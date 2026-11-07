@@ -1,0 +1,255 @@
+{
+  "mode": "candidate",
+  "commands": [
+    {
+      "label": "slf4j-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/slf4j/slf4j-api",
+        "--language",
+        "java",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/slf4j",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 2.92625841696281
+    },
+    {
+      "label": "commons-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/commons-lang/src/main/java",
+        "--language",
+        "java",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/commons",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 8.166308082989417
+    },
+    {
+      "label": "question-0",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/slf4j",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/slf4j/slf4j-api",
+        "--entry",
+        "src/main/java/org/slf4j/LoggerFactory.java",
+        "--function",
+        "LoggerFactory.getLogger(Class<?>)",
+        "--question",
+        "Where is this explicit static implementation?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/question-0.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.3701981670456007
+    },
+    {
+      "label": "question-1",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/commons",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/commons-lang/src/main/java",
+        "--entry",
+        "org/apache/commons/lang3/ClassUtils.java",
+        "--function",
+        "ClassUtils.getPackageName(String)",
+        "--question",
+        "Where is this explicit static implementation?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/question-1.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.3756593340076506
+    },
+    {
+      "label": "question-2",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/commons",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/commons-lang/src/main/java",
+        "--entry",
+        "org/apache/commons/lang3/ClassUtils.java",
+        "--function",
+        "ClassUtils.getShortClassName(String)",
+        "--question",
+        "Where is this explicit static implementation?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/question-2.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.37243187497369945
+    },
+    {
+      "label": "follow-up",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/slf4j",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/slf4j/slf4j-api",
+        "--entry",
+        "src/main/java/org/slf4j/helpers/Util.java",
+        "--function",
+        "Util.getCallingClass()",
+        "--question",
+        "What is the next direct implementation step?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-java-zip/follow-up.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.360675249947235
+    }
+  ],
+  "score": {
+    "correct": 3,
+    "wrong": 0,
+    "missed": 0
+  },
+  "units": [
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "src/main/java/org/slf4j/LoggerFactory.java",
+        "line": 454,
+        "column": 49,
+        "endLine": 454,
+        "endColumn": 71,
+        "resolution": "java-qualified-static-method",
+        "target": {
+          "file": "src/main/java/org/slf4j/helpers/Util.java",
+          "name": "getCallingClass",
+          "line": 98,
+          "column": 5
+        }
+      },
+      "expected": {
+        "file": "src/main/java/org/slf4j/helpers/Util.java",
+        "name": "getCallingClass",
+        "line": 98,
+        "column": 5
+      },
+      "status": "correct"
+    },
+    {
+      "project": "commons",
+      "call": {
+        "file": "org/apache/commons/lang3/ClassUtils.java",
+        "line": 733,
+        "column": 13,
+        "endLine": 733,
+        "endColumn": 43,
+        "resolution": "java-qualified-static-method",
+        "target": {
+          "file": "org/apache/commons/lang3/StringUtils.java",
+          "name": "isEmpty",
+          "line": 3604,
+          "column": 5
+        }
+      },
+      "expected": {
+        "file": "org/apache/commons/lang3/StringUtils.java",
+        "name": "isEmpty",
+        "line": 3604,
+        "column": 5
+      },
+      "status": "correct"
+    },
+    {
+      "project": "commons",
+      "call": {
+        "file": "org/apache/commons/lang3/ClassUtils.java",
+        "line": 995,
+        "column": 13,
+        "endLine": 995,
+        "endColumn": 43,
+        "resolution": "java-qualified-static-method",
+        "target": {
+          "file": "org/apache/commons/lang3/StringUtils.java",
+          "name": "isEmpty",
+          "line": 3604,
+          "column": 5
+        }
+      },
+      "expected": {
+        "file": "org/apache/commons/lang3/StringUtils.java",
+        "name": "isEmpty",
+        "line": 3604,
+        "column": 5
+      },
+      "status": "correct"
+    }
+  ],
+  "reasonableUnknowns": [
+    {
+      "file": "src/main/java/org/slf4j/LoggerFactory.java",
+      "line": 427,
+      "column": 16,
+      "endLine": 427,
+      "endColumn": 46,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    }
+  ],
+  "scope": {
+    "slf4j": {
+      "files": 66,
+      "functions": 623,
+      "calls": 1492,
+      "parseErrors": [],
+      "model": "java-static-lexical-v2"
+    },
+    "commons": {
+      "files": 246,
+      "functions": 3848,
+      "calls": 8397,
+      "parseErrors": [],
+      "model": "java-static-lexical-v2"
+    }
+  },
+  "limits": [
+    "Three finite source-first direct targets, not whole-project recall or runtime execution.",
+    "Commons reserved after initial code was written but before its first run; not blind.",
+    "Compiler audit of all emitted main-source qualified targets is supplemental, post-design evidence.",
+    "Paired cross-file changed-definition coverage is authored regression evidence, not a new real version-pair study."
+  ]
+}

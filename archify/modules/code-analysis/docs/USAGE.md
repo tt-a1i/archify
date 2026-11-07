@@ -242,3 +242,7 @@ The first `serve`, `check` or `task` run initializes the analysis module's missi
 An offline report exports the captured snapshot and labels it as not checked against current source. Changed, missing, and unverifiable evidence is called out in both the preview and exported brief; ask your coding AI to read the current files before editing. An expired page or a rejected server request requires retry or re-analysis. Export does not apply a patch or execute project checks.
 
 Relationships and metrics are folded below the code evidence. A source link opens the nine-line context; **Show full file** expands the file while preserving function-range highlighting. On narrow screens, **View diagram** / **Show analysis** switches between the canvas and reading column. Unchecked categories remain visible in the overview; a clean result only covers the rules that ran.
+
+### Go source investigation
+
+Use `--language go` at a root containing `go.mod`. An installed Go 1.18+ compiler is required. Saved and paired questions can follow captured direct function declarations and known callers; build scope, test inclusion, excluded files and incomplete typing remain explicit. See [Go support](GO.md) for commands, toolchain cost and limitations. Rust remains unsupported.

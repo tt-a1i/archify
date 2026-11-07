@@ -7,7 +7,7 @@
   "required": ["schema_version", "repository", "files", "imports", "symbols", "calls", "unresolved"],
   "properties": {
     "schema_version": { "const": 1 },
-    "callModel": { "type": "string", "minLength": 1, "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. js-ts-lexical-v3 additionally follows same-module default identifier/export-specifier references to ordinary function declarations with one body and no observed source writes or direct eval. js-ts-lexical-v4 additionally binds configured non-relative static imports to captured in-project implementations under the same export restrictions. Mutable values, factories and re-export chains remain unsupported. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. It does not resolve attributes, classes, reexports or runtime dispatch. java-static-lexical-v1 inventories Java method invocations and binds only unqualified fixed-arity calls to a uniquely declared explicit static body method in a top-level ordinary class without extends/implements; inherited Object names and nested/local/anonymous owners are excluded. Targets are lexical source candidates, not compiler attribution or execution." },
+    "callModel": { "type": "string", "minLength": 1, "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. js-ts-lexical-v3 additionally follows same-module default identifier/export-specifier references to ordinary function declarations with one body and no observed source writes or direct eval. js-ts-lexical-v4 additionally binds configured non-relative static imports to captured in-project implementations under the same export restrictions. Mutable values, factories and re-export chains remain unsupported. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. It does not resolve attributes, classes, reexports or runtime dispatch. java-static-lexical-v1 inventories Java method invocations and binds only unqualified fixed-arity calls to a uniquely declared explicit static body method in a top-level ordinary class without extends/implements; inherited Object names and nested/local/anonymous owners are excluded. java-static-lexical-v2 additionally binds explicit class-qualified calls to public unique static fixed-arity methods in captured public top-level classes without explicit supertypes, after native type/value namespace guards. Targets are source candidates, not compiler attribution or execution." },
     "repository": {
       "type": "object",
       "additionalProperties": false,
@@ -19,7 +19,7 @@
         "sourceKind": { "enum": ["working-tree"] },
         "snapshotId": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Digest identifying the extracted facts and captured source text." },
         "url": { "type": ["string", "null"], "description": "Git origin URL as configured; null when there is no Git repository or no origin." },
-        "language": { "enum": ["ts", "py", "java"] },
+        "language": { "enum": ["ts", "py", "java", "go", "rust"] },
         "adapter": { "type": "string", "description": "Parser or runtime the adapter used, with its version." },
         "adapterRevision": { "type": "integer", "minimum": 1, "description": "Revision of the adapter's own extraction logic. Absent in facts written before revisions were recorded." }
       }
@@ -88,7 +88,7 @@
             "type": "object", "additionalProperties": false, "required": ["kind", "sourceRange"],
             "description": "Optional captured named definition with headers: exact owned syntax including decorators, annotations and modifiers, excluding preceding comments and trailing newline. Absent for historical captures and unsupported metric records.",
             "properties": {
-              "kind": { "enum": ["FunctionDef", "AsyncFunctionDef", "methodDeclaration", "interfaceMethodDeclaration", "constructorDeclaration", "compactConstructorDeclaration"] },
+              "kind": { "enum": ["FunctionDef", "AsyncFunctionDef", "methodDeclaration", "interfaceMethodDeclaration", "constructorDeclaration", "compactConstructorDeclaration", "FuncDecl", "RustItemFn"] },
               "sourceRange": { "$ref": "#/$defs/sourceRange" }
             }
           }
@@ -112,7 +112,7 @@
     },
     "calls": {
       "type": "array",
-      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage. python-lexical-v1 records Python ast.Call with the same UTF-16/end-exclusive coordinates, binding only eligible module-level ordinary definitions or direct from-import aliases; unsupported calls remain unresolved. Java java-static-lexical-v1 also inventories syntactic method invocations (excluding constructors and method references); same-file-static-method identifies a bounded lexical source candidate, not compiler resolution.",
+      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage. python-lexical-v1 records Python ast.Call with the same UTF-16/end-exclusive coordinates, binding only eligible module-level ordinary definitions or direct from-import aliases; unsupported calls remain unresolved. Java java-static-lexical-v1 also inventories syntactic method invocations (excluding constructors and method references); same-file-static-method identifies a bounded lexical source candidate, not compiler resolution. Java v2 additionally permits java-qualified-static-method with explicit target.file after native class/value namespace lookup; visibility, overload and scope restrictions apply.",
       "items": {
         "type": "object", "additionalProperties": false,
         "required": ["file", "line", "column", "endLine", "endColumn", "resolution"],
@@ -122,7 +122,7 @@
           "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at invocation expression start." },
           "endLine": { "type": "integer", "minimum": 1, "description": "One-based end-exclusive invocation expression end line." },
           "endColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 end-exclusive column." },
-          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "same-file-static-method", "unresolved"] },
+          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "same-file-static-method", "go-direct-function", "rust-direct-function", "java-qualified-static-method", "unresolved"] },
           "target": {
             "type": "object", "additionalProperties": false,
             "required": ["name", "line", "column"],
@@ -130,17 +130,194 @@
               "file": { "$ref": "#/$defs/repoPath" },
               "name": { "type": "string", "minLength": 1, "description": "Measured function name; a named function expression uses its inner name, which may differ from the const variable name." },
               "line": { "type": "integer", "minimum": 1 },
-              "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at the function declaration or initializer expression start in target.file for imported-function, otherwise the callsite file (including modifiers)." }
+              "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at the function declaration or initializer expression start in target.file for imported-function/java-qualified-static-method, otherwise the callsite file (including modifiers)." }
             }
           },
-          "reason": { "enum": ["unsupported-callee", "optional-call", "no-local-function-binding", "ambiguous-binding"] }
+          "reason": { "enum": ["unsupported-callee", "optional-call", "no-local-function-binding", "ambiguous-binding", "go-method-dispatch", "rust-cfg-unselected", "rust-trait-or-method-dispatch", "rust-macro-not-expanded", "rust-context-dependent"] }
         },
         "oneOf": [
           { "properties": { "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "same-file-static-method"] }, "target": { "type": "object", "not": { "required": ["file"] } } }, "required": ["target"], "not": { "required": ["reason"] } },
-          { "properties": { "resolution": { "const": "imported-function" }, "target": { "type": "object", "required": ["file"] } }, "required": ["target"], "not": { "required": ["reason"] } },
+          { "properties": { "resolution": { "enum": ["imported-function", "java-qualified-static-method"] }, "target": { "type": "object", "required": ["file"] } }, "required": ["target"], "not": { "required": ["reason"] } },
+          { "properties": { "resolution": { "enum": ["go-direct-function", "rust-direct-function"] } }, "required": ["target"], "not": { "required": ["reason"] } },
           { "properties": { "resolution": { "const": "unresolved" } }, "required": ["reason"], "not": { "required": ["target"] } }
         ]
       }
+    },
+    "languageScope": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Language-specific captured source selection, build inputs and unresolved semantic limits.",
+          "additionalProperties": false,
+          "required": [
+            "language",
+            "module",
+            "build",
+            "packages",
+            "typing",
+            "selectedFiles",
+            "excludedFiles",
+            "metadata",
+            "limitations"
+          ],
+          "properties": {
+            "language": {
+              "const": "go"
+            },
+            "module": {
+              "type": "string"
+            },
+            "build": {
+              "type": "object"
+            },
+            "packages": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "typing": {
+              "type": "object"
+            },
+            "selectedFiles": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/repoPath"
+              }
+            },
+            "excludedFiles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "reason"
+                ],
+                "properties": {
+                  "file": {
+                    "$ref": "#/$defs/repoPath"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "metadata": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "language",
+            "build",
+            "crates",
+            "selectedFiles",
+            "excludedFiles",
+            "metadata",
+            "excludedTargets",
+            "excludedRegions",
+            "opaqueMacros",
+            "missingModules",
+            "limitations",
+            "conditionalDefinitions"
+          ],
+          "properties": {
+            "language": {
+              "const": "rust"
+            },
+            "build": {
+              "type": "object"
+            },
+            "crates": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "selectedFiles": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/repoPath"
+              }
+            },
+            "excludedFiles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "reason"
+                ],
+                "properties": {
+                  "file": {
+                    "$ref": "#/$defs/repoPath"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "metadata": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "excludedTargets": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "excludedRegions": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "opaqueMacros": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "missingModules": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "conditionalDefinitions": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      ]
     },
     "packageMarkers": {
       "type": "array",

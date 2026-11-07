@@ -1,0 +1,16 @@
+{
+  "initialHead": "e48965e49b3104ff6a569cfaf974c03d52dee324",
+  "run": "https://github.com/tt-a1i/archify/actions/runs/42389358859",
+  "moduleJob": 128453579743,
+  "observedModuleFailureCount": 10,
+  "reason": "All Rust tests forced offline helper dependency resolution on a fresh CI cache.",
+  "localBefore": "empty-cache-before.log",
+  "localAfter": "empty-cache-after.log",
+  "localAfterCounts": {
+    "pass": 10,
+    "fail": 0
+  },
+  "fixRevision": "61f42c7bf",
+  "runtimeChanged": false,
+  "newFinalHeadCI": "Tracked separately on Draft #1258; not inferred from local success."
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "project": "slf4j",
+    "callInventoryEqual": true,
+    "calls": 1492,
+    "previousBoundTargets": 52,
+    "previousBoundRecordsPreserved": true,
+    "functionsEqual": true,
+    "importsEqual": true,
+    "newQualifiedTargets": 10
+  },
+  {
+    "project": "commons",
+    "callInventoryEqual": true,
+    "calls": 8397,
+    "previousBoundTargets": 558,
+    "previousBoundRecordsPreserved": true,
+    "functionsEqual": true,
+    "importsEqual": true,
+    "newQualifiedTargets": 105
+  }
+]

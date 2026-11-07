@@ -19,22 +19,22 @@ export function run({ graph, facts }) {
   if (!facts) return [];
   const excluded = new Set(graph.excluded.roles || []);
   const skip = new Set(facts.files.filter((f) => excluded.has(f.role)).map((f) => f.path));
-  const edges = facts.imports.filter((i) => i.resolved && !i.typeOnly && !skip.has(i.from) && !skip.has(i.to)).map((e) => ({ ...e, ...(e.names ? { names: [...e.names].sort() } : {}) })).sort(compareImport);
+  const edges = facts.imports.filter((i) => i.resolved && !(facts.repository.language === 'rust' && i.from === i.to) && !i.typeOnly && !skip.has(i.from) && !skip.has(i.to)).map((e) => ({ ...e, ...(e.names ? { names: [...e.names].sort() } : {}) })).sort(compareImport);
   const files = [...new Set(edges.flatMap((e) => [e.from, e.to]))].sort();
   const all = cyclicComponents(files, edges, true);
-  if (facts.repository.language === 'java') return all.map(scc => {
+  if (['java', 'rust'].includes(facts.repository.language)) return all.map(scc => {
     const set = new Set(scc);
     const internal = edges.filter(e => set.has(e.from) && set.has(e.to));
     const path = shortestCycle(scc[0], internal, set);
     return {
       code, dimension, confidence, severity: 'info',
-      message: `${scc.length} Java files form a structural dependency cycle: ${path.join(' → ')} → ${path[0]}. Imports and type references do not establish class initialization order or runtime failure.`,
+      message: `${scc.length} ${facts.repository.language === 'rust' ? 'Rust' : 'Java'} files form a structural dependency cycle: ${path.join(' → ')} → ${path[0]}. ${facts.repository.language === 'rust' ? 'Rust mod/use declarations are compile-time source relationships, not runtime imports or partial initialization.' : 'Imports and type references do not establish class initialization order or runtime failure.'}`,
       subject: { files: scc },
       evidence: {
         kind: 'structural',
         risk: {
           loading: 'not-assessed', coupling: 'present',
-          loadingNote: 'Class initialization order and runtime failure were not assessed.',
+          loadingNote: facts.repository.language === 'rust' ? 'Rust source dependencies do not imply runtime loading order or partial initialization.' : 'Class initialization order and runtime failure were not assessed.',
         },
         path,
         pathImports: path.map((from, i) => {

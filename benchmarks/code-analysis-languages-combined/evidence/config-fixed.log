@@ -1,0 +1,19 @@
+✔ TypeScript pins root and extended config, package metadata, sources and resolution inventory (35.628542ms)
+✔ a tsconfig created after capture cannot change analysis options (9.945875ms)
+✔ excluded source stays outside facts but remains known to resolution (9.436792ms)
+✔ installed configuration packages remain supported and changes invalidate analysis (12.710125ms)
+✔ unusual config extensions cannot change between capture and first use (1.562458ms)
+✔ captured TypeScript configuration preserves UTF-16 BOM support (9.563667ms)
+✔ JavaScript package and ESM references select implementations while TypeScript keeps declarations (26.025875ms)
+✔ JavaScript package implementation fallback uses the captured manifest and source inventory (9.781ms)
+✔ runtime conditional null blocks siblings while arrays retain their next target (14.221875ms)
+✔ runtime package arrays stop at selected or unsupported targets, not capture availability (12.277541ms)
+✔ runtime package correction respects custom conditions, option gates and captured metadata (37.172125ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 317.034333

@@ -225,7 +225,8 @@ export function resolveImports(units) {
   const entries = [...unique.values()].sort((a, b) => compare(a.record.from, b.record.from) || a.record.line - b.record.line || compare(a.record.specifier, b.record.specifier));
   const unresolved = { external: 0, outside: 0, unknown: 0, opaque: 0 };
   for (const { reason } of entries) if (reason) unresolved[reason] += 1;
-  return { imports: entries.map(entry => entry.record), unresolved };
+  return { imports: entries.map(entry => entry.record), unresolved,
+    resolveType: (unit, reference) => referenceTargets(unit, reference, reference.name, index, lookup, inheritedMembers) };
 }
 
 // Types whose member scope contains the node, outermost first.
