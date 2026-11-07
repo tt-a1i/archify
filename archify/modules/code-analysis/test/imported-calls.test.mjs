@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { schemaErrors } from '../extract/shared/schema.mjs';
 import { buildQuestion } from '../lib/explain.mjs';
+import { captureChangeSide, buildChangeQuestion } from '../lib/change-question.mjs';
 
 function fixture(t, sources, exclude = []) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-import-calls-'));
@@ -66,7 +67,7 @@ test('relative default imports bind direct named, anonymous and overloaded funct
   assert.ok(brief.calls.records.every((r) => r.targetNavigation.status === 'valid'));
 });
 
-test('type-only, namespace, packages, export aliases and expressions stay unknown', (t) => {
+test('type-only, namespace, packages, re-exports, named aliases and expressions stay unknown', (t) => {
   const { facts } = fixture(t, {
     'entry.ts': [
       'import type { declared as typeClause } from "./target.js"; typeClause();',
@@ -94,7 +95,9 @@ test('type-only, namespace, packages, export aliases and expressions stay unknow
     'expression.ts': 'export default () => {};',
     'no-default.ts': 'export function noDefault() {}',
   });
-  assert.ok(facts.calls.filter((c) => c.file === 'entry.ts').every((c) => c.resolution === 'unresolved'));
+  const calls = facts.calls.filter(c => c.file === 'entry.ts');
+  assert.equal(calls.find(c => c.line === 8).resolution, 'imported-function');
+  assert.ok(calls.filter(c => c.line !== 8).every(c => c.resolution === 'unresolved'));
 });
 
 test('parameter-default calls cannot target declarations in the unavailable function body', (t) => {
@@ -184,4 +187,48 @@ test('imported target schema and references reject missing file, parse errors an
   bad((f) => { f.parse_errors = [{ path: 'target.mjs', message: 'broken' }]; });
   bad((f) => { f.imports = []; });
   bad((f) => { f.calls[0].resolution = 'same-file-function'; });
+});
+
+
+test('default references follow ordinary same-module functions and local default aliases without following shadows', t => {
+ const args=fixture(t,{
+  'entry.mjs':'import plain from "./plain.mjs";import {default as alias} from "./alias.mjs";function chosen(){plain();alias();}function shadow(plain){plain();}',
+  'plain.mjs':'export default later; function later(){}',
+  'alias.mjs':'function earlier(){} export {earlier as default};',
+ });
+ const imported=args.facts.calls.filter(c=>c.file==='entry.mjs'&&c.target);
+ assert.deepEqual(imported.map(c=>c.target),[{file:'plain.mjs',name:'later',line:1,column:23},{file:'alias.mjs',name:'earlier',line:1,column:1}]);
+ assert.equal(args.facts.calls.filter(c=>c.file==='entry.mjs'&&c.resolution==='unresolved').length,1);
+ const q=buildQuestion(args);assert.equal(q.calls.bindingCoverage,'declarations-const-initializers-relative-imports-and-stable-default-function-references');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
+});
+
+test('default references do not claim a function overwritten by assignments, destructuring, loops or opaque eval',t=>{
+ const sources={'entry.mjs':''};
+ const operations=['f=replacement','[f]=[replacement]','({value:f}={value:replacement})','({f}={f:replacement})','for(f of [replacement]){}','for(f in {x:1}){}','++f','f++','f&&=replacement','eval("f=replacement")'];
+ operations.forEach((op,i)=>{sources[`target${i}.mjs`]=`function f(){} function replacement(){} ${op}; export default f;`;sources['entry.mjs']+=`import run${i} from './target${i}.mjs';run${i}();`;});
+ sources['live.mjs']='function f(){}function replacement(){}f=replacement;export {f as default};';sources['entry.mjs']+='import live from "./live.mjs";live();';
+ const {facts}=fixture(t,sources);assert.ok(facts.calls.filter(c=>c.file==='entry.mjs').every(c=>c.resolution==='unresolved'));
+});
+
+test('writes to a different lexical binding or function property do not hide a stable default reference',t=>{
+ const args=fixture(t,{'entry.mjs':'import f from "./target.mjs";function chosen(){f();}','target.mjs':'function f(){}function unused(f){f=()=>{};}f.extra=1;export default f;'});
+ assert.deepEqual(args.facts.calls.find(c=>c.file==='entry.mjs').target,{file:'target.mjs',name:'f',line:1,column:1});
+});
+
+test('default-reference additions retain historical v1/v2 saved coverage without relabeling it',t=>{
+ const args=fixture(t,{'entry.mjs':'import f from "./target.mjs";function chosen(){f();}','target.mjs':'function f(){}export default f;'});
+ for(const model of ['js-ts-lexical-v1','js-ts-lexical-v2']){
+  const historical=structuredClone(args.facts);historical.callModel=model;historical.calls=historical.calls.map(c=>c.file==='entry.mjs'?{file:c.file,line:c.line,column:c.column,endLine:c.endLine,endColumn:c.endColumn,resolution:'unresolved',reason:'no-local-function-binding'}:c);
+  const q=buildQuestion({...args,facts:historical});assert.equal(q.calls.coverage,'available');assert.equal(q.calls.records[0].fact.resolution,'unresolved');assert.ok(!q.calls.bindingCoverage.includes('stable-default'));
+ }
+});
+
+
+test('changed ordinary function default references recover foreign callers in fresh paired captures',t=>{
+ const files={'entry.mjs':'import run from "./target.mjs";export function chosen(){run();}','target.mjs':'function helper(){return 1;}export default helper;'};
+ const before=fixture(t,files),after=fixture(t,{...files,'target.mjs':files['target.mjs'].replace('return 1','return 2')});
+ const base=captureChangeSide(before.root,before.config,'ts'),head=captureChangeSide(after.root,after.config,'ts');
+ const q=buildChangeQuestion({question:'Which known references reach the changed helper?',entry:'target.mjs',base,head,config:before.config});
+ const changed=q.changedDefinitions.items.find(x=>x.head?.definition.name==='helper');
+ for(const side of ['base','head']){assert.equal(changed[side].knownReferences.total,1);assert.equal(changed[side].knownReferences.items[0].fact.file,'entry.mjs');assert.equal(changed[side].knownReferences.items[0].navigation.status,'valid');}
 });

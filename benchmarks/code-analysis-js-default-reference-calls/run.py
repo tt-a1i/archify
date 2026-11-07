@@ -1,0 +1,30 @@
+"""Replay fixed public source/ZIP questions; upstream modules are never executed."""
+import argparse,hashlib,json,pathlib,subprocess,time
+p=argparse.ArgumentParser();p.add_argument('--cli',type=pathlib.Path,required=True);p.add_argument('--samples-root',type=pathlib.Path,required=True);p.add_argument('--out',type=pathlib.Path,required=True);p.add_argument('--node',default='node');p.add_argument('--expect',choices=['baseline','candidate'],default='candidate');a=p.parse_args();a.cli=a.cli.resolve();a.samples_root=a.samples_root.resolve();a.out=a.out.resolve();assert a.out!=a.samples_root and a.samples_root not in a.out.parents;a.out.mkdir(parents=True,exist_ok=True)
+here=pathlib.Path(__file__).resolve().parent;original=json.loads((here/'source-first.json').read_text());chalk=json.loads((here/'reserved-chalk.json').read_text());pair=json.loads((here/'version-pair.json').read_text());commands=[];facts={}
+for name,revision,hashes in [('prettier',original['revision'],original['sourceSha256']),('chalk',chalk['revision'],chalk['hashes'])]:
+ root=a.samples_root/name;assert subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()==revision
+ for file,sha in hashes.items():assert hashlib.sha256((root/file).read_bytes()).hexdigest()==sha
+for side,name in [('base','prettier-base'),('head','prettier')]:
+ root=a.samples_root/name;assert subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()==pair[side]
+ for entry in pair['evidence'][side]:assert hashlib.sha256((root/entry['file']).read_bytes()).hexdigest()==entry['sha256']
+def run(label,arguments,expected=0):
+ cmd=[a.node,str(a.cli),'code-analysis',*map(str,arguments)];start=time.monotonic();r=subprocess.run(cmd,capture_output=True,text=True);commands.append({'label':label,'command':cmd,'exit':r.returncode,'seconds':time.monotonic()-start});(a.out/(label+'.stdout')).write_text(r.stdout);(a.out/(label+'.stderr')).write_text(r.stderr);assert r.returncode==expected,(label,r.returncode,r.stdout[:1000],r.stderr[:1000]);return json.loads(r.stdout)
+roots={'prettier':a.samples_root/'prettier/src','chalk':a.samples_root/'chalk'}
+for name,root in roots.items():
+ run(name+'-check',['check',root,'--language','ts','--fail-on','never','--out',a.out/name,'--json']);facts[name]=json.loads((a.out/name/'raw-facts.json').read_text())
+units=[]
+for name,file,line,column,expected in [('prettier','main/comments/print.js',126,8,{'file':'utils/is-non-empty-array.js','name':'isNonEmptyArray','line':5,'column':1}),('prettier','main/comments/attach.js',139,8,{'file':'utils/is-non-empty-array.js','name':'isNonEmptyArray','line':5,'column':1}),('chalk','test/chalk.js',12,7,None),('prettier',original['unknown']['file'].removeprefix('src/'),original['unknown']['line'],original['unknown']['column'],None)]:
+ rows=[c for c in facts[name]['calls']if c['file']==file and c['line']==line and c['column']==column];assert len(rows)==1,(file,line,column,rows);call=rows[0];actual=call.get('target');status='correct' if expected and actual==expected else 'wrong' if actual else 'missed' if expected else 'reasonable-unknown';units.append({'project':name,'call':call,'expected':expected,'status':status});assert status==('missed' if expected and a.expect=='baseline' else 'correct' if expected else 'reasonable-unknown')
+for entry,symbol in [('main/comments/print.js','printDanglingComments'),('main/comments/attach.js','attachComments')]:
+ label='question-'+symbol;out=a.out/(label+'.json');run(label,['task',a.out/'prettier','--root',roots['prettier'],'--entry',entry,'--function',symbol,'--question','Where does the imported default function resolve?','--format','json','--out',out,'--json']);q=json.loads(out.read_text());selected=[r for r in q['calls']['records']if r['fact'].get('target',{}).get('name')=='isNonEmptyArray'];assert bool(selected)==(a.expect=='candidate')
+ if selected:assert selected[0]['targetNavigation']['status']=='valid'
+paired_out=a.out/'paired.json';run('paired',['task','--root',roots['prettier'],'--base-root',a.samples_root/'prettier-base/src','--entry','config/prettier-config/load-external-config.js','--question','Which known references reach the changed external config loader?','--format','json','--out',paired_out,'--json'],expected=1)
+q=json.loads(paired_out.read_text());changed=next(x for x in q['changedDefinitions']['items']if x['head']['definition']['name']=='loadExternalConfig');references={}
+for side in ['base','head']:
+ target_line=pair['evidence'][side][1]['locations'][0]['line'];caller_line=pair['evidence'][side][0]['locations'][0]['line']
+ refs=changed[side]['knownReferences'];assert refs['coverage']=='available';references[side]=refs
+ if a.expect=='candidate':
+  assert refs['total']==1;ref=refs['items'][0];assert ref['fact']['file']=='config/prettier-config/load-config.js'and ref['fact']['line']==caller_line and ref['fact']['target']['line']==target_line and ref['navigation']['status']=='valid'
+ else:assert refs['total']==0
+report={'expect':a.expect,'commands':commands,'score':{s:sum(x['status']==s for x in units)for s in ['correct','wrong','missed','reasonable-unknown']},'units':units,'paired':{'status':q['status'],'references':references,'limits':'Real body change, supplemental post-design case; both profiles differ so orientation remains partial/exit1.'},'scope':{name:{'files':len(f['files']),'functions':len(f['functions']),'calls':len(f['calls']),'parseErrors':f.get('parse_errors',[]),'model':f['callModel']}for name,f in facts.items()},'limits':['Two original positive sites; the version-pair caller is separate supplemental evidence, not added to this frozen score.','Chalk was source-inspected reserved negative after initial implementation, not blind.','Unknown callbacks/factory callables are not arbitrary function targets.','All results are captured source evidence, not project execution/complete impact.']};(a.out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({'score':report['score'],'pairedKnownRefs':{k:v['total']for k,v in references.items()},'pairedStatus':q['status']}))

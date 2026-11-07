@@ -1,4 +1,4 @@
-// Resolve direct named exports and default function declarations through
+// Resolve direct named exports and default function declarations/references through
 // already captured relative imports.
 // The Program remains noResolve; this never asks it to load an aliased module.
 import ts from 'typescript';
@@ -37,6 +37,8 @@ export function importedCallTarget(node, source, checker, importTargets, sources
   if (exportedDeclarations.every((d) => ts.isFunctionDeclaration(d) && d.parent === info.source && exported(d, name))) {
     const bodies = exportedDeclarations.filter((d) => d.body);
     if (bodies.length === 1) [target] = bodies;
+  } else if (name === 'default' && exportedDeclarations.length === 1) {
+    target = referencedDefaultFunction(exportedDeclarations[0], info, checker);
   } else if (name !== 'default' && exportedDeclarations.length === 1) {
     const declaration = exportedDeclarations[0];
     if (ts.isVariableDeclaration(declaration) && ts.isIdentifier(declaration.name)
@@ -51,4 +53,62 @@ export function importedCallTarget(node, source, checker, importTargets, sources
   if (!measured) return null;
   const start = info.source.getLineAndCharacterOfPosition(target.getStart(info.source));
   return { file, name: measured.name, line: start.line + 1, column: start.character + 1 };
+}
+
+// ESM default expressions snapshot a value; local export specifiers expose a
+// binding. Accept only an ordinary captured function with no observed writes,
+// so neither form guesses through reassignment, factories or re-export chains.
+function referencedDefaultFunction(declaration, info, checker) {
+  let symbol;
+  if (ts.isExportAssignment(declaration) && !declaration.isExportEquals
+    && declaration.parent === info.source && ts.isIdentifier(declaration.expression)) {
+    symbol = checker.getSymbolAtLocation(declaration.expression);
+  } else if (ts.isExportSpecifier(declaration) && !declaration.isTypeOnly) {
+    const statement = declaration.parent.parent;
+    if (!ts.isExportDeclaration(statement) || statement.parent !== info.source
+      || statement.moduleSpecifier || statement.isTypeOnly) return null;
+    symbol = checker.getExportSpecifierLocalTargetSymbol(declaration);
+  }
+  const declarations = symbol?.declarations || [];
+  const functions = declarations.filter(ts.isFunctionDeclaration);
+  // JS function properties add receiver identifiers to the compiler symbol's
+  // declarations. They mutate properties, not the callable binding itself.
+  const expando = node => ts.isIdentifier(node) && node.getSourceFile() === info.source
+    && (ts.isPropertyAccessExpression(node.parent) || ts.isElementAccessExpression(node.parent))
+    && node.parent.expression === node;
+  if (!functions.length || declarations.some(node => !expando(node)
+    && (!ts.isFunctionDeclaration(node) || node.parent !== info.source || !node.name))) return null;
+  const bodies = functions.filter(node => node.body);
+  if (bodies.length !== 1) return null;
+  info.referenceEffects ||= referenceEffects(info.source, checker);
+  if (info.referenceEffects.opaque || info.referenceEffects.writes.has(symbol)) return null;
+  return bodies[0];
+}
+
+function referenceEffects(source, checker) {
+  const writes = new Set(); let opaque = false;
+  const write = node => {
+    if (ts.isIdentifier(node)) {
+      const symbol = checker.getSymbolAtLocation(node); if (symbol) writes.add(symbol);
+    } else if (ts.isParenthesizedExpression(node)) write(node.expression);
+    else if (ts.isArrayLiteralExpression(node)) node.elements.forEach(write);
+    else if (ts.isObjectLiteralExpression(node)) for (const property of node.properties) {
+      if (ts.isShorthandPropertyAssignment(property)) {
+        const symbol = checker.getShorthandAssignmentValueSymbol(property); if (symbol) writes.add(symbol);
+      } else if (ts.isPropertyAssignment(property)) write(property.initializer);
+      else if (ts.isSpreadAssignment(property)) write(property.expression);
+    }
+    else if (ts.isSpreadElement(node)) write(node.expression);
+    // Property writes mutate an object, not the local function binding.
+  };
+  const walk = node => {
+    if (ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
+      && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) write(node.left);
+    if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node))
+      && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator)) write(node.operand);
+    if ((ts.isForOfStatement(node) || ts.isForInStatement(node)) && !ts.isVariableDeclarationList(node.initializer)) write(node.initializer);
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'eval') opaque = true;
+    ts.forEachChild(node, walk);
+  };
+  walk(source); return { writes, opaque };
 }
