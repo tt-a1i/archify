@@ -325,6 +325,8 @@
     const frame = document.createElement('iframe'); frame.addEventListener('load',()=>{viewerDialog.dataset.nativeLoaded = id;}); frame.title = byId('diagram-dialog-title').textContent;
     frame.setAttribute('sandbox','allow-scripts allow-downloads allow-modals');
     const script = `<script>(()=>{
+      // The page around this Viewer names the diagram, so the preset's standalone badges stay off.
+      document.documentElement.dataset.hosted='explainer';
       const token=${JSON.stringify(token)};
       let pending=null;
       const settle=data=>requestAnimationFrame(()=>{
