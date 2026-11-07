@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../extract/shared/diagnostics.mjs';
 
 export const USAGE = `Usage:
-  archify code-analysis check <repo-root> [--language ts|py|java|go] [--config file.json]
+  archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
                               [--baseline baseline.json] [--compare findings.json] [--out dir]
                               [--fail-on error|warning|info|never] [--new-only]
                               [--update-baseline] [--reason text] [--json]
@@ -133,12 +133,18 @@ export function formatText(r) {
   const lines = [];
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
-  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
-  if (r.coverage?.languageScope) {
+  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
+  if (r.coverage?.languageScope?.language === 'go') {
     const scope = r.coverage.languageScope;
     lines.push(`  Go module: ${scope.module} · ${scope.build.goos}/${scope.build.goarch} · cgo disabled · tests ${scope.build.tests ? 'included' : 'excluded'} · tags ${scope.build.tags.join(', ') || '(none)'}`);
     lines.push(`  Not analyzed: ${scope.excludedFiles.length} excluded Go files; external types not loaded: ${scope.typing.externalPackagesNotLoaded.length}; source typing errors: ${scope.typing.errorCount}`);
     lines.push('  Source bindings only; read coverage.languageScope/raw-facts.json for exclusions and incomplete typing.');
+  }
+  if (r.coverage?.languageScope?.language === 'rust') {
+    const scope = r.coverage.languageScope;
+    lines.push(`  Rust: ${scope.crates.length} Cargo targets · ${scope.selectedFiles.length} source files · tests ${scope.build.tests ? 'included' : 'excluded'} · build scripts/proc macros disabled`);
+    lines.push(`  Not analyzed: ${scope.excludedFiles.length} Rust files; opaque macros ${scope.opaqueMacros.length}; missing modules ${scope.missingModules.length}`);
+    lines.push('  Source profile only; inspect coverage.languageScope for cfg/features, omissions and unknown dispatch.');
   }
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
   if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.join(', ')}`);

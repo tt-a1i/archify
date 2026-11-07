@@ -20,8 +20,15 @@ export function buildModuleGraph(facts, config = {}) {
   const java = facts.repository.language === 'java' && options.packageBoundaries && config.modules?.depth === undefined
     ? javaModules(facts.files.filter((f) => !excluded.has(f.role) && !groupMatchers.some(([, match]) => match(f.path))).map((f) => f.path), facts.packageMarkers || []) : null;
 
-  const goKeys = facts.repository.language === 'go' && options.packageBoundaries && config.modules?.depth === undefined
+  let goKeys = facts.repository.language === 'go' && options.packageBoundaries && config.modules?.depth === undefined
     ? new Map((facts.languageScope?.packages || []).flatMap(pkg => pkg.files.map(file => [file, pkg.path]))) : null;
+  if (facts.repository.language === 'rust' && options.packageBoundaries && config.modules?.depth === undefined) {
+    const owners = new Map();
+    for (const crate of facts.languageScope?.crates || []) for (const file of crate.files) {
+      const keys = owners.get(file) || new Set(); keys.add(`rust:${crate.id}`); owners.set(file, keys);
+    }
+    goKeys = new Map([...owners].map(([file, keys]) => [file, keys.size === 1 ? [...keys][0] : `rust-shared-source:${file}`]));
+  }
   const fileModule = new Map();
   const modules = new Map();
   let excludedFiles = 0;
@@ -56,7 +63,7 @@ export function buildModuleGraph(facts, config = {}) {
     edge.kinds[imp.kind] = (edge.kinds[imp.kind] || 0) + 1;
     if (imp.lazy) edge.kinds.lazy = (edge.kinds.lazy || 0) + 1;
     for (const flag of ['typeOnly', 'conditional', 'implicit']) if (imp[flag]) edge.kinds[flag] = (edge.kinds[flag] || 0) + 1;
-    if (facts.repository.language !== 'java' && !imp.lazy && !imp.typeOnly && !imp.conditional && !(facts.repository.language === 'ts' && imp.kind === 'dynamic')) edge.kinds.eager = (edge.kinds.eager || 0) + 1;
+    if (!['java', 'rust'].includes(facts.repository.language) && !imp.lazy && !imp.typeOnly && !imp.conditional && !(facts.repository.language === 'ts' && imp.kind === 'dynamic')) edge.kinds.eager = (edge.kinds.eager || 0) + 1;
     if (edge.evidence.length < 5) edge.evidence.push({ file: imp.from, line: imp.line, to: imp.to, ...Object.fromEntries(['lazy', 'typeOnly', 'conditional', 'implicit'].filter((flag) => imp[flag]).map((flag) => [flag, true])), ...(facts.repository.language === 'ts' && imp.kind === 'dynamic' ? { deferred: true } : {}) });
     incoming.set(imp.to, (incoming.get(imp.to) || 0) + 1);
   }

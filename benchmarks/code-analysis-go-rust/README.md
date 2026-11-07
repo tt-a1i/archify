@@ -53,3 +53,5 @@ A supplemental alias question is source-frozen in `supplemental-go-alias.json`: 
 ## Go implementation follow-up
 
 The first bounded Go source/ZIP investigation is recorded in [GO.md](GO.md), including the Chi oracle correction, real grpc alias, build/typing scope, nine versioned positive observations, five unknowns, known baseline test failure and exact package evidence. It is Draft validation, not Labs integration. The original manifest remains immutable. Rust's first implementation/acceptance remains pending.
+
+Rust first bounded investigation is recorded in [RUST.md](RUST.md), with explicit Cargo/cfg/trait/macro limits and source/ZIP replay. This is Draft validation, not Labs or release.

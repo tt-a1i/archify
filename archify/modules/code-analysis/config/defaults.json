@@ -4,7 +4,8 @@
     "**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     "**/*.py",
     "**/*.java",
-    "**/*.go"
+    "**/*.go",
+    "**/*.rs"
   ],
   "exclude": [
     "**/node_modules/**",
