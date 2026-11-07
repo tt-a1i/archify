@@ -1,0 +1,7 @@
+{
+  "repository": "serde_json",
+  "revision": "4d4f53c3b7de3259b6a8a15ef4d5f4edb47af32f",
+  "file": "src/map.rs",
+  "sha256": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+  "purpose": "Reserve this file as review slice before implementing inherent function rule. Read and record source answers after first implementation, before candidate extraction. Project was exposed in prior free-function studies; not a blind repository."
+}
