@@ -1,0 +1,18 @@
+✔ Java calls inventory keeps full chained UTF16 spans and excludes constructors/references/annotations (58.136333ms)
+✔ Java lexical candidates reject overloads, members, explicit type args, arity, varargs and inherited Object names (14.543291ms)
+✔ Java invocation inventory retains nested/local/anonymous sites while target binding excludes those owners and supertypes (24.24825ms)
+✔ Java exact function selection excludes same-line neighbours; historical, zero, parse failure and freshness remain distinct (76.551042ms)
+✔ public saved Java task exposes lexical calls and historical unknown separately (634.436667ms)
+✔ Java multiline CRLF invocation ranges and declaration hashes preserve original source positions (21.480542ms)
+✔ Java explicit imported, same-package and full class paths navigate across files (67.707417ms)
+✔ Java expression values and uncertain caller scopes never become imported class targets (21.040541ms)
+✔ Java qualified methods keep overload, visibility, varargs, supertype and duplicate owner gaps unknown (23.768834ms)
+✔ Java paired changed definition recovers captured foreign callers and v1 stays a distinct model (40.534416ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1113.420459
