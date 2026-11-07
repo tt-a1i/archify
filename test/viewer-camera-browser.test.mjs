@@ -801,3 +801,70 @@ test('zooming out a tall diagram keeps its top inside the frame', {
   await stable();
   assert.deepEqual(await alignment(), authoredAlignment, 'reset restores authored inline alignment and priority');
 });
+
+test('touch drag pans the full distance once zoomed above 100% (issue #1253)', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser camera checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-camera-1253-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression, awaitPromise = false) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  const input = path.join(scratch, 'web-app.json');
+  const artifact = path.join(scratch, 'web-app-rendered.html');
+  fs.writeFileSync(input, fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json')));
+  execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, artifact]);
+  // The reporter's conditions: phone-sized mobile emulation, three + presses.
+  await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 760, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(artifact).href });
+  await loaded;
+  const stable = () => run(`(async () => { await document.fonts.ready; await Archify.layoutStability.whenStable(); })()`, true);
+  await stable();
+
+  // At scale 1 the container must leave touch-action alone so the page scrolls.
+  assert.equal(await run(`getComputedStyle(document.querySelector('.diagram-container')).touchAction`), 'auto');
+  for (let i = 0; i < 3; i++) await run(`Archify.view.zoomIn()`);
+  await stable();
+  assert.equal(await run(`Archify.view.state().scale`), 1.75);
+  // Once zoomed, the pannable container must claim the gesture.
+  assert.equal(await run(`getComputedStyle(document.querySelector('.diagram-container')).touchAction`), 'none');
+
+  const start = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    window.__touch1253 = { moves: 0, cancels: 0 };
+    c.addEventListener('pointermove', () => { window.__touch1253.moves += 1; });
+    c.addEventListener('pointercancel', () => { window.__touch1253.cancels += 1; });
+    // Start on empty canvas: a point whose top element is the SVG itself, not a node.
+    const box = c.getBoundingClientRect();
+    for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
+      for (let x = box.left + 40; x < box.right - 40; x += 20) {
+        const el = document.elementFromPoint(x, y);
+        if (el && (el.tagName === 'svg' || el === c)) return { x, y, state: Archify.view.state() };
+      }
+    }
+    return null;
+  })()`);
+  assert.ok(start, 'an empty canvas point is needed to start the drag');
+  const points = Array.from({ length: 16 }, (_, i) => ({ x: start.x + (150 * i) / 15, y: start.y + (90 * i) / 15, id: 1 }));
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[0]] });
+  for (const point of points.slice(1)) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
+    await new Promise((resolve) => setTimeout(resolve, 16));
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await stable();
+  const result = await run(`(() => ({ ...window.__touch1253, state: Archify.view.state() }))()`);
+  assert.equal(result.cancels, 0, `the browser must not cancel the zoomed drag: ${JSON.stringify(result)}`);
+  assert.ok(result.moves >= 10, `most touch moves must reach the camera: ${JSON.stringify(result)}`);
+  assert.ok(Math.abs((result.state.x - start.state.x) - 150) < 2, `camera must follow the finger 150px: ${JSON.stringify(result)}`);
+  assert.ok(Math.abs((result.state.y - start.state.y) - 90) < 2, `camera must follow the finger 90px: ${JSON.stringify(result)}`);
+});
