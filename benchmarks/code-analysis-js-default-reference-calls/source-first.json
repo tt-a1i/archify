@@ -1,0 +1,48 @@
+{
+  "revision": "cca946176c3ec04ae46bf7bcb08c5bba8c041682",
+  "tag": "3.4.2",
+  "url": "https://github.com/prettier/prettier",
+  "stage": "source reading before first analyzer run for this default-reference question, no rule implementation",
+  "sourceSha256": {
+    "package.json": "f805e62f837b100f3a07b87305501f6c613e7f50ad7d6d043cf26bb17cd2c2d1",
+    "src/main/comments/print.js": "60460f3b672c2a797ff49854f780c052c6b7391dd17b8f54ca9cc3b6d815da2c",
+    "src/main/comments/attach.js": "4729e27b6cfc6ebd618c52ef5f1f3b6aaf97af517180d0c775abd5a9ca53c699",
+    "src/utils/is-non-empty-array.js": "9adaf0d1440a0e1018eb671ced812f9f6c8598b1c7f65e85f474dc369c95f27f"
+  },
+  "cases": [
+    {
+      "file": "src/main/comments/print.js",
+      "line": 126,
+      "needle": "isNonEmptyArray(",
+      "expected": {
+        "file": "src/utils/is-non-empty-array.js",
+        "name": "isNonEmptyArray",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "file": "src/main/comments/attach.js",
+      "line": 139,
+      "needle": "isNonEmptyArray(",
+      "expected": {
+        "file": "src/utils/is-non-empty-array.js",
+        "name": "isNonEmptyArray",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "definition": "Ordinary function declaration line5, then export default isNonEmptyArray line9, not an inline default function declaration. Source search finds no assignment to this binding.",
+  "moduleConditions": "package type module, explicit relative .js imports; Node resolve-only validation can inspect paths without loading code. Analyzer root chosen as src; parent package metadata may influence source resolution.",
+  "knownCallers": "Two selected comments paths; many additional source usages exist elsewhere and are not added to the frozen selected score.",
+  "unknown": {
+    "file": "src/main/comments/print.js",
+    "line": 142,
+    "column": 8,
+    "needle": "filter(comment)",
+    "expected": null,
+    "reason": "Caller-supplied filter option may override the default; runtime callable identity not established."
+  },
+  "next": "Run preserved parent; if targets already work, keep as controls rather than inventing a product gap."
+}
