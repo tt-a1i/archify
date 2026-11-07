@@ -1,6 +1,7 @@
 // Resolve direct named exports and default function declarations/references through
-// already captured relative imports.
-// The Program remains noResolve; this never asks it to load an aliased module.
+// already captured static imports, including configured in-project aliases.
+// The Program remains noResolve; module resolution has already selected and
+// captured the target. Never infer an alias from the spelling of a specifier.
 import ts from 'typescript';
 
 const exported = (node, name) => node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
@@ -22,7 +23,7 @@ export function importedCallTarget(node, source, checker, importTargets, sources
   if (!ts.isImportDeclaration(statement) || statement.getSourceFile() !== source
     || clause.isTypeOnly) return null;
   const specifier = statement.moduleSpecifier;
-  if (!ts.isStringLiteral(specifier) || !/^\.\.?\//.test(specifier.text)) return null;
+  if (!ts.isStringLiteral(specifier)) return null;
   const file = importTargets.get(statement);
   const info = sources.get(file);
   if (!info?.valid || info.source === source) return null;

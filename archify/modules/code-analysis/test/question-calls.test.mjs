@@ -97,12 +97,12 @@ test('optional node observation preserves all default function measurements and 
 
 test('explicit call models carry binding coverage independently of extraction revision', (t) => {
   const args = fixture(t, 'function declared() {}\nconst arrow = () => {};\nfunction chosen() { declared(); arrow()(); }');
-  assert.equal(args.facts.callModel, 'js-ts-lexical-v3');
+  assert.equal(args.facts.callModel, 'js-ts-lexical-v4');
   args.facts.repository.adapterRevision += 1;
   const current = buildQuestion(args).calls;
   assert.equal(current.coverage, 'available');
   assert.equal(current.provenance.callModel, args.facts.callModel);
-  assert.equal(current.bindingCoverage, 'declarations-const-initializers-relative-imports-and-stable-default-function-references');
+  assert.equal(current.bindingCoverage, 'declarations-const-initializers-captured-static-imports-and-stable-default-function-references');
   assert.equal(current.records.filter((r) => r.fact.resolution === 'same-file-function-initializer').length, 1);
   const v1 = structuredClone(args.facts); v1.callModel = 'js-ts-lexical-v1'; v1.repository.adapterRevision = 8;
   const compatible = buildQuestion({ ...args, facts: v1 }).calls;

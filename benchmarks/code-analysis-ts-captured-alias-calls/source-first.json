@@ -1,0 +1,98 @@
+{
+  "revision": "c9e06506f88926e252daf5275495eba0c04bf8e3",
+  "url": "https://github.com/reduxjs/redux",
+  "stage": "source inspected before first analyzer run for this alias-import question; no new rule implementation",
+  "exposure": "Redux reused in prior experiments, this test-scope alias question is not a blind holdout.",
+  "sourceSha256": {
+    "test/utils/isPlainObject.spec.ts": "ab1ac46c41948dd44200daa999d1b2de43583d53c504ee20e77af11519565fe8",
+    "src/utils/isPlainObject.ts": "16406a47eb701a7512915722e206fc1c97e7c1da94bce2cf27717cba7eb48976",
+    "tsconfig.json": "d6b32c65a8428112599653ad222dc1c430945adbd19939604d791973980730e5",
+    "vitest.config.ts": "fe364b126019fee64831817a84414b56eb01a43682ee5fd76657c96cf6697697"
+  },
+  "cases": [
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 9,
+      "needle": "isPlainObject(",
+      "expected": {
+        "file": "src/utils/isPlainObject.ts",
+        "line": 5,
+        "column": 1,
+        "name": "isPlainObject"
+      }
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 10,
+      "needle": "isPlainObject(",
+      "expected": {
+        "file": "src/utils/isPlainObject.ts",
+        "line": 5,
+        "column": 1,
+        "name": "isPlainObject"
+      }
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 11,
+      "needle": "isPlainObject(",
+      "expected": {
+        "file": "src/utils/isPlainObject.ts",
+        "line": 5,
+        "column": 1,
+        "name": "isPlainObject"
+      }
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 12,
+      "needle": "isPlainObject(",
+      "expected": {
+        "file": "src/utils/isPlainObject.ts",
+        "line": 5,
+        "column": 1,
+        "name": "isPlainObject"
+      }
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 13,
+      "needle": "isPlainObject(",
+      "expected": {
+        "file": "src/utils/isPlainObject.ts",
+        "line": 5,
+        "column": 1,
+        "name": "isPlainObject"
+      }
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 14,
+      "needle": "isPlainObject(",
+      "expected": {
+        "file": "src/utils/isPlainObject.ts",
+        "line": 5,
+        "column": 1,
+        "name": "isPlainObject"
+      }
+    }
+  ],
+  "import": {
+    "file": "test/utils/isPlainObject.spec.ts",
+    "line": 1,
+    "specifier": "@internal/utils/isPlainObject",
+    "defaultName": "isPlainObject"
+  },
+  "configurationEvidence": {
+    "tsconfig": "baseUrl ./, paths @internal/* \u2192 src/*; include only src/**/*, while Archify source scope may include tests",
+    "vitest": "test.alias @internal/ \u2192 ./src/; test.include includes test specs; do not execute config/project code merely to inspect source",
+    "expectation": "Source binding into captured src/utils/isPlainObject.ts, not proof of emitted Node runtime alias behavior or project compilation"
+  },
+  "unknownControl": {
+    "file": "test/utils/isPlainObject.spec.ts",
+    "line": 7,
+    "needle": "vm.runInNewContext(",
+    "expected": null,
+    "reason": "External Node vm method; project source/backend does not establish its target."
+  }
+}
