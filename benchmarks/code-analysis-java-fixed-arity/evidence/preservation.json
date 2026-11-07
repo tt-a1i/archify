@@ -1,0 +1,29 @@
+[
+  {
+    "project": "commons-lang",
+    "files": 489,
+    "callRangesPreserved": 64826,
+    "functionsPreserved": 9033,
+    "importsPreserved": 8222,
+    "oldTargetsPreserved": 739,
+    "oldTargetsChanged": 0,
+    "newTargets": 254,
+    "parseErrors": []
+  },
+  {
+    "project": "slf4j",
+    "files": 260,
+    "callRangesPreserved": 4856,
+    "functionsPreserved": 1608,
+    "importsPreserved": 2436,
+    "oldTargetsPreserved": 191,
+    "oldTargetsChanged": 0,
+    "newTargets": 38,
+    "parseErrors": [
+      {
+        "path": "slf4j-migrator/jcl/jclcontent.java",
+        "message": "parsing errors detected in line: 19, column: 1! Expecting: one of these possible Token sequences:"
+      }
+    ]
+  }
+]
