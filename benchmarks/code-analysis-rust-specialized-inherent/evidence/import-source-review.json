@@ -1,0 +1,442 @@
+{
+  "kind": "post-design source-anchor review",
+  "observations": 18,
+  "physicalEdges": 10,
+  "rows": [
+    {
+      "profile": "default",
+      "edge": {
+        "from": "src/lib.rs",
+        "kind": "static",
+        "line": 390,
+        "names": [
+          "Deserializer"
+        ],
+        "resolved": true,
+        "specifier": "crate::de::Deserializer",
+        "to": "src/de.rs"
+      },
+      "definition": {
+        "file": "src/de.rs",
+        "line": 31,
+        "header": "pub struct Deserializer<R> {"
+      },
+      "importText": "pub use crate::de::{from_slice, from_str, Deserializer, StreamDeserializer};",
+      "sourceHashes": {
+        "src/lib.rs": "2d786fb5740ce08961a9257656b135ed745a1fa059db8ab2896c0ede1ca5f9ea",
+        "src/de.rs": "db7adf3ef0074e15426d31e1cf4bec78ad92c20e4642c136325f0a78547218c7"
+      }
+    },
+    {
+      "profile": "default",
+      "edge": {
+        "from": "src/lib.rs",
+        "kind": "static",
+        "line": 400,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::value::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "pub use crate::value::{from_value, to_value, Map, Number, Value};",
+      "sourceHashes": {
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+        "src/lib.rs": "2d786fb5740ce08961a9257656b135ed745a1fa059db8ab2896c0ede1ca5f9ea"
+      }
+    },
+    {
+      "profile": "default",
+      "edge": {
+        "from": "src/value/mod.rs",
+        "kind": "static",
+        "line": 105,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "pub use crate::map::Map;",
+      "sourceHashes": {
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+        "src/value/mod.rs": "063b36e08e830718141cf1e06fb499edf40522303785f6e7971f4ee538742597"
+      }
+    },
+    {
+      "profile": "default",
+      "edge": {
+        "from": "src/value/de.rs",
+        "kind": "static",
+        "line": 2,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "use crate::map::Map;",
+      "sourceHashes": {
+        "src/value/de.rs": "a0aeae9ad7dbc1c01a7de0276aab95d9e1a745573ea3eb6bece4cb391a4f6113",
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a"
+      }
+    },
+    {
+      "profile": "default",
+      "edge": {
+        "from": "src/value/from.rs",
+        "kind": "static",
+        "line": 2,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "use crate::map::Map;",
+      "sourceHashes": {
+        "src/value/from.rs": "ae4b5f93b27e578fa40e3a8d25d0df2032fe40b680cddb15963e47cbd56db613",
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a"
+      }
+    },
+    {
+      "profile": "default",
+      "edge": {
+        "from": "src/value/index.rs",
+        "kind": "static",
+        "line": 2,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "use crate::map::Map;",
+      "sourceHashes": {
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+        "src/value/index.rs": "f1404ed12e795a5553da4bdf72835c441a5e0cc0f6e794fee875eaa887d65319"
+      }
+    },
+    {
+      "profile": "default",
+      "edge": {
+        "from": "src/value/ser.rs",
+        "kind": "static",
+        "line": 2,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "use crate::map::Map;",
+      "sourceHashes": {
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+        "src/value/ser.rs": "b5cd3f4b4a58b2f53c4334c6d20705fc7c7b2a2e8988ef93b265a679c952cdfe"
+      }
+    },
+    {
+      "profile": "default",
+      "edge": {
+        "from": "src/read.rs",
+        "kind": "static",
+        "line": 11,
+        "names": [
+          "LineColIterator"
+        ],
+        "resolved": true,
+        "specifier": "crate::iter::LineColIterator",
+        "to": "src/iter.rs"
+      },
+      "definition": {
+        "file": "src/iter.rs",
+        "line": 3,
+        "header": "pub struct LineColIterator<I> {"
+      },
+      "importText": "use crate::iter::LineColIterator;",
+      "sourceHashes": {
+        "src/read.rs": "a1d18c2c674c57f1dd4bdf53109cf51204d88c4a250ba74a68d4d5a83141894d",
+        "src/iter.rs": "f832c469cd7999d26ba9b76baa69b257a212a7edb3dfdf9b1d1bb35e8da85fa9"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "edge": {
+        "from": "src/lib.rs",
+        "kind": "static",
+        "line": 390,
+        "names": [
+          "Deserializer"
+        ],
+        "resolved": true,
+        "specifier": "crate::de::Deserializer",
+        "to": "src/de.rs"
+      },
+      "definition": {
+        "file": "src/de.rs",
+        "line": 31,
+        "header": "pub struct Deserializer<R> {"
+      },
+      "importText": "pub use crate::de::{from_slice, from_str, Deserializer, StreamDeserializer};",
+      "sourceHashes": {
+        "src/lib.rs": "2d786fb5740ce08961a9257656b135ed745a1fa059db8ab2896c0ede1ca5f9ea",
+        "src/de.rs": "db7adf3ef0074e15426d31e1cf4bec78ad92c20e4642c136325f0a78547218c7"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "edge": {
+        "from": "src/lib.rs",
+        "kind": "static",
+        "line": 400,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::value::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "pub use crate::value::{from_value, to_value, Map, Number, Value};",
+      "sourceHashes": {
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+        "src/lib.rs": "2d786fb5740ce08961a9257656b135ed745a1fa059db8ab2896c0ede1ca5f9ea"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "edge": {
+        "from": "src/value/mod.rs",
+        "kind": "static",
+        "line": 105,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "pub use crate::map::Map;",
+      "sourceHashes": {
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+        "src/value/mod.rs": "063b36e08e830718141cf1e06fb499edf40522303785f6e7971f4ee538742597"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "edge": {
+        "from": "src/value/de.rs",
+        "kind": "static",
+        "line": 2,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "use crate::map::Map;",
+      "sourceHashes": {
+        "src/value/de.rs": "a0aeae9ad7dbc1c01a7de0276aab95d9e1a745573ea3eb6bece4cb391a4f6113",
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "edge": {
+        "from": "src/value/from.rs",
+        "kind": "static",
+        "line": 2,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "use crate::map::Map;",
+      "sourceHashes": {
+        "src/value/from.rs": "ae4b5f93b27e578fa40e3a8d25d0df2032fe40b680cddb15963e47cbd56db613",
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "edge": {
+        "from": "src/value/index.rs",
+        "kind": "static",
+        "line": 2,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "use crate::map::Map;",
+      "sourceHashes": {
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+        "src/value/index.rs": "f1404ed12e795a5553da4bdf72835c441a5e0cc0f6e794fee875eaa887d65319"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "edge": {
+        "from": "src/value/ser.rs",
+        "kind": "static",
+        "line": 2,
+        "names": [
+          "Map"
+        ],
+        "resolved": true,
+        "specifier": "crate::map::Map",
+        "to": "src/map.rs"
+      },
+      "definition": {
+        "file": "src/map.rs",
+        "line": 29,
+        "header": "pub struct Map<K, V> {"
+      },
+      "importText": "use crate::map::Map;",
+      "sourceHashes": {
+        "src/map.rs": "947d073f491b771b17a81a82c1c92cfc386e71d787709142b32b92843f10490a",
+        "src/value/ser.rs": "b5cd3f4b4a58b2f53c4334c6d20705fc7c7b2a2e8988ef93b265a679c952cdfe"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "edge": {
+        "from": "src/read.rs",
+        "kind": "static",
+        "line": 11,
+        "names": [
+          "LineColIterator"
+        ],
+        "resolved": true,
+        "specifier": "crate::iter::LineColIterator",
+        "to": "src/iter.rs"
+      },
+      "definition": {
+        "file": "src/iter.rs",
+        "line": 3,
+        "header": "pub struct LineColIterator<I> {"
+      },
+      "importText": "use crate::iter::LineColIterator;",
+      "sourceHashes": {
+        "src/read.rs": "a1d18c2c674c57f1dd4bdf53109cf51204d88c4a250ba74a68d4d5a83141894d",
+        "src/iter.rs": "f832c469cd7999d26ba9b76baa69b257a212a7edb3dfdf9b1d1bb35e8da85fa9"
+      }
+    },
+    {
+      "profile": "regex",
+      "edge": {
+        "from": "regex-automata/src/dfa/dense.rs",
+        "kind": "static",
+        "line": 30,
+        "names": [
+          "Accels"
+        ],
+        "resolved": true,
+        "specifier": "crate::dfa::accel::Accels",
+        "to": "regex-automata/src/dfa/accel.rs"
+      },
+      "definition": {
+        "file": "regex-automata/src/dfa/accel.rs",
+        "line": 134,
+        "header": "pub(crate) struct Accels<A> {"
+      },
+      "importText": "use crate::{\n    dfa::{\n        accel::Accels,\n        automaton::{fmt_state_indicator, Automaton, StartError},\n        special::Special,\n        start::StartKind,\n        DEAD,\n    },\n    util::{\n        alphabet::{self, ByteClasses, ByteSet},\n        int::{Pointer, Usize},\n        prefilter::Prefilter,\n        primitives::{PatternID, StateID},\n        search::Anchored,\n        start::{self, Start, StartByteMap},\n        wire::{self, DeserializeError, Endian, SerializeError},\n    },\n};",
+      "sourceHashes": {
+        "regex-automata/src/dfa/accel.rs": "2a045b0f6715e913d18d2212a7804fabaadfc3bcffad9382e35574d32eb0c492",
+        "regex-automata/src/dfa/dense.rs": "ecce2b872370c2cce051be7c2ca264a94aec749cd1af896fbed7b3b4b80a146e"
+      }
+    },
+    {
+      "profile": "regex",
+      "edge": {
+        "from": "regex-syntax/src/hir/mod.rs",
+        "kind": "static",
+        "line": 30,
+        "names": [
+          "IntervalSet"
+        ],
+        "resolved": true,
+        "specifier": "crate::hir::interval::IntervalSet",
+        "to": "regex-syntax/src/hir/interval.rs"
+      },
+      "definition": {
+        "file": "regex-syntax/src/hir/interval.rs",
+        "line": 34,
+        "header": "pub struct IntervalSet<I> {"
+      },
+      "importText": "use crate::{\n    ast::Span,\n    hir::interval::{Interval, IntervalSet, IntervalSetIter},\n    unicode,\n};",
+      "sourceHashes": {
+        "regex-syntax/src/hir/interval.rs": "74d75837d24ab9a3cff33b375b70694cdd3b9a4610c799137533f365755ba604",
+        "regex-syntax/src/hir/mod.rs": "599ceb4921f2345a7d01d2390188fad13f236b98efe7a38c9beb9a0ce5c4ebad"
+      }
+    }
+  ],
+  "limits": [
+    "Source import/definition anchors, not whole-project compiler/runtime attribution. Feature profiles overlap."
+  ]
+}

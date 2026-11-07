@@ -1,0 +1,60 @@
+{
+  "profile": "serde-default",
+  "negativeControl": true,
+  "tool": "rust-analyzer 1.89.0 (29483883 2025-08-04)",
+  "sourceCandidate": "1ef5ed43de2335d2a6c718af8f3a82bdfb31dfc2",
+  "lockSha256": "4b2b9805c69728cc0f86308b637218ad9d73dd1c7b30d48dac1c5455bd82bdb7",
+  "generatedLockNotOriginal": true,
+  "config": {
+    "checkOnSave": false,
+    "procMacro": {
+      "enable": false
+    },
+    "cargo": {
+      "allTargets": false,
+      "buildScripts": {
+        "enable": false,
+        "rebuildOnSave": false
+      },
+      "extraArgs": [
+        "--offline",
+        "--locked"
+      ],
+      "target": "aarch64-apple-darwin",
+      "features": []
+    },
+    "diagnostics": {
+      "enable": false
+    }
+  },
+  "effectiveSafetySettings": {
+    "checkOnSave": true,
+    "procMacro_enable": true,
+    "cargo_buildScripts_enable": true
+  },
+  "serverStatuses": [
+    {
+      "health": "ok",
+      "quiescent": false,
+      "message": null
+    },
+    {
+      "health": "ok",
+      "quiescent": true,
+      "message": null
+    }
+  ],
+  "seconds": 2.5865105419652537,
+  "counts": {
+    "agrees": 0,
+    "different": 1,
+    "unavailable": 0,
+    "identifier-not-found": 0
+  },
+  "rowsPath": "rows.jsonl",
+  "limits": [
+    "Independent language-server navigation under explicit config, not rustc compilation/runtime proof.",
+    "No build scripts/proc macros/check/tests; missing expansions and source-profile differences affect availability.",
+    "Generated dependency lock belongs to audit copy, not fixed original source."
+  ]
+}
