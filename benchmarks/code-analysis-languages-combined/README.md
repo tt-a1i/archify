@@ -52,7 +52,7 @@ The verifier expects both canonical builds `/runs/combined-package-one.zip` and 
 
 ## Separate validation states
 
-- Local Node26 full module373tests:372pass/1existing installed-config assertion/0skip. Earlier exact #1252 reproduces the same local assertion. Cause not established by that observation.
+- Local Node26 full module373tests:372pass/1existing installed-config assertion/0skip. Earlier exact #1252 reproduces the same local assertion. A separate official Node22.23.3 run also reports372pass/1samefailure/0skip, so Node26 alone does not explain it. The local test compares a ts.sys.readFile filename against the uncanonicalized temporary-root path; macOS temporary-directory canonicalization is a concrete next hypothesis to verify, not an established analyzer defect.
 - Packaged call/shared-question/paired/native/Java/Python selection80/80, no skips. Core smoke19/19. Generated/identity/golden checks passed. README14pass/1Windows-onlyskip; DSH docs7/7.
 - Two canonical Node22.23.3/zlib1.3.1-e00f703 builds identical.168trackedmodulefilesmatch. ZIPsha256 `e1eda9b7201f984f9a97eac0d0502f7f19d09eeffa0a3bef8a4279bbd09c77b6`.
 - Remote CI: not run for this unpublished integration head. Original TS #1261 CI passed353/353analysis, but failed overall on the README baseline; this candidate's local proof pass cannot retroactively make that run green.
