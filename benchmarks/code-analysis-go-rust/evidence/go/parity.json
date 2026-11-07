@@ -1,0 +1,61 @@
+{
+  "testedSource": "4ff07af962f5dc613f3b570d42c17a016b06e480",
+  "zipSha256": "534a2a17a2f7b813270878a8de47e9914126535fe591bcd441475760a915b85a",
+  "rawFacts": [
+    {
+      "project": "cobra-base",
+      "byteEqual": true,
+      "sourceSha256": "a975cb9551fd2389a0a1c8be5e7adf6ed44c24b54b8771501302cfd966d7dc71",
+      "zipSha256": "a975cb9551fd2389a0a1c8be5e7adf6ed44c24b54b8771501302cfd966d7dc71"
+    },
+    {
+      "project": "cobra",
+      "byteEqual": true,
+      "sourceSha256": "48b1d110b4ef5e7fbbce173b058090886ada843e35adc6329438f7bc74206b24",
+      "zipSha256": "48b1d110b4ef5e7fbbce173b058090886ada843e35adc6329438f7bc74206b24"
+    },
+    {
+      "project": "chi",
+      "byteEqual": true,
+      "sourceSha256": "27f501c907918bcab389c27f996d2db71059f22171591ed7d971fa62e7176237",
+      "zipSha256": "27f501c907918bcab389c27f996d2db71059f22171591ed7d971fa62e7176237"
+    },
+    {
+      "project": "grpc-go",
+      "byteEqual": true,
+      "sourceSha256": "9ce6d56b860f7850a101e32a71bf66e695be8d385feab38b5c21bb4ccf396f98",
+      "zipSha256": "9ce6d56b860f7850a101e32a71bf66e695be8d385feab38b5c21bb4ccf396f98"
+    }
+  ],
+  "questions": [
+    {
+      "file": "cobra-question.json",
+      "equalAfterPathNormalization": true
+    },
+    {
+      "file": "cobra-paired.json",
+      "equalAfterPathNormalization": true
+    }
+  ],
+  "packageFiles": {
+    "tracked": 160,
+    "mismatches": []
+  },
+  "scores": {
+    "source": {
+      "correct-target": 9,
+      "wrong-target": 0,
+      "missed-target": 0,
+      "omitted-call": 0,
+      "reasonable-unknown": 5
+    },
+    "zip": {
+      "correct-target": 9,
+      "wrong-target": 0,
+      "missed-target": 0,
+      "omitted-call": 0,
+      "reasonable-unknown": 5
+    }
+  },
+  "note": "Two identical canonical ZIP builds; source and ZIP normal CLI commands preserve exit 0, precise targets and scope. Finite selected cases, not whole-repository accuracy."
+}

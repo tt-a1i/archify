@@ -1,0 +1,32 @@
+✔ Go ordinary and alias imports, same-package cross-file calls and external tests navigate to declaration starts (739.90075ms)
+✔ Go interface/method/variable calls, shadows and invalid duplicate definitions never manufacture function targets (257.6975ms)
+✔ Go source scope honors platform/tags, tests and nested module identity; parse failure is visible (198.030958ms)
+✔ Go imported module identity differs from directory names and package-declared names (105.045417ms)
+✔ Go UTF-16 ranges, saved metadata freshness and paired changed-definition callers reuse source evidence (295.7285ms)
+✔ Go missing compiler and invalid scope fail through the normal CLI with actionable diagnostics (288.928166ms)
+✔ task fixtures: checked-in contract examples match a fresh generation (114.821583ms)
+✔ task: a complexity finding points at the whole function with its captured lines (57.126417ms)
+✔ task: import cycles cite each import of the cycle path; boundaries separate files to change from context (55.951875ms)
+✔ task: ids are stable for the same findings and evidence, and change with the evidence (108.22625ms)
+✔ task: refuses unknown ids, an empty selection and mixed runs (52.413667ms)
+✔ task: long functions get a bounded excerpt with explicit omissions; the hash covers the whole range (0.387417ms)
+✔ task: source text stays inside a fence long enough for any backticks it contains (0.09475ms)
+✔ evidence: unchanged, moved, changed lines, changed context, missing files (56.284375ms)
+✔ evidence: paths from a task file never leave the analysis root (1.001125ms)
+✔ evidence: a UTF-8 BOM captured without it by Python still verifies (53.698417ms)
+✔ payloads: one captured task and its Markdown per finding, for a page without a server (56.932084ms)
+✔ task command: create, verify, --command, --require-valid and usage errors (2009.803083ms)
+✔ evidence: a citation that cannot be read keeps the task from being valid (59.701167ms)
+✔ evidence: Python files are decoded with their PEP 263 coding declaration (102.050875ms)
+✔ evidence: identical code elsewhere is not taken for the cited code having moved (101.935666ms)
+✔ task: a warning-level complexity task is done only below the info thresholds (99.56175ms)
+✔ task: with a warning threshold below the info threshold, completion uses the lower value (101.895417ms)
+✔ evidence: Python latin-1 aliases decode as ISO-8859-1, not windows-1252 (0.181458ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3317.076625

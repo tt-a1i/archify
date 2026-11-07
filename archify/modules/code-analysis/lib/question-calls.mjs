@@ -25,8 +25,10 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   const pythonModel = facts?.repository?.language === 'py' && /^python@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'python-lexical-v1';
   const javaAdapter = facts?.repository?.language === 'java' && /^java-parser@/.test(facts?.repository?.adapter || '');
   const javaModel = javaAdapter && facts?.callModel === 'java-static-lexical-v1';
-  const capturedRangeModel = pythonModel || javaModel;
-  const bindingCoverage = pythonModel ? 'ordinary-module-definitions-and-direct-from-import-aliases' : javaModel ? 'top-level-class-unique-static-fixed-arity-source-candidates' : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
+  const goModel = facts?.repository?.language === 'go' && /^go-parser@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'go-source-direct-v1';
+  const rustModel = facts?.repository?.language === 'rust' && /^rust-syn@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'rust-source-direct-v1';
+  const capturedRangeModel = pythonModel || javaModel || goModel || rustModel;
+  const bindingCoverage = rustModel ? 'rust-explicit-source-functions-under-declared-cargo-cfg-profile' : goModel ? 'go-types-direct-source-functions-with-incomplete-external-types' : pythonModel ? 'ordinary-module-definitions-and-direct-from-import-aliases' : javaModel ? 'top-level-class-unique-static-fixed-arity-source-candidates' : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
   const result = {
     coverage: 'unavailable', reason: null,
     provenance: { rawFactsPath: factsPath ? path.resolve(factsPath) : null, adapter: facts?.repository?.adapter ?? null, adapterRevision: facts?.repository?.adapterRevision ?? null,
@@ -47,6 +49,12 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
     'Targets identify unique ordinary undecorated module-level definitions or direct static from-import aliases. Attributes, classes, decorated targets, reexports, shadows and ambiguous bindings remain unresolved. This is lexical source navigation, not runtime callable identity, execution or reachability.',
     'Function ranges use captured UTF-16 coordinates and exact decoded-source slice hashes. Entry and imported target freshness are checked independently. Each factIndex refers to the unchanged captured calls array; at most 40 records are included.',
   ];
+  if (goModel) result.limitations = [
+    ...facts.languageScope.limitations,
+    'Records inventory Go ast.CallExpr, including type conversions and calls in nested literals; unresolved does not establish callable identity. Targets are captured free-function declarations only; methods, interfaces and function variables are not resolved.',
+    'Locations use exact UTF-16 source ranges and hashes. Metadata freshness is checked by the question entrypoint; at most 40 call records are presented. Read languageScope for selected packages, build conditions, excluded files and incomplete typing.',
+  ];
+  if (rustModel) result.limitations = [...facts.languageScope.limitations, 'Targets identify source declarations under the recorded crate/cfg profile, not compiler type attribution, macro expansion or runtime dispatch. Read excluded/opaque regions before interpreting absent callers.'];
   const unavailable = (reason) => ({ ...result, reason });
   if (entry.factsStatus !== 'valid') return unavailable(`entry-${entry.factsStatus}`);
   if (entry.parseErrors.length) return unavailable('entry-parse-errors');
