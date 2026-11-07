@@ -242,8 +242,11 @@ test('captured configured aliases bind ordinary exports with independent lexical
     'tsconfig.json': aliasConfig,
     'entry.ts': 'import run, { named as renamed, arrow } from "@local/target";\nexport function chosen(){run();renamed();arrow();}\nfunction shadow(run){run();}\n{const renamed=()=>{};renamed();}',
     'src/target.ts': 'export default function helper() {}\nexport function named() {}\nexport const arrow=()=>{};',
+    'js-entry.mjs': 'import run from "@local/plain.mjs";run();',
+    'src/plain.mjs': 'export default function plain(){}',
   });
   const calls = args.facts.calls.filter(c=>c.file==='entry.ts');
+  assert.deepEqual(args.facts.calls.find(c=>c.file==='js-entry.mjs').target,{file:'src/plain.mjs',name:'plain',line:1,column:1});
   assert.deepEqual(calls.filter(c=>c.resolution==='imported-function').map(c=>c.target),[
     {file:'src/target.ts',name:'helper',line:1,column:1},
     {file:'src/target.ts',name:'named',line:2,column:1},
