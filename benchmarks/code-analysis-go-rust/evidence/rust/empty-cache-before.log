@@ -1,0 +1,27 @@
+✖ Rust crate paths, module use aliases and block-use hoisting navigate to exact definitions (131.518833ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 437.07
+
+✖ failing tests:
+
+test at archify/modules/code-analysis/test/rust-calls.test.mjs:19:1
+✖ Rust crate paths, module use aliases and block-use hoisting navigate to exact definitions (131.518833ms)
+  Error [DiagnosticError]: Rust source tooling could not complete. Cargo/rustc 1.71+ and the locked helper dependencies are required.
+      at fail (file://<WORKSPACE>/work/archify/archify/modules/code-analysis/extract/shared/diagnostics.mjs:13:9)
+      at command (file://<WORKSPACE>/work/archify/archify/modules/code-analysis/extract/rust/index.mjs:24:44)
+      at Module.extract (file://<WORKSPACE>/work/archify/archify/modules/code-analysis/extract/rust/index.mjs:124:29)
+      at extractFacts (file://<WORKSPACE>/work/archify/archify/modules/code-analysis/lib/analysis.mjs:82:25)
+      at capture (file://<WORKSPACE>/work/archify/archify/modules/code-analysis/test/rust-calls.test.mjs:16:33)
+      at TestContext.<anonymous> (file://<WORKSPACE>/work/archify/archify/modules/code-analysis/test/rust-calls.test.mjs:21:14)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    diagnostics: [ { code: 'extract/rust-parser-failed', severity: 'error', message: 'Rust source tooling could not complete. Cargo/rustc 1.71+ and the locked helper dependencies are required.', subject: [Object], evidence: [Object], supportedFixes: [Array] } ]
+  }

@@ -4,136 +4,136 @@
       "label": "regex-base-check",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "check",
         "<WORKSPACE>/work/samples/regex-base",
         "--language",
         "rust",
         "--config",
-        "<WORKSPACE>/work/rust-zip-verified/regex-base-config.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/regex-base-config.json",
         "--fail-on",
         "never",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/regex-base",
+        "<WORKSPACE>/work/rust-cache-fix-verified/regex-base",
         "--json"
       ],
       "exit": 0,
-      "seconds": 5.427141124964692
+      "seconds": 10.081547291949391
     },
     {
       "label": "regex-check",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "check",
         "<WORKSPACE>/work/samples/regex",
         "--language",
         "rust",
         "--config",
-        "<WORKSPACE>/work/rust-zip-verified/regex-config.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/regex-config.json",
         "--fail-on",
         "never",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/regex",
+        "<WORKSPACE>/work/rust-cache-fix-verified/regex",
         "--json"
       ],
       "exit": 0,
-      "seconds": 24.166019167052582
+      "seconds": 24.08393658301793
     },
     {
       "label": "serde-json-base-check",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "check",
         "<WORKSPACE>/work/samples/serde-json-base",
         "--language",
         "rust",
         "--config",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-base-config.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-base-config.json",
         "--fail-on",
         "never",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-base",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-base",
         "--json"
       ],
       "exit": 0,
-      "seconds": 2.5261534170713276
+      "seconds": 2.511875999975018
     },
     {
       "label": "serde-json-base-float-check",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "check",
         "<WORKSPACE>/work/samples/serde-json-base",
         "--language",
         "rust",
         "--config",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-base-float-config.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-base-float-config.json",
         "--fail-on",
         "never",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-base-float",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-base-float",
         "--json"
       ],
       "exit": 0,
-      "seconds": 2.6527432911098003
+      "seconds": 2.7148057089652866
     },
     {
       "label": "serde-json-check",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "check",
         "<WORKSPACE>/work/samples/serde-json",
         "--language",
         "rust",
         "--config",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-config.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-config.json",
         "--fail-on",
         "never",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json",
         "--json"
       ],
       "exit": 0,
-      "seconds": 2.7706829159287736
+      "seconds": 2.7247753749834374
     },
     {
       "label": "serde-json-float-check",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "check",
         "<WORKSPACE>/work/samples/serde-json",
         "--language",
         "rust",
         "--config",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-float-config.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-float-config.json",
         "--fail-on",
         "never",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-float",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-float",
         "--json"
       ],
       "exit": 0,
-      "seconds": 2.959534832974896
+      "seconds": 2.9295879170531407
     },
     {
       "label": "regex-question",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "task",
-        "<WORKSPACE>/work/rust-zip-verified/regex",
+        "<WORKSPACE>/work/rust-cache-fix-verified/regex",
         "--root",
         "<WORKSPACE>/work/samples/regex",
         "--entry",
@@ -145,17 +145,17 @@
         "--format",
         "json",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/regex-question.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/regex-question.json",
         "--json"
       ],
       "exit": 0,
-      "seconds": 0.3752038339152932
+      "seconds": 0.3788080000085756
     },
     {
       "label": "regex-paired",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "task",
         "--root",
@@ -169,17 +169,17 @@
         "--format",
         "json",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/regex-paired.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/regex-paired.json",
         "--json"
       ],
       "exit": 1,
-      "seconds": 29.79444800002966
+      "seconds": 29.399270082940347
     },
     {
       "label": "serde-json-paired",
       "command": [
         "node",
-        "<WORKSPACE>/work/rust-final-package/archify/bin/archify.mjs",
+        "<WORKSPACE>/work/rust-cache-fix-package/archify/bin/archify.mjs",
         "code-analysis",
         "task",
         "--root",
@@ -193,13 +193,13 @@
         "--format",
         "json",
         "--out",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-paired.json",
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-paired.json",
         "--json",
         "--config",
-        "<WORKSPACE>/work/rust-zip-verified/serde-json-float-config.json"
+        "<WORKSPACE>/work/rust-cache-fix-verified/serde-json-float-config.json"
       ],
       "exit": 1,
-      "seconds": 5.251346415956505
+      "seconds": 5.209735834039748
     }
   ],
   "score": {
