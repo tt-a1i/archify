@@ -1,0 +1,188 @@
+[
+  {
+    "case": "missing-tool",
+    "exit": 2,
+    "stdout": {
+      "schemaVersion": 1,
+      "status": "error",
+      "command": "check",
+      "diagnostics": [
+        {
+          "code": "extract/rust-unavailable",
+          "severity": "error",
+          "message": "Rust source tooling could not complete. Cargo/rustc 1.71+ and the locked helper dependencies are required.",
+          "subject": {
+            "command": "/archify-missing-rustc"
+          },
+          "evidence": {
+            "exit": null,
+            "code": "ENOENT"
+          },
+          "supportedFixes": [
+            "install a compatible Rust toolchain with Cargo",
+            "set ARCHIFY_CARGO / ARCHIFY_RUSTC to the installed tools",
+            "inspect the captured manifest/profile error; no project build is attempted"
+          ]
+        }
+      ]
+    },
+    "stderr": ""
+  },
+  {
+    "case": "parse-error",
+    "exit": 0,
+    "stdout": {
+      "schemaVersion": 1,
+      "status": "ok",
+      "command": "check",
+      "root": "<WORKSPACE>/work/rust-cli-failure",
+      "out": "<WORKSPACE>/work/rust-cli-parse-error",
+      "language": "rust",
+      "files": 1,
+      "rules": [
+        "coupling/import-cycle",
+        "coupling/cycle",
+        "coupling/hub",
+        "coupling/internal-leak",
+        "complexity/function"
+      ],
+      "verdict": "none-found",
+      "counts": {
+        "findings": 0,
+        "error": 0,
+        "warning": 0,
+        "info": 0,
+        "accepted": 0,
+        "offDiagram": 0
+      },
+      "gate": {
+        "failOn": "never",
+        "newOnly": false,
+        "failing": []
+      },
+      "review": {
+        "baseline": null,
+        "comparison": null
+      },
+      "comparisonReasons": [],
+      "staleBaseline": [],
+      "priorities": [],
+      "coverage": {
+        "parseErrors": [
+          "src/lib.rs"
+        ],
+        "languageScope": {
+          "language": "rust",
+          "build": {
+            "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+            "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+            "helperHost": "aarch64-apple-darwin",
+            "targetCfg": [
+              "debug_assertions",
+              "panic=\"unwind\"",
+              "target_abi=\"\"",
+              "target_arch=\"aarch64\"",
+              "target_endian=\"little\"",
+              "target_env=\"\"",
+              "target_family=\"unix\"",
+              "target_feature=\"aes\"",
+              "target_feature=\"crc\"",
+              "target_feature=\"dit\"",
+              "target_feature=\"dotprod\"",
+              "target_feature=\"dpb\"",
+              "target_feature=\"dpb2\"",
+              "target_feature=\"fcma\"",
+              "target_feature=\"fhm\"",
+              "target_feature=\"flagm\"",
+              "target_feature=\"fp16\"",
+              "target_feature=\"frintts\"",
+              "target_feature=\"jsconv\"",
+              "target_feature=\"lor\"",
+              "target_feature=\"lse\"",
+              "target_feature=\"neon\"",
+              "target_feature=\"paca\"",
+              "target_feature=\"pacg\"",
+              "target_feature=\"pan\"",
+              "target_feature=\"pmuv3\"",
+              "target_feature=\"ras\"",
+              "target_feature=\"rcpc\"",
+              "target_feature=\"rcpc2\"",
+              "target_feature=\"rdm\"",
+              "target_feature=\"sb\"",
+              "target_feature=\"sha2\"",
+              "target_feature=\"sha3\"",
+              "target_feature=\"ssbs\"",
+              "target_feature=\"vh\"",
+              "target_has_atomic=\"128\"",
+              "target_has_atomic=\"16\"",
+              "target_has_atomic=\"32\"",
+              "target_has_atomic=\"64\"",
+              "target_has_atomic=\"8\"",
+              "target_has_atomic=\"ptr\"",
+              "target_os=\"macos\"",
+              "target_pointer_width=\"64\"",
+              "target_vendor=\"apple\"",
+              "unix"
+            ],
+            "customCfg": [],
+            "tests": false,
+            "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+            "buildScripts": false,
+            "procMacros": false,
+            "cargoConfig": "not-loaded"
+          },
+          "crates": [
+            {
+              "id": "Cargo.toml#lib:broken",
+              "package": "broken",
+              "name": "broken",
+              "root": "src/lib.rs",
+              "edition": "2021",
+              "deps": {},
+              "features": [],
+              "targetKinds": [
+                "lib"
+              ],
+              "files": []
+            }
+          ],
+          "selectedFiles": [
+            "src/lib.rs"
+          ],
+          "excludedFiles": [],
+          "metadata": [
+            {
+              "file": "Cargo.toml",
+              "sourceText": "[package]\nname=\"broken\"\nversion=\"0.1.0\"\nedition=\"2021\"\n",
+              "sha256": "690e2e6a90bc54d14d7f08c0fc3507a03159139974a3fb8318b4f60fa8e7bedb"
+            }
+          ],
+          "excludedTargets": [],
+          "conditionalDefinitions": [],
+          "excludedRegions": [],
+          "opaqueMacros": [],
+          "missingModules": [
+            {
+              "crate": "Cargo.toml#lib:broken",
+              "file": "src/lib.rs",
+              "reason": "crate-root-unavailable"
+            }
+          ],
+          "limitations": [
+            "Direct source paths only; no type inference, trait/inherent method dispatch, macro expansion, build-script execution or external dependency source loading.",
+            "Cargo metadata reads captured manifests with zero-byte source inventory stubs, offline/no-deps/locked; the syntax parser reads captured source text only. Active cfg derives from rustc target cfg plus the declared local feature profile; custom build-script cfg stays unknown.",
+            "Call inventory covers parsed function/method bodies; macros are opaque records. Missing/excluded modules, conditional scopes and unsupported local items limit target/caller completeness."
+          ]
+        },
+        "otherLanguages": []
+      }
+    },
+    "stderr": "",
+    "parseErrors": [
+      {
+        "message": "cannot parse string into token stream",
+        "path": "src/lib.rs"
+      }
+    ]
+  }
+]

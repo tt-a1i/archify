@@ -130,7 +130,7 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
     schema_version: TASK_SCHEMA_VERSION,
     kind: KIND,
     taskId: taskIdOf(selected),
-    title: titleOf(selected),
+    title: titleOf(selected, facts.repository?.language),
     findings: selected.map((d) => ({
       id: d.id, code: d.code, dimension: d.dimension, severity: d.severity, confidence: d.confidence,
       ...(review?.findings?.[d.id] ? { review: review.findings[d.id] } : {}),
@@ -139,7 +139,7 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
     source: sourceOf(findings, facts),
     locations,
     facts: selected.map((d) => ({ findingId: d.id, statement: d.message, evidence: keyEvidence(d) })),
-    impact: selected.map((d) => ({ findingId: d.id, statement: facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
+    impact: selected.map((d) => ({ findingId: d.id, statement: facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? 'These Rust files have mutual compile-time source references. Review coupling without inferring runtime import order or partial initialization.' : facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
       ? 'These Java files depend on each other structurally. This can couple changes and tests; class initialization order and runtime failure were not assessed.'
       : IMPACT[d.code] || 'See the finding message.' })),
     suggestions: selected.flatMap((d) => (d.supportedFixes || []).map((text) => ({ findingId: d.id, text }))),
@@ -150,16 +150,16 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
         ? 'Change the files under "modify"; "read" lists files the finding was computed from, for context. Before changing any other file, say which and why.'
         : 'No line evidence: read the listed files and propose a scope before changing anything.',
     },
-    preserve: [...new Set(selected.flatMap((d) => facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
+    preserve: [...new Set(selected.flatMap((d) => facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Rust public paths, API behavior and valid cfg/feature profiles.'] : facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
       ? ['Public Java type names, packages and APIs used by callers.', 'Class initialization behavior and observable side effects.']
       : (PRESERVE[d.code] || (() => ['Existing behaviour of the code involved.']))(d)))],
     acceptance: [
-      ...selected.flatMap((d) => (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
+      ...selected.flatMap((d) => facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Verify the intended source responsibility boundary; document an intentionally retained structural cycle without claiming a runtime import failure.'] : (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
       'A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.',
       'The project checks that cover the changed code pass (see verification).',
     ],
     verification: {
-      reanalyze: reanalyzeCommand(findings),
+      reanalyze: { ...reanalyzeCommand(findings), ...(facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
       commands: commands.map((c) => ({ command: c.command, purpose: c.purpose || 'project check', source: c.source || 'provided' })),
     },
     toConfirm,
@@ -322,10 +322,11 @@ function keyEvidence(d) {
   }
 }
 
-function titleOf(selected) {
+function titleOf(selected, language) {
   const one = (d) => {
     const s = d.subject || {};
     if (d.code === 'complexity/function') return `Reduce the complexity of ${s.function} (${s.file})`;
+    if (language === 'rust' && ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) return 'Review the Rust structural dependency cycle';
     if (d.code === 'coupling/import-cycle') return `Break the import cycle between ${s.files.length} files`;
     if (d.code === 'coupling/cycle') return `Break the dependency cycle between ${s.modules.length} modules`;
     if (d.code === 'coupling/hub') return `Reduce the coupling of hub module ${s.module}`;

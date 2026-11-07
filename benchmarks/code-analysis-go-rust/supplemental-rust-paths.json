@@ -1,0 +1,62 @@
+{
+  "revision": "9870c06e6c772daaad7ab612faab29130753e41c",
+  "exposure": "Source inspected during initial design; supplemental observations, not the original frozen score or blind holdout.",
+  "cases": [
+    {
+      "file": "regex-automata/src/dfa/special.rs",
+      "sha256": "c2e60de5b98e68c9c45aaffbc67a08f049831a764a1ed29d1d1db0fb68efdce5",
+      "lines": [
+        {
+          "line": 357,
+          "text": "        use crate::util::wire::write_state_id as write;"
+        },
+        {
+          "line": 364,
+          "text": "        nwrite += write::<E>(self.max, &mut dst[nwrite..]);"
+        },
+        {
+          "line": 365,
+          "text": "        nwrite += write::<E>(self.quit_id, &mut dst[nwrite..]);"
+        }
+      ]
+    },
+    {
+      "file": "regex-automata/src/util/wire.rs",
+      "sha256": "ad84c82b3035b5015929e1dfd27742f5842cf88740d8bf26ca656a5f17979df2",
+      "lines": [
+        {
+          "line": 663,
+          "text": "pub(crate) fn write_state_id<E: Endian>("
+        }
+      ]
+    },
+    {
+      "file": "regex-automata/src/util/look.rs",
+      "sha256": "fbfcaace79d0c6ad3698c9d6c025cb952f2e00cf88a48cf690d087fa73466689",
+      "lines": [
+        {
+          "line": 1573,
+          "text": "    use regex_syntax::try_is_word_character;"
+        },
+        {
+          "line": 1588,
+          "text": "            Some(Ok(ch)) => try_is_word_character(ch).expect("
+        },
+        {
+          "line": 1603,
+          "text": "            Some(Ok(ch)) => try_is_word_character(ch).expect("
+        }
+      ]
+    },
+    {
+      "file": "regex-syntax/src/lib.rs",
+      "sha256": "5ae457d402e49443bdb23b71353693dd3b0d263b57a6eeb9eb5b5dae5c901bdd",
+      "lines": [
+        {
+          "line": 366,
+          "text": "pub fn try_is_word_character("
+        }
+      ]
+    }
+  ]
+}

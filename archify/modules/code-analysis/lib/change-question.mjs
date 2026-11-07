@@ -32,18 +32,20 @@ function normalize(value, root) {
 }
 
 export function changeEntryLanguage(entry) {
-  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py or .java source file with --entry.');
+  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go or .rs source file with --entry.');
   if (/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry)) return 'ts';
   if (/\.py$/.test(entry)) return 'py';
   if (/\.java$/.test(entry)) return 'java';
-  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py or .java source file with --entry.');
+  if (/\.go$/.test(entry)) return 'go';
+  if (/\.rs$/.test(entry)) return 'rust';
+  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go or .rs source file with --entry.');
 }
 
 export function captureChangeSide(root, config, language = 'ts') {
   root = path.resolve(root);
   let resolution;
   const { facts } = extractFacts(root, { language, config, onCapture: input => { resolution = input; } });
-  if (language !== 'ts') resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
+  if (!['ts', 'go', 'rust'].includes(language)) resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
   return { root, facts, resolution, language, configDigest: digest(JSON.stringify(config)) };
 }
 
@@ -72,7 +74,8 @@ function inspectSide(capture, side) {
     side, root, snapshot: facts.repository, language: facts.repository.language, producer: { adapter: facts.repository.adapter, adapterRevision: facts.repository.adapterRevision }, callModel: facts.callModel ?? null, analysisConfigDigest: capture.configDigest, capturedFiles: files.size,
     sourceIdentity: unavailable.some(file => file.status !== 'parse-error') ? 'incomplete' : 'valid',
     unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
-    resolution: facts.repository.language === 'ts' ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
+    ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
+    resolution: ['ts', 'go', 'rust'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
   };
   const references = new Map(), calls = new Map();
   (facts.calls || []).forEach((fact, factIndex) => {
@@ -96,7 +99,9 @@ function inspectSide(capture, side) {
   for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && facts.callModel === 'python-lexical-v1')
-    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && facts.callModel === 'java-static-lexical-v1');
+    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2'].includes(facts.callModel))
+    || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && facts.callModel === 'go-source-direct-v1')
+    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && facts.callModel === 'rust-source-direct-v1');
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
 }
 
@@ -116,7 +121,7 @@ function definitions(side, file) {
   if (!captured || captured.status !== 'valid') return { coverage: captured?.status || 'not-captured', records: [] };
   if (side.facts.repository.language !== 'ts') {
     const result = [], unavailable = [];
-    const kinds = side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
+    const kinds = side.facts.repository.language === 'rust' ? ['RustItemFn'] : side.facts.repository.language === 'go' ? ['FuncDecl'] : side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
     for (const fn of side.facts.functions.filter(fn => fn.file === file)) {
       const metadata = fn.definition;
       const slice = rangeText(captured.sourceText, metadata?.sourceRange);
@@ -249,7 +254,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const expectedConfig = digest(JSON.stringify(config));
   for (const capture of [base, head]) {
     const repo = capture.facts.repository;
-    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
+    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^go-parser@/.test(repo.adapter) : language === 'rust' ? /^rust-syn@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
     if (capture.language !== language || repo.language !== language || !producerMatches || capture.configDigest !== expectedConfig) fail('task/capture-mismatch', 'Both captures must use the entry language, matching producers and the same analysis configuration.');
   }
   if (base.facts.repository.adapter !== head.facts.repository.adapter || base.facts.repository.adapterRevision !== head.facts.repository.adapterRevision || base.facts.callModel !== head.facts.callModel) fail('task/capture-mismatch', 'Paired capture producers, revisions and call models must match.');
@@ -288,7 +293,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
     limitations: [
       'File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.',
       'Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.',
-      'Known references are conservative lexical callsites, not runtime callers or complete/transitive impact. Member/dynamic dispatch, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets only ordinary undecorated module definitions or direct from-import aliases; decorated/method targets remain unsupported. Java java-static-lexical-v1 inventories method invocations and binds only bounded same-file static source candidates; overloads, member dispatch and inherited owners remain unresolved. Argument type applicability and compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.',
+      'Known references are conservative lexical callsites, not runtime callers or complete/transitive impact. Member/dynamic dispatch, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets only ordinary undecorated module definitions or direct from-import aliases; decorated/method targets remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; overloads, member dispatch and inherited owners remain unresolved. Argument type applicability and compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.',
       'Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.',
       'Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.',
       'Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits.',

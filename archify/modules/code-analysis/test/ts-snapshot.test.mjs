@@ -70,12 +70,14 @@ test('excluded source stays outside facts but remains known to resolution', t =>
 });
 
 test('installed configuration packages remain supported and changes invalidate analysis', t => {
-  const root = fixture(t, {
+  // Module resolution canonicalizes the macOS /var temporary-directory alias.
+  // Match that same path so the intended input mutation actually runs.
+  const root = fs.realpathSync(fixture(t, {
     'entry.ts': 'import { type T } from "./dep";', 'dep.ts': 'export interface T {}',
     'tsconfig.json': JSON.stringify({ extends: 'base-config' }),
     'node_modules/base-config/package.json': JSON.stringify({ name: 'base-config', tsconfig: 'base.json' }),
     'node_modules/base-config/base.json': JSON.stringify({ compilerOptions: { verbatimModuleSyntax: true } }),
-  });
+  }));
   assert.equal(extract(root, config).imports[0].typeOnly, undefined);
   const read = ts.sys.readFile;
   let changed = false;

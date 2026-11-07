@@ -2,11 +2,11 @@ import { listFiles } from '../shared/files.mjs';
 import { describeRepository } from '../shared/git.mjs';
 import { parseSources, PARSER, isJavaSource } from './parse.mjs';
 import { resolveImports, describeUnit } from './imports.mjs';
-import { collectFunctionsAndCalls, CALL_MODEL } from './calls.mjs';
+import { collectFunctionsAndCalls, resolveQualifiedCalls, CALL_MODEL } from './calls.mjs';
 
 export const id = 'java';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 6;
+export const REVISION = 7;
 export const detect = (root, config) => listFiles(root, config).some(isJavaSource);
 export const countSources = (root, config) => listFiles(root, config).filter(isJavaSource).length;
 
@@ -14,7 +14,8 @@ export function extract(root, config) {
   const { files, units, packageMarkers, parse_errors } = parseSources(root, config, unit => ({
     ...describeUnit(unit), ...collectFunctionsAndCalls(unit),
   }));
-  const { imports, unresolved } = resolveImports(units);
+  const { imports, unresolved, resolveType } = resolveImports(units);
+  resolveQualifiedCalls(units, resolveType);
   return {
     schema_version: 1, callModel: CALL_MODEL,
     repository: { ...describeRepository(root), language: id, adapter: PARSER, adapterRevision: REVISION },
