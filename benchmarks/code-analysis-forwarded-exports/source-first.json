@@ -1,0 +1,295 @@
+{
+  "baseline": "3f42ee34b920b15cdd808fc54928e653f883cae1",
+  "project": {
+    "url": "https://github.com/reduxjs/redux",
+    "revision": "c9e06506f88926e252daf5275495eba0c04bf8e3",
+    "hashes": {
+      "test/combineReducers.spec.ts": "3100f5b65d83adcac246fd187c1616ff3a0db2f63908936298178b669335af52",
+      "test/createStore.spec.ts": "60a7405d5a52f079ff49fa0d48dcd95dbff4da27a619222222d62a0ba04dc7a4",
+      "src/index.ts": "3ddccd7d7c48398ade88d3700966abd07ed8171ec38c665f5f60193bd3cded3a",
+      "src/combineReducers.ts": "4fd9efdbc00eb59ae42ec5d190a41286bed80a6f5ca639fea0ba6cbccbd36e70",
+      "src/createStore.ts": "09d4308187c7543413f6ef35eab5b38c613f333135d8bbbe6684b680e5243da3",
+      "tsconfig.json": "d6b32c65a8428112599653ad222dc1c430945adbd19939604d791973980730e5",
+      "vitest.config.ts": "fe364b126019fee64831817a84414b56eb01a43682ee5fd76657c96cf6697697"
+    }
+  },
+  "sourceFreeze": "Source AST inspection only, before this round analyzer comparison or rule implementation.",
+  "parser": "5.9.3",
+  "exposure": "Previously exposed Redux corpus. Old reserved combineReducers site is now design input; two additional callsites reserved from initial forwarding-rule tuning, not blind repositories.",
+  "oracleNote": "Old reserved-barrel rationale mentioned index3/42; current exact exported combineReducers token is line44 (export statement41). New AST spans preserve both. No target answer was changed: body123, signature114.",
+  "configuration": {
+    "baseUrl": "./",
+    "paths": {
+      "redux": [
+        "src/index.ts"
+      ],
+      "@internal/*": [
+        "src/*"
+      ]
+    },
+    "scope": "Existing project-source alias configuration; tsconfig includes src, while captured scope can include tests. No runtime loader or successful project compilation claim."
+  },
+  "cases": [
+    {
+      "id": "combine-first",
+      "cohort": "design-former-reserved",
+      "call": {
+        "file": "test/combineReducers.spec.ts",
+        "line": 17,
+        "column": 23,
+        "endLine": 22,
+        "endColumn": 9,
+        "name": "combineReducers",
+        "text": "combineReducers({\n        counter: (state: number = 0, action: IncrementAction) =>\n          action.type === 'increment' ? state + 1 : state,\n        stack: (state: any[] = [], action: PushAction) =>\n          action.type === 'push' ? [...state, action.value] : state\n      })"
+      },
+      "callerImport": {
+        "line": 2,
+        "column": 1,
+        "endLine": 8,
+        "endColumn": 15,
+        "text": "import {\n  createStore,\n  combineReducers,\n  Reducer,\n  Action,\n  __DO_NOT_USE__ActionTypes as ActionTypes\n} from 'redux'"
+      },
+      "barrel": {
+        "file": "src/index.ts",
+        "import": {
+          "line": 3,
+          "column": 1,
+          "endLine": 3,
+          "endColumn": 48,
+          "text": "import combineReducers from './combineReducers'"
+        },
+        "export": {
+          "line": 40,
+          "column": 1,
+          "endLine": 50,
+          "endColumn": 2,
+          "token": {
+            "line": 43,
+            "column": 3
+          },
+          "text": "export {\n  createStore,\n  legacy_createStore,\n  combineReducers,\n  bindActionCreators,\n  applyMiddleware,\n  compose,\n  isAction,\n  isPlainObject,\n  __DO_NOT_USE__ActionTypes\n}"
+        }
+      },
+      "target": {
+        "file": "src/combineReducers.ts",
+        "name": "combineReducers",
+        "line": 123,
+        "column": 1
+      },
+      "basis": "Explicit redux source alias to an API module exporting its imported binding; one root implementation body, with overload signatures distinguished."
+    },
+    {
+      "id": "store-public",
+      "cohort": "design-named-import-forward",
+      "call": {
+        "file": "test/createStore.spec.ts",
+        "line": 26,
+        "column": 19,
+        "endLine": 26,
+        "endColumn": 57,
+        "name": "createStore",
+        "text": "createStore(combineReducers(reducers))"
+      },
+      "callerImport": {
+        "line": 1,
+        "column": 1,
+        "endLine": 8,
+        "endColumn": 15,
+        "text": "import {\n  createStore,\n  combineReducers,\n  StoreEnhancer,\n  Action,\n  Store,\n  Reducer\n} from 'redux'"
+      },
+      "barrel": {
+        "file": "src/index.ts",
+        "import": {
+          "line": 2,
+          "column": 1,
+          "endLine": 2,
+          "endColumn": 64,
+          "text": "import { createStore, legacy_createStore } from './createStore'"
+        },
+        "export": {
+          "line": 40,
+          "column": 1,
+          "endLine": 50,
+          "endColumn": 2,
+          "token": {
+            "line": 41,
+            "column": 3
+          },
+          "text": "export {\n  createStore,\n  legacy_createStore,\n  combineReducers,\n  bindActionCreators,\n  applyMiddleware,\n  compose,\n  isAction,\n  isPlainObject,\n  __DO_NOT_USE__ActionTypes\n}"
+        }
+      },
+      "target": {
+        "file": "src/createStore.ts",
+        "name": "createStore",
+        "line": 86,
+        "column": 1
+      },
+      "basis": "Explicit redux source alias to an API module exporting its imported binding; one root implementation body, with overload signatures distinguished."
+    },
+    {
+      "id": "combine-second",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "call": {
+        "file": "test/combineReducers.spec.ts",
+        "line": 32,
+        "column": 23,
+        "endLine": 37,
+        "endColumn": 9,
+        "name": "combineReducers",
+        "text": "combineReducers({\n        fake: true as unknown as Reducer,\n        broken: 'string' as unknown as Reducer,\n        another: { nested: 'object' } as unknown as Reducer,\n        stack: (state = []) => state\n      })"
+      },
+      "callerImport": {
+        "line": 2,
+        "column": 1,
+        "endLine": 8,
+        "endColumn": 15,
+        "text": "import {\n  createStore,\n  combineReducers,\n  Reducer,\n  Action,\n  __DO_NOT_USE__ActionTypes as ActionTypes\n} from 'redux'"
+      },
+      "barrel": {
+        "file": "src/index.ts",
+        "import": {
+          "line": 3,
+          "column": 1,
+          "endLine": 3,
+          "endColumn": 48,
+          "text": "import combineReducers from './combineReducers'"
+        },
+        "export": {
+          "line": 40,
+          "column": 1,
+          "endLine": 50,
+          "endColumn": 2,
+          "token": {
+            "line": 43,
+            "column": 3
+          },
+          "text": "export {\n  createStore,\n  legacy_createStore,\n  combineReducers,\n  bindActionCreators,\n  applyMiddleware,\n  compose,\n  isAction,\n  isPlainObject,\n  __DO_NOT_USE__ActionTypes\n}"
+        }
+      },
+      "target": {
+        "file": "src/combineReducers.ts",
+        "name": "combineReducers",
+        "line": 123,
+        "column": 1
+      },
+      "basis": "Explicit redux source alias to an API module exporting its imported binding; one root implementation body, with overload signatures distinguished."
+    },
+    {
+      "id": "store-combine",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "call": {
+        "file": "test/createStore.spec.ts",
+        "line": 26,
+        "column": 31,
+        "endLine": 26,
+        "endColumn": 56,
+        "name": "combineReducers",
+        "text": "combineReducers(reducers)"
+      },
+      "callerImport": {
+        "line": 1,
+        "column": 1,
+        "endLine": 8,
+        "endColumn": 15,
+        "text": "import {\n  createStore,\n  combineReducers,\n  StoreEnhancer,\n  Action,\n  Store,\n  Reducer\n} from 'redux'"
+      },
+      "barrel": {
+        "file": "src/index.ts",
+        "import": {
+          "line": 3,
+          "column": 1,
+          "endLine": 3,
+          "endColumn": 48,
+          "text": "import combineReducers from './combineReducers'"
+        },
+        "export": {
+          "line": 40,
+          "column": 1,
+          "endLine": 50,
+          "endColumn": 2,
+          "token": {
+            "line": 43,
+            "column": 3
+          },
+          "text": "export {\n  createStore,\n  legacy_createStore,\n  combineReducers,\n  bindActionCreators,\n  applyMiddleware,\n  compose,\n  isAction,\n  isPlainObject,\n  __DO_NOT_USE__ActionTypes\n}"
+        }
+      },
+      "target": {
+        "file": "src/combineReducers.ts",
+        "name": "combineReducers",
+        "line": 123,
+        "column": 1
+      },
+      "basis": "Explicit redux source alias to an API module exporting its imported binding; one root implementation body, with overload signatures distinguished."
+    }
+  ],
+  "definitions": {
+    "combineReducers": {
+      "file": "src/combineReducers.ts",
+      "name": "combineReducers",
+      "line": 123,
+      "column": 1,
+      "endLine": 201,
+      "endColumn": 2,
+      "sha256": "58f4d118b53071e25590cf804679f58c76ce118b07d1a6572287737592fd893d",
+      "overloadSignatures": [
+        {
+          "line": 114,
+          "column": 1,
+          "endLine": 122,
+          "endColumn": 10,
+          "header": "export default function combineReducers<M>(",
+          "acceptableImplementationTarget": false
+        }
+      ]
+    },
+    "createStore": {
+      "file": "src/createStore.ts",
+      "name": "createStore",
+      "line": 86,
+      "column": 1,
+      "endLine": 395,
+      "endColumn": 2,
+      "sha256": "e575025aba5c803c7bc7a371b20444f874d02f7caa06e9e3ee3c6e49ae006582",
+      "overloadSignatures": [
+        {
+          "line": 41,
+          "column": 1,
+          "endLine": 49,
+          "endColumn": 31,
+          "header": "export function createStore<",
+          "acceptableImplementationTarget": false
+        },
+        {
+          "line": 75,
+          "column": 1,
+          "endLine": 85,
+          "endColumn": 31,
+          "header": "export function createStore<",
+          "acceptableImplementationTarget": false
+        }
+      ]
+    }
+  },
+  "controls": [
+    {
+      "id": "external-vi",
+      "call": {
+        "file": "test/combineReducers.spec.ts",
+        "line": 46,
+        "column": 19,
+        "endLine": 46,
+        "endColumn": 26,
+        "text": "vi.fn()"
+      },
+      "expectedTarget": null,
+      "reason": "vitest object member; dependency implementation source is not captured."
+    }
+  ],
+  "gaps": [
+    "Factory-returned reducer callable flow is separate from the API import binding and is not counted as a successful unknown here.",
+    "Type-only/star/dynamic/CommonJS/ambiguous/cyclic or writable forwarding paths need their own source evidence before targets are admitted."
+  ],
+  "knownCallerScope": "Only the selected four source calls are known callers for this slice; no complete reference set.",
+  "projectExecution": "None; source parsed with the installed TypeScript SDK, no config/project/test execution."
+}
