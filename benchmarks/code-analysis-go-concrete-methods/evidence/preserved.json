@@ -1,0 +1,23 @@
+[
+  {
+    "project": "cobra",
+    "callsPreserved": 2939,
+    "boundRecordsPreserved": 491,
+    "newTargets": 789,
+    "functionsAndImportsEqual": true
+  },
+  {
+    "project": "chi",
+    "callsPreserved": 2879,
+    "boundRecordsPreserved": 449,
+    "newTargets": 456,
+    "functionsAndImportsEqual": true
+  },
+  {
+    "project": "grpc-go",
+    "callsPreserved": 59112,
+    "boundRecordsPreserved": 14234,
+    "newTargets": 8036,
+    "functionsAndImportsEqual": true
+  }
+]

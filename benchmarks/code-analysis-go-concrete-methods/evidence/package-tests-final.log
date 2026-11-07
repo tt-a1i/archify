@@ -1,0 +1,45 @@
+✔ optional capture observation leaves raw facts and their revision/snapshot fingerprints unchanged (60.764792ms)
+✔ public paired question captures dirty working trees, preserves side coordinates and original task modes (449.206167ms)
+✔ added and deleted files/functions are normal, and file moves do not infer identity (66.557334ms)
+✔ same-line functions use exact ranges and duplicate qualified slots remain unpaired (44.092833ms)
+✔ both sides lose stale definition navigation; stale caller retains evidence but no live location (42.214ms)
+✔ parse errors are partial and suppress affected definitions without losing valid regions (388.107083ms)
+✔ root/extended compiler settings and package contents limit binding attribution, even with one analysis config (482.073083ms)
+✔ new source candidates may change known binding without a configuration mismatch (25.036708ms)
+✔ fresh mode rejects incompatible options and protects either root from output overwrite (868.632792ms)
+✔ bounded orientation counts omitted references and missing entry never looks successful (40.724917ms)
+✔ explicit declaration entries disclose unsupported definitions separately from an available file with no functions (376.703333ms)
+✔ module reading keeps resolved dependency kinds separate from calls and preserves bounded original facts (42.755041ms)
+✔ dependency navigation requires fresh parseable origin/entry and resolution inputs on its own side (52.695375ms)
+✔ Python paired CLI selects the entry language in mixed roots and compares owned decorator headers (404.719709ms)
+✔ Python direct-name references keep def-start identity separate from paired header extent (84.587125ms)
+✔ Java paired headers have exact same-line ranges and fresh zero call totals (22.221916ms)
+✔ paired Java changed static method retains references and unresolved members without inventing old-model coverage (20.816875ms)
+✔ non-TS historical missing metadata and incorrect hashes stay partial without line-only guesses (165.002166ms)
+✔ non-TS captures preserve stale/parse/missing coverage and reject mismatched capture provenance (325.087125ms)
+✔ non-TS duplicate slots and bounded outgoing imports keep uncertainty and original records (84.356167ms)
+✔ paired mode rejects unsupported suffixes and invalid entry paths before capture (2306.165208ms)
+✔ Go ordinary and alias imports, same-package cross-file calls and external tests navigate to declaration starts (146.285875ms)
+✔ Go interface/variable calls, shadows and invalid duplicate functions stay unknown beside concrete methods (98.210333ms)
+✔ Go source scope honors platform/tags, tests and nested module identity; parse failure is visible (200.743916ms)
+✔ Go imported module identity differs from directory names and package-declared names (99.693834ms)
+✔ Go UTF-16 ranges, saved metadata freshness and paired changed-definition callers reuse source evidence (293.895625ms)
+✔ Go missing compiler and invalid scope fail through the normal CLI with actionable diagnostics (279.38725ms)
+✔ Go compiler-selected concrete methods distinguish receivers and follow aliases, promotion, generic instances and method expressions (100.862125ms)
+✔ Go method targets do not guess through interfaces, function fields, missing bodies or duplicate receiver methods (91.184292ms)
+✔ Go changed concrete method definitions recover foreign callers and keep historical v1 coverage distinct (197.074ms)
+✔ orientation retains exact facts, excludes same-line neighbours, and includes nested source calls without claiming caller identity (70.277542ms)
+✔ bounded output counts the selected range and does not confuse omitted unknown calls with absent calls (43.920166ms)
+✔ missing and unknown call models never report a known zero, even when adapter revisions overlap (103.005833ms)
+✔ entry freshness and parse errors gate all calls and same-file targets (41.726042ms)
+✔ unmatched exact source range is unavailable rather than falling back to captured line span (19.984084ms)
+✔ optional node observation preserves all default function measurements and naming (1.041583ms)
+✔ explicit call models carry binding coverage independently of extraction revision (61.336ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6638.783833

@@ -1,0 +1,53 @@
+✖ Go compiler-selected concrete methods distinguish receivers and follow aliases, promotion, generic instances and method expressions (114.686333ms)
+✔ Go method targets do not guess through interfaces, function fields, missing bodies or duplicate receiver methods (85.629167ms)
+✖ Go changed concrete method definitions recover foreign callers and keep historical v1 coverage distinct (175.3895ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 1
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 636.47275
+
+✖ failing tests:
+
+test at archify/modules/code-analysis/test/go-calls.test.mjs:136:1
+✖ Go compiler-selected concrete methods distinguish receivers and follow aliases, promotion, generic instances and method expressions (114.686333ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(calls.every(c=>c.resolution==='go-direct-method'))
+  
+      at TestContext.<anonymous> (file:///Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/modules/code-analysis/test/go-calls.test.mjs:143:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at archify/modules/code-analysis/test/go-calls.test.mjs:175:1
+✖ Go changed concrete method definitions recover foreign callers and keep historical v1 coverage distinct (175.3895ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/modules/code-analysis/test/go-calls.test.mjs:181:45)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
