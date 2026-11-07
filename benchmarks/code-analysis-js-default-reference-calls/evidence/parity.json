@@ -1,0 +1,32 @@
+{
+  "runtimeRevision": "e6778b531",
+  "comparisons": [
+    {
+      "artifact": "prettier/raw-facts.json",
+      "byteEqual": true,
+      "sha256": "ce70596b7967a95c0aa6861529bbfa0b38894c3cf52265114c39a278d566b351"
+    },
+    {
+      "artifact": "chalk/raw-facts.json",
+      "byteEqual": true,
+      "sha256": "c8f9c44051704edeb94e75cb2e3e1c343a81cce6b89a7fcb7aaf493e99d60aa6"
+    },
+    {
+      "artifact": "question-printDanglingComments.json",
+      "equalAfterInstallationOutputPaths": true
+    },
+    {
+      "artifact": "question-attachComments.json",
+      "equalAfterInstallationOutputPaths": true
+    },
+    {
+      "artifact": "paired.json",
+      "equalAfterInstallationOutputPaths": true
+    }
+  ],
+  "zipSha256": "c42bbe3ca39ebb48fe772aa41b144674ef2dc8e350daf965a874185308350488",
+  "canonicalBuildsEqual": true,
+  "moduleTrackedFilesCompared": 156,
+  "builder": "official Node22.23.3/bundled zlib1.3.1-e00f703",
+  "runtime": "Node26.12.0/macOSarm64"
+}

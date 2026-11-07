@@ -1,0 +1,101 @@
+[
+  {
+    "name": "prettier",
+    "rootScope": "src only",
+    "adapter": "typescript@5.9.3",
+    "model": "js-ts-lexical-v3",
+    "options": {
+      "allowJs": true,
+      "module": 199,
+      "moduleResolution": 99,
+      "target": 99
+    },
+    "optionNames": {
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "target": "Latest"
+    },
+    "program": "Captured roots, allowJs, noResolve/noLib/types[]; syntax/source binding, no project type-check or execution",
+    "files": 351,
+    "parseErrors": [],
+    "rootTsconfigPresent": false,
+    "rootTsconfigUsed": false,
+    "metadataReads": {
+      "total": 43,
+      "existing": [
+        {
+          "file": "../package.json",
+          "exists": true,
+          "sha256": "f805e62f837b100f3a07b87305501f6c613e7f50ad7d6d043cf26bb17cd2c2d1"
+        }
+      ],
+      "missingCount": 42
+    }
+  },
+  {
+    "name": "prettier-base",
+    "rootScope": "src only",
+    "adapter": "typescript@5.9.3",
+    "model": "js-ts-lexical-v3",
+    "options": {
+      "allowJs": true,
+      "module": 199,
+      "moduleResolution": 99,
+      "target": 99
+    },
+    "optionNames": {
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "target": "Latest"
+    },
+    "program": "Captured roots, allowJs, noResolve/noLib/types[]; syntax/source binding, no project type-check or execution",
+    "files": 351,
+    "parseErrors": [],
+    "rootTsconfigPresent": false,
+    "rootTsconfigUsed": false,
+    "metadataReads": {
+      "total": 43,
+      "existing": [
+        {
+          "file": "../package.json",
+          "exists": true,
+          "sha256": "3b624b312314863f29fca5518664d82699e817a0029e87a22dc4bab0b6fc1d6c"
+        }
+      ],
+      "missingCount": 42
+    }
+  },
+  {
+    "name": "chalk",
+    "rootScope": "repository",
+    "adapter": "typescript@5.9.3",
+    "model": "js-ts-lexical-v3",
+    "options": {
+      "allowJs": true,
+      "module": 199,
+      "moduleResolution": 99,
+      "target": 99
+    },
+    "optionNames": {
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "target": "Latest"
+    },
+    "program": "Captured roots, allowJs, noResolve/noLib/types[]; syntax/source binding, no project type-check or execution",
+    "files": 15,
+    "parseErrors": [],
+    "rootTsconfigPresent": false,
+    "rootTsconfigUsed": false,
+    "metadataReads": {
+      "total": 8,
+      "existing": [
+        {
+          "file": "package.json",
+          "exists": true,
+          "sha256": "ff033c93b0d4256138f9e4c59283d9f5ffbb0630bf2e87a1b15033e51cddc582"
+        }
+      ],
+      "missingCount": 7
+    }
+  }
+]
