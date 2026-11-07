@@ -11891,7 +11891,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           state.y = height > window.innerHeight ? 0 : height * (1 - state.scale) / 2;
           return;
         }
-        state.x = Math.min(0, Math.max(width - width * state.scale, state.x));
+        if (window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram')) {
+          // A wide diagram's container scrolls horizontally, so the camera
+          // alone cannot reach the diagram's far edge: the old clamp stopped
+          // at width - width * scale, which leaves the rightmost
+          // (width * scale - clientWidth) of the diagram unreachable once
+          // touch-action: none freezes native scrolling above 100% zoom.
+          // Pin the combined scrollLeft - x offset to the SVG's scaled width
+          // instead, so an empty-canvas drag covers the whole diagram and
+          // can return to the left edge again.
+          var maxTravel = width * state.scale - container.clientWidth;
+          var minX = container.scrollLeft - Math.max(0, maxTravel);
+          var maxX = container.scrollLeft;
+          state.x = Math.min(maxX, Math.max(minX, state.x));
+        } else {
+          state.x = Math.min(0, Math.max(width - width * state.scale, state.x));
+        }
         state.y = Math.min(0, Math.max(height - height * state.scale, state.y));
       }
       function reducedMotion() {

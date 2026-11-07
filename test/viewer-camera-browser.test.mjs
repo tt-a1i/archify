@@ -843,12 +843,16 @@ test('touch drag pans the full distance once zoomed above 100% (issue #1253)', {
     window.__touch1253 = { moves: 0, cancels: 0 };
     c.addEventListener('pointermove', () => { window.__touch1253.moves += 1; });
     c.addEventListener('pointercancel', () => { window.__touch1253.cancels += 1; });
-    // Start on empty canvas: a point whose top element is the SVG itself, not a node.
+    // Start where a real drag can start: the camera's pointerdown handler
+    // ignores targets inside the nav chrome, a node, or a relationship
+    // hit-rail, but background shapes such as region rects do start a drag.
+    // Requiring the SVG element itself finds no point on dense diagrams,
+    // where every sampled point sits on a node or an edge rail.
     const box = c.getBoundingClientRect();
     for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
       for (let x = box.left + 40; x < box.right - 40; x += 20) {
         const el = document.elementFromPoint(x, y);
-        if (el && (el.tagName === 'svg' || el === c)) return { x, y, state: Archify.view.state() };
+        if (el && !el.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') && !el.closest('[data-node-id]') && !el.closest('[data-relationship-hit-key]')) return { x, y, state: Archify.view.state() };
       }
     }
     return null;
@@ -867,4 +871,107 @@ test('touch drag pans the full distance once zoomed above 100% (issue #1253)', {
   assert.ok(result.moves >= 10, `most touch moves must reach the camera: ${JSON.stringify(result)}`);
   assert.ok(Math.abs((result.state.x - start.state.x) - 150) < 2, `camera must follow the finger 150px: ${JSON.stringify(result)}`);
   assert.ok(Math.abs((result.state.y - start.state.y) - 90) < 2, `camera must follow the finger 90px: ${JSON.stringify(result)}`);
+});
+
+test('touch drag reaches both edges of a zoomed wide diagram (Devin review on #1254)', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser camera checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-camera-1254-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression, awaitPromise = false) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  const input = path.join(scratch, 'web-app.json');
+  const artifact = path.join(scratch, 'web-app-rendered.html');
+  fs.writeFileSync(input, fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json')));
+  execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, artifact]);
+  // The web-app example is a wide diagram (720px SVG in a ~328px container).
+  await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 760, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(artifact).href });
+  await loaded;
+  const stable = () => run(`(async () => { await document.fonts.ready; await Archify.layoutStability.whenStable(); })()`, true);
+  await stable();
+  for (let i = 0; i < 3; i++) await run(`Archify.view.zoomIn()`);
+  await stable();
+  assert.equal(await run(`Archify.view.state().scale`), 1.75);
+  await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    window.__touch1254 = { cancels: 0 };
+    c.addEventListener('pointercancel', () => { window.__touch1254.cancels += 1; });
+  })()`);
+  const geometry = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const svg = c.querySelector('svg');
+    return { svgWidth: svg.clientWidth, clientWidth: c.clientWidth, scrollLeft: c.scrollLeft, scale: Archify.view.state().scale };
+  })()`);
+  // With the old clamp the camera stopped at width - width * scale, leaving
+  // the rightmost (width * scale - clientWidth) of the diagram unreachable
+  // once touch-action: none froze native scrolling. The clamp now pins the
+  // combined scrollLeft - x offset to the SVG's scaled width.
+  const maxTravel = geometry.svgWidth * geometry.scale - geometry.clientWidth;
+  assert.ok(maxTravel > 0, `the fixture must be wider than the viewport: ${JSON.stringify(geometry)}`);
+  async function findStart() {
+    return run(`(() => {
+      const c = document.querySelector('.diagram-container');
+      const box = c.getBoundingClientRect();
+      for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
+        for (let x = box.left + 40; x < box.right - 40; x += 20) {
+          const el = document.elementFromPoint(x, y);
+          if (el && !el.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') && !el.closest('[data-node-id]') && !el.closest('[data-relationship-hit-key]')) return { x, y };
+        }
+      }
+      return null;
+    })()`);
+  }
+  async function stroke(dx, dy) {
+    const start = await findStart();
+    assert.ok(start, 'a drag start point is needed for every stroke');
+    const points = Array.from({ length: 16 }, (_, i) => ({ x: start.x + (dx * i) / 15, y: start.y + (dy * i) / 15, id: 1 }));
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[0]] });
+    for (const point of points.slice(1)) {
+      await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
+      await new Promise((resolve) => setTimeout(resolve, 16));
+    }
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await stable();
+    return run(`(() => ({ state: Archify.view.state(), scrollLeft: document.querySelector('.diagram-container').scrollLeft }))()`);
+  }
+  // Drag left in strokes until the camera stops: the far edge must be reachable.
+  let left = await run(`Archify.view.state()`);
+  for (let i = 0; i < 12; i++) {
+    const next = await stroke(-150, 0);
+    if (next.state.x >= left.x - 0.5) break;
+    left = next.state;
+  }
+  const expectedLeft = geometry.scrollLeft - maxTravel;
+  assert.ok(Math.abs(left.x - expectedLeft) < 30,
+    `the camera must reach the far edge of the wide diagram: x=${left.x}, expected ${expectedLeft}, ${JSON.stringify(geometry)}`);
+  const rightEdge = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const svg = c.querySelector('svg');
+    const s = Archify.view.state();
+    return (c.scrollLeft - s.x + c.clientWidth) / s.scale;
+  })()`);
+  assert.ok(Math.abs(rightEdge - geometry.svgWidth) < 30,
+    `the visible window must cover the SVG's right edge: ${rightEdge} of ${geometry.svgWidth}`);
+  // Drag right in strokes until the camera stops: the left edge must come back.
+  let right = left;
+  for (let i = 0; i < 12; i++) {
+    const next = await stroke(150, 0);
+    if (next.state.x <= right.x + 0.5) break;
+    right = next.state;
+  }
+  assert.ok(Math.abs(right.x - geometry.scrollLeft) < 30,
+    `the camera must return to the left edge: x=${right.x}, scrollLeft=${geometry.scrollLeft}`);
+  const cancels = await run(`window.__touch1254.cancels`);
+  assert.equal(cancels, 0, 'the browser must not cancel the zoomed wide-diagram drags');
 });
