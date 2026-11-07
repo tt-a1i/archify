@@ -62,10 +62,11 @@
       },
       "sourceKnownTarget": {
         "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
-        "line": 1584,
+        "line": 1583,
         "column": 5,
         "name": "defaultString",
-        "sourceLine": "    public static String defaultString(final String str, final String nullDefault) {"
+        "sourceLine": "    @Deprecated",
+        "methodHeaderLine": 1584
       },
       "definitionAlreadyInventoried": {
         "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
@@ -237,5 +238,6 @@
       },
       "grade": "known-source-miss"
     }
-  ]
+  ],
+  "sourceOracleCorrection": "The annotated defaultString target starts at Deprecated1583, header1584; aligned with the existing captured definition before rule changes."
 }
