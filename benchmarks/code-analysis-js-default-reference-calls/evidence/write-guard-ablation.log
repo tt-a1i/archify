@@ -1,0 +1,30 @@
+✖ default references do not claim a function overwritten by assignments, destructuring, loops or opaque eval (53.653625ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 312.2695
+
+✖ failing tests:
+
+test at archify/modules/code-analysis/test/imported-calls.test.mjs:205:1
+✖ default references do not claim a function overwritten by assignments, destructuring, loops or opaque eval (53.653625ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(facts.calls.filter(c=>c.file==='entry.mjs').every(c=>c.resolution==='unresolved'))
+  
+      at TestContext.<anonymous> (file://<WORKSPACE>/work/archify-js/archify/modules/code-analysis/test/imported-calls.test.mjs:210:42)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
