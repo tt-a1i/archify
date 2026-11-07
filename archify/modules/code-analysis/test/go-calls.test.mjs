@@ -45,7 +45,7 @@ test('Go ordinary and alias imports, same-package cross-file calls and external 
   assert.notEqual(graph.fileModules['main.go'], graph.fileModules['lib/work.go']);
 });
 
-test('Go interface/method/variable calls, shadows and invalid duplicate definitions never manufacture function targets', t => {
+test('Go interface/variable calls, shadows and invalid duplicate functions stay unknown beside concrete methods', t => {
   const root = fixture(t, {
     'lib/work.go': 'package lib\nfunc Work() {}\nfunc Clash() {}\nvar Clash func()\n',
     'main.go': `package main
@@ -59,8 +59,11 @@ func shadow() { alias := struct{ Work func() }{}; alias.Work() }
 `,
   });
   const facts = capture(root); assert.deepEqual(schemaErrors('raw-facts', facts), []);
-  assert.ok(callsIn(facts, 'main.go').every(call => call.resolution === 'unresolved'));
-  assert.deepEqual(callsIn(facts, 'main.go').slice(0, 2).map(call => call.reason), ['go-method-dispatch', 'go-method-dispatch']);
+  const calls = callsIn(facts, 'main.go');
+  assert.equal(calls[1].resolution, 'go-direct-method');
+  assert.deepEqual(calls[1].target, { name: 'Work', line: 5, column: 1 });
+  assert.ok(calls.filter((_, i) => i !== 1).every(call => call.resolution === 'unresolved'));
+  assert.equal(calls[0].reason, 'go-method-dispatch');
   assert.ok(facts.languageScope.typing.errorCount > 0);
 });
 
@@ -179,6 +182,7 @@ test('Go changed concrete method definitions recover foreign callers and keep hi
   const q=buildChangeQuestion({question:'Which known callers reach changed T.M?',entry:'lib/types.go',base,head,config});
   const changed=q.changedDefinitions.items.find(d=>d.head?.definition.qualname==='*T.M');
   for(const side of ['base','head']){assert.equal(changed[side].knownReferences.total,1);assert.equal(changed[side].knownReferences.items[0].navigation.status,'valid');}
+  const incompatible=structuredClone(base.facts);incompatible.callModel='go-source-direct-v1';assert.ok(schemaErrors('raw-facts',incompatible).some(e=>e.message.includes('Go v2')));
   const historical=structuredClone(base.facts);historical.callModel='go-source-direct-v1';historical.calls=historical.calls.map(c=>c.resolution==='go-direct-method'?{file:c.file,line:c.line,column:c.column,endLine:c.endLine,endColumn:c.endColumn,resolution:'unresolved',reason:'go-method-dispatch'}:c);
   const old=buildQuestion({root,facts:historical,entry:'entry.go',symbol:'Entry',question:'What was captured before method support?'});
   assert.equal(old.calls.bindingCoverage,'go-types-direct-source-functions-with-incomplete-external-types');

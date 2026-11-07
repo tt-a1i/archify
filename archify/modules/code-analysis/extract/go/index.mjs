@@ -8,8 +8,8 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'go';
-export const REVISION = 1;
-export const CALL_MODEL = 'go-source-direct-v1';
+export const REVISION = 2;
+export const CALL_MODEL = 'go-source-direct-v2';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.go'));
 export const countSources = (root, config) => listFiles(root, config).filter(file => file.endsWith('.go')).length;
 const script = fileURLToPath(new URL('./extract.go', import.meta.url));
@@ -73,6 +73,6 @@ export function extract(root, config, { onCapture } = {}) {
       selectedFiles: output.selected, excludedFiles: [...excluded, ...output.excluded].sort((a, b) => a.file.localeCompare(b.file)), metadata,
       limitations: ['Only this root module is analyzed. go.work, replace directives, external dependencies, cgo, generated compiler output and nested modules are not loaded.',
         'Targets are direct source function bindings from go/types with incomplete external types. They do not prove successful compilation, argument applicability, runtime dispatch or a complete caller set.',
-        'Function bodies and receiver declarations are inventoried; interface/method/function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.'] },
+        'Function bodies and receiver declarations are inventoried; concrete compiler-selected source methods are bound, including promotion, method expressions and generic instances. Interface and function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.'] },
   };
 }

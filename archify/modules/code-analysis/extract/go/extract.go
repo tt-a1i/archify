@@ -41,6 +41,7 @@ type group struct {
 	pkg               *types.Package
 	checking          bool
 	counts            map[string]int
+	methods           map[string][]types.Type
 }
 type loader struct {
 	req         request
@@ -82,7 +83,7 @@ func (l *loader) check(g *group) *types.Package {
 	}
 	g.checking = true
 	defer func() { g.checking = false }()
-	g.info = &types.Info{Uses: map[*ast.Ident]types.Object{}, Defs: map[*ast.Ident]types.Object{}}
+	g.info = &types.Info{Uses: map[*ast.Ident]types.Object{}, Defs: map[*ast.Ident]types.Object{}, Selections: map[*ast.SelectorExpr]*types.Selection{}}
 	g.pkg = types.NewPackage(g.pkgPath, g.name)
 	cfg := types.Config{Importer: l, Error: func(err error) {
 		l.errors++
@@ -264,9 +265,7 @@ func (l *loader) prepare() {
 			if fn, ok := decl.(*ast.FuncDecl); ok && fn.Body != nil {
 				def := l.definition(file, fn)
 				l.functions = append(l.functions, def)
-				if fn.Recv == nil {
-					l.definitions[fn.Name.Pos()] = def
-				}
+				l.definitions[fn.Name.Pos()] = def
 			}
 		}
 	}
@@ -309,6 +308,64 @@ func declarationCounts(files []*ast.File) map[string]int {
 		}
 	}
 	return counts
+}
+
+// Compare receiver identities, not method spelling across unrelated types.
+// Origin normalizes instantiated named receivers while retaining Go 1.18 support.
+func receiverOwner(t types.Type) types.Type {
+	if p, ok := t.(*types.Pointer); ok {
+		t = p.Elem()
+	}
+	if n, ok := t.(*types.Named); ok {
+		t = n.Origin()
+	}
+	return t
+}
+func (g *group) uniqueMethod(obj *types.Func) bool {
+	if g.methods == nil {
+		g.methods = map[string][]types.Type{}
+		for _, file := range g.files {
+			for _, decl := range file.Decls {
+				fn, ok := decl.(*ast.FuncDecl)
+				if !ok || fn.Recv == nil {
+					continue
+				}
+				var owner types.Type
+				if method, ok := g.info.Defs[fn.Name].(*types.Func); ok {
+					if sig, ok := method.Type().(*types.Signature); ok && sig.Recv() != nil {
+						owner = receiverOwner(sig.Recv().Type())
+					}
+				}
+				g.methods[fn.Name.Name] = append(g.methods[fn.Name.Name], owner)
+			}
+		}
+	}
+	sig, ok := obj.Type().(*types.Signature)
+	if !ok || sig.Recv() == nil {
+		return false
+	}
+	owner, count := receiverOwner(sig.Recv().Type()), 0
+	for _, declared := range g.methods[obj.Name()] {
+		// An invalid receiver cannot establish an arbitrary first method.
+		if declared == nil {
+			return false
+		}
+		if types.Identical(owner, declared) {
+			count++
+		}
+	}
+	return count == 1
+}
+func concreteSelection(selection *types.Selection) bool {
+	if selection == nil || (selection.Kind() != types.MethodVal && selection.Kind() != types.MethodExpr) {
+		return false
+	}
+	receiver := selection.Recv()
+	if p, ok := receiver.(*types.Pointer); ok {
+		receiver = p.Elem()
+	}
+	_, dynamic := receiver.Underlying().(*types.Interface)
+	return !dynamic
 }
 
 func unwrap(e ast.Expr) ast.Expr {
@@ -382,31 +439,45 @@ func main() {
 				r["resolution"] = "unresolved"
 				r["reason"] = "unsupported-callee"
 				var ident *ast.Ident
+				var selection *types.Selection
 				switch x := unwrap(call.Fun).(type) {
 				case *ast.Ident:
 					ident = x
 				case *ast.SelectorExpr:
 					ident = x.Sel
+					selection = g.info.Selections[x]
 				}
 				if ident != nil {
 					r["reason"] = "no-local-function-binding"
-					if obj, ok := g.info.Uses[ident].(*types.Func); ok {
+					obj, ok := g.info.Uses[ident].(*types.Func)
+					if selection != nil {
+						obj, ok = selection.Obj().(*types.Func)
+					}
+					if ok {
 						sig, _ := obj.Type().(*types.Signature)
 						if sig != nil && sig.Recv() != nil {
 							r["reason"] = "go-method-dispatch"
 						}
 						def := l.definitions[obj.Pos()]
-						valid := def != nil && sig != nil && sig.Recv() == nil && !l.invalidDirs[path.Dir(file)]
-						if def != nil && sig != nil && sig.Recv() == nil {
+						method := sig != nil && sig.Recv() != nil && concreteSelection(selection)
+						valid := def != nil && sig != nil && (sig.Recv() == nil || method) && !l.invalidDirs[path.Dir(file)]
+						if def != nil && sig != nil && (sig.Recv() == nil || method) {
 							r["reason"] = "ambiguous-binding"
 						}
 						if valid {
 							targetFile := def["file"].(string)
 							valid = !l.invalidDirs[path.Dir(targetFile)]
-							if obj.Pkg() == g.pkg && counts[obj.Name()] != 1 {
+							targetGroup := g
+							if obj.Pkg() != g.pkg {
+								targetGroup = l.packages[obj.Pkg().Path()]
+							}
+							if method {
+								valid = valid && targetGroup != nil && targetGroup.uniqueMethod(obj)
+							}
+							if !method && obj.Pkg() == g.pkg && counts[obj.Name()] != 1 {
 								valid = false
 							}
-							if targetGroup := l.packages[obj.Pkg().Path()]; obj.Pkg() != g.pkg && targetGroup != nil {
+							if !method && obj.Pkg() != g.pkg && targetGroup != nil {
 								if targetGroup.counts == nil {
 									targetGroup.counts = declarationCounts(targetGroup.files)
 								}
@@ -419,6 +490,9 @@ func main() {
 								span := def["sourceRange"].(record)
 								t := record{"name": def["name"], "line": span["line"], "column": span["column"]}
 								r["resolution"] = "go-direct-function"
+								if method {
+									r["resolution"] = "go-direct-method"
+								}
 								if targetFile != file {
 									t["file"] = targetFile
 								}
