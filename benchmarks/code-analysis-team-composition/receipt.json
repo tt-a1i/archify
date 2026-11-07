@@ -1,0 +1,186 @@
+{
+  "date": "2026-11-07",
+  "before": "16c23ff47d8328a05cf480e639aa6afabc03938c",
+  "productCommit": "e92a4634a0b5ec6ab80e1245629bf22b6fd82822",
+  "archiveSha256": "2518ba3989fd8da4aa3e28950809aa896a98b3e6c9e065458528fbb223d765f6",
+  "kind": "Synthetic public CLI check: mixed Python parse failure and Java file; zero or invalid warning threshold",
+  "sourceArchiveStdoutStderrExitEqual": true,
+  "rows": [
+    {
+      "product": "before",
+      "case": "invalid",
+      "format": "json",
+      "exit": 0,
+      "coverage": null,
+      "diagnosticCodes": []
+    },
+    {
+      "product": "before",
+      "case": "invalid",
+      "format": "text",
+      "exit": 0
+    },
+    {
+      "product": "before",
+      "case": "valid-warning",
+      "format": "json",
+      "exit": 1,
+      "coverage": null,
+      "diagnosticCodes": []
+    },
+    {
+      "product": "before",
+      "case": "valid-warning",
+      "format": "text",
+      "exit": 1
+    },
+    {
+      "product": "before",
+      "case": "valid-never",
+      "format": "json",
+      "exit": 0,
+      "coverage": null,
+      "diagnosticCodes": []
+    },
+    {
+      "product": "before",
+      "case": "valid-never",
+      "format": "text",
+      "exit": 0
+    },
+    {
+      "product": "source",
+      "case": "invalid",
+      "format": "json",
+      "exit": 2,
+      "coverage": null,
+      "diagnosticCodes": [
+        "config/threshold-invalid"
+      ]
+    },
+    {
+      "product": "source",
+      "case": "invalid",
+      "format": "text",
+      "exit": 2
+    },
+    {
+      "product": "source",
+      "case": "valid-warning",
+      "format": "json",
+      "exit": 1,
+      "coverage": {
+        "parseErrors": [
+          "broken.py"
+        ],
+        "otherLanguages": [
+          {
+            "adapter": "java",
+            "files": 1
+          }
+        ]
+      },
+      "diagnosticCodes": []
+    },
+    {
+      "product": "source",
+      "case": "valid-warning",
+      "format": "text",
+      "exit": 1
+    },
+    {
+      "product": "source",
+      "case": "valid-never",
+      "format": "json",
+      "exit": 0,
+      "coverage": {
+        "parseErrors": [
+          "broken.py"
+        ],
+        "otherLanguages": [
+          {
+            "adapter": "java",
+            "files": 1
+          }
+        ]
+      },
+      "diagnosticCodes": []
+    },
+    {
+      "product": "source",
+      "case": "valid-never",
+      "format": "text",
+      "exit": 0
+    },
+    {
+      "product": "archive",
+      "case": "invalid",
+      "format": "json",
+      "exit": 2,
+      "coverage": null,
+      "diagnosticCodes": [
+        "config/threshold-invalid"
+      ]
+    },
+    {
+      "product": "archive",
+      "case": "invalid",
+      "format": "text",
+      "exit": 2
+    },
+    {
+      "product": "archive",
+      "case": "valid-warning",
+      "format": "json",
+      "exit": 1,
+      "coverage": {
+        "parseErrors": [
+          "broken.py"
+        ],
+        "otherLanguages": [
+          {
+            "adapter": "java",
+            "files": 1
+          }
+        ]
+      },
+      "diagnosticCodes": []
+    },
+    {
+      "product": "archive",
+      "case": "valid-warning",
+      "format": "text",
+      "exit": 1
+    },
+    {
+      "product": "archive",
+      "case": "valid-never",
+      "format": "json",
+      "exit": 0,
+      "coverage": {
+        "parseErrors": [
+          "broken.py"
+        ],
+        "otherLanguages": [
+          {
+            "adapter": "java",
+            "files": 1
+          }
+        ]
+      },
+      "diagnosticCodes": []
+    },
+    {
+      "product": "archive",
+      "case": "valid-never",
+      "format": "text",
+      "exit": 0
+    }
+  ],
+  "moduleTests": {
+    "pass": 342,
+    "fail": 1,
+    "skip": 0,
+    "failure": "ts-snapshot.test.mjs:89 Missing expected exception; reproduced on before and candidate with identical inputs"
+  }
+}
