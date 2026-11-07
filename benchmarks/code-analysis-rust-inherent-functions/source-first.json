@@ -1,0 +1,149 @@
+{
+  "frozenAt": "2026-11-07T19:40:59.185097+00:00",
+  "baseline": "3b2bdd1aec833f85c51aaf8c2d8c711fb7083c32",
+  "question": "Can explicit nominal type paths reach visible inherent source functions without guessing trait, macro or generic applicability?",
+  "stage": "Source inspected before any Rust associated-function implementation and this question baseline. Whole repositories previously captured for free-function questions; not blind.",
+  "projects": {
+    "regex": {
+      "revision": "9870c06e6c772daaad7ab612faab29130753e41c",
+      "hashes": {
+        "Cargo.toml": "9d6c1e1e5cefd8577f2f783341b268f95d9dad922e3fd62f5606a304ab1d8a9b",
+        "src/lib.rs": "1be6ce04d4fce06a7e46bc006bbf536f5a7f82d97dc71e7f7489a6d2610f790b",
+        "src/bytes.rs": "cce2b7012f5896cf82fc3086bf8128dc9efe2b69bf6917d041c1a171eabacdc0",
+        "src/regex/string.rs": "d0f866f56ddd6f81517a4688767751ca9d22da705685305f5514870aa9059ea6",
+        "src/regex/bytes.rs": "d53c4305f70558e45de3203200df77cab534aa4762d48d51187a080f619ca969"
+      },
+      "absentFiles": [
+        "Cargo.lock"
+      ]
+    },
+    "serde-json": {
+      "revision": "4d4f53c3b7de3259b6a8a15ef4d5f4edb47af32f",
+      "hashes": {
+        "Cargo.toml": "d538a699a1c5414c1c7c4342f2dcec1be4c85f54e4dc1fcb50f1ca4c389fb97b",
+        "src/lib.rs": "2d786fb5740ce08961a9257656b135ed745a1fa059db8ab2896c0ede1ca5f9ea",
+        "src/number.rs": "186c2da2243afda82848a81fa401142ae8cc58ed820b3c3155b1dd5ab58f52fa",
+        "src/value/from.rs": "ae4b5f93b27e578fa40e3a8d25d0df2032fe40b680cddb15963e47cbd56db613",
+        "src/value/de.rs": "a0aeae9ad7dbc1c01a7de0276aab95d9e1a745573ea3eb6bece4cb391a4f6113"
+      },
+      "absentFiles": [
+        "Cargo.lock"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "project": "regex",
+      "call": {
+        "file": "src/regex/string.rs",
+        "line": 125,
+        "column": 9,
+        "needle": "Regex::new(s)",
+        "sourceLine": "        Regex::new(s)"
+      },
+      "target": {
+        "file": "src/regex/string.rs",
+        "line": 180,
+        "column": 5,
+        "needle": "pub fn new(",
+        "sourceLine": "    pub fn new(re: &str) -> Result<Regex, Error> {",
+        "name": "new"
+      },
+      "owner": "Local pub struct Regex in regex::string; inherent impl Regex starts148, not the FromStr trait implementation containing the call."
+    },
+    {
+      "project": "regex",
+      "call": {
+        "file": "src/regex/bytes.rs",
+        "line": 123,
+        "column": 9,
+        "needle": "Regex::new(s)",
+        "sourceLine": "        Regex::new(s)"
+      },
+      "target": {
+        "file": "src/regex/bytes.rs",
+        "line": 178,
+        "column": 5,
+        "needle": "pub fn new(",
+        "sourceLine": "    pub fn new(re: &str) -> Result<Regex, Error> {",
+        "name": "new"
+      },
+      "owner": "Distinct local pub struct Regex in regex::bytes. Must not jump to string.rs180 merely by matching Regex/new."
+    },
+    {
+      "project": "serde-json",
+      "call": {
+        "file": "src/value/from.rs",
+        "line": 60,
+        "column": 9,
+        "needle": "Number::from_f64(f)",
+        "sourceLine": "        Number::from_f64(f).map_or(Value::Null, Value::Number)"
+      },
+      "target": {
+        "file": "src/number.rs",
+        "line": 183,
+        "column": 5,
+        "needle": "pub fn from_f64(",
+        "sourceLine": "    pub fn from_f64(f: f64) -> Option<Number> {",
+        "name": "from_f64"
+      },
+      "owner": "use crate::number::Number at value/from.rs3; pub struct Number atnumber.rs22, inherent implNumber75. Caller trait implFrom<f64>forValue does not make this explicitly named inherent call a trait dispatch."
+    }
+  ],
+  "profiles": [
+    {
+      "name": "default",
+      "rust": {
+        "offline": true,
+        "tests": false
+      }
+    },
+    {
+      "name": "serde-arbitrary-precision",
+      "project": "serde-json",
+      "rust": {
+        "offline": true,
+        "tests": false,
+        "features": {
+          "serde_json": [
+            "arbitrary_precision"
+          ]
+        }
+      }
+    }
+  ],
+  "traitControl": {
+    "project": "serde-json",
+    "call": {
+      "file": "src/value/de.rs",
+      "line": 52,
+      "column": 17,
+      "needle": "Number::deserialize(de)",
+      "sourceLine": "                Number::deserialize(de).map(Value::Number)"
+    },
+    "expected": null,
+    "reason": "Deserialize is a trait impl beginningnumber.rs395, method397. Do not index trait methods as inherent by nominal owner name."
+  },
+  "macroControl": {
+    "project": "serde-json",
+    "region": {
+      "file": "src/value/from.rs",
+      "line": 20,
+      "column": 1,
+      "needle": "from_integer!",
+      "sourceLine": "from_integer! {"
+    },
+    "expected": "opaque item-expansion; no invented generated impl functions/callers",
+    "reason": "Invocation emits integer From impls; token functions are not captured expanded definitions."
+  },
+  "next": {
+    "evidence": "Current Rust adapter already inventories impl function definitions via register_fn; nominal structs/enums/types are Binding::Other, so Type::function paths cannot traverse. Do not duplicate the existing inventory.",
+    "constraints": [
+      "Preserve string/bytes Regex identities, aliases and recorded cfg state.",
+      "Distinguish inherent and trait impls. Impl generic parameters are not currently propagated into function scope; address scope evidence before type-path binding.",
+      "Do not label source candidates as compiler proof of trait/generic/visibility applicability.",
+      "Use an explicit new model/candidate resolution if needed; retain Rust v1 readers.",
+      "Preserve local Cargo workspace and cross-crate boundaries."
+    ]
+  }
+}

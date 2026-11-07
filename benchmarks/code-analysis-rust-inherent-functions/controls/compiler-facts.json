@@ -1,0 +1,12 @@
+{
+  "rustc": "rustc 1.89.0 (29483883e 2025-08-04)",
+  "edition": "2021",
+  "default": "text,bytes,text,text,trait,trait,nominal,trait,trait,type,value,u8,u16,fallback",
+  "selected": "text,bytes,text,text,trait,trait,nominal,trait,trait,type,value,u8,u16,selected",
+  "basis": "Authored executable compiler controls before a new product rule; no upstream module/build script executed.",
+  "limits": [
+    "Trait and generic-shadow calls do not target the visible nominal Factory implementation.",
+    "Specialized Generic<u8>/Generic<u16> have distinct bodies; owner spelling alone is insufficient.",
+    "Rust type/value namespaces permit dual::Factory type and function at the same name."
+  ]
+}

@@ -1,0 +1,84 @@
+[
+  {
+    "profile": "regex",
+    "functionInventoryPreserved": true,
+    "oldTargetsPreserved": 763,
+    "oldTargetChanges": [],
+    "removedCalls": [],
+    "reason": null,
+    "additionalSourceCandidatesNotIndependentlyAudited": 1205
+  },
+  {
+    "profile": "serde-default",
+    "functionInventoryPreserved": true,
+    "oldTargetsPreserved": 95,
+    "oldTargetChanges": [],
+    "removedCalls": [
+      {
+        "column": 29,
+        "endColumn": 66,
+        "endLine": 446,
+        "file": "src/number.rs",
+        "line": 446,
+        "reason": "rust-macro-not-expanded",
+        "resolution": "unresolved"
+      },
+      {
+        "column": 20,
+        "endColumn": 35,
+        "endLine": 447,
+        "file": "src/number.rs",
+        "line": 447,
+        "reason": "rust-trait-or-method-dispatch",
+        "resolution": "unresolved"
+      },
+      {
+        "column": 28,
+        "endColumn": 80,
+        "endLine": 448,
+        "file": "src/number.rs",
+        "line": 448,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      {
+        "column": 32,
+        "endColumn": 79,
+        "endLine": 448,
+        "file": "src/number.rs",
+        "line": 448,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      {
+        "column": 43,
+        "endColumn": 69,
+        "endLine": 450,
+        "file": "src/number.rs",
+        "line": 450,
+        "reason": "rust-macro-not-expanded",
+        "resolution": "unresolved"
+      },
+      {
+        "column": 17,
+        "endColumn": 28,
+        "endLine": 451,
+        "file": "src/number.rs",
+        "line": 451,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      }
+    ],
+    "reason": "Six nested calls in number.rs446-451 are inside #[cfg(feature=\"arbitrary_precision\")] visit_map; now excluded and reported in default profile.",
+    "additionalSourceCandidatesNotIndependentlyAudited": 22
+  },
+  {
+    "profile": "serde-arbitrary",
+    "functionInventoryPreserved": true,
+    "oldTargetsPreserved": 153,
+    "oldTargetChanges": [],
+    "removedCalls": [],
+    "reason": null,
+    "additionalSourceCandidatesNotIndependentlyAudited": 23
+  }
+]

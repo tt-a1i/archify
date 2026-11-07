@@ -1,0 +1,20 @@
+{
+  "checkOnSave": false,
+  "procMacro": {
+    "enable": false
+  },
+  "cargo": {
+    "allTargets": false,
+    "buildScripts": {
+      "enable": false,
+      "rebuildOnSave": false
+    },
+    "extraArgs": [
+      "--offline",
+      "--locked"
+    ]
+  },
+  "diagnostics": {
+    "enable": false
+  }
+}

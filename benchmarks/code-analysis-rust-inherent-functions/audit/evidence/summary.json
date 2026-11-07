@@ -1,0 +1,305 @@
+{
+  "sourceCandidate": "20ce8f32ad9002c408abeb11a6fedec539aba004",
+  "runtimeCommit": "1a1f6677e",
+  "tool": "rust-analyzer 1.89.0 (29483883 2025-08-04)",
+  "target": "aarch64-apple-darwin",
+  "emittedTargetObservations": 1250,
+  "uniquePhysicalSites": 1230,
+  "languageServerAgrees": 1250,
+  "different": 0,
+  "unavailable": 0,
+  "reservedKnownMissObservations": 4,
+  "reservedKnownMissPhysicalSites": 2,
+  "reservedKnownMissAgreement": 4,
+  "profiles": {
+    "regex": {
+      "emittedTargetObservations": 1205,
+      "reservedKnownMisses": 0,
+      "seconds": 4.141585750039667,
+      "config": {
+        "checkOnSave": false,
+        "procMacro": {
+          "enable": false
+        },
+        "cargo": {
+          "allTargets": false,
+          "buildScripts": {
+            "enable": false,
+            "rebuildOnSave": false
+          },
+          "extraArgs": [
+            "--offline",
+            "--locked"
+          ],
+          "target": "aarch64-apple-darwin",
+          "features": []
+        },
+        "diagnostics": {
+          "enable": false
+        }
+      },
+      "lockSha256": "a191beb98777859e5a3a14c72144d1981d7506e3815ab9cb4f2e73fd80e3eb6b",
+      "effectiveSafetySettings": {
+        "checkOnSave": true,
+        "procMacro_enable": true,
+        "cargo_buildScripts_enable": true
+      },
+      "serverStatuses": [
+        {
+          "health": "ok",
+          "quiescent": false,
+          "message": null
+        },
+        {
+          "health": "ok",
+          "quiescent": true,
+          "message": null
+        }
+      ]
+    },
+    "serde-default": {
+      "emittedTargetObservations": 22,
+      "reservedKnownMisses": 2,
+      "seconds": 2.6864991249749437,
+      "config": {
+        "checkOnSave": false,
+        "procMacro": {
+          "enable": false
+        },
+        "cargo": {
+          "allTargets": false,
+          "buildScripts": {
+            "enable": false,
+            "rebuildOnSave": false
+          },
+          "extraArgs": [
+            "--offline",
+            "--locked"
+          ],
+          "target": "aarch64-apple-darwin",
+          "features": []
+        },
+        "diagnostics": {
+          "enable": false
+        }
+      },
+      "lockSha256": "4b2b9805c69728cc0f86308b637218ad9d73dd1c7b30d48dac1c5455bd82bdb7",
+      "effectiveSafetySettings": {
+        "checkOnSave": true,
+        "procMacro_enable": true,
+        "cargo_buildScripts_enable": true
+      },
+      "serverStatuses": [
+        {
+          "health": "ok",
+          "quiescent": false,
+          "message": null
+        },
+        {
+          "health": "ok",
+          "quiescent": true,
+          "message": null
+        }
+      ]
+    },
+    "serde-arbitrary": {
+      "emittedTargetObservations": 23,
+      "reservedKnownMisses": 2,
+      "seconds": 2.6885369999799877,
+      "config": {
+        "checkOnSave": false,
+        "procMacro": {
+          "enable": false
+        },
+        "cargo": {
+          "allTargets": false,
+          "buildScripts": {
+            "enable": false,
+            "rebuildOnSave": false
+          },
+          "extraArgs": [
+            "--offline",
+            "--locked"
+          ],
+          "target": "aarch64-apple-darwin",
+          "features": [
+            "arbitrary_precision"
+          ]
+        },
+        "diagnostics": {
+          "enable": false
+        }
+      },
+      "lockSha256": "4b2b9805c69728cc0f86308b637218ad9d73dd1c7b30d48dac1c5455bd82bdb7",
+      "effectiveSafetySettings": {
+        "checkOnSave": true,
+        "procMacro_enable": true,
+        "cargo_buildScripts_enable": true
+      },
+      "serverStatuses": [
+        {
+          "health": "ok",
+          "quiescent": false,
+          "message": null
+        },
+        {
+          "health": "ok",
+          "quiescent": true,
+          "message": null
+        }
+      ]
+    }
+  },
+  "negativeGraderControl": {
+    "observations": 1,
+    "different": 1,
+    "productWrongTarget": false,
+    "reason": "Deliberately substitute bytes::Regex::new as expected target for the string::Regex::new call; RA selects string, so grader must reject."
+  },
+  "toolingCost": {
+    "optionalInstalledComponent": "rust-analyzer for existing stable toolchain; rust-src already present",
+    "executableBytes": 35248592,
+    "initialOfflineFailure": "automod not cached; generated separate lockfiles and fetched dependencies for audit copies",
+    "downloadedCrateArchivesObserved": [
+      {
+        "crate": "ar_archive_writer",
+        "version": "0.5.3",
+        "cachedArchiveBytes": 85482
+      },
+      {
+        "crate": "arbitrary",
+        "version": "1.5.0",
+        "cachedArchiveBytes": 38686
+      },
+      {
+        "crate": "atty",
+        "version": "0.2.14",
+        "cachedArchiveBytes": 5470
+      },
+      {
+        "crate": "automod",
+        "version": "1.0.17",
+        "cachedArchiveBytes": 9237
+      },
+      {
+        "crate": "derive_arbitrary",
+        "version": "1.5.0",
+        "cachedArchiveBytes": 12306
+      },
+      {
+        "crate": "dissimilar",
+        "version": "1.0.11",
+        "cachedArchiveBytes": 31622
+      },
+      {
+        "crate": "doc-comment",
+        "version": "0.3.4",
+        "cachedArchiveBytes": 4341
+      },
+      {
+        "crate": "env_logger",
+        "version": "0.9.3",
+        "cachedArchiveBytes": 33291
+      },
+      {
+        "crate": "humantime",
+        "version": "2.4.0",
+        "cachedArchiveBytes": 23251
+      },
+      {
+        "crate": "indoc",
+        "version": "2.0.8",
+        "cachedArchiveBytes": 17682
+      },
+      {
+        "crate": "lexopt",
+        "version": "0.3.2",
+        "cachedArchiveBytes": 27407
+      },
+      {
+        "crate": "object",
+        "version": "0.39.1",
+        "cachedArchiveBytes": 360376
+      },
+      {
+        "crate": "psm",
+        "version": "0.1.32",
+        "cachedArchiveBytes": 25073
+      },
+      {
+        "crate": "quickcheck",
+        "version": "1.1.0",
+        "cachedArchiveBytes": 31932
+      },
+      {
+        "crate": "rand",
+        "version": "0.10.3",
+        "cachedArchiveBytes": 105994
+      },
+      {
+        "crate": "serde_bytes",
+        "version": "0.11.19",
+        "cachedArchiveBytes": 13427
+      },
+      {
+        "crate": "serde_stacker",
+        "version": "0.1.14",
+        "cachedArchiveBytes": 13257
+      },
+      {
+        "crate": "stacker",
+        "version": "0.1.25",
+        "cachedArchiveBytes": 17498
+      },
+      {
+        "crate": "tabwriter",
+        "version": "1.4.1",
+        "cachedArchiveBytes": 10047
+      },
+      {
+        "crate": "target-tuple",
+        "version": "1.0.2",
+        "cachedArchiveBytes": 7277
+      },
+      {
+        "crate": "termcolor",
+        "version": "1.4.1",
+        "cachedArchiveBytes": 18773
+      },
+      {
+        "crate": "textwrap",
+        "version": "0.16.4",
+        "cachedArchiveBytes": 61575
+      },
+      {
+        "crate": "trybuild",
+        "version": "1.0.122",
+        "cachedArchiveBytes": 46989
+      }
+    ],
+    "cachedArchiveBytesForObservedDownloads": 1000993,
+    "installationSeconds": "not measured",
+    "freshCacheCostControlled": false,
+    "productRuntimeOrDependencyChange": false
+  },
+  "cargoGuard": {
+    "requests": 56,
+    "allowed": 32,
+    "rejected": 24,
+    "metadataAlwaysLockedOffline": true,
+    "notes": [
+      "RA prefers CARGO_HOME/bin/cargo over CARGO/PATH; prepare.py guards both.",
+      "Rustc/config queries through Cargo are rejected; RA falls back to direct rustc queries.",
+      "No project build/check/test/proc-macro/build-script execution."
+    ]
+  },
+  "limits": [
+    "Independent LSP definition agreement, not rustc compilation or whole-project precision/recall.",
+    "Observations overlap across feature profiles and include the earlier finite source cases.",
+    "Generated dependency locks are audit-only; original source snapshots have no Cargo.lock.",
+    "Sysroot metadata fell back to no-deps after offline missing cc1.2.0; see profile logs.",
+    "Recorded timings include cache-dependent startup and selected definition queries, not comparable whole-analysis workloads.",
+    "Negative control measures grader discrimination and is excluded from product accuracy counts.",
+    "Cross-host replay is unverified; fixed target and input digests reject scope drift."
+  ]
+}
