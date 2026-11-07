@@ -1,0 +1,1022 @@
+{
+  "kind": "post-design explicit source-chain anchor review",
+  "count": 35,
+  "limitation": "Source-only agreement, not independent compiler attribution, complete scope analysis, runtime initialization proof or a precision/recall denominator. Includes the four selected cases; do not add counts.",
+  "rows": [
+    {
+      "project": "jinja",
+      "call": {
+        "file": "tests/test_api.py",
+        "line": 100,
+        "column": 16,
+        "endLine": 100,
+        "endColumn": 37,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/jinja2/utils.py",
+          "name": "is_undefined",
+          "line": 104,
+          "column": 1
+        }
+      },
+      "callText": "is_undefined(expr2())",
+      "importLine": 11,
+      "importText": "from jinja2 import is_undefined",
+      "exportFile": "src/jinja2/__init__.py",
+      "exportLine": 32,
+      "exportText": "from .utils import is_undefined as is_undefined",
+      "targetHeader": "def is_undefined(obj: t.Any) -> bool:",
+      "sha256": {
+        "tests/test_api.py": "d6929b0602fa0ae0d824d26e9e38071a1db8a11c286e3478f61c44f53777879c",
+        "src/jinja2/__init__.py": "c717a93bd8bb0c7b2a910ae004476e2ed7e8cf6402b93ebf81b2f85d237585b5",
+        "src/jinja2/utils.py": "ad1a77a3d7bb64a4b87f2ad645b10bc8b729b8655315c9e8a1a39ad6ac7f1489"
+      }
+    },
+    {
+      "project": "jinja",
+      "call": {
+        "file": "tests/test_api.py",
+        "line": 295,
+        "column": 29,
+        "endLine": 295,
+        "endColumn": 66,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/jinja2/runtime.py",
+          "name": "make_logging_undefined",
+          "line": 912,
+          "column": 1
+        }
+      },
+      "callText": "make_logging_undefined(DebugLogger())",
+      "importLine": 12,
+      "importText": "from jinja2 import make_logging_undefined",
+      "exportFile": "src/jinja2/__init__.py",
+      "exportLine": 28,
+      "exportText": "from .runtime import make_logging_undefined as make_logging_undefined",
+      "targetHeader": "def make_logging_undefined(",
+      "sha256": {
+        "tests/test_api.py": "d6929b0602fa0ae0d824d26e9e38071a1db8a11c286e3478f61c44f53777879c",
+        "src/jinja2/__init__.py": "c717a93bd8bb0c7b2a910ae004476e2ed7e8cf6402b93ebf81b2f85d237585b5",
+        "src/jinja2/runtime.py": "80393e1af76b8895ea82c19b1e0adc2933f4629eb33d7ce1ceb2290851f78c05"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/celery/src/task_app/__init__.py",
+        "line": 21,
+        "column": 16,
+        "endLine": 21,
+        "endColumn": 45,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"index.html\")",
+      "importLine": 4,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "examples/celery/src/task_app/__init__.py": "172de995eb076d7ea1911f20bf4c2fcb72dbc3d7eee3e5796c4cdfa2dfd486ab",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/javascript/js_example/views.py",
+        "line": 11,
+        "column": 12,
+        "endLine": 11,
+        "endColumn": 48,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(f\"{js}.html\", js=js)",
+      "importLine": 2,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "examples/javascript/js_example/views.py": "221cbb10e105b7463f25e0f296da6efc4db0346f49c6127f07168f283b3e70ca",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/javascript/js_example/views.py",
+        "line": 18,
+        "column": 12,
+        "endLine": 18,
+        "endColumn": 33,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/json/__init__.py",
+          "name": "jsonify",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "jsonify(result=a + b)",
+      "importLine": 1,
+      "importText": "from flask import jsonify",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 27,
+      "exportText": "from .json import jsonify as jsonify",
+      "targetHeader": "def jsonify(*args: t.Any, **kwargs: t.Any) -> Response:",
+      "sha256": {
+        "examples/javascript/js_example/views.py": "221cbb10e105b7463f25e0f296da6efc4db0346f49c6127f07168f283b3e70ca",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/json/__init__.py": "84b351f3df296aaa1e7dd78086b69ae70c89cbe6e6441da4d9d578120572d99f"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 25,
+        "column": 20,
+        "endLine": 25,
+        "endColumn": 51,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "redirect",
+          "line": 249,
+          "column": 1
+        }
+      },
+      "callText": "redirect(url_for(\"auth.login\"))",
+      "importLine": 6,
+      "importText": "from flask import redirect",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 22,
+      "exportText": "from .helpers import redirect as redirect",
+      "targetHeader": "def redirect(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 25,
+        "column": 29,
+        "endLine": 25,
+        "endColumn": 50,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "url_for",
+          "line": 195,
+          "column": 1
+        }
+      },
+      "callText": "url_for(\"auth.login\")",
+      "importLine": 10,
+      "importText": "from flask import url_for",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 26,
+      "exportText": "from .helpers import url_for as url_for",
+      "targetHeader": "def url_for(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 77,
+        "column": 24,
+        "endLine": 77,
+        "endColumn": 55,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "redirect",
+          "line": 249,
+          "column": 1
+        }
+      },
+      "callText": "redirect(url_for(\"auth.login\"))",
+      "importLine": 6,
+      "importText": "from flask import redirect",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 22,
+      "exportText": "from .helpers import redirect as redirect",
+      "targetHeader": "def redirect(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 77,
+        "column": 33,
+        "endLine": 77,
+        "endColumn": 54,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "url_for",
+          "line": 195,
+          "column": 1
+        }
+      },
+      "callText": "url_for(\"auth.login\")",
+      "importLine": 10,
+      "importText": "from flask import url_for",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 26,
+      "exportText": "from .helpers import url_for as url_for",
+      "targetHeader": "def url_for(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 79,
+        "column": 9,
+        "endLine": 79,
+        "endColumn": 21,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "flash",
+          "line": 318,
+          "column": 1
+        }
+      },
+      "callText": "flash(error)",
+      "importLine": 4,
+      "importText": "from flask import flash",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 18,
+      "exportText": "from .helpers import flash as flash",
+      "targetHeader": "def flash(message: str, category: str = \"message\") -> None:",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 81,
+        "column": 12,
+        "endLine": 81,
+        "endColumn": 49,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"auth/register.html\")",
+      "importLine": 7,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 105,
+        "column": 20,
+        "endLine": 105,
+        "endColumn": 46,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "redirect",
+          "line": 249,
+          "column": 1
+        }
+      },
+      "callText": "redirect(url_for(\"index\"))",
+      "importLine": 6,
+      "importText": "from flask import redirect",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 22,
+      "exportText": "from .helpers import redirect as redirect",
+      "targetHeader": "def redirect(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 105,
+        "column": 29,
+        "endLine": 105,
+        "endColumn": 45,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "url_for",
+          "line": 195,
+          "column": 1
+        }
+      },
+      "callText": "url_for(\"index\")",
+      "importLine": 10,
+      "importText": "from flask import url_for",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 26,
+      "exportText": "from .helpers import url_for as url_for",
+      "targetHeader": "def url_for(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 107,
+        "column": 9,
+        "endLine": 107,
+        "endColumn": 21,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "flash",
+          "line": 318,
+          "column": 1
+        }
+      },
+      "callText": "flash(error)",
+      "importLine": 4,
+      "importText": "from flask import flash",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 18,
+      "exportText": "from .helpers import flash as flash",
+      "targetHeader": "def flash(message: str, category: str = \"message\") -> None:",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 109,
+        "column": 12,
+        "endLine": 109,
+        "endColumn": 46,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"auth/login.html\")",
+      "importLine": 7,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 116,
+        "column": 12,
+        "endLine": 116,
+        "endColumn": 38,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "redirect",
+          "line": 249,
+          "column": 1
+        }
+      },
+      "callText": "redirect(url_for(\"index\"))",
+      "importLine": 6,
+      "importText": "from flask import redirect",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 22,
+      "exportText": "from .helpers import redirect as redirect",
+      "targetHeader": "def redirect(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/auth.py",
+        "line": 116,
+        "column": 21,
+        "endLine": 116,
+        "endColumn": 37,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "url_for",
+          "line": 195,
+          "column": 1
+        }
+      },
+      "callText": "url_for(\"index\")",
+      "importLine": 10,
+      "importText": "from flask import url_for",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 26,
+      "exportText": "from .helpers import url_for as url_for",
+      "targetHeader": "def url_for(",
+      "sha256": {
+        "examples/tutorial/flaskr/auth.py": "a5ed5eaa05c6f6ee3e5bdb07b9e657a6e9320a115a68fd74b1cb4ac646680167",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 25,
+        "column": 12,
+        "endLine": 25,
+        "endColumn": 59,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"blog/index.html\", posts=posts)",
+      "importLine": 5,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 73,
+        "column": 13,
+        "endLine": 73,
+        "endColumn": 25,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "flash",
+          "line": 318,
+          "column": 1
+        }
+      },
+      "callText": "flash(error)",
+      "importLine": 2,
+      "importText": "from flask import flash",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 18,
+      "exportText": "from .helpers import flash as flash",
+      "targetHeader": "def flash(message: str, category: str = \"message\") -> None:",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 81,
+        "column": 20,
+        "endLine": 81,
+        "endColumn": 51,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "redirect",
+          "line": 249,
+          "column": 1
+        }
+      },
+      "callText": "redirect(url_for(\"blog.index\"))",
+      "importLine": 4,
+      "importText": "from flask import redirect",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 22,
+      "exportText": "from .helpers import redirect as redirect",
+      "targetHeader": "def redirect(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 81,
+        "column": 29,
+        "endLine": 81,
+        "endColumn": 50,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "url_for",
+          "line": 195,
+          "column": 1
+        }
+      },
+      "callText": "url_for(\"blog.index\")",
+      "importLine": 7,
+      "importText": "from flask import url_for",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 26,
+      "exportText": "from .helpers import url_for as url_for",
+      "targetHeader": "def url_for(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 83,
+        "column": 12,
+        "endLine": 83,
+        "endColumn": 47,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"blog/create.html\")",
+      "importLine": 5,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 101,
+        "column": 13,
+        "endLine": 101,
+        "endColumn": 25,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "flash",
+          "line": 318,
+          "column": 1
+        }
+      },
+      "callText": "flash(error)",
+      "importLine": 2,
+      "importText": "from flask import flash",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 18,
+      "exportText": "from .helpers import flash as flash",
+      "targetHeader": "def flash(message: str, category: str = \"message\") -> None:",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 108,
+        "column": 20,
+        "endLine": 108,
+        "endColumn": 51,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "redirect",
+          "line": 249,
+          "column": 1
+        }
+      },
+      "callText": "redirect(url_for(\"blog.index\"))",
+      "importLine": 4,
+      "importText": "from flask import redirect",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 22,
+      "exportText": "from .helpers import redirect as redirect",
+      "targetHeader": "def redirect(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 108,
+        "column": 29,
+        "endLine": 108,
+        "endColumn": 50,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "url_for",
+          "line": 195,
+          "column": 1
+        }
+      },
+      "callText": "url_for(\"blog.index\")",
+      "importLine": 7,
+      "importText": "from flask import url_for",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 26,
+      "exportText": "from .helpers import url_for as url_for",
+      "targetHeader": "def url_for(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 110,
+        "column": 12,
+        "endLine": 110,
+        "endColumn": 58,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"blog/update.html\", post=post)",
+      "importLine": 5,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 125,
+        "column": 12,
+        "endLine": 125,
+        "endColumn": 43,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "redirect",
+          "line": 249,
+          "column": 1
+        }
+      },
+      "callText": "redirect(url_for(\"blog.index\"))",
+      "importLine": 4,
+      "importText": "from flask import redirect",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 22,
+      "exportText": "from .helpers import redirect as redirect",
+      "targetHeader": "def redirect(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "examples/tutorial/flaskr/blog.py",
+        "line": 125,
+        "column": 21,
+        "endLine": 125,
+        "endColumn": 42,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "url_for",
+          "line": 195,
+          "column": 1
+        }
+      },
+      "callText": "url_for(\"blog.index\")",
+      "importLine": 7,
+      "importText": "from flask import url_for",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 26,
+      "exportText": "from .helpers import url_for as url_for",
+      "targetHeader": "def url_for(",
+      "sha256": {
+        "examples/tutorial/flaskr/blog.py": "c49c5f6e3db32d74bfac13633fd328ec904cb7159d76ca78f6956432076c1fd7",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "tests/test_apps/blueprintapp/apps/admin/__init__.py",
+        "line": 15,
+        "column": 12,
+        "endLine": 15,
+        "endColumn": 47,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"admin/index.html\")",
+      "importLine": 2,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "tests/test_apps/blueprintapp/apps/admin/__init__.py": "5e849dc6984b0b3944ea687e40d96da9d5a9f42e32aa5b4035dedef4558ad83d",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "tests/test_apps/blueprintapp/apps/admin/__init__.py",
+        "line": 20,
+        "column": 12,
+        "endLine": 20,
+        "endColumn": 49,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"./admin/index.html\")",
+      "importLine": 2,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "tests/test_apps/blueprintapp/apps/admin/__init__.py": "5e849dc6984b0b3944ea687e40d96da9d5a9f42e32aa5b4035dedef4558ad83d",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "tests/test_apps/blueprintapp/apps/frontend/__init__.py",
+        "line": 9,
+        "column": 12,
+        "endLine": 9,
+        "endColumn": 50,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"frontend/index.html\")",
+      "importLine": 2,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "tests/test_apps/blueprintapp/apps/frontend/__init__.py": "1630cefb5d073808e8b4164e4d910f69aee57a93eaee53debb575e7e7aabb83f",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "tests/test_apps/blueprintapp/apps/frontend/__init__.py",
+        "line": 14,
+        "column": 12,
+        "endLine": 14,
+        "endColumn": 52,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "render_template(\"missing_template.html\")",
+      "importLine": 2,
+      "importText": "from flask import render_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 38,
+      "exportText": "from .templating import render_template as render_template",
+      "targetHeader": "def render_template(",
+      "sha256": {
+        "tests/test_apps/blueprintapp/apps/frontend/__init__.py": "1630cefb5d073808e8b4164e4d910f69aee57a93eaee53debb575e7e7aabb83f",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "tests/test_converters.py",
+        "line": 26,
+        "column": 16,
+        "endLine": 26,
+        "endColumn": 48,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/helpers.py",
+          "name": "url_for",
+          "line": 195,
+          "column": 1
+        }
+      },
+      "callText": "url_for(\"index\", args=[4, 5, 6])",
+      "importLine": 5,
+      "importText": "from flask import url_for",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 26,
+      "exportText": "from .helpers import url_for as url_for",
+      "targetHeader": "def url_for(",
+      "sha256": {
+        "tests/test_converters.py": "4f529ca6ee85a88c487a488807ff30cb8e4672307b9017f348174a67a5984347",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/helpers.py": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "tests/type_check/typing_route.py",
+        "line": 28,
+        "column": 12,
+        "endLine": 28,
+        "endColumn": 36,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/json/__init__.py",
+          "name": "jsonify",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "callText": "jsonify(\"Hello, World!\")",
+      "importLine": 7,
+      "importText": "from flask import jsonify",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 27,
+      "exportText": "from .json import jsonify as jsonify",
+      "targetHeader": "def jsonify(*args: t.Any, **kwargs: t.Any) -> Response:",
+      "sha256": {
+        "tests/type_check/typing_route.py": "4554c7c77994fdd2ba2a8c50756c418aba619707f3e951551f26e8e9fd37c72a",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/json/__init__.py": "84b351f3df296aaa1e7dd78086b69ae70c89cbe6e6441da4d9d578120572d99f"
+      }
+    },
+    {
+      "project": "flask",
+      "call": {
+        "file": "tests/type_check/typing_route.py",
+        "line": 93,
+        "column": 12,
+        "endLine": 93,
+        "endColumn": 55,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "stream_template",
+          "line": 188,
+          "column": 1
+        }
+      },
+      "callText": "stream_template(\"index.html\", name=\"Hello\")",
+      "importLine": 8,
+      "importText": "from flask import stream_template",
+      "exportFile": "src/flask/__init__.py",
+      "exportLine": 40,
+      "exportText": "from .templating import stream_template as stream_template",
+      "targetHeader": "def stream_template(",
+      "sha256": {
+        "tests/type_check/typing_route.py": "4554c7c77994fdd2ba2a8c50756c418aba619707f3e951551f26e8e9fd37c72a",
+        "src/flask/__init__.py": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da",
+        "src/flask/templating.py": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      }
+    }
+  ]
+}
