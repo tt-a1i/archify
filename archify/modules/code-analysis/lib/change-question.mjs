@@ -32,19 +32,20 @@ function normalize(value, root) {
 }
 
 export function changeEntryLanguage(entry) {
-  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java or .go source file with --entry.');
+  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go or .rs source file with --entry.');
   if (/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry)) return 'ts';
   if (/\.py$/.test(entry)) return 'py';
   if (/\.java$/.test(entry)) return 'java';
   if (/\.go$/.test(entry)) return 'go';
-  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java or .go source file with --entry.');
+  if (/\.rs$/.test(entry)) return 'rust';
+  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go or .rs source file with --entry.');
 }
 
 export function captureChangeSide(root, config, language = 'ts') {
   root = path.resolve(root);
   let resolution;
   const { facts } = extractFacts(root, { language, config, onCapture: input => { resolution = input; } });
-  if (language !== 'ts' && language !== 'go') resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
+  if (!['ts', 'go', 'rust'].includes(language)) resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
   return { root, facts, resolution, language, configDigest: digest(JSON.stringify(config)) };
 }
 
@@ -74,7 +75,7 @@ function inspectSide(capture, side) {
     sourceIdentity: unavailable.some(file => file.status !== 'parse-error') ? 'incomplete' : 'valid',
     unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
     ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
-    resolution: ['ts', 'go'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
+    resolution: ['ts', 'go', 'rust'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
   };
   const references = new Map(), calls = new Map();
   (facts.calls || []).forEach((fact, factIndex) => {
@@ -99,7 +100,8 @@ function inspectSide(capture, side) {
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && facts.callModel === 'python-lexical-v1')
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && facts.callModel === 'java-static-lexical-v1')
-    || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && facts.callModel === 'go-source-direct-v1');
+    || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && facts.callModel === 'go-source-direct-v1')
+    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && facts.callModel === 'rust-source-direct-v1');
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
 }
 
@@ -119,7 +121,7 @@ function definitions(side, file) {
   if (!captured || captured.status !== 'valid') return { coverage: captured?.status || 'not-captured', records: [] };
   if (side.facts.repository.language !== 'ts') {
     const result = [], unavailable = [];
-    const kinds = side.facts.repository.language === 'go' ? ['FuncDecl'] : side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
+    const kinds = side.facts.repository.language === 'rust' ? ['RustItemFn'] : side.facts.repository.language === 'go' ? ['FuncDecl'] : side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
     for (const fn of side.facts.functions.filter(fn => fn.file === file)) {
       const metadata = fn.definition;
       const slice = rangeText(captured.sourceText, metadata?.sourceRange);
@@ -252,7 +254,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const expectedConfig = digest(JSON.stringify(config));
   for (const capture of [base, head]) {
     const repo = capture.facts.repository;
-    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^go-parser@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
+    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^go-parser@/.test(repo.adapter) : language === 'rust' ? /^rust-syn@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
     if (capture.language !== language || repo.language !== language || !producerMatches || capture.configDigest !== expectedConfig) fail('task/capture-mismatch', 'Both captures must use the entry language, matching producers and the same analysis configuration.');
   }
   if (base.facts.repository.adapter !== head.facts.repository.adapter || base.facts.repository.adapterRevision !== head.facts.repository.adapterRevision || base.facts.callModel !== head.facts.callModel) fail('task/capture-mismatch', 'Paired capture producers, revisions and call models must match.');
