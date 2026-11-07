@@ -1,0 +1,107 @@
+{
+  "stage": "SDK-only prototype, no production change or source/ZIP parity yet",
+  "baseline": "1788ace7a692586332bdb7ceabf17ec8eab3d54e",
+  "sourceFreeze": "1461daaae",
+  "helperSha256": "d2275742dee10a6e1db34bc93b715287cff72bf304c6e45328ca6a734c0f354f",
+  "sourceCases": [
+    {
+      "call": {
+        "column": 2,
+        "endColumn": 14,
+        "endLine": 82,
+        "file": "mux.go",
+        "line": 82,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "context.go",
+          "line": 82,
+          "name": "Reset"
+        }
+      },
+      "expected": {
+        "file": "context.go",
+        "line": 82,
+        "column": 1,
+        "name": "Reset"
+      },
+      "grade": "correct source target"
+    },
+    {
+      "call": {
+        "column": 3,
+        "endColumn": 36,
+        "endLine": 309,
+        "file": "mux.go",
+        "line": 309,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 203,
+          "name": "NotFound"
+        }
+      },
+      "expected": {
+        "file": "mux.go",
+        "line": 203,
+        "column": 1,
+        "name": "NotFound"
+      },
+      "grade": "correct source target"
+    },
+    {
+      "call": {
+        "column": 3,
+        "endColumn": 52,
+        "endLine": 312,
+        "file": "mux.go",
+        "line": 312,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 223,
+          "name": "MethodNotAllowed"
+        }
+      },
+      "expected": {
+        "file": "mux.go",
+        "line": 223,
+        "column": 1,
+        "name": "MethodNotAllowed"
+      },
+      "grade": "correct source target"
+    }
+  ],
+  "callRangesPreserved": true,
+  "functionInventoryPreserved": true,
+  "oldTargetsChanged": 0,
+  "newTargets": 3,
+  "interfaceControlsUnresolved": [
+    73,
+    90
+  ],
+  "baselineTypingErrors": 2249,
+  "prototypeTypingErrors": 0,
+  "stdlibSetup": {
+    "command": [
+      "go",
+      "list",
+      "-export",
+      "-json",
+      "std"
+    ],
+    "exit": 0,
+    "seconds": 1.2908208329463378,
+    "goVersion": "go version go1.27.2 darwin/arm64",
+    "scope": "Only SDK standard packages in isolated directory, no project Go module/source/tests/generate/dependency invocation",
+    "goos": "darwin",
+    "goarch": "arm64",
+    "cgo": false,
+    "network": "GOPROXY/GOSUMDB off"
+  },
+  "notes": [
+    "Stdlib-only export import removes the observed missing net/http/context/sync types without ad hoc flow rules.",
+    "All SDK export preparation covers379packages/372archives/214912504bytes with warm existing cache; not controlled cold cost.",
+    "Prototype still says partial-source-bindings; this is not project execution, argument applicability or complete impact."
+  ]
+}

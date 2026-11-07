@@ -1,0 +1,2030 @@
+[
+  {
+    "project": "chi",
+    "callsBefore": 2879,
+    "callsAfter": 2879,
+    "rangesPreserved": true,
+    "functionsPreserved": true,
+    "oldTargetChanges": [],
+    "newTargets": [
+      {
+        "column": 2,
+        "endColumn": 14,
+        "endLine": 82,
+        "file": "mux.go",
+        "line": 82,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "context.go",
+          "line": 82,
+          "name": "Reset"
+        }
+      },
+      {
+        "column": 3,
+        "endColumn": 36,
+        "endLine": 309,
+        "file": "mux.go",
+        "line": 309,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 203,
+          "name": "NotFound"
+        }
+      },
+      {
+        "column": 3,
+        "endColumn": 52,
+        "endLine": 312,
+        "file": "mux.go",
+        "line": 312,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 223,
+          "name": "MethodNotAllowed"
+        }
+      }
+    ],
+    "knownMissReview": [
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 14,
+            "endLine": 82,
+            "file": "mux.go",
+            "line": 82,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "context.go",
+            "name": "Reset",
+            "line": 82,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "github.com/go-chi/chi/v5",
+          "sourceLine": "\trctx.Reset()",
+          "targetSourceLine": "func (x *Context) Reset() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 14,
+          "endLine": 82,
+          "file": "mux.go",
+          "line": 82,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "context.go",
+            "line": 82,
+            "name": "Reset"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 3,
+            "endColumn": 36,
+            "endLine": 309,
+            "file": "mux.go",
+            "line": 309,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "mux.go",
+            "name": "NotFound",
+            "line": 203,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "github.com/go-chi/chi/v5",
+          "sourceLine": "\t\tsubr.NotFound(mx.notFoundHandler)",
+          "targetSourceLine": "func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {"
+        },
+        "actual": {
+          "column": 3,
+          "endColumn": 36,
+          "endLine": 309,
+          "file": "mux.go",
+          "line": 309,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 203,
+            "name": "NotFound"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 3,
+            "endColumn": 52,
+            "endLine": 312,
+            "file": "mux.go",
+            "line": 312,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "mux.go",
+            "name": "MethodNotAllowed",
+            "line": 223,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "github.com/go-chi/chi/v5",
+          "sourceLine": "\t\tsubr.MethodNotAllowed(mx.methodNotAllowedHandler)",
+          "targetSourceLine": "func (mx *Mux) MethodNotAllowed(handlerFn http.HandlerFunc) {"
+        },
+        "actual": {
+          "column": 3,
+          "endColumn": 52,
+          "endLine": 312,
+          "file": "mux.go",
+          "line": 312,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 223,
+            "name": "MethodNotAllowed"
+          }
+        },
+        "status": "recovered"
+      }
+    ],
+    "baselineTypingErrors": 2249,
+    "prototypeTypingErrors": 0,
+    "externalStillMissing": []
+  },
+  {
+    "project": "grpc-go",
+    "callsBefore": 59112,
+    "callsAfter": 59112,
+    "rangesPreserved": true,
+    "functionsPreserved": true,
+    "oldTargetChanges": [],
+    "newTargets": [
+      {
+        "column": 9,
+        "endColumn": 117,
+        "endLine": 170,
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "line": 170,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 61,
+          "name": "UnaryInterceptor"
+        }
+      },
+      {
+        "column": 9,
+        "endColumn": 117,
+        "endLine": 177,
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "line": 177,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 78,
+          "name": "StreamInterceptor"
+        }
+      },
+      {
+        "column": 19,
+        "endColumn": 41,
+        "endLine": 117,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 117,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 184,
+          "name": "Get"
+        }
+      },
+      {
+        "column": 20,
+        "endColumn": 35,
+        "endLine": 143,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 143,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 212,
+          "name": "Keys"
+        }
+      },
+      {
+        "column": 15,
+        "endColumn": 30,
+        "endLine": 144,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 144,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 184,
+          "name": "Get"
+        }
+      },
+      {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 169,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 169,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 225,
+          "name": "Values"
+        }
+      },
+      {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 183,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 183,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 225,
+          "name": "Values"
+        }
+      },
+      {
+        "column": 39,
+        "endColumn": 53,
+        "endLine": 203,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 203,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 203,
+          "name": "Len"
+        }
+      },
+      {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 205,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 205,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 225,
+          "name": "Values"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 60,
+        "endLine": 879,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 879,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/testutils/restartable_listener.go",
+          "line": 83,
+          "name": "Stop"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 56,
+        "endLine": 880,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 880,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/testutils/restartable_listener.go",
+          "line": 83,
+          "name": "Stop"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 63,
+        "endLine": 886,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 886,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/testutils/restartable_listener.go",
+          "line": 96,
+          "name": "Restart"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 59,
+        "endLine": 887,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 887,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/testutils/restartable_listener.go",
+          "line": 96,
+          "name": "Restart"
+        }
+      },
+      {
+        "column": 5,
+        "endColumn": 63,
+        "endLine": 213,
+        "file": "balancer/rls/picker.go",
+        "line": 213,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "metadata/metadata.go",
+          "line": 130,
+          "name": "Append"
+        }
+      },
+      {
+        "column": 5,
+        "endColumn": 26,
+        "endLine": 121,
+        "file": "credentials/xds/xds.go",
+        "line": 121,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 107,
+          "name": "UseFallbackCreds"
+        }
+      },
+      {
+        "column": 14,
+        "endColumn": 41,
+        "endLine": 137,
+        "file": "credentials/xds/xds.go",
+        "line": 137,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 122,
+          "name": "ClientSideTLSConfig"
+        }
+      },
+      {
+        "column": 25,
+        "endColumn": 51,
+        "endLine": 168,
+        "file": "credentials/xds/xds.go",
+        "line": 168,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 199,
+          "name": "MatchingSANExists"
+        }
+      },
+      {
+        "column": 5,
+        "endColumn": 26,
+        "endLine": 228,
+        "file": "credentials/xds/xds.go",
+        "line": 228,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 107,
+          "name": "UseFallbackCreds"
+        }
+      },
+      {
+        "column": 14,
+        "endColumn": 41,
+        "endLine": 243,
+        "file": "credentials/xds/xds.go",
+        "line": 243,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 160,
+          "name": "ServerSideTLSConfig"
+        }
+      },
+      {
+        "column": 10,
+        "endColumn": 44,
+        "endLine": 72,
+        "file": "internal/serviceconfig/duration_test.go",
+        "line": 72,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/serviceconfig/duration.go",
+          "line": 61,
+          "name": "UnmarshalJSON"
+        }
+      },
+      {
+        "column": 9,
+        "endColumn": 22,
+        "endLine": 63,
+        "file": "orca/call_metrics.go",
+        "line": 63,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 76,
+          "name": "recorder"
+        }
+      },
+      {
+        "column": 11,
+        "endColumn": 38,
+        "endLine": 183,
+        "file": "picker_wrapper.go",
+        "line": 183,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "clientconn.go",
+          "line": 1500,
+          "name": "getReadyTransport"
+        }
+      },
+      {
+        "column": 10,
+        "endColumn": 34,
+        "endLine": 264,
+        "file": "test/bufconn/bufconn.go",
+        "line": 264,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 238,
+          "name": "Close"
+        }
+      },
+      {
+        "column": 10,
+        "endColumn": 39,
+        "endLine": 265,
+        "file": "test/bufconn/bufconn.go",
+        "line": 265,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 248,
+          "name": "closeWrite"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 35,
+        "endLine": 697,
+        "file": "test/end2end_test.go",
+        "line": 697,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "server.go",
+          "line": 1895,
+          "name": "Stop"
+        }
+      },
+      {
+        "column": 4,
+        "endColumn": 32,
+        "endLine": 569,
+        "file": "xds/internal/balancer/outlierdetection/balancer.go",
+        "line": 569,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "xds/internal/balancer/outlierdetection/callcounter.go",
+          "line": 49,
+          "name": "clear"
+        }
+      },
+      {
+        "column": 6,
+        "endColumn": 20,
+        "endLine": 50,
+        "file": "xds/internal/balancer/outlierdetection/callcounter_test.go",
+        "line": 50,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 28,
+          "name": "Equal"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 36,
+        "endLine": 176,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 176,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 382,
+          "name": "incrInProgress"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 32,
+        "endLine": 177,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 177,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 394,
+          "name": "incrIssued"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 36,
+        "endLine": 193,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 193,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 386,
+          "name": "decrInProgress"
+        }
+      },
+      {
+        "column": 3,
+        "endColumn": 36,
+        "endLine": 195,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 195,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 366,
+          "name": "incrSucceeded"
+        }
+      },
+      {
+        "column": 3,
+        "endColumn": 34,
+        "endLine": 197,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 197,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 374,
+          "name": "incrErrored"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 42,
+        "endLine": 214,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 214,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 402,
+          "name": "addServerLoad"
+        }
+      },
+      {
+        "column": 2,
+        "endColumn": 29,
+        "endLine": 408,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 408,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 426,
+          "name": "add"
+        }
+      }
+    ],
+    "knownMissReview": [
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 11,
+            "endColumn": 38,
+            "endLine": 183,
+            "file": "picker_wrapper.go",
+            "line": 183,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "clientconn.go",
+            "name": "getReadyTransport",
+            "line": 1500,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc",
+          "sourceLine": "\t\tif t := acbw.ac.getReadyTransport(); t != nil {",
+          "targetSourceLine": "func (ac *addrConn) getReadyTransport() transport.ClientTransport {"
+        },
+        "actual": {
+          "column": 11,
+          "endColumn": 38,
+          "endLine": 183,
+          "file": "picker_wrapper.go",
+          "line": 183,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "clientconn.go",
+            "line": 1500,
+            "name": "getReadyTransport"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 9,
+            "endColumn": 117,
+            "endLine": 170,
+            "file": "authz/grpc_authz_server_interceptors.go",
+            "line": 170,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "authz/grpc_authz_server_interceptors.go",
+            "name": "UnaryInterceptor",
+            "line": 61,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/authz",
+          "sourceLine": "\treturn ((*StaticInterceptor)(atomic.LoadPointer(&i.internalInterceptor))).UnaryInterceptor(ctx, req, info, handler)",
+          "targetSourceLine": "func (i *StaticInterceptor) UnaryInterceptor(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {"
+        },
+        "actual": {
+          "column": 9,
+          "endColumn": 117,
+          "endLine": 170,
+          "file": "authz/grpc_authz_server_interceptors.go",
+          "line": 170,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 61,
+            "name": "UnaryInterceptor"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 9,
+            "endColumn": 117,
+            "endLine": 177,
+            "file": "authz/grpc_authz_server_interceptors.go",
+            "line": 177,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "authz/grpc_authz_server_interceptors.go",
+            "name": "StreamInterceptor",
+            "line": 78,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/authz",
+          "sourceLine": "\treturn ((*StaticInterceptor)(atomic.LoadPointer(&i.internalInterceptor))).StreamInterceptor(srv, ss, info, handler)",
+          "targetSourceLine": "func (i *StaticInterceptor) StreamInterceptor(srv any, ss grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {"
+        },
+        "actual": {
+          "column": 9,
+          "endColumn": 117,
+          "endLine": 177,
+          "file": "authz/grpc_authz_server_interceptors.go",
+          "line": 177,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 78,
+            "name": "StreamInterceptor"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 19,
+            "endColumn": 41,
+            "endLine": 117,
+            "file": "balancer/endpointsharding/endpointsharding.go",
+            "line": 117,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "resolver/map.go",
+            "name": "Get",
+            "line": 184,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/endpointsharding",
+          "sourceLine": "\t\tif child, ok := children.Get(endpoint); ok {",
+          "targetSourceLine": "func (em *EndpointMap) Get(e Endpoint) (value any, ok bool) {"
+        },
+        "actual": {
+          "column": 19,
+          "endColumn": 41,
+          "endLine": 117,
+          "file": "balancer/endpointsharding/endpointsharding.go",
+          "line": 117,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "resolver/map.go",
+            "line": 184,
+            "name": "Get"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 20,
+            "endColumn": 35,
+            "endLine": 143,
+            "file": "balancer/endpointsharding/endpointsharding.go",
+            "line": 143,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "resolver/map.go",
+            "name": "Keys",
+            "line": 212,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/endpointsharding",
+          "sourceLine": "\tfor _, e := range children.Keys() {",
+          "targetSourceLine": "func (em *EndpointMap) Keys() []Endpoint {"
+        },
+        "actual": {
+          "column": 20,
+          "endColumn": 35,
+          "endLine": 143,
+          "file": "balancer/endpointsharding/endpointsharding.go",
+          "line": 143,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "resolver/map.go",
+            "line": 212,
+            "name": "Keys"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 15,
+            "endColumn": 30,
+            "endLine": 144,
+            "file": "balancer/endpointsharding/endpointsharding.go",
+            "line": 144,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "resolver/map.go",
+            "name": "Get",
+            "line": 184,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/endpointsharding",
+          "sourceLine": "\t\tchild, _ := children.Get(e)",
+          "targetSourceLine": "func (em *EndpointMap) Get(e Endpoint) (value any, ok bool) {"
+        },
+        "actual": {
+          "column": 15,
+          "endColumn": 30,
+          "endLine": 144,
+          "file": "balancer/endpointsharding/endpointsharding.go",
+          "line": 144,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "resolver/map.go",
+            "line": 184,
+            "name": "Get"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 24,
+            "endColumn": 41,
+            "endLine": 169,
+            "file": "balancer/endpointsharding/endpointsharding.go",
+            "line": 169,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "resolver/map.go",
+            "name": "Values",
+            "line": 225,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/endpointsharding",
+          "sourceLine": "\tfor _, child := range children.Values() {",
+          "targetSourceLine": "func (em *EndpointMap) Values() []any {"
+        },
+        "actual": {
+          "column": 24,
+          "endColumn": 41,
+          "endLine": 169,
+          "file": "balancer/endpointsharding/endpointsharding.go",
+          "line": 169,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "resolver/map.go",
+            "line": 225,
+            "name": "Values"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 24,
+            "endColumn": 41,
+            "endLine": 183,
+            "file": "balancer/endpointsharding/endpointsharding.go",
+            "line": 183,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "resolver/map.go",
+            "name": "Values",
+            "line": 225,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/endpointsharding",
+          "sourceLine": "\tfor _, child := range children.Values() {",
+          "targetSourceLine": "func (em *EndpointMap) Values() []any {"
+        },
+        "actual": {
+          "column": 24,
+          "endColumn": 41,
+          "endLine": 183,
+          "file": "balancer/endpointsharding/endpointsharding.go",
+          "line": 183,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "resolver/map.go",
+            "line": 225,
+            "name": "Values"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 39,
+            "endColumn": 53,
+            "endLine": 203,
+            "file": "balancer/endpointsharding/endpointsharding.go",
+            "line": 203,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "resolver/map.go",
+            "name": "Len",
+            "line": 203,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/endpointsharding",
+          "sourceLine": "\tchildStates := make([]ChildState, 0, children.Len())",
+          "targetSourceLine": "func (em *EndpointMap) Len() int {"
+        },
+        "actual": {
+          "column": 39,
+          "endColumn": 53,
+          "endLine": 203,
+          "file": "balancer/endpointsharding/endpointsharding.go",
+          "line": 203,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "resolver/map.go",
+            "line": 203,
+            "name": "Len"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 24,
+            "endColumn": 41,
+            "endLine": 205,
+            "file": "balancer/endpointsharding/endpointsharding.go",
+            "line": 205,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "resolver/map.go",
+            "name": "Values",
+            "line": 225,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/endpointsharding",
+          "sourceLine": "\tfor _, child := range children.Values() {",
+          "targetSourceLine": "func (em *EndpointMap) Values() []any {"
+        },
+        "actual": {
+          "column": 24,
+          "endColumn": 41,
+          "endLine": 205,
+          "file": "balancer/endpointsharding/endpointsharding.go",
+          "line": 205,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "resolver/map.go",
+            "line": 225,
+            "name": "Values"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 5,
+            "endColumn": 63,
+            "endLine": 213,
+            "file": "balancer/rls/picker.go",
+            "line": 213,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "metadata/metadata.go",
+            "name": "Append",
+            "line": 130,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/rls",
+          "sourceLine": "\t\t\t\tres.Metadata.Append(rlsDataHeaderName, dcEntry.headerData)",
+          "targetSourceLine": "func (md MD) Append(k string, vals ...string) {"
+        },
+        "actual": {
+          "column": 5,
+          "endColumn": 63,
+          "endLine": 213,
+          "file": "balancer/rls/picker.go",
+          "line": 213,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "metadata/metadata.go",
+            "line": 130,
+            "name": "Append"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 9,
+            "endColumn": 22,
+            "endLine": 63,
+            "file": "orca/call_metrics.go",
+            "line": 63,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "orca/call_metrics.go",
+            "name": "recorder",
+            "line": 76,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/orca",
+          "sourceLine": "\treturn rw.recorder()",
+          "targetSourceLine": "func (rw *recorderWrapper) recorder() CallMetricsRecorder {"
+        },
+        "actual": {
+          "column": 9,
+          "endColumn": 22,
+          "endLine": 63,
+          "file": "orca/call_metrics.go",
+          "line": 63,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 76,
+            "name": "recorder"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 10,
+            "endColumn": 34,
+            "endLine": 264,
+            "file": "test/bufconn/bufconn.go",
+            "line": 264,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "test/bufconn/bufconn.go",
+            "name": "Close",
+            "line": 238,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/test/bufconn",
+          "sourceLine": "\terr1 := c.Reader.(*pipe).Close()",
+          "targetSourceLine": "func (p *pipe) Close() error {"
+        },
+        "actual": {
+          "column": 10,
+          "endColumn": 34,
+          "endLine": 264,
+          "file": "test/bufconn/bufconn.go",
+          "line": 264,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 238,
+            "name": "Close"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 10,
+            "endColumn": 39,
+            "endLine": 265,
+            "file": "test/bufconn/bufconn.go",
+            "line": 265,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "test/bufconn/bufconn.go",
+            "name": "closeWrite",
+            "line": 248,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/test/bufconn",
+          "sourceLine": "\terr2 := c.Writer.(*pipe).closeWrite()",
+          "targetSourceLine": "func (p *pipe) closeWrite() error {"
+        },
+        "actual": {
+          "column": 10,
+          "endColumn": 39,
+          "endLine": 265,
+          "file": "test/bufconn/bufconn.go",
+          "line": 265,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 248,
+            "name": "closeWrite"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 36,
+            "endLine": 176,
+            "file": "xds/internal/xdsclient/load/store.go",
+            "line": 176,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/xdsclient/load/store.go",
+            "name": "incrInProgress",
+            "line": 382,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/xdsclient/load",
+          "sourceLine": "\tp.(*rpcCountData).incrInProgress()",
+          "targetSourceLine": "func (rcd *rpcCountData) incrInProgress() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 36,
+          "endLine": 176,
+          "file": "xds/internal/xdsclient/load/store.go",
+          "line": 176,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 382,
+            "name": "incrInProgress"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 32,
+            "endLine": 177,
+            "file": "xds/internal/xdsclient/load/store.go",
+            "line": 177,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/xdsclient/load/store.go",
+            "name": "incrIssued",
+            "line": 394,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/xdsclient/load",
+          "sourceLine": "\tp.(*rpcCountData).incrIssued()",
+          "targetSourceLine": "func (rcd *rpcCountData) incrIssued() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 32,
+          "endLine": 177,
+          "file": "xds/internal/xdsclient/load/store.go",
+          "line": 177,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 394,
+            "name": "incrIssued"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 36,
+            "endLine": 193,
+            "file": "xds/internal/xdsclient/load/store.go",
+            "line": 193,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/xdsclient/load/store.go",
+            "name": "decrInProgress",
+            "line": 386,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/xdsclient/load",
+          "sourceLine": "\tp.(*rpcCountData).decrInProgress()",
+          "targetSourceLine": "func (rcd *rpcCountData) decrInProgress() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 36,
+          "endLine": 193,
+          "file": "xds/internal/xdsclient/load/store.go",
+          "line": 193,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 386,
+            "name": "decrInProgress"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 3,
+            "endColumn": 36,
+            "endLine": 195,
+            "file": "xds/internal/xdsclient/load/store.go",
+            "line": 195,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/xdsclient/load/store.go",
+            "name": "incrSucceeded",
+            "line": 366,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/xdsclient/load",
+          "sourceLine": "\t\tp.(*rpcCountData).incrSucceeded()",
+          "targetSourceLine": "func (rcd *rpcCountData) incrSucceeded() {"
+        },
+        "actual": {
+          "column": 3,
+          "endColumn": 36,
+          "endLine": 195,
+          "file": "xds/internal/xdsclient/load/store.go",
+          "line": 195,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 366,
+            "name": "incrSucceeded"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 3,
+            "endColumn": 34,
+            "endLine": 197,
+            "file": "xds/internal/xdsclient/load/store.go",
+            "line": 197,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/xdsclient/load/store.go",
+            "name": "incrErrored",
+            "line": 374,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/xdsclient/load",
+          "sourceLine": "\t\tp.(*rpcCountData).incrErrored()",
+          "targetSourceLine": "func (rcd *rpcCountData) incrErrored() {"
+        },
+        "actual": {
+          "column": 3,
+          "endColumn": 34,
+          "endLine": 197,
+          "file": "xds/internal/xdsclient/load/store.go",
+          "line": 197,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 374,
+            "name": "incrErrored"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 42,
+            "endLine": 214,
+            "file": "xds/internal/xdsclient/load/store.go",
+            "line": 214,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/xdsclient/load/store.go",
+            "name": "addServerLoad",
+            "line": 402,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/xdsclient/load",
+          "sourceLine": "\tp.(*rpcCountData).addServerLoad(name, d)",
+          "targetSourceLine": "func (rcd *rpcCountData) addServerLoad(name string, d float64) {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 42,
+          "endLine": 214,
+          "file": "xds/internal/xdsclient/load/store.go",
+          "line": 214,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 402,
+            "name": "addServerLoad"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 29,
+            "endLine": 408,
+            "file": "xds/internal/xdsclient/load/store.go",
+            "line": 408,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/xdsclient/load/store.go",
+            "name": "add",
+            "line": 426,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/xdsclient/load",
+          "sourceLine": "\tloads.(*rpcLoadData).add(d)",
+          "targetSourceLine": "func (rld *rpcLoadData) add(v float64) {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 29,
+          "endLine": 408,
+          "file": "xds/internal/xdsclient/load/store.go",
+          "line": 408,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 426,
+            "name": "add"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 4,
+            "endColumn": 32,
+            "endLine": 569,
+            "file": "xds/internal/balancer/outlierdetection/balancer.go",
+            "line": 569,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/balancer/outlierdetection/callcounter.go",
+            "name": "clear",
+            "line": 49,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/balancer/outlierdetection",
+          "sourceLine": "\t\t\taddrInfo.callCounter.clear()",
+          "targetSourceLine": "func (cc *callCounter) clear() {"
+        },
+        "actual": {
+          "column": 4,
+          "endColumn": 32,
+          "endLine": 569,
+          "file": "xds/internal/balancer/outlierdetection/balancer.go",
+          "line": 569,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "xds/internal/balancer/outlierdetection/callcounter.go",
+            "line": 49,
+            "name": "clear"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 5,
+            "endColumn": 26,
+            "endLine": 121,
+            "file": "credentials/xds/xds.go",
+            "line": 121,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/credentials/xds/handshake_info.go",
+            "name": "UseFallbackCreds",
+            "line": 107,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/credentials/xds",
+          "sourceLine": "\tif hi.UseFallbackCreds() {",
+          "targetSourceLine": "func (hi *HandshakeInfo) UseFallbackCreds() bool {"
+        },
+        "actual": {
+          "column": 5,
+          "endColumn": 26,
+          "endLine": 121,
+          "file": "credentials/xds/xds.go",
+          "line": 121,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/credentials/xds/handshake_info.go",
+            "line": 107,
+            "name": "UseFallbackCreds"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 14,
+            "endColumn": 41,
+            "endLine": 137,
+            "file": "credentials/xds/xds.go",
+            "line": 137,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/credentials/xds/handshake_info.go",
+            "name": "ClientSideTLSConfig",
+            "line": 122,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/credentials/xds",
+          "sourceLine": "\tcfg, err := hi.ClientSideTLSConfig(ctx)",
+          "targetSourceLine": "func (hi *HandshakeInfo) ClientSideTLSConfig(ctx context.Context) (*tls.Config, error) {"
+        },
+        "actual": {
+          "column": 14,
+          "endColumn": 41,
+          "endLine": 137,
+          "file": "credentials/xds/xds.go",
+          "line": 137,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/credentials/xds/handshake_info.go",
+            "line": 122,
+            "name": "ClientSideTLSConfig"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 25,
+            "endColumn": 51,
+            "endLine": 168,
+            "file": "credentials/xds/xds.go",
+            "line": 168,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/credentials/xds/handshake_info.go",
+            "name": "MatchingSANExists",
+            "line": 199,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/credentials/xds",
+          "sourceLine": "\t\tif cert := certs[0]; !hi.MatchingSANExists(cert) {",
+          "targetSourceLine": "func (hi *HandshakeInfo) MatchingSANExists(cert *x509.Certificate) bool {"
+        },
+        "actual": {
+          "column": 25,
+          "endColumn": 51,
+          "endLine": 168,
+          "file": "credentials/xds/xds.go",
+          "line": 168,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/credentials/xds/handshake_info.go",
+            "line": 199,
+            "name": "MatchingSANExists"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 5,
+            "endColumn": 26,
+            "endLine": 228,
+            "file": "credentials/xds/xds.go",
+            "line": 228,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/credentials/xds/handshake_info.go",
+            "name": "UseFallbackCreds",
+            "line": 107,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/credentials/xds",
+          "sourceLine": "\tif hi.UseFallbackCreds() {",
+          "targetSourceLine": "func (hi *HandshakeInfo) UseFallbackCreds() bool {"
+        },
+        "actual": {
+          "column": 5,
+          "endColumn": 26,
+          "endLine": 228,
+          "file": "credentials/xds/xds.go",
+          "line": 228,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/credentials/xds/handshake_info.go",
+            "line": 107,
+            "name": "UseFallbackCreds"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 14,
+            "endColumn": 41,
+            "endLine": 243,
+            "file": "credentials/xds/xds.go",
+            "line": 243,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/credentials/xds/handshake_info.go",
+            "name": "ServerSideTLSConfig",
+            "line": 160,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/credentials/xds",
+          "sourceLine": "\tcfg, err := hi.ServerSideTLSConfig(ctx)",
+          "targetSourceLine": "func (hi *HandshakeInfo) ServerSideTLSConfig(ctx context.Context) (*tls.Config, error) {"
+        },
+        "actual": {
+          "column": 14,
+          "endColumn": 41,
+          "endLine": 243,
+          "file": "credentials/xds/xds.go",
+          "line": 243,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/credentials/xds/handshake_info.go",
+            "line": 160,
+            "name": "ServerSideTLSConfig"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 60,
+            "endLine": 879,
+            "file": "balancer/grpclb/grpclb_test.go",
+            "line": 879,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/testutils/restartable_listener.go",
+            "name": "Stop",
+            "line": 83,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/grpclb [google.golang.org/grpc/balancer/grpclb.test]",
+          "sourceLine": "\ttss.beListeners[0].(*testutils.RestartableListener).Stop()",
+          "targetSourceLine": "func (l *RestartableListener) Stop() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 60,
+          "endLine": 879,
+          "file": "balancer/grpclb/grpclb_test.go",
+          "line": 879,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/testutils/restartable_listener.go",
+            "line": 83,
+            "name": "Stop"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 56,
+            "endLine": 880,
+            "file": "balancer/grpclb/grpclb_test.go",
+            "line": 880,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/testutils/restartable_listener.go",
+            "name": "Stop",
+            "line": 83,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/grpclb [google.golang.org/grpc/balancer/grpclb.test]",
+          "sourceLine": "\ttss.lbListener.(*testutils.RestartableListener).Stop()",
+          "targetSourceLine": "func (l *RestartableListener) Stop() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 56,
+          "endLine": 880,
+          "file": "balancer/grpclb/grpclb_test.go",
+          "line": 880,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/testutils/restartable_listener.go",
+            "line": 83,
+            "name": "Stop"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 63,
+            "endLine": 886,
+            "file": "balancer/grpclb/grpclb_test.go",
+            "line": 886,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/testutils/restartable_listener.go",
+            "name": "Restart",
+            "line": 96,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/grpclb [google.golang.org/grpc/balancer/grpclb.test]",
+          "sourceLine": "\ttss.beListeners[0].(*testutils.RestartableListener).Restart()",
+          "targetSourceLine": "func (l *RestartableListener) Restart() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 63,
+          "endLine": 886,
+          "file": "balancer/grpclb/grpclb_test.go",
+          "line": 886,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/testutils/restartable_listener.go",
+            "line": 96,
+            "name": "Restart"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 59,
+            "endLine": 887,
+            "file": "balancer/grpclb/grpclb_test.go",
+            "line": 887,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/testutils/restartable_listener.go",
+            "name": "Restart",
+            "line": 96,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/balancer/grpclb [google.golang.org/grpc/balancer/grpclb.test]",
+          "sourceLine": "\ttss.lbListener.(*testutils.RestartableListener).Restart()",
+          "targetSourceLine": "func (l *RestartableListener) Restart() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 59,
+          "endLine": 887,
+          "file": "balancer/grpclb/grpclb_test.go",
+          "line": 887,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/testutils/restartable_listener.go",
+            "line": 96,
+            "name": "Restart"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 10,
+            "endColumn": 44,
+            "endLine": 72,
+            "file": "internal/serviceconfig/duration_test.go",
+            "line": 72,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "internal/serviceconfig/duration.go",
+            "name": "UnmarshalJSON",
+            "line": 61,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/internal/serviceconfig [google.golang.org/grpc/internal/serviceconfig.test]",
+          "sourceLine": "\t\terr := got.UnmarshalJSON([]byte(tc.json))",
+          "targetSourceLine": "func (d *Duration) UnmarshalJSON(b []byte) error {"
+        },
+        "actual": {
+          "column": 10,
+          "endColumn": 44,
+          "endLine": 72,
+          "file": "internal/serviceconfig/duration_test.go",
+          "line": 72,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "internal/serviceconfig/duration.go",
+            "line": 61,
+            "name": "UnmarshalJSON"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 2,
+            "endColumn": 35,
+            "endLine": 697,
+            "file": "test/end2end_test.go",
+            "line": 697,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "server.go",
+            "name": "Stop",
+            "line": 1895,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/test [google.golang.org/grpc/test.test]",
+          "sourceLine": "\tw.s.Handler.(*grpc.Server).Stop()",
+          "targetSourceLine": "func (s *Server) Stop() {"
+        },
+        "actual": {
+          "column": 2,
+          "endColumn": 35,
+          "endLine": 697,
+          "file": "test/end2end_test.go",
+          "line": 697,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "file": "server.go",
+            "line": 1895,
+            "name": "Stop"
+          }
+        },
+        "status": "recovered"
+      },
+      {
+        "sourceKnown": {
+          "call": {
+            "column": 6,
+            "endColumn": 20,
+            "endLine": 50,
+            "file": "xds/internal/balancer/outlierdetection/callcounter_test.go",
+            "line": 50,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          },
+          "compilerTarget": {
+            "file": "xds/internal/balancer/outlierdetection/callcounter_test.go",
+            "name": "Equal",
+            "line": 28,
+            "column": 1
+          },
+          "grade": "Missed",
+          "package": "google.golang.org/grpc/xds/internal/balancer/outlierdetection [google.golang.org/grpc/xds/internal/balancer/outlierdetection.test]",
+          "sourceLine": "\tif !ab1.Equal(ab2) {",
+          "targetSourceLine": "func (b1 *bucket) Equal(b2 *bucket) bool {"
+        },
+        "actual": {
+          "column": 6,
+          "endColumn": 20,
+          "endLine": 50,
+          "file": "xds/internal/balancer/outlierdetection/callcounter_test.go",
+          "line": 50,
+          "resolution": "go-direct-method",
+          "target": {
+            "column": 1,
+            "line": 28,
+            "name": "Equal"
+          }
+        },
+        "status": "recovered"
+      }
+    ],
+    "baselineTypingErrors": 28697,
+    "prototypeTypingErrors": 11000,
+    "externalStillMissing": [
+      "github.com/cespare/xxhash/v2",
+      "github.com/cncf/xds/go/udpa/type/v1",
+      "github.com/cncf/xds/go/xds/data/orca/v3",
+      "github.com/cncf/xds/go/xds/service/orca/v3",
+      "github.com/cncf/xds/go/xds/type/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/admin/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/api/v2",
+      "github.com/envoyproxy/go-control-plane/envoy/api/v2/core",
+      "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint",
+      "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/config/core/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/config/rbac/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/config/route/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/clusters/aggregate/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/common/fault/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/fault/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/rbac/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/client_side_weighted_round_robin/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/least_request/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/pick_first/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/ring_hash/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/round_robin/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/wrr_locality/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/rbac/audit_loggers/stream/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/service/load_stats/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/service/status/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/type",
+      "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3",
+      "github.com/envoyproxy/go-control-plane/envoy/type/v3",
+      "github.com/envoyproxy/go-control-plane/pkg/cache/types",
+      "github.com/envoyproxy/go-control-plane/pkg/cache/v3",
+      "github.com/envoyproxy/go-control-plane/pkg/resource/v3",
+      "github.com/envoyproxy/go-control-plane/pkg/server/v3",
+      "github.com/envoyproxy/go-control-plane/pkg/wellknown",
+      "github.com/golang/glog",
+      "github.com/google/go-cmp/cmp",
+      "github.com/google/go-cmp/cmp/cmpopts",
+      "github.com/google/uuid",
+      "go.opentelemetry.io/contrib/detectors/gcp",
+      "go.opentelemetry.io/otel/attribute",
+      "go.opentelemetry.io/otel/metric",
+      "go.opentelemetry.io/otel/metric/noop",
+      "go.opentelemetry.io/otel/propagation",
+      "go.opentelemetry.io/otel/sdk/metric",
+      "go.opentelemetry.io/otel/sdk/metric/metricdata",
+      "go.opentelemetry.io/otel/sdk/metric/metricdata/metricdatatest",
+      "go.opentelemetry.io/otel/sdk/resource",
+      "go.opentelemetry.io/otel/trace",
+      "golang.org/x/net/http2",
+      "golang.org/x/net/http2/hpack",
+      "golang.org/x/net/trace",
+      "golang.org/x/oauth2",
+      "golang.org/x/oauth2/google",
+      "golang.org/x/oauth2/jwt",
+      "golang.org/x/sync/semaphore",
+      "golang.org/x/sys/unix",
+      "google.golang.org/genproto/googleapis/rpc/code",
+      "google.golang.org/genproto/googleapis/rpc/errdetails",
+      "google.golang.org/genproto/googleapis/rpc/status",
+      "google.golang.org/grpc/testdata",
+      "google.golang.org/grpc/testdata/grpc_testing_not_regenerated",
+      "google.golang.org/protobuf/encoding/protojson",
+      "google.golang.org/protobuf/encoding/prototext",
+      "google.golang.org/protobuf/proto",
+      "google.golang.org/protobuf/protoadapt",
+      "google.golang.org/protobuf/reflect/protodesc",
+      "google.golang.org/protobuf/reflect/protoreflect",
+      "google.golang.org/protobuf/reflect/protoregistry",
+      "google.golang.org/protobuf/runtime/protoimpl",
+      "google.golang.org/protobuf/testing/protocmp",
+      "google.golang.org/protobuf/types/descriptorpb",
+      "google.golang.org/protobuf/types/dynamicpb",
+      "google.golang.org/protobuf/types/known/anypb",
+      "google.golang.org/protobuf/types/known/durationpb",
+      "google.golang.org/protobuf/types/known/structpb",
+      "google.golang.org/protobuf/types/known/timestamppb",
+      "google.golang.org/protobuf/types/known/wrapperspb",
+      "unsafe"
+    ]
+  },
+  {
+    "project": "cobra",
+    "callsBefore": 2939,
+    "callsAfter": 2939,
+    "rangesPreserved": true,
+    "functionsPreserved": true,
+    "oldTargetChanges": [],
+    "newTargets": [],
+    "knownMissReview": [],
+    "baselineTypingErrors": 1414,
+    "prototypeTypingErrors": 230,
+    "externalStillMissing": [
+      "github.com/cpuguy83/go-md2man/v2/md2man",
+      "github.com/mitchellh/go-homedir",
+      "github.com/spf13/pflag",
+      "github.com/spf13/viper",
+      "gopkg.in/yaml.v2"
+    ]
+  }
+]
