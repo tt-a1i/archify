@@ -16,6 +16,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strconv"
@@ -183,7 +184,7 @@ func (l *loader) prepare() {
 	ctx.BuildTags = l.req.Tags
 	ctx.CgoEnabled = false
 	ctx.OpenFile = func(file string) (io.ReadCloser, error) {
-		b, ok := l.req.Sources[path.Clean(file)]
+		b, ok := l.req.Sources[path.Clean(filepath.ToSlash(file))]
 		if !ok {
 			return nil, os.ErrNotExist
 		}
@@ -388,10 +389,17 @@ func main() {
 					ident = x.Sel
 				}
 				if ident != nil {
+					r["reason"] = "no-local-function-binding"
 					if obj, ok := g.info.Uses[ident].(*types.Func); ok {
 						sig, _ := obj.Type().(*types.Signature)
+						if sig != nil && sig.Recv() != nil {
+							r["reason"] = "go-method-dispatch"
+						}
 						def := l.definitions[obj.Pos()]
 						valid := def != nil && sig != nil && sig.Recv() == nil && !l.invalidDirs[path.Dir(file)]
+						if def != nil && sig != nil && sig.Recv() == nil {
+							r["reason"] = "ambiguous-binding"
+						}
 						if valid {
 							targetFile := def["file"].(string)
 							valid = !l.invalidDirs[path.Dir(targetFile)]

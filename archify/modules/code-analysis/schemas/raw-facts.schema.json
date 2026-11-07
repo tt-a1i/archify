@@ -133,7 +133,7 @@
               "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at the function declaration or initializer expression start in target.file for imported-function, otherwise the callsite file (including modifiers)." }
             }
           },
-          "reason": { "enum": ["unsupported-callee", "optional-call", "no-local-function-binding", "ambiguous-binding"] }
+          "reason": { "enum": ["unsupported-callee", "optional-call", "no-local-function-binding", "ambiguous-binding", "go-method-dispatch"] }
         },
         "oneOf": [
           { "properties": { "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "same-file-static-method"] }, "target": { "type": "object", "not": { "required": ["file"] } } }, "required": ["target"], "not": { "required": ["reason"] } },

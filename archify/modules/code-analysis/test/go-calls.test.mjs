@@ -60,6 +60,7 @@ func shadow() { alias := struct{ Work func() }{}; alias.Work() }
   });
   const facts = capture(root); assert.deepEqual(schemaErrors('raw-facts', facts), []);
   assert.ok(callsIn(facts, 'main.go').every(call => call.resolution === 'unresolved'));
+  assert.deepEqual(callsIn(facts, 'main.go').slice(0, 2).map(call => call.reason), ['go-method-dispatch', 'go-method-dispatch']);
   assert.ok(facts.languageScope.typing.errorCount > 0);
 });
 
