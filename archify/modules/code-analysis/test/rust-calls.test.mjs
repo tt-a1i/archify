@@ -218,7 +218,7 @@ test('Rust changed specialized constructor retrieves its verified imported calle
  const baseRoot=fixture(t,{'src/lib.rs':lib,'src/model.rs':before});
  const root=fixture(t,{'src/lib.rs':lib,'src/model.rs':before.replace('String::new()','String::from("changed")')});
  const cfg=config(),base=captureChangeSide(baseRoot,cfg,'rust'),head=captureChangeSide(root,cfg,'rust');
- const brief=buildChangeQuestion({base,head,baseRoot,root,entry:'src/model.rs',question:'Which known caller references the changed constructor?'});
+ const brief=buildChangeQuestion({base,head,config:cfg,entry:'src/model.rs',question:'Which known caller references the changed constructor?'});
  assert.equal(brief.changedDefinitions.total,1);
  for(const side of ['base','head']){
   const refs=brief.changedDefinitions.items[0][side].knownReferences;
