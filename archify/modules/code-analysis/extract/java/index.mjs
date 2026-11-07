@@ -6,7 +6,7 @@ import { collectFunctionsAndCalls, resolveQualifiedCalls, CALL_MODEL } from './c
 
 export const id = 'java';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 7;
+export const REVISION = 8;
 export const detect = (root, config) => listFiles(root, config).some(isJavaSource);
 export const countSources = (root, config) => listFiles(root, config).filter(isJavaSource).length;
 

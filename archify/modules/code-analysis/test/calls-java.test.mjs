@@ -22,7 +22,7 @@ const spelling = (source, call) => source.split(/\r\n|[\r\n]/)[call.line - 1].sl
 test('Java calls inventory keeps full chained UTF16 spans and excludes constructors/references/annotations', t => {
   const source = 'class A { static A make() { return null; } static void sink(Object x) {} @Deprecated void chosen() { String s = "😀"; make().toString(); sink(make()); new A(); Runnable r = A::make; Runnable l = () -> make(); } }';
   const args = fixture(t, source);
-  assert.equal(args.facts.callModel, 'java-static-lexical-v2');
+  assert.equal(args.facts.callModel, 'java-static-lexical-v3');
   assert.deepEqual(args.facts.calls.map(call => spelling(source, call)), ['make()', 'make().toString()', 'sink(make())', 'make()', 'make()']);
   assert.deepEqual(args.facts.calls.map(call => call.resolution), ['same-file-static-method', 'unresolved', 'same-file-static-method', 'same-file-static-method', 'same-file-static-method']);
   const [first, chained] = args.facts.calls;
@@ -30,12 +30,12 @@ test('Java calls inventory keeps full chained UTF16 spans and excludes construct
   assert.equal(first.column, chained.column);
   const question = buildQuestion({ ...args, symbol: 'chosen' });
   assert.equal(question.calls.total, 5);
-  assert.equal(question.calls.bindingCoverage, 'top-level-class-and-explicit-qualified-static-source-candidates');
+  assert.equal(question.calls.bindingCoverage, 'top-level-class-unique-fixed-arity-static-source-candidates');
   assert.ok(question.calls.records.filter(record => record.fact.target).every(record => record.targetNavigation.status === 'valid'));
   assert.ok(question.calls.limitations.some(text => text.includes('compilation are not checked')));
 });
 
-test('Java lexical candidates reject overloads, members, explicit type args, arity, varargs and inherited Object names', t => {
+test('Java lexical candidates distinguish fixed arities and reject members, explicit type args, mismatches, varargs and inherited Object names', t => {
   const source = `class A {
  static void yes() {} static void overloaded() {} static void overloaded(int x) {}
  static void spread(String... x) {} static void one(int x) {} void instance() {}
@@ -44,8 +44,8 @@ test('Java lexical candidates reject overloads, members, explicit type args, ari
 }`;
   const { facts } = fixture(t, source);
   assert.equal(facts.calls.length, 10);
-  assert.deepEqual(facts.calls.filter(call => call.target).map(call => call.target.name), ['yes']);
-  assert.equal(facts.calls.find(call => spelling(source, call) === 'overloaded()').reason, 'ambiguous-binding');
+  assert.deepEqual(facts.calls.filter(call => call.target).map(call => call.target.name), ['yes', 'overloaded']);
+  assert.equal(facts.calls.find(call => spelling(source, call) === 'overloaded()').target.line, 2);
 });
 
 test('Java invocation inventory retains nested/local/anonymous sites while target binding excludes those owners and supertypes', t => {
