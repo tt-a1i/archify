@@ -1,26 +1,31 @@
-// This program analyzes only the immutable sources supplied on stdin. It never
-// loads project packages, runs project code, invokes go list, or downloads modules.
+// Project source comes only from the captured stdin snapshot. Optional SDK
+// export preparation runs in an empty directory, only for known standard
+// packages; project modules, code, tests and generators are never invoked.
 package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/build"
+	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
 	"io"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf16"
 )
 
@@ -28,6 +33,7 @@ type record = map[string]interface{}
 type request struct {
 	Sources map[string][]byte `json:"sources"`
 	Module  string            `json:"module"`
+	Stdlib  bool              `json:"stdlib"`
 	GOOS    string            `json:"goos"`
 	GOARCH  string            `json:"goarch"`
 	Tags    []string          `json:"tags"`
@@ -44,6 +50,10 @@ type group struct {
 	methods           map[string][]types.Type
 }
 type loader struct {
+	stdlib      types.Importer
+	sdkExports  map[string]string
+	sdkLoaded   map[string]record
+	sdk         record
 	req         request
 	fset        *token.FileSet
 	groups      map[string]*group
@@ -67,6 +77,12 @@ func (l *loader) Import(p string) (*types.Package, error) {
 		}
 		return l.check(g), nil
 	}
+	if l.req.Stdlib && p == "unsafe" {
+		return types.Unsafe, nil
+	}
+	if _, ok := l.sdkExports[p]; ok {
+		return l.stdlib.Import(p)
+	}
 	if q := l.external[p]; q != nil {
 		return q, nil
 	}
@@ -77,6 +93,131 @@ func (l *loader) Import(p string) (*types.Package, error) {
 	l.external[p] = q
 	return q, nil
 }
+
+// Metadata classification comes from the SDK, never a project module lookup.
+type sdkPackage struct {
+	ImportPath string
+	Export     string
+	Standard   bool
+}
+
+func (l *loader) prepareSDK() error {
+	l.sdk = record{"mode": "disabled", "packages": []record{}, "projectCommands": false, "sourceFilesAnalyzed": false}
+	l.sdkLoaded = map[string]record{}
+	if !l.req.Stdlib {
+		return nil
+	}
+	l.sdk["mode"] = "compiler-exports"
+	l.sdk["toolchain"] = runtime.Version()
+	l.sdk["network"] = "module-proxy-and-checksum-disabled"
+	// Avoid SDK subprocesses for captures that cannot import a standard package.
+	potential := map[string]bool{}
+	for _, file := range l.asts {
+		for _, spec := range file.Imports {
+			p, err := strconv.Unquote(spec.Path.Value)
+			if err == nil && p == "unsafe" {
+				l.sdk["intrinsicPackages"] = []string{"unsafe"}
+			}
+			if err == nil && l.packages[p] == nil && !strings.Contains(strings.Split(p, "/")[0], ".") && p != "unsafe" {
+				potential[p] = true
+			}
+		}
+	}
+	if len(potential) == 0 {
+		return nil
+	}
+	temporary, err := os.MkdirTemp("", "archify-go-sdk-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(temporary)
+	goos, goarch := l.req.GOOS, l.req.GOARCH
+	if goos == "" {
+		goos = build.Default.GOOS
+	}
+	if goarch == "" {
+		goarch = build.Default.GOARCH
+	}
+	tool := filepath.Join(runtime.GOROOT(), "bin", "go")
+	if runtime.GOOS == "windows" {
+		tool += ".exe"
+	}
+	list := func(export bool, paths []string) ([]sdkPackage, error) {
+		args := []string{"list", "-json"}
+		if export {
+			args = append(args, "-export", "-deps")
+		}
+		if len(l.req.Tags) > 0 {
+			args = append(args, "-tags="+strings.Join(l.req.Tags, ","))
+		}
+		args = append(args, paths...)
+		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, tool, args...)
+		cmd.Dir = temporary
+		cmd.Env = append(os.Environ(), "GO111MODULE=off", "GOWORK=off", "GOFLAGS=", "GOTOOLCHAIN=local", "GOENV=off", "CGO_ENABLED=0", "GOPROXY=off", "GOSUMDB=off", "GOOS="+goos, "GOARCH="+goarch)
+		var errors bytes.Buffer
+		cmd.Stderr = &errors
+		data, err := cmd.Output()
+		if err != nil {
+			return nil, fmt.Errorf("SDK-only %v: %v: %s", args, err, strings.TrimSpace(errors.String()))
+		}
+		decoder := json.NewDecoder(bytes.NewReader(data))
+		var packages []sdkPackage
+		for {
+			var p sdkPackage
+			err := decoder.Decode(&p)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
+			packages = append(packages, p)
+		}
+		return packages, nil
+	}
+	standard, err := list(false, []string{"std"})
+	if err != nil {
+		return err
+	}
+	wanted := []string{}
+	for _, p := range standard {
+		if p.Standard && potential[p.ImportPath] {
+			wanted = append(wanted, p.ImportPath)
+		}
+	}
+	sort.Strings(wanted)
+	l.sdk["requestedPackages"] = wanted
+	if len(wanted) == 0 {
+		return nil
+	}
+	packages, err := list(true, wanted)
+	if err != nil {
+		return err
+	}
+	l.sdkExports = map[string]string{}
+	for _, p := range packages {
+		if p.Standard && p.Export != "" {
+			l.sdkExports[p.ImportPath] = p.Export
+		}
+	}
+	l.sdk["exportedDependencyCount"] = len(l.sdkExports)
+	l.stdlib = importer.ForCompiler(l.fset, "gc", func(p string) (io.ReadCloser, error) {
+		file, ok := l.sdkExports[p]
+		if !ok {
+			return nil, fmt.Errorf("SDK export unavailable for %s", p)
+		}
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+		digest := sha256.Sum256(data)
+		l.sdkLoaded[p] = record{"path": p, "sha256": hex.EncodeToString(digest[:]), "bytes": len(data)}
+		return io.NopCloser(bytes.NewReader(data)), nil
+	})
+	return nil
+}
 func (l *loader) check(g *group) *types.Package {
 	if g.pkg != nil {
 		return g.pkg
@@ -85,7 +226,11 @@ func (l *loader) check(g *group) *types.Package {
 	defer func() { g.checking = false }()
 	g.info = &types.Info{Uses: map[*ast.Ident]types.Object{}, Defs: map[*ast.Ident]types.Object{}, Selections: map[*ast.SelectorExpr]*types.Selection{}}
 	g.pkg = types.NewPackage(g.pkgPath, g.name)
-	cfg := types.Config{Importer: l, Error: func(err error) {
+	goarch := l.req.GOARCH
+	if goarch == "" {
+		goarch = build.Default.GOARCH
+	}
+	cfg := types.Config{Importer: l, Sizes: types.SizesFor("gc", goarch), Error: func(err error) {
 		l.errors++
 		if len(l.diagnostics) < 20 {
 			l.diagnostics = append(l.diagnostics, err.Error())
@@ -386,6 +531,10 @@ func main() {
 	}
 	l := &loader{req: req, fset: token.NewFileSet(), groups: map[string]*group{}, packages: map[string]*group{}, external: map[string]*types.Package{}, asts: map[string]*ast.File{}, invalidDirs: map[string]bool{}, definitions: map[token.Pos]record{}, selected: []string{}, excluded: []record{}, parseErrors: []record{}, functions: []record{}}
 	l.prepare()
+	if err := l.prepareSDK(); err != nil {
+		fmt.Fprintln(os.Stderr, "Go SDK type preparation failed:", err)
+		os.Exit(2)
+	}
 	ids := []string{}
 	for id := range l.groups {
 		ids = append(ids, id)
@@ -517,6 +666,16 @@ func main() {
 		}
 		return a["column"].(int) < b["column"].(int)
 	})
+	sdkPaths := []string{}
+	for p := range l.sdkLoaded {
+		sdkPaths = append(sdkPaths, p)
+	}
+	sort.Strings(sdkPaths)
+	sdkPackages := []record{}
+	for _, p := range sdkPaths {
+		sdkPackages = append(sdkPackages, l.sdkLoaded[p])
+	}
+	l.sdk["packages"] = sdkPackages
 	external := []string{}
 	for p := range l.external {
 		external = append(external, p)
@@ -529,7 +688,7 @@ func main() {
 	if goarch == "" {
 		goarch = build.Default.GOARCH
 	}
-	out := record{"version": runtime.Version(), "selected": l.selected, "excluded": l.excluded, "parse_errors": l.parseErrors, "functions": l.functions, "calls": calls, "imports": imports, "packages": packages, "typing": record{"status": "partial-source-bindings", "errorCount": l.errors, "errors": l.diagnostics, "externalPackagesNotLoaded": external}, "build": record{"goos": goos, "goarch": goarch, "tags": req.Tags, "cgo": false, "tests": req.Tests, "goWork": "not-loaded", "replace": "not-loaded", "releaseTags": build.Default.ReleaseTags, "toolchain": runtime.Version(), "goFlags": "not-loaded"}}
+	out := record{"version": runtime.Version(), "selected": l.selected, "excluded": l.excluded, "parse_errors": l.parseErrors, "functions": l.functions, "calls": calls, "imports": imports, "packages": packages, "standardLibrary": l.sdk, "typing": record{"status": "partial-source-bindings", "errorCount": l.errors, "errors": l.diagnostics, "externalPackagesNotLoaded": external}, "build": record{"goos": goos, "goarch": goarch, "tags": req.Tags, "cgo": false, "tests": req.Tests, "goWork": "not-loaded", "replace": "not-loaded", "releaseTags": build.Default.ReleaseTags, "toolTags": build.Default.ToolTags, "toolchain": runtime.Version(), "goFlags": "not-loaded"}}
 	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
 		panic(err)
 	}

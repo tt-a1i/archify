@@ -153,7 +153,7 @@ test('Go compiler-selected concrete methods distinguish receivers and follow ali
     {file:'lib/types.go',name:'M',line:3,column:1},
   ]);
   const q=buildQuestion({root,facts,entry:'entry.go',symbol:'Entry',question:'Where are these concrete methods defined?'});
-  assert.equal(q.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-incomplete-external-types');
+  assert.equal(q.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-recorded-sdk-and-incomplete-thirdparty-types');
   assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
 });
 
@@ -188,4 +188,51 @@ test('Go changed concrete method definitions recover foreign callers and keep hi
   const old=buildQuestion({root,facts:historical,entry:'entry.go',symbol:'Entry',question:'What was captured before method support?'});
   assert.equal(old.calls.bindingCoverage,'go-types-direct-source-functions-with-incomplete-external-types');
   assert.equal(old.calls.records[0].targetNavigation.status,'unresolved');
+});
+
+
+test('Go SDK types recover explicit local receivers without binding SDK bodies or interface implementations',t=>{
+ const root=fixture(t,{'entry.go':`package app
+import ("net/http";"sync")
+type Context struct{}
+func (*Context) Reset(){}
+var pool sync.Pool
+func Entry(r *http.Request){c,_:=r.Context().Value("key").(*Context);c=pool.Get().(*Context);c.Reset();var h http.Handler;h.ServeHTTP(nil,r);http.NotFound(nil,r)}
+`});
+ const before=capture(root,{go:{stdlib:false}}),facts=capture(root);
+ const reset=f=>callsIn(f,'entry.go').find(c=>c.target?.name==='Reset');
+ assert.equal(reset(before),undefined);assert.deepEqual(reset(facts).target,{name:'Reset',line:4,column:1});
+ assert.equal(facts.callModel,'go-source-direct-v3');assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.languageScope.typing.errorCount,0);assert.equal(facts.files.length,1);
+ assert.equal(before.languageScope.standardLibrary.mode,'disabled');
+ const disabledQuestion=buildQuestion({root,facts:before,entry:'entry.go',symbol:'Entry',question:'What remains unknown without SDK types?'});
+ assert.equal(disabledQuestion.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-sdk-types-disabled');
+ const sdk=facts.languageScope.standardLibrary;assert.equal(sdk.mode,'compiler-exports');
+ assert.ok(sdk.packages.some(p=>p.path==='net/http'&&p.sha256.length===64&&p.bytes>0));
+ assert.ok(sdk.packages.some(p=>p.path==='sync'));assert.equal(sdk.sourceFilesAnalyzed,false);assert.equal(sdk.projectCommands,false);
+ const calls=callsIn(facts,'entry.go');assert.equal(calls.at(-2).resolution,'unresolved');assert.equal(calls.at(-1).resolution,'unresolved');
+ assert.ok(!facts.languageScope.typing.externalPackagesNotLoaded.includes('net/http'));
+ const historical=structuredClone(facts);historical.callModel='go-source-direct-v2';delete historical.languageScope.standardLibrary;
+ const q=buildQuestion({root,facts:historical,entry:'entry.go',symbol:'Entry',question:'Read the earlier concrete-method capture contract'});
+ assert.equal(q.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-incomplete-external-types');
+ assert.ok(q.calls.records.some(r=>r.fact.target?.name==='Reset'&&r.targetNavigation.status==='valid'));
+});
+
+test('Go SDK unsafe is an intrinsic type package; bad SDK scopes fail explicitly and can select captured-only mode',t=>{
+ const root=fixture(t,{'entry.go':'package app\nimport "unsafe"\ntype T struct{}\nfunc (*T) M(){}\nfunc Entry(p unsafe.Pointer){(*T)(p).M()}\n'});
+ const facts=capture(root);assert.equal(facts.languageScope.typing.errorCount,0);
+ assert.deepEqual(facts.languageScope.standardLibrary.intrinsicPackages,['unsafe']);
+ assert.ok(callsIn(facts,'entry.go').some(c=>c.target?.name==='M'));
+ assert.throws(()=>capture(root,{go:{stdlib:'yes'}}),e=>e.diagnostics?.[0].code==='extract/go-config-invalid');
+ const other=fixture(t,{'entry.go':'package app\nimport "sync"\nvar P sync.Pool\n'});
+ assert.throws(()=>capture(other,{go:{goos:'madeup'}}),e=>e.diagnostics?.[0].code==='extract/go-failed'&&e.diagnostics[0].supportedFixes.some(f=>f.includes('stdlib: false')));
+});
+
+
+test('Go SDK intrinsic typing uses the declared architecture size, including raw-string imports',t=>{
+ const root=fixture(t,{'entry.go':'package app\nimport `unsafe`\nvar _ [4 - unsafe.Sizeof(uintptr(0))]byte\n'});
+ const narrow=capture(root,{go:{goos:'linux',goarch:'386'}}),wide=capture(root,{go:{goos:'linux',goarch:'amd64'}});
+ assert.equal(narrow.languageScope.typing.errorCount,0);assert.ok(wide.languageScope.typing.errorCount>0);
+ assert.deepEqual(narrow.languageScope.standardLibrary.intrinsicPackages,['unsafe']);
+ assert.equal(narrow.languageScope.build.goarch,'386');assert.equal(narrow.files.length,1);
 });
