@@ -12,7 +12,7 @@ import { describeRepository } from '../shared/git.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 9;
+export const REVISION = 10;
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'extract.py');
 const PY_EXT = /\.py$/;
@@ -67,6 +67,19 @@ export function extract(root, config) {
 
   const calls = [];
   const parsedFiles = new Map(output.files.filter(record => !record.error).map(record => [record.path, record]));
+  // Reuse captured import resolution for one explicit reexport. No project
+  // import or arbitrary chain traversal; ambiguous/rebound bindings are absent.
+  const importedDefinition = (from, binding, reexports = 1) => {
+    const edges = resolveDeclaredImport({ module: binding.module, level: binding.level, names: [binding.name] }, from, fileSet, directories);
+    const targets = edges.filter(edge => edge.to && edge.to !== from && edge.names?.includes(binding.name));
+    if (targets.length !== 1) return null;
+    const file = targets[0].to, record = parsedFiles.get(file);
+    if (!record) return null;
+    const target = Object.hasOwn(record.definitions, binding.name) ? record.definitions[binding.name] : null;
+    if (target) return { file, name: target.name, line: target.line, column: target.column };
+    const forwarded = Object.hasOwn(record.importBindings, binding.name) ? record.importBindings[binding.name] : null;
+    return reexports && forwarded ? importedDefinition(file, forwarded, reexports - 1) : null;
+  };
   const imports = [];
   const unresolved = { external: 0, outside: 0, unknown: 0, opaque: 0 };
   const parseErrors = [];
@@ -81,16 +94,10 @@ export function extract(root, config) {
     for (const found of record.calls || []) {
       const { _import: binding, ...call } = found;
       if (binding) {
-        const edges = resolveDeclaredImport({ module: binding.module, level: binding.level, names: [binding.name] }, record.path, fileSet, directories);
-        const targets = edges.filter(edge => edge.to && edge.to !== record.path && edge.names?.includes(binding.name));
-        if (targets.length === 1) {
-          const file = targets[0].to;
-          const definitions = parsedFiles.get(file)?.definitions;
-          const target = definitions && Object.hasOwn(definitions, binding.name) ? definitions[binding.name] : null;
-          if (target) {
-            call.resolution = 'imported-function'; delete call.reason;
-            call.target = { file, name: target.name, line: target.line, column: target.column };
-          }
+        const target = importedDefinition(record.path, binding);
+        if (target && target.file !== record.path) {
+          call.resolution = 'imported-function'; delete call.reason;
+          call.target = target;
         }
       }
       calls.push({ file: record.path, ...call });
@@ -129,7 +136,7 @@ export function extract(root, config) {
     imports,
     symbols: symbols.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.name, b.name)),
     functions: functions.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.qualname, b.qualname)),
-    callModel: 'python-lexical-v1',
+    callModel: 'python-lexical-v2',
     calls,
     unresolved,
   };

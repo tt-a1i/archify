@@ -20,11 +20,11 @@ const before = (aLine, aColumn, bLine, bColumn) => aLine < bLine || (aLine === b
 
 export function questionCalls({ facts, factsPath, inspect, entry, location, symbol, text, selectedFunction }) {
   const knownAdapter = facts?.repository?.language === 'ts' && /^typescript@/.test(facts?.repository?.adapter || '');
-  const pythonModel = facts?.repository?.language === 'py' && /^python@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'python-lexical-v1';
+  const pythonModel = facts?.repository?.language === 'py' && /^python@/.test(facts?.repository?.adapter || '') && ['python-lexical-v1', 'python-lexical-v2'].includes(facts?.callModel);
   const javaAdapter = facts?.repository?.language === 'java' && /^java-parser@/.test(facts?.repository?.adapter || '');
   const javaModel = javaAdapter && facts?.callModel === 'java-static-lexical-v1';
   const capturedRangeModel = pythonModel || javaModel;
-  const bindingCoverage = pythonModel ? 'ordinary-module-definitions-and-direct-from-import-aliases' : javaModel ? 'top-level-class-unique-static-fixed-arity-source-candidates' : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
+  const bindingCoverage = pythonModel ? (facts.callModel === 'python-lexical-v2' ? 'ordinary-module-definitions-direct-imports-and-one-explicit-reexport' : 'ordinary-module-definitions-and-direct-from-import-aliases') : javaModel ? 'top-level-class-unique-static-fixed-arity-source-candidates' : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
   const result = {
     coverage: 'unavailable', reason: null,
     provenance: { rawFactsPath: factsPath ? path.resolve(factsPath) : null, adapter: facts?.repository?.adapter ?? null, adapterRevision: facts?.repository?.adapterRevision ?? null,
@@ -42,9 +42,12 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   };
   if (pythonModel) result.limitations = [
     'Records are captured Python ast.Call sites physically contained in the selected range, including nested functions and defaults; they are not necessarily direct or executed calls of the selected function. Definition ranges exclude preceding decorators.',
-    'Targets identify unique ordinary undecorated module-level definitions or direct static from-import aliases. Attributes, classes, decorated targets, reexports, shadows and ambiguous bindings remain unresolved. This is lexical source navigation, not runtime callable identity, execution or reachability.',
+    'Targets identify unique ordinary undecorated module-level definitions or direct static from-import aliases. Attributes, classes, decorated targets, shadows and ambiguous bindings remain unresolved. This is lexical source navigation, not runtime callable identity, execution or reachability.',
     'Function ranges use captured UTF-16 coordinates and exact decoded-source slice hashes. Entry and imported target freshness are checked independently. Each factIndex refers to the unchanged captured calls array; at most 40 records are included.',
   ];
+  if (pythonModel) result.limitations.push(facts.callModel === 'python-lexical-v2'
+    ? 'One unconditional unique explicit from-import reexport may reach a captured ordinary function, including aliases. Longer chains, conditional/rebound/wildcard exports and runtime module initialization remain unproved.'
+    : 'Historical python-lexical-v1 does not bind reexports; newer reader capabilities do not expand this saved capture.');
   const unavailable = (reason) => ({ ...result, reason });
   if (entry.factsStatus !== 'valid') return unavailable(`entry-${entry.factsStatus}`);
   if (entry.parseErrors.length) return unavailable('entry-parse-errors');
