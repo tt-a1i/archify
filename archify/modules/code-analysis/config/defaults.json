@@ -3,7 +3,8 @@
   "include": [
     "**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     "**/*.py",
-    "**/*.java"
+    "**/*.java",
+    "**/*.go"
   ],
   "exclude": [
     "**/node_modules/**",
@@ -30,7 +31,8 @@
       "**/*.spec.*",
       "**/test_*.py",
       "**/*_test.py",
-      "**/conftest.py"
+      "**/conftest.py",
+      "**/*_test.go"
     ],
     "generated": [
       "**/generated-*",

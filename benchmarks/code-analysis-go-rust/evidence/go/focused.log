@@ -1,0 +1,47 @@
+✔ optional capture observation leaves raw facts and their revision/snapshot fingerprints unchanged (69.235334ms)
+✔ public paired question captures dirty working trees, preserves side coordinates and original task modes (488.915209ms)
+✔ added and deleted files/functions are normal, and file moves do not infer identity (70.459708ms)
+✔ same-line functions use exact ranges and duplicate qualified slots remain unpaired (50.906041ms)
+✔ both sides lose stale definition navigation; stale caller retains evidence but no live location (48.297542ms)
+✔ parse errors are partial and suppress affected definitions without losing valid regions (412.773333ms)
+✔ root/extended compiler settings and package contents limit binding attribution, even with one analysis config (479.984208ms)
+✔ new source candidates may change known binding without a configuration mismatch (23.011417ms)
+✔ fresh mode rejects incompatible options and protects either root from output overwrite (924.479541ms)
+✔ bounded orientation counts omitted references and missing entry never looks successful (41.18625ms)
+✔ explicit declaration entries disclose unsupported definitions separately from an available file with no functions (381.399833ms)
+✔ module reading keeps resolved dependency kinds separate from calls and preserves bounded original facts (44.565666ms)
+✔ dependency navigation requires fresh parseable origin/entry and resolution inputs on its own side (53.772792ms)
+✔ Python paired CLI selects the entry language in mixed roots and compares owned decorator headers (411.071959ms)
+✔ Python direct-name references keep def-start identity separate from paired header extent (88.232625ms)
+✔ Java paired headers have exact same-line ranges and fresh zero call totals (22.900708ms)
+✔ paired Java changed static method retains references and unresolved members without inventing old-model coverage (20.602708ms)
+✔ non-TS historical missing metadata and incorrect hashes stay partial without line-only guesses (166.325583ms)
+✔ non-TS captures preserve stale/parse/missing coverage and reject mismatched capture provenance (327.864625ms)
+✔ non-TS duplicate slots and bounded outgoing imports keep uncertainty and original records (85.500625ms)
+✔ paired mode rejects unsupported suffixes and invalid entry paths before capture (2367.262541ms)
+✔ check: the summary shows a parse failure and a language that was not analyzed (834.213ms)
+✔ check: a clean run says nothing about coverage and the gate is unchanged (743.562458ms)
+✔ check: threshold errors stay errors and partial coverage does not change the finding gate (1060.291083ms)
+✔ Go ordinary and alias imports, same-package cross-file calls and external tests navigate to declaration starts (178.361208ms)
+✔ Go interface/method/variable calls, shadows and invalid duplicate definitions never manufacture function targets (102.484958ms)
+✔ Go source scope honors platform/tags, tests and nested module identity; parse failure is visible (220.396125ms)
+✔ Go imported module identity differs from directory names and package-declared names (104.575208ms)
+✔ Go UTF-16 ranges, saved metadata freshness and paired changed-definition callers reuse source evidence (317.518083ms)
+✔ Go missing compiler and invalid scope fail through the normal CLI with actionable diagnostics (290.902375ms)
+✔ graphs: the synthetic fixture folds into a hand-verified two-module graph (110.63675ms)
+✔ graphs: explicit groups win over depth, and a deeper package folds into its depth-level ancestor (52.593625ms)
+✔ orientation retains exact facts, excludes same-line neighbours, and includes nested source calls without claiming caller identity (77.979583ms)
+✔ bounded output counts the selected range and does not confuse omitted unknown calls with absent calls (67.703125ms)
+✔ missing and unknown call models never report a known zero, even when adapter revisions overlap (124.193041ms)
+✔ entry freshness and parse errors gate all calls and same-file targets (43.584541ms)
+✔ unmatched exact source range is unavailable rather than falling back to captured line span (23.757125ms)
+✔ optional node observation preserves all default function measurements and naming (1.072583ms)
+✔ explicit call models carry binding coverage independently of extraction revision (69.034041ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6922.782792

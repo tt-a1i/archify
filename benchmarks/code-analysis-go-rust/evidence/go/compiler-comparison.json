@@ -1,0 +1,38 @@
+[
+  {
+    "project": "cobra",
+    "command": [
+      "go",
+      "test",
+      "-c",
+      "-vet=off",
+      "-mod=readonly",
+      "-o",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/compiler-comparison/cobra.test",
+      "./doc"
+    ],
+    "seconds": 5.565861042006873,
+    "exit": 0,
+    "stdout": "",
+    "stderr": "go: downloading gopkg.in/yaml.v2 v2.2.2\ngo: downloading github.com/spf13/pflag v1.0.3\ngo: downloading github.com/cpuguy83/go-md2man/v2 v2.0.0\ngo: downloading github.com/russross/blackfriday/v2 v2.0.1\ngo: downloading github.com/shurcooL/sanitized_anchor_name v1.0.0\n",
+    "executedProjectBinary": false
+  },
+  {
+    "project": "chi",
+    "command": [
+      "go",
+      "test",
+      "-c",
+      "-vet=off",
+      "-mod=readonly",
+      "-o",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/compiler-comparison/chi.test",
+      "./middleware"
+    ],
+    "seconds": 1.7106887500267476,
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "executedProjectBinary": false
+  }
+]

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../extract/shared/diagnostics.mjs';
 
 export const USAGE = `Usage:
-  archify code-analysis check <repo-root> [--language ts|py|java] [--config file.json]
+  archify code-analysis check <repo-root> [--language ts|py|java|go] [--config file.json]
                               [--baseline baseline.json] [--compare findings.json] [--out dir]
                               [--fail-on error|warning|info|never] [--new-only]
                               [--update-baseline] [--reason text] [--json]
@@ -109,6 +109,7 @@ export async function runCheck(argv) {
       // below does not read it.
       coverage: {
         parseErrors: overview.coverage.files.parseErrors,
+        ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
         otherLanguages: overview.coverage.otherLanguages,
       },
     }),
@@ -132,7 +133,13 @@ export function formatText(r) {
   const lines = [];
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
-  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
+  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
+  if (r.coverage?.languageScope) {
+    const scope = r.coverage.languageScope;
+    lines.push(`  Go module: ${scope.module} · ${scope.build.goos}/${scope.build.goarch} · cgo disabled · tests ${scope.build.tests ? 'included' : 'excluded'} · tags ${scope.build.tags.join(', ') || '(none)'}`);
+    lines.push(`  Not analyzed: ${scope.excludedFiles.length} excluded Go files; external types not loaded: ${scope.typing.externalPackagesNotLoaded.length}; source typing errors: ${scope.typing.errorCount}`);
+    lines.push('  Source bindings only; read coverage.languageScope/raw-facts.json for exclusions and incomplete typing.');
+  }
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
   if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.join(', ')}`);
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);

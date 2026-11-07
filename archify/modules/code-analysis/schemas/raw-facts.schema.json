@@ -19,7 +19,7 @@
         "sourceKind": { "enum": ["working-tree"] },
         "snapshotId": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Digest identifying the extracted facts and captured source text." },
         "url": { "type": ["string", "null"], "description": "Git origin URL as configured; null when there is no Git repository or no origin." },
-        "language": { "enum": ["ts", "py", "java"] },
+        "language": { "enum": ["ts", "py", "java", "go"] },
         "adapter": { "type": "string", "description": "Parser or runtime the adapter used, with its version." },
         "adapterRevision": { "type": "integer", "minimum": 1, "description": "Revision of the adapter's own extraction logic. Absent in facts written before revisions were recorded." }
       }
@@ -88,7 +88,7 @@
             "type": "object", "additionalProperties": false, "required": ["kind", "sourceRange"],
             "description": "Optional captured named definition with headers: exact owned syntax including decorators, annotations and modifiers, excluding preceding comments and trailing newline. Absent for historical captures and unsupported metric records.",
             "properties": {
-              "kind": { "enum": ["FunctionDef", "AsyncFunctionDef", "methodDeclaration", "interfaceMethodDeclaration", "constructorDeclaration", "compactConstructorDeclaration"] },
+              "kind": { "enum": ["FunctionDef", "AsyncFunctionDef", "methodDeclaration", "interfaceMethodDeclaration", "constructorDeclaration", "compactConstructorDeclaration", "FuncDecl"] },
               "sourceRange": { "$ref": "#/$defs/sourceRange" }
             }
           }
@@ -122,7 +122,7 @@
           "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at invocation expression start." },
           "endLine": { "type": "integer", "minimum": 1, "description": "One-based end-exclusive invocation expression end line." },
           "endColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 end-exclusive column." },
-          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "same-file-static-method", "unresolved"] },
+          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "same-file-static-method", "go-direct-function", "unresolved"] },
           "target": {
             "type": "object", "additionalProperties": false,
             "required": ["name", "line", "column"],
@@ -138,8 +138,82 @@
         "oneOf": [
           { "properties": { "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "same-file-static-method"] }, "target": { "type": "object", "not": { "required": ["file"] } } }, "required": ["target"], "not": { "required": ["reason"] } },
           { "properties": { "resolution": { "const": "imported-function" }, "target": { "type": "object", "required": ["file"] } }, "required": ["target"], "not": { "required": ["reason"] } },
+          { "properties": { "resolution": { "const": "go-direct-function" } }, "required": ["target"], "not": { "required": ["reason"] } },
           { "properties": { "resolution": { "const": "unresolved" } }, "required": ["reason"], "not": { "required": ["target"] } }
         ]
+      }
+    },
+    "languageScope": {
+      "type": "object",
+      "description": "Language-specific captured source selection, build inputs and unresolved semantic limits.",
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "module",
+        "build",
+        "packages",
+        "typing",
+        "selectedFiles",
+        "excludedFiles",
+        "metadata",
+        "limitations"
+      ],
+      "properties": {
+        "language": {
+          "const": "go"
+        },
+        "module": {
+          "type": "string"
+        },
+        "build": {
+          "type": "object"
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "typing": {
+          "type": "object"
+        },
+        "selectedFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/repoPath"
+          }
+        },
+        "excludedFiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "file",
+              "reason"
+            ],
+            "properties": {
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "metadata": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "packageMarkers": {

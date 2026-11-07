@@ -20,12 +20,14 @@ export function buildModuleGraph(facts, config = {}) {
   const java = facts.repository.language === 'java' && options.packageBoundaries && config.modules?.depth === undefined
     ? javaModules(facts.files.filter((f) => !excluded.has(f.role) && !groupMatchers.some(([, match]) => match(f.path))).map((f) => f.path), facts.packageMarkers || []) : null;
 
+  const goKeys = facts.repository.language === 'go' && options.packageBoundaries && config.modules?.depth === undefined
+    ? new Map((facts.languageScope?.packages || []).flatMap(pkg => pkg.files.map(file => [file, pkg.path]))) : null;
   const fileModule = new Map();
   const modules = new Map();
   let excludedFiles = 0;
   for (const file of facts.files) {
     if (excluded.has(file.role)) { excludedFiles += 1; continue; }
-    const key = moduleKey(file.path, groupMatchers, packageDirs, options.depth, java?.keys);
+    const key = moduleKey(file.path, groupMatchers, packageDirs, options.depth, goKeys || java?.keys);
     fileModule.set(file.path, key);
     // A root-level file is its own module (main.py, config.py): such files
     // are entry points or shared constants with opposite roles, and folding
@@ -146,8 +148,8 @@ function javaModules(paths, markers) {
 function moduleKey(filePath, groupMatchers, packageDirs, depth, javaKeys) {
   for (const [id, match] of groupMatchers) if (match(filePath)) return id;
   const dir = filePath.includes('/') ? filePath.slice(0, filePath.lastIndexOf('/')) : '';
-  if (dir === '') return `file:${filePath}`;
   if (javaKeys?.get(filePath) !== undefined) return javaKeys.get(filePath);
+  if (dir === '') return `file:${filePath}`;
   const segments = dir.split('/');
   const byDepth = segments.slice(0, depth).join('/');
   // A package boundary only refines grouping within the depth budget: a package

@@ -1,12 +1,13 @@
 import * as tsAdapter from './ts/index.mjs';
 import * as pyAdapter from './py/index.mjs';
 import * as javaAdapter from './java/index.mjs';
+import * as goAdapter from './go/index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './shared/diagnostics.mjs';
 import { JAVA_BUILD_MARKERS } from './shared/files.mjs';
 
-const ADAPTERS = [tsAdapter, pyAdapter, javaAdapter];
+const ADAPTERS = [tsAdapter, pyAdapter, javaAdapter, goAdapter];
 
 export function selectAdapter(root, config, requested) {
   const supported = ADAPTERS.map((a) => a.id);
