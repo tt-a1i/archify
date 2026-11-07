@@ -32,6 +32,11 @@
           "file": "src/number.rs",
           "line": 400,
           "column": 17
+        },
+        {
+          "file": "src/value/de.rs",
+          "line": 54,
+          "column": 20
         }
       ]
     },
@@ -70,5 +75,6 @@
       ]
     }
   },
-  "knownCallerContext": "value/from caller is top-level From impl; number and new value/de callers are nested Visitor implementations. Calls inside macro/doc tokens excluded."
+  "knownCallerContext": "value/from caller is top-level From impl; number and new value/de callers are nested Visitor implementations. Calls inside macro/doc tokens excluded.",
+  "sourceOracleCorrection": "Initial supplemental list omitted base value/de.rs54. First paired result prompted direct source inspection before final grading. All three non-doc base sites now recorded; this is not blind validation."
 }
