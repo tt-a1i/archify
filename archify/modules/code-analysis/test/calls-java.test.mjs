@@ -22,7 +22,7 @@ const spelling = (source, call) => source.split(/\r\n|[\r\n]/)[call.line - 1].sl
 test('Java calls inventory keeps full chained UTF16 spans and excludes constructors/references/annotations', t => {
   const source = 'class A { static A make() { return null; } static void sink(Object x) {} @Deprecated void chosen() { String s = "😀"; make().toString(); sink(make()); new A(); Runnable r = A::make; Runnable l = () -> make(); } }';
   const args = fixture(t, source);
-  assert.equal(args.facts.callModel, 'java-static-lexical-v1');
+  assert.equal(args.facts.callModel, 'java-static-lexical-v2');
   assert.deepEqual(args.facts.calls.map(call => spelling(source, call)), ['make()', 'make().toString()', 'sink(make())', 'make()', 'make()']);
   assert.deepEqual(args.facts.calls.map(call => call.resolution), ['same-file-static-method', 'unresolved', 'same-file-static-method', 'same-file-static-method', 'same-file-static-method']);
   const [first, chained] = args.facts.calls;
@@ -30,7 +30,7 @@ test('Java calls inventory keeps full chained UTF16 spans and excludes construct
   assert.equal(first.column, chained.column);
   const question = buildQuestion({ ...args, symbol: 'chosen' });
   assert.equal(question.calls.total, 5);
-  assert.equal(question.calls.bindingCoverage, 'top-level-class-unique-static-fixed-arity-source-candidates');
+  assert.equal(question.calls.bindingCoverage, 'top-level-class-and-explicit-qualified-static-source-candidates');
   assert.ok(question.calls.records.filter(record => record.fact.target).every(record => record.targetNavigation.status === 'valid'));
   assert.ok(question.calls.limitations.some(text => text.includes('compilation are not checked')));
 });
