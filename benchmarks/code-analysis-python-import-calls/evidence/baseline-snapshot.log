@@ -1,0 +1,89 @@
+TAP version 13
+# Subtest: TypeScript pins root and extended config, package metadata, sources and resolution inventory
+ok 1 - TypeScript pins root and extended config, package metadata, sources and resolution inventory
+  ---
+  duration_ms: 75.341958
+  type: 'test'
+  ...
+# Subtest: a tsconfig created after capture cannot change analysis options
+ok 2 - a tsconfig created after capture cannot change analysis options
+  ---
+  duration_ms: 20.304417
+  type: 'test'
+  ...
+# Subtest: excluded source stays outside facts but remains known to resolution
+ok 3 - excluded source stays outside facts but remains known to resolution
+  ---
+  duration_ms: 17.757125
+  type: 'test'
+  ...
+# Subtest: installed configuration packages remain supported and changes invalidate analysis
+not ok 4 - installed configuration packages remain supported and changes invalidate analysis
+  ---
+  duration_ms: 40.068917
+  type: 'test'
+  location: '${BASELINE}/archify/modules/code-analysis/test/ts-snapshot.test.mjs:72:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    TestContext.<anonymous> (file://${BASELINE}/archify/modules/code-analysis/test/ts-snapshot.test.mjs:89:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: unusual config extensions cannot change between capture and first use
+ok 5 - unusual config extensions cannot change between capture and first use
+  ---
+  duration_ms: 2.708959
+  type: 'test'
+  ...
+# Subtest: captured TypeScript configuration preserves UTF-16 BOM support
+ok 6 - captured TypeScript configuration preserves UTF-16 BOM support
+  ---
+  duration_ms: 20.696583
+  type: 'test'
+  ...
+# Subtest: JavaScript package and ESM references select implementations while TypeScript keeps declarations
+ok 7 - JavaScript package and ESM references select implementations while TypeScript keeps declarations
+  ---
+  duration_ms: 56.899375
+  type: 'test'
+  ...
+# Subtest: JavaScript package implementation fallback uses the captured manifest and source inventory
+ok 8 - JavaScript package implementation fallback uses the captured manifest and source inventory
+  ---
+  duration_ms: 18.62725
+  type: 'test'
+  ...
+# Subtest: runtime conditional null blocks siblings while arrays retain their next target
+ok 9 - runtime conditional null blocks siblings while arrays retain their next target
+  ---
+  duration_ms: 26.907375
+  type: 'test'
+  ...
+# Subtest: runtime package arrays stop at selected or unsupported targets, not capture availability
+ok 10 - runtime package arrays stop at selected or unsupported targets, not capture availability
+  ---
+  duration_ms: 24.654708
+  type: 'test'
+  ...
+# Subtest: runtime package correction respects custom conditions, option gates and captured metadata
+ok 11 - runtime package correction respects custom conditions, option gates and captured metadata
+  ---
+  duration_ms: 70.855375
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 10
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 764.599792

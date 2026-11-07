@@ -1,0 +1,516 @@
+{
+  "productSha": "8b1ed343bb335c4d93a5f7bdb7e2ae6746011ffa",
+  "node": "v22.23.3",
+  "python": "Python 3.13.16",
+  "manifestSha256": "4f3a2074d5f48ee126e30d3fb149ef2743d7005031732dbba2d69dedec140d0d",
+  "counts": {
+    "correct": 5,
+    "wrong": 0,
+    "missed": 0,
+    "omitted": 0,
+    "unknown": 5
+  },
+  "units": [
+    {
+      "id": "click-01",
+      "expected": {
+        "file": "src/click/globals.py",
+        "name": "resolve_color_default",
+        "line": 54,
+        "column": 1
+      },
+      "observed": {
+        "file": "src/click/termui.py",
+        "line": 266,
+        "column": 13,
+        "endLine": 266,
+        "endColumn": 41,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/click/globals.py",
+          "name": "resolve_color_default",
+          "line": 54,
+          "column": 1
+        }
+      },
+      "grade": "correct",
+      "navigation": {
+        "status": "valid",
+        "location": {
+          "file": "src/click/globals.py",
+          "name": "resolve_color_default",
+          "line": 54,
+          "column": 1
+        },
+        "evidence": {
+          "file": "src/click/globals.py",
+          "currentStatus": "ok",
+          "parseErrors": [],
+          "factsStatus": "valid",
+          "currentSha256": "72e27a05ba34ef79601049a18ebdfde0f78cf901665ccf828bec267ec77b1f98"
+        }
+      }
+    },
+    {
+      "id": "click-02",
+      "expected": {
+        "file": "src/click/_termui_impl.py",
+        "name": "pager",
+        "line": 362,
+        "column": 1
+      },
+      "observed": {
+        "file": "src/click/termui.py",
+        "line": 280,
+        "column": 12,
+        "endLine": 280,
+        "endColumn": 63,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/click/_termui_impl.py",
+          "name": "pager",
+          "line": 362,
+          "column": 1
+        }
+      },
+      "grade": "correct",
+      "navigation": {
+        "status": "valid",
+        "location": {
+          "file": "src/click/_termui_impl.py",
+          "name": "pager",
+          "line": 362,
+          "column": 1
+        },
+        "evidence": {
+          "file": "src/click/_termui_impl.py",
+          "currentStatus": "ok",
+          "parseErrors": [],
+          "factsStatus": "valid",
+          "currentSha256": "6b9cfb23d80e15e326bbb19bebf44fc90f063ee54fd4479b962c5c5923d240f9"
+        }
+      }
+    },
+    {
+      "id": "click-03",
+      "expected": {
+        "file": "src/click/_termui_impl.py",
+        "name": "open_url",
+        "line": 611,
+        "column": 1
+      },
+      "observed": {
+        "file": "src/click/termui.py",
+        "line": 709,
+        "column": 12,
+        "endLine": 709,
+        "endColumn": 51,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/click/_termui_impl.py",
+          "name": "open_url",
+          "line": 611,
+          "column": 1
+        }
+      },
+      "grade": "correct",
+      "navigation": {
+        "status": "valid",
+        "location": {
+          "file": "src/click/_termui_impl.py",
+          "name": "open_url",
+          "line": 611,
+          "column": 1
+        },
+        "evidence": {
+          "file": "src/click/_termui_impl.py",
+          "currentStatus": "ok",
+          "parseErrors": [],
+          "factsStatus": "valid",
+          "currentSha256": "6b9cfb23d80e15e326bbb19bebf44fc90f063ee54fd4479b962c5c5923d240f9"
+        }
+      }
+    },
+    {
+      "id": "click-04",
+      "expected": null,
+      "observed": {
+        "file": "src/click/termui.py",
+        "line": 744,
+        "column": 12,
+        "endLine": 744,
+        "endColumn": 26,
+        "resolution": "unresolved",
+        "reason": "no-local-function-binding"
+      },
+      "grade": "unknown",
+      "navigation": {
+        "status": "unresolved",
+        "location": null,
+        "reason": "no-local-function-binding"
+      }
+    },
+    {
+      "id": "click-05",
+      "expected": null,
+      "observed": {
+        "file": "src/click/termui.py",
+        "line": 750,
+        "column": 12,
+        "endLine": 750,
+        "endColumn": 15,
+        "resolution": "unresolved",
+        "reason": "no-local-function-binding"
+      },
+      "grade": "unknown",
+      "navigation": {
+        "status": "unresolved",
+        "location": null,
+        "reason": "no-local-function-binding"
+      }
+    },
+    {
+      "id": "click-06",
+      "expected": null,
+      "observed": {
+        "file": "src/click/termui.py",
+        "line": 270,
+        "column": 10,
+        "endLine": 270,
+        "endColumn": 44,
+        "resolution": "unresolved",
+        "reason": "no-local-function-binding"
+      },
+      "grade": "unknown",
+      "navigation": {
+        "status": "unresolved",
+        "location": null,
+        "reason": "no-local-function-binding"
+      }
+    },
+    {
+      "id": "jinja-07",
+      "expected": {
+        "file": "src/jinja2/compiler.py",
+        "name": "generate",
+        "line": 101,
+        "column": 1
+      },
+      "observed": {
+        "file": "src/jinja2/environment.py",
+        "line": 694,
+        "column": 16,
+        "endLine": 701,
+        "endColumn": 10,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/jinja2/compiler.py",
+          "name": "generate",
+          "line": 101,
+          "column": 1
+        }
+      },
+      "grade": "correct",
+      "navigation": {
+        "status": "valid",
+        "location": {
+          "file": "src/jinja2/compiler.py",
+          "name": "generate",
+          "line": 101,
+          "column": 1
+        },
+        "evidence": {
+          "file": "src/jinja2/compiler.py",
+          "currentStatus": "ok",
+          "parseErrors": [],
+          "factsStatus": "valid",
+          "currentSha256": "f51a42425e57f3c0479652623ec1cf876f791e1d2e029bf0149350baeb542de3"
+        }
+      }
+    },
+    {
+      "id": "jinja-08",
+      "expected": {
+        "file": "src/jinja2/debug.py",
+        "name": "rewrite_traceback_stack",
+        "line": 14,
+        "column": 1
+      },
+      "observed": {
+        "file": "src/jinja2/environment.py",
+        "line": 942,
+        "column": 15,
+        "endLine": 942,
+        "endColumn": 53,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/jinja2/debug.py",
+          "name": "rewrite_traceback_stack",
+          "line": 14,
+          "column": 1
+        }
+      },
+      "grade": "correct",
+      "navigation": {
+        "status": "valid",
+        "location": {
+          "file": "src/jinja2/debug.py",
+          "name": "rewrite_traceback_stack",
+          "line": 14,
+          "column": 1
+        },
+        "evidence": {
+          "file": "src/jinja2/debug.py",
+          "currentStatus": "ok",
+          "parseErrors": [],
+          "factsStatus": "valid",
+          "currentSha256": "0a71ea0831ddf81546bed8bff19b13a259d7361037102b18fba9ffda9c14f07c"
+        }
+      }
+    },
+    {
+      "id": "jinja-09",
+      "expected": null,
+      "observed": {
+        "file": "src/jinja2/environment.py",
+        "line": 932,
+        "column": 48,
+        "endLine": 932,
+        "endColumn": 65,
+        "resolution": "unresolved",
+        "reason": "no-local-function-binding"
+      },
+      "grade": "unknown",
+      "navigation": {
+        "status": "unresolved",
+        "location": null,
+        "reason": "no-local-function-binding"
+      }
+    },
+    {
+      "id": "jinja-10",
+      "expected": null,
+      "observed": {
+        "file": "src/jinja2/environment.py",
+        "line": 920,
+        "column": 17,
+        "endLine": 920,
+        "endColumn": 45,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "grade": "unknown",
+      "navigation": {
+        "status": "unresolved",
+        "location": null,
+        "reason": "unsupported-callee"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "label": "click-check",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "${WORK}/click",
+        "--language",
+        "py",
+        "--out",
+        "${WORK}/final-source-v2/click",
+        "--fail-on",
+        "never",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "click-0-question",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "${WORK}/final-source-v2/click",
+        "--question",
+        "Which captured source function does this call name bind to?",
+        "--entry",
+        "src/click/termui.py",
+        "--function",
+        "echo_via_pager",
+        "--root",
+        "${WORK}/click",
+        "--format",
+        "json",
+        "--out",
+        "${WORK}/final-source-v2/click-0-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "click-1-question",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "${WORK}/final-source-v2/click",
+        "--question",
+        "Which captured source function does this call name bind to?",
+        "--entry",
+        "src/click/termui.py",
+        "--function",
+        "launch",
+        "--root",
+        "${WORK}/click",
+        "--format",
+        "json",
+        "--out",
+        "${WORK}/final-source-v2/click-1-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "click-2-question",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "${WORK}/final-source-v2/click",
+        "--question",
+        "Which captured source function does this call name bind to?",
+        "--entry",
+        "src/click/termui.py",
+        "--function",
+        "getchar",
+        "--root",
+        "${WORK}/click",
+        "--format",
+        "json",
+        "--out",
+        "${WORK}/final-source-v2/click-2-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "click-3-question",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "${WORK}/final-source-v2/click",
+        "--question",
+        "Which captured source function does this call name bind to?",
+        "--entry",
+        "src/click/termui.py",
+        "--function",
+        "raw_terminal",
+        "--root",
+        "${WORK}/click",
+        "--format",
+        "json",
+        "--out",
+        "${WORK}/final-source-v2/click-3-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "jinja-check",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "${WORK}/jinja",
+        "--language",
+        "py",
+        "--out",
+        "${WORK}/final-source-v2/jinja",
+        "--fail-on",
+        "never",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "jinja-4-question",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "${WORK}/final-source-v2/jinja",
+        "--question",
+        "Which captured source function does this call name bind to?",
+        "--entry",
+        "src/jinja2/environment.py",
+        "--function",
+        "Environment._generate",
+        "--root",
+        "${WORK}/jinja",
+        "--format",
+        "json",
+        "--out",
+        "${WORK}/final-source-v2/jinja-4-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "jinja-5-question",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "${WORK}/final-source-v2/jinja",
+        "--question",
+        "Which captured source function does this call name bind to?",
+        "--entry",
+        "src/jinja2/environment.py",
+        "--function",
+        "Environment.handle_exception",
+        "--root",
+        "${WORK}/jinja",
+        "--format",
+        "json",
+        "--out",
+        "${WORK}/final-source-v2/jinja-5-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "jinja-6-question",
+      "argv": [
+        "${NODE}",
+        "${WORK}/archify/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "${WORK}/final-source-v2/jinja",
+        "--question",
+        "Which captured source function does this call name bind to?",
+        "--entry",
+        "src/jinja2/environment.py",
+        "--function",
+        "Environment.list_templates",
+        "--root",
+        "${WORK}/jinja",
+        "--format",
+        "json",
+        "--out",
+        "${WORK}/final-source-v2/jinja-6-question.json",
+        "--json"
+      ],
+      "exit": 0
+    }
+  ]
+}

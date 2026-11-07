@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: Python call inventory, direct alias targets, async definition and known zero
+ok 1 - Python call inventory, direct alias targets, async definition and known zero
+  ---
+  duration_ms: 178.298917
+  type: 'test'
+  ...
+# Subtest: Python unsupported/rebound/conditional/decorated/reexport/class targets stay inventoried
+ok 2 - Python unsupported/rebound/conditional/decorated/reexport/class targets stay inventoried
+  ---
+  duration_ms: 215.247292
+  type: 'test'
+  ...
+# Subtest: Python class/comprehension/header/nested scopes use their actual lexical contexts
+ok 3 - Python class/comprehension/header/nested scopes use their actual lexical contexts
+  ---
+  duration_ms: 113.688417
+  type: 'test'
+  ...
+# Subtest: Python scope bindings are collected before resolving parameter/store/import/catch/match/walrus/nonlocal uses
+ok 4 - Python scope bindings are collected before resolving parameter/store/import/catch/match/walrus/nonlocal uses
+  ---
+  duration_ms: 93.893333
+  type: 'test'
+  ...
+# Subtest: Python UTF-16 and exact span hashes preserve BMP/astral text, CRLF and encoded sources
+ok 5 - Python UTF-16 and exact span hashes preserve BMP/astral text, CRLF and encoded sources
+  ---
+  duration_ms: 213.358833
+  type: 'test'
+  ...
+# Subtest: Python saved range proof and imported navigation have independent freshness guards
+ok 6 - Python saved range proof and imported navigation have independent freshness guards
+  ---
+  duration_ms: 231.491125
+  type: 'test'
+  ...
+# Subtest: Python old/unknown/spoofed call models and parse failures cannot claim known zero
+ok 7 - Python old/unknown/spoofed call models and parse failures cannot claim known zero
+  ---
+  duration_ms: 282.520875
+  type: 'test'
+  ...
+# Subtest: Python definition ranges exclude decorator calls but include physically contained defaults and nested source
+ok 8 - Python definition ranges exclude decorator calls but include physically contained defaults and nested source
+  ---
+  duration_ms: 106.464917
+  type: 'test'
+  ...
+# Subtest: Python target coordinates and parse errors cannot yield trusted navigation
+ok 9 - Python target coordinates and parse errors cannot yield trusted navigation
+  ---
+  duration_ms: 229.117042
+  type: 'test'
+  ...
+# Subtest: Python class global writers, implicit class cells and private name mangling cannot invent module targets
+ok 10 - Python class global writers, implicit class cells and private name mangling cannot invent module targets
+  ---
+  duration_ms: 91.580875
+  type: 'test'
+  ...
+# Subtest: Python import names use only captured own definitions
+ok 11 - Python import names use only captured own definitions
+  ---
+  duration_ms: 111.854708
+  type: 'test'
+  ...
+# Subtest: Python external from-import calls stay unresolved and normal check succeeds
+ok 12 - Python external from-import calls stay unresolved and normal check succeeds
+  ---
+  duration_ms: 1091.698458
+  type: 'test'
+  ...
+# Subtest: Python captured package and namespace module direct imports use the analyzed directories
+ok 13 - Python captured package and namespace module direct imports use the analyzed directories
+  ---
+  duration_ms: 108.360125
+  type: 'test'
+  ...
+# Subtest: Python generic class bases and keywords use unsupported annotation scope while decorators stay outer
+ok 14 - Python generic class bases and keywords use unsupported annotation scope while decorators stay outer
+  ---
+  duration_ms: 90.68025
+  type: 'test'
+  ...
+# Subtest: Python function-local explicit imports bind only unique preceding imports in the calling block
+ok 15 - Python function-local explicit imports bind only unique preceding imports in the calling block
+  ---
+  duration_ms: 127.808833
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3947.10475

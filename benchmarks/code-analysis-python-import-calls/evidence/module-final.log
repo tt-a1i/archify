@@ -1,0 +1,2087 @@
+TAP version 13
+# Subtest: atlas: every in-tree dependency between analyzed files is drawn once, between the right files
+ok 1 - atlas: every in-tree dependency between analyzed files is drawn once, between the right files
+  ---
+  duration_ms: 556.703375
+  type: 'test'
+  ...
+# Subtest: atlas: functions keep their measurements and reported ones point at their finding
+ok 2 - atlas: functions keep their measurements and reported ones point at their finding
+  ---
+  duration_ms: 179.019167
+  type: 'test'
+  ...
+# Subtest: atlas: cycles, module cycles and boundary imports select the files and modules they name
+ok 3 - atlas: cycles, module cycles and boundary imports select the files and modules they name
+  ---
+  duration_ms: 255.111333
+  type: 'test'
+  ...
+# Subtest: atlas: a hub selects its module; accepted findings are marked; without raw facts there is no atlas
+ok 4 - atlas: a hub selects its module; accepted findings are marked; without raw facts there is no atlas
+  ---
+  duration_ms: 181.644416
+  type: 'test'
+  ...
+# Subtest: atlas: coverage reports what draws no curve
+ok 5 - atlas: coverage reports what draws no curve
+  ---
+  duration_ms: 217.724375
+  type: 'test'
+  ...
+# Subtest: atlas: module labels are the shortest path tails that stay unique
+ok 6 - atlas: module labels are the shortest path tails that stay unique
+  ---
+  duration_ms: 0.380042
+  type: 'test'
+  ...
+# Subtest: atlas: the overlay embeds the atlas before the Classic script only when raw facts are given
+ok 7 - atlas: the overlay embeds the atlas before the Classic script only when raw facts are given
+  ---
+  duration_ms: 218.940208
+  type: 'test'
+  ...
+# Subtest: atlas: an internal-imports finding draws its cited imports and marks its module and entry files
+ok 8 - atlas: an internal-imports finding draws its cited imports and marks its module and entry files
+  ---
+  duration_ms: 278.319
+  type: 'test'
+  ...
+# Subtest: boundary: one finding per crossed layer pair, citing every import that crosses it
+ok 9 - boundary: one finding per crossed layer pair, citing every import that crosses it
+  ---
+  duration_ms: 147.627459
+  type: 'test'
+  ...
+# Subtest: boundary: an allow list forbids every other declared layer
+ok 10 - boundary: an allow list forbids every other declared layer
+  ---
+  duration_ms: 5.864708
+  type: 'test'
+  ...
+# Subtest: boundary: without configuration the rule does not run and is not listed as checked
+ok 11 - boundary: without configuration the rule does not run and is not listed as checked
+  ---
+  duration_ms: 4.092958
+  type: 'test'
+  ...
+# Subtest: boundary: the first declared layer wins when globs overlap
+ok 12 - boundary: the first declared layer wins when globs overlap
+  ---
+  duration_ms: 0.955458
+  type: 'test'
+  ...
+# Subtest: boundary: invalid configuration stops with a diagnostic instead of checking less
+ok 13 - boundary: invalid configuration stops with a diagnostic instead of checking less
+  ---
+  duration_ms: 4.201166
+  type: 'test'
+  ...
+# Subtest: boundary: ids name the layer pair, so new crossing imports keep the same problem
+ok 14 - boundary: ids name the layer pair, so new crossing imports keep the same problem
+  ---
+  duration_ms: 1.215292
+  type: 'test'
+  ...
+# Subtest: boundary: coverage lists layers with their file counts, including layers that match nothing
+ok 15 - boundary: coverage lists layers with their file counts, including layers that match nothing
+  ---
+  duration_ms: 1.335167
+  type: 'test'
+  ...
+# Subtest: boundary: the overlay ties a crossing to the components on both ends
+ok 16 - boundary: the overlay ties a crossing to the components on both ends
+  ---
+  duration_ms: 19.530542
+  type: 'test'
+  ...
+# Subtest: boundary: end to end on a real TypeScript tree with a config file
+ok 17 - boundary: end to end on a real TypeScript tree with a config file
+  ---
+  duration_ms: 342.457375
+  type: 'test'
+  ...
+# Subtest: Java calls inventory keeps full chained UTF16 spans and excludes constructors/references/annotations
+ok 18 - Java calls inventory keeps full chained UTF16 spans and excludes constructors/references/annotations
+  ---
+  duration_ms: 420.8845
+  type: 'test'
+  ...
+# Subtest: Java lexical candidates reject overloads, members, explicit type args, arity, varargs and inherited Object names
+ok 19 - Java lexical candidates reject overloads, members, explicit type args, arity, varargs and inherited Object names
+  ---
+  duration_ms: 66.802625
+  type: 'test'
+  ...
+# Subtest: Java invocation inventory retains nested/local/anonymous sites while target binding excludes those owners and supertypes
+ok 20 - Java invocation inventory retains nested/local/anonymous sites while target binding excludes those owners and supertypes
+  ---
+  duration_ms: 139.923333
+  type: 'test'
+  ...
+# Subtest: Java exact function selection excludes same-line neighbours; historical, zero, parse failure and freshness remain distinct
+ok 21 - Java exact function selection excludes same-line neighbours; historical, zero, parse failure and freshness remain distinct
+  ---
+  duration_ms: 304.60425
+  type: 'test'
+  ...
+# Subtest: public saved Java task exposes lexical calls and historical unknown separately
+ok 22 - public saved Java task exposes lexical calls and historical unknown separately
+  ---
+  duration_ms: 4233.96725
+  type: 'test'
+  ...
+# Subtest: Java multiline CRLF invocation ranges and declaration hashes preserve original source positions
+ok 23 - Java multiline CRLF invocation ranges and declaration hashes preserve original source positions
+  ---
+  duration_ms: 61.014375
+  type: 'test'
+  ...
+# Subtest: TS calls bind declarations rather than names across shadowing, nested scopes and closures
+ok 24 - TS calls bind declarations rather than names across shadowing, nested scopes and closures
+  ---
+  duration_ms: 423.728166
+  type: 'test'
+  ...
+# Subtest: overloads select the sole body; duplicate bodies and cross-file global bindings stay unresolved
+ok 25 - overloads select the sole body; duplicate bodies and cross-file global bindings stay unresolved
+  ---
+  duration_ms: 98.198334
+  type: 'test'
+  ...
+# Subtest: parameter-default scopes preserve valid outer bindings and initializer-created function scopes
+ok 26 - parameter-default scopes preserve valid outer bindings and initializer-created function scopes
+  ---
+  duration_ms: 69.070791
+  type: 'test'
+  ...
+# Subtest: lexical binding remains a declaration fact under reassignment; syntax errors skip whole files
+ok 27 - lexical binding remains a declaration fact under reassignment; syntax errors skip whole files
+  ---
+  duration_ms: 50.642459
+  type: 'test'
+  ...
+# Subtest: call schema rejects unsupported targets/positions and retains empty historical calls; revision change is not source change
+ok 28 - call schema rejects unsupported targets/positions and retains empty historical calls; revision change is not source change
+  ---
+  duration_ms: 106.877875
+  type: 'test'
+  ...
+# Subtest: nested call expressions sharing a start preserve every expression
+ok 29 - nested call expressions sharing a start preserve every expression
+  ---
+  duration_ms: 37.964209
+  type: 'test'
+  ...
+# Subtest: multiline calls use end-exclusive UTF-16 source ranges
+ok 30 - multiline calls use end-exclusive UTF-16 source ranges
+  ---
+  duration_ms: 38.053208
+  type: 'test'
+  ...
+# Subtest: const direct initializers use measured names and positions; named expression inner bindings remain unknown
+ok 31 - const direct initializers use measured names and positions; named expression inner bindings remain unknown
+  ---
+  duration_ms: 50.838792
+  type: 'test'
+  ...
+# Subtest: const binding follows parameter and block shadowing, excludes mutable, wrapped and indirect initializers
+ok 32 - const binding follows parameter and block shadowing, excludes mutable, wrapped and indirect initializers
+  ---
+  duration_ms: 48.328667
+  type: 'test'
+  ...
+# Subtest: nonunique variable declarations and cross-file globals cannot acquire an initializer target
+ok 33 - nonunique variable declarations and cross-file globals cannot acquire an initializer target
+  ---
+  duration_ms: 78.350084
+  type: 'test'
+  ...
+# Subtest: optional capture observation leaves raw facts and their revision/snapshot fingerprints unchanged
+ok 34 - optional capture observation leaves raw facts and their revision/snapshot fingerprints unchanged
+  ---
+  duration_ms: 554.768916
+  type: 'test'
+  ...
+# Subtest: public paired question captures dirty working trees, preserves side coordinates and original task modes
+ok 35 - public paired question captures dirty working trees, preserves side coordinates and original task modes
+  ---
+  duration_ms: 2953.49775
+  type: 'test'
+  ...
+# Subtest: added and deleted files/functions are normal, and file moves do not infer identity
+ok 36 - added and deleted files/functions are normal, and file moves do not infer identity
+  ---
+  duration_ms: 209.750292
+  type: 'test'
+  ...
+# Subtest: same-line functions use exact ranges and duplicate qualified slots remain unpaired
+ok 37 - same-line functions use exact ranges and duplicate qualified slots remain unpaired
+  ---
+  duration_ms: 132.698542
+  type: 'test'
+  ...
+# Subtest: both sides lose stale definition navigation; stale caller retains evidence but no live location
+ok 38 - both sides lose stale definition navigation; stale caller retains evidence but no live location
+  ---
+  duration_ms: 129.276833
+  type: 'test'
+  ...
+# Subtest: parse errors are partial and suppress affected definitions without losing valid regions
+ok 39 - parse errors are partial and suppress affected definitions without losing valid regions
+  ---
+  duration_ms: 2053.631917
+  type: 'test'
+  ...
+# Subtest: root/extended compiler settings and package contents limit binding attribution, even with one analysis config
+ok 40 - root/extended compiler settings and package contents limit binding attribution, even with one analysis config
+  ---
+  duration_ms: 2558.852542
+  type: 'test'
+  ...
+# Subtest: new source candidates may change known binding without a configuration mismatch
+ok 41 - new source candidates may change known binding without a configuration mismatch
+  ---
+  duration_ms: 76.329208
+  type: 'test'
+  ...
+# Subtest: fresh mode rejects incompatible options and protects either root from output overwrite
+ok 42 - fresh mode rejects incompatible options and protects either root from output overwrite
+  ---
+  duration_ms: 3697.235708
+  type: 'test'
+  ...
+# Subtest: bounded orientation counts omitted references and missing entry never looks successful
+ok 43 - bounded orientation counts omitted references and missing entry never looks successful
+  ---
+  duration_ms: 131.5715
+  type: 'test'
+  ...
+# Subtest: explicit declaration entries disclose unsupported definitions separately from an available file with no functions
+ok 44 - explicit declaration entries disclose unsupported definitions separately from an available file with no functions
+  ---
+  duration_ms: 2080.157
+  type: 'test'
+  ...
+# Subtest: module reading keeps resolved dependency kinds separate from calls and preserves bounded original facts
+ok 45 - module reading keeps resolved dependency kinds separate from calls and preserves bounded original facts
+  ---
+  duration_ms: 141.611666
+  type: 'test'
+  ...
+# Subtest: dependency navigation requires fresh parseable origin/entry and resolution inputs on its own side
+ok 46 - dependency navigation requires fresh parseable origin/entry and resolution inputs on its own side
+  ---
+  duration_ms: 199.86925
+  type: 'test'
+  ...
+# Subtest: Python paired CLI selects the entry language in mixed roots and compares owned decorator headers
+ok 47 - Python paired CLI selects the entry language in mixed roots and compares owned decorator headers
+  ---
+  duration_ms: 2218.1415
+  type: 'test'
+  ...
+# Subtest: Python direct-name references keep def-start identity separate from paired header extent
+ok 48 - Python direct-name references keep def-start identity separate from paired header extent
+  ---
+  duration_ms: 337.721958
+  type: 'test'
+  ...
+# Subtest: Java paired headers have exact same-line ranges and fresh zero call totals
+ok 49 - Java paired headers have exact same-line ranges and fresh zero call totals
+  ---
+  duration_ms: 91.8425
+  type: 'test'
+  ...
+# Subtest: paired Java changed static method retains references and unresolved members without inventing old-model coverage
+ok 50 - paired Java changed static method retains references and unresolved members without inventing old-model coverage
+  ---
+  duration_ms: 94.709042
+  type: 'test'
+  ...
+# Subtest: non-TS historical missing metadata and incorrect hashes stay partial without line-only guesses
+ok 51 - non-TS historical missing metadata and incorrect hashes stay partial without line-only guesses
+  ---
+  duration_ms: 862.869458
+  type: 'test'
+  ...
+# Subtest: non-TS captures preserve stale/parse/missing coverage and reject mismatched capture provenance
+ok 52 - non-TS captures preserve stale/parse/missing coverage and reject mismatched capture provenance
+  ---
+  duration_ms: 1382.942291
+  type: 'test'
+  ...
+# Subtest: non-TS duplicate slots and bounded outgoing imports keep uncertainty and original records
+ok 53 - non-TS duplicate slots and bounded outgoing imports keep uncertainty and original records
+  ---
+  duration_ms: 393.244083
+  type: 'test'
+  ...
+# Subtest: paired mode rejects unsupported suffixes and invalid entry paths before capture
+ok 54 - paired mode rejects unsupported suffixes and invalid entry paths before capture
+  ---
+  duration_ms: 13319.67875
+  type: 'test'
+  ...
+# Subtest: check: the summary shows a parse failure and a language that was not analyzed
+ok 55 - check: the summary shows a parse failure and a language that was not analyzed
+  ---
+  duration_ms: 4524.351125
+  type: 'test'
+  ...
+# Subtest: check: a clean run says nothing about coverage and the gate is unchanged
+ok 56 - check: a clean run says nothing about coverage and the gate is unchanged
+  ---
+  duration_ms: 4156.226833
+  type: 'test'
+  ...
+# Subtest: check: threshold errors stay errors and partial coverage does not change the finding gate
+ok 57 - check: threshold errors stay errors and partial coverage does not change the finding gate
+  ---
+  duration_ms: 5913.37225
+  type: 'test'
+  ...
+# Subtest: config: objects merge at every depth, arrays and scalars replace
+ok 58 - config: objects merge at every depth, arrays and scalars replace
+  ---
+  duration_ms: 5.795459
+  type: 'test'
+  ...
+# Subtest: config: a file overriding one role keeps the default exclude list and other roles
+ok 59 - config: a file overriding one role keeps the default exclude list and other roles
+  ---
+  duration_ms: 6.321291
+  type: 'test'
+  ...
+# Subtest: comparison: the same analysis of edited code is comparable; a fixed cycle is no longer detected
+ok 60 - comparison: the same analysis of edited code is comparable; a fixed cycle is no longer detected
+  ---
+  duration_ms: 722.770208
+  type: 'test'
+  ...
+# Subtest: comparison: switching a rule off, changing thresholds or deleting a file is not a fix
+ok 61 - comparison: switching a rule off, changing thresholds or deleting a file is not a fix
+  ---
+  duration_ms: 1136.911458
+  type: 'test'
+  ...
+# Subtest: comparison: renaming a function changes its id; the old one is not detected because its function is gone
+ok 62 - comparison: renaming a function changes its id; the old one is not detected because its function is gone
+  ---
+  duration_ms: 448.388167
+  type: 'test'
+  ...
+# Subtest: comparison: a previous run without analysis context has unknown comparability
+ok 63 - comparison: a previous run without analysis context has unknown comparability
+  ---
+  duration_ms: 155.11225
+  type: 'test'
+  ...
+# Subtest: comparison: findings with position-numbered ids stay readable and are flagged as not comparable
+ok 64 - comparison: findings with position-numbered ids stay readable and are flagged as not comparable
+  ---
+  duration_ms: 162.525375
+  type: 'test'
+  ...
+# Subtest: comparison: reordering first-match config maps or changing the extractor is not comparable
+ok 65 - comparison: reordering first-match config maps or changing the extractor is not comparable
+  ---
+  duration_ms: 375.462834
+  type: 'test'
+  ...
+# Subtest: comparison: a changed extraction logic revision is not comparable; an unrecorded one is reported once
+ok 66 - comparison: a changed extraction logic revision is not comparable; an unrecorded one is reported once
+  ---
+  duration_ms: 180.947708
+  type: 'test'
+  ...
+# Subtest: check: an explicit --compare that cannot be read is an input error, not "no comparison"
+ok 67 - check: an explicit --compare that cannot be read is an input error, not "no comparison"
+  ---
+  duration_ms: 3632.938209
+  type: 'test'
+  ...
+# Subtest: comparison: numeric stable hashes retain normal comparison and context checks
+ok 68 - comparison: numeric stable hashes retain normal comparison and context checks
+  ---
+  duration_ms: 71.363291
+  type: 'test'
+  ...
+# Subtest: java complexity: method and constructor overloads have distinct stable names; signatures without bodies are skipped
+ok 69 - java complexity: method and constructor overloads have distinct stable names; signatures without bodies are skipped
+  ---
+  duration_ms: 21.581167
+  type: 'test'
+  ...
+# Subtest: java complexity: hand-counted branches, operators, loops and catch are measured with source evidence
+ok 70 - java complexity: hand-counted branches, operators, loops and catch are measured with source evidence
+  ---
+  duration_ms: 5.106958
+  type: 'test'
+  ...
+# Subtest: java complexity: switch labels, guards, enhanced for and do loops are counted once
+ok 71 - java complexity: switch labels, guards, enhanced for and do loops are counted once
+  ---
+  duration_ms: 6.682875
+  type: 'test'
+  ...
+# Subtest: java complexity: lambda branches belong to the method; local and anonymous methods are separate
+ok 72 - java complexity: lambda branches belong to the method; local and anonymous methods are separate
+  ---
+  duration_ms: 1.705708
+  type: 'test'
+  ...
+# Subtest: java complexity: initializer blocks and lambda fields are measured on their own
+ok 73 - java complexity: initializer blocks and lambda fields are measured on their own
+  ---
+  duration_ms: 9.53725
+  type: 'test'
+  ...
+# Subtest: java complexity: enum constant bodies keep separate method identities
+ok 74 - java complexity: enum constant bodies keep separate method identities
+  ---
+  duration_ms: 0.6855
+  type: 'test'
+  ...
+# Subtest: python extraction: functions carry complexity, nesting and location; nested functions stand alone
+ok 75 - python extraction: functions carry complexity, nesting and location; nested functions stand alone
+  ---
+  duration_ms: 381.288208
+  type: 'test'
+  ...
+# Subtest: complexity: warning at the warning thresholds, info below them, nothing under info
+ok 76 - complexity: warning at the warning thresholds, info below them, nothing under info
+  ---
+  duration_ms: 58.215375
+  type: 'test'
+  ...
+# Subtest: complexity: thresholds come from the config, level by level
+ok 77 - complexity: thresholds come from the config, level by level
+  ---
+  duration_ms: 0.821
+  type: 'test'
+  ...
+# Subtest: complexity: a threshold that is not a whole number names the setting and stops
+ok 78 - complexity: a threshold that is not a whole number names the setting and stops
+  ---
+  duration_ms: 1.137083
+  type: 'test'
+  ...
+# Subtest: complexity: a valid threshold still overrides just that one value
+ok 79 - complexity: a valid threshold still overrides just that one value
+  ---
+  duration_ms: 0.460959
+  type: 'test'
+  ...
+# Subtest: complexity: a warning threshold set below the info threshold still reports the function
+ok 80 - complexity: a warning threshold set below the info threshold still reports the function
+  ---
+  duration_ms: 0.484916
+  type: 'test'
+  ...
+# Subtest: complexity: not run, and not listed as checked, when functions were not measured
+ok 81 - complexity: not run, and not listed as checked, when functions were not measured
+  ---
+  duration_ms: 0.564459
+  type: 'test'
+  ...
+# Subtest: complexity: the id follows the function, and the digest only its own lines
+ok 82 - complexity: the id follows the function, and the digest only its own lines
+  ---
+  duration_ms: 2.570042
+  type: 'test'
+  ...
+# Subtest: complexity: the overlay ties a function to its component and adds an indicator there only
+ok 83 - complexity: the overlay ties a function to its component and adds an indicator there only
+  ---
+  duration_ms: 50.419416
+  type: 'test'
+  ...
+# Subtest: complexity: end to end on a Python tree
+ok 84 - complexity: end to end on a Python tree
+  ---
+  duration_ms: 215.877334
+  type: 'test'
+  ...
+# Subtest: ts extraction: functions, methods, named arrows and module-scope callbacks; inner callbacks fold in
+ok 85 - ts extraction: functions, methods, named arrows and module-scope callbacks; inner callbacks fold in
+  ---
+  duration_ms: 133.498584
+  type: 'test'
+  ...
+# Subtest: ts and python: the same logic gets the same complexity and nesting
+ok 86 - ts and python: the same logic gets the same complexity and nesting
+  ---
+  duration_ms: 260.13475
+  type: 'test'
+  ...
+# Subtest: complexity: runs for JS/TS projects end to end
+ok 87 - complexity: runs for JS/TS projects end to end
+  ---
+  duration_ms: 45.559
+  type: 'test'
+  ...
+# Subtest: ts extraction: module-scope callbacks are named by their call and literal, not their position
+ok 88 - ts extraction: module-scope callbacks are named by their call and literal, not their position
+  ---
+  duration_ms: 135.547417
+  type: 'test'
+  ...
+# Subtest: ts extraction: syntax errors are recorded as parse_errors
+ok 89 - ts extraction: syntax errors are recorded as parse_errors
+  ---
+  duration_ms: 46.761875
+  type: 'test'
+  ...
+# Subtest: definition metadata: Python owns actual stacked parenthesized decorator tokens while call starts stay at def
+ok 90 - definition metadata: Python owns actual stacked parenthesized decorator tokens while call starts stay at def
+  ---
+  duration_ms: 649.336125
+  type: 'test'
+  ...
+# Subtest: definition metadata: Python nested/class/duplicate definitions retain independent owned ranges
+ok 91 - definition metadata: Python nested/class/duplicate definitions retain independent owned ranges
+  ---
+  duration_ms: 161.785958
+  type: 'test'
+  ...
+# Subtest: definition metadata: Java includes annotations/modifiers with exact same-line, CRLF and astral bounds
+ok 92 - definition metadata: Java includes annotations/modifiers with exact same-line, CRLF and astral bounds
+  ---
+  duration_ms: 103.507542
+  type: 'test'
+  ...
+# Subtest: definition metadata: Java preprocessing-required escapes remain parse-invalid; invalid offsets are unavailable
+ok 93 - definition metadata: Java preprocessing-required escapes remain parse-invalid; invalid offsets are unavailable
+  ---
+  duration_ms: 30.964042
+  type: 'test'
+  ...
+# Subtest: definition metadata: schema rejects corrupt hashes, reversed/outside ranges and wrong language kinds; historical metadata is optional
+ok 94 - definition metadata: schema rejects corrupt hashes, reversed/outside ranges and wrong language kinds; historical metadata is optional
+  ---
+  duration_ms: 178.979084
+  type: 'test'
+  ...
+# Subtest: cycle: a DAG yields no finding; a 3-cycle yields one finding naming exactly its members
+ok 95 - cycle: a DAG yields no finding; a 3-cycle yields one finding naming exactly its members
+  ---
+  duration_ms: 139.589167
+  type: 'test'
+  ...
+# Subtest: cycle: two separate cycles are two findings; a self-contained 2-cycle quotes both imports
+ok 96 - cycle: two separate cycles are two findings; a self-contained 2-cycle quotes both imports
+  ---
+  duration_ms: 1.65375
+  type: 'test'
+  ...
+# Subtest: ids: a finding keeps its id when an unrelated finding sorting before it appears or disappears
+ok 97 - ids: a finding keeps its id when an unrelated finding sorting before it appears or disappears
+  ---
+  duration_ms: 0.971958
+  type: 'test'
+  ...
+# Subtest: ids: module findings are identified by grouping path, not by the generated module id
+ok 98 - ids: module findings are identified by grouping path, not by the generated module id
+  ---
+  duration_ms: 0.592875
+  type: 'test'
+  ...
+# Subtest: evidenceDigest: tracks only the files a finding is about, and is omitted without facts
+ok 99 - evidenceDigest: tracks only the files a finding is about, and is omitted without facts
+  ---
+  duration_ms: 5.087791
+  type: 'test'
+  ...
+# Subtest: evidenceDigest: module findings cover every file of their modules
+ok 100 - evidenceDigest: module findings cover every file of their modules
+  ---
+  duration_ms: 0.730625
+  type: 'test'
+  ...
+# Subtest: hub: fires only when both fan-in and fan-out meet the configured thresholds, echoed in evidence
+ok 101 - hub: fires only when both fan-in and fan-out meet the configured thresholds, echoed in evidence
+  ---
+  duration_ms: 0.8005
+  type: 'test'
+  ...
+# Subtest: evaluate: ignore list suppresses a rule and counts it
+ok 102 - evaluate: ignore list suppresses a rule and counts it
+  ---
+  duration_ms: 0.270292
+  type: 'test'
+  ...
+# Subtest: import-cycle: eager cycles warn and deferred cycles remain unverified, never asserted safe
+ok 103 - import-cycle: eager cycles warn and deferred cycles remain unverified, never asserted safe
+  ---
+  duration_ms: 1.858542
+  type: 'test'
+  ...
+# Subtest: import-cycle: binding line order produces a partial-init candidate with its assumptions exposed
+ok 104 - import-cycle: binding line order produces a partial-init candidate with its assumptions exposed
+  ---
+  duration_ms: 1.626
+  type: 'test'
+  ...
+# Subtest: import-cycle: a package-level cycle made of two different files is not a file cycle
+ok 105 - import-cycle: a package-level cycle made of two different files is not a file cycle
+  ---
+  duration_ms: 2.904667
+  type: 'test'
+  ...
+# Subtest: import-cycle: test files are excluded like the module graph excludes them
+ok 106 - import-cycle: test files are excluded like the module graph excludes them
+  ---
+  duration_ms: 1.059417
+  type: 'test'
+  ...
+# Subtest: saved py question uses captured source and functions with explicit call-model coverage
+ok 107 - saved py question uses captured source and functions with explicit call-model coverage
+  ---
+  duration_ms: 4313.444417
+  type: 'test'
+  ...
+# Subtest: saved java question uses captured source and functions with explicit call-model coverage
+ok 108 - saved java question uses captured source and functions with explicit call-model coverage
+  ---
+  duration_ms: 3926.70125
+  type: 'test'
+  ...
+# Subtest: saved language admission requires matching captured producer and implementation inventory
+ok 109 - saved language admission requires matching captured producer and implementation inventory
+  ---
+  duration_ms: 383.524083
+  type: 'test'
+  ...
+# Subtest: saved Python overload records and Java method overload names retain explicit ambiguity
+ok 110 - saved Python overload records and Java method overload names retain explicit ambiguity
+  ---
+  duration_ms: 228.85975
+  type: 'test'
+  ...
+# Subtest: question locates a real function without findings and exposes unresolved dependencies
+ok 111 - question locates a real function without findings and exposes unresolved dependencies
+  ---
+  duration_ms: 1990.958
+  type: 'test'
+  ...
+# Subtest: public receipts distinguish captured zero calls from import-only facts with the same current source
+ok 112 - public receipts distinguish captured zero calls from import-only facts with the same current source
+  ---
+  duration_ms: 4937.687667
+  type: 'test'
+  ...
+# Subtest: question entries support captured TS and JSX implementations while declaration files remain unsupported
+ok 113 - question entries support captured TS and JSX implementations while declaration files remain unsupported
+  ---
+  duration_ms: 413.183542
+  type: 'test'
+  ...
+# Subtest: changed entry loses captured location; changed dependencies have their own status
+ok 114 - changed entry loses captured location; changed dependencies have their own status
+  ---
+  duration_ms: 1965.616792
+  type: 'test'
+  ...
+# Subtest: missing facts are explicit; invalid function or entry is not a successful orientation
+ok 115 - missing facts are explicit; invalid function or entry is not a successful orientation
+  ---
+  duration_ms: 2042.459792
+  type: 'test'
+  ...
+# Subtest: question output cannot overwrite the source it identifies
+ok 116 - question output cannot overwrite the source it identifies
+  ---
+  duration_ms: 3830.071583
+  type: 'test'
+  ...
+# Subtest: unchanged but syntactically broken source exposes partial extraction instead of a trusted range
+ok 117 - unchanged but syntactically broken source exposes partial extraction instead of a trusted range
+  ---
+  duration_ms: 1646.468625
+  type: 'test'
+  ...
+# Subtest: question scope distinguishes a subdirectory from its Git root and works in a linked worktree
+ok 118 - question scope distinguishes a subdirectory from its Git root and works in a linked worktree
+  ---
+  duration_ms: 530.521209
+  type: 'test'
+  ...
+# Subtest: optional Git scope remains unknown in non-Git directories or without Git, preserving entry orientation
+ok 119 - optional Git scope remains unknown in non-Git directories or without Git, preserving entry orientation
+  ---
+  duration_ms: 2789.386792
+  type: 'test'
+  ...
+# Subtest: extract: synthetic fixture yields the expected files, imports, and unresolved counts
+ok 120 - extract: synthetic fixture yields the expected files, imports, and unresolved counts
+  ---
+  duration_ms: 2361.183458
+  type: 'test'
+  ...
+# Subtest: extract: failures are structured diagnostics, never stacks
+ok 121 - extract: failures are structured diagnostics, never stacks
+  ---
+  duration_ms: 3448.431459
+  type: 'test'
+  ...
+# Subtest: java: captured sources retain exact text, line positions, roles and exclusions
+ok 122 - java: captured sources retain exact text, line positions, roles and exclusions
+  ---
+  duration_ms: 22.275167
+  type: 'test'
+  ...
+# Subtest: java: records, compact constructors, sealed types and switch patterns are parsed
+ok 123 - java: records, compact constructors, sealed types and switch patterns are parsed
+  ---
+  duration_ms: 27.421833
+  type: 'test'
+  ...
+# Subtest: java: empty member records are types, not methods, through dependencies and boundaries
+ok 124 - java: empty member records are types, not methods, through dependencies and boundaries
+  ---
+  duration_ms: 335.751708
+  type: 'test'
+  ...
+# Subtest: java: instance creation, constructor references and class literals are type references
+ok 125 - java: instance creation, constructor references and class literals are type references
+  ---
+  duration_ms: 49.736833
+  type: 'test'
+  ...
+# Subtest: java: duplicate enclosing declarations keep member types ambiguous on every lookup path
+ok 126 - java: duplicate enclosing declarations keep member types ambiguous on every lookup path
+  ---
+  duration_ms: 14.373625
+  type: 'test'
+  ...
+# Subtest: java: classes local to interface methods and initializer blocks are not member types
+ok 127 - java: classes local to interface methods and initializer blocks are not member types
+  ---
+  duration_ms: 5.734
+  type: 'test'
+  ...
+# Subtest: java: explicitly and implicitly static member types can be statically imported
+ok 128 - java: explicitly and implicitly static member types can be statically imported
+  ---
+  duration_ms: 4.923958
+  type: 'test'
+  ...
+# Subtest: java: build-output defaults exclude Java sources only, keeping existing JS/TS scans and overrides
+ok 129 - java: build-output defaults exclude Java sources only, keeping existing JS/TS scans and overrides
+  ---
+  duration_ms: 245.59225
+  type: 'test'
+  ...
+# Subtest: java: unresolved counters follow the shared contract: external outside the sources, unknown for internal gaps
+ok 130 - java: unresolved counters follow the shared contract: external outside the sources, unknown for internal gaps
+  ---
+  duration_ms: 9.474708
+  type: 'test'
+  ...
+# Subtest: java: broken syntax and unsupported input stay visible without partial facts
+ok 131 - java: broken syntax and unsupported input stay visible without partial facts
+  ---
+  duration_ms: 31.8125
+  type: 'test'
+  ...
+# Subtest: java: explicit, static, nested, same-package and qualified type references resolve to declarations
+ok 132 - java: explicit, static, nested, same-package and qualified type references resolve to declarations
+  ---
+  duration_ms: 6.52925
+  type: 'test'
+  ...
+# Subtest: java: duplicate types, unknown static members, wildcard and shadowed names never create guessed edges
+ok 133 - java: duplicate types, unknown static members, wildcard and shadowed names never create guessed edges
+  ---
+  duration_ms: 8.47025
+  type: 'test'
+  ...
+# Subtest: java: wildcard declarations do not manufacture dependencies on unused package members
+ok 134 - java: wildcard declarations do not manufacture dependencies on unused package members
+  ---
+  duration_ms: 6.960167
+  type: 'test'
+  ...
+# Subtest: java: anonymous initializer members are not static members of their enclosing field owner
+ok 135 - java: anonymous initializer members are not static members of their enclosing field owner
+  ---
+  duration_ms: 2.955875
+  type: 'test'
+  ...
+# Subtest: java: the public pipeline preserves deterministic facts, structural cycles and Java task semantics
+ok 136 - java: the public pipeline preserves deterministic facts, structural cycles and Java task semantics
+  ---
+  duration_ms: 111.599125
+  type: 'test'
+  ...
+# Subtest: java: CLI check writes every stage and mixed-language selection reports omitted files
+ok 137 - java: CLI check writes every stage and mixed-language selection reports omitted files
+  ---
+  duration_ms: 4565.846417
+  type: 'test'
+  ...
+# Subtest: java: literal and comment Unicode escapes keep source ranges and file dependencies
+ok 138 - java: literal and comment Unicode escapes keep source ranges and file dependencies
+  ---
+  duration_ms: 35.033542
+  type: 'test'
+  ...
+# Subtest: java: boundary-changing and malformed Unicode escapes retain coverage diagnostics
+ok 139 - java: boundary-changing and malformed Unicode escapes retain coverage diagnostics
+  ---
+  duration_ms: 36.094541
+  type: 'test'
+  ...
+# Subtest: java: Unicode escapes in comments are rejected rather than hiding pre-lexing Java code
+ok 140 - java: Unicode escapes in comments are rejected rather than hiding pre-lexing Java code
+  ---
+  duration_ms: 27.27625
+  type: 'test'
+  ...
+# Subtest: java: conflicting single imports stay ambiguous, and declared interface static members resolve
+ok 141 - java: conflicting single imports stay ambiguous, and declared interface static members resolve
+  ---
+  duration_ms: 30.21225
+  type: 'test'
+  ...
+# Subtest: java: local and anonymous scopes do not turn inherited names into package dependencies
+ok 142 - java: local and anonymous scopes do not turn inherited names into package dependencies
+  ---
+  duration_ms: 31.103875
+  type: 'test'
+  ...
+# Subtest: java: a lexical member type prefix blocks unrelated package and import fallbacks
+ok 143 - java: a lexical member type prefix blocks unrelated package and import fallbacks
+  ---
+  duration_ms: 7.729791
+  type: 'test'
+  ...
+# Subtest: java: initializer-local classes are not indexed as externally accessible member types
+ok 144 - java: initializer-local classes are not indexed as externally accessible member types
+  ---
+  duration_ms: 6.351
+  type: 'test'
+  ...
+# Subtest: java: static value imports do not suppress independent type dependencies
+ok 145 - java: static value imports do not suppress independent type dependencies
+  ---
+  duration_ms: 38.571208
+  type: 'test'
+  ...
+# Subtest: java: static imports preserve member-type and uncertain owner guards
+ok 146 - java: static imports preserve member-type and uncertain owner guards
+  ---
+  duration_ms: 16.550375
+  type: 'test'
+  ...
+# Subtest: java: ordinary declaration headers resolve proven types, and analyzed supertypes open class bodies
+ok 147 - java: ordinary declaration headers resolve proven types, and analyzed supertypes open class bodies
+  ---
+  duration_ms: 10.656042
+  type: 'test'
+  ...
+# Subtest: java: inherited member types bind body names; unknown supertype chains keep the body guard
+ok 148 - java: inherited member types bind body names; unknown supertype chains keep the body guard
+  ---
+  duration_ms: 19.9675
+  type: 'test'
+  ...
+# Subtest: java: listed JDK supertypes named by a single-type import open class bodies
+ok 149 - java: listed JDK supertypes named by a single-type import open class bodies
+  ---
+  duration_ms: 16.832125
+  type: 'test'
+  ...
+# Subtest: java: member records holding only member types keep those members, in the owner and in subclasses
+ok 150 - java: member records holding only member types keep those members, in the owner and in subclasses
+  ---
+  duration_ms: 52.139375
+  type: 'test'
+  ...
+# Subtest: java: enum and record members are out of scope in their own implements clauses
+ok 151 - java: enum and record members are out of scope in their own implements clauses
+  ---
+  duration_ms: 7.512209
+  type: 'test'
+  ...
+# Subtest: java: modules follow Maven/Gradle modules, or packages in a single-module build
+ok 152 - java: modules follow Maven/Gradle modules, or packages in a single-module build
+  ---
+  duration_ms: 269.616959
+  type: 'test'
+  ...
+# Subtest: java: qualified names start at a package or an in-scope type, never at a subpackage
+ok 153 - java: qualified names start at a package or an in-scope type, never at a subpackage
+  ---
+  duration_ms: 8.857542
+  type: 'test'
+  ...
+# Subtest: java: declaration headers preserve outer, local, parameter and static-import guards
+ok 154 - java: declaration headers preserve outer, local, parameter and static-import guards
+  ---
+  duration_ms: 9.920791
+  type: 'test'
+  ...
+# Subtest: py: fixture yields hand-verified files, imports, unresolved counts, and parse errors
+ok 155 - py: fixture yields hand-verified files, imports, unresolved counts, and parse errors
+  ---
+  duration_ms: 2120.594958
+  type: 'test'
+  ...
+# Subtest: py: a `from pkg import sub` edge lands on the submodule, not only the package
+ok 156 - py: a `from pkg import sub` edge lands on the submodule, not only the package
+  ---
+  duration_ms: 2113.339833
+  type: 'test'
+  ...
+# Subtest: py: output is byte-for-byte deterministic
+ok 157 - py: output is byte-for-byte deterministic
+  ---
+  duration_ms: 3792.067625
+  type: 'test'
+  ...
+# Subtest: adapter selection: mixed trees must name a language; --language settles it
+ok 158 - adapter selection: mixed trees must name a language; --language settles it
+  ---
+  duration_ms: 3276.717459
+  type: 'test'
+  ...
+# Subtest: py: a PEP 420 namespace directory resolves submodule imports and rejects attributes
+ok 159 - py: a PEP 420 namespace directory resolves submodule imports and rejects attributes
+  ---
+  duration_ms: 1894.268
+  type: 'test'
+  ...
+# Subtest: py: an import inside a function body is marked lazy; module-scope imports are not
+ok 160 - py: an import inside a function body is marked lazy; module-scope imports are not
+  ---
+  duration_ms: 2105.410958
+  type: 'test'
+  ...
+# Subtest: CommonJS directory requires find the captured JS entry behind separate declarations
+ok 161 - CommonJS directory requires find the captured JS entry behind separate declarations
+  ---
+  duration_ms: 1852.256791
+  type: 'test'
+  ...
+# Subtest: capturing declarations distinguishes a directory require from a type-only import
+ok 162 - capturing declarations distinguishes a directory require from a type-only import
+  ---
+  duration_ms: 2111.942417
+  type: 'test'
+  ...
+# Subtest: extensionless and explicit CommonJS file loads use the JS implementation beside its declaration
+ok 163 - extensionless and explicit CommonJS file loads use the JS implementation beside its declaration
+  ---
+  duration_ms: 1892.717666
+  type: 'test'
+  ...
+# Subtest: extract preserves import-equals and ignores locally bound require calls
+ok 164 - extract preserves import-equals and ignores locally bound require calls
+  ---
+  duration_ms: 1904.852833
+  type: 'test'
+  ...
+# Subtest: extract rejects an unmatched configured brace without hanging or writing output
+ok 165 - extract rejects an unmatched configured brace without hanging or writing output
+  ---
+  duration_ms: 1503.7365
+  type: 'test'
+  ...
+# Subtest: extract bytes do not depend on locale for Unicode paths
+ok 166 - extract bytes do not depend on locale for Unicode paths
+  ---
+  duration_ms: 3681.991125
+  type: 'test'
+  ...
+# Subtest: repository roots are relative to Git through directory aliases
+ok 167 - repository roots are relative to Git through directory aliases
+  ---
+  duration_ms: 203.54825
+  type: 'test'
+  ...
+# Subtest: an in-root directory whose name starts with ".." is not classified as outside
+ok 168 - an in-root directory whose name starts with ".." is not classified as outside
+  ---
+  duration_ms: 2696.61075
+  type: 'test'
+  ...
+# Subtest: Python records a NUL byte as a per-file parse error
+ok 169 - Python records a NUL byte as a per-file parse error
+  ---
+  duration_ms: 2395.390916
+  type: 'test'
+  ...
+# Subtest: raw-facts schema requires unresolved counters and enforces the resolved/to invariant
+ok 170 - raw-facts schema requires unresolved counters and enforces the resolved/to invariant
+  ---
+  duration_ms: 137.67025
+  type: 'test'
+  ...
+# Subtest: regression: a credentialed origin (https://user@github.com/…) is recorded without the credential, so evidence mode and links still work
+ok 171 - regression: a credentialed origin (https://user@github.com/…) is recorded without the credential, so evidence mode and links still work
+  ---
+  duration_ms: 158.213583
+  type: 'test'
+  ...
+# Subtest: extract: archify/ self-bootstrap passes schema and is byte-for-byte deterministic
+ok 172 - extract: archify/ self-bootstrap passes schema and is byte-for-byte deterministic
+  ---
+  duration_ms: 21663.270792
+  type: 'test'
+  ...
+# Subtest: extract: hand-verified import lists for two archify files
+ok 173 - extract: hand-verified import lists for two archify files
+  ---
+  duration_ms: 5768.126083
+  type: 'test'
+  ...
+# Subtest: extractor revision: ts output on ts-basic matches its recorded revision
+ok 174 - extractor revision: ts output on ts-basic matches its recorded revision
+  ---
+  duration_ms: 325.089291
+  type: 'test'
+  ...
+# Subtest: extractor revision: py output on py-basic matches its recorded revision
+ok 175 - extractor revision: py output on py-basic matches its recorded revision
+  ---
+  duration_ms: 203.996584
+  type: 'test'
+  ...
+# Subtest: extractor revision: java output on java-basic matches its recorded revision
+ok 176 - extractor revision: java output on java-basic matches its recorded revision
+  ---
+  duration_ms: 156.895792
+  type: 'test'
+  ...
+# Subtest: graphs: the synthetic fixture folds into a hand-verified two-module graph
+ok 177 - graphs: the synthetic fixture folds into a hand-verified two-module graph
+  ---
+  duration_ms: 374.942458
+  type: 'test'
+  ...
+# Subtest: graphs: explicit groups win over depth, and a deeper package folds into its depth-level ancestor
+ok 178 - graphs: explicit groups win over depth, and a deeper package folds into its depth-level ancestor
+  ---
+  duration_ms: 140.838417
+  type: 'test'
+  ...
+# Subtest: Python imports choose a regular package before its sibling module within one search root
+ok 179 - Python imports choose a regular package before its sibling module within one search root
+  ---
+  duration_ms: 254.930542
+  type: 'test'
+  ...
+# Subtest: Python dotted imports cannot cross a parent module or a different regular package
+ok 180 - Python dotted imports cannot cross a parent module or a different regular package
+  ---
+  duration_ms: 203.641583
+  type: 'test'
+  ...
+# Subtest: Python absolute namespace imports search every portion until a regular package wins
+ok 181 - Python absolute namespace imports search every portion until a regular package wins
+  ---
+  duration_ms: 191.642583
+  type: 'test'
+  ...
+# Subtest: Python relative namespace imports use every package portion in search order
+ok 182 - Python relative namespace imports use every package portion in search order
+  ---
+  duration_ms: 206.405292
+  type: 'test'
+  ...
+# Subtest: Python relative namespace lookup preserves regular and analyzed-root package boundaries
+ok 183 - Python relative namespace lookup preserves regular and analyzed-root package boundaries
+  ---
+  duration_ms: 283.494542
+  type: 'test'
+  ...
+# Subtest: Python keeps imports and function measurements inside long arithmetic expressions
+ok 184 - Python keeps imports and function measurements inside long arithmetic expressions
+  ---
+  duration_ms: 169.095
+  type: 'test'
+  ...
+# Subtest: Python TYPE_CHECKING aliases stay as structural edges, never runtime-cycle errors
+ok 185 - Python TYPE_CHECKING aliases stay as structural edges, never runtime-cycle errors
+  ---
+  duration_ms: 614.819667
+  type: 'test'
+  ...
+# Subtest: Python reassignment of TYPE_CHECKING cannot hide a runtime dependency
+ok 186 - Python reassignment of TYPE_CHECKING cannot hide a runtime dependency
+  ---
+  duration_ms: 124.969542
+  type: 'test'
+  ...
+# Subtest: Python TYPE_CHECKING else branch is runtime, unknown guards are conditional
+ok 187 - Python TYPE_CHECKING else branch is runtime, unknown guards are conditional
+  ---
+  duration_ms: 137.626792
+  type: 'test'
+  ...
+# Subtest: Python match evaluates its subject before conditionally loading case guards and bodies
+ok 188 - Python match evaluates its subject before conditionally loading case guards and bodies
+  ---
+  duration_ms: 206.752875
+  type: 'test'
+  ...
+# Subtest: Python dynamic and opaque imports inherit function scope; default expressions do not
+ok 189 - Python dynamic and opaque imports inherit function scope; default expressions do not
+  ---
+  duration_ms: 307.704334
+  type: 'test'
+  ...
+# Subtest: A deferred import may fail during initialization: do not assert import safety
+ok 190 - A deferred import may fail during initialization: do not assert import safety
+  ---
+  duration_ms: 203.291459
+  type: 'test'
+  ...
+# Subtest: Python submodule imports include package initialization, exposing the real file cycle
+ok 191 - Python submodule imports include package initialization, exposing the real file cycle
+  ---
+  duration_ms: 251.147417
+  type: 'test'
+  ...
+# Subtest: Python nested package initializers are included once, without false ancestor re-entry
+ok 192 - Python nested package initializers are included once, without false ancestor re-entry
+  ---
+  duration_ms: 139.99025
+  type: 'test'
+  ...
+# Subtest: Python simple eager failure is a candidate, not a claim that static line order is proof
+ok 193 - Python simple eager failure is a candidate, not a claim that static line order is proof
+  ---
+  duration_ms: 186.4955
+  type: 'test'
+  ...
+# Subtest: TypeScript type-only cycles are erased in JavaScript and excluded from runtime findings
+ok 194 - TypeScript type-only cycles are erased in JavaScript and excluded from runtime findings
+  ---
+  duration_ms: 212.8275
+  type: 'test'
+  ...
+# Subtest: TypeScript inline type specifiers respect verbatimModuleSyntax side effects
+ok 195 - TypeScript inline type specifiers respect verbatimModuleSyntax side effects
+  ---
+  duration_ms: 71.36875
+  type: 'test'
+  ...
+# Subtest: JavaScript function-scope import() and require are deferred; top-level require remains eager
+ok 196 - JavaScript function-scope import() and require are deferred; top-level require remains eager
+  ---
+  duration_ms: 204.851166
+  type: 'test'
+  ...
+# Subtest: CommonJS guarded requires are conditional while the expressions selecting a branch stay eager
+ok 197 - CommonJS guarded requires are conditional while the expressions selecting a branch stay eager
+  ---
+  duration_ms: 44.203667
+  type: 'test'
+  ...
+# Subtest: CommonJS optional-chain arguments and computed keys retain their syntactic guard
+ok 198 - CommonJS optional-chain arguments and computed keys retain their syntactic guard
+  ---
+  duration_ms: 231.226
+  type: 'test'
+  ...
+# Subtest: CommonJS optional-chain bases and grouped chain breaks remain eager
+ok 199 - CommonJS optional-chain bases and grouped chain breaks remain eager
+  ---
+  duration_ms: 195.546333
+  type: 'test'
+  ...
+# Subtest: TypeScript uses tsconfig path aliases and ignores Python files in explicitly selected TS trees
+ok 200 - TypeScript uses tsconfig path aliases and ignores Python files in explicitly selected TS trees
+  ---
+  duration_ms: 35.0425
+  type: 'test'
+  ...
+# Subtest: JavaScript package conditions match Node for imports, exports, require and dynamic import
+ok 201 - JavaScript package conditions match Node for imports, exports, require and dynamic import
+  ---
+  duration_ms: 276.042583
+  type: 'test'
+  ...
+# Subtest: TypeScript package conditions follow emitted syntax, package scope and resolution-mode attributes
+ok 202 - TypeScript package conditions follow emitted syntax, package scope and resolution-mode attributes
+  ---
+  duration_ms: 44.68825
+  type: 'test'
+  ...
+# Subtest: Unavailable and blocked package conditions stay unresolved instead of choosing a different branch
+ok 203 - Unavailable and blocked package conditions stay unresolved instead of choosing a different branch
+  ---
+  duration_ms: 35.468167
+  type: 'test'
+  ...
+# Subtest: Module IDs are unique and deterministic for path, case, root-file and Unicode collisions
+ok 204 - Module IDs are unique and deterministic for path, case, root-file and Unicode collisions
+  ---
+  duration_ms: 145.59975
+  type: 'test'
+  ...
+# Subtest: Overlay uses exact ownership for root files and explicitly grouped modules
+ok 205 - Overlay uses exact ownership for root files and explicitly grouped modules
+  ---
+  duration_ms: 136.298541
+  type: 'test'
+  ...
+# Subtest: Semantic validation rejects duplicate IDs, dangling edges and inconsistent ownership
+ok 206 - Semantic validation rejects duplicate IDs, dangling edges and inconsistent ownership
+  ---
+  duration_ms: 124.274417
+  type: 'test'
+  ...
+# Subtest: evaluate rejects raw facts from a different revision and invalid file records
+ok 207 - evaluate rejects raw facts from a different revision and invalid file records
+  ---
+  duration_ms: 125.821666
+  type: 'test'
+  ...
+# Subtest: single-file runtime cycles retain eager and deferred risk semantics
+ok 208 - single-file runtime cycles retain eager and deferred risk semantics
+  ---
+  duration_ms: 395.606791
+  type: 'test'
+  ...
+# Subtest: TypeScript extraction ignores ancestor configs but honors a root config
+ok 209 - TypeScript extraction ignores ancestor configs but honors a root config
+  ---
+  duration_ms: 132.437209
+  type: 'test'
+  ...
+# Subtest: raw facts reject unresolved implicit package initialization edges
+ok 210 - raw facts reject unresolved implicit package initialization edges
+  ---
+  duration_ms: 137.296208
+  type: 'test'
+  ...
+# Subtest: review regressions: loop targets and statement-scoped initializer deduplication
+ok 211 - review regressions: loop targets and statement-scoped initializer deduplication
+  ---
+  duration_ms: 171.083167
+  type: 'test'
+  ...
+# Subtest: review regressions: explicit zero eager counts and legacy graph classification
+ok 212 - review regressions: explicit zero eager counts and legacy graph classification
+  ---
+  duration_ms: 187.183125
+  type: 'test'
+  ...
+# Subtest: review regressions: import evidence and ownership errors are order independent
+ok 213 - review regressions: import evidence and ownership errors are order independent
+  ---
+  duration_ms: 169.97875
+  type: 'test'
+  ...
+# Subtest: review regressions: overlay renders candidate references without safety claims
+ok 214 - review regressions: overlay renders candidate references without safety claims
+  ---
+  duration_ms: 150.786375
+  type: 'test'
+  ...
+# Subtest: evaluate rejects changed dependency aggregates with identical metadata
+ok 215 - evaluate rejects changed dependency aggregates with identical metadata
+  ---
+  duration_ms: 202.384083
+  type: 'test'
+  ...
+# Subtest: Python generic function bounds retain deferred imports on 3.12+
+ok 216 - Python generic function bounds retain deferred imports on 3.12+
+  ---
+  duration_ms: 370.976333
+  type: 'test'
+  ...
+# Subtest: overlay draws a recorded singleton self-import instead of missing-path text
+ok 217 - overlay draws a recorded singleton self-import instead of missing-path text
+  ---
+  duration_ms: 181.038291
+  type: 'test'
+  ...
+# Subtest: eager module cycles choose a supporting eager path despite shorter lazy cycles
+ok 218 - eager module cycles choose a supporting eager path despite shorter lazy cycles
+  ---
+  duration_ms: 159.358792
+  type: 'test'
+  ...
+# Subtest: finally imports inherit enclosing flags instead of adding a conditional guard
+ok 219 - finally imports inherit enclosing flags instead of adding a conditional guard
+  ---
+  duration_ms: 203.42175
+  type: 'test'
+  ...
+# Subtest: Python 3.12 class bounds and aliases are lazy while class bases and bodies are eager
+ok 220 - Python 3.12 class bounds and aliases are lazy while class bases and bodies are eager
+  ---
+  duration_ms: 347.794667
+  type: 'test'
+  ...
+# Subtest: module kind evidence rejects empty and eager-only counts while preserving legacy forms
+ok 221 - module kind evidence rejects empty and eager-only counts while preserving legacy forms
+  ---
+  duration_ms: 158.830209
+  type: 'test'
+  ...
+# Subtest: Python expression guards preserve eager prefixes and deferred bodies
+ok 222 - Python expression guards preserve eager prefixes and deferred bodies
+  ---
+  duration_ms: 1991.644666
+  type: 'test'
+  ...
+# Subtest: declaration imports remain structural without runtime cycles
+ok 223 - declaration imports remain structural without runtime cycles
+  ---
+  duration_ms: 67.996542
+  type: 'test'
+  ...
+# Subtest: raw facts reject undercounted and overcounted unresolved imports
+ok 224 - raw facts reject undercounted and overcounted unresolved imports
+  ---
+  duration_ms: 124.65825
+  type: 'test'
+  ...
+# Subtest: relative named import aliases bind direct exported declarations and const initializers using checker identity
+ok 225 - relative named import aliases bind direct exported declarations and const initializers using checker identity
+  ---
+  duration_ms: 265.688667
+  type: 'test'
+  ...
+# Subtest: relative default imports bind direct named, anonymous and overloaded function declarations without following shadows
+ok 226 - relative default imports bind direct named, anonymous and overloaded function declarations without following shadows
+  ---
+  duration_ms: 79.545542
+  type: 'test'
+  ...
+# Subtest: type-only, namespace, packages, export aliases and expressions stay unknown
+ok 227 - type-only, namespace, packages, export aliases and expressions stay unknown
+  ---
+  duration_ms: 65.9435
+  type: 'test'
+  ...
+# Subtest: parameter-default calls cannot target declarations in the unavailable function body
+ok 228 - parameter-default calls cannot target declarations in the unavailable function body
+  ---
+  duration_ms: 34.317
+  type: 'test'
+  ...
+# Subtest: excluded, missing, syntactically broken and ambiguous export targets cannot be used
+ok 229 - excluded, missing, syntactically broken and ambiguous export targets cannot be used
+  ---
+  duration_ms: 38.154666
+  type: 'test'
+  ...
+# Subtest: target freshness independently disables navigation, keeps captured evidence and recovers after extraction
+ok 230 - target freshness independently disables navigation, keeps captured evidence and recovers after extraction
+  ---
+  duration_ms: 228.293875
+  type: 'test'
+  ...
+# Subtest: captured target parse errors or missing source evidence never expose current navigation
+ok 231 - captured target parse errors or missing source evidence never expose current navigation
+  ---
+  duration_ms: 102.550792
+  type: 'test'
+  ...
+# Subtest: imported target schema and references reject missing file, parse errors and absent import edges
+ok 232 - imported target schema and references reject missing file, parse errors and absent import edges
+  ---
+  duration_ms: 31.9975
+  type: 'test'
+  ...
+# Subtest: serve: delivers, waits for an authorized click, reuses the completed analysis
+ok 233 - serve: delivers, waits for an authorized click, reuses the completed analysis
+  ---
+  duration_ms: 4709.830917
+  type: 'test'
+  ...
+# Subtest: serve: editing or removing the IR requires redelivery before the first analysis
+ok 234 - serve: editing or removing the IR requires redelivery before the first analysis
+  ---
+  duration_ms: 3364.509583
+  type: 'test'
+  ...
+# Subtest: serve: arguments are validated up front
+ok 235 - serve: arguments are validated up front
+  ---
+  duration_ms: 0.812708
+  type: 'test'
+  ...
+# Subtest: serve: reads the required IR before creating output
+ok 236 - serve: reads the required IR before creating output
+  ---
+  duration_ms: 3.004625
+  type: 'test'
+  ...
+# Subtest: serve: /task builds a checked AI task for findings of the current result only
+ok 237 - serve: /task builds a checked AI task for findings of the current result only
+  ---
+  duration_ms: 4030.730291
+  type: 'test'
+  ...
+# Subtest: internal-leak: a module with no entry file, reached through enough internal files, is reported as info with every import
+ok 238 - internal-leak: a module with no entry file, reached through enough internal files, is reported as info with every import
+  ---
+  duration_ms: 107.973917
+  type: 'test'
+  ...
+# Subtest: internal-leak: without an entry file, fewer internal files than minFiles is not reported
+ok 239 - internal-leak: without an entry file, fewer internal files than minFiles is not reported
+  ---
+  duration_ms: 1.086792
+  type: 'test'
+  ...
+# Subtest: internal-leak: a detected index file makes bypassing imports info, and imports through it are counted, not cited
+ok 240 - internal-leak: a detected index file makes bypassing imports info, and imports through it are counted, not cited
+  ---
+  duration_ms: 1.035417
+  type: 'test'
+  ...
+# Subtest: internal-leak: an index file below the module folder is not its entry; __init__.py is for Python
+ok 241 - internal-leak: an index file below the module folder is not its entry; __init__.py is for Python
+  ---
+  duration_ms: 1.055375
+  type: 'test'
+  ...
+# Subtest: internal-leak: configured entries make bypassing imports a warning and replace detection
+ok 242 - internal-leak: configured entries make bypassing imports a warning and replace detection
+  ---
+  duration_ms: 46.677541
+  type: 'test'
+  ...
+# Subtest: internal-leak: test files, vendored folders and Java are not checked
+ok 243 - internal-leak: test files, vendored folders and Java are not checked
+  ---
+  duration_ms: 2.208375
+  type: 'test'
+  ...
+# Subtest: internal-leak: an invalid option stops the analysis with a diagnostic
+ok 244 - internal-leak: an invalid option stops the analysis with a diagnostic
+  ---
+  duration_ms: 0.882417
+  type: 'test'
+  ...
+# Subtest: overlay: components map to modules through their sources; descendants follow the parent
+ok 245 - overlay: components map to modules through their sources; descendants follow the parent
+  ---
+  duration_ms: 5.486166
+  type: 'test'
+  ...
+# Subtest: overlay: indicators are red for a proven load-time failure, amber for an eager cycle, blue for a lazy-closed or package-level one, green otherwise
+ok 246 - overlay: indicators are red for a proven load-time failure, amber for an eager cycle, blue for a lazy-closed or package-level one, green otherwise
+  ---
+  duration_ms: 6.677375
+  type: 'test'
+  ...
+# Subtest: overlay: every finding is listed once at the top level with its modules and components, including unmapped ones
+ok 247 - overlay: every finding is listed once at the top level with its modules and components, including unmapped ones
+  ---
+  duration_ms: 0.942709
+  type: 'test'
+  ...
+# Subtest: overlay: an explicit map wins and an unmapped component is reported, not invented
+ok 248 - overlay: an explicit map wins and an unmapped component is reported, not invented
+  ---
+  duration_ms: 0.519875
+  type: 'test'
+  ...
+# Subtest: overlay: the delivered HTML is extended, never rewritten, and refuses non-Archify input
+ok 249 - overlay: the delivered HTML is extended, never rewritten, and refuses non-Archify input
+  ---
+  duration_ms: 0.671292
+  type: 'test'
+  ...
+# Subtest: overlay: --source embeds the full text of every file a finding cites, nothing more
+ok 250 - overlay: --source embeds the full text of every file a finding cites, nothing more
+  ---
+  duration_ms: 3.41325
+  type: 'test'
+  ...
+# Subtest: analysis: the delivered page is read, never rewritten; the analysis page and every stage land in the output directory
+ok 251 - analysis: the delivered page is read, never rewritten; the analysis page and every stage land in the output directory
+  ---
+  duration_ms: 1328.727583
+  type: 'test'
+  ...
+# Subtest: overlay: embedded JSON stays inside its script element whatever the source text holds
+ok 252 - overlay: embedded JSON stays inside its script element whatever the source text holds
+  ---
+  duration_ms: 0.145
+  type: 'test'
+  ...
+# Subtest: overview: the same structure seen at several levels is related and takes one priority slot
+ok 253 - overview: the same structure seen at several levels is related and takes one priority slot
+  ---
+  duration_ms: 3.499584
+  type: 'test'
+  ...
+# Subtest: overview: a cycle inside one module is not tied to a module-level cycle
+ok 254 - overview: a cycle inside one module is not tied to a module-level cycle
+  ---
+  duration_ms: 0.407125
+  type: 'test'
+  ...
+# Subtest: overview: priorities rank by severity, then reach, and stop at the limit
+ok 255 - overview: priorities rank by severity, then reach, and stop at the limit
+  ---
+  duration_ms: 1.504583
+  type: 'test'
+  ...
+# Subtest: overview: one rule with many instances does not take every priority slot
+ok 256 - overview: one rule with many instances does not take every priority slot
+  ---
+  duration_ms: 0.306292
+  type: 'test'
+  ...
+# Subtest: overview: the verdict never claims more than the checks did
+ok 257 - overview: the verdict never claims more than the checks did
+  ---
+  duration_ms: 1.48725
+  type: 'test'
+  ...
+# Subtest: overview: coverage names what was analyzed, left out, and switched off
+ok 258 - overview: coverage names what was analyzed, left out, and switched off
+  ---
+  duration_ms: 0.329041
+  type: 'test'
+  ...
+# Subtest: extract: files of the language not analyzed are counted
+ok 259 - extract: files of the language not analyzed are counted
+  ---
+  duration_ms: 10.324833
+  type: 'test'
+  ...
+# Subtest: Python call inventory, direct alias targets, async definition and known zero
+ok 260 - Python call inventory, direct alias targets, async definition and known zero
+  ---
+  duration_ms: 473.875417
+  type: 'test'
+  ...
+# Subtest: Python unsupported/rebound/conditional/decorated/reexport/class targets stay inventoried
+ok 261 - Python unsupported/rebound/conditional/decorated/reexport/class targets stay inventoried
+  ---
+  duration_ms: 511.585292
+  type: 'test'
+  ...
+# Subtest: Python class/comprehension/header/nested scopes use their actual lexical contexts
+ok 262 - Python class/comprehension/header/nested scopes use their actual lexical contexts
+  ---
+  duration_ms: 256.275708
+  type: 'test'
+  ...
+# Subtest: Python scope bindings are collected before resolving parameter/store/import/catch/match/walrus/nonlocal uses
+ok 263 - Python scope bindings are collected before resolving parameter/store/import/catch/match/walrus/nonlocal uses
+  ---
+  duration_ms: 185.276542
+  type: 'test'
+  ...
+# Subtest: Python UTF-16 and exact span hashes preserve BMP/astral text, CRLF and encoded sources
+ok 264 - Python UTF-16 and exact span hashes preserve BMP/astral text, CRLF and encoded sources
+  ---
+  duration_ms: 553.115083
+  type: 'test'
+  ...
+# Subtest: Python saved range proof and imported navigation have independent freshness guards
+ok 265 - Python saved range proof and imported navigation have independent freshness guards
+  ---
+  duration_ms: 421.641
+  type: 'test'
+  ...
+# Subtest: Python old/unknown/spoofed call models and parse failures cannot claim known zero
+ok 266 - Python old/unknown/spoofed call models and parse failures cannot claim known zero
+  ---
+  duration_ms: 555.302208
+  type: 'test'
+  ...
+# Subtest: Python definition ranges exclude decorator calls but include physically contained defaults and nested source
+ok 267 - Python definition ranges exclude decorator calls but include physically contained defaults and nested source
+  ---
+  duration_ms: 197.118875
+  type: 'test'
+  ...
+# Subtest: Python target coordinates and parse errors cannot yield trusted navigation
+ok 268 - Python target coordinates and parse errors cannot yield trusted navigation
+  ---
+  duration_ms: 505.824375
+  type: 'test'
+  ...
+# Subtest: Python class global writers, implicit class cells and private name mangling cannot invent module targets
+ok 269 - Python class global writers, implicit class cells and private name mangling cannot invent module targets
+  ---
+  duration_ms: 136.659125
+  type: 'test'
+  ...
+# Subtest: Python import names use only captured own definitions
+ok 270 - Python import names use only captured own definitions
+  ---
+  duration_ms: 196.807625
+  type: 'test'
+  ...
+# Subtest: Python external from-import calls stay unresolved and normal check succeeds
+ok 271 - Python external from-import calls stay unresolved and normal check succeeds
+  ---
+  duration_ms: 2354.58325
+  type: 'test'
+  ...
+# Subtest: Python captured package and namespace module direct imports use the analyzed directories
+ok 272 - Python captured package and namespace module direct imports use the analyzed directories
+  ---
+  duration_ms: 176.918875
+  type: 'test'
+  ...
+# Subtest: Python generic class bases and keywords use unsupported annotation scope while decorators stay outer
+ok 273 - Python generic class bases and keywords use unsupported annotation scope while decorators stay outer
+  ---
+  duration_ms: 2049.045791
+  type: 'test'
+  ...
+# Subtest: Python function-local explicit imports bind only unique preceding imports in the calling block
+ok 274 - Python function-local explicit imports bind only unique preceding imports in the calling block
+  ---
+  duration_ms: 317.503792
+  type: 'test'
+  ...
+# Subtest: Python selection skips incompatible and broken launchers
+ok 275 - Python selection skips incompatible and broken launchers
+  ---
+  duration_ms: 5.783417
+  type: 'test'
+  ...
+# Subtest: compatible Python extractor errors are reported without fallback
+ok 276 - compatible Python extractor errors are reported without fallback
+  ---
+  duration_ms: 1.062875
+  type: 'test'
+  ...
+# Subtest: orientation retains exact facts, excludes same-line neighbours, and includes nested source calls without claiming caller identity
+ok 277 - orientation retains exact facts, excludes same-line neighbours, and includes nested source calls without claiming caller identity
+  ---
+  duration_ms: 637.670917
+  type: 'test'
+  ...
+# Subtest: bounded output counts the selected range and does not confuse omitted unknown calls with absent calls
+ok 278 - bounded output counts the selected range and does not confuse omitted unknown calls with absent calls
+  ---
+  duration_ms: 245.318292
+  type: 'test'
+  ...
+# Subtest: missing and unknown call models never report a known zero, even when adapter revisions overlap
+ok 279 - missing and unknown call models never report a known zero, even when adapter revisions overlap
+  ---
+  duration_ms: 431.305542
+  type: 'test'
+  ...
+# Subtest: entry freshness and parse errors gate all calls and same-file targets
+ok 280 - entry freshness and parse errors gate all calls and same-file targets
+  ---
+  duration_ms: 142.463625
+  type: 'test'
+  ...
+# Subtest: unmatched exact source range is unavailable rather than falling back to captured line span
+ok 281 - unmatched exact source range is unavailable rather than falling back to captured line span
+  ---
+  duration_ms: 152.861166
+  type: 'test'
+  ...
+# Subtest: optional node observation preserves all default function measurements and naming
+ok 282 - optional node observation preserves all default function measurements and naming
+  ---
+  duration_ms: 3.6495
+  type: 'test'
+  ...
+# Subtest: explicit call models carry binding coverage independently of extraction revision
+ok 283 - explicit call models carry binding coverage independently of extraction revision
+  ---
+  duration_ms: 242.0065
+  type: 'test'
+  ...
+# Subtest: glob alternatives translate wildcards and nested braces consistently
+ok 284 - glob alternatives translate wildcards and nested braces consistently
+  ---
+  duration_ms: 62.80175
+  type: 'test'
+  ...
+# Subtest: both coupling rules handle a dependency chain beyond the JS call stack
+ok 285 - both coupling rules handle a dependency chain beyond the JS call stack
+  ---
+  duration_ms: 1719.059375
+  type: 'test'
+  ...
+# Subtest: Python honors source encoding cookies, BOMs, and reports invalid encodings
+ok 286 - Python honors source encoding cookies, BOMs, and reports invalid encodings
+  ---
+  duration_ms: 287.212625
+  type: 'test'
+  ...
+# Subtest: Python loader recognition respects statement order and lexical rebinding
+ok 287 - Python loader recognition respects statement order and lexical rebinding
+  ---
+  duration_ms: 193.522
+  type: 'test'
+  ...
+# Subtest: relative Python imports cannot escape a top-level or src-layout package
+ok 288 - relative Python imports cannot escape a top-level or src-layout package
+  ---
+  duration_ms: 390.9125
+  type: 'test'
+  ...
+# Subtest: Python free loaders honor global declarations and uncertain conditional imports
+ok 289 - Python free loaders honor global declarations and uncertain conditional imports
+  ---
+  duration_ms: 155.965416
+  type: 'test'
+  ...
+# Subtest: separate installers serialize and recheck shared dependency state
+ok 290 - separate installers serialize and recheck shared dependency state
+  ---
+  duration_ms: 325.459625
+  type: 'test'
+  ...
+# Subtest: extraction rejects a directory replaced after enumeration, before reading outside bytes
+ok 291 - extraction rejects a directory replaced after enumeration, before reading outside bytes
+  ---
+  duration_ms: 3.021167
+  type: 'test'
+  ...
+# Subtest: source snapshots skip existing links and retain bytes after the live path changes
+ok 292 - source snapshots skip existing links and retain bytes after the live path changes
+  ---
+  duration_ms: 3.03975
+  type: 'test'
+  ...
+# Subtest: source snapshots reject a file swapped between path validation and descriptor opening
+ok 293 - source snapshots reject a file swapped between path validation and descriptor opening
+  ---
+  duration_ms: 1.734667
+  type: 'test'
+  ...
+# Subtest: package.json and pyproject.toml set module boundaries even though adapters only list sources
+ok 294 - package.json and pyproject.toml set module boundaries even though adapters only list sources
+  ---
+  duration_ms: 1005.735958
+  type: 'test'
+  ...
+# Subtest: an install lock left by an exited process is reclaimed; a live owner is waited for
+ok 295 - an install lock left by an exited process is reclaimed; a live owner is waited for
+  ---
+  duration_ms: 431.846167
+  type: 'test'
+  ...
+# Subtest: processes that find the same stale lock reclaim it once and never run the operation together
+ok 296 - processes that find the same stale lock reclaim it once and never run the operation together
+  ---
+  duration_ms: 852.550792
+  type: 'test'
+  ...
+# Subtest: package markers come from the source snapshot, not from a later walk of the tree
+ok 297 - package markers come from the source snapshot, not from a later walk of the tree
+  ---
+  duration_ms: 2120.011625
+  type: 'test'
+  ...
+# Subtest: TypeScript package markers come from the frozen inventory
+ok 298 - TypeScript package markers come from the frozen inventory
+  ---
+  duration_ms: 102.909833
+  type: 'test'
+  ...
+# Subtest: baseline: accepted, accepted with changed evidence, open, and stale entries
+ok 299 - baseline: accepted, accepted with changed evidence, open, and stale entries
+  ---
+  duration_ms: 256.181792
+  type: 'test'
+  ...
+# Subtest: baseline: an entry without a digest stays accepted whatever the evidence
+ok 300 - baseline: an entry without a digest stays accepted whatever the evidence
+  ---
+  duration_ms: 0.359292
+  type: 'test'
+  ...
+# Subtest: baseline: invalid or duplicated entries are refused with a diagnostic
+ok 301 - baseline: invalid or duplicated entries are refused with a diagnostic
+  ---
+  duration_ms: 1.263459
+  type: 'test'
+  ...
+# Subtest: comparison: new, fixed, evidence-changed and unchanged relative to the previous run
+ok 302 - comparison: new, fixed, evidence-changed and unchanged relative to the previous run
+  ---
+  duration_ms: 1.104584
+  type: 'test'
+  ...
+# Subtest: baselineFrom: keeps existing reasons, records digests, drops entries that no longer occur
+ok 303 - baselineFrom: keeps existing reasons, records digests, drops entries that no longer occur
+  ---
+  duration_ms: 0.529833
+  type: 'test'
+  ...
+# Subtest: overview: accepted findings are counted but leave the verdict and the priorities
+ok 304 - overview: accepted findings are counted but leave the verdict and the priorities
+  ---
+  duration_ms: 2.766458
+  type: 'test'
+  ...
+# Subtest: check: exit codes follow the gate, the baseline and the comparison
+ok 305 - check: exit codes follow the gate, the baseline and the comparison
+  ---
+  duration_ms: 13506.916542
+  type: 'test'
+  ...
+# Subtest: check: --new-only without a previous run treats every open finding as new
+ok 306 - check: --new-only without a previous run treats every open finding as new
+  ---
+  duration_ms: 1881.344458
+  type: 'test'
+  ...
+# Subtest: check: usage and analysis errors exit 2 with a diagnostic, never a stack
+ok 307 - check: usage and analysis errors exit 2 with a diagnostic, never a stack
+  ---
+  duration_ms: 1289.582
+  type: 'test'
+  ...
+# Subtest: source markers compare captured text with HEAD, including staged edits and new files
+ok 308 - source markers compare captured text with HEAD, including staged edits and new files
+  ---
+  duration_ms: 749.065792
+  type: 'test'
+  ...
+# Subtest: ts: dirty and untracked sources retain truthful identity and captured snippets
+ok 309 - ts: dirty and untracked sources retain truthful identity and captured snippets
+  ---
+  duration_ms: 2903.662083
+  type: 'test'
+  ...
+# Subtest: py: dirty and untracked sources retain truthful identity and captured snippets
+ok 310 - py: dirty and untracked sources retain truthful identity and captured snippets
+  ---
+  duration_ms: 1119.214625
+  type: 'test'
+  ...
+# Subtest: non-Git extraction preserves working-tree source navigation
+ok 311 - non-Git extraction preserves working-tree source navigation
+  ---
+  duration_ms: 82.077125
+  type: 'test'
+  ...
+# Subtest: source listed in a mapped module is embedded even without import evidence
+ok 312 - source listed in a mapped module is embedded even without import evidence
+  ---
+  duration_ms: 13.297667
+  type: 'test'
+  ...
+# Subtest: an unmapped hub keeps its files and captured source available to the reader
+ok 313 - an unmapped hub keeps its files and captured source available to the reader
+  ---
+  duration_ms: 2.632583
+  type: 'test'
+  ...
+# Subtest: hub arrows and all Bezier controls stay outside the node columns
+ok 314 - hub arrows and all Bezier controls stay outside the node columns
+  ---
+  duration_ms: 6.248542
+  type: 'test'
+  ...
+# Subtest: source links preserve distinct finding lines and never invent line one
+ok 315 - source links preserve distinct finding lines and never invent line one
+  ---
+  duration_ms: 2.704042
+  type: 'test'
+  ...
+# Subtest: task fixtures: checked-in contract examples match a fresh generation
+ok 316 - task fixtures: checked-in contract examples match a fresh generation
+  ---
+  duration_ms: 753.211208
+  type: 'test'
+  ...
+# Subtest: task: a complexity finding points at the whole function with its captured lines
+ok 317 - task: a complexity finding points at the whole function with its captured lines
+  ---
+  duration_ms: 298.884125
+  type: 'test'
+  ...
+# Subtest: task: import cycles cite each import of the cycle path; boundaries separate files to change from context
+ok 318 - task: import cycles cite each import of the cycle path; boundaries separate files to change from context
+  ---
+  duration_ms: 215.481792
+  type: 'test'
+  ...
+# Subtest: task: ids are stable for the same findings and evidence, and change with the evidence
+ok 319 - task: ids are stable for the same findings and evidence, and change with the evidence
+  ---
+  duration_ms: 391.082292
+  type: 'test'
+  ...
+# Subtest: task: refuses unknown ids, an empty selection and mixed runs
+ok 320 - task: refuses unknown ids, an empty selection and mixed runs
+  ---
+  duration_ms: 283.465375
+  type: 'test'
+  ...
+# Subtest: task: long functions get a bounded excerpt with explicit omissions; the hash covers the whole range
+ok 321 - task: long functions get a bounded excerpt with explicit omissions; the hash covers the whole range
+  ---
+  duration_ms: 2.094709
+  type: 'test'
+  ...
+# Subtest: task: source text stays inside a fence long enough for any backticks it contains
+ok 322 - task: source text stays inside a fence long enough for any backticks it contains
+  ---
+  duration_ms: 0.850209
+  type: 'test'
+  ...
+# Subtest: evidence: unchanged, moved, changed lines, changed context, missing files
+ok 323 - evidence: unchanged, moved, changed lines, changed context, missing files
+  ---
+  duration_ms: 197.217667
+  type: 'test'
+  ...
+# Subtest: evidence: paths from a task file never leave the analysis root
+ok 324 - evidence: paths from a task file never leave the analysis root
+  ---
+  duration_ms: 2.08575
+  type: 'test'
+  ...
+# Subtest: evidence: a UTF-8 BOM captured without it by Python still verifies
+ok 325 - evidence: a UTF-8 BOM captured without it by Python still verifies
+  ---
+  duration_ms: 187.442708
+  type: 'test'
+  ...
+# Subtest: payloads: one captured task and its Markdown per finding, for a page without a server
+ok 326 - payloads: one captured task and its Markdown per finding, for a page without a server
+  ---
+  duration_ms: 248.45675
+  type: 'test'
+  ...
+# Subtest: task command: create, verify, --command, --require-valid and usage errors
+ok 327 - task command: create, verify, --command, --require-valid and usage errors
+  ---
+  duration_ms: 7718.889041
+  type: 'test'
+  ...
+# Subtest: evidence: a citation that cannot be read keeps the task from being valid
+ok 328 - evidence: a citation that cannot be read keeps the task from being valid
+  ---
+  duration_ms: 167.173459
+  type: 'test'
+  ...
+# Subtest: evidence: Python files are decoded with their PEP 263 coding declaration
+ok 329 - evidence: Python files are decoded with their PEP 263 coding declaration
+  ---
+  duration_ms: 294.063583
+  type: 'test'
+  ...
+# Subtest: evidence: identical code elsewhere is not taken for the cited code having moved
+ok 330 - evidence: identical code elsewhere is not taken for the cited code having moved
+  ---
+  duration_ms: 302.663541
+  type: 'test'
+  ...
+# Subtest: task: a warning-level complexity task is done only below the info thresholds
+ok 331 - task: a warning-level complexity task is done only below the info thresholds
+  ---
+  duration_ms: 270.053583
+  type: 'test'
+  ...
+# Subtest: task: with a warning threshold below the info threshold, completion uses the lower value
+ok 332 - task: with a warning threshold below the info threshold, completion uses the lower value
+  ---
+  duration_ms: 243.329166
+  type: 'test'
+  ...
+# Subtest: evidence: Python latin-1 aliases decode as ISO-8859-1, not windows-1252
+ok 333 - evidence: Python latin-1 aliases decode as ISO-8859-1, not windows-1252
+  ---
+  duration_ms: 0.384
+  type: 'test'
+  ...
+# Subtest: TypeScript pins root and extended config, package metadata, sources and resolution inventory
+ok 334 - TypeScript pins root and extended config, package metadata, sources and resolution inventory
+  ---
+  duration_ms: 163.435875
+  type: 'test'
+  ...
+# Subtest: a tsconfig created after capture cannot change analysis options
+ok 335 - a tsconfig created after capture cannot change analysis options
+  ---
+  duration_ms: 54.483375
+  type: 'test'
+  ...
+# Subtest: excluded source stays outside facts but remains known to resolution
+ok 336 - excluded source stays outside facts but remains known to resolution
+  ---
+  duration_ms: 35.59025
+  type: 'test'
+  ...
+# Subtest: installed configuration packages remain supported and changes invalidate analysis
+not ok 337 - installed configuration packages remain supported and changes invalidate analysis
+  ---
+  duration_ms: 79.82525
+  type: 'test'
+  location: '${STUDY}/work/archify/archify/modules/code-analysis/test/ts-snapshot.test.mjs:72:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    TestContext.<anonymous> (file://${STUDY}/work/archify/archify/modules/code-analysis/test/ts-snapshot.test.mjs:89:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: unusual config extensions cannot change between capture and first use
+ok 338 - unusual config extensions cannot change between capture and first use
+  ---
+  duration_ms: 29.989542
+  type: 'test'
+  ...
+# Subtest: captured TypeScript configuration preserves UTF-16 BOM support
+ok 339 - captured TypeScript configuration preserves UTF-16 BOM support
+  ---
+  duration_ms: 1693.409167
+  type: 'test'
+  ...
+# Subtest: JavaScript package and ESM references select implementations while TypeScript keeps declarations
+ok 340 - JavaScript package and ESM references select implementations while TypeScript keeps declarations
+  ---
+  duration_ms: 404.621792
+  type: 'test'
+  ...
+# Subtest: JavaScript package implementation fallback uses the captured manifest and source inventory
+ok 341 - JavaScript package implementation fallback uses the captured manifest and source inventory
+  ---
+  duration_ms: 41.649625
+  type: 'test'
+  ...
+# Subtest: runtime conditional null blocks siblings while arrays retain their next target
+ok 342 - runtime conditional null blocks siblings while arrays retain their next target
+  ---
+  duration_ms: 57.198167
+  type: 'test'
+  ...
+# Subtest: runtime package arrays stop at selected or unsupported targets, not capture availability
+ok 343 - runtime package arrays stop at selected or unsupported targets, not capture availability
+  ---
+  duration_ms: 93.3095
+  type: 'test'
+  ...
+# Subtest: runtime package correction respects custom conditions, option gates and captured metadata
+ok 344 - runtime package correction respects custom conditions, option gates and captured metadata
+  ---
+  duration_ms: 175.125625
+  type: 'test'
+  ...
+1..344
+# tests 344
+# suites 0
+# pass 343
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 38412.404416

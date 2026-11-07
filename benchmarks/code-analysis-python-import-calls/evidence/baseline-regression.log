@@ -1,0 +1,51 @@
+TAP version 13
+# Subtest: Python function-local explicit imports bind only unique preceding imports in the calling block
+not ok 1 - Python function-local explicit imports bind only unique preceding imports in the calling block
+  ---
+  duration_ms: 151.277083
+  type: 'test'
+  location: '${STUDY}/work/archify/archify/modules/code-analysis/test/python-calls.test.mjs:231:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    -   4,
+    -   7,
+    -   9,
+    -   32,
+        36,
+    -   38,
+    -   44
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 4
+    1: 7
+    2: 9
+    3: 32
+    4: 36
+    5: 38
+    6: 44
+  actual:
+    0: 36
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file://${STUDY}/work/archify/archify/modules/code-analysis/test/python-calls.test.mjs:278:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 920.469042

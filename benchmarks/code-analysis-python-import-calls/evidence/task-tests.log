@@ -1,0 +1,118 @@
+TAP version 13
+# Subtest: task fixtures: checked-in contract examples match a fresh generation
+ok 1 - task fixtures: checked-in contract examples match a fresh generation
+  ---
+  duration_ms: 209.91625
+  type: 'test'
+  ...
+# Subtest: task: a complexity finding points at the whole function with its captured lines
+ok 2 - task: a complexity finding points at the whole function with its captured lines
+  ---
+  duration_ms: 103.340916
+  type: 'test'
+  ...
+# Subtest: task: import cycles cite each import of the cycle path; boundaries separate files to change from context
+ok 3 - task: import cycles cite each import of the cycle path; boundaries separate files to change from context
+  ---
+  duration_ms: 101.765
+  type: 'test'
+  ...
+# Subtest: task: ids are stable for the same findings and evidence, and change with the evidence
+ok 4 - task: ids are stable for the same findings and evidence, and change with the evidence
+  ---
+  duration_ms: 191.360042
+  type: 'test'
+  ...
+# Subtest: task: refuses unknown ids, an empty selection and mixed runs
+ok 5 - task: refuses unknown ids, an empty selection and mixed runs
+  ---
+  duration_ms: 101.243
+  type: 'test'
+  ...
+# Subtest: task: long functions get a bounded excerpt with explicit omissions; the hash covers the whole range
+ok 6 - task: long functions get a bounded excerpt with explicit omissions; the hash covers the whole range
+  ---
+  duration_ms: 1.165375
+  type: 'test'
+  ...
+# Subtest: task: source text stays inside a fence long enough for any backticks it contains
+ok 7 - task: source text stays inside a fence long enough for any backticks it contains
+  ---
+  duration_ms: 0.27175
+  type: 'test'
+  ...
+# Subtest: evidence: unchanged, moved, changed lines, changed context, missing files
+ok 8 - evidence: unchanged, moved, changed lines, changed context, missing files
+  ---
+  duration_ms: 108.325
+  type: 'test'
+  ...
+# Subtest: evidence: paths from a task file never leave the analysis root
+ok 9 - evidence: paths from a task file never leave the analysis root
+  ---
+  duration_ms: 1.325
+  type: 'test'
+  ...
+# Subtest: evidence: a UTF-8 BOM captured without it by Python still verifies
+ok 10 - evidence: a UTF-8 BOM captured without it by Python still verifies
+  ---
+  duration_ms: 104.82575
+  type: 'test'
+  ...
+# Subtest: payloads: one captured task and its Markdown per finding, for a page without a server
+ok 11 - payloads: one captured task and its Markdown per finding, for a page without a server
+  ---
+  duration_ms: 107.118375
+  type: 'test'
+  ...
+# Subtest: task command: create, verify, --command, --require-valid and usage errors
+ok 12 - task command: create, verify, --command, --require-valid and usage errors
+  ---
+  duration_ms: 4829.329125
+  type: 'test'
+  ...
+# Subtest: evidence: a citation that cannot be read keeps the task from being valid
+ok 13 - evidence: a citation that cannot be read keeps the task from being valid
+  ---
+  duration_ms: 118.631833
+  type: 'test'
+  ...
+# Subtest: evidence: Python files are decoded with their PEP 263 coding declaration
+ok 14 - evidence: Python files are decoded with their PEP 263 coding declaration
+  ---
+  duration_ms: 255.000791
+  type: 'test'
+  ...
+# Subtest: evidence: identical code elsewhere is not taken for the cited code having moved
+ok 15 - evidence: identical code elsewhere is not taken for the cited code having moved
+  ---
+  duration_ms: 292.864584
+  type: 'test'
+  ...
+# Subtest: task: a warning-level complexity task is done only below the info thresholds
+ok 16 - task: a warning-level complexity task is done only below the info thresholds
+  ---
+  duration_ms: 242.923708
+  type: 'test'
+  ...
+# Subtest: task: with a warning threshold below the info threshold, completion uses the lower value
+ok 17 - task: with a warning threshold below the info threshold, completion uses the lower value
+  ---
+  duration_ms: 261.814917
+  type: 'test'
+  ...
+# Subtest: evidence: Python latin-1 aliases decode as ISO-8859-1, not windows-1252
+ok 18 - evidence: Python latin-1 aliases decode as ISO-8859-1, not windows-1252
+  ---
+  duration_ms: 0.390292
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7675.712
