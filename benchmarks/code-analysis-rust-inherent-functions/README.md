@@ -21,7 +21,7 @@ Source answers were frozen at `98cbbc7dc` before this rule; baseline observation
 
 The paired observations overlap the design corpus and are not an additional independent accuracy denominator. Macro invocations remain opaque records, outside the call-target score. Exact inner-call end coordinates distinguish chained calls sharing their start.
 
-Raw output additionally contains **1,205 regex**, **22 default serde** and **23 arbitrary_precision serde** inherent source candidates. These additional candidates have **not** received independent whole-project target grading; their count is not a correctness claim. All previous correct targets and function inventories are preserved. Default serde now omits six formerly captured calls inside the excluded arbitrary_precision nested method, with its exact region reported; other call ranges remain.
+Raw output additionally contains **1,205 regex**, **22 default serde** and **23 arbitrary_precision serde** inherent source candidates. A later [independent rust-analyzer audit](audit/README.md) compares all 1,250 emitted observations (1,230 physical sites) and finds matching declaration locations for each. This includes the finite source cases and remains language-server agreement, not whole-project precision/recall or compilation. All previous correct targets and function inventories are preserved. Default serde now omits six formerly captured calls inside the excluded arbitrary_precision nested method, with its exact region reported; other call ranges remain.
 
 Pins, source hashes, actual commands, configurations, exits and bounded grades are in source-first.json, review-source-first.json, version-pair.json and evidence/. The current language models remain separate: Go v2 concrete selections and Rust v2 source candidates do not imply interchangeable semantics.
 
@@ -46,7 +46,7 @@ Three raw-facts files are byte-identical; four questions match after normalizing
 
 ## Tools, cost and separate checks
 
-Existing rustc/cargo 1.89.0 ran the helper and authored compiler controls; no new toolchain or dependency was installed. The declared helper floor remains Rust/Cargo 1.71+. Missing cargo or rustc was exercised: exit 2, extract/rust-unavailable, installation and ARCHIFY_CARGO/ARCHIFY_RUSTC guidance. rust-analyzer is absent; this is not a real-project compiler/RA target-accuracy comparison.
+The original acceptance used existing rustc/cargo 1.89.0 for the helper and authored compiler controls, with no new toolchain or dependency. A later optional independent audit installed RA 1.89.0; its setup and cost are separately recorded in audit/. The declared helper floor remains Rust/Cargo 1.71+. Missing cargo or rustc was exercised: exit 2, extract/rust-unavailable, installation and ARCHIFY_CARGO/ARCHIFY_RUSTC guidance. The original acceptance did not use RA; the later audit compares real-project declaration navigation without claiming rustc compilation.
 
 The baseline replay exposed a legacy shared Cargo helper executable returning v2 output to a v1 reader. Candidate cache directories now key the exact helper manifest, lockfile and main source contents. Identical source/ZIP content shares builds; changed versions compile separately. The observed current helper target cache occupies 103,840 KiB, including dependencies. Cold setup/download costs were not controlled; replay timings are cache-dependent and not a speedup claim. Verified parent replay followed cleaning only our legacy helper artifacts for its host triple.
 
@@ -55,4 +55,4 @@ The baseline replay exposed a legacy shared Cargo helper executable returning v2
 - Remote: final-head CI is tracked on the Draft; local passes do not establish a remote result or Windows execution.
 - Integration: unmerged Draft work. Maintainers retain approval, formal merge, release and installation decisions.
 
-The next investigation remains visible: generic/type-alias owner paths and independent grading of additional source candidates, while retaining Go's 37 compiler-confirmed known method misses and the other languages' source-backed backlog.
+The next investigation remains visible: generic/type-alias owner paths and remaining coverage gaps, while retaining Go's 37 compiler-confirmed known method misses and the other languages' source-backed backlog.

@@ -1,0 +1,5 @@
+{
+  "exit": 1,
+  "message": "Run prepare.py with this exact --out first",
+  "serverSpawned": false
+}
