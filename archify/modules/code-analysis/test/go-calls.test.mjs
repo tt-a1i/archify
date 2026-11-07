@@ -164,10 +164,11 @@ test('Go method targets do not guess through interfaces, function fields, missin
  func (*T) M(){}
  func (*T) M(){}
  type I interface{M()}
+ type Embedded struct{I}
  type Holder struct{M func()}
  type NoBody struct{}
  func (*NoBody) M()
- func Entry(t *T,i I,h Holder,n *NoBody){t.M();i.M();h.M();n.M()}
+ func Entry(t *T,i I,h Holder,n *NoBody,e Embedded){t.M();i.M();h.M();n.M();e.M()}
  func Param[P I](p P){p.M()}
 `,
   });
