@@ -7,9 +7,9 @@
     "root": ".",
     "url": null,
     "language": "py",
-    "adapter": "python@3.13.16",
-    "adapterRevision": 9,
-    "snapshotId": "42518dd173774710715defc7acc5bf3483b7a17ee31e4504090dea348bce8eea"
+    "adapter": "python@3.15.0",
+    "adapterRevision": 10,
+    "snapshotId": "a5500d463bb33a032d43c5c83fe6ce327cc96db7f6600aa5668d4ca5bc9f5159"
   },
   "files": [
     {
@@ -511,7 +511,7 @@
       "deepestLine": 9
     }
   ],
-  "callModel": "python-lexical-v1",
+  "callModel": "python-lexical-v2",
   "calls": [
     {
       "file": "app/a.py",

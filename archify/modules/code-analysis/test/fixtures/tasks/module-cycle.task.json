@@ -25,9 +25,9 @@
   "source": {
     "root": ".",
     "language": "py",
-    "adapter": "python@3.13.16",
+    "adapter": "python@3.15.0",
     "sourceKind": "working-tree",
-    "snapshotId": "42518dd173774710715defc7acc5bf3483b7a17ee31e4504090dea348bce8eea",
+    "snapshotId": "a5500d463bb33a032d43c5c83fe6ce327cc96db7f6600aa5668d4ca5bc9f5159",
     "configDigest": "716da75c0e50bafceba14d3fee738f6e39d6a0d7a725f7122fe7eed031c4187e",
     "analyzer": {
       "name": "@archify/code-analysis",
