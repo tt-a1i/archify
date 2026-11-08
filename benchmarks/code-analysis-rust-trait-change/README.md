@@ -88,11 +88,9 @@ The script exits nonzero if any control is accepted, if an in-scope item is wron
 
 ## CI record
 
-CI run [42465518271](https://github.com/tt-a1i/archify/actions/runs/42465518271) at `3a1ac77a` first failed in `full-regression (2)` because the self-bootstrap test's `spawnSync` hit its 20 s limit (`ETIMEDOUT`, assertion `null !== 0`); no byte or schema comparison ran. The same commit passed on rerun (`gh run rerun --failed`), including the downstream `test (22)` gate. The failure excerpt is in `evidence/ci-full-regression-2-attempt1.txt`; `evidence/ci.json` records both attempts.
+Validation commit `a4c0e6721` passed run [42475803613](https://github.com/tt-a1i/archify/actions/runs/42475803613) on attempt 1: 19 successful jobs, only the two deploy jobs skipped. This includes both full-regression shards, all test versions, browser regression, Windows portability, package smoke, ZIP freshness and website.
 
-Final validation commit `38f82efd2` passed run [42467009838](https://github.com/tt-a1i/archify/actions/runs/42467009838) in full; all required jobs succeeded and deploy jobs were skipped by design.
-
-The specific 36.19 s runtime cause is unknown; the concurrent shard load is suspected but not measured. Complete CI runs the module suite twice: shard 1 runs it directly and shard 2's root shard includes `test/code-analysis.test.mjs`, which spawns the same suite.
+The base branch's earlier CI history remains in `evidence/ci.json`: `3a1ac77a` hit a 20 s self-bootstrap `spawnSync` timeout on the first attempt and passed on rerun; `0e1fe6f4c` hit one browser layout flake and passed on rerun. Those causes were not proven.
 
 ## Independent language-server comparison
 
