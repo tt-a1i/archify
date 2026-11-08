@@ -35,9 +35,10 @@
   "The private helper has one captured caller; any other caller would have to be in the same module."
  ],
  "expectedGap": false,
- "reserved": true,
+ "reserved": false,
  "baseTree": "git worktree at 3dd9f5e^",
  "build": "workspace read with the committed lockfile; no project build executed",
  "freeze": "head source and the commit diff read before any candidate query; reserved before the candidate run",
- "notes": "Reserved Rust case. Target column is the function name in the inherent impl."
+ "notes": "Moved from reserved to regression after a general defaulted-generic owner field fix; the frozen answer and coordinates are unchanged.",
+ "regression": true
 }

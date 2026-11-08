@@ -24,9 +24,9 @@
     "name": "getCompletions"
    },
    "directCaller": {
-    "name": "Run",
-    "line": 242,
-    "kind": "function"
+    "name": "initCompleteCmd",
+    "line": 231,
+    "kind": "method"
    },
    "runtime": "determined",
    "context": "hidden completion command Run closure"
@@ -40,5 +40,5 @@
  "baseTree": "git worktree at 746ef07^",
  "build": "no project build executed",
  "freeze": "head source and the commit diff read before any candidate query",
- "notes": "Go method definition anchor is the FuncDecl start; call column is the receiver start."
+ "notes": "Go method definition anchor is the FuncDecl start; call column is the receiver start. The call sits in the Run closure; the direct caller is its enclosing named method."
 }
