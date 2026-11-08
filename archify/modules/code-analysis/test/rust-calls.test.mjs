@@ -448,9 +448,71 @@ impl<G: Gate> Borrowed<G> { pub fn check(&self) -> bool { self.as_ref().enabled(
  assert.ok(erased,'the call through a differently instantiated generic field is still captured');
  assert.equal(erased.resolution,'unresolved');
  assert.equal(erased.target,undefined);
- const borrowed=facts.calls.find(row=>row.line===11&&row.resolution==='rust-trait-method-candidate');
- assert.ok(borrowed,'self.as_ref() unwraps a one-parameter wrapper to its bound');
- assert.equal(borrowed.target.name,'enabled');
+ const borrowed=facts.calls.filter(row=>row.line===11);
+ assert.ok(borrowed.length>0,'self.as_ref() without wrapping evidence is still captured');
+ assert.ok(borrowed.every(row=>row.resolution!=='rust-trait-method-candidate'&&row.resolution!=='rust-trait-impl'),'an unevidenced self.as_ref() stays unknown instead of reaching the trait bound');
+});
+
+test('Rust accessor receivers follow captured wrapping implementations', t => {
+ const source=`pub trait Gate { fn enabled(&self) -> bool { true } }
+pub struct Wrap<G>(G);
+impl<G: Gate> std::convert::AsRef<G> for Wrap<G> { fn as_ref(&self) -> &G { &self.0 } }
+impl<G: Gate> std::ops::Deref for Wrap<G> { type Target = G; fn deref(&self) -> &G { &self.0 } }
+impl<G: Gate> std::borrow::Borrow<G> for Wrap<G> { fn borrow(&self) -> &G { &self.0 } }
+impl<G: Gate> Wrap<G> {
+ pub fn via_as_ref(&self) -> bool { self.as_ref().enabled() }
+ pub fn via_deref(&self) -> bool { self.deref().enabled() }
+ pub fn via_borrow(&self) -> bool { self.borrow().enabled() }
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ for (const line of [7,8,9]) {
+  const call=facts.calls.find(row=>row.line===line&&row.resolution==='rust-trait-method-candidate');
+  assert.ok(call,`line ${line} follows the captured wrapping target to the trait bound`);
+  assert.equal(call.target.name,'enabled');
+ }
+});
+
+test('Rust inherent accessor shadows wrapping inference', t => {
+ const source=`pub trait Gate { fn enabled(&self) -> bool { true } }
+pub struct Other;
+impl Other {
+ pub fn enabled(&self) -> bool { false }
+}
+pub struct Wrapper<T> { inner: T }
+impl<T: Gate> Wrapper<T> {
+ pub fn as_ref(&self) -> &Other { &Other }
+ pub fn check(&self) -> bool { self.as_ref().enabled() }
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(row=>row.line===9&&row.resolution==='rust-inherent-source-candidate'&&row.target.name==='enabled');
+ assert.ok(call,'the inherent as_ref return type selects Other::enabled');
+ assert.equal(call.target.line,4);
+ assert.equal(facts.calls.filter(row=>row.line===9&&row.resolution==='rust-trait-method-candidate').length,0,'the trait bound is not claimed when an inherent accessor exists');
+});
+
+test('Rust swapped generic parameters map field positions', t => {
+ const source=`pub trait Left { fn make(&self) -> bool { true } }
+pub trait Right { fn make(&self) -> bool { true } }
+pub struct Pair<X, Y> { first: X, second: Y }
+impl<A: Right, B: Left> Pair<B, A> {
+ pub fn first(&self) -> bool { self.first.make() }
+ pub fn second(&self) -> bool { self.second.make() }
+}
+pub struct S;
+impl Left for S { fn make(&self) -> bool { false } }
+impl Right for S { fn make(&self) -> bool { false } }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const first=facts.calls.find(row=>row.line===5&&row.resolution==='rust-trait-method-candidate');
+ const second=facts.calls.find(row=>row.line===6&&row.resolution==='rust-trait-method-candidate');
+ assert.ok(first&&second,'both fields resolve through the swapped impl parameters');
+ assert.equal(first.target.line,1);
+ assert.equal(second.target.line,2);
 });
 
 test('Rust default-method references stay within the declaring crate file', t => {

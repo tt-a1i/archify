@@ -198,8 +198,7 @@ struct Function {
     generics: Vec<String>,
     signature: Scope,
     self_type: Option<TypeHint>,
-    self_ref: Option<TypeHint>,
-    self_params: Option<BTreeSet<String>>,
+    self_args: Option<Vec<TypeHint>>,
     default_method: Option<DefaultMethod>,
 }
 #[derive(Clone)]
@@ -282,6 +281,14 @@ struct InherentPending {
     index: usize,
     parameters: Parameters,
     static_function: bool,
+    returns: Option<TypeHint>,
+}
+#[derive(Clone)]
+struct WrapPending {
+    module: usize,
+    self_path: Option<(Vec<String>, bool)>,
+    method: String,
+    target: TypeHint,
 }
 struct Analysis {
     sources: BTreeMap<String, String>,
@@ -293,8 +300,13 @@ struct Analysis {
     functions: Vec<Function>,
     nominal_parameters: BTreeMap<(usize, String), Parameters>,
     fields: BTreeMap<(usize, String, String), TypeHint>,
+    struct_params: BTreeMap<(usize, String), Vec<String>>,
     inherent_pending: Vec<InherentPending>,
     inherent: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
+    inherent_methods: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
+    inherent_returns: BTreeMap<(usize, String, String), Vec<TypeHint>>,
+    wrap_pending: Vec<WrapPending>,
+    wrap_targets: BTreeMap<(usize, String, String), Vec<TypeHint>>,
     traits: Vec<TraitDecl>,
     trait_pending: Vec<TraitImplPending>,
     trait_impls: Vec<TraitImpl>,
@@ -596,8 +608,7 @@ impl Analysis {
             generics,
             signature: signature_scope(&f.sig),
             self_type: None,
-            self_ref: None,
-            self_params: None,
+            self_args: None,
             default_method: None,
         });
         index
@@ -881,11 +892,14 @@ impl Analysis {
                 Item::Union(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Struct(s) => {
                     let name = s.ident.to_string();
-                    let struct_generics: BTreeSet<String> = s
+                    let ordered: Vec<String> = s
                         .generics
                         .type_params()
                         .map(|p| p.ident.to_string())
                         .collect();
+                    let struct_generics: BTreeSet<String> = ordered.iter().cloned().collect();
+                    self.struct_params
+                        .insert((id, name.clone()), ordered);
                     for field in &s.fields {
                         if let Some(ident) = &field.ident {
                             if let Some(hint) = type_hint(&field.ty, &struct_generics) {
@@ -967,6 +981,49 @@ impl Analysis {
                         .type_params()
                         .map(|p| p.ident.to_string())
                         .collect();
+                    let impl_generics: BTreeSet<String> =
+                        impl_types.iter().cloned().collect();
+                    let wrap = trait_ref.as_ref().and_then(|(trait_path, _)| {
+                        let name = trait_path.last()?;
+                        let method = match name.as_str() {
+                            "AsRef" => "as_ref",
+                            "Borrow" => "borrow",
+                            "Deref" => "deref",
+                            _ => return None,
+                        };
+                        let target = if name == "Deref" {
+                            im.items.iter().find_map(|item| match item {
+                                ImplItem::Type(ty) if ty.ident == "Target" => {
+                                    type_hint(&ty.ty, &impl_generics)
+                                }
+                                _ => None,
+                            })
+                        } else {
+                            im.trait_
+                                .as_ref()
+                                .and_then(|(_, path, _)| path.segments.last())
+                                .and_then(|segment| match &segment.arguments {
+                                    PathArguments::AngleBracketed(args) => {
+                                        args.args.iter().find_map(|arg| match arg {
+                                            GenericArgument::Type(ty) => {
+                                                type_hint(ty, &impl_generics)
+                                            }
+                                            _ => None,
+                                        })
+                                    }
+                                    _ => None,
+                                })
+                        }?;
+                        Some(WrapPending {
+                            module: id,
+                            self_path: self_path.clone(),
+                            method: method.to_string(),
+                            target,
+                        })
+                    });
+                    if let Some(wrap) = &wrap {
+                        self.wrap_pending.push(wrap.clone());
+                    }
                     for i in im.items {
                         if let ImplItem::Fn(f) = i {
                             let item = ItemFn {
@@ -985,41 +1042,31 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
-                                let impl_generics: BTreeSet<String> =
-                                    impl_types.iter().cloned().collect();
                                 self.functions[index].self_type =
                                     type_hint(&im.self_ty, &impl_generics);
-                                if let syn::Type::Path(p) = im.self_ty.as_ref() {
-                                    if let Some(segment) = p.path.segments.last() {
-                                        if let PathArguments::AngleBracketed(args) = &segment.arguments {
-                                            if args.args.len() == 1 {
-                                                if let GenericArgument::Type(inner) = &args.args[0] {
-                                                    self.functions[index].self_ref =
-                                                        type_hint(inner, &impl_generics);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                let mut self_params = BTreeSet::new();
+                                let mut self_args = Vec::new();
                                 if let syn::Type::Path(p) = im.self_ty.as_ref() {
                                     if let Some(segment) = p.path.segments.last() {
                                         if let PathArguments::AngleBracketed(args) = &segment.arguments {
                                             for arg in &args.args {
                                                 if let GenericArgument::Type(ty) = arg {
-                                                    if let Some(TypeHint::Generic(name)) =
-                                                        type_hint(ty, &impl_generics)
-                                                    {
-                                                        if impl_generics.contains(&name) {
-                                                            self_params.insert(name);
-                                                        }
+                                                    if let Some(hint) = type_hint(ty, &impl_generics) {
+                                                        self_args.push(hint);
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                self.functions[index].self_params = Some(self_params);
+                                self.functions[index].self_args = Some(self_args);
+                                let mut method_generics = impl_generics.clone();
+                                method_generics.extend(
+                                    item.sig
+                                        .generics
+                                        .type_params()
+                                        .map(|param| param.ident.to_string()),
+                                );
+                                let returns = return_hint(&item.sig.output, &method_generics);
                                 for param in im_generics.type_params() {
                                     let name = param.ident.to_string();
                                     for bound in &param.bounds {
@@ -1044,6 +1091,7 @@ impl Analysis {
                                         index,
                                         parameters: *parameters,
                                         static_function: item.sig.receiver().is_none(),
+                                        returns,
                                     });
                                 }
                                 if let Some((trait_path, absolute)) = &trait_ref {
@@ -1336,8 +1384,37 @@ fn type_hint(ty: &Type, generics: &BTreeSet<String>) -> Option<TypeHint> {
         _ => None,
     }
 }
-fn type_hint_from_expr(expr: &Expr) -> Option<TypeHint> {
-    match expr {
+fn return_hint(output: &ReturnType, generics: &BTreeSet<String>) -> Option<TypeHint> {
+    match output {
+        ReturnType::Type(_, ty) => type_hint(ty, generics),
+        ReturnType::Default => None,
+    }
+}
+fn hint_key(hint: &TypeHint) -> String {
+    match hint {
+        TypeHint::Generic(name) => format!("generic:{name}"),
+        TypeHint::Dyn(parts, absolute) => format!("dyn:{}:{}", absolute, parts.join("::")),
+        TypeHint::Nominal(parts, absolute) => {
+            format!("nominal:{}:{}", absolute, parts.join("::"))
+        }
+    }
+}
+fn unique_hint(values: &[TypeHint]) -> Option<TypeHint> {
+    let first = values.first()?;
+    let key = hint_key(first);
+    values
+        .iter()
+        .all(|value| hint_key(value) == key)
+        .then(|| first.clone())
+}
+fn unique_index(values: &[Option<usize>]) -> Option<usize> {
+    if values.iter().any(Option::is_none) {
+        return None;
+    }
+    let set: BTreeSet<usize> = values.iter().flatten().copied().collect();
+    (set.len() == 1).then(|| *set.first().unwrap())
+}
+fn type_hint_from_expr(expr: &Expr) -> Option<TypeHint> {    match expr {
         Expr::Reference(r) => type_hint_from_expr(&r.expr),
         Expr::Paren(p) => type_hint_from_expr(&p.expr),
         Expr::Struct(s) => Some(TypeHint::Nominal(
@@ -1664,16 +1741,24 @@ impl Scanner<'_> {
                     syn::Member::Named(ident) => ident.to_string(),
                     syn::Member::Unnamed(index) => index.index.to_string(),
                 };
-                match self.a.fields.get(&(module, name, member)).cloned()? {
-                    // A generic field name only matches when the impl instantiates the struct with that same parameter.
-                    TypeHint::Generic(parameter)
-                        if !self
-                            .function
-                            .self_params
-                            .as_ref()
-                            .is_some_and(|params| params.contains(&parameter)) =>
-                    {
-                        None
+                match self.a.fields.get(&(module, name.clone(), member)).cloned()? {
+                    // Substitute the struct parameter position with the impl's self argument.
+                    TypeHint::Generic(parameter) => {
+                        let params = self.a.struct_params.get(&(module, name.clone()))?;
+                        let position = params.iter().position(|param| param == &parameter)?;
+                        let TypeHint::Nominal(parts, absolute) =
+                            self.function.self_type.clone()?
+                        else {
+                            return None;
+                        };
+                        if self.resolve_nominal(&parts, absolute)? != (module, name) {
+                            return None;
+                        }
+                        let args = self.function.self_args.as_ref()?;
+                        if args.len() != params.len() {
+                            return None;
+                        }
+                        args.get(position).cloned()
                     }
                     hint => Some(hint),
                 }
@@ -1701,12 +1786,36 @@ impl Scanner<'_> {
                             && p.path.segments.len() == 1
                             && p.path.segments[0].ident == "self"
                 );
-                if is_self
-                    && ["as_ref", "deref", "borrow"].contains(&m.method.to_string().as_str())
-                {
-                    return self.function.self_ref.clone();
+                if !is_self {
+                    return None;
                 }
-                None
+                let method = m.method.to_string();
+                if !["as_ref", "deref", "borrow"].contains(&method.as_str()) {
+                    return None;
+                }
+                let TypeHint::Nominal(parts, absolute) = self.function.self_type.clone()? else {
+                    return None;
+                };
+                let (module, name) = self.resolve_nominal(&parts, absolute)?;
+                if self
+                    .a
+                    .inherent_methods
+                    .contains_key(&(module, name.clone(), method.clone()))
+                    || self
+                        .a
+                        .inherent_returns
+                        .contains_key(&(module, name.clone(), method.clone()))
+                {
+                    return self
+                        .a
+                        .inherent_returns
+                        .get(&(module, name, method))
+                        .and_then(|values| unique_hint(values));
+                }
+                self.a
+                    .wrap_targets
+                    .get(&(module, name, method))
+                    .and_then(|values| unique_hint(values))
             }
             _ => None,
         }
@@ -1859,6 +1968,22 @@ impl Scanner<'_> {
                 }
                 TypeHint::Nominal(parts, absolute) => {
                     if let Some((module, name)) = self.resolve_nominal(&parts, absolute) {
+                        if let Some(indices) = self
+                            .a
+                            .inherent_methods
+                            .get(&(module, name.clone(), method.clone()))
+                        {
+                            if let Some(index) = unique_index(indices) {
+                                self.impl_target(
+                                    span,
+                                    index,
+                                    "rust-inherent-source-candidate",
+                                );
+                            } else {
+                                self.call(span, None, "rust-trait-or-method-dispatch");
+                            }
+                            return;
+                        }
                         if let Some(index) = self.unique_trait_impl(module, &name, &method) {
                             self.impl_target(span, index, "rust-trait-impl");
                             return;
@@ -2305,8 +2430,13 @@ fn main() {
         functions: Vec::new(),
         nominal_parameters: BTreeMap::new(),
         fields: BTreeMap::new(),
+        struct_params: BTreeMap::new(),
         inherent_pending: Vec::new(),
         inherent: BTreeMap::new(),
+        inherent_methods: BTreeMap::new(),
+        inherent_returns: BTreeMap::new(),
+        wrap_pending: Vec::new(),
+        wrap_targets: BTreeMap::new(),
         traits: Vec::new(),
         trait_pending: Vec::new(),
         trait_impls: Vec::new(),
@@ -2342,6 +2472,25 @@ fn main() {
         if let Some(Binding::Nominal(owner_module, owner_name)) =
             a.resolve(pending.module, &pending.owner, false, false, 0)
         {
+            if let Some(returns) = pending.returns.clone() {
+                a.inherent_returns
+                    .entry((owner_module, owner_name.clone(), pending.name.clone()))
+                    .or_default()
+                    .push(returns);
+            }
+            if !pending.static_function {
+                // Keep a method's receiver overload as a blocker for path calls,
+                // while allowing direct method-call resolution by receiver.
+                a.inherent
+                    .entry((owner_module.clone(), owner_name.clone(), pending.name.clone()))
+                    .or_default()
+                    .push(None);
+                a.inherent_methods
+                    .entry((owner_module, owner_name, pending.name))
+                    .or_default()
+                    .push(Some(pending.index));
+                continue;
+            }
             let index = if let Some(parameters) = a
                 .nominal_parameters
                 .get(&(owner_module, owner_name.clone()))
@@ -2359,6 +2508,19 @@ fn main() {
                 .entry((owner_module, owner_name, pending.name))
                 .or_default()
                 .push(index);
+        }
+    }
+    for pending in a.wrap_pending.clone() {
+        let Some((path, absolute)) = &pending.self_path else {
+            continue;
+        };
+        if let Some(Binding::Nominal(owner_module, owner_name)) =
+            a.resolve(pending.module, path, *absolute, false, 0)
+        {
+            a.wrap_targets
+                .entry((owner_module, owner_name, pending.method))
+                .or_default()
+                .push(pending.target);
         }
     }
     // Resolve trait declarations and impl edges after all module trees exist.

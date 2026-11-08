@@ -75,16 +75,22 @@ concrete `Self` or unresolved types remain unresolved. Multiple
 implementations of the trait do not duplicate the body's calls.
 
 Method receivers also resolve through `self.<field>` when the owning impl's
-self type and the struct field declaration are captured. A field declared as a
-generic parameter reaches that trait method only when the impl instantiates the
-struct with the same parameter (`impl<G: Gate> Holder<G>`); an impl for a
-different instantiation (`impl<T: Gate> Holder<u8>`) stays unresolved, and a
-field declared with a unique nominal type selects its unique impl.
-`self.as_ref()`, `self.deref()` and `self.borrow()` unwrap a one-parameter
-wrapper to its inner type. Renamed generics between impl and struct (for
-example `impl<S> Subscriber for Layered<L, S>` where the field is declared
-`inner: I`), pattern bindings, loop variables, macro-produced receivers and
-other accessor chains remain unresolved.
+self type and the struct field declaration are captured. A generic field is
+substituted by its position in the struct declaration, so
+`impl<A: Right, B: Left> Pair<B, A>` maps `first: X` to `B` and
+`second: Y` to `A`; an impl for a different instantiation
+(`impl<T: Gate> Holder<u8>`) stays unresolved, and a field declared with a
+unique nominal type selects its unique impl.
+
+`self.as_ref()`, `self.deref()` and `self.borrow()` unwrap only with captured
+source evidence: an inherent method on the receiver's type whose return type is
+captured, or a captured `AsRef`/`Borrow`/`Deref` implementation target. An
+inherent accessor shadows the wrapping trait, and a wrapper without such
+evidence stays unresolved instead of being assumed to expose its generic
+parameter. Renamed generics between impl and struct (for example
+`impl<S> Subscriber for Layered<L, S>` where the field is declared `inner: I`),
+pattern bindings, loop variables, macro-produced receivers and other accessor
+chains remain unresolved.
 
 Unsupported applicability remains explicit: external or macro-generated traits,
 supertrait/blanket impls, type aliases/Self, generic argument substitution,
