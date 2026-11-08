@@ -21,7 +21,7 @@
         "language": "rust",
         "adapter": "rust-syn@2.0.119",
         "adapterRevision": 6,
-        "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5"
+        "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db"
       },
       "language": "rust",
       "producer": {
@@ -787,7 +787,7 @@
         "language": "rust",
         "adapter": "rust-syn@2.0.119",
         "adapterRevision": 6,
-        "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a"
+        "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a"
       },
       "language": "rust",
       "producer": {
@@ -1603,12 +1603,12 @@
         "file": "src/decode.rs",
         "status": "text-changed",
         "base": {
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "sha256": "58c9da26fe0c4d563b3e610a960bdf502ad57b2c914974f93662478bff57c440",
           "status": "valid"
         },
         "head": {
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "sha256": "96e907ecbae9f635f60573259255a1436cd1329b35c6c4aed54ae9f10d18fc2e",
           "status": "valid"
         }
@@ -1617,12 +1617,12 @@
         "file": "src/engine/general_purpose/decode.rs",
         "status": "text-changed",
         "base": {
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "sha256": "ce151ed65a46ee72ed1df7e221d02a314582a005a9e9b71ddf81da0c59d22714",
           "status": "valid"
         },
         "head": {
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "sha256": "1558f945fd2c11eb9b3232ea8f997fffd47beb05d86a6e4abf9697795a009510",
           "status": "valid"
         }
@@ -1631,12 +1631,12 @@
         "file": "src/engine/general_purpose/decode_suffix.rs",
         "status": "text-changed",
         "base": {
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "sha256": "c38f11e5a2f2cf4f6d0477dc328194e28c1d0a71de93c52487b21ab6c1ecd977",
           "status": "valid"
         },
         "head": {
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "sha256": "689688f7bf442b232d3b9f56a1b41c56d9393ace88556a165c224b93dd19b74e",
           "status": "valid"
         }
@@ -1645,12 +1645,12 @@
         "file": "src/engine/general_purpose/mod.rs",
         "status": "text-changed",
         "base": {
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "sha256": "9f49375fc03166a491acf464daa7a9e6540fdc2cca407da9a248e15640952c20",
           "status": "valid"
         },
         "head": {
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "sha256": "901760a7f5721ec3bafad5fea6251f57de0f767ecb2e1e2fdfe64d661404ec34",
           "status": "valid"
         }
@@ -1659,12 +1659,12 @@
         "file": "src/engine/mod.rs",
         "status": "text-changed",
         "base": {
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "sha256": "15210115e5f99e0d252a1240922deb1516778e318564f92a9d880a82fd82a55e",
           "status": "valid"
         },
         "head": {
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "sha256": "e3b0ae19ff8e89ed247ac4f370f300882ad2991d2b8d2ae12f827fa83b13487a",
           "status": "valid"
         }
@@ -1673,12 +1673,12 @@
         "file": "src/read/decoder.rs",
         "status": "text-changed",
         "base": {
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "sha256": "a6d071d6606311babd865ba3d20e4f4d7c7ce941d2dd82bdc7ebb914b6742202",
           "status": "valid"
         },
         "head": {
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "sha256": "00aaa0553a54fcf12762658c4e56663a9705cc30c07af30976291e6f69d78c3d",
           "status": "valid"
         }
@@ -1709,7 +1709,7 @@
     "role": "entry-file-wide source reading evidence, not selected-definition calls or execution timing",
     "base": {
       "side": "base",
-      "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+      "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
       "originStatus": "valid",
       "total": 10,
       "included": 10,
@@ -1718,7 +1718,7 @@
       "items": [
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 7,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1740,7 +1740,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 8,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1762,7 +1762,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 70,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1787,7 +1787,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 71,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1809,7 +1809,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 72,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1831,7 +1831,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 73,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1856,7 +1856,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 74,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1881,7 +1881,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 75,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1906,7 +1906,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 76,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1928,7 +1928,7 @@
         },
         {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "factIndex": 77,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1955,7 +1955,7 @@
     },
     "head": {
       "side": "head",
-      "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+      "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
       "originStatus": "valid",
       "total": 10,
       "included": 10,
@@ -1964,7 +1964,7 @@
       "items": [
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 7,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -1986,7 +1986,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 8,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2008,7 +2008,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 71,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2033,7 +2033,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 72,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2055,7 +2055,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 73,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2080,7 +2080,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 74,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2105,7 +2105,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 75,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2127,7 +2127,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 76,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2152,7 +2152,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 77,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2174,7 +2174,7 @@
         },
         {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "factIndex": 78,
           "fact": {
             "from": "src/engine/general_purpose/mod.rs",
@@ -2204,7 +2204,7 @@
     "role": "dependency reading locations, separate from calls; not proof of execution or affected behavior",
     "base": {
       "side": "base",
-      "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+      "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
       "entryStatus": "valid",
       "resolvedReferences": {
         "total": 3,
@@ -2214,7 +2214,7 @@
         "items": [
           {
             "side": "base",
-            "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+            "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
             "factIndex": 9,
             "fact": {
               "from": "src/engine/mod.rs",
@@ -2237,7 +2237,7 @@
           },
           {
             "side": "base",
-            "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+            "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
             "factIndex": 62,
             "fact": {
               "from": "src/engine/mod.rs",
@@ -2263,7 +2263,7 @@
           },
           {
             "side": "base",
-            "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+            "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
             "factIndex": 63,
             "fact": {
               "from": "src/engine/mod.rs",
@@ -2294,7 +2294,7 @@
     },
     "head": {
       "side": "head",
-      "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+      "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
       "entryStatus": "valid",
       "resolvedReferences": {
         "total": 3,
@@ -2304,7 +2304,7 @@
         "items": [
           {
             "side": "head",
-            "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+            "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
             "factIndex": 9,
             "fact": {
               "from": "src/engine/mod.rs",
@@ -2327,7 +2327,7 @@
           },
           {
             "side": "head",
-            "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+            "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
             "factIndex": 63,
             "fact": {
               "from": "src/engine/mod.rs",
@@ -2353,7 +2353,7 @@
           },
           {
             "side": "head",
-            "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+            "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
             "factIndex": 64,
             "fact": {
               "from": "src/engine/mod.rs",
@@ -2394,7 +2394,7 @@
         "pairing": "unique-exact-source-slot",
         "base": {
           "side": "base",
-          "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+          "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
           "definition": {
             "file": "src/engine/general_purpose/mod.rs",
             "name": "internal_decode",
@@ -2451,14 +2451,14 @@
                 }
               }
             ],
-            "total": 5,
-            "included": 5,
+            "total": 4,
+            "included": 4,
             "omitted": 0,
             "limit": 40,
             "items": [
               {
                 "side": "base",
-                "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+                "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
                 "factIndex": 210,
                 "fact": {
                   "column": 33,
@@ -2505,7 +2505,7 @@
               },
               {
                 "side": "base",
-                "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+                "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
                 "factIndex": 223,
                 "fact": {
                   "column": 33,
@@ -2552,7 +2552,7 @@
               },
               {
                 "side": "base",
-                "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+                "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
                 "factIndex": 233,
                 "fact": {
                   "column": 13,
@@ -2599,7 +2599,7 @@
               },
               {
                 "side": "base",
-                "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
+                "snapshotId": "d0a442a45400124064b13c09cc98c817657dc11ba933cbaa6eaf3d79063bc8db",
                 "factIndex": 239,
                 "fact": {
                   "column": 13,
@@ -2643,45 +2643,6 @@
                     "endColumn": 18
                   }
                 }
-              },
-              {
-                "side": "base",
-                "snapshotId": "bebe35b09e29511ff026ad18b70d331c4a5f4c97b3a7220a39256f6747474be5",
-                "factIndex": 259,
-                "fact": {
-                  "column": 31,
-                  "directCaller": {
-                    "column": 5,
-                    "file": "src/read/decoder.rs",
-                    "kind": "method",
-                    "line": 136,
-                    "name": "decode_to_buf",
-                    "qualname": "read::decoder::DecoderReader < 'e , E , R >::decode_to_buf"
-                  },
-                  "endColumn": 14,
-                  "endLine": 148,
-                  "file": "src/read/decoder.rs",
-                  "line": 142,
-                  "resolution": "rust-trait-method-candidate",
-                  "target": {
-                    "column": 8,
-                    "file": "src/engine/mod.rs",
-                    "line": 91,
-                    "name": "internal_decode"
-                  }
-                },
-                "reason": "call site proves this trait method is used; compile-time or runtime concrete implementation is not determined",
-                "runtimeTarget": "not-determined",
-                "navigation": {
-                  "status": "valid",
-                  "location": {
-                    "file": "src/read/decoder.rs",
-                    "line": 142,
-                    "column": 31,
-                    "endLine": 148,
-                    "endColumn": 14
-                  }
-                }
               }
             ]
           },
@@ -2697,7 +2658,7 @@
         },
         "head": {
           "side": "head",
-          "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+          "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
           "definition": {
             "file": "src/engine/general_purpose/mod.rs",
             "name": "internal_decode",
@@ -2754,14 +2715,14 @@
                 }
               }
             ],
-            "total": 5,
-            "included": 5,
+            "total": 4,
+            "included": 4,
             "omitted": 0,
             "limit": 40,
             "items": [
               {
                 "side": "head",
-                "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+                "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
                 "factIndex": 226,
                 "fact": {
                   "column": 33,
@@ -2808,7 +2769,7 @@
               },
               {
                 "side": "head",
-                "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+                "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
                 "factIndex": 241,
                 "fact": {
                   "column": 33,
@@ -2855,7 +2816,7 @@
               },
               {
                 "side": "head",
-                "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+                "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
                 "factIndex": 248,
                 "fact": {
                   "column": 13,
@@ -2902,7 +2863,7 @@
               },
               {
                 "side": "head",
-                "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
+                "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a",
                 "factIndex": 254,
                 "fact": {
                   "column": 13,
@@ -2944,45 +2905,6 @@
                     "column": 13,
                     "endLine": 406,
                     "endColumn": 18
-                  }
-                }
-              },
-              {
-                "side": "head",
-                "snapshotId": "b7841898dc7298cc5e5ca82d5f191930fe291a2e1b755a11d742cb4d5730c41a",
-                "factIndex": 276,
-                "fact": {
-                  "column": 31,
-                  "directCaller": {
-                    "column": 5,
-                    "file": "src/read/decoder.rs",
-                    "kind": "method",
-                    "line": 140,
-                    "name": "decode_to_buf",
-                    "qualname": "read::decoder::DecoderReader < 'e , E , R >::decode_to_buf"
-                  },
-                  "endColumn": 14,
-                  "endLine": 152,
-                  "file": "src/read/decoder.rs",
-                  "line": 146,
-                  "resolution": "rust-trait-method-candidate",
-                  "target": {
-                    "column": 8,
-                    "file": "src/engine/mod.rs",
-                    "line": 87,
-                    "name": "internal_decode"
-                  }
-                },
-                "reason": "call site proves this trait method is used; compile-time or runtime concrete implementation is not determined",
-                "runtimeTarget": "not-determined",
-                "navigation": {
-                  "status": "valid",
-                  "location": {
-                    "file": "src/read/decoder.rs",
-                    "line": 146,
-                    "column": 31,
-                    "endLine": 152,
-                    "endColumn": 14
                   }
                 }
               }

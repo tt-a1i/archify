@@ -147,7 +147,7 @@
         "engine::general_purpose::GeneralPurpose::internal_decode"
       ],
       "missingImplementations": [],
-      "consideredRecords": 5,
+      "consideredRecords": 4,
       "expectedGap": false,
       "status": "pass",
       "id": "base64-inner-decode",
