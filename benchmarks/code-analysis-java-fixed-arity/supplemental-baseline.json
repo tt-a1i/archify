@@ -1,0 +1,61 @@
+{
+  "stage": "Source read and checked before rule; original five misses retained separately.",
+  "observations": [
+    {
+      "sourceCase": {
+        "project": "commons-lang",
+        "call": {
+          "file": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java",
+          "line": 287,
+          "column": 33,
+          "needle": "StringUtils.defaultString(th.getMessage())",
+          "sourceLine": "        return clsName + \": \" + StringUtils.defaultString(th.getMessage());"
+        },
+        "target": {
+          "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+          "line": 1553,
+          "column": 5,
+          "name": "defaultString"
+        },
+        "exposure": "Supplemental production call source read after baseline exposed independent guards, before arity rule."
+      },
+      "baseline": {
+        "file": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java",
+        "line": 287,
+        "column": 33,
+        "endLine": 287,
+        "endColumn": 75,
+        "resolution": "unresolved",
+        "reason": "ambiguous-binding"
+      }
+    },
+    {
+      "sourceCase": {
+        "project": "slf4j",
+        "call": {
+          "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+          "line": 124,
+          "column": 16,
+          "needle": "arrayFormat(messagePattern, new Object[] { arg })",
+          "sourceLine": "        return arrayFormat(messagePattern, new Object[] { arg });"
+        },
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+          "line": 154,
+          "column": 5,
+          "name": "arrayFormat"
+        },
+        "exposure": "Supplemental production call source read after baseline exposed independent guards, before arity rule."
+      },
+      "baseline": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 124,
+        "column": 16,
+        "endLine": 124,
+        "endColumn": 65,
+        "resolution": "unresolved",
+        "reason": "ambiguous-binding"
+      }
+    }
+  ]
+}

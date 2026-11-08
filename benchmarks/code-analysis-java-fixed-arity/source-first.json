@@ -1,0 +1,169 @@
+{
+  "baseline": "f8470917f7f80e279555025bee25af81f544c8f1",
+  "stage": "Source answers frozen before this question baseline, compiler controls or any arity-selection rule. Repositories exposed in prior static-path studies; not blind.",
+  "question": "Can a unique fixed arity select a direct public static source candidate when a different-arity sibling currently makes the entire name ambiguous?",
+  "projects": {
+    "commons-lang": {
+      "revision": "c8774fa74adbbbcd4e5f915ab6bc3aa10d877419",
+      "hashes": {
+        "src/main/java/org/apache/commons/lang3/StringUtils.java": "b9e7f9cd0f13d992283ba23616813df22ed366aa55b372e22034a13591022cd1",
+        "src/test/java/org/apache/commons/lang3/StringUtilsTest.java": "2cb0a1f5c25369380c6693291c93d1c380cdc3da0f7584e550e676c6acd3c513",
+        "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java": "e0192baa68dad55d833685d99e9e3720d191dd48d321981fee365e7c4c3d5259"
+      }
+    },
+    "slf4j": {
+      "revision": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+      "hashes": {
+        "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java": "49acf33155be65d4e7e4cdde884fd7378ef264c4cd2f0a5c853d89111091b20b",
+        "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java": "9440ab6c1c398b4a5f27abe72a7fafbf4034b731c8ea286d9f9e88fd2d126323",
+        "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+        "slf4j-api/src/test/java/org/slf4j/LoggerAccessingThread.java": "0864158b5f654d63e87f77fc141e35e90f6df091036df141e575ce13694a2898"
+      }
+    }
+  },
+  "cases": [
+    {
+      "project": "commons-lang",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 622,
+        "column": 26,
+        "needle": "StringUtils.defaultString(null)",
+        "sourceLine": "        assertEquals(\"\", StringUtils.defaultString(null));"
+      },
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1553,
+        "column": 5,
+        "name": "defaultString",
+        "sourceLine": "    public static String defaultString(final String str) {"
+      }
+    },
+    {
+      "project": "commons-lang",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 629,
+        "column": 30,
+        "needle": "StringUtils.defaultString(null, \"NULL\")",
+        "sourceLine": "        assertEquals(\"NULL\", StringUtils.defaultString(null, \"NULL\"));"
+      },
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1583,
+        "column": 5,
+        "name": "defaultString",
+        "sourceLine": "    @Deprecated",
+        "methodHeaderLine": 1584
+      }
+    },
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 48,
+        "column": 18,
+        "needle": "MessageFormatter.format(null, i1)",
+        "sourceLine": "        result = MessageFormatter.format(null, i1).getMessage();"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 123,
+        "column": 5,
+        "name": "format",
+        "sourceLine": "    final public static FormattingTuple format(String messagePattern, Object arg) {"
+      }
+    },
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 57,
+        "column": 18,
+        "needle": "MessageFormatter.format(\"Values are {} and {}.\", i1, \"[{}]\")",
+        "sourceLine": "        result = MessageFormatter.format(\"Values are {} and {}.\", i1, \"[{}]\").getMessage();"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 150,
+        "column": 5,
+        "name": "format",
+        "sourceLine": "    final public static FormattingTuple format(final String messagePattern, Object arg1, Object arg2) {"
+      }
+    },
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 75,
+        "column": 18,
+        "needle": "MessageFormatter.arrayFormat(\"Val1 is {}, val2 is {}, val3 is {}\", new Integer[] { null, null, null })",
+        "sourceLine": "        result = MessageFormatter.arrayFormat(\"Val1 is {}, val2 is {}, val3 is {}\", new Integer[] { null, null, null }).getMessage();"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 154,
+        "column": 5,
+        "name": "arrayFormat",
+        "sourceLine": "    final public static FormattingTuple arrayFormat(final String messagePattern, final Object[] argArray) {"
+      }
+    }
+  ],
+  "sameArityCounterexample": {
+    "project": "slf4j",
+    "call": {
+      "file": "slf4j-api/src/test/java/org/slf4j/LoggerAccessingThread.java",
+      "line": 55,
+      "needle": "LoggerFactory.getLogger(loggerNamePrefix + \"-\" + count + \"-\" + i)",
+      "sourceLine": "            Logger logger = LoggerFactory.getLogger(loggerNamePrefix + \"-\" + count + \"-\" + i);"
+    },
+    "reason": "LoggerFactory.getLogger(String)425 and getLogger(Class<?>)451 both have arity1; arity-only source evidence must not choose, even if a compiler can infer this particular argument type."
+  },
+  "constraints": [
+    "Keep all existing type/value/static-value/wildcard-import guards.",
+    "Any possibly competing variable-arity declarations need explicit treatment; do not choose an arbitrary fixed method.",
+    "Same arity, inherited/instance paths, generic argument applicability and compilation remain unproved.",
+    "Owned annotation extent must include Deprecated at StringUtils1583; method header is1584. Verify exact jump representation against the existing inventory rather than moving source lines."
+  ],
+  "reviewSlice": "SLF4J positive calls were source-inspected for freezing but will not tune the first Commons-based arity rule; not an unseen repository.",
+  "sourceOracleCorrections": [
+    "Existing measured owned definition begins at Deprecated1583, with header1584. Jump expectation corrected to the captured declaration start before any rule change.",
+    "The initial five test calls also meet pre-arity guards: Commons StringUtilsTest inherits AbstractLangTest; SLF4J MessageFormatterTest imports static Assert.*. They must not be used to claim arity-only improvement bypasses those value/inheritance safeguards. Retain them as known misses with separate blockers."
+  ],
+  "supplementalProductionCases": [
+    {
+      "project": "commons-lang",
+      "call": {
+        "file": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java",
+        "line": 287,
+        "column": 33,
+        "needle": "StringUtils.defaultString(th.getMessage())",
+        "sourceLine": "        return clsName + \": \" + StringUtils.defaultString(th.getMessage());"
+      },
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1553,
+        "column": 5,
+        "name": "defaultString"
+      },
+      "exposure": "Supplemental production call source read after baseline exposed independent guards, before arity rule."
+    },
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 124,
+        "column": 16,
+        "needle": "arrayFormat(messagePattern, new Object[] { arg })",
+        "sourceLine": "        return arrayFormat(messagePattern, new Object[] { arg });"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 154,
+        "column": 5,
+        "name": "arrayFormat"
+      },
+      "exposure": "Supplemental production call source read after baseline exposed independent guards, before arity rule."
+    }
+  ]
+}

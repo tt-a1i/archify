@@ -1,0 +1,324 @@
+{
+  "expect": "baseline",
+  "commands": [
+    {
+      "label": "commons-lang-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/commons-lang",
+        "--language",
+        "java",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/java-arity-accepted-baseline/commons-lang",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 19.077361458912492
+    },
+    {
+      "label": "slf4j-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/slf4j",
+        "--language",
+        "java",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/java-arity-accepted-baseline/slf4j",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 2.1891500840429217
+    },
+    {
+      "label": "commons-lang-question",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/java-arity-accepted-baseline/commons-lang",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/commons-lang",
+        "--entry",
+        "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java",
+        "--function",
+        "ExceptionUtils.getMessage(Throwable)",
+        "--question",
+        "Where does the fixed-arity static call lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/java-arity-accepted-baseline/commons-lang-question.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.37922737491317093
+    },
+    {
+      "label": "slf4j-question",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/java-arity-accepted-baseline/slf4j",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/slf4j",
+        "--entry",
+        "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "--function",
+        "MessageFormatter.format(String,Object)",
+        "--question",
+        "Where does the fixed-arity static call lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/java-arity-accepted-baseline/slf4j-question.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.33442537498194724
+    }
+  ],
+  "score": {
+    "correct": 0,
+    "wrong": 0,
+    "missed": 7
+  },
+  "units": [
+    {
+      "role": "original-test-misses",
+      "project": "commons-lang",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 622,
+        "column": 26,
+        "endLine": 622,
+        "endColumn": 57,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "expected": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1553,
+        "column": 5,
+        "name": "defaultString"
+      },
+      "status": "missed"
+    },
+    {
+      "role": "original-test-misses",
+      "project": "commons-lang",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 629,
+        "column": 30,
+        "endLine": 629,
+        "endColumn": 69,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "expected": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1583,
+        "column": 5,
+        "name": "defaultString"
+      },
+      "status": "missed"
+    },
+    {
+      "role": "original-test-misses",
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 48,
+        "column": 18,
+        "endLine": 48,
+        "endColumn": 51,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "expected": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 123,
+        "column": 5,
+        "name": "format"
+      },
+      "status": "missed"
+    },
+    {
+      "role": "original-test-misses",
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 57,
+        "column": 18,
+        "endLine": 57,
+        "endColumn": 78,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "expected": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 150,
+        "column": 5,
+        "name": "format"
+      },
+      "status": "missed"
+    },
+    {
+      "role": "original-test-misses",
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 75,
+        "column": 18,
+        "endLine": 75,
+        "endColumn": 120,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "expected": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 154,
+        "column": 5,
+        "name": "arrayFormat"
+      },
+      "status": "missed"
+    },
+    {
+      "role": "production-arity",
+      "project": "commons-lang",
+      "call": {
+        "file": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java",
+        "line": 287,
+        "column": 33,
+        "endLine": 287,
+        "endColumn": 75,
+        "resolution": "unresolved",
+        "reason": "ambiguous-binding"
+      },
+      "expected": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1553,
+        "column": 5,
+        "name": "defaultString"
+      },
+      "status": "missed"
+    },
+    {
+      "role": "production-arity",
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 124,
+        "column": 16,
+        "endLine": 124,
+        "endColumn": 65,
+        "resolution": "unresolved",
+        "reason": "ambiguous-binding"
+      },
+      "expected": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 154,
+        "column": 5,
+        "name": "arrayFormat"
+      },
+      "status": "missed"
+    }
+  ],
+  "sameArityUnknown": {
+    "file": "slf4j-api/src/test/java/org/slf4j/LoggerAccessingThread.java",
+    "line": 55,
+    "column": 29,
+    "endLine": 55,
+    "endColumn": 94,
+    "resolution": "unresolved",
+    "reason": "unsupported-callee"
+  },
+  "questions": {
+    "commons-lang": {
+      "function": "ExceptionUtils.getMessage(Throwable)",
+      "calls": 3,
+      "included": 3,
+      "omitted": 0,
+      "selected": {
+        "factIndex": 4842,
+        "fact": {
+          "file": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java",
+          "line": 287,
+          "column": 33,
+          "endLine": 287,
+          "endColumn": 75,
+          "resolution": "unresolved",
+          "reason": "ambiguous-binding"
+        },
+        "targetNavigation": {
+          "status": "unresolved",
+          "location": null,
+          "reason": "ambiguous-binding"
+        }
+      }
+    },
+    "slf4j": {
+      "function": "MessageFormatter.format(String,Object)",
+      "calls": 1,
+      "included": 1,
+      "omitted": 0,
+      "selected": {
+        "factIndex": 1403,
+        "fact": {
+          "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+          "line": 124,
+          "column": 16,
+          "endLine": 124,
+          "endColumn": 65,
+          "resolution": "unresolved",
+          "reason": "ambiguous-binding"
+        },
+        "targetNavigation": {
+          "status": "unresolved",
+          "location": null,
+          "reason": "ambiguous-binding"
+        }
+      }
+    }
+  },
+  "scope": {
+    "commons-lang": {
+      "model": "java-static-lexical-v2",
+      "files": 489,
+      "calls": 64826,
+      "functions": 9033,
+      "parseErrors": []
+    },
+    "slf4j": {
+      "model": "java-static-lexical-v2",
+      "files": 260,
+      "calls": 4856,
+      "functions": 1608,
+      "parseErrors": [
+        {
+          "path": "slf4j-migrator/jcl/jclcontent.java",
+          "message": "parsing errors detected in line: 19, column: 1! Expecting: one of these possible Token sequences:"
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Original five test calls remain known misses because inherited/wildcard caller guards apply before arity.",
+    "Two supplemental production source answers follow the initial baseline; not blind samples.",
+    "Unique fixed count is source navigation, not argument typing, runtime dispatch or full compiler attribution.",
+    "Checks deliberately use fail-on never; zero does not mean no findings."
+  ]
+}

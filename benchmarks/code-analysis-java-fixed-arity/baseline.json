@@ -1,0 +1,243 @@
+{
+  "baseline": "f8470917f7f80e279555025bee25af81f544c8f1",
+  "stage": "Observed before arity rule; fixed-function inventory exists, all five call observations missed.",
+  "observations": [
+    {
+      "project": "commons-lang",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 622,
+        "column": 26,
+        "endLine": 622,
+        "endColumn": 57,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "sourceKnownTarget": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1553,
+        "column": 5,
+        "name": "defaultString",
+        "sourceLine": "    public static String defaultString(final String str) {"
+      },
+      "definitionAlreadyInventoried": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "name": "defaultString",
+        "qualname": "StringUtils.defaultString(String)",
+        "line": 1553,
+        "endLine": 1555,
+        "complexity": 1,
+        "nesting": 0,
+        "deepestLine": 1553,
+        "definition": {
+          "kind": "methodDeclaration",
+          "sourceRange": {
+            "line": 1553,
+            "column": 5,
+            "endLine": 1555,
+            "endColumn": 6,
+            "sha256": "272cf370177fa14b10af2c9a094f11c5d36010f4eacb4ee1e004e60ad239b25c"
+          }
+        },
+        "sourceRange": {
+          "line": 1553,
+          "column": 5,
+          "endLine": 1555,
+          "endColumn": 6,
+          "sha256": "272cf370177fa14b10af2c9a094f11c5d36010f4eacb4ee1e004e60ad239b25c"
+        }
+      },
+      "grade": "known-source-miss"
+    },
+    {
+      "project": "commons-lang",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 629,
+        "column": 30,
+        "endLine": 629,
+        "endColumn": 69,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "sourceKnownTarget": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1583,
+        "column": 5,
+        "name": "defaultString",
+        "sourceLine": "    @Deprecated",
+        "methodHeaderLine": 1584
+      },
+      "definitionAlreadyInventoried": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "name": "defaultString",
+        "qualname": "StringUtils.defaultString(String,String)",
+        "line": 1583,
+        "endLine": 1586,
+        "complexity": 1,
+        "nesting": 0,
+        "deepestLine": 1583,
+        "definition": {
+          "kind": "methodDeclaration",
+          "sourceRange": {
+            "line": 1583,
+            "column": 5,
+            "endLine": 1586,
+            "endColumn": 6,
+            "sha256": "366906f2840ec71dc73b099e2ec493e09de5342ad196687c13774dc54c3f2a81"
+          }
+        },
+        "sourceRange": {
+          "line": 1583,
+          "column": 5,
+          "endLine": 1586,
+          "endColumn": 6,
+          "sha256": "366906f2840ec71dc73b099e2ec493e09de5342ad196687c13774dc54c3f2a81"
+        }
+      },
+      "grade": "known-source-miss"
+    },
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 48,
+        "column": 18,
+        "endLine": 48,
+        "endColumn": 51,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "sourceKnownTarget": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 123,
+        "column": 5,
+        "name": "format",
+        "sourceLine": "    final public static FormattingTuple format(String messagePattern, Object arg) {"
+      },
+      "definitionAlreadyInventoried": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "name": "format",
+        "qualname": "MessageFormatter.format(String,Object)",
+        "line": 123,
+        "endLine": 125,
+        "complexity": 1,
+        "nesting": 0,
+        "deepestLine": 123,
+        "definition": {
+          "kind": "methodDeclaration",
+          "sourceRange": {
+            "line": 123,
+            "column": 5,
+            "endLine": 125,
+            "endColumn": 6,
+            "sha256": "8d9737713b3a448f4a145d3ee07fea26c15828d5afd77ef3eb7bed712ec38ba6"
+          }
+        },
+        "sourceRange": {
+          "line": 123,
+          "column": 5,
+          "endLine": 125,
+          "endColumn": 6,
+          "sha256": "8d9737713b3a448f4a145d3ee07fea26c15828d5afd77ef3eb7bed712ec38ba6"
+        }
+      },
+      "grade": "known-source-miss"
+    },
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 57,
+        "column": 18,
+        "endLine": 57,
+        "endColumn": 78,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "sourceKnownTarget": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 150,
+        "column": 5,
+        "name": "format",
+        "sourceLine": "    final public static FormattingTuple format(final String messagePattern, Object arg1, Object arg2) {"
+      },
+      "definitionAlreadyInventoried": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "name": "format",
+        "qualname": "MessageFormatter.format(String,Object,Object)",
+        "line": 150,
+        "endLine": 152,
+        "complexity": 1,
+        "nesting": 0,
+        "deepestLine": 150,
+        "definition": {
+          "kind": "methodDeclaration",
+          "sourceRange": {
+            "line": 150,
+            "column": 5,
+            "endLine": 152,
+            "endColumn": 6,
+            "sha256": "f2b1e2147fcfe07e291b304b59929865d60075c5570cf50d1ae69807ded8c17c"
+          }
+        },
+        "sourceRange": {
+          "line": 150,
+          "column": 5,
+          "endLine": 152,
+          "endColumn": 6,
+          "sha256": "f2b1e2147fcfe07e291b304b59929865d60075c5570cf50d1ae69807ded8c17c"
+        }
+      },
+      "grade": "known-source-miss"
+    },
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+        "line": 75,
+        "column": 18,
+        "endLine": 75,
+        "endColumn": 120,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      },
+      "sourceKnownTarget": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 154,
+        "column": 5,
+        "name": "arrayFormat",
+        "sourceLine": "    final public static FormattingTuple arrayFormat(final String messagePattern, final Object[] argArray) {"
+      },
+      "definitionAlreadyInventoried": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "name": "arrayFormat",
+        "qualname": "MessageFormatter.arrayFormat(String,Object[])",
+        "line": 154,
+        "endLine": 161,
+        "complexity": 2,
+        "nesting": 1,
+        "deepestLine": 157,
+        "definition": {
+          "kind": "methodDeclaration",
+          "sourceRange": {
+            "line": 154,
+            "column": 5,
+            "endLine": 161,
+            "endColumn": 6,
+            "sha256": "25f753477c74a6acb2d6482daeef49581d8c7fa05bb664318c683818e361faf9"
+          }
+        },
+        "sourceRange": {
+          "line": 154,
+          "column": 5,
+          "endLine": 161,
+          "endColumn": 6,
+          "sha256": "25f753477c74a6acb2d6482daeef49581d8c7fa05bb664318c683818e361faf9"
+        }
+      },
+      "grade": "known-source-miss"
+    }
+  ],
+  "sourceOracleCorrection": "The annotated defaultString target starts at Deprecated1583, header1584; aligned with the existing captured definition before rule changes."
+}

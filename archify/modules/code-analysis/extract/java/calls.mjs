@@ -1,8 +1,16 @@
 import { children, descendants, tokensOf, TYPE_DECLARATIONS } from './parse.mjs';
 import { measureFunctions } from './functions.mjs';
 
-export const CALL_MODEL = 'java-static-lexical-v2';
+export const CALL_MODEL = 'java-static-lexical-v3';
 const OBJECT_METHODS = new Set(['getClass', 'hashCode', 'equals', 'clone', 'toString', 'notify', 'notifyAll', 'wait', 'finalize']);
+
+// Fixed argument count can distinguish siblings, but never argument types.
+// A varargs sibling needs applicability phases this source model does not run.
+function fixedArity(methods, arity) {
+  if (methods.some(method => method.varargs)) return { ambiguous: methods.length > 1 };
+  const candidates = methods.filter(method => method.arity === arity);
+  return { method: candidates.length === 1 ? candidates[0] : undefined, ambiguous: candidates.length > 1 };
+}
 
 // Inventory and lexical source navigation are separate: every syntactic method
 // invocation is retained, including qualified/chained calls we cannot bind.
@@ -87,18 +95,11 @@ export function collectFunctionsAndCalls(unit) {
       if (anonymous || types.length !== 1 || owner.name !== 'normalClassDeclaration'
         || owner.children.classExtends || owner.children.classImplements
         || method?.name !== 'methodDeclaration' || !measured.has(method) || OBJECT_METHODS.has(name)) return;
-      const candidates = (declarations.get(owner) || []).filter(node =>
-        node.children.methodHeader[0].children.methodDeclarator[0].children.Identifier[0].image === name);
-      if (candidates.length > 1) { call.reason = 'ambiguous-binding'; return; }
-      const target = candidates[0];
-      if (!target || !measured.has(target)) return;
-      const modifiers = target.children.methodModifier || [];
-      if (!modifiers.some(modifier => modifier.children.Static)) return;
-      const declarator = target.children.methodHeader[0].children.methodDeclarator[0];
-      const parameters = [...descendants(declarator)].filter(node => ['variableParaRegularParameter', 'variableArityParameter'].includes(node.name));
-      if (parameters.some(node => node.name === 'variableArityParameter')) return;
-      if (parameters.length !== (invocation.children.argumentList?.[0]?.children.expression?.length || 0)) return;
-      const record = measured.get(target);
+      const methods = staticMethods.filter(candidate => candidate.ownerOffset === owner.location.startOffset && candidate.name === name);
+      const { method: target, ambiguous } = fixedArity(methods, invocation.children.argumentList?.[0]?.children.expression?.length || 0);
+      if (ambiguous) { call.reason = 'ambiguous-binding'; return; }
+      if (!target?.record || !target.static) return;
+      const record = target.record;
       call.resolution = 'same-file-static-method';
       call.target = { name: record.name, line: record.line, column: record.sourceRange.column };
       delete call.reason;
@@ -108,7 +109,7 @@ export function collectFunctionsAndCalls(unit) {
   return { functions, calls, qualifiedCalls, staticMethods };
 }
 
-// Only public, unique, explicitly static source methods in ordinary top-level
+// Only public, unique-at-fixed-arity, explicitly static source methods in ordinary top-level
 // classes without explicit supertypes are eligible. This does not type-check
 // argument applicability, compilation, class loading or execution.
 export function resolveQualifiedCalls(units, resolveType) {
@@ -124,8 +125,8 @@ export function resolveQualifiedCalls(units, resolveType) {
     const type = targets[0], targetUnit = byFile.get(type.file);
     if (type.owners.length || type.kind !== 'normalClassDeclaration') continue;
     const methods = targetUnit.staticMethods.filter(method => method.ownerOffset === type.startOffset && method.name === request.name);
-    if (methods.length > 1) { request.call.reason = 'ambiguous-binding'; continue; }
-    const method = methods[0];
+    const { method, ambiguous } = fixedArity(methods, request.arity);
+    if (ambiguous) { request.call.reason = 'ambiguous-binding'; continue; }
     if (!method?.record || !method.ordinaryOwner || !method.publicOwner || !method.public || !method.static
       || method.varargs || method.arity !== request.arity) continue;
     const record = method.record;
