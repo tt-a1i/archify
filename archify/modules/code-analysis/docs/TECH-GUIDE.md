@@ -543,3 +543,10 @@ preceding decorators; their hashes retain actual interior line endings. Old
 captures without the model remain unavailable rather than known-zero. See
 [the architecture contract](../ARCHITECTURE.md#python-call-facts) for binding
 limits and freshness; the fresh paired change workflow remains JS/TS only.
+
+
+### Java captured superclass qualifier evidence
+
+Java call model v4 admits explicit class-qualified static source candidates from callers extending closed captured chains of ordinary top-level classes. It reuses the type/member inheritance graph and collects inherited instance and static field names in the same traversal. Incomplete, external, cyclic or ambiguous ancestry cannot prove value absence; the type-only JDK allowlist does not supply a field inventory. Member-type shadowing keeps the existing type namespace guard. Bare inherited calls, interface/virtual dispatch, inherited target owners and argument applicability remain unproved.
+
+Each new inherited-context target records qualifierAncestry source points. Saved-question navigation requires these files to remain fresh; changing a parent can change the qualifier binding even when caller/target text is unchanged. Historical Java v1–v3 captures remain readable with their original scope, without rebinding under v4.

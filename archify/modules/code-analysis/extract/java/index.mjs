@@ -6,7 +6,7 @@ import { collectFunctionsAndCalls, resolveQualifiedCalls, CALL_MODEL } from './c
 
 export const id = 'java';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 8;
+export const REVISION = 9;
 export const detect = (root, config) => listFiles(root, config).some(isJavaSource);
 export const countSources = (root, config) => listFiles(root, config).filter(isJavaSource).length;
 
@@ -14,8 +14,8 @@ export function extract(root, config) {
   const { files, units, packageMarkers, parse_errors } = parseSources(root, config, unit => ({
     ...describeUnit(unit), ...collectFunctionsAndCalls(unit),
   }));
-  const { imports, unresolved, resolveType } = resolveImports(units);
-  resolveQualifiedCalls(units, resolveType);
+  const { imports, unresolved, resolveType, qualifierAncestry } = resolveImports(units);
+  resolveQualifiedCalls(units, resolveType, qualifierAncestry);
   return {
     schema_version: 1, callModel: CALL_MODEL,
     repository: { ...describeRepository(root), language: id, adapter: PARSER, adapterRevision: REVISION },

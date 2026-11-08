@@ -19,10 +19,10 @@ const capture = root => { const {facts}=extractFacts(root,{language:'java'});ass
 
 test('Java explicit imported, same-package and full class paths navigate across files',t=>{
  const root=fixture(t,{'p/Api.java':api,'q/Calls.java':'package q; import p.Api; public class Calls { public void caller(){Api.run();p.Api.args("😀");} }','p/Local.java':'package p; public class Local { public void caller(){Api.run();} }'});
- const facts=capture(root);assert.equal(facts.callModel,'java-static-lexical-v3');assert.equal(facts.calls.length,3);
+ const facts=capture(root);assert.equal(facts.callModel,'java-static-lexical-v4');assert.equal(facts.calls.length,3);
  assert.ok(facts.calls.every(c=>c.resolution==='java-qualified-static-method'&&c.target.file==='p/Api.java'));
  const q=buildQuestion({root,facts,entry:'q/Calls.java',symbol:'Calls.caller()',question:'Where is the implementation?'});
- assert.equal(q.calls.bindingCoverage,'top-level-class-unique-fixed-arity-static-source-candidates');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
+ assert.equal(q.calls.bindingCoverage,'top-level-class-static-source-candidates-with-captured-superclass-value-guards');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
  fs.appendFileSync(path.join(root,'p/Api.java'),'// changed\n');
  const stale=buildQuestion({root,facts,entry:'q/Calls.java',symbol:'Calls.caller()',question:'Still current?'});
  assert.ok(stale.calls.records.every(r=>r.targetNavigation.status!=='valid'));
@@ -39,9 +39,9 @@ public class Calls {
  public void packageValue(Other p){p.Api.run();}
 }
 class Field { static Other Api; public void run(){Api.run();} }
-class Inherited extends Other { public void run(){Api.run();} }
+class Inherited extends Other { public void invoke(){Api.run();} }
 `});const facts=capture(root);
- assert.equal(facts.calls.filter(c=>c.target).length,1);assert.equal(facts.calls.find(c=>c.target).line,3);
+ assert.equal(facts.calls.filter(c=>c.target).length,2);assert.equal(facts.calls.find(c=>c.target).line,3);assert.ok(facts.calls.filter(c=>c.target).every(c=>c.target.file==='p/Api.java'));
 });
 
 test('Java qualified methods keep overload, visibility, varargs, supertype and duplicate owner gaps unknown',t=>{
@@ -77,7 +77,7 @@ public class Api {
  public static String choose(String x,String y){return "two";}
  public static String local(){return choose(null)+choose(null,"x");}
 }`,'q/Calls.java':'package q; import p.Api; public class Calls { public void call(){Api.choose(null);Api.choose(null,"x");} }'});
- const facts=capture(root);assert.equal(facts.callModel,'java-static-lexical-v3');
+ const facts=capture(root);assert.equal(facts.callModel,'java-static-lexical-v4');
  const external=facts.calls.filter(c=>c.file==='q/Calls.java');
  assert.deepEqual(external.map(c=>[c.resolution,c.target.file,c.target.line]),[['java-qualified-static-method','p/Api.java',3],['java-qualified-static-method','p/Api.java',4]]);
  const local=facts.calls.filter(c=>c.file==='p/Api.java');assert.deepEqual(local.map(c=>[c.resolution,c.target.line]),[['same-file-static-method',3],['same-file-static-method',4]]);
@@ -102,4 +102,64 @@ test('Java changed overload keeps only the references to its fixed-arity declara
  const q=buildChangeQuestion({question:'Which known callers reach the changed one-argument overload?',entry:'p/Api.java',base,head,config});
  const changed=q.changedDefinitions.items.filter(d=>d.head?.definition.name==='run');assert.equal(changed.length,1);
  for(const side of ['base','head']){const refs=changed[0][side].knownReferences;assert.equal(refs.total,1);assert.equal(refs.items[0].fact.target.name,'run');assert.equal(refs.items[0].navigation.status,'valid');}
+});
+
+test('Java captured ordinary superclass chains permit class qualifiers only without inherited value or type blockers',t=>{
+ const root=fixture(t,{
+  'p/Api.java':api,
+  'p/Other.java':'package p; public class Other {public static void run(){}}',
+  'q/Plain.java':'package q; import p.Api; class Root {int unrelated;} class Middle extends Root {} public class Plain extends Middle {public void call(){Api.run();}}',
+  'q/Field.java':'package q; import p.Api; class FieldBase {p.Other Api;} public class Field extends FieldBase {public void call(){Api.run();}}',
+  'q/StaticField.java':'package q; import p.Api; class StaticBase {static p.Other Api;} public class StaticField extends StaticBase {public void call(){Api.run();}}',
+  'q/Member.java':'package q; import p.Api; class MemberBase {static class Api {public static void run(){}}} public class Member extends MemberBase {public void call(){Api.run();}}',
+  'q/Missing.java':'package q; import p.Api; public class Missing extends External {public void call(){Api.run();}}',
+  'q/Cycle.java':'package q; import p.Api; class Loop extends Cycle{} public class Cycle extends Loop {public void call(){Api.run();}}',
+ });
+ const facts=capture(root),bound=facts.calls.filter(c=>c.target);
+ assert.deepEqual(bound.map(c=>[c.file,c.target.file,c.target.name]),[['q/Plain.java','p/Api.java','run']]);
+ assert.ok(facts.calls.filter(c=>c.file!=='q/Plain.java').every(c=>c.resolution==='unresolved'));
+ assert.equal(bound[0].qualifierAncestry.length,2);
+ for(const mutate of [
+  c=>{c.qualifierAncestry[0].file='missing.java';},
+  c=>{c.qualifierAncestry[0].line=999;},
+  c=>{c.qualifierAncestry.push(c.qualifierAncestry[0]);},
+ ]){
+  const corrupt=structuredClone(facts);mutate(corrupt.calls.find(c=>c.target));
+  assert.ok(schemaErrors('raw-facts',corrupt).some(e=>String(e.path).includes('qualifierAncestry')));
+ }
+ const old=structuredClone(facts);old.callModel='java-static-lexical-v3';
+ assert.ok(schemaErrors('raw-facts',old).some(e=>String(e.message).includes('Java v4')));
+
+ const q=buildQuestion({root,facts,entry:'q/Plain.java',symbol:'Plain.call()',question:'Which captured implementation does this class-qualified call reach?'});
+ assert.equal(q.calls.records[0].targetNavigation.status,'valid');
+});
+
+test('Java changed static implementation finds its captured-superclass caller on each side',t=>{
+ const root=fixture(t,{'base/p/Api.java':api,'head/p/Api.java':api.replace('void run(){}','void run(){int changed=1;}')});
+ for(const side of ['base','head']){
+  fs.mkdirSync(path.join(root,side,'q'),{recursive:true});
+  fs.writeFileSync(path.join(root,side,'q/Calls.java'),'package q; import p.Api; class Parent {} public class Calls extends Parent {public void caller(){Api.run();}}');
+ }
+ const config=loadConfig(null);
+ const base=captureChangeSide(path.join(root,'base'),config,'java');
+ const head=captureChangeSide(path.join(root,'head'),config,'java');
+ const result=buildChangeQuestion({base,head,config,entry:'p/Api.java',question:'Where are the known callers of this changed implementation?'});
+ const change=result.changedDefinitions.items.find(c=>c.head.definition.name==='run');
+ assert.ok(change);
+ for(const side of ['base','head']){
+  assert.equal(change[side].knownReferences.total,1);
+  assert.equal(change[side].knownReferences.items[0].fact.file,'q/Calls.java');
+  assert.equal(change[side].knownReferences.items[0].navigation.status,'valid');
+ }
+});
+
+test('Java inherited qualifier navigation requires fresh ancestor source even when caller and target are unchanged',t=>{
+ const root=fixture(t,{'p/Api.java':api,'q/Parent.java':'package q; public class Parent {}','q/Calls.java':'package q; import p.Api; public class Calls extends Parent {public void call(){Api.run();}}'});
+ const facts=capture(root),args={root,facts,entry:'q/Calls.java',symbol:'Calls.call()',question:'Is this inherited qualifier evidence still current?'};
+ assert.equal(buildQuestion(args).calls.records[0].targetNavigation.status,'valid');
+ fs.writeFileSync(path.join(root,'q/Parent.java'),'package q; public class Parent {protected Object Api;}');
+ const stale=buildQuestion(args).calls.records[0];
+ assert.equal(stale.targetNavigation.status,'unverifiable');
+ assert.equal(stale.targetNavigation.location,null);
+ assert.equal(stale.targetNavigation.reason,'qualifier-ancestry-changed');
 });
