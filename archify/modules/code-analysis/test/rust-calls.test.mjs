@@ -136,7 +136,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v7');
+ assert.equal(facts.callModel,'rust-source-direct-v8');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -314,7 +314,7 @@ pub fn object(x: &dyn Left) { x.act(); }
 pub fn ambiguous(x: &A) { x.act(); }
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v7');
+ assert.equal(facts.callModel,'rust-source-direct-v8');
  const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
  assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
  assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
@@ -492,6 +492,172 @@ impl<T: Gate> Wrapper<T> {
  assert.ok(call,'the inherent as_ref return type selects Other::enabled');
  assert.equal(call.target.line,4);
  assert.equal(facts.calls.filter(row=>row.line===9&&row.resolution==='rust-trait-method-candidate').length,0,'the trait bound is not claimed when an inherent accessor exists');
+});
+
+test('Rust impl where clauses and default type parameters resolve field receivers', t => {
+ const source=`pub trait Subscriber { fn event_enabled(&self) -> bool { true } }
+pub trait Layer<S> { fn event_enabled(&self, s: &S) -> bool { true } }
+pub struct Layered<L, I, S = I> { layer: L, inner: I, _s: std::marker::PhantomData<fn(S)> }
+impl<L, S> Subscriber for Layered<L, S>
+where
+ L: Layer<S>,
+ S: Subscriber,
+{
+ fn event_enabled(&self) -> bool { self.inner.event_enabled() }
+}
+impl<A, B, S> Layered<A, B, S>
+where
+ A: Layer<S>,
+ B: Layer<S>,
+{
+ fn check(&self, s: &S) -> bool { self.layer.event_enabled(s) }
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const inner=facts.calls.find(row=>row.line===9&&row.target?.name==='event_enabled');
+ assert.ok(inner,'the omitted default parameter maps inner to S');
+ assert.equal(inner.target.line,1);
+ const layer=facts.calls.find(row=>row.line===16&&row.target?.name==='event_enabled');
+ assert.ok(layer,'a where-clause bound on the impl generic is available');
+ assert.equal(layer.target.line,2);
+});
+
+test('Rust standard smart-pointer accessors return their type argument', t => {
+ const source=`pub trait Gate { fn enabled(&self) -> bool { true } }
+use std::sync::Arc;
+use std::boxed::Box;
+pub struct Shared;
+impl<S: Gate> Gate for Arc<S> { fn enabled(&self) -> bool { self.as_ref().enabled() } }
+impl<S: Gate> Gate for Box<S> { fn enabled(&self) -> bool { self.as_ref().enabled() } }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ for (const line of [5,6]) {
+  const call=facts.calls.find(row=>row.line===line&&row.target?.name==='enabled');
+  assert.ok(call,`line ${line} follows the pointer payload`);
+  assert.equal(call.target.line,1);
+ }
+});
+
+test('Rust tuple-variant bindings resolve through the scrutinee type', t => {
+ const source=`pub trait Gate { fn enabled(&self) -> bool { true } }
+pub enum Maybe<T> { Yes(T), No }
+impl<T: Gate> Maybe<T> {
+ pub fn check(&self) -> bool {
+  match self {
+   Maybe::Yes(inner) => inner.enabled(),
+   Maybe::No => false,
+  }
+ }
+}
+pub trait Layer<S> { fn event_enabled(&self, s: &S) -> bool { true } }
+impl<L, S> Layer<S> for Option<L>
+where
+ L: Layer<S>,
+{
+ fn event_enabled(&self, s: &S) -> bool {
+  match self {
+   Some(inner) => inner.event_enabled(s),
+   None => false,
+  }
+ }
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const local=facts.calls.find(row=>row.line===6&&row.target?.name==='enabled');
+ assert.ok(local,'a captured tuple variant binds its payload type');
+ assert.equal(local.target.line,1);
+ const option=facts.calls.find(row=>row.line===18&&row.target?.name==='event_enabled');
+ assert.ok(option,'the standard Option payload binds through the impl argument');
+ assert.equal(option.target.line,11);
+});
+
+test('Rust local same-name accessor traits follow their declared return type', t => {
+ const source=`pub trait AsRef<T> { fn as_ref(&self) -> &Other; }
+pub struct First;
+pub struct Other;
+impl First { pub fn enabled(&self) -> bool { false } }
+impl Other { pub fn enabled(&self) -> bool { true } }
+pub struct Wrap;
+impl AsRef<First> for Wrap { fn as_ref(&self) -> &Other { &Other } }
+impl Wrap { pub fn check(&self) -> bool { self.as_ref().enabled() } }
+pub fn run(w: &Wrap) -> bool { w.as_ref().enabled() }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ for (const line of [8,9]) {
+  const call=facts.calls.find(row=>row.line===line&&row.resolution==='rust-inherent-source-candidate');
+  assert.ok(call,`line ${line} follows the local trait declaration`);
+  assert.equal(call.target.name,'enabled');
+  assert.equal(call.target.line,5,'the local AsRef<First> declaration returns Other');
+  assert.equal(facts.calls.filter(row=>row.line===line&&row.target?.line===4).length,0,'the trait argument First is not used as the return type');
+ }
+});
+
+test('Rust local Borrow and Deref declarations follow their own targets', t => {
+ const source=`pub trait Borrow<T> { fn borrow(&self) -> &Other; }
+pub trait Deref { type Target; fn deref(&self) -> &Self::Target; }
+pub struct First;
+pub struct Other;
+impl First { pub fn enabled(&self) -> bool { false } }
+impl Other { pub fn enabled(&self) -> bool { true } }
+pub struct Wrap;
+impl Borrow<First> for Wrap { fn borrow(&self) -> &Other { &Other } }
+impl Deref for Wrap { type Target = Other; fn deref(&self) -> &Other { &Other } }
+impl Wrap {
+ pub fn via_borrow(&self) -> bool { self.borrow().enabled() }
+ pub fn via_deref(&self) -> bool { self.deref().enabled() }
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ for (const line of [11,12]) {
+  const call=facts.calls.find(row=>row.line===line&&row.resolution==='rust-inherent-source-candidate');
+  assert.ok(call,`line ${line} follows the local declaration`);
+  assert.equal(call.target.line,6);
+ }
+});
+
+test('Rust accessor aliases resolve local declarations and standard paths', t => {
+ const source=`pub struct First;
+pub struct Other;
+impl First { pub fn enabled(&self) -> bool { false } }
+impl Other { pub fn enabled(&self) -> bool { true } }
+mod custom { use super::{First, Other}; pub trait AsRef<T> { fn as_ref(&self) -> &Other; } }
+use crate::custom::AsRef as LocalRef;
+use std::convert::AsRef as StdRef;
+pub struct Local;
+pub struct Standard;
+impl LocalRef<First> for Local { fn as_ref(&self) -> &Other { &Other } }
+impl StdRef<First> for Standard { fn as_ref(&self) -> &First { &First } }
+impl Local { pub fn check(&self) -> bool { self.as_ref().enabled() } }
+impl Standard { pub fn check(&self) -> bool { self.as_ref().enabled() } }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const local=facts.calls.find(row=>row.line===12&&row.target?.name==='enabled');
+ assert.ok(local,'the local alias resolves to the local trait declaration');
+ assert.equal(local.target.line,4);
+ const standard=facts.calls.find(row=>row.line===13&&row.target?.name==='enabled');
+ assert.ok(standard,'the standard alias keeps the AsRef argument type');
+ assert.equal(standard.target.line,3);
+});
+
+test('Rust external same-name accessor without captured evidence stays unknown', t => {
+ const source=`use external::AsRef;
+pub struct First;
+pub struct Other;
+impl Other { pub fn enabled(&self) -> bool { true } }
+pub struct Wrap;
+impl AsRef<First> for Wrap { fn as_ref(&self) -> &Other { &Other } }
+impl Wrap { pub fn check(&self) -> bool { self.as_ref().enabled() } }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(row=>row.line===7&&row.target?.name==='enabled');
+ assert.equal(call,undefined,'an uncaptured external AsRef signature is not assumed');
 });
 
 test('Rust swapped generic parameters map field positions', t => {
