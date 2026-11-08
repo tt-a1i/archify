@@ -88,7 +88,7 @@
             "type": "object", "additionalProperties": false, "required": ["kind", "sourceRange"],
             "description": "Optional captured named definition with headers: exact owned syntax including decorators, annotations and modifiers, excluding preceding comments and trailing newline. Absent for historical captures and unsupported metric records.",
             "properties": {
-              "kind": { "enum": ["FunctionDef", "AsyncFunctionDef", "methodDeclaration", "interfaceMethodDeclaration", "constructorDeclaration", "compactConstructorDeclaration", "FuncDecl", "RustItemFn"] },
+              "kind": { "enum": ["FunctionDef", "AsyncFunctionDef", "methodDeclaration", "interfaceMethodDeclaration", "constructorDeclaration", "compactConstructorDeclaration", "FuncDecl", "InterfaceMethod", "RustItemFn"] },
               "sourceRange": { "$ref": "#/$defs/sourceRange" }
             }
           }
@@ -122,7 +122,7 @@
           "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at invocation expression start." },
           "endLine": { "type": "integer", "minimum": 1, "description": "One-based end-exclusive invocation expression end line." },
           "endColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 end-exclusive column." },
-          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "same-file-static-method", "go-direct-function", "go-direct-method", "rust-direct-function", "rust-inherent-source-candidate", "rust-specialized-inherent-source-candidate", "rust-lifetime-inherent-source-candidate", "java-qualified-static-method", "unresolved"] },
+          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "same-file-static-method", "go-direct-function", "go-direct-method", "go-interface-method", "rust-direct-function", "rust-inherent-source-candidate", "rust-specialized-inherent-source-candidate", "rust-lifetime-inherent-source-candidate", "java-qualified-static-method", "unresolved"] },
           "via": { "type": "array", "minItems": 1, "description": "js-ts-lexical-v5 ordered forwarding import/reexport statement locations, between the caller import and target file. Captured value edges and current path freshness are checked separately.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
           "qualifierAncestry": { "type": "array", "minItems": 1, "description": "Java v4 captured ancestor class declaration points supporting absence of inherited qualifier fields. Current ancestor-file freshness is required before navigation.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
           "buildEvidence": { "type": "array", "minItems": 1, "description": "Java v5 captured POM source points supporting a declared direct project dependency route. Requires recorded metadata and current input freshness.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
@@ -141,7 +141,7 @@
         "oneOf": [
           { "properties": { "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "same-file-static-method"] }, "target": { "type": "object", "not": { "required": ["file"] } } }, "required": ["target"], "not": { "required": ["reason"] } },
           { "properties": { "resolution": { "enum": ["imported-function", "java-qualified-static-method"] }, "target": { "type": "object", "required": ["file"] } }, "required": ["target"], "not": { "required": ["reason"] } },
-          { "properties": { "resolution": { "enum": ["go-direct-function", "go-direct-method", "rust-direct-function", "rust-inherent-source-candidate", "rust-specialized-inherent-source-candidate", "rust-lifetime-inherent-source-candidate"] } }, "required": ["target"], "not": { "required": ["reason"] } },
+          { "properties": { "resolution": { "enum": ["go-direct-function", "go-direct-method", "go-interface-method", "rust-direct-function", "rust-inherent-source-candidate", "rust-specialized-inherent-source-candidate", "rust-lifetime-inherent-source-candidate"] } }, "required": ["target"], "not": { "required": ["reason"] } },
           { "properties": { "resolution": { "const": "unresolved" } }, "required": ["reason"], "not": { "required": ["target"] } }
         ]
       }

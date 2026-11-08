@@ -80,8 +80,9 @@ func shadow() { alias := struct{ Work func() }{}; alias.Work() }
   const calls = callsIn(facts, 'main.go');
   assert.equal(calls[1].resolution, 'go-direct-method');
   assert.deepEqual(calls[1].target, { name: 'Work', line: 5, column: 1 });
-  assert.ok(calls.filter((_, i) => i !== 1).every(call => call.resolution === 'unresolved'));
-  assert.equal(calls[0].reason, 'go-method-dispatch');
+  assert.equal(calls[0].resolution, 'go-interface-method');
+  assert.deepEqual(calls[0].target, { name: 'Work', line: 3, column: 20 });
+  assert.ok(calls.filter((_, i) => i > 1).every(call => call.resolution === 'unresolved'));
   assert.ok(facts.languageScope.typing.errorCount > 0);
 });
 
@@ -171,7 +172,7 @@ test('Go compiler-selected concrete methods distinguish receivers and follow ali
     {file:'lib/types.go',name:'M',line:3,column:1},
   ]);
   const q=buildQuestion({root,facts,entry:'entry.go',symbol:'Entry',question:'Where are these concrete methods defined?'});
-  assert.equal(q.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-recorded-sdk-and-incomplete-thirdparty-types');
+  assert.equal(q.calls.bindingCoverage,'go-types-direct-functions-concrete-methods-and-interface-declarations-with-recorded-sdk-and-incomplete-thirdparty-types');
   assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
 });
 
@@ -191,7 +192,10 @@ test('Go method targets do not guess through interfaces, function fields, missin
 `,
   });
   const facts=capture(root);assert.ok(facts.languageScope.typing.errorCount>0);
-  assert.ok(callsIn(facts,'entry.go').every(c=>c.resolution==='unresolved'));
+  const calls=callsIn(facts,'entry.go');
+  assert.equal(calls[1].resolution,'go-interface-method');
+  assert.deepEqual(calls[1].target,{name:'M',line:5,column:19});
+  assert.ok(calls.filter((_,i)=>i!==1).every(c=>c.resolution==='unresolved'));
 });
 
 test('Go changed concrete method definitions recover foreign callers and keep historical v1 coverage distinct',t=>{
@@ -224,7 +228,7 @@ func Entry(r *http.Request){c,_:=r.Context().Value("key").(*Context);c=pool.Get(
  assert.equal(facts.languageScope.typing.errorCount,0);assert.equal(facts.files.length,1);
  assert.equal(before.languageScope.standardLibrary.mode,'disabled');
  const disabledQuestion=buildQuestion({root,facts:before,entry:'entry.go',symbol:'Entry',question:'What remains unknown without SDK types?'});
- assert.equal(disabledQuestion.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-sdk-types-disabled');
+ assert.equal(disabledQuestion.calls.bindingCoverage,'go-types-direct-functions-concrete-methods-and-interface-declarations-with-sdk-types-disabled');
  const sdk=facts.languageScope.standardLibrary;assert.equal(sdk.mode,'compiler-exports');
  assert.ok(sdk.packages.some(p=>p.path==='net/http'&&p.sha256.length===64&&p.bytes>0));
  assert.ok(sdk.packages.some(p=>p.path==='sync'));assert.equal(sdk.sourceFilesAnalyzed,false);assert.equal(sdk.projectCommands,false);
@@ -253,4 +257,17 @@ test('Go SDK intrinsic typing uses the declared architecture size, including raw
  assert.equal(narrow.languageScope.typing.errorCount,0);assert.ok(wide.languageScope.typing.errorCount>0);
  assert.deepEqual(narrow.languageScope.standardLibrary.intrinsicPackages,['unsafe']);
  assert.equal(narrow.languageScope.build.goarch,'386');assert.equal(narrow.files.length,1);
+});
+
+test('Go interface method declaration changes pair with interface-typed call sites', t => {
+  const baseRoot = fixture(t, { 'main.go': 'package app\ntype I interface { Work() }\nfunc Use(i I) { i.Work() }\n' });
+  const headRoot = fixture(t, { 'main.go': 'package app\ntype I interface { Work(int) }\nfunc Use(i I) { i.Work(1) }\n' });
+  const config = scopeConfig();
+  const base = captureChangeSide(baseRoot, config, 'go'), head = captureChangeSide(headRoot, config, 'go');
+  const q = buildChangeQuestion({ question: 'Which callers use I.Work?', entry: 'main.go', base, head, config });
+  const change = q.changedDefinitions.items.find(d => d.head?.definition.kind === 'InterfaceMethod' && d.head.definition.qualname === 'I.Work');
+  assert.ok(change);
+  assert.equal(change.head.knownReferences.total, 1);
+  assert.equal(change.head.knownReferences.items[0].navigation.status, 'valid');
+  assert.equal(change.head.knownReferences.items[0].navigation.location.file, 'main.go');
 });

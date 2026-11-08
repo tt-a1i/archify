@@ -50,24 +50,25 @@ type group struct {
 	methods           map[string][]types.Type
 }
 type loader struct {
-	stdlib      types.Importer
-	sdkExports  map[string]string
-	sdkLoaded   map[string]record
-	sdk         record
-	req         request
-	fset        *token.FileSet
-	groups      map[string]*group
-	packages    map[string]*group
-	external    map[string]*types.Package
-	diagnostics []string
-	errors      int
-	asts        map[string]*ast.File
-	selected    []string
-	excluded    []record
-	parseErrors []record
-	invalidDirs map[string]bool
-	definitions map[token.Pos]record
-	functions   []record
+	stdlib           types.Importer
+	sdkExports       map[string]string
+	sdkLoaded        map[string]record
+	sdk              record
+	req              request
+	fset             *token.FileSet
+	groups           map[string]*group
+	packages         map[string]*group
+	external         map[string]*types.Package
+	diagnostics      []string
+	errors           int
+	asts             map[string]*ast.File
+	selected         []string
+	excluded         []record
+	parseErrors      []record
+	invalidDirs      map[string]bool
+	definitions      map[token.Pos]record
+	interfaceMethods map[token.Pos]record
+	functions        []record
 }
 
 func (l *loader) Import(p string) (*types.Package, error) {
@@ -319,6 +320,17 @@ func (l *loader) definition(file string, fn *ast.FuncDecl) record {
 	visit(fn.Body, 0)
 	return record{"file": file, "name": fn.Name.Name, "qualname": qualname, "line": r["line"], "endLine": r["endLine"], "complexity": complexity, "nesting": nesting, "deepestLine": deepest, "sourceRange": r, "definition": record{"kind": "FuncDecl", "sourceRange": r}}
 }
+func (l *loader) interfaceMethod(file, owner string, name *ast.Ident, field *ast.Field) record {
+	r := l.span(field)
+	start, end := l.fset.PositionFor(field.Pos(), false).Offset, l.fset.PositionFor(field.End(), false).Offset
+	sum := sha256.Sum256(l.req.Sources[file][start:end])
+	r["sha256"] = hex.EncodeToString(sum[:])
+	qualname := name.Name
+	if owner != "" {
+		qualname = owner + "." + qualname
+	}
+	return record{"file": file, "name": name.Name, "qualname": qualname, "line": r["line"], "endLine": r["endLine"], "complexity": 1, "nesting": 0, "deepestLine": r["line"], "sourceRange": r, "definition": record{"kind": "InterfaceMethod", "sourceRange": r}}
+}
 func (l *loader) prepare() {
 	ctx := build.Default
 	if l.req.GOOS != "" {
@@ -413,6 +425,36 @@ func (l *loader) prepare() {
 				l.definitions[fn.Name.Pos()] = def
 			}
 		}
+		owners := map[*ast.InterfaceType]string{}
+		for _, decl := range f.Decls {
+			gd, ok := decl.(*ast.GenDecl)
+			if !ok || gd.Tok != token.TYPE {
+				continue
+			}
+			for _, spec := range gd.Specs {
+				ts := spec.(*ast.TypeSpec)
+				if it, ok := ts.Type.(*ast.InterfaceType); ok {
+					owners[it] = ts.Name.Name
+				}
+			}
+		}
+		ast.Inspect(f, func(n ast.Node) bool {
+			it, ok := n.(*ast.InterfaceType)
+			if !ok {
+				return true
+			}
+			for _, field := range it.Methods.List {
+				if _, ok := field.Type.(*ast.FuncType); !ok {
+					continue
+				}
+				for _, name := range field.Names {
+					def := l.interfaceMethod(file, owners[it], name, field)
+					l.functions = append(l.functions, def)
+					l.interfaceMethods[name.Pos()] = def
+				}
+			}
+			return true
+		})
 	}
 	for _, g := range l.groups {
 		if !strings.Contains(g.id, "#test:") {
@@ -501,6 +543,16 @@ func (g *group) uniqueMethod(obj *types.Func) bool {
 	}
 	return count == 1
 }
+func interfaceSelection(selection *types.Selection) bool {
+	if selection == nil || (selection.Kind() != types.MethodVal && selection.Kind() != types.MethodExpr) {
+		return false
+	}
+	if _, typeParam := selection.Recv().(*types.TypeParam); typeParam {
+		return false
+	}
+	_, dynamic := selection.Recv().Underlying().(*types.Interface)
+	return dynamic
+}
 func concreteSelection(selection *types.Selection) bool {
 	if selection == nil || (selection.Kind() != types.MethodVal && selection.Kind() != types.MethodExpr) {
 		return false
@@ -529,7 +581,7 @@ func main() {
 	if err := json.NewDecoder(os.Stdin).Decode(&req); err != nil {
 		panic(err)
 	}
-	l := &loader{req: req, fset: token.NewFileSet(), groups: map[string]*group{}, packages: map[string]*group{}, external: map[string]*types.Package{}, asts: map[string]*ast.File{}, invalidDirs: map[string]bool{}, definitions: map[token.Pos]record{}, selected: []string{}, excluded: []record{}, parseErrors: []record{}, functions: []record{}}
+	l := &loader{req: req, fset: token.NewFileSet(), groups: map[string]*group{}, packages: map[string]*group{}, external: map[string]*types.Package{}, asts: map[string]*ast.File{}, invalidDirs: map[string]bool{}, definitions: map[token.Pos]record{}, interfaceMethods: map[token.Pos]record{}, selected: []string{}, excluded: []record{}, parseErrors: []record{}, functions: []record{}}
 	l.prepare()
 	if err := l.prepareSDK(); err != nil {
 		fmt.Fprintln(os.Stderr, "Go SDK type preparation failed:", err)
@@ -607,9 +659,13 @@ func main() {
 						if sig != nil && sig.Recv() != nil {
 							r["reason"] = "go-method-dispatch"
 						}
-						def := l.definitions[obj.Pos()]
 						method := sig != nil && sig.Recv() != nil && concreteSelection(selection)
-						valid := def != nil && sig != nil && (sig.Recv() == nil || method) && !l.invalidDirs[path.Dir(file)]
+						interfaceMethod := sig != nil && sig.Recv() != nil && interfaceSelection(selection)
+						def := l.definitions[obj.Pos()]
+						if interfaceMethod {
+							def = l.interfaceMethods[obj.Pos()]
+						}
+						valid := def != nil && sig != nil && (sig.Recv() == nil || method || interfaceMethod) && !l.invalidDirs[path.Dir(file)]
 						if def != nil && sig != nil && (sig.Recv() == nil || method) {
 							r["reason"] = "ambiguous-binding"
 						}
@@ -623,10 +679,13 @@ func main() {
 							if method {
 								valid = valid && targetGroup != nil && targetGroup.uniqueMethod(obj)
 							}
-							if !method && obj.Pkg() == g.pkg && counts[obj.Name()] != 1 {
+							if interfaceMethod {
+								valid = valid && targetGroup != nil
+							}
+							if !method && !interfaceMethod && obj.Pkg() == g.pkg && counts[obj.Name()] != 1 {
 								valid = false
 							}
-							if !method && obj.Pkg() != g.pkg && targetGroup != nil {
+							if !method && !interfaceMethod && obj.Pkg() != g.pkg && targetGroup != nil {
 								if targetGroup.counts == nil {
 									targetGroup.counts = declarationCounts(targetGroup.files)
 								}
@@ -641,6 +700,9 @@ func main() {
 								r["resolution"] = "go-direct-function"
 								if method {
 									r["resolution"] = "go-direct-method"
+								}
+								if interfaceMethod {
+									r["resolution"] = "go-interface-method"
 								}
 								if targetFile != file {
 									t["file"] = targetFile

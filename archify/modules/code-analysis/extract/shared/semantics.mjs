@@ -55,7 +55,7 @@ export function semanticErrors(name, data) {
         const slice = rangeText(sourceTexts.get(fn.file), range, data.repository.language);
         if (slice === null || createHash('sha256').update(slice).digest('hex') !== range.sha256
           || range.line > fn.line || range.endLine !== fn.endLine
-          || (python ? data.repository.language !== 'py' : kind === 'FuncDecl' ? data.repository.language !== 'go' : kind === 'RustItemFn' ? data.repository.language !== 'rust' : data.repository.language !== 'java')
+          || (python ? data.repository.language !== 'py' : kind === 'FuncDecl' || kind === 'InterfaceMethod' ? data.repository.language !== 'go' : kind === 'RustItemFn' ? data.repository.language !== 'rust' : data.repository.language !== 'java')
           || (fn.sourceRange && (range.line > fn.sourceRange.line || (range.line === fn.sourceRange.line && range.column > fn.sourceRange.column)
             || range.endLine !== fn.sourceRange.endLine || range.endColumn !== fn.sourceRange.endColumn))) {
           add(`/functions/${i}/definition/sourceRange`, 'must match exact captured owned definition extent and digest');
@@ -125,6 +125,7 @@ export function semanticErrors(name, data) {
         if (call.resolution === 'rust-lifetime-inherent-source-candidate' && (!rustCalls || data.callModel !== 'rust-source-direct-v4')) add(`${at}/resolution`, 'requires the Rust v4 lifetime-only inherent source-candidate model');
         if (call.resolution === 'rust-direct-function' && !rustCalls) add(`${at}/resolution`, 'requires the Rust source-direct model');
         if (call.resolution === 'go-direct-method' && (!goCalls || !['go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
+        if (call.resolution === 'go-interface-method' && (!goCalls || data.callModel !== 'go-source-direct-v3')) add(`${at}/resolution`, 'requires the Go v3 interface-declaration model');
         if (call.resolution === 'go-direct-function' && !goCalls) add(`${at}/resolution`, 'requires the Go source-direct model');
         if (!validPoint(targetFile, call.target)) add(`${at}/target`, 'target must lie inside captured source');
         if ((pythonCalls || javaCalls || goCalls || rustCalls) && !functionPoints.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured definition start');

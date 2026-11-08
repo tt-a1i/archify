@@ -8,7 +8,7 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'go';
-export const REVISION = 3;
+export const REVISION = 4;
 export const CALL_MODEL = 'go-source-direct-v3';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.go'));
 export const countSources = (root, config) => listFiles(root, config).filter(file => file.endsWith('.go')).length;
@@ -77,6 +77,6 @@ export function extract(root, config, { onCapture } = {}) {
         'Source selection uses the running SDK tool/release tags; target CPU-feature and experimental overrides are not independently reconstructed.',
         'The go.mod language/toolchain directives are captured as metadata but are not enforced by this incomplete type checker.',
         'Targets are direct source function bindings from go/types with recorded SDK types when enabled and incomplete third-party types. They do not prove successful compilation, argument applicability, runtime dispatch or a complete caller set.',
-        'Function bodies and receiver declarations are inventoried; concrete compiler-selected source methods are bound, including promotion, method expressions and generic instances. Interface and function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.'] },
+        'Function bodies and receiver declarations are inventoried; concrete compiler-selected source methods are bound, including promotion, method expressions and generic instances. Interface method calls bind to a captured interface method declaration when one is visible; the runtime implementation remains unknown. Function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.'] },
   };
 }
