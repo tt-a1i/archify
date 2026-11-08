@@ -1,6 +1,6 @@
 {
   "controls": {
-    "callModel": "rust-source-direct-v5",
+    "callModel": "rust-source-direct-v6",
     "calls": 6,
     "checks": {
       "ambiguousConcrete": true,
@@ -39,11 +39,7 @@
   "failures": [],
   "projects": [
     {
-      "baseline": {
-        "callModel": null,
-        "knownReferences": 0,
-        "traitCandidates": "absent"
-      },
+      "baseline": null,
       "coverage": {
         "knownReferences": "available",
         "traitCandidates": "available"
@@ -69,6 +65,7 @@
               "file": "src/buf/chain.rs",
               "line": 184
             },
+            "defaultMethod": null,
             "kind": "definite",
             "navigation": {
               "location": {
@@ -103,6 +100,7 @@
           },
           "callPosition": "src/buf/chain.rs:184:13",
           "callRange": "src/buf/chain.rs:184:13-184:33",
+          "defaultMethod": null,
           "expected": {
             "call": {
               "column": 13,
@@ -111,6 +109,7 @@
               "file": "src/buf/chain.rs",
               "line": 184
             },
+            "defaultMethod": null,
             "inCallInventory": true,
             "kind": "definite",
             "reason": "`ret` is a local `crate::BytesMut` value, so `ret.put(...)` uses the BytesMut impl of BufMut.",
@@ -146,6 +145,7 @@
               "file": "src/buf/chain.rs",
               "line": 185
             },
+            "defaultMethod": null,
             "kind": "definite",
             "navigation": {
               "location": {
@@ -180,6 +180,7 @@
           },
           "callPosition": "src/buf/chain.rs:185:13",
           "callRange": "src/buf/chain.rs:185:13-185:53",
+          "defaultMethod": null,
           "expected": {
             "call": {
               "column": 13,
@@ -188,9 +189,111 @@
               "file": "src/buf/chain.rs",
               "line": 185
             },
+            "defaultMethod": null,
             "inCallInventory": true,
             "kind": "definite",
             "reason": "Same local BytesMut receiver; the argument type does not change the receiver implementation.",
+            "selfType": "BytesMut",
+            "selfTypeVerified": true,
+            "target": {
+              "column": 5,
+              "file": "src/bytes_mut.rs",
+              "line": 1300
+            },
+            "targetEndVerified": false,
+            "trait": "BufMut",
+            "unverifiedFields": [
+              "target-end"
+            ]
+          },
+          "selfType": "BytesMut",
+          "status": "correct",
+          "targetEndPosition": null,
+          "targetPosition": "src/bytes_mut.rs:1300:5",
+          "traitName": "BufMut",
+          "unverifiedFields": [
+            "target-end"
+          ],
+          "wrong": []
+        },
+        {
+          "actual": {
+            "call": {
+              "column": 9,
+              "endColumn": 32,
+              "endLine": 2374,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2374
+            },
+            "defaultMethod": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2363,
+              "name": "copy_to_bytes",
+              "qualname": "buf::buf_impl::Buf::copy_to_bytes",
+              "trait": "Buf"
+            },
+            "kind": "definite",
+            "navigation": {
+              "location": {
+                "column": 9,
+                "endColumn": 32,
+                "endLine": 2374,
+                "file": "src/buf/buf_impl.rs",
+                "line": 2374
+              },
+              "status": "valid"
+            },
+            "resolution": "rust-trait-impl",
+            "selfType": "BytesMut",
+            "selfTypeVerified": true,
+            "target": {
+              "column": 5,
+              "file": "src/bytes_mut.rs",
+              "line": 1300,
+              "name": "put"
+            },
+            "targetEndVerified": false,
+            "trait": {
+              "column": 18,
+              "file": "src/buf/buf_mut.rs",
+              "line": 30,
+              "name": "BufMut",
+              "qualname": "buf::buf_mut::BufMut"
+            },
+            "unverifiedFields": [
+              "target-end"
+            ]
+          },
+          "callPosition": "src/buf/buf_impl.rs:2374:9",
+          "callRange": "src/buf/buf_impl.rs:2374:9-2374:32",
+          "defaultMethod": {
+            "column": 8,
+            "file": "src/buf/buf_impl.rs",
+            "line": 2363,
+            "name": "copy_to_bytes",
+            "qualname": "buf::buf_impl::Buf::copy_to_bytes",
+            "trait": "Buf"
+          },
+          "expected": {
+            "call": {
+              "column": 9,
+              "endColumn": 32,
+              "endLine": 2374,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2374
+            },
+            "defaultMethod": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2363,
+              "name": "copy_to_bytes",
+              "qualname": "buf::buf_impl::Buf::copy_to_bytes",
+              "trait": "Buf"
+            },
+            "inCallInventory": true,
+            "kind": "definite",
+            "reason": "`ret` is a local `crate::BytesMut` value inside Buf::copy_to_bytes.",
             "selfType": "BytesMut",
             "selfTypeVerified": true,
             "target": {
@@ -231,14 +334,14 @@
             "wrong": []
           },
           "definite": {
-            "correct": 2,
-            "expected": 2,
-            "included": 2,
+            "correct": 3,
+            "expected": 3,
+            "included": 3,
             "limit": 40,
             "missed": [],
             "omitted": 0,
-            "returned": 2,
-            "total": 2,
+            "returned": 3,
+            "total": 3,
             "wrong": []
           }
         },
@@ -255,33 +358,22 @@
             "wrong": []
           },
           "definite": {
-            "correct": 2,
+            "correct": 3,
             "expected": 3,
-            "included": 2,
+            "included": 3,
             "limit": 40,
-            "missed": [
-              "src/buf/buf_impl.rs:2374"
-            ],
+            "missed": [],
             "omitted": 0,
-            "returned": 2,
-            "total": 2,
+            "returned": 3,
+            "total": 3,
             "wrong": []
           },
-          "knownInventoryGaps": [
-            {
-              "position": "src/buf/buf_impl.rs:2374",
-              "reason": "`ret` is a local `crate::BytesMut` value inside Buf::copy_to_bytes."
-            }
-          ]
+          "knownInventoryGaps": []
         }
       }
     },
     {
-      "baseline": {
-        "callModel": null,
-        "knownReferences": 0,
-        "traitCandidates": "absent"
-      },
+      "baseline": null,
       "coverage": {
         "knownReferences": "available",
         "traitCandidates": "available"
@@ -333,6 +425,7 @@
           },
           "callPosition": "src/__private_api.rs:101:9",
           "callRange": "src/__private_api.rs:101:9-101:23",
+          "defaultMethod": null,
           "expected": {
             "call": {
               "column": 9,
@@ -449,6 +542,7 @@
           "file": "src/buf/chain.rs",
           "line": 185
         },
+        "defaultMethod": null,
         "kind": "definite",
         "navigation": {
           "location": {
@@ -483,6 +577,7 @@
       },
       "callPosition": "src/buf/chain.rs:185:21",
       "callRange": "src/buf/chain.rs:185:21-185:52",
+      "defaultMethod": null,
       "expected": {
         "call": {
           "column": 13,
@@ -491,6 +586,7 @@
           "file": "src/buf/chain.rs",
           "line": 185
         },
+        "defaultMethod": null,
         "inCallInventory": true,
         "kind": "definite",
         "reason": "Same local BytesMut receiver; the argument type does not change the receiver implementation.",
@@ -528,6 +624,7 @@
           "file": "src/buf/chain.rs",
           "line": 184
         },
+        "defaultMethod": null,
         "kind": "definite",
         "navigation": {
           "location": {
@@ -562,6 +659,7 @@
       },
       "callPosition": "src/buf/chain.rs:184:13",
       "callRange": "src/buf/chain.rs:184:13-184:33",
+      "defaultMethod": null,
       "expected": {
         "call": {
           "column": 13,
@@ -570,6 +668,7 @@
           "file": "src/buf/chain.rs",
           "line": 184
         },
+        "defaultMethod": null,
         "inCallInventory": true,
         "kind": "definite",
         "reason": "`ret` is a local `crate::BytesMut` value, so `ret.put(...)` uses the BytesMut impl of BufMut.",
@@ -608,6 +707,7 @@
           "file": "src/buf/chain.rs",
           "line": 184
         },
+        "defaultMethod": null,
         "kind": "definite",
         "navigation": {
           "location": {
@@ -642,6 +742,7 @@
       },
       "callPosition": "src/buf/chain.rs:184:13",
       "callRange": "src/buf/chain.rs:184:13-184:33",
+      "defaultMethod": null,
       "expected": {
         "call": {
           "column": 13,
@@ -650,6 +751,7 @@
           "file": "src/buf/chain.rs",
           "line": 184
         },
+        "defaultMethod": null,
         "inCallInventory": true,
         "kind": "definite",
         "reason": "`ret` is a local `crate::BytesMut` value, so `ret.put(...)` uses the BytesMut impl of BufMut.",
@@ -678,5 +780,91 @@
         "declaration-range"
       ]
     }
+  },
+  "retainedDefaultBody": {
+    "callModel": "rust-source-direct-v6",
+    "defaultMethod": {
+      "column": 8,
+      "file": "src/buf/buf_impl.rs",
+      "line": 299,
+      "name": "copy_to_slice",
+      "qualname": "buf::buf_impl::Buf::copy_to_slice",
+      "trait": "Buf"
+    },
+    "returnedCalls": 3,
+    "rows": [
+      {
+        "actual": {
+          "column": 9,
+          "defaultMethod": {
+            "column": 8,
+            "file": "src/buf/buf_impl.rs",
+            "line": 299,
+            "name": "copy_to_slice",
+            "qualname": "buf::buf_impl::Buf::copy_to_slice",
+            "trait": "Buf"
+          },
+          "endColumn": 36,
+          "endLine": 300,
+          "file": "src/buf/buf_impl.rs",
+          "line": 300,
+          "reason": "rust-trait-or-method-dispatch",
+          "resolution": "unresolved"
+        },
+        "count": 1,
+        "expected": {
+          "column": 9,
+          "endColumn": 36,
+          "endLine": 300,
+          "line": 300,
+          "reason": "rust-trait-or-method-dispatch",
+          "resolution": "unresolved",
+          "why": "receiver is Self; the concrete impl is not determined"
+        },
+        "status": "correct",
+        "wrong": []
+      },
+      {
+        "actual": {
+          "column": 37,
+          "defaultMethod": {
+            "column": 8,
+            "file": "src/buf/buf_impl.rs",
+            "line": 299,
+            "name": "copy_to_slice",
+            "qualname": "buf::buf_impl::Buf::copy_to_slice",
+            "trait": "Buf"
+          },
+          "endColumn": 58,
+          "endLine": 301,
+          "file": "src/buf/buf_impl.rs",
+          "line": 301,
+          "resolution": "rust-direct-function",
+          "target": {
+            "column": 1,
+            "file": "src/lib.rs",
+            "line": 206,
+            "name": "panic_advance"
+          }
+        },
+        "count": 1,
+        "expected": {
+          "column": 37,
+          "endColumn": 58,
+          "endLine": 301,
+          "line": 301,
+          "resolution": "rust-direct-function",
+          "target": {
+            "file": "src/lib.rs",
+            "line": 206,
+            "name": "panic_advance"
+          },
+          "why": "imported free function"
+        },
+        "status": "correct",
+        "wrong": []
+      }
+    ],
+    "status": "correct"
   }
 }

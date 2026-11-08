@@ -136,7 +136,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v5');
+ assert.equal(facts.callModel,'rust-source-direct-v6');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -314,7 +314,7 @@ pub fn object(x: &dyn Left) { x.act(); }
 pub fn ambiguous(x: &A) { x.act(); }
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v5');
+ assert.equal(facts.callModel,'rust-source-direct-v6');
  const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
  assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
  assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
@@ -335,4 +335,36 @@ pub fn ambiguous(x: &A) { x.act(); }
  assert.deepEqual(candidates.items.map(record=>record.fact.line),[9,9,10]);
  assert.ok(candidates.items.every(record=>record.fact.target.line===1&&record.reason.includes('not determined')));
  assert.equal(a.traitCandidates.role.includes('not proof of runtime dispatch'),true);
+});
+
+test('Rust trait default bodies are inventoried once with context and leave Self-dependent calls unknown', t => {
+ const source=`pub trait Left { fn act(&self) -> u8; }
+pub trait Defaults {
+    fn twice(&self) -> u8 {
+        let ret = A::new();
+        ret.act()
+    }
+    fn via_self(&self) -> u8 { self.act() }
+}
+pub struct A(u8);
+impl A { pub fn new() -> Self { A(0) } }
+pub struct B(u8);
+impl B { pub fn new() -> Self { B(0) } }
+impl Left for A { fn act(&self) -> u8 { 1 } }
+impl Left for B { fn act(&self) -> u8 { 2 } }
+impl Defaults for A {}
+impl Defaults for B {}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const defaultCalls=facts.calls.filter(call=>call.defaultMethod);
+ const twice=defaultCalls.filter(call=>call.defaultMethod.name==='twice');
+ assert.equal(twice.filter(call=>call.line===4&&call.column===19).length,1,'constructor call appears once despite two implementing types');
+ const hit=twice.filter(call=>call.line===5&&call.column===9);
+ assert.equal(hit.length,1,'one source call is scanned once despite two implementing types');
+ assert.equal(hit[0].resolution,'rust-trait-impl');assert.equal(hit[0].target.line,13);
+ assert.deepEqual(hit[0].defaultMethod,{file:'src/lib.rs',name:'twice',qualname:'Defaults::twice',line:3,column:8,trait:'Defaults'});
+ const selfCall=defaultCalls.find(call=>call.defaultMethod.name==='via_self');
+ assert.equal(selfCall.resolution,'unresolved');assert.equal(selfCall.reason,'rust-trait-or-method-dispatch');
+ assert.ok(!defaultCalls.some(call=>call.defaultMethod.name==='act'),'a bodyless trait declaration produces no calls');
 });

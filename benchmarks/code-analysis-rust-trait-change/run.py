@@ -75,6 +75,7 @@ def expected_items(project: dict) -> list[dict]:
             "targetEndVerified": False,
             "unverifiedFields": ["target-end"],
             "inCallInventory": call.get("inCallInventory", True),
+            "defaultMethod": call.get("defaultMethod"),
             "reason": call.get("reason"),
         })
     for call in project.get("candidateCalls", []):
@@ -121,6 +122,7 @@ def actual_items(head: dict) -> list[dict]:
             "targetEndVerified": False,
             "unverifiedFields": unverified,
             "resolution": fact.get("resolution"),
+            "defaultMethod": fact.get("defaultMethod"),
             "navigation": entry.get("navigation"),
         })
     for entry in candidates.get("items", []):
@@ -158,6 +160,8 @@ def score(expected: dict, actual: dict | None) -> dict:
     actual_trait_name = actual_trait.get("name") if isinstance(actual_trait, dict) else actual_trait
     if expected["trait"] != actual_trait_name:
         wrong.append("owning-trait")
+    if expected.get("defaultMethod") != actual.get("defaultMethod"):
+        wrong.append("default-method-context")
     if expected["selfTypeVerified"]:
         if not actual.get("selfTypeVerified") or expected["selfType"] != actual.get("selfType"):
             wrong.append("implementation-type")
@@ -174,6 +178,7 @@ def score(expected: dict, actual: dict | None) -> dict:
         record["targetEndPosition"] = None
         record["traitName"] = (actual.get("trait") or {}).get("name")
         record["selfType"] = actual.get("selfType")
+        record["defaultMethod"] = actual.get("defaultMethod")
         record["unverifiedFields"] = actual.get("unverifiedFields")
     return record
 
@@ -331,6 +336,46 @@ def score_fixture(expected: dict, actual: dict) -> dict:
             "status": "wrong" if wrong else "correct"}
 
 
+def retained_default_section(cli: Path, samples: Path, out: Path, meta: dict) -> dict:
+    expected = meta["retainedDefaultBody"]
+    root = samples / "bytes-head"
+    config = load_config(out)
+    facts_path = out / "retained-facts"
+    result = run(["node", str(cli), "code-analysis", "check", str(root), "--language", "rust",
+                  "--config", str(config), "--out", str(facts_path), "--fail-on", "never", "--json"])
+    if result.returncode != 0:
+        raise RuntimeError(f"retained default-body check failed: {result.stderr.strip()[:800]}")
+    facts = json.loads((facts_path / "raw-facts.json").read_text())
+    calls = [call for call in facts["calls"]
+             if call["file"] == expected["file"]
+             and (call.get("defaultMethod") or {}).get("name") == expected["defaultMethod"]["name"]]
+    rows = []
+    for item in expected["calls"]:
+        matches = [call for call in calls
+                   if all(call[field] == item[field]
+                          for field in ("line", "column", "endLine", "endColumn"))]
+        actual = matches[0] if len(matches) == 1 else None
+        wrong = []
+        if actual is None:
+            wrong.append("missing-or-duplicate")
+        else:
+            if actual.get("resolution") != item["resolution"]:
+                wrong.append("resolution")
+            if item.get("reason") and actual.get("reason") != item["reason"]:
+                wrong.append("reason")
+            if item.get("target"):
+                target = actual.get("target") or {}
+                if any(target.get(key) != item["target"][key] for key in ("file", "line", "name")):
+                    wrong.append("target")
+            if actual.get("defaultMethod") != expected["defaultMethod"]:
+                wrong.append("default-method-context")
+        rows.append({"expected": item, "actual": actual, "count": len(matches),
+                     "wrong": wrong, "status": "wrong" if wrong else "correct"})
+    status = "correct" if rows and all(row["status"] == "correct" for row in rows) else "wrong"
+    return {"status": status, "defaultMethod": expected["defaultMethod"],
+            "rows": rows, "returnedCalls": len(calls), "callModel": facts.get("callModel")}
+
+
 def project_section(name: str, cli: Path, baseline_cli: Path | None, samples: Path, out: Path, meta: dict) -> dict:
     project = meta["projects"][name]
     root, base = samples / f"{name}-head", samples / f"{name}-base"
@@ -424,7 +469,10 @@ def main() -> int:
     projects = [project_section(name, args.cli.resolve(), args.baseline_cli.resolve() if args.baseline_cli else None, samples, out, meta)
                 for name in ("bytes", "log")]
     real_controls = real_result_controls(projects)
+    retained = retained_default_section(args.cli.resolve(), samples, out, meta)
     failures = []
+    if retained["status"] != "correct":
+        failures.append("retained-default-body")
     for control, ok in controls["checks"].items():
         if not ok:
             failures.append(f"control:{control}")
@@ -454,7 +502,7 @@ def main() -> int:
         if project["baseline"] and project["baseline"]["knownReferences"] != 0:
             failures.append(f"{project['name']}:baseline-not-empty")
     summary = {"controls": controls, "realResultControls": real_controls,
-               "projects": projects, "failures": failures}
+               "retainedDefaultBody": retained, "projects": projects, "failures": failures}
     (out / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     brief = {}
     for project in projects:
@@ -470,6 +518,13 @@ def main() -> int:
             "sourceAnswer": project["scopes"]["sourceAnswer"],
             "baseline": project["baseline"],
         }
+    brief["retainedDefaultBody"] = {
+        "status": retained["status"],
+        "rows": [{"call": f"{row['expected']['line']}:{row['expected']['column']}",
+                  "resolution": (row["actual"] or {}).get("resolution"),
+                  "target": (row["actual"] or {}).get("target"),
+                  "wrong": row["wrong"]} for row in retained["rows"]],
+    }
     print(json.dumps(brief, indent=2, sort_keys=True))
     if failures:
         print(json.dumps({"failures": failures}, indent=2))

@@ -37,7 +37,7 @@ export function semanticErrors(name, data) {
     const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel);
     if (goCalls && data.callModel === 'go-source-direct-v3' && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
-    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5'].includes(data.callModel);
+    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6'].includes(data.callModel);
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     const javaProjects = javaCalls && data.callModel === 'java-static-lexical-v5';
     if (javaProjects && data.languageScope?.language !== 'java') add('/languageScope','requires Java v5 declared project scope');
@@ -103,6 +103,12 @@ export function semanticErrors(name, data) {
       if (!validPoint(call.file, { line: call.endLine, column: call.endColumn }, true)) add(at, 'call end must lie inside captured source or at EOF');
       if (call.endLine < call.line || (call.endLine === call.line && call.endColumn <= call.column)) add(at, 'call end must follow its start');
       if (brokenFiles.has(call.file)) add(at, 'calls must be omitted for files with parse errors');
+      if (call.defaultMethod) {
+        const method = call.defaultMethod;
+        if (!rustCalls || data.callModel !== 'rust-source-direct-v6') add(`${at}/defaultMethod`, 'requires the Rust v6 trait default-body model');
+        else if (!files.has(method.file) || brokenFiles.has(method.file) || !validPoint(method.file, method)
+          || !traitDeclarations.has(JSON.stringify([method.file, method.name, method.line, method.column]))) add(`${at}/defaultMethod`, 'must match a captured trait method declaration');
+      }
       if (call.reason === 'java-inherited-build-scope' && (!javaCalls || !['java-static-lexical-v4','java-static-lexical-v5'].includes(data.callModel))) add(at + '/reason', 'requires the Java v4 inherited-context model');
       if (call.buildEvidence) {
         if (!javaProjects || call.resolution !== 'java-qualified-static-method') add(at + '/buildEvidence','requires a qualified Java v5 project-source candidate');
@@ -136,12 +142,12 @@ export function semanticErrors(name, data) {
           if (targetFile === call.file || (!direct && !forwarded)) add(`${at}/target/file`, 'must follow a recorded static import or supported reexport to another captured file');
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }
-        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
-        if (call.resolution === 'rust-specialized-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v3 concrete-specialization source-candidate model');
-        if (call.resolution === 'rust-lifetime-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v4', 'rust-source-direct-v5'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v4 lifetime-only inherent source-candidate model');
+        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
+        if (call.resolution === 'rust-specialized-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v3 concrete-specialization source-candidate model');
+        if (call.resolution === 'rust-lifetime-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v4 lifetime-only inherent source-candidate model');
         if (call.resolution === 'rust-direct-function' && !rustCalls) add(`${at}/resolution`, 'requires the Rust source-direct model');
-        if (call.resolution === 'rust-trait-impl' && (!rustCalls || data.callModel !== 'rust-source-direct-v5')) add(`${at}/resolution`, 'requires the Rust v5 trait impl model');
-        if (call.resolution === 'rust-trait-method-candidate' && (!rustCalls || data.callModel !== 'rust-source-direct-v5')) add(`${at}/resolution`, 'requires the Rust v5 trait candidate model');
+        if (call.resolution === 'rust-trait-impl' && (!rustCalls || !['rust-source-direct-v5', 'rust-source-direct-v6'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v5 trait impl model');
+        if (call.resolution === 'rust-trait-method-candidate' && (!rustCalls || !['rust-source-direct-v5', 'rust-source-direct-v6'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v5 trait candidate model');
         if (call.resolution === 'rust-trait-method-candidate' && !traitDeclarations.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured trait method declaration');
         if (call.resolution === 'go-direct-method' && (!goCalls || !['go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
         if (call.resolution === 'go-direct-function' && !goCalls) add(`${at}/resolution`, 'requires the Go source-direct model');
