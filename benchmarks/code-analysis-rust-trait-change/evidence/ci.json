@@ -1,0 +1,77 @@
+{
+  "commit": "3a1ac77a8f1855457ecb660e8f8280e34f8e337b",
+  "runId": 42465518271,
+  "url": "https://github.com/tt-a1i/archify/actions/runs/42465518271",
+  "attempts": {
+    "1": {
+      "conclusion": "failure",
+      "jobs": {
+        "fullRegression1": {
+          "id": 128684042733,
+          "conclusion": "success",
+          "selfBootstrapDurationMs": 14380.522898
+        },
+        "fullRegression2": {
+          "id": 128684042707,
+          "conclusion": "failure",
+          "selfBootstrapDurationMs": 36189.791907,
+          "assertion": "null !== 0",
+          "operator": "strictEqual",
+          "expected": 0,
+          "actual": null,
+          "error": "spawnSync /opt/hostedtoolcache/node/22.23.4/x64/bin/node ETIMEDOUT",
+          "suite": "# tests 417, # pass 416, # fail 1",
+          "interpretation": "runExtract exceeded its 20 s spawnSync limit before any schema or byte-equality assertion ran; no extractor output was compared."
+        },
+        "test22": {
+          "id": 128685556168,
+          "conclusion": "failure",
+          "reason": "downstream gate: CI_SCOPE=full with REGRESSION_RESULT=failure"
+        }
+      }
+    },
+    "2": {
+      "conclusion": "success",
+      "trigger": "gh run rerun 42465518271 --failed",
+      "jobs": {
+        "fullRegression1": {
+          "id": 128686527383,
+          "conclusion": "success",
+          "selfBootstrapDurationMs": 14380.522898
+        },
+        "fullRegression2": {
+          "id": 128686526115,
+          "conclusion": "success",
+          "codeAnalysisSuiteDurationMs": 132169.243255
+        },
+        "test22": {
+          "id": 128687700294,
+          "conclusion": "success"
+        }
+      }
+    }
+  },
+  "assessment": {
+    "kind": "transient subprocess timeout, not a byte or schema behavior regression",
+    "evidence": [
+      "The failing assertion is the spawnSync status check (null !== 0) after ETIMEDOUT; it is not a diff of extracted bytes or schema output.",
+      "The same commit 3a1ac77a8 passed the same test on rerun attempt 2.",
+      "The same test passed in full-regression (1) during attempt 1 at 14.38 s, below the 20 s limit.",
+      "The test after the failure passed at 14.98 s, close to the same 20 s limit."
+    ],
+    "unknown": "The specific cause of the 36.19 s runtime in full-regression (2) attempt 1 is not proven. The runner executes generated tests, the Hermes adapter and the root suite before the module wrapper, and the root suite runs four files concurrently; that load was not measured. The rerun shows the output is deterministic, not that the timeout cause is known.",
+    "coverageNote": "Complete CI runs the module suite twice: full-regression (1) runs test:code-analysis directly, and full-regression (2)'s root shard includes test/code-analysis.test.mjs, which spawns the same module suite."
+  },
+  "firstFailureRecord": "evidence/ci-full-regression-2-attempt1.txt",
+  "finalValidation": {
+    "commit": "38f82efd2efc7a8ad4733a7a12477fda09c52684",
+    "runId": 42467009838,
+    "url": "https://github.com/tt-a1i/archify/actions/runs/42467009838",
+    "conclusion": "success",
+    "requiredJobs": "scope, webm-decode, zip-freshness, full-regression (1/2), website, test (18/20/22/24), package smoke (ubuntu/windows/macos), published-update-manifest, Windows test portability (Node 22/24), browser-regression (1/2), webm-artifact",
+    "skipped": [
+      "deploy-cloudflare",
+      "deploy-pages"
+    ]
+  }
+}

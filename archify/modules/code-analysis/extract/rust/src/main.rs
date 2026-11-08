@@ -120,8 +120,47 @@ enum Binding {
     Inherent(usize),
     SpecializedInherent(usize),
     LifetimeInherent(usize),
+    Trait(usize),
     Use(Vec<String>, bool),
     Other,
+}
+#[derive(Clone)]
+struct TraitMethod {
+    file: String,
+    name: String,
+    line: usize,
+    column: usize,
+    qualname: String,
+}
+#[derive(Clone)]
+struct TraitDecl {
+    file: String,
+    name: String,
+    qualname: String,
+    line: usize,
+    column: usize,
+    methods: BTreeMap<String, TraitMethod>,
+}
+#[derive(Clone)]
+struct TraitImplPending {
+    module: usize,
+    trait_path: Vec<String>,
+    absolute: bool,
+    self_path: Option<(Vec<String>, bool)>,
+    self_type: String,
+    method: String,
+    function: usize,
+    state: State,
+}
+#[derive(Clone)]
+struct TraitImpl {
+    trait_decl: usize,
+    self_module: Option<usize>,
+    self_name: Option<String>,
+    self_type: String,
+    method: String,
+    function: usize,
+    state: State,
 }
 #[derive(Clone)]
 struct Module {
@@ -148,6 +187,7 @@ struct Function {
     body: Block,
     params: Vec<String>,
     generics: Vec<String>,
+    signature: Scope,
 }
 #[derive(Clone)]
 struct Krate {
@@ -241,6 +281,9 @@ struct Analysis {
     nominal_parameters: BTreeMap<(usize, String), Parameters>,
     inherent_pending: Vec<InherentPending>,
     inherent: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
+    traits: Vec<TraitDecl>,
+    trait_pending: Vec<TraitImplPending>,
+    trait_impls: Vec<TraitImpl>,
     variants: BTreeSet<(usize, String, String)>,
     cfg: BTreeSet<String>,
     tests: bool,
@@ -537,6 +580,7 @@ impl Analysis {
             body: *f.block.clone(),
             params,
             generics,
+            signature: signature_scope(&f.sig),
         });
         index
     }
@@ -732,7 +776,47 @@ impl Analysis {
                         }
                     }
                 }
-                Item::Trait(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
+                Item::Trait(s) => {
+                    let name = s.ident.to_string();
+                    let (line, column) = self.point(&file, self.bytes(&file, s.ident.span()).0);
+                    let qualname = if mod_path.is_empty() {
+                        name.clone()
+                    } else {
+                        format!("{mod_path}::{name}")
+                    };
+                    let mut methods = BTreeMap::new();
+                    for item in &s.items {
+                        if let TraitItem::Fn(m) = item {
+                            let method_state = and(selected, self.attrs(&m.attrs, krate));
+                            if method_state < 0 {
+                                continue;
+                            }
+                            let method_name = m.sig.ident.to_string();
+                            let (mline, mcolumn) =
+                                self.point(&file, self.bytes(&file, m.sig.ident.span()).0);
+                            methods.insert(
+                                method_name.clone(),
+                                TraitMethod {
+                                    file: file.clone(),
+                                    name: method_name.clone(),
+                                    line: mline,
+                                    column: mcolumn,
+                                    qualname: format!("{qualname}::{method_name}"),
+                                },
+                            );
+                        }
+                    }
+                    let index = self.traits.len();
+                    self.traits.push(TraitDecl {
+                        file: file.clone(),
+                        name: name.clone(),
+                        qualname,
+                        line,
+                        column,
+                        methods,
+                    });
+                    self.add_binding(id, name, Binding::Trait(index));
+                }
                 Item::Union(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Struct(s) => {
                     let name = s.ident.to_string();
@@ -773,6 +857,16 @@ impl Analysis {
                 Item::Static(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Impl(im) => {
                     let owner = im.self_ty.to_token_stream().to_string();
+                    let trait_ref = im
+                        .trait_
+                        .as_ref()
+                        .map(|(_, path, _)| (path_parts(path), path.leading_colon.is_some()));
+                    let self_path = match im.self_ty.as_ref() {
+                        Type::Path(p) if p.qself.is_none() => {
+                            Some((path_parts(&p.path), p.path.leading_colon.is_some()))
+                        }
+                        _ => None,
+                    };
                     // Keep unsupported inherent declarations as competitors for
                     // generic owners. Ignoring them can select the wrong concrete impl.
                     let owner_path = if im.trait_.is_none() {
@@ -794,8 +888,8 @@ impl Analysis {
                     } else {
                         None
                     };
-                    let impl_types: Vec<String> = im
-                        .generics
+                    let im_generics = im.generics.clone();
+                    let impl_types: Vec<String> = im_generics
                         .type_params()
                         .map(|p| p.ident.to_string())
                         .collect();
@@ -817,6 +911,22 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
+                                for param in im_generics.type_params() {
+                                    let name = param.ident.to_string();
+                                    for bound in &param.bounds {
+                                        if let TypeParamBound::Trait(b) = bound {
+                                            self.functions[index]
+                                                .signature
+                                                .generic_bounds
+                                                .entry(name.clone())
+                                                .or_default()
+                                                .push((
+                                                    path_parts(&b.path),
+                                                    b.path.leading_colon.is_some(),
+                                                ));
+                                        }
+                                    }
+                                }
                                 if let Some((path, parameters)) = &owner_path {
                                     self.inherent_pending.push(InherentPending {
                                         module: id,
@@ -825,6 +935,20 @@ impl Analysis {
                                         index,
                                         parameters: *parameters,
                                         static_function: item.sig.receiver().is_none(),
+                                    });
+                                }
+                                if let Some((trait_path, absolute)) = &trait_ref {
+                                    self.trait_pending.push(TraitImplPending {
+                                        module: id,
+                                        trait_path: trait_path.clone(),
+                                        absolute: *absolute,
+                                        self_path: self_path
+                                            .as_ref()
+                                            .map(|(parts, absolute)| (parts.clone(), *absolute)),
+                                        self_type: owner.clone(),
+                                        method: item.sig.ident.to_string(),
+                                        function: index,
+                                        state: cfg,
                                     });
                                 }
                             }
@@ -1050,6 +1174,12 @@ fn expr_attrs(expr: &Expr) -> &[Attribute] {
     )
 }
 
+#[derive(Clone)]
+enum TypeHint {
+    Generic(String),
+    Dyn(Vec<String>, bool),
+    Nominal(Vec<String>, bool),
+}
 #[derive(Clone, Default)]
 struct Scope {
     uncertain_glob: bool,
@@ -1057,17 +1187,117 @@ struct Scope {
     types: BTreeSet<String>,
     uses: BTreeMap<String, (Vec<String>, bool)>,
     globs: Vec<Vec<String>>,
+    local_types: BTreeMap<String, TypeHint>,
+    generic_bounds: BTreeMap<String, Vec<(Vec<String>, bool)>>,
+}
+fn type_hint(ty: &Type, generics: &BTreeSet<String>) -> Option<TypeHint> {
+    match ty {
+        Type::Reference(r) => type_hint(&r.elem, generics),
+        Type::Paren(p) => type_hint(&p.elem, generics),
+        Type::Group(g) => type_hint(&g.elem, generics),
+        Type::TraitObject(t) => {
+            for bound in &t.bounds {
+                if let TypeParamBound::Trait(b) = bound {
+                    return Some(TypeHint::Dyn(
+                        path_parts(&b.path),
+                        b.path.leading_colon.is_some(),
+                    ));
+                }
+            }
+            None
+        }
+        Type::Path(p) if p.qself.is_none() => {
+            for segment in &p.path.segments {
+                if let PathArguments::AngleBracketed(args) = &segment.arguments {
+                    for arg in &args.args {
+                        if let GenericArgument::Type(inner) = arg {
+                            if let Some(hint @ TypeHint::Dyn(_, _)) = type_hint(inner, generics) {
+                                return Some(hint);
+                            }
+                        }
+                    }
+                }
+            }
+            let parts = path_parts(&p.path);
+            if parts.len() == 1 && generics.contains(&parts[0]) {
+                return Some(TypeHint::Generic(parts[0].clone()));
+            }
+            Some(TypeHint::Nominal(parts, p.path.leading_colon.is_some()))
+        }
+        _ => None,
+    }
+}
+fn type_hint_from_expr(expr: &Expr) -> Option<TypeHint> {
+    match expr {
+        Expr::Reference(r) => type_hint_from_expr(&r.expr),
+        Expr::Paren(p) => type_hint_from_expr(&p.expr),
+        Expr::Struct(s) => Some(TypeHint::Nominal(
+            path_parts(&s.path),
+            s.path.leading_colon.is_some(),
+        )),
+        Expr::Call(c) => {
+            let Expr::Path(p) = c.func.as_ref() else {
+                return None;
+            };
+            if p.qself.is_some() || p.path.segments.len() < 2 {
+                return None;
+            }
+            let mut parts = path_parts(&p.path);
+            parts.pop();
+            Some(TypeHint::Nominal(parts, p.path.leading_colon.is_some()))
+        }
+        _ => None,
+    }
 }
 fn signature_scope(sig: &Signature) -> Scope {
     let mut scope = Scope::default();
-    scope
-        .types
-        .extend(sig.generics.type_params().map(|p| p.ident.to_string()));
+    let generics: BTreeSet<String> = sig
+        .generics
+        .type_params()
+        .map(|p| p.ident.to_string())
+        .collect();
+    scope.types.extend(generics.iter().cloned());
+    for param in sig.generics.type_params() {
+        for bound in &param.bounds {
+            if let TypeParamBound::Trait(b) = bound {
+                scope
+                    .generic_bounds
+                    .entry(param.ident.to_string())
+                    .or_default()
+                    .push((path_parts(&b.path), b.path.leading_colon.is_some()));
+            }
+        }
+    }
+    if let Some(where_clause) = &sig.generics.where_clause {
+        for predicate in &where_clause.predicates {
+            if let WherePredicate::Type(p) = predicate {
+                if let Type::Path(t) = &p.bounded_ty {
+                    if t.qself.is_none() && t.path.segments.len() == 1 {
+                        let name = t.path.segments[0].ident.to_string();
+                        for bound in &p.bounds {
+                            if let TypeParamBound::Trait(b) = bound {
+                                scope
+                                    .generic_bounds
+                                    .entry(name.clone())
+                                    .or_default()
+                                    .push((path_parts(&b.path), b.path.leading_colon.is_some()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     for arg in &sig.inputs {
         if let FnArg::Typed(p) = arg {
             let mut names = Vec::new();
             pattern_names(&p.pat, &mut names);
-            scope.values.extend(names);
+            scope.values.extend(names.iter().cloned());
+            if let Some(hint) = type_hint(&p.ty, &generics) {
+                for name in names {
+                    scope.local_types.insert(name, hint.clone());
+                }
+            }
         }
     }
     scope
@@ -1190,6 +1420,261 @@ impl Scanner<'_> {
             false,
             0,
         )
+    }
+    fn resolve_trait(&self, parts: &[String], absolute: bool) -> Option<usize> {
+        if parts.is_empty() {
+            return None;
+        }
+        if !["crate", "self", "super"].contains(&parts[0].as_str()) {
+            for scope in self.scopes.iter().rev() {
+                if let Some((prefix, abs)) = scope.uses.get(&parts[0]) {
+                    let mut full = prefix.clone();
+                    full.extend_from_slice(&parts[1..]);
+                    return match self.a.resolve(self.function.module, &full, *abs, true, 0) {
+                        Some(Binding::Trait(index)) => Some(index),
+                        _ => None,
+                    };
+                }
+            }
+        }
+        match self
+            .a
+            .resolve(self.function.module, parts, absolute, false, 0)
+        {
+            Some(Binding::Trait(index)) => Some(index),
+            _ => None,
+        }
+    }
+    fn resolve_nominal(&self, parts: &[String], absolute: bool) -> Option<(usize, String)> {
+        if parts.is_empty() {
+            return None;
+        }
+        if !["crate", "self", "super"].contains(&parts[0].as_str()) {
+            for scope in self.scopes.iter().rev() {
+                if let Some((prefix, abs)) = scope.uses.get(&parts[0]) {
+                    let mut full = prefix.clone();
+                    full.extend_from_slice(&parts[1..]);
+                    return match self.a.resolve(self.function.module, &full, *abs, true, 0) {
+                        Some(Binding::Nominal(module, name)) => Some((module, name)),
+                        _ => None,
+                    };
+                }
+            }
+        }
+        match self
+            .a
+            .resolve(self.function.module, parts, absolute, false, 0)
+        {
+            Some(Binding::Nominal(module, name)) => Some((module, name)),
+            _ => None,
+        }
+    }
+    fn bound_trait(&self, generic: &str, method: &str) -> Option<usize> {
+        for scope in self.scopes.iter().rev() {
+            let Some(bounds) = scope.generic_bounds.get(generic) else {
+                continue;
+            };
+            let mut found = Vec::new();
+            for (parts, absolute) in bounds {
+                if let Some(decl) = self.resolve_trait(parts, *absolute) {
+                    if self.a.traits[decl].methods.contains_key(method) {
+                        found.push(decl)
+                    }
+                }
+            }
+            return match found.len() {
+                1 => found.pop(),
+                _ => None,
+            };
+        }
+        None
+    }
+    fn local_hint(&self, name: &str) -> Option<TypeHint> {
+        for scope in self.scopes.iter().rev() {
+            if let Some(hint) = scope.local_types.get(name) {
+                return Some(hint.clone());
+            }
+        }
+        None
+    }
+    fn receiver_hint(&self, expr: &Expr) -> Option<TypeHint> {
+        match expr {
+            Expr::Path(p) if p.qself.is_none() && p.path.segments.len() == 1 => {
+                self.local_hint(&p.path.segments[0].ident.to_string())
+            }
+            Expr::Reference(r) => self.receiver_hint(&r.expr),
+            Expr::Paren(p) => self.receiver_hint(&p.expr),
+            Expr::Struct(s) => Some(TypeHint::Nominal(
+                path_parts(&s.path),
+                s.path.leading_colon.is_some(),
+            )),
+            Expr::Call(c) => {
+                let Expr::Path(p) = c.func.as_ref() else {
+                    return None;
+                };
+                if p.qself.is_some() || p.path.segments.len() < 2 {
+                    return None;
+                }
+                let mut parts = path_parts(&p.path);
+                parts.pop();
+                Some(TypeHint::Nominal(parts, p.path.leading_colon.is_some()))
+            }
+            _ => None,
+        }
+    }
+    fn unique_trait_impl(&self, module: usize, name: &str, method: &str) -> Option<usize> {
+        if self
+            .a
+            .inherent
+            .contains_key(&(module, name.to_string(), method.to_string()))
+        {
+            return None;
+        }
+        let mut functions = BTreeSet::new();
+        for edge in &self.a.trait_impls {
+            if edge.state == 1
+                && edge.self_module == Some(module)
+                && edge.self_name.as_deref() == Some(name)
+                && edge.method == method
+            {
+                functions.insert(edge.function);
+            }
+        }
+        if functions.len() == 1 {
+            functions.pop_first()
+        } else {
+            None
+        }
+    }
+    fn trait_target(&mut self, span: Span, decl: usize, method: &str, resolution: &str) {
+        if self.state == 0 {
+            self.call(span, None, "rust-cfg-unselected");
+            return;
+        }
+        let file = self.function.file.clone();
+        let (a, b) = self.a.bytes(&file, span);
+        let mut r = self.a.range(&file, a, b);
+        r["file"] = json!(file);
+        let target = self.a.traits[decl].methods[method].clone();
+        r["resolution"] = json!(resolution);
+        r["target"] = json!({"file":target.file,"name":target.name,"line":target.line,"column":target.column});
+        r["_crate"] = json!(self.a.crates[self.a.modules[self.function.module].krate].id);
+        self.a.calls.push(r);
+    }
+    fn impl_target(&mut self, span: Span, index: usize, resolution: &str) {
+        let f = &self.a.functions[index];
+        if self.state == 0 || f.state != 1 {
+            self.call(span, None, "rust-cfg-unselected");
+            return;
+        }
+        let file = self.function.file.clone();
+        let (a, b) = self.a.bytes(&file, span);
+        let mut r = self.a.range(&file, a, b);
+        r["file"] = json!(file);
+        let (line, column) = self.a.point(&f.file, f.start);
+        r["resolution"] = json!(resolution);
+        r["target"] = json!({"file":f.file,"name":f.name,"line":line,"column":column});
+        r["_crate"] = json!(self.a.crates[self.a.modules[self.function.module].krate].id);
+        self.a.calls.push(r);
+    }
+    fn qualified_trait_call(&mut self, span: Span, path: &ExprPath) -> bool {
+        let parts = path_parts(&path.path);
+        if let Some(qself) = &path.qself {
+            if qself.position != 1 || parts.len() != 2 {
+                return false;
+            }
+            let method = parts[1].clone();
+            let Some(decl) = self.resolve_trait(std::slice::from_ref(&parts[0]), false) else {
+                return false;
+            };
+            if !self.a.traits[decl].methods.contains_key(&method) {
+                return false;
+            }
+            let Type::Path(ty) = qself.ty.as_ref() else {
+                return false;
+            };
+            if ty.qself.is_some() {
+                return false;
+            }
+            let ty_parts = path_parts(&ty.path);
+            let generic = ty_parts.len() == 1
+                && self
+                    .scopes
+                    .iter()
+                    .rev()
+                    .any(|scope| scope.generic_bounds.contains_key(&ty_parts[0]));
+            if generic {
+                self.trait_target(span, decl, &method, "rust-trait-method-candidate");
+                return true;
+            }
+            let Some((module, name)) =
+                self.resolve_nominal(&ty_parts, ty.path.leading_colon.is_some())
+            else {
+                return false;
+            };
+            let mut functions = BTreeSet::new();
+            for edge in &self.a.trait_impls {
+                if edge.state == 1
+                    && edge.trait_decl == decl
+                    && edge.self_module == Some(module)
+                    && edge.self_name.as_deref() == Some(name.as_str())
+                    && edge.method == method
+                {
+                    functions.insert(edge.function);
+                }
+            }
+            if functions.len() == 1 {
+                let index = functions.pop_first().unwrap();
+                self.impl_target(span, index, "rust-trait-impl");
+                return true;
+            }
+            return false;
+        }
+        if parts.len() != 2 {
+            return false;
+        }
+        let method = parts[1].clone();
+        if let Some(decl) = self.resolve_trait(std::slice::from_ref(&parts[0]), false) {
+            if self.a.traits[decl].methods.contains_key(&method) {
+                self.trait_target(span, decl, &method, "rust-trait-method-candidate");
+                return true;
+            }
+        }
+        if let Some(decl) = self.bound_trait(&parts[0], &method) {
+            self.trait_target(span, decl, &method, "rust-trait-method-candidate");
+            return true;
+        }
+        false
+    }
+    fn method_call(&mut self, span: Span, call: &ExprMethodCall) {
+        let method = call.method.to_string();
+        if let Some(hint) = self.receiver_hint(&call.receiver) {
+            match hint {
+                TypeHint::Generic(name) => {
+                    if let Some(decl) = self.bound_trait(&name, &method) {
+                        self.trait_target(span, decl, &method, "rust-trait-method-candidate");
+                        return;
+                    }
+                }
+                TypeHint::Dyn(parts, absolute) => {
+                    if let Some(decl) = self.resolve_trait(&parts, absolute) {
+                        if self.a.traits[decl].methods.contains_key(&method) {
+                            self.trait_target(span, decl, &method, "rust-trait-method-candidate");
+                            return;
+                        }
+                    }
+                }
+                TypeHint::Nominal(parts, absolute) => {
+                    if let Some((module, name)) = self.resolve_nominal(&parts, absolute) {
+                        if let Some(index) = self.unique_trait_impl(module, &name, &method) {
+                            self.impl_target(span, index, "rust-trait-impl");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        self.call(span, None, "rust-trait-or-method-dispatch");
     }
     fn block_scope(&mut self, block: &Block) -> Scope {
         let mut scope = Scope::default();
@@ -1316,8 +1801,22 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
             }
             let mut names = Vec::new();
             pattern_names(&local.pat, &mut names);
+            let annotation = match &local.pat {
+                Pat::Type(t) => Some(type_hint(&t.ty, &BTreeSet::new())),
+                _ => None,
+            };
+            let hint = annotation.flatten().or_else(|| {
+                local
+                    .init
+                    .as_ref()
+                    .and_then(|init| type_hint_from_expr(&init.expr))
+            });
             for name in names {
-                self.scopes.last_mut().unwrap().values.insert(name);
+                let scope = self.scopes.last_mut().unwrap();
+                scope.values.insert(name.clone());
+                if let Some(hint) = &hint {
+                    scope.local_types.insert(name, hint.clone());
+                }
             }
         }
         self.state = previous;
@@ -1414,6 +1913,10 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         } else {
             None
         };
+        if path.map_or(false, |p| self.qualified_trait_call(call.span(), p)) {
+            visit::visit_expr_call(self, call);
+            return;
+        }
         self.call(
             call.span(),
             path,
@@ -1425,8 +1928,21 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         );
         visit::visit_expr_call(self, call)
     }
+    fn visit_expr_assign(&mut self, assign: &'ast ExprAssign) {
+        if let Expr::Path(path) = assign.left.as_ref() {
+            if path.qself.is_none() && path.path.segments.len() == 1 {
+                let name = path.path.segments[0].ident.to_string();
+                for scope in self.scopes.iter_mut().rev() {
+                    if scope.local_types.remove(&name).is_some() {
+                        break;
+                    }
+                }
+            }
+        }
+        visit::visit_expr_assign(self, assign)
+    }
     fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
-        self.call(call.span(), None, "rust-trait-or-method-dispatch");
+        self.method_call(call.span(), call);
         visit::visit_expr_method_call(self, call)
     }
     fn visit_expr_closure(&mut self, closure: &'ast ExprClosure) {
@@ -1585,6 +2101,9 @@ fn main() {
         nominal_parameters: BTreeMap::new(),
         inherent_pending: Vec::new(),
         inherent: BTreeMap::new(),
+        traits: Vec::new(),
+        trait_pending: Vec::new(),
+        trait_impls: Vec::new(),
         variants: BTreeSet::new(),
         selected: BTreeSet::new(),
         excluded_regions: Vec::new(),
@@ -1636,6 +2155,40 @@ fn main() {
                 .push(index);
         }
     }
+    // Resolve trait declarations and impl edges after all module trees exist.
+    for pending in a.trait_pending.clone() {
+        let trait_decl = match a.resolve(
+            pending.module,
+            &pending.trait_path,
+            pending.absolute,
+            false,
+            0,
+        ) {
+            Some(Binding::Trait(index)) => index,
+            _ => continue,
+        };
+        let (self_module, self_name) = match &pending.self_path {
+            Some((self_path, self_absolute)) => {
+                match a.resolve(pending.module, self_path, *self_absolute, false, 0) {
+                    Some(Binding::Nominal(module, name)) => (Some(module), Some(name)),
+                    _ => (None, None),
+                }
+            }
+            None => (None, None),
+        };
+        if !a.traits[trait_decl].methods.contains_key(&pending.method) {
+            continue;
+        }
+        a.trait_impls.push(TraitImpl {
+            trait_decl,
+            self_module,
+            self_name,
+            self_type: pending.self_type,
+            method: pending.method,
+            function: pending.function,
+            state: pending.state,
+        });
+    }
     // Import evidence is resolved only after every workspace crate is indexed.
     for m in 0..a.modules.len() {
         let module = a.modules[m].clone();
@@ -1661,7 +2214,7 @@ fn main() {
         }
     }
     for f in a.functions.clone() {
-        let mut scope = Scope::default();
+        let mut scope = f.signature.clone();
         scope.values.extend(f.params.clone());
         scope.types.extend(f.generics.clone());
         let body = f.body.clone();
@@ -1690,6 +2243,32 @@ fn main() {
         let line = range["line"].as_u64().unwrap() as usize;
         functions.push(json!({"file":f.file,"name":f.name,"qualname":f.qualname,"line":line,"endLine":range["endLine"],"complexity":metrics.complexity,"nesting":metrics.nesting,"deepestLine":if metrics.deepest==0{line}else{metrics.deepest},"sourceRange":range,"definition":{"kind":"RustItemFn","sourceRange":owned},"_cfg":f.state}));
     }
+    let traits: Vec<_> = a
+        .traits
+        .iter()
+        .map(|decl| {
+            json!({
+                "declaration": {"file":decl.file,"name":decl.name,"qualname":decl.qualname,"line":decl.line,"column":decl.column},
+                "methods": decl.methods.values().map(|m| json!({"file":m.file,"name":m.name,"qualname":m.qualname,"line":m.line,"column":m.column})).collect::<Vec<_>>()
+            })
+        })
+        .collect();
+    let trait_implementations: Vec<_> = a
+        .trait_impls
+        .iter()
+        .map(|edge| {
+            let f = &a.functions[edge.function];
+            let range = a.range(&f.file, f.start, f.end);
+            let decl = &a.traits[edge.trait_decl];
+            let method = &decl.methods[&edge.method];
+            json!({
+                "trait": {"file":decl.file,"name":decl.name,"qualname":decl.qualname,"line":decl.line,"column":decl.column},
+                "traitMethod": {"file":method.file,"name":method.name,"qualname":method.qualname,"line":method.line,"column":method.column},
+                "implementation": {"file":f.file,"name":f.name,"qualname":f.qualname,"line":range["line"],"column":range["column"]},
+                "selfType": edge.self_type
+            })
+        })
+        .collect();
     // Deduplicate physical facts across crate contexts; disagreement stays unknown.
     let mut grouped: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     for mut call in a.calls {
@@ -1717,5 +2296,5 @@ fn main() {
         .iter()
         .map(|m| json!({"crate":a.crates[m.krate].id,"path":m.path,"file":m.file,"cfg":m.state}))
         .collect();
-    println!("{}",serde_json::to_string(&json!({"selected":a.selected,"functions":functions,"calls":calls,"imports":a.imports,"modules":modules,"parse_errors":a.parse_errors,"excludedRegions":a.excluded_regions,"opaqueMacros":a.opaque,"missingModules":a.missing})).unwrap());
+    println!("{}",serde_json::to_string(&json!({"selected":a.selected,"functions":functions,"calls":calls,"imports":a.imports,"modules":modules,"traits":traits,"traitImplementations":trait_implementations,"parse_errors":a.parse_errors,"excludedRegions":a.excluded_regions,"opaqueMacros":a.opaque,"missingModules":a.missing})).unwrap());
 }

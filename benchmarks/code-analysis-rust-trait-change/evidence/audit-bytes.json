@@ -1,0 +1,41 @@
+{
+  "limits": [
+    "Go to Definition returns one declaration selected by rust-analyzer's incomplete analysis.",
+    "It does not prove runtime dispatch or execution.",
+    "No build scripts, proc macros, check-on-save or dependency analysis were enabled."
+  ],
+  "matches": 2,
+  "root": "bytes-head",
+  "rows": [
+    {
+      "column": 17,
+      "definition": {
+        "column": 8,
+        "line": 1300,
+        "relative": "src/bytes_mut.rs"
+      },
+      "error": null,
+      "expectedFile": "src/bytes_mut.rs",
+      "expectedLine": 1300,
+      "line": 184,
+      "matches": true,
+      "name": "put"
+    },
+    {
+      "column": 17,
+      "definition": {
+        "column": 8,
+        "line": 1300,
+        "relative": "src/bytes_mut.rs"
+      },
+      "error": null,
+      "expectedFile": "src/bytes_mut.rs",
+      "expectedLine": 1300,
+      "line": 185,
+      "matches": true,
+      "name": "put"
+    }
+  ],
+  "tool": "rust-analyzer 1.89.0 (29483883 2025-08-04)",
+  "total": 2
+}
