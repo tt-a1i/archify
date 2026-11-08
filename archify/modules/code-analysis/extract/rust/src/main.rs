@@ -2804,7 +2804,8 @@ fn main() {
     }
     // Resolve owner identity after all module trees and local crate roots exist.
     for pending in a.inherent_pending.clone() {
-        if let Some(Binding::Nominal(owner_module, owner_name)) =
+        if let Some(Binding::Nominal(owner_module, owner_name))
+        | Some(Binding::Fields(owner_module, owner_name)) =
             a.resolve(pending.module, &pending.owner, false, false, 0)
         {
             if let Some(returns) = pending.returns.clone() {
@@ -2955,7 +2956,13 @@ fn main() {
         }
         let body = f.body.clone();
         let state = f.state;
-        let kind = if f.default_method.is_some() { "trait-default-method" } else if f.qualname.contains("::") { "method" } else { "function" };
+        let kind = if f.default_method.is_some() {
+            "trait-default-method"
+        } else if f.self_type.is_some() {
+            "method"
+        } else {
+            "function"
+        };
         let (line, column) = a.point(&f.file, f.start);
         let caller = Caller { file: f.file.clone(), name: f.name.clone(), qualname: f.qualname.clone(), kind, line, column };
         let mut scanner = Scanner {

@@ -494,6 +494,30 @@ impl<T: Gate> Wrapper<T> {
  assert.equal(facts.calls.filter(row=>row.line===9&&row.resolution==='rust-trait-method-candidate').length,0,'the trait bound is not claimed when an inherent accessor exists');
 });
 
+test('Rust defaulted generic structs expose field receivers and inherent methods', t => {
+ const source=`pub struct HeaderMap<T = u8> { x: T }
+impl<T> HeaderMap<T> {
+ fn hidden(&self) -> u8 { 0 }
+}
+pub struct Occupied<'a, T> { map: &'a mut HeaderMap<T> }
+impl<'a, T> Occupied<'a, T> {
+ fn call(&self) { self.map.hidden(); }
+}
+mod util {
+ pub fn helper() { work_inner(); }
+ fn work_inner() {}
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(row=>row.line===7&&row.target?.name==='hidden');
+ assert.ok(call,'a defaulted generic owner still exposes field and inherent-method evidence');
+ assert.equal(call.target.line,3);
+ const helper=facts.calls.find(row=>row.line===10);
+ assert.equal(helper.target?.name,'work_inner');
+ assert.equal(helper.directCaller.kind,'function','module-level functions are not methods');
+});
+
 test('Rust impl where clauses and default type parameters resolve field receivers', t => {
  const source=`pub trait Subscriber { fn event_enabled(&self) -> bool { true } }
 pub trait Layer<S> { fn event_enabled(&self, s: &S) -> bool { true } }
