@@ -1,0 +1,222 @@
+{
+  "counts": {
+    "agree": 2,
+    "different": 0,
+    "unavailable": 0
+  },
+  "preservedTargets": 231,
+  "callRanges": 4856,
+  "files": 260,
+  "functions": 1608,
+  "metadataFiles": 16,
+  "metadataBytes": 46914,
+  "evidenceAttached": 62,
+  "compilerScope": {
+    "sourceRevision": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+    "jdk": "javac 17.0.21",
+    "sourceFiles": 77,
+    "sourceList": [
+      "slf4j-api/src/main/java/org/slf4j/ILoggerFactory.java",
+      "slf4j-api/src/main/java/org/slf4j/IMarkerFactory.java",
+      "slf4j-api/src/main/java/org/slf4j/Logger.java",
+      "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+      "slf4j-api/src/main/java/org/slf4j/MDC.java",
+      "slf4j-api/src/main/java/org/slf4j/Marker.java",
+      "slf4j-api/src/main/java/org/slf4j/MarkerFactory.java",
+      "slf4j-api/src/main/java/org/slf4j/event/DefaultLoggingEvent.java",
+      "slf4j-api/src/main/java/org/slf4j/event/EventConstants.java",
+      "slf4j-api/src/main/java/org/slf4j/event/EventRecordingLogger.java",
+      "slf4j-api/src/main/java/org/slf4j/event/KeyValuePair.java",
+      "slf4j-api/src/main/java/org/slf4j/event/Level.java",
+      "slf4j-api/src/main/java/org/slf4j/event/LoggingEvent.java",
+      "slf4j-api/src/main/java/org/slf4j/event/SubstituteLoggingEvent.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/AbstractLogger.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/BasicMDCAdapter.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/BasicMarker.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/BasicMarkerFactory.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/CheckReturnValue.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/FormattingTuple.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/LegacyAbstractLogger.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/MarkerIgnoringBase.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/NOPLogger.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/NOPLoggerFactory.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/NOPMDCAdapter.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/NOP_FallbackServiceProvider.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/NamedLoggerBase.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/NormalizedParameters.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/SubstituteLogger.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/SubstituteLoggerFactory.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/SubstituteServiceProvider.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/ThreadLocalMapOfStacks.java",
+      "slf4j-api/src/main/java/org/slf4j/helpers/Util.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/CallerBoundaryAware.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/DefaultLoggingEventBuilder.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/LocationAwareLogger.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/LoggerFactoryBinder.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/LoggingEventAware.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/LoggingEventBuilder.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/MDCAdapter.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/MarkerFactoryBinder.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/NOPLoggingEventBuilder.java",
+      "slf4j-api/src/main/java/org/slf4j/spi/SLF4JServiceProvider.java",
+      "slf4j-api/src/test/java/org/slf4j/LoggerAccessingThread.java",
+      "slf4j-api/src/test/java/org/slf4j/basicTests/BasicMarkerTest.java",
+      "slf4j-api/src/test/java/org/slf4j/basicTests/Differentiator.java",
+      "slf4j-api/src/test/java/org/slf4j/basicTests/DoubleCheckedInt.java",
+      "slf4j-api/src/test/java/org/slf4j/basicTests/FluentAPIUsage.java",
+      "slf4j-api/src/test/java/org/slf4j/basicTests/NoBindingMultithreadedInitializationTest.java",
+      "slf4j-api/src/test/java/org/slf4j/basicTests/NoBindingTest.java",
+      "slf4j-api/src/test/java/org/slf4j/eventTest/EventRecordingLoggerTest.java",
+      "slf4j-api/src/test/java/org/slf4j/helpers/BasicMDCAdapterTest.java",
+      "slf4j-api/src/test/java/org/slf4j/helpers/MDCAdapterTestBase.java",
+      "slf4j-api/src/test/java/org/slf4j/helpers/MessageFormatterTest.java",
+      "slf4j-api/src/test/java/org/slf4j/helpers/StringPrintStream.java",
+      "slf4j-api/src/test/java/org/slf4j/helpers/SubstitutableLoggerTest.java",
+      "slf4j-api/src/test/java/org/slf4j/helpers/SubstituteLoggerFactoryTest.java",
+      "slf4j-api/src/test/java/org/slf4j/rule/BlaTest.java",
+      "slf4j-api/src/test/java/org/slf4j/rule/RunInNewThread.java",
+      "slf4j-api/src/test/java/org/slf4j/rule/RunInNewThreadRule.java",
+      "slf4j-api/src/test/java/org/slf4j/rule/RunInNewThreadStatement.java",
+      "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+      "slf4j-simple/src/main/java/org/slf4j/simple/OutputChoice.java",
+      "slf4j-simple/src/main/java/org/slf4j/simple/SimpleLogger.java",
+      "slf4j-simple/src/main/java/org/slf4j/simple/SimpleLoggerConfiguration.java",
+      "slf4j-simple/src/main/java/org/slf4j/simple/SimpleLoggerFactory.java",
+      "slf4j-simple/src/main/java/org/slf4j/simple/SimpleServiceProvider.java",
+      "slf4j-simple/src/test/java/org/slf4j/simple/DetectLoggerNameMismatchTest.java",
+      "slf4j-simple/src/test/java/org/slf4j/simple/DoubleInitializationPitfallTest.java",
+      "slf4j-simple/src/test/java/org/slf4j/simple/InvocationTest.java",
+      "slf4j-simple/src/test/java/org/slf4j/simple/SilentPrintStream.java",
+      "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+      "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerTest.java",
+      "slf4j-simple/src/test/java/org/slf4j/simple/multiThreadedExecution/MultithereadedExecutionTest.java",
+      "slf4j-simple/src/test/java/org/slf4j/simple/multiThreadedExecution/StateCheckingPrintStream.java"
+    ],
+    "excludedSources": [
+      "slf4j-api/src/test/java/org/slf4j/LoggerFactoryTest.java"
+    ],
+    "exclusionReason": "Full 78-source graph has two upstream compiler errors in this unrelated test: TestingProvider.getRequesteApiVersion does not implement getRequestedApiVersion. Sources unchanged; analyzer still captures all 260 files.",
+    "exit": 0,
+    "dependencyBytes": 427732,
+    "downloaded": [],
+    "seconds": 1.4259449579985812,
+    "helperSha256": "9f75a3065f9ff2d75bc1562c52d4302bf0500dada2cdbbeaa11ab7daedb22f7e",
+    "method": "JavacTask parse/analyze --release17 -proc:none; API and Simple main/test sources plus pinned JUnit4.13.1/hamcrest-core1.3; no project emit/build/test execution.",
+    "projectExecuted": false
+  },
+  "compilerDiagnostics": "FILES\t77\tERRORS\t0\n",
+  "rows": [
+    {
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 53,
+        "column": 9,
+        "endLine": 53,
+        "endColumn": 36,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "buildEvidence": [
+          {
+            "file": "slf4j-simple/pom.xml",
+            "line": 2,
+            "column": 1
+          },
+          {
+            "file": "parent-pom.xml",
+            "line": 2,
+            "column": 1
+          },
+          {
+            "file": "pom.xml",
+            "line": 2,
+            "column": 1
+          },
+          {
+            "file": "slf4j-api/pom.xml",
+            "line": 2,
+            "column": 1
+          }
+        ],
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+          "name": "reset",
+          "line": 43,
+          "column": 5
+        }
+      },
+      "compiler": {
+        "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+        "line": 43,
+        "column": 5,
+        "name": "reset"
+      },
+      "status": "agree"
+    },
+    {
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 58,
+        "column": 9,
+        "endLine": 58,
+        "endColumn": 36,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "buildEvidence": [
+          {
+            "file": "slf4j-simple/pom.xml",
+            "line": 2,
+            "column": 1
+          },
+          {
+            "file": "parent-pom.xml",
+            "line": 2,
+            "column": 1
+          },
+          {
+            "file": "pom.xml",
+            "line": 2,
+            "column": 1
+          },
+          {
+            "file": "slf4j-api/pom.xml",
+            "line": 2,
+            "column": 1
+          }
+        ],
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+          "name": "reset",
+          "line": 43,
+          "column": 5
+        }
+      },
+      "compiler": {
+        "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+        "line": 43,
+        "column": 5,
+        "name": "reset"
+      },
+      "status": "agree"
+    }
+  ],
+  "limits": [
+    "Two frozen design calls are the entire new-target denominator; not an additional independent sample.",
+    "Two reserved preservation cases already resolved before this rule.",
+    "Compiler checks a selected 77-file API/Simple graph, not all 260 source files or the built Maven/runtime classpath."
+  ],
+  "projectExecuted": false
+}

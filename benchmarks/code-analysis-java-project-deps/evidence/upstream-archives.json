@@ -1,0 +1,16 @@
+[
+  {
+    "side": "base",
+    "revision": "99e356974859a4cac2f5e533de2d8232d9d5dbe6",
+    "archiveBytes": 2261800,
+    "archiveSha256": "18a790a1459c3472a53530764b1ebcdf9a169b2917ceeeb93487dd99cfc33076",
+    "seconds": 2.6231661250349134
+  },
+  {
+    "side": "head",
+    "revision": "1c13755b2520e511bc41b5c6fdc8bd6c58e529c0",
+    "archiveBytes": 2263270,
+    "archiveSha256": "0bab90ea16f89bc11c1089f8714672503d7a0bf7b478236c4da59887d1f69285",
+    "seconds": 2.6080433749593794
+  }
+]
