@@ -11,7 +11,7 @@ This is a bounded source-navigation study, not compiler/runtime proof or a whole
 | tokio-rs/bytes | `d38faf7c9d003d6074405dd480db6bdb813cb80f` | `c08f87663a04eac3b9ab2dfa1976852d9b525a8c` | body refactor of `impl BufMut for BytesMut::put` |
 | rust-lang/log | `761461a5d0c8ea3d483d79b1de0205c2897318d2` | `db145979e229549215300f2696fa89b215cb1cab` | both `KVs::into_kvs` impls change their key type; kept out of rule design |
 
-Profile for both: rustc/cargo `1.89.0`, target `aarch64-apple-darwin`, default features, tests excluded, root module only. `source-first.json` records expected call sites, declarations, owner types and reasons before either CLI ran. `run.py` verifies the head commit and file hashes.
+Profile for both: rustc/cargo `1.89.0`, target `aarch64-apple-darwin`, default features, tests excluded, root module only. `source-first.json` records expected call ranges, declarations, owner types and reasons before either CLI ran; call columns are derived from the frozen source text. `run.py` verifies the head commit and file hashes.
 
 ## Source answer and measured result
 
@@ -34,7 +34,22 @@ log, changed `impl KVs for ()` (`src/__private_api.rs:32`), trait `KVs::into_kvs
 
 The reference-self impl at `src/__private_api.rs:25` is reported head-only because its qualname embeds the changed `Key` token text; its head trait candidate is still `src/__private_api.rs:101`.
 
-Baseline at `0c81af0e` reports 0 known references and no trait-candidate coverage for both questions. Candidate `rust-source-direct-v5` reports 2 definite calls and 1 trait candidate, 0 wrong, 0 missed inside the source-first scope. The display limit is 40; all observed records are included (definite 2/2, candidate 1/1).
+Baseline at `0c81af0e` reports 0 known references and no trait-candidate coverage for both questions. Candidate `rust-source-direct-v5` returns the three real results below. The display limit is 40; all observed records are included.
+
+| Result | Call range | Target declaration | Owning trait | Implementation type | Status |
+| --- | --- | --- | --- | --- | --- |
+| bytes `ret.put(&mut self.a)` | `src/buf/chain.rs:184:13-184:33` | `src/bytes_mut.rs:1300:5` | `BufMut` | `BytesMut` | correct |
+| bytes `ret.put((&mut self.b).take(...))` | `src/buf/chain.rs:185:13-185:53` | `src/bytes_mut.rs:1300:5` | `BufMut` | `BytesMut` | correct |
+| log `kvs.into_kvs()` | `src/__private_api.rs:101:9-101:23` | `src/__private_api.rs:17:12` | `KVs` | unverified (runtime target not determined) | correct |
+
+The bytes count depends on scope, so both are reported:
+
+| Scope | Definite calls found | Missed |
+| --- | --- | --- |
+| Current call inventory | 2/2 | none |
+| Frozen source answer | 2/3 | `src/buf/buf_impl.rs:2374` |
+
+The missing source-answer call is inside a `Buf` default-method body, which the current call inventory does not scan. It is a retained product gap, not a wrong target or a trait-resolution miss.
 
 ## Complete example
 
@@ -46,9 +61,22 @@ Remaining uncertainty: `src/buf/buf_impl.rs:2374` also calls `ret.put(...)`, but
 
 ## Scorer and controls
 
-`run.py` scores call range, target file, declaration range, owning trait and implementation type. `controls/fixture` has two traits with the same method name, two types implementing one trait, explicit `<A as Left>::act`, generic `T: Left`, `&dyn Left`, and an ambiguous `&A` receiver that implements both traits.
+`run.py` scores each returned real result on call range (file, line, column, end line, end column), target declaration (file, line, column), owning trait and, when determined, implementation type. Missing implementation identity is recorded as `unverified` rather than invented; the log candidate must not claim an implementation.
 
-The negative control replaces the correct `<A as Left>::act` target with `Right::act` on the same type. Scoring must return `wrong` with `declaration-range`; the script exits nonzero if it does not. The fixture also proves a concrete `&A` receiver stays unresolved when two traits declare `act`, rather than selecting one by name.
+`controls/fixture` has two traits with the same method name, two types implementing one trait, explicit `<A as Left>::act`, generic `T: Left`, `&dyn Left`, and an ambiguous `&A` receiver that implements both traits. Its negative control replaces the correct `<A as Left>::act` target with `Right::act` on the same type and must return `wrong` with `declaration-range`.
+
+Two controls use the real bytes results:
+
+- Same-named wrong target: replace `src/buf/chain.rs:184`'s target with the same-named trait declaration `src/buf/buf_mut.rs:202` (`BufMut::put`). The scorer returns `wrong` with `declaration-range` and `implementation-type`.
+- Same-line different call: replace `src/buf/chain.rs:185`'s call range with the nested `.take(...)` call at `185:21-185:52`, keeping the same target. The scorer returns `wrong` with `call-range` only, so it distinguishes position from target identity.
+
+The script exits nonzero if either real-result control is accepted or if an in-scope item is wrong or missing. The documented source-answer gap at `2374` is reported but does not fail the run.
+
+## CI record
+
+CI run [42465518271](https://github.com/tt-a1i/archify/actions/runs/42465518271) at `3a1ac77a` first failed in `full-regression (2)` because the self-bootstrap test's `spawnSync` hit its 20 s limit (`ETIMEDOUT`, assertion `null !== 0`); no byte or schema comparison ran. The same commit passed on rerun (`gh run rerun --failed`), including the downstream `test (22)` gate. The failure excerpt is in `evidence/ci-full-regression-2-attempt1.txt`; `evidence/ci.json` records both attempts.
+
+The specific 36.19 s runtime cause is unknown; the concurrent shard load is suspected but not measured. Complete CI runs the module suite twice: shard 1 runs it directly and shard 2's root shard includes `test/code-analysis.test.mjs`, which spawns the same suite.
 
 ## Independent language-server comparison
 
@@ -67,7 +95,7 @@ python3 run.py --cli <source-or-unpacked-zip>/archify/bin/archify.mjs \
   --out /tmp/rust-trait-run
 ```
 
-The samples directory must contain `bytes-base`, `bytes-head`, `log-base`, `log-head` at the pinned revisions. `audit.py --root <sample> --positions <json> --out <dir>` reproduces the language-server rows. `evidence/` contains the normalized run, ZIP and audit summaries; `archify.zip` SHA256 is recorded in `evidence/zip.json`, and the unpacked archive produces the same counts.
+The samples directory must contain `bytes-base`, `bytes-head`, `log-base`, `log-head` at the pinned revisions. `audit.py --root <sample> --positions <json> --out <dir>` reproduces the language-server rows. `evidence/` contains the normalized source run (`summary.json`), the unpacked-ZIP run (`zip.json`), the CI attempts (`ci.json` and the first-failure excerpt), and the audit summaries; `archify.zip` SHA256 is recorded in `evidence/zip.json`, and the unpacked archive produces byte-identical results to the source run.
 
 ## Limits
 

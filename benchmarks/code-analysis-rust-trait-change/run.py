@@ -1,8 +1,11 @@
 """Replay the frozen Rust trait-change questions through a source or ZIP CLI.
 
-The scorer checks call range, target file and declaration range, owning trait and
-implementation type. A deliberately swapped same-named declaration must score
-wrong; this script fails if that probe passes.
+Each returned real result is scored item by item on call range, target
+declaration, owning trait and, when determined, implementation type. The bytes
+project is reported under two scopes: calls inside the current call inventory
+and every call in the frozen source answer. Missing fields are recorded as
+unverified instead of being invented. A same-named wrong target and a
+different call position on the same line must both score wrong.
 """
 from __future__ import annotations
 
@@ -15,6 +18,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 LIMIT = 40
+CALL_FIELDS = ("file", "line", "column", "endLine", "endColumn")
 
 
 def run(command: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
@@ -34,6 +38,8 @@ def question(cli: Path, base: Path | None, root: Path, entry: str, text: str, ou
 
 
 def position(fact: dict) -> str:
+    if "column" in fact:
+        return f"{fact['file']}:{fact['line']}:{fact['column']}"
     return f"{fact['file']}:{fact['line']}"
 
 
@@ -47,32 +53,192 @@ def changed(q: dict, line: int, qualname: str | None = None) -> dict:
     raise RuntimeError(f"changed definition not found at line {line} ({qualname})")
 
 
-def refs(side: dict, declared: int) -> dict:
-    known = side.get("knownReferences") or {}
-    candidates = side.get("traitCandidates") or {}
-    direct = sorted(position(row["fact"]) for row in known.get("items", []))
-    candidate = sorted(position(row["fact"]) for row in candidates.get("items", []))
-    return {
-        "knownReferences": {**known, "positions": direct},
-        "traitCandidates": candidates,
-        "candidatePositions": candidate,
-    }
+def changed_impl(project: dict) -> dict:
+    if "changedImplementation" in project:
+        return project["changedImplementation"]
+    return next(impl for impl in project["changedImplementations"] if impl.get("pairing") != "head-only")
 
 
-def score(expected: dict, actual: dict) -> dict:
-    """Identity-level scoring: call range plus target declaration identity."""
+def expected_items(project: dict) -> list[dict]:
+    """Rows frozen from source inspection before either CLI ran."""
+    impl = changed_impl(project)
+    declaration = project["traitDeclaration"]
+    rows = []
+    for call in project.get("definiteCalls", []):
+        rows.append({
+            "kind": "definite",
+            "call": {field: call[field] for field in CALL_FIELDS},
+            "target": {"file": impl["file"], "line": impl["line"]},
+            "trait": impl["trait"],
+            "selfType": impl["ownerType"],
+            "selfTypeVerified": True,
+            "inCallInventory": call.get("inCallInventory", True),
+            "reason": call.get("reason"),
+        })
+    for call in project.get("candidateCalls", []):
+        rows.append({
+            "kind": "candidate",
+            "call": {field: call[field] for field in CALL_FIELDS},
+            "target": {"file": declaration["file"], "line": declaration["line"]},
+            "trait": declaration["trait"],
+            "selfType": None,
+            "selfTypeVerified": False,
+            "inCallInventory": call.get("inCallInventory", True),
+            "reason": call.get("reason"),
+        })
+    return rows
+
+
+def actual_items(head: dict) -> list[dict]:
+    """Rows extracted from the CLI answer, including fields it did not determine."""
+    candidates = head.get("traitCandidates") or {}
+    trait = candidates.get("trait")
+    implementations = candidates.get("implementations") or []
+    rows = []
+    for entry in (head.get("knownReferences") or {}).get("items", []):
+        fact = entry["fact"]
+        match = next((impl for impl in implementations
+                      if impl["implementation"]["file"] == fact["target"]["file"]
+                      and impl["implementation"]["line"] == fact["target"]["line"]), None)
+        unverified = []
+        if trait is None:
+            unverified.append("owning-trait")
+        if match is None:
+            unverified.append("implementation-type")
+        rows.append({
+            "kind": "definite",
+            "call": {field: fact[field] for field in CALL_FIELDS},
+            "target": dict(fact["target"]),
+            "trait": trait,
+            "selfType": match["selfType"] if match else None,
+            "selfTypeVerified": match is not None,
+            "unverifiedFields": unverified,
+            "resolution": fact.get("resolution"),
+            "navigation": entry.get("navigation"),
+        })
+    for entry in candidates.get("items", []):
+        fact = entry["fact"]
+        unverified = ["implementation-type"]
+        if trait is None:
+            unverified.append("owning-trait")
+        rows.append({
+            "kind": "candidate",
+            "call": {field: fact[field] for field in CALL_FIELDS},
+            "target": dict(fact["target"]),
+            "trait": trait,
+            "selfType": None,
+            "selfTypeVerified": False,
+            "unverifiedFields": unverified,
+            "resolution": fact.get("resolution"),
+            "runtimeTarget": entry.get("runtimeTarget"),
+        })
+    return rows
+
+
+def score(expected: dict, actual: dict | None) -> dict:
+    """Identity-level score for one real result."""
+    if actual is None:
+        return {"expected": expected, "actual": None, "wrong": ["missing"], "status": "missed"}
     wrong = []
     if expected["call"] != actual["call"]:
         wrong.append("call-range")
-    if expected.get("targetFile") != actual.get("targetFile"):
-        wrong.append("target-file")
-    if expected.get("targetLine") != actual.get("targetLine"):
+    if (expected["target"]["file"] != actual["target"]["file"]
+            or expected["target"]["line"] != actual["target"]["line"]):
         wrong.append("declaration-range")
-    if expected.get("trait") != actual.get("trait"):
+    actual_trait = actual.get("trait")
+    actual_trait_name = actual_trait.get("name") if isinstance(actual_trait, dict) else actual_trait
+    if expected["trait"] != actual_trait_name:
         wrong.append("owning-trait")
-    if expected.get("selfType") != actual.get("selfType"):
-        wrong.append("implementation-type")
-    return {"expected": expected, "actual": actual, "wrong": wrong, "status": "wrong" if wrong else "correct"}
+    if expected["selfTypeVerified"]:
+        if not actual.get("selfTypeVerified") or expected["selfType"] != actual.get("selfType"):
+            wrong.append("implementation-type")
+    elif actual.get("selfTypeVerified"):
+        wrong.append("implementation-type-overclaimed")
+    record = {"expected": expected, "actual": actual, "wrong": wrong,
+              "status": "wrong" if wrong else "correct"}
+    if actual is not None:
+        call = actual["call"]
+        record["callRange"] = (f"{call['file']}:{call['line']}:{call['column']}"
+                               f"-{call['endLine']}:{call['endColumn']}")
+        record["callPosition"] = position(actual["call"])
+        record["targetPosition"] = position(actual["target"])
+        record["traitName"] = (actual.get("trait") or {}).get("name")
+        record["selfType"] = actual.get("selfType")
+        record["unverifiedFields"] = actual.get("unverifiedFields")
+    return record
+
+
+def score_items(project: dict, rows: list[dict]) -> dict:
+    expected = expected_items(project)
+    used = set()
+    scored = []
+    for item in expected:
+        match = None
+        for index, row in enumerate(rows):
+            if index not in used and row["kind"] == item["kind"] and row["call"] == item["call"]:
+                used.add(index)
+                match = row
+                break
+        scored.append(score(item, match))
+    extras = [score({"kind": row["kind"], "call": row["call"], "target": row["target"],
+                     "trait": row.get("trait"), "selfType": None, "selfTypeVerified": False,
+                     "inCallInventory": True}, row)
+              for index, row in enumerate(rows) if index not in used]
+    for extra in extras:
+        extra["status"] = "wrong"
+        extra["wrong"] = ["unexpected-result"]
+    return {"scored": scored, "extras": extras}
+
+
+def counts(scored: list[dict], extras: list[dict]) -> dict:
+    wrong = [row for row in scored if row["status"] == "wrong"] + extras
+    missed = [row for row in scored if row["status"] == "missed"]
+    returned = sum(1 for row in scored if row.get("actual") is not None)
+    return {
+        "expected": len(scored),
+        "correct": sum(1 for row in scored if row["status"] == "correct"),
+        "returned": returned,
+        "wrong": [row["callPosition"] if row.get("actual") else row["expected"]["call"] for row in wrong],
+        "missed": [f"{row['expected']['call']['file']}:{row['expected']['call']['line']}" for row in missed],
+        "total": returned,
+        "included": returned,
+        "omitted": 0,
+        "limit": LIMIT,
+    }
+
+
+def real_result_controls(projects: list[dict]) -> dict:
+    rows = next(project for project in projects if project["name"] == "bytes")["items"]
+
+    def at(file: str, line: int, column: int, end_column: int) -> dict:
+        return next(row for row in rows if row["expected"]["call"] == {
+            "file": file, "line": line, "column": column, "endLine": line,
+            "endColumn": end_column})
+
+    base = at("src/buf/chain.rs", 184, 13, 33)
+    swapped_target = json.loads(json.dumps(base["actual"]))
+    swapped_target["target"] = {"file": "src/buf/buf_mut.rs", "line": 202, "column": 8, "name": "put"}
+    swapped_target["selfType"] = None
+    swapped_target["selfTypeVerified"] = False
+    swapped_target["unverifiedFields"] = ["implementation-type"]
+    target_check = score(base["expected"], swapped_target)
+
+    base = at("src/buf/chain.rs", 185, 13, 53)
+    swapped_call = json.loads(json.dumps(base["actual"]))
+    swapped_call["call"] = {"file": "src/buf/chain.rs", "line": 185, "column": 21,
+                            "endLine": 185, "endColumn": 52}
+    call_check = score(base["expected"], swapped_call)
+
+    checks = {
+        "sameNamedWrongTargetRejected": target_check["status"] == "wrong"
+        and {"declaration-range", "implementation-type"} <= set(target_check["wrong"]),
+        "sameLineDifferentCallRejected": call_check["status"] == "wrong"
+        and call_check["wrong"] == ["call-range"],
+    }
+    if not all(checks.values()):
+        raise RuntimeError(f"real-result controls were not rejected: {checks}")
+    return {"checks": checks, "sameNamedWrongTarget": target_check,
+            "sameLineDifferentCall": call_check}
 
 
 def load_config(root: Path) -> Path:
@@ -123,7 +289,7 @@ def control_section(cli: Path, root: Path, out: Path) -> dict:
     actual = {"call": "src/lib.rs:9:21", "targetFile": line9[0]["target"]["file"],
               "targetLine": line9[0]["target"]["line"], "trait": "Left", "selfType": "A"}
     swapped = {**actual, "targetLine": 7, "trait": "Right", "selfType": "A"}
-    negative = score(expected, swapped)
+    negative = score_fixture(expected, swapped)
     checks["negativeControlRejected"] = negative["status"] == "wrong" and "declaration-range" in negative["wrong"]
     if not negative["status"] == "wrong":
         raise RuntimeError("negative control was accepted")
@@ -132,55 +298,74 @@ def control_section(cli: Path, root: Path, out: Path) -> dict:
             "traitImplementations": len(facts["traitImplementations"])}
 
 
+def score_fixture(expected: dict, actual: dict) -> dict:
+    wrong = []
+    if expected["call"] != actual["call"]:
+        wrong.append("call-range")
+    if expected.get("targetFile") != actual.get("targetFile"):
+        wrong.append("target-file")
+    if expected.get("targetLine") != actual.get("targetLine"):
+        wrong.append("declaration-range")
+    if expected.get("trait") != actual.get("trait"):
+        wrong.append("owning-trait")
+    if expected.get("selfType") != actual.get("selfType"):
+        wrong.append("implementation-type")
+    return {"expected": expected, "actual": actual, "wrong": wrong,
+            "status": "wrong" if wrong else "correct"}
+
+
 def project_section(name: str, cli: Path, baseline_cli: Path | None, samples: Path, out: Path, meta: dict) -> dict:
     project = meta["projects"][name]
     root, base = samples / f"{name}-head", samples / f"{name}-base"
     text = ("I changed the trait implementation method in this revision. Which calls definitely point to the "
             "changed implementation, which only prove use of the trait method, and which remain unknown?")
     config = load_config(out)
-    after = question(cli, base, root, "src/bytes_mut.rs" if name == "bytes" else "src/__private_api.rs", text, out / f"{name}-after.json", config)
-    baseline = None if baseline_cli is None else question(baseline_cli, base, root, "src/bytes_mut.rs" if name == "bytes" else "src/__private_api.rs", text, out / f"{name}-baseline.json", config)
+    entry = "src/bytes_mut.rs" if name == "bytes" else "src/__private_api.rs"
+    after = question(cli, base, root, entry, text, out / f"{name}-after.json", config)
+    baseline = None if baseline_cli is None else question(baseline_cli, base, root, entry, text, out / f"{name}-baseline.json", config)
 
-    if name == "bytes":
-        item = changed(after, 1300)
-        expected_direct = {f"{c['file']}:{c['line']}" for c in project["definiteCalls"] if c.get("inCallInventory", True)}
-        expected_candidates = {f"{c['file']}:{c['line']}" for c in project["candidateCalls"]}
-    else:
-        item = changed(after, 32)
-        expected_direct = {f"{c['file']}:{c['line']}" for c in project["definiteCalls"]}
-        expected_candidates = {f"{c['file']}:{c['line']}" for c in project["candidateCalls"]}
-
+    item = changed(after, 1300 if name == "bytes" else 32)
     head = item["head"]
-    observed = refs(head, 1300)
-    trait_method = head["traitCandidates"].get("traitMethod") if head.get("traitCandidates") else None
+    rows = actual_items(head)
+    graded = score_items(project, rows)
+    items = [row for row in graded["scored"] if row["status"] != "missed"] + graded["extras"]
+
+    definite = [row for row in graded["scored"] if row["expected"]["kind"] == "definite"]
+    inventory = [row for row in definite if row["expected"]["inCallInventory"]]
+    candidates = [row for row in graded["scored"] if row["expected"]["kind"] == "candidate"]
+    known_gaps = [row for row in definite if row["status"] == "missed"
+                  and not row["expected"]["inCallInventory"]]
+
     declaration = project["traitDeclaration"]
+    trait_method = (head.get("traitCandidates") or {}).get("traitMethod")
     identity = {
-        "definite": all(row["fact"]["target"]["file"] == item["head"]["definition"]["file"]
-                        and row["fact"]["target"]["line"] == item["head"]["definition"]["line"]
-                        for row in head["knownReferences"].get("items", [])),
-        "candidateTarget": bool(trait_method) and trait_method["file"] == declaration["file"] and trait_method["line"] == declaration["line"],
+        "definiteTargetsChangedImplementation": all(
+            row["actual"]["target"]["file"] == changed_impl(project)["file"]
+            and row["actual"]["target"]["line"] == changed_impl(project)["line"]
+            for row in definite if row["actual"]),
+        "candidateTarget": bool(trait_method) and trait_method["file"] == declaration["file"]
+        and trait_method["line"] == declaration["line"],
         "candidateNotRuntime": (head.get("traitCandidates") or {}).get("runtimeTarget") == "not-determined",
     }
-    direct = set(observed["knownReferences"]["positions"])
-    candidates = set(observed["candidatePositions"])
     result = {
         "name": name,
         "repository": project["repository"],
         "head": project["head"],
         "definition": {"file": item["head"]["definition"]["file"], "line": item["head"]["definition"]["line"],
                        "qualname": item["head"]["definition"]["qualname"]},
-        "definite": {"expected": sorted(expected_direct), "actual": sorted(direct),
-                     "correct": len(expected_direct & direct), "wrong": sorted(direct - expected_direct),
-                     "missed": sorted(expected_direct - direct),
-                     "total": head["knownReferences"].get("total"), "included": head["knownReferences"].get("included"),
-                     "omitted": head["knownReferences"].get("omitted"), "limit": head["knownReferences"].get("limit")},
-        "candidates": {"expected": sorted(expected_candidates), "actual": sorted(candidates),
-                       "correct": len(expected_candidates & candidates), "wrong": sorted(candidates - expected_candidates),
-                       "missed": sorted(expected_candidates - candidates),
-                       "coverage": (head.get("traitCandidates") or {}).get("coverage"),
-                       "total": (head.get("traitCandidates") or {}).get("total"),
-                       "included": (head.get("traitCandidates") or {}).get("included"),
-                       "omitted": (head.get("traitCandidates") or {}).get("omitted")},
+        "items": items,
+        "scopes": {
+            "callInventory": {"definite": counts(inventory, []), "candidates": counts(candidates, [])},
+            "sourceAnswer": {"definite": counts(definite, []), "candidates": counts(candidates, []),
+                             "knownInventoryGaps": [
+                                 {"position": f"{row['expected']['call']['file']}:{row['expected']['call']['line']}",
+                                  "reason": row["expected"].get("reason")}
+                                 for row in known_gaps]},
+        },
+        "coverage": {
+            "traitCandidates": (head.get("traitCandidates") or {}).get("coverage"),
+            "knownReferences": (head.get("knownReferences") or {}).get("coverage"),
+        },
         "identity": identity,
         "baseline": None,
     }
@@ -221,27 +406,54 @@ def main() -> int:
     controls = control_section(args.cli.resolve(), samples, out)
     projects = [project_section(name, args.cli.resolve(), args.baseline_cli.resolve() if args.baseline_cli else None, samples, out, meta)
                 for name in ("bytes", "log")]
+    real_controls = real_result_controls(projects)
     failures = []
     for control, ok in controls["checks"].items():
         if not ok:
             failures.append(f"control:{control}")
+    for control, ok in real_controls["checks"].items():
+        if not ok:
+            failures.append(f"real-control:{control}")
     for project in projects:
-        for kind in ("definite", "candidates"):
-            for key in ("wrong", "missed"):
-                if project[kind][key]:
-                    failures.append(f"{project['name']}:{kind}:{key}")
-        if project["candidates"].get("coverage") not in ("available", "not-applicable"):
-            failures.append(f"{project['name']}:candidate-coverage:{project['candidates'].get('coverage')}")
+        known_gaps = {gap["position"] for gap in project["scopes"]["sourceAnswer"]["knownInventoryGaps"]}
+        for scope, kinds in project["scopes"].items():
+            for kind in ("definite", "candidates"):
+                for key in ("wrong", "missed"):
+                    blocking = [entry for entry in kinds[kind][key]
+                                if not (key == "missed" and entry in known_gaps)]
+                    if blocking:
+                        failures.append(f"{project['name']}:{scope}:{kind}:{key}")
+        for row in project["items"]:
+            allowed_gap = (row["status"] == "missed"
+                           and row["expected"].get("inCallInventory") is False)
+            if row["status"] != "correct" and not allowed_gap:
+                failures.append(f"{project['name']}:item:{row['status']}")
+            if row["actual"] and row["expected"]["kind"] == "candidate" and row["actual"]["selfTypeVerified"]:
+                failures.append(f"{project['name']}:candidate-impl-overclaimed")
+        if project["coverage"]["traitCandidates"] not in ("available", "not-applicable"):
+            failures.append(f"{project['name']}:candidate-coverage:{project['coverage']['traitCandidates']}")
         if not all(project["identity"].values()):
             failures.append(f"{project['name']}:identity")
         if project["baseline"] and project["baseline"]["knownReferences"] != 0:
             failures.append(f"{project['name']}:baseline-not-empty")
-    summary = {"controls": controls, "projects": projects, "failures": failures}
+    summary = {"controls": controls, "realResultControls": real_controls,
+               "projects": projects, "failures": failures}
     (out / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
-    print(json.dumps({p["name"]: {"definite": p["definite"]["correct"], "candidates": p["candidates"]["correct"],
-                                  "wrong": p["definite"]["wrong"] + p["candidates"]["wrong"],
-                                  "missed": p["definite"]["missed"] + p["candidates"]["missed"],
-                                  "baseline": p["baseline"]} for p in projects}, indent=2, sort_keys=True))
+    brief = {}
+    for project in projects:
+        brief[project["name"]] = {
+            "items": [{"call": row.get("callRange") or (
+                           f"{row['expected']['call']['file']}:{row['expected']['call']['line']}:"
+                           f"{row['expected']['call']['column']}"),
+                       "target": row.get("targetPosition"),
+                       "trait": row.get("traitName"), "selfType": row.get("selfType"),
+                       "unverified": row.get("unverifiedFields"), "status": row["status"]}
+                      for row in project["items"]],
+            "callInventory": project["scopes"]["callInventory"],
+            "sourceAnswer": project["scopes"]["sourceAnswer"],
+            "baseline": project["baseline"],
+        }
+    print(json.dumps(brief, indent=2, sort_keys=True))
     if failures:
         print(json.dumps({"failures": failures}, indent=2))
         return 1

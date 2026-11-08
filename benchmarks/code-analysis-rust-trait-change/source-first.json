@@ -33,7 +33,8 @@
       "traitDeclaration": {
         "file": "src/buf/buf_mut.rs",
         "line": 202,
-        "name": "put"
+        "name": "put",
+        "trait": "BufMut"
       },
       "implementations": [
         "BytesMut",
@@ -49,18 +50,27 @@
         {
           "file": "src/buf/chain.rs",
           "line": 184,
+          "column": 13,
+          "endLine": 184,
+          "endColumn": 33,
           "reason": "`ret` is a local `crate::BytesMut` value, so `ret.put(...)` uses the BytesMut impl of BufMut.",
           "inCallInventory": true
         },
         {
           "file": "src/buf/chain.rs",
           "line": 185,
+          "column": 13,
+          "endLine": 185,
+          "endColumn": 53,
           "reason": "Same local BytesMut receiver; the argument type does not change the receiver implementation.",
           "inCallInventory": true
         },
         {
           "file": "src/buf/buf_impl.rs",
           "line": 2374,
+          "column": 9,
+          "endLine": 2374,
+          "endColumn": 32,
           "reason": "`ret` is a local `crate::BytesMut` value inside Buf::copy_to_bytes.",
           "inCallInventory": false
         }
@@ -103,13 +113,17 @@
       "traitDeclaration": {
         "file": "src/__private_api.rs",
         "line": 17,
-        "name": "into_kvs"
+        "name": "into_kvs",
+        "trait": "KVs"
       },
       "definiteCalls": [],
       "candidateCalls": [
         {
           "file": "src/__private_api.rs",
           "line": 101,
+          "column": 9,
+          "endLine": 101,
+          "endColumn": 23,
           "reason": "`kvs` has declared type K where K: KVs<'a>; the call proves KVs::into_kvs but not which impl K denotes."
         }
       ],
@@ -121,7 +135,7 @@
     }
   },
   "controls": {
-    "fixture": "controls/trait-identity.rs",
+    "fixture": "controls/fixture/src/lib.rs",
     "twoTraitsSameMethod": [
       "Left::act",
       "Right::act"
@@ -157,6 +171,18 @@
     "unknown": [
       "x.act() where x: &A, because A implements both Left::act and Right::act"
     ],
-    "negativeControl": "Replace the <A as Left>::act target with Left::act on B (or Right::act on A); the scorer must classify it as wrong because the call range, target declaration and owning impl identity disagree."
+    "negativeControl": "Replace the <A as Left>::act target with Left::act on B (or Right::act on A); the scorer must classify it as wrong because the call range, target declaration and owning impl identity disagree.",
+    "realResultControls": {
+      "sameNamedWrongTarget": {
+        "base": "bytes src/buf/chain.rs:184:13",
+        "swapTargetTo": "src/buf/buf_mut.rs:202 (the BufMut::put trait declaration)",
+        "expected": "wrong with declaration-range and implementation-type"
+      },
+      "sameLineDifferentCall": {
+        "base": "bytes src/buf/chain.rs:185:13-53",
+        "swapCallTo": "src/buf/chain.rs:185:21-52 (the nested .take call on the same line)",
+        "expected": "wrong with call-range only"
+      }
+    }
   }
 }
