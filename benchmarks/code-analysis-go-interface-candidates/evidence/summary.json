@@ -39,7 +39,7 @@
               "interfaceMethod": "Context.RealIP",
               "position": "client_ip_security_test.go:37",
               "promotion": null,
-              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). The runtime receiver may be another implementation; it is not determined.",
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
               "runtimeTarget": "not-determined"
             },
             {
@@ -54,7 +54,7 @@
               "interfaceMethod": "Context.RealIP",
               "position": "client_ip_security_test.go:51",
               "promotion": null,
-              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). The runtime receiver may be another implementation; it is not determined.",
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
               "runtimeTarget": "not-determined"
             },
             {
@@ -69,7 +69,7 @@
               "interfaceMethod": "Context.RealIP",
               "position": "middleware/logger.go:342",
               "promotion": null,
-              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). The runtime receiver may be another implementation; it is not determined.",
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
               "runtimeTarget": "not-determined"
             },
             {
@@ -84,7 +84,7 @@
               "interfaceMethod": "Context.RealIP",
               "position": "middleware/proxy.go:292",
               "promotion": null,
-              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). The runtime receiver may be another implementation; it is not determined.",
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
               "runtimeTarget": "not-determined"
             },
             {
@@ -99,7 +99,7 @@
               "interfaceMethod": "Context.RealIP",
               "position": "middleware/rate_limiter.go:51",
               "promotion": null,
-              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). The runtime receiver may be another implementation; it is not determined.",
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
               "runtimeTarget": "not-determined"
             },
             {
@@ -114,7 +114,7 @@
               "interfaceMethod": "Context.RealIP",
               "position": "middleware/request_logger.go:369",
               "promotion": null,
-              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). The runtime receiver may be another implementation; it is not determined.",
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
               "runtimeTarget": "not-determined"
             }
           ],
