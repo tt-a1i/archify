@@ -136,7 +136,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v6');
+ assert.equal(facts.callModel,'rust-source-direct-v7');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -314,7 +314,7 @@ pub fn object(x: &dyn Left) { x.act(); }
 pub fn ambiguous(x: &A) { x.act(); }
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v6');
+ assert.equal(facts.callModel,'rust-source-direct-v7');
  const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
  assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
  assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
