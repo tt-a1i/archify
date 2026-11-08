@@ -1,0 +1,70 @@
+{
+  "model": "java-static-lexical-v3",
+  "units": [
+    {
+      "id": "default-one",
+      "status": "missed",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 622,
+        "column": 26,
+        "endLine": 622,
+        "endColumn": 57,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      }
+    },
+    {
+      "id": "default-two",
+      "status": "missed",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 629,
+        "column": 30,
+        "endLine": 629,
+        "endColumn": 69,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      }
+    },
+    {
+      "id": "empty-null",
+      "status": "missed",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsEmptyBlankTest.java",
+        "line": 122,
+        "column": 20,
+        "endLine": 122,
+        "endColumn": 45,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      }
+    },
+    {
+      "id": "empty-value",
+      "status": "missed",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsEmptyBlankTest.java",
+        "line": 125,
+        "column": 21,
+        "endLine": 125,
+        "endColumn": 47,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      }
+    }
+  ],
+  "score": {
+    "correct": 0,
+    "wrong": 0,
+    "missed": 4
+  },
+  "scope": {
+    "files": 489,
+    "calls": 64826,
+    "functions": 9033,
+    "parseErrors": []
+  },
+  "exit": 0,
+  "projectExecuted": false
+}
