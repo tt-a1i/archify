@@ -1,0 +1,166 @@
+{
+  "frozenAt": "2026-11-08T11:52:00Z",
+  "repository": "marshallpierce/rust-base64",
+  "base": "1e8246a889f2b43299279e0c7ebd849dcaa7cb32",
+  "head": "d021c39ae782c91d88cf3a76030f3f7b1eed892b",
+  "change": "Optimize generic functions: the Engine default methods move their work into nested `inner` helpers. The body of Engine::decode is one of the modified default bodies.",
+  "question": "Engine::decode is a modified trait default method in this revision. Which calls are known inside that default body, which target declarations can be verified, and which calls must stay unknown?",
+  "stage": "Recorded from the upstream diff and head source before the scored baseline/candidate runs. Expected positions are source coordinates, not extractor output. The candidate was not modified for this case.",
+  "profile": {
+    "crate": "base64 0.21.2",
+    "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+    "target": "aarch64-apple-darwin",
+    "features": "default features only (std)",
+    "tests": false,
+    "cfg": "rustc target cfg plus declared local feature profile",
+    "scope": "captured workspace sources; no rust-analyzer or compiler facts are used by the extractor"
+  },
+  "headHashes": {
+    "Cargo.toml": "14b37eaf5fb79cd81297f775d9f7583996ccec4478f9f8416eb5f7b3bb65a410",
+    "src/engine/mod.rs": "f1a307dadcab561719c868595cae5be0e37cdba337c2f8959d6ed1367030ed75",
+    "src/encode.rs": "b03c529b6de9cff58aafb7865bef28c3d5b857153353397a4ebeccd6434924d6",
+    "src/lib.rs": "b4699408a9356f88fd8a3aeffae97e54e7a249afe5d919ecf9d4092d1c8efde1",
+    "src/chunked_encoder.rs": "635e4a514fa849f25ebfdc0ecb0b7a9fa99c5576d34f58058b094f3ea158cee3"
+  },
+  "method": {
+    "file": "src/engine/mod.rs",
+    "name": "decode",
+    "qualname": "engine::Engine::decode",
+    "trait": "Engine",
+    "declaration": {
+      "line": 246,
+      "column": 8
+    },
+    "sourceRange": {
+      "line": 246,
+      "endLine": 264
+    }
+  },
+  "expectedCalls": [
+    {
+      "file": "src/engine/mod.rs",
+      "line": 251,
+      "column": 28,
+      "endLine": 251,
+      "endColumn": 83,
+      "kind": "method-call",
+      "expression": "engine.internal_decoded_len_estimate(input_bytes.len())",
+      "resolution": "rust-trait-method-candidate",
+      "target": {
+        "file": "src/engine/mod.rs",
+        "line": 66,
+        "column": 8,
+        "name": "internal_decoded_len_estimate"
+      },
+      "targetVerified": true,
+      "note": "Generic receiver E: Engine proves the trait method, not a concrete implementation."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 251,
+      "column": 65,
+      "endLine": 251,
+      "endColumn": 82,
+      "kind": "method-call",
+      "expression": "input_bytes.len()",
+      "resolution": "unresolved",
+      "target": null,
+      "targetVerified": false,
+      "note": "External slice method; no captured source declaration."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 252,
+      "column": 30,
+      "endLine": 252,
+      "endColumn": 70,
+      "kind": "macro",
+      "expression": "vec![0; estimate.decoded_len_estimate()]",
+      "resolution": "unresolved",
+      "reason": "rust-macro-not-expanded",
+      "target": null,
+      "targetVerified": false,
+      "note": "Macro expansion is opaque; the method call inside the token tree is not inspected."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 254,
+      "column": 33,
+      "endLine": 255,
+      "endColumn": 69,
+      "kind": "method-call",
+      "expression": "engine.internal_decode(input_bytes, &mut buffer, estimate)?",
+      "resolution": "rust-trait-method-candidate",
+      "target": {
+        "file": "src/engine/mod.rs",
+        "line": 91,
+        "column": 8,
+        "name": "internal_decode"
+      },
+      "targetVerified": true,
+      "note": "Generic receiver E: Engine proves the trait method; the runtime implementation remains undetermined."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 258,
+      "column": 13,
+      "endLine": 258,
+      "endColumn": 43,
+      "kind": "method-call",
+      "expression": "buffer.truncate(bytes_written)",
+      "resolution": "unresolved",
+      "target": null,
+      "targetVerified": false,
+      "note": "External Vec method; no captured source declaration."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 260,
+      "column": 13,
+      "endLine": 260,
+      "endColumn": 23,
+      "kind": "constructor-call",
+      "expression": "Ok(buffer)",
+      "resolution": "unresolved",
+      "target": null,
+      "targetVerified": false,
+      "note": "Tuple-variant constructor, not a navigable free function."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 263,
+      "column": 21,
+      "endLine": 263,
+      "endColumn": 35,
+      "kind": "method-call",
+      "expression": "input.as_ref()",
+      "resolution": "unresolved",
+      "target": null,
+      "targetVerified": false,
+      "note": "AsRef is external; the receiver type is a generic T."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 263,
+      "column": 9,
+      "endLine": 263,
+      "endColumn": 36,
+      "kind": "function-call",
+      "expression": "inner(self, input.as_ref())",
+      "resolution": "unresolved",
+      "target": null,
+      "targetVerified": false,
+      "note": "inner is a function item nested in the default body; nested function targets are outside the current entity inventory."
+    }
+  ],
+  "reasonableUnknowns": [
+    "No call in this default body resolves to a concrete Engine implementation; the receiver is the generic E: Engine inside the nested helper.",
+    "The external slice/Vec/AsRef methods and the Ok constructor have no captured source target.",
+    "The vec! macro is opaque; its token tree is not expanded.",
+    "The nested `inner` function is a known source declaration but not a navigable function entity in this model."
+  ],
+  "scoring": {
+    "baseline": "rust-source-direct-v5 uses its own source-range flow: any recorded call fully inside the changed method's source range (src/engine/mod.rs:246-264) counts, because v5 has no defaultMethod field.",
+    "candidate": "rust-source-direct-v6 selects calls whose defaultMethod context identifies Engine::decode, then requires exact call ranges and the expected target or retained unknown."
+  }
+}
