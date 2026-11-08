@@ -179,7 +179,7 @@ Archify reads captured source with incomplete third-party typing.
 - Source CLI: `run.py` exits 0 for A/B/C with the source-first direct and
   candidate lists; wrong = 0, missed = 0, no duplicate candidate.
 - The unpacked `archify.zip` (SHA256
-  `e5515748952e8cb0d10b5668e1a159cbe58d53f1795ea19725cec1c862dd0278`)
+  `a3570bc643e0312e214a9e90cb244ff561f5e30090c150c73c96eea9bfa3f3bc`)
   produces a byte-identical normalized `summary.json` to the source CLI for all
   three studies. The extracted tree needs the normal Code Analysis dependencies
   installed; the ZIP itself does not vendor them.
