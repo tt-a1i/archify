@@ -11,13 +11,14 @@
   "file": "clap_builder/src/builder/value_parser.rs",
   "line": 599
  },
+ "definitionScope": "unpaired",
  "expectedCalls": [
   {
    "file": "clap_builder/src/builder/value_parser.rs",
    "line": 242,
    "column": 9,
    "endLine": 242,
-   "endColumn": 67,
+   "endColumn": 68,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -28,7 +29,7 @@
    },
    "directCaller": {
     "name": "parse_ref",
-    "line": 234,
+    "line": 235,
     "kind": "method"
    },
    "runtime": "not-determined",

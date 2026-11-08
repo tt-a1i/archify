@@ -11,13 +11,14 @@
   "file": "tracing-core/src/subscriber.rs",
   "line": 305
  },
+ "definitionScope": "unpaired",
  "expectedCalls": [
   {
    "file": "tracing-core/src/dispatcher.rs",
    "line": 514,
    "column": 12,
    "endLine": 514,
-   "endColumn": 47,
+   "endColumn": 48,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -39,7 +40,7 @@
    "line": 717,
    "column": 9,
    "endLine": 717,
-   "endColumn": 42,
+   "endColumn": 43,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -61,7 +62,7 @@
    "line": 802,
    "column": 9,
    "endLine": 802,
-   "endColumn": 42,
+   "endColumn": 43,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -83,7 +84,7 @@
    "line": 145,
    "column": 13,
    "endLine": 145,
-   "endColumn": 43,
+   "endColumn": 44,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -105,7 +106,7 @@
    "line": 402,
    "column": 9,
    "endLine": 402,
-   "endColumn": 39,
+   "endColumn": 40,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {

@@ -168,8 +168,11 @@ def score_side(case, head):
                                 "status": status, "directCaller": caller,
                                 "targetWrong": target_wrong, "runtimeTarget": record.get("runtimeTarget")})
                 break
-    implementation_rows = ((head.get("interfaceCandidates") or {}).get("implementations") or {}).get("items") or []
-    implementation_names = sorted({((row.get("implementation") or {}).get("method") or row.get("method") or {}).get("qualname") for row in implementation_rows if ((row.get("implementation") or {}).get("method") or row.get("method"))})
+    implementation_rows = []
+    interface_pool = (head.get("interfaceCandidates") or {}).get("implementations") or {}
+    implementation_rows += interface_pool.get("items") or []
+    implementation_rows += (head.get("traitCandidates") or {}).get("implementations") or []
+    implementation_names = sorted({((row.get("implementation") or {}).get("method") or (row.get("implementation") if row.get("implementation") and not row["implementation"].get("method") else None) or row.get("method") or {}).get("qualname") for row in implementation_rows if ((row.get("implementation") or {}).get("method") or row.get("implementation") or row.get("method"))})
     missing_implementations = [name for name in case.get("expectedImplementations", []) if name not in implementation_names]
     missed = [{"index": index, "call": call} for index, call in enumerate(case["expectedCalls"]) if index not in found_ids]
     wrong = [row for row in results if row["status"] == "wrong"]

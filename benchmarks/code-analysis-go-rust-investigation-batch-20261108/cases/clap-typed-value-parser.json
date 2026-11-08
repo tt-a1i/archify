@@ -11,6 +11,7 @@
   "file": "clap_builder/src/builder/value_parser.rs",
   "line": 766
  },
+ "definitionScope": "unpaired",
  "expectedCalls": [
   {
    "file": "clap_builder/src/builder/value_parser.rs",

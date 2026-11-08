@@ -102,7 +102,7 @@
   }
  ],
  "expectedImplementations": [
-  "GeneralPurpose::internal_decode"
+  "engine::general_purpose::GeneralPurpose::internal_decode"
  ],
  "unknowns": [
   "The concrete engine is chosen by the caller of the default method; the generic E: Engine bound does not determine runtime identity.",

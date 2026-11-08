@@ -11,13 +11,14 @@
   "file": "tracing-subscriber/src/layer/mod.rs",
   "line": 879
  },
+ "definitionScope": "unpaired",
  "expectedCalls": [
   {
    "file": "tracing-subscriber/src/layer/layered.rs",
    "line": 143,
    "column": 12,
    "endLine": 143,
-   "endColumn": 54,
+   "endColumn": 55,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -39,7 +40,7 @@
    "line": 293,
    "column": 12,
    "endLine": 293,
-   "endColumn": 55,
+   "endColumn": 56,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -61,7 +62,7 @@
    "line": 1514,
    "column": 32,
    "endLine": 1514,
-   "endColumn": 62,
+   "endColumn": 63,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -83,7 +84,7 @@
    "line": 1609,
    "column": 17,
    "endLine": 1609,
-   "endColumn": 54,
+   "endColumn": 55,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -105,7 +106,7 @@
    "line": 1694,
    "column": 33,
    "endLine": 1694,
-   "endColumn": 67,
+   "endColumn": 69,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
@@ -127,7 +128,7 @@
    "line": 139,
    "column": 9,
    "endLine": 139,
-   "endColumn": 81,
+   "endColumn": 82,
    "inventory": "knownReferences",
    "targetKind": "trait-declaration",
    "target": {
