@@ -99,3 +99,48 @@ jobs:
       - name: Real DSH distribution acceptance
         run: node integrations/deepseek-harness/scripts/distribution-acceptance.mjs
         shell: bash
+
+  publish:
+    name: publish to npm
+    needs: [contract, adapter-release]
+    if: startsWith(github.ref, 'refs/tags/archify-dsh-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      # Trusted publishing needs an npm CLI that performs the OIDC exchange.
+      - name: Use an npm CLI with trusted publishing
+        run: |
+          npm install --global npm@^11.5.1
+          npm --version
+      - name: Require the tag to match the package version
+        run: |
+          version=$(node -p "require('./integrations/deepseek-harness/package.json').version")
+          test "${GITHUB_REF_NAME}" = "archify-dsh-v${version}"
+      - name: Pack the tested tarball
+        run: node integrations/deepseek-harness/scripts/pack.mjs --out "$RUNNER_TEMP/archify-dsh.tgz" --json > "$RUNNER_TEMP/pack.json"
+      # No NODE_AUTH_TOKEN and no .npmrc token: npm exchanges the OIDC identity
+      # for a short-lived credential issued to the configured trusted publisher.
+      - name: Publish with trusted publishing
+        run: npm publish "$RUNNER_TEMP/archify-dsh.tgz" --access public
+      - name: Record the release when none exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "release $GITHUB_REF_NAME already exists"
+            exit 0
+          fi
+          gh release create "$GITHUB_REF_NAME" \
+            "$RUNNER_TEMP/archify-dsh.tgz#tt-a1i-archify-dsh.tgz" \
+            --verify-tag \
+            --latest=false \
+            --title "Archify DSH ${GITHUB_REF_NAME#archify-dsh-v}" \
+            --notes "Published \`@tt-a1i/archify-dsh\` from this tag's verified tarball. See the integration README for the bundled Archify source and acceptance record."
