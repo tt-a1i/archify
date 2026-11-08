@@ -80,8 +80,9 @@ func shadow() { alias := struct{ Work func() }{}; alias.Work() }
   const calls = callsIn(facts, 'main.go');
   assert.equal(calls[1].resolution, 'go-direct-method');
   assert.deepEqual(calls[1].target, { name: 'Work', line: 5, column: 1 });
-  assert.ok(calls.filter((_, i) => i !== 1).every(call => call.resolution === 'unresolved'));
-  assert.equal(calls[0].reason, 'go-method-dispatch');
+  assert.equal(calls[0].resolution, 'go-interface-method');
+  assert.deepEqual(calls[0].target, { name: 'Work', line: 3, column: 20 });
+  assert.ok(calls.filter((_, i) => i > 1).every(call => call.resolution === 'unresolved'));
   assert.ok(facts.languageScope.typing.errorCount > 0);
 });
 
@@ -171,7 +172,7 @@ test('Go compiler-selected concrete methods distinguish receivers and follow ali
     {file:'lib/types.go',name:'M',line:3,column:1},
   ]);
   const q=buildQuestion({root,facts,entry:'entry.go',symbol:'Entry',question:'Where are these concrete methods defined?'});
-  assert.equal(q.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-recorded-sdk-and-incomplete-thirdparty-types');
+  assert.equal(q.calls.bindingCoverage,'go-types-direct-functions-concrete-methods-and-interface-declarations-with-recorded-sdk-and-incomplete-thirdparty-types');
   assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
 });
 
@@ -191,7 +192,15 @@ test('Go method targets do not guess through interfaces, function fields, missin
 `,
   });
   const facts=capture(root);assert.ok(facts.languageScope.typing.errorCount>0);
-  assert.ok(callsIn(facts,'entry.go').every(c=>c.resolution==='unresolved'));
+  const calls=callsIn(facts,'entry.go');
+  assert.equal(calls[1].resolution,'go-interface-method');
+  assert.deepEqual(calls[1].target,{name:'M',line:5,column:19});
+  assert.equal(calls[1].receiverPromotion,undefined);
+  assert.equal(calls[4].resolution,'go-interface-method');
+  assert.deepEqual(calls[4].target,{name:'M',line:5,column:19});
+  assert.equal(calls[4].receiverPromotion,'embedded-interface');
+  assert.equal(calls[4].receiverInterface.qualname,'I');
+  assert.ok(calls.filter((_,i)=>i!==1&&i!==4).every(c=>c.resolution==='unresolved'));
 });
 
 test('Go changed concrete method definitions recover foreign callers and keep historical v1 coverage distinct',t=>{
@@ -224,7 +233,7 @@ func Entry(r *http.Request){c,_:=r.Context().Value("key").(*Context);c=pool.Get(
  assert.equal(facts.languageScope.typing.errorCount,0);assert.equal(facts.files.length,1);
  assert.equal(before.languageScope.standardLibrary.mode,'disabled');
  const disabledQuestion=buildQuestion({root,facts:before,entry:'entry.go',symbol:'Entry',question:'What remains unknown without SDK types?'});
- assert.equal(disabledQuestion.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-sdk-types-disabled');
+ assert.equal(disabledQuestion.calls.bindingCoverage,'go-types-direct-functions-concrete-methods-and-interface-declarations-with-sdk-types-disabled');
  const sdk=facts.languageScope.standardLibrary;assert.equal(sdk.mode,'compiler-exports');
  assert.ok(sdk.packages.some(p=>p.path==='net/http'&&p.sha256.length===64&&p.bytes>0));
  assert.ok(sdk.packages.some(p=>p.path==='sync'));assert.equal(sdk.sourceFilesAnalyzed,false);assert.equal(sdk.projectCommands,false);
@@ -253,4 +262,180 @@ test('Go SDK intrinsic typing uses the declared architecture size, including raw
  assert.equal(narrow.languageScope.typing.errorCount,0);assert.ok(wide.languageScope.typing.errorCount>0);
  assert.deepEqual(narrow.languageScope.standardLibrary.intrinsicPackages,['unsafe']);
  assert.equal(narrow.languageScope.build.goarch,'386');assert.equal(narrow.files.length,1);
+});
+
+test('Go changed concrete methods list direct calls and interface candidates with full method-set evidence', t => {
+  const base = fixture(t, { 'main.go': `package app
+type I interface { M() }
+type A struct{}
+func (A) M(){ println(1) }
+type B struct{}
+func (*B) M(){}
+type C struct{}
+func (C) M(int){}
+func Use(i I, a A, b B, c C){ i.M(); a.M(); b.M(); c.M(1) }
+` });
+  const head = fixture(t, { 'main.go': `package app
+type I interface { M() }
+type A struct{}
+func (A) M(){ println(2) }
+type B struct{}
+func (*B) M(){}
+type C struct{}
+func (C) M(int){}
+func Use(i I, a A, b B, c C){ i.M(); a.M(); b.M(); c.M(1) }
+` });
+  const config = scopeConfig();
+  const question = buildChangeQuestion({ question: 'Which callers reach changed A.M?', entry: 'main.go', base: captureChangeSide(base, config, 'go'), head: captureChangeSide(head, config, 'go'), config });
+  const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === 'A.M');
+  assert.equal(changed.head.knownReferences.total, 1);
+  assert.equal(changed.head.interfaceCandidates.coverage, 'available');
+  assert.equal(changed.head.interfaceCandidates.total, 1);
+  const candidate = changed.head.interfaceCandidates.items[0];
+  assert.equal(candidate.fact.line, 9);
+  assert.equal(candidate.interface.qualname, 'I');
+  assert.equal(candidate.interfaceMethod.qualname, 'I.M');
+  assert.equal(candidate.runtimeTarget, 'not-determined');
+  assert.deepEqual(candidate.implementations.items.map(row => `${row.type.qualname}:${row.valueSatisfies}:${row.pointerSatisfies}`).sort(), ['A:true:true', 'B:false:true']);
+  assert.ok(!candidate.implementations.items.some(row => row.type.qualname === 'C'));
+});
+
+test('Go pointer-only implementations are labelled by *T and stay candidates for the changed value method', t => {
+  const source = body => `package app
+type I interface { M() }
+type A struct{}
+func (A) M(){}
+type B struct{}
+func (*B) M(){ println(${body}) }
+func Use(i I, a A, b *B){ i.M(); a.M(); b.M() }
+`;
+  const base = fixture(t, { 'main.go': source(1) }), head = fixture(t, { 'main.go': source(2) });
+  const config = scopeConfig();
+  const question = buildChangeQuestion({ question: 'Which callers reach changed B.M?', entry: 'main.go', base: captureChangeSide(base, config, 'go'), head: captureChangeSide(head, config, 'go'), config });
+  const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === '*B.M');
+  assert.equal(changed.head.knownReferences.total, 1);
+  assert.equal(changed.head.interfaceCandidates.total, 1);
+  const candidate = changed.head.interfaceCandidates.items[0];
+  assert.equal(candidate.changedImplementation.valueSatisfies, false);
+  assert.equal(candidate.changedImplementation.pointerSatisfies, true);
+  assert.equal(candidate.changedImplementation.methodSet, 'pointer');
+  assert.match(candidate.reason, /\*B/);
+  assert.equal(candidate.implementations.items.find(row => row.type.qualname === 'A').valueSatisfies, true);
+});
+
+test('Go sibling interfaces with the same method name keep candidates separate', t => {
+  const source = body => `package app
+type G interface { Gather() int }
+type TG interface { Gather() (int, func()) }
+type R struct{}
+func (*R) Gather() int { println(${body}); return 0 }
+type Q struct{}
+func (*Q) Gather() (int, func()) { return 0, nil }
+func Use(g G, tg TG, r *R, q *Q){ g.Gather(); tg.Gather(); r.Gather(); q.Gather() }
+`;
+  const base = fixture(t, { 'main.go': source(1) }), head = fixture(t, { 'main.go': source(2) });
+  const config = scopeConfig();
+  const question = buildChangeQuestion({ question: 'Which callers reach changed R.Gather?', entry: 'main.go', base: captureChangeSide(base, config, 'go'), head: captureChangeSide(head, config, 'go'), config });
+  const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === '*R.Gather');
+  assert.equal(changed.head.knownReferences.total, 1);
+  assert.equal(changed.head.interfaceCandidates.total, 1);
+  assert.equal(changed.head.interfaceCandidates.items[0].interface.qualname, 'G');
+  assert.ok(!changed.head.interfaceCandidates.items.some(row => row.interface.qualname === 'TG'));
+});
+
+test('Go embedded interfaces and interface-valued wrappers remain explicit alternatives', t => {
+  const source = body => `package app
+type I interface { M() }
+type J interface { I }
+type A struct{}
+func (A) M(){ println(${body}) }
+type Wrap struct{ I }
+func Use(j J, i I){ j.M(); i.M() }
+`;
+  const base = fixture(t, { 'main.go': source(1) }), head = fixture(t, { 'main.go': source(2) });
+  const config = scopeConfig();
+  const question = buildChangeQuestion({ question: 'Which interface callers reach changed A.M?', entry: 'main.go', base: captureChangeSide(base, config, 'go'), head: captureChangeSide(head, config, 'go'), config });
+  const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === 'A.M');
+  assert.equal(changed.head.interfaceCandidates.total, 2);
+  assert.deepEqual(changed.head.interfaceCandidates.items.map(row => row.interface.qualname).sort(), ['I', 'J']);
+  const wrapper = changed.head.interfaceCandidates.items[0].implementations.items.find(row => row.type.qualname === 'Wrap');
+  assert.equal(wrapper.reason, 'promoted-interface-method');
+  assert.equal(wrapper.method, undefined);
+  assert.equal(wrapper.promotedDeclaration.qualname, 'I.M');
+});
+
+test('Go interface candidates include calls captured in package tests', t => {
+  const base = fixture(t, {
+    'lib/lib.go': 'package lib\ntype I interface{ M() }\ntype T struct{}\nfunc (T) M(){ println(1) }\n',
+    'lib/lib_test.go': 'package lib\nfunc use(i I){ i.M() }\n',
+  });
+  const head = fixture(t, {
+    'lib/lib.go': 'package lib\ntype I interface{ M() }\ntype T struct{}\nfunc (T) M(){ println(2) }\n',
+    'lib/lib_test.go': 'package lib\nfunc use(i I){ i.M() }\n',
+  });
+  const config = scopeConfig();
+  const question = buildChangeQuestion({ question: 'Which test callers reach changed T.M?', entry: 'lib/lib.go', base: captureChangeSide(base, config, 'go'), head: captureChangeSide(head, config, 'go'), config });
+  const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === 'T.M');
+  assert.equal(changed.head.knownReferences.total, 0);
+  assert.equal(changed.head.interfaceCandidates.total, 1);
+  assert.equal(changed.head.interfaceCandidates.items[0].fact.file, 'lib/lib_test.go');
+  assert.equal(changed.head.interfaceCandidates.items[0].interface.qualname, 'I');
+});
+
+test('Go wrapper calls promoted from an embedded interface stay interface candidates', t => {
+  const source = body => `package app
+type I interface { M() }
+type A struct{}
+func (A) M(){ println(${body}) }
+type Wrap struct{ I }
+func Use(w Wrap, i I){ w.M(); i.M() }
+`;
+  const config = scopeConfig();
+  const base = captureChangeSide(fixture(t, { 'main.go': source(1) }), config, 'go');
+  const head = captureChangeSide(fixture(t, { 'main.go': source(2) }), config, 'go');
+  const question = buildChangeQuestion({ question: 'Which interface-reaching callers reach changed A.M?', entry: 'main.go', base, head, config });
+  const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === 'A.M');
+  assert.equal(changed.head.knownReferences.total, 0);
+  assert.equal(changed.head.interfaceCandidates.total, 2);
+  const wrapper = changed.head.interfaceCandidates.items.find(row => row.fact.receiverPromotion === 'embedded-interface');
+  assert.equal(wrapper.fact.file, 'main.go');
+  assert.equal(wrapper.interface.qualname, 'I');
+  assert.match(wrapper.reason, /embedded field/);
+  assert.ok(wrapper.implementations.items.some(row => row.type.qualname === 'Wrap' && row.reason === 'promoted-interface-method'));
+});
+
+test('Go captures without interface implementation edges report candidates as unavailable, not zero', t => {
+  const source = body => `package app
+type I interface { M() }
+type A struct{}
+func (A) M(){ println(${body}) }
+func Use(i I, a A){ i.M(); a.M() }
+`;
+  const config = scopeConfig();
+  const base = captureChangeSide(fixture(t, { 'main.go': source(1) }), config, 'go');
+  const head = captureChangeSide(fixture(t, { 'main.go': source(2) }), config, 'go');
+  const old = structuredClone(head);
+  delete old.facts.interfaceImplementations;
+  if (old.facts.languageScope) delete old.facts.languageScope.interfaceEvidence;
+  const question = buildChangeQuestion({ question: 'Which callers reach changed A.M?', entry: 'main.go', base, head: old, config });
+  assert.equal(question.status, 'partial');
+  assert.ok(question.comparison.reasons.some(reason => reason.code === 'interface-implementation-evidence-unavailable' && reason.side === 'head'));
+  const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === 'A.M');
+  assert.equal(changed.head.knownReferences.total, 1);
+  assert.equal(changed.head.interfaceCandidates.coverage, 'unavailable');
+  assert.equal(changed.head.interfaceCandidates.reason, 'interface-implementation-evidence-not-captured');
+  assert.equal(changed.head.interfaceCandidates.total, null);
+});
+
+test('Go interface method declaration changes pair with interface-typed call sites', t => {
+  const baseRoot = fixture(t, { 'main.go': 'package app\ntype I interface { Work() }\nfunc Use(i I) { i.Work() }\n' });
+  const headRoot = fixture(t, { 'main.go': 'package app\ntype I interface { Work(int) }\nfunc Use(i I) { i.Work(1) }\n' });
+  const config = scopeConfig();
+  const base = captureChangeSide(baseRoot, config, 'go'), head = captureChangeSide(headRoot, config, 'go');
+  const q = buildChangeQuestion({ question: 'Which callers use I.Work?', entry: 'main.go', base, head, config });
+  const change = q.changedDefinitions.items.find(d => d.head?.definition.kind === 'InterfaceMethod' && d.head.definition.qualname === 'I.Work');
+  assert.ok(change);
+  assert.equal(change.head.knownReferences.total, 1);
+  assert.equal(change.head.knownReferences.items[0].navigation.status, 'valid');
+  assert.equal(change.head.knownReferences.items[0].navigation.location.file, 'main.go');
 });
