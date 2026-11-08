@@ -45,16 +45,20 @@ for case in source['cases']:
 for case in [source['unknownControl'], reserved['case']]:
     column = (args.sample / case['file']).read_text().splitlines()[case['line']-1].index(case['needle']) + 1
     call = next(c for c in facts['calls'] if c['file'] == case['file'] and c['line'] == case['line'] and c['column'] == column)
-    assert call['resolution'] == 'unresolved' and 'target' not in call, call
-    # A source-known target hidden behind an unsupported re-export is a miss,
-    # not an accuracy win disguised as an unknown.
-    units.append({'call': call, 'expected': case.get('eventualSourceDefinition'), 'status': 'missed' if 'eventualSourceDefinition' in case else 'reasonable-unknown', 'reason': case['reason']})
+    forwarded = facts['callModel'] == 'js-ts-lexical-v5' and 'eventualSourceDefinition' in case
+    if forwarded:
+        expected = {**case['eventualSourceDefinition'], 'name': 'combineReducers'}
+        assert call.get('target') == expected, call
+    else:
+        assert call['resolution'] == 'unresolved' and 'target' not in call, call
+    # Preserve older known-source misses; v5 now verifies that original source target.
+    units.append({'call': call, 'expected': case.get('eventualSourceDefinition'), 'status': 'correct' if forwarded else 'missed' if 'eventualSourceDefinition' in case else 'reasonable-unknown', 'reason': 'Explicit captured ESM forwarding under v5; original v4 miss remains historical.' if forwarded else case['reason']})
 question_file = args.out / 'question.json'
 run('question', ['task', args.out / 'capture', '--root', args.sample, '--entry', source['import']['file'], '--question', 'Where does the aliased default function resolve?', '--format', 'json', '--out', question_file, '--json'])
 question = json.loads(question_file.read_text())
 records = [r for r in question['calls']['records'] if r['fact'].get('target', {}).get('name') == 'isPlainObject']
 assert len(records) == (6 if args.expect == 'candidate' else 0)
 assert all(r['targetNavigation']['status'] == 'valid' for r in records)
-report = {'expect': args.expect, 'revision': source['revision'], 'commands': commands, 'units': units, 'score': {status: sum(u['status'] == status for u in units) for status in ['correct', 'wrong', 'missed', 'reasonable-unknown']}, 'scope': {'files': len(facts['files']), 'parseErrors': facts.get('parse_errors', []), 'model': facts['callModel'], 'adapterRevision': facts['repository']['adapterRevision']}, 'limits': ['Source configuration, not runtime module loading or successful compilation.', 'Reserved barrel is an explicit known-source miss; it did not participate in implementation tuning.']}
+report = {'expect': args.expect, 'revision': source['revision'], 'commands': commands, 'units': units, 'score': {status: sum(u['status'] == status for u in units) for status in ['correct', 'wrong', 'missed', 'reasonable-unknown']}, 'scope': {'files': len(facts['files']), 'parseErrors': facts.get('parse_errors', []), 'model': facts['callModel'], 'adapterRevision': facts['repository']['adapterRevision']}, 'limits': ['Source configuration, not runtime module loading or successful compilation.', 'Original v4 reserved barrel miss is historical; v5 forwarding reuses this source answer as design input, not a fresh holdout.']}
 (args.out / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
 print(json.dumps({'score': report['score'], 'scope': report['scope']}))

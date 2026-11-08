@@ -1,0 +1,62 @@
+{
+  "expect": "candidate",
+  "exit": 0,
+  "status": "ready",
+  "sides": {
+    "before": {
+      "verifiedSelectedCallers": [
+        {
+          "file": "test/combineReducers.spec.ts",
+          "line": 18,
+          "column": 23,
+          "status": "correct"
+        },
+        {
+          "file": "test/combineReducers.spec.ts",
+          "line": 33,
+          "column": 23,
+          "status": "correct"
+        }
+      ],
+      "capturedReferences": {
+        "coverage": "available",
+        "total": 51,
+        "included": 40,
+        "omitted": 11,
+        "limit": 40
+      },
+      "innerReturnedFunctionReferences": 0
+    },
+    "after": {
+      "verifiedSelectedCallers": [
+        {
+          "file": "test/combineReducers.spec.ts",
+          "line": 17,
+          "column": 23,
+          "status": "correct"
+        },
+        {
+          "file": "test/combineReducers.spec.ts",
+          "line": 32,
+          "column": 23,
+          "status": "correct"
+        }
+      ],
+      "capturedReferences": {
+        "coverage": "available",
+        "total": 51,
+        "included": 40,
+        "omitted": 11,
+        "limit": 40
+      },
+      "innerReturnedFunctionReferences": 0
+    }
+  },
+  "limits": [
+    "Supplemental real version pair selected after initial forwarding implementation; not a holdout.",
+    "Initial 17/32 caller coordinates described the after version only. Source AST confirmation after the first paired observation found before callers at 18/33. This supplemental pair is not a held-out/source-first claim for those before coordinates; no product rule changed.",
+    "Only two selected callers per side are source-verified here; other captured references are not graded as correct.",
+    "40-record display limit is visible; returned combination function value flow remains unknown.",
+    "Type annotation change is source evidence, not a runtime effect claim."
+  ]
+}

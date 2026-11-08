@@ -1,0 +1,144 @@
+{
+  "expect": "candidate",
+  "score": {
+    "correct": 4,
+    "wrong": 0,
+    "missed": 0,
+    "unknown": 1
+  },
+  "units": [
+    {
+      "id": "combine-first",
+      "cohort": "design-former-reserved",
+      "status": "correct",
+      "call": {
+        "file": "test/combineReducers.spec.ts",
+        "line": 17,
+        "column": 23,
+        "endLine": 22,
+        "endColumn": 9,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/combineReducers.ts",
+          "name": "combineReducers",
+          "line": 123,
+          "column": 1
+        },
+        "via": [
+          {
+            "file": "src/index.ts",
+            "line": 3,
+            "column": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "store-public",
+      "cohort": "design-named-import-forward",
+      "status": "correct",
+      "call": {
+        "file": "test/createStore.spec.ts",
+        "line": 26,
+        "column": 19,
+        "endLine": 26,
+        "endColumn": 57,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/createStore.ts",
+          "name": "createStore",
+          "line": 86,
+          "column": 1
+        },
+        "via": [
+          {
+            "file": "src/index.ts",
+            "line": 2,
+            "column": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "combine-second",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "status": "correct",
+      "call": {
+        "file": "test/combineReducers.spec.ts",
+        "line": 32,
+        "column": 23,
+        "endLine": 37,
+        "endColumn": 9,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/combineReducers.ts",
+          "name": "combineReducers",
+          "line": 123,
+          "column": 1
+        },
+        "via": [
+          {
+            "file": "src/index.ts",
+            "line": 3,
+            "column": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "store-combine",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "status": "correct",
+      "call": {
+        "file": "test/createStore.spec.ts",
+        "line": 26,
+        "column": 31,
+        "endLine": 26,
+        "endColumn": 56,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/combineReducers.ts",
+          "name": "combineReducers",
+          "line": 123,
+          "column": 1
+        },
+        "via": [
+          {
+            "file": "src/index.ts",
+            "line": 3,
+            "column": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "external-vi",
+      "status": "unknown",
+      "call": {
+        "file": "test/combineReducers.spec.ts",
+        "line": 46,
+        "column": 19,
+        "endLine": 46,
+        "endColumn": 26,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      }
+    }
+  ],
+  "scope": {
+    "files": 201,
+    "calls": 30241,
+    "functions": 7549,
+    "parseErrors": [],
+    "model": "js-ts-lexical-v5",
+    "adapterRevision": 22
+  },
+  "limits": [
+    "Factory-returned reducer callable flow is separate from the API import binding and is not counted as a successful unknown here.",
+    "Type-only/star/dynamic/CommonJS/ambiguous/cyclic or writable forwarding paths need their own source evidence before targets are admitted.",
+    "Previously exposed Redux corpus. Old reserved combineReducers site is now design input; two additional callsites reserved from initial forwarding-rule tuning, not blind repositories.",
+    "Only the selected four source calls are known callers for this slice; no complete reference set."
+  ],
+  "projectExecuted": false,
+  "implementationFreeze": "1dc65d74a"
+}

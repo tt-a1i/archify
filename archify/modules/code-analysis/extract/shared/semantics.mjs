@@ -69,6 +69,8 @@ export function semanticErrors(name, data) {
       if (!staticImports.has(edge.from)) staticImports.set(edge.from, new Set());
       staticImports.get(edge.from).add(edge.to);
     }
+    const forwardingModel = data.repository.language === 'ts' && /^typescript@/.test(data.repository.adapter) && data.callModel === 'js-ts-lexical-v5';
+    const valueImportLines = forwardingModel ? new Set(data.imports.filter(edge => edge.resolved && ['static', 'export'].includes(edge.kind) && !edge.typeOnly).map(edge => JSON.stringify([edge.from, edge.line, edge.to]))) : null;
     data.calls.forEach((call, i) => {
       const at = `/calls/${i}`;
       if (!files.has(call.file)) add(`${at}/file`, 'must reference a recorded file');
@@ -76,12 +78,22 @@ export function semanticErrors(name, data) {
       if (!validPoint(call.file, { line: call.endLine, column: call.endColumn }, true)) add(at, 'call end must lie inside captured source or at EOF');
       if (call.endLine < call.line || (call.endLine === call.line && call.endColumn <= call.column)) add(at, 'call end must follow its start');
       if (brokenFiles.has(call.file)) add(at, 'calls must be omitted for files with parse errors');
+      if (call.via && (!forwardingModel || call.resolution !== 'imported-function')) add(`${at}/via`, 'requires an imported call under the JS/TS v5 forwarding model');
       if (call.target) {
         const targetFile = call.target.file || call.file;
         if (call.resolution === 'java-qualified-static-method' && (!javaCalls || !['java-static-lexical-v2', 'java-static-lexical-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Java v2 source model');
         if (call.resolution === 'imported-function') {
           const direct = staticImports.get(call.file)?.has(targetFile);
-          const forwarded = pythonCalls && data.callModel === 'python-lexical-v2' && [...(staticImports.get(call.file) || [])].some(via => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
+          let forwarded = pythonCalls && data.callModel === 'python-lexical-v2' && [...(staticImports.get(call.file) || [])].some(via => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
+          if (call.via && forwardingModel) {
+            const route = [call.file, ...call.via.map(point => point.file), targetFile];
+            forwarded = new Set(route).size === route.length && staticImports.get(call.file)?.has(route[1]);
+            for (const [index, point] of call.via.entries()) {
+              if (!files.has(point.file) || brokenFiles.has(point.file) || !validPoint(point.file, point)
+                || !valueImportLines.has(JSON.stringify([point.file, point.line, route[index + 2]]))) forwarded = false;
+            }
+            if (!forwarded) add(`${at}/via`, 'must follow an acyclic recorded value import/export path at captured source points');
+          }
           if (targetFile === call.file || (!direct && !forwarded)) add(`${at}/target/file`, 'must follow a recorded static import or supported reexport to another captured file');
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }

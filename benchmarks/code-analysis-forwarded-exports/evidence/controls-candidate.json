@@ -1,0 +1,53 @@
+{
+  "model": "js-ts-lexical-v5",
+  "calls": [
+    {
+      "file": "consumer.mjs",
+      "line": 3,
+      "column": 1,
+      "endLine": 3,
+      "endColumn": 30,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "consumer.mjs",
+      "line": 3,
+      "column": 13,
+      "endLine": 3,
+      "endColumn": 19,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "consumer.mjs",
+      "line": 3,
+      "column": 21,
+      "endLine": 3,
+      "endColumn": 29,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "eval-consumer.mjs",
+      "line": 2,
+      "column": 1,
+      "endLine": 2,
+      "endColumn": 20,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "eval-consumer.mjs",
+      "line": 2,
+      "column": 13,
+      "endLine": 2,
+      "endColumn": 19,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    }
+  ],
+  "projectExecuted": false,
+  "authoredControlExecutedBeforeGuardFix": true,
+  "meaning": "Export reassignment and parenthesized direct eval controls stay unknown after the guard. These are authored controls, not real-project accuracy observations."
+}

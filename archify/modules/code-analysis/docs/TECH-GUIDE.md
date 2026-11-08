@@ -121,6 +121,12 @@ For runtime `.js/.mjs/.cjs` references in Node16/NodeNext resolution, affected i
 
 The selector supports nested conditions/arrays and literal relative JavaScript endpoints. Affected pattern routes, internal package redirects, URL/escaped/legacy path forms, non-JS endpoints, numeric condition keys and relevant node-addons/module-sync policies remain unknown rather than selecting a guessed fallback. It adds no external package search, runtime resolver process or cross-extraction cache. The existing implementation lookup still depends on an internal TypeScript option, so dependency upgrades must retain these regressions. This is not a complete Node runtime loader; custom loaders and execution success remain separate concerns. A resolved edge alone does not prove that Node will load that file successfully.
 
+### Explicit ESM call forwarding
+
+`js-ts-lexical-v5` follows captured, module-acyclic explicit value import/export paths to a unique measured function implementation body. Local exports of imported bindings and explicit reexports retain each forwarding statement in `calls[].via`. Overload signatures without bodies are not implementation targets. Observed binding writes and direct eval, including parentheses and erased TypeScript wrappers, block imported implementation attribution. Forwarding source freshness is required before navigating a saved question.
+
+Star/type-only exports, CommonJS/dynamic forwarding, arbitrary function-value aliases, factory results and cyclic routes remain unsupported. This is bounded source evidence; it does not prove initialization order, runtime identity, execution or complete impact. Historical call models retain their captured coverage.
+
 ### Why not dependency-cruiser or Babel
 
 The adapter reuses its TypeScript Program and traversal for import edges, function measurements and conservative lexical call facts. It does not add another parser or resolver for this evidence. The explicit `js-ts-lexical-v2` call model and its unsupported cases are described in [Architecture](../ARCHITECTURE.md#jsts-call-facts); complete symbol and call graphs remain unimplemented.
