@@ -1,0 +1,464 @@
+{
+ "id": "certmagic-load",
+ "language": "go",
+ "repo": "https://github.com/caddyserver/certmagic",
+ "base": "16c9db1449c3f84bf20edc022963caa983323d57",
+ "head": "1a2275d54c24cbc0f85979ae3b2815d3b81aae15",
+ "entry": "filestorage.go",
+ "question": "FileStorage.Load now returns no bytes when os.ReadFile fails. Which callers reach it, and which only prove use of the Storage interface?",
+ "changedDefinition": {
+  "qualname": "*FileStorage.Load",
+  "file": "filestorage.go",
+  "line": 102
+ },
+ "expectedCalls": [
+  {
+   "file": "account.go",
+   "line": 58,
+   "column": 19,
+   "endLine": 58,
+   "endColumn": 79,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "loadAccount",
+    "line": 57,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "account.go",
+   "line": 62,
+   "column": 19,
+   "endLine": 62,
+   "endColumn": 86,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "loadAccount",
+    "line": 57,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "account.go",
+   "line": 105,
+   "column": 20,
+   "endLine": 105,
+   "endColumn": 90,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "GetAccount",
+    "line": 98,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "account.go",
+   "line": 123,
+   "column": 20,
+   "endLine": 123,
+   "endColumn": 90,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "loadAccountByKey",
+    "line": 116,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "account_test.go",
+   "line": 127,
+   "column": 9,
+   "endLine": 127,
+   "endColumn": 33,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "Load",
+    "line": 125,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "config.go",
+   "line": 716,
+   "column": 21,
+   "endLine": 716,
+   "endColumn": 64,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "reusePrivateKey",
+    "line": 707,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "config.go",
+   "line": 1122,
+   "column": 24,
+   "endLine": 1122,
+   "endColumn": 55,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "getChallengeInfo",
+    "line": 1102,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "config.go",
+   "line": 1186,
+   "column": 17,
+   "endLine": 1186,
+   "endColumn": 43,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "checkStorage",
+    "line": 1160,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "crypto.go",
+   "line": 248,
+   "column": 19,
+   "endLine": 248,
+   "endColumn": 103,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "loadCertResource",
+    "line": 240,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "crypto.go",
+   "line": 253,
+   "column": 20,
+   "endLine": 253,
+   "endColumn": 98,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "loadCertResource",
+    "line": 240,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "crypto.go",
+   "line": 258,
+   "column": 20,
+   "endLine": 258,
+   "endColumn": 98,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "loadCertResource",
+    "line": 240,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "filestorage_test.go",
+   "line": 23,
+   "column": 14,
+   "endLine": 23,
+   "endColumn": 32,
+   "inventory": "knownReferences",
+   "targetKind": "concrete",
+   "target": {
+    "file": "filestorage.go",
+    "line": 102,
+    "column": 1,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "TestFileStorageStoreLoad",
+    "line": 13,
+    "kind": "function"
+   },
+   "runtime": "determined"
+  },
+  {
+   "file": "filestorage_test.go",
+   "line": 46,
+   "column": 14,
+   "endLine": 46,
+   "endColumn": 32,
+   "inventory": "knownReferences",
+   "targetKind": "concrete",
+   "target": {
+    "file": "filestorage.go",
+    "line": 102,
+    "column": 1,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "TestFileStorageStoreLoadRace",
+    "line": 28,
+    "kind": "function"
+   },
+   "runtime": "determined"
+  },
+  {
+   "file": "maintain.go",
+   "line": 439,
+   "column": 20,
+   "endLine": 439,
+   "endColumn": 94,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "loadStoredACMECertificateMetadata",
+    "line": 438,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "maintain.go",
+   "line": 644,
+   "column": 26,
+   "endLine": 644,
+   "endColumn": 55,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "CleanStorage",
+    "line": 620,
+    "kind": "function"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "maintain.go",
+   "line": 722,
+   "column": 21,
+   "endLine": 722,
+   "endColumn": 43,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "deleteOldOCSPStaples",
+    "line": 709,
+    "kind": "function"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "maintain.go",
+   "line": 780,
+   "column": 22,
+   "endLine": 780,
+   "endColumn": 49,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "deleteExpiredCerts",
+    "line": 747,
+    "kind": "function"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "maintain.go",
+   "line": 897,
+   "column": 21,
+   "endLine": 897,
+   "endColumn": 61,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "moveCompromisedPrivateKey",
+    "line": 894,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "ocsp.go",
+   "line": 69,
+   "column": 21,
+   "endLine": 69,
+   "endColumn": 53,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "stapleOCSP",
+    "line": 47,
+    "kind": "function"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "zerosslissuer.go",
+   "line": 282,
+   "column": 25,
+   "endLine": 282,
+   "endColumn": 56,
+   "inventory": "interfaceCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 80,
+    "column": 2,
+    "name": "Load"
+   },
+   "directCaller": {
+    "name": "getDistributedValidationInfo",
+    "line": 271,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  }
+ ],
+ "unknowns": [
+  "Runtime assignment to cfg.Storage is not determined; external modules and test doubles remain alternatives.",
+  "FileStorage is the default storage, but defaulting happens in config.go and is not proven at each call site."
+ ],
+ "expectedGap": false,
+ "reserved": false,
+ "baseTree": "git worktree at the fixed base commit",
+ "build": "root module only; Go 1.27.2; default GOOS/GOARCH; cgo disabled; tests included; no project build or test executed",
+ "freeze": "source answer derived from the upstream diff and HEAD source with go/parser (tools/callspans.go), before any candidate query",
+ "notes": ""
+}
