@@ -1,0 +1,250 @@
+{
+  "expect": "baseline",
+  "score": {
+    "correct": 0,
+    "wrong": 0,
+    "missed": 3,
+    "unknown": 2
+  },
+  "units": [
+    {
+      "id": "translator-new",
+      "cohort": "design-prior-known-miss",
+      "status": "missed",
+      "call": {
+        "column": 25,
+        "endColumn": 56,
+        "endLine": 174,
+        "file": "regex-syntax/src/hir/translate.rs",
+        "line": 174,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "navigation": "unresolved"
+    },
+    {
+      "id": "ast-heap-new",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "status": "missed",
+      "call": {
+        "column": 5,
+        "endColumn": 23,
+        "endLine": 119,
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "line": 119,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "navigation": "unresolved"
+    },
+    {
+      "id": "hir-heap-new",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "status": "missed",
+      "call": {
+        "column": 5,
+        "endColumn": 23,
+        "endLine": 66,
+        "file": "regex-syntax/src/hir/visitor.rs",
+        "line": 66,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "navigation": "unresolved"
+    },
+    {
+      "id": "trait-control-0",
+      "status": "unknown",
+      "call": {
+        "column": 13,
+        "endColumn": 35,
+        "endLine": 215,
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "line": 215,
+        "reason": "rust-trait-or-method-dispatch",
+        "resolution": "unresolved"
+      }
+    },
+    {
+      "id": "trait-control-1",
+      "status": "unknown",
+      "call": {
+        "column": 13,
+        "endColumn": 35,
+        "endLine": 118,
+        "file": "regex-syntax/src/hir/visitor.rs",
+        "line": 118,
+        "reason": "rust-trait-or-method-dispatch",
+        "resolution": "unresolved"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "label": "check",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-rust-lifetime/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "$WORKSPACE/work/samples/regex",
+        "--language",
+        "rust",
+        "--config",
+        "$WORKSPACE/work/rust-lifetime-baseline-replay/profile.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "$WORKSPACE/work/rust-lifetime-baseline-replay/capture",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 26.979715332970954
+    },
+    {
+      "label": "translator-new",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-rust-lifetime/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/rust-lifetime-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/regex",
+        "--entry",
+        "regex-syntax/src/hir/translate.rs",
+        "--function",
+        "hir::translate::Translator::translate",
+        "--question",
+        "Which captured lifetime-only inherent implementation does this constructor path identify, and what remains unknown?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/rust-lifetime-baseline-replay/translator-new.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.38503712497185916
+    },
+    {
+      "label": "ast-heap-new",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-rust-lifetime/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/rust-lifetime-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/regex",
+        "--entry",
+        "regex-syntax/src/ast/visitor.rs",
+        "--function",
+        "ast::visitor::visit",
+        "--question",
+        "Which captured lifetime-only inherent implementation does this constructor path identify, and what remains unknown?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/rust-lifetime-baseline-replay/ast-heap-new.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.35868287505581975
+    },
+    {
+      "label": "hir-heap-new",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-rust-lifetime/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/rust-lifetime-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/regex",
+        "--entry",
+        "regex-syntax/src/hir/visitor.rs",
+        "--function",
+        "hir::visitor::visit",
+        "--question",
+        "Which captured lifetime-only inherent implementation does this constructor path identify, and what remains unknown?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/rust-lifetime-baseline-replay/hir-heap-new.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.35730499995406717
+    }
+  ],
+  "scope": {
+    "model": "rust-source-direct-v3",
+    "files": 166,
+    "calls": 17995,
+    "functions": 3435,
+    "parseErrors": [],
+    "build": {
+      "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+      "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+      "helperHost": "aarch64-apple-darwin",
+      "targetCfg": [
+        "debug_assertions",
+        "panic=\"unwind\"",
+        "target_abi=\"\"",
+        "target_arch=\"aarch64\"",
+        "target_endian=\"little\"",
+        "target_env=\"\"",
+        "target_family=\"unix\"",
+        "target_feature=\"aes\"",
+        "target_feature=\"crc\"",
+        "target_feature=\"dit\"",
+        "target_feature=\"dotprod\"",
+        "target_feature=\"dpb\"",
+        "target_feature=\"dpb2\"",
+        "target_feature=\"fcma\"",
+        "target_feature=\"fhm\"",
+        "target_feature=\"flagm\"",
+        "target_feature=\"fp16\"",
+        "target_feature=\"frintts\"",
+        "target_feature=\"jsconv\"",
+        "target_feature=\"lor\"",
+        "target_feature=\"lse\"",
+        "target_feature=\"neon\"",
+        "target_feature=\"paca\"",
+        "target_feature=\"pacg\"",
+        "target_feature=\"pan\"",
+        "target_feature=\"pmuv3\"",
+        "target_feature=\"ras\"",
+        "target_feature=\"rcpc\"",
+        "target_feature=\"rcpc2\"",
+        "target_feature=\"rdm\"",
+        "target_feature=\"sb\"",
+        "target_feature=\"sha2\"",
+        "target_feature=\"sha3\"",
+        "target_feature=\"ssbs\"",
+        "target_feature=\"vh\"",
+        "target_has_atomic=\"128\"",
+        "target_has_atomic=\"16\"",
+        "target_has_atomic=\"32\"",
+        "target_has_atomic=\"64\"",
+        "target_has_atomic=\"8\"",
+        "target_has_atomic=\"ptr\"",
+        "target_os=\"macos\"",
+        "target_pointer_width=\"64\"",
+        "target_vendor=\"apple\"",
+        "unix"
+      ],
+      "customCfg": [],
+      "tests": false,
+      "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+      "buildScripts": false,
+      "procMacros": false,
+      "cargoConfig": "not-loaded"
+    }
+  },
+  "limits": [
+    "Previously analyzed regex corpus; two same-spelled constructors reserved only from initial rule tuning, not blind.",
+    "Source candidates do not prove lifetime/argument applicability, compilation, runtime dispatch or complete impact."
+  ],
+  "projectExecuted": false
+}

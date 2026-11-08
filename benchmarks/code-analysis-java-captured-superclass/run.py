@@ -4,7 +4,7 @@ import argparse,hashlib,json,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser()
 for name in ['cli','sample','out']:p.add_argument('--'+name,type=Path,required=True)
-p.add_argument('--expect',choices=['baseline','candidate'],default='candidate');a=p.parse_args()
+p.add_argument('--expect',choices=['baseline','candidate'],default='candidate');p.add_argument('--candidate-model',default='java-static-lexical-v4');a=p.parse_args()
 a.cli=a.cli.resolve();a.sample=a.sample.resolve();a.out=a.out.resolve();assert not a.out.exists();a.out.mkdir(parents=True)
 m=json.loads((Path(__file__).parent/'source-first.json').read_text());commands=[];units=[];questions={}
 def verify():
@@ -13,7 +13,7 @@ def verify():
  for file,digest in m['project']['hashes'].items():assert hashlib.sha256((a.sample/file).read_bytes()).hexdigest()==digest,file
 def run(label,args):
  cmd=['node',str(a.cli),'code-analysis',*map(str,args)];r=subprocess.run(cmd,capture_output=True,text=True);commands.append(dict(label=label,command=cmd,exit=r.returncode));(a.out/(label+'.stdout')).write_text(r.stdout);(a.out/(label+'.stderr')).write_text(r.stderr);assert r.returncode==0,(label,r.stderr)
-verify();run('check',['check',a.sample,'--language','java','--fail-on','never','--out',a.out/'capture','--json']);f=json.loads((a.out/'capture/raw-facts.json').read_text());assert f['callModel']==('java-static-lexical-v3' if a.expect=='baseline' else 'java-static-lexical-v4')
+verify();run('check',['check',a.sample,'--language','java','--fail-on','never','--out',a.out/'capture','--json']);f=json.loads((a.out/'capture/raw-facts.json').read_text());assert f['callModel']==('java-static-lexical-v3' if a.expect=='baseline' else a.candidate_model)
 for case in m['cases']:
  point=case['call'];call=next(c for c in f['calls'] if all(c[k]==point[k] for k in ['file','line','column','endLine','endColumn']));status='correct' if call.get('target')==case['target'] else 'wrong' if call.get('target') else 'missed';assert status==('missed' if a.expect=='baseline' else 'correct'),case['id']
  # Narrowest captured enclosing method selects the question, not the target oracle.
