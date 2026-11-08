@@ -7,6 +7,8 @@ for n in ['cli','sample','out']:p.add_argument('--'+n,type=Path,required=True)
 p.add_argument('--expect',choices=['baseline','candidate'],default='candidate');a=p.parse_args()
 for n in ['cli','sample','out']:setattr(a,n,getattr(a,n).resolve())
 assert not a.out.exists();a.out.mkdir(parents=True);m=json.loads((Path(__file__).parent/'source-first.json').read_text());commands=[];units=[]
+for correction in json.loads((Path(__file__).parent/'source-corrections.json').read_text())['corrections']:
+ next(c for c in m['cases'] if c['id']==correction['id'])['target']=correction['target']
 def verify():
  assert subprocess.check_output(['git','-C',str(a.sample),'rev-parse','HEAD'],text=True).strip()==m['project']['revision']
  assert not subprocess.check_output(['git','-C',str(a.sample),'status','--porcelain','--untracked-files=no'],text=True)
