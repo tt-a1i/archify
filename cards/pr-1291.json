@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1291,
+  "author": "tt-a1i",
+  "title": "fix(dsh): assert the current default install command in the docs contract",
+  "mergedAt": "2026-11-08T16:13:51Z",
+  "mergeCommit": "cfca6b601e7e57017e04b4b1ada85b9226be37ca",
+  "url": "https://github.com/tt-a1i/archify/pull/1291"
+}
