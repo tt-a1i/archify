@@ -76,6 +76,8 @@ The script exits nonzero if either real-result control is accepted or if an in-s
 
 CI run [42465518271](https://github.com/tt-a1i/archify/actions/runs/42465518271) at `3a1ac77a` first failed in `full-regression (2)` because the self-bootstrap test's `spawnSync` hit its 20 s limit (`ETIMEDOUT`, assertion `null !== 0`); no byte or schema comparison ran. The same commit passed on rerun (`gh run rerun --failed`), including the downstream `test (22)` gate. The failure excerpt is in `evidence/ci-full-regression-2-attempt1.txt`; `evidence/ci.json` records both attempts.
 
+Final validation commit `38f82efd2` passed run [42467009838](https://github.com/tt-a1i/archify/actions/runs/42467009838) in full; all required jobs succeeded and deploy jobs were skipped by design.
+
 The specific 36.19 s runtime cause is unknown; the concurrent shard load is suspected but not measured. Complete CI runs the module suite twice: shard 1 runs it directly and shard 2's root shard includes `test/code-analysis.test.mjs`, which spawns the same suite.
 
 ## Independent language-server comparison
