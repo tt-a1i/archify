@@ -20,8 +20,8 @@ bytes, changed `BytesMut::put` (`src/bytes_mut.rs:1300`), trait `BufMut::put` (`
 | Class | Positions | Why |
 | --- | --- | --- |
 | Definite impl | `src/buf/chain.rs:184`, `src/buf/chain.rs:185` | `ret` is a local `crate::BytesMut`; `ret.put(...)` selects the BytesMut impl |
+| Definite impl in a default body | `src/buf/buf_impl.rs:2374` | `ret` is a local `crate::BytesMut` inside `Buf::copy_to_bytes`; the default body is inventoried once and the call carries its trait-default context |
 | Trait candidate | none | no interface-mediated call to `put` in this revision |
-| Out of inventory | `src/buf/buf_impl.rs:2374` | definite source answer, but it sits in a `Buf` default method body, which the current call inventory does not scan |
 | Other unknown | external/generic `BufMut` receivers, macros | not captured |
 
 log, changed `impl KVs for ()` (`src/__private_api.rs:32`), trait `KVs::into_kvs` (`src/__private_api.rs:17`):
@@ -34,24 +34,25 @@ log, changed `impl KVs for ()` (`src/__private_api.rs:32`), trait `KVs::into_kvs
 
 The reference-self impl at `src/__private_api.rs:25` is reported head-only because its qualname embeds the changed `Key` token text; its head trait candidate is still `src/__private_api.rs:101`.
 
-Baseline at `0c81af0e` reports 0 known references and no trait-candidate coverage for both questions. Candidate `rust-source-direct-v5` returns the three real results below. The display limit is 40; all observed records are included.
+Baseline at `0c81af0e` reports 0 known references and no trait-candidate coverage for both questions. Baseline `rust-source-direct-v5` returns 2/3 bytes calls; candidate `rust-source-direct-v6` returns 3/3. The display limit is 40; all observed records are included.
 
 | Result | Call range | Target declaration | Owning trait | Implementation type | Status |
 | --- | --- | --- | --- | --- | --- |
 | bytes `ret.put(&mut self.a)` | `src/buf/chain.rs:184:13-184:33` | `src/bytes_mut.rs:1300:5` | `BufMut` | `BytesMut` | correct |
 | bytes `ret.put((&mut self.b).take(...))` | `src/buf/chain.rs:185:13-185:53` | `src/bytes_mut.rs:1300:5` | `BufMut` | `BytesMut` | correct |
+| bytes `ret.put(self.take(len))` in `Buf::copy_to_bytes` | `src/buf/buf_impl.rs:2374:9-2374:32` | `src/bytes_mut.rs:1300:5` | `BufMut` | `BytesMut` | correct |
 | log `kvs.into_kvs()` | `src/__private_api.rs:101:9-101:23` | `src/__private_api.rs:17:12` | `KVs` | unverified (runtime target not determined) | correct |
 
-The target declaration is the CLI `file:line:column` start anchor. The per-call CLI record has no target end position, so `target-end` remains unverified for all three results rather than being inferred from another record.
+The target declaration is the CLI `file:line:column` start anchor. The per-call CLI record has no target end position, so `target-end` remains unverified for all results rather than being inferred from another record.
 
-The bytes count depends on scope, so both are reported:
+The bytes count by model:
 
-| Scope | Definite calls found | Missed |
+| Model | Definite calls found | Missed |
 | --- | --- | --- |
-| Current call inventory | 2/2 | none |
-| Frozen source answer | 2/3 | `src/buf/buf_impl.rs:2374` |
+| Baseline `rust-source-direct-v5` | 2/3 | `src/buf/buf_impl.rs:2374` |
+| Candidate `rust-source-direct-v6` | 3/3 | none |
 
-The missing source-answer call is inside a `Buf` default-method body, which the current call inventory does not scan. It is a retained product gap, not a wrong target or a trait-resolution miss.
+The new call is inside `Buf::copy_to_bytes` (`src/buf/buf_impl.rs:2363:8`). The CLI records `defaultMethod: {name: copy_to_bytes, trait: Buf, qualname: buf::buf_impl::Buf::copy_to_bytes}` on the call, and the target is the unique `BytesMut::put` impl. The body is scanned once even though many types implement `Buf`; a bodyless trait declaration adds no calls; calls that depend on the concrete `Self` stay unresolved.
 
 ## Complete example
 
@@ -59,7 +60,17 @@ Change: `BytesMut`'s `BufMut::put` body `src/bytes_mut.rs:1300` was refactored f
 
 CLI finding: `ret.put(&mut self.a)` at `src/buf/chain.rs:184` is a direct reference to that changed implementation. `ret` is initialized as `crate::BytesMut::with_capacity(len)`, so the call does not depend on an interface choice. Worth checking because it exercises the refactored cold path.
 
-Remaining uncertainty: `src/buf/buf_impl.rs:2374` also calls `ret.put(...)`, but it lives in a `Buf` default method body outside the current inventory; and any external/generic `BufMut` call is not attributed here.
+Remaining uncertainty: external/generic `BufMut` receivers and macro expansions are not attributed; calls inside `Buf::copy_to_bytes` that depend on the concrete `Self` would still be unknown.
+
+## Retained default-body sample
+
+A second default body, `Buf::copy_to_slice` (`src/buf/buf_impl.rs:299`), was frozen in `source-first.json` before the candidate run and was not used to design the rule:
+
+- `self.try_copy_to_slice(dst)` at `300:9-300:36` is captured exactly once with `defaultMethod` context; it stays `unresolved` with reason `rust-trait-or-method-dispatch` because the concrete `Self` is not determined.
+- `panic_advance(&error)` at `301:37-301:58` is captured once with the same context and resolves to the imported free function at `src/lib.rs:206`.
+- Two `impl Buf for ...` types do not duplicate the body's calls.
+
+`run.py` writes this comparison under `retainedDefaultBody` and exits nonzero if any expected row is missing or mismatched.
 
 ## Scorer and controls
 
@@ -73,7 +84,7 @@ Two controls use the real bytes results:
 - Same-line different call: replace `src/buf/chain.rs:185`'s call range with the nested `.take(...)` call at `185:21-185:52`, keeping the same target. The scorer returns `wrong` with `call-range` only, so it distinguishes position from target identity.
 - Target column only: change `src/buf/chain.rs:184`'s target column from `5` to `6`, keeping call range, target file, line, trait and implementation type unchanged. The scorer returns `wrong` with `declaration-range` only.
 
-The script exits nonzero if either real-result control is accepted or if an in-scope item is wrong or missing. The documented source-answer gap at `2374` is reported but does not fail the run.
+The script exits nonzero if any control is accepted, if an in-scope item is wrong or missing, or if the retained default-body sample mismatches.
 
 ## CI record
 
@@ -95,17 +106,16 @@ The specific 36.19 s runtime cause is unknown; the concurrent shard load is susp
 
 ```sh
 python3 run.py --cli <source-or-unpacked-zip>/archify/bin/archify.mjs \
-  --baseline-cli <0c81af0e-checkout>/archify/bin/archify.mjs \
   --samples /path/to/bytes-base,bytes-head,log-base,log-head \
   --out /tmp/rust-trait-run
 ```
 
-The samples directory must contain `bytes-base`, `bytes-head`, `log-base`, `log-head` at the pinned revisions. `audit.py --root <sample> --positions <json> --out <dir>` reproduces the language-server rows. `evidence/` contains the normalized source run (`summary.json`), the unpacked-ZIP run (`zip.json`), the CI attempts (`ci.json` and the first-failure excerpt), and the audit summaries; `archify.zip` SHA256 is recorded in `evidence/zip.json`, and the unpacked archive produces byte-identical results to the source run.
+The samples directory must contain `bytes-base`, `bytes-head`, `log-base`, `log-head` at the pinned revisions. `evidence/baseline-summary.json` is the v5 2/3 run; `summary.json` is the v6 3/3 candidate run. `audit.py --root <sample> --positions <json> --out <dir>` reproduces the language-server rows. `evidence/` also contains the unpacked-ZIP run (`zip.json`), the CI attempts (`ci.json` and the first-failure excerpt), and the audit summaries; `archify.zip` SHA256 is recorded in `evidence/zip.json`, and the unpacked archive produces byte-identical results to the source run.
 
 ## Limits
 
 - Only local captured traits and impls are modeled. External, macro-generated, blanket and supertrait impls remain unknown.
 - Receiver types are taken from parameters, local `let` initializers and literal/constructor paths; fields, chained calls and reassigned locals remain unknown.
-- Trait default-method bodies are outside the call inventory (independent pre-existing gap).
+- Trait default-method bodies are inventoried once per source declaration with `defaultMethod` context; calls that depend on the concrete `Self` remain unresolved.
 - Same-type, same-method-name impls in different traits share a qualname slot and stay explicitly `duplicate-slot`, not silently merged.
 - No compiler, borrow-check, runtime or complete-impact proof is claimed from source navigation.

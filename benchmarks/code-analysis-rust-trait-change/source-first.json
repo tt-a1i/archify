@@ -75,7 +75,16 @@
           "endLine": 2374,
           "endColumn": 32,
           "reason": "`ret` is a local `crate::BytesMut` value inside Buf::copy_to_bytes.",
-          "inCallInventory": false
+          "inCallInventory": true,
+          "baselineInCallInventory": false,
+          "defaultMethod": {
+            "file": "src/buf/buf_impl.rs",
+            "name": "copy_to_bytes",
+            "qualname": "buf::buf_impl::Buf::copy_to_bytes",
+            "line": 2363,
+            "column": 8,
+            "trait": "Buf"
+          }
         }
       ],
       "candidateCalls": [],
@@ -85,7 +94,7 @@
         "Calls inside macro expansions are opaque.",
         "This crate has no tested <Type as Trait>::method or dyn Trait call to this method."
       ],
-      "measuredNote": "First measurement: src/buf/buf_impl.rs:2374 is a default method body inside `pub trait Buf`. The existing Rust call inventory only scans registered free-function and impl-method bodies, so that call is absent before and after this change. It remains a definite source answer but is an out-of-scope unknown for the trait-resolution gap, not a wrong or missed target."
+      "measuredNote": "Baseline rust-source-direct-v5 finds 2/3: src/buf/buf_impl.rs:2374 sits in a Buf default method body outside that inventory. Candidate rust-source-direct-v6 inventories the default body once and resolves the local BytesMut receiver to src/bytes_mut.rs:1300, yielding 3/3; the call carries defaultMethod context for Buf::copy_to_bytes."
     },
     "log": {
       "repository": "rust-lang/log",
@@ -190,5 +199,41 @@
         "expected": "wrong with call-range only"
       }
     }
+  },
+  "retainedDefaultBody": {
+    "file": "src/buf/buf_impl.rs",
+    "defaultMethod": {
+      "file": "src/buf/buf_impl.rs",
+      "name": "copy_to_slice",
+      "qualname": "buf::buf_impl::Buf::copy_to_slice",
+      "line": 299,
+      "column": 8,
+      "trait": "Buf"
+    },
+    "calls": [
+      {
+        "line": 300,
+        "column": 9,
+        "endLine": 300,
+        "endColumn": 36,
+        "resolution": "unresolved",
+        "reason": "rust-trait-or-method-dispatch",
+        "why": "receiver is Self; the concrete impl is not determined"
+      },
+      {
+        "line": 301,
+        "column": 37,
+        "endLine": 301,
+        "endColumn": 58,
+        "resolution": "rust-direct-function",
+        "target": {
+          "file": "src/lib.rs",
+          "line": 206,
+          "name": "panic_advance"
+        },
+        "why": "imported free function"
+      }
+    ],
+    "note": "Selected after the default-body rule was fixed and before the candidate run. The same body is not duplicated per implementing type; Self-dependent dispatch stays unknown."
   }
 }

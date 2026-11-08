@@ -133,6 +133,15 @@ struct TraitMethod {
     qualname: String,
 }
 #[derive(Clone)]
+struct DefaultMethod {
+    file: String,
+    name: String,
+    qualname: String,
+    line: usize,
+    column: usize,
+    trait_name: String,
+}
+#[derive(Clone)]
 struct TraitDecl {
     file: String,
     name: String,
@@ -188,6 +197,7 @@ struct Function {
     params: Vec<String>,
     generics: Vec<String>,
     signature: Scope,
+    default_method: Option<DefaultMethod>,
 }
 #[derive(Clone)]
 struct Krate {
@@ -581,6 +591,7 @@ impl Analysis {
             params,
             generics,
             signature: signature_scope(&f.sig),
+            default_method: None,
         });
         index
     }
@@ -804,6 +815,49 @@ impl Analysis {
                                     qualname: format!("{qualname}::{method_name}"),
                                 },
                             );
+                            // A default body is one source body regardless of how many
+                            // types implement the trait. Register it once for scanning;
+                            // impls never duplicate this body.
+                            if m.default.is_some() {
+                                let item = ItemFn {
+                                    attrs: m.attrs.clone(),
+                                    vis: Visibility::Inherited,
+                                    sig: m.sig.clone(),
+                                    block: Box::new(m.default.clone().unwrap()),
+                                };
+                                let index = self.register_fn(
+                                    id,
+                                    &file,
+                                    &item,
+                                    format!("{qualname}::{method_name}"),
+                                    method_state,
+                                );
+                                self.functions[index].default_method = Some(DefaultMethod {
+                                    file: file.clone(),
+                                    name: method_name.clone(),
+                                    qualname: format!("{qualname}::{method_name}"),
+                                    line: mline,
+                                    column: mcolumn,
+                                    trait_name: name.clone(),
+                                });
+                                for param in s.generics.type_params() {
+                                    let generic = param.ident.to_string();
+                                    self.functions[index].generics.push(generic.clone());
+                                    for bound in &param.bounds {
+                                        if let TypeParamBound::Trait(b) = bound {
+                                            self.functions[index]
+                                                .signature
+                                                .generic_bounds
+                                                .entry(generic.clone())
+                                                .or_default()
+                                                .push((
+                                                    path_parts(&b.path),
+                                                    b.path.leading_colon.is_some(),
+                                                ));
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     let index = self.traits.len();
@@ -1314,6 +1368,18 @@ impl Scanner<'_> {
         let (start, end) = self.a.bytes(file, span);
         self.a.excluded_regions.push(json!({"file":file,"range":self.a.range(file,start,end),"reason":"cfg-or-test-not-selected"}));
     }
+    fn annotate_default(&self, record: &mut Value) {
+        if let Some(method) = &self.function.default_method {
+            record["defaultMethod"] = json!({
+                "file": method.file,
+                "name": method.name,
+                "qualname": method.qualname,
+                "line": method.line,
+                "column": method.column,
+                "trait": method.trait_name,
+            });
+        }
+    }
     fn call(&mut self, span: Span, path: Option<&ExprPath>, reason: &str) {
         let file = self.function.file.clone();
         let (a, b) = self.a.bytes(&file, span);
@@ -1371,6 +1437,7 @@ impl Scanner<'_> {
         }
         // Distinct crate contexts at one physical call must agree before navigation.
         r["_crate"] = json!(self.a.crates[self.a.modules[self.function.module].krate].id);
+        self.annotate_default(&mut r);
         self.a.calls.push(r);
     }
     fn resolve_call_path(&self, path: &ExprPath) -> Option<Binding> {
@@ -1559,6 +1626,7 @@ impl Scanner<'_> {
         r["resolution"] = json!(resolution);
         r["target"] = json!({"file":target.file,"name":target.name,"line":target.line,"column":target.column});
         r["_crate"] = json!(self.a.crates[self.a.modules[self.function.module].krate].id);
+        self.annotate_default(&mut r);
         self.a.calls.push(r);
     }
     fn impl_target(&mut self, span: Span, index: usize, resolution: &str) {
@@ -1575,6 +1643,7 @@ impl Scanner<'_> {
         r["resolution"] = json!(resolution);
         r["target"] = json!({"file":f.file,"name":f.name,"line":line,"column":column});
         r["_crate"] = json!(self.a.crates[self.a.modules[self.function.module].krate].id);
+        self.annotate_default(&mut r);
         self.a.calls.push(r);
     }
     fn qualified_trait_call(&mut self, span: Span, path: &ExprPath) -> bool {
