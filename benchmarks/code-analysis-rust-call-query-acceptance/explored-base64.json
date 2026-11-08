@@ -1,0 +1,282 @@
+{
+  "base": "1e8246a889f2b43299279e0c7ebd849dcaa7cb32",
+  "case": "base64 Engine::decode default body (d021c39)",
+  "changedDefinitions": [
+    {
+      "file": "src/engine/mod.rs",
+      "knownReferences": 0,
+      "line": 118,
+      "name": "encode",
+      "qualname": "engine::Engine::encode"
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "knownReferences": 0,
+      "line": 158,
+      "name": "encode_string",
+      "qualname": "engine::Engine::encode_string"
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "knownReferences": 0,
+      "line": 196,
+      "name": "encode_slice",
+      "qualname": "engine::Engine::encode_slice"
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "knownReferences": 0,
+      "line": 246,
+      "name": "decode",
+      "qualname": "engine::Engine::decode"
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "knownReferences": 0,
+      "line": 298,
+      "name": "decode_vec",
+      "qualname": "engine::Engine::decode_vec"
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "knownReferences": 0,
+      "line": 343,
+      "name": "decode_slice",
+      "qualname": "engine::Engine::decode_slice"
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "knownReferences": 0,
+      "line": 386,
+      "name": "decode_slice_unchecked",
+      "qualname": "engine::Engine::decode_slice_unchecked"
+    }
+  ],
+  "command": "node archify/bin/archify.mjs code-analysis task --base-root <samples>/base64-base --root <samples>/base64-head --entry src/engine/mod.rs --config <config> --question \"I changed Engine::decode in this revision. Which calls point to it, and is there a call inside a trait default method body?\" --format json --out <out>.json --json",
+  "conclusion": "The change query answers incoming references to a definition. To find a call inside a default body, the changed definition must be the callee (internal_decode or a changed free function). For the explored decode case, the query reports zero incoming references and does not expose the eight raw call positions.",
+  "focus": {
+    "decode": {
+      "cli": "listed as changed definition; knownReferences total 0; no outgoing calls are shown",
+      "source": "trait default method at src/engine/mod.rs:246"
+    },
+    "inner": {
+      "cli": "not an entity in changedDefinitions or references; no directCaller field",
+      "source": "nested local function at src/engine/mod.rs:247"
+    },
+    "internal_decode": {
+      "cli": "not a changed definition and not shown as a caller; it is only a target in raw call facts",
+      "source": "trait method target declaration at src/engine/mod.rs:91"
+    }
+  },
+  "head": "d021c39ae782c91d88cf3a76030f3f7b1eed892b",
+  "macroBoundary": {
+    "argumentMethod": "estimate.decoded_len_estimate() inside the macro token tree is not a separately inventoried call",
+    "call": "252:30-252:70",
+    "changeQuery": "not shown because the changed definition Engine::decode has no incoming references and the query does not publish outgoing calls",
+    "kind": "vec! macro invocation",
+    "rawFact": {
+      "reason": "rust-macro-not-expanded",
+      "resolution": "unresolved"
+    }
+  },
+  "rawFactsCalls": [
+    {
+      "column": 28,
+      "defaultMethod": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 246,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "endColumn": 83,
+      "endLine": 251,
+      "file": "src/engine/mod.rs",
+      "line": 251,
+      "reason": null,
+      "resolution": "rust-trait-method-candidate",
+      "target": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 66,
+        "name": "internal_decoded_len_estimate"
+      }
+    },
+    {
+      "column": 65,
+      "defaultMethod": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 246,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "endColumn": 82,
+      "endLine": 251,
+      "file": "src/engine/mod.rs",
+      "line": 251,
+      "reason": "rust-trait-or-method-dispatch",
+      "resolution": "unresolved",
+      "target": null
+    },
+    {
+      "column": 30,
+      "defaultMethod": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 246,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "endColumn": 70,
+      "endLine": 252,
+      "file": "src/engine/mod.rs",
+      "line": 252,
+      "reason": "rust-macro-not-expanded",
+      "resolution": "unresolved",
+      "target": null
+    },
+    {
+      "column": 33,
+      "defaultMethod": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 246,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "endColumn": 69,
+      "endLine": 255,
+      "file": "src/engine/mod.rs",
+      "line": 254,
+      "reason": null,
+      "resolution": "rust-trait-method-candidate",
+      "target": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 91,
+        "name": "internal_decode"
+      }
+    },
+    {
+      "column": 13,
+      "defaultMethod": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 246,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "endColumn": 43,
+      "endLine": 258,
+      "file": "src/engine/mod.rs",
+      "line": 258,
+      "reason": "rust-trait-or-method-dispatch",
+      "resolution": "unresolved",
+      "target": null
+    },
+    {
+      "column": 13,
+      "defaultMethod": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 246,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "endColumn": 23,
+      "endLine": 260,
+      "file": "src/engine/mod.rs",
+      "line": 260,
+      "reason": "no-local-function-binding",
+      "resolution": "unresolved",
+      "target": null
+    },
+    {
+      "column": 21,
+      "defaultMethod": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 246,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "endColumn": 35,
+      "endLine": 263,
+      "file": "src/engine/mod.rs",
+      "line": 263,
+      "reason": "rust-trait-or-method-dispatch",
+      "resolution": "unresolved",
+      "target": null
+    },
+    {
+      "column": 9,
+      "defaultMethod": {
+        "column": 8,
+        "file": "src/engine/mod.rs",
+        "line": 246,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "endColumn": 36,
+      "endLine": 263,
+      "file": "src/engine/mod.rs",
+      "line": 263,
+      "reason": "no-local-function-binding",
+      "resolution": "unresolved",
+      "target": null
+    }
+  ],
+  "repository": "marshallpierce/rust-base64",
+  "sourceDirectCallers": [
+    {
+      "call": "251:28-251:83",
+      "directCaller": "inner (nested in Engine::decode)",
+      "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
+    },
+    {
+      "call": "251:65-251:82",
+      "directCaller": "inner (nested in Engine::decode)",
+      "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
+    },
+    {
+      "call": "252:30-252:70",
+      "directCaller": "inner (nested in Engine::decode)",
+      "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
+    },
+    {
+      "call": "254:33-255:69",
+      "directCaller": "inner (nested in Engine::decode)",
+      "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
+    },
+    {
+      "call": "258:13-258:43",
+      "directCaller": "inner (nested in Engine::decode)",
+      "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
+    },
+    {
+      "call": "260:13-260:23",
+      "directCaller": "inner (nested in Engine::decode)",
+      "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
+    },
+    {
+      "call": "263:21-263:35",
+      "directCaller": "inner (nested in Engine::decode)",
+      "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
+    },
+    {
+      "call": "263:9-263:36",
+      "directCaller": "inner (nested in Engine::decode)",
+      "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
+    }
+  ],
+  "status": "explored"
+}

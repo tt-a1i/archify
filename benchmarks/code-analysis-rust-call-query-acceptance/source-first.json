@@ -1,0 +1,179 @@
+{
+  "frozenAt": "2026-11-08T12:19:00Z",
+  "case": "base64 GeneralPurpose::internal_decode",
+  "repository": "marshallpierce/rust-base64",
+  "base": "a8a60f43c56597259558261353b5bf7e953eed36",
+  "head": "9e9c7abe65fed78c35a1e94e11446d66ff118c25",
+  "change": "Engine::internal_decode now returns DecodeSliceError; the GeneralPurpose implementation and the Engine default-body call sites are updated.",
+  "question": "I changed GeneralPurpose::internal_decode in this revision. Which calls point to it, and is there a call inside a trait default method body?",
+  "stage": "Recorded from the upstream diff and head source before the scored v5/v6 replay. Expected positions are source coordinates, not extractor output. The case was not previously run through the candidate analyzer.",
+  "profile": {
+    "crate": "base64",
+    "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+    "target": "aarch64-apple-darwin",
+    "features": "default features (std)",
+    "tests": false,
+    "cfg": "rustc target cfg plus declared local feature profile",
+    "preparation": "cargo fetch in each sample worktree provides the dependency metadata; no project build or test is run"
+  },
+  "headHashes": {
+    "Cargo.toml": "b17fbd0a764669ee9b09d7545708853285337f0ed293cf3ce42f68a42746efc4",
+    "src/engine/mod.rs": "e3b0ae19ff8e89ed247ac4f370f300882ad2991d2b8d2ae12f827fa83b13487a",
+    "src/engine/general_purpose/mod.rs": "901760a7f5721ec3bafad5fea6251f57de0f767ecb2e1e2fdfe64d661404ec34"
+  },
+  "changedDefinition": {
+    "file": "src/engine/general_purpose/mod.rs",
+    "line": 171,
+    "column": 5,
+    "qualname": "engine::general_purpose::GeneralPurpose::internal_decode",
+    "name": "internal_decode",
+    "selfType": "GeneralPurpose"
+  },
+  "expectedCallers": [
+    {
+      "file": "src/engine/mod.rs",
+      "line": 251,
+      "column": 33,
+      "endLine": 252,
+      "endColumn": 69,
+      "expression": "engine.internal_decode(input_bytes, &mut buffer, estimate)",
+      "directCaller": {
+        "file": "src/engine/mod.rs",
+        "line": 244,
+        "name": "inner",
+        "kind": "nested-function"
+      },
+      "defaultMethod": {
+        "file": "src/engine/mod.rs",
+        "line": 243,
+        "column": 8,
+        "name": "decode",
+        "qualname": "engine::Engine::decode",
+        "trait": "Engine"
+      },
+      "target": {
+        "file": "src/engine/mod.rs",
+        "line": 87,
+        "column": 8,
+        "name": "internal_decode",
+        "kind": "trait-method"
+      },
+      "runtimeTarget": "not-determined",
+      "provable": "The call is syntactically inside Engine::decode and resolves to the trait declaration through the generic E: Engine receiver.",
+      "unknown": "The concrete GeneralPurpose implementation is a source candidate, not a proven runtime target."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 322,
+      "column": 33,
+      "endLine": 323,
+      "endColumn": 70,
+      "expression": "engine.internal_decode(input_bytes, buffer_slice, estimate)",
+      "directCaller": {
+        "file": "src/engine/mod.rs",
+        "line": 306,
+        "name": "inner",
+        "kind": "nested-function"
+      },
+      "defaultMethod": {
+        "file": "src/engine/mod.rs",
+        "line": 301,
+        "column": 8,
+        "name": "decode_vec",
+        "qualname": "engine::Engine::decode_vec",
+        "trait": "Engine"
+      },
+      "target": {
+        "file": "src/engine/mod.rs",
+        "line": 87,
+        "column": 8,
+        "name": "internal_decode",
+        "kind": "trait-method"
+      },
+      "runtimeTarget": "not-determined",
+      "provable": "The call is syntactically inside Engine::decode_vec and resolves to the trait declaration through E: Engine.",
+      "unknown": "The concrete GeneralPurpose implementation is a source candidate, not a proven runtime target."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 365,
+      "column": 13,
+      "endLine": 370,
+      "endColumn": 18,
+      "expression": "engine.internal_decode(input_bytes, output, engine.internal_decoded_len_estimate(input_bytes.len()))",
+      "directCaller": {
+        "file": "src/engine/mod.rs",
+        "line": 357,
+        "name": "inner",
+        "kind": "nested-function"
+      },
+      "defaultMethod": {
+        "file": "src/engine/mod.rs",
+        "line": 352,
+        "column": 8,
+        "name": "decode_slice",
+        "qualname": "engine::Engine::decode_slice",
+        "trait": "Engine"
+      },
+      "target": {
+        "file": "src/engine/mod.rs",
+        "line": 87,
+        "column": 8,
+        "name": "internal_decode",
+        "kind": "trait-method"
+      },
+      "runtimeTarget": "not-determined",
+      "provable": "The call is syntactically inside Engine::decode_slice and resolves to the trait declaration through E: Engine.",
+      "unknown": "The concrete GeneralPurpose implementation is a source candidate, not a proven runtime target."
+    },
+    {
+      "file": "src/engine/mod.rs",
+      "line": 401,
+      "column": 13,
+      "endLine": 406,
+      "endColumn": 18,
+      "expression": "engine.internal_decode(input_bytes, output, engine.internal_decoded_len_estimate(input_bytes.len()))",
+      "directCaller": {
+        "file": "src/engine/mod.rs",
+        "line": 397,
+        "name": "inner",
+        "kind": "nested-function"
+      },
+      "defaultMethod": {
+        "file": "src/engine/mod.rs",
+        "line": 392,
+        "column": 8,
+        "name": "decode_slice_unchecked",
+        "qualname": "engine::Engine::decode_slice_unchecked",
+        "trait": "Engine"
+      },
+      "target": {
+        "file": "src/engine/mod.rs",
+        "line": 87,
+        "column": 8,
+        "name": "internal_decode",
+        "kind": "trait-method"
+      },
+      "runtimeTarget": "not-determined",
+      "provable": "The call is syntactically inside Engine::decode_slice_unchecked and resolves to the trait declaration through E: Engine.",
+      "unknown": "The concrete GeneralPurpose implementation is a source candidate, not a proven runtime target."
+    }
+  ],
+  "implementationCandidate": {
+    "selfType": "GeneralPurpose",
+    "file": "src/engine/general_purpose/mod.rs",
+    "line": 171,
+    "column": 5,
+    "qualname": "engine::general_purpose::GeneralPurpose::internal_decode"
+  },
+  "reasonableUnknowns": [
+    "The direct caller is the nested local function inner in each default body; the change query exposes the call location and outer defaultMethod but has no directCaller field.",
+    "The receiver is the generic E: Engine inside inner, so the query proves the trait declaration and lists GeneralPurpose only as an implementation candidate.",
+    "Runtime dispatch to GeneralPurpose is not determined; the change query must not claim it.",
+    "Calls in test or external code are outside this controlled source answer."
+  ],
+  "negativeControl": {
+    "misreportedDirectCaller": "engine::Engine::decode",
+    "expected": "rejected because the outer default method is not the direct caller; inner at src/engine/mod.rs:244 is."
+  }
+}
