@@ -1,7 +1,7 @@
 import { children, descendants, tokensOf, TYPE_DECLARATIONS } from './parse.mjs';
 import { measureFunctions } from './functions.mjs';
 
-export const CALL_MODEL = 'java-static-lexical-v3';
+export const CALL_MODEL = 'java-static-lexical-v4';
 const OBJECT_METHODS = new Set(['getClass', 'hashCode', 'equals', 'clone', 'toString', 'notify', 'notifyAll', 'wait', 'finalize']);
 
 // Fixed argument count can distinguish siblings, but never argument types.
@@ -77,11 +77,12 @@ export function collectFunctionsAndCalls(unit) {
         const { types, method, anonymous, lambda } = context, owner = types[0];
         const first = prefixTokens[0].image;
         if (!anonymous && !lambda && types.length === 1 && owner.name === 'normalClassDeclaration'
-          && !owner.children.classExtends && !owner.children.classImplements
+          && !owner.children.classImplements
           && method?.name === 'methodDeclaration' && measured.has(method)
           && !values.get(owner)?.has(first) && !values.get(method)?.has(first)) {
           qualifiedCalls.push({ call, qualifier: prefixTokens.slice(0, -2).map(t => t.image).join(''),
             name: prefixTokens.at(-1).image, arity: invocation.children.argumentList?.[0]?.children.expression?.length || 0,
+            inherited: Boolean(owner.children.classExtends),
             startOffset: primary.location.startOffset, endOffset: invocation.location.endOffset });
         }
       }
@@ -112,10 +113,12 @@ export function collectFunctionsAndCalls(unit) {
 // Only public, unique-at-fixed-arity, explicitly static source methods in ordinary top-level
 // classes without explicit supertypes are eligible. This does not type-check
 // argument applicability, compilation, class loading or execution.
-export function resolveQualifiedCalls(units, resolveType) {
+export function resolveQualifiedCalls(units, resolveType, qualifierAncestry, sameBuildRoot) {
   const byFile = new Map(units.map(unit => [unit.file, unit]));
   for (const unit of units) for (const request of unit.qualifiedCalls) {
     const first = request.qualifier.split('.')[0];
+    const ancestry = request.inherited ? qualifierAncestry(unit, request, first) : null;
+    if (request.inherited && !ancestry?.length) continue;
     // A static import can introduce a value in an expression, even alongside
     // an ordinary import of the same type name. The type-only resolver must
     // not reinterpret that value as the imported class.
@@ -123,6 +126,10 @@ export function resolveQualifiedCalls(units, resolveType) {
     const targets = resolveType(unit, { ...request, name: request.qualifier });
     if (targets.length !== 1) continue;
     const type = targets[0], targetUnit = byFile.get(type.file);
+    if (request.inherited && !sameBuildRoot(unit.file, [...ancestry, { file: type.file }])) {
+      request.call.reason = 'java-inherited-build-scope';
+      continue;
+    }
     if (type.owners.length || type.kind !== 'normalClassDeclaration') continue;
     const methods = targetUnit.staticMethods.filter(method => method.ownerOffset === type.startOffset && method.name === request.name);
     const { method, ambiguous } = fixedArity(methods, request.arity);
@@ -131,6 +138,7 @@ export function resolveQualifiedCalls(units, resolveType) {
       || method.varargs || method.arity !== request.arity) continue;
     const record = method.record;
     request.call.resolution = 'java-qualified-static-method';
+    if (ancestry) request.call.qualifierAncestry = ancestry;
     request.call.target = { file: type.file, name: record.name, line: record.line, column: record.sourceRange.column };
     delete request.call.reason;
   }

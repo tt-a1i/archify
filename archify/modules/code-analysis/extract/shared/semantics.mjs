@@ -34,7 +34,7 @@ export function semanticErrors(name, data) {
       if (fn.deepestLine < fn.line || fn.deepestLine > fn.endLine) add(`/functions/${i}/deepestLine`, 'must lie inside the function');
     });
     const pythonCalls = data.repository.language === 'py' && ['python-lexical-v1', 'python-lexical-v2'].includes(data.callModel);
-    const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3'].includes(data.callModel);
+    const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel);
     if (goCalls && data.callModel === 'go-source-direct-v3' && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
     const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3'].includes(data.callModel);
@@ -78,10 +78,20 @@ export function semanticErrors(name, data) {
       if (!validPoint(call.file, { line: call.endLine, column: call.endColumn }, true)) add(at, 'call end must lie inside captured source or at EOF');
       if (call.endLine < call.line || (call.endLine === call.line && call.endColumn <= call.column)) add(at, 'call end must follow its start');
       if (brokenFiles.has(call.file)) add(at, 'calls must be omitted for files with parse errors');
+      if (call.reason === 'java-inherited-build-scope' && (!javaCalls || data.callModel !== 'java-static-lexical-v4')) add(at + '/reason', 'requires the Java v4 inherited-context model');
+      if (call.qualifierAncestry) {
+        if (!javaCalls || data.callModel !== 'java-static-lexical-v4' || call.resolution !== 'java-qualified-static-method') add(at + '/qualifierAncestry', 'requires a qualified call under Java v4');
+        const points = new Set();
+        for (const point of call.qualifierAncestry) {
+          const key = JSON.stringify(point);
+          if (points.has(key) || !files.has(point.file) || brokenFiles.has(point.file) || !validPoint(point.file, point)) add(at + '/qualifierAncestry', 'must contain distinct valid captured ancestor points');
+          points.add(key);
+        }
+      }
       if (call.via && (!forwardingModel || call.resolution !== 'imported-function')) add(`${at}/via`, 'requires an imported call under the JS/TS v5 forwarding model');
       if (call.target) {
         const targetFile = call.target.file || call.file;
-        if (call.resolution === 'java-qualified-static-method' && (!javaCalls || !['java-static-lexical-v2', 'java-static-lexical-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Java v2 source model');
+        if (call.resolution === 'java-qualified-static-method' && (!javaCalls || !['java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Java v2 source model');
         if (call.resolution === 'imported-function') {
           const direct = staticImports.get(call.file)?.has(targetFile);
           let forwarded = pythonCalls && data.callModel === 'python-lexical-v2' && [...(staticImports.get(call.file) || [])].some(via => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));

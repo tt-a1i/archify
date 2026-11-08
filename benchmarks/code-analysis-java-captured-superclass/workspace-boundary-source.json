@@ -1,0 +1,145 @@
+{
+  "projectRevision": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+  "stage": "Post-design replay of the older Java arity recipe exposed this incorrect module selection. Source/POM inspected before any boundary guard change; not a holdout.",
+  "initialImplementation": "c630a529d12fa3111cc2e9d41730c3effd7a3793",
+  "hashes": {
+    "slf4j-reload4j/pom.xml": "fe3472b190f4289bc620a4152fa682443d8283cb93db907e60feea9d608b721d",
+    "parent-pom.xml": "c2c7c62740550b4de5e2f546ec78896f895f5190dea6a35db7f57e8b92eeb364",
+    "slf4j-reload4j/src/test/java/org/slf4j/reload4j/Reload4jMultithreadedInitializationTest.java": "78d8003d46a8b5e1448bebc202ae8439dbc4c6c57abc82f835f62c4b200b7a15",
+    "log4j-over-slf4j/src/main/java/org/apache/log4j/LogManager.java": "12d5fc53c973bc5f81888dbe58b6bfc056eca22b53674baf83be20e6bb73f049",
+    "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java": "8eea36d951e1e8473e1376107d62c7af7d7c9d337dd7daeadbff75b417eb00c6",
+    "slf4j-simple/pom.xml": "a275a67ab656e4d8a59b962abe126ce0a477d59f01e89c9f2c98c145c50bc412"
+  },
+  "initialNewTargets": [
+    {
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/basicTests/NoBindingMultithreadedInitializationTest.java",
+        "line": 44,
+        "column": 9,
+        "endLine": 44,
+        "endColumn": 36,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+          "name": "reset",
+          "line": 43,
+          "column": 5
+        }
+      },
+      "sourceStatus": "correct-source-known",
+      "basis": "Direct slf4j-api/test-jar dependency and captured LoggerFactoryFriend.reset definition"
+    },
+    {
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/basicTests/NoBindingMultithreadedInitializationTest.java",
+        "line": 49,
+        "column": 9,
+        "endLine": 49,
+        "endColumn": 36,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+          "name": "reset",
+          "line": 43,
+          "column": 5
+        }
+      },
+      "sourceStatus": "correct-source-known",
+      "basis": "Direct slf4j-api/test-jar dependency and captured LoggerFactoryFriend.reset definition"
+    },
+    {
+      "call": {
+        "file": "slf4j-reload4j/src/test/java/org/slf4j/reload4j/Reload4jMultithreadedInitializationTest.java",
+        "line": 66,
+        "column": 40,
+        "endLine": 66,
+        "endColumn": 66,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "target": {
+          "file": "log4j-over-slf4j/src/main/java/org/apache/log4j/LogManager.java",
+          "name": "getRootLogger",
+          "line": 39,
+          "column": 5
+        }
+      },
+      "sourceStatus": "wrong",
+      "basis": "reload4j module declares external ch.qos.reload4j1.2.22, not log4j-over-slf4j"
+    },
+    {
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 53,
+        "column": 9,
+        "endLine": 53,
+        "endColumn": 36,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+          "name": "reset",
+          "line": 43,
+          "column": 5
+        }
+      },
+      "sourceStatus": "correct-source-known",
+      "basis": "Direct slf4j-api/test-jar dependency and captured LoggerFactoryFriend.reset definition"
+    },
+    {
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 58,
+        "column": 9,
+        "endLine": 58,
+        "endColumn": 36,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+          "name": "reset",
+          "line": 43,
+          "column": 5
+        }
+      },
+      "sourceStatus": "correct-source-known",
+      "basis": "Direct slf4j-api/test-jar dependency and captured LoggerFactoryFriend.reset definition"
+    }
+  ],
+  "expectedScope": "Do not claim a newly supported inherited-context target across captured Maven/Gradle build roots without classpath proof. Two same-api-root calls can stay targets; two valid simple->api calls are known misses until cross-module evidence is supported. The reload4j call must not navigate to compatibility source.",
+  "limits": [
+    "Existing non-inherited v3 source-global candidates retain their historical contract; this is not full Maven/Gradle dependency resolution.",
+    "The two legitimate cross-build calls must be counted as misses, never accuracy wins."
+  ]
+}

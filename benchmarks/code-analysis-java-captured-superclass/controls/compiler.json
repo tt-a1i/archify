@@ -1,0 +1,32 @@
+{
+  "jdk": "Retained Temurin javac17.0.21; system PATH has no Java runtime, no install",
+  "method": "AllStaticCalls JavacTask parse/analyze, -proc:none --release17, no emit/execute project code",
+  "diagnostics": "FILES\t6\tERRORS\t0\n",
+  "rows": [
+    {
+      "file": "q/Field.java",
+      "targetFile": "p/Other.java",
+      "sourceOffset": 128,
+      "targetOffset": 32
+    },
+    {
+      "file": "q/Member.java",
+      "targetFile": "q/Member.java",
+      "sourceOffset": 164,
+      "targetOffset": 70
+    },
+    {
+      "file": "q/Plain.java",
+      "targetFile": "p/Api.java",
+      "sourceOffset": 151,
+      "targetOffset": 30
+    },
+    {
+      "file": "q/StaticField.java",
+      "targetFile": "p/Other.java",
+      "sourceOffset": 153,
+      "targetOffset": 32
+    }
+  ],
+  "meaning": "Only closed plain ancestry selects imported p.Api. Inherited instance/static fields select p.Other; inherited member type selects the nested declaration. The analyzer must not attribute these to imported p.Api."
+}
