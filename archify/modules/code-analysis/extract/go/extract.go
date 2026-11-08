@@ -50,9 +50,6 @@ type group struct {
 	methods           map[string][]types.Type
 }
 type interfaceInfo struct {
-	g        *group
-	file     string
-	ts       *ast.TypeSpec
 	named    *types.Named
 	iface    *types.Interface
 	record   record
@@ -62,9 +59,6 @@ type interfaceInfo struct {
 	reason   string
 }
 type concreteType struct {
-	g      *group
-	file   string
-	ts     *ast.TypeSpec
 	named  *types.Named
 	record record
 }
@@ -707,13 +701,13 @@ func (l *loader) collectInterfaceEvidence() {
 						if iface == nil {
 							continue
 						}
-						l.interfaceInfos = append(l.interfaceInfos, &interfaceInfo{g: g, file: file, ts: ts, named: named, iface: iface, record: rec})
+						l.interfaceInfos = append(l.interfaceInfos, &interfaceInfo{named: named, iface: iface, record: rec})
 						continue
 					}
 					if _, dynamic := named.Underlying().(*types.Interface); dynamic {
 						continue
 					}
-					concretes = append(concretes, &concreteType{g: g, file: file, ts: ts, named: named, record: rec})
+					concretes = append(concretes, &concreteType{named: named, record: rec})
 				}
 			}
 		}

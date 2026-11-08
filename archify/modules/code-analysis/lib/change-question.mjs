@@ -71,7 +71,7 @@ function inspectSide(capture, side) {
   inputs.sort((a, b) => a.file.localeCompare(b.file));
   const settings = { options: normalize(resolution.options || {}, root), inputs };
   const unavailable = [...files.values()].filter(file => file.status !== 'valid').map(file => ({ file: file.path, status: file.status, ...(file.parseError ? { parseError: file.parseError } : {}) }));
-  const evidence = facts.interfaceEvidence || facts.languageScope?.interfaceEvidence || null;
+  const evidence = facts.languageScope?.interfaceEvidence || null;
   const summary = {
     side, root, snapshot: facts.repository, language: facts.repository.language, producer: { adapter: facts.repository.adapter, adapterRevision: facts.repository.adapterRevision }, callModel: facts.callModel ?? null, analysisConfigDigest: capture.configDigest, capturedFiles: files.size,
     sourceIdentity: unavailable.some(file => file.status !== 'parse-error') ? 'incomplete' : 'valid',

@@ -488,8 +488,7 @@
           }
         }
       }
-    },
-    "interfaceEvidence": { "$ref": "#/$defs/interfaceEvidence" }
+    }
   },
   "$defs": {
     "sourceRange": {"type":"object","additionalProperties":false,"required":["line","column","endLine","endColumn","sha256"],"properties":{"line":{"type":"integer","minimum":1},"column":{"type":"integer","minimum":1},"endLine":{"type":"integer","minimum":1},"endColumn":{"type":"integer","minimum":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}},"description":"Exact decoded source slice. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice."},

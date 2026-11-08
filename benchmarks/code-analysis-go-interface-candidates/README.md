@@ -172,6 +172,20 @@ Archify reads captured source with incomplete third-party typing.
   candidates. The change question also reports
   `interface-implementation-evidence-unavailable` for that side.
 
+## Validation states
+
+- Local source tests: `npm test` 19/19; code-analysis suite 424/424 with zero
+  skips. The focused Go suite covers the new candidate paths.
+- Source CLI: `run.py` exits 0 for A/B/C with the source-first direct and
+  candidate lists; wrong = 0, missed = 0, no duplicate candidate.
+- The unpacked `archify.zip` (SHA256
+  `e5515748952e8cb0d10b5668e1a159cbe58d53f1795ea19725cec1c862dd0278`)
+  produces a byte-identical normalized `summary.json` to the source CLI for all
+  three studies. The extracted tree needs the normal Code Analysis dependencies
+  installed; the ZIP itself does not vendor them.
+- Final remote CI status is recorded on the Draft PR after the final push. This
+  report does not claim a merge, release or live installation.
+
 ## Acceptance
 
 - Source-first lists: all 3 + 47 + 0 direct references are preserved; all

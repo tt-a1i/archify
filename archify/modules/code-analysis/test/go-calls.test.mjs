@@ -416,7 +416,6 @@ func Use(i I, a A){ i.M(); a.M() }
   const head = captureChangeSide(fixture(t, { 'main.go': source(2) }), config, 'go');
   const old = structuredClone(head);
   delete old.facts.interfaceImplementations;
-  delete old.facts.interfaceEvidence;
   if (old.facts.languageScope) delete old.facts.languageScope.interfaceEvidence;
   const question = buildChangeQuestion({ question: 'Which callers reach changed A.M?', entry: 'main.go', base, head: old, config });
   assert.equal(question.status, 'partial');

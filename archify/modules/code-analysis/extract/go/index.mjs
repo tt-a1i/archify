@@ -70,7 +70,7 @@ export function extract(root, config, { onCapture } = {}) {
     repository: { ...describeRepository(root), language: id, adapter: `go-parser@${output.version.replace(/^go/, '')}`, adapterRevision: REVISION },
     files: [...selected].map(file => { const sourceText = tree.contents.get(file).toString('utf8'); return { path: file, sourceText, loc: lineCount(sourceText), role: file.endsWith('_test.go') ? 'test' : classifyRole(file, config.roles) }; }),
     packageMarkers: ['go.mod'], imports, symbols: [], functions: output.functions, calls: output.calls, unresolved,
-    interfaceImplementations: output.interfaceImplementations, interfaceEvidence: output.interfaceEvidence,
+    interfaceImplementations: output.interfaceImplementations,
     ...(output.parse_errors.length ? { parse_errors: output.parse_errors } : {}),
     languageScope: { language: id, module, build: output.build, packages: output.packages, typing: output.typing, standardLibrary: output.standardLibrary, interfaceEvidence: output.interfaceEvidence,
       selectedFiles: output.selected, excludedFiles: [...excluded, ...output.excluded].sort((a, b) => a.file.localeCompare(b.file)), metadata,
