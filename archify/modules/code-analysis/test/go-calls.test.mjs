@@ -439,3 +439,61 @@ test('Go interface method declaration changes pair with interface-typed call sit
   assert.equal(change.head.knownReferences.items[0].navigation.status, 'valid');
   assert.equal(change.head.knownReferences.items[0].navigation.location.file, 'main.go');
 });
+
+test('Go direct caller identifies the innermost enclosing function or method', t => {
+  const root = fixture(t, { 'main.go': `package app
+type T struct{}
+func (T) M(){}
+func Use(t T){
+  t.M()
+  f := func(){ t.M() }
+  f()
+}
+func (T) Caller(t T){
+  t.M()
+}
+` });
+  const facts = capture(root, { go: { stdlib: false } });
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
+  const calls = callsIn(facts, 'main.go').filter(call => call.resolution === 'go-direct-method');
+  assert.deepEqual(calls.map(call => call.directCaller), [
+    { file: 'main.go', name: 'Use', qualname: 'Use', kind: 'function', line: 4, column: 1 },
+    { file: 'main.go', name: 'Use', qualname: 'Use', kind: 'function', line: 4, column: 1 },
+    { file: 'main.go', name: 'Caller', qualname: 'T.Caller', kind: 'method', line: 9, column: 1 },
+  ]);
+});
+
+test('Go changed interface methods list captured implementations without claiming dispatch', t => {
+  const base = fixture(t, { 'main.go': `package app
+type I interface { M() }
+type A struct{}
+func (A) M(){}
+type B struct{}
+func (*B) M(){}
+type C struct{}
+func (C) M(int){}
+func Use(i I){ i.M() }
+` });
+  const head = fixture(t, { 'main.go': `package app
+type I interface { M() error }
+type A struct{}
+func (A) M() error { return nil }
+type B struct{}
+func (*B) M() error { return nil }
+type C struct{}
+func (C) M(int){}
+func Use(i I){ i.M() }
+` });
+  const config = scopeConfig();
+  const question = buildChangeQuestion({ question: 'Which implementations satisfy changed I.M?', entry: 'main.go', base: captureChangeSide(base, config, 'go'), head: captureChangeSide(head, config, 'go'), config });
+  const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === 'I.M');
+  assert.ok(changed, 'the changed interface method is a definition');
+  assert.equal(changed.head.knownReferences.total, 1);
+  const candidates = changed.head.interfaceCandidates;
+  assert.equal(candidates.coverage, 'available');
+  assert.equal(candidates.total, 0);
+  assert.equal(candidates.runtimeTarget, 'not-determined');
+  assert.deepEqual(candidates.implementations.items.map(row => row.implementation.type.qualname).sort(), ['A', 'B']);
+  assert.equal(candidates.implementations.items.find(row => row.implementation.type.qualname === 'B').implementation.pointerSatisfies, true);
+  assert.ok(!candidates.implementations.items.some(row => row.implementation.type.qualname === 'C'));
+});

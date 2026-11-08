@@ -1,0 +1,137 @@
+{
+ "id": "certmagic-interface",
+ "language": "go",
+ "repo": "https://github.com/caddyserver/certmagic",
+ "base": "2d114193c350ea9b5dd17b4a40b660af6e33c0db",
+ "head": "9a56fcd4f9cc49b8068eab8674a9bd4468068ca3",
+ "entry": "storage.go",
+ "question": "Storage.Store now takes a context. Which call sites go through the interface, and which captured types implement the new signature?",
+ "changedDefinition": {
+  "qualname": "Storage.Store",
+  "file": "storage.go",
+  "line": 48
+ },
+ "expectedCalls": [
+  {
+   "file": "config.go",
+   "line": 978,
+   "column": 8,
+   "endLine": 978,
+   "endColumn": 45,
+   "inventory": "knownReferences",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 48,
+    "column": 2,
+    "name": "Store"
+   },
+   "directCaller": {
+    "name": "checkStorage",
+    "line": 971,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "maintain.go",
+   "line": 634,
+   "column": 8,
+   "endLine": 634,
+   "endColumn": 72,
+   "inventory": "knownReferences",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 48,
+    "column": 2,
+    "name": "Store"
+   },
+   "directCaller": {
+    "name": "moveCompromisedPrivateKey",
+    "line": 625,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "ocsp.go",
+   "line": 119,
+   "column": 11,
+   "endLine": 119,
+   "endColumn": 55,
+   "inventory": "knownReferences",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 48,
+    "column": 2,
+    "name": "Store"
+   },
+   "directCaller": {
+    "name": "stapleOCSP",
+    "line": 42,
+    "kind": "function"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "solvers.go",
+   "line": 490,
+   "column": 8,
+   "endLine": 490,
+   "endColumn": 85,
+   "inventory": "knownReferences",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 48,
+    "column": 2,
+    "name": "Store"
+   },
+   "directCaller": {
+    "name": "Present",
+    "line": 484,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  },
+  {
+   "file": "storage.go",
+   "line": 122,
+   "column": 10,
+   "endLine": 122,
+   "endColumn": 40,
+   "inventory": "knownReferences",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "storage.go",
+    "line": 48,
+    "column": 2,
+    "name": "Store"
+   },
+   "directCaller": {
+    "name": "storeTx",
+    "line": 120,
+    "kind": "function"
+   },
+   "runtime": "not-determined",
+   "interface": "Storage"
+  }
+ ],
+ "expectedImplementations": [
+  "*FileStorage.Store"
+ ],
+ "unknowns": [
+  "Runtime assignment to cfg.Storage is not determined; external implementations remain possible.",
+  "Only captured in-repo types are listed; stdlib and third-party Storage implementations are outside the capture."
+ ],
+ "baseTree": "git worktree at the fixed base commit",
+ "build": "root module only; Go 1.17-era module read by Go 1.27.2; tests included; no project build or test executed",
+ "freeze": "source answer derived from the upstream diff and HEAD source with go/parser (tools/callspans.go), before any candidate query",
+ "notes": "Real trigger for interface-method reverse lookup: the changed definition is the interface declaration, so calls are knownReferences and the newly added implementation list must name the changed concrete methods."
+}

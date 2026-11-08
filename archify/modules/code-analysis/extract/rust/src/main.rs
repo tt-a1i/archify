@@ -1356,9 +1356,19 @@ fn signature_scope(sig: &Signature) -> Scope {
     }
     scope
 }
+#[derive(Clone)]
+struct Caller {
+    file: String,
+    name: String,
+    qualname: String,
+    kind: &'static str,
+    line: usize,
+    column: usize,
+}
 struct Scanner<'a> {
     a: &'a mut Analysis,
     function: Function,
+    callers: Vec<Caller>,
     scopes: Vec<Scope>,
     state: State,
 }
@@ -1379,6 +1389,24 @@ impl Scanner<'_> {
                 "trait": method.trait_name,
             });
         }
+    }
+    fn annotate_caller(&self, record: &mut Value) {
+        if let Some(c) = self.callers.last() {
+            record["directCaller"] = json!({
+                "file": c.file,
+                "name": c.name,
+                "qualname": c.qualname,
+                "kind": c.kind,
+                "line": c.line,
+                "column": c.column,
+            });
+        }
+    }
+    fn caller_at(&self, span: Span, name: &str, qualname: String, kind: &'static str) -> Caller {
+        let file = self.function.file.clone();
+        let start = self.a.bytes(&file, span).0;
+        let (line, column) = self.a.point(&file, start);
+        Caller { file, name: name.into(), qualname, kind, line, column }
     }
     fn call(&mut self, span: Span, path: Option<&ExprPath>, reason: &str) {
         let file = self.function.file.clone();
@@ -1438,6 +1466,7 @@ impl Scanner<'_> {
         // Distinct crate contexts at one physical call must agree before navigation.
         r["_crate"] = json!(self.a.crates[self.a.modules[self.function.module].krate].id);
         self.annotate_default(&mut r);
+        self.annotate_caller(&mut r);
         self.a.calls.push(r);
     }
     fn resolve_call_path(&self, path: &ExprPath) -> Option<Binding> {
@@ -1627,6 +1656,7 @@ impl Scanner<'_> {
         r["target"] = json!({"file":target.file,"name":target.name,"line":target.line,"column":target.column});
         r["_crate"] = json!(self.a.crates[self.a.modules[self.function.module].krate].id);
         self.annotate_default(&mut r);
+        self.annotate_caller(&mut r);
         self.a.calls.push(r);
     }
     fn impl_target(&mut self, span: Span, index: usize, resolution: &str) {
@@ -1644,6 +1674,7 @@ impl Scanner<'_> {
         r["target"] = json!({"file":f.file,"name":f.name,"line":line,"column":column});
         r["_crate"] = json!(self.a.crates[self.a.modules[self.function.module].krate].id);
         self.annotate_default(&mut r);
+        self.annotate_caller(&mut r);
         self.a.calls.push(r);
     }
     fn qualified_trait_call(&mut self, span: Span, path: &ExprPath) -> bool {
@@ -1898,7 +1929,11 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
             let scope = signature_scope(&f.sig);
             let old = self.scopes.clone();
             self.scopes.push(scope);
+            let parent = self.callers.last().map(|c| c.qualname.clone()).unwrap_or_else(|| self.function.qualname.clone());
+            let caller = self.caller_at(f.sig.span(), &f.sig.ident.to_string(), format!("{parent}::{}", f.sig.ident), "local-function");
+            self.callers.push(caller);
             self.visit_block(&f.block);
+            self.callers.pop();
             self.scopes = old;
         } else {
             self.excluded(f.span());
@@ -1932,7 +1967,11 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         let scope = signature_scope(&item.sig);
         self.scopes.push(scope);
         if self.state >= 0 {
+            let parent = self.callers.last().map(|c| c.qualname.clone()).unwrap_or_else(|| self.function.qualname.clone());
+            let caller = self.caller_at(item.sig.span(), &item.sig.ident.to_string(), format!("{parent}::{}", item.sig.ident), "method");
+            self.callers.push(caller);
             self.visit_block(&item.block);
+            self.callers.pop();
         } else {
             self.excluded(item.span());
         }
@@ -1964,7 +2003,11 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         self.scopes.push(signature_scope(&item.sig));
         if self.state >= 0 {
             if let Some(body) = &item.default {
+                let parent = self.callers.last().map(|c| c.qualname.clone()).unwrap_or_else(|| self.function.qualname.clone());
+                let caller = self.caller_at(item.sig.span(), &item.sig.ident.to_string(), format!("{parent}::{}", item.sig.ident), "trait-default-method");
+                self.callers.push(caller);
                 self.visit_block(body);
+                self.callers.pop();
             }
         } else {
             self.excluded(item.span());
@@ -2288,9 +2331,13 @@ fn main() {
         scope.types.extend(f.generics.clone());
         let body = f.body.clone();
         let state = f.state;
+        let kind = if f.default_method.is_some() { "trait-default-method" } else if f.qualname.contains("::") { "method" } else { "function" };
+        let (line, column) = a.point(&f.file, f.start);
+        let caller = Caller { file: f.file.clone(), name: f.name.clone(), qualname: f.qualname.clone(), kind, line, column };
         let mut scanner = Scanner {
             a: &mut a,
             function: f,
+            callers: vec![caller],
             scopes: vec![scope],
             state,
         };

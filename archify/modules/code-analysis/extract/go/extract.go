@@ -336,6 +336,55 @@ func (l *loader) definition(file string, fn *ast.FuncDecl) record {
 	visit(fn.Body, 0)
 	return record{"file": file, "name": fn.Name.Name, "qualname": qualname, "line": r["line"], "endLine": r["endLine"], "complexity": complexity, "nesting": nesting, "deepestLine": deepest, "sourceRange": r, "definition": record{"kind": "FuncDecl", "sourceRange": r}}
 }
+func positionWithin(call, span record) bool {
+	line, column := call["line"].(int), call["column"].(int)
+	startLine, startColumn := span["line"].(int), span["column"].(int)
+	endLine, endColumn := span["endLine"].(int), span["endColumn"].(int)
+	if line < startLine || line > endLine {
+		return false
+	}
+	if line == startLine && column < startColumn {
+		return false
+	}
+	if line == endLine && column > endColumn {
+		return false
+	}
+	return true
+}
+func positionBefore(a, b record) bool {
+	if a["line"].(int) != b["line"].(int) {
+		return a["line"].(int) < b["line"].(int)
+	}
+	return a["column"].(int) < b["column"].(int)
+}
+func (l *loader) annotateCallers(calls []record) {
+	for _, call := range calls {
+		file, _ := call["file"].(string)
+		var best record
+		for _, def := range l.functions {
+			if def["file"] != file {
+				continue
+			}
+			kind, _ := def["definition"].(record)["kind"].(string)
+			span, _ := def["sourceRange"].(record)
+			if kind != "FuncDecl" || !positionWithin(call, span) {
+				continue
+			}
+			if best == nil || positionBefore(best["sourceRange"].(record), span) {
+				best = def
+			}
+		}
+		if best == nil {
+			continue
+		}
+		span := best["sourceRange"].(record)
+		kind := "function"
+		if best["qualname"] != best["name"] {
+			kind = "method"
+		}
+		call["directCaller"] = record{"file": file, "name": best["name"], "qualname": best["qualname"], "kind": kind, "line": span["line"], "column": span["column"]}
+	}
+}
 func (l *loader) interfaceMethod(file, owner string, name *ast.Ident, field *ast.Field) record {
 	r := l.span(field)
 	start, end := l.fset.PositionFor(field.Pos(), false).Offset, l.fset.PositionFor(field.End(), false).Offset
@@ -1063,6 +1112,7 @@ func main() {
 			})
 		}
 	}
+	l.annotateCallers(calls)
 	sort.Slice(calls, func(i, j int) bool {
 		a, b := calls[i], calls[j]
 		if a["file"] != b["file"] {

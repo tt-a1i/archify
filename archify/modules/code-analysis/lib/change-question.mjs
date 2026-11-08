@@ -226,13 +226,29 @@ function interfaceCandidateReason(edge, record, hasAlternatives) {
   return `Call through ${iface}.${method}: ${type} (${forms}) satisfies ${iface} via ${location}.${promotion} ${alternatives}`;
 }
 
+function interfaceMethodImplementations(side, definition) {
+  const unique = new Map();
+  for (const edges of side.interfaceEdges.values()) {
+    for (const edge of edges) {
+      if (edge.method.file !== definition.file || edge.method.line !== definition.line || edge.method.column !== definition.column) continue;
+      if (`${edge.interface.qualname}.${edge.method.name}` !== definition.qualname) continue;
+      const impl = edge.implementation;
+      const id = key(impl.type.package, impl.type.qualname, impl.reason, impl.method?.qualname || impl.promotedDeclaration?.qualname || null);
+      if (!unique.has(id)) unique.set(id, { interface: edge.interface, method: edge.method, implementation: impl });
+    }
+  }
+  const records = [...unique.values()].sort((a, b) => a.implementation.type.qualname.localeCompare(b.implementation.type.qualname));
+  return { coverage: 'available', role: 'captured implementations of this interface method; method-set evidence only, not runtime dispatch', runtimeTarget: 'not-determined', implementations: bounded(records), items: [], total: 0, included: 0, omitted: 0, limit: LIMIT };
+}
+
 function interfaceCandidates(side, definition) {
   if (side.facts.repository.language !== 'go') return null;
-  if (definition.kind !== 'FuncDecl' || definition.qualname === definition.name) {
-    return { coverage: 'not-applicable', reason: definition.kind === 'InterfaceMethod' ? 'interface-method-declaration' : 'not-a-concrete-method', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
-  }
   if (!side.hasInterfaceEvidence) {
     return { coverage: 'unavailable', reason: 'interface-implementation-evidence-not-captured', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  }
+  if (definition.kind === 'InterfaceMethod') return interfaceMethodImplementations(side, definition);
+  if (definition.kind !== 'FuncDecl' || definition.qualname === definition.name) {
+    return { coverage: 'not-applicable', reason: 'not-a-concrete-method', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
   }
   const edges = side.interfaceEdges.get(key(definition.file, definition.line, definition.column, definition.qualname)) || [];
   const items = [], seen = new Set(), edgeSeen = new Set();

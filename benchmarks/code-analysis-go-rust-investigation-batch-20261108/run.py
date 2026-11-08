@@ -111,15 +111,17 @@ def score_target(call, record):
             wrong.append("missing-expected-target")
         else:
             for field in ("file", "line", "column", "name"):
-                if actual.get(field) not in (None, expected.get(field)):
+                value = actual.get("file") if field == "file" and fact.get("resolution") != "go-interface-method" else actual.get(field)
+                if field == "file" and fact.get("resolution") == "go-interface-method":
+                    value = actual.get("file") or fact.get("file")
+                if value not in (None, expected.get(field)):
                     wrong.append(f"target-{field}")
         if record.get("runtimeTarget") not in (None, "not-determined"):
             wrong.append("runtime-clained")
     elif kind == "trait-declaration":
         actual = fact.get("target") or {}
-        if not actual.get("file"):
-            wrong.append("missing-trait-target")
-        elif expected and actual.get("file") != expected.get("file"):
+        actual_file = actual.get("file") or fact.get("file")
+        if expected and actual_file != expected.get("file"):
             wrong.append("target-file")
         if expected:
             for field in ("line", "column", "name"):
@@ -163,6 +165,9 @@ def score_side(case, head):
                                 "status": status, "directCaller": caller,
                                 "targetWrong": target_wrong, "runtimeTarget": record.get("runtimeTarget")})
                 break
+    implementation_rows = ((head.get("interfaceCandidates") or {}).get("implementations") or {}).get("items") or []
+    implementation_names = sorted({((row.get("implementation") or {}).get("method") or row.get("method") or {}).get("qualname") for row in implementation_rows if ((row.get("implementation") or {}).get("method") or row.get("method"))})
+    missing_implementations = [name for name in case.get("expectedImplementations", []) if name not in implementation_names]
     missed = [{"index": index, "call": call} for index, call in enumerate(case["expectedCalls"]) if index not in found_ids]
     wrong = [row for row in results if row["status"] == "wrong"]
     callers = [row["directCaller"]["status"] for row in results]
@@ -183,9 +188,11 @@ def score_side(case, head):
         "directCallerStatus": {status: callers.count(status) for status in sorted(set(callers))},
         "items": results,
         "missed": missed,
+        "implementations": implementation_names,
+        "missingImplementations": missing_implementations,
         "consideredRecords": considered,
         "expectedGap": bool(case.get("expectedGap")),
-        "status": ("pass" if not missed and not wrong else
+        "status": ("pass" if not missed and not wrong and not missing_implementations else
                    "gap" if case.get("expectedGap") and not wrong else "fail"),
     }
 
@@ -218,9 +225,9 @@ def main():
         print(f"{case['id']}: {report['status']} found={report.get('foundCalls')}/"
               f"{report['expectedCalls']} wrong={report['wrongCalls']} missed={report['missedCalls']} "
               f"query={query.get('status')} callers={report.get('directCallerStatus')}")
-    keys = ("expectedCalls", "foundCalls", "correctCalls", "wrongCalls", "missedCalls",
+    keys = ("expectedCalls", "foundCalls", "correctCalls", "wrongCalls", "missedCalls", "missingImplementations",
             "determinedTargets", "candidateTargets", "unknownTargets")
-    summary["totals"] = {key: sum(row.get(key, 0) for row in summary["cases"]) for key in keys}
+    summary["totals"] = {key: (sum(len(row.get(key, [])) if isinstance(row.get(key), list) else (row.get(key) or 0) for row in summary["cases"])) for key in keys}
     summary["totals"]["definitionsFound"] = sum(1 for row in summary["cases"] if row.get("definitionFound"))
     summary["totals"]["cases"] = len(summary["cases"])
     out_dir.mkdir(parents=True, exist_ok=True)

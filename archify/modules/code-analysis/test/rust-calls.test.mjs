@@ -368,3 +368,23 @@ impl Defaults for B {}
  assert.equal(selfCall.resolution,'unresolved');assert.equal(selfCall.reason,'rust-trait-or-method-dispatch');
  assert.ok(!defaultCalls.some(call=>call.defaultMethod.name==='act'),'a bodyless trait declaration produces no calls');
 });
+
+test('Rust direct caller names a local function and keeps the enclosing default method', t => {
+ const source=`pub trait Defaults {
+    fn twice(&self) -> u8 { fn inner() -> u8 { A::new().act() } inner() }
+}
+pub struct A(u8);
+impl A { pub fn new() -> Self { A(0) } }
+pub trait Left { fn act(&self) -> u8; }
+impl Left for A { fn act(&self) -> u8 { 1 } }
+impl Defaults for A {}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(row=>row.line===2&&row.column===48&&row.resolution==='rust-trait-impl');
+ assert.ok(call,'the call inside the local function is captured');
+ assert.deepEqual(call.directCaller,{file:'src/lib.rs',name:'inner',qualname:'Defaults::twice::inner',kind:'local-function',line:2,column:29});
+ assert.deepEqual(call.defaultMethod,{file:'src/lib.rs',name:'twice',qualname:'Defaults::twice',line:2,column:8,trait:'Defaults'});
+ const outer=facts.calls.find(row=>row.line===2&&row.column===65);
+ assert.equal(outer.directCaller.name,'twice');assert.equal(outer.directCaller.kind,'trait-default-method');assert.equal(outer.directCaller.column,5);
+});
