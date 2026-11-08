@@ -388,3 +388,56 @@ impl Defaults for A {}
  const outer=facts.calls.find(row=>row.line===2&&row.column===65);
  assert.equal(outer.directCaller.name,'twice');assert.equal(outer.directCaller.kind,'trait-default-method');assert.equal(outer.directCaller.column,5);
 });
+
+test('Rust changed trait default method lists trait-bound calls but not concrete impl calls', t => {
+ const body = (result) => `pub trait Gate {
+    fn enabled(&self) -> bool { ${result} }
+}
+
+pub struct S;
+
+impl Gate for S {
+    fn enabled(&self) -> bool { false }
+}
+
+fn accept<G: Gate>(g: &G) -> bool { g.enabled() }
+
+fn concrete(s: &S) -> bool { s.enabled() }
+`;
+ const root=fixture(t,{'src/lib.rs':body('true')});
+ const headRoot=fixture(t,{'src/lib.rs':body('false')});
+ const settings=config();
+ const pair=buildChangeQuestion({root:headRoot,baseRoot:root,base:captureChangeSide(root,settings,'rust'),head:captureChangeSide(headRoot,settings,'rust'),config:settings,entry:'src/lib.rs',question:'Who calls the changed default?'});
+ assert.equal(pair.status,'ready');
+ const change=pair.changedDefinitions.items[0];
+ assert.equal(change.head.definition.qualname,'Gate::enabled');
+ assert.equal(change.head.definition.line,2);
+ assert.equal(change.head.knownReferences.total,1);
+ const ref=change.head.knownReferences.items[0];
+ assert.equal(ref.fact.resolution,'rust-trait-method-candidate');
+ assert.equal(ref.fact.target.line,2);
+ assert.equal(ref.fact.target.column,8);
+ assert.equal(ref.fact.directCaller.name,'accept');
+ assert.equal(ref.fact.directCaller.kind,'function');
+});
+
+test('Rust method receiver fields resolve trait bounds and unique concrete impls', t => {
+ const source=`pub trait Gate { fn enabled(&self) -> bool { true } }
+pub struct Holder<G> { gate: G }
+impl<G: Gate> Holder<G> { pub fn check(&self) -> bool { self.gate.enabled() } }
+pub struct S;
+impl Gate for S { fn enabled(&self) -> bool { false } }
+pub struct Concrete { gate: S }
+impl Concrete { pub fn check(&self) -> bool { self.gate.enabled() } }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const bound=facts.calls.find(row=>row.line===3&&row.resolution==='rust-trait-method-candidate');
+ assert.ok(bound,'a field with a generic type reaches the trait bound');
+ assert.equal(bound.target.name,'enabled');
+ assert.equal(bound.directCaller.name,'check');
+ const concrete=facts.calls.find(row=>row.line===7&&row.resolution==='rust-trait-impl');
+ assert.ok(concrete,'a field with a nominal type reaches the unique impl');
+ assert.equal(concrete.target.name,'enabled');
+ assert.equal(concrete.target.line,5);
+});

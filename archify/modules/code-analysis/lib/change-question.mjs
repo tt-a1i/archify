@@ -279,8 +279,30 @@ function interfaceCandidates(side, definition) {
     ...(incomplete ? { unknown: `${incomplete} captured interface(s) were omitted from the edge set because their method evidence was incomplete. Absence of a candidate is not proof of non-implementation.` } : {}) };
 }
 
+function directReferences(side, definition) {
+  const keys = new Set([key(definition.file, definition.line, definition.column, definition.name)]);
+  // A Rust default body is registered at its fn keyword, while trait calls target the method name.
+  if (side.facts.repository.language === 'rust' && Array.isArray(side.facts.traits)) {
+    for (const trait of side.facts.traits) {
+      for (const method of trait.methods || []) {
+        if (method.qualname === definition.qualname) keys.add(key(method.file, method.line, method.column, method.name));
+      }
+    }
+  }
+  const seen = new Set(), records = [];
+  for (const target of keys) {
+    for (const record of side.references.get(target) || []) {
+      if (seen.has(record.factIndex)) continue;
+      seen.add(record.factIndex);
+      records.push(record);
+    }
+  }
+  records.sort((a, b) => a.fact.file.localeCompare(b.fact.file) || a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
+  return records;
+}
+
 function describeDefinition(side, definition) {
-  const refs = side.references.get(key(definition.file, definition.line, definition.column, definition.name)) || [];
+  const refs = directReferences(side, definition);
   const knownReferences = refs.map(record => {
     const status = !side.resolutionFresh ? 'resolution-input-changed' : side.files.get(record.fact.file)?.status || 'unverifiable';
     return { ...record, bindingAttribution: side.bindingAttribution, navigation: { status, location: status === 'valid' ? { file: record.fact.file, line: record.fact.line, column: record.fact.column, endLine: record.fact.endLine, endColumn: record.fact.endColumn } : null } };

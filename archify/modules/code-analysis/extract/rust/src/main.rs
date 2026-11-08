@@ -197,6 +197,8 @@ struct Function {
     params: Vec<String>,
     generics: Vec<String>,
     signature: Scope,
+    self_type: Option<TypeHint>,
+    self_ref: Option<TypeHint>,
     default_method: Option<DefaultMethod>,
 }
 #[derive(Clone)]
@@ -289,6 +291,7 @@ struct Analysis {
     modules: Vec<Module>,
     functions: Vec<Function>,
     nominal_parameters: BTreeMap<(usize, String), Parameters>,
+    fields: BTreeMap<(usize, String, String), TypeHint>,
     inherent_pending: Vec<InherentPending>,
     inherent: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
     traits: Vec<TraitDecl>,
@@ -591,6 +594,8 @@ impl Analysis {
             params,
             generics,
             signature: signature_scope(&f.sig),
+            self_type: None,
+            self_ref: None,
             default_method: None,
         });
         index
@@ -874,6 +879,19 @@ impl Analysis {
                 Item::Union(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Struct(s) => {
                     let name = s.ident.to_string();
+                    let struct_generics: BTreeSet<String> = s
+                        .generics
+                        .type_params()
+                        .map(|p| p.ident.to_string())
+                        .collect();
+                    for field in &s.fields {
+                        if let Some(ident) = &field.ident {
+                            if let Some(hint) = type_hint(&field.ty, &struct_generics) {
+                                self.fields
+                                    .insert((id, name.clone(), ident.to_string()), hint);
+                            }
+                        }
+                    }
                     let parameters = declaration_parameters(&s.generics, true);
                     let binding = if selected == 1 && parameters != Parameters::Unsupported {
                         if parameters != Parameters::None {
@@ -965,6 +983,22 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
+                                let impl_generics: BTreeSet<String> =
+                                    impl_types.iter().cloned().collect();
+                                self.functions[index].self_type =
+                                    type_hint(&im.self_ty, &impl_generics);
+                                if let syn::Type::Path(p) = im.self_ty.as_ref() {
+                                    if let Some(segment) = p.path.segments.last() {
+                                        if let PathArguments::AngleBracketed(args) = &segment.arguments {
+                                            if args.args.len() == 1 {
+                                                if let GenericArgument::Type(inner) = &args.args[0] {
+                                                    self.functions[index].self_ref =
+                                                        type_hint(inner, &impl_generics);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 for param in im_generics.type_params() {
                                     let name = param.ident.to_string();
                                     for bound in &param.bounds {
@@ -1600,6 +1634,23 @@ impl Scanner<'_> {
             }
             Expr::Reference(r) => self.receiver_hint(&r.expr),
             Expr::Paren(p) => self.receiver_hint(&p.expr),
+            Expr::Field(f) => {
+                let TypeHint::Nominal(parts, absolute) = self.receiver_hint(&f.base)? else {
+                    return None;
+                };
+                let (module, name) = self.resolve_nominal(&parts, absolute).or_else(|| {
+                    if parts.len() == 1 {
+                        Some((self.function.module, parts[0].clone()))
+                    } else {
+                        None
+                    }
+                })?;
+                let member = match &f.member {
+                    syn::Member::Named(ident) => ident.to_string(),
+                    syn::Member::Unnamed(index) => index.index.to_string(),
+                };
+                self.a.fields.get(&(module, name, member)).cloned()
+            }
             Expr::Struct(s) => Some(TypeHint::Nominal(
                 path_parts(&s.path),
                 s.path.leading_colon.is_some(),
@@ -1610,6 +1661,16 @@ impl Scanner<'_> {
                 };
                 if p.qself.is_some() || p.path.segments.len() < 2 {
                     return None;
+                }
+                let base = p.path.segments[0].ident.to_string();
+                let method = p.path.segments[1].ident.to_string();
+                if p.path.segments.len() == 2
+                    && base == "self"
+                    && ["as_ref", "deref", "borrow"].contains(&method.as_str())
+                {
+                    if let Some(hint) = &self.function.self_ref {
+                        return Some(hint.clone());
+                    }
                 }
                 let mut parts = path_parts(&p.path);
                 parts.pop();
@@ -2211,6 +2272,7 @@ fn main() {
         modules: Vec::new(),
         functions: Vec::new(),
         nominal_parameters: BTreeMap::new(),
+        fields: BTreeMap::new(),
         inherent_pending: Vec::new(),
         inherent: BTreeMap::new(),
         traits: Vec::new(),
@@ -2329,6 +2391,9 @@ fn main() {
         let mut scope = f.signature.clone();
         scope.values.extend(f.params.clone());
         scope.types.extend(f.generics.clone());
+        if let Some(hint) = &f.self_type {
+            scope.local_types.insert("self".into(), hint.clone());
+        }
         let body = f.body.clone();
         let state = f.state;
         let kind = if f.default_method.is_some() { "trait-default-method" } else if f.qualname.contains("::") { "method" } else { "function" };

@@ -59,20 +59,33 @@ declared `T: Trait` bound, `dyn Trait`, `Trait::method` or generic path target
 the trait method declaration only (`rust-trait-method-candidate`); they prove
 trait use, not the runtime implementation. Change questions list these as
 `traitCandidates` with `runtimeTarget: not-determined`, separately from direct
-references.
+references. When the selected definition is the trait method itself, its
+trait-dispatch callsites are listed under direct references: a default body is
+registered at its `fn` keyword while calls target the method name, so both
+source anchors are consulted for the same declaration.
 
 v6 inventories a trait method's default body once per source declaration, not
 once per implementing type. A declaration without a body adds no call. Calls in
 the body carry `defaultMethod` context (file, name, qualname, line, column and
 trait) and use the existing receiver typing: a local value with a captured
 nominal type can resolve to a unique trait impl, while calls that depend on the
-concrete `Self`, fields or unresolved types remain unresolved. Multiple
+concrete `Self` or unresolved types remain unresolved. Multiple
 implementations of the trait do not duplicate the body's calls.
 
+Method receivers also resolve through `self.<field>` when the owning impl's
+self type and the struct field declaration are captured. A field declared as a
+generic parameter with a trait bound reaches that trait method, and a field
+declared with a unique nominal type selects its unique impl. Renamed generics
+between impl and struct (for example `impl<S> Subscriber for Layered<L, S>`
+where the field is declared `inner: I`), pattern bindings, loop variables,
+macro-produced receivers and nested accessor chains other than
+`as_ref`/`deref`/`borrow` remain unresolved.
+
 Unsupported applicability remains explicit: external or macro-generated traits,
-supertrait/blanket impls, type aliases/Self, generic argument matching, receiver
-types from fields/chained calls or reassigned locals, and calls that require the
-concrete `Self` inside a default body. Concrete types implementing several traits
+supertrait/blanket impls, type aliases/Self, generic argument substitution,
+receiver types from renamed generic fields, pattern bindings, loop variables,
+nested chains or reassigned locals, and calls that require the concrete `Self`
+inside a default body. Concrete types implementing several traits
 with the same method stay unresolved rather than selecting one. Repeated
 trait-method qualnames (same type, same method name in different traits) remain
 duplicate slots in paired questions, while their head-only traitCandidates stay
