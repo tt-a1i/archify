@@ -1,0 +1,132 @@
+{
+  "baseline": "0e41f1e7fef84e19776305cfc8630311ff01e814",
+  "project": {
+    "url": "https://github.com/apache/commons-lang",
+    "revision": "c8774fa74adbbbcd4e5f915ab6bc3aa10d877419",
+    "hashes": {
+      "src/test/java/org/apache/commons/lang3/AbstractLangTest.java": "35a91d8a8071b091ec2fcd3697996a5a3d5077bf3f45fe22d9fda3d093757dd2",
+      "src/test/java/org/apache/commons/lang3/StringUtilsTest.java": "2cb0a1f5c25369380c6693291c93d1c380cdc3da0f7584e550e676c6acd3c513",
+      "src/test/java/org/apache/commons/lang3/StringUtilsEmptyBlankTest.java": "86696a23e3adf769d5f311c5a52790681406764b51f17056b08c875c0f31ef07",
+      "src/main/java/org/apache/commons/lang3/StringUtils.java": "b9e7f9cd0f13d992283ba23616813df22ed366aa55b372e22034a13591022cd1"
+    }
+  },
+  "stage": "Upstream source inspection before this new superclass scope baseline/implementation. Two existing defaultString answers are retained design inputs; two isEmpty calls are reserved from initial rule tuning.",
+  "exposure": "Previously exposed Commons Lang corpus; not a blind repository.",
+  "question": "Can a captured, closed ordinary superclass allow explicit class-qualified static source navigation without confusing inherited fields/member types with the class?",
+  "callerClasses": [
+    {
+      "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+      "line": 60,
+      "extends": "AbstractLangTest"
+    },
+    {
+      "file": "src/test/java/org/apache/commons/lang3/StringUtilsEmptyBlankTest.java",
+      "line": 29,
+      "extends": "AbstractLangTest"
+    }
+  ],
+  "parent": {
+    "file": "src/test/java/org/apache/commons/lang3/AbstractLangTest.java",
+    "line": 27,
+    "kind": "ordinary class",
+    "explicitSupertypes": [],
+    "fields": [],
+    "memberTypes": [],
+    "methods": [
+      {
+        "name": "after",
+        "line": 33
+      },
+      {
+        "name": "validateNullToStringStyleRegistry",
+        "line": 37
+      }
+    ],
+    "note": "Parent source inspected in full: no inherited value/member type named StringUtils. Its imports are not inherited members. Object remains implicit and must be accounted for."
+  },
+  "cases": [
+    {
+      "id": "default-one",
+      "cohort": "design-prior-known-miss",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 622,
+        "column": 26,
+        "endLine": 622,
+        "endColumn": 57,
+        "text": "StringUtils.defaultString(null)"
+      },
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "name": "defaultString",
+        "line": 1553,
+        "column": 5
+      },
+      "targetHeader": "    public static String defaultString(final String str) {"
+    },
+    {
+      "id": "default-two",
+      "cohort": "design-prior-known-miss",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java",
+        "line": 629,
+        "column": 30,
+        "endLine": 629,
+        "endColumn": 69,
+        "text": "StringUtils.defaultString(null, \"NULL\")"
+      },
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "name": "defaultString",
+        "line": 1583,
+        "column": 5
+      },
+      "targetHeader": "    @Deprecated"
+    },
+    {
+      "id": "empty-null",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsEmptyBlankTest.java",
+        "line": 122,
+        "column": 20,
+        "endLine": 122,
+        "endColumn": 45,
+        "text": "StringUtils.isEmpty(null)"
+      },
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "name": "isEmpty",
+        "line": 3604,
+        "column": 5
+      },
+      "targetHeader": "    public static boolean isEmpty(final CharSequence cs) {"
+    },
+    {
+      "id": "empty-value",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "call": {
+        "file": "src/test/java/org/apache/commons/lang3/StringUtilsEmptyBlankTest.java",
+        "line": 125,
+        "column": 21,
+        "endLine": 125,
+        "endColumn": 47,
+        "text": "StringUtils.isEmpty(\"foo\")"
+      },
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "name": "isEmpty",
+        "line": 3604,
+        "column": 5
+      },
+      "targetHeader": "    public static boolean isEmpty(final CharSequence cs) {"
+    }
+  ],
+  "requiredUnknowns": [
+    "Uncaptured/excluded/malformed/ambiguous superclass, cycles and incomplete parent inventories must not silently become complete.",
+    "Inherited field or member type named StringUtils can change qualifier binding; prove source identity or remain unknown.",
+    "Generic/incomplete/external hierarchy, interfaces, nested/anonymous/lambda contexts and static wildcard value imports remain separate unless independently supported.",
+    "Bare inherited calls/argument applicability/virtual dispatch/compiled runtime behavior are not established by this question."
+  ],
+  "projectExecuted": false
+}
