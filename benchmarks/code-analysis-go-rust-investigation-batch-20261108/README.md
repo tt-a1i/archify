@@ -10,7 +10,9 @@ does not scan source itself. Every case records the fixed base/head commits, the
 changed definition, exact expected call ranges, direct caller name/line/kind,
 provable target, unknowns and the expected status (`pass` or a documented
 `expectedGap`). This revision covers 20 cases and 86 expected call positions:
-the 12 cases from the first stage plus 8 new or frozen cases.
+the 12 cases from the first stage plus 8 new or frozen cases. The earlier 12
+cases still contribute exactly 73 positions and are unchanged; the 8 new cases
+add 13.
 
 ## Baselines and ancestry
 
@@ -24,6 +26,19 @@ the 12 cases from the first stage plus 8 new or frozen cases.
 The stage-2 baseline and candidate ran the same queries against the same sample
 roots. Only the extractor/query code differs. Both lines are ancestors of this
 branch, and the team commits from the earlier stage remain in history.
+
+### Remote reconciliation (2026-11-09)
+
+- #1290 is still Draft; this audit adds documentation/evidence commits on top of
+  `c10ea384c`. Its base, #1289, still points at `70bdf0227` and is open/unmerged.
+- `origin/labs/code-analysis` is still `bf0a29e76` (2026-11-04); this stage did
+  not update or merge it.
+- `origin/main` advanced with `#1291`/`#1294` (DSH docs) and two branch updates
+  unrelated to Code Analysis. Since the branch point `654da74e0`, `origin/main`
+  has no changes under `archify/modules/code-analysis`, so no newer upstream
+  fix overlaps this work.
+- The team Wiki page for this batch was updated to the final numbers.
+
 
 ## Cases
 
@@ -61,7 +76,10 @@ source, before any candidate run in this batch. `echo-remove-custom-method` and
 their frozen answers. `bytes-truncate-zero` replaced
 `http-insert-occupied-mult` as the Rust reserved case after the defaulted-generic
 owner fix was discovered, and `http-insert-occupied-mult` moved to the regression
-set.
+set. A later source-only review, run without the CLI or answer keys, independently
+froze the same bytes definition (`src/bytes.rs:569`) and production call
+(`599:9`, caller `clear`); its test-call list is profile-excluded and recorded in
+`evidence/readers/bytes-source-review.md`.
 
 Selection notes:
 
@@ -132,6 +150,11 @@ and `omit-end-position` preservation checks on the one Ripgrep item that was
 already `wrong` before mutation, so their status could not change and the check
 is not discriminative there. The candidate run executed 136 checks, all passed,
 with every kind covered (`evidence/stage2-{baseline,final}/counterexamples.json`).
+Of the candidate checks, 29 were not applicable and passed as such because the
+mutation had no record to act on: 8 `delete-target` (no concrete target), 9
+`promote-candidate` (no candidate target), 10 `omit-target-file` (no same-file
+target) and 2 `wrong-declaration` (no target record). The baseline had 20 such
+checks (5 / 6 / 9 / 0).
 
 ## Results (same 20 questions on both revisions)
 
@@ -177,6 +200,28 @@ keys omitted, not false targets:
 Both stay outside `expectedCalls` so the frozen keys remain comparable; they are
 recorded here as answer-key omissions, and the scored extras are therefore 0
 proven wrong targets.
+
+### Reader paths
+
+Each path can be followed with the normal `code-analysis task` output:
+
+- **Go, external interface (new):** `gin` definition
+  `*responseWriter.Hijack` at `response_writer.go:111`; `interfaceCandidates`
+  list `response_writer_test.go:120:20`, `190:23`, `245:23` with direct callers
+  `TestResponseWriterHijackAfterWriteHeaderNow` etc. and no target, because the
+  static method is external `net/http.Hijacker.Hijack`. The baseline showed 0/3.
+- **Rust, trait receiver (new):** `tracing` definition `Layer::event_enabled` at
+  `layer/mod.rs:879`; `knownReferences` list `layered.rs:143:12`, `293:12` and
+  `mod.rs:1514:32`, all trait-method candidates with `runtimeTarget` unknown.
+  The baseline showed 0/6.
+- **Go, determined method (reserved):** `echo` definition `*routeMethods.set` at
+  `router.go:226`; one reference at `router.go:860:2`, caller
+  `(*node).setHandler:859` (`method`), resolution `go-direct-method`.
+- **Rust, determined candidate (reserved):** `bytes` definition
+  `Bytes::truncate` at `src/bytes.rs:569`; one production reference at
+  `src/bytes.rs:599:9`, caller `Bytes::clear:598` (`method`),
+  `rust-inherent-source-candidate`.
+
 
 ### Remaining misses (8)
 
@@ -299,7 +344,7 @@ reported a misleading target.
 
 ## Change groups
 
-Eleven new base/head groups plus two regression groups (questions from one pair
+Thirteen new base/head groups plus two regression groups (questions from one pair
 count once):
 
 | Group | Cases |

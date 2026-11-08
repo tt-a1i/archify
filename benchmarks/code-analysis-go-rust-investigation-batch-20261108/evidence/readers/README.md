@@ -58,3 +58,14 @@ Neither reader had access to `cases/*.json`. Both reproduced the frozen
 coordinates from the CLI output and source alone, and the direct caller kinds
 matched. Their reported gaps are display/navigation limits already recorded in
 the batch README, not coordinate errors.
+
+## Source-only re-freeze of the replacement Rust reserved case
+
+A third reviewer, with no CLI and no answer key, read only the two bytes trees and
+the upstream diff. It froze the same definition (`src/bytes.rs:569`,
+`bytes::Bytes::truncate`) and the same production call (`src/bytes.rs:599:9`,
+caller `Bytes::clear:598`, inherent method, determined). It also listed seven
+test calls under `tests/`, which it correctly marked as profile-dependent; the
+benchmark's default source profile excludes them. Its full report is
+`bytes-source-review.md`. This confirms the replacement reserved key is
+independently derivable from source alone.
