@@ -1,0 +1,31 @@
+{
+  "candidate": "a150e7682",
+  "rustAnalyzer": "rust-analyzer 1.89.0 (29483883 2025-08-04)",
+  "projects": {
+    "regex": {
+      "revision": "9870c06e6c772daaad7ab612faab29130753e41c",
+      "lockSha256": "a191beb98777859e5a3a14c72144d1981d7506e3815ab9cb4f2e73fd80e3eb6b"
+    },
+    "serde-json": {
+      "revision": "4d4f53c3b7de3259b6a8a15ef4d5f4edb47af32f",
+      "lockSha256": "4b2b9805c69728cc0f86308b637218ad9d73dd1c7b30d48dac1c5455bd82bdb7"
+    }
+  },
+  "profiles": {
+    "regex": {
+      "callsSha256": "020e9dfc12347d6076b94639a1598e289d4b123365f6fd96867a2646158bf450",
+      "functionsSha256": "bbf2219a44a923c5282204dd1ce43702429f22cad1003b0ec4e421593a4fb016",
+      "sourcesSha256": "2d3780b254399975e79eb4d7e2ffe7c4ed7c3ee7e21946d5adfbdbbedcc32200",
+      "model": "rust-source-direct-v4",
+      "resolution": "rust-lifetime-inherent-source-candidate"
+    }
+  },
+  "target": "aarch64-apple-darwin",
+  "includeKnownMapMisses": false,
+  "negativeControlTarget": {
+    "file": "regex-syntax/src/hir/translate.rs",
+    "name": "new",
+    "line": 685,
+    "column": 5
+  }
+}
