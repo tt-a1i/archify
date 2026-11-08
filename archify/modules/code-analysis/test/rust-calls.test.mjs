@@ -120,7 +120,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v3');
+ assert.equal(facts.callModel,'rust-source-direct-v4');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -224,5 +224,60 @@ test('Rust changed specialized constructor retrieves its verified imported calle
   const refs=brief.changedDefinitions.items[0][side].knownReferences;
   assert.equal(refs.coverage,'available');assert.equal(refs.total,1);
   assert.equal(refs.items[0].navigation.status,'valid');assert.equal(refs.items[0].navigation.location.file,'src/lib.rs');
+ }
+});
+
+test('Rust lifetime-only constructor paths preserve imported identity and distinguish enum variants',t=>{
+ const root=fixture(t,{'Cargo.toml':'[workspace]\nmembers=["api","app"]\nresolver="2"\n',
+ 'api/Cargo.toml':'[package]\nname="borrowed-api"\nversion="0.1.0"\nedition="2021"\n[lib]\nname="actual_api"\n',
+ 'app/Cargo.toml':'[package]\nname="client"\nversion="0.1.0"\nedition="2021"\n[dependencies]\nrenamed={package="borrowed-api",path="../api"}\n',
+ 'api/src/lib.rs':'pub mod model;\n',
+ 'app/src/lib.rs':"use renamed::model::Borrowed as Imported;\npub fn caller(){Imported::new(\"one\");renamed::model::Borrowed::new(\"two\");renamed::model::Either::new(\"three\");}\n",
+ 'api/src/model.rs':`pub struct Borrowed<'a>(&'a str);
+impl<'a> Borrowed<'a>{pub fn new(v:&'a str)->Self{Self(v)}}
+pub enum Either<'a>{Value(&'a str)}
+impl<'a> Either<'a>{pub fn new(v:&'a str)->Self{Self::Value(v)}}
+pub enum Collision<'a>{Make(&'a str)}
+impl<'a> Collision<'a>{pub fn Make()->Self{Self::Make("")}}
+pub fn variant(){Collision::Make("value");}
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const direct=calls(facts,'app/src/lib.rs');assert.equal(direct.length,3);
+ assert.ok(direct.every(c=>c.resolution==='rust-lifetime-inherent-source-candidate'&&c.target.file==='api/src/model.rs'));
+ assert.deepEqual(direct.map(c=>c.target.line),[2,2,4]);
+ assert.equal(calls(facts,'api/src/model.rs').find(c=>c.line===7).resolution,'unresolved');
+ const q=buildQuestion({root,facts,entry:'app/src/lib.rs',symbol:'caller',question:'Which borrowed implementation is selected by these paths?'});
+ assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
+ const old=structuredClone(facts);old.callModel='rust-source-direct-v3';assert.ok(schemaErrors('raw-facts',old).some(e=>String(e.message).includes('v4')));
+});
+
+test('Rust lifetime-only candidates retain bounded, concrete, mixed, cfg, receiver and explicit-argument unknowns',t=>{
+ const root=fixture(t,{'src/lib.rs':`struct Plain<'a>(&'a str);impl<'a> Plain<'a>{fn new(v:&'a str)->Self{Self(v)}}
+struct Bounded<'a:'b,'b>(&'a str,&'b str);impl<'a:'b,'b> Bounded<'a,'b>{fn new(){}}
+struct Mixed<'a,T>(&'a T);impl<'a,T> Mixed<'a,T>{fn new(){}}
+struct Concrete<'a>(&'a str);impl Concrete<'static>{fn new(){}}
+struct Shared<'a,'b>(&'a str,&'b str);impl<'a> Shared<'a,'a>{fn new(){}}
+struct Receiver<'a>(&'a str);impl<'a> Receiver<'a>{fn new(self){}}
+struct Conditional<'a>(&'a str);impl<'a> Conditional<'a>{fn new(){}}
+#[cfg(build_unknown)]impl<'a> Conditional<'a>{fn new(){}}
+type Alias<'a>=Plain<'a>;
+fn unsupported(){Bounded::new();Mixed::new();Concrete::new();Shared::new();Receiver::new();Conditional::new();Alias::new("");Plain::<'static>::new("");}
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const selected=calls(facts,'src/lib.rs').filter(c=>c.line===10);assert.equal(selected.length,8);
+ assert.ok(selected.every(c=>c.resolution==='unresolved'));
+});
+
+test('Rust paired changed lifetime constructor retrieves its captured imported caller',t=>{
+ const lib='mod model;use crate::model::Borrowed as Imported;\npub fn caller(){Imported::new("value");}\n';
+ const before="pub struct Borrowed<'a>(&'a str);\nimpl<'a> Borrowed<'a>{pub fn new(v:&'a str)->Self{Self(v)}}\n";
+ const baseRoot=fixture(t,{'src/lib.rs':lib,'src/model.rs':before});
+ const root=fixture(t,{'src/lib.rs':lib,'src/model.rs':before.replace('Self(v)','Self(if v.is_empty(){"changed"}else{v})')});
+ const cfg=config(),base=captureChangeSide(baseRoot,cfg,'rust'),head=captureChangeSide(root,cfg,'rust');
+ const q=buildChangeQuestion({base,head,config:cfg,entry:'src/model.rs',question:'Which known caller refers to this changed borrowed constructor?'});
+ assert.equal(q.changedDefinitions.total,1);
+ for(const side of ['base','head']){
+  const refs=q.changedDefinitions.items[0][side].knownReferences;assert.equal(refs.coverage,'available');assert.equal(refs.total,1);
+  assert.equal(refs.items[0].fact.resolution,'rust-lifetime-inherent-source-candidate');assert.equal(refs.items[0].navigation.status,'valid');
  }
 });

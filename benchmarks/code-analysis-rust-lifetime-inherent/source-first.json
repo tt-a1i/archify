@@ -1,0 +1,133 @@
+{
+  "baseline": "3f42ee34b920b15cdd808fc54928e653f883cae1",
+  "latestCumulative": "196dd3569efba785d456a6dd0825ea6ebdf489bf",
+  "project": {
+    "url": "https://github.com/rust-lang/regex",
+    "revision": "9870c06e6c772daaad7ab612faab29130753e41c",
+    "hashes": {
+      "Cargo.toml": "9d6c1e1e5cefd8577f2f783341b268f95d9dad922e3fd62f5606a304ab1d8a9b",
+      "regex-syntax/Cargo.toml": "4c18da01da8ea5c747cb548eee8c34f935510be514b62869ff046f53aca37583",
+      "regex-syntax/src/lib.rs": "5ae457d402e49443bdb23b71353693dd3b0d263b57a6eeb9eb5b5dae5c901bdd",
+      "regex-syntax/src/hir/mod.rs": "599ceb4921f2345a7d01d2390188fad13f236b98efe7a38c9beb9a0ce5c4ebad",
+      "regex-syntax/src/ast/mod.rs": "21cda9fe9e1810b285cb8f8a2aa5eeaff6c38e256ceed036b68c66fb6b0124d6",
+      "regex-syntax/src/ast/visitor.rs": "f0fdf758801fe70e6b299b73ab63196e814af95ef6eccad7ef4f72075743fcf6",
+      "regex-syntax/src/hir/translate.rs": "6129a12a686a6ec8965cdeb9f889640891da6aae75995606080fa88d4dd1a602",
+      "regex-syntax/src/hir/visitor.rs": "71ca9c93aa48a5ed445399659fa6455093a1bbd9ef44b66bc7095c1b08b2ec1f"
+    }
+  },
+  "stage": "Source inspected before any lifetime-only rule implementation. Previously analyzed corpus, not blind; two same-spelled constructors reserved from initial rule tuning.",
+  "question": "Can bare nominal constructor paths reach unique lifetime-only inherent source declarations, preserve module identity and recover a source-verified caller, without guessing receiver/trait targets?",
+  "cases": [
+    {
+      "id": "translator-new",
+      "cohort": "design-prior-known-miss",
+      "call": {
+        "line": 174,
+        "column": 25,
+        "endColumn": 56,
+        "text": "TranslatorI::new(self, pattern)",
+        "file": "regex-syntax/src/hir/translate.rs",
+        "endLine": 174
+      },
+      "sourceIdentity": {
+        "file": "regex-syntax/src/hir/translate.rs",
+        "line": 685,
+        "column": 8,
+        "name": "new"
+      },
+      "target": {
+        "file": "regex-syntax/src/hir/translate.rs",
+        "name": "new",
+        "line": 684,
+        "column": 5
+      },
+      "header": "    fn new(trans: &'t Translator, pattern: &'p str) -> TranslatorI<'t, 'p> {"
+    },
+    {
+      "id": "ast-heap-new",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "call": {
+        "line": 119,
+        "column": 5,
+        "endColumn": 23,
+        "text": "HeapVisitor::new()",
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "endLine": 119
+      },
+      "sourceIdentity": {
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "name": "new",
+        "line": 201,
+        "column": 8
+      },
+      "target": {
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "name": "new",
+        "line": 201,
+        "column": 5
+      },
+      "header": "    fn new() -> HeapVisitor<'a> {"
+    },
+    {
+      "id": "hir-heap-new",
+      "cohort": "reserved-from-initial-rule-tuning",
+      "call": {
+        "line": 66,
+        "column": 5,
+        "endColumn": 23,
+        "text": "HeapVisitor::new()",
+        "file": "regex-syntax/src/hir/visitor.rs",
+        "endLine": 66
+      },
+      "sourceIdentity": {
+        "file": "regex-syntax/src/hir/visitor.rs",
+        "name": "new",
+        "line": 105,
+        "column": 8
+      },
+      "target": {
+        "file": "regex-syntax/src/hir/visitor.rs",
+        "name": "new",
+        "line": 105,
+        "column": 5
+      },
+      "header": "    fn new() -> HeapVisitor<'a> {"
+    }
+  ],
+  "controls": [
+    {
+      "file": "regex-syntax/src/ast/visitor.rs",
+      "line": 215,
+      "column": 13,
+      "endLine": 215,
+      "endColumn": 35,
+      "text": "visitor.visit_pre(ast)",
+      "expectedTarget": null,
+      "reason": "Generic Visitor receiver call; no concrete implementation is established."
+    },
+    {
+      "file": "regex-syntax/src/hir/visitor.rs",
+      "line": 118,
+      "column": 13,
+      "endLine": 118,
+      "endColumn": 35,
+      "text": "visitor.visit_pre(hir)",
+      "expectedTarget": null,
+      "reason": "Generic Visitor receiver call; no concrete implementation is established."
+    }
+  ],
+  "profile": {
+    "tests": false,
+    "defaultFeatures": true,
+    "target": "aarch64-apple-darwin",
+    "offline": true
+  },
+  "sourcePath": "root workspace -> regex-syntax library -> lib.rs pub mod hir/ast -> hir/mod.rs or ast/mod.rs -> translate/visitor module; direct local type paths, no use alias at these three calls.",
+  "knownCallers": "rg finds one physical direct path for TranslatorI::new and one HeapVisitor::new in each ast/hir visitor module. Chained .visit remains a separate receiver call.",
+  "rangeContract": "Source identity points name the fn identifier. Existing Rust declaration target range includes leading attributes/doc comments; exact target points are source-verified under that existing contract, not learned from a new candidate.",
+  "unknowns": [
+    "Trait/receiver dispatch, mixed type/const generics, explicit call type/lifetime arguments, bounded lifetimes, aliases/Self and full applicability need separate evidence.",
+    "No project build, expanded macros, proc macros, remote dependency source or runtime dispatch proof."
+  ],
+  "projectExecuted": false
+}

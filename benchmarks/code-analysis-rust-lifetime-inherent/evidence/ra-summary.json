@@ -1,0 +1,61 @@
+{
+  "runtimeCommit": "a150e76822add69d0902b270bcd8d1fab843b58a",
+  "observations": 95,
+  "physicalCallSites": 84,
+  "profiles": {
+    "regex": {
+      "counts": {
+        "agrees": 73,
+        "different": 0,
+        "unavailable": 0,
+        "identifier-not-found": 0
+      },
+      "seconds": 4.3422609160188586,
+      "settingsVerifiedDisabled": {
+        "checkOnSave": true,
+        "procMacro_enable": true,
+        "cargo_buildScripts_enable": true
+      }
+    },
+    "serde-default": {
+      "counts": {
+        "agrees": 11,
+        "different": 0,
+        "unavailable": 0,
+        "identifier-not-found": 0
+      },
+      "seconds": 3.8217193329473957,
+      "settingsVerifiedDisabled": {
+        "checkOnSave": true,
+        "procMacro_enable": true,
+        "cargo_buildScripts_enable": true
+      }
+    },
+    "serde-arbitrary": {
+      "counts": {
+        "agrees": 11,
+        "different": 0,
+        "unavailable": 0,
+        "identifier-not-found": 0
+      },
+      "seconds": 3.8217105420771986,
+      "settingsVerifiedDisabled": {
+        "checkOnSave": true,
+        "procMacro_enable": true,
+        "cargo_buildScripts_enable": true
+      }
+    }
+  },
+  "lspLocationsPerObservation": 1,
+  "counts": {
+    "agrees": 95,
+    "different": 0,
+    "unavailable": 0
+  },
+  "limits": [
+    "Serde two profiles overlap on11physical sites; observations are not independent physical samples.",
+    "Selected3regex sites are included in the73regex observations.",
+    "Language-server source definition agreement, not compilation, runtime dispatch, complete impact or whole-project precision/recall."
+  ],
+  "projectExecuted": false
+}
