@@ -243,3 +243,5 @@ Continue with **Trace**, **Check**, and **Deliver** above. In particular, read t
 actual caller and relevant branches on both sides, then distinguish source-backed
 interpretation from executed behavior. Completion requires a short analysis with
 source references and named unknowns, not merely this orientation JSON.
+
+For `python-lexical-v2`, one unique unconditional explicit from-import reexport may connect a call through its API module to the captured implementation. Read the two recorded static import edges for that path; aliases do not change the definition name. Longer/rebound/conditional/wildcard chains and runtime module initialization remain unproved. Saved v1 output retains its direct-only binding scope.

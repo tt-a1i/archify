@@ -23,7 +23,7 @@ const selected = args => buildQuestion({ ...args, symbol: 'chosen' }).calls;
 
 test('Python call inventory, direct alias targets, async definition and known zero', t => {
   const args = fixture(t, { 'entry.py': 'from helper import work as alias\ndef local(): pass\nasync def task(): pass\ndef chosen():\n    local()\n    alias()\n    task()\n    obj.method()\n    factory()()\n', 'helper.py': 'def work(): pass\n' });
-  assert.equal(args.facts.callModel, 'python-lexical-v1'); assert.equal(args.facts.repository.adapterRevision, 9);
+  assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 10);
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
   const calls = selected(args); assert.equal(calls.coverage, 'available'); assert.equal(calls.total, 6);
   assert.deepEqual(calls.records.map(r => r.fact.resolution), ['same-file-function', 'imported-function', 'same-file-function', ...Array(3).fill('unresolved')]);
@@ -32,7 +32,7 @@ test('Python call inventory, direct alias targets, async definition and known ze
   const zero = buildQuestion({ ...args, symbol: 'local' }).calls; assert.equal(zero.coverage, 'available'); assert.equal(zero.total, 0);
 });
 
-test('Python unsupported/rebound/conditional/decorated/reexport/class targets stay inventoried', t => {
+test('Python unsupported/rebound/conditional/decorated/long-reexport/class targets stay inventoried', t => {
   const args = fixture(t, { 'entry.py': `from helper import work as alias
 from reexport import work as indirect
 if enabled:
@@ -53,7 +53,7 @@ def chosen():
     duplicate()
     Target()
     obj.method()
-`, 'helper.py': 'def work(): pass\n', 'reexport.py': 'from helper import work\n' });
+`, 'helper.py': 'def work(): pass\n', 'reexport.py': 'from forwarded import work\n', 'forwarded.py': 'from helper import work\n' });
   assert.deepEqual(selected(args).records.map(r => r.fact.resolution), ['imported-function', ...Array(7).fill('unresolved')]);
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
   const star = fixture(t, { 'entry.py': 'from helper import *\ndef helper(): pass\ndef chosen(): helper()\n', 'helper.py': 'def work(): pass\n' });
@@ -207,7 +207,7 @@ test('Python external from-import calls stay unresolved and normal check succeed
   const run = spawnSync(process.execPath, [cli, 'code-analysis', 'check', args.root, '--language', 'py', '--out', output, '--fail-on', 'never', '--json'], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stdout + run.stderr);
   const captured = JSON.parse(fs.readFileSync(path.join(output, 'raw-facts.json'), 'utf8'));
-  assert.equal(captured.calls[0].resolution, 'unresolved'); assert.equal(captured.callModel, 'python-lexical-v1');
+  assert.equal(captured.calls[0].resolution, 'unresolved'); assert.equal(captured.callModel, 'python-lexical-v2');
 });
 
 test('Python captured package and namespace module direct imports use the analyzed directories', t => {
@@ -280,5 +280,47 @@ class C:
   assert.ok(args.facts.calls.filter(c => !imported.includes(c)).every(c => c.resolution === 'unresolved' && !c.target));
   assert.deepEqual(selected(args).records[0].targetNavigation.location, { file: 'helper.py', name: 'handler', line: 1, column: 1 });
   assert.equal(selected(args).records[0].targetNavigation.status, 'valid');
+  assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
+});
+
+test('Python one-hop explicit package reexports navigate implementation and retain guards', t => {
+  const args = fixture(t, {
+    'entry.py': `from api import exposed as alias
+from blocked import conditional, rebound, decorated, repeated, deep
+from cyclic import loop
+from back import work as returned
+from star import exposed as wildcard
+
+def chosen():
+    alias()
+    conditional()
+    rebound()
+    decorated()
+    repeated()
+    deep()
+    loop()
+    returned()
+    wildcard()
+`,
+    'api/__init__.py': 'from impl import work as exposed\n',
+    'impl.py': 'def work(): pass\n@decorate\ndef decorated(): pass\n',
+    'blocked.py': `if enabled:
+    from impl import work as conditional
+from impl import work as rebound
+rebound = replacement
+from impl import decorated
+from impl import work as repeated
+from impl import work as repeated
+from api import exposed as deep
+`,
+    'cyclic.py': 'from cyclic import loop\n',
+    'back.py': 'from entry import chosen as work\n',
+    'star.py': 'from impl import work as exposed\nfrom external import *\n',
+  });
+  const calls = selected(args);
+  assert.equal(calls.records[0].fact.resolution, 'imported-function');
+  assert.deepEqual(calls.records[0].targetNavigation.location, { file: 'impl.py', name: 'work', line: 1, column: 1 });
+  assert.equal(calls.records[0].targetNavigation.status, 'valid');
+  assert.ok(calls.records.slice(1).every(r => r.fact.resolution === 'unresolved'));
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
 });
