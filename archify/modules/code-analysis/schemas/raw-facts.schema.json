@@ -758,6 +758,7 @@
               "no-local-function-binding",
               "ambiguous-binding",
               "go-method-dispatch",
+              "go-interface-external-method",
               "java-inherited-build-scope",
               "rust-cfg-unselected",
               "rust-trait-or-method-dispatch",
@@ -804,6 +805,30 @@
               "column": {
                 "type": "integer",
                 "minimum": 1
+              }
+            }
+          },
+          "interfaceMethod": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Go unresolved call through an interface method whose declaration is not captured. Identifies the declaration package and name so a change query can match a concrete implementation without inventing a source target.",
+            "required": [
+              "package",
+              "qualname",
+              "name"
+            ],
+            "properties": {
+              "package": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
               }
             }
           }
@@ -1287,7 +1312,7 @@
     },
     "interfaceImplementations": {
       "type": "array",
-      "description": "Go v5 captured interface method declarations and the named source types whose value or pointer method sets satisfy the whole interface. Each edge is declaration evidence, not runtime dispatch or a complete implementation set when incomplete typing was skipped.",
+      "description": "Go interface evidence: captured interface method declarations and the named source types whose value or pointer method sets satisfy the whole interface. Since go-source-direct-v4 an edge may name an external embedded interface method with package/name and external:true but no captured source location. Each edge is method-set evidence, not runtime dispatch.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -1305,10 +1330,7 @@
             "additionalProperties": false,
             "required": [
               "qualname",
-              "name",
-              "file",
-              "line",
-              "column"
+              "name"
             ],
             "properties": {
               "qualname": {
@@ -1329,8 +1351,43 @@
               "column": {
                 "type": "integer",
                 "minimum": 1
+              },
+              "package": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Go external interface method only: declaring package import path."
+              },
+              "external": {
+                "const": true,
+                "description": "Go external interface method only: the declaration was loaded from export data and has no captured source location."
               }
-            }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "external": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "external"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "package"
+                  ]
+                },
+                "else": {
+                  "required": [
+                    "file",
+                    "line",
+                    "column"
+                  ]
+                }
+              }
+            ]
           },
           "implementation": {
             "type": "object",
@@ -1514,7 +1571,7 @@
       "description": "Coverage of the captured interface implementation edge set. incompleteInterfaces and genericInterfaces explain why a concrete method may have no interface edge; absence is unknown, not proof of non-implementation.",
       "properties": {
         "model": {
-          "const": "captured-interface-implementations-v1"
+          "enum": ["captured-interface-implementations-v1", "captured-interface-implementations-v2"]
         },
         "completeInterfaces": {
           "type": "integer",

@@ -80,7 +80,7 @@ function inspectSide(capture, side) {
     ...(evidence ? { interfaceEvidence: evidence } : {}),
     resolution: ['ts', 'go', 'rust', 'java'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
   };
-  const references = new Map(), calls = new Map(), interfaceReferences = new Map();
+  const references = new Map(), calls = new Map(), interfaceReferences = new Map(), externalInterfaceReferences = new Map();
   (facts.calls || []).forEach((fact, factIndex) => {
     const record = { side, snapshotId: facts.repository.snapshotId, factIndex, fact };
     const fileCalls = calls.get(fact.file) || [];
@@ -94,10 +94,17 @@ function inspectSide(capture, side) {
         const interfaceRefs = interfaceReferences.get(key(targetKey, interfaceKey)) || [];
         interfaceRefs.push(record); interfaceReferences.set(key(targetKey, interfaceKey), interfaceRefs);
       }
+    } else if (fact.receiverInterface && fact.interfaceMethod) {
+      // The static receiver is a captured interface, but the selected method
+      // was declared in an uncaptured package. Keep the callsite without a target.
+      const externalKey = key(fact.receiverInterface.package, fact.receiverInterface.qualname,
+        fact.interfaceMethod.package, fact.interfaceMethod.name);
+      const interfaceRefs = externalInterfaceReferences.get(externalKey) || [];
+      interfaceRefs.push(record); externalInterfaceReferences.set(externalKey, interfaceRefs);
     }
   });
-  const hasInterfaceEvidence = Array.isArray(facts.interfaceImplementations) && evidence?.model === 'captured-interface-implementations-v1';
-  const interfaceEdges = new Map(), interfaceMethods = new Map();
+  const hasInterfaceEvidence = Array.isArray(facts.interfaceImplementations) && ['captured-interface-implementations-v1', 'captured-interface-implementations-v2'].includes(evidence?.model);
+  const interfaceEdges = new Map(), interfaceMethods = new Map(), externalInterfaceMethods = new Map();
   if (hasInterfaceEvidence) {
     for (const edge of facts.interfaceImplementations) {
       const method = edge.implementation.method;
@@ -106,9 +113,15 @@ function inspectSide(capture, side) {
         const rows = interfaceEdges.get(edgeKey) || [];
         rows.push(edge); interfaceEdges.set(edgeKey, rows);
       }
-      const methodKey = key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column, edge.method.name);
-      const rows = interfaceMethods.get(methodKey) || [];
-      rows.push(edge); interfaceMethods.set(methodKey, rows);
+      if (edge.method.external) {
+        const externalKey = key(edge.interface.package, edge.interface.qualname, edge.method.package, edge.method.name);
+        const rows = externalInterfaceMethods.get(externalKey) || [];
+        rows.push(edge); externalInterfaceMethods.set(externalKey, rows);
+      } else {
+        const methodKey = key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+        const rows = interfaceMethods.get(methodKey) || [];
+        rows.push(edge); interfaceMethods.set(methodKey, rows);
+      }
     }
   }
   const importsByTarget = new Map();
@@ -123,10 +136,10 @@ function inspectSide(capture, side) {
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2'].includes(facts.callModel))
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
-    || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(facts.callModel))
+    || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(facts.callModel))
     || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8'].includes(facts.callModel));
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings,
-    interfaceReferences, interfaceEdges, interfaceMethods, interfaceEvidence: evidence, hasInterfaceEvidence };
+    interfaceReferences, externalInterfaceReferences, interfaceEdges, interfaceMethods, externalInterfaceMethods, interfaceEvidence: evidence, hasInterfaceEvidence };
 }
 
 function compareSettings(base, head) {
@@ -221,6 +234,7 @@ function interfaceCandidateReason(edge, record, hasAlternatives) {
       : 'an uncaptured method body';
   const promotion = record.fact.receiverPromotion === 'embedded-interface' ? ' The call is on a concrete wrapper and reaches the interface through an embedded field.' : '';
   const alternatives = hasAlternatives ? 'The runtime receiver may be another implementation; it is not determined.' : 'No other captured implementation is listed, but runtime identity is still not determined.';
+  if (edge.method.external) return `Call through ${iface}.${method}: ${type} (${forms}) satisfies ${iface}, but ${method} is declared in ${edge.method.package}, whose source is not captured. The callsite is recorded without a source target.${promotion} ${alternatives}`;
   if (impl.reason === 'promoted-interface-method') return `Call through ${iface}.${method}: ${type} satisfies ${iface}, but the method is promoted from ${location}; the concrete body is not captured.${promotion} ${alternatives}`;
   if (impl.reason === 'method-body-not-captured') return `Call through ${iface}.${method}: ${type} satisfies ${iface}, but the implementing body is not captured.${promotion} ${alternatives}`;
   return `Call through ${iface}.${method}: ${type} (${forms}) satisfies ${iface} via ${location}.${promotion} ${alternatives}`;
@@ -258,10 +272,15 @@ function interfaceCandidates(side, definition) {
       edge.implementation.method?.qualname || edge.implementation.promotedDeclaration?.qualname || null);
     if (edgeSeen.has(edgeKey)) continue;
     edgeSeen.add(edgeKey);
-    const targetKey = key(edge.method.file, edge.method.line, edge.method.column, edge.method.name);
-    const methodKey = key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column, edge.method.name);
-    const implementations = (side.interfaceMethods.get(methodKey) || [edge]).map(row => row.implementation);
-    const refs = side.interfaceReferences.get(key(targetKey, key(edge.interface.package, edge.interface.qualname))) || [];
+    const external = edge.method.external === true;
+    const targetKey = external ? null : key(edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+    const methodKey = external
+      ? key(edge.interface.package, edge.interface.qualname, edge.method.package, edge.method.name)
+      : key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+    const implementations = ((external ? side.externalInterfaceMethods.get(methodKey) : side.interfaceMethods.get(methodKey)) || [edge]).map(row => row.implementation);
+    const refs = (external
+      ? side.externalInterfaceReferences.get(methodKey)
+      : side.interfaceReferences.get(key(targetKey, key(edge.interface.package, edge.interface.qualname)))) || [];
     for (const record of refs) {
       const id = `${record.snapshotId}:${record.factIndex}`;
       if (seen.has(id)) continue;

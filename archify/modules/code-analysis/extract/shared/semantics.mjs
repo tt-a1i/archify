@@ -35,8 +35,8 @@ export function semanticErrors(name, data) {
     });
     const pythonCalls = data.repository.language === 'py' && ['python-lexical-v1', 'python-lexical-v2'].includes(data.callModel);
     const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(data.callModel);
-    const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel);
-    if (goCalls && data.callModel === 'go-source-direct-v3' && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
+    const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(data.callModel);
+    if (goCalls && ['go-source-direct-v3', 'go-source-direct-v4'].includes(data.callModel) && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
     const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8'].includes(data.callModel);
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     const javaProjects = javaCalls && data.callModel === 'java-static-lexical-v5';
@@ -149,8 +149,8 @@ export function semanticErrors(name, data) {
         if (call.resolution === 'rust-trait-impl' && (!rustCalls || !['rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v5 trait impl model');
         if (call.resolution === 'rust-trait-method-candidate' && (!rustCalls || !['rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v5 trait candidate model');
         if (call.resolution === 'rust-trait-method-candidate' && !traitDeclarations.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured trait method declaration');
-        if (call.resolution === 'go-direct-method' && (!goCalls || !['go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
-        if (call.resolution === 'go-interface-method' && (!goCalls || data.callModel !== 'go-source-direct-v3')) add(`${at}/resolution`, 'requires the Go v3 interface-declaration model');
+        if (call.resolution === 'go-direct-method' && (!goCalls || !['go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
+        if (call.resolution === 'go-interface-method' && (!goCalls || !['go-source-direct-v3', 'go-source-direct-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v3 interface-declaration model');
         if (call.resolution === 'go-direct-function' && !goCalls) add(`${at}/resolution`, 'requires the Go source-direct model');
         if (!validPoint(targetFile, call.target)) add(`${at}/target`, 'target must lie inside captured source');
         if (call.resolution !== 'rust-trait-method-candidate') {

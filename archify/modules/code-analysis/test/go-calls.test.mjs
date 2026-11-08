@@ -229,7 +229,7 @@ func Entry(r *http.Request){c,_:=r.Context().Value("key").(*Context);c=pool.Get(
  const before=capture(root,{go:{stdlib:false}}),facts=capture(root);
  const reset=f=>callsIn(f,'entry.go').find(c=>c.target?.name==='Reset');
  assert.equal(reset(before),undefined);assert.deepEqual(reset(facts).target,{name:'Reset',line:4,column:1});
- assert.equal(facts.callModel,'go-source-direct-v3');assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.callModel,'go-source-direct-v4');assert.deepEqual(schemaErrors('raw-facts',facts),[]);
  assert.equal(facts.languageScope.typing.errorCount,0);assert.equal(facts.files.length,1);
  assert.equal(before.languageScope.standardLibrary.mode,'disabled');
  const disabledQuestion=buildQuestion({root,facts:before,entry:'entry.go',symbol:'Entry',question:'What remains unknown without SDK types?'});
@@ -380,6 +380,36 @@ test('Go interface candidates include calls captured in package tests', t => {
   assert.equal(changed.head.interfaceCandidates.total, 1);
   assert.equal(changed.head.interfaceCandidates.items[0].fact.file, 'lib/lib_test.go');
   assert.equal(changed.head.interfaceCandidates.items[0].interface.qualname, 'I');
+});
+
+test('Go calls through an external embedded interface keep an unlocated candidate', t => {
+ const source = body => `package app
+import ("bufio"; "net"; "net/http")
+type RW interface { http.Hijacker; Status() int }
+type W struct{}
+func (W) Status() int { return 200 }
+func (W) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+  _ = ${body}
+  return nil, nil, nil
+}
+func Use(w RW) { w.Hijack() }
+`;
+ const config = scopeConfig();
+ const base = captureChangeSide(fixture(t, { 'main.go': source(1) }), config, 'go');
+ const head = captureChangeSide(fixture(t, { 'main.go': source(2) }), config, 'go');
+ const question = buildChangeQuestion({ question: 'Which callers reach changed W.Hijack?', entry: 'main.go', base, head, config });
+ const changed = question.changedDefinitions.items.find(row => row.head?.definition.qualname === 'W.Hijack');
+ assert.equal(changed.head.knownReferences.total, 0);
+ assert.equal(changed.head.interfaceCandidates.total, 1);
+ const candidate = changed.head.interfaceCandidates.items[0];
+ assert.equal(candidate.fact.file, 'main.go');
+ assert.equal(candidate.fact.line, 10);
+ assert.equal(candidate.fact.target, undefined,'the external declaration has no captured source target');
+ assert.equal(candidate.interface.qualname, 'RW');
+ assert.equal(candidate.interfaceMethod.package, 'net/http');
+ assert.equal(candidate.interfaceMethod.name, 'Hijack');
+ assert.match(candidate.reason, /net\/http/);
+ assert.ok(candidate.implementations.items.some(row => row.type.qualname === 'W' && row.method?.qualname === 'W.Hijack'));
 });
 
 test('Go wrapper calls promoted from an embedded interface stay interface candidates', t => {
