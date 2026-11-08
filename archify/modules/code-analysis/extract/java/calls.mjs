@@ -1,7 +1,7 @@
 import { children, descendants, tokensOf, TYPE_DECLARATIONS } from './parse.mjs';
 import { measureFunctions } from './functions.mjs';
 
-export const CALL_MODEL = 'java-static-lexical-v4';
+export const CALL_MODEL = 'java-static-lexical-v5';
 const OBJECT_METHODS = new Set(['getClass', 'hashCode', 'equals', 'clone', 'toString', 'notify', 'notifyAll', 'wait', 'finalize']);
 
 // Fixed argument count can distinguish siblings, but never argument types.
@@ -113,7 +113,7 @@ export function collectFunctionsAndCalls(unit) {
 // Only public, unique-at-fixed-arity, explicitly static source methods in ordinary top-level
 // classes without explicit supertypes are eligible. This does not type-check
 // argument applicability, compilation, class loading or execution.
-export function resolveQualifiedCalls(units, resolveType, qualifierAncestry, sameBuildRoot) {
+export function resolveQualifiedCalls(units, resolveType, qualifierAncestry, buildEvidence) {
   const byFile = new Map(units.map(unit => [unit.file, unit]));
   for (const unit of units) for (const request of unit.qualifiedCalls) {
     const first = request.qualifier.split('.')[0];
@@ -126,7 +126,8 @@ export function resolveQualifiedCalls(units, resolveType, qualifierAncestry, sam
     const targets = resolveType(unit, { ...request, name: request.qualifier });
     if (targets.length !== 1) continue;
     const type = targets[0], targetUnit = byFile.get(type.file);
-    if (request.inherited && !sameBuildRoot(unit.file, [...ancestry, { file: type.file }])) {
+    const build = buildEvidence(unit.file, [...(ancestry || []), { file:type.file }]);
+    if (request.inherited && build === null) {
       request.call.reason = 'java-inherited-build-scope';
       continue;
     }
@@ -139,6 +140,7 @@ export function resolveQualifiedCalls(units, resolveType, qualifierAncestry, sam
     const record = method.record;
     request.call.resolution = 'java-qualified-static-method';
     if (ancestry) request.call.qualifierAncestry = ancestry;
+    if (build?.length) request.call.buildEvidence = build;
     request.call.target = { file: type.file, name: record.name, line: record.line, column: record.sourceRange.column };
     delete request.call.reason;
   }

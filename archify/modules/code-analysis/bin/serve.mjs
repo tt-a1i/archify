@@ -54,7 +54,7 @@ export function runWorker(options) {
 // installs them on demand instead of asking for a separate setup step.
 export async function ensureDependencies(root = moduleRoot) {
   root = fs.realpathSync(root);
-  const missingPackages = () => ['typescript', 'ajv', 'java-parser'].filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
+  const missingPackages = () => ['typescript', 'ajv', 'java-parser', '@xmldom/xmldom'].filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
   // Installed, read-only copies need no lock file. An active installer must
   // finish even if its package manifests have already appeared.
   if (!missingPackages().length && !fs.existsSync(path.join(root, '.code-analysis-install.lock'))) return false;

@@ -159,8 +159,8 @@ split. Setting `modules.depth` or `modules.packageBoundaries: false` restores
 directory-depth grouping. JPMS modules are not read.
 
 This grouping is inferred from build-file locations and source directories;
-Maven and Gradle models (declared modules, source sets, dependencies) are not
-evaluated. Adding a second build module, moving sources or changing a shared
+Module grouping does not evaluate Maven or Gradle models. Java v5 separately reads
+a bounded set of Maven declarations for static-call candidates, described below. Adding a second build module, moving sources or changing a shared
 directory prefix can change the modules, and with them module edges, module
 cycles and hubs, without any dependency change. Compare module-level findings
 across runs only under the same grouping: for longitudinal comparison, pin
@@ -193,7 +193,44 @@ branches. Existing thresholds and source-evidence views are reused.
 
 ## Method invocation source navigation
 
-Fresh Java captures declare `callModel: "java-static-lexical-v1"`. They inventory
+Current captures use `java-static-lexical-v5` (adapter revision 11). Historical
+v1 restrictions below describe the original collection contract. Later revisions
+add explicit class-qualified public static methods (v2), unique fixed-arity
+candidates among different-arity siblings (v3), and qualifier lookups from callers
+with closed captured ordinary-class ancestry (v4). Captured ancestors must have
+no inherited field or member-type blocker for the qualifier; this is not general
+inheritance or overload/type inference.
+
+Java v5 additionally admits these inherited-context static calls across Maven
+project roots when captured POMs establish a unique **direct** project dependency.
+It reads literal project coordinates, local parents (including named parent XML
+files), inherited default properties and dependency management, and a shared
+literal reactor declaration. Main sources require compile/provided jar routes;
+test sources may also use test/runtime scope. A target in `src/test/java` requires
+a test-jar dependency; an ordinary jar does not expose test fixtures. Both the
+target and any captured ancestor used for qualifier absence need a valid route.
+Reactor co-location alone grants no dependency.
+
+`languageScope` records the exact used UTF-8 POM text and SHA-256, effective
+project coordinates/direct dependencies, profile identifiers, unsupported models
+and limitations. `calls[].buildEvidence` contains jumpable POM declaration
+points. Saved and paired investigations check these inputs for changes before
+allowing call navigation. POMs are metadata, not analyzed Java source files.
+The scanner captures configured XML/POM files so a named local parent can be
+read from the same snapshot; only used metadata is emitted. Excludes still apply.
+
+Relevant dependency/module profiles, unresolved parents/properties, duplicate
+coordinates, imported BOMs, custom main/test layouts and Gradle dependencies
+cannot grant these new routes. This does not execute Maven, Gradle, plugins,
+annotation processors or project code, and requires no JDK or Maven installation.
+The XML reader pins `@xmldom/xmldom@0.9.12`. Existing same-root and no-parent
+source candidates retain their previous contract; dependency evidence does not
+turn the global source type index into a complete classpath or disambiguate
+multiple declarations. External artifacts, transitive dependencies, CLI/settings
+activation, generated code, runtime loading and complete impact remain unknown.
+
+
+The original v1 captures declare `callModel: "java-static-lexical-v1"`. They inventory
 all parsed method invocation expressions with full original-source UTF-16 start
 and end-exclusive positions, including chained calls and lambda/nested type
 bodies. Constructors, method references and implicit invocations are excluded.

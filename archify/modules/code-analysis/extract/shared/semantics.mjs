@@ -34,11 +34,19 @@ export function semanticErrors(name, data) {
       if (fn.deepestLine < fn.line || fn.deepestLine > fn.endLine) add(`/functions/${i}/deepestLine`, 'must lie inside the function');
     });
     const pythonCalls = data.repository.language === 'py' && ['python-lexical-v1', 'python-lexical-v2'].includes(data.callModel);
-    const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4'].includes(data.callModel);
+    const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel);
     if (goCalls && data.callModel === 'go-source-direct-v3' && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
     const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3'].includes(data.callModel);
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
+    const javaProjects = javaCalls && data.callModel === 'java-static-lexical-v5';
+    if (javaProjects && data.languageScope?.language !== 'java') add('/languageScope','requires Java v5 declared project scope');
+    if (javaProjects) unique(data.languageScope?.metadata || [],'file','/languageScope/metadata');
+    const metadata = new Map(javaProjects ? (data.languageScope?.metadata || []).map(input => [input.file,input]) : []);
+    for (const input of metadata.values()) {
+      if (files.has(input.file) || createHash('sha256').update(input.sourceText).digest('hex') !== input.sha256) add('/languageScope/metadata','must contain separate captured metadata with matching hashes');
+    }
+
     data.functions?.forEach((fn, i) => {
       if ((pythonCalls || javaCalls || goCalls || rustCalls || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
       if (fn.definition) {
@@ -54,6 +62,7 @@ export function semanticErrors(name, data) {
         }
       }
     });
+    if (javaProjects) for (const input of metadata.values()) sourceTexts.set(input.file,input.sourceText);
     const sourceLines = new Map();
     const functionKey = (file, name, line) => JSON.stringify([file, name, line]);
     const functionStarts = new Set((data.functions || []).map((fn) => functionKey(fn.file, fn.name, fn.line)));
@@ -78,9 +87,13 @@ export function semanticErrors(name, data) {
       if (!validPoint(call.file, { line: call.endLine, column: call.endColumn }, true)) add(at, 'call end must lie inside captured source or at EOF');
       if (call.endLine < call.line || (call.endLine === call.line && call.endColumn <= call.column)) add(at, 'call end must follow its start');
       if (brokenFiles.has(call.file)) add(at, 'calls must be omitted for files with parse errors');
-      if (call.reason === 'java-inherited-build-scope' && (!javaCalls || data.callModel !== 'java-static-lexical-v4')) add(at + '/reason', 'requires the Java v4 inherited-context model');
+      if (call.reason === 'java-inherited-build-scope' && (!javaCalls || !['java-static-lexical-v4','java-static-lexical-v5'].includes(data.callModel))) add(at + '/reason', 'requires the Java v4 inherited-context model');
+      if (call.buildEvidence) {
+        if (!javaProjects || call.resolution !== 'java-qualified-static-method') add(at + '/buildEvidence','requires a qualified Java v5 project-source candidate');
+        for (const point of call.buildEvidence) if (!metadata.has(point.file) || !validPoint(point.file,point)) add(at + '/buildEvidence','must reference a captured POM source point');
+      }
       if (call.qualifierAncestry) {
-        if (!javaCalls || data.callModel !== 'java-static-lexical-v4' || call.resolution !== 'java-qualified-static-method') add(at + '/qualifierAncestry', 'requires a qualified call under Java v4');
+        if (!javaCalls || !['java-static-lexical-v4','java-static-lexical-v5'].includes(data.callModel) || call.resolution !== 'java-qualified-static-method') add(at + '/qualifierAncestry', 'requires a qualified call under Java v4');
         const points = new Set();
         for (const point of call.qualifierAncestry) {
           const key = JSON.stringify(point);
@@ -91,7 +104,7 @@ export function semanticErrors(name, data) {
       if (call.via && (!forwardingModel || call.resolution !== 'imported-function')) add(`${at}/via`, 'requires an imported call under the JS/TS v5 forwarding model');
       if (call.target) {
         const targetFile = call.target.file || call.file;
-        if (call.resolution === 'java-qualified-static-method' && (!javaCalls || !['java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Java v2 source model');
+        if (call.resolution === 'java-qualified-static-method' && (!javaCalls || !['java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Java v2 source model');
         if (call.resolution === 'imported-function') {
           const direct = staticImports.get(call.file)?.has(targetFile);
           let forwarded = pythonCalls && data.callModel === 'python-lexical-v2' && [...(staticImports.get(call.file) || [])].some(via => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));

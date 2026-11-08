@@ -45,7 +45,7 @@ export function captureChangeSide(root, config, language = 'ts') {
   root = path.resolve(root);
   let resolution;
   const { facts } = extractFacts(root, { language, config, onCapture: input => { resolution = input; } });
-  if (!['ts', 'go', 'rust'].includes(language)) resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
+  if (!['ts', 'go', 'rust', 'java'].includes(language)) resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
   return { root, facts, resolution, language, configDigest: digest(JSON.stringify(config)) };
 }
 
@@ -63,7 +63,8 @@ function inspectSide(capture, side) {
   for (const [file, text] of resolution.reads || []) {
     // Includes absent reads for freshness, but only actual content contributes
     // to the settings digest: adding an import may probe new absent paths.
-    const status = ts.sys.readFile(file) === text ? 'valid' : 'changed';
+    const javaInput = capture.language === 'java' ? readInside(root,path.relative(root,file).split(path.sep).join('/')) : null;
+    const status = (capture.language === 'java' ? javaInput.status === 'ok' && javaInput.text === text : ts.sys.readFile(file) === text) ? 'valid' : 'changed';
     if (status !== 'valid') resolutionFresh = false;
     if (text !== undefined) inputs.push({ file: normalize(file, root), sha256: digest(text) });
   }
@@ -75,7 +76,7 @@ function inspectSide(capture, side) {
     sourceIdentity: unavailable.some(file => file.status !== 'parse-error') ? 'incomplete' : 'valid',
     unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
     ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
-    resolution: ['ts', 'go', 'rust'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
+    resolution: ['ts', 'go', 'rust', 'java'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
   };
   const references = new Map(), calls = new Map();
   (facts.calls || []).forEach((fact, factIndex) => {
@@ -99,7 +100,7 @@ function inspectSide(capture, side) {
   for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2'].includes(facts.callModel))
-    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4'].includes(facts.callModel))
+    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(facts.callModel))
     || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3'].includes(facts.callModel));
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
