@@ -1,0 +1,258 @@
+{
+  "runtimeMerge": "4e684e4911e8ad001b39d472976eb89925862235",
+  "preservedOriginalParents": [
+    "196dd3569efba785d456a6dd0825ea6ebdf489bf",
+    "915d528e584a6343ab79284bd274ed11762cf9c9"
+  ],
+  "rawCapturesByteIdentical": [
+    "base/go-direct/chi/raw-facts.json",
+    "base/go-direct/cobra/raw-facts.json",
+    "base/go-direct/cobra-base/raw-facts.json",
+    "base/go-direct/grpc-go/raw-facts.json",
+    "base/go-sdk/chi/raw-facts.json",
+    "base/go-sdk/cobra/raw-facts.json",
+    "base/go-sdk/disabled/raw-facts.json",
+    "base/go-sdk/grpc-go/raw-facts.json",
+    "base/java-arity/commons-lang/raw-facts.json",
+    "base/java-arity/slf4j/raw-facts.json",
+    "base/js-default/chalk/raw-facts.json",
+    "base/js-default/prettier/raw-facts.json",
+    "base/py-import/click/raw-facts.json",
+    "base/py-import/jinja/raw-facts.json",
+    "base/py-reexport/flask/raw-facts.json",
+    "base/py-reexport/jinja/raw-facts.json",
+    "base/rust-direct/regex/raw-facts.json",
+    "base/rust-direct/regex-base/raw-facts.json",
+    "base/rust-direct/serde-json/raw-facts.json",
+    "base/rust-direct/serde-json-base/raw-facts.json",
+    "base/rust-direct/serde-json-base-float/raw-facts.json",
+    "base/rust-direct/serde-json-float/raw-facts.json",
+    "base/rust-inherent/regex/raw-facts.json",
+    "base/rust-inherent/serde-arbitrary/raw-facts.json",
+    "base/rust-inherent/serde-default/raw-facts.json",
+    "base/ts-alias/capture/raw-facts.json",
+    "recent/java-parent/capture/raw-facts.json",
+    "recent/java-project/capture/raw-facts.json",
+    "recent/rust-lifetime/capture/raw-facts.json",
+    "recent/rust-specialized/arbitrary/raw-facts.json",
+    "recent/rust-specialized/default/raw-facts.json",
+    "recent/ts-forward/capture/raw-facts.json"
+  ],
+  "questionsEqualOnlyInstallOutputPaths": [
+    "base/go-direct/cobra-paired.json",
+    "base/go-direct/cobra-question.json",
+    "base/go-sdk/paired.json",
+    "base/go-sdk/question-chi-NotFound.json",
+    "base/go-sdk/question-chi-Reset.json",
+    "base/go-sdk/question-cobra-HasParent.json",
+    "base/go-sdk/question-disabled.json",
+    "base/go-sdk/question-grpc-go-getReadyTransport.json",
+    "base/java-arity/commons-lang-question.json",
+    "base/java-arity/slf4j-question.json",
+    "base/js-default/paired.json",
+    "base/js-default/question-attachComments.json",
+    "base/js-default/question-printDanglingComments.json",
+    "base/py-import/click-0-question.json",
+    "base/py-import/click-1-question.json",
+    "base/py-import/click-2-question.json",
+    "base/py-import/click-3-question.json",
+    "base/py-import/jinja-4-question.json",
+    "base/py-import/jinja-5-question.json",
+    "base/py-import/jinja-6-question.json",
+    "base/py-reexport/flask-json-question.json",
+    "base/py-reexport/flask-render-question.json",
+    "base/py-reexport/jinja-logging-question.json",
+    "base/py-reexport/jinja-undefined-question.json",
+    "base/rust-direct/regex-paired.json",
+    "base/rust-direct/regex-question.json",
+    "base/rust-direct/serde-json-paired.json",
+    "base/rust-inherent/paired.json",
+    "base/rust-inherent/regex-question.json",
+    "base/rust-inherent/serde-arbitrary-question.json",
+    "base/rust-inherent/serde-default-question.json",
+    "base/ts-alias/question.json",
+    "recent/java-history/changed-pom.json",
+    "recent/java-history/saved-java4.json",
+    "recent/java-pair/question.json",
+    "recent/java-parent/question-0.json",
+    "recent/java-parent/question-1.json",
+    "recent/java-parent/question-2.json",
+    "recent/java-project/question-0.json",
+    "recent/java-project/question-1.json",
+    "recent/java-project/question-2.json",
+    "recent/java-project/question-3.json",
+    "recent/java-project/question-4.json",
+    "recent/rust-history/v1.json",
+    "recent/rust-history/v2.json",
+    "recent/rust-history/v3.json",
+    "recent/rust-lifetime/ast-heap-new.json",
+    "recent/rust-lifetime/hir-heap-new.json",
+    "recent/rust-lifetime/translator-new.json",
+    "recent/rust-pair/question.json",
+    "recent/rust-specialized/arbitrary-map-empty-unit-question.json",
+    "recent/rust-specialized/arbitrary-map-visitor-question.json",
+    "recent/rust-specialized/arbitrary-value-capacity-question.json",
+    "recent/rust-specialized/arbitrary-value-index-question.json",
+    "recent/rust-specialized/arbitrary-value-newtype-question.json",
+    "recent/rust-specialized/default-map-empty-unit-question.json",
+    "recent/rust-specialized/default-map-visitor-question.json",
+    "recent/rust-specialized/default-value-capacity-question.json",
+    "recent/rust-specialized/default-value-index-question.json",
+    "recent/rust-specialized/default-value-newtype-question.json",
+    "recent/ts-forward/question-0.json",
+    "recent/ts-forward/question-1.json",
+    "recent/ts-pair/question.json"
+  ],
+  "commandsPerDistribution": 96,
+  "expectedNonzero": [
+    {
+      "group": "base",
+      "family": "go-sdk",
+      "label": "paired",
+      "exit": 1
+    },
+    {
+      "group": "base",
+      "family": "js-default",
+      "label": "paired",
+      "exit": 1
+    },
+    {
+      "group": "base",
+      "family": "rust-direct",
+      "label": "regex-paired",
+      "exit": 1
+    },
+    {
+      "group": "base",
+      "family": "rust-direct",
+      "label": "serde-json-paired",
+      "exit": 1
+    },
+    {
+      "group": "base",
+      "family": "rust-inherent",
+      "label": "paired",
+      "exit": 1
+    },
+    {
+      "group": "recent",
+      "family": "java-history",
+      "label": "changed-pom",
+      "exit": 1
+    },
+    {
+      "group": "recent",
+      "family": "java-pair",
+      "label": null,
+      "exit": 1
+    },
+    {
+      "group": "recent",
+      "family": "rust-history",
+      "label": "missing-sdk",
+      "exit": 2
+    }
+  ],
+  "scores": {
+    "base/go-direct": {
+      "correct-target": 10,
+      "wrong-target": 0,
+      "missed-target": 0,
+      "omitted-call": 0,
+      "reasonable-unknown": 4
+    },
+    "base/go-sdk": {
+      "correct": 37,
+      "wrong": 0,
+      "missed": 0,
+      "reasonable-unknown": 2
+    },
+    "base/java-arity": {
+      "correct": 4,
+      "wrong": 0,
+      "missed": 3
+    },
+    "base/js-default": {
+      "correct": 2,
+      "wrong": 0,
+      "missed": 0,
+      "reasonable-unknown": 2
+    },
+    "base/py-import": {
+      "correct": 5,
+      "wrong": 0,
+      "missed": 0,
+      "omitted": 0,
+      "unknown": 5
+    },
+    "base/py-reexport": {
+      "correct": 4,
+      "wrong": 0,
+      "missed": 0,
+      "unknown": 2
+    },
+    "base/rust-direct": {
+      "correct-target": 9,
+      "wrong-target": 0,
+      "missed-target": 0,
+      "omitted-call": 0,
+      "reasonable-unknown": 2
+    },
+    "base/rust-inherent": {
+      "correct": 8,
+      "wrong": 0,
+      "missed": 0,
+      "reasonable-unknown": 4
+    },
+    "base/ts-alias": {
+      "correct": 7,
+      "wrong": 0,
+      "missed": 0,
+      "reasonable-unknown": 1
+    },
+    "recent/java-parent": {
+      "correct": 4,
+      "wrong": 0,
+      "missed": 0
+    },
+    "recent/java-project": {
+      "correct": 4,
+      "wrong": 0,
+      "missed": 0,
+      "unknown-external-target": 1
+    },
+    "recent/rust-lifetime": {
+      "correct": 3,
+      "wrong": 0,
+      "missed": 0,
+      "unknown": 2
+    },
+    "recent/rust-specialized": {
+      "correct": 10,
+      "wrong": 0,
+      "missed": 0,
+      "unknown": 4
+    },
+    "recent/ts-forward": {
+      "correct": 4,
+      "wrong": 0,
+      "missed": 0,
+      "unknown": 1
+    }
+  },
+  "moduleFilesEqual": 170,
+  "canonicalBuildsEqual": true,
+  "zip": {
+    "sha256": "bb2f38587109acd1b73e97d58ce987b8db56af0c9ad58988665340e668286e4b",
+    "bytes": 7596031
+  },
+  "producerLabelNote": "The unchanged original nine-recipe Python import report carries the symbolic label HEAD in both distributions. The runtimeMerge above, parent verification, unchanged module bytes and matched packaged bytes establish the immutable producer; HEAD is not used as immutable evidence.",
+  "limits": [
+    "Previously exposed fixed corpora; no new blind accuracy claim.",
+    "Recipes and profiles overlap; scores must not be summed.",
+    "Existing compiler/LSP audit results keep their original individual PR/runtime attribution; these replays do not rerun those oracles.",
+    "Source/ZIP equality is distribution validation, not compilation, runtime, complete impact, Labs integration or release."
+  ],
+  "projectExecuted": false
+}

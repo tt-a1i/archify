@@ -1,0 +1,19 @@
+{
+  "newCandidates": 73,
+  "preservedTargets": 1968,
+  "callRanges": 17995,
+  "files": 166,
+  "functions": 3435,
+  "parseErrors": [],
+  "preservedFields": [
+    "files",
+    "functions",
+    "parse_errors",
+    "packageMarkers"
+  ],
+  "importRecords": 1477,
+  "newBoundImports": 39,
+  "sourceReviewedImports": 39,
+  "stage": "Independent call audit recorded separately; imports are source-checked, not compiler-checked.",
+  "projectExecuted": false
+}

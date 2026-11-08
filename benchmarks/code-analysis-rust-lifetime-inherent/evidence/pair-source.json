@@ -1,0 +1,224 @@
+{
+  "expect": "candidate",
+  "command": [
+    "node",
+    "$WORKSPACE/work/archify-rust-lifetime/archify/bin/archify.mjs",
+    "code-analysis",
+    "task",
+    "--base-root",
+    "$WORKSPACE/work/rust-lifetime-owned/lifetime-owned-before",
+    "--root",
+    "$WORKSPACE/work/rust-lifetime-owned/lifetime-owned-after",
+    "--entry",
+    "api/src/lib.rs",
+    "--question",
+    "Which captured callers refer to this changed owned lifetime-only constructor?",
+    "--format",
+    "json",
+    "--out",
+    "$WORKSPACE/work/rust-lifetime-pair-source/question.json",
+    "--json"
+  ],
+  "exit": 0,
+  "status": "ready",
+  "references": [
+    {
+      "side": "base",
+      "knownSites": 3,
+      "items": [
+        {
+          "side": "base",
+          "snapshotId": "eb4d2343ada77192306938c18bc35e0641c53202fd95a605bdedbb256aebecdc",
+          "factIndex": 1,
+          "fact": {
+            "column": 17,
+            "endColumn": 37,
+            "endLine": 2,
+            "file": "app/src/lib.rs",
+            "line": 2,
+            "resolution": "rust-lifetime-inherent-source-candidate",
+            "target": {
+              "column": 23,
+              "file": "api/src/lib.rs",
+              "line": 2,
+              "name": "new"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "app/src/lib.rs",
+              "line": 2,
+              "column": 17,
+              "endLine": 2,
+              "endColumn": 37
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "eb4d2343ada77192306938c18bc35e0641c53202fd95a605bdedbb256aebecdc",
+          "factIndex": 2,
+          "fact": {
+            "column": 38,
+            "endColumn": 67,
+            "endLine": 2,
+            "file": "app/src/lib.rs",
+            "line": 2,
+            "resolution": "rust-lifetime-inherent-source-candidate",
+            "target": {
+              "column": 23,
+              "file": "api/src/lib.rs",
+              "line": 2,
+              "name": "new"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "app/src/lib.rs",
+              "line": 2,
+              "column": 38,
+              "endLine": 2,
+              "endColumn": 67
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "eb4d2343ada77192306938c18bc35e0641c53202fd95a605bdedbb256aebecdc",
+          "factIndex": 4,
+          "fact": {
+            "column": 13,
+            "endColumn": 35,
+            "endLine": 3,
+            "file": "app/src/lib.rs",
+            "line": 3,
+            "resolution": "rust-lifetime-inherent-source-candidate",
+            "target": {
+              "column": 23,
+              "file": "api/src/lib.rs",
+              "line": 2,
+              "name": "new"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "app/src/lib.rs",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 35
+            }
+          }
+        }
+      ]
+    },
+    {
+      "side": "head",
+      "knownSites": 3,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "b823e46ce744dc80a90110057da07d722e6eb2b2ecb25455ae7b5cb3567ee16e",
+          "factIndex": 2,
+          "fact": {
+            "column": 17,
+            "endColumn": 37,
+            "endLine": 2,
+            "file": "app/src/lib.rs",
+            "line": 2,
+            "resolution": "rust-lifetime-inherent-source-candidate",
+            "target": {
+              "column": 23,
+              "file": "api/src/lib.rs",
+              "line": 2,
+              "name": "new"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "app/src/lib.rs",
+              "line": 2,
+              "column": 17,
+              "endLine": 2,
+              "endColumn": 37
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "b823e46ce744dc80a90110057da07d722e6eb2b2ecb25455ae7b5cb3567ee16e",
+          "factIndex": 3,
+          "fact": {
+            "column": 38,
+            "endColumn": 67,
+            "endLine": 2,
+            "file": "app/src/lib.rs",
+            "line": 2,
+            "resolution": "rust-lifetime-inherent-source-candidate",
+            "target": {
+              "column": 23,
+              "file": "api/src/lib.rs",
+              "line": 2,
+              "name": "new"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "app/src/lib.rs",
+              "line": 2,
+              "column": 38,
+              "endLine": 2,
+              "endColumn": 67
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "b823e46ce744dc80a90110057da07d722e6eb2b2ecb25455ae7b5cb3567ee16e",
+          "factIndex": 5,
+          "fact": {
+            "column": 13,
+            "endColumn": 35,
+            "endLine": 3,
+            "file": "app/src/lib.rs",
+            "line": 3,
+            "resolution": "rust-lifetime-inherent-source-candidate",
+            "target": {
+              "column": 23,
+              "file": "api/src/lib.rs",
+              "line": 2,
+              "name": "new"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "app/src/lib.rs",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 35
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "sourceScope": "Owned Cargo workspace with renamed dependency and custom actual_api library name; three physical direct sites in two caller functions.",
+  "limits": [
+    "Synthetic changed-body integration, not a real upstream change.",
+    "Original real Go/Rust upstream acceptance remains separately attributed; no runtime or complete impact proof."
+  ],
+  "projectExecuted": false
+}

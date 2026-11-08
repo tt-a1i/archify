@@ -23,7 +23,7 @@ def at(profile,point):
 for profile,project,rust in profiles:
  config=a.out/(profile+'-config.json');config.write_text(json.dumps({'rust':rust})+'\n');run(profile+'-check',['check',a.samples_root/project,'--language','rust','--config',config,'--out',a.out/profile,'--fail-on','never','--json'])
  f=json.loads((a.out/profile/'raw-facts.json').read_text());facts[profile]=f
- assert f['callModel'] in (['rust-source-direct-v1'] if a.expect=='baseline' else ['rust-source-direct-v2','rust-source-direct-v3'])
+ assert f['callModel'] in (['rust-source-direct-v1'] if a.expect=='baseline' else ['rust-source-direct-v2','rust-source-direct-v3','rust-source-direct-v4'])
  for case in m['cases']:
   if case['project']!=project:continue
   call=at(profile,case['call']);expected={k:case['target'][k] for k in ['file','line','column','name']};status='correct' if call.get('target')==expected else 'wrong' if call.get('target') else 'missed'
@@ -34,7 +34,7 @@ for profile,project,rust in profiles:
   assert any(x['file']=='src/value/from.rs' and x['line']==20 and x['kind']=='item-expansion' for x in f['languageScope']['opaqueMacros'])
   for case in json.loads((here/'review-source-first.json').read_text())['cases']:
    call=at(profile,case['call']);expected=case.get('target')
-   if expected and f['callModel']=='rust-source-direct-v3':
+   if expected and f['callModel']in ['rust-source-direct-v3','rust-source-direct-v4']:
     assert call.get('target')==expected;status='correct'
    else:
     assert call['resolution']=='unresolved' and 'target'not in call;status='missed' if expected else 'reasonable-unknown'
