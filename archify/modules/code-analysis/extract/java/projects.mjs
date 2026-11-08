@@ -124,9 +124,15 @@ export function projectScope(contents, packageMarkers) {
       const conditional = pom.profiles.some(profile => one(profile,'dependencies') || one(profile,'dependencyManagement') || one(profile,'modules')
         || one(one(profile,'build'),'sourceDirectory') || one(one(profile,'build'),'testSourceDirectory'));
       if (conditional || conditionalProperties.some(key=>referenced.has(key)) || pom.customLayout) throw new Error('conditional dependencies or custom source layout');
-      const resolvedManagement = management.map(d => Object.fromEntries(Object.entries(d).map(([k,v]) => [k,typeof v === 'string' ? expand(v,props) : v])));
+      const resolveDependency = d => Object.fromEntries(Object.entries(d).map(([key,value]) => {
+        const result=typeof value==='string' ? expand(value,props) : value;
+        if (value!==null && (result===null || result==='')) throw new Error('unresolved or empty dependency field '+key);
+        return [key,result];
+      }));
+      const resolvedManagement = management.map(resolveDependency);
+      if (resolvedManagement.some(d=>d.type==='pom' && d.scope==='import')) throw new Error('imported BOM management is not resolved');
       const resolved = deps.map(d => {
-        const expanded = Object.fromEntries(Object.entries(d).map(([k,v]) => [k,typeof v === 'string' ? expand(v,props) : v]));
+        const expanded = resolveDependency(d);
         const managed = resolvedManagement.find(m => depKey(m) === depKey(expanded)) || {};
         return { ...managed, ...Object.fromEntries(Object.entries(expanded).filter(([,v]) => v !== null)) };
       });

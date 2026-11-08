@@ -79,3 +79,13 @@ test('an inherited profile property that changes a nested dependency version can
  assert.equal(facts.calls[0].resolution,'unresolved');assert.equal(facts.calls[0].reason,'java-inherited-build-scope');
  assert.ok(facts.languageScope.unknowns.some(p=>p.file==='caller/pom.xml' && p.detail.includes('conditional')));
 });
+
+test('unresolved explicit scope, type or classifier properties cannot silently become default jar visibility',t=>{
+ for(const field of ['scope','type','classifier']){
+  const args=fixture(t),caller=path.join(args.root,'caller/pom.xml');
+  assert.ok(extractFacts(args.root,{language:'java',config:args.config}).facts.calls[0].target);
+  fs.writeFileSync(caller,fs.readFileSync(caller,'utf8').replace('<version>1</version></dependency>','<version>1</version><'+field+'>${missing}</'+field+'></dependency>'));
+  const {facts}=extractFacts(args.root,{language:'java',config:args.config});assert.equal(facts.calls[0].resolution,'unresolved');
+  assert.ok(facts.languageScope.unknowns.some(p=>p.file==='caller/pom.xml' && p.detail.includes('unresolved or empty dependency field')));
+ }
+});
