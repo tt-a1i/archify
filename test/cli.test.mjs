@@ -239,6 +239,7 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.match(result.stdout, /\[ok\] Example renderer/);
   assert.match(result.stdout, /\[ok\] Live preview runtime/);
   assert.match(result.stdout, /\[ok\] Atomic output safety runtime/);
+  assert.match(result.stdout, /\[ok\] File identity \(lstat and fstat agree on a temporary file\)/);
   assert.match(result.stdout, /\[ok\] Sidecar path naming runtime/);
   assert.match(result.stdout, /\[ok\] Finalize runtime/);
   assert.match(result.stdout, /\[ok\] Scenario recipe guide/);
@@ -281,6 +282,93 @@ test('cli: doctor rejects a corrupt standalone validator', () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /\[invalid\] Standalone schema validators/);
   assert.match(result.stderr, /Archify is not ready: 1 runtime check failed\./);
+});
+
+function doctorProbeEnv(name, preload) {
+  const temporary = path.join(tmp, `doctor-temporary-${name}`);
+  fs.mkdirSync(temporary, { recursive: true });
+  const env = { ...process.env, TMPDIR: temporary, TMP: temporary, TEMP: temporary };
+  if (preload) {
+    const file = path.join(tmp, `doctor-preload-${name}.mjs`);
+    fs.writeFileSync(file, `import fs from 'node:fs';\n${preload}`);
+    env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ? `${process.env.NODE_OPTIONS} ` : ''}--import=${pathToFileURL(file).href}`;
+  }
+  return { env, temporary };
+}
+
+function doctorProbeDirectories(temporary) {
+  return fs.readdirSync(temporary).filter((entry) => entry.startsWith('archify-doctor-'));
+}
+
+test('cli: doctor reports a runtime whose path and handle file identities disagree', () => {
+  // Mirrors Node 22.12, 22.16 and 24.0 (libuv 1.49-1.50) on Windows 11, where
+  // path-based stats report dev 0 and handle-based fstat reports the volume serial (#1012).
+  const { env, temporary } = doctorProbeEnv('dev-zero', `for (const name of ['lstatSync', 'statSync']) {
+  const original = fs[name];
+  fs[name] = function (target, options) {
+    const stats = original.apply(this, arguments);
+    if (stats && options && options.bigint) stats.dev = 0n;
+    return stats;
+  };
+}
+`);
+
+  const doctor = run(['doctor'], { env });
+  assert.equal(doctor.status, 1);
+  assert.match(doctor.stdout, /\[unsupported\] File identity: lstat dev=0 ino=\d+, fstat dev=\d+ ino=\d+/);
+  assert.ok(doctor.stdout.includes(`Node.js v${process.versions.node}, libuv ${process.versions.uv}`));
+  assert.doesNotMatch(doctor.stdout, /Archify is ready/);
+  assert.match(doctor.stderr, /Archify is not ready: 1 runtime check failed\./);
+  assert.deepEqual(doctorProbeDirectories(temporary), []);
+
+  const demoDirectory = path.join(tmp, 'demo-path-stat-dev-zero');
+  const demo = run(['demo', demoDirectory], { env });
+  assert.equal(demo.status, 1);
+  assert.match(demo.stderr, /\[output\/target-changed\]/);
+  assert.equal(fs.existsSync(path.join(demoDirectory, 'archify-demo.html')), false);
+});
+
+test('cli: doctor does not report a file identity pass without a usable temporary directory', () => {
+  const missing = path.join(tmp, 'missing-temporary-directory');
+  const result = run(['doctor'], { env: { ...process.env, TMPDIR: missing, TMP: missing, TEMP: missing } });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /\[unavailable\] File identity not checked: the temporary probe could not run \(ENOENT\)/);
+  assert.doesNotMatch(result.stdout, /\[ok\] File identity/);
+  assert.doesNotMatch(result.stdout, /Archify is ready\./);
+  assert.match(result.stdout, /Archify is ready, but 1 runtime check could not run\./);
+});
+
+test('cli: doctor removes the file identity probe directory when the probe fails', () => {
+  const { env, temporary } = doctorProbeEnv('open-fails', `const original = fs.openSync;
+fs.openSync = function (target) {
+  if (String(target).endsWith('identity-probe')) {
+    throw Object.assign(new Error('injected'), { code: 'EACCES' });
+  }
+  return original.apply(this, arguments);
+};
+`);
+
+  const result = run(['doctor'], { env });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /\[unavailable\] File identity not checked: the temporary probe could not run \(EACCES\)/);
+  assert.deepEqual(doctorProbeDirectories(temporary), []);
+});
+
+test('cli: doctor keeps the file identity result when the probe directory cannot be removed', () => {
+  const { env, temporary } = doctorProbeEnv('remove-fails', `const original = fs.rmSync;
+fs.rmSync = function (target) {
+  if (String(target).includes('archify-doctor-')) {
+    throw Object.assign(new Error('injected'), { code: 'EBUSY' });
+  }
+  return original.apply(this, arguments);
+};
+`);
+
+  const result = run(['doctor'], { env });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /\[ok\] File identity \(lstat and fstat agree on a temporary file\); could not remove .+ \(EBUSY\)/);
+  assert.match(result.stdout, /Archify is ready\./);
+  assert.equal(doctorProbeDirectories(temporary).length, 1);
 });
 
 test('cli: examples renders from an installed skill', () => {
