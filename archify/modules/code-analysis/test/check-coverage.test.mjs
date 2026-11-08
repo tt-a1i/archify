@@ -8,6 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { formatText } from '../bin/check.mjs';
 
 const CHECK = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'check.mjs');
 
@@ -60,4 +61,21 @@ test('check: a clean run says nothing about coverage and the gate is unchanged',
   const text = check(root, ['--language', 'py']);
   assert.equal(text.status, 0, text.stdout + text.stderr);
   assert.doesNotMatch(text.stdout, /Not analyzed/);
+});
+
+test('check: the text summary escapes control characters in parse-failure paths', () => {
+  const text = formatText({
+    verdict: 'ok',
+    counts: { findings: 0, error: 0, warning: 0, info: 0, accepted: 0 },
+    language: 'py',
+    files: 1,
+    rules: [],
+    coverage: { parseErrors: ['src/\u001b[2Jbroken.py'], otherLanguages: [] },
+    review: {},
+    staleBaseline: [],
+    status: 'ok',
+    gate: { failOn: 'warning', newOnly: false, failing: [] },
+  });
+  assert.match(text, /src\/\\u001b\[2Jbroken\.py/);
+  assert.doesNotMatch(text, /\u001b/);
 });

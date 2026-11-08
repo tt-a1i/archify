@@ -134,7 +134,7 @@ export function formatText(r) {
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
   lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
-  if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.join(', ')}`);
+  if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.map(formatTerminalText).join(', ')}`);
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);
   if (r.review.comparison) {
     const c = r.review.comparison;
@@ -151,6 +151,10 @@ export function formatText(r) {
     if (r.gate.failing.length > 20) lines.push(`  … ${r.gate.failing.length - 20} more (use --json for all)`);
   } else lines.push(`PASSED: no open finding at or above ${r.gate.failOn}${r.gate.newOnly ? ' among new findings' : ''}.`);
   return lines.join('\n');
+}
+
+function formatTerminalText(value) {
+  return String(value).replace(/[\u0000-\u001f\u007f-\u009f]/g, (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
