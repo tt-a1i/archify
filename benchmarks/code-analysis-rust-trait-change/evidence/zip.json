@@ -1,0 +1,28 @@
+{
+  "controls": {
+    "ambiguousConcrete": true,
+    "dynTrait": true,
+    "genericMethod": true,
+    "genericPath": true,
+    "leftImpl": true,
+    "negativeControlRejected": true,
+    "rightImpl": true,
+    "twoTraitsOneType": true,
+    "twoTypesOneTrait": true
+  },
+  "sameResultsAsSource": {
+    "bytes": {
+      "candidates": 0,
+      "definite": 2,
+      "missed": [],
+      "wrong": []
+    },
+    "log": {
+      "candidates": 1,
+      "definite": 0,
+      "missed": [],
+      "wrong": []
+    }
+  },
+  "zipSha256": "5c9687d0fb0fe1ade96defa923e6f7d1c7eb2822d29b12b647b8d9b1d31e35e1"
+}

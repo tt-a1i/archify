@@ -102,7 +102,7 @@ function inspectSide(capture, side) {
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2'].includes(facts.callModel))
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(facts.callModel))
-    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4'].includes(facts.callModel));
+    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5'].includes(facts.callModel));
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
 }
 
@@ -168,6 +168,27 @@ function callsInRange(records, range) {
   return selected;
 }
 
+function traitCandidates(side, definition) {
+  if (side.facts.repository.language !== 'rust') return null;
+  const edges = side.facts.traitImplementations;
+  if (!Array.isArray(edges)) return { coverage: 'unavailable', reason: 'rust-trait-edges-not-captured', runtimeTarget: 'not-determined', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  const matching = edges.filter(edge => edge.implementation.file === definition.file && edge.implementation.line === definition.line && edge.implementation.column === definition.column);
+  if (!matching.length) return { coverage: 'not-applicable', reason: 'definition-not-a-captured-trait-implementation', runtimeTarget: 'not-determined', total: 0, included: 0, omitted: 0, limit: LIMIT, items: [] };
+  const targets = new Set(matching.map(edge => key(edge.traitMethod.file, edge.traitMethod.line, edge.traitMethod.column, edge.traitMethod.name)));
+  const items = [];
+  for (const record of [...side.calls.values()].flat()) {
+    if (record.fact.resolution !== 'rust-trait-method-candidate' || !record.fact.target) continue;
+    const target = record.fact.target;
+    if (!targets.has(key(target.file || record.fact.file, target.line, target.column, target.name))) continue;
+    const status = !side.resolutionFresh ? 'resolution-input-changed' : side.files.get(record.fact.file)?.status || 'unverifiable';
+    items.push({ ...record, reason: 'call site proves this trait method is used; compile-time or runtime concrete implementation is not determined', runtimeTarget: 'not-determined',
+      navigation: { status, location: status === 'valid' ? { file: record.fact.file, line: record.fact.line, column: record.fact.column, endLine: record.fact.endLine, endColumn: record.fact.endColumn } : null } });
+  }
+  items.sort((a, b) => a.fact.file.localeCompare(b.fact.file) || a.fact.line - b.fact.line || a.fact.column - b.fact.column);
+  return { coverage: 'available', role: 'trait-declaration anchors for review; not proof of runtime dispatch to the changed implementation', runtimeTarget: 'not-determined',
+    trait: matching[0].trait, traitMethod: matching[0].traitMethod, implementations: matching.map(edge => ({ selfType: edge.selfType, implementation: edge.implementation })), ...bounded(items) };
+}
+
 function describeDefinition(side, definition) {
   const refs = side.references.get(key(definition.file, definition.line, definition.column, definition.name)) || [];
   const knownReferences = refs.map(record => {
@@ -177,8 +198,9 @@ function describeDefinition(side, definition) {
   const unresolved = callsInRange(side.calls.get(definition.file) || [], definition.sourceRange || definition);
   const unavailable = { coverage: 'unavailable', reason: 'unsupported-or-unknown-call-model', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
   const available = items => ({ coverage: 'available', ...bounded(items) });
+  const candidates = traitCandidates(side, definition);
   return { side: side.side, snapshotId: side.facts.repository.snapshotId, definition,
-    knownReferences: side.callCoverage ? available(knownReferences) : { ...unavailable }, unresolvedWithinSourceRange: side.callCoverage ? { ...available(unresolved), containment: 'physical-source-range-including-nested-definitions-and-owned-headers' } : { ...unavailable } };
+    knownReferences: side.callCoverage ? available(knownReferences) : { ...unavailable }, ...(candidates ? { traitCandidates: candidates } : {}), unresolvedWithinSourceRange: side.callCoverage ? { ...available(unresolved), containment: 'physical-source-range-including-nested-definitions-and-owned-headers' } : { ...unavailable } };
 }
 
 function moduleReferences(side, entry) {

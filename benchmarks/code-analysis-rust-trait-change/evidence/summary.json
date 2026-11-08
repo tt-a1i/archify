@@ -1,0 +1,145 @@
+{
+  "controls": {
+    "callModel": "rust-source-direct-v5",
+    "calls": 6,
+    "checks": {
+      "ambiguousConcrete": true,
+      "dynTrait": true,
+      "genericMethod": true,
+      "genericPath": true,
+      "leftImpl": true,
+      "negativeControlRejected": true,
+      "rightImpl": true,
+      "twoTraitsOneType": true,
+      "twoTypesOneTrait": true
+    },
+    "negativeControl": {
+      "actual": {
+        "call": "src/lib.rs:9:21",
+        "selfType": "A",
+        "targetFile": "src/lib.rs",
+        "targetLine": 7,
+        "trait": "Right"
+      },
+      "expected": {
+        "call": "src/lib.rs:9:21",
+        "selfType": "A",
+        "targetFile": "src/lib.rs",
+        "targetLine": 5,
+        "trait": "Left"
+      },
+      "status": "wrong",
+      "wrong": [
+        "declaration-range",
+        "owning-trait"
+      ]
+    },
+    "traitImplementations": 3
+  },
+  "failures": [],
+  "projects": [
+    {
+      "baseline": {
+        "callModel": null,
+        "knownReferences": 0,
+        "traitCandidates": "absent"
+      },
+      "candidates": {
+        "actual": [],
+        "correct": 0,
+        "coverage": "available",
+        "expected": [],
+        "included": 0,
+        "missed": [],
+        "omitted": 0,
+        "total": 0,
+        "wrong": []
+      },
+      "definite": {
+        "actual": [
+          "src/buf/chain.rs:184",
+          "src/buf/chain.rs:185"
+        ],
+        "correct": 2,
+        "expected": [
+          "src/buf/chain.rs:184",
+          "src/buf/chain.rs:185"
+        ],
+        "included": 2,
+        "limit": 40,
+        "missed": [],
+        "omitted": 0,
+        "total": 2,
+        "wrong": []
+      },
+      "definition": {
+        "file": "src/bytes_mut.rs",
+        "line": 1300,
+        "qualname": "bytes_mut::BytesMut::put"
+      },
+      "head": "c08f87663a04eac3b9ab2dfa1976852d9b525a8c",
+      "identity": {
+        "candidateNotRuntime": true,
+        "candidateTarget": true,
+        "definite": true
+      },
+      "name": "bytes",
+      "repository": "tokio-rs/bytes"
+    },
+    {
+      "baseline": {
+        "callModel": null,
+        "knownReferences": 0,
+        "traitCandidates": "absent"
+      },
+      "candidates": {
+        "actual": [
+          "src/__private_api.rs:101"
+        ],
+        "correct": 1,
+        "coverage": "available",
+        "expected": [
+          "src/__private_api.rs:101"
+        ],
+        "included": 1,
+        "missed": [],
+        "omitted": 0,
+        "total": 1,
+        "wrong": []
+      },
+      "definite": {
+        "actual": [],
+        "correct": 0,
+        "expected": [],
+        "included": 0,
+        "limit": 40,
+        "missed": [],
+        "omitted": 0,
+        "total": 0,
+        "wrong": []
+      },
+      "definition": {
+        "file": "src/__private_api.rs",
+        "line": 32,
+        "qualname": "__private_api::()::into_kvs"
+      },
+      "head": "db145979e229549215300f2696fa89b215cb1cab",
+      "identity": {
+        "candidateNotRuntime": true,
+        "candidateTarget": true,
+        "definite": true
+      },
+      "name": "log",
+      "repository": "rust-lang/log",
+      "unpairedReferenceImplementation": {
+        "candidates": [
+          "src/__private_api.rs:101"
+        ],
+        "coverage": "available",
+        "knownReferences": 0,
+        "line": 25,
+        "reason": "head-only"
+      }
+    }
+  ]
+}

@@ -59,7 +59,9 @@ mod util{pub fn run()->u8{0}}
 fn nested_use(){let run=||0u16;{use crate::util::run;let _:u8=run();}}
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- for(const line of [3,4,5,6,7,8])assert.ok(calls(facts,'src/lib.rs').filter(c=>c.line===line).every(c=>c.resolution==='unresolved'),`line ${line}`);
+ for(const line of [3,4,5,7,8])assert.ok(calls(facts,'src/lib.rs').filter(c=>c.line===line).every(c=>c.resolution==='unresolved'),`line ${line}`);
+ const generic=calls(facts,'src/lib.rs').find(c=>c.line===6);
+ assert.equal(generic.resolution,'rust-trait-method-candidate');assert.equal(generic.target.line,2);assert.equal(generic.target.name,'method');
  assert.equal(calls(facts,'src/lib.rs').find(c=>c.line===10&&c.target)?.target.line,9);
 });
 
@@ -134,13 +136,15 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v4');
+ assert.equal(facts.callModel,'rust-source-direct-v5');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
  assert.ok(facts.imports.some(i=>i.resolved&&i.names?.includes('Imported')&&i.to==='src/text.rs'));
  assert.equal(calls(facts,'src/lib.rs').find(c=>c.line===9).target.file,'src/text.rs');
- for(const line of [5,6,7,10,12,14,15])assert.equal(calls(facts,'src/lib.rs').find(c=>c.line===line).resolution,'unresolved',`line ${line}`);
+ for(const line of [5,6,7]){const call=calls(facts,'src/lib.rs').find(c=>c.line===line);assert.equal(call.resolution,'rust-trait-method-candidate',`line ${line}`);assert.equal(call.target.line,3)}
+ const qualified=calls(facts,'src/lib.rs').find(c=>c.line===10);assert.equal(qualified.resolution,'rust-trait-impl');assert.equal(qualified.target.line,9);
+ for(const line of [14,15])assert.equal(calls(facts,'src/lib.rs').find(c=>c.line===line).resolution,'unresolved',`line ${line}`);
  const question=buildQuestion({root,facts,entry:'src/lib.rs',symbol:'caller',question:'Where are the constructors?'});
  assert.ok(question.calls.records.every(r=>r.targetNavigation.status==='valid'));
  const legacy=structuredClone(facts);legacy.callModel='rust-source-direct-v1';
@@ -294,4 +298,41 @@ test('Rust paired changed lifetime constructor retrieves its captured imported c
   const refs=q.changedDefinitions.items[0][side].knownReferences;assert.equal(refs.coverage,'available');assert.equal(refs.total,1);
   assert.equal(refs.items[0].fact.resolution,'rust-lifetime-inherent-source-candidate');assert.equal(refs.items[0].navigation.status,'valid');
  }
+});
+
+test('Rust trait impl calls separate definite targets from trait-only candidates',t=>{
+ const root=fixture(t,{'src/lib.rs':`pub trait Left { fn act(&self) -> u8; }
+pub trait Right { fn act(&self) -> u8; }
+pub struct A;
+pub struct B;
+impl Left for A { fn act(&self) -> u8 { 1 } }
+impl Left for B { fn act(&self) -> u8 { 2 } }
+impl Right for A { fn act(&self) -> u8 { 3 } }
+pub fn definite() { <A as Left>::act(&A); <A as Right>::act(&A); }
+pub fn generic<T: Left>(x: T) { x.act(); T::act(&x); }
+pub fn object(x: &dyn Left) { x.act(); }
+pub fn ambiguous(x: &A) { x.act(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.callModel,'rust-source-direct-v5');
+ const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
+ assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
+ assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
+ for(const column of [33,42]){const item=call(9,column);assert.equal(item.resolution,'rust-trait-method-candidate');assert.equal(item.target.line,1)}
+ const object=call(10,31);assert.equal(object.resolution,'rust-trait-method-candidate');assert.equal(object.target.line,1);
+ assert.equal(call(11,27).resolution,'unresolved');
+ const edges=facts.traitImplementations.filter(edge=>edge.traitMethod.name==='act');
+ assert.deepEqual(edges.filter(edge=>edge.trait.name==='Left').map(edge=>edge.selfType).sort(),['A','B']);
+ assert.deepEqual(edges.filter(edge=>edge.selfType==='A').map(edge=>edge.trait.name).sort(),['Left','Right']);
+ const settings=config();const headRoot=fixture(t,{'src/lib.rs':fs.readFileSync(path.join(root,'src/lib.rs'),'utf8').replace('fn act(&self) -> u8 { 1 }','fn act(&self) -> u8 { 10 }')});
+ const pair=buildChangeQuestion({base:captureChangeSide(root,settings,'rust'),head:captureChangeSide(headRoot,settings,'rust'),config:settings,entry:'src/lib.rs',question:'Which callers reach the changed trait method?'});
+ const a=pair.unpairedDefinitions.items.find(item=>item.side==='head'&&item.definition.line===5);
+ assert.ok(a,'duplicate trait-method qualnames stay explicit; the head impl Left for A remains inspectable');
+ assert.equal(a.reason,'duplicate-slot');
+ const direct=a.knownReferences.items.map(record=>record.fact.line);
+ assert.deepEqual(direct,[8]);
+ const candidates=a.traitCandidates;assert.equal(candidates.coverage,'available');assert.equal(candidates.runtimeTarget,'not-determined');
+ assert.deepEqual(candidates.items.map(record=>record.fact.line),[9,9,10]);
+ assert.ok(candidates.items.every(record=>record.fact.target.line===1&&record.reason.includes('not determined')));
+ assert.equal(a.traitCandidates.role.includes('not proof of runtime dispatch'),true);
 });

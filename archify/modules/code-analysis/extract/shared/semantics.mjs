@@ -37,7 +37,7 @@ export function semanticErrors(name, data) {
     const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel);
     if (goCalls && data.callModel === 'go-source-direct-v3' && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
-    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4'].includes(data.callModel);
+    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5'].includes(data.callModel);
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     const javaProjects = javaCalls && data.callModel === 'java-static-lexical-v5';
     if (javaProjects && data.languageScope?.language !== 'java') add('/languageScope','requires Java v5 declared project scope');
@@ -67,6 +67,22 @@ export function semanticErrors(name, data) {
     const functionKey = (file, name, line) => JSON.stringify([file, name, line]);
     const functionStarts = new Set((data.functions || []).map((fn) => functionKey(fn.file, fn.name, fn.line)));
     const functionPoints = new Set((data.functions || []).map(fn => JSON.stringify([fn.file, fn.name, fn.sourceRange?.line, fn.sourceRange?.column])));
+    const traitDeclarations = new Set();
+    for (const [i, decl] of (data.traits || []).entries()) {
+      const point = decl.declaration;
+      if (!point || !files.has(point.file) || !(Number.isInteger(point.line) && point.line >= 1 && Number.isInteger(point.column) && point.column >= 1)) add(`/traits/${i}/declaration`, 'must reference a valid captured declaration point');
+      for (const [j, method] of (decl.methods || []).entries()) {
+        if (!files.has(method.file) || !(Number.isInteger(method.line) && method.line >= 1 && Number.isInteger(method.column) && method.column >= 1)) add(`/traits/${i}/methods/${j}`, 'must reference a valid captured declaration point');
+        traitDeclarations.add(JSON.stringify([method.file, method.name, method.line, method.column]));
+      }
+    }
+    for (const [i, edge] of (data.traitImplementations || []).entries()) {
+      for (const part of ['trait', 'traitMethod', 'implementation']) {
+        const point = edge[part];
+        if (!point || !files.has(point.file) || !(Number.isInteger(point.line) && point.line >= 1 && Number.isInteger(point.column) && point.column >= 1)) add(`/traitImplementations/${i}/${part}`, 'must reference a valid captured declaration point');
+      }
+      if (edge.traitMethod) traitDeclarations.add(JSON.stringify([edge.traitMethod.file, edge.traitMethod.name, edge.traitMethod.line, edge.traitMethod.column]));
+    }
     const brokenFiles = new Set((data.parse_errors || []).map((error) => error.path));
     const validPoint = (file, point, exclusive = false) => {
       if (!sourceLines.has(file)) sourceLines.set(file, sourceTexts.get(file)?.split(goCalls || rustCalls ? /\n/ : pythonCalls ? /\r\n|[\n\r]/ : /\r\n|[\n\r\u2028\u2029]/));
@@ -120,15 +136,20 @@ export function semanticErrors(name, data) {
           if (targetFile === call.file || (!direct && !forwarded)) add(`${at}/target/file`, 'must follow a recorded static import or supported reexport to another captured file');
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }
-        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
-        if (call.resolution === 'rust-specialized-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v3', 'rust-source-direct-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v3 concrete-specialization source-candidate model');
-        if (call.resolution === 'rust-lifetime-inherent-source-candidate' && (!rustCalls || data.callModel !== 'rust-source-direct-v4')) add(`${at}/resolution`, 'requires the Rust v4 lifetime-only inherent source-candidate model');
+        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
+        if (call.resolution === 'rust-specialized-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v3 concrete-specialization source-candidate model');
+        if (call.resolution === 'rust-lifetime-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v4', 'rust-source-direct-v5'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v4 lifetime-only inherent source-candidate model');
         if (call.resolution === 'rust-direct-function' && !rustCalls) add(`${at}/resolution`, 'requires the Rust source-direct model');
+        if (call.resolution === 'rust-trait-impl' && (!rustCalls || data.callModel !== 'rust-source-direct-v5')) add(`${at}/resolution`, 'requires the Rust v5 trait impl model');
+        if (call.resolution === 'rust-trait-method-candidate' && (!rustCalls || data.callModel !== 'rust-source-direct-v5')) add(`${at}/resolution`, 'requires the Rust v5 trait candidate model');
+        if (call.resolution === 'rust-trait-method-candidate' && !traitDeclarations.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured trait method declaration');
         if (call.resolution === 'go-direct-method' && (!goCalls || !['go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
         if (call.resolution === 'go-direct-function' && !goCalls) add(`${at}/resolution`, 'requires the Go source-direct model');
         if (!validPoint(targetFile, call.target)) add(`${at}/target`, 'target must lie inside captured source');
-        if ((pythonCalls || javaCalls || goCalls || rustCalls) && !functionPoints.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured definition start');
-        if (!functionStarts.has(functionKey(targetFile, call.target.name, call.target.line))) add(`${at}/target`, 'target must reference a recorded function in its target file');
+        if (call.resolution !== 'rust-trait-method-candidate') {
+          if ((pythonCalls || javaCalls || goCalls || rustCalls) && !functionPoints.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured definition start');
+          if (!functionStarts.has(functionKey(targetFile, call.target.name, call.target.line))) add(`${at}/target`, 'target must reference a recorded function in its target file');
+        }
       }
     });
     data.parse_errors?.forEach((error, i) => {

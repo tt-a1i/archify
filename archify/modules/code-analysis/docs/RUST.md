@@ -30,13 +30,13 @@ The coverage.languageScope and raw-facts languageScope report actual selected fi
 
 Crate-local crate/self/super paths, explicit paths, module use/use-as, grouped imports, unambiguous globs and local workspace library paths can identify free functions. Actual Cargo library names and renamed dependencies define the boundary. Module lookup observes editions, module file/path attributes, lexical shadowing and conditional imports. Unsupported or ambiguous paths stay unresolved. Cross-crate source bindings do not prove visibility or type correctness.
 
-The original v1 model leaves methods, trait dispatch, function values, associated functions, local item functions as targets, generated/expanded macros, external crates, and full type inference unknown. Later bounded inherent-function revisions are described below; receiver/trait dispatch remains unproved. Syntactic function/method bodies form the call inventory; macros have opaque records. Type/field definitions are not navigable entities yet. Structural cycles report source coupling; they do not imply runtime import order or partial initialization.
+The original v1 model leaves methods, trait dispatch, function values, associated functions, local item functions as targets, generated/expanded macros, external crates, and full type inference unknown. Later bounded inherent-function revisions are described below. v5 additionally records local trait declarations and impl edges, but trait-only call targets remain declaration anchors rather than runtime dispatch. Syntactic function/method bodies form the call inventory; macros have opaque records. Type/field definitions are not navigable entities yet. Structural cycles report source coupling; they do not imply runtime import order or partial initialization.
 
 See the pinned real-project replay and source/ZIP evidence in benchmarks/code-analysis-go-rust/RUST.md. These finite cases are not whole-repository accuracy measurements.
 
-## Current call model and lifetime-only owners
+## Current call model and trait impl candidates
 
-Current captures use rust-source-direct-v4 / adapter4. Historical v1 collects free
+Current captures use rust-source-direct-v5 / adapter5. Historical v1 collects free
 functions; v2 additionally admits unique monomorphic inherent function paths;
 v3 additionally admits bare generic-struct paths to unique concrete type
 specializations. Historical facts keep their original scope without rebinding.
@@ -49,11 +49,27 @@ locations. Duplicate/conditional/unsupported sibling declarations block selectio
 variant names still prevent selecting a same-named inherent function. New calls
 use rust-lifetime-inherent-source-candidate.
 
-Concrete static lifetime specializations, mixed type/lifetime owners, bounded
-lifetimes, const/defaulted parameters, explicit call arguments, aliases/Self,
-receiver/trait dispatch and full applicability remain unsupported. Lifetime-only
-source navigation does not infer lifetimes, borrow-check, compile, execute or
-establish complete impact. Native function sourceRange starts at pub/fn, while
-definition.sourceRange also includes owned attributes/doc comments; target
-locations use the former. Saved and paired questions retain existing freshness
-and source-profile checks. Normal toolchain requirements are unchanged.
+v5 records captured local trait declarations, their methods, and impl-method
+edges. An explicit `<Type as Trait>::method(...)` path resolves to the unique
+captured impl for that nominal type and trait (`rust-trait-impl`). Method calls
+resolve to a unique impl when the receiver is a parameter, local `let`, literal
+struct path or constructor path whose captured nominal type is unambiguous; an
+inherent declaration with the same name blocks that selection. Calls through a
+declared `T: Trait` bound, `dyn Trait`, `Trait::method` or generic path target
+the trait method declaration only (`rust-trait-method-candidate`); they prove
+trait use, not the runtime implementation. Change questions list these as
+`traitCandidates` with `runtimeTarget: not-determined`, separately from direct
+references.
+
+Unsupported applicability remains explicit: external or macro-generated traits,
+supertrait/blanket impls, type aliases/Self, generic argument matching, receiver
+types from fields/chained calls or reassigned locals, and trait default bodies
+outside the current call inventory. Concrete types implementing several traits
+with the same method stay unresolved rather than selecting one. Repeated
+trait-method qualnames (same type, same method name in different traits) remain
+duplicate slots in paired questions, while their head-only traitCandidates stay
+inspectable. Source navigation does not infer lifetimes, borrow-check, compile,
+execute or establish complete impact. Native function sourceRange starts at
+pub/fn, while definition.sourceRange also includes owned attributes/doc comments;
+target locations use the former. Saved and paired questions retain existing
+freshness and source-profile checks. Normal toolchain requirements are unchanged.
