@@ -163,3 +163,16 @@ test('Java inherited qualifier navigation requires fresh ancestor source even wh
  assert.equal(stale.targetNavigation.location,null);
  assert.equal(stale.targetNavigation.reason,'qualifier-ancestry-changed');
 });
+
+test('Java inherited-context targets and ancestor evidence cannot cross unproved build roots',t=>{
+ for(const crossing of ['target','ancestor']){
+  const root=fixture(t,{
+   'caller/pom.xml':'<project/>','other/pom.xml':'<project/>',
+   [(crossing==='target'?'other':'caller')+'/p/Api.java']:api,
+   [(crossing==='ancestor'?'other':'caller')+'/q/Parent.java']:'package q; public class Parent {}',
+   'caller/q/Calls.java':'package q; import p.Api; public class Calls extends Parent {public void call(){Api.run();}}',
+  });
+  const facts=capture(root),call=facts.calls.find(c=>c.file==='caller/q/Calls.java');
+  assert.equal(call.resolution,'unresolved');assert.equal(call.reason,'java-inherited-build-scope');assert.ok(!call.target);
+ }
+});

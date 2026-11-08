@@ -113,7 +113,7 @@ export function collectFunctionsAndCalls(unit) {
 // Only public, unique-at-fixed-arity, explicitly static source methods in ordinary top-level
 // classes without explicit supertypes are eligible. This does not type-check
 // argument applicability, compilation, class loading or execution.
-export function resolveQualifiedCalls(units, resolveType, qualifierAncestry) {
+export function resolveQualifiedCalls(units, resolveType, qualifierAncestry, sameBuildRoot) {
   const byFile = new Map(units.map(unit => [unit.file, unit]));
   for (const unit of units) for (const request of unit.qualifiedCalls) {
     const first = request.qualifier.split('.')[0];
@@ -126,6 +126,10 @@ export function resolveQualifiedCalls(units, resolveType, qualifierAncestry) {
     const targets = resolveType(unit, { ...request, name: request.qualifier });
     if (targets.length !== 1) continue;
     const type = targets[0], targetUnit = byFile.get(type.file);
+    if (request.inherited && !sameBuildRoot(unit.file, [...ancestry, { file: type.file }])) {
+      request.call.reason = 'java-inherited-build-scope';
+      continue;
+    }
     if (type.owners.length || type.kind !== 'normalClassDeclaration') continue;
     const methods = targetUnit.staticMethods.filter(method => method.ownerOffset === type.startOffset && method.name === request.name);
     const { method, ambiguous } = fixedArity(methods, request.arity);

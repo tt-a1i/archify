@@ -78,6 +78,7 @@ export function semanticErrors(name, data) {
       if (!validPoint(call.file, { line: call.endLine, column: call.endColumn }, true)) add(at, 'call end must lie inside captured source or at EOF');
       if (call.endLine < call.line || (call.endLine === call.line && call.endColumn <= call.column)) add(at, 'call end must follow its start');
       if (brokenFiles.has(call.file)) add(at, 'calls must be omitted for files with parse errors');
+      if (call.reason === 'java-inherited-build-scope' && (!javaCalls || data.callModel !== 'java-static-lexical-v4')) add(at + '/reason', 'requires the Java v4 inherited-context model');
       if (call.qualifierAncestry) {
         if (!javaCalls || data.callModel !== 'java-static-lexical-v4' || call.resolution !== 'java-qualified-static-method') add(at + '/qualifierAncestry', 'requires a qualified call under Java v4');
         const points = new Set();
