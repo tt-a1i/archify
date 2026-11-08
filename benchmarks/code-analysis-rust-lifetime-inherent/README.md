@@ -49,7 +49,12 @@ runtime behavior/full impact. Historical v1/v2/v3 facts retain their original sc
 
 [Preservation](evidence/preservation.json): all17,995call ranges,3,435functions,
 166source files and1,968old targets are unchanged;0parse failures. Exactly73new
-call candidates appear. The selected3are included in that denominator.
+call candidates appear. The selected3are included in that regex denominator. A post-design preservation
+replay also found11new serde_json targets per profile (11physical sites across
+default/arbitrary_precision); both sets are independently LSP-audited below.
+Existing serde targets127/default and186/arbitrary remain unchanged.
+The [reproducible preservation checker](preserve.py) records separate source,
+call-range and import evidence for all three profiles.
 The shared nominal index also binds39previously unknown import records to9source
 nominals; all1,477import records remain present, with no old resolved target changed.
 [Their fixed source declarations/import statements](evidence/imports-source-review.json)
@@ -63,12 +68,18 @@ blind accuracy cohort. Graph findings may change as these dependencies become vi
 location for each of73new calls; all73agree with the captured source declaration
 range/name,0different/0unavailable. A separate deliberately wrong expectation is
 [rejected](evidence/ra-negative.json) (0agree/1different), not a product wrong target.
-These are language-server definition agreements, not compiler/build/precision/recall
+[All-profile summary](evidence/ra-summary.json) additionally covers11/11serde
+default and11/11arbitrary_precision observations, source-reviewed after design.
+All95observations across84physical sites agree with exactly one LSP location each;
+0different/0unavailable. Serde has2new bound imports per profile, separately
+source-reviewed in its preservation receipts. These are language-server definition
+agreements, not compiler/build/precision/recall
 or runtime proof. The three selected questions overlap those73observations.
 
 The retained executable is35,248,592bytes; no toolchain/component was installed.
 Rust/cargo1.89.0, rust-src, existing registry caches and previous isolated fixed-source
-workspaces were reused. Startup plus73queries took4.34s here; fresh installation,
+workspaces were reused. Regex startup plus73queries took4.34s here; each serde startup plus11queries
+took3.82s. These are cached local observations; fresh installation,
 download cost and cross-host audit were not measured. The audit uses a separately
 generated/pinned Cargo.lock, not an upstream release lock. Existing standard-library
 metadata offline fallback (missing cc1.2.0, then no-deps) remains in raw local stderr.
@@ -77,7 +88,7 @@ Effective analyzer status explicitly reports checkOnSave=false,
 procMacro_enable=false and cargo_buildScripts_enable=false. The legacy receipt's
 boolean safety values mean these false settings were found, not that execution was
 enabled. The [Cargo guard log](evidence/cargo-commands.jsonl) permits only metadata
-and version commands in these two audit sessions, enforces locked/offline metadata,
+and version commands across these audit sessions, enforces locked/offline metadata,
 and rejects other probes. No upstream build/check/test, proc macro or build script
 is executed. Project source bytes are checked against the captured facts before LSP
 requests. The audit is optional research, not a shipped backend/dependency.
@@ -112,7 +123,7 @@ Map sites retain10correct/0wrong/0missed observations under two overlapping prof
 plus4unknowns. Old facts/questions are not rewritten as new outputs.
 
 For independent attribution, use the unchanged prior audit prepare.py / audit.py
-with the new pinned inputs and --profile regex. Prepare new guarded output directories
+with the new pinned inputs and --profile regex, serde-default, or serde-arbitrary. Prepare new guarded output directories
 as described in that audit README; supply the captured facts at <facts-root>/regex.
 Normal and --negative-control sessions keep separate result directories. The fixed
 workspaces/locks are independently hashed and source-verified. Reuse/download of

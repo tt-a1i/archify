@@ -18,6 +18,20 @@
       "sourcesSha256": "2d3780b254399975e79eb4d7e2ffe7c4ed7c3ee7e21946d5adfbdbbedcc32200",
       "model": "rust-source-direct-v4",
       "resolution": "rust-lifetime-inherent-source-candidate"
+    },
+    "serde-default": {
+      "callsSha256": "dbdcf32003b7c794d91fd242d049ff7308fccdaf22dcdccfbe92af8fb329dcc6",
+      "functionsSha256": "9756d8580d2c5995996c054f69d689d232bedf076bf5d5bac2cfcbe4969e10ed",
+      "sourcesSha256": "a9c23561ae074148a4e134e92944bcd3867de6599136b86c57de7895593da338",
+      "model": "rust-source-direct-v4",
+      "resolution": "rust-lifetime-inherent-source-candidate"
+    },
+    "serde-arbitrary": {
+      "callsSha256": "a8a6e776b32112d490f98e1367da656479f1ddb6819c85a2c326c7af0fb105d1",
+      "functionsSha256": "9a089d45d3251d74fab1e1aba5c889bb011177fa8bc5f51b6b192c850437a18b",
+      "sourcesSha256": "a9c23561ae074148a4e134e92944bcd3867de6599136b86c57de7895593da338",
+      "model": "rust-source-direct-v4",
+      "resolution": "rust-lifetime-inherent-source-candidate"
     }
   },
   "target": "aarch64-apple-darwin",

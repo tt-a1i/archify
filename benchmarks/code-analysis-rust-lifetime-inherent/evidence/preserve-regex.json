@@ -1,0 +1,2286 @@
+{
+  "newCallCandidates": 73,
+  "preservedTargets": 1968,
+  "callRanges": 17995,
+  "files": 166,
+  "functions": 3435,
+  "parseErrors": [],
+  "importRecords": 1477,
+  "newBoundImports": 39,
+  "newCalls": [
+    {
+      "column": 9,
+      "endColumn": 29,
+      "endLine": 2560,
+      "file": "regex-automata/src/dfa/dense.rs",
+      "line": 2560,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/dfa/minimize.rs",
+        "line": 80,
+        "name": "new"
+      }
+    },
+    {
+      "column": 30,
+      "endColumn": 66,
+      "endLine": 81,
+      "file": "regex-automata/src/dfa/minimize.rs",
+      "line": 81,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/dfa/minimize.rs",
+        "line": 331,
+        "name": "incoming_transitions"
+      }
+    },
+    {
+      "column": 26,
+      "endColumn": 60,
+      "endLine": 82,
+      "file": "regex-automata/src/dfa/minimize.rs",
+      "line": 82,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/dfa/minimize.rs",
+        "line": 300,
+        "name": "initial_partitions"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 56,
+      "endLine": 413,
+      "file": "regex-automata/src/dfa/onepass.rs",
+      "line": 413,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/dfa/onepass.rs",
+        "line": 524,
+        "name": "new"
+      }
+    },
+    {
+      "column": 18,
+      "endColumn": 51,
+      "endLine": 441,
+      "file": "regex-automata/src/dfa/regex.rs",
+      "line": 441,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 31,
+      "endLine": 1228,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 1228,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2088,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 31,
+      "endLine": 1518,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 1518,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2088,
+        "name": "new"
+      }
+    },
+    {
+      "column": 20,
+      "endColumn": 45,
+      "endLine": 1559,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 1559,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2672,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 31,
+      "endLine": 1574,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 1574,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2088,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 34,
+      "endLine": 1718,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 1718,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2672,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 34,
+      "endLine": 1755,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 1755,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2672,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 29,
+      "endLine": 1941,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 1941,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2088,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 43,
+      "endLine": 2095,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 2095,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2672,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 31,
+      "endLine": 347,
+      "file": "regex-automata/src/hybrid/dfa.rs",
+      "line": 347,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/hybrid/dfa.rs",
+        "line": 2088,
+        "name": "new"
+      }
+    },
+    {
+      "column": 18,
+      "endColumn": 51,
+      "endLine": 404,
+      "file": "regex-automata/src/hybrid/regex.rs",
+      "line": 404,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 18,
+      "endColumn": 51,
+      "endLine": 615,
+      "file": "regex-automata/src/meta/regex.rs",
+      "line": 615,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 18,
+      "endColumn": 51,
+      "endLine": 657,
+      "file": "regex-automata/src/meta/regex.rs",
+      "line": 657,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 18,
+      "endColumn": 51,
+      "endLine": 1060,
+      "file": "regex-automata/src/nfa/thompson/backtrack.rs",
+      "line": 1060,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 18,
+      "endColumn": 51,
+      "endLine": 1111,
+      "file": "regex-automata/src/nfa/thompson/backtrack.rs",
+      "line": 1111,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 71,
+      "endLine": 1425,
+      "file": "regex-automata/src/nfa/thompson/compiler.rs",
+      "line": 1425,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/nfa/thompson/compiler.rs",
+        "line": 1762,
+        "name": "new"
+      }
+    },
+    {
+      "column": 17,
+      "endColumn": 67,
+      "endLine": 1440,
+      "file": "regex-automata/src/nfa/thompson/compiler.rs",
+      "line": 1440,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/nfa/thompson/compiler.rs",
+        "line": 1762,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 60,
+      "endLine": 172,
+      "file": "regex-automata/src/nfa/thompson/literal_trie.rs",
+      "line": 172,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/nfa/thompson/literal_trie.rs",
+        "line": 326,
+        "name": "new"
+      }
+    },
+    {
+      "column": 25,
+      "endColumn": 57,
+      "endLine": 192,
+      "file": "regex-automata/src/nfa/thompson/literal_trie.rs",
+      "line": 192,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/nfa/thompson/literal_trie.rs",
+        "line": 326,
+        "name": "new"
+      }
+    },
+    {
+      "column": 18,
+      "endColumn": 51,
+      "endLine": 895,
+      "file": "regex-automata/src/nfa/thompson/pikevm.rs",
+      "line": 895,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 18,
+      "endColumn": 51,
+      "endLine": 938,
+      "file": "regex-automata/src/nfa/thompson/pikevm.rs",
+      "line": 938,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 29,
+      "endLine": 787,
+      "file": "regex-automata/src/util/search.rs",
+      "line": 787,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 25,
+      "endColumn": 45,
+      "endLine": 27,
+      "file": "regex-cli/args/input.rs",
+      "line": 27,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 77,
+      "endLine": 355,
+      "file": "regex-cli/cmd/find/capture/mod.rs",
+      "line": 355,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 77,
+      "endLine": 420,
+      "file": "regex-cli/cmd/find/capture/mod.rs",
+      "line": 420,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 77,
+      "endLine": 195,
+      "file": "regex-cli/cmd/find/half/mod.rs",
+      "line": 195,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 77,
+      "endLine": 232,
+      "file": "regex-cli/cmd/find/half/mod.rs",
+      "line": 232,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/iter.rs",
+        "line": 165,
+        "name": "new"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 50,
+      "endLine": 178,
+      "file": "regex-lite/src/hir/mod.rs",
+      "line": 178,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-lite/src/hir/parse.rs",
+        "line": 157,
+        "name": "new"
+      }
+    },
+    {
+      "column": 14,
+      "endColumn": 46,
+      "endLine": 1120,
+      "file": "regex-lite/src/string.rs",
+      "line": 1120,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-lite/src/string.rs",
+        "line": 1505,
+        "name": "new"
+      }
+    },
+    {
+      "column": 14,
+      "endColumn": 46,
+      "endLine": 1269,
+      "file": "regex-lite/src/string.rs",
+      "line": 1269,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-lite/src/string.rs",
+        "line": 1505,
+        "name": "new"
+      }
+    },
+    {
+      "column": 40,
+      "endColumn": 71,
+      "endLine": 1677,
+      "file": "regex-lite/src/string.rs",
+      "line": 1677,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-lite/src/string.rs",
+        "line": 1505,
+        "name": "new"
+      }
+    },
+    {
+      "column": 37,
+      "endColumn": 68,
+      "endLine": 2178,
+      "file": "regex-lite/src/string.rs",
+      "line": 2178,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-lite/src/string.rs",
+        "line": 1505,
+        "name": "new"
+      }
+    },
+    {
+      "column": 5,
+      "endColumn": 23,
+      "endLine": 119,
+      "file": "regex-syntax/src/ast/visitor.rs",
+      "line": 119,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "line": 201,
+        "name": "new"
+      }
+    },
+    {
+      "column": 23,
+      "endColumn": 55,
+      "endLine": 317,
+      "file": "regex-syntax/src/ast/visitor.rs",
+      "line": 317,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "line": 471,
+        "name": "from_bracketed"
+      }
+    },
+    {
+      "column": 17,
+      "endColumn": 43,
+      "endLine": 461,
+      "file": "regex-syntax/src/ast/visitor.rs",
+      "line": 461,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "line": 475,
+        "name": "from_set"
+      }
+    },
+    {
+      "column": 17,
+      "endColumn": 43,
+      "endLine": 464,
+      "file": "regex-syntax/src/ast/visitor.rs",
+      "line": 464,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "line": 475,
+        "name": "from_set"
+      }
+    },
+    {
+      "column": 9,
+      "endColumn": 41,
+      "endLine": 472,
+      "file": "regex-syntax/src/ast/visitor.rs",
+      "line": 472,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/ast/visitor.rs",
+        "line": 475,
+        "name": "from_set"
+      }
+    },
+    {
+      "column": 27,
+      "endColumn": 54,
+      "endLine": 118,
+      "file": "regex-syntax/src/error.rs",
+      "line": 118,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/error.rs",
+        "line": 156,
+        "name": "from_formatter"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 48,
+      "endLine": 91,
+      "file": "regex-syntax/src/error.rs",
+      "line": 91,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/error.rs",
+        "line": 156,
+        "name": "from_formatter"
+      }
+    },
+    {
+      "column": 25,
+      "endColumn": 56,
+      "endLine": 174,
+      "file": "regex-syntax/src/hir/translate.rs",
+      "line": 174,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/hir/translate.rs",
+        "line": 685,
+        "name": "new"
+      }
+    },
+    {
+      "column": 5,
+      "endColumn": 23,
+      "endLine": 66,
+      "file": "regex-syntax/src/hir/visitor.rs",
+      "line": 66,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-syntax/src/hir/visitor.rs",
+        "line": 105,
+        "name": "new"
+      }
+    },
+    {
+      "column": 13,
+      "endColumn": 33,
+      "endLine": 1052,
+      "file": "src/regex/bytes.rs",
+      "line": 1052,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 28,
+      "endColumn": 48,
+      "endLine": 1085,
+      "file": "src/regex/bytes.rs",
+      "line": 1085,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 41,
+      "endLine": 1121,
+      "file": "src/regex/bytes.rs",
+      "line": 1121,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 39,
+      "endColumn": 79,
+      "endLine": 1122,
+      "file": "src/regex/bytes.rs",
+      "line": 1122,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/bytes.rs",
+        "line": 1551,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 41,
+      "endLine": 1158,
+      "file": "src/regex/bytes.rs",
+      "line": 1158,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 41,
+      "endLine": 1241,
+      "file": "src/regex/bytes.rs",
+      "line": 1241,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 36,
+      "endColumn": 76,
+      "endLine": 1243,
+      "file": "src/regex/bytes.rs",
+      "line": 1243,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/bytes.rs",
+        "line": 1551,
+        "name": "new"
+      }
+    },
+    {
+      "column": 23,
+      "endColumn": 66,
+      "endLine": 1665,
+      "file": "src/regex/bytes.rs",
+      "line": 1665,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/bytes.rs",
+        "line": 1551,
+        "name": "new"
+      }
+    },
+    {
+      "column": 23,
+      "endColumn": 66,
+      "endLine": 1701,
+      "file": "src/regex/bytes.rs",
+      "line": 1701,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/bytes.rs",
+        "line": 1551,
+        "name": "new"
+      }
+    },
+    {
+      "column": 23,
+      "endColumn": 70,
+      "endLine": 2176,
+      "file": "src/regex/bytes.rs",
+      "line": 2176,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/bytes.rs",
+        "line": 1551,
+        "name": "new"
+      }
+    },
+    {
+      "column": 28,
+      "endColumn": 71,
+      "endLine": 2372,
+      "file": "src/regex/bytes.rs",
+      "line": 2372,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/bytes.rs",
+        "line": 1551,
+        "name": "new"
+      }
+    },
+    {
+      "column": 13,
+      "endColumn": 33,
+      "endLine": 1039,
+      "file": "src/regex/string.rs",
+      "line": 1039,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 13,
+      "endColumn": 33,
+      "endLine": 1073,
+      "file": "src/regex/string.rs",
+      "line": 1073,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 41,
+      "endLine": 1110,
+      "file": "src/regex/string.rs",
+      "line": 1110,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 22,
+      "endColumn": 62,
+      "endLine": 1113,
+      "file": "src/regex/string.rs",
+      "line": 1113,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/string.rs",
+        "line": 1564,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 41,
+      "endLine": 1149,
+      "file": "src/regex/string.rs",
+      "line": 1149,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 41,
+      "endLine": 1240,
+      "file": "src/regex/string.rs",
+      "line": 1240,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 36,
+      "endColumn": 76,
+      "endLine": 1242,
+      "file": "src/regex/string.rs",
+      "line": 1242,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/string.rs",
+        "line": 1564,
+        "name": "new"
+      }
+    },
+    {
+      "column": 23,
+      "endColumn": 66,
+      "endLine": 1675,
+      "file": "src/regex/string.rs",
+      "line": 1675,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/string.rs",
+        "line": 1564,
+        "name": "new"
+      }
+    },
+    {
+      "column": 23,
+      "endColumn": 66,
+      "endLine": 1711,
+      "file": "src/regex/string.rs",
+      "line": 1711,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/string.rs",
+        "line": 1564,
+        "name": "new"
+      }
+    },
+    {
+      "column": 23,
+      "endColumn": 70,
+      "endLine": 2184,
+      "file": "src/regex/string.rs",
+      "line": 2184,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/string.rs",
+        "line": 1564,
+        "name": "new"
+      }
+    },
+    {
+      "column": 28,
+      "endColumn": 71,
+      "endLine": 2380,
+      "file": "src/regex/string.rs",
+      "line": 2380,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/regex/string.rs",
+        "line": 1564,
+        "name": "new"
+      }
+    },
+    {
+      "column": 28,
+      "endColumn": 48,
+      "endLine": 249,
+      "file": "src/regexset/bytes.rs",
+      "line": 249,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 41,
+      "endLine": 330,
+      "file": "src/regexset/bytes.rs",
+      "line": 330,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 25,
+      "endColumn": 45,
+      "endLine": 364,
+      "file": "src/regexset/bytes.rs",
+      "line": 364,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 28,
+      "endColumn": 48,
+      "endLine": 245,
+      "file": "src/regexset/string.rs",
+      "line": 245,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 21,
+      "endColumn": 41,
+      "endLine": 326,
+      "file": "src/regexset/string.rs",
+      "line": 326,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    },
+    {
+      "column": 25,
+      "endColumn": 45,
+      "endLine": 360,
+      "file": "src/regexset/string.rs",
+      "line": 360,
+      "resolution": "rust-lifetime-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "regex-automata/src/util/search.rs",
+        "line": 112,
+        "name": "new"
+      }
+    }
+  ],
+  "importSourceReview": [
+    {
+      "before": {
+        "from": "regex-automata/src/dfa/dense.rs",
+        "kind": "static",
+        "line": 22,
+        "names": [
+          "Minimizer"
+        ],
+        "resolved": false,
+        "specifier": "crate::dfa::minimize::Minimizer"
+      },
+      "after": {
+        "from": "regex-automata/src/dfa/dense.rs",
+        "kind": "static",
+        "line": 22,
+        "names": [
+          "Minimizer"
+        ],
+        "resolved": true,
+        "specifier": "crate::dfa::minimize::Minimizer",
+        "to": "regex-automata/src/dfa/minimize.rs"
+      },
+      "sourceStatement": "use crate::{\n    dfa::{\n        accel::Accel, determinize, minimize::Minimizer, remapper::Remapper,\n        sparse,\n    },\n    nfa::thompson,\n    util::{look::LookMatcher, search::MatchKind},\n};",
+      "targetSource": {
+        "file": "regex-automata/src/dfa/minimize.rs",
+        "line": 44,
+        "column": 19,
+        "name": "Minimizer",
+        "text": "pub(crate) struct Minimizer<'a> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/dfa/onepass.rs",
+        "kind": "static",
+        "line": 44,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/dfa/onepass.rs",
+        "kind": "static",
+        "line": 44,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    dfa::{remapper::Remapper, DEAD},\n    nfa::thompson::{self, NFA},\n    util::{\n        alphabet::ByteClasses,\n        captures::Captures,\n        escape::DebugByte,\n        int::{Usize, U32, U64, U8},\n        look::{Look, LookSet, UnicodeWordBoundaryError},\n        primitives::{NonMaxUsize, PatternID, StateID},\n        search::{Anchored, Input, Match, MatchError, MatchKind, Span},\n        sparse_set::SparseSet,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/dfa/regex.rs",
+        "kind": "static",
+        "line": 23,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/dfa/regex.rs",
+        "kind": "static",
+        "line": 23,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    dfa::{automaton::Automaton, dense},\n    util::{iter, search::Input},\n    Anchored, Match, MatchError,\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/dfa/automaton.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/dfa/automaton.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    dfa::search,\n    util::{\n        empty,\n        prefilter::Prefilter,\n        primitives::{PatternID, StateID},\n        search::{Anchored, HalfMatch, Input, MatchError},\n        start,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/dfa/search.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/dfa/search.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    dfa::{\n        accel,\n        automaton::{Automaton, OverlappingState},\n    },\n    util::{\n        prefilter::Prefilter,\n        primitives::StateID,\n        search::{Anchored, HalfMatch, Input, Span},\n    },\n    MatchError,\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/hybrid/dfa.rs",
+        "kind": "static",
+        "line": 14,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/hybrid/dfa.rs",
+        "kind": "static",
+        "line": 14,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    hybrid::{\n        error::{BuildError, CacheError, StartError},\n        id::{LazyStateID, LazyStateIDError},\n        search,\n    },\n    nfa::thompson,\n    util::{\n        alphabet::{self, ByteClasses, ByteSet},\n        determinize::{self, State, StateBuilderEmpty, StateBuilderNFA},\n        empty,\n        prefilter::Prefilter,\n        primitives::{PatternID, StateID as NFAStateID},\n        search::{\n            Anchored, HalfMatch, Input, MatchError, MatchKind, PatternSet,\n        },\n        sparse_set::SparseSets,\n        start::{self, Start, StartByteMap},\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/hybrid/regex.rs",
+        "kind": "static",
+        "line": 17,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/hybrid/regex.rs",
+        "kind": "static",
+        "line": 17,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    hybrid::{\n        dfa::{self, DFA},\n        error::BuildError,\n    },\n    nfa::thompson,\n    util::{\n        iter,\n        search::{Anchored, Input, Match, MatchError, MatchKind},\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/hybrid/search.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/hybrid/search.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    hybrid::{\n        dfa::{Cache, OverlappingState, DFA},\n        id::LazyStateID,\n    },\n    util::{\n        prefilter::Prefilter,\n        search::{HalfMatch, Input, MatchError, Span},\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/mod.rs",
+        "kind": "static",
+        "line": 45,
+        "names": [
+          "CapturesMatches"
+        ],
+        "resolved": false,
+        "specifier": "self::regex::CapturesMatches"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/mod.rs",
+        "kind": "static",
+        "line": 45,
+        "names": [
+          "CapturesMatches"
+        ],
+        "resolved": true,
+        "specifier": "self::regex::CapturesMatches",
+        "to": "regex-automata/src/meta/regex.rs"
+      },
+      "sourceStatement": "pub use self::{\n    error::BuildError,\n    regex::{\n        Builder, Cache, CapturesMatches, Config, FindMatches, Regex, Split,\n        SplitN,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/meta/regex.rs",
+        "line": 2113,
+        "column": 12,
+        "name": "CapturesMatches",
+        "text": "pub struct CapturesMatches<'r, 'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/mod.rs",
+        "kind": "static",
+        "line": 45,
+        "names": [
+          "FindMatches"
+        ],
+        "resolved": false,
+        "specifier": "self::regex::FindMatches"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/mod.rs",
+        "kind": "static",
+        "line": 45,
+        "names": [
+          "FindMatches"
+        ],
+        "resolved": true,
+        "specifier": "self::regex::FindMatches",
+        "to": "regex-automata/src/meta/regex.rs"
+      },
+      "sourceStatement": "pub use self::{\n    error::BuildError,\n    regex::{\n        Builder, Cache, CapturesMatches, Config, FindMatches, Regex, Split,\n        SplitN,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/meta/regex.rs",
+        "line": 2050,
+        "column": 12,
+        "name": "FindMatches",
+        "text": "pub struct FindMatches<'r, 'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/mod.rs",
+        "kind": "static",
+        "line": 45,
+        "names": [
+          "Split"
+        ],
+        "resolved": false,
+        "specifier": "self::regex::Split"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/mod.rs",
+        "kind": "static",
+        "line": 45,
+        "names": [
+          "Split"
+        ],
+        "resolved": true,
+        "specifier": "self::regex::Split",
+        "to": "regex-automata/src/meta/regex.rs"
+      },
+      "sourceStatement": "pub use self::{\n    error::BuildError,\n    regex::{\n        Builder, Cache, CapturesMatches, Config, FindMatches, Regex, Split,\n        SplitN,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/meta/regex.rs",
+        "line": 2181,
+        "column": 12,
+        "name": "Split",
+        "text": "pub struct Split<'r, 'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/mod.rs",
+        "kind": "static",
+        "line": 45,
+        "names": [
+          "SplitN"
+        ],
+        "resolved": false,
+        "specifier": "self::regex::SplitN"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/mod.rs",
+        "kind": "static",
+        "line": 45,
+        "names": [
+          "SplitN"
+        ],
+        "resolved": true,
+        "specifier": "self::regex::SplitN",
+        "to": "regex-automata/src/meta/regex.rs"
+      },
+      "sourceStatement": "pub use self::{\n    error::BuildError,\n    regex::{\n        Builder, Cache, CapturesMatches, Config, FindMatches, Regex, Split,\n        SplitN,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/meta/regex.rs",
+        "line": 2235,
+        "column": 12,
+        "name": "SplitN",
+        "text": "pub struct SplitN<'r, 'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/limited.rs",
+        "kind": "static",
+        "line": 39,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/limited.rs",
+        "kind": "static",
+        "line": 39,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    meta::error::{RetryError, RetryQuadraticError},\n    HalfMatch, Input, MatchError,\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/regex.rs",
+        "kind": "static",
+        "line": 13,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/regex.rs",
+        "kind": "static",
+        "line": 13,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    meta::{\n        error::BuildError,\n        strategy::{self, Strategy},\n        wrappers,\n    },\n    nfa::thompson::WhichCaptures,\n    util::{\n        captures::{Captures, GroupInfo},\n        iter,\n        pool::{Pool, PoolGuard},\n        prefilter::Prefilter,\n        primitives::{NonMaxUsize, PatternID},\n        search::{HalfMatch, Input, Match, MatchKind, PatternSet, Span},\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/stopat.rs",
+        "kind": "static",
+        "line": 49,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/stopat.rs",
+        "kind": "static",
+        "line": 49,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{meta::error::RetryFailError, HalfMatch, Input, MatchError};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/strategy.rs",
+        "kind": "static",
+        "line": 10,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/strategy.rs",
+        "kind": "static",
+        "line": 10,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    meta::{\n        error::{BuildError, RetryError, RetryFailError, RetryQuadraticError},\n        regex::{Cache, RegexInfo},\n        reverse_inner, wrappers,\n    },\n    nfa::thompson::{self, WhichCaptures, NFA},\n    util::{\n        captures::{Captures, GroupInfo},\n        look::LookMatcher,\n        prefilter::{self, Prefilter, PrefilterI},\n        primitives::{NonMaxUsize, PatternID},\n        search::{Anchored, HalfMatch, Input, Match, MatchKind, PatternSet},\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/meta/wrappers.rs",
+        "kind": "static",
+        "line": 29,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/meta/wrappers.rs",
+        "kind": "static",
+        "line": 29,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    meta::{\n        error::{BuildError, RetryError, RetryFailError},\n        regex::RegexInfo,\n    },\n    nfa::thompson::{pikevm, NFA},\n    util::{prefilter::Prefilter, primitives::NonMaxUsize},\n    HalfMatch, Input, Match, MatchKind, PatternID, PatternSet,\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/nfa/thompson/mod.rs",
+        "kind": "static",
+        "line": 72,
+        "names": [
+          "PatternIter"
+        ],
+        "resolved": false,
+        "specifier": "self::nfa::PatternIter"
+      },
+      "after": {
+        "from": "regex-automata/src/nfa/thompson/mod.rs",
+        "kind": "static",
+        "line": 72,
+        "names": [
+          "PatternIter"
+        ],
+        "resolved": true,
+        "specifier": "self::nfa::PatternIter",
+        "to": "regex-automata/src/nfa/thompson/nfa.rs"
+      },
+      "sourceStatement": "pub use self::{\n    builder::Builder,\n    error::BuildError,\n    nfa::{\n        DenseTransitions, PatternIter, SparseTransitions, State, Transition,\n        NFA,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/nfa/thompson/nfa.rs",
+        "line": 2024,
+        "column": 12,
+        "name": "PatternIter",
+        "text": "pub struct PatternIter<'a> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/nfa/thompson/backtrack.rs",
+        "kind": "static",
+        "line": 15,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/nfa/thompson/backtrack.rs",
+        "kind": "static",
+        "line": 15,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    nfa::thompson::{self, BuildError, State, NFA},\n    util::{\n        captures::Captures,\n        empty, iter,\n        prefilter::Prefilter,\n        primitives::{NonMaxUsize, PatternID, SmallIndex, StateID},\n        search::{Anchored, HalfMatch, Input, Match, MatchError, Span},\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/nfa/thompson/pikevm.rs",
+        "kind": "static",
+        "line": 13,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/nfa/thompson/pikevm.rs",
+        "kind": "static",
+        "line": 13,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::{\n    nfa::thompson::{self, BuildError, State, NFA},\n    util::{\n        captures::Captures,\n        empty, iter,\n        prefilter::Prefilter,\n        primitives::{NonMaxUsize, PatternID, SmallIndex, StateID},\n        search::{\n            Anchored, HalfMatch, Input, Match, MatchKind, PatternSet, Span,\n        },\n        sparse_set::SparseSet,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/util/iter.rs",
+        "kind": "static",
+        "line": 15,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/util/iter.rs",
+        "kind": "static",
+        "line": 15,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::util::search::{HalfMatch, Input, Match, MatchError};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/util/start.rs",
+        "kind": "static",
+        "line": 5,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/util/start.rs",
+        "kind": "static",
+        "line": 5,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::util::{\n    look::LookMatcher,\n    search::{Anchored, Input},\n    wire::{self, DeserializeError, SerializeError},\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-automata/src/util/empty.rs",
+        "kind": "static",
+        "line": 157,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "crate::util::search::Input"
+      },
+      "after": {
+        "from": "regex-automata/src/util/empty.rs",
+        "kind": "static",
+        "line": 157,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "crate::util::search::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use crate::util::search::{Input, MatchError};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-syntax/src/hir/translate.rs",
+        "kind": "static",
+        "line": 9,
+        "names": [
+          "ClassQuery"
+        ],
+        "resolved": false,
+        "specifier": "crate::unicode::ClassQuery"
+      },
+      "after": {
+        "from": "regex-syntax/src/hir/translate.rs",
+        "kind": "static",
+        "line": 9,
+        "names": [
+          "ClassQuery"
+        ],
+        "resolved": true,
+        "specifier": "crate::unicode::ClassQuery",
+        "to": "regex-syntax/src/unicode.rs"
+      },
+      "sourceStatement": "use crate::{\n    ast::{self, Ast, Span, Visitor},\n    either::Either,\n    hir::{self, Error, ErrorKind, Hir, HirKind},\n    unicode::{self, ClassQuery},\n};",
+      "targetSource": {
+        "file": "regex-syntax/src/unicode.rs",
+        "line": 216,
+        "column": 10,
+        "name": "ClassQuery",
+        "text": "pub enum ClassQuery<'a> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "src/regex/bytes.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "src/regex/bytes.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{meta, util::captures, Input, PatternID};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "src/regex/string.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "src/regex/string.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{meta, util::captures, Input, PatternID};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "src/regexset/bytes.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "src/regexset/bytes.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{meta, Input, PatternID, PatternSet, PatternSetIter};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "src/regexset/bytes.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "PatternSetIter"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::PatternSetIter"
+      },
+      "after": {
+        "from": "src/regexset/bytes.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "PatternSetIter"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::PatternSetIter",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{meta, Input, PatternID, PatternSet, PatternSetIter};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 1364,
+        "column": 12,
+        "name": "PatternSetIter",
+        "text": "pub struct PatternSetIter<'a> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "src/regexset/string.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "src/regexset/string.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{meta, Input, PatternID, PatternSet, PatternSetIter};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "src/regexset/string.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "PatternSetIter"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::PatternSetIter"
+      },
+      "after": {
+        "from": "src/regexset/string.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "PatternSetIter"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::PatternSetIter",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{meta, Input, PatternID, PatternSet, PatternSetIter};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 1364,
+        "column": 12,
+        "name": "PatternSetIter",
+        "text": "pub struct PatternSetIter<'a> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/args/input.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/args/input.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{Anchored, Input, PatternID};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/cmd/find/capture/mod.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/cmd/find/capture/mod.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use {\n    anyhow::Context,\n    bstr::ByteSlice,\n    lexopt::Parser,\n    regex_automata::{\n        util::captures::{Captures, GroupInfo},\n        Input, MatchError, PatternID,\n    },\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/cmd/find/capture/dfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/cmd/find/capture/dfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{util::captures::Captures, Input};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/cmd/find/capture/nfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/cmd/find/capture/nfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{util::captures::Captures, Input};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/cmd/find/half/mod.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/cmd/find/half/mod.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use {\n    anyhow::Context,\n    lexopt::Parser,\n    regex_automata::{HalfMatch, Input, MatchError, PatternID},\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/cmd/find/half/dfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/cmd/find/half/dfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{dfa::Automaton, Input};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/cmd/find/which/mod.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/cmd/find/which/mod.rs",
+        "kind": "static",
+        "line": 3,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use {\n    anyhow::Context,\n    lexopt::Parser,\n    regex_automata::{Input, MatchError, PatternID, PatternSet},\n};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/cmd/find/which/dfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/cmd/find/which/dfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{dfa::Automaton, Input, PatternSet};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    },
+    {
+      "before": {
+        "from": "regex-cli/cmd/find/which/nfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": false,
+        "specifier": "regex_automata::Input"
+      },
+      "after": {
+        "from": "regex-cli/cmd/find/which/nfa.rs",
+        "kind": "static",
+        "line": 1,
+        "names": [
+          "Input"
+        ],
+        "resolved": true,
+        "specifier": "regex_automata::Input",
+        "to": "regex-automata/src/util/search.rs"
+      },
+      "sourceStatement": "use regex_automata::{Input, PatternSet};",
+      "targetSource": {
+        "file": "regex-automata/src/util/search.rs",
+        "line": 102,
+        "column": 12,
+        "name": "Input",
+        "text": "pub struct Input<'h> {"
+      },
+      "verification": "Post-design fixed-source nominal declaration/import spelling review; not independent LSP attribution or blind evaluation."
+    }
+  ],
+  "sourceReviewLimits": "Source spelling/declaration match for these fixed nominals; no standalone type/module graph compilation claim.",
+  "projectExecuted": false
+}
