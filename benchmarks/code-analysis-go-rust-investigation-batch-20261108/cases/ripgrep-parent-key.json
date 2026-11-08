@@ -1,0 +1,45 @@
+{
+ "id": "ripgrep-parent-key",
+ "language": "rust",
+ "repo": "https://github.com/BurntSushi/ripgrep",
+ "base": "1752fb78f1735e517f731944707a79eb064e8669",
+ "head": "6892bc2b7efe5909cbbeec8f757ed2c4c76b1d30",
+ "entry": "crates/ignore/src/incremental.rs",
+ "question": "A new parent_key helper computes byte-oriented cache parent keys. Where is it called in the incremental ignore walk?",
+ "changedDefinition": {
+  "file": "crates/ignore/src/incremental.rs",
+  "line": 112
+ },
+ "definitionScope": "unpaired",
+ "expectedCalls": [
+  {
+   "file": "crates/ignore/src/incremental.rs",
+   "line": 369,
+   "column": 31,
+   "inventory": "knownReferences",
+   "targetKind": "concrete",
+   "target": {
+    "file": "crates/ignore/src/incremental.rs",
+    "line": 112,
+    "name": "parent_key"
+   },
+   "directCaller": {
+    "name": "matched_with_errors_ignore",
+    "line": 353,
+    "kind": "method"
+   },
+   "runtime": "determined",
+   "context": "the cache lookup asks for a byte parent key before walking components"
+  }
+ ],
+ "unknowns": [
+  "The helper is new in this commit, so the base side has no paired definition.",
+  "Only the first caller is captured; later cache writes use component keys directly."
+ ],
+ "expectedGap": false,
+ "reserved": false,
+ "baseTree": "git worktree at 6892bc2^",
+ "build": "workspace read with the committed lockfile; no project build executed",
+ "freeze": "head source and the commit diff read before any candidate query",
+ "notes": "Unpaired definition case for a newly added private helper."
+}

@@ -1,0 +1,43 @@
+{
+ "id": "http-insert-occupied-mult",
+ "language": "rust",
+ "repo": "https://github.com/hyperium/http",
+ "base": "c6af28bfd8ef171a7f8c61e551d3ee68db4ca577",
+ "head": "3dd9f5e1c3c228c26e6836ee60b36129351bfd3b",
+ "entry": "src/header/map.rs",
+ "question": "HeaderMap::insert_occupied_mult now drains extra values while the entry still holds its links. Which source call reaches this private method?",
+ "changedDefinition": {
+  "file": "src/header/map.rs",
+  "line": 1432
+ },
+ "expectedCalls": [
+  {
+   "file": "src/header/map.rs",
+   "line": 3431,
+   "column": 9,
+   "inventory": "knownReferences",
+   "targetKind": "concrete",
+   "target": {
+    "file": "src/header/map.rs",
+    "line": 1432,
+    "name": "insert_occupied_mult"
+   },
+   "directCaller": {
+    "name": "insert_mult",
+    "line": 3430,
+    "kind": "method"
+   },
+   "runtime": "determined",
+   "context": "OccupiedEntry::insert_mult drains through the private helper"
+  }
+ ],
+ "unknowns": [
+  "The private helper has one captured caller; any other caller would have to be in the same module."
+ ],
+ "expectedGap": false,
+ "reserved": true,
+ "baseTree": "git worktree at 3dd9f5e^",
+ "build": "workspace read with the committed lockfile; no project build executed",
+ "freeze": "head source and the commit diff read before any candidate query; reserved before the candidate run",
+ "notes": "Reserved Rust case. Target column is the function name in the inherent impl."
+}
