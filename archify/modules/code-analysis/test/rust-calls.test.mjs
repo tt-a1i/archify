@@ -429,6 +429,10 @@ pub struct S;
 impl Gate for S { fn enabled(&self) -> bool { false } }
 pub struct Concrete { gate: S }
 impl Concrete { pub fn check(&self) -> bool { self.gate.enabled() } }
+pub struct Erased<T> { gate: T }
+impl<T: Gate> Erased<u8> { pub fn check(&self) -> bool { self.gate.enabled() } }
+pub struct Borrowed<G>(G);
+impl<G: Gate> Borrowed<G> { pub fn check(&self) -> bool { self.as_ref().enabled() } }
 `;
  const root=fixture(t,{'src/lib.rs':source});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
@@ -440,4 +444,34 @@ impl Concrete { pub fn check(&self) -> bool { self.gate.enabled() } }
  assert.ok(concrete,'a field with a nominal type reaches the unique impl');
  assert.equal(concrete.target.name,'enabled');
  assert.equal(concrete.target.line,5);
+ const erased=facts.calls.find(row=>row.line===9);
+ assert.ok(erased,'the call through a differently instantiated generic field is still captured');
+ assert.equal(erased.resolution,'unresolved');
+ assert.equal(erased.target,undefined);
+ const borrowed=facts.calls.find(row=>row.line===11&&row.resolution==='rust-trait-method-candidate');
+ assert.ok(borrowed,'self.as_ref() unwraps a one-parameter wrapper to its bound');
+ assert.equal(borrowed.target.name,'enabled');
+});
+
+test('Rust default-method references stay within the declaring crate file', t => {
+ const source = value => `pub trait Gate { fn enabled(&self) -> bool { ${value} } }
+pub fn use_gate<G: Gate>(gate: &G) -> bool { gate.enabled() }
+`;
+ const files = {
+  'Cargo.toml': '[workspace]\nmembers=["api","app"]\nresolver="2"\n',
+  'api/Cargo.toml': '[package]\nname="api"\nversion="0.1.0"\nedition="2021"\n',
+  'app/Cargo.toml': '[package]\nname="app"\nversion="0.1.0"\nedition="2021"\n',
+  'api/src/lib.rs': source('true'),
+  'app/src/lib.rs': source('false')
+ };
+ const root = fixture(t, files);
+ const headRoot = fixture(t, { ...files, 'api/src/lib.rs': source('1') });
+ const settings = config();
+ const base = captureChangeSide(root, settings, 'rust');
+ const head = captureChangeSide(headRoot, settings, 'rust');
+ const pair = buildChangeQuestion({ root: headRoot, baseRoot: root, base, head, config: settings, entry: 'api/src/lib.rs', question: 'Which callers reach Gate::enabled?' });
+ const row = (pair.changedDefinitions.items || []).find(item => item.head.definition.file === 'api/src/lib.rs');
+ assert.ok(row, 'the changed default body in the api crate is a changed definition');
+ assert.equal(row.head.knownReferences.total, 1);
+ assert.deepEqual(row.head.knownReferences.items.map(item => item.fact.file), ['api/src/lib.rs']);
 });

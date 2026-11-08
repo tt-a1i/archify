@@ -199,6 +199,7 @@ struct Function {
     signature: Scope,
     self_type: Option<TypeHint>,
     self_ref: Option<TypeHint>,
+    self_params: Option<BTreeSet<String>>,
     default_method: Option<DefaultMethod>,
 }
 #[derive(Clone)]
@@ -596,6 +597,7 @@ impl Analysis {
             signature: signature_scope(&f.sig),
             self_type: None,
             self_ref: None,
+            self_params: None,
             default_method: None,
         });
         index
@@ -999,6 +1001,25 @@ impl Analysis {
                                         }
                                     }
                                 }
+                                let mut self_params = BTreeSet::new();
+                                if let syn::Type::Path(p) = im.self_ty.as_ref() {
+                                    if let Some(segment) = p.path.segments.last() {
+                                        if let PathArguments::AngleBracketed(args) = &segment.arguments {
+                                            for arg in &args.args {
+                                                if let GenericArgument::Type(ty) = arg {
+                                                    if let Some(TypeHint::Generic(name)) =
+                                                        type_hint(ty, &impl_generics)
+                                                    {
+                                                        if impl_generics.contains(&name) {
+                                                            self_params.insert(name);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                self.functions[index].self_params = Some(self_params);
                                 for param in im_generics.type_params() {
                                     let name = param.ident.to_string();
                                     for bound in &param.bounds {
@@ -1638,18 +1659,24 @@ impl Scanner<'_> {
                 let TypeHint::Nominal(parts, absolute) = self.receiver_hint(&f.base)? else {
                     return None;
                 };
-                let (module, name) = self.resolve_nominal(&parts, absolute).or_else(|| {
-                    if parts.len() == 1 {
-                        Some((self.function.module, parts[0].clone()))
-                    } else {
-                        None
-                    }
-                })?;
+                let (module, name) = self.resolve_nominal(&parts, absolute)?;
                 let member = match &f.member {
                     syn::Member::Named(ident) => ident.to_string(),
                     syn::Member::Unnamed(index) => index.index.to_string(),
                 };
-                self.a.fields.get(&(module, name, member)).cloned()
+                match self.a.fields.get(&(module, name, member)).cloned()? {
+                    // A generic field name only matches when the impl instantiates the struct with that same parameter.
+                    TypeHint::Generic(parameter)
+                        if !self
+                            .function
+                            .self_params
+                            .as_ref()
+                            .is_some_and(|params| params.contains(&parameter)) =>
+                    {
+                        None
+                    }
+                    hint => Some(hint),
+                }
             }
             Expr::Struct(s) => Some(TypeHint::Nominal(
                 path_parts(&s.path),
@@ -1659,22 +1686,27 @@ impl Scanner<'_> {
                 let Expr::Path(p) = c.func.as_ref() else {
                     return None;
                 };
-                if p.qself.is_some() || p.path.segments.len() < 2 {
+                if p.qself.is_some() || p.path.segments.is_empty() {
                     return None;
-                }
-                let base = p.path.segments[0].ident.to_string();
-                let method = p.path.segments[1].ident.to_string();
-                if p.path.segments.len() == 2
-                    && base == "self"
-                    && ["as_ref", "deref", "borrow"].contains(&method.as_str())
-                {
-                    if let Some(hint) = &self.function.self_ref {
-                        return Some(hint.clone());
-                    }
                 }
                 let mut parts = path_parts(&p.path);
                 parts.pop();
                 Some(TypeHint::Nominal(parts, p.path.leading_colon.is_some()))
+            }
+            Expr::MethodCall(m) => {
+                let is_self = matches!(
+                    m.receiver.as_ref(),
+                    Expr::Path(p)
+                        if p.qself.is_none()
+                            && p.path.segments.len() == 1
+                            && p.path.segments[0].ident == "self"
+                );
+                if is_self
+                    && ["as_ref", "deref", "borrow"].contains(&m.method.to_string().as_str())
+                {
+                    return self.function.self_ref.clone();
+                }
+                None
             }
             _ => None,
         }

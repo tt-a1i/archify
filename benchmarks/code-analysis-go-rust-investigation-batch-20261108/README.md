@@ -73,18 +73,23 @@ Selection notes:
 1. **Trait-default references.** A Rust default body is registered at its `fn`
    keyword, while trait-dispatch calls target the method name, so a changed
    default method showed no direct references. `change-question.mjs` now unions
-   the definition key with the name-anchor keys from `facts.traits`. Trigger:
+   the definition key with the name-anchor keys from `facts.traits`, restricted
+   to the declaring file because module paths are crate-local and workspace
+   members can share a qualname. Trigger:
    `tracing` `dispatcher.rs:514` (`self.subscriber.event_enabled(event)`) now
    resolves to `Subscriber::event_enabled` at `subscriber.rs:305:8` with direct
    caller `event` at line 513. Negative control: a concrete impl call is resolved
-   to the impl and must not appear as a trait-default reference.
+   to the impl and must not appear as a trait-default reference; a same-named
+   trait in another workspace member is not merged.
 2. **Field receiver typing.** The Rust extractor records named struct field type
    hints and the impl self type, then resolves `self.<field>` (and
-   `self.as_ref()/deref()/borrow()`) to a trait bound or a unique nominal impl.
-   Trigger: `test/rust-calls.test.mjs` fixtures produce
-   `rust-trait-method-candidate` for a generic field and `rust-trait-impl` for a
-   concrete field. Negative control: the concrete call must not be reported as a
-   trait candidate.
+   `self.as_ref()/deref()/borrow()` on `self`) to a trait bound or a unique
+   nominal impl. A generic field is used only when the impl instantiates the
+   struct with that same parameter. Trigger: `test/rust-calls.test.mjs` fixtures
+   produce `rust-trait-method-candidate` for a matching generic field and
+   `rust-trait-impl` for a concrete field. Negative controls: a concrete call
+   must not become a trait candidate, and a generic field on a differently
+   instantiated impl (`Holder<u8>`) stays unresolved.
 
 `docs/GO.md` and `docs/RUST.md` describe the supported and unsupported cases.
 
@@ -113,7 +118,7 @@ Each sample root is a `git worktree` at the fixed base or head commit. `clap` an
 `tracing` roots were read with a generated `Cargo.lock` because the extractor uses
 `--locked`; no project build or test was executed. Go roots were read with Go
 1.27.2, default `GOOS/GOARCH`, cgo disabled. The code-analysis module suite passed
-431/431 with 0 skips at this revision.
+432/432 with 0 skips at this revision.
 
 ## Results (final candidate)
 

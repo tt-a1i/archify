@@ -285,7 +285,8 @@ function directReferences(side, definition) {
   if (side.facts.repository.language === 'rust' && Array.isArray(side.facts.traits)) {
     for (const trait of side.facts.traits) {
       for (const method of trait.methods || []) {
-        if (method.qualname === definition.qualname) keys.add(key(method.file, method.line, method.column, method.name));
+        // Module paths are crate-local, so a same-named trait in another workspace member has the same qualname.
+        if (method.file === definition.file && method.qualname === definition.qualname) keys.add(key(method.file, method.line, method.column, method.name));
       }
     }
   }

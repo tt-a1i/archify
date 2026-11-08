@@ -59,10 +59,12 @@ declared `T: Trait` bound, `dyn Trait`, `Trait::method` or generic path target
 the trait method declaration only (`rust-trait-method-candidate`); they prove
 trait use, not the runtime implementation. Change questions list these as
 `traitCandidates` with `runtimeTarget: not-determined`, separately from direct
-references. When the selected definition is the trait method itself, its
-trait-dispatch callsites are listed under direct references: a default body is
-registered at its `fn` keyword while calls target the method name, so both
-source anchors are consulted for the same declaration.
+references. When the selected definition is a trait method's default body, its
+trait-dispatch callsites in the declaring file are listed under direct
+references: the body is registered at its `fn` keyword while calls target the
+method name, so both source anchors are consulted for the same declaration.
+Module paths are crate-local, so a same-named trait in another workspace member
+is excluded rather than merged by qualname.
 
 v6 inventories a trait method's default body once per source declaration, not
 once per implementing type. A declaration without a body adds no call. Calls in
@@ -74,12 +76,15 @@ implementations of the trait do not duplicate the body's calls.
 
 Method receivers also resolve through `self.<field>` when the owning impl's
 self type and the struct field declaration are captured. A field declared as a
-generic parameter with a trait bound reaches that trait method, and a field
-declared with a unique nominal type selects its unique impl. Renamed generics
-between impl and struct (for example `impl<S> Subscriber for Layered<L, S>`
-where the field is declared `inner: I`), pattern bindings, loop variables,
-macro-produced receivers and nested accessor chains other than
-`as_ref`/`deref`/`borrow` remain unresolved.
+generic parameter reaches that trait method only when the impl instantiates the
+struct with the same parameter (`impl<G: Gate> Holder<G>`); an impl for a
+different instantiation (`impl<T: Gate> Holder<u8>`) stays unresolved, and a
+field declared with a unique nominal type selects its unique impl.
+`self.as_ref()`, `self.deref()` and `self.borrow()` unwrap a one-parameter
+wrapper to its inner type. Renamed generics between impl and struct (for
+example `impl<S> Subscriber for Layered<L, S>` where the field is declared
+`inner: I`), pattern bindings, loop variables, macro-produced receivers and
+other accessor chains remain unresolved.
 
 Unsupported applicability remains explicit: external or macro-generated traits,
 supertrait/blanket impls, type aliases/Self, generic argument substitution,
