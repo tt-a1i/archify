@@ -53,3 +53,5 @@ The audit checks live bytes against captured sources before using a full-resolut
 - Scoped test-value review: preserve correct jumps, exclusions, shadows, historical readers and changed-definition known references; no private-function/source-string assertions. Focused simplify-codebase survey: capture → existing import target → same export resolver → schema/questions/paired readers. No new runtime lookup layer/cache/dependency. Separate benchmark audits preserve distinct configured-TS and fallback-JS experimental profiles; no production abstraction or compatibility cut justified.
 
 See `evidence/` for commands/exits, original source manifests, complete 11-site audit, package parity and logs. No diagram-generation changes, so no diagram-generation benchmark or visual-quality claim.
+
+The v5 follow-up in [#1271](https://github.com/tt-a1i/archify/pull/1271) now verifies the original barrel source target. The runner retains the v4 known miss when replaying historical captures and expects7correct/0wrong/0missed/1reasonable-unknown under v5. That barrel was reused as design input, not a new holdout; this does not rewrite the original v4 outcome.
