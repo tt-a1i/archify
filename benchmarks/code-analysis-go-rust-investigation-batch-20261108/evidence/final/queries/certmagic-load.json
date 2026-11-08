@@ -11,7 +11,7 @@
   "sides": {
     "base": {
       "side": "base",
-      "root": "/private/tmp/archify-batch-20261108/samples/certmagic-load-base",
+      "root": "/tmp/archify-batch-20261108/samples/certmagic-load-base",
       "snapshot": {
         "revision": null,
         "baseRevision": "16c9db1449c3f84bf20edc022963caa983323d57",
@@ -892,7 +892,7 @@
     },
     "head": {
       "side": "head",
-      "root": "/private/tmp/archify-batch-20261108/samples/certmagic-load-head",
+      "root": "/tmp/archify-batch-20261108/samples/certmagic-load-head",
       "snapshot": {
         "revision": null,
         "baseRevision": "1a2275d54c24cbc0f85979ae3b2815d3b81aae15",

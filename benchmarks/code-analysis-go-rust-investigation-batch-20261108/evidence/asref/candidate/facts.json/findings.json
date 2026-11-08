@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "repository": {
+    "revision": null,
+    "baseRevision": "0d9d4dce768f2ed61c0eb46f9eb6cacb58e6078a",
+    "sourceKind": "working-tree",
+    "root": "benchmarks/code-analysis-go-rust-investigation-batch-20261108/fixtures/rust-accessor-shadow/head",
+    "url": "https://github.com/tt-a1i/archify.git",
+    "language": "rust",
+    "adapter": "rust-syn@2.0.119",
+    "adapterRevision": 7,
+    "snapshotId": "d3cda32e2dbca1a1ab0cf61bf899e58a2f2bc0f7eb5469d1f99a4ebe48bf65bd"
+  },
+  "rules": [
+    "coupling/import-cycle",
+    "coupling/cycle",
+    "coupling/hub",
+    "coupling/internal-leak",
+    "complexity/function"
+  ],
+  "summary": {
+    "errors": 0,
+    "warnings": 0,
+    "info": 0,
+    "suppressed": 0
+  },
+  "analysis": {
+    "analyzer": {
+      "name": "@archify/code-analysis",
+      "version": "0.1.0-dev.1"
+    },
+    "language": "rust",
+    "adapter": "rust-syn@2.0.119",
+    "adapterRevision": 7,
+    "configDigest": "fd3e5ab83e4d18741e14010e2de72625c065ca5bb7c9182dec40e39991fa9417",
+    "ruleVersions": {
+      "complexity/function": 1,
+      "coupling/cycle": 1,
+      "coupling/hub": 1,
+      "coupling/import-cycle": 1,
+      "coupling/internal-leak": 1
+    },
+    "coverage": {
+      "files": 1,
+      "excludedRoles": [
+        "generated",
+        "test"
+      ],
+      "parseErrors": []
+    }
+  },
+  "diagnostics": []
+}

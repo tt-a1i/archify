@@ -1,0 +1,4 @@
+Command: python3 benchmarks/.../run.py --cli archify/bin/archify.mjs --samples /tmp/archify-batch-20261108/samples --out .../evidence/stage-baseline --include-reserved
+Result: exit 1 after 9 scored cases (baseline), and the same abort occurred on the first candidate rerun.
+Reason: raft-stage-commit-index: missing sample roots. The case id expects raft-stage-commit-index-base/-head, but the worktrees had been created as raft-stage-commit-base/-head. The worktrees were renamed with git worktree move and the complete runs were repeated.
+Raw stdout/stderr: aborted-run.txt (baseline). The candidate abort had the same message; its log is retained in the task output.

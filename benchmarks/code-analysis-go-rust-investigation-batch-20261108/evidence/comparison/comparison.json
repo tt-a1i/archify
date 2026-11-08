@@ -1,0 +1,885 @@
+{
+  "baseline": "/private/tmp/archify-batch-20261108/combined/benchmarks/code-analysis-go-rust-investigation-batch-20261108/evidence/stage-baseline",
+  "candidate": "/private/tmp/archify-batch-20261108/combined/benchmarks/code-analysis-go-rust-investigation-batch-20261108/evidence/final",
+  "caseCount": 12,
+  "changeGroups": {
+    "16c9db14->1a2275d5": [
+      "certmagic-load",
+      "certmagic-store"
+    ],
+    "2d114193->9a56fcd4": [
+      "certmagic-interface-load",
+      "certmagic-interface"
+    ],
+    "8d0468f7->d75fcd4c": [
+      "gin-close",
+      "gin-hijack"
+    ],
+    "b55ebc9f->67202405": [
+      "clap-any-value-parser",
+      "clap-typed-value-parser"
+    ],
+    "d3c91249->a2e87783": [
+      "raft-stage-commit-index"
+    ],
+    "d3eb109e->f42e7e6d": [
+      "tracing-layer-event-enabled",
+      "tracing-subscriber-event-enabled"
+    ]
+  },
+  "changeGroupCount": 6,
+  "scopes": {
+    "new": {
+      "cases": [
+        "certmagic-interface",
+        "certmagic-load",
+        "certmagic-store",
+        "clap-any-value-parser",
+        "gin-close",
+        "gin-hijack",
+        "raft-stage-commit-index",
+        "tracing-layer-event-enabled",
+        "tracing-subscriber-event-enabled"
+      ],
+      "baselineFound": 39,
+      "candidateFound": 39,
+      "baselineWrong": 0,
+      "candidateWrong": 0,
+      "baselineMissed": 16,
+      "candidateMissed": 16,
+      "baselineExtras": 0,
+      "candidateExtras": 0
+    },
+    "regression": {
+      "cases": [
+        "base64-inner-decode"
+      ],
+      "baselineFound": 4,
+      "candidateFound": 4,
+      "baselineWrong": 0,
+      "candidateWrong": 0,
+      "baselineMissed": 0,
+      "candidateMissed": 0,
+      "baselineExtras": 0,
+      "candidateExtras": 0
+    },
+    "reserved-go": {
+      "cases": [
+        "certmagic-interface-load"
+      ],
+      "baselineFound": 13,
+      "candidateFound": 13,
+      "baselineWrong": 0,
+      "candidateWrong": 0,
+      "baselineMissed": 0,
+      "candidateMissed": 0,
+      "baselineExtras": 0,
+      "candidateExtras": 0
+    },
+    "reserved-rust": {
+      "cases": [
+        "clap-typed-value-parser"
+      ],
+      "baselineFound": 0,
+      "candidateFound": 0,
+      "baselineWrong": 0,
+      "candidateWrong": 0,
+      "baselineMissed": 1,
+      "candidateMissed": 1,
+      "baselineExtras": 0,
+      "candidateExtras": 0
+    }
+  },
+  "rows": [
+    {
+      "id": "base64-inner-decode",
+      "language": "rust",
+      "repo": "https://github.com/marshallpierce/rust-base64",
+      "base": "a8a60f43c56597259558261353b5bf7e953eed36",
+      "head": "9e9c7abe65fed78c35a1e94e11446d66ff118c25",
+      "scope": "regression",
+      "baseline": {
+        "status": "pass",
+        "expected": 4,
+        "found": 4,
+        "correct": 4,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 4,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 4
+        }
+      },
+      "candidate": {
+        "status": "pass",
+        "expected": 4,
+        "found": 4,
+        "correct": 4,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 4,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 4
+        }
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 6
+        },
+        "callModel": "rust-source-direct-v6",
+        "snapshotId": "cc2f8fef389dd309fc45d46bbbbb5e2a51b3c7529948c20410d20dd7de12d95a"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 7
+        },
+        "callModel": "rust-source-direct-v7",
+        "snapshotId": "42c1cbaa7c5b663167d2817f80ee12a2234d183b6f813b460536376c0090f8aa"
+      }
+    },
+    {
+      "id": "certmagic-interface-load",
+      "language": "go",
+      "repo": "https://github.com/caddyserver/certmagic",
+      "base": "2d114193c350ea9b5dd17b4a40b660af6e33c0db",
+      "head": "9a56fcd4f9cc49b8068eab8674a9bd4468068ca3",
+      "scope": "reserved-go",
+      "baseline": {
+        "status": "pass",
+        "expected": 13,
+        "found": 13,
+        "correct": 13,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 13,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 13
+        }
+      },
+      "candidate": {
+        "status": "pass",
+        "expected": 13,
+        "found": 13,
+        "correct": 13,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 13,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 13
+        }
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "dbfe39e09aaf8ba002a8a502b9205c497803e1ad22b374bc05bfb91e114eeb8d"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "dbfe39e09aaf8ba002a8a502b9205c497803e1ad22b374bc05bfb91e114eeb8d"
+      }
+    },
+    {
+      "id": "certmagic-interface",
+      "language": "go",
+      "repo": "https://github.com/caddyserver/certmagic",
+      "base": "2d114193c350ea9b5dd17b4a40b660af6e33c0db",
+      "head": "9a56fcd4f9cc49b8068eab8674a9bd4468068ca3",
+      "scope": "new",
+      "baseline": {
+        "status": "pass",
+        "expected": 5,
+        "found": 5,
+        "correct": 5,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 5,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 5
+        }
+      },
+      "candidate": {
+        "status": "pass",
+        "expected": 5,
+        "found": 5,
+        "correct": 5,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 5,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 5
+        }
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "dbfe39e09aaf8ba002a8a502b9205c497803e1ad22b374bc05bfb91e114eeb8d"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "dbfe39e09aaf8ba002a8a502b9205c497803e1ad22b374bc05bfb91e114eeb8d"
+      }
+    },
+    {
+      "id": "certmagic-load",
+      "language": "go",
+      "repo": "https://github.com/caddyserver/certmagic",
+      "base": "16c9db1449c3f84bf20edc022963caa983323d57",
+      "head": "1a2275d54c24cbc0f85979ae3b2815d3b81aae15",
+      "scope": "new",
+      "baseline": {
+        "status": "pass",
+        "expected": 20,
+        "found": 20,
+        "correct": 20,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 2,
+          "candidate": 18,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 20
+        }
+      },
+      "candidate": {
+        "status": "pass",
+        "expected": 20,
+        "found": 20,
+        "correct": 20,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 2,
+          "candidate": 18,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 20
+        }
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "0a66b9e439f1b3a38df81c925f8badd0d0471b836253676226cbdd239aba4e2e"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "0a66b9e439f1b3a38df81c925f8badd0d0471b836253676226cbdd239aba4e2e"
+      }
+    },
+    {
+      "id": "certmagic-store",
+      "language": "go",
+      "repo": "https://github.com/caddyserver/certmagic",
+      "base": "16c9db1449c3f84bf20edc022963caa983323d57",
+      "head": "1a2275d54c24cbc0f85979ae3b2815d3b81aae15",
+      "scope": "new",
+      "baseline": {
+        "status": "pass",
+        "expected": 12,
+        "found": 12,
+        "correct": 12,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 3,
+          "candidate": 9,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 12
+        }
+      },
+      "candidate": {
+        "status": "pass",
+        "expected": 12,
+        "found": 12,
+        "correct": 12,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 3,
+          "candidate": 9,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 12
+        }
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "0a66b9e439f1b3a38df81c925f8badd0d0471b836253676226cbdd239aba4e2e"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "0a66b9e439f1b3a38df81c925f8badd0d0471b836253676226cbdd239aba4e2e"
+      }
+    },
+    {
+      "id": "clap-any-value-parser",
+      "language": "rust",
+      "repo": "https://github.com/clap-rs/clap",
+      "base": "b55ebc9f7f0364c67ef48e8cbcc308b139f1a72a",
+      "head": "6720240577577d185b886921290323c5dc647af7",
+      "scope": "new",
+      "baseline": {
+        "status": "gap",
+        "expected": 1,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 1,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "candidate": {
+        "status": "gap",
+        "expected": 1,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 1,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 6
+        },
+        "callModel": "rust-source-direct-v6",
+        "snapshotId": "67d3bbddcc3bd92bfc9a213079af1ec975bef3611a4b9455c8619296ba6c6e8d"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 7
+        },
+        "callModel": "rust-source-direct-v7",
+        "snapshotId": "968e9a863dfcedeae68a809ca09e93e13b01d7b6080f2b738ff27d836729cb1e"
+      }
+    },
+    {
+      "id": "clap-typed-value-parser",
+      "language": "rust",
+      "repo": "https://github.com/clap-rs/clap",
+      "base": "b55ebc9f7f0364c67ef48e8cbcc308b139f1a72a",
+      "head": "6720240577577d185b886921290323c5dc647af7",
+      "scope": "reserved-rust",
+      "baseline": {
+        "status": "gap",
+        "expected": 1,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 1,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "candidate": {
+        "status": "gap",
+        "expected": 1,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 1,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 6
+        },
+        "callModel": "rust-source-direct-v6",
+        "snapshotId": "399262e2373c643381cb6328ed53e947f2adb7c92a24ba8c3a6210e7261d40ea"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 7
+        },
+        "callModel": "rust-source-direct-v7",
+        "snapshotId": "496ec919dd88436919b047fbea7bc394db1d7a7657a3787ba72aa975f78fc844"
+      }
+    },
+    {
+      "id": "gin-close",
+      "language": "go",
+      "repo": "https://github.com/gin-gonic/gin",
+      "base": "8d0468f72897652485933b845253386f9147a8bf",
+      "head": "d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11",
+      "scope": "new",
+      "baseline": {
+        "status": "gap",
+        "expected": 2,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 2,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "candidate": {
+        "status": "gap",
+        "expected": 2,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 2,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "1f45ea16fefd70b87c60af45e1af80198cfb22e61091a2ce2de8e7ce5ad38b5a"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "1f45ea16fefd70b87c60af45e1af80198cfb22e61091a2ce2de8e7ce5ad38b5a"
+      }
+    },
+    {
+      "id": "gin-hijack",
+      "language": "go",
+      "repo": "https://github.com/gin-gonic/gin",
+      "base": "8d0468f72897652485933b845253386f9147a8bf",
+      "head": "d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11",
+      "scope": "new",
+      "baseline": {
+        "status": "gap",
+        "expected": 3,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 3,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "candidate": {
+        "status": "gap",
+        "expected": 3,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 3,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "1f45ea16fefd70b87c60af45e1af80198cfb22e61091a2ce2de8e7ce5ad38b5a"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "1f45ea16fefd70b87c60af45e1af80198cfb22e61091a2ce2de8e7ce5ad38b5a"
+      }
+    },
+    {
+      "id": "raft-stage-commit-index",
+      "language": "go",
+      "repo": "https://github.com/hashicorp/raft",
+      "base": "d3c912496caf9b94feab148b7d90643038d83862",
+      "head": "a2e8778364df5dd56ef5f61fc69b22a33104efa5",
+      "scope": "new",
+      "baseline": {
+        "status": "pass",
+        "expected": 1,
+        "found": 1,
+        "correct": 1,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 1,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 1
+        }
+      },
+      "candidate": {
+        "status": "pass",
+        "expected": 1,
+        "found": 1,
+        "correct": 1,
+        "wrong": 0,
+        "missed": 0,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 1,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 1
+        }
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "dc62433dfed95fba6c43d170d22a8d82f1937ee641e49c28908f2b97b17815f7"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "go-parser@1.27.2",
+          "adapterRevision": 5
+        },
+        "callModel": "go-source-direct-v3",
+        "snapshotId": "dc62433dfed95fba6c43d170d22a8d82f1937ee641e49c28908f2b97b17815f7"
+      }
+    },
+    {
+      "id": "tracing-layer-event-enabled",
+      "language": "rust",
+      "repo": "https://github.com/tokio-rs/tracing",
+      "base": "d3eb109e45a5078716345fccc05505f63ecea69f",
+      "head": "f42e7e6dd2593ffdddf75f4ae48fa8ebdd649184",
+      "scope": "new",
+      "baseline": {
+        "status": "gap",
+        "expected": 6,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 6,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "candidate": {
+        "status": "gap",
+        "expected": 6,
+        "found": 0,
+        "correct": 0,
+        "wrong": 0,
+        "missed": 6,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 0,
+          "unknown": 0
+        },
+        "directCallerStatus": {}
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 6
+        },
+        "callModel": "rust-source-direct-v6",
+        "snapshotId": "49fffe007446c2ab158f677f7beb3eb755ff150a81dfeb956d739fe0e956514b"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 7
+        },
+        "callModel": "rust-source-direct-v7",
+        "snapshotId": "cfee334c33b6fd0a5bc668b23aff04901f99a712f9ae82cba8a7388e4f980f8d"
+      }
+    },
+    {
+      "id": "tracing-subscriber-event-enabled",
+      "language": "rust",
+      "repo": "https://github.com/tokio-rs/tracing",
+      "base": "d3eb109e45a5078716345fccc05505f63ecea69f",
+      "head": "f42e7e6dd2593ffdddf75f4ae48fa8ebdd649184",
+      "scope": "new",
+      "baseline": {
+        "status": "gap",
+        "expected": 5,
+        "found": 1,
+        "correct": 1,
+        "wrong": 0,
+        "missed": 4,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 1,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 1
+        }
+      },
+      "candidate": {
+        "status": "gap",
+        "expected": 5,
+        "found": 1,
+        "correct": 1,
+        "wrong": 0,
+        "missed": 4,
+        "extras": 0,
+        "extraProvenErrors": 0,
+        "extraNeedsReview": 0,
+        "displayed": {
+          "determined": 0,
+          "candidate": 1,
+          "unknown": 0
+        },
+        "directCallerStatus": {
+          "correct": 1
+        }
+      },
+      "baselineIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 6
+        },
+        "callModel": "rust-source-direct-v6",
+        "snapshotId": "21d761890eb1682449bf895cb253f643f6a048056513b2d44ca9b8194f34b6ae"
+      },
+      "candidateIdentity": {
+        "producer": {
+          "adapter": "rust-syn@2.0.119",
+          "adapterRevision": 7
+        },
+        "callModel": "rust-source-direct-v7",
+        "snapshotId": "935cf4f911a004fb4601281ee3eccebe78a0025e162375f13dad4e8c00d91574"
+      }
+    }
+  ],
+  "totals": {
+    "baseline": {
+      "expectedCalls": 73,
+      "foundCalls": 56,
+      "correctCalls": 56,
+      "wrongCalls": 0,
+      "missedCalls": 17,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "missingImplementations": 0,
+      "determinedTargets": 5,
+      "candidateTargets": 63,
+      "unknownTargets": 5,
+      "displayedDeterminedTargets": 5,
+      "displayedCandidateTargets": 51,
+      "displayedUnknownTargets": 0,
+      "definitionsFound": 12,
+      "cases": 12,
+      "counterexamples": 56,
+      "counterexamplesPassed": 56,
+      "counterexampleCoverage": {
+        "delete-target": 2,
+        "wrong-declaration": 7,
+        "extra-call": 7,
+        "duplicate-call": 7,
+        "wrong-direct-caller": 7,
+        "promote-candidate": 7,
+        "omit-target-file": 1,
+        "omit-end-position": 7
+      },
+      "counterexamplesUncovered": []
+    },
+    "candidate": {
+      "expectedCalls": 73,
+      "foundCalls": 56,
+      "correctCalls": 56,
+      "wrongCalls": 0,
+      "missedCalls": 17,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "missingImplementations": 0,
+      "determinedTargets": 5,
+      "candidateTargets": 63,
+      "unknownTargets": 5,
+      "displayedDeterminedTargets": 5,
+      "displayedCandidateTargets": 51,
+      "displayedUnknownTargets": 0,
+      "definitionsFound": 12,
+      "cases": 12,
+      "counterexamples": 56,
+      "counterexamplesPassed": 56,
+      "counterexampleCoverage": {
+        "delete-target": 2,
+        "wrong-declaration": 7,
+        "extra-call": 7,
+        "duplicate-call": 7,
+        "wrong-direct-caller": 7,
+        "promote-candidate": 7,
+        "omit-target-file": 1,
+        "omit-end-position": 7
+      },
+      "counterexamplesUncovered": []
+    }
+  }
+}

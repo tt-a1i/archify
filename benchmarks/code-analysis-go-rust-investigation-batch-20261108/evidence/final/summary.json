@@ -26,6 +26,19 @@
       "correctCalls": 4,
       "wrongCalls": 0,
       "missedCalls": 0,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 4,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 4,
+        "unknown": 0
+      },
       "determinedTargets": 0,
       "candidateTargets": 4,
       "unknownTargets": 0,
@@ -58,7 +71,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 8,
+            "file": "src/engine/mod.rs",
+            "line": 87,
+            "name": "internal_decode"
+          }
         },
         {
           "index": 1,
@@ -85,7 +105,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 8,
+            "file": "src/engine/mod.rs",
+            "line": 87,
+            "name": "internal_decode"
+          }
         },
         {
           "index": 2,
@@ -112,7 +139,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 8,
+            "file": "src/engine/mod.rs",
+            "line": 87,
+            "name": "internal_decode"
+          }
         },
         {
           "index": 3,
@@ -139,10 +173,18 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 8,
+            "file": "src/engine/mod.rs",
+            "line": 87,
+            "name": "internal_decode"
+          }
         }
       ],
       "missed": [],
+      "extras": [],
       "implementations": [
         "engine::general_purpose::GeneralPurpose::internal_decode"
       ],
@@ -158,7 +200,7 @@
       "reserved": false,
       "regression": true,
       "definitionScope": "changed",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -186,6 +228,19 @@
       "correctCalls": 13,
       "wrongCalls": 0,
       "missedCalls": 0,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 13,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 13,
+        "unknown": 0
+      },
       "determinedTargets": 0,
       "candidateTargets": 13,
       "unknownTargets": 0,
@@ -218,7 +273,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 1,
@@ -245,7 +307,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 2,
@@ -272,7 +341,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 3,
@@ -299,7 +375,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 4,
@@ -326,7 +409,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 5,
@@ -353,7 +443,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 6,
@@ -380,7 +477,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 7,
@@ -407,7 +511,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 8,
@@ -434,7 +545,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 9,
@@ -461,7 +579,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 10,
@@ -488,7 +613,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 11,
@@ -515,7 +647,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         },
         {
           "index": 12,
@@ -542,10 +681,18 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 51,
+            "name": "Load"
+          }
         }
       ],
       "missed": [],
+      "extras": [],
       "implementations": [
         "*FileStorage.Load"
       ],
@@ -561,7 +708,7 @@
       "reserved": true,
       "regression": false,
       "definitionScope": "changed",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -589,6 +736,19 @@
       "correctCalls": 5,
       "wrongCalls": 0,
       "missedCalls": 0,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 5,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 5,
+        "unknown": 0
+      },
       "determinedTargets": 0,
       "candidateTargets": 5,
       "unknownTargets": 0,
@@ -621,7 +781,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 48,
+            "name": "Store"
+          }
         },
         {
           "index": 1,
@@ -648,7 +815,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 48,
+            "name": "Store"
+          }
         },
         {
           "index": 2,
@@ -675,7 +849,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 48,
+            "name": "Store"
+          }
         },
         {
           "index": 3,
@@ -702,7 +883,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 48,
+            "name": "Store"
+          }
         },
         {
           "index": 4,
@@ -729,10 +917,18 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "line": 48,
+            "name": "Store",
+            "file": "storage.go"
+          }
         }
       ],
       "missed": [],
+      "extras": [],
       "implementations": [
         "*FileStorage.Store"
       ],
@@ -748,7 +944,7 @@
       "reserved": false,
       "regression": false,
       "definitionScope": "changed",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -776,6 +972,19 @@
       "correctCalls": 20,
       "wrongCalls": 0,
       "missedCalls": 0,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 2,
+        "candidate": 18,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 2,
+        "candidate": 18,
+        "unknown": 0
+      },
       "determinedTargets": 2,
       "candidateTargets": 18,
       "unknownTargets": 0,
@@ -808,7 +1017,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "determined",
+          "target": {
+            "column": 1,
+            "file": "filestorage.go",
+            "line": 102,
+            "name": "Load"
+          }
         },
         {
           "index": 12,
@@ -835,7 +1051,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "determined",
+          "target": {
+            "column": 1,
+            "file": "filestorage.go",
+            "line": 102,
+            "name": "Load"
+          }
         },
         {
           "index": 4,
@@ -862,7 +1085,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 0,
@@ -889,7 +1119,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 1,
@@ -916,7 +1153,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 2,
@@ -943,7 +1187,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 3,
@@ -970,7 +1221,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 5,
@@ -997,7 +1255,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 6,
@@ -1024,7 +1289,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 7,
@@ -1051,7 +1323,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 8,
@@ -1078,7 +1357,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 9,
@@ -1105,7 +1391,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 10,
@@ -1132,7 +1425,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 13,
@@ -1159,7 +1459,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 14,
@@ -1186,7 +1493,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 15,
@@ -1213,7 +1527,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 16,
@@ -1240,7 +1561,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 17,
@@ -1267,7 +1595,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 18,
@@ -1294,7 +1629,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         },
         {
           "index": 19,
@@ -1321,10 +1663,18 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 80,
+            "name": "Load"
+          }
         }
       ],
       "missed": [],
+      "extras": [],
       "implementations": [],
       "missingImplementations": [],
       "consideredRecords": 20,
@@ -1338,7 +1688,7 @@
       "reserved": false,
       "regression": false,
       "definitionScope": "changed",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -1366,6 +1716,19 @@
       "correctCalls": 12,
       "wrongCalls": 0,
       "missedCalls": 0,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 3,
+        "candidate": 9,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 3,
+        "candidate": 9,
+        "unknown": 0
+      },
       "determinedTargets": 3,
       "candidateTargets": 9,
       "unknownTargets": 0,
@@ -1398,7 +1761,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "determined",
+          "target": {
+            "column": 1,
+            "file": "filestorage.go",
+            "line": 81,
+            "name": "Store"
+          }
         },
         {
           "index": 4,
@@ -1425,7 +1795,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "determined",
+          "target": {
+            "column": 1,
+            "file": "filestorage.go",
+            "line": 81,
+            "name": "Store"
+          }
         },
         {
           "index": 5,
@@ -1452,7 +1829,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "determined",
+          "target": {
+            "column": 1,
+            "file": "filestorage.go",
+            "line": 81,
+            "name": "Store"
+          }
         },
         {
           "index": 0,
@@ -1479,7 +1863,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 77,
+            "name": "Store"
+          }
         },
         {
           "index": 1,
@@ -1506,7 +1897,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 77,
+            "name": "Store"
+          }
         },
         {
           "index": 2,
@@ -1533,7 +1931,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 77,
+            "name": "Store"
+          }
         },
         {
           "index": 6,
@@ -1560,7 +1965,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 77,
+            "name": "Store"
+          }
         },
         {
           "index": 7,
@@ -1587,7 +1999,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 77,
+            "name": "Store"
+          }
         },
         {
           "index": 8,
@@ -1614,7 +2033,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 77,
+            "name": "Store"
+          }
         },
         {
           "index": 9,
@@ -1641,7 +2067,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 77,
+            "name": "Store"
+          }
         },
         {
           "index": 10,
@@ -1668,7 +2101,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "storage.go",
+            "line": 77,
+            "name": "Store"
+          }
         },
         {
           "index": 11,
@@ -1695,10 +2135,18 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": "not-determined"
+          "runtimeTarget": "not-determined",
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "line": 77,
+            "name": "Store",
+            "file": "storage.go"
+          }
         }
       ],
       "missed": [],
+      "extras": [],
       "implementations": [],
       "missingImplementations": [],
       "consideredRecords": 12,
@@ -1712,7 +2160,7 @@
       "reserved": false,
       "regression": false,
       "definitionScope": "changed",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -1740,6 +2188,19 @@
       "correctCalls": 0,
       "wrongCalls": 0,
       "missedCalls": 1,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 0,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 1,
+        "unknown": 0
+      },
       "determinedTargets": 0,
       "candidateTargets": 1,
       "unknownTargets": 0,
@@ -1772,6 +2233,7 @@
           }
         }
       ],
+      "extras": [],
       "implementations": [],
       "missingImplementations": [],
       "consideredRecords": 0,
@@ -1785,7 +2247,7 @@
       "reserved": false,
       "regression": false,
       "definitionScope": "unpaired",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -1813,6 +2275,19 @@
       "correctCalls": 0,
       "wrongCalls": 0,
       "missedCalls": 1,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 0,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 1,
+        "unknown": 0
+      },
       "determinedTargets": 0,
       "candidateTargets": 1,
       "unknownTargets": 0,
@@ -1845,6 +2320,7 @@
           }
         }
       ],
+      "extras": [],
       "implementations": [],
       "missingImplementations": [],
       "consideredRecords": 0,
@@ -1858,7 +2334,7 @@
       "reserved": true,
       "regression": false,
       "definitionScope": "unpaired",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -1886,6 +2362,19 @@
       "correctCalls": 0,
       "wrongCalls": 0,
       "missedCalls": 2,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 0,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 0,
+        "unknown": 2
+      },
       "determinedTargets": 0,
       "candidateTargets": 0,
       "unknownTargets": 2,
@@ -1933,6 +2422,7 @@
           }
         }
       ],
+      "extras": [],
       "implementations": [],
       "missingImplementations": [],
       "consideredRecords": 0,
@@ -1946,7 +2436,7 @@
       "reserved": false,
       "regression": false,
       "definitionScope": "changed",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -1974,6 +2464,19 @@
       "correctCalls": 0,
       "wrongCalls": 0,
       "missedCalls": 3,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 0,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 0,
+        "unknown": 3
+      },
       "determinedTargets": 0,
       "candidateTargets": 0,
       "unknownTargets": 3,
@@ -2041,6 +2544,7 @@
           }
         }
       ],
+      "extras": [],
       "implementations": [],
       "missingImplementations": [],
       "consideredRecords": 0,
@@ -2054,7 +2558,107 @@
       "reserved": false,
       "regression": false,
       "definitionScope": "changed",
-      "exitCode": 0,
+      "exitCode": null,
+      "queryStatus": "ready"
+    },
+    {
+      "definitionFound": true,
+      "definition": {
+        "file": "log.go",
+        "name": "StageCommitIndex",
+        "qualname": "CommitTrackingLogStore.StageCommitIndex",
+        "kind": "InterfaceMethod",
+        "line": 211,
+        "column": 2,
+        "endLine": 211,
+        "endColumn": 36,
+        "sourceRange": {
+          "column": 2,
+          "endColumn": 36,
+          "endLine": 211,
+          "line": 211,
+          "sha256": "a9821cd6ea963ee1264f403655ed5e6707475eb777e857d87f7c90a2fc498af0"
+        },
+        "textSha256": "a9821cd6ea963ee1264f403655ed5e6707475eb777e857d87f7c90a2fc498af0"
+      },
+      "expectedCalls": 1,
+      "foundCalls": 1,
+      "correctCalls": 1,
+      "wrongCalls": 0,
+      "missedCalls": 0,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 1,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 1,
+        "unknown": 0
+      },
+      "determinedTargets": 0,
+      "candidateTargets": 1,
+      "unknownTargets": 0,
+      "directCallerStatus": {
+        "correct": 1
+      },
+      "items": [
+        {
+          "index": 0,
+          "pool": "knownReferences",
+          "position": {
+            "file": "raft.go",
+            "line": 1401,
+            "column": 12,
+            "endLine": 1401,
+            "endColumn": 47
+          },
+          "status": "correct",
+          "directCaller": {
+            "status": "correct",
+            "provided": true,
+            "actual": {
+              "column": 1,
+              "file": "raft.go",
+              "kind": "method",
+              "line": 1393,
+              "name": "tryStageCommitIndex",
+              "qualname": "*Raft.tryStageCommitIndex"
+            },
+            "wrong": []
+          },
+          "targetWrong": [],
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 2,
+            "file": "log.go",
+            "line": 211,
+            "name": "StageCommitIndex"
+          }
+        }
+      ],
+      "missed": [],
+      "extras": [],
+      "implementations": [
+        "*InmemCommitTrackingStore.StageCommitIndex"
+      ],
+      "missingImplementations": [],
+      "consideredRecords": 1,
+      "expectedGap": false,
+      "status": "pass",
+      "id": "raft-stage-commit-index",
+      "language": "go",
+      "repo": "https://github.com/hashicorp/raft",
+      "base": "d3c912496caf9b94feab148b7d90643038d83862",
+      "head": "a2e8778364df5dd56ef5f61fc69b22a33104efa5",
+      "reserved": false,
+      "regression": false,
+      "definitionScope": "unpaired",
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -2082,6 +2686,19 @@
       "correctCalls": 0,
       "wrongCalls": 0,
       "missedCalls": 6,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 0,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 6,
+        "unknown": 0
+      },
       "determinedTargets": 0,
       "candidateTargets": 6,
       "unknownTargets": 0,
@@ -2239,6 +2856,7 @@
           }
         }
       ],
+      "extras": [],
       "implementations": [],
       "missingImplementations": [],
       "consideredRecords": 0,
@@ -2252,7 +2870,7 @@
       "reserved": false,
       "regression": false,
       "definitionScope": "unpaired",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     },
     {
@@ -2280,6 +2898,19 @@
       "correctCalls": 1,
       "wrongCalls": 0,
       "missedCalls": 4,
+      "extraCalls": 0,
+      "extraProvenErrors": 0,
+      "extraNeedsReview": 0,
+      "displayedTargets": {
+        "determined": 0,
+        "candidate": 1,
+        "unknown": 0
+      },
+      "expectedTargets": {
+        "determined": 0,
+        "candidate": 5,
+        "unknown": 0
+      },
       "determinedTargets": 0,
       "candidateTargets": 5,
       "unknownTargets": 0,
@@ -2312,7 +2943,14 @@
             "wrong": []
           },
           "targetWrong": [],
-          "runtimeTarget": null
+          "runtimeTarget": null,
+          "targetClass": "candidate",
+          "target": {
+            "column": 8,
+            "file": "tracing-core/src/subscriber.rs",
+            "line": 305,
+            "name": "event_enabled"
+          }
         }
       ],
       "missed": [
@@ -2417,6 +3055,7 @@
           }
         }
       ],
+      "extras": [],
       "implementations": [],
       "missingImplementations": [],
       "consideredRecords": 1,
@@ -2430,21 +3069,915 @@
       "reserved": false,
       "regression": false,
       "definitionScope": "unpaired",
-      "exitCode": 0,
+      "exitCode": null,
       "queryStatus": "ready"
     }
   ],
+  "counterexamples": [
+    {
+      "id": "base64-inner-decode",
+      "checks": [
+        {
+          "kind": "delete-target",
+          "detected": false,
+          "available": false,
+          "reason": "no-concrete-target-record",
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-declaration",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "traitCandidates",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-line"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "extra-call",
+          "available": true,
+          "detected": true,
+          "callIndex": null,
+          "pool": "traitCandidates",
+          "beforeStatus": null,
+          "afterStatus": null,
+          "beforeWrong": null,
+          "afterWrong": null,
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "duplicate-call",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "traitCandidates",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-direct-caller",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "traitCandidates",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "promote-candidate",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "traitCandidates",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-file",
+            "target-line",
+            "candidate-promoted"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "omit-target-file",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "traitCandidates",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "preserve",
+          "passed": true
+        },
+        {
+          "kind": "omit-end-position",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "traitCandidates",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "preserve",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "certmagic-interface-load",
+      "checks": [
+        {
+          "kind": "delete-target",
+          "detected": false,
+          "available": false,
+          "reason": "no-concrete-target-record",
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-declaration",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-line"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "extra-call",
+          "available": true,
+          "detected": true,
+          "callIndex": null,
+          "pool": "knownReferences",
+          "beforeStatus": null,
+          "afterStatus": null,
+          "beforeWrong": null,
+          "afterWrong": null,
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "duplicate-call",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-direct-caller",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "promote-candidate",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "candidate-promoted"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "omit-target-file",
+          "detected": false,
+          "available": false,
+          "reason": "no-same-file-target",
+          "expectation": "preserve",
+          "passed": true
+        },
+        {
+          "kind": "omit-end-position",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "preserve",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "certmagic-interface",
+      "checks": [
+        {
+          "kind": "delete-target",
+          "detected": false,
+          "available": false,
+          "reason": "no-concrete-target-record",
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-declaration",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-line"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "extra-call",
+          "available": true,
+          "detected": true,
+          "callIndex": null,
+          "pool": "knownReferences",
+          "beforeStatus": null,
+          "afterStatus": null,
+          "beforeWrong": null,
+          "afterWrong": null,
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "duplicate-call",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-direct-caller",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "promote-candidate",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "candidate-promoted"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "omit-target-file",
+          "detected": false,
+          "available": false,
+          "reason": "no-same-file-target",
+          "expectation": "preserve",
+          "passed": true
+        },
+        {
+          "kind": "omit-end-position",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "preserve",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "certmagic-load",
+      "checks": [
+        {
+          "kind": "delete-target",
+          "available": true,
+          "detected": true,
+          "callIndex": 11,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-missing"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-declaration",
+          "available": true,
+          "detected": true,
+          "callIndex": 11,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-line"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "extra-call",
+          "available": true,
+          "detected": true,
+          "callIndex": null,
+          "pool": "knownReferences",
+          "beforeStatus": null,
+          "afterStatus": null,
+          "beforeWrong": null,
+          "afterWrong": null,
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "duplicate-call",
+          "available": true,
+          "detected": true,
+          "callIndex": 11,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-direct-caller",
+          "available": true,
+          "detected": true,
+          "callIndex": 11,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "promote-candidate",
+          "available": true,
+          "detected": true,
+          "callIndex": 4,
+          "pool": "interfaceCandidates",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-file",
+            "target-line",
+            "candidate-promoted"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "omit-target-file",
+          "detected": false,
+          "available": false,
+          "reason": "no-same-file-target",
+          "expectation": "preserve",
+          "passed": true
+        },
+        {
+          "kind": "omit-end-position",
+          "available": true,
+          "detected": true,
+          "callIndex": 11,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "preserve",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "certmagic-store",
+      "checks": [
+        {
+          "kind": "delete-target",
+          "available": true,
+          "detected": true,
+          "callIndex": 3,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-missing"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-declaration",
+          "available": true,
+          "detected": true,
+          "callIndex": 3,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-line"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "extra-call",
+          "available": true,
+          "detected": true,
+          "callIndex": null,
+          "pool": "knownReferences",
+          "beforeStatus": null,
+          "afterStatus": null,
+          "beforeWrong": null,
+          "afterWrong": null,
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "duplicate-call",
+          "available": true,
+          "detected": true,
+          "callIndex": 3,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-direct-caller",
+          "available": true,
+          "detected": true,
+          "callIndex": 3,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "promote-candidate",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "interfaceCandidates",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-file",
+            "target-line",
+            "candidate-promoted"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "omit-target-file",
+          "detected": false,
+          "available": false,
+          "reason": "no-same-file-target",
+          "expectation": "preserve",
+          "passed": true
+        },
+        {
+          "kind": "omit-end-position",
+          "available": true,
+          "detected": true,
+          "callIndex": 3,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "preserve",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "clap-any-value-parser",
+      "checks": [],
+      "skipped": "no-scored-record",
+      "passed": true
+    },
+    {
+      "id": "clap-typed-value-parser",
+      "checks": [],
+      "skipped": "no-scored-record",
+      "passed": true
+    },
+    {
+      "id": "gin-close",
+      "checks": [],
+      "skipped": "no-scored-record",
+      "passed": true
+    },
+    {
+      "id": "gin-hijack",
+      "checks": [],
+      "skipped": "no-scored-record",
+      "passed": true
+    },
+    {
+      "id": "raft-stage-commit-index",
+      "checks": [
+        {
+          "kind": "delete-target",
+          "detected": false,
+          "available": false,
+          "reason": "no-concrete-target-record",
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-declaration",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-line"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "extra-call",
+          "available": true,
+          "detected": true,
+          "callIndex": null,
+          "pool": "knownReferences",
+          "beforeStatus": null,
+          "afterStatus": null,
+          "beforeWrong": null,
+          "afterWrong": null,
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "duplicate-call",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-direct-caller",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "promote-candidate",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "candidate-promoted"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "omit-target-file",
+          "detected": false,
+          "available": false,
+          "reason": "no-same-file-target",
+          "expectation": "preserve",
+          "passed": true
+        },
+        {
+          "kind": "omit-end-position",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "preserve",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "tracing-layer-event-enabled",
+      "checks": [],
+      "skipped": "no-scored-record",
+      "passed": true
+    },
+    {
+      "id": "tracing-subscriber-event-enabled",
+      "checks": [
+        {
+          "kind": "delete-target",
+          "detected": false,
+          "available": false,
+          "reason": "no-concrete-target-record",
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-declaration",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "target-line"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "extra-call",
+          "available": true,
+          "detected": true,
+          "callIndex": null,
+          "pool": "knownReferences",
+          "beforeStatus": null,
+          "afterStatus": null,
+          "beforeWrong": null,
+          "afterWrong": null,
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "duplicate-call",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 1,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "wrong-direct-caller",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "promote-candidate",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "wrong",
+          "beforeWrong": [],
+          "afterWrong": [
+            "candidate-promoted"
+          ],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "detect",
+          "passed": true
+        },
+        {
+          "kind": "omit-target-file",
+          "detected": false,
+          "available": false,
+          "reason": "no-same-file-target",
+          "expectation": "preserve",
+          "passed": true
+        },
+        {
+          "kind": "omit-end-position",
+          "available": true,
+          "detected": true,
+          "callIndex": 0,
+          "pool": "knownReferences",
+          "beforeStatus": "correct",
+          "afterStatus": "correct",
+          "beforeWrong": [],
+          "afterWrong": [],
+          "beforeExtras": 0,
+          "afterExtras": 0,
+          "expectation": "preserve",
+          "passed": true
+        }
+      ],
+      "passed": true
+    }
+  ],
   "totals": {
-    "expectedCalls": 72,
-    "foundCalls": 55,
-    "correctCalls": 55,
+    "expectedCalls": 73,
+    "foundCalls": 56,
+    "correctCalls": 56,
     "wrongCalls": 0,
     "missedCalls": 17,
+    "extraCalls": 0,
+    "extraProvenErrors": 0,
+    "extraNeedsReview": 0,
     "missingImplementations": 0,
     "determinedTargets": 5,
-    "candidateTargets": 62,
+    "candidateTargets": 63,
     "unknownTargets": 5,
-    "definitionsFound": 11,
-    "cases": 11
+    "displayedDeterminedTargets": 5,
+    "displayedCandidateTargets": 51,
+    "displayedUnknownTargets": 0,
+    "definitionsFound": 12,
+    "cases": 12,
+    "counterexamples": 56,
+    "counterexamplesPassed": 56,
+    "counterexampleCoverage": {
+      "delete-target": 2,
+      "wrong-declaration": 7,
+      "extra-call": 7,
+      "duplicate-call": 7,
+      "wrong-direct-caller": 7,
+      "promote-candidate": 7,
+      "omit-target-file": 1,
+      "omit-end-position": 7
+    },
+    "counterexamplesUncovered": []
   }
 }

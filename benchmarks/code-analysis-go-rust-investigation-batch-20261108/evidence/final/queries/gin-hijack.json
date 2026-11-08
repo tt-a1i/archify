@@ -11,7 +11,7 @@
   "sides": {
     "base": {
       "side": "base",
-      "root": "/private/tmp/archify-batch-20261108/samples/gin-hijack-base",
+      "root": "/tmp/archify-batch-20261108/samples/gin-hijack-base",
       "snapshot": {
         "revision": null,
         "baseRevision": "8d0468f72897652485933b845253386f9147a8bf",
@@ -1217,7 +1217,7 @@
     },
     "head": {
       "side": "head",
-      "root": "/private/tmp/archify-batch-20261108/samples/gin-hijack-head",
+      "root": "/tmp/archify-batch-20261108/samples/gin-hijack-head",
       "snapshot": {
         "revision": null,
         "baseRevision": "d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11",

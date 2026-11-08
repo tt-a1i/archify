@@ -1,0 +1,1 @@
+Change orientation written to /tmp/archify-batch-20261108/combined/benchmarks/code-analysis-go-rust-investigation-batch-20261108/evidence/stage-baseline/queries/tracing-layer-event-enabled.json (ready); partial means capture/configuration limits, not a finding gate failure. Complete docs/FUNCTION-ANALYSIS.md.

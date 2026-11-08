@@ -1,0 +1,82 @@
+{
+  "fixture": "fixtures/rust-accessor-shadow",
+  "question": "Wrapper<T: Gate>::as_ref returns Other, not T. Which calls reach Other::enabled?",
+  "runs": {
+    "baseline": {
+      "producer": {
+        "adapter": "rust-syn@2.0.119",
+        "adapterRevision": 6
+      },
+      "callModel": "rust-source-direct-v6",
+      "snapshotId": "f99753fdccc5881335eaf2f9a08543aca63f841da39522d6d1e26e494555af02",
+      "definition": {
+        "qualname": "::Other::enabled",
+        "file": "src/lib.rs",
+        "line": 8
+      },
+      "knownReferences": 0,
+      "traitCandidates": 0,
+      "rawCalls": [
+        {
+          "line": 23,
+          "resolution": "unresolved",
+          "targetName": null,
+          "targetLine": null,
+          "directCaller": "check"
+        },
+        {
+          "line": 23,
+          "resolution": "rust-trait-method-candidate",
+          "targetName": "enabled",
+          "targetLine": 2,
+          "directCaller": "check"
+        }
+      ]
+    },
+    "candidate": {
+      "producer": {
+        "adapter": "rust-syn@2.0.119",
+        "adapterRevision": 7
+      },
+      "callModel": "rust-source-direct-v7",
+      "snapshotId": "d3cda32e2dbca1a1ab0cf61bf899e58a2f2bc0f7eb5469d1f99a4ebe48bf65bd",
+      "definition": {
+        "qualname": "::Other::enabled",
+        "file": "src/lib.rs",
+        "line": 8
+      },
+      "knownReferences": 1,
+      "traitCandidates": 0,
+      "rawCalls": [
+        {
+          "line": 23,
+          "resolution": "rust-inherent-source-candidate",
+          "targetName": "as_ref",
+          "targetLine": 18,
+          "directCaller": "check"
+        },
+        {
+          "line": 23,
+          "resolution": "rust-inherent-source-candidate",
+          "targetName": "enabled",
+          "targetLine": 8,
+          "directCaller": "check"
+        }
+      ]
+    }
+  },
+  "returnedToUnknown": [
+    {
+      "item": "Borrowed<G>(G) with self.as_ref() and no inherent return/AsRef/Borrow/Deref evidence",
+      "before": "rust-trait-method-candidate via the one-parameter wrapper assumption",
+      "after": "unresolved",
+      "test": "Rust method receiver fields resolve trait bounds and unique concrete impls, line 11"
+    }
+  ],
+  "validatedSiblings": [
+    "AsRef target",
+    "Deref Target",
+    "Borrow target",
+    "swapped generic parameters Pair<X,Y> with impl<A,B> Pair<B,A>"
+  ]
+}
