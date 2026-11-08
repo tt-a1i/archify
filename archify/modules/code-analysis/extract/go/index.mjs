@@ -8,7 +8,7 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'go';
-export const REVISION = 4;
+export const REVISION = 5;
 export const CALL_MODEL = 'go-source-direct-v3';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.go'));
 export const countSources = (root, config) => listFiles(root, config).filter(file => file.endsWith('.go')).length;
@@ -70,13 +70,15 @@ export function extract(root, config, { onCapture } = {}) {
     repository: { ...describeRepository(root), language: id, adapter: `go-parser@${output.version.replace(/^go/, '')}`, adapterRevision: REVISION },
     files: [...selected].map(file => { const sourceText = tree.contents.get(file).toString('utf8'); return { path: file, sourceText, loc: lineCount(sourceText), role: file.endsWith('_test.go') ? 'test' : classifyRole(file, config.roles) }; }),
     packageMarkers: ['go.mod'], imports, symbols: [], functions: output.functions, calls: output.calls, unresolved,
+    interfaceImplementations: output.interfaceImplementations, interfaceEvidence: output.interfaceEvidence,
     ...(output.parse_errors.length ? { parse_errors: output.parse_errors } : {}),
-    languageScope: { language: id, module, build: output.build, packages: output.packages, typing: output.typing, standardLibrary: output.standardLibrary,
+    languageScope: { language: id, module, build: output.build, packages: output.packages, typing: output.typing, standardLibrary: output.standardLibrary, interfaceEvidence: output.interfaceEvidence,
       selectedFiles: output.selected, excludedFiles: [...excluded, ...output.excluded].sort((a, b) => a.file.localeCompare(b.file)), metadata,
       limitations: ['Only this root module is analyzed. go.work, replace directives, third-party dependencies, cgo, generated compiler output and nested modules are not loaded. SDK standard-library type exports may be prepared and read; their source is not analyzed.',
         'Source selection uses the running SDK tool/release tags; target CPU-feature and experimental overrides are not independently reconstructed.',
         'The go.mod language/toolchain directives are captured as metadata but are not enforced by this incomplete type checker.',
         'Targets are direct source function bindings from go/types with recorded SDK types when enabled and incomplete third-party types. They do not prove successful compilation, argument applicability, runtime dispatch or a complete caller set.',
-        'Function bodies and receiver declarations are inventoried; concrete compiler-selected source methods are bound, including promotion, method expressions and generic instances. Interface method calls bind to a captured interface method declaration when one is visible; the runtime implementation remains unknown. Function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.'] },
+        'Function bodies and receiver declarations are inventoried; concrete compiler-selected source methods are bound, including promotion, method expressions and generic instances. Interface method calls bind to a captured interface method declaration when one is visible; the runtime implementation remains unknown. Function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.',
+        'Captured interface implementation edges use go/types method sets for named source types and interfaces. Value and pointer satisfaction are recorded separately. Interfaces with external or anonymous embedded interfaces, generic interfaces, generic concrete types and type aliases are omitted from the edge set and reported as unknown; absence of an edge is not proof that a type does not implement an interface.'] },
   };
 }
