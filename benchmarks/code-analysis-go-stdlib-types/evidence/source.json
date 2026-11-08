@@ -1,0 +1,2457 @@
+{
+  "expect": "candidate",
+  "commands": [
+    {
+      "label": "chi-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--language",
+        "go",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/chi",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 1.4610117910197005
+    },
+    {
+      "label": "grpc-go-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/grpc-go",
+        "--language",
+        "go",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/grpc-go",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 2.354165750090033
+    },
+    {
+      "label": "cobra-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/cobra",
+        "--language",
+        "go",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/cobra",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.7495832500280812
+    },
+    {
+      "label": "question-chi-Reset",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/chi",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--entry",
+        "mux.go",
+        "--function",
+        "*Mux.ServeHTTP",
+        "--question",
+        "Where does this known concrete method lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/question-chi-Reset.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.31713324994780123
+    },
+    {
+      "label": "question-chi-NotFound",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/chi",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--entry",
+        "mux.go",
+        "--function",
+        "*Mux.Mount",
+        "--question",
+        "Where does this known concrete method lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/question-chi-NotFound.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.31105737504549325
+    },
+    {
+      "label": "question-grpc-go-getReadyTransport",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/grpc-go",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/grpc-go",
+        "--entry",
+        "picker_wrapper.go",
+        "--function",
+        "*pickerWrapper.pick",
+        "--question",
+        "Where does this known concrete method lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/question-grpc-go-getReadyTransport.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.3624106659553945
+    },
+    {
+      "label": "question-cobra-HasParent",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/cobra",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/cobra",
+        "--entry",
+        "doc/util.go",
+        "--function",
+        "hasSeeAlso",
+        "--question",
+        "Where does this known concrete method lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/question-cobra-HasParent.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.3123117499053478
+    },
+    {
+      "label": "paired",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--base-root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi-base",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--entry",
+        "mux.go",
+        "--question",
+        "Which known callers reach changed Mux.Match?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/paired.json",
+        "--json"
+      ],
+      "exit": 1,
+      "seconds": 1.2345477079506963
+    },
+    {
+      "label": "disabled-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--language",
+        "go",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/stdlib-disabled.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/disabled",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.49838845804333687
+    },
+    {
+      "label": "question-disabled",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-stdlib/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/disabled",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--entry",
+        "mux.go",
+        "--function",
+        "*Mux.ServeHTTP",
+        "--question",
+        "What remains unknown without SDK types?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-source/question-disabled.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.3160564579302445
+    }
+  ],
+  "score": {
+    "correct": 37,
+    "wrong": 0,
+    "missed": 0,
+    "reasonable-unknown": 2
+  },
+  "units": [
+    {
+      "project": "chi",
+      "call": {
+        "column": 2,
+        "endColumn": 14,
+        "endLine": 82,
+        "file": "mux.go",
+        "line": 82,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "context.go",
+          "line": 82,
+          "name": "Reset"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "context.go",
+        "name": "Reset",
+        "line": 82,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "chi",
+      "call": {
+        "column": 3,
+        "endColumn": 36,
+        "endLine": 309,
+        "file": "mux.go",
+        "line": 309,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 203,
+          "name": "NotFound"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "mux.go",
+        "name": "NotFound",
+        "line": 203,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "chi",
+      "call": {
+        "column": 3,
+        "endColumn": 52,
+        "endLine": 312,
+        "file": "mux.go",
+        "line": 312,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 223,
+          "name": "MethodNotAllowed"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "mux.go",
+        "name": "MethodNotAllowed",
+        "line": 223,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 11,
+        "endColumn": 38,
+        "endLine": 183,
+        "file": "picker_wrapper.go",
+        "line": 183,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "clientconn.go",
+          "line": 1500,
+          "name": "getReadyTransport"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "clientconn.go",
+        "name": "getReadyTransport",
+        "line": 1500,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 9,
+        "endColumn": 117,
+        "endLine": 170,
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "line": 170,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 61,
+          "name": "UnaryInterceptor"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "name": "UnaryInterceptor",
+        "line": 61,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 9,
+        "endColumn": 117,
+        "endLine": 177,
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "line": 177,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 78,
+          "name": "StreamInterceptor"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "name": "StreamInterceptor",
+        "line": 78,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 19,
+        "endColumn": 41,
+        "endLine": 117,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 117,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 184,
+          "name": "Get"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Get",
+        "line": 184,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 20,
+        "endColumn": 35,
+        "endLine": 143,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 143,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 212,
+          "name": "Keys"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Keys",
+        "line": 212,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 15,
+        "endColumn": 30,
+        "endLine": 144,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 144,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 184,
+          "name": "Get"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Get",
+        "line": 184,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 169,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 169,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 225,
+          "name": "Values"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Values",
+        "line": 225,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 183,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 183,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 225,
+          "name": "Values"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Values",
+        "line": 225,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 39,
+        "endColumn": 53,
+        "endLine": 203,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 203,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 203,
+          "name": "Len"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Len",
+        "line": 203,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 205,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 205,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "resolver/map.go",
+          "line": 225,
+          "name": "Values"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Values",
+        "line": 225,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 5,
+        "endColumn": 63,
+        "endLine": 213,
+        "file": "balancer/rls/picker.go",
+        "line": 213,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "metadata/metadata.go",
+          "line": 130,
+          "name": "Append"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "metadata/metadata.go",
+        "name": "Append",
+        "line": 130,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 9,
+        "endColumn": 22,
+        "endLine": 63,
+        "file": "orca/call_metrics.go",
+        "line": 63,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 76,
+          "name": "recorder"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "orca/call_metrics.go",
+        "name": "recorder",
+        "line": 76,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 10,
+        "endColumn": 34,
+        "endLine": 264,
+        "file": "test/bufconn/bufconn.go",
+        "line": 264,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 238,
+          "name": "Close"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "test/bufconn/bufconn.go",
+        "name": "Close",
+        "line": 238,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 10,
+        "endColumn": 39,
+        "endLine": 265,
+        "file": "test/bufconn/bufconn.go",
+        "line": 265,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 248,
+          "name": "closeWrite"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "test/bufconn/bufconn.go",
+        "name": "closeWrite",
+        "line": 248,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 36,
+        "endLine": 176,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 176,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 382,
+          "name": "incrInProgress"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "incrInProgress",
+        "line": 382,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 32,
+        "endLine": 177,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 177,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 394,
+          "name": "incrIssued"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "incrIssued",
+        "line": 394,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 36,
+        "endLine": 193,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 193,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 386,
+          "name": "decrInProgress"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "decrInProgress",
+        "line": 386,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 3,
+        "endColumn": 36,
+        "endLine": 195,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 195,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 366,
+          "name": "incrSucceeded"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "incrSucceeded",
+        "line": 366,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 3,
+        "endColumn": 34,
+        "endLine": 197,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 197,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 374,
+          "name": "incrErrored"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "incrErrored",
+        "line": 374,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 42,
+        "endLine": 214,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 214,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 402,
+          "name": "addServerLoad"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "addServerLoad",
+        "line": 402,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 29,
+        "endLine": 408,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 408,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 426,
+          "name": "add"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "add",
+        "line": 426,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 4,
+        "endColumn": 32,
+        "endLine": 569,
+        "file": "xds/internal/balancer/outlierdetection/balancer.go",
+        "line": 569,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "xds/internal/balancer/outlierdetection/callcounter.go",
+          "line": 49,
+          "name": "clear"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/balancer/outlierdetection/callcounter.go",
+        "name": "clear",
+        "line": 49,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 5,
+        "endColumn": 26,
+        "endLine": 121,
+        "file": "credentials/xds/xds.go",
+        "line": 121,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 107,
+          "name": "UseFallbackCreds"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "UseFallbackCreds",
+        "line": 107,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 14,
+        "endColumn": 41,
+        "endLine": 137,
+        "file": "credentials/xds/xds.go",
+        "line": 137,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 122,
+          "name": "ClientSideTLSConfig"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "ClientSideTLSConfig",
+        "line": 122,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 25,
+        "endColumn": 51,
+        "endLine": 168,
+        "file": "credentials/xds/xds.go",
+        "line": 168,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 199,
+          "name": "MatchingSANExists"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "MatchingSANExists",
+        "line": 199,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 5,
+        "endColumn": 26,
+        "endLine": 228,
+        "file": "credentials/xds/xds.go",
+        "line": 228,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 107,
+          "name": "UseFallbackCreds"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "UseFallbackCreds",
+        "line": 107,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 14,
+        "endColumn": 41,
+        "endLine": 243,
+        "file": "credentials/xds/xds.go",
+        "line": 243,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/credentials/xds/handshake_info.go",
+          "line": 160,
+          "name": "ServerSideTLSConfig"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "ServerSideTLSConfig",
+        "line": 160,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 60,
+        "endLine": 879,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 879,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/testutils/restartable_listener.go",
+          "line": 83,
+          "name": "Stop"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/testutils/restartable_listener.go",
+        "name": "Stop",
+        "line": 83,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 56,
+        "endLine": 880,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 880,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/testutils/restartable_listener.go",
+          "line": 83,
+          "name": "Stop"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/testutils/restartable_listener.go",
+        "name": "Stop",
+        "line": 83,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 63,
+        "endLine": 886,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 886,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/testutils/restartable_listener.go",
+          "line": 96,
+          "name": "Restart"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/testutils/restartable_listener.go",
+        "name": "Restart",
+        "line": 96,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 59,
+        "endLine": 887,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 887,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/testutils/restartable_listener.go",
+          "line": 96,
+          "name": "Restart"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/testutils/restartable_listener.go",
+        "name": "Restart",
+        "line": 96,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 10,
+        "endColumn": 44,
+        "endLine": 72,
+        "file": "internal/serviceconfig/duration_test.go",
+        "line": 72,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "internal/serviceconfig/duration.go",
+          "line": 61,
+          "name": "UnmarshalJSON"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "internal/serviceconfig/duration.go",
+        "name": "UnmarshalJSON",
+        "line": 61,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 35,
+        "endLine": 697,
+        "file": "test/end2end_test.go",
+        "line": 697,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "file": "server.go",
+          "line": 1895,
+          "name": "Stop"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "server.go",
+        "name": "Stop",
+        "line": 1895,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 6,
+        "endColumn": 20,
+        "endLine": 50,
+        "file": "xds/internal/balancer/outlierdetection/callcounter_test.go",
+        "line": 50,
+        "resolution": "go-direct-method",
+        "target": {
+          "column": 1,
+          "line": 28,
+          "name": "Equal"
+        }
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/balancer/outlierdetection/callcounter_test.go",
+        "name": "Equal",
+        "line": 28,
+        "column": 1
+      },
+      "status": "correct",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "chi",
+      "call": {
+        "column": 3,
+        "endColumn": 29,
+        "endLine": 73,
+        "file": "mux.go",
+        "line": 73,
+        "reason": "go-method-dispatch",
+        "resolution": "unresolved"
+      },
+      "status": "reasonable-unknown",
+      "basis": "http.Handler interface dispatch, not an arbitrary concrete method body"
+    },
+    {
+      "project": "chi",
+      "call": {
+        "column": 2,
+        "endColumn": 28,
+        "endLine": 90,
+        "file": "mux.go",
+        "line": 90,
+        "reason": "go-method-dispatch",
+        "resolution": "unresolved"
+      },
+      "status": "reasonable-unknown",
+      "basis": "http.Handler interface dispatch, not an arbitrary concrete method body"
+    }
+  ],
+  "questions": {
+    "question-chi-Reset": {
+      "total": 13,
+      "included": 13,
+      "omitted": 0,
+      "selectedTargetShown": 1,
+      "validTargets": 1
+    },
+    "question-chi-NotFound": {
+      "total": 19,
+      "included": 19,
+      "omitted": 0,
+      "selectedTargetShown": 1,
+      "validTargets": 1
+    },
+    "question-grpc-go-getReadyTransport": {
+      "total": 22,
+      "included": 22,
+      "omitted": 0,
+      "selectedTargetShown": 1,
+      "validTargets": 1
+    },
+    "question-cobra-HasParent": {
+      "total": 4,
+      "included": 4,
+      "omitted": 0,
+      "selectedTargetShown": 1,
+      "validTargets": 1
+    }
+  },
+  "paired": {
+    "status": "partial",
+    "references": {
+      "base": {
+        "coverage": "available",
+        "total": 2,
+        "included": 2,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "side": "base",
+            "snapshotId": "4f4f2958c3890bd3e023d74cb9c30385bbec50da30f4fcf653999fba05e5ec99",
+            "factIndex": 2333,
+            "fact": {
+              "column": 5,
+              "endColumn": 37,
+              "endLine": 1807,
+              "file": "mux_test.go",
+              "line": 1807,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1807,
+                "column": 5,
+                "endLine": 1807,
+                "endColumn": 37
+              }
+            }
+          },
+          {
+            "side": "base",
+            "snapshotId": "4f4f2958c3890bd3e023d74cb9c30385bbec50da30f4fcf653999fba05e5ec99",
+            "factIndex": 2336,
+            "fact": {
+              "column": 5,
+              "endColumn": 42,
+              "endLine": 1812,
+              "file": "mux_test.go",
+              "line": 1812,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1812,
+                "column": 5,
+                "endLine": 1812,
+                "endColumn": 42
+              }
+            }
+          }
+        ]
+      },
+      "head": {
+        "coverage": "available",
+        "total": 4,
+        "included": 4,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "side": "head",
+            "snapshotId": "e9a53c1b1ccb9ddc679934abd93df56626f92a3c8d0763663892545eced414bd",
+            "factIndex": 2381,
+            "fact": {
+              "column": 5,
+              "endColumn": 37,
+              "endLine": 1807,
+              "file": "mux_test.go",
+              "line": 1807,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1807,
+                "column": 5,
+                "endLine": 1807,
+                "endColumn": 37
+              }
+            }
+          },
+          {
+            "side": "head",
+            "snapshotId": "e9a53c1b1ccb9ddc679934abd93df56626f92a3c8d0763663892545eced414bd",
+            "factIndex": 2384,
+            "fact": {
+              "column": 5,
+              "endColumn": 42,
+              "endLine": 1812,
+              "file": "mux_test.go",
+              "line": 1812,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1812,
+                "column": 5,
+                "endLine": 1812,
+                "endColumn": 42
+              }
+            }
+          },
+          {
+            "side": "head",
+            "snapshotId": "e9a53c1b1ccb9ddc679934abd93df56626f92a3c8d0763663892545eced414bd",
+            "factIndex": 2394,
+            "fact": {
+              "column": 5,
+              "endColumn": 30,
+              "endLine": 1827,
+              "file": "mux_test.go",
+              "line": 1827,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1827,
+                "column": 5,
+                "endLine": 1827,
+                "endColumn": 30
+              }
+            }
+          },
+          {
+            "side": "head",
+            "snapshotId": "e9a53c1b1ccb9ddc679934abd93df56626f92a3c8d0763663892545eced414bd",
+            "factIndex": 2399,
+            "fact": {
+              "column": 5,
+              "endColumn": 30,
+              "endLine": 1838,
+              "file": "mux_test.go",
+              "line": 1838,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1838,
+                "column": 5,
+                "endLine": 1838,
+                "endColumn": 30
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "scope": {
+    "chi": {
+      "model": "go-source-direct-v3",
+      "files": 54,
+      "calls": 2879,
+      "parseErrors": [],
+      "build": {
+        "cgo": false,
+        "goFlags": "not-loaded",
+        "goWork": "not-loaded",
+        "goarch": "arm64",
+        "goos": "darwin",
+        "releaseTags": [
+          "go1.1",
+          "go1.2",
+          "go1.3",
+          "go1.4",
+          "go1.5",
+          "go1.6",
+          "go1.7",
+          "go1.8",
+          "go1.9",
+          "go1.10",
+          "go1.11",
+          "go1.12",
+          "go1.13",
+          "go1.14",
+          "go1.15",
+          "go1.16",
+          "go1.17",
+          "go1.18",
+          "go1.19",
+          "go1.20",
+          "go1.21",
+          "go1.22",
+          "go1.23",
+          "go1.24",
+          "go1.25",
+          "go1.26",
+          "go1.27"
+        ],
+        "replace": "not-loaded",
+        "tags": [],
+        "tests": true,
+        "toolTags": [
+          "goexperiment.regabiwrappers",
+          "goexperiment.regabiargs",
+          "goexperiment.jsonv2",
+          "goexperiment.greenteagc",
+          "goexperiment.randomizedheapbase64",
+          "goexperiment.sizespecializedmalloc",
+          "arm64.v8.0"
+        ],
+        "toolchain": "go1.27.2"
+      },
+      "typing": {
+        "errorCount": 0,
+        "errors": null,
+        "externalPackagesNotLoaded": [],
+        "status": "partial-source-bindings"
+      },
+      "standardLibrary": {
+        "exportedDependencyCount": 213,
+        "mode": "compiler-exports",
+        "network": "module-proxy-and-checksum-disabled",
+        "packages": [
+          {
+            "bytes": 422668,
+            "path": "bufio",
+            "sha256": "e285559ee5b063b7693c99ad1320ce2bb011b089b913791229e7ec313367f13f"
+          },
+          {
+            "bytes": 605696,
+            "path": "bytes",
+            "sha256": "22b3214332c262f77ecfb2ec5275d812be5831a3681cab6923d2f855ae432f71"
+          },
+          {
+            "bytes": 1381442,
+            "path": "compress/flate",
+            "sha256": "3da79ea66c3ad070a288d41c17e8648e67f180ef56708d5a5ab43a036ccceb56"
+          },
+          {
+            "bytes": 169428,
+            "path": "compress/gzip",
+            "sha256": "31a3c9c6d4d9e1d1e966bc2e7ce628ebc77fea2870fde6225a132ded00d25387"
+          },
+          {
+            "bytes": 412724,
+            "path": "context",
+            "sha256": "79180122176a983c1241f6501c4dc805aa408bc5322d31a73fe2390e83b57ca6"
+          },
+          {
+            "bytes": 78864,
+            "path": "crypto/rand",
+            "sha256": "352e6f9a95c1c6089c4c2d68ac627970be58b2b81629051d2a3a3d825a322be3"
+          },
+          {
+            "bytes": 31160,
+            "path": "crypto/subtle",
+            "sha256": "289bd07d71abc1e39b20b9594d345b430ed8803e5f9acc1f3bc311485555d6cb"
+          },
+          {
+            "bytes": 6036938,
+            "path": "crypto/tls",
+            "sha256": "fb2095fc1d26cfee37998db3bc58ffd2db2975401c8ac34a291ac47220128e24"
+          },
+          {
+            "bytes": 175780,
+            "path": "encoding/base64",
+            "sha256": "c695141a2523d396405c3910f1a840c7e739868dc82489da8263d94724167184"
+          },
+          {
+            "bytes": 100910,
+            "path": "errors",
+            "sha256": "efbbb2d66f523125bb66e6d2b4de1ed4db03dfaf725bc86cf1dbe69b28f67a53"
+          },
+          {
+            "bytes": 1153168,
+            "path": "expvar",
+            "sha256": "e6650df04ce2c81958ca681e3ae4603b77cf446c7e4dd3882ad68eeb5dbb1ec2"
+          },
+          {
+            "bytes": 1296514,
+            "path": "fmt",
+            "sha256": "e803f1b8708bd7b065a0637e3df04f9d64eec2707cc1478bc327bde3b5512a2f"
+          },
+          {
+            "bytes": 449500,
+            "path": "io",
+            "sha256": "a05c5ac71c0ad8fb6f96fd603e58cc35faa166484aa47aa27dbe0aa05987a98d"
+          },
+          {
+            "bytes": 227450,
+            "path": "io/ioutil",
+            "sha256": "8b91dce11ab8bd64366b2e7280cd2f269522cd48de3f4f500aa4fa8664de2e1a"
+          },
+          {
+            "bytes": 332498,
+            "path": "log",
+            "sha256": "4ea2bcb809a03231a00a1230c20e19dcab431b39963bb6261c5218b0689132d6"
+          },
+          {
+            "bytes": 4801038,
+            "path": "net",
+            "sha256": "7a2ed373a4c906f19a70596a5104a5fd6d6a88bdfb578911269c3f0a4e07e7f5"
+          },
+          {
+            "bytes": 6677702,
+            "path": "net/http",
+            "sha256": "62ee5a1d2a3d197f59e108c69ef508386f0a480ba22cda486824679257631f0e"
+          },
+          {
+            "bytes": 767866,
+            "path": "net/http/httptest",
+            "sha256": "e2fdca680755ff597c2648984f6b8aad9ce1b32c33ccaf761995e24dff97334a"
+          },
+          {
+            "bytes": 565162,
+            "path": "net/http/pprof",
+            "sha256": "3421adaee8a91cee7553fe4720f8c3899c70ac231b9ac14b12316061f58b9044"
+          },
+          {
+            "bytes": 626974,
+            "path": "net/url",
+            "sha256": "370b1ff4265a91547af0ba8fde9fccaded04e33e4d1992b5ef7f989160a4c281"
+          },
+          {
+            "bytes": 2507384,
+            "path": "os",
+            "sha256": "9eb16dabf1c6e1a672441c7c1fa0619ae4b1c850e74bfae8ae128e674c6a0bbb"
+          },
+          {
+            "bytes": 81814,
+            "path": "path",
+            "sha256": "9ae827800ebe72b26bfed23c6891a1b811d4b73f2623da5595650ef7d785352d"
+          },
+          {
+            "bytes": 3999474,
+            "path": "reflect",
+            "sha256": "29fa2df372b613fd9fc54183d0a32753d5334c9b57d71de49a13cc0c085083b2"
+          },
+          {
+            "bytes": 1564304,
+            "path": "regexp",
+            "sha256": "0011bc27b7690fe34e06895d686558a659790795de8d1754d5b74d3dbba97e9e"
+          },
+          {
+            "bytes": 15224824,
+            "path": "runtime",
+            "sha256": "0d8b6cd4488799cea5a1069dd039c4d9128037a067f43d6019e4c99a5f95e73e"
+          },
+          {
+            "bytes": 321124,
+            "path": "runtime/debug",
+            "sha256": "3064a424e4ba6b790b66dfe00023860bb9d41cb3480143c84fb4ffdc5f8df29e"
+          },
+          {
+            "bytes": 638340,
+            "path": "sort",
+            "sha256": "042b171e5644cce1fc232b8bf25baa5989b9dcb58bb722f98b7ba31aa037d79f"
+          },
+          {
+            "bytes": 256904,
+            "path": "strconv",
+            "sha256": "b32d8ecfc8059d75b25eb2c1acf4eb4179f15151b8814218c7f80e86abd47595"
+          },
+          {
+            "bytes": 718248,
+            "path": "strings",
+            "sha256": "2178f8b2688d5daf07e8e1e56e1ab9ecc5ddb319fc5be13ad4485be8eabbeaaf"
+          },
+          {
+            "bytes": 967650,
+            "path": "sync",
+            "sha256": "c93cb181ae1db592a7684d379d635d748f75ad1f964062d3992bd35d7f682446"
+          },
+          {
+            "bytes": 275140,
+            "path": "sync/atomic",
+            "sha256": "1d5225ab5d15785da37025c1a9b6ed82abc38723dd0b3721176c6f995090dede"
+          },
+          {
+            "bytes": 2805664,
+            "path": "testing",
+            "sha256": "19bbe5f78a077d87b3844b611f0758a89bfac71a020e4c89660e6cfe6685e40d"
+          },
+          {
+            "bytes": 1393550,
+            "path": "time",
+            "sha256": "5e62432237c9ed51eb4fe40718f8560c6354d1b38492505482dcf4c5e7a43679"
+          }
+        ],
+        "projectCommands": false,
+        "requestedPackages": [
+          "bufio",
+          "bytes",
+          "compress/flate",
+          "compress/gzip",
+          "context",
+          "crypto/rand",
+          "crypto/subtle",
+          "crypto/tls",
+          "encoding/base64",
+          "errors",
+          "expvar",
+          "fmt",
+          "io",
+          "io/ioutil",
+          "log",
+          "net",
+          "net/http",
+          "net/http/httptest",
+          "net/http/pprof",
+          "net/url",
+          "os",
+          "path",
+          "reflect",
+          "regexp",
+          "runtime",
+          "runtime/debug",
+          "sort",
+          "strconv",
+          "strings",
+          "sync",
+          "sync/atomic",
+          "testing",
+          "time"
+        ],
+        "sourceFilesAnalyzed": false,
+        "toolchain": "go1.27.2"
+      }
+    },
+    "grpc-go": {
+      "model": "go-source-direct-v3",
+      "files": 799,
+      "calls": 59112,
+      "parseErrors": [],
+      "build": {
+        "cgo": false,
+        "goFlags": "not-loaded",
+        "goWork": "not-loaded",
+        "goarch": "arm64",
+        "goos": "darwin",
+        "releaseTags": [
+          "go1.1",
+          "go1.2",
+          "go1.3",
+          "go1.4",
+          "go1.5",
+          "go1.6",
+          "go1.7",
+          "go1.8",
+          "go1.9",
+          "go1.10",
+          "go1.11",
+          "go1.12",
+          "go1.13",
+          "go1.14",
+          "go1.15",
+          "go1.16",
+          "go1.17",
+          "go1.18",
+          "go1.19",
+          "go1.20",
+          "go1.21",
+          "go1.22",
+          "go1.23",
+          "go1.24",
+          "go1.25",
+          "go1.26",
+          "go1.27"
+        ],
+        "replace": "not-loaded",
+        "tags": [],
+        "tests": true,
+        "toolTags": [
+          "goexperiment.regabiwrappers",
+          "goexperiment.regabiargs",
+          "goexperiment.jsonv2",
+          "goexperiment.greenteagc",
+          "goexperiment.randomizedheapbase64",
+          "goexperiment.sizespecializedmalloc",
+          "arm64.v8.0"
+        ],
+        "toolchain": "go1.27.2"
+      },
+      "typing": {
+        "errorCount": 10918,
+        "errors": [
+          "internal/tcp_keepalive_unix.go:50:10: undefined: unix.SetsockoptInt",
+          "internal/tcp_keepalive_unix.go:50:38: undefined: unix.SOL_SOCKET",
+          "internal/tcp_keepalive_unix.go:50:55: undefined: unix.SO_KEEPALIVE",
+          "credentials/credentials.go:290:14: undefined: proto.Message",
+          "internal/status/status.go:44:9: undefined: spb.Status",
+          "internal/status/status.go:86:23: undefined: spb.Status",
+          "internal/status/status.go:117:31: undefined: spb.Status",
+          "internal/status/status.go:134:52: undefined: protoadapt.MessageV1",
+          "internal/status/status.go:52:26: undefined: spb.Status",
+          "internal/status/status.go:54:13: undefined: spb.Status",
+          "internal/status/status.go:55:18: undefined: proto.Unmarshal",
+          "internal/status/status.go:57:26: undefined: spb.Status",
+          "internal/status/status.go:65:11: undefined: spb.Status",
+          "internal/status/status.go:77:25: undefined: spb.Status",
+          "internal/status/status.go:87:26: undefined: proto.Clone",
+          "internal/status/status.go:121:15: undefined: proto.Clone",
+          "internal/status/status.go:141:19: undefined: anypb.New",
+          "internal/status/status.go:141:34: undefined: protoadapt.MessageV2Of",
+          "internal/status/status.go:196:40: undefined: protoadapt.MessageV1Of",
+          "internal/status/status.go:227:15: undefined: proto.Equal"
+        ],
+        "externalPackagesNotLoaded": [
+          "github.com/cespare/xxhash/v2",
+          "github.com/cncf/xds/go/udpa/type/v1",
+          "github.com/cncf/xds/go/xds/data/orca/v3",
+          "github.com/cncf/xds/go/xds/service/orca/v3",
+          "github.com/cncf/xds/go/xds/type/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/admin/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/api/v2",
+          "github.com/envoyproxy/go-control-plane/envoy/api/v2/core",
+          "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint",
+          "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/core/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/rbac/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/route/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/clusters/aggregate/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/common/fault/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/fault/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/rbac/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/client_side_weighted_round_robin/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/least_request/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/pick_first/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/ring_hash/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/round_robin/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/wrr_locality/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/rbac/audit_loggers/stream/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/service/load_stats/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/service/status/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/type",
+          "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/type/v3",
+          "github.com/envoyproxy/go-control-plane/pkg/cache/types",
+          "github.com/envoyproxy/go-control-plane/pkg/cache/v3",
+          "github.com/envoyproxy/go-control-plane/pkg/resource/v3",
+          "github.com/envoyproxy/go-control-plane/pkg/server/v3",
+          "github.com/envoyproxy/go-control-plane/pkg/wellknown",
+          "github.com/golang/glog",
+          "github.com/google/go-cmp/cmp",
+          "github.com/google/go-cmp/cmp/cmpopts",
+          "github.com/google/uuid",
+          "go.opentelemetry.io/contrib/detectors/gcp",
+          "go.opentelemetry.io/otel/attribute",
+          "go.opentelemetry.io/otel/metric",
+          "go.opentelemetry.io/otel/metric/noop",
+          "go.opentelemetry.io/otel/propagation",
+          "go.opentelemetry.io/otel/sdk/metric",
+          "go.opentelemetry.io/otel/sdk/metric/metricdata",
+          "go.opentelemetry.io/otel/sdk/metric/metricdata/metricdatatest",
+          "go.opentelemetry.io/otel/sdk/resource",
+          "go.opentelemetry.io/otel/trace",
+          "golang.org/x/net/http2",
+          "golang.org/x/net/http2/hpack",
+          "golang.org/x/net/trace",
+          "golang.org/x/oauth2",
+          "golang.org/x/oauth2/google",
+          "golang.org/x/oauth2/jwt",
+          "golang.org/x/sync/semaphore",
+          "golang.org/x/sys/unix",
+          "google.golang.org/genproto/googleapis/rpc/code",
+          "google.golang.org/genproto/googleapis/rpc/errdetails",
+          "google.golang.org/genproto/googleapis/rpc/status",
+          "google.golang.org/grpc/testdata",
+          "google.golang.org/grpc/testdata/grpc_testing_not_regenerated",
+          "google.golang.org/protobuf/encoding/protojson",
+          "google.golang.org/protobuf/encoding/prototext",
+          "google.golang.org/protobuf/proto",
+          "google.golang.org/protobuf/protoadapt",
+          "google.golang.org/protobuf/reflect/protodesc",
+          "google.golang.org/protobuf/reflect/protoreflect",
+          "google.golang.org/protobuf/reflect/protoregistry",
+          "google.golang.org/protobuf/runtime/protoimpl",
+          "google.golang.org/protobuf/testing/protocmp",
+          "google.golang.org/protobuf/types/descriptorpb",
+          "google.golang.org/protobuf/types/dynamicpb",
+          "google.golang.org/protobuf/types/known/anypb",
+          "google.golang.org/protobuf/types/known/durationpb",
+          "google.golang.org/protobuf/types/known/structpb",
+          "google.golang.org/protobuf/types/known/timestamppb",
+          "google.golang.org/protobuf/types/known/wrapperspb"
+        ],
+        "status": "partial-source-bindings"
+      },
+      "standardLibrary": {
+        "exportedDependencyCount": 217,
+        "intrinsicPackages": [
+          "unsafe"
+        ],
+        "mode": "compiler-exports",
+        "network": "module-proxy-and-checksum-disabled",
+        "packages": [
+          {
+            "bytes": 422668,
+            "path": "bufio",
+            "sha256": "e285559ee5b063b7693c99ad1320ce2bb011b089b913791229e7ec313367f13f"
+          },
+          {
+            "bytes": 605696,
+            "path": "bytes",
+            "sha256": "22b3214332c262f77ecfb2ec5275d812be5831a3681cab6923d2f855ae432f71"
+          },
+          {
+            "bytes": 169428,
+            "path": "compress/gzip",
+            "sha256": "31a3c9c6d4d9e1d1e966bc2e7ce628ebc77fea2870fde6225a132ded00d25387"
+          },
+          {
+            "bytes": 34882,
+            "path": "container/heap",
+            "sha256": "54ee423b841b7909ad0c5b6af42d957989d4c4a9fab6dc6e70ebe4ab7c8d21a3"
+          },
+          {
+            "bytes": 105662,
+            "path": "container/list",
+            "sha256": "767221134d9020941a5e41d99fa34a610820b2b46321b7fdc634d89553f7081d"
+          },
+          {
+            "bytes": 412724,
+            "path": "context",
+            "sha256": "79180122176a983c1241f6501c4dc805aa408bc5322d31a73fe2390e83b57ca6"
+          },
+          {
+            "bytes": 20844,
+            "path": "crypto/aes",
+            "sha256": "793d525321f9f6393ab40a7ecac004846a42bb5d52073c0d63baf307f8bf03c0"
+          },
+          {
+            "bytes": 401628,
+            "path": "crypto/cipher",
+            "sha256": "bd5ccee12edfc7680b0ce0b226cde01f1be726a2972f85ed8ad5bf6cb6f34466"
+          },
+          {
+            "bytes": 82320,
+            "path": "crypto/hmac",
+            "sha256": "7f622a760befb37e32a6fd124346b86bd52715eba721aa99410e99a19f20bec5"
+          },
+          {
+            "bytes": 78864,
+            "path": "crypto/rand",
+            "sha256": "352e6f9a95c1c6089c4c2d68ac627970be58b2b81629051d2a3a3d825a322be3"
+          },
+          {
+            "bytes": 25626,
+            "path": "crypto/sha256",
+            "sha256": "07576006435b83a973f3a6b5558c3ff7374511863e453da17a4966d5e9326711"
+          },
+          {
+            "bytes": 6036938,
+            "path": "crypto/tls",
+            "sha256": "fb2095fc1d26cfee37998db3bc58ffd2db2975401c8ac34a291ac47220128e24"
+          },
+          {
+            "bytes": 2858108,
+            "path": "crypto/x509",
+            "sha256": "787b09a891f0069fad703c5de566a389fa945ad458a20bd810c5dd63cba56ab8"
+          },
+          {
+            "bytes": 154822,
+            "path": "crypto/x509/pkix",
+            "sha256": "8b25e3eb471266d3203dfa72df47a802d8bd354bd2070649bcd456cc53628d9c"
+          },
+          {
+            "bytes": 175780,
+            "path": "encoding/base64",
+            "sha256": "c695141a2523d396405c3910f1a840c7e739868dc82489da8263d94724167184"
+          },
+          {
+            "bytes": 1326980,
+            "path": "encoding/binary",
+            "sha256": "c7bff2e2c8353403490ad33622d49f507e1ddf1772b5665a1506a827ec7ff889"
+          },
+          {
+            "bytes": 153980,
+            "path": "encoding/csv",
+            "sha256": "074af613db1a69e0299847f043154ae05a546e2538d2bbdaab55578c676864bc"
+          },
+          {
+            "bytes": 3082938,
+            "path": "encoding/gob",
+            "sha256": "aa6a9bd76573d29fcf5943426cb0e71319a4745c6120c21928e056c7deebbdbd"
+          },
+          {
+            "bytes": 112348,
+            "path": "encoding/hex",
+            "sha256": "97e1c25cba0faa3e1c57fc1c6bd8b96a4cc91c5bd4f2e25c5482f8559129dd67"
+          },
+          {
+            "bytes": 727962,
+            "path": "encoding/json",
+            "sha256": "5ae236bd0177c407d236ebb436e66378ba3a9b1f6ae949f1902eaf89345ea4aa"
+          },
+          {
+            "bytes": 181806,
+            "path": "encoding/pem",
+            "sha256": "1a98a643a205e6621deb541cebe1eb4dafc5aff001c9c892ef1bc367daa93a7a"
+          },
+          {
+            "bytes": 100910,
+            "path": "errors",
+            "sha256": "efbbb2d66f523125bb66e6d2b4de1ed4db03dfaf725bc86cf1dbe69b28f67a53"
+          },
+          {
+            "bytes": 866186,
+            "path": "flag",
+            "sha256": "b8e7311430b37571960b3143065c48245f77bc8b91746885fb46f210b61620e5"
+          },
+          {
+            "bytes": 1296514,
+            "path": "fmt",
+            "sha256": "e803f1b8708bd7b065a0637e3df04f9d64eec2707cc1478bc327bde3b5512a2f"
+          },
+          {
+            "bytes": 449500,
+            "path": "io",
+            "sha256": "a05c5ac71c0ad8fb6f96fd603e58cc35faa166484aa47aa27dbe0aa05987a98d"
+          },
+          {
+            "bytes": 332498,
+            "path": "log",
+            "sha256": "4ea2bcb809a03231a00a1230c20e19dcab431b39963bb6261c5218b0689132d6"
+          },
+          {
+            "bytes": 8754,
+            "path": "maps",
+            "sha256": "8acce40f9075f30e35fd1bee294afe15469af873afb95a6da6c8670a65bfe609"
+          },
+          {
+            "bytes": 612542,
+            "path": "math",
+            "sha256": "efff2a0e0ddd762ac68dcf296bedc1f7adebb877647776ce5bb44bd525eb10f9"
+          },
+          {
+            "bytes": 106398,
+            "path": "math/bits",
+            "sha256": "70489ce05b9b24482ea4f45685aaa0f3027f2a924f188dec7a5a2af32a29294c"
+          },
+          {
+            "bytes": 383580,
+            "path": "math/rand",
+            "sha256": "6b6ec68114c1415084b61ac0a284d6cbdd5ee552452e23970eae378eb78705e2"
+          },
+          {
+            "bytes": 266754,
+            "path": "math/rand/v2",
+            "sha256": "cef7fbf8b7423b023de1a771892e212182857ac257d2741aae414cae0ba08ac4"
+          },
+          {
+            "bytes": 4801038,
+            "path": "net",
+            "sha256": "7a2ed373a4c906f19a70596a5104a5fd6d6a88bdfb578911269c3f0a4e07e7f5"
+          },
+          {
+            "bytes": 6677702,
+            "path": "net/http",
+            "sha256": "62ee5a1d2a3d197f59e108c69ef508386f0a480ba22cda486824679257631f0e"
+          },
+          {
+            "bytes": 767866,
+            "path": "net/http/httptest",
+            "sha256": "e2fdca680755ff597c2648984f6b8aad9ce1b32c33ccaf761995e24dff97334a"
+          },
+          {
+            "bytes": 858560,
+            "path": "net/http/httputil",
+            "sha256": "31d04fb66751f27ca8ded79e9e4898e9f130ef4727ff4dd725bb72c15a2a7320"
+          },
+          {
+            "bytes": 565162,
+            "path": "net/http/pprof",
+            "sha256": "3421adaee8a91cee7553fe4720f8c3899c70ac231b9ac14b12316061f58b9044"
+          },
+          {
+            "bytes": 1867962,
+            "path": "net/netip",
+            "sha256": "c687f0514e715c33967a0f3832e14c7ca523846d5ffee0863681b0df9597c35e"
+          },
+          {
+            "bytes": 626974,
+            "path": "net/url",
+            "sha256": "370b1ff4265a91547af0ba8fde9fccaded04e33e4d1992b5ef7f989160a4c281"
+          },
+          {
+            "bytes": 2507384,
+            "path": "os",
+            "sha256": "9eb16dabf1c6e1a672441c7c1fa0619ae4b1c850e74bfae8ae128e674c6a0bbb"
+          },
+          {
+            "bytes": 547078,
+            "path": "os/exec",
+            "sha256": "7796ae47814123db6f0601ed4e5c1306c737ef8b82482cd4b2cce649111d75fa"
+          },
+          {
+            "bytes": 203980,
+            "path": "os/signal",
+            "sha256": "24930cb618157544737f114c83a6c0231f3d06324ae354e0553d07a2608d4d65"
+          },
+          {
+            "bytes": 81814,
+            "path": "path",
+            "sha256": "9ae827800ebe72b26bfed23c6891a1b811d4b73f2623da5595650ef7d785352d"
+          },
+          {
+            "bytes": 340390,
+            "path": "path/filepath",
+            "sha256": "051d299b2b90d0d1e7e1ba0a859783ab3bc65996b2d01b8b4d00c3e34257c388"
+          },
+          {
+            "bytes": 3999474,
+            "path": "reflect",
+            "sha256": "29fa2df372b613fd9fc54183d0a32753d5334c9b57d71de49a13cc0c085083b2"
+          },
+          {
+            "bytes": 1564304,
+            "path": "regexp",
+            "sha256": "0011bc27b7690fe34e06895d686558a659790795de8d1754d5b74d3dbba97e9e"
+          },
+          {
+            "bytes": 15224824,
+            "path": "runtime",
+            "sha256": "0d8b6cd4488799cea5a1069dd039c4d9128037a067f43d6019e4c99a5f95e73e"
+          },
+          {
+            "bytes": 321124,
+            "path": "runtime/debug",
+            "sha256": "3064a424e4ba6b790b66dfe00023860bb9d41cb3480143c84fb4ffdc5f8df29e"
+          },
+          {
+            "bytes": 1460628,
+            "path": "runtime/pprof",
+            "sha256": "636c0c001d90b4bdad85b506e301bbd0fd861f6ec513e5cca795dbaf2b8d9140"
+          },
+          {
+            "bytes": 70966,
+            "path": "slices",
+            "sha256": "1d5e5d6ff9b46be5524a7a12441de2f856d0e2fad41b2e3cb218310cd172d097"
+          },
+          {
+            "bytes": 638340,
+            "path": "sort",
+            "sha256": "042b171e5644cce1fc232b8bf25baa5989b9dcb58bb722f98b7ba31aa037d79f"
+          },
+          {
+            "bytes": 256904,
+            "path": "strconv",
+            "sha256": "b32d8ecfc8059d75b25eb2c1acf4eb4179f15151b8814218c7f80e86abd47595"
+          },
+          {
+            "bytes": 718248,
+            "path": "strings",
+            "sha256": "2178f8b2688d5daf07e8e1e56e1ab9ecc5ddb319fc5be13ad4485be8eabbeaaf"
+          },
+          {
+            "bytes": 967650,
+            "path": "sync",
+            "sha256": "c93cb181ae1db592a7684d379d635d748f75ad1f964062d3992bd35d7f682446"
+          },
+          {
+            "bytes": 275140,
+            "path": "sync/atomic",
+            "sha256": "1d5225ab5d15785da37025c1a9b6ed82abc38723dd0b3721176c6f995090dede"
+          },
+          {
+            "bytes": 1889576,
+            "path": "syscall",
+            "sha256": "0149c05eecfef110900213a8bd08857ade44086e87c46d5ae6f85e084b9af0b5"
+          },
+          {
+            "bytes": 2805664,
+            "path": "testing",
+            "sha256": "19bbe5f78a077d87b3844b611f0758a89bfac71a020e4c89660e6cfe6685e40d"
+          },
+          {
+            "bytes": 1393550,
+            "path": "time",
+            "sha256": "5e62432237c9ed51eb4fe40718f8560c6354d1b38492505482dcf4c5e7a43679"
+          },
+          {
+            "bytes": 523138,
+            "path": "unicode",
+            "sha256": "f1e15f5811c157c834b533af5361c9f3a9302ff0be5fe0fd3d2a52b779b9578f"
+          },
+          {
+            "bytes": 83180,
+            "path": "unicode/utf8",
+            "sha256": "a9402f8f207f472f28f79330353a4204540375ed70b9fa5532c480937525b72d"
+          }
+        ],
+        "projectCommands": false,
+        "requestedPackages": [
+          "bufio",
+          "bytes",
+          "compress/gzip",
+          "container/heap",
+          "container/list",
+          "context",
+          "crypto/aes",
+          "crypto/cipher",
+          "crypto/hmac",
+          "crypto/rand",
+          "crypto/sha256",
+          "crypto/tls",
+          "crypto/x509",
+          "crypto/x509/pkix",
+          "encoding/base64",
+          "encoding/binary",
+          "encoding/csv",
+          "encoding/gob",
+          "encoding/hex",
+          "encoding/json",
+          "encoding/pem",
+          "errors",
+          "flag",
+          "fmt",
+          "io",
+          "log",
+          "maps",
+          "math",
+          "math/bits",
+          "math/rand",
+          "math/rand/v2",
+          "net",
+          "net/http",
+          "net/http/httptest",
+          "net/http/httputil",
+          "net/http/pprof",
+          "net/netip",
+          "net/url",
+          "os",
+          "os/exec",
+          "os/signal",
+          "path",
+          "path/filepath",
+          "reflect",
+          "regexp",
+          "runtime",
+          "runtime/debug",
+          "runtime/pprof",
+          "slices",
+          "sort",
+          "strconv",
+          "strings",
+          "sync",
+          "sync/atomic",
+          "syscall",
+          "testing",
+          "time",
+          "unicode",
+          "unicode/utf8"
+        ],
+        "sourceFilesAnalyzed": false,
+        "toolchain": "go1.27.2"
+      }
+    },
+    "cobra": {
+      "model": "go-source-direct-v3",
+      "files": 48,
+      "calls": 2939,
+      "parseErrors": [],
+      "build": {
+        "cgo": false,
+        "goFlags": "not-loaded",
+        "goWork": "not-loaded",
+        "goarch": "arm64",
+        "goos": "darwin",
+        "releaseTags": [
+          "go1.1",
+          "go1.2",
+          "go1.3",
+          "go1.4",
+          "go1.5",
+          "go1.6",
+          "go1.7",
+          "go1.8",
+          "go1.9",
+          "go1.10",
+          "go1.11",
+          "go1.12",
+          "go1.13",
+          "go1.14",
+          "go1.15",
+          "go1.16",
+          "go1.17",
+          "go1.18",
+          "go1.19",
+          "go1.20",
+          "go1.21",
+          "go1.22",
+          "go1.23",
+          "go1.24",
+          "go1.25",
+          "go1.26",
+          "go1.27"
+        ],
+        "replace": "not-loaded",
+        "tags": [],
+        "tests": true,
+        "toolTags": [
+          "goexperiment.regabiwrappers",
+          "goexperiment.regabiargs",
+          "goexperiment.jsonv2",
+          "goexperiment.greenteagc",
+          "goexperiment.randomizedheapbase64",
+          "goexperiment.sizespecializedmalloc",
+          "arm64.v8.0"
+        ],
+        "toolchain": "go1.27.2"
+      },
+      "typing": {
+        "errorCount": 230,
+        "errors": [
+          "command.go:32:30: undefined: flag.ParseErrorsWhitelist",
+          "command.go:175:14: undefined: flag.FlagSet",
+          "command.go:177:15: undefined: flag.FlagSet",
+          "command.go:179:15: undefined: flag.FlagSet",
+          "command.go:181:15: undefined: flag.FlagSet",
+          "command.go:183:22: undefined: flag.FlagSet",
+          "command.go:186:28: undefined: flag.FlagSet",
+          "command.go:186:55: undefined: flag.NormalizedName",
+          "bash_completions.go:437:52: undefined: pflag.Flag",
+          "bash_completions.go:448:47: undefined: pflag.Flag",
+          "bash_completions.go:463:65: undefined: pflag.Flag",
+          "bash_completions.go:628:37: undefined: pflag.Flag",
+          "command.go:289:61: undefined: flag.FlagSet",
+          "command.go:289:88: undefined: flag.NormalizedName",
+          "command.go:530:43: undefined: flag.FlagSet",
+          "command.go:538:48: undefined: flag.FlagSet",
+          "command.go:1398:58: undefined: flag.FlagSet",
+          "command.go:1398:85: undefined: flag.NormalizedName",
+          "command.go:1404:33: undefined: flag.FlagSet",
+          "command.go:1417:51: undefined: flag.FlagSet"
+        ],
+        "externalPackagesNotLoaded": [
+          "github.com/cpuguy83/go-md2man/v2/md2man",
+          "github.com/mitchellh/go-homedir",
+          "github.com/spf13/pflag",
+          "github.com/spf13/viper",
+          "gopkg.in/yaml.v2"
+        ],
+        "status": "partial-source-bindings"
+      },
+      "standardLibrary": {
+        "exportedDependencyCount": 94,
+        "mode": "compiler-exports",
+        "network": "module-proxy-and-checksum-disabled",
+        "packages": [
+          {
+            "bytes": 422668,
+            "path": "bufio",
+            "sha256": "e285559ee5b063b7693c99ad1320ce2bb011b089b913791229e7ec313367f13f"
+          },
+          {
+            "bytes": 605696,
+            "path": "bytes",
+            "sha256": "22b3214332c262f77ecfb2ec5275d812be5831a3681cab6923d2f855ae432f71"
+          },
+          {
+            "bytes": 412724,
+            "path": "context",
+            "sha256": "79180122176a983c1241f6501c4dc805aa408bc5322d31a73fe2390e83b57ca6"
+          },
+          {
+            "bytes": 727962,
+            "path": "encoding/json",
+            "sha256": "5ae236bd0177c407d236ebb436e66378ba3a9b1f6ae949f1902eaf89345ea4aa"
+          },
+          {
+            "bytes": 100910,
+            "path": "errors",
+            "sha256": "efbbb2d66f523125bb66e6d2b4de1ed4db03dfaf725bc86cf1dbe69b28f67a53"
+          },
+          {
+            "bytes": 866186,
+            "path": "flag",
+            "sha256": "b8e7311430b37571960b3143065c48245f77bc8b91746885fb46f210b61620e5"
+          },
+          {
+            "bytes": 1296514,
+            "path": "fmt",
+            "sha256": "e803f1b8708bd7b065a0637e3df04f9d64eec2707cc1478bc327bde3b5512a2f"
+          },
+          {
+            "bytes": 449500,
+            "path": "io",
+            "sha256": "a05c5ac71c0ad8fb6f96fd603e58cc35faa166484aa47aa27dbe0aa05987a98d"
+          },
+          {
+            "bytes": 227450,
+            "path": "io/ioutil",
+            "sha256": "8b91dce11ab8bd64366b2e7280cd2f269522cd48de3f4f500aa4fa8664de2e1a"
+          },
+          {
+            "bytes": 2507384,
+            "path": "os",
+            "sha256": "9eb16dabf1c6e1a672441c7c1fa0619ae4b1c850e74bfae8ae128e674c6a0bbb"
+          },
+          {
+            "bytes": 547078,
+            "path": "os/exec",
+            "sha256": "7796ae47814123db6f0601ed4e5c1306c737ef8b82482cd4b2cce649111d75fa"
+          },
+          {
+            "bytes": 81814,
+            "path": "path",
+            "sha256": "9ae827800ebe72b26bfed23c6891a1b811d4b73f2623da5595650ef7d785352d"
+          },
+          {
+            "bytes": 340390,
+            "path": "path/filepath",
+            "sha256": "051d299b2b90d0d1e7e1ba0a859783ab3bc65996b2d01b8b4d00c3e34257c388"
+          },
+          {
+            "bytes": 3999474,
+            "path": "reflect",
+            "sha256": "29fa2df372b613fd9fc54183d0a32753d5334c9b57d71de49a13cc0c085083b2"
+          },
+          {
+            "bytes": 1564304,
+            "path": "regexp",
+            "sha256": "0011bc27b7690fe34e06895d686558a659790795de8d1754d5b74d3dbba97e9e"
+          },
+          {
+            "bytes": 638340,
+            "path": "sort",
+            "sha256": "042b171e5644cce1fc232b8bf25baa5989b9dcb58bb722f98b7ba31aa037d79f"
+          },
+          {
+            "bytes": 256904,
+            "path": "strconv",
+            "sha256": "b32d8ecfc8059d75b25eb2c1acf4eb4179f15151b8814218c7f80e86abd47595"
+          },
+          {
+            "bytes": 718248,
+            "path": "strings",
+            "sha256": "2178f8b2688d5daf07e8e1e56e1ab9ecc5ddb319fc5be13ad4485be8eabbeaaf"
+          },
+          {
+            "bytes": 2805664,
+            "path": "testing",
+            "sha256": "19bbe5f78a077d87b3844b611f0758a89bfac71a020e4c89660e6cfe6685e40d"
+          },
+          {
+            "bytes": 1751886,
+            "path": "text/template",
+            "sha256": "b14ed8ed9d9432f77713399183c27f2280ef09f13d60e65e5aee8f70bed2d212"
+          },
+          {
+            "bytes": 1393550,
+            "path": "time",
+            "sha256": "5e62432237c9ed51eb4fe40718f8560c6354d1b38492505482dcf4c5e7a43679"
+          },
+          {
+            "bytes": 523138,
+            "path": "unicode",
+            "sha256": "f1e15f5811c157c834b533af5361c9f3a9302ff0be5fe0fd3d2a52b779b9578f"
+          }
+        ],
+        "projectCommands": false,
+        "requestedPackages": [
+          "bufio",
+          "bytes",
+          "context",
+          "encoding/json",
+          "errors",
+          "flag",
+          "fmt",
+          "io",
+          "io/ioutil",
+          "os",
+          "os/exec",
+          "path",
+          "path/filepath",
+          "reflect",
+          "regexp",
+          "sort",
+          "strconv",
+          "strings",
+          "testing",
+          "text/template",
+          "time",
+          "unicode"
+        ],
+        "sourceFilesAnalyzed": false,
+        "toolchain": "go1.27.2"
+      }
+    }
+  },
+  "limits": [
+    "37 already known misses in exposed repositories, not a new blind corpus or whole-project precision/recall.",
+    "Prototype and accepted CLI observations overlap the original full compiler cohort.",
+    "Paired Match is a reused regression; Reset body is unchanged in that pair.",
+    "Checks deliberately use fail-on never; exit zero does not mean no findings."
+  ]
+}

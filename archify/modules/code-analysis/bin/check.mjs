@@ -137,6 +137,7 @@ export function formatText(r) {
   if (r.coverage?.languageScope?.language === 'go') {
     const scope = r.coverage.languageScope;
     lines.push(`  Go module: ${scope.module} · ${scope.build.goos}/${scope.build.goarch} · cgo disabled · tests ${scope.build.tests ? 'included' : 'excluded'} · tags ${scope.build.tags.join(', ') || '(none)'}`);
+    if (scope.standardLibrary) lines.push(`  SDK standard types: ${scope.standardLibrary.mode === 'disabled' ? 'disabled' : `${scope.standardLibrary.packages.length} compiler exports read; SDK source not analyzed`}`);
     lines.push(`  Not analyzed: ${scope.excludedFiles.length} excluded Go files; external types not loaded: ${scope.typing.externalPackagesNotLoaded.length}; source typing errors: ${scope.typing.errorCount}`);
     lines.push('  Source bindings only; read coverage.languageScope/raw-facts.json for exclusions and incomplete typing.');
   }

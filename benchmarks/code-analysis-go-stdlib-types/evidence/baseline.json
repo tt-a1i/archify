@@ -1,0 +1,1631 @@
+{
+  "expect": "baseline",
+  "commands": [
+    {
+      "label": "chi-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-rust-associated/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--language",
+        "go",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/chi",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.6074070410104468
+    },
+    {
+      "label": "grpc-go-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-rust-associated/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/grpc-go",
+        "--language",
+        "go",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/grpc-go",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 1.8816886249696836
+    },
+    {
+      "label": "cobra-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-rust-associated/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/cobra",
+        "--language",
+        "go",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/cobra",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.5048955830279738
+    },
+    {
+      "label": "question-chi-Reset",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-rust-associated/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/chi",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--entry",
+        "mux.go",
+        "--function",
+        "*Mux.ServeHTTP",
+        "--question",
+        "Where does this known concrete method lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/question-chi-Reset.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.31974437506869435
+    },
+    {
+      "label": "question-chi-NotFound",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-rust-associated/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/chi",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--entry",
+        "mux.go",
+        "--function",
+        "*Mux.Mount",
+        "--question",
+        "Where does this known concrete method lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/question-chi-NotFound.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.30954729090444744
+    },
+    {
+      "label": "question-grpc-go-getReadyTransport",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-rust-associated/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/grpc-go",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/grpc-go",
+        "--entry",
+        "picker_wrapper.go",
+        "--function",
+        "*pickerWrapper.pick",
+        "--question",
+        "Where does this known concrete method lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/question-grpc-go-getReadyTransport.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.36588166700676084
+    },
+    {
+      "label": "question-cobra-HasParent",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-rust-associated/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/cobra",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/cobra",
+        "--entry",
+        "doc/util.go",
+        "--function",
+        "hasSeeAlso",
+        "--question",
+        "Where does this known concrete method lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/question-cobra-HasParent.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.3125644170213491
+    },
+    {
+      "label": "paired",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-rust-associated/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--base-root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi-base",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+        "--entry",
+        "mux.go",
+        "--question",
+        "Which known callers reach changed Mux.Match?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/go-stdlib-accepted-baseline/paired.json",
+        "--json"
+      ],
+      "exit": 1,
+      "seconds": 0.6232296660309657
+    }
+  ],
+  "score": {
+    "correct": 0,
+    "wrong": 0,
+    "missed": 37,
+    "reasonable-unknown": 2
+  },
+  "units": [
+    {
+      "project": "chi",
+      "call": {
+        "column": 2,
+        "endColumn": 14,
+        "endLine": 82,
+        "file": "mux.go",
+        "line": 82,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "context.go",
+        "name": "Reset",
+        "line": 82,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "chi",
+      "call": {
+        "column": 3,
+        "endColumn": 36,
+        "endLine": 309,
+        "file": "mux.go",
+        "line": 309,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "mux.go",
+        "name": "NotFound",
+        "line": 203,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "chi",
+      "call": {
+        "column": 3,
+        "endColumn": 52,
+        "endLine": 312,
+        "file": "mux.go",
+        "line": 312,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "mux.go",
+        "name": "MethodNotAllowed",
+        "line": 223,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 11,
+        "endColumn": 38,
+        "endLine": 183,
+        "file": "picker_wrapper.go",
+        "line": 183,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "clientconn.go",
+        "name": "getReadyTransport",
+        "line": 1500,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 9,
+        "endColumn": 117,
+        "endLine": 170,
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "line": 170,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "name": "UnaryInterceptor",
+        "line": 61,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 9,
+        "endColumn": 117,
+        "endLine": 177,
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "line": 177,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "authz/grpc_authz_server_interceptors.go",
+        "name": "StreamInterceptor",
+        "line": 78,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 19,
+        "endColumn": 41,
+        "endLine": 117,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 117,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Get",
+        "line": 184,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 20,
+        "endColumn": 35,
+        "endLine": 143,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 143,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Keys",
+        "line": 212,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 15,
+        "endColumn": 30,
+        "endLine": 144,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 144,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Get",
+        "line": 184,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 169,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 169,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Values",
+        "line": 225,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 183,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 183,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Values",
+        "line": 225,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 39,
+        "endColumn": 53,
+        "endLine": 203,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 203,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Len",
+        "line": 203,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 24,
+        "endColumn": 41,
+        "endLine": 205,
+        "file": "balancer/endpointsharding/endpointsharding.go",
+        "line": 205,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "resolver/map.go",
+        "name": "Values",
+        "line": 225,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 5,
+        "endColumn": 63,
+        "endLine": 213,
+        "file": "balancer/rls/picker.go",
+        "line": 213,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "metadata/metadata.go",
+        "name": "Append",
+        "line": 130,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 9,
+        "endColumn": 22,
+        "endLine": 63,
+        "file": "orca/call_metrics.go",
+        "line": 63,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "orca/call_metrics.go",
+        "name": "recorder",
+        "line": 76,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 10,
+        "endColumn": 34,
+        "endLine": 264,
+        "file": "test/bufconn/bufconn.go",
+        "line": 264,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "test/bufconn/bufconn.go",
+        "name": "Close",
+        "line": 238,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 10,
+        "endColumn": 39,
+        "endLine": 265,
+        "file": "test/bufconn/bufconn.go",
+        "line": 265,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "test/bufconn/bufconn.go",
+        "name": "closeWrite",
+        "line": 248,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 36,
+        "endLine": 176,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 176,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "incrInProgress",
+        "line": 382,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 32,
+        "endLine": 177,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 177,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "incrIssued",
+        "line": 394,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 36,
+        "endLine": 193,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 193,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "decrInProgress",
+        "line": 386,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 3,
+        "endColumn": 36,
+        "endLine": 195,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 195,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "incrSucceeded",
+        "line": 366,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 3,
+        "endColumn": 34,
+        "endLine": 197,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 197,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "incrErrored",
+        "line": 374,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 42,
+        "endLine": 214,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 214,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "addServerLoad",
+        "line": 402,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 29,
+        "endLine": 408,
+        "file": "xds/internal/xdsclient/load/store.go",
+        "line": 408,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/xdsclient/load/store.go",
+        "name": "add",
+        "line": 426,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 4,
+        "endColumn": 32,
+        "endLine": 569,
+        "file": "xds/internal/balancer/outlierdetection/balancer.go",
+        "line": 569,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/balancer/outlierdetection/callcounter.go",
+        "name": "clear",
+        "line": 49,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 5,
+        "endColumn": 26,
+        "endLine": 121,
+        "file": "credentials/xds/xds.go",
+        "line": 121,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "UseFallbackCreds",
+        "line": 107,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 14,
+        "endColumn": 41,
+        "endLine": 137,
+        "file": "credentials/xds/xds.go",
+        "line": 137,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "ClientSideTLSConfig",
+        "line": 122,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 25,
+        "endColumn": 51,
+        "endLine": 168,
+        "file": "credentials/xds/xds.go",
+        "line": 168,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "MatchingSANExists",
+        "line": 199,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 5,
+        "endColumn": 26,
+        "endLine": 228,
+        "file": "credentials/xds/xds.go",
+        "line": 228,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "UseFallbackCreds",
+        "line": 107,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 14,
+        "endColumn": 41,
+        "endLine": 243,
+        "file": "credentials/xds/xds.go",
+        "line": 243,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/credentials/xds/handshake_info.go",
+        "name": "ServerSideTLSConfig",
+        "line": 160,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 60,
+        "endLine": 879,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 879,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/testutils/restartable_listener.go",
+        "name": "Stop",
+        "line": 83,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 56,
+        "endLine": 880,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 880,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/testutils/restartable_listener.go",
+        "name": "Stop",
+        "line": 83,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 63,
+        "endLine": 886,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 886,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/testutils/restartable_listener.go",
+        "name": "Restart",
+        "line": 96,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 59,
+        "endLine": 887,
+        "file": "balancer/grpclb/grpclb_test.go",
+        "line": 887,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/testutils/restartable_listener.go",
+        "name": "Restart",
+        "line": 96,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 10,
+        "endColumn": 44,
+        "endLine": 72,
+        "file": "internal/serviceconfig/duration_test.go",
+        "line": 72,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "internal/serviceconfig/duration.go",
+        "name": "UnmarshalJSON",
+        "line": 61,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 2,
+        "endColumn": 35,
+        "endLine": 697,
+        "file": "test/end2end_test.go",
+        "line": 697,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "server.go",
+        "name": "Stop",
+        "line": 1895,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "grpc-go",
+      "call": {
+        "column": 6,
+        "endColumn": 20,
+        "endLine": 50,
+        "file": "xds/internal/balancer/outlierdetection/callcounter_test.go",
+        "line": 50,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "sourceKnownTarget": {
+        "file": "xds/internal/balancer/outlierdetection/callcounter_test.go",
+        "name": "Equal",
+        "line": 28,
+        "column": 1
+      },
+      "status": "missed",
+      "basis": "Earlier fixed full compiler oracle; source hashes rechecked; reserved gRPC not tuned in first Chi SDK prototype."
+    },
+    {
+      "project": "chi",
+      "call": {
+        "column": 3,
+        "endColumn": 29,
+        "endLine": 73,
+        "file": "mux.go",
+        "line": 73,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "status": "reasonable-unknown",
+      "basis": "http.Handler interface dispatch, not an arbitrary concrete method body"
+    },
+    {
+      "project": "chi",
+      "call": {
+        "column": 2,
+        "endColumn": 28,
+        "endLine": 90,
+        "file": "mux.go",
+        "line": 90,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "status": "reasonable-unknown",
+      "basis": "http.Handler interface dispatch, not an arbitrary concrete method body"
+    }
+  ],
+  "questions": {
+    "question-chi-Reset": {
+      "total": 13,
+      "included": 13,
+      "omitted": 0,
+      "selectedTargetShown": 0,
+      "validTargets": 0
+    },
+    "question-chi-NotFound": {
+      "total": 19,
+      "included": 19,
+      "omitted": 0,
+      "selectedTargetShown": 0,
+      "validTargets": 0
+    },
+    "question-grpc-go-getReadyTransport": {
+      "total": 22,
+      "included": 22,
+      "omitted": 0,
+      "selectedTargetShown": 0,
+      "validTargets": 0
+    },
+    "question-cobra-HasParent": {
+      "total": 4,
+      "included": 4,
+      "omitted": 0,
+      "selectedTargetShown": 1,
+      "validTargets": 1
+    }
+  },
+  "paired": {
+    "status": "partial",
+    "references": {
+      "base": {
+        "coverage": "available",
+        "total": 2,
+        "included": 2,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "side": "base",
+            "snapshotId": "6be587b66bd28acb151af03f6ec2ce2a6a643ad30da64ce1fef78fdf130546bb",
+            "factIndex": 2333,
+            "fact": {
+              "column": 5,
+              "endColumn": 37,
+              "endLine": 1807,
+              "file": "mux_test.go",
+              "line": 1807,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1807,
+                "column": 5,
+                "endLine": 1807,
+                "endColumn": 37
+              }
+            }
+          },
+          {
+            "side": "base",
+            "snapshotId": "6be587b66bd28acb151af03f6ec2ce2a6a643ad30da64ce1fef78fdf130546bb",
+            "factIndex": 2336,
+            "fact": {
+              "column": 5,
+              "endColumn": 42,
+              "endLine": 1812,
+              "file": "mux_test.go",
+              "line": 1812,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1812,
+                "column": 5,
+                "endLine": 1812,
+                "endColumn": 42
+              }
+            }
+          }
+        ]
+      },
+      "head": {
+        "coverage": "available",
+        "total": 4,
+        "included": 4,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "side": "head",
+            "snapshotId": "0654b5172077406a221963a25dbcc4e40254bafec25363e6afe1a16a13f30cfa",
+            "factIndex": 2381,
+            "fact": {
+              "column": 5,
+              "endColumn": 37,
+              "endLine": 1807,
+              "file": "mux_test.go",
+              "line": 1807,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1807,
+                "column": 5,
+                "endLine": 1807,
+                "endColumn": 37
+              }
+            }
+          },
+          {
+            "side": "head",
+            "snapshotId": "0654b5172077406a221963a25dbcc4e40254bafec25363e6afe1a16a13f30cfa",
+            "factIndex": 2384,
+            "fact": {
+              "column": 5,
+              "endColumn": 42,
+              "endLine": 1812,
+              "file": "mux_test.go",
+              "line": 1812,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1812,
+                "column": 5,
+                "endLine": 1812,
+                "endColumn": 42
+              }
+            }
+          },
+          {
+            "side": "head",
+            "snapshotId": "0654b5172077406a221963a25dbcc4e40254bafec25363e6afe1a16a13f30cfa",
+            "factIndex": 2394,
+            "fact": {
+              "column": 5,
+              "endColumn": 30,
+              "endLine": 1827,
+              "file": "mux_test.go",
+              "line": 1827,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1827,
+                "column": 5,
+                "endLine": 1827,
+                "endColumn": 30
+              }
+            }
+          },
+          {
+            "side": "head",
+            "snapshotId": "0654b5172077406a221963a25dbcc4e40254bafec25363e6afe1a16a13f30cfa",
+            "factIndex": 2399,
+            "fact": {
+              "column": 5,
+              "endColumn": 30,
+              "endLine": 1838,
+              "file": "mux_test.go",
+              "line": 1838,
+              "resolution": "go-direct-method",
+              "target": {
+                "column": 1,
+                "file": "mux.go",
+                "line": 365,
+                "name": "Match"
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "mux_test.go",
+                "line": 1838,
+                "column": 5,
+                "endLine": 1838,
+                "endColumn": 30
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "scope": {
+    "chi": {
+      "model": "go-source-direct-v2",
+      "files": 54,
+      "calls": 2879,
+      "parseErrors": [],
+      "build": {
+        "cgo": false,
+        "goFlags": "not-loaded",
+        "goWork": "not-loaded",
+        "goarch": "arm64",
+        "goos": "darwin",
+        "releaseTags": [
+          "go1.1",
+          "go1.2",
+          "go1.3",
+          "go1.4",
+          "go1.5",
+          "go1.6",
+          "go1.7",
+          "go1.8",
+          "go1.9",
+          "go1.10",
+          "go1.11",
+          "go1.12",
+          "go1.13",
+          "go1.14",
+          "go1.15",
+          "go1.16",
+          "go1.17",
+          "go1.18",
+          "go1.19",
+          "go1.20",
+          "go1.21",
+          "go1.22",
+          "go1.23",
+          "go1.24",
+          "go1.25",
+          "go1.26",
+          "go1.27"
+        ],
+        "replace": "not-loaded",
+        "tags": [],
+        "tests": true,
+        "toolchain": "go1.27.2"
+      },
+      "typing": {
+        "errorCount": 2249,
+        "errors": [
+          "chain.go:25:19: undefined: http.Handler",
+          "chain.go:26:19: undefined: http.Handler",
+          "chi.go:138:30: undefined: http.Handler",
+          "chi.go:138:44: undefined: http.Handler",
+          "chi.go:68:7: undefined: http.Handler",
+          "tree.go:845:28: undefined: http.Handler",
+          "context.go:51:20: undefined: context.Context",
+          "chi.go:72:31: undefined: http.Handler",
+          "chi.go:72:45: undefined: http.Handler",
+          "chi.go:75:32: undefined: http.Handler",
+          "chi.go:75:46: undefined: http.Handler",
+          "chi.go:85:31: undefined: http.Handler",
+          "chi.go:89:32: undefined: http.Handler",
+          "chi.go:90:36: undefined: http.HandlerFunc",
+          "chi.go:94:40: undefined: http.Handler",
+          "chi.go:95:44: undefined: http.HandlerFunc",
+          "chi.go:98:33: undefined: http.HandlerFunc",
+          "chi.go:99:32: undefined: http.HandlerFunc",
+          "chi.go:100:29: undefined: http.HandlerFunc",
+          "chi.go:101:30: undefined: http.HandlerFunc"
+        ],
+        "externalPackagesNotLoaded": [
+          "bufio",
+          "bytes",
+          "compress/flate",
+          "compress/gzip",
+          "context",
+          "crypto/rand",
+          "crypto/subtle",
+          "crypto/tls",
+          "encoding/base64",
+          "errors",
+          "expvar",
+          "fmt",
+          "io",
+          "io/ioutil",
+          "log",
+          "net",
+          "net/http",
+          "net/http/httptest",
+          "net/http/pprof",
+          "net/url",
+          "os",
+          "path",
+          "reflect",
+          "regexp",
+          "runtime",
+          "runtime/debug",
+          "sort",
+          "strconv",
+          "strings",
+          "sync",
+          "sync/atomic",
+          "testing",
+          "time"
+        ],
+        "status": "partial-source-bindings"
+      },
+      "standardLibrary": null
+    },
+    "grpc-go": {
+      "model": "go-source-direct-v2",
+      "files": 799,
+      "calls": 59112,
+      "parseErrors": [],
+      "build": {
+        "cgo": false,
+        "goFlags": "not-loaded",
+        "goWork": "not-loaded",
+        "goarch": "arm64",
+        "goos": "darwin",
+        "releaseTags": [
+          "go1.1",
+          "go1.2",
+          "go1.3",
+          "go1.4",
+          "go1.5",
+          "go1.6",
+          "go1.7",
+          "go1.8",
+          "go1.9",
+          "go1.10",
+          "go1.11",
+          "go1.12",
+          "go1.13",
+          "go1.14",
+          "go1.15",
+          "go1.16",
+          "go1.17",
+          "go1.18",
+          "go1.19",
+          "go1.20",
+          "go1.21",
+          "go1.22",
+          "go1.23",
+          "go1.24",
+          "go1.25",
+          "go1.26",
+          "go1.27"
+        ],
+        "replace": "not-loaded",
+        "tags": [],
+        "tests": true,
+        "toolchain": "go1.27.2"
+      },
+      "typing": {
+        "errorCount": 28697,
+        "errors": [
+          "backoff/backoff.go:32:17: undefined: time.Duration",
+          "backoff/backoff.go:39:16: undefined: time.Duration",
+          "backoff/backoff.go:48:25: undefined: time.Second",
+          "backoff/backoff.go:51:25: undefined: time.Second",
+          "grpclog/internal/loggerv2.go:122:20: undefined: log.Logger",
+          "grpclog/internal/loggerv2.go:106:19: undefined: fmt.Sprintf",
+          "grpclog/internal/loggerv2.go:110:18: undefined: fmt.Sprint",
+          "grpclog/internal/loggerv2.go:114:20: undefined: fmt.Sprintln",
+          "grpclog/internal/loggerv2.go:118:15: undefined: os.Exit",
+          "grpclog/internal/loggerv2.go:236:38: undefined: io.Writer",
+          "grpclog/internal/loggerv2.go:236:49: undefined: io.Writer",
+          "grpclog/internal/loggerv2.go:249:45: undefined: io.Writer",
+          "grpclog/internal/loggerv2.go:135:15: undefined: json.Marshal",
+          "grpclog/internal/loggerv2.go:146:44: undefined: io.Discard",
+          "grpclog/internal/loggerv2.go:153:44: undefined: io.Discard",
+          "grpclog/internal/loggerv2.go:160:44: undefined: io.Discard",
+          "grpclog/internal/loggerv2.go:237:17: undefined: io.Discard",
+          "grpclog/internal/loggerv2.go:240:18: undefined: io.Discard",
+          "grpclog/internal/loggerv2.go:243:12: undefined: io.MultiWriter",
+          "grpclog/internal/loggerv2.go:250:14: undefined: log.LstdFlags"
+        ],
+        "externalPackagesNotLoaded": [
+          "bufio",
+          "bytes",
+          "compress/gzip",
+          "container/heap",
+          "container/list",
+          "context",
+          "crypto/aes",
+          "crypto/cipher",
+          "crypto/hmac",
+          "crypto/rand",
+          "crypto/sha256",
+          "crypto/tls",
+          "crypto/x509",
+          "crypto/x509/pkix",
+          "encoding/base64",
+          "encoding/binary",
+          "encoding/csv",
+          "encoding/gob",
+          "encoding/hex",
+          "encoding/json",
+          "encoding/pem",
+          "errors",
+          "flag",
+          "fmt",
+          "github.com/cespare/xxhash/v2",
+          "github.com/cncf/xds/go/udpa/type/v1",
+          "github.com/cncf/xds/go/xds/data/orca/v3",
+          "github.com/cncf/xds/go/xds/service/orca/v3",
+          "github.com/cncf/xds/go/xds/type/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/admin/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/api/v2",
+          "github.com/envoyproxy/go-control-plane/envoy/api/v2/core",
+          "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint",
+          "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/core/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/rbac/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/config/route/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/clusters/aggregate/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/common/fault/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/fault/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/rbac/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/client_side_weighted_round_robin/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/least_request/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/pick_first/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/ring_hash/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/round_robin/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/wrr_locality/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/rbac/audit_loggers/stream/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/service/load_stats/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/service/status/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/type",
+          "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3",
+          "github.com/envoyproxy/go-control-plane/envoy/type/v3",
+          "github.com/envoyproxy/go-control-plane/pkg/cache/types",
+          "github.com/envoyproxy/go-control-plane/pkg/cache/v3",
+          "github.com/envoyproxy/go-control-plane/pkg/resource/v3",
+          "github.com/envoyproxy/go-control-plane/pkg/server/v3",
+          "github.com/envoyproxy/go-control-plane/pkg/wellknown",
+          "github.com/golang/glog",
+          "github.com/google/go-cmp/cmp",
+          "github.com/google/go-cmp/cmp/cmpopts",
+          "github.com/google/uuid",
+          "go.opentelemetry.io/contrib/detectors/gcp",
+          "go.opentelemetry.io/otel/attribute",
+          "go.opentelemetry.io/otel/metric",
+          "go.opentelemetry.io/otel/metric/noop",
+          "go.opentelemetry.io/otel/propagation",
+          "go.opentelemetry.io/otel/sdk/metric",
+          "go.opentelemetry.io/otel/sdk/metric/metricdata",
+          "go.opentelemetry.io/otel/sdk/metric/metricdata/metricdatatest",
+          "go.opentelemetry.io/otel/sdk/resource",
+          "go.opentelemetry.io/otel/trace",
+          "golang.org/x/net/http2",
+          "golang.org/x/net/http2/hpack",
+          "golang.org/x/net/trace",
+          "golang.org/x/oauth2",
+          "golang.org/x/oauth2/google",
+          "golang.org/x/oauth2/jwt",
+          "golang.org/x/sync/semaphore",
+          "golang.org/x/sys/unix",
+          "google.golang.org/genproto/googleapis/rpc/code",
+          "google.golang.org/genproto/googleapis/rpc/errdetails",
+          "google.golang.org/genproto/googleapis/rpc/status",
+          "google.golang.org/grpc/testdata",
+          "google.golang.org/grpc/testdata/grpc_testing_not_regenerated",
+          "google.golang.org/protobuf/encoding/protojson",
+          "google.golang.org/protobuf/encoding/prototext",
+          "google.golang.org/protobuf/proto",
+          "google.golang.org/protobuf/protoadapt",
+          "google.golang.org/protobuf/reflect/protodesc",
+          "google.golang.org/protobuf/reflect/protoreflect",
+          "google.golang.org/protobuf/reflect/protoregistry",
+          "google.golang.org/protobuf/runtime/protoimpl",
+          "google.golang.org/protobuf/testing/protocmp",
+          "google.golang.org/protobuf/types/descriptorpb",
+          "google.golang.org/protobuf/types/dynamicpb",
+          "google.golang.org/protobuf/types/known/anypb",
+          "google.golang.org/protobuf/types/known/durationpb",
+          "google.golang.org/protobuf/types/known/structpb",
+          "google.golang.org/protobuf/types/known/timestamppb",
+          "google.golang.org/protobuf/types/known/wrapperspb",
+          "io",
+          "log",
+          "maps",
+          "math",
+          "math/bits",
+          "math/rand",
+          "math/rand/v2",
+          "net",
+          "net/http",
+          "net/http/httptest",
+          "net/http/httputil",
+          "net/http/pprof",
+          "net/netip",
+          "net/url",
+          "os",
+          "os/exec",
+          "os/signal",
+          "path",
+          "path/filepath",
+          "reflect",
+          "regexp",
+          "runtime",
+          "runtime/debug",
+          "runtime/pprof",
+          "slices",
+          "sort",
+          "strconv",
+          "strings",
+          "sync",
+          "sync/atomic",
+          "syscall",
+          "testing",
+          "time",
+          "unicode",
+          "unicode/utf8",
+          "unsafe"
+        ],
+        "status": "partial-source-bindings"
+      },
+      "standardLibrary": null
+    },
+    "cobra": {
+      "model": "go-source-direct-v2",
+      "files": 48,
+      "calls": 2939,
+      "parseErrors": [],
+      "build": {
+        "cgo": false,
+        "goFlags": "not-loaded",
+        "goWork": "not-loaded",
+        "goarch": "arm64",
+        "goos": "darwin",
+        "releaseTags": [
+          "go1.1",
+          "go1.2",
+          "go1.3",
+          "go1.4",
+          "go1.5",
+          "go1.6",
+          "go1.7",
+          "go1.8",
+          "go1.9",
+          "go1.10",
+          "go1.11",
+          "go1.12",
+          "go1.13",
+          "go1.14",
+          "go1.15",
+          "go1.16",
+          "go1.17",
+          "go1.18",
+          "go1.19",
+          "go1.20",
+          "go1.21",
+          "go1.22",
+          "go1.23",
+          "go1.24",
+          "go1.25",
+          "go1.26",
+          "go1.27"
+        ],
+        "replace": "not-loaded",
+        "tags": [],
+        "tests": true,
+        "toolchain": "go1.27.2"
+      },
+      "typing": {
+        "errorCount": 1414,
+        "errors": [
+          "command.go:32:30: undefined: flag.ParseErrorsWhitelist",
+          "command.go:152:14: undefined: context.Context",
+          "command.go:173:22: undefined: bytes.Buffer",
+          "command.go:175:14: undefined: flag.FlagSet",
+          "command.go:177:15: undefined: flag.FlagSet",
+          "command.go:179:15: undefined: flag.FlagSet",
+          "command.go:181:15: undefined: flag.FlagSet",
+          "command.go:183:22: undefined: flag.FlagSet",
+          "command.go:186:28: undefined: flag.FlagSet",
+          "command.go:186:55: undefined: flag.NormalizedName",
+          "command.go:206:14: undefined: io.Reader",
+          "command.go:208:15: undefined: io.Writer",
+          "command.go:210:15: undefined: io.Writer",
+          "bash_completions.go:22:31: undefined: bytes.Buffer",
+          "bash_completions.go:350:33: undefined: bytes.Buffer",
+          "bash_completions.go:390:31: undefined: bytes.Buffer",
+          "bash_completions.go:402:34: undefined: bytes.Buffer",
+          "bash_completions.go:437:32: undefined: bytes.Buffer",
+          "bash_completions.go:437:52: undefined: pflag.Flag",
+          "bash_completions.go:448:27: undefined: bytes.Buffer"
+        ],
+        "externalPackagesNotLoaded": [
+          "bufio",
+          "bytes",
+          "context",
+          "encoding/json",
+          "errors",
+          "flag",
+          "fmt",
+          "github.com/cpuguy83/go-md2man/v2/md2man",
+          "github.com/mitchellh/go-homedir",
+          "github.com/spf13/pflag",
+          "github.com/spf13/viper",
+          "gopkg.in/yaml.v2",
+          "io",
+          "io/ioutil",
+          "os",
+          "os/exec",
+          "path",
+          "path/filepath",
+          "reflect",
+          "regexp",
+          "sort",
+          "strconv",
+          "strings",
+          "testing",
+          "text/template",
+          "time",
+          "unicode"
+        ],
+        "status": "partial-source-bindings"
+      },
+      "standardLibrary": null
+    }
+  },
+  "limits": [
+    "37 already known misses in exposed repositories, not a new blind corpus or whole-project precision/recall.",
+    "Prototype and accepted CLI observations overlap the original full compiler cohort.",
+    "Paired Match is a reused regression; Reset body is unchanged in that pair.",
+    "Checks deliberately use fail-on never; exit zero does not mean no findings."
+  ]
+}
