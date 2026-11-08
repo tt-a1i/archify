@@ -2,9 +2,9 @@
 import argparse, json, os, queue, subprocess, threading, time, hashlib
 from pathlib import Path
 from urllib.parse import unquote,urlparse
-p=argparse.ArgumentParser();p.add_argument('--profile',choices=['serde-default','serde-arbitrary','regex'],required=True);p.add_argument('--workspaces-root',type=Path,required=True);p.add_argument('--facts-root',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--negative-control',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--profile',choices=['serde-default','serde-arbitrary','regex'],required=True);p.add_argument('--workspaces-root',type=Path,required=True);p.add_argument('--facts-root',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--negative-control',action='store_true');p.add_argument('--inputs',type=Path);a=p.parse_args()
 here=Path(__file__).resolve().parent;project='regex' if a.profile=='regex'else'serde-json';root=a.workspaces_root.resolve()/project;output=a.out.resolve();out=output/(a.profile+'-negative-control'if a.negative_control else a.profile);out.mkdir(parents=True,exist_ok=True);started=time.monotonic()
-inputs=json.loads((here/'inputs.json').read_text());assert hashlib.sha256((root/'Cargo.lock').read_bytes()).hexdigest()==inputs['projects'][project]['lockSha256']
+inputs=json.loads((a.inputs or here/'inputs.json').read_text());assert hashlib.sha256((root/'Cargo.lock').read_bytes()).hexdigest()==inputs['projects'][project]['lockSha256']
 assert (output/'bin/cargo').is_file() and (output/'cargo-home/bin/cargo').resolve()==(output/'bin/cargo').resolve(), 'Run prepare.py with this exact --out first'
 assert subprocess.check_output(['rust-analyzer','--version'],text=True).strip()==inputs['rustAnalyzer']
 config=json.loads((here/'lsp-config.json').read_text());config['cargo']['target']=inputs['target'];config['cargo']['features']=['arbitrary_precision']if a.profile=='serde-arbitrary'else[]
@@ -68,26 +68,30 @@ try:
  assert facts['callModel']==expected['model'] and digest(facts['calls'])==expected['callsSha256']
  assert digest(facts['functions'])==expected['functionsSha256']
  assert digest({x['path']:x['sourceText']for x in facts['files']})==expected['sourcesSha256']
+ assert all((root/x['path']).read_bytes().decode('utf-8')==x['sourceText'] for x in facts['files']), 'Audit workspace source differs from the captured inputs'
  function_ranges={(f['file'],f['name'],f['sourceRange']['line'],f['sourceRange']['column']):f['sourceRange']for f in facts['functions']}
- candidates=[c for c in facts['calls']if c['resolution']=='rust-inherent-source-candidate']
- if project=='serde-json':
+ candidates=[c for c in facts['calls']if c['resolution']==expected.get('resolution','rust-inherent-source-candidate')]
+ if project=='serde-json' and inputs.get('includeKnownMapMisses',True):
   for line in [526,535]:
    text=(root/'src/map.rs').read_text().splitlines()[line-1];column=text.index('Map::new()')+1
    candidates.append({'file':'src/map.rs','line':line,'column':column,'endLine':line,'endColumn':column+len('Map::new()'),'resolution':'unresolved','target':{'file':'src/map.rs','line':41,'column':5,'name':'new'},'auditRole':'known source miss, not emitted product target'})
  if a.negative_control:
-  assert a.profile=='regex'
-  control=json.loads(json.dumps(next(c for c in candidates if c['file']=='src/regex/string.rs'and c['line']==125)))
-  control['target']={'file':'src/regex/bytes.rs','line':178,'column':5,'name':'new'}
-  control['auditRole']='Deliberately wrong nominal target; grader discrimination, not product output'
+  if inputs.get('negativeControlTarget'):
+   control=json.loads(json.dumps(candidates[0]));control['queryName']=control['target']['name'];control['target']=inputs['negativeControlTarget']
+  else:
+   assert a.profile=='regex'
+   control=json.loads(json.dumps(next(c for c in candidates if c['file']=='src/regex/string.rs'and c['line']==125)))
+   control['target']={'file':'src/regex/bytes.rs','line':178,'column':5,'name':'new'}
+  control['auditRole']='Deliberately wrong source target; grader discrimination, not product output'
   candidates=[control]
  for i,c in enumerate(candidates):
-  line=(root/c['file']).read_text().splitlines()[c['line']-1];target=c['target'];needle='::'+target['name'];start=len(line.encode('utf-16-le')[:(c['column']-1)*2].decode('utf-16-le'))
+  line=(root/c['file']).read_text().splitlines()[c['line']-1];target=c['target'];query_name=c.get('queryName',target['name']);needle='::'+query_name;start=len(line.encode('utf-16-le')[:(c['column']-1)*2].decode('utf-16-le'))
   # Every eligible product path has an explicit, nongeneric terminal segment.
   index=line.find(needle,start)
   if index<0:
    rows.append({'call':c,'status':'identifier-not-found'});continue
   pos=len(line[:index+2].encode('utf-16-le'))//2
-  if c['endLine']==c['line']:assert pos+len(target['name'].encode('utf-16-le'))//2<=c['endColumn']-1
+  if c['endLine']==c['line']:assert pos+len(query_name.encode('utf-16-le'))//2<=c['endColumn']-1
   response=request('textDocument/definition',{'textDocument':{'uri':(root/c['file']).as_uri()},'position':{'line':c['line']-1,'character':pos}})
   definitions=response.get('result')or[]
   if isinstance(definitions,dict):definitions=[definitions]
@@ -103,7 +107,7 @@ try:
   agreement=any(loc['file']==target['file']and loc['line']==target['line']and (rg['line'],rg['column'])<=(loc['line'],loc['column'])<(rg['endLine'],rg['endColumn'])and (root/loc['file']).read_text().splitlines()[loc['line']-1][loc['column']-1:].startswith(target['name'])for loc in locations)
   rows.append({'call':c,'query':{'file':c['file'],'line':c['line'],'column':pos+1},'expectedFunctionRange':rg,'languageServerLocations':locations,'status':'agrees'if agreement else'different'if locations else'unavailable','error':response.get('error')})
   if (i+1)%100==0:print(json.dumps({'profile':a.profile,'completed':i+1,'total':len(candidates)}),flush=True)
- report={'profile':a.profile,'negativeControl':a.negative_control,'tool':subprocess.check_output(['rust-analyzer','--version'],text=True).strip(),'sourceCandidate':inputs['candidate'],'lockSha256':hashlib.sha256((root/'Cargo.lock').read_bytes()).hexdigest(),'generatedLockNotOriginal':True,'config':config,'effectiveSafetySettings':{key:(''+key+': false,') in status.get('result','') for key in ['checkOnSave','procMacro_enable','cargo_buildScripts_enable']},'serverStatuses':statuses,'seconds':time.monotonic()-started,'counts':{s:sum(r['status']==s for r in rows)for s in ['agrees','different','unavailable','identifier-not-found']},'rowsPath':'rows.jsonl','limits':['Independent language-server navigation under explicit config, not rustc compilation/runtime proof.','No build scripts/proc macros/check/tests; missing expansions and source-profile differences affect availability.','Generated dependency lock belongs to audit copy, not fixed original source.']}
+ report={'profile':a.profile,'negativeControl':a.negative_control,'tool':subprocess.check_output(['rust-analyzer','--version'],text=True).strip(),'sourceCandidate':inputs['candidate'],'lockSha256':hashlib.sha256((root/'Cargo.lock').read_bytes()).hexdigest(),'generatedLockNotOriginal':True,'capturedSourcesVerified':len(facts['files']),'config':config,'effectiveSafetySettings':{key:(''+key+': false,') in status.get('result','') for key in ['checkOnSave','procMacro_enable','cargo_buildScripts_enable']},'serverStatuses':statuses,'seconds':time.monotonic()-started,'counts':{s:sum(r['status']==s for r in rows)for s in ['agrees','different','unavailable','identifier-not-found']},'rowsPath':'rows.jsonl','limits':['Independent language-server navigation under explicit config, not rustc compilation/runtime proof.','No build scripts/proc macros/check/tests; missing expansions and source-profile differences affect availability.','Generated dependency lock belongs to audit copy, not fixed original source.']}
  if a.negative_control:assert len(rows)==1 and rows[0]['status']=='different'
  (out/'rows.jsonl').write_text(''.join(json.dumps(row,separators=(',',':'))+'\n'for row in rows));(out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report['counts']),flush=True)
 finally:

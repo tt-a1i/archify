@@ -1,0 +1,54 @@
+2026-11-08T07:09:57.402867+08:00  INFO Using sysroot workspace=$AUDIT-workspaces/regex/Cargo.toml src_root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library")) root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin"))
+2026-11-08T07:09:57.43905+08:00  WARN failed to run `cd "$AUDIT-workspaces/regex" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/regex" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin" failed, exit status: 97
+stderr:
+Audit rejects Cargo execution: ['rustc', '-Z', 'unstable-options', '--print', 'target-spec-json', '--', '-Z', 'unstable-options', '--target', 'aarch64-apple-darwin']
+
+2026-11-08T07:09:57.445027+08:00  WARN rustc_cfg::get: failed to run `cd "$AUDIT-workspaces/regex" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/regex" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O" failed, exit status: 97
+stderr:
+Audit rejects Cargo execution: ['rustc', '-Z', 'unstable-options', '--print', 'cfg', '--target', 'aarch64-apple-darwin', '--', '-O']
+
+2026-11-08T07:09:57.524485+08:00  WARN `cargo metadata` failed, but retry with `--no-deps` succeeded cargo_toml=/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/Cargo.toml e=`cargo metadata` exited with an error:     Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+error: failed to download `cc v1.2.0`
+
+Caused by:
+  attempting to make an HTTP request, but --offline was specified
+
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: <anyhow::Error as core::convert::From<cargo_metadata::errors::Error>>::from
+   2: <project_model::cargo_workspace::CargoWorkspace>::fetch_metadata_
+   3: <project_model::cargo_workspace::CargoWorkspace>::fetch_metadata
+   4: <project_model::sysroot::Sysroot>::load_workspace
+   5: std::sys::backtrace::__rust_begin_short_backtrace::<<project_model::workspace::ProjectWorkspace>::load_cargo::{closure#0}::{closure#5}, core::option::Option<project_model::sysroot::RustLibSrcWorkspace>>
+   6: <<std::thread::Builder>::spawn_unchecked_<<project_model::workspace::ProjectWorkspace>::load_cargo::{closure#0}::{closure#5}, core::option::Option<project_model::sysroot::RustLibSrcWorkspace>>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+   7: std::sys::pal::unix::thread::Thread::new::thread_start
+   8: __pthread_cond_wait
+2026-11-08T07:09:57.7717+08:00  INFO Using sysroot workspace=$AUDIT-workspaces/regex/Cargo.toml src_root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library")) root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin"))
+2026-11-08T07:09:57.809095+08:00  WARN rustc_cfg::get: failed to run `cd "$AUDIT-workspaces/regex" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/regex" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O" failed, exit status: 97
+stderr:
+Audit rejects Cargo execution: ['rustc', '-Z', 'unstable-options', '--print', 'cfg', '--target', 'aarch64-apple-darwin', '--', '-O']
+
+2026-11-08T07:09:57.819517+08:00  WARN failed to run `cd "$AUDIT-workspaces/regex" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/regex" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin" failed, exit status: 97
+stderr:
+Audit rejects Cargo execution: ['rustc', '-Z', 'unstable-options', '--print', 'target-spec-json', '--', '-Z', 'unstable-options', '--target', 'aarch64-apple-darwin']
+
+2026-11-08T07:09:57.896123+08:00  WARN `cargo metadata` failed, but retry with `--no-deps` succeeded cargo_toml=/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/Cargo.toml e=`cargo metadata` exited with an error:     Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+error: failed to download `cc v1.2.0`
+
+Caused by:
+  attempting to make an HTTP request, but --offline was specified
+
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: <anyhow::Error as core::convert::From<cargo_metadata::errors::Error>>::from
+   2: <project_model::cargo_workspace::CargoWorkspace>::fetch_metadata_
+   3: <project_model::cargo_workspace::CargoWorkspace>::fetch_metadata
+   4: <project_model::sysroot::Sysroot>::load_workspace
+   5: std::sys::backtrace::__rust_begin_short_backtrace::<<project_model::workspace::ProjectWorkspace>::load_cargo::{closure#0}::{closure#5}, core::option::Option<project_model::sysroot::RustLibSrcWorkspace>>
+   6: <<std::thread::Builder>::spawn_unchecked_<<project_model::workspace::ProjectWorkspace>::load_cargo::{closure#0}::{closure#5}, core::option::Option<project_model::sysroot::RustLibSrcWorkspace>>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+   7: std::sys::pal::unix::thread::Thread::new::thread_start
+   8: __pthread_cond_wait

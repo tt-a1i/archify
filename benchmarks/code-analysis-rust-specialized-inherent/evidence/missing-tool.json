@@ -1,0 +1,22 @@
+{
+  "exit": 2,
+  "diagnostics": [
+    {
+      "code": "extract/rust-unavailable",
+      "severity": "error",
+      "message": "Rust source tooling could not complete. Cargo/rustc 1.71+ and the locked helper dependencies are required.",
+      "subject": {
+        "command": "/nonexistent/archify-test-cargo"
+      },
+      "evidence": {
+        "exit": null,
+        "code": "ENOENT"
+      },
+      "supportedFixes": [
+        "install a compatible Rust toolchain with Cargo",
+        "set ARCHIFY_CARGO / ARCHIFY_RUSTC to the installed tools",
+        "inspect the captured manifest/profile error; no project build is attempted"
+      ]
+    }
+  ]
+}

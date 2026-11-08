@@ -23,7 +23,7 @@ def at(profile,point):
 for profile,project,rust in profiles:
  config=a.out/(profile+'-config.json');config.write_text(json.dumps({'rust':rust})+'\n');run(profile+'-check',['check',a.samples_root/project,'--language','rust','--config',config,'--out',a.out/profile,'--fail-on','never','--json'])
  f=json.loads((a.out/profile/'raw-facts.json').read_text());facts[profile]=f
- assert f['callModel']==('rust-source-direct-v1' if a.expect=='baseline' else 'rust-source-direct-v2')
+ assert f['callModel'] in (['rust-source-direct-v1'] if a.expect=='baseline' else ['rust-source-direct-v2','rust-source-direct-v3'])
  for case in m['cases']:
   if case['project']!=project:continue
   call=at(profile,case['call']);expected={k:case['target'][k] for k in ['file','line','column','name']};status='correct' if call.get('target')==expected else 'wrong' if call.get('target') else 'missed'
@@ -33,8 +33,12 @@ for profile,project,rust in profiles:
   call=at(profile,m['traitControl']['call']);assert call['resolution']=='unresolved' and 'target'not in call;units.append({'profile':profile,'call':call,'status':'reasonable-unknown','reason':m['traitControl']['reason']})
   assert any(x['file']=='src/value/from.rs' and x['line']==20 and x['kind']=='item-expansion' for x in f['languageScope']['opaqueMacros'])
   for case in json.loads((here/'review-source-first.json').read_text())['cases']:
-   call=at(profile,case['call']);assert call['resolution']=='unresolved' and 'target'not in call
-   units.append({'profile':profile,'call':call,'expected':case.get('target'),'status':'missed' if case.get('target') else 'reasonable-unknown','exposure':'reserved file inspected after first rule, before extraction','reason':case['expected']})
+   call=at(profile,case['call']);expected=case.get('target')
+   if expected and f['callModel']=='rust-source-direct-v3':
+    assert call.get('target')==expected;status='correct'
+   else:
+    assert call['resolution']=='unresolved' and 'target'not in call;status='missed' if expected else 'reasonable-unknown'
+   units.append({'profile':profile,'call':call,'expected':expected,'status':status,'exposure':'reserved in initial monomorphic study; v3 follow-up design data','historicalReason':case['expected']})
  # Whole source file orientation avoids collapsing repeated trait method qualnames.
  entry='src/regex/string.rs' if project=='regex' else 'src/value/from.rs';dest=a.out/(profile+'-question.json')
  run(profile+'-question',['task',a.out/profile,'--root',a.samples_root/project,'--entry',entry,'--question','Where do the explicit inherent calls lead?','--format','json','--out',dest,'--json'])
@@ -55,5 +59,5 @@ for side in ['base','head']:
  if a.expect=='candidate':
   assert sorted((r['fact']['file'],r['fact']['line'],r['fact']['column'])for r in refs['items'])==sorted((r['file'],r['line'],r['column'])for r in expected)
   assert all(r['navigation']['status']=='valid'for r in refs['items'])
-report={'expect':a.expect,'paired':{'status':q['status'],'knownReferences':{side:changed[side]['knownReferences'] for side in ['base','head']}},'commands':commands,'score':{s:sum(u['status']==s for u in units) for s in ['correct','wrong','missed','reasonable-unknown']},'units':units,'profiles':{p:{'files':len(f['files']),'calls':len(f['calls']),'newSourceCandidates':sum(c['resolution']=='rust-inherent-source-candidate'for c in f['calls']),'parseErrors':f.get('parse_errors',[]),'build':f['languageScope']['build'],'conditionalDefinitions':len(f['languageScope']['conditionalDefinitions']),'opaqueMacros':len(f['languageScope']['opaqueMacros']),'excludedFiles':f['languageScope']['excludedFiles'],'missingModules':f['languageScope']['missingModules']}for p,f in facts.items()},'limits':['Finite source-checked positives and review misses; not whole-project precision or compiler attribution.','Additional source candidates outside these units are not independently graded.','Reserved file follows initial implementation, repositories were previously exposed.','Checks use --fail-on never; exit zero does not mean no findings.']}
+report={'expect':a.expect,'paired':{'status':q['status'],'knownReferences':{side:changed[side]['knownReferences'] for side in ['base','head']}},'commands':commands,'score':{s:sum(u['status']==s for u in units) for s in ['correct','wrong','missed','reasonable-unknown']},'units':units,'profiles':{p:{'files':len(f['files']),'calls':len(f['calls']),'newSourceCandidates':sum(c['resolution']in ['rust-inherent-source-candidate','rust-specialized-inherent-source-candidate']for c in f['calls']),'parseErrors':f.get('parse_errors',[]),'build':f['languageScope']['build'],'conditionalDefinitions':len(f['languageScope']['conditionalDefinitions']),'opaqueMacros':len(f['languageScope']['opaqueMacros']),'excludedFiles':f['languageScope']['excludedFiles'],'missingModules':f['languageScope']['missingModules']}for p,f in facts.items()},'limits':['Finite source-checked positives and review misses; not whole-project precision or compiler attribution.','Additional source candidates outside these units are not independently graded.','Reserved file follows initial implementation, repositories were previously exposed.','Checks use --fail-on never; exit zero does not mean no findings.']}
 (a.out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({'score':report['score'],'profiles':{p:{k:v[k]for k in ['files','calls','newSourceCandidates']}for p,v in report['profiles'].items()}}))
