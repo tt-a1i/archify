@@ -48,92 +48,17 @@
    },
    "runtime": "determined",
    "context": "forwarding impl for &mut B"
-  },
-  {
-   "file": "tests/test_buf.rs",
-   "line": 468,
-   "column": 20,
-   "inventory": "knownReferences",
-   "targetKind": "concrete",
-   "target": {
-    "file": "src/buf/buf_impl.rs",
-    "line": 2086,
-    "name": "try_get_int"
-   },
-   "directCaller": {
-    "name": "try_get_int_sign_extends",
-    "line": 462,
-    "kind": "function"
-   },
-   "runtime": "determined",
-   "context": "3-byte big-endian negative value"
-  },
-  {
-   "file": "tests/test_buf.rs",
-   "line": 480,
-   "column": 16,
-   "inventory": "knownReferences",
-   "targetKind": "concrete",
-   "target": {
-    "file": "src/buf/buf_impl.rs",
-    "line": 2086,
-    "name": "try_get_int"
-   },
-   "directCaller": {
-    "name": "try_get_int_sign_extends",
-    "line": 462,
-    "kind": "function"
-   },
-   "runtime": "determined",
-   "context": "positive value unchanged"
-  },
-  {
-   "file": "tests/test_buf.rs",
-   "line": 483,
-   "column": 17,
-   "inventory": "knownReferences",
-   "targetKind": "concrete",
-   "target": {
-    "file": "src/buf/buf_impl.rs",
-    "line": 2086,
-    "name": "try_get_int"
-   },
-   "directCaller": {
-    "name": "try_get_int_sign_extends",
-    "line": 462,
-    "kind": "function"
-   },
-   "runtime": "determined",
-   "context": "full-width value"
-  },
-  {
-   "file": "tests/test_buf.rs",
-   "line": 487,
-   "column": 15,
-   "inventory": "knownReferences",
-   "targetKind": "concrete",
-   "target": {
-    "file": "src/buf/buf_impl.rs",
-    "line": 2086,
-    "name": "try_get_int"
-   },
-   "directCaller": {
-    "name": "try_get_int_sign_extends",
-    "line": 462,
-    "kind": "function"
-   },
-   "runtime": "determined",
-   "context": "short input error shape"
   }
  ],
  "unknowns": [
   "The default method is inherited by many external Buf implementations; only captured calls are listed.",
-  "The changed source also modifies try_get_int_le; this question freezes try_get_int only."
+  "The changed source also modifies try_get_int_le; this question freezes try_get_int only.",
+  "Unit tests added by the commit are outside the default Rust source profile."
  ],
  "expectedGap": false,
  "reserved": false,
  "baseTree": "git worktree at 7930d93^",
  "build": "workspace read with the committed lockfile; no project build executed",
  "freeze": "head source and the commit diff read before any candidate query",
- "notes": "Default trait method calls on concrete receivers can remain unresolved; the score records what the normal query actually finds."
+ "notes": "Production calls only. Both remaining calls exercise default-method or deref receivers; the score records whether the query resolves them."
 }
