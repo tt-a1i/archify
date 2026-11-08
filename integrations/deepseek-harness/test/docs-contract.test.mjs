@@ -132,9 +132,10 @@ test('Skills CLI, Cursor, Codex, Claude Code, OpenCode, and Raven remain the def
   const english = read('README.md');
   const chinese = read('README_ZH.md');
   const japanese = read('README_JA.md');
-  assert.match(english, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
-  assert.match(chinese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
-  assert.match(japanese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
+  const quickStartInstall = /^```bash\nnpx -y skills@latest add https:\/\/archify\.si --skill archify --agent cursor --global --copy --yes\n```$/m;
+  assert.match(english, quickStartInstall);
+  assert.match(chinese, quickStartInstall);
+  assert.match(japanese, quickStartInstall);
   assert.match(english, /## Quick start/);
   assert.match(chinese, /## 快速开始/);
   assert.match(japanese, /## クイックスタート/);
