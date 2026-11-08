@@ -1,0 +1,44 @@
+{
+  "captures": [
+    {
+      "label": "new-commons",
+      "sha256": "885d015579609ee18fbba04eeace53b19a2b82e0ce5b96602fbad26754c67647"
+    },
+    {
+      "label": "older-commons",
+      "sha256": "885d015579609ee18fbba04eeace53b19a2b82e0ce5b96602fbad26754c67647"
+    },
+    {
+      "label": "older-slf",
+      "sha256": "a4d1f89aa3e6c17b3aa7363344c1528b66f959c32ae8b9b0376bd0a9b35d7bd6"
+    },
+    {
+      "label": "controls",
+      "sha256": "d13ef6e2b3988889bd5dea0f5aa6ba428577e5cfdabcaaa2934efab473b418ef"
+    },
+    {
+      "label": "shared-js",
+      "sha256": "017963272a4d513c4ff37b7dc869ca6c9531b649c915b11e219ea83b04e6c531"
+    }
+  ],
+  "distinctCaptures": 4,
+  "questions": [
+    "new-0",
+    "new-1",
+    "new-2",
+    "commons-lang",
+    "slf4j",
+    "legacy",
+    "paired",
+    "js-0",
+    "js-1"
+  ],
+  "cliCommandsPerDistribution": 14,
+  "exits": "All0: newrecipe4, olderarity4, sharedJS3, ownedpair1, observedlegacytask1 and controlscheck1.",
+  "normalization": "Only installation/output paths; source roots, locations, coverage, reasons and snapshot identities otherwise compare exactly.",
+  "zipSha256": "7a59436f2535dcab4fbef25e744c2c95b7ea3bcaa52ee36258d578d63d178152",
+  "repeatedZipEqual": true,
+  "moduleFilesEqual": 168,
+  "historicalModel": "java-static-lexical-v3",
+  "projectExecuted": false
+}

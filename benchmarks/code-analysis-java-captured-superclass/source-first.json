@@ -128,5 +128,6 @@
     "Generic/incomplete/external hierarchy, interfaces, nested/anonymous/lambda contexts and static wildcard value imports remain separate unless independently supported.",
     "Bare inherited calls/argument applicability/virtual dispatch/compiled runtime behavior are not established by this question."
   ],
-  "projectExecuted": false
+  "projectExecuted": false,
+  "scopeClarification": "Generic ordinary ancestors can contribute a closed field-name inventory when all actual superclass declarations are captured. This does not infer type arguments or argument applicability; post-design compiler audit includes captured AbstractExceptionContextTest<T> with this bounded name proof."
 }

@@ -1,0 +1,101 @@
+{
+  "stage": "After module-boundary correction; post-design supplemental observations, not heldout",
+  "rows": [
+    {
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/basicTests/NoBindingMultithreadedInitializationTest.java",
+        "line": 44,
+        "column": 9,
+        "endLine": 44,
+        "endColumn": 36,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+          "name": "reset",
+          "line": 43,
+          "column": 5
+        }
+      },
+      "status": "correct",
+      "initial": "correct-source-known"
+    },
+    {
+      "call": {
+        "file": "slf4j-api/src/test/java/org/slf4j/basicTests/NoBindingMultithreadedInitializationTest.java",
+        "line": 49,
+        "column": 9,
+        "endLine": 49,
+        "endColumn": 36,
+        "resolution": "java-qualified-static-method",
+        "qualifierAncestry": [
+          {
+            "file": "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java",
+            "line": 20,
+            "column": 17
+          }
+        ],
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+          "name": "reset",
+          "line": 43,
+          "column": 5
+        }
+      },
+      "status": "correct",
+      "initial": "correct-source-known"
+    },
+    {
+      "call": {
+        "file": "slf4j-reload4j/src/test/java/org/slf4j/reload4j/Reload4jMultithreadedInitializationTest.java",
+        "line": 66,
+        "column": 40,
+        "endLine": 66,
+        "endColumn": 66,
+        "resolution": "unresolved",
+        "reason": "java-inherited-build-scope"
+      },
+      "status": "unknown-external-target",
+      "initial": "wrong"
+    },
+    {
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 53,
+        "column": 9,
+        "endLine": 53,
+        "endColumn": 36,
+        "resolution": "unresolved",
+        "reason": "java-inherited-build-scope"
+      },
+      "status": "missed",
+      "initial": "correct-source-known"
+    },
+    {
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 58,
+        "column": 9,
+        "endLine": 58,
+        "endColumn": 36,
+        "resolution": "unresolved",
+        "reason": "java-inherited-build-scope"
+      },
+      "status": "missed",
+      "initial": "correct-source-known"
+    }
+  ],
+  "score": {
+    "correct": 2,
+    "wrong": 0,
+    "missed": 2,
+    "unknown-external-target": 1
+  },
+  "meaning": "Two same-api-root calls admitted; erroneous reload4j->compatibility source withheld; two legitimate Simple->Api calls remain known misses until classpath evidence is supported."
+}

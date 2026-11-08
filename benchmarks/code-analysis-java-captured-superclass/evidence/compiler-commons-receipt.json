@@ -1,0 +1,14 @@
+{
+  "profile": "commons",
+  "jdk": "javac 17.0.21",
+  "sourceRevision": "c8774fa74adbbbcd4e5f915ab6bc3aa10d877419",
+  "sourceFiles": 489,
+  "excludedSources": [],
+  "exit": 0,
+  "downloaded": [],
+  "dependencyBytes": 6386640,
+  "seconds": 9.180542374961078,
+  "helperSha256": "9f75a3065f9ff2d75bc1562c52d4302bf0500dada2cdbbeaa11ab7daedb22f7e",
+  "method": "JavacTask parse/analyze --release17 -proc:none; no project emit, test execution or build scripts.",
+  "projectExecuted": false
+}
