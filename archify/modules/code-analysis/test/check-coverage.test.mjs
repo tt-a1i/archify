@@ -8,6 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { formatText } from '../bin/check.mjs';
 
 const CHECK = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'check.mjs');
 
@@ -91,4 +92,33 @@ test('check: threshold errors stay errors and partial coverage does not change t
       otherLanguages: [{ adapter: 'java', files: 1 }],
     });
   }
+});
+
+function textWithParseError(parseError) {
+  return formatText({
+    verdict: 'ok',
+    counts: { findings: 0, error: 0, warning: 0, info: 0, accepted: 0 },
+    language: 'py',
+    files: 1,
+    rules: [],
+    coverage: { parseErrors: [parseError], otherLanguages: [] },
+    review: {},
+    staleBaseline: [],
+    status: 'ok',
+    gate: { failOn: 'warning', newOnly: false, failing: [] },
+  });
+}
+
+test('check: the text summary escapes control characters in parse-failure paths', () => {
+  const text = textWithParseError('src/\u001b[2Jbroken.py');
+  assert.match(text, /src\/\\u001b\[2Jbroken\.py/);
+  assert.doesNotMatch(text, /\u001b/);
+});
+
+test('check: parse paths with literal escapes remain distinct from control characters', () => {
+  const controlCharacter = textWithParseError('src/bad\n.py');
+  const literalEscape = textWithParseError('src/bad\\u000a.py');
+  assert.match(controlCharacter, /src\/bad\\u000a\.py/);
+  assert.match(literalEscape, /src\/bad\\\\u000a\.py/);
+  assert.notEqual(controlCharacter, literalEscape);
 });
