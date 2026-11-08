@@ -37,7 +37,7 @@ export function semanticErrors(name, data) {
     const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel);
     if (goCalls && data.callModel === 'go-source-direct-v3' && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
-    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3'].includes(data.callModel);
+    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4'].includes(data.callModel);
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     data.functions?.forEach((fn, i) => {
       if ((pythonCalls || javaCalls || goCalls || rustCalls || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
@@ -85,8 +85,9 @@ export function semanticErrors(name, data) {
           if (targetFile === call.file || (!direct && !forwarded)) add(`${at}/target/file`, 'must follow a recorded static import or supported reexport to another captured file');
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }
-        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v2', 'rust-source-direct-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
-        if (call.resolution === 'rust-specialized-inherent-source-candidate' && (!rustCalls || data.callModel !== 'rust-source-direct-v3')) add(`${at}/resolution`, 'requires the Rust v3 concrete-specialization source-candidate model');
+        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
+        if (call.resolution === 'rust-specialized-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v3', 'rust-source-direct-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v3 concrete-specialization source-candidate model');
+        if (call.resolution === 'rust-lifetime-inherent-source-candidate' && (!rustCalls || data.callModel !== 'rust-source-direct-v4')) add(`${at}/resolution`, 'requires the Rust v4 lifetime-only inherent source-candidate model');
         if (call.resolution === 'rust-direct-function' && !rustCalls) add(`${at}/resolution`, 'requires the Rust source-direct model');
         if (call.resolution === 'go-direct-method' && (!goCalls || !['go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
         if (call.resolution === 'go-direct-function' && !goCalls) add(`${at}/resolution`, 'requires the Go source-direct model');

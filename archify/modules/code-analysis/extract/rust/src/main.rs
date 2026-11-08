@@ -119,6 +119,7 @@ enum Binding {
     Nominal(usize, String),
     Inherent(usize),
     SpecializedInherent(usize),
+    LifetimeInherent(usize),
     Use(Vec<String>, bool),
     Other,
 }
@@ -156,14 +157,77 @@ struct Krate {
     deps: BTreeMap<String, String>,
     features: BTreeSet<String>,
 }
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Parameters {
+    None,
+    Types(usize),
+    Lifetimes(usize),
+    Unsupported,
+}
+fn declaration_parameters(generics: &syn::Generics, allow_types: bool) -> Parameters {
+    if generics.params.is_empty() {
+        return Parameters::None;
+    }
+    if generics.where_clause.is_some() {
+        return Parameters::Unsupported;
+    }
+    if allow_types && generics.params.iter().all(|p| matches!(p,
+        syn::GenericParam::Type(t) if t.bounds.is_empty() && t.default.is_none() && t.attrs.is_empty())) {
+        return Parameters::Types(generics.params.len());
+    }
+    if generics.params.iter().all(|p| {
+        matches!(p,
+        syn::GenericParam::Lifetime(l) if l.bounds.is_empty() && l.attrs.is_empty()
+            && l.lifetime.ident != "static" && l.lifetime.ident != "_")
+    }) {
+        return Parameters::Lifetimes(generics.params.len());
+    }
+    Parameters::Unsupported
+}
+fn inherent_parameters(im: &syn::ItemImpl, arguments: &PathArguments) -> Parameters {
+    // Preserve the historical non-generic owner contract.
+    if im.generics.params.is_empty() && matches!(arguments, PathArguments::None) {
+        return Parameters::None;
+    }
+    if let PathArguments::AngleBracketed(args) = arguments {
+        if im.generics.params.is_empty()
+            && im.generics.where_clause.is_none()
+            && args.args.iter().all(|arg| {
+                matches!(arg,
+                syn::GenericArgument::Type(Type::Path(t)) if t.qself.is_none()
+                    && t.path.segments.iter().all(|s| matches!(s.arguments, PathArguments::None)))
+            })
+        {
+            return Parameters::Types(args.args.len());
+        }
+        if let Parameters::Lifetimes(count) = declaration_parameters(&im.generics, false) {
+            let names: BTreeSet<_> = im
+                .generics
+                .lifetimes()
+                .map(|l| l.lifetime.ident.to_string())
+                .collect();
+            let used: BTreeSet<_> = args
+                .args
+                .iter()
+                .filter_map(|arg| match arg {
+                    syn::GenericArgument::Lifetime(l) => Some(l.ident.to_string()),
+                    _ => None,
+                })
+                .collect();
+            if args.args.len() == count && names.len() == count && used == names {
+                return Parameters::Lifetimes(count);
+            }
+        }
+    }
+    Parameters::Unsupported
+}
 #[derive(Clone)]
 struct InherentPending {
     module: usize,
     owner: Vec<String>,
     name: String,
     index: usize,
-    monomorphic: bool,
-    specialization: Option<usize>,
+    parameters: Parameters,
     static_function: bool,
 }
 struct Analysis {
@@ -174,7 +238,7 @@ struct Analysis {
     roots: BTreeMap<String, usize>,
     modules: Vec<Module>,
     functions: Vec<Function>,
-    nominal_parameters: BTreeMap<(usize, String), usize>,
+    nominal_parameters: BTreeMap<(usize, String), Parameters>,
     inherent_pending: Vec<InherentPending>,
     inherent: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
     variants: BTreeSet<(usize, String, String)>,
@@ -672,19 +736,16 @@ impl Analysis {
                 Item::Union(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Struct(s) => {
                     let name = s.ident.to_string();
-                    let plain_parameters = s.generics.where_clause.is_none()
-                        && s.generics.params.iter().all(|p| matches!(p,
-                            syn::GenericParam::Type(t) if t.bounds.is_empty() && t.default.is_none() && t.attrs.is_empty()));
-                    let binding =
-                        if selected == 1 && (s.generics.params.is_empty() || plain_parameters) {
-                            if !s.generics.params.is_empty() {
-                                self.nominal_parameters
-                                    .insert((id, name.clone()), s.generics.params.len());
-                            }
-                            Binding::Nominal(id, name.clone())
-                        } else {
-                            Binding::Other
-                        };
+                    let parameters = declaration_parameters(&s.generics, true);
+                    let binding = if selected == 1 && parameters != Parameters::Unsupported {
+                        if parameters != Parameters::None {
+                            self.nominal_parameters
+                                .insert((id, name.clone()), parameters);
+                        }
+                        Binding::Nominal(id, name.clone())
+                    } else {
+                        Binding::Other
+                    };
                     self.add_binding(id, name, binding);
                 }
                 Item::Enum(s) => {
@@ -695,7 +756,12 @@ impl Analysis {
                         self.variants
                             .insert((id, name.clone(), variant.ident.to_string()));
                     }
-                    let binding = if selected == 1 && s.generics.params.is_empty() {
+                    let parameters = declaration_parameters(&s.generics, false);
+                    let binding = if selected == 1 && parameters != Parameters::Unsupported {
+                        if parameters != Parameters::None {
+                            self.nominal_parameters
+                                .insert((id, name.clone()), parameters);
+                        }
                         Binding::Nominal(id, name.clone())
                     } else {
                         Binding::Other
@@ -721,21 +787,7 @@ impl Analysis {
                                         .all(|s| matches!(s.arguments, PathArguments::None)) =>
                             {
                                 let arguments = &p.path.segments.last().unwrap().arguments;
-                                let monomorphic = im.generics.params.is_empty()
-                                    && matches!(arguments, PathArguments::None);
-                                let specialization = if im.generics.params.is_empty()
-                                    && im.generics.where_clause.is_none()
-                                {
-                                    match arguments {
-                                        PathArguments::AngleBracketed(a) if a.args.iter().all(|arg| matches!(arg,
-                                            syn::GenericArgument::Type(Type::Path(t)) if t.qself.is_none()
-                                                && t.path.segments.iter().all(|s| matches!(s.arguments, PathArguments::None)))) => Some(a.args.len()),
-                                        _ => None,
-                                    }
-                                } else {
-                                    None
-                                };
-                                Some((path_parts(&p.path), monomorphic, specialization))
+                                Some((path_parts(&p.path), inherent_parameters(&im, arguments)))
                             }
                             _ => None,
                         }
@@ -765,14 +817,13 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
-                                if let Some((path, monomorphic, specialization)) = &owner_path {
+                                if let Some((path, parameters)) = &owner_path {
                                     self.inherent_pending.push(InherentPending {
                                         module: id,
                                         owner: path.clone(),
                                         name: item.sig.ident.to_string(),
                                         index,
-                                        monomorphic: *monomorphic,
-                                        specialization: *specialization,
+                                        parameters: *parameters,
                                         static_function: item.sig.receiver().is_none(),
                                     });
                                 }
@@ -893,7 +944,7 @@ impl Analysis {
             current = match current {
                 Binding::Module(m) => self.lookup(m, part, depth + 1)?,
                 Binding::Nominal(m, name) => {
-                    let specialized = self.nominal_parameters.contains_key(&(m, name.clone()));
+                    let parameters = self.nominal_parameters.get(&(m, name.clone()));
                     let key = (m, name, part.clone());
                     if self.variants.contains(&key) {
                         return None;
@@ -903,10 +954,10 @@ impl Analysis {
                         return None;
                     }
                     let index = *candidates[0].as_ref()?;
-                    if specialized {
-                        Binding::SpecializedInherent(index)
-                    } else {
-                        Binding::Inherent(index)
+                    match parameters {
+                        Some(Parameters::Types(_)) => Binding::SpecializedInherent(index),
+                        Some(Parameters::Lifetimes(_)) => Binding::LifetimeInherent(index),
+                        _ => Binding::Inherent(index),
                     }
                 }
                 _ => return None,
@@ -1065,6 +1116,14 @@ impl Scanner<'_> {
                         .all(|s| matches!(s.arguments, PathArguments::None)) =>
                 {
                     Some((index, "rust-specialized-inherent-source-candidate"))
+                }
+                Some(Binding::LifetimeInherent(index))
+                    if p.path
+                        .segments
+                        .iter()
+                        .all(|s| matches!(s.arguments, PathArguments::None)) =>
+                {
+                    Some((index, "rust-lifetime-inherent-source-candidate"))
                 }
                 _ => None,
             };
@@ -1558,15 +1617,15 @@ fn main() {
         if let Some(Binding::Nominal(owner_module, owner_name)) =
             a.resolve(pending.module, &pending.owner, false, false, 0)
         {
-            let index = if let Some(arity) = a
+            let index = if let Some(parameters) = a
                 .nominal_parameters
                 .get(&(owner_module, owner_name.clone()))
             {
                 // A generic/receiver/otherwise unsupported sibling remains a
                 // blocker, rather than disappearing from the overload inventory.
-                (pending.static_function && pending.specialization == Some(*arity))
+                (pending.static_function && pending.parameters == *parameters)
                     .then_some(pending.index)
-            } else if pending.monomorphic && pending.static_function {
+            } else if pending.parameters == Parameters::None && pending.static_function {
                 Some(pending.index)
             } else {
                 continue;

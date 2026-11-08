@@ -30,6 +30,30 @@ The coverage.languageScope and raw-facts languageScope report actual selected fi
 
 Crate-local crate/self/super paths, explicit paths, module use/use-as, grouped imports, unambiguous globs and local workspace library paths can identify free functions. Actual Cargo library names and renamed dependencies define the boundary. Module lookup observes editions, module file/path attributes, lexical shadowing and conditional imports. Unsupported or ambiguous paths stay unresolved. Cross-crate source bindings do not prove visibility or type correctness.
 
-Methods, trait dispatch, function values, associated functions, local item functions as targets, generated/expanded macros, external crates, and full type inference remain unknown. Syntactic function/method bodies form the call inventory; macros have opaque records. Type/field definitions are not navigable entities yet. Structural cycles report source coupling; they do not imply runtime import order or partial initialization.
+The original v1 model leaves methods, trait dispatch, function values, associated functions, local item functions as targets, generated/expanded macros, external crates, and full type inference unknown. Later bounded inherent-function revisions are described below; receiver/trait dispatch remains unproved. Syntactic function/method bodies form the call inventory; macros have opaque records. Type/field definitions are not navigable entities yet. Structural cycles report source coupling; they do not imply runtime import order or partial initialization.
 
 See the pinned real-project replay and source/ZIP evidence in benchmarks/code-analysis-go-rust/RUST.md. These finite cases are not whole-repository accuracy measurements.
+
+## Current call model and lifetime-only owners
+
+Current captures use rust-source-direct-v4 / adapter4. Historical v1 collects free
+functions; v2 additionally admits unique monomorphic inherent function paths;
+v3 additionally admits bare generic-struct paths to unique concrete type
+specializations. Historical facts keep their original scope without rebinding.
+
+v4 adds receiver-free inherent source candidates on structs/enums whose generic
+parameters are only unbounded lifetimes. Impl parameters must be unbounded, have
+no where clause, and map one-to-one to named lifetime arguments of the owner.
+Bare nominal/module/import-alias paths reuse existing crate identity and source
+locations. Duplicate/conditional/unsupported sibling declarations block selection;
+variant names still prevent selecting a same-named inherent function. New calls
+use rust-lifetime-inherent-source-candidate.
+
+Concrete static lifetime specializations, mixed type/lifetime owners, bounded
+lifetimes, const/defaulted parameters, explicit call arguments, aliases/Self,
+receiver/trait dispatch and full applicability remain unsupported. Lifetime-only
+source navigation does not infer lifetimes, borrow-check, compile, execute or
+establish complete impact. Native function sourceRange starts at pub/fn, while
+definition.sourceRange also includes owned attributes/doc comments; target
+locations use the former. Saved and paired questions retain existing freshness
+and source-profile checks. Normal toolchain requirements are unchanged.
