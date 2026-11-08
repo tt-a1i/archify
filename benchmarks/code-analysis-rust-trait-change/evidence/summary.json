@@ -89,6 +89,7 @@
               "line": 1300,
               "name": "put"
             },
+            "targetEndVerified": false,
             "trait": {
               "column": 18,
               "file": "src/buf/buf_mut.rs",
@@ -96,7 +97,9 @@
               "name": "BufMut",
               "qualname": "buf::buf_mut::BufMut"
             },
-            "unverifiedFields": []
+            "unverifiedFields": [
+              "target-end"
+            ]
           },
           "callPosition": "src/buf/chain.rs:184:13",
           "callRange": "src/buf/chain.rs:184:13-184:33",
@@ -114,16 +117,24 @@
             "selfType": "BytesMut",
             "selfTypeVerified": true,
             "target": {
+              "column": 5,
               "file": "src/bytes_mut.rs",
               "line": 1300
             },
-            "trait": "BufMut"
+            "targetEndVerified": false,
+            "trait": "BufMut",
+            "unverifiedFields": [
+              "target-end"
+            ]
           },
           "selfType": "BytesMut",
           "status": "correct",
+          "targetEndPosition": null,
           "targetPosition": "src/bytes_mut.rs:1300:5",
           "traitName": "BufMut",
-          "unverifiedFields": [],
+          "unverifiedFields": [
+            "target-end"
+          ],
           "wrong": []
         },
         {
@@ -155,6 +166,7 @@
               "line": 1300,
               "name": "put"
             },
+            "targetEndVerified": false,
             "trait": {
               "column": 18,
               "file": "src/buf/buf_mut.rs",
@@ -162,7 +174,9 @@
               "name": "BufMut",
               "qualname": "buf::buf_mut::BufMut"
             },
-            "unverifiedFields": []
+            "unverifiedFields": [
+              "target-end"
+            ]
           },
           "callPosition": "src/buf/chain.rs:185:13",
           "callRange": "src/buf/chain.rs:185:13-185:53",
@@ -180,16 +194,24 @@
             "selfType": "BytesMut",
             "selfTypeVerified": true,
             "target": {
+              "column": 5,
               "file": "src/bytes_mut.rs",
               "line": 1300
             },
-            "trait": "BufMut"
+            "targetEndVerified": false,
+            "trait": "BufMut",
+            "unverifiedFields": [
+              "target-end"
+            ]
           },
           "selfType": "BytesMut",
           "status": "correct",
+          "targetEndPosition": null,
           "targetPosition": "src/bytes_mut.rs:1300:5",
           "traitName": "BufMut",
-          "unverifiedFields": [],
+          "unverifiedFields": [
+            "target-end"
+          ],
           "wrong": []
         }
       ],
@@ -296,6 +318,7 @@
               "line": 17,
               "name": "into_kvs"
             },
+            "targetEndVerified": false,
             "trait": {
               "column": 15,
               "file": "src/__private_api.rs",
@@ -304,7 +327,8 @@
               "qualname": "__private_api::sealed::KVs"
             },
             "unverifiedFields": [
-              "implementation-type"
+              "implementation-type",
+              "target-end"
             ]
           },
           "callPosition": "src/__private_api.rs:101:9",
@@ -323,17 +347,25 @@
             "selfType": null,
             "selfTypeVerified": false,
             "target": {
+              "column": 12,
               "file": "src/__private_api.rs",
               "line": 17
             },
-            "trait": "KVs"
+            "targetEndVerified": false,
+            "trait": "KVs",
+            "unverifiedFields": [
+              "implementation-type",
+              "target-end"
+            ]
           },
           "selfType": null,
           "status": "correct",
+          "targetEndPosition": null,
           "targetPosition": "src/__private_api.rs:17:12",
           "traitName": "KVs",
           "unverifiedFields": [
-            "implementation-type"
+            "implementation-type",
+            "target-end"
           ],
           "wrong": []
         }
@@ -405,7 +437,8 @@
   "realResultControls": {
     "checks": {
       "sameLineDifferentCallRejected": true,
-      "sameNamedWrongTargetRejected": true
+      "sameNamedWrongTargetRejected": true,
+      "targetColumnOnlyRejected": true
     },
     "sameLineDifferentCall": {
       "actual": {
@@ -436,6 +469,7 @@
           "line": 1300,
           "name": "put"
         },
+        "targetEndVerified": false,
         "trait": {
           "column": 18,
           "file": "src/buf/buf_mut.rs",
@@ -443,7 +477,9 @@
           "name": "BufMut",
           "qualname": "buf::buf_mut::BufMut"
         },
-        "unverifiedFields": []
+        "unverifiedFields": [
+          "target-end"
+        ]
       },
       "callPosition": "src/buf/chain.rs:185:21",
       "callRange": "src/buf/chain.rs:185:21-185:52",
@@ -461,16 +497,24 @@
         "selfType": "BytesMut",
         "selfTypeVerified": true,
         "target": {
+          "column": 5,
           "file": "src/bytes_mut.rs",
           "line": 1300
         },
-        "trait": "BufMut"
+        "targetEndVerified": false,
+        "trait": "BufMut",
+        "unverifiedFields": [
+          "target-end"
+        ]
       },
       "selfType": "BytesMut",
       "status": "wrong",
+      "targetEndPosition": null,
       "targetPosition": "src/bytes_mut.rs:1300:5",
       "traitName": "BufMut",
-      "unverifiedFields": [],
+      "unverifiedFields": [
+        "target-end"
+      ],
       "wrong": [
         "call-range"
       ]
@@ -504,6 +548,7 @@
           "line": 202,
           "name": "put"
         },
+        "targetEndVerified": false,
         "trait": {
           "column": 18,
           "file": "src/buf/buf_mut.rs",
@@ -531,13 +576,19 @@
         "selfType": "BytesMut",
         "selfTypeVerified": true,
         "target": {
+          "column": 5,
           "file": "src/bytes_mut.rs",
           "line": 1300
         },
-        "trait": "BufMut"
+        "targetEndVerified": false,
+        "trait": "BufMut",
+        "unverifiedFields": [
+          "target-end"
+        ]
       },
       "selfType": null,
       "status": "wrong",
+      "targetEndPosition": null,
       "targetPosition": "src/buf/buf_mut.rs:202:8",
       "traitName": "BufMut",
       "unverifiedFields": [
@@ -546,6 +597,85 @@
       "wrong": [
         "declaration-range",
         "implementation-type"
+      ]
+    },
+    "targetColumnOnly": {
+      "actual": {
+        "call": {
+          "column": 13,
+          "endColumn": 33,
+          "endLine": 184,
+          "file": "src/buf/chain.rs",
+          "line": 184
+        },
+        "kind": "definite",
+        "navigation": {
+          "location": {
+            "column": 13,
+            "endColumn": 33,
+            "endLine": 184,
+            "file": "src/buf/chain.rs",
+            "line": 184
+          },
+          "status": "valid"
+        },
+        "resolution": "rust-trait-impl",
+        "selfType": "BytesMut",
+        "selfTypeVerified": true,
+        "target": {
+          "column": 6,
+          "file": "src/bytes_mut.rs",
+          "line": 1300,
+          "name": "put"
+        },
+        "targetEndVerified": false,
+        "trait": {
+          "column": 18,
+          "file": "src/buf/buf_mut.rs",
+          "line": 30,
+          "name": "BufMut",
+          "qualname": "buf::buf_mut::BufMut"
+        },
+        "unverifiedFields": [
+          "target-end"
+        ]
+      },
+      "callPosition": "src/buf/chain.rs:184:13",
+      "callRange": "src/buf/chain.rs:184:13-184:33",
+      "expected": {
+        "call": {
+          "column": 13,
+          "endColumn": 33,
+          "endLine": 184,
+          "file": "src/buf/chain.rs",
+          "line": 184
+        },
+        "inCallInventory": true,
+        "kind": "definite",
+        "reason": "`ret` is a local `crate::BytesMut` value, so `ret.put(...)` uses the BytesMut impl of BufMut.",
+        "selfType": "BytesMut",
+        "selfTypeVerified": true,
+        "target": {
+          "column": 5,
+          "file": "src/bytes_mut.rs",
+          "line": 1300
+        },
+        "targetEndVerified": false,
+        "trait": "BufMut",
+        "unverifiedFields": [
+          "target-end"
+        ]
+      },
+      "selfType": "BytesMut",
+      "status": "wrong",
+      "targetEndPosition": null,
+      "targetPosition": "src/bytes_mut.rs:1300:6",
+      "traitName": "BufMut",
+      "unverifiedFields": [
+        "target-end"
+      ],
+      "wrong": [
+        "declaration-range"
       ]
     }
   }

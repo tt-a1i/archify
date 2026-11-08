@@ -68,10 +68,12 @@ def expected_items(project: dict) -> list[dict]:
         rows.append({
             "kind": "definite",
             "call": {field: call[field] for field in CALL_FIELDS},
-            "target": {"file": impl["file"], "line": impl["line"]},
+            "target": {"file": impl["file"], "line": impl["line"], "column": impl["column"]},
             "trait": impl["trait"],
             "selfType": impl["ownerType"],
             "selfTypeVerified": True,
+            "targetEndVerified": False,
+            "unverifiedFields": ["target-end"],
             "inCallInventory": call.get("inCallInventory", True),
             "reason": call.get("reason"),
         })
@@ -79,10 +81,13 @@ def expected_items(project: dict) -> list[dict]:
         rows.append({
             "kind": "candidate",
             "call": {field: call[field] for field in CALL_FIELDS},
-            "target": {"file": declaration["file"], "line": declaration["line"]},
+            "target": {"file": declaration["file"], "line": declaration["line"],
+                       "column": declaration["column"]},
             "trait": declaration["trait"],
             "selfType": None,
             "selfTypeVerified": False,
+            "targetEndVerified": False,
+            "unverifiedFields": ["implementation-type", "target-end"],
             "inCallInventory": call.get("inCallInventory", True),
             "reason": call.get("reason"),
         })
@@ -105,6 +110,7 @@ def actual_items(head: dict) -> list[dict]:
             unverified.append("owning-trait")
         if match is None:
             unverified.append("implementation-type")
+        unverified.append("target-end")
         rows.append({
             "kind": "definite",
             "call": {field: fact[field] for field in CALL_FIELDS},
@@ -112,13 +118,14 @@ def actual_items(head: dict) -> list[dict]:
             "trait": trait,
             "selfType": match["selfType"] if match else None,
             "selfTypeVerified": match is not None,
+            "targetEndVerified": False,
             "unverifiedFields": unverified,
             "resolution": fact.get("resolution"),
             "navigation": entry.get("navigation"),
         })
     for entry in candidates.get("items", []):
         fact = entry["fact"]
-        unverified = ["implementation-type"]
+        unverified = ["implementation-type", "target-end"]
         if trait is None:
             unverified.append("owning-trait")
         rows.append({
@@ -128,6 +135,7 @@ def actual_items(head: dict) -> list[dict]:
             "trait": trait,
             "selfType": None,
             "selfTypeVerified": False,
+            "targetEndVerified": False,
             "unverifiedFields": unverified,
             "resolution": fact.get("resolution"),
             "runtimeTarget": entry.get("runtimeTarget"),
@@ -143,7 +151,8 @@ def score(expected: dict, actual: dict | None) -> dict:
     if expected["call"] != actual["call"]:
         wrong.append("call-range")
     if (expected["target"]["file"] != actual["target"]["file"]
-            or expected["target"]["line"] != actual["target"]["line"]):
+            or expected["target"]["line"] != actual["target"]["line"]
+            or expected["target"].get("column") != actual["target"].get("column")):
         wrong.append("declaration-range")
     actual_trait = actual.get("trait")
     actual_trait_name = actual_trait.get("name") if isinstance(actual_trait, dict) else actual_trait
@@ -162,6 +171,7 @@ def score(expected: dict, actual: dict | None) -> dict:
                                f"-{call['endLine']}:{call['endColumn']}")
         record["callPosition"] = position(actual["call"])
         record["targetPosition"] = position(actual["target"])
+        record["targetEndPosition"] = None
         record["traitName"] = (actual.get("trait") or {}).get("name")
         record["selfType"] = actual.get("selfType")
         record["unverifiedFields"] = actual.get("unverifiedFields")
@@ -229,16 +239,23 @@ def real_result_controls(projects: list[dict]) -> dict:
                             "endLine": 185, "endColumn": 52}
     call_check = score(base["expected"], swapped_call)
 
+    base = at("src/buf/chain.rs", 184, 13, 33)
+    swapped_column = json.loads(json.dumps(base["actual"]))
+    swapped_column["target"]["column"] = 6
+    column_check = score(base["expected"], swapped_column)
+
     checks = {
         "sameNamedWrongTargetRejected": target_check["status"] == "wrong"
         and {"declaration-range", "implementation-type"} <= set(target_check["wrong"]),
         "sameLineDifferentCallRejected": call_check["status"] == "wrong"
         and call_check["wrong"] == ["call-range"],
+        "targetColumnOnlyRejected": column_check["status"] == "wrong"
+        and column_check["wrong"] == ["declaration-range"],
     }
     if not all(checks.values()):
         raise RuntimeError(f"real-result controls were not rejected: {checks}")
     return {"checks": checks, "sameNamedWrongTarget": target_check,
-            "sameLineDifferentCall": call_check}
+            "sameLineDifferentCall": call_check, "targetColumnOnly": column_check}
 
 
 def load_config(root: Path) -> Path:

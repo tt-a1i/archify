@@ -2,6 +2,7 @@
   "frozenAt": "2026-11-08T08:55:00Z",
   "question": "A maintainer changed one method inside `impl Trait for Type`. Which calls definitely point to that implementation, which only prove use of the trait method, and which remain unknown?",
   "stage": "Recorded from source inspection and upstream diffs before running either CLI on these revisions. The controlled fixture was written after the rule shape was fixed; it is design input, not blind validation.",
+  "targetColumnNote": "Target columns are source-derived declaration anchors: a native fn target uses the fn keyword column; a trait-method target uses the method name column. Per-call CLI targets expose no end position, so target end remains unverified.",
   "profile": {
     "toolchain": "rustc 1.89.0 (29483883 2025-08-04)",
     "target": "aarch64-apple-darwin",
@@ -26,6 +27,7 @@
       "changedImplementation": {
         "file": "src/bytes_mut.rs",
         "line": 1300,
+        "column": 5,
         "qualname": "bytes_mut::BytesMut::put",
         "ownerType": "BytesMut",
         "trait": "BufMut"
@@ -33,6 +35,7 @@
       "traitDeclaration": {
         "file": "src/buf/buf_mut.rs",
         "line": 202,
+        "column": 8,
         "name": "put",
         "trait": "BufMut"
       },
@@ -99,12 +102,14 @@
         {
           "file": "src/__private_api.rs",
           "line": 32,
+          "column": 5,
           "ownerType": "()",
           "trait": "KVs"
         },
         {
           "file": "src/__private_api.rs",
           "line": 25,
+          "column": 5,
           "ownerType": "&'a [(Key<'a>, Value<'a>)]",
           "trait": "KVs",
           "pairing": "head-only"
@@ -113,6 +118,7 @@
       "traitDeclaration": {
         "file": "src/__private_api.rs",
         "line": 17,
+        "column": 12,
         "name": "into_kvs",
         "trait": "KVs"
       },

@@ -64,6 +64,7 @@
             "line": 1300,
             "name": "put"
           },
+          "targetEndVerified": false,
           "trait": {
             "column": 18,
             "file": "src/buf/buf_mut.rs",
@@ -71,7 +72,9 @@
             "name": "BufMut",
             "qualname": "buf::buf_mut::BufMut"
           },
-          "unverifiedFields": []
+          "unverifiedFields": [
+            "target-end"
+          ]
         },
         "callPosition": "src/buf/chain.rs:184:13",
         "callRange": "src/buf/chain.rs:184:13-184:33",
@@ -89,16 +92,24 @@
           "selfType": "BytesMut",
           "selfTypeVerified": true,
           "target": {
+            "column": 5,
             "file": "src/bytes_mut.rs",
             "line": 1300
           },
-          "trait": "BufMut"
+          "targetEndVerified": false,
+          "trait": "BufMut",
+          "unverifiedFields": [
+            "target-end"
+          ]
         },
         "selfType": "BytesMut",
         "status": "correct",
+        "targetEndPosition": null,
         "targetPosition": "src/bytes_mut.rs:1300:5",
         "traitName": "BufMut",
-        "unverifiedFields": [],
+        "unverifiedFields": [
+          "target-end"
+        ],
         "wrong": []
       },
       {
@@ -130,6 +141,7 @@
             "line": 1300,
             "name": "put"
           },
+          "targetEndVerified": false,
           "trait": {
             "column": 18,
             "file": "src/buf/buf_mut.rs",
@@ -137,7 +149,9 @@
             "name": "BufMut",
             "qualname": "buf::buf_mut::BufMut"
           },
-          "unverifiedFields": []
+          "unverifiedFields": [
+            "target-end"
+          ]
         },
         "callPosition": "src/buf/chain.rs:185:13",
         "callRange": "src/buf/chain.rs:185:13-185:53",
@@ -155,16 +169,24 @@
           "selfType": "BytesMut",
           "selfTypeVerified": true,
           "target": {
+            "column": 5,
             "file": "src/bytes_mut.rs",
             "line": 1300
           },
-          "trait": "BufMut"
+          "targetEndVerified": false,
+          "trait": "BufMut",
+          "unverifiedFields": [
+            "target-end"
+          ]
         },
         "selfType": "BytesMut",
         "status": "correct",
+        "targetEndPosition": null,
         "targetPosition": "src/bytes_mut.rs:1300:5",
         "traitName": "BufMut",
-        "unverifiedFields": [],
+        "unverifiedFields": [
+          "target-end"
+        ],
         "wrong": []
       }
     ],
@@ -295,6 +317,7 @@
             "line": 17,
             "name": "into_kvs"
           },
+          "targetEndVerified": false,
           "trait": {
             "column": 15,
             "file": "src/__private_api.rs",
@@ -303,7 +326,8 @@
             "qualname": "__private_api::sealed::KVs"
           },
           "unverifiedFields": [
-            "implementation-type"
+            "implementation-type",
+            "target-end"
           ]
         },
         "callPosition": "src/__private_api.rs:101:9",
@@ -322,17 +346,25 @@
           "selfType": null,
           "selfTypeVerified": false,
           "target": {
+            "column": 12,
             "file": "src/__private_api.rs",
             "line": 17
           },
-          "trait": "KVs"
+          "targetEndVerified": false,
+          "trait": "KVs",
+          "unverifiedFields": [
+            "implementation-type",
+            "target-end"
+          ]
         },
         "selfType": null,
         "status": "correct",
+        "targetEndPosition": null,
         "targetPosition": "src/__private_api.rs:17:12",
         "traitName": "KVs",
         "unverifiedFields": [
-          "implementation-type"
+          "implementation-type",
+          "target-end"
         ],
         "wrong": []
       }
@@ -365,10 +397,11 @@
   },
   "realResultControls": {
     "sameLineDifferentCallRejected": true,
-    "sameNamedWrongTargetRejected": true
+    "sameNamedWrongTargetRejected": true,
+    "targetColumnOnlyRejected": true
   },
   "sameResultsAsSource": true,
-  "sourceCommit": "3a1ac77a8f1855457ecb660e8f8280e34f8e337b",
+  "sourceCommit": "38f82efd2efc7a8ad4733a7a12477fda09c52684",
   "unpackedEntry": "archify/bin/archify.mjs",
   "zipSha256": "5c9687d0fb0fe1ade96defa923e6f7d1c7eb2822d29b12b647b8d9b1d31e35e1"
 }

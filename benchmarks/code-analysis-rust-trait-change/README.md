@@ -11,7 +11,7 @@ This is a bounded source-navigation study, not compiler/runtime proof or a whole
 | tokio-rs/bytes | `d38faf7c9d003d6074405dd480db6bdb813cb80f` | `c08f87663a04eac3b9ab2dfa1976852d9b525a8c` | body refactor of `impl BufMut for BytesMut::put` |
 | rust-lang/log | `761461a5d0c8ea3d483d79b1de0205c2897318d2` | `db145979e229549215300f2696fa89b215cb1cab` | both `KVs::into_kvs` impls change their key type; kept out of rule design |
 
-Profile for both: rustc/cargo `1.89.0`, target `aarch64-apple-darwin`, default features, tests excluded, root module only. `source-first.json` records expected call ranges, declarations, owner types and reasons before either CLI ran; call columns are derived from the frozen source text. `run.py` verifies the head commit and file hashes.
+Profile for both: rustc/cargo `1.89.0`, target `aarch64-apple-darwin`, default features, tests excluded, root module only. `source-first.json` records expected call ranges, target declaration anchors, owner types and reasons before either CLI ran; call columns and target columns are derived from the frozen source text. `run.py` verifies the head commit and file hashes.
 
 ## Source answer and measured result
 
@@ -42,6 +42,8 @@ Baseline at `0c81af0e` reports 0 known references and no trait-candidate coverag
 | bytes `ret.put((&mut self.b).take(...))` | `src/buf/chain.rs:185:13-185:53` | `src/bytes_mut.rs:1300:5` | `BufMut` | `BytesMut` | correct |
 | log `kvs.into_kvs()` | `src/__private_api.rs:101:9-101:23` | `src/__private_api.rs:17:12` | `KVs` | unverified (runtime target not determined) | correct |
 
+The target declaration is the CLI `file:line:column` start anchor. The per-call CLI record has no target end position, so `target-end` remains unverified for all three results rather than being inferred from another record.
+
 The bytes count depends on scope, so both are reported:
 
 | Scope | Definite calls found | Missed |
@@ -61,7 +63,7 @@ Remaining uncertainty: `src/buf/buf_impl.rs:2374` also calls `ret.put(...)`, but
 
 ## Scorer and controls
 
-`run.py` scores each returned real result on call range (file, line, column, end line, end column), target declaration (file, line, column), owning trait and, when determined, implementation type. Missing implementation identity is recorded as `unverified` rather than invented; the log candidate must not claim an implementation.
+`run.py` scores each returned real result on call range (file, line, column, end line, end column), target declaration (file, line, column), owning trait and, when determined, implementation type. Missing implementation identity and target end are recorded as `unverified` rather than invented; the log candidate must not claim an implementation.
 
 `controls/fixture` has two traits with the same method name, two types implementing one trait, explicit `<A as Left>::act`, generic `T: Left`, `&dyn Left`, and an ambiguous `&A` receiver that implements both traits. Its negative control replaces the correct `<A as Left>::act` target with `Right::act` on the same type and must return `wrong` with `declaration-range`.
 
@@ -69,6 +71,7 @@ Two controls use the real bytes results:
 
 - Same-named wrong target: replace `src/buf/chain.rs:184`'s target with the same-named trait declaration `src/buf/buf_mut.rs:202` (`BufMut::put`). The scorer returns `wrong` with `declaration-range` and `implementation-type`.
 - Same-line different call: replace `src/buf/chain.rs:185`'s call range with the nested `.take(...)` call at `185:21-185:52`, keeping the same target. The scorer returns `wrong` with `call-range` only, so it distinguishes position from target identity.
+- Target column only: change `src/buf/chain.rs:184`'s target column from `5` to `6`, keeping call range, target file, line, trait and implementation type unchanged. The scorer returns `wrong` with `declaration-range` only.
 
 The script exits nonzero if either real-result control is accepted or if an in-scope item is wrong or missing. The documented source-answer gap at `2374` is reported but does not fail the run.
 
