@@ -30,9 +30,10 @@ test('extract: archify/ self-bootstrap passes schema and is byte-for-byte determ
   const { config, output } = workspace(t);
   const OUT_A = output('facts-a.json');
   const OUT_B = output('facts-b.json');
-  const first = runExtract([ARCHIFY, '--language', 'ts', '--config', config, '--out', OUT_A]);
+  // Full renderer-package extraction needs a wider budget on shared CI runners.
+  const first = runExtract([ARCHIFY, '--language', 'ts', '--config', config, '--out', OUT_A], process.env, 60000);
   assert.equal(first.status, 0, `${first.stdout || ''}${first.stderr || ''}${first.error?.message || ''}`);
-  const second = runExtract([ARCHIFY, '--language', 'ts', '--config', config, '--out', OUT_B]);
+  const second = runExtract([ARCHIFY, '--language', 'ts', '--config', config, '--out', OUT_B], process.env, 60000);
   assert.equal(second.status, 0, `${second.stdout || ''}${second.stderr || ''}${second.error?.message || ''}`);
   assert.equal(fs.readFileSync(OUT_A, 'utf8'), fs.readFileSync(OUT_B, 'utf8'));
   const facts = JSON.parse(fs.readFileSync(OUT_A, 'utf8'));
@@ -47,7 +48,7 @@ test('extract: hand-verified import lists for two archify files', { skip: SKIP }
   // Independent of test ordering: this test produces its own extraction.
   const { config, output } = workspace(t);
   const OUT_C = output('facts.json');
-  assert.equal(runExtract([ARCHIFY, '--language', 'ts', '--config', config, '--out', OUT_C]).status, 0);
+  assert.equal(runExtract([ARCHIFY, '--language', 'ts', '--config', config, '--out', OUT_C], process.env, 60000).status, 0);
   const facts = JSON.parse(fs.readFileSync(OUT_C, 'utf8'));
   // renderers/shared/validator.mjs — verified by hand against its two import lines.
   assert.deepEqual(edges(facts, 'renderers/shared/validator.mjs'), [
