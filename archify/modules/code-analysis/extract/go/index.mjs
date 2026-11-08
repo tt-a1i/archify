@@ -8,8 +8,8 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'go';
-export const REVISION = 5;
-export const CALL_MODEL = 'go-source-direct-v3';
+export const REVISION = 6;
+export const CALL_MODEL = 'go-source-direct-v4';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.go'));
 export const countSources = (root, config) => listFiles(root, config).filter(file => file.endsWith('.go')).length;
 const script = fileURLToPath(new URL('./extract.go', import.meta.url));

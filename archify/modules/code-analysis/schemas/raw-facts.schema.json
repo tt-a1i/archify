@@ -4,24 +4,91 @@
   "title": "Archify Analyzers raw facts",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "repository", "files", "imports", "symbols", "calls", "unresolved"],
+  "required": [
+    "schema_version",
+    "repository",
+    "files",
+    "imports",
+    "symbols",
+    "calls",
+    "unresolved"
+  ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "callModel": { "type": "string", "minLength": 1, "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. js-ts-lexical-v3 additionally follows same-module default identifier/export-specifier references to ordinary function declarations with one body and no observed source writes or direct eval. js-ts-lexical-v4 additionally binds configured non-relative static imports to captured in-project implementations under the same export restrictions. js-ts-lexical-v5 additionally follows explicit ESM imported/local function exports through captured acyclic value routes, retaining forwarding statement positions in via. Imported callable targets reject observed source writes or direct eval. Wildcard/type-only/dynamic/CommonJS forwarding and arbitrary value aliases/factories remain unsupported. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. python-lexical-v2 additionally follows one unique unconditional explicit from-import reexport. Neither resolves attributes, classes, longer/conditional/rebound export chains or runtime dispatch. java-static-lexical-v1 inventories Java method invocations and binds only unqualified fixed-arity calls to a uniquely declared explicit static body method in a top-level ordinary class without extends/implements; inherited Object names and nested/local/anonymous owners are excluded. java-static-lexical-v2 additionally binds explicit class-qualified calls to public unique static fixed-arity methods in captured public top-level classes without explicit supertypes, after native type/value namespace guards. go-source-direct-v1 binds captured free-function declarations under the recorded module/build/test profile with incomplete external types. java-static-lexical-v3 additionally permits unique fixed-arity static candidates among different-arity siblings, preserving same-arity and variable-arity unknowns. go-source-direct-v3 uses recorded optional installed SDK standard-library compiler exports to improve captured source bindings while third-party types remain incomplete. go-source-direct-v2 additionally binds compiler-selected concrete receiver methods, including promotion, method expressions and generic instances; interfaces and function-variable calls remain unresolved. rust-source-direct-v3 additionally permits bare generic-struct paths to unique concrete-specialization inherent source candidates; generic/receiver/unsupported siblings block selection. Explicit generic call arguments, lifetime/const/bounded owners, trait/alias applicability and full type inference remain unsupported. Java-static-lexical-v4 additionally admits explicit class-qualified static candidates from callers with closed captured ordinary-class ancestry and no inherited qualifier field blocker; historical Java scopes remain distinct. Java-static-lexical-v5 additionally permits declared direct captured Maven jar/test-jar project source routes with POM evidence and main/test role checks. rust-source-direct-v4 additionally admits bare paths to unique lifetime-only struct/enum inherent source candidates with unbounded one-to-one impl lifetime parameters; unsupported siblings and enum variant names block selection. Historical Rust v1/v2/v3 scopes remain distinct. rust-source-direct-v5 additionally captures local trait declarations and impl edges: explicit <Type as Trait>::method resolves to a unique captured impl, while calls through a declared T: Trait bound, dyn Trait or a generic trait path target the trait method declaration only; local bindings/parameters with explicit captured nominal types may resolve a method call to a unique trait impl. Trait candidates do not determine runtime dispatch. rust-source-direct-v6 additionally inventories trait default method bodies once per source declaration and records defaultMethod context; calls in those bodies use the same receiver typing as other functions, while declarations without a body produce no calls. Historical v5 scopes remain distinct. Targets are source candidates, not proof of full compilation or execution." },
+    "schema_version": {
+      "const": 1
+    },
+    "callModel": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. js-ts-lexical-v3 additionally follows same-module default identifier/export-specifier references to ordinary function declarations with one body and no observed source writes or direct eval. js-ts-lexical-v4 additionally binds configured non-relative static imports to captured in-project implementations under the same export restrictions. js-ts-lexical-v5 additionally follows explicit ESM imported/local function exports through captured acyclic value routes, retaining forwarding statement positions in via. Imported callable targets reject observed source writes or direct eval. Wildcard/type-only/dynamic/CommonJS forwarding and arbitrary value aliases/factories remain unsupported. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. python-lexical-v2 additionally follows one unique unconditional explicit from-import reexport. Neither resolves attributes, classes, longer/conditional/rebound export chains or runtime dispatch. java-static-lexical-v1 inventories Java method invocations and binds only unqualified fixed-arity calls to a uniquely declared explicit static body method in a top-level ordinary class without extends/implements; inherited Object names and nested/local/anonymous owners are excluded. java-static-lexical-v2 additionally binds explicit class-qualified calls to public unique static fixed-arity methods in captured public top-level classes without explicit supertypes, after native type/value namespace guards. go-source-direct-v1 binds captured free-function declarations under the recorded module/build/test profile with incomplete external types. java-static-lexical-v3 additionally permits unique fixed-arity static candidates among different-arity siblings, preserving same-arity and variable-arity unknowns. go-source-direct-v3 uses recorded optional installed SDK standard-library compiler exports to improve captured source bindings while third-party types remain incomplete. go-source-direct-v2 additionally binds compiler-selected concrete receiver methods, including promotion, method expressions and generic instances; interfaces and function-variable calls remain unresolved. rust-source-direct-v3 additionally permits bare generic-struct paths to unique concrete-specialization inherent source candidates; generic/receiver/unsupported siblings block selection. Explicit generic call arguments, lifetime/const/bounded owners, trait/alias applicability and full type inference remain unsupported. Java-static-lexical-v4 additionally admits explicit class-qualified static candidates from callers with closed captured ordinary-class ancestry and no inherited qualifier field blocker; historical Java scopes remain distinct. Java-static-lexical-v5 additionally permits declared direct captured Maven jar/test-jar project source routes with POM evidence and main/test role checks. rust-source-direct-v4 additionally admits bare paths to unique lifetime-only struct/enum inherent source candidates with unbounded one-to-one impl lifetime parameters; unsupported siblings and enum variant names block selection. Historical Rust v1/v2/v3 scopes remain distinct. rust-source-direct-v5 additionally captures local trait declarations and impl edges: explicit <Type as Trait>::method resolves to a unique captured impl, while calls through a declared T: Trait bound, dyn Trait or a generic trait path target the trait method declaration only; local bindings/parameters with explicit captured nominal types may resolve a method call to a unique trait impl. Trait candidates do not determine runtime dispatch. rust-source-direct-v6 additionally inventories trait default method bodies once per source declaration and records defaultMethod context; calls in those bodies use the same receiver typing as other functions, while declarations without a body produce no calls. rust-source-direct-v7 additionally requires captured evidence for self.as_ref()/deref()/borrow(): an inherent method return type, an AsRef/Borrow generic target, or a Deref Target, prefers a unique inherent method over those wrapper targets, and substitutes generic struct fields by declaration position. Calls without that evidence remain unresolved. rust-source-direct-v8 additionally resolves accessor traits from captured local declarations (including aliases and defaulted generic parameters), reads impl where-clause bounds, applies default type parameters to field receivers, follows standard Box/Arc/Rc accessor payloads, and binds tuple-variant match payloads. Historical v5 scopes remain distinct. Targets are source candidates, not proof of full compilation or execution."
+    },
     "repository": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["root", "revision", "sourceKind", "snapshotId", "language", "adapter"],
+      "required": [
+        "root",
+        "revision",
+        "sourceKind",
+        "snapshotId",
+        "language",
+        "adapter"
+      ],
       "properties": {
-        "root": { "type": "string", "minLength": 1, "description": "Analyzed directory, relative to the Git repository root (\".\" when equal)." },
-        "revision": { "type": ["string", "null"], "pattern": "^[a-f0-9]{40}$" },
-        "baseRevision": { "type": ["string", "null"], "pattern": "^[a-f0-9]{40}$", "description": "Contextual HEAD only, not the revision of the analyzed working-tree contents." },
-        "sourceKind": { "enum": ["working-tree"] },
-        "snapshotId": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Digest identifying the extracted facts and captured source text." },
-        "url": { "type": ["string", "null"], "description": "Git origin URL as configured; null when there is no Git repository or no origin." },
-        "language": { "enum": ["ts", "py", "java", "go", "rust"] },
-        "adapter": { "type": "string", "description": "Parser or runtime the adapter used, with its version." },
-        "adapterRevision": { "type": "integer", "minimum": 1, "description": "Revision of the adapter's own extraction logic. Absent in facts written before revisions were recorded." }
+        "root": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Analyzed directory, relative to the Git repository root (\".\" when equal)."
+        },
+        "revision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "baseRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{40}$",
+          "description": "Contextual HEAD only, not the revision of the analyzed working-tree contents."
+        },
+        "sourceKind": {
+          "enum": [
+            "working-tree"
+          ]
+        },
+        "snapshotId": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Digest identifying the extracted facts and captured source text."
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Git origin URL as configured; null when there is no Git repository or no origin."
+        },
+        "language": {
+          "enum": [
+            "ts",
+            "py",
+            "java",
+            "go",
+            "rust"
+          ]
+        },
+        "adapter": {
+          "type": "string",
+          "description": "Parser or runtime the adapter used, with its version."
+        },
+        "adapterRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Revision of the adapter's own extraction logic. Absent in facts written before revisions were recorded."
+        }
       }
     },
     "files": {
@@ -29,12 +96,31 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "sourceText", "loc", "role"],
+        "required": [
+          "path",
+          "sourceText",
+          "loc",
+          "role"
+        ],
         "properties": {
-          "path": { "$ref": "#/$defs/repoPath" },
-          "sourceText": { "type": "string", "description": "Exact text parsed by the extractor, retained for consistent source navigation." },
-          "loc": { "type": "integer", "minimum": 0 },
-          "role": { "enum": ["source", "test", "generated"] }
+          "path": {
+            "$ref": "#/$defs/repoPath"
+          },
+          "sourceText": {
+            "type": "string",
+            "description": "Exact text parsed by the extractor, retained for consistent source navigation."
+          },
+          "loc": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "role": {
+            "enum": [
+              "source",
+              "test",
+              "generated"
+            ]
+          }
         }
       }
     },
@@ -44,27 +130,98 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["from", "specifier", "kind", "line", "resolved"],
+        "required": [
+          "from",
+          "specifier",
+          "kind",
+          "line",
+          "resolved"
+        ],
         "properties": {
-          "from": { "$ref": "#/$defs/repoPath" },
-          "to": { "$ref": "#/$defs/repoPath", "description": "Present only when resolved inside the analyzed tree." },
-          "specifier": { "type": "string", "minLength": 1 },
-          "kind": { "enum": ["static", "dynamic", "require", "export"] },
-          "line": { "type": "integer", "minimum": 1 },
-          "resolved": { "type": "boolean" },
-          "names": { "type": "array", "items": { "type": "string" } },
-          "lazy": { "const": true, "description": "Import occurs in a deferred body. Its caller may still run during module initialization; this is not a safety guarantee." },
-          "typeOnly": { "const": true, "description": "Type-only dependency, excluded from runtime import-cycle analysis." },
-          "conditional": { "const": true, "description": "Execution depends on a guard, exception, or loop not evaluated by the analyzer." },
-          "implicit": { "const": true, "description": "Python package initializer loaded by this import; line points to the initiating statement." }
+          "from": {
+            "$ref": "#/$defs/repoPath"
+          },
+          "to": {
+            "$ref": "#/$defs/repoPath",
+            "description": "Present only when resolved inside the analyzed tree."
+          },
+          "specifier": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "static",
+              "dynamic",
+              "require",
+              "export"
+            ]
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "resolved": {
+            "type": "boolean"
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lazy": {
+            "const": true,
+            "description": "Import occurs in a deferred body. Its caller may still run during module initialization; this is not a safety guarantee."
+          },
+          "typeOnly": {
+            "const": true,
+            "description": "Type-only dependency, excluded from runtime import-cycle analysis."
+          },
+          "conditional": {
+            "const": true,
+            "description": "Execution depends on a guard, exception, or loop not evaluated by the analyzer."
+          },
+          "implicit": {
+            "const": true,
+            "description": "Python package initializer loaded by this import; line points to the initiating statement."
+          }
         },
-        "if": { "properties": { "resolved": { "const": true } } },
-        "then": { "required": ["to"] },
-        "else": { "not": { "required": ["to"] } },
-        "allOf": [{
-          "if": { "required": ["implicit"] },
-          "then": { "properties": { "resolved": { "const": true } } }
-        }]
+        "if": {
+          "properties": {
+            "resolved": {
+              "const": true
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "to"
+          ]
+        },
+        "else": {
+          "not": {
+            "required": [
+              "to"
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "implicit"
+              ]
+            },
+            "then": {
+              "properties": {
+                "resolved": {
+                  "const": true
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "functions": {
@@ -73,23 +230,79 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["file", "name", "qualname", "line", "endLine", "complexity", "nesting", "deepestLine"],
+        "required": [
+          "file",
+          "name",
+          "qualname",
+          "line",
+          "endLine",
+          "complexity",
+          "nesting",
+          "deepestLine"
+        ],
         "properties": {
-          "file": { "$ref": "#/$defs/repoPath" },
-          "name": { "type": "string", "minLength": 1 },
-          "qualname": { "type": "string", "minLength": 1 },
-          "line": { "type": "integer", "minimum": 1 },
-          "endLine": { "type": "integer", "minimum": 1 },
-          "complexity": { "type": "integer", "minimum": 1, "description": "Cyclomatic complexity: 1 plus each branch point (see extract/py/extract.py)." },
-          "nesting": { "type": "integer", "minimum": 0, "description": "Deepest block nesting inside the body; elif stays at its if's depth." },
-          "deepestLine": { "type": "integer", "minimum": 1 },
-          "sourceRange": { "$ref": "#/$defs/sourceRange", "description": "Exact decoded definition slice: Java CST declaration including modifiers, or Python def/async def through AST end excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 and java-static-lexical-v1 functions; absent in historical captures." },
+          "file": {
+            "$ref": "#/$defs/repoPath"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "qualname": {
+            "type": "string",
+            "minLength": 1
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "endLine": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "complexity": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Cyclomatic complexity: 1 plus each branch point (see extract/py/extract.py)."
+          },
+          "nesting": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Deepest block nesting inside the body; elif stays at its if's depth."
+          },
+          "deepestLine": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sourceRange": {
+            "$ref": "#/$defs/sourceRange",
+            "description": "Exact decoded definition slice: Java CST declaration including modifiers, or Python def/async def through AST end excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 and java-static-lexical-v1 functions; absent in historical captures."
+          },
           "definition": {
-            "type": "object", "additionalProperties": false, "required": ["kind", "sourceRange"],
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "sourceRange"
+            ],
             "description": "Optional captured named definition with headers: exact owned syntax including decorators, annotations and modifiers, excluding preceding comments and trailing newline. Absent for historical captures and unsupported metric records.",
             "properties": {
-              "kind": { "enum": ["FunctionDef", "AsyncFunctionDef", "methodDeclaration", "interfaceMethodDeclaration", "constructorDeclaration", "compactConstructorDeclaration", "FuncDecl", "InterfaceMethod", "RustItemFn"] },
-              "sourceRange": { "$ref": "#/$defs/sourceRange" }
+              "kind": {
+                "enum": [
+                  "FunctionDef",
+                  "AsyncFunctionDef",
+                  "methodDeclaration",
+                  "interfaceMethodDeclaration",
+                  "constructorDeclaration",
+                  "compactConstructorDeclaration",
+                  "FuncDecl",
+                  "InterfaceMethod",
+                  "RustItemFn"
+                ]
+              },
+              "sourceRange": {
+                "$ref": "#/$defs/sourceRange"
+              }
             }
           }
         }
@@ -101,12 +314,32 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["file", "name", "kind", "line"],
+        "required": [
+          "file",
+          "name",
+          "kind",
+          "line"
+        ],
         "properties": {
-          "file": { "$ref": "#/$defs/repoPath" },
-          "name": { "type": "string", "minLength": 1 },
-          "kind": { "enum": ["function", "class", "variable", "import"] },
-          "line": { "type": "integer", "minimum": 1 }
+          "file": {
+            "$ref": "#/$defs/repoPath"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "function",
+              "class",
+              "variable",
+              "import"
+            ]
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          }
         }
       }
     },
@@ -114,11 +347,80 @@
       "type": "array",
       "description": "Captured local trait declarations. Methods are declaration anchors; a call target here does not determine runtime dispatch.",
       "items": {
-        "type": "object", "additionalProperties": false,
-        "required": ["declaration", "methods"],
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "declaration",
+          "methods"
+        ],
         "properties": {
-          "declaration": { "type": "object", "additionalProperties": false, "required": ["file", "name", "qualname", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "name": { "type": "string", "minLength": 1 }, "qualname": { "type": "string", "minLength": 1 }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } },
-          "methods": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["file", "name", "qualname", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "name": { "type": "string", "minLength": 1 }, "qualname": { "type": "string", "minLength": 1 }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } }
+          "declaration": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "name",
+              "qualname",
+              "line",
+              "column"
+            ],
+            "properties": {
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "file",
+                "name",
+                "qualname",
+                "line",
+                "column"
+              ],
+              "properties": {
+                "file": {
+                  "$ref": "#/$defs/repoPath"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "qualname": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "column": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -126,13 +428,115 @@
       "type": "array",
       "description": "Captured local trait impl method edges used for Rust trait-call evidence. A traitMethod target is a declaration anchor, not proof of runtime dispatch.",
       "items": {
-        "type": "object", "additionalProperties": false,
-        "required": ["trait", "traitMethod", "implementation", "selfType"],
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "trait",
+          "traitMethod",
+          "implementation",
+          "selfType"
+        ],
         "properties": {
-          "trait": { "type": "object", "additionalProperties": false, "required": ["file", "name", "qualname", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "name": { "type": "string", "minLength": 1 }, "qualname": { "type": "string", "minLength": 1 }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } },
-          "traitMethod": { "type": "object", "additionalProperties": false, "required": ["file", "name", "qualname", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "name": { "type": "string", "minLength": 1 }, "qualname": { "type": "string", "minLength": 1 }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } },
-          "implementation": { "type": "object", "additionalProperties": false, "required": ["file", "name", "qualname", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "name": { "type": "string", "minLength": 1 }, "qualname": { "type": "string", "minLength": 1 }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } },
-          "selfType": { "type": "string", "minLength": 1 }
+          "trait": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "name",
+              "qualname",
+              "line",
+              "column"
+            ],
+            "properties": {
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "traitMethod": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "name",
+              "qualname",
+              "line",
+              "column"
+            ],
+            "properties": {
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "implementation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "name",
+              "qualname",
+              "line",
+              "column"
+            ],
+            "properties": {
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "selfType": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -140,50 +544,387 @@
       "type": "array",
       "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage. python-lexical-v1 records Python ast.Call with the same UTF-16/end-exclusive coordinates, binding only eligible module-level ordinary definitions or direct from-import aliases; unsupported calls remain unresolved. Java java-static-lexical-v1 also inventories syntactic method invocations (excluding constructors and method references); same-file-static-method identifies a bounded lexical source candidate, not compiler resolution. Java v2 additionally permits java-qualified-static-method with explicit target.file after native class/value namespace lookup; visibility, overload and scope restrictions apply.",
       "items": {
-        "type": "object", "additionalProperties": false,
-        "required": ["file", "line", "column", "endLine", "endColumn", "resolution"],
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "line",
+          "column",
+          "endLine",
+          "endColumn",
+          "resolution"
+        ],
         "properties": {
-          "file": { "$ref": "#/$defs/repoPath" },
-          "line": { "type": "integer", "minimum": 1 },
-          "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at invocation expression start." },
-          "endLine": { "type": "integer", "minimum": 1, "description": "One-based end-exclusive invocation expression end line." },
-          "endColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 end-exclusive column." },
-          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "same-file-static-method", "go-direct-function", "go-direct-method", "go-interface-method", "rust-direct-function", "rust-inherent-source-candidate", "rust-specialized-inherent-source-candidate", "rust-lifetime-inherent-source-candidate", "rust-trait-impl", "rust-trait-method-candidate", "java-qualified-static-method", "unresolved"] },
-          "via": { "type": "array", "minItems": 1, "description": "js-ts-lexical-v5 ordered forwarding import/reexport statement locations, between the caller import and target file. Captured value edges and current path freshness are checked separately.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
-          "qualifierAncestry": { "type": "array", "minItems": 1, "description": "Java v4 captured ancestor class declaration points supporting absence of inherited qualifier fields. Current ancestor-file freshness is required before navigation.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
-          "buildEvidence": { "type": "array", "minItems": 1, "description": "Java v5 captured POM source points supporting a declared direct project dependency route. Requires recorded metadata and current input freshness.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
-          "receiverInterface": { "$ref": "#/$defs/interfaceNamedRef", "description": "Go interface method calls only: the captured named interface that supplied the static receiver type. For a promoted method on a concrete wrapper, this is the interface that declared the promoted method. Used to distinguish calls through sibling interfaces with the same method spelling. Absent when the receiver is an anonymous or uncaptured interface." },
-          "receiverPromotion": { "const": "embedded-interface", "description": "Go promoted method call: the static receiver is a concrete type, but the selected method is promoted from an embedded interface field, so dispatch still goes through the interface." },
+          "file": {
+            "$ref": "#/$defs/repoPath"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "column": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "1-based UTF-16 column at invocation expression start."
+          },
+          "endLine": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "One-based end-exclusive invocation expression end line."
+          },
+          "endColumn": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "One-based UTF-16 end-exclusive column."
+          },
+          "resolution": {
+            "enum": [
+              "same-file-function",
+              "same-file-function-initializer",
+              "imported-function",
+              "same-file-static-method",
+              "go-direct-function",
+              "go-direct-method",
+              "go-interface-method",
+              "rust-direct-function",
+              "rust-inherent-source-candidate",
+              "rust-specialized-inherent-source-candidate",
+              "rust-lifetime-inherent-source-candidate",
+              "rust-trait-impl",
+              "rust-trait-method-candidate",
+              "java-qualified-static-method",
+              "unresolved"
+            ]
+          },
+          "via": {
+            "type": "array",
+            "minItems": 1,
+            "description": "js-ts-lexical-v5 ordered forwarding import/reexport statement locations, between the caller import and target file. Captured value edges and current path freshness are checked separately.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "file",
+                "line",
+                "column"
+              ],
+              "properties": {
+                "file": {
+                  "$ref": "#/$defs/repoPath"
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "column": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "qualifierAncestry": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Java v4 captured ancestor class declaration points supporting absence of inherited qualifier fields. Current ancestor-file freshness is required before navigation.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "file",
+                "line",
+                "column"
+              ],
+              "properties": {
+                "file": {
+                  "$ref": "#/$defs/repoPath"
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "column": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "buildEvidence": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Java v5 captured POM source points supporting a declared direct project dependency route. Requires recorded metadata and current input freshness.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "file",
+                "line",
+                "column"
+              ],
+              "properties": {
+                "file": {
+                  "$ref": "#/$defs/repoPath"
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "column": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "receiverInterface": {
+            "$ref": "#/$defs/interfaceNamedRef",
+            "description": "Go interface method calls only: the captured named interface that supplied the static receiver type. For a promoted method on a concrete wrapper, this is the interface that declared the promoted method. Used to distinguish calls through sibling interfaces with the same method spelling. Absent when the receiver is an anonymous or uncaptured interface."
+          },
+          "receiverPromotion": {
+            "const": "embedded-interface",
+            "description": "Go promoted method call: the static receiver is a concrete type, but the selected method is promoted from an embedded interface field, so dispatch still goes through the interface."
+          },
           "target": {
-            "type": "object", "additionalProperties": false,
-            "required": ["name", "line", "column"],
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "line",
+              "column"
+            ],
             "properties": {
-              "file": { "$ref": "#/$defs/repoPath" },
-              "name": { "type": "string", "minLength": 1, "description": "Measured function name; a named function expression uses its inner name, which may differ from the const variable name." },
-              "line": { "type": "integer", "minimum": 1 },
-              "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at the function declaration or initializer expression start in target.file for imported-function/java-qualified-static-method, otherwise the callsite file (including modifiers)." }
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Measured function name; a named function expression uses its inner name, which may differ from the const variable name."
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "1-based UTF-16 column at the function declaration or initializer expression start in target.file for imported-function/java-qualified-static-method, otherwise the callsite file (including modifiers)."
+              }
             }
           },
           "defaultMethod": {
-            "type": "object", "additionalProperties": false,
+            "type": "object",
+            "additionalProperties": false,
             "description": "Rust v6 context for a call captured inside a trait default method body. The body is inventoried once per source declaration, not per implementing type.",
-            "required": ["file", "name", "qualname", "line", "column", "trait"],
+            "required": [
+              "file",
+              "name",
+              "qualname",
+              "line",
+              "column",
+              "trait"
+            ],
             "properties": {
-              "file": { "$ref": "#/$defs/repoPath" },
-              "name": { "type": "string", "minLength": 1 },
-              "qualname": { "type": "string", "minLength": 1 },
-              "line": { "type": "integer", "minimum": 1 },
-              "column": { "type": "integer", "minimum": 1 },
-              "trait": { "type": "string", "minLength": 1 }
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "trait": {
+                "type": "string",
+                "minLength": 1
+              }
             }
           },
-          "reason": { "enum": ["unsupported-callee", "optional-call", "no-local-function-binding", "ambiguous-binding", "go-method-dispatch", "java-inherited-build-scope", "rust-cfg-unselected", "rust-trait-or-method-dispatch", "rust-macro-not-expanded", "rust-context-dependent"] }
+          "reason": {
+            "enum": [
+              "unsupported-callee",
+              "optional-call",
+              "no-local-function-binding",
+              "ambiguous-binding",
+              "go-method-dispatch",
+              "go-interface-external-method",
+              "java-inherited-build-scope",
+              "rust-cfg-unselected",
+              "rust-trait-or-method-dispatch",
+              "rust-macro-not-expanded",
+              "rust-context-dependent"
+            ]
+          },
+          "directCaller": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Innermost captured named function/method containing this call site. Local named functions are reported as local-function; a call inside a trait default body reports the enclosing default method, while defaultMethod keeps the outer trait context. Closures are attributed to their enclosing named function. This is source containment, not runtime dispatch evidence.",
+            "required": [
+              "file",
+              "name",
+              "qualname",
+              "kind",
+              "line",
+              "column"
+            ],
+            "properties": {
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "enum": [
+                  "function",
+                  "method",
+                  "local-function",
+                  "trait-default-method"
+                ]
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "interfaceMethod": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Go unresolved call through an interface method whose declaration is not captured. Identifies the declaration package and name so a change query can match a concrete implementation without inventing a source target.",
+            "required": [
+              "package",
+              "qualname",
+              "name"
+            ],
+            "properties": {
+              "package": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
         },
         "oneOf": [
-          { "properties": { "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "same-file-static-method"] }, "target": { "type": "object", "not": { "required": ["file"] } } }, "required": ["target"], "not": { "required": ["reason"] } },
-          { "properties": { "resolution": { "enum": ["imported-function", "java-qualified-static-method"] }, "target": { "type": "object", "required": ["file"] } }, "required": ["target"], "not": { "required": ["reason"] } },
-          { "properties": { "resolution": { "enum": ["go-direct-function", "go-direct-method", "go-interface-method", "rust-direct-function", "rust-inherent-source-candidate", "rust-specialized-inherent-source-candidate", "rust-lifetime-inherent-source-candidate", "rust-trait-impl", "rust-trait-method-candidate"] } }, "required": ["target"], "not": { "required": ["reason"] } },
-          { "properties": { "resolution": { "const": "unresolved" } }, "required": ["reason"], "not": { "required": ["target"] } }
+          {
+            "properties": {
+              "resolution": {
+                "enum": [
+                  "same-file-function",
+                  "same-file-function-initializer",
+                  "same-file-static-method"
+                ]
+              },
+              "target": {
+                "type": "object",
+                "not": {
+                  "required": [
+                    "file"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "target"
+            ],
+            "not": {
+              "required": [
+                "reason"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "resolution": {
+                "enum": [
+                  "imported-function",
+                  "java-qualified-static-method"
+                ]
+              },
+              "target": {
+                "type": "object",
+                "required": [
+                  "file"
+                ]
+              }
+            },
+            "required": [
+              "target"
+            ],
+            "not": {
+              "required": [
+                "reason"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "resolution": {
+                "enum": [
+                  "go-direct-function",
+                  "go-direct-method",
+                  "go-interface-method",
+                  "rust-direct-function",
+                  "rust-inherent-source-candidate",
+                  "rust-specialized-inherent-source-candidate",
+                  "rust-lifetime-inherent-source-candidate",
+                  "rust-trait-impl",
+                  "rust-trait-method-candidate"
+                ]
+              }
+            },
+            "required": [
+              "target"
+            ],
+            "not": {
+              "required": [
+                "reason"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "resolution": {
+                "const": "unresolved"
+              }
+            },
+            "required": [
+              "reason"
+            ],
+            "not": {
+              "required": [
+                "target"
+              ]
+            }
+          }
         ]
       }
     },
@@ -296,23 +1037,79 @@
             "standardLibrary": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["mode", "packages", "projectCommands", "sourceFilesAnalyzed"],
+              "required": [
+                "mode",
+                "packages",
+                "projectCommands",
+                "sourceFilesAnalyzed"
+              ],
               "properties": {
-                "mode": { "enum": ["disabled", "compiler-exports"] },
-                "toolchain": { "type": "string" },
-                "network": { "type": "string" },
-                "projectCommands": { "const": false },
-                "sourceFilesAnalyzed": { "const": false },
-                "intrinsicPackages": { "type": "array", "items": { "enum": ["unsafe"] } },
-                "requestedPackages": { "type": "array", "items": { "type": "string" } },
-                "exportedDependencyCount": { "type": "integer", "minimum": 0 },
-                "packages": { "type": "array", "items": {
-                  "type": "object", "additionalProperties": false, "required": ["path", "sha256", "bytes"],
-                  "properties": { "path": { "type": "string" }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "bytes": { "type": "integer", "minimum": 0 } }
-                } }
+                "mode": {
+                  "enum": [
+                    "disabled",
+                    "compiler-exports"
+                  ]
+                },
+                "toolchain": {
+                  "type": "string"
+                },
+                "network": {
+                  "type": "string"
+                },
+                "projectCommands": {
+                  "const": false
+                },
+                "sourceFilesAnalyzed": {
+                  "const": false
+                },
+                "intrinsicPackages": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unsafe"
+                    ]
+                  }
+                },
+                "requestedPackages": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "exportedDependencyCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "packages": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "path",
+                      "sha256",
+                      "bytes"
+                    ],
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "bytes": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                }
               }
             },
-            "interfaceEvidence": { "$ref": "#/$defs/interfaceEvidence" },
+            "interfaceEvidence": {
+              "$ref": "#/$defs/interfaceEvidence"
+            },
             "selectedFiles": {
               "type": "array",
               "items": {
@@ -456,7 +1253,10 @@
     "packageMarkers": {
       "type": "array",
       "description": "Package marker files (package.json, pyproject.toml, __init__.py; for Java also pom.xml, build.gradle, build.gradle.kts) under the analyzed root, relative POSIX paths. Module grouping uses them as package boundaries. Java v5 additionally reads captured Maven POMs for its bounded declared direct project dependency model.",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "parse_errors": {
       "type": "array",
@@ -464,65 +1264,222 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "message"],
-        "properties": { "path": { "$ref": "#/$defs/repoPath" }, "message": { "type": "string" } }
+        "required": [
+          "path",
+          "message"
+        ],
+        "properties": {
+          "path": {
+            "$ref": "#/$defs/repoPath"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
       }
     },
     "unresolved": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["external", "outside", "unknown", "opaque"],
+      "required": [
+        "external",
+        "outside",
+        "unknown",
+        "opaque"
+      ],
       "properties": {
-        "external": { "type": "integer", "minimum": 0, "description": "Third-party or standard-library dependencies: bare or node: specifiers, Python modules outside the tree, Java imports of packages no analyzed file declares." },
-        "outside": { "type": "integer", "minimum": 0, "description": "Resolved to a file outside the analyzed root." },
-        "unknown": { "type": "integer", "minimum": 0, "description": "Dependencies that look internal but could not be resolved: path-like or in-tree specifiers, Java names in an analyzed package or matching an analyzed type." },
-        "opaque": { "type": "integer", "minimum": 0, "description": "Dynamic import/require whose specifier is not a string literal (recorded as \"<computed>\")." }
+        "external": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Third-party or standard-library dependencies: bare or node: specifiers, Python modules outside the tree, Java imports of packages no analyzed file declares."
+        },
+        "outside": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Resolved to a file outside the analyzed root."
+        },
+        "unknown": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Dependencies that look internal but could not be resolved: path-like or in-tree specifiers, Java names in an analyzed package or matching an analyzed type."
+        },
+        "opaque": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Dynamic import/require whose specifier is not a string literal (recorded as \"<computed>\")."
+        }
       }
     },
     "interfaceImplementations": {
       "type": "array",
-      "description": "Go v5 captured interface method declarations and the named source types whose value or pointer method sets satisfy the whole interface. Each edge is declaration evidence, not runtime dispatch or a complete implementation set when incomplete typing was skipped.",
+      "description": "Go interface evidence: captured interface method declarations and the named source types whose value or pointer method sets satisfy the whole interface. Since go-source-direct-v4 an edge may name an external embedded interface method with package/name and external:true but no captured source location. Each edge is method-set evidence, not runtime dispatch.",
       "items": {
-        "type": "object", "additionalProperties": false, "required": ["interface", "method", "implementation"],
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "interface",
+          "method",
+          "implementation"
+        ],
         "properties": {
-          "interface": { "$ref": "#/$defs/interfaceNamedRef" },
+          "interface": {
+            "$ref": "#/$defs/interfaceNamedRef"
+          },
           "method": {
-            "type": "object", "additionalProperties": false, "required": ["qualname", "name", "file", "line", "column"],
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "qualname",
+              "name"
+            ],
             "properties": {
-              "qualname": { "type": "string", "minLength": 1 },
-              "name": { "type": "string", "minLength": 1 },
-              "file": { "$ref": "#/$defs/repoPath" },
-              "line": { "type": "integer", "minimum": 1 },
-              "column": { "type": "integer", "minimum": 1 }
-            }
+              "qualname": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "file": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "package": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Go external interface method only: declaring package import path."
+              },
+              "external": {
+                "const": true,
+                "description": "Go external interface method only: the declaration was loaded from export data and has no captured source location."
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "external": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "external"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "package"
+                  ]
+                },
+                "else": {
+                  "required": [
+                    "file",
+                    "line",
+                    "column"
+                  ]
+                }
+              }
+            ]
           },
           "implementation": {
-            "type": "object", "additionalProperties": false, "required": ["type", "valueSatisfies", "pointerSatisfies", "methodSet", "reason"],
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "valueSatisfies",
+              "pointerSatisfies",
+              "methodSet",
+              "reason"
+            ],
             "properties": {
-              "type": { "$ref": "#/$defs/interfaceNamedRef" },
-              "valueSatisfies": { "type": "boolean", "description": "The value type T itself satisfies the interface." },
-              "pointerSatisfies": { "type": "boolean", "description": "*T satisfies the interface. Both flags are true when T's value method set already satisfies it." },
-              "methodSet": { "enum": ["value", "pointer"], "description": "Which method set supplied the implementing method." },
+              "type": {
+                "$ref": "#/$defs/interfaceNamedRef"
+              },
+              "valueSatisfies": {
+                "type": "boolean",
+                "description": "The value type T itself satisfies the interface."
+              },
+              "pointerSatisfies": {
+                "type": "boolean",
+                "description": "*T satisfies the interface. Both flags are true when T's value method set already satisfies it."
+              },
+              "methodSet": {
+                "enum": [
+                  "value",
+                  "pointer"
+                ],
+                "description": "Which method set supplied the implementing method."
+              },
               "method": {
-                "type": "object", "additionalProperties": false, "required": ["qualname", "file", "line", "column"],
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "qualname",
+                  "file",
+                  "line",
+                  "column"
+                ],
                 "properties": {
-                  "qualname": { "type": "string", "minLength": 1 },
-                  "file": { "$ref": "#/$defs/repoPath" },
-                  "line": { "type": "integer", "minimum": 1 },
-                  "column": { "type": "integer", "minimum": 1 }
+                  "qualname": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "file": {
+                    "$ref": "#/$defs/repoPath"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "column": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
                 }
               },
               "promotedDeclaration": {
-                "type": "object", "additionalProperties": false, "required": ["qualname", "file", "line", "column"],
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "qualname",
+                  "file",
+                  "line",
+                  "column"
+                ],
                 "description": "Present when the satisfying method is promoted from an embedded interface field; no concrete body is attributed.",
                 "properties": {
-                  "qualname": { "type": "string", "minLength": 1 },
-                  "file": { "$ref": "#/$defs/repoPath" },
-                  "line": { "type": "integer", "minimum": 1 },
-                  "column": { "type": "integer", "minimum": 1 }
+                  "qualname": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "file": {
+                    "$ref": "#/$defs/repoPath"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "column": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
                 }
               },
-              "reason": { "enum": ["captured-concrete-method", "promoted-interface-method", "method-body-not-captured"] }
+              "reason": {
+                "enum": [
+                  "captured-concrete-method",
+                  "promoted-interface-method",
+                  "method-body-not-captured"
+                ]
+              }
             }
           }
         }
@@ -530,39 +1487,145 @@
     }
   },
   "$defs": {
-    "sourceRange": {"type":"object","additionalProperties":false,"required":["line","column","endLine","endColumn","sha256"],"properties":{"line":{"type":"integer","minimum":1},"column":{"type":"integer","minimum":1},"endLine":{"type":"integer","minimum":1},"endColumn":{"type":"integer","minimum":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}},"description":"Exact decoded source slice. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice."},
-    "repoPath": { "type": "string", "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\\\u0000-\\u001f]+$" },
-    "interfaceNamedRef": {
-      "type": "object", "additionalProperties": false, "required": ["qualname", "package", "file", "line", "column"],
+    "sourceRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line",
+        "column",
+        "endLine",
+        "endColumn",
+        "sha256"
+      ],
       "properties": {
-        "qualname": { "type": "string", "minLength": 1 },
-        "package": { "type": "string", "minLength": 1 },
-        "file": { "$ref": "#/$defs/repoPath" },
-        "line": { "type": "integer", "minimum": 1 },
-        "column": { "type": "integer", "minimum": 1 }
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endColumn": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "description": "Exact decoded source slice. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice."
+    },
+    "repoPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\\\u0000-\\u001f]+$"
+    },
+    "interfaceNamedRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "qualname",
+        "package",
+        "file",
+        "line",
+        "column"
+      ],
+      "properties": {
+        "qualname": {
+          "type": "string",
+          "minLength": 1
+        },
+        "package": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "interfaceEvidence": {
-      "type": "object", "additionalProperties": false,
-      "required": ["model", "completeInterfaces", "incompleteInterfaces", "genericInterfaces", "interfacesWithoutCapturedImplementations", "edges"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "completeInterfaces",
+        "incompleteInterfaces",
+        "genericInterfaces",
+        "interfacesWithoutCapturedImplementations",
+        "edges"
+      ],
       "description": "Coverage of the captured interface implementation edge set. incompleteInterfaces and genericInterfaces explain why a concrete method may have no interface edge; absence is unknown, not proof of non-implementation.",
       "properties": {
-        "model": { "const": "captured-interface-implementations-v1" },
-        "completeInterfaces": { "type": "integer", "minimum": 0 },
+        "model": {
+          "enum": ["captured-interface-implementations-v1", "captured-interface-implementations-v2"]
+        },
+        "completeInterfaces": {
+          "type": "integer",
+          "minimum": 0
+        },
         "incompleteInterfaces": {
-          "type": "array", "items": {
-            "type": "object", "additionalProperties": false, "required": ["interface", "reason"],
-            "properties": { "interface": { "$ref": "#/$defs/interfaceNamedRef" }, "reason": { "type": "string", "minLength": 1 } }
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "interface",
+              "reason"
+            ],
+            "properties": {
+              "interface": {
+                "$ref": "#/$defs/interfaceNamedRef"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
         },
-        "genericInterfaces": { "type": "array", "items": { "$ref": "#/$defs/interfaceNamedRef" } },
+        "genericInterfaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/interfaceNamedRef"
+          }
+        },
         "interfacesWithoutCapturedImplementations": {
-          "type": "array", "items": {
-            "type": "object", "additionalProperties": false, "required": ["interface", "reason"],
-            "properties": { "interface": { "$ref": "#/$defs/interfaceNamedRef" }, "reason": { "const": "no-captured-implementation" } }
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "interface",
+              "reason"
+            ],
+            "properties": {
+              "interface": {
+                "$ref": "#/$defs/interfaceNamedRef"
+              },
+              "reason": {
+                "const": "no-captured-implementation"
+              }
+            }
           }
         },
-        "edges": { "type": "integer", "minimum": 0 }
+        "edges": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     }
   }

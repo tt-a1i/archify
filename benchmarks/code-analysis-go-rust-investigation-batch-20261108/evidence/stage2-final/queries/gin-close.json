@@ -1,0 +1,4427 @@
+{
+  "kind": "archify-change-question",
+  "stage": "orientation-only",
+  "status": "ready",
+  "question": "responseWriter.CloseNotify changed to return nil when the wrapped ResponseWriter does not support CloseNotify. Which callers reach the changed method, and are they statically determined?",
+  "entry": "response_writer.go",
+  "workflow": "docs/FUNCTION-ANALYSIS.md",
+  "language": "go",
+  "capture": "fresh-pair; same current language extractor and effective analysis configuration",
+  "analysisConfigDigest": "8951d9eb428985e18ffd7d2520bfb1cf4f6d2e2d6d038e154c801a55ba147362",
+  "sides": {
+    "base": {
+      "side": "base",
+      "root": "/tmp/archify-batch-20261108/samples/gin-close-base",
+      "snapshot": {
+        "revision": null,
+        "baseRevision": "8d0468f72897652485933b845253386f9147a8bf",
+        "sourceKind": "working-tree",
+        "root": ".",
+        "url": "https://github.com/gin-gonic/gin.git",
+        "language": "go",
+        "adapter": "go-parser@1.27.2",
+        "adapterRevision": 6,
+        "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6"
+      },
+      "language": "go",
+      "producer": {
+        "adapter": "go-parser@1.27.2",
+        "adapterRevision": 6
+      },
+      "callModel": "go-source-direct-v4",
+      "analysisConfigDigest": "8951d9eb428985e18ffd7d2520bfb1cf4f6d2e2d6d038e154c801a55ba147362",
+      "capturedFiles": 93,
+      "sourceIdentity": "valid",
+      "unavailableFiles": {
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      },
+      "parseErrors": 0,
+      "languageScope": {
+        "language": "go",
+        "module": "github.com/gin-gonic/gin",
+        "build": {
+          "cgo": false,
+          "goFlags": "not-loaded",
+          "goWork": "not-loaded",
+          "goarch": "arm64",
+          "goos": "darwin",
+          "releaseTags": [
+            "go1.1",
+            "go1.2",
+            "go1.3",
+            "go1.4",
+            "go1.5",
+            "go1.6",
+            "go1.7",
+            "go1.8",
+            "go1.9",
+            "go1.10",
+            "go1.11",
+            "go1.12",
+            "go1.13",
+            "go1.14",
+            "go1.15",
+            "go1.16",
+            "go1.17",
+            "go1.18",
+            "go1.19",
+            "go1.20",
+            "go1.21",
+            "go1.22",
+            "go1.23",
+            "go1.24",
+            "go1.25",
+            "go1.26",
+            "go1.27"
+          ],
+          "replace": "not-loaded",
+          "tags": [],
+          "tests": true,
+          "toolTags": [
+            "goexperiment.regabiwrappers",
+            "goexperiment.regabiargs",
+            "goexperiment.jsonv2",
+            "goexperiment.greenteagc",
+            "goexperiment.randomizedheapbase64",
+            "goexperiment.sizespecializedmalloc",
+            "arm64.v8.0"
+          ],
+          "toolchain": "go1.27.2"
+        },
+        "packages": [
+          {
+            "files": [
+              "auth.go",
+              "context.go",
+              "debug.go",
+              "deprecated.go",
+              "doc.go",
+              "errors.go",
+              "fs.go",
+              "gin.go",
+              "logger.go",
+              "mode.go",
+              "path.go",
+              "recovery.go",
+              "response_writer.go",
+              "routergroup.go",
+              "test_helpers.go",
+              "tree.go",
+              "utils.go",
+              "version.go"
+            ],
+            "id": "github.com/gin-gonic/gin",
+            "name": "gin",
+            "path": "github.com/gin-gonic/gin"
+          },
+          {
+            "files": [
+              "auth.go",
+              "context.go",
+              "debug.go",
+              "deprecated.go",
+              "doc.go",
+              "errors.go",
+              "fs.go",
+              "gin.go",
+              "logger.go",
+              "mode.go",
+              "path.go",
+              "recovery.go",
+              "response_writer.go",
+              "routergroup.go",
+              "test_helpers.go",
+              "tree.go",
+              "utils.go",
+              "version.go",
+              "auth_test.go",
+              "benchmarks_test.go",
+              "context_file_test.go",
+              "context_test.go",
+              "debug_test.go",
+              "deprecated_test.go",
+              "errors_test.go",
+              "fs_test.go",
+              "gin_integration_test.go",
+              "gin_test.go",
+              "githubapi_test.go",
+              "logger_test.go",
+              "middleware_test.go",
+              "mode_test.go",
+              "path_test.go",
+              "recovery_test.go",
+              "response_writer_test.go",
+              "routergroup_test.go",
+              "routes_test.go",
+              "tree_test.go",
+              "utils_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin#test:gin",
+            "name": "gin",
+            "path": "github.com/gin-gonic/gin"
+          },
+          {
+            "files": [
+              "binding/binding.go",
+              "binding/bson.go",
+              "binding/default_validator.go",
+              "binding/form.go",
+              "binding/form_mapping.go",
+              "binding/header.go",
+              "binding/json.go",
+              "binding/msgpack.go",
+              "binding/multipart_form_mapping.go",
+              "binding/plain.go",
+              "binding/protobuf.go",
+              "binding/query.go",
+              "binding/toml.go",
+              "binding/uri.go",
+              "binding/xml.go",
+              "binding/yaml.go"
+            ],
+            "id": "github.com/gin-gonic/gin/binding",
+            "name": "binding",
+            "path": "github.com/gin-gonic/gin/binding"
+          },
+          {
+            "files": [
+              "binding/binding.go",
+              "binding/bson.go",
+              "binding/default_validator.go",
+              "binding/form.go",
+              "binding/form_mapping.go",
+              "binding/header.go",
+              "binding/json.go",
+              "binding/msgpack.go",
+              "binding/multipart_form_mapping.go",
+              "binding/plain.go",
+              "binding/protobuf.go",
+              "binding/query.go",
+              "binding/toml.go",
+              "binding/uri.go",
+              "binding/xml.go",
+              "binding/yaml.go",
+              "binding/binding_msgpack_test.go",
+              "binding/binding_test.go",
+              "binding/default_validator_benchmark_test.go",
+              "binding/default_validator_test.go",
+              "binding/form_mapping_benchmark_test.go",
+              "binding/form_mapping_test.go",
+              "binding/json_test.go",
+              "binding/msgpack_test.go",
+              "binding/multipart_form_mapping_test.go",
+              "binding/toml_test.go",
+              "binding/validate_test.go",
+              "binding/xml_test.go",
+              "binding/yaml_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/binding#test:binding",
+            "name": "binding",
+            "path": "github.com/gin-gonic/gin/binding"
+          },
+          {
+            "files": [
+              "codec/json/api.go",
+              "codec/json/json.go"
+            ],
+            "id": "github.com/gin-gonic/gin/codec/json",
+            "name": "json",
+            "path": "github.com/gin-gonic/gin/codec/json"
+          },
+          {
+            "files": [
+              "ginS/gins.go"
+            ],
+            "id": "github.com/gin-gonic/gin/ginS",
+            "name": "ginS",
+            "path": "github.com/gin-gonic/gin/ginS"
+          },
+          {
+            "files": [
+              "ginS/gins.go",
+              "ginS/gins_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/ginS#test:ginS",
+            "name": "ginS",
+            "path": "github.com/gin-gonic/gin/ginS"
+          },
+          {
+            "files": [
+              "internal/bytesconv/bytesconv.go"
+            ],
+            "id": "github.com/gin-gonic/gin/internal/bytesconv",
+            "name": "bytesconv",
+            "path": "github.com/gin-gonic/gin/internal/bytesconv"
+          },
+          {
+            "files": [
+              "internal/bytesconv/bytesconv.go",
+              "internal/bytesconv/bytesconv_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/internal/bytesconv#test:bytesconv",
+            "name": "bytesconv",
+            "path": "github.com/gin-gonic/gin/internal/bytesconv"
+          },
+          {
+            "files": [
+              "internal/fs/fs.go"
+            ],
+            "id": "github.com/gin-gonic/gin/internal/fs",
+            "name": "fs",
+            "path": "github.com/gin-gonic/gin/internal/fs"
+          },
+          {
+            "files": [
+              "internal/fs/fs.go",
+              "internal/fs/fs_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/internal/fs#test:fs",
+            "name": "fs",
+            "path": "github.com/gin-gonic/gin/internal/fs"
+          },
+          {
+            "files": [
+              "render/bson.go",
+              "render/data.go",
+              "render/html.go",
+              "render/json.go",
+              "render/msgpack.go",
+              "render/pdf.go",
+              "render/protobuf.go",
+              "render/reader.go",
+              "render/redirect.go",
+              "render/render.go",
+              "render/text.go",
+              "render/toml.go",
+              "render/xml.go",
+              "render/yaml.go"
+            ],
+            "id": "github.com/gin-gonic/gin/render",
+            "name": "render",
+            "path": "github.com/gin-gonic/gin/render"
+          },
+          {
+            "files": [
+              "render/bson.go",
+              "render/data.go",
+              "render/html.go",
+              "render/json.go",
+              "render/msgpack.go",
+              "render/pdf.go",
+              "render/protobuf.go",
+              "render/reader.go",
+              "render/redirect.go",
+              "render/render.go",
+              "render/text.go",
+              "render/toml.go",
+              "render/xml.go",
+              "render/yaml.go",
+              "render/reader_test.go",
+              "render/render_msgpack_test.go",
+              "render/render_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/render#test:render",
+            "name": "render",
+            "path": "github.com/gin-gonic/gin/render"
+          }
+        ],
+        "typing": {
+          "errorCount": 2381,
+          "errors": [
+            "binding/default_validator.go:18:12: undefined: validator",
+            "binding/protobuf.go:30:24: undefined: proto.Message",
+            "binding/protobuf.go:34:18: undefined: proto.Unmarshal",
+            "binding/bson.go:29:14: undefined: bson.Unmarshal",
+            "binding/default_validator.go:95:16: undefined: validator",
+            "binding/msgpack.go:32:19: undefined: codec.MsgpackHandle",
+            "binding/msgpack.go:33:18: undefined: codec.NewDecoder",
+            "binding/toml.go:30:13: undefined: toml",
+            "binding/yaml.go:30:13: undefined: yaml",
+            "binding/default_validator.go:13:2: \"github.com/go-playground/validator/v10\" imported and not used",
+            "binding/toml.go:12:2: \"github.com/pelletier/go-toml/v2\" imported and not used",
+            "binding/yaml.go:12:2: \"github.com/goccy/go-yaml\" imported and not used",
+            "render/bson.go:24:21: undefined: bson.Marshal",
+            "render/msgpack.go:41:15: undefined: codec.MsgpackHandle",
+            "render/msgpack.go:42:15: undefined: codec.NewEncoder",
+            "render/protobuf.go:24:22: undefined: proto.Marshal",
+            "render/protobuf.go:24:44: undefined: proto.Message",
+            "render/yaml.go:24:16: undefined: yaml",
+            "render/toml.go:24:16: undefined: toml",
+            "render/toml.go:10:2: \"github.com/pelletier/go-toml/v2\" imported and not used"
+          ],
+          "externalPackagesNotLoaded": [
+            "github.com/gin-contrib/sse",
+            "github.com/gin-gonic/gin/testdata/protoexample",
+            "github.com/go-playground/validator/v10",
+            "github.com/goccy/go-yaml",
+            "github.com/json-iterator/go",
+            "github.com/mattn/go-isatty",
+            "github.com/modern-go/reflect2",
+            "github.com/pelletier/go-toml/v2",
+            "github.com/quic-go/quic-go/http3",
+            "github.com/stretchr/testify/assert",
+            "github.com/stretchr/testify/require",
+            "github.com/ugorji/go/codec",
+            "go.mongodb.org/mongo-driver/v2/bson",
+            "golang.org/x/net/http2",
+            "golang.org/x/net/http2/h2c",
+            "google.golang.org/protobuf/proto"
+          ],
+          "status": "partial-source-bindings"
+        },
+        "standardLibrary": {
+          "exportedDependencyCount": 212,
+          "intrinsicPackages": [
+            "unsafe"
+          ],
+          "mode": "compiler-exports",
+          "network": "module-proxy-and-checksum-disabled",
+          "packages": [
+            {
+              "bytes": 422668,
+              "path": "bufio",
+              "sha256": "e285559ee5b063b7693c99ad1320ce2bb011b089b913791229e7ec313367f13f"
+            },
+            {
+              "bytes": 605696,
+              "path": "bytes",
+              "sha256": "22b3214332c262f77ecfb2ec5275d812be5831a3681cab6923d2f855ae432f71"
+            },
+            {
+              "bytes": 2554,
+              "path": "cmp",
+              "sha256": "83a5b12672194de931d3bff29f77a3e85c3e12f5019fff73b8242d14818e58d8"
+            },
+            {
+              "bytes": 412724,
+              "path": "context",
+              "sha256": "79180122176a983c1241f6501c4dc805aa408bc5322d31a73fe2390e83b57ca6"
+            },
+            {
+              "bytes": 78864,
+              "path": "crypto/rand",
+              "sha256": "352e6f9a95c1c6089c4c2d68ac627970be58b2b81629051d2a3a3d825a322be3"
+            },
+            {
+              "bytes": 31160,
+              "path": "crypto/subtle",
+              "sha256": "289bd07d71abc1e39b20b9594d345b430ed8803e5f9acc1f3bc311485555d6cb"
+            },
+            {
+              "bytes": 6036938,
+              "path": "crypto/tls",
+              "sha256": "fb2095fc1d26cfee37998db3bc58ffd2db2975401c8ac34a291ac47220128e24"
+            },
+            {
+              "bytes": 20104,
+              "path": "encoding",
+              "sha256": "9fbb32605149a257cb7413fd10982b5f54a9be7b84fc5222ebc15b940eec2b11"
+            },
+            {
+              "bytes": 175780,
+              "path": "encoding/base64",
+              "sha256": "c695141a2523d396405c3910f1a840c7e739868dc82489da8263d94724167184"
+            },
+            {
+              "bytes": 112348,
+              "path": "encoding/hex",
+              "sha256": "97e1c25cba0faa3e1c57fc1c6bd8b96a4cc91c5bd4f2e25c5482f8559129dd67"
+            },
+            {
+              "bytes": 727962,
+              "path": "encoding/json",
+              "sha256": "5ae236bd0177c407d236ebb436e66378ba3a9b1f6ae949f1902eaf89345ea4aa"
+            },
+            {
+              "bytes": 2025332,
+              "path": "encoding/xml",
+              "sha256": "bb99b686264a7f2adb633c0cb42e44f69e1d543dab621ab7be0ea0de510e8312"
+            },
+            {
+              "bytes": 100910,
+              "path": "errors",
+              "sha256": "efbbb2d66f523125bb66e6d2b4de1ed4db03dfaf725bc86cf1dbe69b28f67a53"
+            },
+            {
+              "bytes": 866186,
+              "path": "flag",
+              "sha256": "b8e7311430b37571960b3143065c48245f77bc8b91746885fb46f210b61620e5"
+            },
+            {
+              "bytes": 1296514,
+              "path": "fmt",
+              "sha256": "e803f1b8708bd7b065a0637e3df04f9d64eec2707cc1478bc327bde3b5512a2f"
+            },
+            {
+              "bytes": 1536844,
+              "path": "html/template",
+              "sha256": "49daa3b0c2c3519995834e49b23279cd037c15dfe77b99807734971a82ebac1e"
+            },
+            {
+              "bytes": 449500,
+              "path": "io",
+              "sha256": "a05c5ac71c0ad8fb6f96fd603e58cc35faa166484aa47aa27dbe0aa05987a98d"
+            },
+            {
+              "bytes": 471944,
+              "path": "io/fs",
+              "sha256": "4f50078d2e9aa7ac07390117b4c1d207513095b627c7cf45508d0506a6c60c4b"
+            },
+            {
+              "bytes": 332498,
+              "path": "log",
+              "sha256": "4ea2bcb809a03231a00a1230c20e19dcab431b39963bb6261c5218b0689132d6"
+            },
+            {
+              "bytes": 8754,
+              "path": "maps",
+              "sha256": "8acce40f9075f30e35fd1bee294afe15469af873afb95a6da6c8670a65bfe609"
+            },
+            {
+              "bytes": 612542,
+              "path": "math",
+              "sha256": "efff2a0e0ddd762ac68dcf296bedc1f7adebb877647776ce5bb44bd525eb10f9"
+            },
+            {
+              "bytes": 383580,
+              "path": "math/rand",
+              "sha256": "6b6ec68114c1415084b61ac0a284d6cbdd5ee552452e23970eae378eb78705e2"
+            },
+            {
+              "bytes": 595650,
+              "path": "mime/multipart",
+              "sha256": "965b40cb0d497e73a24c729386d5cd1bf1dc768a4a14c526c3cd8816966e42ed"
+            },
+            {
+              "bytes": 4801038,
+              "path": "net",
+              "sha256": "7a2ed373a4c906f19a70596a5104a5fd6d6a88bdfb578911269c3f0a4e07e7f5"
+            },
+            {
+              "bytes": 6677702,
+              "path": "net/http",
+              "sha256": "62ee5a1d2a3d197f59e108c69ef508386f0a480ba22cda486824679257631f0e"
+            },
+            {
+              "bytes": 767866,
+              "path": "net/http/httptest",
+              "sha256": "e2fdca680755ff597c2648984f6b8aad9ce1b32c33ccaf761995e24dff97334a"
+            },
+            {
+              "bytes": 858560,
+              "path": "net/http/httputil",
+              "sha256": "31d04fb66751f27ca8ded79e9e4898e9f130ef4727ff4dd725bb72c15a2a7320"
+            },
+            {
+              "bytes": 412986,
+              "path": "net/textproto",
+              "sha256": "c25d4c331f9174c841d57831753df2ea8ae71a5f707d1799bc0c0d48f892d6d9"
+            },
+            {
+              "bytes": 626974,
+              "path": "net/url",
+              "sha256": "370b1ff4265a91547af0ba8fde9fccaded04e33e4d1992b5ef7f989160a4c281"
+            },
+            {
+              "bytes": 2507384,
+              "path": "os",
+              "sha256": "9eb16dabf1c6e1a672441c7c1fa0619ae4b1c850e74bfae8ae128e674c6a0bbb"
+            },
+            {
+              "bytes": 81814,
+              "path": "path",
+              "sha256": "9ae827800ebe72b26bfed23c6891a1b811d4b73f2623da5595650ef7d785352d"
+            },
+            {
+              "bytes": 340390,
+              "path": "path/filepath",
+              "sha256": "051d299b2b90d0d1e7e1ba0a859783ab3bc65996b2d01b8b4d00c3e34257c388"
+            },
+            {
+              "bytes": 3999474,
+              "path": "reflect",
+              "sha256": "29fa2df372b613fd9fc54183d0a32753d5334c9b57d71de49a13cc0c085083b2"
+            },
+            {
+              "bytes": 1564304,
+              "path": "regexp",
+              "sha256": "0011bc27b7690fe34e06895d686558a659790795de8d1754d5b74d3dbba97e9e"
+            },
+            {
+              "bytes": 15224824,
+              "path": "runtime",
+              "sha256": "0d8b6cd4488799cea5a1069dd039c4d9128037a067f43d6019e4c99a5f95e73e"
+            },
+            {
+              "bytes": 256904,
+              "path": "strconv",
+              "sha256": "b32d8ecfc8059d75b25eb2c1acf4eb4179f15151b8814218c7f80e86abd47595"
+            },
+            {
+              "bytes": 718248,
+              "path": "strings",
+              "sha256": "2178f8b2688d5daf07e8e1e56e1ab9ecc5ddb319fc5be13ad4485be8eabbeaaf"
+            },
+            {
+              "bytes": 967650,
+              "path": "sync",
+              "sha256": "c93cb181ae1db592a7684d379d635d748f75ad1f964062d3992bd35d7f682446"
+            },
+            {
+              "bytes": 275140,
+              "path": "sync/atomic",
+              "sha256": "1d5225ab5d15785da37025c1a9b6ed82abc38723dd0b3721176c6f995090dede"
+            },
+            {
+              "bytes": 1889576,
+              "path": "syscall",
+              "sha256": "0149c05eecfef110900213a8bd08857ade44086e87c46d5ae6f85e084b9af0b5"
+            },
+            {
+              "bytes": 2805664,
+              "path": "testing",
+              "sha256": "19bbe5f78a077d87b3844b611f0758a89bfac71a020e4c89660e6cfe6685e40d"
+            },
+            {
+              "bytes": 1393550,
+              "path": "time",
+              "sha256": "5e62432237c9ed51eb4fe40718f8560c6354d1b38492505482dcf4c5e7a43679"
+            },
+            {
+              "bytes": 523138,
+              "path": "unicode",
+              "sha256": "f1e15f5811c157c834b533af5361c9f3a9302ff0be5fe0fd3d2a52b779b9578f"
+            },
+            {
+              "bytes": 83180,
+              "path": "unicode/utf8",
+              "sha256": "a9402f8f207f472f28f79330353a4204540375ed70b9fa5532c480937525b72d"
+            }
+          ],
+          "projectCommands": false,
+          "requestedPackages": [
+            "bufio",
+            "bytes",
+            "cmp",
+            "context",
+            "crypto/rand",
+            "crypto/subtle",
+            "crypto/tls",
+            "encoding",
+            "encoding/base64",
+            "encoding/hex",
+            "encoding/json",
+            "encoding/xml",
+            "errors",
+            "flag",
+            "fmt",
+            "html/template",
+            "io",
+            "io/fs",
+            "log",
+            "maps",
+            "math",
+            "math/rand",
+            "mime/multipart",
+            "net",
+            "net/http",
+            "net/http/httptest",
+            "net/http/httputil",
+            "net/textproto",
+            "net/url",
+            "os",
+            "path",
+            "path/filepath",
+            "reflect",
+            "regexp",
+            "runtime",
+            "strconv",
+            "strings",
+            "sync",
+            "sync/atomic",
+            "syscall",
+            "testing",
+            "time",
+            "unicode",
+            "unicode/utf8"
+          ],
+          "sourceFilesAnalyzed": false,
+          "toolchain": "go1.27.2"
+        },
+        "interfaceEvidence": {
+          "completeInterfaces": 15,
+          "edges": 200,
+          "genericInterfaces": [],
+          "incompleteInterfaces": [],
+          "interfacesWithoutCapturedImplementations": [
+            {
+              "interface": {
+                "column": 6,
+                "file": "codec/json/api.go",
+                "line": 22,
+                "package": "github.com/gin-gonic/gin/codec/json",
+                "qualname": "Encoder"
+              },
+              "reason": "no-captured-implementation"
+            },
+            {
+              "interface": {
+                "column": 6,
+                "file": "codec/json/api.go",
+                "line": 41,
+                "package": "github.com/gin-gonic/gin/codec/json",
+                "qualname": "Decoder"
+              },
+              "reason": "no-captured-implementation"
+            }
+          ],
+          "model": "captured-interface-implementations-v2"
+        },
+        "selectedFiles": [
+          "auth.go",
+          "auth_test.go",
+          "benchmarks_test.go",
+          "binding/binding.go",
+          "binding/binding_msgpack_test.go",
+          "binding/binding_test.go",
+          "binding/bson.go",
+          "binding/default_validator.go",
+          "binding/default_validator_benchmark_test.go",
+          "binding/default_validator_test.go",
+          "binding/form.go",
+          "binding/form_mapping.go",
+          "binding/form_mapping_benchmark_test.go",
+          "binding/form_mapping_test.go",
+          "binding/header.go",
+          "binding/json.go",
+          "binding/json_test.go",
+          "binding/msgpack.go",
+          "binding/msgpack_test.go",
+          "binding/multipart_form_mapping.go",
+          "binding/multipart_form_mapping_test.go",
+          "binding/plain.go",
+          "binding/protobuf.go",
+          "binding/query.go",
+          "binding/toml.go",
+          "binding/toml_test.go",
+          "binding/uri.go",
+          "binding/validate_test.go",
+          "binding/xml.go",
+          "binding/xml_test.go",
+          "binding/yaml.go",
+          "binding/yaml_test.go",
+          "codec/json/api.go",
+          "codec/json/json.go",
+          "context.go",
+          "context_file_test.go",
+          "context_test.go",
+          "debug.go",
+          "debug_test.go",
+          "deprecated.go",
+          "deprecated_test.go",
+          "doc.go",
+          "errors.go",
+          "errors_test.go",
+          "fs.go",
+          "fs_test.go",
+          "gin.go",
+          "ginS/gins.go",
+          "ginS/gins_test.go",
+          "gin_integration_test.go",
+          "gin_test.go",
+          "githubapi_test.go",
+          "internal/bytesconv/bytesconv.go",
+          "internal/bytesconv/bytesconv_test.go",
+          "internal/fs/fs.go",
+          "internal/fs/fs_test.go",
+          "logger.go",
+          "logger_test.go",
+          "middleware_test.go",
+          "mode.go",
+          "mode_test.go",
+          "path.go",
+          "path_test.go",
+          "recovery.go",
+          "recovery_test.go",
+          "render/bson.go",
+          "render/data.go",
+          "render/html.go",
+          "render/json.go",
+          "render/msgpack.go",
+          "render/pdf.go",
+          "render/protobuf.go",
+          "render/reader.go",
+          "render/reader_test.go",
+          "render/redirect.go",
+          "render/render.go",
+          "render/render_msgpack_test.go",
+          "render/render_test.go",
+          "render/text.go",
+          "render/toml.go",
+          "render/xml.go",
+          "render/yaml.go",
+          "response_writer.go",
+          "response_writer_test.go",
+          "routergroup.go",
+          "routergroup_test.go",
+          "routes_test.go",
+          "test_helpers.go",
+          "tree.go",
+          "tree_test.go",
+          "utils.go",
+          "utils_test.go",
+          "version.go"
+        ],
+        "excludedFiles": [
+          {
+            "file": "binding/binding_nomsgpack.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "codec/json/go_json.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "codec/json/jsoniter.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "codec/json/sonic.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "context_appengine.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "testdata/protoexample/test.pb.go",
+            "reason": "go-package-directory-excluded"
+          }
+        ],
+        "metadata": [
+          {
+            "file": "go.mod",
+            "sourceText": "module github.com/gin-gonic/gin\n\ngo 1.25.0\n\nrequire (\n\tgithub.com/bytedance/sonic v1.15.0\n\tgithub.com/gin-contrib/sse v1.1.0\n\tgithub.com/go-playground/validator/v10 v10.30.1\n\tgithub.com/goccy/go-json v0.10.6\n\tgithub.com/goccy/go-yaml v1.19.2\n\tgithub.com/json-iterator/go v1.1.12\n\tgithub.com/mattn/go-isatty v0.0.20\n\tgithub.com/modern-go/reflect2 v1.0.2\n\tgithub.com/pelletier/go-toml/v2 v2.2.4\n\tgithub.com/quic-go/quic-go v0.59.0\n\tgithub.com/stretchr/testify v1.11.1\n\tgithub.com/ugorji/go/codec v1.3.1\n\tgo.mongodb.org/mongo-driver/v2 v2.5.0\n\tgolang.org/x/net v0.55.0\n\tgoogle.golang.org/protobuf v1.36.11\n)\n\nrequire gopkg.in/yaml.v3 v3.0.1 // indirect\n\nrequire (\n\tgithub.com/bytedance/gopkg v0.1.3 // indirect\n\tgithub.com/bytedance/sonic/loader v0.5.0 // indirect\n\tgithub.com/cloudwego/base64x v0.1.6 // indirect\n\tgithub.com/davecgh/go-spew v1.1.1 // indirect\n\tgithub.com/gabriel-vasile/mimetype v1.4.13 // indirect\n\tgithub.com/go-playground/locales v0.14.1 // indirect\n\tgithub.com/go-playground/universal-translator v0.18.1 // indirect\n\tgithub.com/klauspost/cpuid/v2 v2.3.0 // indirect\n\tgithub.com/kr/text v0.2.0 // indirect\n\tgithub.com/leodido/go-urn v1.4.0 // indirect\n\tgithub.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect\n\tgithub.com/pmezard/go-difflib v1.0.0 // indirect\n\tgithub.com/quic-go/qpack v0.6.0 // indirect\n\tgithub.com/twitchyliquid64/golang-asm v0.15.1 // indirect\n\tgo.uber.org/mock v0.6.0 // indirect\n\tgolang.org/x/arch v0.25.0 // indirect\n\tgolang.org/x/crypto v0.51.0 // indirect\n\tgolang.org/x/sys v0.45.0 // indirect\n\tgolang.org/x/text v0.37.0 // indirect\n)\n",
+            "sha256": "03d4516bb50bbd081c36a9b16f2a3f4e161439bf3d7cb83d5a18c7e2e75fcfaa"
+          }
+        ],
+        "limitations": [
+          "Only this root module is analyzed. go.work, replace directives, third-party dependencies, cgo, generated compiler output and nested modules are not loaded. SDK standard-library type exports may be prepared and read; their source is not analyzed.",
+          "Source selection uses the running SDK tool/release tags; target CPU-feature and experimental overrides are not independently reconstructed.",
+          "The go.mod language/toolchain directives are captured as metadata but are not enforced by this incomplete type checker.",
+          "Targets are direct source function bindings from go/types with recorded SDK types when enabled and incomplete third-party types. They do not prove successful compilation, argument applicability, runtime dispatch or a complete caller set.",
+          "Function bodies and receiver declarations are inventoried; concrete compiler-selected source methods are bound, including promotion, method expressions and generic instances. Interface method calls bind to a captured interface method declaration when one is visible; the runtime implementation remains unknown. Function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.",
+          "Captured interface implementation edges use go/types method sets for named source types and interfaces. Value and pointer satisfaction are recorded separately. Interfaces with external or anonymous embedded interfaces, generic interfaces, generic concrete types and type aliases are omitted from the edge set and reported as unknown; absence of an edge is not proof that a type does not implement an interface."
+        ]
+      },
+      "interfaceEvidence": {
+        "completeInterfaces": 15,
+        "edges": 200,
+        "genericInterfaces": [],
+        "incompleteInterfaces": [],
+        "interfacesWithoutCapturedImplementations": [
+          {
+            "interface": {
+              "column": 6,
+              "file": "codec/json/api.go",
+              "line": 22,
+              "package": "github.com/gin-gonic/gin/codec/json",
+              "qualname": "Encoder"
+            },
+            "reason": "no-captured-implementation"
+          },
+          {
+            "interface": {
+              "column": 6,
+              "file": "codec/json/api.go",
+              "line": 41,
+              "package": "github.com/gin-gonic/gin/codec/json",
+              "qualname": "Decoder"
+            },
+            "reason": "no-captured-implementation"
+          }
+        ],
+        "model": "captured-interface-implementations-v2"
+      },
+      "resolution": {
+        "digest": "838ef2eb9dad62480c2b85b7b10f5221ef2f906af5d0a26f41ba2d475dcfecdd",
+        "fresh": true,
+        "options": {
+          "cgo": false,
+          "goFlags": "not-loaded",
+          "goWork": "not-loaded",
+          "goarch": "arm64",
+          "goos": "darwin",
+          "module": "github.com/gin-gonic/gin",
+          "releaseTags": [
+            "go1.1",
+            "go1.2",
+            "go1.3",
+            "go1.4",
+            "go1.5",
+            "go1.6",
+            "go1.7",
+            "go1.8",
+            "go1.9",
+            "go1.10",
+            "go1.11",
+            "go1.12",
+            "go1.13",
+            "go1.14",
+            "go1.15",
+            "go1.16",
+            "go1.17",
+            "go1.18",
+            "go1.19",
+            "go1.20",
+            "go1.21",
+            "go1.22",
+            "go1.23",
+            "go1.24",
+            "go1.25",
+            "go1.26",
+            "go1.27"
+          ],
+          "replace": "not-loaded",
+          "standardLibrary": {
+            "exportedDependencyCount": 212,
+            "intrinsicPackages": [
+              "unsafe"
+            ],
+            "mode": "compiler-exports",
+            "network": "module-proxy-and-checksum-disabled",
+            "packages": [
+              {
+                "bytes": 422668,
+                "path": "bufio",
+                "sha256": "e285559ee5b063b7693c99ad1320ce2bb011b089b913791229e7ec313367f13f"
+              },
+              {
+                "bytes": 605696,
+                "path": "bytes",
+                "sha256": "22b3214332c262f77ecfb2ec5275d812be5831a3681cab6923d2f855ae432f71"
+              },
+              {
+                "bytes": 2554,
+                "path": "cmp",
+                "sha256": "83a5b12672194de931d3bff29f77a3e85c3e12f5019fff73b8242d14818e58d8"
+              },
+              {
+                "bytes": 412724,
+                "path": "context",
+                "sha256": "79180122176a983c1241f6501c4dc805aa408bc5322d31a73fe2390e83b57ca6"
+              },
+              {
+                "bytes": 78864,
+                "path": "crypto/rand",
+                "sha256": "352e6f9a95c1c6089c4c2d68ac627970be58b2b81629051d2a3a3d825a322be3"
+              },
+              {
+                "bytes": 31160,
+                "path": "crypto/subtle",
+                "sha256": "289bd07d71abc1e39b20b9594d345b430ed8803e5f9acc1f3bc311485555d6cb"
+              },
+              {
+                "bytes": 6036938,
+                "path": "crypto/tls",
+                "sha256": "fb2095fc1d26cfee37998db3bc58ffd2db2975401c8ac34a291ac47220128e24"
+              },
+              {
+                "bytes": 20104,
+                "path": "encoding",
+                "sha256": "9fbb32605149a257cb7413fd10982b5f54a9be7b84fc5222ebc15b940eec2b11"
+              },
+              {
+                "bytes": 175780,
+                "path": "encoding/base64",
+                "sha256": "c695141a2523d396405c3910f1a840c7e739868dc82489da8263d94724167184"
+              },
+              {
+                "bytes": 112348,
+                "path": "encoding/hex",
+                "sha256": "97e1c25cba0faa3e1c57fc1c6bd8b96a4cc91c5bd4f2e25c5482f8559129dd67"
+              },
+              {
+                "bytes": 727962,
+                "path": "encoding/json",
+                "sha256": "5ae236bd0177c407d236ebb436e66378ba3a9b1f6ae949f1902eaf89345ea4aa"
+              },
+              {
+                "bytes": 2025332,
+                "path": "encoding/xml",
+                "sha256": "bb99b686264a7f2adb633c0cb42e44f69e1d543dab621ab7be0ea0de510e8312"
+              },
+              {
+                "bytes": 100910,
+                "path": "errors",
+                "sha256": "efbbb2d66f523125bb66e6d2b4de1ed4db03dfaf725bc86cf1dbe69b28f67a53"
+              },
+              {
+                "bytes": 866186,
+                "path": "flag",
+                "sha256": "b8e7311430b37571960b3143065c48245f77bc8b91746885fb46f210b61620e5"
+              },
+              {
+                "bytes": 1296514,
+                "path": "fmt",
+                "sha256": "e803f1b8708bd7b065a0637e3df04f9d64eec2707cc1478bc327bde3b5512a2f"
+              },
+              {
+                "bytes": 1536844,
+                "path": "html/template",
+                "sha256": "49daa3b0c2c3519995834e49b23279cd037c15dfe77b99807734971a82ebac1e"
+              },
+              {
+                "bytes": 449500,
+                "path": "io",
+                "sha256": "a05c5ac71c0ad8fb6f96fd603e58cc35faa166484aa47aa27dbe0aa05987a98d"
+              },
+              {
+                "bytes": 471944,
+                "path": "io/fs",
+                "sha256": "4f50078d2e9aa7ac07390117b4c1d207513095b627c7cf45508d0506a6c60c4b"
+              },
+              {
+                "bytes": 332498,
+                "path": "log",
+                "sha256": "4ea2bcb809a03231a00a1230c20e19dcab431b39963bb6261c5218b0689132d6"
+              },
+              {
+                "bytes": 8754,
+                "path": "maps",
+                "sha256": "8acce40f9075f30e35fd1bee294afe15469af873afb95a6da6c8670a65bfe609"
+              },
+              {
+                "bytes": 612542,
+                "path": "math",
+                "sha256": "efff2a0e0ddd762ac68dcf296bedc1f7adebb877647776ce5bb44bd525eb10f9"
+              },
+              {
+                "bytes": 383580,
+                "path": "math/rand",
+                "sha256": "6b6ec68114c1415084b61ac0a284d6cbdd5ee552452e23970eae378eb78705e2"
+              },
+              {
+                "bytes": 595650,
+                "path": "mime/multipart",
+                "sha256": "965b40cb0d497e73a24c729386d5cd1bf1dc768a4a14c526c3cd8816966e42ed"
+              },
+              {
+                "bytes": 4801038,
+                "path": "net",
+                "sha256": "7a2ed373a4c906f19a70596a5104a5fd6d6a88bdfb578911269c3f0a4e07e7f5"
+              },
+              {
+                "bytes": 6677702,
+                "path": "net/http",
+                "sha256": "62ee5a1d2a3d197f59e108c69ef508386f0a480ba22cda486824679257631f0e"
+              },
+              {
+                "bytes": 767866,
+                "path": "net/http/httptest",
+                "sha256": "e2fdca680755ff597c2648984f6b8aad9ce1b32c33ccaf761995e24dff97334a"
+              },
+              {
+                "bytes": 858560,
+                "path": "net/http/httputil",
+                "sha256": "31d04fb66751f27ca8ded79e9e4898e9f130ef4727ff4dd725bb72c15a2a7320"
+              },
+              {
+                "bytes": 412986,
+                "path": "net/textproto",
+                "sha256": "c25d4c331f9174c841d57831753df2ea8ae71a5f707d1799bc0c0d48f892d6d9"
+              },
+              {
+                "bytes": 626974,
+                "path": "net/url",
+                "sha256": "370b1ff4265a91547af0ba8fde9fccaded04e33e4d1992b5ef7f989160a4c281"
+              },
+              {
+                "bytes": 2507384,
+                "path": "os",
+                "sha256": "9eb16dabf1c6e1a672441c7c1fa0619ae4b1c850e74bfae8ae128e674c6a0bbb"
+              },
+              {
+                "bytes": 81814,
+                "path": "path",
+                "sha256": "9ae827800ebe72b26bfed23c6891a1b811d4b73f2623da5595650ef7d785352d"
+              },
+              {
+                "bytes": 340390,
+                "path": "path/filepath",
+                "sha256": "051d299b2b90d0d1e7e1ba0a859783ab3bc65996b2d01b8b4d00c3e34257c388"
+              },
+              {
+                "bytes": 3999474,
+                "path": "reflect",
+                "sha256": "29fa2df372b613fd9fc54183d0a32753d5334c9b57d71de49a13cc0c085083b2"
+              },
+              {
+                "bytes": 1564304,
+                "path": "regexp",
+                "sha256": "0011bc27b7690fe34e06895d686558a659790795de8d1754d5b74d3dbba97e9e"
+              },
+              {
+                "bytes": 15224824,
+                "path": "runtime",
+                "sha256": "0d8b6cd4488799cea5a1069dd039c4d9128037a067f43d6019e4c99a5f95e73e"
+              },
+              {
+                "bytes": 256904,
+                "path": "strconv",
+                "sha256": "b32d8ecfc8059d75b25eb2c1acf4eb4179f15151b8814218c7f80e86abd47595"
+              },
+              {
+                "bytes": 718248,
+                "path": "strings",
+                "sha256": "2178f8b2688d5daf07e8e1e56e1ab9ecc5ddb319fc5be13ad4485be8eabbeaaf"
+              },
+              {
+                "bytes": 967650,
+                "path": "sync",
+                "sha256": "c93cb181ae1db592a7684d379d635d748f75ad1f964062d3992bd35d7f682446"
+              },
+              {
+                "bytes": 275140,
+                "path": "sync/atomic",
+                "sha256": "1d5225ab5d15785da37025c1a9b6ed82abc38723dd0b3721176c6f995090dede"
+              },
+              {
+                "bytes": 1889576,
+                "path": "syscall",
+                "sha256": "0149c05eecfef110900213a8bd08857ade44086e87c46d5ae6f85e084b9af0b5"
+              },
+              {
+                "bytes": 2805664,
+                "path": "testing",
+                "sha256": "19bbe5f78a077d87b3844b611f0758a89bfac71a020e4c89660e6cfe6685e40d"
+              },
+              {
+                "bytes": 1393550,
+                "path": "time",
+                "sha256": "5e62432237c9ed51eb4fe40718f8560c6354d1b38492505482dcf4c5e7a43679"
+              },
+              {
+                "bytes": 523138,
+                "path": "unicode",
+                "sha256": "f1e15f5811c157c834b533af5361c9f3a9302ff0be5fe0fd3d2a52b779b9578f"
+              },
+              {
+                "bytes": 83180,
+                "path": "unicode/utf8",
+                "sha256": "a9402f8f207f472f28f79330353a4204540375ed70b9fa5532c480937525b72d"
+              }
+            ],
+            "projectCommands": false,
+            "requestedPackages": [
+              "bufio",
+              "bytes",
+              "cmp",
+              "context",
+              "crypto/rand",
+              "crypto/subtle",
+              "crypto/tls",
+              "encoding",
+              "encoding/base64",
+              "encoding/hex",
+              "encoding/json",
+              "encoding/xml",
+              "errors",
+              "flag",
+              "fmt",
+              "html/template",
+              "io",
+              "io/fs",
+              "log",
+              "maps",
+              "math",
+              "math/rand",
+              "mime/multipart",
+              "net",
+              "net/http",
+              "net/http/httptest",
+              "net/http/httputil",
+              "net/textproto",
+              "net/url",
+              "os",
+              "path",
+              "path/filepath",
+              "reflect",
+              "regexp",
+              "runtime",
+              "strconv",
+              "strings",
+              "sync",
+              "sync/atomic",
+              "syscall",
+              "testing",
+              "time",
+              "unicode",
+              "unicode/utf8"
+            ],
+            "sourceFilesAnalyzed": false,
+            "toolchain": "go1.27.2"
+          },
+          "tags": [],
+          "tests": true,
+          "toolTags": [
+            "goexperiment.regabiwrappers",
+            "goexperiment.regabiargs",
+            "goexperiment.jsonv2",
+            "goexperiment.greenteagc",
+            "goexperiment.randomizedheapbase64",
+            "goexperiment.sizespecializedmalloc",
+            "arm64.v8.0"
+          ],
+          "toolchain": "go1.27.2"
+        },
+        "inputs": {
+          "total": 1,
+          "included": 1,
+          "omitted": 0,
+          "limit": 40,
+          "items": [
+            {
+              "file": "<root>/go.mod",
+              "sha256": "03d4516bb50bbd081c36a9b16f2a3f4e161439bf3d7cb83d5a18c7e2e75fcfaa"
+            }
+          ]
+        }
+      }
+    },
+    "head": {
+      "side": "head",
+      "root": "/tmp/archify-batch-20261108/samples/gin-close-head",
+      "snapshot": {
+        "revision": null,
+        "baseRevision": "d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11",
+        "sourceKind": "working-tree",
+        "root": ".",
+        "url": "https://github.com/gin-gonic/gin.git",
+        "language": "go",
+        "adapter": "go-parser@1.27.2",
+        "adapterRevision": 6,
+        "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802"
+      },
+      "language": "go",
+      "producer": {
+        "adapter": "go-parser@1.27.2",
+        "adapterRevision": 6
+      },
+      "callModel": "go-source-direct-v4",
+      "analysisConfigDigest": "8951d9eb428985e18ffd7d2520bfb1cf4f6d2e2d6d038e154c801a55ba147362",
+      "capturedFiles": 93,
+      "sourceIdentity": "valid",
+      "unavailableFiles": {
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      },
+      "parseErrors": 0,
+      "languageScope": {
+        "language": "go",
+        "module": "github.com/gin-gonic/gin",
+        "build": {
+          "cgo": false,
+          "goFlags": "not-loaded",
+          "goWork": "not-loaded",
+          "goarch": "arm64",
+          "goos": "darwin",
+          "releaseTags": [
+            "go1.1",
+            "go1.2",
+            "go1.3",
+            "go1.4",
+            "go1.5",
+            "go1.6",
+            "go1.7",
+            "go1.8",
+            "go1.9",
+            "go1.10",
+            "go1.11",
+            "go1.12",
+            "go1.13",
+            "go1.14",
+            "go1.15",
+            "go1.16",
+            "go1.17",
+            "go1.18",
+            "go1.19",
+            "go1.20",
+            "go1.21",
+            "go1.22",
+            "go1.23",
+            "go1.24",
+            "go1.25",
+            "go1.26",
+            "go1.27"
+          ],
+          "replace": "not-loaded",
+          "tags": [],
+          "tests": true,
+          "toolTags": [
+            "goexperiment.regabiwrappers",
+            "goexperiment.regabiargs",
+            "goexperiment.jsonv2",
+            "goexperiment.greenteagc",
+            "goexperiment.randomizedheapbase64",
+            "goexperiment.sizespecializedmalloc",
+            "arm64.v8.0"
+          ],
+          "toolchain": "go1.27.2"
+        },
+        "packages": [
+          {
+            "files": [
+              "auth.go",
+              "context.go",
+              "debug.go",
+              "deprecated.go",
+              "doc.go",
+              "errors.go",
+              "fs.go",
+              "gin.go",
+              "logger.go",
+              "mode.go",
+              "path.go",
+              "recovery.go",
+              "response_writer.go",
+              "routergroup.go",
+              "test_helpers.go",
+              "tree.go",
+              "utils.go",
+              "version.go"
+            ],
+            "id": "github.com/gin-gonic/gin",
+            "name": "gin",
+            "path": "github.com/gin-gonic/gin"
+          },
+          {
+            "files": [
+              "auth.go",
+              "context.go",
+              "debug.go",
+              "deprecated.go",
+              "doc.go",
+              "errors.go",
+              "fs.go",
+              "gin.go",
+              "logger.go",
+              "mode.go",
+              "path.go",
+              "recovery.go",
+              "response_writer.go",
+              "routergroup.go",
+              "test_helpers.go",
+              "tree.go",
+              "utils.go",
+              "version.go",
+              "auth_test.go",
+              "benchmarks_test.go",
+              "context_file_test.go",
+              "context_test.go",
+              "debug_test.go",
+              "deprecated_test.go",
+              "errors_test.go",
+              "fs_test.go",
+              "gin_integration_test.go",
+              "gin_test.go",
+              "githubapi_test.go",
+              "logger_test.go",
+              "middleware_test.go",
+              "mode_test.go",
+              "path_test.go",
+              "recovery_test.go",
+              "response_writer_test.go",
+              "routergroup_test.go",
+              "routes_test.go",
+              "tree_test.go",
+              "utils_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin#test:gin",
+            "name": "gin",
+            "path": "github.com/gin-gonic/gin"
+          },
+          {
+            "files": [
+              "binding/binding.go",
+              "binding/bson.go",
+              "binding/default_validator.go",
+              "binding/form.go",
+              "binding/form_mapping.go",
+              "binding/header.go",
+              "binding/json.go",
+              "binding/msgpack.go",
+              "binding/multipart_form_mapping.go",
+              "binding/plain.go",
+              "binding/protobuf.go",
+              "binding/query.go",
+              "binding/toml.go",
+              "binding/uri.go",
+              "binding/xml.go",
+              "binding/yaml.go"
+            ],
+            "id": "github.com/gin-gonic/gin/binding",
+            "name": "binding",
+            "path": "github.com/gin-gonic/gin/binding"
+          },
+          {
+            "files": [
+              "binding/binding.go",
+              "binding/bson.go",
+              "binding/default_validator.go",
+              "binding/form.go",
+              "binding/form_mapping.go",
+              "binding/header.go",
+              "binding/json.go",
+              "binding/msgpack.go",
+              "binding/multipart_form_mapping.go",
+              "binding/plain.go",
+              "binding/protobuf.go",
+              "binding/query.go",
+              "binding/toml.go",
+              "binding/uri.go",
+              "binding/xml.go",
+              "binding/yaml.go",
+              "binding/binding_msgpack_test.go",
+              "binding/binding_test.go",
+              "binding/default_validator_benchmark_test.go",
+              "binding/default_validator_test.go",
+              "binding/form_mapping_benchmark_test.go",
+              "binding/form_mapping_test.go",
+              "binding/json_test.go",
+              "binding/msgpack_test.go",
+              "binding/multipart_form_mapping_test.go",
+              "binding/toml_test.go",
+              "binding/validate_test.go",
+              "binding/xml_test.go",
+              "binding/yaml_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/binding#test:binding",
+            "name": "binding",
+            "path": "github.com/gin-gonic/gin/binding"
+          },
+          {
+            "files": [
+              "codec/json/api.go",
+              "codec/json/json.go"
+            ],
+            "id": "github.com/gin-gonic/gin/codec/json",
+            "name": "json",
+            "path": "github.com/gin-gonic/gin/codec/json"
+          },
+          {
+            "files": [
+              "ginS/gins.go"
+            ],
+            "id": "github.com/gin-gonic/gin/ginS",
+            "name": "ginS",
+            "path": "github.com/gin-gonic/gin/ginS"
+          },
+          {
+            "files": [
+              "ginS/gins.go",
+              "ginS/gins_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/ginS#test:ginS",
+            "name": "ginS",
+            "path": "github.com/gin-gonic/gin/ginS"
+          },
+          {
+            "files": [
+              "internal/bytesconv/bytesconv.go"
+            ],
+            "id": "github.com/gin-gonic/gin/internal/bytesconv",
+            "name": "bytesconv",
+            "path": "github.com/gin-gonic/gin/internal/bytesconv"
+          },
+          {
+            "files": [
+              "internal/bytesconv/bytesconv.go",
+              "internal/bytesconv/bytesconv_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/internal/bytesconv#test:bytesconv",
+            "name": "bytesconv",
+            "path": "github.com/gin-gonic/gin/internal/bytesconv"
+          },
+          {
+            "files": [
+              "internal/fs/fs.go"
+            ],
+            "id": "github.com/gin-gonic/gin/internal/fs",
+            "name": "fs",
+            "path": "github.com/gin-gonic/gin/internal/fs"
+          },
+          {
+            "files": [
+              "internal/fs/fs.go",
+              "internal/fs/fs_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/internal/fs#test:fs",
+            "name": "fs",
+            "path": "github.com/gin-gonic/gin/internal/fs"
+          },
+          {
+            "files": [
+              "render/bson.go",
+              "render/data.go",
+              "render/html.go",
+              "render/json.go",
+              "render/msgpack.go",
+              "render/pdf.go",
+              "render/protobuf.go",
+              "render/reader.go",
+              "render/redirect.go",
+              "render/render.go",
+              "render/text.go",
+              "render/toml.go",
+              "render/xml.go",
+              "render/yaml.go"
+            ],
+            "id": "github.com/gin-gonic/gin/render",
+            "name": "render",
+            "path": "github.com/gin-gonic/gin/render"
+          },
+          {
+            "files": [
+              "render/bson.go",
+              "render/data.go",
+              "render/html.go",
+              "render/json.go",
+              "render/msgpack.go",
+              "render/pdf.go",
+              "render/protobuf.go",
+              "render/reader.go",
+              "render/redirect.go",
+              "render/render.go",
+              "render/text.go",
+              "render/toml.go",
+              "render/xml.go",
+              "render/yaml.go",
+              "render/reader_test.go",
+              "render/render_msgpack_test.go",
+              "render/render_test.go"
+            ],
+            "id": "github.com/gin-gonic/gin/render#test:render",
+            "name": "render",
+            "path": "github.com/gin-gonic/gin/render"
+          }
+        ],
+        "typing": {
+          "errorCount": 2382,
+          "errors": [
+            "binding/default_validator.go:18:12: undefined: validator",
+            "binding/protobuf.go:30:24: undefined: proto.Message",
+            "binding/protobuf.go:34:18: undefined: proto.Unmarshal",
+            "binding/bson.go:29:14: undefined: bson.Unmarshal",
+            "binding/default_validator.go:95:16: undefined: validator",
+            "binding/msgpack.go:32:19: undefined: codec.MsgpackHandle",
+            "binding/msgpack.go:33:18: undefined: codec.NewDecoder",
+            "binding/toml.go:30:13: undefined: toml",
+            "binding/yaml.go:30:13: undefined: yaml",
+            "binding/default_validator.go:13:2: \"github.com/go-playground/validator/v10\" imported and not used",
+            "binding/toml.go:12:2: \"github.com/pelletier/go-toml/v2\" imported and not used",
+            "binding/yaml.go:12:2: \"github.com/goccy/go-yaml\" imported and not used",
+            "render/bson.go:24:21: undefined: bson.Marshal",
+            "render/msgpack.go:41:15: undefined: codec.MsgpackHandle",
+            "render/msgpack.go:42:15: undefined: codec.NewEncoder",
+            "render/protobuf.go:24:22: undefined: proto.Marshal",
+            "render/protobuf.go:24:44: undefined: proto.Message",
+            "render/yaml.go:24:16: undefined: yaml",
+            "render/toml.go:24:16: undefined: toml",
+            "render/toml.go:10:2: \"github.com/pelletier/go-toml/v2\" imported and not used"
+          ],
+          "externalPackagesNotLoaded": [
+            "github.com/gin-contrib/sse",
+            "github.com/gin-gonic/gin/testdata/protoexample",
+            "github.com/go-playground/validator/v10",
+            "github.com/goccy/go-yaml",
+            "github.com/json-iterator/go",
+            "github.com/mattn/go-isatty",
+            "github.com/modern-go/reflect2",
+            "github.com/pelletier/go-toml/v2",
+            "github.com/quic-go/quic-go/http3",
+            "github.com/stretchr/testify/assert",
+            "github.com/stretchr/testify/require",
+            "github.com/ugorji/go/codec",
+            "go.mongodb.org/mongo-driver/v2/bson",
+            "golang.org/x/net/http2",
+            "golang.org/x/net/http2/h2c",
+            "google.golang.org/protobuf/proto"
+          ],
+          "status": "partial-source-bindings"
+        },
+        "standardLibrary": {
+          "exportedDependencyCount": 212,
+          "intrinsicPackages": [
+            "unsafe"
+          ],
+          "mode": "compiler-exports",
+          "network": "module-proxy-and-checksum-disabled",
+          "packages": [
+            {
+              "bytes": 422668,
+              "path": "bufio",
+              "sha256": "e285559ee5b063b7693c99ad1320ce2bb011b089b913791229e7ec313367f13f"
+            },
+            {
+              "bytes": 605696,
+              "path": "bytes",
+              "sha256": "22b3214332c262f77ecfb2ec5275d812be5831a3681cab6923d2f855ae432f71"
+            },
+            {
+              "bytes": 2554,
+              "path": "cmp",
+              "sha256": "83a5b12672194de931d3bff29f77a3e85c3e12f5019fff73b8242d14818e58d8"
+            },
+            {
+              "bytes": 412724,
+              "path": "context",
+              "sha256": "79180122176a983c1241f6501c4dc805aa408bc5322d31a73fe2390e83b57ca6"
+            },
+            {
+              "bytes": 78864,
+              "path": "crypto/rand",
+              "sha256": "352e6f9a95c1c6089c4c2d68ac627970be58b2b81629051d2a3a3d825a322be3"
+            },
+            {
+              "bytes": 31160,
+              "path": "crypto/subtle",
+              "sha256": "289bd07d71abc1e39b20b9594d345b430ed8803e5f9acc1f3bc311485555d6cb"
+            },
+            {
+              "bytes": 6036938,
+              "path": "crypto/tls",
+              "sha256": "fb2095fc1d26cfee37998db3bc58ffd2db2975401c8ac34a291ac47220128e24"
+            },
+            {
+              "bytes": 20104,
+              "path": "encoding",
+              "sha256": "9fbb32605149a257cb7413fd10982b5f54a9be7b84fc5222ebc15b940eec2b11"
+            },
+            {
+              "bytes": 175780,
+              "path": "encoding/base64",
+              "sha256": "c695141a2523d396405c3910f1a840c7e739868dc82489da8263d94724167184"
+            },
+            {
+              "bytes": 112348,
+              "path": "encoding/hex",
+              "sha256": "97e1c25cba0faa3e1c57fc1c6bd8b96a4cc91c5bd4f2e25c5482f8559129dd67"
+            },
+            {
+              "bytes": 727962,
+              "path": "encoding/json",
+              "sha256": "5ae236bd0177c407d236ebb436e66378ba3a9b1f6ae949f1902eaf89345ea4aa"
+            },
+            {
+              "bytes": 2025332,
+              "path": "encoding/xml",
+              "sha256": "bb99b686264a7f2adb633c0cb42e44f69e1d543dab621ab7be0ea0de510e8312"
+            },
+            {
+              "bytes": 100910,
+              "path": "errors",
+              "sha256": "efbbb2d66f523125bb66e6d2b4de1ed4db03dfaf725bc86cf1dbe69b28f67a53"
+            },
+            {
+              "bytes": 866186,
+              "path": "flag",
+              "sha256": "b8e7311430b37571960b3143065c48245f77bc8b91746885fb46f210b61620e5"
+            },
+            {
+              "bytes": 1296514,
+              "path": "fmt",
+              "sha256": "e803f1b8708bd7b065a0637e3df04f9d64eec2707cc1478bc327bde3b5512a2f"
+            },
+            {
+              "bytes": 1536844,
+              "path": "html/template",
+              "sha256": "49daa3b0c2c3519995834e49b23279cd037c15dfe77b99807734971a82ebac1e"
+            },
+            {
+              "bytes": 449500,
+              "path": "io",
+              "sha256": "a05c5ac71c0ad8fb6f96fd603e58cc35faa166484aa47aa27dbe0aa05987a98d"
+            },
+            {
+              "bytes": 471944,
+              "path": "io/fs",
+              "sha256": "4f50078d2e9aa7ac07390117b4c1d207513095b627c7cf45508d0506a6c60c4b"
+            },
+            {
+              "bytes": 332498,
+              "path": "log",
+              "sha256": "4ea2bcb809a03231a00a1230c20e19dcab431b39963bb6261c5218b0689132d6"
+            },
+            {
+              "bytes": 8754,
+              "path": "maps",
+              "sha256": "8acce40f9075f30e35fd1bee294afe15469af873afb95a6da6c8670a65bfe609"
+            },
+            {
+              "bytes": 612542,
+              "path": "math",
+              "sha256": "efff2a0e0ddd762ac68dcf296bedc1f7adebb877647776ce5bb44bd525eb10f9"
+            },
+            {
+              "bytes": 383580,
+              "path": "math/rand",
+              "sha256": "6b6ec68114c1415084b61ac0a284d6cbdd5ee552452e23970eae378eb78705e2"
+            },
+            {
+              "bytes": 595650,
+              "path": "mime/multipart",
+              "sha256": "965b40cb0d497e73a24c729386d5cd1bf1dc768a4a14c526c3cd8816966e42ed"
+            },
+            {
+              "bytes": 4801038,
+              "path": "net",
+              "sha256": "7a2ed373a4c906f19a70596a5104a5fd6d6a88bdfb578911269c3f0a4e07e7f5"
+            },
+            {
+              "bytes": 6677702,
+              "path": "net/http",
+              "sha256": "62ee5a1d2a3d197f59e108c69ef508386f0a480ba22cda486824679257631f0e"
+            },
+            {
+              "bytes": 767866,
+              "path": "net/http/httptest",
+              "sha256": "e2fdca680755ff597c2648984f6b8aad9ce1b32c33ccaf761995e24dff97334a"
+            },
+            {
+              "bytes": 858560,
+              "path": "net/http/httputil",
+              "sha256": "31d04fb66751f27ca8ded79e9e4898e9f130ef4727ff4dd725bb72c15a2a7320"
+            },
+            {
+              "bytes": 412986,
+              "path": "net/textproto",
+              "sha256": "c25d4c331f9174c841d57831753df2ea8ae71a5f707d1799bc0c0d48f892d6d9"
+            },
+            {
+              "bytes": 626974,
+              "path": "net/url",
+              "sha256": "370b1ff4265a91547af0ba8fde9fccaded04e33e4d1992b5ef7f989160a4c281"
+            },
+            {
+              "bytes": 2507384,
+              "path": "os",
+              "sha256": "9eb16dabf1c6e1a672441c7c1fa0619ae4b1c850e74bfae8ae128e674c6a0bbb"
+            },
+            {
+              "bytes": 81814,
+              "path": "path",
+              "sha256": "9ae827800ebe72b26bfed23c6891a1b811d4b73f2623da5595650ef7d785352d"
+            },
+            {
+              "bytes": 340390,
+              "path": "path/filepath",
+              "sha256": "051d299b2b90d0d1e7e1ba0a859783ab3bc65996b2d01b8b4d00c3e34257c388"
+            },
+            {
+              "bytes": 3999474,
+              "path": "reflect",
+              "sha256": "29fa2df372b613fd9fc54183d0a32753d5334c9b57d71de49a13cc0c085083b2"
+            },
+            {
+              "bytes": 1564304,
+              "path": "regexp",
+              "sha256": "0011bc27b7690fe34e06895d686558a659790795de8d1754d5b74d3dbba97e9e"
+            },
+            {
+              "bytes": 15224824,
+              "path": "runtime",
+              "sha256": "0d8b6cd4488799cea5a1069dd039c4d9128037a067f43d6019e4c99a5f95e73e"
+            },
+            {
+              "bytes": 256904,
+              "path": "strconv",
+              "sha256": "b32d8ecfc8059d75b25eb2c1acf4eb4179f15151b8814218c7f80e86abd47595"
+            },
+            {
+              "bytes": 718248,
+              "path": "strings",
+              "sha256": "2178f8b2688d5daf07e8e1e56e1ab9ecc5ddb319fc5be13ad4485be8eabbeaaf"
+            },
+            {
+              "bytes": 967650,
+              "path": "sync",
+              "sha256": "c93cb181ae1db592a7684d379d635d748f75ad1f964062d3992bd35d7f682446"
+            },
+            {
+              "bytes": 275140,
+              "path": "sync/atomic",
+              "sha256": "1d5225ab5d15785da37025c1a9b6ed82abc38723dd0b3721176c6f995090dede"
+            },
+            {
+              "bytes": 1889576,
+              "path": "syscall",
+              "sha256": "0149c05eecfef110900213a8bd08857ade44086e87c46d5ae6f85e084b9af0b5"
+            },
+            {
+              "bytes": 2805664,
+              "path": "testing",
+              "sha256": "19bbe5f78a077d87b3844b611f0758a89bfac71a020e4c89660e6cfe6685e40d"
+            },
+            {
+              "bytes": 1393550,
+              "path": "time",
+              "sha256": "5e62432237c9ed51eb4fe40718f8560c6354d1b38492505482dcf4c5e7a43679"
+            },
+            {
+              "bytes": 523138,
+              "path": "unicode",
+              "sha256": "f1e15f5811c157c834b533af5361c9f3a9302ff0be5fe0fd3d2a52b779b9578f"
+            },
+            {
+              "bytes": 83180,
+              "path": "unicode/utf8",
+              "sha256": "a9402f8f207f472f28f79330353a4204540375ed70b9fa5532c480937525b72d"
+            }
+          ],
+          "projectCommands": false,
+          "requestedPackages": [
+            "bufio",
+            "bytes",
+            "cmp",
+            "context",
+            "crypto/rand",
+            "crypto/subtle",
+            "crypto/tls",
+            "encoding",
+            "encoding/base64",
+            "encoding/hex",
+            "encoding/json",
+            "encoding/xml",
+            "errors",
+            "flag",
+            "fmt",
+            "html/template",
+            "io",
+            "io/fs",
+            "log",
+            "maps",
+            "math",
+            "math/rand",
+            "mime/multipart",
+            "net",
+            "net/http",
+            "net/http/httptest",
+            "net/http/httputil",
+            "net/textproto",
+            "net/url",
+            "os",
+            "path",
+            "path/filepath",
+            "reflect",
+            "regexp",
+            "runtime",
+            "strconv",
+            "strings",
+            "sync",
+            "sync/atomic",
+            "syscall",
+            "testing",
+            "time",
+            "unicode",
+            "unicode/utf8"
+          ],
+          "sourceFilesAnalyzed": false,
+          "toolchain": "go1.27.2"
+        },
+        "interfaceEvidence": {
+          "completeInterfaces": 15,
+          "edges": 200,
+          "genericInterfaces": [],
+          "incompleteInterfaces": [],
+          "interfacesWithoutCapturedImplementations": [
+            {
+              "interface": {
+                "column": 6,
+                "file": "codec/json/api.go",
+                "line": 22,
+                "package": "github.com/gin-gonic/gin/codec/json",
+                "qualname": "Encoder"
+              },
+              "reason": "no-captured-implementation"
+            },
+            {
+              "interface": {
+                "column": 6,
+                "file": "codec/json/api.go",
+                "line": 41,
+                "package": "github.com/gin-gonic/gin/codec/json",
+                "qualname": "Decoder"
+              },
+              "reason": "no-captured-implementation"
+            }
+          ],
+          "model": "captured-interface-implementations-v2"
+        },
+        "selectedFiles": [
+          "auth.go",
+          "auth_test.go",
+          "benchmarks_test.go",
+          "binding/binding.go",
+          "binding/binding_msgpack_test.go",
+          "binding/binding_test.go",
+          "binding/bson.go",
+          "binding/default_validator.go",
+          "binding/default_validator_benchmark_test.go",
+          "binding/default_validator_test.go",
+          "binding/form.go",
+          "binding/form_mapping.go",
+          "binding/form_mapping_benchmark_test.go",
+          "binding/form_mapping_test.go",
+          "binding/header.go",
+          "binding/json.go",
+          "binding/json_test.go",
+          "binding/msgpack.go",
+          "binding/msgpack_test.go",
+          "binding/multipart_form_mapping.go",
+          "binding/multipart_form_mapping_test.go",
+          "binding/plain.go",
+          "binding/protobuf.go",
+          "binding/query.go",
+          "binding/toml.go",
+          "binding/toml_test.go",
+          "binding/uri.go",
+          "binding/validate_test.go",
+          "binding/xml.go",
+          "binding/xml_test.go",
+          "binding/yaml.go",
+          "binding/yaml_test.go",
+          "codec/json/api.go",
+          "codec/json/json.go",
+          "context.go",
+          "context_file_test.go",
+          "context_test.go",
+          "debug.go",
+          "debug_test.go",
+          "deprecated.go",
+          "deprecated_test.go",
+          "doc.go",
+          "errors.go",
+          "errors_test.go",
+          "fs.go",
+          "fs_test.go",
+          "gin.go",
+          "ginS/gins.go",
+          "ginS/gins_test.go",
+          "gin_integration_test.go",
+          "gin_test.go",
+          "githubapi_test.go",
+          "internal/bytesconv/bytesconv.go",
+          "internal/bytesconv/bytesconv_test.go",
+          "internal/fs/fs.go",
+          "internal/fs/fs_test.go",
+          "logger.go",
+          "logger_test.go",
+          "middleware_test.go",
+          "mode.go",
+          "mode_test.go",
+          "path.go",
+          "path_test.go",
+          "recovery.go",
+          "recovery_test.go",
+          "render/bson.go",
+          "render/data.go",
+          "render/html.go",
+          "render/json.go",
+          "render/msgpack.go",
+          "render/pdf.go",
+          "render/protobuf.go",
+          "render/reader.go",
+          "render/reader_test.go",
+          "render/redirect.go",
+          "render/render.go",
+          "render/render_msgpack_test.go",
+          "render/render_test.go",
+          "render/text.go",
+          "render/toml.go",
+          "render/xml.go",
+          "render/yaml.go",
+          "response_writer.go",
+          "response_writer_test.go",
+          "routergroup.go",
+          "routergroup_test.go",
+          "routes_test.go",
+          "test_helpers.go",
+          "tree.go",
+          "tree_test.go",
+          "utils.go",
+          "utils_test.go",
+          "version.go"
+        ],
+        "excludedFiles": [
+          {
+            "file": "binding/binding_nomsgpack.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "codec/json/go_json.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "codec/json/jsoniter.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "codec/json/sonic.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "context_appengine.go",
+            "reason": "build-conditions-or-filename"
+          },
+          {
+            "file": "testdata/protoexample/test.pb.go",
+            "reason": "go-package-directory-excluded"
+          }
+        ],
+        "metadata": [
+          {
+            "file": "go.mod",
+            "sourceText": "module github.com/gin-gonic/gin\n\ngo 1.25.0\n\nrequire (\n\tgithub.com/bytedance/sonic v1.15.0\n\tgithub.com/gin-contrib/sse v1.1.0\n\tgithub.com/go-playground/validator/v10 v10.30.1\n\tgithub.com/goccy/go-json v0.10.6\n\tgithub.com/goccy/go-yaml v1.19.2\n\tgithub.com/json-iterator/go v1.1.12\n\tgithub.com/mattn/go-isatty v0.0.20\n\tgithub.com/modern-go/reflect2 v1.0.2\n\tgithub.com/pelletier/go-toml/v2 v2.2.4\n\tgithub.com/quic-go/quic-go v0.59.0\n\tgithub.com/stretchr/testify v1.11.1\n\tgithub.com/ugorji/go/codec v1.3.1\n\tgo.mongodb.org/mongo-driver/v2 v2.5.0\n\tgolang.org/x/net v0.55.0\n\tgoogle.golang.org/protobuf v1.36.11\n)\n\nrequire gopkg.in/yaml.v3 v3.0.1 // indirect\n\nrequire (\n\tgithub.com/bytedance/gopkg v0.1.3 // indirect\n\tgithub.com/bytedance/sonic/loader v0.5.0 // indirect\n\tgithub.com/cloudwego/base64x v0.1.6 // indirect\n\tgithub.com/davecgh/go-spew v1.1.1 // indirect\n\tgithub.com/gabriel-vasile/mimetype v1.4.13 // indirect\n\tgithub.com/go-playground/locales v0.14.1 // indirect\n\tgithub.com/go-playground/universal-translator v0.18.1 // indirect\n\tgithub.com/klauspost/cpuid/v2 v2.3.0 // indirect\n\tgithub.com/kr/text v0.2.0 // indirect\n\tgithub.com/leodido/go-urn v1.4.0 // indirect\n\tgithub.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect\n\tgithub.com/pmezard/go-difflib v1.0.0 // indirect\n\tgithub.com/quic-go/qpack v0.6.0 // indirect\n\tgithub.com/twitchyliquid64/golang-asm v0.15.1 // indirect\n\tgo.uber.org/mock v0.6.0 // indirect\n\tgolang.org/x/arch v0.25.0 // indirect\n\tgolang.org/x/crypto v0.51.0 // indirect\n\tgolang.org/x/sys v0.45.0 // indirect\n\tgolang.org/x/text v0.37.0 // indirect\n)\n",
+            "sha256": "03d4516bb50bbd081c36a9b16f2a3f4e161439bf3d7cb83d5a18c7e2e75fcfaa"
+          }
+        ],
+        "limitations": [
+          "Only this root module is analyzed. go.work, replace directives, third-party dependencies, cgo, generated compiler output and nested modules are not loaded. SDK standard-library type exports may be prepared and read; their source is not analyzed.",
+          "Source selection uses the running SDK tool/release tags; target CPU-feature and experimental overrides are not independently reconstructed.",
+          "The go.mod language/toolchain directives are captured as metadata but are not enforced by this incomplete type checker.",
+          "Targets are direct source function bindings from go/types with recorded SDK types when enabled and incomplete third-party types. They do not prove successful compilation, argument applicability, runtime dispatch or a complete caller set.",
+          "Function bodies and receiver declarations are inventoried; concrete compiler-selected source methods are bound, including promotion, method expressions and generic instances. Interface method calls bind to a captured interface method declaration when one is visible; the runtime implementation remains unknown. Function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.",
+          "Captured interface implementation edges use go/types method sets for named source types and interfaces. Value and pointer satisfaction are recorded separately. Interfaces with external or anonymous embedded interfaces, generic interfaces, generic concrete types and type aliases are omitted from the edge set and reported as unknown; absence of an edge is not proof that a type does not implement an interface."
+        ]
+      },
+      "interfaceEvidence": {
+        "completeInterfaces": 15,
+        "edges": 200,
+        "genericInterfaces": [],
+        "incompleteInterfaces": [],
+        "interfacesWithoutCapturedImplementations": [
+          {
+            "interface": {
+              "column": 6,
+              "file": "codec/json/api.go",
+              "line": 22,
+              "package": "github.com/gin-gonic/gin/codec/json",
+              "qualname": "Encoder"
+            },
+            "reason": "no-captured-implementation"
+          },
+          {
+            "interface": {
+              "column": 6,
+              "file": "codec/json/api.go",
+              "line": 41,
+              "package": "github.com/gin-gonic/gin/codec/json",
+              "qualname": "Decoder"
+            },
+            "reason": "no-captured-implementation"
+          }
+        ],
+        "model": "captured-interface-implementations-v2"
+      },
+      "resolution": {
+        "digest": "838ef2eb9dad62480c2b85b7b10f5221ef2f906af5d0a26f41ba2d475dcfecdd",
+        "fresh": true,
+        "options": {
+          "cgo": false,
+          "goFlags": "not-loaded",
+          "goWork": "not-loaded",
+          "goarch": "arm64",
+          "goos": "darwin",
+          "module": "github.com/gin-gonic/gin",
+          "releaseTags": [
+            "go1.1",
+            "go1.2",
+            "go1.3",
+            "go1.4",
+            "go1.5",
+            "go1.6",
+            "go1.7",
+            "go1.8",
+            "go1.9",
+            "go1.10",
+            "go1.11",
+            "go1.12",
+            "go1.13",
+            "go1.14",
+            "go1.15",
+            "go1.16",
+            "go1.17",
+            "go1.18",
+            "go1.19",
+            "go1.20",
+            "go1.21",
+            "go1.22",
+            "go1.23",
+            "go1.24",
+            "go1.25",
+            "go1.26",
+            "go1.27"
+          ],
+          "replace": "not-loaded",
+          "standardLibrary": {
+            "exportedDependencyCount": 212,
+            "intrinsicPackages": [
+              "unsafe"
+            ],
+            "mode": "compiler-exports",
+            "network": "module-proxy-and-checksum-disabled",
+            "packages": [
+              {
+                "bytes": 422668,
+                "path": "bufio",
+                "sha256": "e285559ee5b063b7693c99ad1320ce2bb011b089b913791229e7ec313367f13f"
+              },
+              {
+                "bytes": 605696,
+                "path": "bytes",
+                "sha256": "22b3214332c262f77ecfb2ec5275d812be5831a3681cab6923d2f855ae432f71"
+              },
+              {
+                "bytes": 2554,
+                "path": "cmp",
+                "sha256": "83a5b12672194de931d3bff29f77a3e85c3e12f5019fff73b8242d14818e58d8"
+              },
+              {
+                "bytes": 412724,
+                "path": "context",
+                "sha256": "79180122176a983c1241f6501c4dc805aa408bc5322d31a73fe2390e83b57ca6"
+              },
+              {
+                "bytes": 78864,
+                "path": "crypto/rand",
+                "sha256": "352e6f9a95c1c6089c4c2d68ac627970be58b2b81629051d2a3a3d825a322be3"
+              },
+              {
+                "bytes": 31160,
+                "path": "crypto/subtle",
+                "sha256": "289bd07d71abc1e39b20b9594d345b430ed8803e5f9acc1f3bc311485555d6cb"
+              },
+              {
+                "bytes": 6036938,
+                "path": "crypto/tls",
+                "sha256": "fb2095fc1d26cfee37998db3bc58ffd2db2975401c8ac34a291ac47220128e24"
+              },
+              {
+                "bytes": 20104,
+                "path": "encoding",
+                "sha256": "9fbb32605149a257cb7413fd10982b5f54a9be7b84fc5222ebc15b940eec2b11"
+              },
+              {
+                "bytes": 175780,
+                "path": "encoding/base64",
+                "sha256": "c695141a2523d396405c3910f1a840c7e739868dc82489da8263d94724167184"
+              },
+              {
+                "bytes": 112348,
+                "path": "encoding/hex",
+                "sha256": "97e1c25cba0faa3e1c57fc1c6bd8b96a4cc91c5bd4f2e25c5482f8559129dd67"
+              },
+              {
+                "bytes": 727962,
+                "path": "encoding/json",
+                "sha256": "5ae236bd0177c407d236ebb436e66378ba3a9b1f6ae949f1902eaf89345ea4aa"
+              },
+              {
+                "bytes": 2025332,
+                "path": "encoding/xml",
+                "sha256": "bb99b686264a7f2adb633c0cb42e44f69e1d543dab621ab7be0ea0de510e8312"
+              },
+              {
+                "bytes": 100910,
+                "path": "errors",
+                "sha256": "efbbb2d66f523125bb66e6d2b4de1ed4db03dfaf725bc86cf1dbe69b28f67a53"
+              },
+              {
+                "bytes": 866186,
+                "path": "flag",
+                "sha256": "b8e7311430b37571960b3143065c48245f77bc8b91746885fb46f210b61620e5"
+              },
+              {
+                "bytes": 1296514,
+                "path": "fmt",
+                "sha256": "e803f1b8708bd7b065a0637e3df04f9d64eec2707cc1478bc327bde3b5512a2f"
+              },
+              {
+                "bytes": 1536844,
+                "path": "html/template",
+                "sha256": "49daa3b0c2c3519995834e49b23279cd037c15dfe77b99807734971a82ebac1e"
+              },
+              {
+                "bytes": 449500,
+                "path": "io",
+                "sha256": "a05c5ac71c0ad8fb6f96fd603e58cc35faa166484aa47aa27dbe0aa05987a98d"
+              },
+              {
+                "bytes": 471944,
+                "path": "io/fs",
+                "sha256": "4f50078d2e9aa7ac07390117b4c1d207513095b627c7cf45508d0506a6c60c4b"
+              },
+              {
+                "bytes": 332498,
+                "path": "log",
+                "sha256": "4ea2bcb809a03231a00a1230c20e19dcab431b39963bb6261c5218b0689132d6"
+              },
+              {
+                "bytes": 8754,
+                "path": "maps",
+                "sha256": "8acce40f9075f30e35fd1bee294afe15469af873afb95a6da6c8670a65bfe609"
+              },
+              {
+                "bytes": 612542,
+                "path": "math",
+                "sha256": "efff2a0e0ddd762ac68dcf296bedc1f7adebb877647776ce5bb44bd525eb10f9"
+              },
+              {
+                "bytes": 383580,
+                "path": "math/rand",
+                "sha256": "6b6ec68114c1415084b61ac0a284d6cbdd5ee552452e23970eae378eb78705e2"
+              },
+              {
+                "bytes": 595650,
+                "path": "mime/multipart",
+                "sha256": "965b40cb0d497e73a24c729386d5cd1bf1dc768a4a14c526c3cd8816966e42ed"
+              },
+              {
+                "bytes": 4801038,
+                "path": "net",
+                "sha256": "7a2ed373a4c906f19a70596a5104a5fd6d6a88bdfb578911269c3f0a4e07e7f5"
+              },
+              {
+                "bytes": 6677702,
+                "path": "net/http",
+                "sha256": "62ee5a1d2a3d197f59e108c69ef508386f0a480ba22cda486824679257631f0e"
+              },
+              {
+                "bytes": 767866,
+                "path": "net/http/httptest",
+                "sha256": "e2fdca680755ff597c2648984f6b8aad9ce1b32c33ccaf761995e24dff97334a"
+              },
+              {
+                "bytes": 858560,
+                "path": "net/http/httputil",
+                "sha256": "31d04fb66751f27ca8ded79e9e4898e9f130ef4727ff4dd725bb72c15a2a7320"
+              },
+              {
+                "bytes": 412986,
+                "path": "net/textproto",
+                "sha256": "c25d4c331f9174c841d57831753df2ea8ae71a5f707d1799bc0c0d48f892d6d9"
+              },
+              {
+                "bytes": 626974,
+                "path": "net/url",
+                "sha256": "370b1ff4265a91547af0ba8fde9fccaded04e33e4d1992b5ef7f989160a4c281"
+              },
+              {
+                "bytes": 2507384,
+                "path": "os",
+                "sha256": "9eb16dabf1c6e1a672441c7c1fa0619ae4b1c850e74bfae8ae128e674c6a0bbb"
+              },
+              {
+                "bytes": 81814,
+                "path": "path",
+                "sha256": "9ae827800ebe72b26bfed23c6891a1b811d4b73f2623da5595650ef7d785352d"
+              },
+              {
+                "bytes": 340390,
+                "path": "path/filepath",
+                "sha256": "051d299b2b90d0d1e7e1ba0a859783ab3bc65996b2d01b8b4d00c3e34257c388"
+              },
+              {
+                "bytes": 3999474,
+                "path": "reflect",
+                "sha256": "29fa2df372b613fd9fc54183d0a32753d5334c9b57d71de49a13cc0c085083b2"
+              },
+              {
+                "bytes": 1564304,
+                "path": "regexp",
+                "sha256": "0011bc27b7690fe34e06895d686558a659790795de8d1754d5b74d3dbba97e9e"
+              },
+              {
+                "bytes": 15224824,
+                "path": "runtime",
+                "sha256": "0d8b6cd4488799cea5a1069dd039c4d9128037a067f43d6019e4c99a5f95e73e"
+              },
+              {
+                "bytes": 256904,
+                "path": "strconv",
+                "sha256": "b32d8ecfc8059d75b25eb2c1acf4eb4179f15151b8814218c7f80e86abd47595"
+              },
+              {
+                "bytes": 718248,
+                "path": "strings",
+                "sha256": "2178f8b2688d5daf07e8e1e56e1ab9ecc5ddb319fc5be13ad4485be8eabbeaaf"
+              },
+              {
+                "bytes": 967650,
+                "path": "sync",
+                "sha256": "c93cb181ae1db592a7684d379d635d748f75ad1f964062d3992bd35d7f682446"
+              },
+              {
+                "bytes": 275140,
+                "path": "sync/atomic",
+                "sha256": "1d5225ab5d15785da37025c1a9b6ed82abc38723dd0b3721176c6f995090dede"
+              },
+              {
+                "bytes": 1889576,
+                "path": "syscall",
+                "sha256": "0149c05eecfef110900213a8bd08857ade44086e87c46d5ae6f85e084b9af0b5"
+              },
+              {
+                "bytes": 2805664,
+                "path": "testing",
+                "sha256": "19bbe5f78a077d87b3844b611f0758a89bfac71a020e4c89660e6cfe6685e40d"
+              },
+              {
+                "bytes": 1393550,
+                "path": "time",
+                "sha256": "5e62432237c9ed51eb4fe40718f8560c6354d1b38492505482dcf4c5e7a43679"
+              },
+              {
+                "bytes": 523138,
+                "path": "unicode",
+                "sha256": "f1e15f5811c157c834b533af5361c9f3a9302ff0be5fe0fd3d2a52b779b9578f"
+              },
+              {
+                "bytes": 83180,
+                "path": "unicode/utf8",
+                "sha256": "a9402f8f207f472f28f79330353a4204540375ed70b9fa5532c480937525b72d"
+              }
+            ],
+            "projectCommands": false,
+            "requestedPackages": [
+              "bufio",
+              "bytes",
+              "cmp",
+              "context",
+              "crypto/rand",
+              "crypto/subtle",
+              "crypto/tls",
+              "encoding",
+              "encoding/base64",
+              "encoding/hex",
+              "encoding/json",
+              "encoding/xml",
+              "errors",
+              "flag",
+              "fmt",
+              "html/template",
+              "io",
+              "io/fs",
+              "log",
+              "maps",
+              "math",
+              "math/rand",
+              "mime/multipart",
+              "net",
+              "net/http",
+              "net/http/httptest",
+              "net/http/httputil",
+              "net/textproto",
+              "net/url",
+              "os",
+              "path",
+              "path/filepath",
+              "reflect",
+              "regexp",
+              "runtime",
+              "strconv",
+              "strings",
+              "sync",
+              "sync/atomic",
+              "syscall",
+              "testing",
+              "time",
+              "unicode",
+              "unicode/utf8"
+            ],
+            "sourceFilesAnalyzed": false,
+            "toolchain": "go1.27.2"
+          },
+          "tags": [],
+          "tests": true,
+          "toolTags": [
+            "goexperiment.regabiwrappers",
+            "goexperiment.regabiargs",
+            "goexperiment.jsonv2",
+            "goexperiment.greenteagc",
+            "goexperiment.randomizedheapbase64",
+            "goexperiment.sizespecializedmalloc",
+            "arm64.v8.0"
+          ],
+          "toolchain": "go1.27.2"
+        },
+        "inputs": {
+          "total": 1,
+          "included": 1,
+          "omitted": 0,
+          "limit": 40,
+          "items": [
+            {
+              "file": "<root>/go.mod",
+              "sha256": "03d4516bb50bbd081c36a9b16f2a3f4e161439bf3d7cb83d5a18c7e2e75fcfaa"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "comparison": {
+    "sourceText": "reading-signals-only",
+    "bindingAttribution": "source-import-model-only",
+    "reasons": [],
+    "resolutionChanges": {
+      "optionChanges": {
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      },
+      "inputChanges": {
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      }
+    }
+  },
+  "fileChanges": {
+    "total": 2,
+    "included": 2,
+    "omitted": 0,
+    "limit": 40,
+    "items": [
+      {
+        "file": "response_writer.go",
+        "status": "text-changed",
+        "base": {
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "sha256": "ba31f0d43862f3f38fad4d860b31b4a37cb272a1babe1e5442a11031b530adec",
+          "status": "valid"
+        },
+        "head": {
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "sha256": "906e5673f82a077b04d443bacdbad041398e2c6eb4ba7fe8627b04be6321f5a6",
+          "status": "valid"
+        }
+      },
+      {
+        "file": "response_writer_test.go",
+        "status": "text-changed",
+        "base": {
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "sha256": "a50062c96cd4c629eb499dfae08217ba6ec48c99877163cd7364aadd03146c7d",
+          "status": "valid"
+        },
+        "head": {
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "sha256": "5bad5c72679922f70d24a867d4e43e8496670e755b65b991647a35336e5718f0",
+          "status": "valid"
+        }
+      }
+    ]
+  },
+  "definitionCoverage": {
+    "base": "available",
+    "head": "available"
+  },
+  "unavailableDefinitions": {
+    "base": {
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "head": {
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    }
+  },
+  "outgoingImports": {
+    "role": "entry-file-wide source reading evidence, not selected-definition calls or execution timing",
+    "base": {
+      "side": "base",
+      "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+      "originStatus": "valid",
+      "total": 5,
+      "included": 5,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "factIndex": 150,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 8,
+            "resolved": false,
+            "specifier": "bufio"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "factIndex": 151,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 9,
+            "resolved": false,
+            "specifier": "errors"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "factIndex": 152,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 10,
+            "resolved": false,
+            "specifier": "io"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "factIndex": 153,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 11,
+            "resolved": false,
+            "specifier": "net"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "factIndex": 154,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 12,
+            "resolved": false,
+            "specifier": "net/http"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        }
+      ]
+    },
+    "head": {
+      "side": "head",
+      "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+      "originStatus": "valid",
+      "total": 5,
+      "included": 5,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "factIndex": 150,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 8,
+            "resolved": false,
+            "specifier": "bufio"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "factIndex": 151,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 9,
+            "resolved": false,
+            "specifier": "errors"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "factIndex": 152,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 10,
+            "resolved": false,
+            "specifier": "io"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "factIndex": 153,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 11,
+            "resolved": false,
+            "specifier": "net"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "factIndex": 154,
+          "fact": {
+            "from": "response_writer.go",
+            "kind": "static",
+            "line": 12,
+            "resolved": false,
+            "specifier": "net/http"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        }
+      ]
+    }
+  },
+  "moduleReading": {
+    "role": "dependency reading locations, separate from calls; not proof of execution or affected behavior",
+    "base": {
+      "side": "base",
+      "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+      "entryStatus": "valid",
+      "resolvedReferences": {
+        "total": 2,
+        "included": 2,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "side": "base",
+            "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+            "factIndex": 572,
+            "fact": {
+              "from": "ginS/gins.go",
+              "kind": "static",
+              "line": 12,
+              "resolved": true,
+              "specifier": "github.com/gin-gonic/gin",
+              "to": "response_writer.go"
+            },
+            "bindingAttribution": "source-import-model-only",
+            "originStatus": "valid",
+            "entryStatus": "valid",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "ginS/gins.go",
+                "line": 12
+              }
+            }
+          },
+          {
+            "side": "base",
+            "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+            "factIndex": 594,
+            "fact": {
+              "from": "ginS/gins_test.go",
+              "kind": "static",
+              "line": 13,
+              "resolved": true,
+              "specifier": "github.com/gin-gonic/gin",
+              "to": "response_writer.go"
+            },
+            "bindingAttribution": "source-import-model-only",
+            "originStatus": "valid",
+            "entryStatus": "valid",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "ginS/gins_test.go",
+                "line": 13
+              }
+            }
+          }
+        ]
+      },
+      "unresolvedImports": 478,
+      "unknown": "Unresolved import destinations cannot be attributed to this entry. The count covers all captured sources, not potential consumers of this file."
+    },
+    "head": {
+      "side": "head",
+      "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+      "entryStatus": "valid",
+      "resolvedReferences": {
+        "total": 2,
+        "included": 2,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "side": "head",
+            "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+            "factIndex": 572,
+            "fact": {
+              "from": "ginS/gins.go",
+              "kind": "static",
+              "line": 12,
+              "resolved": true,
+              "specifier": "github.com/gin-gonic/gin",
+              "to": "response_writer.go"
+            },
+            "bindingAttribution": "source-import-model-only",
+            "originStatus": "valid",
+            "entryStatus": "valid",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "ginS/gins.go",
+                "line": 12
+              }
+            }
+          },
+          {
+            "side": "head",
+            "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+            "factIndex": 594,
+            "fact": {
+              "from": "ginS/gins_test.go",
+              "kind": "static",
+              "line": 13,
+              "resolved": true,
+              "specifier": "github.com/gin-gonic/gin",
+              "to": "response_writer.go"
+            },
+            "bindingAttribution": "source-import-model-only",
+            "originStatus": "valid",
+            "entryStatus": "valid",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "ginS/gins_test.go",
+                "line": 13
+              }
+            }
+          }
+        ]
+      },
+      "unresolvedImports": 478,
+      "unknown": "Unresolved import destinations cannot be attributed to this entry. The count covers all captured sources, not potential consumers of this file."
+    },
+    "factRole": "Original records from this side/snapshot imports array. Preserve kind, typeOnly and lazy; absent typeOnly/lazy mean false. Use navigation.location only when valid."
+  },
+  "changedDefinitions": {
+    "total": 2,
+    "included": 2,
+    "omitted": 0,
+    "limit": 40,
+    "items": [
+      {
+        "pairing": "unique-exact-source-slot",
+        "base": {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "definition": {
+            "file": "response_writer.go",
+            "name": "Hijack",
+            "qualname": "*responseWriter.Hijack",
+            "kind": "FuncDecl",
+            "line": 111,
+            "column": 1,
+            "endLine": 121,
+            "endColumn": 2,
+            "sourceRange": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 121,
+              "line": 111,
+              "sha256": "84576242ed0e9b361c397a50cfe67917d0703e30c37e5dfd615bcf61b412497f"
+            },
+            "textSha256": "84576242ed0e9b361c397a50cfe67917d0703e30c37e5dfd615bcf61b412497f"
+          },
+          "knownReferences": {
+            "coverage": "available",
+            "total": 0,
+            "included": 0,
+            "omitted": 0,
+            "limit": 40,
+            "items": []
+          },
+          "interfaceCandidates": {
+            "coverage": "available",
+            "total": 3,
+            "included": 3,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "base",
+                "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+                "factIndex": 7877,
+                "fact": {
+                  "column": 16,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer_test.go",
+                    "kind": "function",
+                    "line": 110,
+                    "name": "TestResponseWriterHijack",
+                    "qualname": "TestResponseWriterHijack"
+                  },
+                  "endColumn": 26,
+                  "endLine": 117,
+                  "file": "response_writer_test.go",
+                  "interfaceMethod": {
+                    "name": "Hijack",
+                    "package": "net/http",
+                    "qualname": "http.Hijack"
+                  },
+                  "line": 117,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "response_writer_test.go",
+                    "line": 117,
+                    "column": 16,
+                    "endLine": 117,
+                    "endColumn": 26
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "Hijack",
+                  "package": "net/http",
+                  "qualname": "http.Hijack"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 111,
+                    "qualname": "*responseWriter.Hijack"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 111,
+                        "qualname": "*responseWriter.Hijack"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.Hijack: responseWriter (*T) satisfies ResponseWriter, but Hijack is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              },
+              {
+                "side": "base",
+                "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+                "factIndex": 7896,
+                "fact": {
+                  "column": 23,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer_test.go",
+                    "kind": "function",
+                    "line": 140,
+                    "name": "TestResponseWriterHijackAfterWrite",
+                    "qualname": "TestResponseWriterHijackAfterWrite"
+                  },
+                  "endColumn": 33,
+                  "endLine": 187,
+                  "file": "response_writer_test.go",
+                  "interfaceMethod": {
+                    "name": "Hijack",
+                    "package": "net/http",
+                    "qualname": "http.Hijack"
+                  },
+                  "line": 187,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "response_writer_test.go",
+                    "line": 187,
+                    "column": 23,
+                    "endLine": 187,
+                    "endColumn": 33
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "Hijack",
+                  "package": "net/http",
+                  "qualname": "http.Hijack"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 111,
+                    "qualname": "*responseWriter.Hijack"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 111,
+                        "qualname": "*responseWriter.Hijack"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.Hijack: responseWriter (*T) satisfies ResponseWriter, but Hijack is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              },
+              {
+                "side": "base",
+                "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+                "factIndex": 7913,
+                "fact": {
+                  "column": 23,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer_test.go",
+                    "kind": "function",
+                    "line": 198,
+                    "name": "TestResponseWriterHijackAfterWriteHeaderNow",
+                    "qualname": "TestResponseWriterHijackAfterWriteHeaderNow"
+                  },
+                  "endColumn": 33,
+                  "endLine": 242,
+                  "file": "response_writer_test.go",
+                  "interfaceMethod": {
+                    "name": "Hijack",
+                    "package": "net/http",
+                    "qualname": "http.Hijack"
+                  },
+                  "line": 242,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "response_writer_test.go",
+                    "line": 242,
+                    "column": 23,
+                    "endLine": 242,
+                    "endColumn": 33
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "Hijack",
+                  "package": "net/http",
+                  "qualname": "http.Hijack"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 111,
+                    "qualname": "*responseWriter.Hijack"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 111,
+                        "qualname": "*responseWriter.Hijack"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.Hijack: responseWriter (*T) satisfies ResponseWriter, but Hijack is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              }
+            ]
+          },
+          "unresolvedWithinSourceRange": {
+            "coverage": "available",
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "base",
+                "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+                "factIndex": 7803,
+                "fact": {
+                  "column": 9,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "kind": "method",
+                    "line": 111,
+                    "name": "Hijack",
+                    "qualname": "*responseWriter.Hijack"
+                  },
+                  "endColumn": 50,
+                  "endLine": 120,
+                  "file": "response_writer.go",
+                  "interfaceMethod": {
+                    "name": "Hijack",
+                    "package": "net/http",
+                    "qualname": "http.Hijack"
+                  },
+                  "line": 120,
+                  "reason": "go-interface-external-method",
+                  "resolution": "unresolved"
+                }
+              }
+            ],
+            "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+          }
+        },
+        "head": {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "definition": {
+            "file": "response_writer.go",
+            "name": "Hijack",
+            "qualname": "*responseWriter.Hijack",
+            "kind": "FuncDecl",
+            "line": 111,
+            "column": 1,
+            "endLine": 125,
+            "endColumn": 2,
+            "sourceRange": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 125,
+              "line": 111,
+              "sha256": "f62d40f76385ea2b59ef436a64b6afb346abc9201da29085ad60d001a7e422b8"
+            },
+            "textSha256": "f62d40f76385ea2b59ef436a64b6afb346abc9201da29085ad60d001a7e422b8"
+          },
+          "knownReferences": {
+            "coverage": "available",
+            "total": 0,
+            "included": 0,
+            "omitted": 0,
+            "limit": 40,
+            "items": []
+          },
+          "interfaceCandidates": {
+            "coverage": "available",
+            "total": 3,
+            "included": 3,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "head",
+                "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+                "factIndex": 7876,
+                "fact": {
+                  "column": 20,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer_test.go",
+                    "kind": "function",
+                    "line": 110,
+                    "name": "TestResponseWriterHijack",
+                    "qualname": "TestResponseWriterHijack"
+                  },
+                  "endColumn": 30,
+                  "endLine": 120,
+                  "file": "response_writer_test.go",
+                  "interfaceMethod": {
+                    "name": "Hijack",
+                    "package": "net/http",
+                    "qualname": "http.Hijack"
+                  },
+                  "line": 120,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "response_writer_test.go",
+                    "line": 120,
+                    "column": 20,
+                    "endLine": 120,
+                    "endColumn": 30
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "Hijack",
+                  "package": "net/http",
+                  "qualname": "http.Hijack"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 111,
+                    "qualname": "*responseWriter.Hijack"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 111,
+                        "qualname": "*responseWriter.Hijack"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.Hijack: responseWriter (*T) satisfies ResponseWriter, but Hijack is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              },
+              {
+                "side": "head",
+                "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+                "factIndex": 7897,
+                "fact": {
+                  "column": 23,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer_test.go",
+                    "kind": "function",
+                    "line": 143,
+                    "name": "TestResponseWriterHijackAfterWrite",
+                    "qualname": "TestResponseWriterHijackAfterWrite"
+                  },
+                  "endColumn": 33,
+                  "endLine": 190,
+                  "file": "response_writer_test.go",
+                  "interfaceMethod": {
+                    "name": "Hijack",
+                    "package": "net/http",
+                    "qualname": "http.Hijack"
+                  },
+                  "line": 190,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "response_writer_test.go",
+                    "line": 190,
+                    "column": 23,
+                    "endLine": 190,
+                    "endColumn": 33
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "Hijack",
+                  "package": "net/http",
+                  "qualname": "http.Hijack"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 111,
+                    "qualname": "*responseWriter.Hijack"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 111,
+                        "qualname": "*responseWriter.Hijack"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.Hijack: responseWriter (*T) satisfies ResponseWriter, but Hijack is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              },
+              {
+                "side": "head",
+                "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+                "factIndex": 7914,
+                "fact": {
+                  "column": 23,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer_test.go",
+                    "kind": "function",
+                    "line": 201,
+                    "name": "TestResponseWriterHijackAfterWriteHeaderNow",
+                    "qualname": "TestResponseWriterHijackAfterWriteHeaderNow"
+                  },
+                  "endColumn": 33,
+                  "endLine": 245,
+                  "file": "response_writer_test.go",
+                  "interfaceMethod": {
+                    "name": "Hijack",
+                    "package": "net/http",
+                    "qualname": "http.Hijack"
+                  },
+                  "line": 245,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "response_writer_test.go",
+                    "line": 245,
+                    "column": 23,
+                    "endLine": 245,
+                    "endColumn": 33
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "Hijack",
+                  "package": "net/http",
+                  "qualname": "http.Hijack"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 111,
+                    "qualname": "*responseWriter.Hijack"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 111,
+                        "qualname": "*responseWriter.Hijack"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.Hijack: responseWriter (*T) satisfies ResponseWriter, but Hijack is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              }
+            ]
+          },
+          "unresolvedWithinSourceRange": {
+            "coverage": "available",
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "head",
+                "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+                "factIndex": 7803,
+                "fact": {
+                  "column": 9,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "kind": "method",
+                    "line": 111,
+                    "name": "Hijack",
+                    "qualname": "*responseWriter.Hijack"
+                  },
+                  "endColumn": 26,
+                  "endLine": 124,
+                  "file": "response_writer.go",
+                  "interfaceMethod": {
+                    "name": "Hijack",
+                    "package": "net/http",
+                    "qualname": "http.Hijack"
+                  },
+                  "line": 124,
+                  "reason": "go-interface-external-method",
+                  "resolution": "unresolved"
+                }
+              }
+            ],
+            "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+          }
+        }
+      },
+      {
+        "pairing": "unique-exact-source-slot",
+        "base": {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "definition": {
+            "file": "response_writer.go",
+            "name": "CloseNotify",
+            "qualname": "*responseWriter.CloseNotify",
+            "kind": "FuncDecl",
+            "line": 124,
+            "column": 1,
+            "endLine": 126,
+            "endColumn": 2,
+            "sourceRange": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 126,
+              "line": 124,
+              "sha256": "7dd2a7eb84d5377bbdfc77a72be827557f4a90e3913a4359af85d9663e31417d"
+            },
+            "textSha256": "7dd2a7eb84d5377bbdfc77a72be827557f4a90e3913a4359af85d9663e31417d"
+          },
+          "knownReferences": {
+            "coverage": "available",
+            "total": 0,
+            "included": 0,
+            "omitted": 0,
+            "limit": 40,
+            "items": []
+          },
+          "interfaceCandidates": {
+            "coverage": "available",
+            "total": 2,
+            "included": 2,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "base",
+                "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+                "factIndex": 2090,
+                "fact": {
+                  "column": 16,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "context.go",
+                    "kind": "method",
+                    "line": 1355,
+                    "name": "Stream",
+                    "qualname": "*Context.Stream"
+                  },
+                  "endColumn": 31,
+                  "endLine": 1357,
+                  "file": "context.go",
+                  "interfaceMethod": {
+                    "name": "CloseNotify",
+                    "package": "net/http",
+                    "qualname": "http.CloseNotify"
+                  },
+                  "line": 1357,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "context.go",
+                    "line": 1357,
+                    "column": 16,
+                    "endLine": 1357,
+                    "endColumn": 31
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "CloseNotify",
+                  "package": "net/http",
+                  "qualname": "http.CloseNotify"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 124,
+                    "qualname": "*responseWriter.CloseNotify"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 124,
+                        "qualname": "*responseWriter.CloseNotify"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.CloseNotify: responseWriter (*T) satisfies ResponseWriter, but CloseNotify is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              },
+              {
+                "side": "base",
+                "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+                "factIndex": 7882,
+                "fact": {
+                  "column": 3,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer_test.go",
+                    "kind": "function",
+                    "line": 110,
+                    "name": "TestResponseWriterHijack",
+                    "qualname": "TestResponseWriterHijack"
+                  },
+                  "endColumn": 18,
+                  "endLine": 123,
+                  "file": "response_writer_test.go",
+                  "interfaceMethod": {
+                    "name": "CloseNotify",
+                    "package": "net/http",
+                    "qualname": "http.CloseNotify"
+                  },
+                  "line": 123,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "response_writer_test.go",
+                    "line": 123,
+                    "column": 3,
+                    "endLine": 123,
+                    "endColumn": 18
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "CloseNotify",
+                  "package": "net/http",
+                  "qualname": "http.CloseNotify"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 124,
+                    "qualname": "*responseWriter.CloseNotify"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 124,
+                        "qualname": "*responseWriter.CloseNotify"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.CloseNotify: responseWriter (*T) satisfies ResponseWriter, but CloseNotify is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              }
+            ]
+          },
+          "unresolvedWithinSourceRange": {
+            "coverage": "available",
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "base",
+                "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+                "factIndex": 7804,
+                "fact": {
+                  "column": 9,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "kind": "method",
+                    "line": 124,
+                    "name": "CloseNotify",
+                    "qualname": "*responseWriter.CloseNotify"
+                  },
+                  "endColumn": 60,
+                  "endLine": 125,
+                  "file": "response_writer.go",
+                  "interfaceMethod": {
+                    "name": "CloseNotify",
+                    "package": "net/http",
+                    "qualname": "http.CloseNotify"
+                  },
+                  "line": 125,
+                  "reason": "go-interface-external-method",
+                  "resolution": "unresolved"
+                }
+              }
+            ],
+            "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+          }
+        },
+        "head": {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "definition": {
+            "file": "response_writer.go",
+            "name": "CloseNotify",
+            "qualname": "*responseWriter.CloseNotify",
+            "kind": "FuncDecl",
+            "line": 128,
+            "column": 1,
+            "endLine": 133,
+            "endColumn": 2,
+            "sourceRange": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 133,
+              "line": 128,
+              "sha256": "366d0ef679c3c131414a315865052f883e0db6d27b9dbd5ca89657efa7e6d791"
+            },
+            "textSha256": "366d0ef679c3c131414a315865052f883e0db6d27b9dbd5ca89657efa7e6d791"
+          },
+          "knownReferences": {
+            "coverage": "available",
+            "total": 0,
+            "included": 0,
+            "omitted": 0,
+            "limit": 40,
+            "items": []
+          },
+          "interfaceCandidates": {
+            "coverage": "available",
+            "total": 2,
+            "included": 2,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "head",
+                "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+                "factIndex": 2090,
+                "fact": {
+                  "column": 16,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "context.go",
+                    "kind": "method",
+                    "line": 1355,
+                    "name": "Stream",
+                    "qualname": "*Context.Stream"
+                  },
+                  "endColumn": 31,
+                  "endLine": 1357,
+                  "file": "context.go",
+                  "interfaceMethod": {
+                    "name": "CloseNotify",
+                    "package": "net/http",
+                    "qualname": "http.CloseNotify"
+                  },
+                  "line": 1357,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "context.go",
+                    "line": 1357,
+                    "column": 16,
+                    "endLine": 1357,
+                    "endColumn": 31
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "CloseNotify",
+                  "package": "net/http",
+                  "qualname": "http.CloseNotify"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 128,
+                    "qualname": "*responseWriter.CloseNotify"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 128,
+                        "qualname": "*responseWriter.CloseNotify"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.CloseNotify: responseWriter (*T) satisfies ResponseWriter, but CloseNotify is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              },
+              {
+                "side": "head",
+                "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+                "factIndex": 7883,
+                "fact": {
+                  "column": 16,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer_test.go",
+                    "kind": "function",
+                    "line": 110,
+                    "name": "TestResponseWriterHijack",
+                    "qualname": "TestResponseWriterHijack"
+                  },
+                  "endColumn": 31,
+                  "endLine": 127,
+                  "file": "response_writer_test.go",
+                  "interfaceMethod": {
+                    "name": "CloseNotify",
+                    "package": "net/http",
+                    "qualname": "http.CloseNotify"
+                  },
+                  "line": 127,
+                  "reason": "go-interface-external-method",
+                  "receiverInterface": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 23,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "ResponseWriter"
+                  },
+                  "resolution": "unresolved"
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "response_writer_test.go",
+                    "line": 127,
+                    "column": 16,
+                    "endLine": 127,
+                    "endColumn": 31
+                  }
+                },
+                "interface": {
+                  "column": 6,
+                  "file": "response_writer.go",
+                  "line": 23,
+                  "package": "github.com/gin-gonic/gin",
+                  "qualname": "ResponseWriter"
+                },
+                "interfaceMethod": {
+                  "external": true,
+                  "name": "CloseNotify",
+                  "package": "net/http",
+                  "qualname": "http.CloseNotify"
+                },
+                "changedImplementation": {
+                  "method": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "line": 128,
+                    "qualname": "*responseWriter.CloseNotify"
+                  },
+                  "methodSet": "pointer",
+                  "pointerSatisfies": true,
+                  "reason": "captured-concrete-method",
+                  "type": {
+                    "column": 6,
+                    "file": "response_writer.go",
+                    "line": 49,
+                    "package": "github.com/gin-gonic/gin",
+                    "qualname": "responseWriter"
+                  },
+                  "valueSatisfies": false
+                },
+                "implementations": {
+                  "total": 2,
+                  "included": 2,
+                  "omitted": 0,
+                  "limit": 40,
+                  "items": [
+                    {
+                      "methodSet": "value",
+                      "pointerSatisfies": true,
+                      "reason": "method-body-not-captured",
+                      "type": {
+                        "column": 6,
+                        "file": "context_test.go",
+                        "line": 3429,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "interceptedWriter"
+                      },
+                      "valueSatisfies": true
+                    },
+                    {
+                      "method": {
+                        "column": 1,
+                        "file": "response_writer.go",
+                        "line": 128,
+                        "qualname": "*responseWriter.CloseNotify"
+                      },
+                      "methodSet": "pointer",
+                      "pointerSatisfies": true,
+                      "reason": "captured-concrete-method",
+                      "type": {
+                        "column": 6,
+                        "file": "response_writer.go",
+                        "line": 49,
+                        "package": "github.com/gin-gonic/gin",
+                        "qualname": "responseWriter"
+                      },
+                      "valueSatisfies": false
+                    }
+                  ]
+                },
+                "runtimeTarget": "not-determined",
+                "reason": "Call through ResponseWriter.CloseNotify: responseWriter (*T) satisfies ResponseWriter, but CloseNotify is declared in net/http, whose source is not captured. The callsite is recorded without a source target. The runtime receiver may be another implementation; it is not determined."
+              }
+            ]
+          },
+          "unresolvedWithinSourceRange": {
+            "coverage": "available",
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "head",
+                "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+                "factIndex": 7804,
+                "fact": {
+                  "column": 10,
+                  "directCaller": {
+                    "column": 1,
+                    "file": "response_writer.go",
+                    "kind": "method",
+                    "line": 128,
+                    "name": "CloseNotify",
+                    "qualname": "*responseWriter.CloseNotify"
+                  },
+                  "endColumn": 26,
+                  "endLine": 130,
+                  "file": "response_writer.go",
+                  "interfaceMethod": {
+                    "name": "CloseNotify",
+                    "package": "net/http",
+                    "qualname": "http.CloseNotify"
+                  },
+                  "line": 130,
+                  "reason": "go-interface-external-method",
+                  "resolution": "unresolved"
+                }
+              }
+            ],
+            "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+          }
+        }
+      }
+    ]
+  },
+  "positionOnlyDefinitions": {
+    "total": 2,
+    "included": 2,
+    "omitted": 0,
+    "limit": 40,
+    "items": [
+      {
+        "base": {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "definition": {
+            "file": "response_writer.go",
+            "name": "Flush",
+            "qualname": "*responseWriter.Flush",
+            "kind": "FuncDecl",
+            "line": 129,
+            "column": 1,
+            "endLine": 134,
+            "endColumn": 2,
+            "sourceRange": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 134,
+              "line": 129,
+              "sha256": "5f50693868d7f20c9a2eaa7d139abaa3497f64f7aef268985fb26744b308fa99"
+            },
+            "textSha256": "5f50693868d7f20c9a2eaa7d139abaa3497f64f7aef268985fb26744b308fa99"
+          }
+        },
+        "head": {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "definition": {
+            "file": "response_writer.go",
+            "name": "Flush",
+            "qualname": "*responseWriter.Flush",
+            "kind": "FuncDecl",
+            "line": 136,
+            "column": 1,
+            "endLine": 141,
+            "endColumn": 2,
+            "sourceRange": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 141,
+              "line": 136,
+              "sha256": "5f50693868d7f20c9a2eaa7d139abaa3497f64f7aef268985fb26744b308fa99"
+            },
+            "textSha256": "5f50693868d7f20c9a2eaa7d139abaa3497f64f7aef268985fb26744b308fa99"
+          }
+        }
+      },
+      {
+        "base": {
+          "side": "base",
+          "snapshotId": "4e5291de63da4cfc8e856d3a76c41df4f90fd1fcfd02c186b06fc0d7f4d9b2b6",
+          "definition": {
+            "file": "response_writer.go",
+            "name": "Pusher",
+            "qualname": "*responseWriter.Pusher",
+            "kind": "FuncDecl",
+            "line": 136,
+            "column": 1,
+            "endLine": 141,
+            "endColumn": 2,
+            "sourceRange": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 141,
+              "line": 136,
+              "sha256": "78c25330a84a9d2fd55b70fe79286889833ff42231515acbacf89b69f7279e21"
+            },
+            "textSha256": "78c25330a84a9d2fd55b70fe79286889833ff42231515acbacf89b69f7279e21"
+          }
+        },
+        "head": {
+          "side": "head",
+          "snapshotId": "667e8ef699ec74baae0034d09541f748a6247afe6df7b500876fa3ef2c05f802",
+          "definition": {
+            "file": "response_writer.go",
+            "name": "Pusher",
+            "qualname": "*responseWriter.Pusher",
+            "kind": "FuncDecl",
+            "line": 143,
+            "column": 1,
+            "endLine": 148,
+            "endColumn": 2,
+            "sourceRange": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 148,
+              "line": 143,
+              "sha256": "78c25330a84a9d2fd55b70fe79286889833ff42231515acbacf89b69f7279e21"
+            },
+            "textSha256": "78c25330a84a9d2fd55b70fe79286889833ff42231515acbacf89b69f7279e21"
+          }
+        }
+      }
+    ]
+  },
+  "unpairedDefinitions": {
+    "total": 0,
+    "included": 0,
+    "omitted": 0,
+    "limit": 40,
+    "items": []
+  },
+  "limitations": [
+    "File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.",
+    "Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.",
+    "Known references are conservative source callsites, not runtime callers or complete/transitive impact. Dynamic dispatch, unsupported member calls, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets ordinary undecorated module definitions or direct from-import aliases; v2 additionally follows one unique unconditional explicit reexport. Longer/rebound/conditional chains, decorated/method targets and runtime module initialization remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; v3 additionally distinguishes different fixed arities while same-arity/varargs competition, member dispatch and inherited owners remain unresolved. Go v1 binds captured free functions; v2 additionally follows compiler-selected concrete methods, including promotion, expressions and generic instances; v3 additionally binds interface method declarations captured in source as declaration anchors, while runtime interface dispatch and function variables remain unknown under incomplete external typing. Current Go change orientation additionally lists interface-mediated candidate callsites when captured go/types method sets prove that the changed concrete method is in an interface implementation; candidates are not definite runtime callers. Captures without interface implementation edges report interfaceCandidates as unavailable rather than zero. Argument type applicability and complete compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.",
+    "Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.",
+    "Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.",
+    "Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits."
+  ],
+  "nextSteps": [
+    "Read the changed source and the known callsite in each named side; inspect unresolved calls, adapter/configuration inputs and omitted regions relevant to the question.",
+    "For Go concrete methods, compare knownReferences (direct calls) with interfaceCandidates (interface-mediated possibilities). A candidate names the interface method declaration, the satisfying type and method, and any other captured implementations; the runtime receiver is not determined.",
+    "Explain the behavior from source and appropriate project checks. Keep inference and unknowns explicit; this orientation is not a completed change review."
+  ]
+}

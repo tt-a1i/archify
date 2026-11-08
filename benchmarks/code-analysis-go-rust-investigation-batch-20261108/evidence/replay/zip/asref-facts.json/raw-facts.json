@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "callModel": "rust-source-direct-v7",
+  "repository": {
+    "revision": null,
+    "baseRevision": "6a45b2f704f4f98b52a92f27664924e1c65b28f6",
+    "sourceKind": "working-tree",
+    "root": "benchmarks/code-analysis-go-rust-investigation-batch-20261108/fixtures/rust-accessor-shadow/head",
+    "url": "https://github.com/tt-a1i/archify.git",
+    "language": "rust",
+    "adapter": "rust-syn@2.0.119",
+    "adapterRevision": 7,
+    "snapshotId": "8e8e6c3105aff1939d53e13c227e19fcd0728fa3397f7b38904bacb0ec783291"
+  },
+  "files": [
+    {
+      "path": "src/lib.rs",
+      "sourceText": "pub trait Gate {\n    fn enabled(&self) -> bool;\n}\n\npub struct Other;\n\nimpl Other {\n    pub fn enabled(&self) -> bool {\n        false\n    }\n}\n\npub struct Wrapper<T> {\n    inner: T,\n}\n\nimpl<T: Gate> Wrapper<T> {\n    pub fn as_ref(&self) -> &Other {\n        &Other\n    }\n\n    pub fn check(&self) -> bool {\n        self.as_ref().enabled()\n    }\n}\n",
+      "loc": 25,
+      "role": "source"
+    }
+  ],
+  "packageMarkers": [
+    "Cargo.toml"
+  ],
+  "imports": [],
+  "symbols": [],
+  "functions": [
+    {
+      "complexity": 1,
+      "deepestLine": 8,
+      "definition": {
+        "kind": "RustItemFn",
+        "sourceRange": {
+          "column": 5,
+          "endColumn": 6,
+          "endLine": 10,
+          "line": 8,
+          "sha256": "bb725d97540cd79f9ecdfc4110269cdbb8f4676ea458c84c45e1fac2111de342"
+        }
+      },
+      "endLine": 10,
+      "file": "src/lib.rs",
+      "line": 8,
+      "name": "enabled",
+      "nesting": 0,
+      "qualname": "::Other::enabled",
+      "sourceRange": {
+        "column": 5,
+        "endColumn": 6,
+        "endLine": 10,
+        "line": 8,
+        "sha256": "bb725d97540cd79f9ecdfc4110269cdbb8f4676ea458c84c45e1fac2111de342"
+      }
+    },
+    {
+      "complexity": 1,
+      "deepestLine": 18,
+      "definition": {
+        "kind": "RustItemFn",
+        "sourceRange": {
+          "column": 5,
+          "endColumn": 6,
+          "endLine": 20,
+          "line": 18,
+          "sha256": "e060e0b4c1d048031ca9eec5d7c540449f65e4888792eb3d4e2c935b8174bdb6"
+        }
+      },
+      "endLine": 20,
+      "file": "src/lib.rs",
+      "line": 18,
+      "name": "as_ref",
+      "nesting": 0,
+      "qualname": "::Wrapper < T >::as_ref",
+      "sourceRange": {
+        "column": 5,
+        "endColumn": 6,
+        "endLine": 20,
+        "line": 18,
+        "sha256": "e060e0b4c1d048031ca9eec5d7c540449f65e4888792eb3d4e2c935b8174bdb6"
+      }
+    },
+    {
+      "complexity": 1,
+      "deepestLine": 22,
+      "definition": {
+        "kind": "RustItemFn",
+        "sourceRange": {
+          "column": 5,
+          "endColumn": 6,
+          "endLine": 24,
+          "line": 22,
+          "sha256": "66a92c45aad82be41037d9d273106581c745b1f02bfd95b822ad5024ccc8d5d3"
+        }
+      },
+      "endLine": 24,
+      "file": "src/lib.rs",
+      "line": 22,
+      "name": "check",
+      "nesting": 0,
+      "qualname": "::Wrapper < T >::check",
+      "sourceRange": {
+        "column": 5,
+        "endColumn": 6,
+        "endLine": 24,
+        "line": 22,
+        "sha256": "66a92c45aad82be41037d9d273106581c745b1f02bfd95b822ad5024ccc8d5d3"
+      }
+    }
+  ],
+  "calls": [
+    {
+      "column": 9,
+      "directCaller": {
+        "column": 5,
+        "file": "src/lib.rs",
+        "kind": "method",
+        "line": 22,
+        "name": "check",
+        "qualname": "::Wrapper < T >::check"
+      },
+      "endColumn": 22,
+      "endLine": 23,
+      "file": "src/lib.rs",
+      "line": 23,
+      "resolution": "rust-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/lib.rs",
+        "line": 18,
+        "name": "as_ref"
+      }
+    },
+    {
+      "column": 9,
+      "directCaller": {
+        "column": 5,
+        "file": "src/lib.rs",
+        "kind": "method",
+        "line": 22,
+        "name": "check",
+        "qualname": "::Wrapper < T >::check"
+      },
+      "endColumn": 32,
+      "endLine": 23,
+      "file": "src/lib.rs",
+      "line": 23,
+      "resolution": "rust-inherent-source-candidate",
+      "target": {
+        "column": 5,
+        "file": "src/lib.rs",
+        "line": 8,
+        "name": "enabled"
+      }
+    }
+  ],
+  "traits": [
+    {
+      "declaration": {
+        "column": 11,
+        "file": "src/lib.rs",
+        "line": 1,
+        "name": "Gate",
+        "qualname": "Gate"
+      },
+      "methods": [
+        {
+          "column": 8,
+          "file": "src/lib.rs",
+          "line": 2,
+          "name": "enabled",
+          "qualname": "Gate::enabled"
+        }
+      ]
+    }
+  ],
+  "traitImplementations": [],
+  "unresolved": {
+    "external": 0,
+    "outside": 0,
+    "unknown": 0,
+    "opaque": 0
+  },
+  "languageScope": {
+    "language": "rust",
+    "build": {
+      "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+      "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+      "helperHost": "aarch64-apple-darwin",
+      "targetCfg": [
+        "debug_assertions",
+        "panic=\"unwind\"",
+        "target_abi=\"\"",
+        "target_arch=\"aarch64\"",
+        "target_endian=\"little\"",
+        "target_env=\"\"",
+        "target_family=\"unix\"",
+        "target_feature=\"aes\"",
+        "target_feature=\"crc\"",
+        "target_feature=\"dit\"",
+        "target_feature=\"dotprod\"",
+        "target_feature=\"dpb\"",
+        "target_feature=\"dpb2\"",
+        "target_feature=\"fcma\"",
+        "target_feature=\"fhm\"",
+        "target_feature=\"flagm\"",
+        "target_feature=\"fp16\"",
+        "target_feature=\"frintts\"",
+        "target_feature=\"jsconv\"",
+        "target_feature=\"lor\"",
+        "target_feature=\"lse\"",
+        "target_feature=\"neon\"",
+        "target_feature=\"paca\"",
+        "target_feature=\"pacg\"",
+        "target_feature=\"pan\"",
+        "target_feature=\"pmuv3\"",
+        "target_feature=\"ras\"",
+        "target_feature=\"rcpc\"",
+        "target_feature=\"rcpc2\"",
+        "target_feature=\"rdm\"",
+        "target_feature=\"sb\"",
+        "target_feature=\"sha2\"",
+        "target_feature=\"sha3\"",
+        "target_feature=\"ssbs\"",
+        "target_feature=\"vh\"",
+        "target_has_atomic=\"128\"",
+        "target_has_atomic=\"16\"",
+        "target_has_atomic=\"32\"",
+        "target_has_atomic=\"64\"",
+        "target_has_atomic=\"8\"",
+        "target_has_atomic=\"ptr\"",
+        "target_os=\"macos\"",
+        "target_pointer_width=\"64\"",
+        "target_vendor=\"apple\"",
+        "unix"
+      ],
+      "customCfg": [],
+      "tests": false,
+      "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+      "buildScripts": false,
+      "procMacros": false,
+      "cargoConfig": "not-loaded"
+    },
+    "crates": [
+      {
+        "id": "Cargo.toml#lib:asref_repro",
+        "package": "asref-repro",
+        "name": "asref_repro",
+        "root": "src/lib.rs",
+        "edition": "2021",
+        "deps": {},
+        "features": [],
+        "targetKinds": [
+          "lib"
+        ],
+        "files": [
+          "src/lib.rs"
+        ]
+      }
+    ],
+    "selectedFiles": [
+      "src/lib.rs"
+    ],
+    "excludedFiles": [],
+    "metadata": [
+      {
+        "file": "Cargo.toml",
+        "sourceText": "[package]\nname = \"asref-repro\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+        "sha256": "0baa664c0c09e77bd9954c07661b2acc5f0c24eac6cd4f26a27a6a07b42656d5"
+      }
+    ],
+    "excludedTargets": [],
+    "conditionalDefinitions": [],
+    "excludedRegions": [],
+    "opaqueMacros": [],
+    "missingModules": [],
+    "limitations": [
+      "Explicit free-function paths, monomorphic inherent source candidates and bare generic-struct paths to unique concrete-specialization source candidates. Lifetime-only struct/enum owners additionally allow bare paths to unique receiver-free inherent declarations when unbounded impl lifetime names map one-to-one to owner arguments; unsupported siblings and enum variant names block selection. Specializations require named type arguments and no impl generics/where clause; competing unsupported inherent declarations block the candidate. No type/argument inference, visibility checking, Self/type-alias resolution, explicit generic call arguments, mixed lifetime/type parameters, concrete or bounded lifetime specializations, const/bounded/defaulted generic owners, receiver types beyond explicit parameters, adjacent-before-let bindings and trait objects, macro expansion, build-script execution or external dependency source loading.",
+      "Cargo metadata reads captured manifests with zero-byte source inventory stubs, offline/no-deps/locked; the syntax parser reads captured source text only. Active cfg derives from rustc target cfg plus the declared local feature profile; custom build-script cfg stays unknown.",
+      "Call inventory covers parsed function/method bodies plus trait default method bodies, each once per source declaration; declarations without a body add no calls and calls depending on the concrete Self remain unresolved. Macros are opaque records. Missing/excluded modules, conditional scopes and unsupported local items limit target/caller completeness."
+    ]
+  }
+}

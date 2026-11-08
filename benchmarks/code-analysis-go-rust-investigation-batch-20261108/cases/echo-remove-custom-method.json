@@ -1,0 +1,44 @@
+{
+ "id": "echo-remove-custom-method",
+ "language": "go",
+ "repo": "https://github.com/labstack/echo",
+ "base": "4f7bea5d2ad253d2d0fddb1382ae25be040a3d8b",
+ "head": "296824015d4a6345531fa71e9233fd42879f2c69",
+ "entry": "router.go",
+ "question": "routeMethods.set now accepts a nil routeMethod so Router.Remove can delete a custom method without panicking. Which source call reaches this method?",
+ "changedDefinition": {
+  "file": "router.go",
+  "line": 226,
+  "qualname": "*routeMethods.set"
+ },
+ "expectedCalls": [
+  {
+   "file": "router.go",
+   "line": 860,
+   "column": 2,
+   "inventory": "knownReferences",
+   "targetKind": "concrete",
+   "target": {
+    "file": "router.go",
+    "line": 226,
+    "name": "set"
+   },
+   "directCaller": {
+    "name": "setHandler",
+    "line": 859,
+    "kind": "method"
+   },
+   "runtime": "determined",
+   "context": "node.setHandler forwards the add/remove result to the method table"
+  }
+ ],
+ "unknowns": [
+  "Router.Remove reaches node.setHandler dynamically through the node tree; this case freezes the direct call only."
+ ],
+ "expectedGap": false,
+ "reserved": true,
+ "baseTree": "git worktree at 2968240^",
+ "build": "no project build executed",
+ "freeze": "head source and the commit diff read before any candidate query; reserved before the candidate run",
+ "notes": "Reserved Go case. Definition line is the method declaration; the nil guard is the changed behavior."
+}

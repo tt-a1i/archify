@@ -336,6 +336,55 @@ func (l *loader) definition(file string, fn *ast.FuncDecl) record {
 	visit(fn.Body, 0)
 	return record{"file": file, "name": fn.Name.Name, "qualname": qualname, "line": r["line"], "endLine": r["endLine"], "complexity": complexity, "nesting": nesting, "deepestLine": deepest, "sourceRange": r, "definition": record{"kind": "FuncDecl", "sourceRange": r}}
 }
+func positionWithin(call, span record) bool {
+	line, column := call["line"].(int), call["column"].(int)
+	startLine, startColumn := span["line"].(int), span["column"].(int)
+	endLine, endColumn := span["endLine"].(int), span["endColumn"].(int)
+	if line < startLine || line > endLine {
+		return false
+	}
+	if line == startLine && column < startColumn {
+		return false
+	}
+	if line == endLine && column > endColumn {
+		return false
+	}
+	return true
+}
+func positionBefore(a, b record) bool {
+	if a["line"].(int) != b["line"].(int) {
+		return a["line"].(int) < b["line"].(int)
+	}
+	return a["column"].(int) < b["column"].(int)
+}
+func (l *loader) annotateCallers(calls []record) {
+	for _, call := range calls {
+		file, _ := call["file"].(string)
+		var best record
+		for _, def := range l.functions {
+			if def["file"] != file {
+				continue
+			}
+			kind, _ := def["definition"].(record)["kind"].(string)
+			span, _ := def["sourceRange"].(record)
+			if kind != "FuncDecl" || !positionWithin(call, span) {
+				continue
+			}
+			if best == nil || positionBefore(best["sourceRange"].(record), span) {
+				best = def
+			}
+		}
+		if best == nil {
+			continue
+		}
+		span := best["sourceRange"].(record)
+		kind := "function"
+		if best["qualname"] != best["name"] {
+			kind = "method"
+		}
+		call["directCaller"] = record{"file": file, "name": best["name"], "qualname": best["qualname"], "kind": kind, "line": span["line"], "column": span["column"]}
+	}
+}
 func (l *loader) interfaceMethod(file, owner string, name *ast.Ident, field *ast.Field) record {
 	r := l.span(field)
 	start, end := l.fset.PositionFor(field.Pos(), false).Offset, l.fset.PositionFor(field.End(), false).Offset
@@ -634,8 +683,10 @@ func (l *loader) interfaceComplete(info *interfaceInfo) bool {
 			}
 			target := l.interfaceInfoFor(embedded)
 			if target == nil {
-				info.reason = "external-embedded-interface"
-				return false
+				// The method set comes from SDK/export data. Its declarations
+				// have no captured source anchor, but the interface still carries
+				// usable implementation evidence for captured concrete types.
+				continue
 			}
 			if !l.interfaceComplete(target) {
 				info.reason = "incomplete-embedded-interface"
@@ -766,10 +817,16 @@ func (l *loader) collectInterfaceEvidence() {
 		for i := 0; i < info.iface.NumMethods(); i++ {
 			method := info.iface.Method(i)
 			anchor := l.interfaceMethods[method.Pos()]
-			if anchor == nil {
+			var methodRec record
+			if anchor != nil {
+				methodRec = record{"qualname": anchor["qualname"], "name": anchor["name"], "file": anchor["file"], "line": anchor["line"], "column": defColumn(anchor)}
+			} else if method.Pkg() != nil {
+				// A promoted method from an uncaptured interface. Keep the
+				// declaration identity, but do not invent a source location.
+				methodRec = record{"qualname": method.Pkg().Name() + "." + method.Name(), "name": method.Name(), "package": method.Pkg().Path(), "external": true}
+			} else {
 				continue
 			}
-			methodRec := record{"qualname": anchor["qualname"], "name": anchor["name"], "file": anchor["file"], "line": anchor["line"], "column": defColumn(anchor)}
 			for _, concrete := range concretes {
 				value := types.Implements(concrete.named, info.iface)
 				pointer := types.Implements(types.NewPointer(concrete.named), info.iface)
@@ -801,7 +858,7 @@ func (l *loader) collectInterfaceEvidence() {
 					implementation["reason"] = "method-body-not-captured"
 				}
 				edge := record{"interface": info.record, "method": methodRec, "implementation": implementation}
-				edgeKey := fmt.Sprintf("%s|%s|%s|%d|%d|%s|%s|%d|%s", info.record["package"], info.record["qualname"], methodRec["file"], methodRec["line"], methodRec["column"], concrete.record["package"], concrete.record["qualname"], concrete.record["line"], fmt.Sprint(fn.Pos()))
+				edgeKey := fmt.Sprintf("%s|%s|%v|%v|%v|%s|%s|%d|%s", info.record["package"], info.record["qualname"], methodRec["file"], methodRec["line"], methodRec["column"], concrete.record["package"], concrete.record["qualname"], concrete.record["line"], fmt.Sprint(fn.Pos()))
 				if seen[edgeKey] {
 					emitted = true
 					continue
@@ -830,20 +887,28 @@ func (l *loader) collectInterfaceEvidence() {
 		a, b := edges[i], edges[j]
 		ai, bi := a["interface"].(record), b["interface"].(record)
 		am, bm := a["method"].(record), b["method"].(record)
-		if ai["package"] != bi["package"] {
-			return ai["package"].(string) < bi["package"].(string)
+		fieldString := func(r record, key string) string {
+			value, _ := r[key].(string)
+			return value
 		}
-		if ai["qualname"] != bi["qualname"] {
-			return ai["qualname"].(string) < bi["qualname"].(string)
+		fieldInt := func(r record, key string) int {
+			value, _ := r[key].(int)
+			return value
 		}
-		if am["file"] != bm["file"] {
-			return am["file"].(string) < bm["file"].(string)
+		if fieldString(ai, "package") != fieldString(bi, "package") {
+			return fieldString(ai, "package") < fieldString(bi, "package")
 		}
-		if am["line"] != bm["line"] {
-			return am["line"].(int) < bm["line"].(int)
+		if fieldString(ai, "qualname") != fieldString(bi, "qualname") {
+			return fieldString(ai, "qualname") < fieldString(bi, "qualname")
 		}
-		if am["column"] != bm["column"] {
-			return am["column"].(int) < bm["column"].(int)
+		if fieldString(am, "file") != fieldString(bm, "file") {
+			return fieldString(am, "file") < fieldString(bm, "file")
+		}
+		if fieldInt(am, "line") != fieldInt(bm, "line") {
+			return fieldInt(am, "line") < fieldInt(bm, "line")
+		}
+		if fieldInt(am, "column") != fieldInt(bm, "column") {
+			return fieldInt(am, "column") < fieldInt(bm, "column")
 		}
 		at, bt := a["implementation"].(record)["type"].(record), b["implementation"].(record)["type"].(record)
 		if at["package"] != bt["package"] {
@@ -856,7 +921,7 @@ func (l *loader) collectInterfaceEvidence() {
 	})
 	l.interfaceEdges = edges
 	l.interfaceReport = record{
-		"model":                "captured-interface-implementations-v1",
+		"model":                "captured-interface-implementations-v2",
 		"completeInterfaces":   len(complete),
 		"incompleteInterfaces": incomplete,
 		"genericInterfaces":    generics,
@@ -1000,6 +1065,15 @@ func main() {
 								def = anchor
 							}
 						}
+						if interfaceMethod && selection != nil {
+							if recv := l.receiverInterface(selection.Recv()); recv != nil {
+								r["receiverInterface"] = recv
+							}
+							if def == nil && obj.Pkg() != nil {
+								r["interfaceMethod"] = record{"package": obj.Pkg().Path(), "qualname": obj.Pkg().Name() + "." + obj.Name(), "name": obj.Name()}
+								r["reason"] = "go-interface-external-method"
+							}
+						}
 						valid := def != nil && sig != nil && (sig.Recv() == nil || method || interfaceMethod) && !l.invalidDirs[path.Dir(file)]
 						if def != nil && sig != nil && (sig.Recv() == nil || method) {
 							r["reason"] = "ambiguous-binding"
@@ -1063,6 +1137,7 @@ func main() {
 			})
 		}
 	}
+	l.annotateCallers(calls)
 	sort.Slice(calls, func(i, j int) bool {
 		a, b := calls[i], calls[j]
 		if a["file"] != b["file"] {
