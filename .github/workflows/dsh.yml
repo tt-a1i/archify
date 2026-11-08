@@ -141,5 +141,6 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             "$RUNNER_TEMP/archify-dsh.tgz#tt-a1i-archify-dsh.tgz" \
             --verify-tag \
+            --latest=false \
             --title "Archify DSH ${GITHUB_REF_NAME#archify-dsh-v}" \
             --notes "Published \`@tt-a1i/archify-dsh\` from this tag's verified tarball. See the integration README for the bundled Archify source and acceptance record."
