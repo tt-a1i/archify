@@ -1,0 +1,4709 @@
+{
+  "counts": {
+    "direct": {
+      "afero": {
+        "displayed": 0,
+        "omitted": 0,
+        "total": 0
+      },
+      "client": {
+        "displayed": 40,
+        "omitted": 7,
+        "total": 47
+      },
+      "echo": {
+        "displayed": 3,
+        "omitted": 0,
+        "total": 3
+      }
+    },
+    "interfaceCandidates": {
+      "afero": 38,
+      "client": 9,
+      "echo": 6
+    }
+  },
+  "focus": {
+    "description": "The 15 interface candidates added in the previous round (Echo 6 + client_golang 9), rescored by source identity.",
+    "direct": {
+      "client": {
+        "displayed": 40,
+        "omitted": 7,
+        "total": 47
+      },
+      "echo": {
+        "displayed": 3,
+        "omitted": 0,
+        "total": 3
+      }
+    },
+    "interfaceCandidates": {
+      "client": 9,
+      "echo": 6
+    },
+    "items": [
+      {
+        "changedImplementation": "*context.RealIP",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "context.go:46:2",
+          "method": "RealIP",
+          "mismatches": {},
+          "ownerDeclaration": "context.go:20:6",
+          "ownerType": "Context",
+          "position": "client_ip_security_test.go:37",
+          "qualname": "Context.RealIP",
+          "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "status": "ok",
+          "targetFile": "context.go"
+        },
+        "implementations": {
+          "total": 1,
+          "types": [
+            "context"
+          ]
+        },
+        "interface": "Context",
+        "interfaceMethod": "Context.RealIP",
+        "position": "client_ip_security_test.go:37",
+        "promotion": null,
+        "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "echo"
+      },
+      {
+        "changedImplementation": "*context.RealIP",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "context.go:46:2",
+          "method": "RealIP",
+          "mismatches": {},
+          "ownerDeclaration": "context.go:20:6",
+          "ownerType": "Context",
+          "position": "client_ip_security_test.go:51",
+          "qualname": "Context.RealIP",
+          "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "status": "ok",
+          "targetFile": "context.go"
+        },
+        "implementations": {
+          "total": 1,
+          "types": [
+            "context"
+          ]
+        },
+        "interface": "Context",
+        "interfaceMethod": "Context.RealIP",
+        "position": "client_ip_security_test.go:51",
+        "promotion": null,
+        "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "echo"
+      },
+      {
+        "changedImplementation": "*context.RealIP",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "context.go:46:2",
+          "method": "RealIP",
+          "mismatches": {},
+          "ownerDeclaration": "context.go:20:6",
+          "ownerType": "Context",
+          "position": "middleware/logger.go:342",
+          "qualname": "Context.RealIP",
+          "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "status": "ok",
+          "targetFile": "context.go"
+        },
+        "implementations": {
+          "total": 1,
+          "types": [
+            "context"
+          ]
+        },
+        "interface": "Context",
+        "interfaceMethod": "Context.RealIP",
+        "position": "middleware/logger.go:342",
+        "promotion": null,
+        "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "echo"
+      },
+      {
+        "changedImplementation": "*context.RealIP",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "context.go:46:2",
+          "method": "RealIP",
+          "mismatches": {},
+          "ownerDeclaration": "context.go:20:6",
+          "ownerType": "Context",
+          "position": "middleware/proxy.go:292",
+          "qualname": "Context.RealIP",
+          "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "status": "ok",
+          "targetFile": "context.go"
+        },
+        "implementations": {
+          "total": 1,
+          "types": [
+            "context"
+          ]
+        },
+        "interface": "Context",
+        "interfaceMethod": "Context.RealIP",
+        "position": "middleware/proxy.go:292",
+        "promotion": null,
+        "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "echo"
+      },
+      {
+        "changedImplementation": "*context.RealIP",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "context.go:46:2",
+          "method": "RealIP",
+          "mismatches": {},
+          "ownerDeclaration": "context.go:20:6",
+          "ownerType": "Context",
+          "position": "middleware/rate_limiter.go:51",
+          "qualname": "Context.RealIP",
+          "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "status": "ok",
+          "targetFile": "context.go"
+        },
+        "implementations": {
+          "total": 1,
+          "types": [
+            "context"
+          ]
+        },
+        "interface": "Context",
+        "interfaceMethod": "Context.RealIP",
+        "position": "middleware/rate_limiter.go:51",
+        "promotion": null,
+        "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "echo"
+      },
+      {
+        "changedImplementation": "*context.RealIP",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "context.go:46:2",
+          "method": "RealIP",
+          "mismatches": {},
+          "ownerDeclaration": "context.go:20:6",
+          "ownerType": "Context",
+          "position": "middleware/request_logger.go:369",
+          "qualname": "Context.RealIP",
+          "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "status": "ok",
+          "targetFile": "context.go"
+        },
+        "implementations": {
+          "total": 1,
+          "types": [
+            "context"
+          ]
+        },
+        "interface": "Context",
+        "interfaceMethod": "Context.RealIP",
+        "position": "middleware/request_logger.go:369",
+        "promotion": null,
+        "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "echo"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/graphite/bridge.go:171",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/graphite/bridge.go:171",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/promhttp/http_test.go:81",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/promhttp/http_test.go:81",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/promhttp/http_test.go:1382",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/promhttp/http_test.go:1382",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/registry.go:678",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/registry.go:678",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/registry.go:843",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/registry.go:843",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/registry.go:1194",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/registry.go:1194",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/testutil/lint.go:38",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/testutil/lint.go:38",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/testutil/testutil.go:147",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/testutil/testutil.go:147",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      },
+      {
+        "changedImplementation": "*Registry.Gather",
+        "identity": {
+          "category": "interface-candidate",
+          "declaration": "prometheus/registry.go:173:2",
+          "method": "Gather",
+          "mismatches": {},
+          "ownerDeclaration": "prometheus/registry.go:153:6",
+          "ownerType": "Gatherer",
+          "position": "prometheus/testutil/testutil.go:256",
+          "qualname": "Gatherer.Gather",
+          "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "status": "ok",
+          "targetFile": "prometheus/registry.go"
+        },
+        "implementations": {
+          "total": 3,
+          "types": [
+            "GathererFunc",
+            "Gatherers",
+            "Registry"
+          ]
+        },
+        "interface": "Gatherer",
+        "interfaceMethod": "Gatherer.Gather",
+        "position": "prometheus/testutil/testutil.go:256",
+        "promotion": null,
+        "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+        "runtimeTarget": "not-determined",
+        "study": "client"
+      }
+    ],
+    "total": 15
+  },
+  "note": "Generated by run.py from preserved checkouts at the fixed commits; positions are repository-relative. Source identity is checked before position classification, and a same-named interface-method swap is required to be rejected.",
+  "scope": {
+    "cgo": false,
+    "go": "1.27.2",
+    "goarch": "arm64",
+    "goos": "darwin",
+    "gopls": "v0.24.0",
+    "modules": "root module only",
+    "tags": [],
+    "tests": true
+  },
+  "studies": [
+    {
+      "after": {
+        "direct": {
+          "count": 3,
+          "identity": {
+            "items": [
+              {
+                "category": "direct",
+                "declaration": "context.go:298:1",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "context",
+                "position": "client_ip_security_test.go:38",
+                "qualname": "*context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "context.go:298:1",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "context",
+                "position": "context_test.go:81",
+                "qualname": "*context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "context.go:298:1",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "context",
+                "position": "context_test.go:1306",
+                "qualname": "*context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              }
+            ],
+            "omitted": 0,
+            "valid": true,
+            "wrong": []
+          },
+          "included": 3,
+          "omitted": 0,
+          "positions": [
+            "client_ip_security_test.go:38",
+            "context_test.go:1306",
+            "context_test.go:81"
+          ]
+        },
+        "interfaceCandidates": {
+          "count": 6,
+          "coverage": "available",
+          "items": [
+            {
+              "changedImplementation": "*context.RealIP",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "context.go:46:2",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": "context.go:20:6",
+                "ownerType": "Context",
+                "position": "client_ip_security_test.go:37",
+                "qualname": "Context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              "implementations": {
+                "total": 1,
+                "types": [
+                  "context"
+                ]
+              },
+              "interface": "Context",
+              "interfaceMethod": "Context.RealIP",
+              "position": "client_ip_security_test.go:37",
+              "promotion": null,
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*context.RealIP",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "context.go:46:2",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": "context.go:20:6",
+                "ownerType": "Context",
+                "position": "client_ip_security_test.go:51",
+                "qualname": "Context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              "implementations": {
+                "total": 1,
+                "types": [
+                  "context"
+                ]
+              },
+              "interface": "Context",
+              "interfaceMethod": "Context.RealIP",
+              "position": "client_ip_security_test.go:51",
+              "promotion": null,
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*context.RealIP",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "context.go:46:2",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": "context.go:20:6",
+                "ownerType": "Context",
+                "position": "middleware/logger.go:342",
+                "qualname": "Context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              "implementations": {
+                "total": 1,
+                "types": [
+                  "context"
+                ]
+              },
+              "interface": "Context",
+              "interfaceMethod": "Context.RealIP",
+              "position": "middleware/logger.go:342",
+              "promotion": null,
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*context.RealIP",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "context.go:46:2",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": "context.go:20:6",
+                "ownerType": "Context",
+                "position": "middleware/proxy.go:292",
+                "qualname": "Context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              "implementations": {
+                "total": 1,
+                "types": [
+                  "context"
+                ]
+              },
+              "interface": "Context",
+              "interfaceMethod": "Context.RealIP",
+              "position": "middleware/proxy.go:292",
+              "promotion": null,
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*context.RealIP",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "context.go:46:2",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": "context.go:20:6",
+                "ownerType": "Context",
+                "position": "middleware/rate_limiter.go:51",
+                "qualname": "Context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              "implementations": {
+                "total": 1,
+                "types": [
+                  "context"
+                ]
+              },
+              "interface": "Context",
+              "interfaceMethod": "Context.RealIP",
+              "position": "middleware/rate_limiter.go:51",
+              "promotion": null,
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*context.RealIP",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "context.go:46:2",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": "context.go:20:6",
+                "ownerType": "Context",
+                "position": "middleware/request_logger.go:369",
+                "qualname": "Context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              "implementations": {
+                "total": 1,
+                "types": [
+                  "context"
+                ]
+              },
+              "interface": "Context",
+              "interfaceMethod": "Context.RealIP",
+              "position": "middleware/request_logger.go:369",
+              "promotion": null,
+              "reason": "Call through Context.RealIP: context (*T) satisfies Context via *context.RealIP (context.go:298). No other captured implementation is listed, but runtime identity is still not determined.",
+              "runtimeTarget": "not-determined"
+            }
+          ],
+          "unknown": null
+        },
+        "status": "ready"
+      },
+      "base": "fa780cd",
+      "baseCommit": "fa780cdfb02db0c263e3b4212ea8d6afa31e976c",
+      "baseline": {
+        "direct": {
+          "count": 3,
+          "positions": [
+            "client_ip_security_test.go:38",
+            "context_test.go:1306",
+            "context_test.go:81"
+          ]
+        },
+        "interfaceCandidates": "absent",
+        "status": "ready"
+      },
+      "changedDefinition": "*context.RealIP",
+      "checks": {
+        "candidateIdentityWrong": [],
+        "candidateMissed": [],
+        "candidateWrong": [],
+        "candidateWrongReasons": [],
+        "counterexamplePassed": null,
+        "directIdentityWrong": [],
+        "directMissed": [],
+        "directPreserved": true,
+        "directWrong": [],
+        "goplsMatches": true,
+        "sourceIdentityValid": true,
+        "specific": {}
+      },
+      "counterexample": null,
+      "entry": "context.go",
+      "gopls": {
+        "concreteEqualsDirectPlusCandidates": true,
+        "concreteReferences": {
+          "count": 9,
+          "positions": [
+            "client_ip_security_test.go:37",
+            "client_ip_security_test.go:38",
+            "client_ip_security_test.go:51",
+            "context_test.go:1306",
+            "context_test.go:81",
+            "middleware/logger.go:342",
+            "middleware/proxy.go:292",
+            "middleware/rate_limiter.go:51",
+            "middleware/request_logger.go:369"
+          ]
+        },
+        "countsMatch": true,
+        "displayedPositionsCovered": true,
+        "implementations": {
+          "capturedConcrete": [
+            "context.go:298"
+          ],
+          "gopls": [
+            "context.go:298"
+          ],
+          "goplsOnly": [],
+          "promotedOnly": []
+        },
+        "interfaceReferenceExtras": [],
+        "interfaceReferences": {
+          "count": 9,
+          "positions": [
+            "client_ip_security_test.go:37",
+            "client_ip_security_test.go:38",
+            "client_ip_security_test.go:51",
+            "context_test.go:1306",
+            "context_test.go:81",
+            "middleware/logger.go:342",
+            "middleware/proxy.go:292",
+            "middleware/rate_limiter.go:51",
+            "middleware/request_logger.go:369"
+          ]
+        },
+        "omittedDirectNotCompared": 0
+      },
+      "head": "ebbb855",
+      "headCommit": "ebbb855f5827b76fb206e267dd91d020000baf66",
+      "interface": "Context",
+      "name": "echo",
+      "positions": {
+        "direct": {
+          "actual": [
+            "client_ip_security_test.go:38",
+            "context_test.go:1306",
+            "context_test.go:81"
+          ],
+          "baseline": [
+            "client_ip_security_test.go:38",
+            "context_test.go:1306",
+            "context_test.go:81"
+          ],
+          "correct": 3,
+          "expected": [
+            "client_ip_security_test.go:38",
+            "context_test.go:1306",
+            "context_test.go:81"
+          ],
+          "identity": {
+            "items": [
+              {
+                "category": "direct",
+                "declaration": "context.go:298:1",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "context",
+                "position": "client_ip_security_test.go:38",
+                "qualname": "*context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "context.go:298:1",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "context",
+                "position": "context_test.go:81",
+                "qualname": "*context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "context.go:298:1",
+                "method": "RealIP",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "context",
+                "position": "context_test.go:1306",
+                "qualname": "*context.RealIP",
+                "repositoryVersion": "ebbb855f5827b76fb206e267dd91d020000baf66",
+                "status": "ok",
+                "targetFile": "context.go"
+              }
+            ],
+            "omitted": 0,
+            "valid": true,
+            "wrong": []
+          },
+          "missed": [],
+          "preserved": true,
+          "total": {
+            "after": 3,
+            "baseline": 3,
+            "included": 3,
+            "omitted": 0,
+            "preserved": true
+          },
+          "wrong": []
+        },
+        "interfaceCandidates": {
+          "actual": [
+            "client_ip_security_test.go:37",
+            "client_ip_security_test.go:51",
+            "middleware/logger.go:342",
+            "middleware/proxy.go:292",
+            "middleware/rate_limiter.go:51",
+            "middleware/request_logger.go:369"
+          ],
+          "baselineCoverage": "absent",
+          "correct": 6,
+          "coverage": "available",
+          "expected": [
+            "client_ip_security_test.go:37",
+            "client_ip_security_test.go:51",
+            "middleware/logger.go:342",
+            "middleware/proxy.go:292",
+            "middleware/rate_limiter.go:51",
+            "middleware/request_logger.go:369"
+          ],
+          "missed": [],
+          "unknown": null,
+          "wrong": []
+        }
+      },
+      "repository": "labstack/echo",
+      "sourceIdentity": {
+        "base": {
+          "checkout": "fa780cdfb02db0c263e3b4212ea8d6afa31e976c",
+          "clean": true,
+          "expected": "fa780cdfb02db0c263e3b4212ea8d6afa31e976c",
+          "snapshot": "fa780cdfb02db0c263e3b4212ea8d6afa31e976c",
+          "valid": true
+        },
+        "declarations": [
+          {
+            "actualText": "type Context interface {",
+            "expectedText": "type Context interface",
+            "file": "context.go",
+            "line": 20,
+            "valid": true
+          },
+          {
+            "actualText": "\tRealIP() string",
+            "expectedText": "RealIP() string",
+            "file": "context.go",
+            "line": 46,
+            "valid": true
+          },
+          {
+            "actualText": "func (c *context) RealIP() string {",
+            "expectedText": "func (c *context) RealIP",
+            "file": "context.go",
+            "line": 298,
+            "valid": true
+          }
+        ],
+        "head": {
+          "checkout": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "clean": true,
+          "expected": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "snapshot": "ebbb855f5827b76fb206e267dd91d020000baf66",
+          "valid": true
+        },
+        "valid": true
+      }
+    },
+    {
+      "after": {
+        "direct": {
+          "count": 47,
+          "identity": {
+            "items": [
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collector_test.go:58",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectorfunc_test.go:75",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/dbstats_collector_test.go:38",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:86",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:99",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:121",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:179",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:241",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/version/version_test.go:34",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/version/version_test.go:80",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/example_metricvec_test.go:125",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:165",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:372",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:785",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:818",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:835",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:848",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/graphite/bridge_test.go:128",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/graphite/bridge_test.go:224",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/graphite/bridge_test.go:313",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/process_collector_darwin_test.go:40",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/promhttp/http_test.go:1102",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/promhttp/instrument_client_test.go:125",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/promhttp/instrument_client_test.go:241",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/push/push_test.go:81",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry.go:444",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:803",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:940",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1010",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1112",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1487",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1511",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1532",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1545",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1622",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1658",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1691",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1735",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1740",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/value_test.go:448",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              }
+            ],
+            "omitted": 7,
+            "valid": true,
+            "wrong": []
+          },
+          "included": 40,
+          "omitted": 7,
+          "positions": [
+            "prometheus/collector_test.go:58",
+            "prometheus/collectorfunc_test.go:75",
+            "prometheus/collectors/dbstats_collector_test.go:38",
+            "prometheus/collectors/go_collector_latest_test.go:121",
+            "prometheus/collectors/go_collector_latest_test.go:179",
+            "prometheus/collectors/go_collector_latest_test.go:241",
+            "prometheus/collectors/go_collector_latest_test.go:86",
+            "prometheus/collectors/go_collector_latest_test.go:99",
+            "prometheus/collectors/version/version_test.go:34",
+            "prometheus/collectors/version/version_test.go:80",
+            "prometheus/example_metricvec_test.go:125",
+            "prometheus/examples_test.go:165",
+            "prometheus/examples_test.go:372",
+            "prometheus/examples_test.go:785",
+            "prometheus/examples_test.go:818",
+            "prometheus/examples_test.go:835",
+            "prometheus/examples_test.go:848",
+            "prometheus/graphite/bridge_test.go:128",
+            "prometheus/graphite/bridge_test.go:224",
+            "prometheus/graphite/bridge_test.go:313",
+            "prometheus/process_collector_darwin_test.go:40",
+            "prometheus/promhttp/http_test.go:1102",
+            "prometheus/promhttp/instrument_client_test.go:125",
+            "prometheus/promhttp/instrument_client_test.go:241",
+            "prometheus/push/push_test.go:81",
+            "prometheus/registry.go:444",
+            "prometheus/registry_test.go:1010",
+            "prometheus/registry_test.go:1112",
+            "prometheus/registry_test.go:1487",
+            "prometheus/registry_test.go:1511",
+            "prometheus/registry_test.go:1532",
+            "prometheus/registry_test.go:1545",
+            "prometheus/registry_test.go:1622",
+            "prometheus/registry_test.go:1658",
+            "prometheus/registry_test.go:1691",
+            "prometheus/registry_test.go:1735",
+            "prometheus/registry_test.go:1740",
+            "prometheus/registry_test.go:803",
+            "prometheus/registry_test.go:940",
+            "prometheus/value_test.go:448"
+          ]
+        },
+        "interfaceCandidates": {
+          "count": 9,
+          "coverage": "available",
+          "items": [
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/graphite/bridge.go:171",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/graphite/bridge.go:171",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/promhttp/http_test.go:81",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/promhttp/http_test.go:81",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/promhttp/http_test.go:1382",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/promhttp/http_test.go:1382",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/registry.go:678",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/registry.go:678",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/registry.go:843",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/registry.go:843",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/registry.go:1194",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/registry.go:1194",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/testutil/lint.go:38",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/testutil/lint.go:38",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/testutil/testutil.go:147",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/testutil/testutil.go:147",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*Registry.Gather",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "prometheus/registry.go:173:2",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": "prometheus/registry.go:153:6",
+                "ownerType": "Gatherer",
+                "position": "prometheus/testutil/testutil.go:256",
+                "qualname": "Gatherer.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              "implementations": {
+                "total": 3,
+                "types": [
+                  "GathererFunc",
+                  "Gatherers",
+                  "Registry"
+                ]
+              },
+              "interface": "Gatherer",
+              "interfaceMethod": "Gatherer.Gather",
+              "position": "prometheus/testutil/testutil.go:256",
+              "promotion": null,
+              "reason": "Call through Gatherer.Gather: Registry (*T) satisfies Gatherer via *Registry.Gather (prometheus/registry.go:455). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            }
+          ],
+          "unknown": "1 captured interface(s) were omitted from the edge set because their method evidence was incomplete. Absence of a candidate is not proof of non-implementation."
+        },
+        "status": "ready"
+      },
+      "base": "7c438e9",
+      "baseCommit": "7c438e9a9bf011d011836bc6431bf824b82f17c2",
+      "baseline": {
+        "direct": {
+          "count": 40,
+          "positions": [
+            "prometheus/collector_test.go:58",
+            "prometheus/collectorfunc_test.go:75",
+            "prometheus/collectors/dbstats_collector_test.go:38",
+            "prometheus/collectors/go_collector_latest_test.go:121",
+            "prometheus/collectors/go_collector_latest_test.go:179",
+            "prometheus/collectors/go_collector_latest_test.go:241",
+            "prometheus/collectors/go_collector_latest_test.go:86",
+            "prometheus/collectors/go_collector_latest_test.go:99",
+            "prometheus/collectors/version/version_test.go:34",
+            "prometheus/collectors/version/version_test.go:80",
+            "prometheus/example_metricvec_test.go:125",
+            "prometheus/examples_test.go:165",
+            "prometheus/examples_test.go:372",
+            "prometheus/examples_test.go:785",
+            "prometheus/examples_test.go:818",
+            "prometheus/examples_test.go:835",
+            "prometheus/examples_test.go:848",
+            "prometheus/graphite/bridge_test.go:128",
+            "prometheus/graphite/bridge_test.go:224",
+            "prometheus/graphite/bridge_test.go:313",
+            "prometheus/process_collector_darwin_test.go:40",
+            "prometheus/promhttp/http_test.go:1102",
+            "prometheus/promhttp/instrument_client_test.go:125",
+            "prometheus/promhttp/instrument_client_test.go:241",
+            "prometheus/push/push_test.go:81",
+            "prometheus/registry.go:444",
+            "prometheus/registry_test.go:1010",
+            "prometheus/registry_test.go:1112",
+            "prometheus/registry_test.go:1487",
+            "prometheus/registry_test.go:1511",
+            "prometheus/registry_test.go:1532",
+            "prometheus/registry_test.go:1545",
+            "prometheus/registry_test.go:1622",
+            "prometheus/registry_test.go:1658",
+            "prometheus/registry_test.go:1691",
+            "prometheus/registry_test.go:1735",
+            "prometheus/registry_test.go:1740",
+            "prometheus/registry_test.go:803",
+            "prometheus/registry_test.go:940",
+            "prometheus/value_test.go:448"
+          ]
+        },
+        "interfaceCandidates": "absent",
+        "status": "ready"
+      },
+      "changedDefinition": "*Registry.Gather",
+      "checks": {
+        "candidateIdentityWrong": [],
+        "candidateMissed": [],
+        "candidateWrong": [],
+        "candidateWrongReasons": [],
+        "counterexamplePassed": true,
+        "directIdentityWrong": [],
+        "directMissed": [],
+        "directPreserved": true,
+        "directWrong": [],
+        "goplsMatches": true,
+        "sourceIdentityValid": true,
+        "specific": {
+          "transactionalGathererPresent": false
+        }
+      },
+      "counterexample": {
+        "fieldControls": {
+          "declaration": {
+            "detected": true,
+            "expectedField": "declaration",
+            "mismatches": {
+              "declaration": {
+                "actual": "prometheus/registry.go:174:2",
+                "expected": "prometheus/registry.go:173:2"
+              }
+            }
+          },
+          "ownerType": {
+            "detected": true,
+            "expectedField": "ownerType",
+            "mismatches": {
+              "ownerType": {
+                "actual": "TransactionalGatherer",
+                "expected": "Gatherer"
+              }
+            }
+          },
+          "repositoryVersion": {
+            "detected": true,
+            "expectedField": "repositoryVersion",
+            "mismatches": {
+              "repositoryVersion": {
+                "actual": "7c438e9a9bf011d011836bc6431bf824b82f17c2",
+                "expected": "8f7c8876630bc7308740fea042ddc10b9963af54"
+              }
+            }
+          },
+          "targetFile": {
+            "detected": true,
+            "expectedField": "targetFile",
+            "mismatches": {
+              "declaration": {
+                "actual": "prometheus/registry_test.go:173:2",
+                "expected": "prometheus/registry.go:173:2"
+              },
+              "targetFile": {
+                "actual": "prometheus/registry_test.go",
+                "expected": "prometheus/registry.go"
+              }
+            }
+          }
+        },
+        "passed": true,
+        "sameNamedInterfaceSwap": {
+          "detected": true,
+          "from": {
+            "declaration": "prometheus/registry.go:173:2",
+            "method": "Gather",
+            "ownerDeclaration": "prometheus/registry.go:153:6",
+            "ownerType": "Gatherer",
+            "qualname": "Gatherer.Gather",
+            "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+            "targetFile": "prometheus/registry.go"
+          },
+          "mismatches": {
+            "declaration": {
+              "actual": "prometheus/registry.go:1180:2",
+              "expected": "prometheus/registry.go:173:2"
+            },
+            "ownerDeclaration": {
+              "actual": "prometheus/registry.go:1158:6",
+              "expected": "prometheus/registry.go:153:6"
+            },
+            "ownerType": {
+              "actual": "TransactionalGatherer",
+              "expected": "Gatherer"
+            },
+            "qualname": {
+              "actual": "TransactionalGatherer.Gather",
+              "expected": "Gatherer.Gather"
+            }
+          },
+          "position": "prometheus/graphite/bridge.go:171",
+          "to": {
+            "declaration": "prometheus/registry.go:1180:2",
+            "method": "Gather",
+            "ownerDeclaration": "prometheus/registry.go:1158:6",
+            "ownerType": "TransactionalGatherer",
+            "qualname": "TransactionalGatherer.Gather",
+            "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+            "targetFile": "prometheus/registry.go"
+          }
+        }
+      },
+      "entry": "prometheus/registry.go",
+      "gopls": {
+        "concreteEqualsDirectPlusCandidates": true,
+        "concreteReferences": {
+          "count": 56,
+          "positions": [
+            "prometheus/collector_test.go:58",
+            "prometheus/collectorfunc_test.go:75",
+            "prometheus/collectors/dbstats_collector_test.go:38",
+            "prometheus/collectors/go_collector_latest_test.go:121",
+            "prometheus/collectors/go_collector_latest_test.go:179",
+            "prometheus/collectors/go_collector_latest_test.go:241",
+            "prometheus/collectors/go_collector_latest_test.go:86",
+            "prometheus/collectors/go_collector_latest_test.go:99",
+            "prometheus/collectors/version/version_test.go:34",
+            "prometheus/collectors/version/version_test.go:80",
+            "prometheus/example_metricvec_test.go:125",
+            "prometheus/examples_test.go:165",
+            "prometheus/examples_test.go:372",
+            "prometheus/examples_test.go:785",
+            "prometheus/examples_test.go:818",
+            "prometheus/examples_test.go:835",
+            "prometheus/examples_test.go:848",
+            "prometheus/graphite/bridge.go:171",
+            "prometheus/graphite/bridge_test.go:128",
+            "prometheus/graphite/bridge_test.go:224",
+            "prometheus/graphite/bridge_test.go:313",
+            "prometheus/process_collector_darwin_test.go:40",
+            "prometheus/promhttp/http_test.go:1102",
+            "prometheus/promhttp/http_test.go:1382",
+            "prometheus/promhttp/http_test.go:81",
+            "prometheus/promhttp/instrument_client_test.go:125",
+            "prometheus/promhttp/instrument_client_test.go:241",
+            "prometheus/push/push_test.go:81",
+            "prometheus/registry.go:1194",
+            "prometheus/registry.go:444",
+            "prometheus/registry.go:678",
+            "prometheus/registry.go:843",
+            "prometheus/registry_test.go:1010",
+            "prometheus/registry_test.go:1112",
+            "prometheus/registry_test.go:1487",
+            "prometheus/registry_test.go:1511",
+            "prometheus/registry_test.go:1532",
+            "prometheus/registry_test.go:1545",
+            "prometheus/registry_test.go:1622",
+            "prometheus/registry_test.go:1658",
+            "prometheus/registry_test.go:1691",
+            "prometheus/registry_test.go:1735",
+            "prometheus/registry_test.go:1740",
+            "prometheus/registry_test.go:803",
+            "prometheus/registry_test.go:940",
+            "prometheus/testutil/lint.go:38",
+            "prometheus/testutil/testutil.go:147",
+            "prometheus/testutil/testutil.go:256",
+            "prometheus/value_test.go:448",
+            "prometheus/vec_test.go:1238",
+            "prometheus/wrap_test.go:302",
+            "prometheus/wrap_test.go:371",
+            "prometheus/wrap_test.go:39",
+            "prometheus/wrap_test.go:390",
+            "prometheus/wrap_test.go:421",
+            "prometheus/wrap_test.go:458"
+          ]
+        },
+        "countsMatch": true,
+        "displayedPositionsCovered": true,
+        "implementations": {
+          "capturedConcrete": [
+            "prometheus/registry.go:206",
+            "prometheus/registry.go:455",
+            "prometheus/registry.go:828"
+          ],
+          "gopls": [
+            "prometheus/registry.go:206",
+            "prometheus/registry.go:455",
+            "prometheus/registry.go:828"
+          ],
+          "goplsOnly": [],
+          "promotedOnly": []
+        },
+        "interfaceReferenceExtras": [
+          "prometheus/examples_test.go:621",
+          "prometheus/examples_test.go:650",
+          "prometheus/push/push.go:270",
+          "prometheus/registry_test.go:1593",
+          "prometheus/registry_test.go:1759"
+        ],
+        "interfaceReferences": {
+          "count": 61,
+          "positions": [
+            "prometheus/collector_test.go:58",
+            "prometheus/collectorfunc_test.go:75",
+            "prometheus/collectors/dbstats_collector_test.go:38",
+            "prometheus/collectors/go_collector_latest_test.go:121",
+            "prometheus/collectors/go_collector_latest_test.go:179",
+            "prometheus/collectors/go_collector_latest_test.go:241",
+            "prometheus/collectors/go_collector_latest_test.go:86",
+            "prometheus/collectors/go_collector_latest_test.go:99",
+            "prometheus/collectors/version/version_test.go:34",
+            "prometheus/collectors/version/version_test.go:80",
+            "prometheus/example_metricvec_test.go:125",
+            "prometheus/examples_test.go:165",
+            "prometheus/examples_test.go:372",
+            "prometheus/examples_test.go:621",
+            "prometheus/examples_test.go:650",
+            "prometheus/examples_test.go:785",
+            "prometheus/examples_test.go:818",
+            "prometheus/examples_test.go:835",
+            "prometheus/examples_test.go:848",
+            "prometheus/graphite/bridge.go:171",
+            "prometheus/graphite/bridge_test.go:128",
+            "prometheus/graphite/bridge_test.go:224",
+            "prometheus/graphite/bridge_test.go:313",
+            "prometheus/process_collector_darwin_test.go:40",
+            "prometheus/promhttp/http_test.go:1102",
+            "prometheus/promhttp/http_test.go:1382",
+            "prometheus/promhttp/http_test.go:81",
+            "prometheus/promhttp/instrument_client_test.go:125",
+            "prometheus/promhttp/instrument_client_test.go:241",
+            "prometheus/push/push.go:270",
+            "prometheus/push/push_test.go:81",
+            "prometheus/registry.go:1194",
+            "prometheus/registry.go:444",
+            "prometheus/registry.go:678",
+            "prometheus/registry.go:843",
+            "prometheus/registry_test.go:1010",
+            "prometheus/registry_test.go:1112",
+            "prometheus/registry_test.go:1487",
+            "prometheus/registry_test.go:1511",
+            "prometheus/registry_test.go:1532",
+            "prometheus/registry_test.go:1545",
+            "prometheus/registry_test.go:1593",
+            "prometheus/registry_test.go:1622",
+            "prometheus/registry_test.go:1658",
+            "prometheus/registry_test.go:1691",
+            "prometheus/registry_test.go:1735",
+            "prometheus/registry_test.go:1740",
+            "prometheus/registry_test.go:1759",
+            "prometheus/registry_test.go:803",
+            "prometheus/registry_test.go:940",
+            "prometheus/testutil/lint.go:38",
+            "prometheus/testutil/testutil.go:147",
+            "prometheus/testutil/testutil.go:256",
+            "prometheus/value_test.go:448",
+            "prometheus/vec_test.go:1238",
+            "prometheus/wrap_test.go:302",
+            "prometheus/wrap_test.go:371",
+            "prometheus/wrap_test.go:39",
+            "prometheus/wrap_test.go:390",
+            "prometheus/wrap_test.go:421",
+            "prometheus/wrap_test.go:458"
+          ]
+        },
+        "omittedDirectNotCompared": 7
+      },
+      "head": "8f7c887",
+      "headCommit": "8f7c8876630bc7308740fea042ddc10b9963af54",
+      "interface": "Gatherer",
+      "name": "client",
+      "positions": {
+        "direct": {
+          "actual": [
+            "prometheus/collector_test.go:58",
+            "prometheus/collectorfunc_test.go:75",
+            "prometheus/collectors/dbstats_collector_test.go:38",
+            "prometheus/collectors/go_collector_latest_test.go:121",
+            "prometheus/collectors/go_collector_latest_test.go:179",
+            "prometheus/collectors/go_collector_latest_test.go:241",
+            "prometheus/collectors/go_collector_latest_test.go:86",
+            "prometheus/collectors/go_collector_latest_test.go:99",
+            "prometheus/collectors/version/version_test.go:34",
+            "prometheus/collectors/version/version_test.go:80",
+            "prometheus/example_metricvec_test.go:125",
+            "prometheus/examples_test.go:165",
+            "prometheus/examples_test.go:372",
+            "prometheus/examples_test.go:785",
+            "prometheus/examples_test.go:818",
+            "prometheus/examples_test.go:835",
+            "prometheus/examples_test.go:848",
+            "prometheus/graphite/bridge_test.go:128",
+            "prometheus/graphite/bridge_test.go:224",
+            "prometheus/graphite/bridge_test.go:313",
+            "prometheus/process_collector_darwin_test.go:40",
+            "prometheus/promhttp/http_test.go:1102",
+            "prometheus/promhttp/instrument_client_test.go:125",
+            "prometheus/promhttp/instrument_client_test.go:241",
+            "prometheus/push/push_test.go:81",
+            "prometheus/registry.go:444",
+            "prometheus/registry_test.go:1010",
+            "prometheus/registry_test.go:1112",
+            "prometheus/registry_test.go:1487",
+            "prometheus/registry_test.go:1511",
+            "prometheus/registry_test.go:1532",
+            "prometheus/registry_test.go:1545",
+            "prometheus/registry_test.go:1622",
+            "prometheus/registry_test.go:1658",
+            "prometheus/registry_test.go:1691",
+            "prometheus/registry_test.go:1735",
+            "prometheus/registry_test.go:1740",
+            "prometheus/registry_test.go:803",
+            "prometheus/registry_test.go:940",
+            "prometheus/value_test.go:448"
+          ],
+          "baseline": [
+            "prometheus/collector_test.go:58",
+            "prometheus/collectorfunc_test.go:75",
+            "prometheus/collectors/dbstats_collector_test.go:38",
+            "prometheus/collectors/go_collector_latest_test.go:121",
+            "prometheus/collectors/go_collector_latest_test.go:179",
+            "prometheus/collectors/go_collector_latest_test.go:241",
+            "prometheus/collectors/go_collector_latest_test.go:86",
+            "prometheus/collectors/go_collector_latest_test.go:99",
+            "prometheus/collectors/version/version_test.go:34",
+            "prometheus/collectors/version/version_test.go:80",
+            "prometheus/example_metricvec_test.go:125",
+            "prometheus/examples_test.go:165",
+            "prometheus/examples_test.go:372",
+            "prometheus/examples_test.go:785",
+            "prometheus/examples_test.go:818",
+            "prometheus/examples_test.go:835",
+            "prometheus/examples_test.go:848",
+            "prometheus/graphite/bridge_test.go:128",
+            "prometheus/graphite/bridge_test.go:224",
+            "prometheus/graphite/bridge_test.go:313",
+            "prometheus/process_collector_darwin_test.go:40",
+            "prometheus/promhttp/http_test.go:1102",
+            "prometheus/promhttp/instrument_client_test.go:125",
+            "prometheus/promhttp/instrument_client_test.go:241",
+            "prometheus/push/push_test.go:81",
+            "prometheus/registry.go:444",
+            "prometheus/registry_test.go:1010",
+            "prometheus/registry_test.go:1112",
+            "prometheus/registry_test.go:1487",
+            "prometheus/registry_test.go:1511",
+            "prometheus/registry_test.go:1532",
+            "prometheus/registry_test.go:1545",
+            "prometheus/registry_test.go:1622",
+            "prometheus/registry_test.go:1658",
+            "prometheus/registry_test.go:1691",
+            "prometheus/registry_test.go:1735",
+            "prometheus/registry_test.go:1740",
+            "prometheus/registry_test.go:803",
+            "prometheus/registry_test.go:940",
+            "prometheus/value_test.go:448"
+          ],
+          "correct": 40,
+          "expected": [
+            "prometheus/collector_test.go:58",
+            "prometheus/collectorfunc_test.go:75",
+            "prometheus/collectors/dbstats_collector_test.go:38",
+            "prometheus/collectors/go_collector_latest_test.go:121",
+            "prometheus/collectors/go_collector_latest_test.go:179",
+            "prometheus/collectors/go_collector_latest_test.go:241",
+            "prometheus/collectors/go_collector_latest_test.go:86",
+            "prometheus/collectors/go_collector_latest_test.go:99",
+            "prometheus/collectors/version/version_test.go:34",
+            "prometheus/collectors/version/version_test.go:80",
+            "prometheus/example_metricvec_test.go:125",
+            "prometheus/examples_test.go:165",
+            "prometheus/examples_test.go:372",
+            "prometheus/examples_test.go:785",
+            "prometheus/examples_test.go:818",
+            "prometheus/examples_test.go:835",
+            "prometheus/examples_test.go:848",
+            "prometheus/graphite/bridge_test.go:128",
+            "prometheus/graphite/bridge_test.go:224",
+            "prometheus/graphite/bridge_test.go:313",
+            "prometheus/process_collector_darwin_test.go:40",
+            "prometheus/promhttp/http_test.go:1102",
+            "prometheus/promhttp/instrument_client_test.go:125",
+            "prometheus/promhttp/instrument_client_test.go:241",
+            "prometheus/push/push_test.go:81",
+            "prometheus/registry.go:444",
+            "prometheus/registry_test.go:1010",
+            "prometheus/registry_test.go:1112",
+            "prometheus/registry_test.go:1487",
+            "prometheus/registry_test.go:1511",
+            "prometheus/registry_test.go:1532",
+            "prometheus/registry_test.go:1545",
+            "prometheus/registry_test.go:1622",
+            "prometheus/registry_test.go:1658",
+            "prometheus/registry_test.go:1691",
+            "prometheus/registry_test.go:1735",
+            "prometheus/registry_test.go:1740",
+            "prometheus/registry_test.go:803",
+            "prometheus/registry_test.go:940",
+            "prometheus/value_test.go:448"
+          ],
+          "identity": {
+            "items": [
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collector_test.go:58",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectorfunc_test.go:75",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/dbstats_collector_test.go:38",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:86",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:99",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:121",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:179",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/go_collector_latest_test.go:241",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/version/version_test.go:34",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/collectors/version/version_test.go:80",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/example_metricvec_test.go:125",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:165",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:372",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:785",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:818",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:835",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/examples_test.go:848",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/graphite/bridge_test.go:128",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/graphite/bridge_test.go:224",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/graphite/bridge_test.go:313",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/process_collector_darwin_test.go:40",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/promhttp/http_test.go:1102",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/promhttp/instrument_client_test.go:125",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/promhttp/instrument_client_test.go:241",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/push/push_test.go:81",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry.go:444",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:803",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:940",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1010",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1112",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1487",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1511",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1532",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1545",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1622",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1658",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1691",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1735",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/registry_test.go:1740",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              },
+              {
+                "category": "direct",
+                "declaration": "prometheus/registry.go:455:1",
+                "method": "Gather",
+                "mismatches": {},
+                "ownerDeclaration": null,
+                "ownerType": "Registry",
+                "position": "prometheus/value_test.go:448",
+                "qualname": "*Registry.Gather",
+                "repositoryVersion": "8f7c8876630bc7308740fea042ddc10b9963af54",
+                "status": "ok",
+                "targetFile": "prometheus/registry.go"
+              }
+            ],
+            "omitted": 7,
+            "valid": true,
+            "wrong": []
+          },
+          "missed": [],
+          "preserved": true,
+          "total": {
+            "after": 47,
+            "baseline": 47,
+            "included": 40,
+            "omitted": 7,
+            "preserved": true
+          },
+          "wrong": []
+        },
+        "interfaceCandidates": {
+          "actual": [
+            "prometheus/graphite/bridge.go:171",
+            "prometheus/promhttp/http_test.go:1382",
+            "prometheus/promhttp/http_test.go:81",
+            "prometheus/registry.go:1194",
+            "prometheus/registry.go:678",
+            "prometheus/registry.go:843",
+            "prometheus/testutil/lint.go:38",
+            "prometheus/testutil/testutil.go:147",
+            "prometheus/testutil/testutil.go:256"
+          ],
+          "baselineCoverage": "absent",
+          "correct": 9,
+          "coverage": "available",
+          "expected": [
+            "prometheus/graphite/bridge.go:171",
+            "prometheus/promhttp/http_test.go:1382",
+            "prometheus/promhttp/http_test.go:81",
+            "prometheus/registry.go:1194",
+            "prometheus/registry.go:678",
+            "prometheus/registry.go:843",
+            "prometheus/testutil/lint.go:38",
+            "prometheus/testutil/testutil.go:147",
+            "prometheus/testutil/testutil.go:256"
+          ],
+          "missed": [],
+          "unknown": "1 captured interface(s) were omitted from the edge set because their method evidence was incomplete. Absence of a candidate is not proof of non-implementation.",
+          "wrong": []
+        }
+      },
+      "repository": "prometheus/client_golang",
+      "sourceIdentity": {
+        "base": {
+          "checkout": "7c438e9a9bf011d011836bc6431bf824b82f17c2",
+          "clean": true,
+          "expected": "7c438e9a9bf011d011836bc6431bf824b82f17c2",
+          "snapshot": "7c438e9a9bf011d011836bc6431bf824b82f17c2",
+          "valid": true
+        },
+        "declarations": [
+          {
+            "actualText": "type Gatherer interface {",
+            "expectedText": "type Gatherer interface",
+            "file": "prometheus/registry.go",
+            "line": 153,
+            "valid": true
+          },
+          {
+            "actualText": "\tGather() ([]*dto.MetricFamily, error)",
+            "expectedText": "Gather() ([]*dto.MetricFamily, error)",
+            "file": "prometheus/registry.go",
+            "line": 173,
+            "valid": true
+          },
+          {
+            "actualText": "func (r *Registry) Gather() ([]*dto.MetricFamily, error) {",
+            "expectedText": "func (r *Registry) Gather",
+            "file": "prometheus/registry.go",
+            "line": 455,
+            "valid": true
+          }
+        ],
+        "head": {
+          "checkout": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "clean": true,
+          "expected": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "snapshot": "8f7c8876630bc7308740fea042ddc10b9963af54",
+          "valid": true
+        },
+        "valid": true
+      }
+    },
+    {
+      "after": {
+        "direct": {
+          "count": 0,
+          "identity": {
+            "items": [],
+            "omitted": 0,
+            "valid": true,
+            "wrong": []
+          },
+          "included": 0,
+          "omitted": 0,
+          "positions": []
+        },
+        "interfaceCandidates": {
+          "count": 38,
+          "coverage": "available",
+          "items": [
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "afero_test.go:88",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "afero_test.go:88",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "afero_test.go:96",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "afero_test.go:96",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "afero_test.go:104",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "afero_test.go:104",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "afero_test.go:117",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "afero_test.go:117",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "basepath_copy_test.go:41",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "basepath_copy_test.go:41",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "basepath_test.go:267",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "basepath_test.go:267",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "basepath.go:163",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "basepath.go:163",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "cacheOnReadFs.go:224",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "cacheOnReadFs.go:224",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "cacheOnReadFs.go:228",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "cacheOnReadFs.go:228",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "cacheOnReadFs.go:235",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "cacheOnReadFs.go:235",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "composite_test.go:127",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "composite_test.go:127",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "copyOnWriteFs.go:218",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "copyOnWriteFs.go:218",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "copyOnWriteFs.go:230",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "copyOnWriteFs.go:230",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "copyOnWriteFs.go:238",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "copyOnWriteFs.go:238",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "copyOnWriteFs.go:248",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "copyOnWriteFs.go:248",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "copyOnWriteFs.go:250",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "copyOnWriteFs.go:250",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "httpFs.go:97",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "httpFs.go:97",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "iofs_test.go:38",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "iofs_test.go:38",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "iofs_test.go:66",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "iofs_test.go:66",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "ioutil.go:127",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "ioutil.go:127",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "ioutil.go:196",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "ioutil.go:196",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:85",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:85",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:123",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:123",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:131",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:131",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:151",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:151",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:225",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:225",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:298",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:298",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:657",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:657",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:684",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:684",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "memmap_test.go:1138",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "memmap_test.go:1138",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "readonlyfs.go:79",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "readonlyfs.go:79",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "regexpfs_test.go:54",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "regexpfs_test.go:54",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "regexpfs_test.go:89",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "regexpfs_test.go:89",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "regexpfs_test.go:118",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "regexpfs_test.go:118",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "regexpfs.go:128",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "regexpfs.go:128",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "tarfs/tarfs_test.go:310",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "tarfs/tarfs_test.go:310",
+              "promotion": "embedded-interface",
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The call is on a concrete wrapper and reaches the interface through an embedded field. The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "tarfs/tarfs_test.go:324",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "tarfs/tarfs_test.go:324",
+              "promotion": "embedded-interface",
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The call is on a concrete wrapper and reaches the interface through an embedded field. The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            },
+            {
+              "changedImplementation": "*RegexpFs.OpenFile",
+              "identity": {
+                "category": "interface-candidate",
+                "declaration": "afero.go:74:2",
+                "method": "OpenFile",
+                "mismatches": {},
+                "ownerDeclaration": "afero.go:57:6",
+                "ownerType": "Fs",
+                "position": "unionFile.go:330",
+                "qualname": "Fs.OpenFile",
+                "repositoryVersion": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+                "status": "ok",
+                "targetFile": "afero.go"
+              },
+              "implementations": {
+                "total": 13,
+                "types": [
+                  "Afero",
+                  "BasePathFs",
+                  "CacheOnReadFs",
+                  "CopyOnWriteFs",
+                  "FromIOFS",
+                  "Fs",
+                  "MemMapFs",
+                  "OsFs",
+                  "ReadOnlyFs",
+                  "RegexpFs",
+                  "optionalIfaceFs",
+                  "regexpStatErrorFs"
+                ]
+              },
+              "interface": "Fs",
+              "interfaceMethod": "Fs.OpenFile",
+              "position": "unionFile.go:330",
+              "promotion": null,
+              "reason": "Call through Fs.OpenFile: RegexpFs (*T) satisfies Fs via *RegexpFs.OpenFile (regexpfs.go:118). The runtime receiver may be another implementation; it is not determined.",
+              "runtimeTarget": "not-determined"
+            }
+          ],
+          "unknown": "1 captured interface(s) were omitted from the edge set because their method evidence was incomplete. Absence of a candidate is not proof of non-implementation."
+        },
+        "status": "ready"
+      },
+      "base": "effad5e",
+      "baseCommit": "effad5ec7dbd98364d26fd13f32761f56d9d7857",
+      "baseline": {
+        "direct": {
+          "count": 0,
+          "positions": []
+        },
+        "interfaceCandidates": "absent",
+        "status": "ready"
+      },
+      "changedDefinition": "*RegexpFs.OpenFile",
+      "checks": {
+        "candidateIdentityWrong": [],
+        "candidateMissed": [],
+        "candidateWrong": [],
+        "candidateWrongReasons": [],
+        "counterexamplePassed": null,
+        "directIdentityWrong": [],
+        "directMissed": [],
+        "directPreserved": true,
+        "directWrong": [],
+        "goplsMatches": true,
+        "sourceIdentityValid": true,
+        "specific": {
+          "httpFsPresent": false,
+          "promotedTypes": [
+            "Afero",
+            "regexpStatErrorFs"
+          ],
+          "regexpFsPointerOnly": true
+        }
+      },
+      "counterexample": null,
+      "entry": "regexpfs.go",
+      "gopls": {
+        "concreteEqualsDirectPlusCandidates": true,
+        "concreteReferences": {
+          "count": 38,
+          "positions": [
+            "afero_test.go:104",
+            "afero_test.go:117",
+            "afero_test.go:88",
+            "afero_test.go:96",
+            "basepath.go:163",
+            "basepath_copy_test.go:41",
+            "basepath_test.go:267",
+            "cacheOnReadFs.go:224",
+            "cacheOnReadFs.go:228",
+            "cacheOnReadFs.go:235",
+            "composite_test.go:127",
+            "copyOnWriteFs.go:218",
+            "copyOnWriteFs.go:230",
+            "copyOnWriteFs.go:238",
+            "copyOnWriteFs.go:248",
+            "copyOnWriteFs.go:250",
+            "httpFs.go:97",
+            "iofs_test.go:38",
+            "iofs_test.go:66",
+            "ioutil.go:127",
+            "ioutil.go:196",
+            "memmap_test.go:1138",
+            "memmap_test.go:123",
+            "memmap_test.go:131",
+            "memmap_test.go:151",
+            "memmap_test.go:225",
+            "memmap_test.go:298",
+            "memmap_test.go:657",
+            "memmap_test.go:684",
+            "memmap_test.go:85",
+            "readonlyfs.go:79",
+            "regexpfs.go:128",
+            "regexpfs_test.go:118",
+            "regexpfs_test.go:54",
+            "regexpfs_test.go:89",
+            "tarfs/tarfs_test.go:310",
+            "tarfs/tarfs_test.go:324",
+            "unionFile.go:330"
+          ]
+        },
+        "countsMatch": true,
+        "displayedPositionsCovered": true,
+        "implementations": {
+          "capturedConcrete": [
+            "basepath.go:159",
+            "basepath_copy_test.go:40",
+            "cacheOnReadFs.go:211",
+            "copyOnWriteFs.go:207",
+            "iofs.go:184",
+            "memmap.go:262",
+            "os.go:64",
+            "readonlyfs.go:75",
+            "regexpfs.go:118",
+            "tarfs/fs.go:114",
+            "zipfs/fs.go:92"
+          ],
+          "gopls": [
+            "basepath.go:159",
+            "basepath_copy_test.go:40",
+            "cacheOnReadFs.go:211",
+            "copyOnWriteFs.go:207",
+            "iofs.go:184",
+            "memmap.go:262",
+            "os.go:64",
+            "readonlyfs.go:75",
+            "regexpfs.go:118",
+            "tarfs/fs.go:114",
+            "zipfs/fs.go:92"
+          ],
+          "goplsOnly": [],
+          "promotedOnly": []
+        },
+        "interfaceReferenceExtras": [
+          "copyOnWriteFs.go:331",
+          "memmap_test.go:1083",
+          "memmap_test.go:1105"
+        ],
+        "interfaceReferences": {
+          "count": 41,
+          "positions": [
+            "afero_test.go:104",
+            "afero_test.go:117",
+            "afero_test.go:88",
+            "afero_test.go:96",
+            "basepath.go:163",
+            "basepath_copy_test.go:41",
+            "basepath_test.go:267",
+            "cacheOnReadFs.go:224",
+            "cacheOnReadFs.go:228",
+            "cacheOnReadFs.go:235",
+            "composite_test.go:127",
+            "copyOnWriteFs.go:218",
+            "copyOnWriteFs.go:230",
+            "copyOnWriteFs.go:238",
+            "copyOnWriteFs.go:248",
+            "copyOnWriteFs.go:250",
+            "copyOnWriteFs.go:331",
+            "httpFs.go:97",
+            "iofs_test.go:38",
+            "iofs_test.go:66",
+            "ioutil.go:127",
+            "ioutil.go:196",
+            "memmap_test.go:1083",
+            "memmap_test.go:1105",
+            "memmap_test.go:1138",
+            "memmap_test.go:123",
+            "memmap_test.go:131",
+            "memmap_test.go:151",
+            "memmap_test.go:225",
+            "memmap_test.go:298",
+            "memmap_test.go:657",
+            "memmap_test.go:684",
+            "memmap_test.go:85",
+            "readonlyfs.go:79",
+            "regexpfs.go:128",
+            "regexpfs_test.go:118",
+            "regexpfs_test.go:54",
+            "regexpfs_test.go:89",
+            "tarfs/tarfs_test.go:310",
+            "tarfs/tarfs_test.go:324",
+            "unionFile.go:330"
+          ]
+        },
+        "omittedDirectNotCompared": 0
+      },
+      "head": "8d2a95c",
+      "headCommit": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+      "interface": "Fs",
+      "name": "afero",
+      "positions": {
+        "direct": {
+          "actual": [],
+          "baseline": [],
+          "correct": 0,
+          "expected": [],
+          "identity": {
+            "items": [],
+            "omitted": 0,
+            "valid": true,
+            "wrong": []
+          },
+          "missed": [],
+          "preserved": true,
+          "total": {
+            "after": 0,
+            "baseline": 0,
+            "included": 0,
+            "omitted": 0,
+            "preserved": true
+          },
+          "wrong": []
+        },
+        "interfaceCandidates": {
+          "actual": [
+            "afero_test.go:104",
+            "afero_test.go:117",
+            "afero_test.go:88",
+            "afero_test.go:96",
+            "basepath.go:163",
+            "basepath_copy_test.go:41",
+            "basepath_test.go:267",
+            "cacheOnReadFs.go:224",
+            "cacheOnReadFs.go:228",
+            "cacheOnReadFs.go:235",
+            "composite_test.go:127",
+            "copyOnWriteFs.go:218",
+            "copyOnWriteFs.go:230",
+            "copyOnWriteFs.go:238",
+            "copyOnWriteFs.go:248",
+            "copyOnWriteFs.go:250",
+            "httpFs.go:97",
+            "iofs_test.go:38",
+            "iofs_test.go:66",
+            "ioutil.go:127",
+            "ioutil.go:196",
+            "memmap_test.go:1138",
+            "memmap_test.go:123",
+            "memmap_test.go:131",
+            "memmap_test.go:151",
+            "memmap_test.go:225",
+            "memmap_test.go:298",
+            "memmap_test.go:657",
+            "memmap_test.go:684",
+            "memmap_test.go:85",
+            "readonlyfs.go:79",
+            "regexpfs.go:128",
+            "regexpfs_test.go:118",
+            "regexpfs_test.go:54",
+            "regexpfs_test.go:89",
+            "tarfs/tarfs_test.go:310",
+            "tarfs/tarfs_test.go:324",
+            "unionFile.go:330"
+          ],
+          "baselineCoverage": "absent",
+          "correct": 38,
+          "coverage": "available",
+          "expected": [
+            "afero_test.go:104",
+            "afero_test.go:117",
+            "afero_test.go:88",
+            "afero_test.go:96",
+            "basepath.go:163",
+            "basepath_copy_test.go:41",
+            "basepath_test.go:267",
+            "cacheOnReadFs.go:224",
+            "cacheOnReadFs.go:228",
+            "cacheOnReadFs.go:235",
+            "composite_test.go:127",
+            "copyOnWriteFs.go:218",
+            "copyOnWriteFs.go:230",
+            "copyOnWriteFs.go:238",
+            "copyOnWriteFs.go:248",
+            "copyOnWriteFs.go:250",
+            "httpFs.go:97",
+            "iofs_test.go:38",
+            "iofs_test.go:66",
+            "ioutil.go:127",
+            "ioutil.go:196",
+            "memmap_test.go:1138",
+            "memmap_test.go:123",
+            "memmap_test.go:131",
+            "memmap_test.go:151",
+            "memmap_test.go:225",
+            "memmap_test.go:298",
+            "memmap_test.go:657",
+            "memmap_test.go:684",
+            "memmap_test.go:85",
+            "readonlyfs.go:79",
+            "regexpfs.go:128",
+            "regexpfs_test.go:118",
+            "regexpfs_test.go:54",
+            "regexpfs_test.go:89",
+            "tarfs/tarfs_test.go:310",
+            "tarfs/tarfs_test.go:324",
+            "unionFile.go:330"
+          ],
+          "missed": [],
+          "unknown": "1 captured interface(s) were omitted from the edge set because their method evidence was incomplete. Absence of a candidate is not proof of non-implementation.",
+          "wrong": []
+        }
+      },
+      "repository": "spf13/afero",
+      "sourceIdentity": {
+        "base": {
+          "checkout": "effad5ec7dbd98364d26fd13f32761f56d9d7857",
+          "clean": true,
+          "expected": "effad5ec7dbd98364d26fd13f32761f56d9d7857",
+          "snapshot": "effad5ec7dbd98364d26fd13f32761f56d9d7857",
+          "valid": true
+        },
+        "declarations": [
+          {
+            "actualText": "type Fs interface {",
+            "expectedText": "type Fs interface",
+            "file": "afero.go",
+            "line": 57,
+            "valid": true
+          },
+          {
+            "actualText": "\tOpenFile(name string, flag int, perm os.FileMode) (File, error)",
+            "expectedText": "OpenFile(name string, flag int, perm os.FileMode) (File, error)",
+            "file": "afero.go",
+            "line": 74,
+            "valid": true
+          },
+          {
+            "actualText": "func (r *RegexpFs) OpenFile(name string, flag int, perm os.FileMode) (File, error) {",
+            "expectedText": "func (r *RegexpFs) OpenFile",
+            "file": "regexpfs.go",
+            "line": 118,
+            "valid": true
+          }
+        ],
+        "head": {
+          "checkout": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+          "clean": true,
+          "expected": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+          "snapshot": "8d2a95c25179002d8b1a94a2a613c71ae698332c",
+          "valid": true
+        },
+        "valid": true
+      }
+    }
+  ]
+}

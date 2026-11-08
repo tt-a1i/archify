@@ -126,6 +126,8 @@
           "via": { "type": "array", "minItems": 1, "description": "js-ts-lexical-v5 ordered forwarding import/reexport statement locations, between the caller import and target file. Captured value edges and current path freshness are checked separately.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
           "qualifierAncestry": { "type": "array", "minItems": 1, "description": "Java v4 captured ancestor class declaration points supporting absence of inherited qualifier fields. Current ancestor-file freshness is required before navigation.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
           "buildEvidence": { "type": "array", "minItems": 1, "description": "Java v5 captured POM source points supporting a declared direct project dependency route. Requires recorded metadata and current input freshness.", "items": { "type": "object", "additionalProperties": false, "required": ["file", "line", "column"], "properties": { "file": { "$ref": "#/$defs/repoPath" }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } } } },
+          "receiverInterface": { "$ref": "#/$defs/interfaceNamedRef", "description": "Go interface method calls only: the captured named interface that supplied the static receiver type. For a promoted method on a concrete wrapper, this is the interface that declared the promoted method. Used to distinguish calls through sibling interfaces with the same method spelling. Absent when the receiver is an anonymous or uncaptured interface." },
+          "receiverPromotion": { "const": "embedded-interface", "description": "Go promoted method call: the static receiver is a concrete type, but the selected method is promoted from an embedded interface field, so dispatch still goes through the interface." },
           "target": {
             "type": "object", "additionalProperties": false,
             "required": ["name", "line", "column"],
@@ -271,6 +273,7 @@
                 } }
               }
             },
+            "interfaceEvidence": { "$ref": "#/$defs/interfaceEvidence" },
             "selectedFiles": {
               "type": "array",
               "items": {
@@ -436,10 +439,92 @@
         "unknown": { "type": "integer", "minimum": 0, "description": "Dependencies that look internal but could not be resolved: path-like or in-tree specifiers, Java names in an analyzed package or matching an analyzed type." },
         "opaque": { "type": "integer", "minimum": 0, "description": "Dynamic import/require whose specifier is not a string literal (recorded as \"<computed>\")." }
       }
+    },
+    "interfaceImplementations": {
+      "type": "array",
+      "description": "Go v5 captured interface method declarations and the named source types whose value or pointer method sets satisfy the whole interface. Each edge is declaration evidence, not runtime dispatch or a complete implementation set when incomplete typing was skipped.",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["interface", "method", "implementation"],
+        "properties": {
+          "interface": { "$ref": "#/$defs/interfaceNamedRef" },
+          "method": {
+            "type": "object", "additionalProperties": false, "required": ["qualname", "name", "file", "line", "column"],
+            "properties": {
+              "qualname": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 },
+              "file": { "$ref": "#/$defs/repoPath" },
+              "line": { "type": "integer", "minimum": 1 },
+              "column": { "type": "integer", "minimum": 1 }
+            }
+          },
+          "implementation": {
+            "type": "object", "additionalProperties": false, "required": ["type", "valueSatisfies", "pointerSatisfies", "methodSet", "reason"],
+            "properties": {
+              "type": { "$ref": "#/$defs/interfaceNamedRef" },
+              "valueSatisfies": { "type": "boolean", "description": "The value type T itself satisfies the interface." },
+              "pointerSatisfies": { "type": "boolean", "description": "*T satisfies the interface. Both flags are true when T's value method set already satisfies it." },
+              "methodSet": { "enum": ["value", "pointer"], "description": "Which method set supplied the implementing method." },
+              "method": {
+                "type": "object", "additionalProperties": false, "required": ["qualname", "file", "line", "column"],
+                "properties": {
+                  "qualname": { "type": "string", "minLength": 1 },
+                  "file": { "$ref": "#/$defs/repoPath" },
+                  "line": { "type": "integer", "minimum": 1 },
+                  "column": { "type": "integer", "minimum": 1 }
+                }
+              },
+              "promotedDeclaration": {
+                "type": "object", "additionalProperties": false, "required": ["qualname", "file", "line", "column"],
+                "description": "Present when the satisfying method is promoted from an embedded interface field; no concrete body is attributed.",
+                "properties": {
+                  "qualname": { "type": "string", "minLength": 1 },
+                  "file": { "$ref": "#/$defs/repoPath" },
+                  "line": { "type": "integer", "minimum": 1 },
+                  "column": { "type": "integer", "minimum": 1 }
+                }
+              },
+              "reason": { "enum": ["captured-concrete-method", "promoted-interface-method", "method-body-not-captured"] }
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
     "sourceRange": {"type":"object","additionalProperties":false,"required":["line","column","endLine","endColumn","sha256"],"properties":{"line":{"type":"integer","minimum":1},"column":{"type":"integer","minimum":1},"endLine":{"type":"integer","minimum":1},"endColumn":{"type":"integer","minimum":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}},"description":"Exact decoded source slice. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice."},
-    "repoPath": { "type": "string", "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\\\u0000-\\u001f]+$" }
+    "repoPath": { "type": "string", "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\\\u0000-\\u001f]+$" },
+    "interfaceNamedRef": {
+      "type": "object", "additionalProperties": false, "required": ["qualname", "package", "file", "line", "column"],
+      "properties": {
+        "qualname": { "type": "string", "minLength": 1 },
+        "package": { "type": "string", "minLength": 1 },
+        "file": { "$ref": "#/$defs/repoPath" },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "interfaceEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model", "completeInterfaces", "incompleteInterfaces", "genericInterfaces", "interfacesWithoutCapturedImplementations", "edges"],
+      "description": "Coverage of the captured interface implementation edge set. incompleteInterfaces and genericInterfaces explain why a concrete method may have no interface edge; absence is unknown, not proof of non-implementation.",
+      "properties": {
+        "model": { "const": "captured-interface-implementations-v1" },
+        "completeInterfaces": { "type": "integer", "minimum": 0 },
+        "incompleteInterfaces": {
+          "type": "array", "items": {
+            "type": "object", "additionalProperties": false, "required": ["interface", "reason"],
+            "properties": { "interface": { "$ref": "#/$defs/interfaceNamedRef" }, "reason": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "genericInterfaces": { "type": "array", "items": { "$ref": "#/$defs/interfaceNamedRef" } },
+        "interfacesWithoutCapturedImplementations": {
+          "type": "array", "items": {
+            "type": "object", "additionalProperties": false, "required": ["interface", "reason"],
+            "properties": { "interface": { "$ref": "#/$defs/interfaceNamedRef" }, "reason": { "const": "no-captured-implementation" } }
+          }
+        },
+        "edges": { "type": "integer", "minimum": 0 }
+      }
+    }
   }
 }

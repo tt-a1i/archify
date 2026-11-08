@@ -71,14 +71,16 @@ function inspectSide(capture, side) {
   inputs.sort((a, b) => a.file.localeCompare(b.file));
   const settings = { options: normalize(resolution.options || {}, root), inputs };
   const unavailable = [...files.values()].filter(file => file.status !== 'valid').map(file => ({ file: file.path, status: file.status, ...(file.parseError ? { parseError: file.parseError } : {}) }));
+  const evidence = facts.languageScope?.interfaceEvidence || null;
   const summary = {
     side, root, snapshot: facts.repository, language: facts.repository.language, producer: { adapter: facts.repository.adapter, adapterRevision: facts.repository.adapterRevision }, callModel: facts.callModel ?? null, analysisConfigDigest: capture.configDigest, capturedFiles: files.size,
     sourceIdentity: unavailable.some(file => file.status !== 'parse-error') ? 'incomplete' : 'valid',
     unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
     ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
+    ...(evidence ? { interfaceEvidence: evidence } : {}),
     resolution: ['ts', 'go', 'rust', 'java'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
   };
-  const references = new Map(), calls = new Map();
+  const references = new Map(), calls = new Map(), interfaceReferences = new Map();
   (facts.calls || []).forEach((fact, factIndex) => {
     const record = { side, snapshotId: facts.repository.snapshotId, factIndex, fact };
     const fileCalls = calls.get(fact.file) || [];
@@ -87,8 +89,28 @@ function inspectSide(capture, side) {
       const targetKey = key(fact.target.file || fact.file, fact.target.line, fact.target.column, fact.target.name);
       const refs = references.get(targetKey) || [];
       refs.push(record); references.set(targetKey, refs);
+      if (fact.receiverInterface) {
+        const interfaceKey = key(fact.receiverInterface.package, fact.receiverInterface.qualname);
+        const interfaceRefs = interfaceReferences.get(key(targetKey, interfaceKey)) || [];
+        interfaceRefs.push(record); interfaceReferences.set(key(targetKey, interfaceKey), interfaceRefs);
+      }
     }
   });
+  const hasInterfaceEvidence = Array.isArray(facts.interfaceImplementations) && evidence?.model === 'captured-interface-implementations-v1';
+  const interfaceEdges = new Map(), interfaceMethods = new Map();
+  if (hasInterfaceEvidence) {
+    for (const edge of facts.interfaceImplementations) {
+      const method = edge.implementation.method;
+      if (method) {
+        const edgeKey = key(method.file, method.line, method.column, method.qualname);
+        const rows = interfaceEdges.get(edgeKey) || [];
+        rows.push(edge); interfaceEdges.set(edgeKey, rows);
+      }
+      const methodKey = key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+      const rows = interfaceMethods.get(methodKey) || [];
+      rows.push(edge); interfaceMethods.set(methodKey, rows);
+    }
+  }
   const importsByTarget = new Map();
   let unresolvedImports = 0;
   facts.imports.forEach((fact, factIndex) => {
@@ -103,7 +125,8 @@ function inspectSide(capture, side) {
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(facts.callModel))
     || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4'].includes(facts.callModel));
-  return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
+  return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings,
+    interfaceReferences, interfaceEdges, interfaceMethods, interfaceEvidence: evidence, hasInterfaceEvidence };
 }
 
 function compareSettings(base, head) {
@@ -168,6 +191,57 @@ function callsInRange(records, range) {
   return selected;
 }
 
+function interfaceCandidateReason(edge, record, hasAlternatives) {
+  const iface = edge.interface.qualname, method = edge.method.name, impl = edge.implementation;
+  const type = impl.type.qualname;
+  const forms = impl.valueSatisfies && impl.pointerSatisfies ? 'T and *T' : impl.valueSatisfies ? 'T' : '*T';
+  const location = impl.method ? `${impl.method.qualname} (${impl.method.file}:${impl.method.line})`
+    : impl.promotedDeclaration ? `${impl.promotedDeclaration.qualname} (${impl.promotedDeclaration.file}:${impl.promotedDeclaration.line})`
+      : 'an uncaptured method body';
+  const promotion = record.fact.receiverPromotion === 'embedded-interface' ? ' The call is on a concrete wrapper and reaches the interface through an embedded field.' : '';
+  const alternatives = hasAlternatives ? 'The runtime receiver may be another implementation; it is not determined.' : 'No other captured implementation is listed, but runtime identity is still not determined.';
+  if (impl.reason === 'promoted-interface-method') return `Call through ${iface}.${method}: ${type} satisfies ${iface}, but the method is promoted from ${location}; the concrete body is not captured.${promotion} ${alternatives}`;
+  if (impl.reason === 'method-body-not-captured') return `Call through ${iface}.${method}: ${type} satisfies ${iface}, but the implementing body is not captured.${promotion} ${alternatives}`;
+  return `Call through ${iface}.${method}: ${type} (${forms}) satisfies ${iface} via ${location}.${promotion} ${alternatives}`;
+}
+
+function interfaceCandidates(side, definition) {
+  if (side.facts.repository.language !== 'go') return null;
+  if (definition.kind !== 'FuncDecl' || definition.qualname === definition.name) {
+    return { coverage: 'not-applicable', reason: definition.kind === 'InterfaceMethod' ? 'interface-method-declaration' : 'not-a-concrete-method', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  }
+  if (!side.hasInterfaceEvidence) {
+    return { coverage: 'unavailable', reason: 'interface-implementation-evidence-not-captured', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  }
+  const edges = side.interfaceEdges.get(key(definition.file, definition.line, definition.column, definition.qualname)) || [];
+  const items = [], seen = new Set(), edgeSeen = new Set();
+  for (const edge of edges) {
+    const edgeKey = key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column,
+      edge.implementation.type.package, edge.implementation.type.qualname, edge.implementation.reason,
+      edge.implementation.method?.qualname || edge.implementation.promotedDeclaration?.qualname || null);
+    if (edgeSeen.has(edgeKey)) continue;
+    edgeSeen.add(edgeKey);
+    const targetKey = key(edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+    const methodKey = key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+    const implementations = (side.interfaceMethods.get(methodKey) || [edge]).map(row => row.implementation);
+    const refs = side.interfaceReferences.get(key(targetKey, key(edge.interface.package, edge.interface.qualname))) || [];
+    for (const record of refs) {
+      const id = `${record.snapshotId}:${record.factIndex}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const status = !side.resolutionFresh ? 'resolution-input-changed' : side.files.get(record.fact.file)?.status || 'unverifiable';
+      items.push({ ...record, bindingAttribution: side.bindingAttribution,
+        navigation: { status, location: status === 'valid' ? { file: record.fact.file, line: record.fact.line, column: record.fact.column, endLine: record.fact.endLine, endColumn: record.fact.endColumn } : null },
+        interface: edge.interface, interfaceMethod: edge.method, changedImplementation: edge.implementation,
+        implementations: bounded(implementations), runtimeTarget: 'not-determined', reason: interfaceCandidateReason(edge, record, implementations.length > 1) });
+    }
+  }
+  items.sort((a, b) => a.fact.file.localeCompare(b.fact.file) || a.fact.line - b.fact.line || a.fact.column - b.fact.column);
+  const incomplete = side.interfaceEvidence?.incompleteInterfaces?.length || 0;
+  return { coverage: 'available', ...bounded(items),
+    ...(incomplete ? { unknown: `${incomplete} captured interface(s) were omitted from the edge set because their method evidence was incomplete. Absence of a candidate is not proof of non-implementation.` } : {}) };
+}
+
 function describeDefinition(side, definition) {
   const refs = side.references.get(key(definition.file, definition.line, definition.column, definition.name)) || [];
   const knownReferences = refs.map(record => {
@@ -177,8 +251,10 @@ function describeDefinition(side, definition) {
   const unresolved = callsInRange(side.calls.get(definition.file) || [], definition.sourceRange || definition);
   const unavailable = { coverage: 'unavailable', reason: 'unsupported-or-unknown-call-model', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
   const available = items => ({ coverage: 'available', ...bounded(items) });
+  const candidates = interfaceCandidates(side, definition);
   return { side: side.side, snapshotId: side.facts.repository.snapshotId, definition,
-    knownReferences: side.callCoverage ? available(knownReferences) : { ...unavailable }, unresolvedWithinSourceRange: side.callCoverage ? { ...available(unresolved), containment: 'physical-source-range-including-nested-definitions-and-owned-headers' } : { ...unavailable } };
+    knownReferences: side.callCoverage ? available(knownReferences) : { ...unavailable }, ...(candidates ? { interfaceCandidates: candidates } : {}),
+    unresolvedWithinSourceRange: side.callCoverage ? { ...available(unresolved), containment: 'physical-source-range-including-nested-definitions-and-owned-headers' } : { ...unavailable } };
 }
 
 function moduleReferences(side, entry) {
@@ -265,6 +341,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   for (const [name, side] of Object.entries(sides)) {
     if (side.summary.unavailableFiles.total) reasons.push({ code: 'source-regions-unavailable', side: name, count: side.summary.unavailableFiles.total, message: 'Some captured source regions failed parsing or freshness checks; other valid regions remain available.' });
     if (!side.resolutionFresh) reasons.push({ code: 'resolution-input-changed', side: name, message: 'A configuration/package input changed after capture; call and dependency navigation for this side is unavailable.' });
+    if (language === 'go' && !side.hasInterfaceEvidence) reasons.push({ code: 'interface-implementation-evidence-unavailable', side: name, message: 'This capture has no interface implementation edges. Direct references remain available; interface-mediated candidates are unavailable, not zero.' });
   }
   const settingsEqual = sides.base.summary.resolution.digest === sides.head.summary.resolution.digest;
   const bindingAttribution = language !== 'ts' ? 'source-import-model-only' : settingsEqual && sides.base.resolutionFresh && sides.head.resolutionFresh ? 'same-observed-settings' : 'limited';
@@ -294,13 +371,14 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
     limitations: [
       'File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.',
       'Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.',
-      'Known references are conservative source callsites, not runtime callers or complete/transitive impact. Dynamic dispatch, unsupported member calls, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets ordinary undecorated module definitions or direct from-import aliases; v2 additionally follows one unique unconditional explicit reexport. Longer/rebound/conditional chains, decorated/method targets and runtime module initialization remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; v3 additionally distinguishes different fixed arities while same-arity/varargs competition, member dispatch and inherited owners remain unresolved. Go v1 binds captured free functions; v2 additionally follows compiler-selected concrete methods, including promotion, expressions and generic instances; v3 additionally binds interface method declarations captured in source as declaration anchors, while runtime interface dispatch and function variables remain unknown under incomplete external typing. Argument type applicability and complete compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.',
+      'Known references are conservative source callsites, not runtime callers or complete/transitive impact. Dynamic dispatch, unsupported member calls, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets ordinary undecorated module definitions or direct from-import aliases; v2 additionally follows one unique unconditional explicit reexport. Longer/rebound/conditional chains, decorated/method targets and runtime module initialization remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; v3 additionally distinguishes different fixed arities while same-arity/varargs competition, member dispatch and inherited owners remain unresolved. Go v1 binds captured free functions; v2 additionally follows compiler-selected concrete methods, including promotion, expressions and generic instances; v3 additionally binds interface method declarations captured in source as declaration anchors, while runtime interface dispatch and function variables remain unknown under incomplete external typing. Current Go change orientation additionally lists interface-mediated candidate callsites when captured go/types method sets prove that the changed concrete method is in an interface implementation; candidates are not definite runtime callers. Captures without interface implementation edges report interfaceCandidates as unavailable rather than zero. Argument type applicability and complete compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.',
       'Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.',
       'Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.',
       'Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits.',
     ],
     nextSteps: [
       'Read the changed source and the known callsite in each named side; inspect unresolved calls, adapter/configuration inputs and omitted regions relevant to the question.',
+      'For Go concrete methods, compare knownReferences (direct calls) with interfaceCandidates (interface-mediated possibilities). A candidate names the interface method declaration, the satisfying type and method, and any other captured implementations; the runtime receiver is not determined.',
       'Explain the behavior from source and appropriate project checks. Keep inference and unknowns explicit; this orientation is not a completed change review.',
     ],
   };

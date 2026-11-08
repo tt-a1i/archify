@@ -49,6 +49,19 @@ type group struct {
 	counts            map[string]int
 	methods           map[string][]types.Type
 }
+type interfaceInfo struct {
+	named    *types.Named
+	iface    *types.Interface
+	record   record
+	complete bool
+	checked  bool
+	visiting bool
+	reason   string
+}
+type concreteType struct {
+	named  *types.Named
+	record record
+}
 type loader struct {
 	stdlib           types.Importer
 	sdkExports       map[string]string
@@ -68,6 +81,9 @@ type loader struct {
 	invalidDirs      map[string]bool
 	definitions      map[token.Pos]record
 	interfaceMethods map[token.Pos]record
+	interfaceInfos   []*interfaceInfo
+	interfaceEdges   []record
+	interfaceReport  record
 	functions        []record
 }
 
@@ -565,6 +581,313 @@ func concreteSelection(selection *types.Selection) bool {
 	return !dynamic
 }
 
+func (l *loader) namedRecord(g *group, file string, ts *ast.TypeSpec, name string) record {
+	p := l.point(ts.Name.Pos())
+	return record{"qualname": name, "package": g.pkg.Path(), "file": file, "line": p["line"], "column": p["column"]}
+}
+
+func defColumn(def record) int {
+	if span, ok := def["sourceRange"].(record); ok {
+		if column, ok := span["column"].(int); ok {
+			return column
+		}
+	}
+	return 1
+}
+
+func (l *loader) interfaceInfoFor(t types.Type) *interfaceInfo {
+	for _, info := range l.interfaceInfos {
+		if info.named != nil && types.Identical(t, info.named) {
+			return info
+		}
+	}
+	return nil
+}
+
+// Complete means every embedded interface is captured source (or the universe
+// error type). External embeds are unknown, not "no methods".
+func (l *loader) interfaceComplete(info *interfaceInfo) bool {
+	if info.checked {
+		return info.complete
+	}
+	if info.visiting {
+		info.reason = "cyclic-embedded-interface"
+		return false
+	}
+	info.visiting = true
+	defer func() { info.visiting = false }()
+	info.checked = true
+	if info.iface == nil {
+		info.reason = "incomplete-type-check"
+		return false
+	}
+	info.iface.Complete()
+	if !info.iface.IsMethodSet() {
+		info.reason = "constraint-interface"
+		return false
+	}
+	for i := 0; i < info.iface.NumEmbeddeds(); i++ {
+		switch embedded := info.iface.EmbeddedType(i).(type) {
+		case *types.Named:
+			if embedded.Obj().Pkg() == nil {
+				continue
+			}
+			target := l.interfaceInfoFor(embedded)
+			if target == nil {
+				info.reason = "external-embedded-interface"
+				return false
+			}
+			if !l.interfaceComplete(target) {
+				info.reason = "incomplete-embedded-interface"
+				return false
+			}
+		case *types.Interface:
+			if embedded.NumMethods() > 0 || embedded.NumEmbeddeds() > 0 {
+				info.reason = "anonymous-embedded-interface"
+				return false
+			}
+		default:
+			info.reason = "unsupported-embedded-type"
+			return false
+		}
+	}
+	info.complete = true
+	return true
+}
+
+func (l *loader) collectInterfaceEvidence() {
+	ids := make([]string, 0, len(l.groups))
+	for id := range l.groups {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	var concretes []*concreteType
+	generics := []record{}
+	for _, id := range ids {
+		g := l.groups[id]
+		if g.info == nil || g.pkg == nil {
+			continue
+		}
+		for i, f := range g.files {
+			file := g.names[i]
+			if l.invalidDirs[path.Dir(file)] {
+				continue
+			}
+			for _, decl := range f.Decls {
+				gd, ok := decl.(*ast.GenDecl)
+				if !ok || gd.Tok != token.TYPE {
+					continue
+				}
+				for _, spec := range gd.Specs {
+					ts := spec.(*ast.TypeSpec)
+					obj, _ := g.info.Defs[ts.Name].(*types.TypeName)
+					if obj == nil || obj.IsAlias() {
+						continue
+					}
+					named, ok := obj.Type().(*types.Named)
+					if !ok {
+						continue
+					}
+					_, isInterface := ts.Type.(*ast.InterfaceType)
+					rec := l.namedRecord(g, file, ts, ts.Name.Name)
+					if named.TypeParams().Len() > 0 {
+						if isInterface {
+							generics = append(generics, rec)
+						}
+						continue
+					}
+					if isInterface {
+						iface, _ := named.Underlying().(*types.Interface)
+						if iface == nil {
+							continue
+						}
+						l.interfaceInfos = append(l.interfaceInfos, &interfaceInfo{named: named, iface: iface, record: rec})
+						continue
+					}
+					if _, dynamic := named.Underlying().(*types.Interface); dynamic {
+						continue
+					}
+					concretes = append(concretes, &concreteType{named: named, record: rec})
+				}
+			}
+		}
+	}
+	sort.Slice(l.interfaceInfos, func(i, j int) bool {
+		a, b := l.interfaceInfos[i].record, l.interfaceInfos[j].record
+		if a["package"] != b["package"] {
+			return a["package"].(string) < b["package"].(string)
+		}
+		if a["file"] != b["file"] {
+			return a["file"].(string) < b["file"].(string)
+		}
+		if a["line"] != b["line"] {
+			return a["line"].(int) < b["line"].(int)
+		}
+		return a["qualname"].(string) < b["qualname"].(string)
+	})
+	sort.Slice(concretes, func(i, j int) bool {
+		a, b := concretes[i].record, concretes[j].record
+		if a["package"] != b["package"] {
+			return a["package"].(string) < b["package"].(string)
+		}
+		if a["file"] != b["file"] {
+			return a["file"].(string) < b["file"].(string)
+		}
+		if a["line"] != b["line"] {
+			return a["line"].(int) < b["line"].(int)
+		}
+		return a["qualname"].(string) < b["qualname"].(string)
+	})
+	edges := []record{}
+	seen := map[string]bool{}
+	edgeInterfaces := map[string]bool{}
+	complete := map[string]bool{}
+	incomplete := []record{}
+	incompleteSeen := map[string]bool{}
+	without := []record{}
+	withoutSeen := map[string]bool{}
+	if generics == nil {
+		generics = []record{}
+	}
+	for _, info := range l.interfaceInfos {
+		key := fmt.Sprintf("%s|%s|%s|%d", info.record["package"], info.record["qualname"], info.record["file"], info.record["line"])
+		if !l.interfaceComplete(info) {
+			if !incompleteSeen[key] {
+				incompleteSeen[key] = true
+				incomplete = append(incomplete, record{"interface": info.record, "reason": info.reason})
+			}
+			continue
+		}
+		complete[key] = true
+		if info.iface.NumMethods() == 0 {
+			continue
+		}
+		emitted := false
+		for i := 0; i < info.iface.NumMethods(); i++ {
+			method := info.iface.Method(i)
+			anchor := l.interfaceMethods[method.Pos()]
+			if anchor == nil {
+				continue
+			}
+			methodRec := record{"qualname": anchor["qualname"], "name": anchor["name"], "file": anchor["file"], "line": anchor["line"], "column": defColumn(anchor)}
+			for _, concrete := range concretes {
+				value := types.Implements(concrete.named, info.iface)
+				pointer := types.Implements(types.NewPointer(concrete.named), info.iface)
+				if !value && !pointer {
+					continue
+				}
+				methodSet := "value"
+				set := types.NewMethodSet(concrete.named)
+				if !value {
+					methodSet = "pointer"
+					set = types.NewMethodSet(types.NewPointer(concrete.named))
+				}
+				selection := set.Lookup(method.Pkg(), method.Name())
+				if selection == nil {
+					continue
+				}
+				fn, ok := selection.Obj().(*types.Func)
+				if !ok {
+					continue
+				}
+				implementation := record{"type": concrete.record, "valueSatisfies": value, "pointerSatisfies": pointer, "methodSet": methodSet}
+				if def := l.definitions[fn.Pos()]; def != nil {
+					implementation["method"] = record{"qualname": def["qualname"], "file": def["file"], "line": def["line"], "column": defColumn(def)}
+					implementation["reason"] = "captured-concrete-method"
+				} else if promoted := l.interfaceMethods[fn.Pos()]; promoted != nil {
+					implementation["promotedDeclaration"] = record{"qualname": promoted["qualname"], "file": promoted["file"], "line": promoted["line"], "column": defColumn(promoted)}
+					implementation["reason"] = "promoted-interface-method"
+				} else {
+					implementation["reason"] = "method-body-not-captured"
+				}
+				edge := record{"interface": info.record, "method": methodRec, "implementation": implementation}
+				edgeKey := fmt.Sprintf("%s|%s|%s|%d|%d|%s|%s|%d|%s", info.record["package"], info.record["qualname"], methodRec["file"], methodRec["line"], methodRec["column"], concrete.record["package"], concrete.record["qualname"], concrete.record["line"], fmt.Sprint(fn.Pos()))
+				if seen[edgeKey] {
+					emitted = true
+					continue
+				}
+				seen[edgeKey] = true
+				edgeInterfaces[key] = true
+				edges = append(edges, edge)
+				emitted = true
+			}
+		}
+		if !emitted && !withoutSeen[key] {
+			withoutSeen[key] = true
+			without = append(without, record{"interface": info.record, "reason": "no-captured-implementation"})
+		}
+	}
+	filtered := without[:0]
+	for _, row := range without {
+		rec := row["interface"].(record)
+		key := fmt.Sprintf("%s|%s|%s|%d", rec["package"], rec["qualname"], rec["file"], rec["line"])
+		if !edgeInterfaces[key] {
+			filtered = append(filtered, row)
+		}
+	}
+	without = filtered
+	sort.Slice(edges, func(i, j int) bool {
+		a, b := edges[i], edges[j]
+		ai, bi := a["interface"].(record), b["interface"].(record)
+		am, bm := a["method"].(record), b["method"].(record)
+		if ai["package"] != bi["package"] {
+			return ai["package"].(string) < bi["package"].(string)
+		}
+		if ai["qualname"] != bi["qualname"] {
+			return ai["qualname"].(string) < bi["qualname"].(string)
+		}
+		if am["file"] != bm["file"] {
+			return am["file"].(string) < bm["file"].(string)
+		}
+		if am["line"] != bm["line"] {
+			return am["line"].(int) < bm["line"].(int)
+		}
+		if am["column"] != bm["column"] {
+			return am["column"].(int) < bm["column"].(int)
+		}
+		at, bt := a["implementation"].(record)["type"].(record), b["implementation"].(record)["type"].(record)
+		if at["package"] != bt["package"] {
+			return at["package"].(string) < bt["package"].(string)
+		}
+		if at["qualname"] != bt["qualname"] {
+			return at["qualname"].(string) < bt["qualname"].(string)
+		}
+		return at["line"].(int) < bt["line"].(int)
+	})
+	l.interfaceEdges = edges
+	l.interfaceReport = record{
+		"model":                "captured-interface-implementations-v1",
+		"completeInterfaces":   len(complete),
+		"incompleteInterfaces": incomplete,
+		"genericInterfaces":    generics,
+		"interfacesWithoutCapturedImplementations": without,
+		"edges": len(edges),
+	}
+}
+
+func (l *loader) receiverInterface(t types.Type) record {
+	for _, info := range l.interfaceInfos {
+		if info.named != nil && types.Identical(t, info.named) {
+			return info.record
+		}
+	}
+	return nil
+}
+
+func (l *loader) declarationInterface(anchor record) record {
+	owner, _ := anchor["qualname"].(string)
+	if i := strings.LastIndex(owner, "."); i >= 0 {
+		owner = owner[:i]
+	}
+	file, _ := anchor["file"].(string)
+	for _, info := range l.interfaceInfos {
+		if info.record["qualname"] == owner && info.record["file"] == file {
+			return info.record
+		}
+	}
+	return nil
+}
+
 func unwrap(e ast.Expr) ast.Expr {
 	switch x := e.(type) {
 	case *ast.ParenExpr:
@@ -592,10 +915,13 @@ func main() {
 		ids = append(ids, id)
 	}
 	sort.Strings(ids)
+	for _, id := range ids {
+		l.check(l.groups[id])
+	}
+	l.collectInterfaceEvidence()
 	calls, imports, packages := []record{}, []record{}, []record{}
 	for _, id := range ids {
 		g := l.groups[id]
-		l.check(g)
 		packages = append(packages, record{"id": g.id, "path": g.pkgPath, "name": g.name, "files": g.names})
 		if g.counts == nil {
 			g.counts = declarationCounts(g.files)
@@ -665,6 +991,15 @@ func main() {
 						if interfaceMethod {
 							def = l.interfaceMethods[obj.Pos()]
 						}
+						promotedInterface := false
+						if method && def == nil {
+							if anchor := l.interfaceMethods[obj.Pos()]; anchor != nil {
+								method = false
+								interfaceMethod = true
+								promotedInterface = true
+								def = anchor
+							}
+						}
 						valid := def != nil && sig != nil && (sig.Recv() == nil || method || interfaceMethod) && !l.invalidDirs[path.Dir(file)]
 						if def != nil && sig != nil && (sig.Recv() == nil || method) {
 							r["reason"] = "ambiguous-binding"
@@ -703,6 +1038,16 @@ func main() {
 								}
 								if interfaceMethod {
 									r["resolution"] = "go-interface-method"
+									recv := l.receiverInterface(selection.Recv())
+									if recv == nil {
+										recv = l.declarationInterface(def)
+									}
+									if recv != nil {
+										r["receiverInterface"] = recv
+									}
+									if promotedInterface {
+										r["receiverPromotion"] = "embedded-interface"
+									}
 								}
 								if targetFile != file {
 									t["file"] = targetFile
@@ -750,7 +1095,11 @@ func main() {
 	if goarch == "" {
 		goarch = build.Default.GOARCH
 	}
-	out := record{"version": runtime.Version(), "selected": l.selected, "excluded": l.excluded, "parse_errors": l.parseErrors, "functions": l.functions, "calls": calls, "imports": imports, "packages": packages, "standardLibrary": l.sdk, "typing": record{"status": "partial-source-bindings", "errorCount": l.errors, "errors": l.diagnostics, "externalPackagesNotLoaded": external}, "build": record{"goos": goos, "goarch": goarch, "tags": req.Tags, "cgo": false, "tests": req.Tests, "goWork": "not-loaded", "replace": "not-loaded", "releaseTags": build.Default.ReleaseTags, "toolTags": build.Default.ToolTags, "toolchain": runtime.Version(), "goFlags": "not-loaded"}}
+	interfaceEdges := l.interfaceEdges
+	if interfaceEdges == nil {
+		interfaceEdges = []record{}
+	}
+	out := record{"version": runtime.Version(), "selected": l.selected, "excluded": l.excluded, "parse_errors": l.parseErrors, "functions": l.functions, "calls": calls, "imports": imports, "packages": packages, "standardLibrary": l.sdk, "interfaceImplementations": interfaceEdges, "interfaceEvidence": l.interfaceReport, "typing": record{"status": "partial-source-bindings", "errorCount": l.errors, "errors": l.diagnostics, "externalPackagesNotLoaded": external}, "build": record{"goos": goos, "goarch": goarch, "tags": req.Tags, "cgo": false, "tests": req.Tests, "goWork": "not-loaded", "replace": "not-loaded", "releaseTags": build.Default.ReleaseTags, "toolTags": build.Default.ToolTags, "toolchain": runtime.Version(), "goFlags": "not-loaded"}}
 	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
 		panic(err)
 	}
