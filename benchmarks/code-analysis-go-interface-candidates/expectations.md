@@ -19,6 +19,34 @@ custom tags, tests included, Go `1.27.2`, gopls `v0.24.0`. Afero's `sftpfs/` and
 by the earlier interface-anchor study; they are known samples. Afero did not
 participate in any Go rule design.
 
+## Source identity answer
+
+Acceptance uses these source-derived identities, not only `file:line` positions.
+A direct call targets the changed concrete method; a candidate targets the named
+interface method. The declaration anchor is the call-target anchor emitted by
+the analyzer: the `FuncDecl` start for a direct call, the interface method line's
+indentation for a candidate. The method-name column is recorded separately where
+it differs.
+
+| Study | Base commit | Head commit | Target file | Direct declaration | Interface declaration | Owning type |
+| --- | --- | --- | --- | --- | --- | --- |
+| A | `fa780cdfb02db0c263e3b4212ea8d6afa31e976c` | `ebbb855f5827b76fb206e267dd91d020000baf66` | `context.go` | `context.go:298:1` (`*context.RealIP`; name column 19) | `context.go:46:2` (`Context.RealIP`) | `context` / `Context` (`context.go:20:6`) |
+| B | `7c438e9a9bf011d011836bc6431bf824b82f17c2` | `8f7c8876630bc7308740fea042ddc10b9963af54` | `prometheus/registry.go` | `prometheus/registry.go:455:1` (`*Registry.Gather`; name column 20) | `prometheus/registry.go:173:2` (`Gatherer.Gather`) | `Registry` / `Gatherer` (`prometheus/registry.go:153:6`) |
+| C | `effad5ec7dbd98364d26fd13f32761f56d9d7857` | `8d2a95c25179002d8b1a94a2a613c71ae698332c` | `regexpfs.go` | `regexpfs.go:118:1` (`*RegexpFs.OpenFile`; name column 20) | `afero.go:74:2` (`Fs.OpenFile`) | `RegexpFs` / `Fs` (`afero.go:57:6`) |
+
+The analyzer omits `target.file` when the target is in the call's own file. The
+grader resolves that omission to the call file before comparing the target file;
+it does not treat the omission as a different file.
+
+The negative control is a source-grounded same-named swap: client candidate
+`prometheus/graphite/bridge.go:171` changes from `Gatherer.Gather`
+(`prometheus/registry.go:173:2`, owner `Gatherer` at `153:6`) to
+`TransactionalGatherer.Gather` (`prometheus/registry.go:1180:2`, owner
+`TransactionalGatherer` at `1158:6`). The declaration and owning type differ even
+though the method name is the same. The grader must report the mismatch, and
+separate controls must reject a changed target file, declaration, owning type or
+repository version.
+
 ## A. Echo `(*context).RealIP`
 
 Interface: `Context` (`context.go:20`), declaration anchor `Context.RealIP`

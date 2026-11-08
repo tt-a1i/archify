@@ -44,10 +44,32 @@ python3 benchmarks/code-analysis-go-interface-candidates/run.py \
 ```
 
 The script runs the same paired question with the baseline and candidate
-CLIs, classifies every direct and candidate position against the fixed source
-list, and optionally compares with gopls. `evidence/summary.json` is its normal
-output. Positions are repository-relative; gopls is an oracle only and is not a
-product dependency.
+CLIs, checks the source checkout and CLI snapshot revisions, and then classifies
+every direct and candidate position against the fixed source answer. A position
+matches only when the call site and its target agree on four fields: repository
+version, target file, declaration anchor and owning type. `evidence/summary.json`
+is its normal output; [`identity-recheck.md`](identity-recheck.md) itemizes the
+previous round's 15 candidates and all displayed direct calls. Positions are
+repository-relative; gopls is an oracle only and is not a product dependency.
+
+The source checkouts passed to `--samples` must expose their Git identity: a
+normal checkout, a worktree, or a `.source-commit` file containing the full
+commit hash. Checking out Afero inside the Archify worktree without its own
+`.git` would otherwise attribute the capture to the Archify revision.
+
+## Negative control
+
+The grader mutates one real client candidate, `prometheus/graphite/bridge.go:171`,
+from `Gatherer.Gather` (`prometheus/registry.go:173:2`, owner `Gatherer`) to the
+same-named `TransactionalGatherer.Gather` (`prometheus/registry.go:1180:2`,
+owner `TransactionalGatherer`). The target name stays `Gather`; the declaration
+and owning type change. The run fails unless the scorer reports the mismatch.
+Separate controls mutate the target file, declaration line, owning type and
+repository version; each must be detected independently.
+
+Current result: the same-named swap is detected on declaration, owner
+declaration, owning type and qualname; all four field controls are detected.
+The negative control is part of the normal run, not an optional check.
 
 ## Results
 
@@ -55,17 +77,19 @@ The candidate keeps every direct binding and adds the interface candidates.
 `total` is the complete bounded list size; `included` and `omitted` show the
 normal 40-item display bound.
 
-| Study | Direct before | Direct after | Interface candidates | Wrong | Missed | Reasonable unknown |
-| --- | --- | --- | --- | ---: | ---: | ---: |
-| A `RealIP` | 3 | 3 | 6 | 0 | 0 | 0 |
-| B `Registry.Gather` | 47 | 47 (40 listed, 7 omitted) | 9 | 0 | 0 | 0 |
-| C `RegexpFs.OpenFile` | 0 | 0 | 38 | 0 | 0 | 0 |
+| Study | Direct before | Direct after | Interface candidates | Wrong | Missed | Identity wrong | Reasonable unknown |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
+| A `RealIP` | 3 | 3 | 6 | 0 | 0 | 0 | 0 |
+| B `Registry.Gather` | 47 | 47 (40 listed, 7 omitted) | 9 | 0 | 0 | 0 | 0 |
+| C `RegexpFs.OpenFile` | 0 | 0 | 38 | 0 | 0 | 0 | 0 |
 
 All 6 Echo positions, all 9 client positions, and all 38 afero positions are
-the source-expected calls. The seven omitted client direct positions are not
-missing bindings: `knownReferences.total` remains 47 while the display bound
-shows 40. The complete position lists are in `evidence/summary.json` and
-[expectations.md](expectations.md).
+the source-expected calls and carry the expected repository version, target
+file, declaration anchor and owning type. The seven omitted client direct
+positions are not missing bindings: `knownReferences.total` remains 47 while the
+display bound shows 40. The complete position lists are in
+`evidence/summary.json` and [expectations.md](expectations.md); the per-item
+identity tables are in [identity-recheck.md](identity-recheck.md).
 
 ### What a candidate carries
 
@@ -178,6 +202,10 @@ Archify reads captured source with incomplete third-party typing.
   skips. The focused Go suite covers the new candidate paths.
 - Source CLI: `run.py` exits 0 for A/B/C with the source-first direct and
   candidate lists; wrong = 0, missed = 0, no duplicate candidate.
+- Identity recheck: every displayed direct call and all 15 previous-round
+  candidates match the source repository version, target file, declaration and
+  owning type; `identity-recheck.md` lists them individually. The same-named
+  swap and all four field controls are rejected by the scorer.
 - The unpacked `archify.zip` (SHA256
   `835c60ed21a21b16cf2be50528f24c07644539cf039be6dc56804143fd6a53de`)
   produces a byte-identical normalized `summary.json` to the source CLI for all
@@ -190,6 +218,8 @@ Archify reads captured source with incomplete third-party typing.
 
 - Source-first lists: all 3 + 47 + 0 direct references are preserved; all
   6 + 9 + 38 interface candidates are present; wrong = 0, missed = 0.
+- Every displayed position and all 15 previous-round candidates carry the
+  expected source identity; the same-named interface-method swap is rejected.
 - Direct and candidate positions are distinct; no duplicate candidate was
   observed. `HttpFs`, `TransactionalGatherer`, and same-named wrong-signature
   methods are not linked.
