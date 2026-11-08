@@ -1,0 +1,118 @@
+{
+ "id": "base64-inner-decode",
+ "language": "rust",
+ "repo": "https://github.com/marshallpierce/rust-base64",
+ "base": "a8a60f43c56597259558261353b5bf7e953eed36",
+ "head": "9e9c7abe65fed78c35a1e94e11446d66ff118c25",
+ "entry": "src/engine/general_purpose/mod.rs",
+ "question": "GeneralPurpose::internal_decode changed its capture and padding accounting. Which calls reach the trait method through Engine, and which local helper contains each call?",
+ "changedDefinition": {
+  "qualname": "engine::general_purpose::GeneralPurpose::internal_decode",
+  "file": "src/engine/general_purpose/mod.rs",
+  "line": 171
+ },
+ "expectedCalls": [
+  {
+   "file": "src/engine/mod.rs",
+   "line": 251,
+   "column": 33,
+   "endLine": 252,
+   "endColumn": 69,
+   "inventory": "traitCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "src/engine/mod.rs",
+    "line": 87,
+    "column": 8,
+    "name": "internal_decode"
+   },
+   "directCaller": {
+    "name": "inner",
+    "line": 244,
+    "kind": "local-function"
+   },
+   "runtime": "not-determined",
+   "context": "inside the local fn inner of the Engine::decode default body; outer defaultMethod is decode"
+  },
+  {
+   "file": "src/engine/mod.rs",
+   "line": 322,
+   "column": 33,
+   "endLine": 323,
+   "endColumn": 70,
+   "inventory": "traitCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "src/engine/mod.rs",
+    "line": 87,
+    "column": 8,
+    "name": "internal_decode"
+   },
+   "directCaller": {
+    "name": "inner",
+    "line": 306,
+    "kind": "local-function"
+   },
+   "runtime": "not-determined",
+   "context": "inside the local fn inner of the Engine::decode_vec default body; outer defaultMethod is decode_vec"
+  },
+  {
+   "file": "src/engine/mod.rs",
+   "line": 365,
+   "column": 13,
+   "endLine": 370,
+   "endColumn": 18,
+   "inventory": "traitCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "src/engine/mod.rs",
+    "line": 87,
+    "column": 8,
+    "name": "internal_decode"
+   },
+   "directCaller": {
+    "name": "inner",
+    "line": 357,
+    "kind": "local-function"
+   },
+   "runtime": "not-determined",
+   "context": "inside the local fn inner of the Engine::decode_slice default body; outer defaultMethod is decode_slice"
+  },
+  {
+   "file": "src/engine/mod.rs",
+   "line": 401,
+   "column": 13,
+   "endLine": 406,
+   "endColumn": 18,
+   "inventory": "traitCandidates",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "src/engine/mod.rs",
+    "line": 87,
+    "column": 8,
+    "name": "internal_decode"
+   },
+   "directCaller": {
+    "name": "inner",
+    "line": 397,
+    "kind": "local-function"
+   },
+   "runtime": "not-determined",
+   "context": "inside the local fn inner of the Engine::decode_slice_unchecked default body; outer defaultMethod is decode_slice_unchecked"
+  }
+ ],
+ "expectedImplementations": [
+  "GeneralPurpose::internal_decode"
+ ],
+ "unknowns": [
+  "The concrete engine is chosen by the caller of the default method; the generic E: Engine bound does not determine runtime identity.",
+  "Only captured in-repo Engine implementations are listed."
+ ],
+ "expectedGap": false,
+ "reserved": false,
+ "regression": true,
+ "baseTree": "git worktree at the fixed base commit",
+ "build": "workspace read with the existing lockfile; no project build or test executed",
+ "freeze": "regression answer carried from the accepted Rust default-body work at fixed commits a8a60f43 and 9e9c7ab; coordinates rechecked against HEAD source before this run",
+ "notes": "Regression for local-function directCaller inside trait default bodies. The four target call spans span multiple lines for the decode_slice variants."
+}

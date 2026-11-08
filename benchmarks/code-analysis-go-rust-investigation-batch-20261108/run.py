@@ -58,10 +58,13 @@ def pool_items(side, name):
     return pool, pool.get("items") or []
 
 
-def find_definition(query, expected):
-    items = (query.get("changedDefinitions") or {}).get("items") or []
+def find_definition(query, expected, scope="changed"):
+    if scope == "unpaired":
+        items = (query.get("unpairedDefinitions") or {}).get("items") or []
+    else:
+        items = (query.get("changedDefinitions") or {}).get("items") or []
     for row in items:
-        head = row.get("head") or {}
+        head = row if scope == "unpaired" else row.get("head") or {}
         definition = head.get("definition") or {}
         if definition.get("file") != expected["file"]:
             continue
@@ -69,7 +72,7 @@ def find_definition(query, expected):
             continue
         if expected.get("qualname") and definition.get("qualname") != expected["qualname"]:
             continue
-        return row
+        return head
     return None
 
 
@@ -210,16 +213,17 @@ def main():
     summary = {"cli": str(Path(args.cli).resolve()), "cases": [], "totals": {}}
     for case in load_cases(args.include_reserved, args.case):
         query, exit_code = run_query(Path(args.cli), case, samples, out_dir / "queries")
-        head = None
-        row = find_definition(query, case["changedDefinition"])
+        scope = case.get("definitionScope", "changed")
+        row = find_definition(query, case["changedDefinition"], scope)
         if not row:
             report = {"definitionFound": False, "expectedCalls": len(case["expectedCalls"]),
                       "foundCalls": 0, "correctCalls": 0, "wrongCalls": 0,
                       "missedCalls": len(case["expectedCalls"]), "status": "fail"}
         else:
-            report = score_side(case, row["head"])
+            report = score_side(case, row)
         report.update({"id": case["id"], "language": case["language"], "repo": case["repo"],
                        "base": case["base"], "head": case["head"], "reserved": bool(case.get("reserved")),
+                       "regression": bool(case.get("regression")), "definitionScope": scope,
                        "exitCode": exit_code, "queryStatus": query.get("status")})
         summary["cases"].append(report)
         print(f"{case['id']}: {report['status']} found={report.get('foundCalls')}/"

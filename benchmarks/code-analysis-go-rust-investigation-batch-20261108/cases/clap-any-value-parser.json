@@ -1,0 +1,48 @@
+{
+ "id": "clap-any-value-parser",
+ "language": "rust",
+ "repo": "https://github.com/clap-rs/clap",
+ "base": "b55ebc9f7f0364c67ef48e8cbcc308b139f1a72a",
+ "head": "6720240577577d185b886921290323c5dc647af7",
+ "entry": "clap_builder/src/builder/value_parser.rs",
+ "question": "AnyValueParser::parse_ref_ was added as a type-erased default. Which call sites dispatch through that trait method, and can the dynamic parser target be resolved to a concrete implementation?",
+ "changedDefinition": {
+  "qualname": "builder::value_parser::AnyValueParser::parse_ref_",
+  "file": "clap_builder/src/builder/value_parser.rs",
+  "line": 599
+ },
+ "expectedCalls": [
+  {
+   "file": "clap_builder/src/builder/value_parser.rs",
+   "line": 242,
+   "column": 9,
+   "endLine": 242,
+   "endColumn": 67,
+   "inventory": "knownReferences",
+   "targetKind": "trait-declaration",
+   "target": {
+    "file": "clap_builder/src/builder/value_parser.rs",
+    "line": 599,
+    "column": 8,
+    "name": "parse_ref_"
+   },
+   "directCaller": {
+    "name": "parse_ref",
+    "line": 234,
+    "kind": "method"
+   },
+   "runtime": "not-determined",
+   "context": "ValueParser::parse_ref calls any_value_parser(), which returns a type-erased parser"
+  }
+ ],
+ "unknowns": [
+  "The dynamic AnyValueParser target is not resolved to the generic impl AnyValueParser for P.",
+  "The sibling call at line 658 is TypedValueParser::parse_ref_, not this definition, and is covered by the reserved clap-typed case."
+ ],
+ "expectedGap": true,
+ "reserved": false,
+ "baseTree": "git worktree at the fixed base commit",
+ "build": "workspace read with a generated Cargo.lock because the extractor uses --locked; no project build or test executed",
+ "freeze": "source answer derived from the upstream diff and HEAD source before any candidate query",
+ "notes": "Only one source call targets AnyValueParser::parse_ref_. The same commit also adds a same-named TypedValueParser method, which must not be merged into this answer."
+}
