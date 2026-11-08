@@ -33,6 +33,18 @@ function run(args, extra = []) {
   return spawnSync(process.execPath, [cli, 'code-analysis', 'task', '--question', args.question, '--base-root', args.baseRoot, '--root', args.root, '--entry', args.entry, '--format', 'json', ...extra], { encoding: 'utf8' });
 }
 
+test('Python BOM decoding preserves fresh paired definition bodies and known callers', t => {
+  const files = { 'entry.py': '\ufeffdef work(): return 1\n', 'caller.py': '\ufefffrom entry import work\ndef caller(): return work()\n' };
+  const args = { ...setup(t, files, { ...files, 'entry.py': '\ufeffdef work(): return 2\n' }), entry: 'entry.py' };
+  const brief = buildChangeQuestion(capture(args));
+  assert.equal(brief.status, 'ready'); assert.equal(brief.changedDefinitions.total, 1);
+  for (const side of ['base', 'head']) {
+    const refs = brief.changedDefinitions.items[0][side].knownReferences;
+    assert.equal(refs.coverage, 'available'); assert.equal(refs.total, 1);
+    assert.equal(refs.items[0].navigation.status, 'valid');
+  }
+});
+
 test('optional capture observation leaves raw facts and their revision/snapshot fingerprints unchanged', t => {
   const args = setup(t), config = loadConfig(null);
   const plain = extractFacts(args.root, { language: 'ts', config });

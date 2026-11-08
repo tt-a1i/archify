@@ -48,11 +48,11 @@ export function semanticErrors(name, data) {
     }
 
     data.functions?.forEach((fn, i) => {
-      if ((pythonCalls || javaCalls || goCalls || rustCalls || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
+      if ((pythonCalls || javaCalls || goCalls || rustCalls || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn, data.repository.language)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
       if (fn.definition) {
         const { kind, sourceRange: range } = fn.definition;
         const python = ['FunctionDef', 'AsyncFunctionDef'].includes(kind);
-        const slice = rangeText(sourceTexts.get(fn.file), range);
+        const slice = rangeText(sourceTexts.get(fn.file), range, data.repository.language);
         if (slice === null || createHash('sha256').update(slice).digest('hex') !== range.sha256
           || range.line > fn.line || range.endLine !== fn.endLine
           || (python ? data.repository.language !== 'py' : kind === 'FuncDecl' ? data.repository.language !== 'go' : kind === 'RustItemFn' ? data.repository.language !== 'rust' : data.repository.language !== 'java')
@@ -69,7 +69,7 @@ export function semanticErrors(name, data) {
     const functionPoints = new Set((data.functions || []).map(fn => JSON.stringify([fn.file, fn.name, fn.sourceRange?.line, fn.sourceRange?.column])));
     const brokenFiles = new Set((data.parse_errors || []).map((error) => error.path));
     const validPoint = (file, point, exclusive = false) => {
-      if (!sourceLines.has(file)) sourceLines.set(file, sourceTexts.get(file)?.split(pythonCalls || goCalls || rustCalls ? /\r\n|[\n\r]/ : /\r\n|[\n\r\u2028\u2029]/));
+      if (!sourceLines.has(file)) sourceLines.set(file, sourceTexts.get(file)?.split(goCalls || rustCalls ? /\n/ : pythonCalls ? /\r\n|[\n\r]/ : /\r\n|[\n\r\u2028\u2029]/));
       const lines = sourceLines.get(file);
       return lines && point.line <= lines.length && point.column <= lines[point.line - 1].length + (exclusive ? 1 : 0);
     };

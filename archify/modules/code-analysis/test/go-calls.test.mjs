@@ -22,6 +22,24 @@ const scopeConfig = config => mergeConfig(loadConfig(), config || {});
 const capture = (root, config) => extractFacts(root, { language: 'go', config: scopeConfig(config) }).facts;
 const callsIn = (facts, file) => facts.calls.filter(call => call.file === file);
 
+test('Go native LF ranges preserve bare CR inside raw strings and comments', t => {
+  const root = fixture(t, {
+    'entry.go': 'package p\n/* a\rb */ func Work() string { return `a\rb` }\nfunc Caller() string { return Work() }\n',
+  });
+  const facts = capture(root, { go: { stdlib: false } });
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
+  const question = buildQuestion({ root, facts, entry: 'entry.go', symbol: 'Caller', question: 'Where is Work?' });
+  assert.equal(question.calls.coverage, 'available');
+  assert.deepEqual(question.calls.records[0].targetNavigation.location, { file: 'entry.go', name: 'Work', line: 2, column: 11 });
+  const config = scopeConfig({ go: { stdlib: false } });
+  const base = captureChangeSide(root, config, 'go');
+  const headRoot = fixture(t, { 'entry.go': 'package p\n/* a\rb */ func Work() string { return `a\rc` }\nfunc Caller() string { return Work() }\n' });
+  const head = captureChangeSide(headRoot, config, 'go');
+  const pair = buildChangeQuestion({ root: headRoot, baseRoot: root, base, head, config, entry: 'entry.go', question: 'What changed?' });
+  assert.equal(pair.status, 'ready'); assert.equal(pair.changedDefinitions.total, 1);
+  assert.equal(pair.changedDefinitions.items[0].head.knownReferences.total, 1);
+});
+
 test('Go ordinary and alias imports, same-package cross-file calls and external tests navigate to declaration starts', t => {
   const root = fixture(t, {
     'lib/work.go': 'package lib\nfunc Work() {}\n',

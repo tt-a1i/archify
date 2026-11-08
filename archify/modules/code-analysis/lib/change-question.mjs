@@ -125,7 +125,7 @@ function definitions(side, file) {
     const kinds = side.facts.repository.language === 'rust' ? ['RustItemFn'] : side.facts.repository.language === 'go' ? ['FuncDecl'] : side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
     for (const fn of side.facts.functions.filter(fn => fn.file === file)) {
       const metadata = fn.definition;
-      const slice = rangeText(captured.sourceText, metadata?.sourceRange);
+      const slice = rangeText(captured.sourceText, metadata?.sourceRange, side.facts.repository.language);
       if (!metadata || !kinds.includes(metadata.kind) || slice === null || digest(slice) !== metadata.sourceRange.sha256) {
         unavailable.push({ file, name: fn.name, qualname: fn.qualname, reason: !metadata ? 'definition-metadata-unavailable' : 'definition-metadata-invalid' });
         continue;

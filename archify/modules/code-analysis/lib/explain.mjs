@@ -119,7 +119,7 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
   if (symbol && selected.factsStatus === 'valid' && !selected.parseErrors.length) {
     if (matches.length !== 1) fail('task/function-unresolved', `Expected one captured function named ${symbol}; found ${matches.length}.`, { subject: { entry, symbol }, supportedFixes: ['use an exact qualname from raw-facts.json, or omit --function and inspect the file'] });
     const f = matches[0];
-    const lines = sources.get(entry).split(/\r\n|[\n\r\u2028\u2029]/);
+    const lines = sources.get(entry).split(['go', 'rust'].includes(facts?.repository?.language) ? /\n/ : /\r\n|[\n\r\u2028\u2029]/);
     if (!Number.isInteger(f.line) || !Number.isInteger(f.endLine) || f.line < 1 || f.endLine < f.line || f.endLine > lines.length) fail('task/facts-invalid', 'Function range is outside the captured file.', { subject: { entry, symbol } });
     location = { file: entry, symbol: f.qualname, startLine: f.line, endLine: f.endLine };
   }

@@ -16,6 +16,20 @@ const config=overrides=>mergeConfig(loadConfig(),{rust:{offline:false},...overri
 const capture=(root,overrides)=>extractFacts(root,{language:'rust',config:config(overrides)}).facts;
 const calls=(facts,file)=>facts.calls.filter(call=>call.file===file);
 
+test('Rust native LF ranges preserve bare CR inside block comments', t => {
+ const source = '/* a\rb */ pub fn work()->i32 {/* c\rd */ 1}\npub fn caller()->i32 {work()}\n';
+ const root = fixture(t, {'src/lib.rs': source});
+ const facts = capture(root); assert.deepEqual(schemaErrors('raw-facts', facts), []);
+ const question = buildQuestion({root,facts,entry:'src/lib.rs',symbol:'caller',question:'Where is work?'});
+ assert.equal(question.calls.coverage,'available');
+ assert.deepEqual(question.calls.records[0].targetNavigation.location,{file:'src/lib.rs',name:'work',line:1,column:11});
+ const settings=config(); const base=captureChangeSide(root,settings,'rust');
+ const headRoot=fixture(t,{'src/lib.rs':source.replace('d */ 1','d */ 2')});
+ const head=captureChangeSide(headRoot,settings,'rust');
+ const pair=buildChangeQuestion({root:headRoot,baseRoot:root,base,head,config:settings,entry:'src/lib.rs',question:'What changed?'});
+ assert.equal(pair.status,'ready');assert.equal(pair.changedDefinitions.total,1);assert.equal(pair.changedDefinitions.items[0].head.knownReferences.total,1);
+});
+
 test('Rust crate paths, module use aliases and block-use hoisting navigate to exact definitions',t=>{
  const root=fixture(t,{'src/lib.rs':'mod util;\nuse crate::util::work as run;\npub fn caller(){ run(); util::work(); }\npub fn local(){ run(); use crate::util::work as run; }\n','src/util.rs':'pub fn work() {}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);

@@ -21,6 +21,15 @@ function fixture(t, files) {
 }
 const selected = args => buildQuestion({ ...args, symbol: 'chosen' }).calls;
 
+test('Python BOM decoding keeps fresh entry and imported target coordinates aligned', t => {
+  const args = fixture(t, { 'entry.py': '\ufefffrom helper import work\ndef chosen(): return work()\n', 'helper.py': '\ufeffdef work(): return 1\n' });
+  const calls = selected(args); assert.equal(calls.coverage, 'available');
+  assert.deepEqual(calls.records[0].targetNavigation.location, { file: 'helper.py', name: 'work', line: 1, column: 1 });
+  fs.writeFileSync(path.join(args.root, 'helper.py'), '\ufeffdef work(): return 2\n');
+  const changed = selected(args).records[0].targetNavigation;
+  assert.equal(changed.status, 'changed'); assert.equal(changed.location, null);
+});
+
 test('Python call inventory, direct alias targets, async definition and known zero', t => {
   const args = fixture(t, { 'entry.py': 'from helper import work as alias\ndef local(): pass\nasync def task(): pass\ndef chosen():\n    local()\n    alias()\n    task()\n    obj.method()\n    factory()()\n', 'helper.py': 'def work(): pass\n' });
   assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 10);

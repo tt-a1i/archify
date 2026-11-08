@@ -75,7 +75,7 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   if (symbol) {
     if (!location) return unavailable('function-range-unavailable');
     if (capturedRangeModel) {
-      if (!validSourceRange(text, selectedFunction)) return unavailable('function-range-unavailable');
+      if (!validSourceRange(text, selectedFunction, facts.repository.language)) return unavailable('function-range-unavailable');
       const { sha256, ...capturedRange } = selectedFunction.sourceRange;
       range = capturedRange;
     } else {
@@ -110,7 +110,7 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
     if (!capturedFiles.has(file)) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-not-captured' } };
     if (capturedRangeModel) {
       const measured = (facts.functions || []).filter(fn => fn.file === file && fn.name === target.name && fn.sourceRange?.line === target.line && fn.sourceRange?.column === target.column);
-      if (measured.length !== 1 || !validSourceRange(capturedTexts.get(file), measured[0])) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-range-unavailable' } };
+      if (measured.length !== 1 || !validSourceRange(capturedTexts.get(file), measured[0], facts.repository.language)) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-range-unavailable' } };
     }
     const support = {};
     for (const [key, points, prefix] of [
