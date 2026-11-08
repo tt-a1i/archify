@@ -1,0 +1,2638 @@
+[
+  {
+    "sha": "f160d1deb412a16f5eccb58af7130740d69607dd",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T09:43:03+08:00",
+    "message": "fix(code-analysis): resolve imports with their TypeScript usage mode\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "06dd7340c44fc2bebafbbb897b86f9f789d303a1",
+    "parents": [
+      "f160d1deb412a16f5eccb58af7130740d69607dd"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T10:09:35+08:00",
+    "message": "fix(code-analysis): resolve JavaScript declaration shadows to implementations\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "4bb002cc4b6062389db4c95355ae760708095134",
+    "parents": [
+      "06dd7340c44fc2bebafbbb897b86f9f789d303a1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T22:33:37+08:00",
+    "message": "fix(code-analysis): preserve conditional null package targets\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 2,
+      "analysis-product": 2,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "c86934d673a481c70f5c732279a501b5baaffce3",
+    "parents": [
+      "4bb002cc4b6062389db4c95355ae760708095134"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T11:20:41+08:00",
+    "message": "feat(code-analysis): capture lexical JS/TS call evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 2,
+      "analysis-product": 6,
+      "tests-fixtures": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "5c55dfc6a851e3c9cc8403989165620624ba4fbc",
+    "parents": [
+      "c86934d673a481c70f5c732279a501b5baaffce3"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T18:53:00+08:00",
+    "message": "fix(code-analysis): reject body targets in parameter default scopes\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 2,
+      "tests-fixtures": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b10e044c5f93d66a6fdb32cf235f76405e605cc6",
+    "parents": [
+      "5c55dfc6a851e3c9cc8403989165620624ba4fbc"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T23:09:15+08:00",
+    "message": "test(code-analysis): keep revision checks in the extractor fixture\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "5c944a64b47a953c7a3a3300b06b1f322f92cea6",
+    "parents": [
+      "b10e044c5f93d66a6fdb32cf235f76405e605cc6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T11:49:23+08:00",
+    "message": "feat(code-analysis): orient source questions with captured call evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 4,
+      "analysis-product": 3,
+      "tests-fixtures": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "af2221c971725ccbda452f0e850e25542b150905",
+    "parents": [
+      "5c944a64b47a953c7a3a3300b06b1f322f92cea6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T12:12:31+08:00",
+    "message": "feat(code-analysis): bind direct default function imports\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 3,
+      "analysis-product": 5,
+      "tests-fixtures": 4
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "dd9e382234e25a74bf45fcb3165611354840fca1",
+    "parents": [
+      "af2221c971725ccbda452f0e850e25542b150905"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T14:47:31+08:00",
+    "message": "feat(code-analysis): compare fresh captures for one source entry\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 4,
+      "analysis-product": 5,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "919bf8c137ef9acd9c95ef39a1d2fb6106160ced",
+    "parents": [
+      "dd9e382234e25a74bf45fcb3165611354840fca1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T23:09:16+08:00",
+    "message": "test(code-analysis): compare captured revision without a fixed number\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "f0cd8dd4e0289a5fcc4548690e2b1b0157f5e228",
+    "parents": [
+      "919bf8c137ef9acd9c95ef39a1d2fb6106160ced"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T20:00:45+08:00",
+    "message": "feat(code-analysis): orient saved Python and Java source questions\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 2,
+      "analysis-product": 3,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "0c9d4335bc7b21e102d35a1de65b4ba02081de8e",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-05T22:32:50+08:00",
+    "message": "fix(code-analysis): recognize all-digit stable finding IDs\n\nPrefer the 12-digit hex format shared by the producer and baseline schema before labeling older counters as position-based. Reproduce the collision using a real producer identity and exercise the legacy and missing-context cases.\n\nPorted from local experiments db78ef11a and d04c8ea37 onto the current Labs baseline.\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "6ef9d3410b0b468d14f8f431f79aea828a051aa5",
+    "parents": [
+      "f0cd8dd4e0289a5fcc4548690e2b1b0157f5e228",
+      "0c9d4335bc7b21e102d35a1de65b4ba02081de8e"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:26:35+08:00",
+    "message": "Merge commit '0c9d4335bc7b21e102d35a1de65b4ba02081de8e' into codex/code-analysis-investigation-combined\n\n# Conflicts:\n#\tarchify.zip\n\n",
+    "categories": {
+      "analysis-product": 1,
+      "tests-fixtures": 1
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "5df4226925e7b77099fda86c5aba6202a6e12465",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-05T23:12:31+08:00",
+    "message": "fix(code-analysis): distinguish guarded imports from eager cycles\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 4,
+      "tests-fixtures": 16
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "592afacd0dc4d118a51cd92fd0a62894ee45b715",
+    "parents": [
+      "5df4226925e7b77099fda86c5aba6202a6e12465"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T20:08:28+08:00",
+    "message": "fix(code-analysis): classify optional-chain require guards\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "cbde05b6d4be040da91c0855bebe1222ba930764",
+    "parents": [
+      "592afacd0dc4d118a51cd92fd0a62894ee45b715"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-05T23:38:12+08:00",
+    "message": "fix(code-analysis): resolve CommonJS directory loads to captured JS entries\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "1b924d65c6b15c8ef98c9c09af87aed4ae3d7535",
+    "parents": [
+      "cbde05b6d4be040da91c0855bebe1222ba930764"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-05T23:46:38+08:00",
+    "message": "fix(code-analysis): recover relative CommonJS files hidden by declarations\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "cc275c54678311231c47443184e80d467cdf3677",
+    "parents": [
+      "6ef9d3410b0b468d14f8f431f79aea828a051aa5",
+      "1b924d65c6b15c8ef98c9c09af87aed4ae3d7535"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:26:46+08:00",
+    "message": "Merge commit '1b924d65c6b15c8ef98c9c09af87aed4ae3d7535' into codex/code-analysis-investigation-combined\n\n# Conflicts:\n#\tarchify.zip\n#\tarchify/modules/code-analysis/extract/ts/functions.mjs\n#\tarchify/modules/code-analysis/extract/ts/index.mjs\n#\tarchify/modules/code-analysis/test/fixtures/extractor-revisions.json\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 4,
+      "tests-fixtures": 16
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "8bb1cf247ac88c939a6fe574caf9801745344a26",
+    "parents": [
+      "592afacd0dc4d118a51cd92fd0a62894ee45b715"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T00:27:30+08:00",
+    "message": "fix(code-analysis): prefer Python package initializers to sibling modules\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 15
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "0669d9b2bc4db1b2c318f726419ec70523947d62",
+    "parents": [
+      "8bb1cf247ac88c939a6fe574caf9801745344a26"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T10:31:02+08:00",
+    "message": "fix(code-analysis): resolve Python imports through parent package paths\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 15
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "272f995b9a0a38789c1d7d8c76e73ce62636fe5b",
+    "parents": [
+      "0669d9b2bc4db1b2c318f726419ec70523947d62"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T15:28:14+08:00",
+    "message": "fix(code-analysis): follow relative namespace package portions\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 15
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "98d07914db2daf248a232a20ed0f73e458f958a9",
+    "parents": [
+      "cc275c54678311231c47443184e80d467cdf3677",
+      "272f995b9a0a38789c1d7d8c76e73ce62636fe5b"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:26:50+08:00",
+    "message": "Merge commit '272f995b9a0a38789c1d7d8c76e73ce62636fe5b' into codex/code-analysis-investigation-combined\n\n# Conflicts:\n#\tarchify.zip\n#\tarchify/modules/code-analysis/test/fixtures/extractor-revisions.json\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 14
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "5eb24a20e2961faa559ba083ea223b6b172f95ed",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T00:42:00+08:00",
+    "message": "fix(code-analysis): traverse long Python arithmetic without exhausting the stack\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-product": 3,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "bcf25cc75d27ed2f5b34c2da2ca25436135581aa",
+    "parents": [
+      "98d07914db2daf248a232a20ed0f73e458f958a9",
+      "5eb24a20e2961faa559ba083ea223b6b172f95ed"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:27:00+08:00",
+    "message": "Merge commit '5eb24a20e2961faa559ba083ea223b6b172f95ed' into codex/code-analysis-investigation-combined\n\n# Conflicts:\n#\tarchify.zip\n#\tarchify/modules/code-analysis/test/import-semantics.test.mjs\n\n",
+    "categories": {
+      "analysis-product": 3,
+      "tests-fixtures": 1
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "9dc6bea08bc820befc4e5d9396692afc87a8fea9",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T09:00:17+08:00",
+    "message": "fix(code-analysis): retain safe Java literal and comment escapes\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 2,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "4b14fa0a8e4b481f5037ca67a8f79269f587ced0",
+    "parents": [
+      "bcf25cc75d27ed2f5b34c2da2ca25436135581aa",
+      "9dc6bea08bc820befc4e5d9396692afc87a8fea9"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:27:03+08:00",
+    "message": "Merge commit '9dc6bea08bc820befc4e5d9396692afc87a8fea9' into codex/code-analysis-investigation-combined\n\n# Conflicts:\n#\tarchify.zip\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 2,
+      "tests-fixtures": 2
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "6c82e0d58a9e26a8781e5b87fb55be3e98bbff80",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-06T15:52:42+08:00",
+    "message": "fix(code-analysis): distinguish Java static value imports from types\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 2,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "0fcf35161f77e6597ee8f51174a8c4706ff15bb6",
+    "parents": [
+      "4b14fa0a8e4b481f5037ca67a8f79269f587ced0",
+      "6c82e0d58a9e26a8781e5b87fb55be3e98bbff80"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:27:09+08:00",
+    "message": "Merge commit '6c82e0d58a9e26a8781e5b87fb55be3e98bbff80' into codex/code-analysis-investigation-combined\n\n# Conflicts:\n#\tarchify.zip\n#\tarchify/modules/code-analysis/extract/java/index.mjs\n#\tarchify/modules/code-analysis/test/fixtures/extractor-revisions.json\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 3,
+      "tests-fixtures": 1
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "6c096098004502cec50c11d9ec9278468f6a6abb",
+    "parents": [
+      "0fcf35161f77e6597ee8f51174a8c4706ff15bb6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:28:04+08:00",
+    "message": "test(code-analysis): pin combined extractor contracts and fixtures\n\n",
+    "categories": {
+      "tests-fixtures": 15
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "7fa882747cda2fc150c120b62a039c6d783d1ccf",
+    "parents": [
+      "6c096098004502cec50c11d9ec9278468f6a6abb"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:29:06+08:00",
+    "message": "build(code-analysis): package combined investigation candidate\n\n",
+    "categories": {
+      "generated-distribution": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "23a3578c5b617557caea584ba91ceebc8533f9db",
+    "parents": [
+      "7fa882747cda2fc150c120b62a039c6d783d1ccf"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:42:21+08:00",
+    "message": "feat(code-analysis): capture bounded Python call evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 4,
+      "analysis-product": 8,
+      "tests-fixtures": 17
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "8739a9769e69eb822ad9459eb15baa2884b35209",
+    "parents": [
+      "23a3578c5b617557caea584ba91ceebc8533f9db"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T00:50:09+08:00",
+    "message": "fix(code-analysis): preserve Python call resolver and generic scopes\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-product": 2,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "92606d7e8d1a55a800c0ee0ea34753630682c0f5",
+    "parents": [
+      "8739a9769e69eb822ad9459eb15baa2884b35209"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:13:38+08:00",
+    "message": "feat(code-analysis): pair Python and Java owned definitions\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-product": 8,
+      "analysis-authored-docs-contract": 1,
+      "tests-fixtures": 18
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "76596453bf13e9c27f8701df3cdc862846f6b770",
+    "parents": [
+      "92606d7e8d1a55a800c0ee0ea34753630682c0f5"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:03:36+08:00",
+    "message": "feat(code-analysis): capture bounded Java method call evidence\n\nIntegrate Java calls on the Python call-evidence branch. Preserve both models, shared exact-range validation, historical coverage gates, and TS parsing behavior. Resolve shared schema, question, docs, and saved-language assertions for both languages.\n\n(cherry picked from commit d9ab19812a5ccf119a0d7e95e8d89accaa5fb025)\n(cherry picked from commit 4deaea1bf29b0de995433d848c5f09e554fab386)\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 2,
+      "analysis-product": 7,
+      "tests-fixtures": 4
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "62a7af34456d5e2b8c5775fa00d94fe49534e150",
+    "parents": [
+      "76596453bf13e9c27f8701df3cdc862846f6b770"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:15:38+08:00",
+    "message": "test(code-analysis): retain Java source replay study\n\nCopy benchmark-only files from 110b8dec29333b97b2a9071b65df8b629ad8360a; inherited ZIP deliberately excluded pending final source review.\n\n(cherry picked from commit 110b8dec29333b97b2a9071b65df8b629ad8360a)\n\n",
+    "categories": {
+      "benchmark-evidence": 9
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "216a7227cddfc3d7da3b852628ed95b5a8928b14",
+    "parents": [
+      "62a7af34456d5e2b8c5775fa00d94fe49534e150"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:16:11+08:00",
+    "message": "docs(code-analysis): align combined Java call coverage\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "6ebf826863fe70e9b3428c0cfcd556d9e05cb59e",
+    "parents": [
+      "216a7227cddfc3d7da3b852628ed95b5a8928b14"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:18:32+08:00",
+    "message": "test(code-analysis): retain seven-project investigation replay\n\n",
+    "categories": {
+      "benchmark-evidence": 16
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "749ab83912adbf9617da2926be696f9b45ea90dc",
+    "parents": [
+      "6ebf826863fe70e9b3428c0cfcd556d9e05cb59e"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:18:53+08:00",
+    "message": "build(code-analysis): package complete investigation candidate\n\n",
+    "categories": {
+      "generated-distribution": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "919dc11f807484754fddcb707fd98fbfb3951c89",
+    "parents": [
+      "749ab83912adbf9617da2926be696f9b45ea90dc"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:26:52+08:00",
+    "message": "test(code-analysis): distinguish availability expansion from target accuracy\n\n",
+    "categories": {
+      "benchmark-evidence": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "64b52af3b22679c09c18472d4879f65f0cb72975",
+    "parents": [
+      "919dc11f807484754fddcb707fd98fbfb3951c89"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:28:58+08:00",
+    "message": "docs(code-analysis): publish bounded investigation acceptance evidence\n\n",
+    "categories": {
+      "benchmark-evidence": 8
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "16c23ff47d8328a05cf480e639aa6afabc03938c",
+    "parents": [
+      "64b52af3b22679c09c18472d4879f65f0cb72975"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:35:34+08:00",
+    "message": "docs(code-analysis): record public replay and baseline CI failure\n\n",
+    "categories": {
+      "benchmark-evidence": 8
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "6e123ea0a84df12ca539af862c72bd4f05913716",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "\u6768\u5609\u4f1f",
+    "committer": "\u6768\u5609\u4f1f",
+    "authoredAt": "2026-11-06T10:14:37+08:00",
+    "message": "fix(code-analysis): reject a complexity threshold that is not a whole number\n\nA value such as \"oops\" used to compare as NaN and match nothing, so the run\nreported no findings and exited 0. The check now names the setting and exits\nwith a configuration error. Valid numbers and the defaults are unchanged.\n\n",
+    "categories": {
+      "analysis-product": 1,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "f0b53b72031953ffd956409332f11fd9534326f4",
+    "parents": [
+      "6e123ea0a84df12ca539af862c72bd4f05913716"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:19:12+08:00",
+    "message": "chore: refresh generated skill archive\n\n",
+    "categories": {
+      "generated-distribution": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "67f2a5c2c6920f77343a99aae00864e9b39f9295",
+    "parents": [
+      "16c23ff47d8328a05cf480e639aa6afabc03938c",
+      "f0b53b72031953ffd956409332f11fd9534326f4"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T08:30:59+08:00",
+    "message": "Combine #1222 threshold validation while preserving original commits\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 1
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "8de4ee3901f6d03f0c6782f772cf467a1518146f",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "\u6768\u5609\u4f1f",
+    "committer": "\u6768\u5609\u4f1f",
+    "authoredAt": "2026-11-06T10:22:41+08:00",
+    "message": "fix(code-analysis): show parse failures and unanalyzed languages in the check summary\n\noverview.json already recorded both, but the CLI text and JSON omitted them,\nso a reader could take a partial run for a clean one. The finding gate and\nits exit code are unchanged.\n\n",
+    "categories": {
+      "analysis-product": 1,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "2b43eb36a6dde564bba2b2818f08163c2e6556dd",
+    "parents": [
+      "8de4ee3901f6d03f0c6782f772cf467a1518146f"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T01:19:12+08:00",
+    "message": "chore: refresh generated skill archive\n\n",
+    "categories": {
+      "generated-distribution": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b63c710c039f2a1311a8f66d7d110d8372f66e16",
+    "parents": [
+      "67f2a5c2c6920f77343a99aae00864e9b39f9295",
+      "2b43eb36a6dde564bba2b2818f08163c2e6556dd"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T08:31:12+08:00",
+    "message": "Combine #1223 coverage summary while preserving original commits\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-product": 1,
+      "tests-fixtures": 1
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "e92a4634a0b5ec6ab80e1245629bf22b6fd82822",
+    "parents": [
+      "b63c710c039f2a1311a8f66d7d110d8372f66e16"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T08:32:23+08:00",
+    "message": "Verify threshold and partial-coverage behavior in the combined CLI\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "764a53907f8c5209280f100a4901bd457dd982e0",
+    "parents": [
+      "e92a4634a0b5ec6ab80e1245629bf22b6fd82822"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T08:34:23+08:00",
+    "message": "Record team attribution and combined A1 A2 verification\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "7428fa2e36335f27c02d5d86a49663db7236efe4",
+    "parents": [
+      "764a53907f8c5209280f100a4901bd457dd982e0"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T20:08:48+08:00",
+    "message": "Freeze source-first Click and Jinja explicit import call answers\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "474c9a4f7048c989e0f6aab77a0540076613b383",
+    "parents": [
+      "7428fa2e36335f27c02d5d86a49663db7236efe4"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T20:11:24+08:00",
+    "message": "Resolve unique preceding function-local Python from-import calls\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 2,
+      "tests-fixtures": 2,
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "63d18cac8a015b8348b8cb0f9719874ccb780899",
+    "parents": [
+      "474c9a4f7048c989e0f6aab77a0540076613b383"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T20:12:39+08:00",
+    "message": "Refresh revision-bound task fixtures and canonical skill archive\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "tests-fixtures": 13
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "8b1ed343bb335c4d93a5f7bdb7e2ae6746011ffa",
+    "parents": [
+      "63d18cac8a015b8348b8cb0f9719874ccb780899"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T20:14:58+08:00",
+    "message": "Rebuild package after refreshing revision-bound task fixtures\n\n",
+    "categories": {
+      "generated-distribution": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "93378351dc97768fd7e0882a50f32ecc7a34e2a6",
+    "parents": [
+      "8b1ed343bb335c4d93a5f7bdb7e2ae6746011ffa"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T20:18:13+08:00",
+    "message": "Record frozen Python import call evaluation and package verification\n\n",
+    "categories": {
+      "benchmark-evidence": 17
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "7a824d69fc947fae7bbb948d0c56636f2e5f6172",
+    "parents": [
+      "93378351dc97768fd7e0882a50f32ecc7a34e2a6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:47:29+08:00",
+    "message": "test(code-analysis): freeze captured TypeScript alias call gap\n\n",
+    "categories": {
+      "benchmark-evidence": 4
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "a59f1bcad4c4c19ff04b70477f3f1aa0978b96be",
+    "parents": [
+      "93378351dc97768fd7e0882a50f32ecc7a34e2a6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:53:35+08:00",
+    "message": "test(code-analysis): freeze JavaScript default export reference gap\n\n",
+    "categories": {
+      "benchmark-evidence": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "66e375d89fd428353efe03cad6682952685735d5",
+    "parents": [
+      "a59f1bcad4c4c19ff04b70477f3f1aa0978b96be"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:00:32+08:00",
+    "message": "test(code-analysis): freeze ESM value and namespace controls\n\n",
+    "categories": {
+      "benchmark-evidence": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "e6778b531fbc2d4019edcceedaacd31f5451f850",
+    "parents": [
+      "66e375d89fd428353efe03cad6682952685735d5"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:10:36+08:00",
+    "message": "feat(code-analysis): follow stable default function references\n\n",
+    "categories": {
+      "analysis-product": 6,
+      "tests-fixtures": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "f37dc8e9323b2e7d5702ea8427d3caf07be976c1",
+    "parents": [
+      "e6778b531fbc2d4019edcceedaacd31f5451f850"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:20:26+08:00",
+    "message": "test(code-analysis): retain supplemental version-pair source answers\n\n",
+    "categories": {
+      "benchmark-evidence": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "abb16fb76e2b7fc85c8bcb3a0ea3ad3fb84a7808",
+    "parents": [
+      "f37dc8e9323b2e7d5702ea8427d3caf07be976c1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:31:40+08:00",
+    "message": "Package JavaScript default references and real change investigation evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 17
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "80875e5e75d3a9e1a91a50a51a56a0315550a19f",
+    "parents": [
+      "abb16fb76e2b7fc85c8bcb3a0ea3ad3fb84a7808"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:34:03+08:00",
+    "message": "docs(code-analysis): clarify fixed source investigation scope\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "d899f9166e5b046c9299c092f1545c6b33476695",
+    "parents": [
+      "7a824d69fc947fae7bbb948d0c56636f2e5f6172",
+      "80875e5e75d3a9e1a91a50a51a56a0315550a19f"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:39:07+08:00",
+    "message": "Preserve frozen alias study on published default-reference candidate\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-product": 6,
+      "tests-fixtures": 5,
+      "benchmark-evidence": 24
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "84c28dfca55626a5496a76fc2ffc22ab4cf3dab5",
+    "parents": [
+      "d899f9166e5b046c9299c092f1545c6b33476695"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:43:04+08:00",
+    "message": "Record alias gap on history-preserving JS v3 baseline\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "c8dcdc647e33ad8f22dd15c671ee3cf89b4eff02",
+    "parents": [
+      "84c28dfca55626a5496a76fc2ffc22ab4cf3dab5"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:56:58+08:00",
+    "message": "test(code-analysis): freeze captured alias call boundaries\n\n",
+    "categories": {
+      "tests-fixtures": 1,
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "9f8f3200c46718a11980fb2649cfe6b42982b87b",
+    "parents": [
+      "c8dcdc647e33ad8f22dd15c671ee3cf89b4eff02"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T01:59:50+08:00",
+    "message": "feat(code-analysis): bind calls through captured configured aliases\n\n",
+    "categories": {
+      "analysis-product": 6,
+      "tests-fixtures": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "d9cd0b2721c58c5cdf71bf172df4df25507345ad",
+    "parents": [
+      "9f8f3200c46718a11980fb2649cfe6b42982b87b"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:01:51+08:00",
+    "message": "test(code-analysis): check configured aliases from JavaScript sources\n\n",
+    "categories": {
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "cbc557b7b616dfc1dde2a6b2a7e04af32c9b5d54",
+    "parents": [
+      "d9cd0b2721c58c5cdf71bf172df4df25507345ad"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:03:33+08:00",
+    "message": "test(code-analysis): publish alias source ZIP and signature evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 14
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "580b50393041dfe41f2dee076ac04ccf37f4e579",
+    "parents": [
+      "93378351dc97768fd7e0882a50f32ecc7a34e2a6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T22:13:01+08:00",
+    "message": "Freeze Go and Rust real-project source answers before analyzer evaluation\n\n",
+    "categories": {
+      "benchmark-evidence": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b37f67c49dbfa40d9e506ab4f93ae0b1d107df89",
+    "parents": [
+      "580b50393041dfe41f2dee076ac04ccf37f4e579"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T22:13:49+08:00",
+    "message": "Record unsupported Go and Rust normal CLI baseline\n\n",
+    "categories": {
+      "benchmark-evidence": 18
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b7338e0b1ba97348aa7216ea0469e334abe72f07",
+    "parents": [
+      "b37f67c49dbfa40d9e506ab4f93ae0b1d107df89"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T22:19:40+08:00",
+    "message": "Verify frozen source manifest and source ZIP baseline parity\n\n",
+    "categories": {
+      "benchmark-evidence": 4
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "96f606bc7e267345c89b4d4fbd8deb7175133995",
+    "parents": [
+      "b7338e0b1ba97348aa7216ea0469e334abe72f07"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T22:24:09+08:00",
+    "message": "Correct Chi module-identity oracle and freeze a valid grpc alias case\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "8944d00ec778ae7701f18cffe5daca5c37595c17",
+    "parents": [
+      "96f606bc7e267345c89b4d4fbd8deb7175133995"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T22:39:55+08:00",
+    "message": "Add conservative Go source investigation with explicit build and typing scope\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 3,
+      "analysis-product": 12,
+      "tests-fixtures": 13,
+      "benchmark-evidence": 7
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "4ff07af962f5dc613f3b570d42c17a016b06e480",
+    "parents": [
+      "8944d00ec778ae7701f18cffe5daca5c37595c17"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T22:43:15+08:00",
+    "message": "Keep Go snapshot paths portable and explain unresolved method dispatch\n\n",
+    "categories": {
+      "analysis-product": 2,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "561957dd275f6d33991865c4c6db36b1c4b87dab",
+    "parents": [
+      "4ff07af962f5dc613f3b570d42c17a016b06e480"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T22:48:40+08:00",
+    "message": "Package Go investigation and record fixed source ZIP acceptance evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 10
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "81509b6527ef29a2cae5f1dd66422bb7e0940f50",
+    "parents": [
+      "561957dd275f6d33991865c4c6db36b1c4b87dab"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T23:11:26+08:00",
+    "message": "Freeze rustc namespace scope and cfg controls before Rust binding implementation\n\n",
+    "categories": {
+      "benchmark-evidence": 14
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "bf147b0f58fad007e7aa464ad7edf90806aa9dfc",
+    "parents": [
+      "81509b6527ef29a2cae5f1dd66422bb7e0940f50"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-07T23:56:46+08:00",
+    "message": "feat(code-analysis): investigate Rust source paths and known references\n\n",
+    "categories": {
+      "analysis-product": 19,
+      "analysis-authored-docs-contract": 1,
+      "tests-fixtures": 13
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "d2b8bc13c60ab693b449f7a1f79a115e1a02b2c7",
+    "parents": [
+      "bf147b0f58fad007e7aa464ad7edf90806aa9dfc"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:02:12+08:00",
+    "message": "Package Rust investigation and record pinned source ZIP evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 35
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "e48965e49b3104ff6a569cfaf974c03d52dee324",
+    "parents": [
+      "d2b8bc13c60ab693b449f7a1f79a115e1a02b2c7"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:03:03+08:00",
+    "message": "docs(code-analysis): restore positive supplemental Cargo control\n\n",
+    "categories": {
+      "benchmark-evidence": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "61f42c7bfa7955312d0f1f82e8eaa8f07eff28c1",
+    "parents": [
+      "e48965e49b3104ff6a569cfaf974c03d52dee324"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:08:29+08:00",
+    "message": "test(code-analysis): bootstrap Rust helper dependencies on fresh caches\n\n",
+    "categories": {
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "9e41b7483f26ecb1c57f0172b1d96d4e457b217e",
+    "parents": [
+      "61f42c7bfa7955312d0f1f82e8eaa8f07eff28c1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:10:48+08:00",
+    "message": "Package Rust fresh-cache tests and preserve CI correction evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 8
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "4d644beab8996fbbd61775af5a02201ea2196611",
+    "parents": [
+      "cbc557b7b616dfc1dde2a6b2a7e04af32c9b5d54",
+      "9e41b7483f26ecb1c57f0172b1d96d4e457b217e"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:06:49+08:00",
+    "message": "Integrate preserved Go Rust Draft histories for combined validation\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 4,
+      "analysis-product": 21,
+      "tests-fixtures": 14,
+      "benchmark-evidence": 88
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "572d5147241d2d34744950520096f69cca005ff1",
+    "parents": [
+      "93378351dc97768fd7e0882a50f32ecc7a34e2a6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:16:35+08:00",
+    "message": "test(code-analysis): freeze Java cross-file static investigation\n\n",
+    "categories": {
+      "benchmark-evidence": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "718d591b9425a7871350d158f884f0644ac9b227",
+    "parents": [
+      "572d5147241d2d34744950520096f69cca005ff1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:22:22+08:00",
+    "message": "test(code-analysis): freeze compiler controls for qualified Java calls\n\n",
+    "categories": {
+      "benchmark-evidence": 4
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "5f0b6414f3121733fe69c17528ac4b5502ea649a",
+    "parents": [
+      "718d591b9425a7871350d158f884f0644ac9b227"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:31:16+08:00",
+    "message": "feat(code-analysis): follow explicit Java class static paths\n\n",
+    "categories": {
+      "analysis-product": 7,
+      "tests-fixtures": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b5eabc1c020d9459fb055f4520092f1985ab854f",
+    "parents": [
+      "5f0b6414f3121733fe69c17528ac4b5502ea649a"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:39:52+08:00",
+    "message": "Package Java static paths and record fixed source compiler ZIP evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 24
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "ddfd5683095ba6d86de784446ea4cb1a3c37610b",
+    "parents": [
+      "b5eabc1c020d9459fb055f4520092f1985ab854f"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T00:40:17+08:00",
+    "message": "docs(code-analysis): distinguish frozen baseline from Java candidate results\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "96e158992637742270d51107afa2216ad62c8934",
+    "parents": [
+      "4d644beab8996fbbd61775af5a02201ea2196611",
+      "ddfd5683095ba6d86de784446ea4cb1a3c37610b"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:07:15+08:00",
+    "message": "Compose preserved Java qualified calls with all language readers\n\n",
+    "categories": {
+      "analysis-product": 7,
+      "tests-fixtures": 3,
+      "benchmark-evidence": 32
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "816556b9667cd8eb2d762d8361edba340c462f83",
+    "parents": [
+      "bf0a29e7664f52973d06a8e6a608df2db1ecbd39"
+    ],
+    "author": "BlueboxC",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-10-31T07:03:15+01:00",
+    "message": "Refresh README animation after Sequence header centering\n\nRecapture the existing scenes from the current gallery artifacts after upstream PR #1173.\n\nBlueboxC\n\n(cherry picked from commit 355ea380a2cdfddf12cd107d7d663ee7b2c4c5b7)\n\n",
+    "categories": {
+      "generated-readme-proof": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "ced8cc446ee463b92d0c65ca1aff6b1ecb7ffb99",
+    "parents": [
+      "816556b9667cd8eb2d762d8361edba340c462f83"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-03T17:21:06+08:00",
+    "message": "test(dsh): align docs contract with agent-prompt install path\n\n64ecdfb moved the README default install path to the llms.txt agent prompt\nplus 'npx -y skills@latest add https://archify.si ...'; the DSH docs contract\nstill required the removed 'npx skills add tt-a1i/archify -g' block (and named\nRaven, removed in #1161), so DSH package contract fails on main, dev schedule\nand #1180.\n\n(cherry picked from commit d469f1223ba2371ecaa5ef9414b1fc6055da1599)\n\n",
+    "categories": {
+      "integration-tests": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "15c9cf5e356ff43fe911db4f88d09de3e86814a2",
+    "parents": [
+      "96e158992637742270d51107afa2216ad62c8934",
+      "ced8cc446ee463b92d0c65ca1aff6b1ecb7ffb99"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:07:21+08:00",
+    "message": "Preserve existing Labs README proof and DSH repair for candidate validation\n\n",
+    "categories": {
+      "generated-readme-proof": 2,
+      "integration-tests": 1
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "8372644d69b640acadf0b6ae65bdea7354304b30",
+    "parents": [
+      "15c9cf5e356ff43fe911db4f88d09de3e86814a2"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:15:11+08:00",
+    "message": "test(code-analysis): verify cumulative six-language source and ZIP candidate\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 21
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "3929b7fd2f88e45a7fe371872934b2ef1e705578",
+    "parents": [
+      "8372644d69b640acadf0b6ae65bdea7354304b30"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:16:49+08:00",
+    "message": "Record canonical Node module result without inferring failure cause\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b2693a2218e1c7d256039d1ca1d46ea430558ced",
+    "parents": [
+      "3929b7fd2f88e45a7fe371872934b2ef1e705578"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:19:14+08:00",
+    "message": "test(code-analysis): canonicalize config mutation fixture paths on macOS\n\n",
+    "categories": {
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "68f54478ae16d824e43198ac94d6e05746510edf",
+    "parents": [
+      "b2693a2218e1c7d256039d1ca1d46ea430558ced"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:23:20+08:00",
+    "message": "test(code-analysis): publish final six-language replay and fixture proof\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 20
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "e71e193766765704492251eb68d2c5c64b74a4da",
+    "parents": [
+      "68f54478ae16d824e43198ac94d6e05746510edf"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:28:19+08:00",
+    "message": "test(code-analysis): freeze concrete Go method source questions\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "ab859d9512f98d8da0e731f48f0a347275aa4755",
+    "parents": [
+      "e71e193766765704492251eb68d2c5c64b74a4da"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:29:42+08:00",
+    "message": "Record concrete Go receiver misses and interface controls\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "fecca5fd9c19a304cbcd0a230c11867b7d47ee4d",
+    "parents": [
+      "ab859d9512f98d8da0e731f48f0a347275aa4755"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:37:48+08:00",
+    "message": "Freeze Go compiler selections and real changed-method source pair\n\n",
+    "categories": {
+      "benchmark-evidence": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "2ba59178f95495e72a01dd13aea911ed95e9def6",
+    "parents": [
+      "fecca5fd9c19a304cbcd0a230c11867b7d47ee4d"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:45:16+08:00",
+    "message": "test(code-analysis): freeze concrete method binding regressions\n\n",
+    "categories": {
+      "tests-fixtures": 1,
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "e6c5d7b456d267d1a9c826a6fe1d8957b4a9804a",
+    "parents": [
+      "2ba59178f95495e72a01dd13aea911ed95e9def6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:49:34+08:00",
+    "message": "Freeze reserved grpc concrete attribute-method target\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "55414edf674992a9aabaf1f8f1dd3aa4a3d37558",
+    "parents": [
+      "e6c5d7b456d267d1a9c826a6fe1d8957b4a9804a"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:53:18+08:00",
+    "message": "feat(code-analysis): bind compiler-selected concrete Go methods\n\n",
+    "categories": {
+      "analysis-product": 6,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "3429fef638189e94df95d729dfd1765f29e4aa4d",
+    "parents": [
+      "55414edf674992a9aabaf1f8f1dd3aa4a3d37558"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:58:03+08:00",
+    "message": "test(code-analysis): replay methods without freezing historical unknowns\n\n",
+    "categories": {
+      "tests-fixtures": 1,
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "7d4652ee6da961c5b7012b7ff038c7e36e2573c5",
+    "parents": [
+      "3429fef638189e94df95d729dfd1765f29e4aa4d"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T02:59:06+08:00",
+    "message": "docs(code-analysis): distinguish concrete method evidence from dynamic dispatch\n\n",
+    "categories": {
+      "analysis-product": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "1a9c0cf8ce6b29060948eb49a74715336580e034",
+    "parents": [
+      "7d4652ee6da961c5b7012b7ff038c7e36e2573c5"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T03:09:52+08:00",
+    "message": "Report Go language directive limits and replay the reserved getter question\n\n",
+    "categories": {
+      "analysis-product": 1,
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "3b2bdd1aec833f85c51aaf8c2d8c711fb7083c32",
+    "parents": [
+      "1a9c0cf8ce6b29060948eb49a74715336580e034"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T03:18:41+08:00",
+    "message": "test(code-analysis): publish concrete method source ZIP and compiler evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 24
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "98cbbc7dcc3e382d8c47eb5c23dde8e9e67f33da",
+    "parents": [
+      "3b2bdd1aec833f85c51aaf8c2d8c711fb7083c32"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T03:40:59+08:00",
+    "message": "test(code-analysis): freeze inherent Rust source paths and trait controls\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "84cfa26ac9d8f913d0ff931877f8c7cf99e8ed39",
+    "parents": [
+      "98cbbc7dcc3e382d8c47eb5c23dde8e9e67f33da"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T03:46:50+08:00",
+    "message": "Record Rust inherent-path misses and feature and trait boundaries\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "f738cdf4b74d27d8e098761ed1ef5a1b55cd7839",
+    "parents": [
+      "84cfa26ac9d8f913d0ff931877f8c7cf99e8ed39"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T03:56:07+08:00",
+    "message": "test(code-analysis): freeze rustc inherent and namespace controls\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b2c93da10ace299033840b7cb6bbcb3298115ccf",
+    "parents": [
+      "f738cdf4b74d27d8e098761ed1ef5a1b55cd7839"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T03:58:37+08:00",
+    "message": "test(code-analysis): reserve serde map review slice before Rust rule\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "30c7db237a3e83726a0f9f36e1c1e355e433df7a",
+    "parents": [
+      "b2c93da10ace299033840b7cb6bbcb3298115ccf"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:00:50+08:00",
+    "message": "test(code-analysis): record reserved map source answers before candidate run\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "a2286d40ef944879873f936843c4430b41d69584",
+    "parents": [
+      "30c7db237a3e83726a0f9f36e1c1e355e433df7a"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:01:51+08:00",
+    "message": "test(code-analysis): freeze compiler enum variant precedence counterexample\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "9c13967294ce8e8e9f52a236671534f8b8902dad",
+    "parents": [
+      "a2286d40ef944879873f936843c4430b41d69584"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:06:50+08:00",
+    "message": "test(code-analysis): freeze real changed Rust inherent definition references\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "1a1f6677e04ee074ae45e23502f789e13cdd0ece",
+    "parents": [
+      "9c13967294ce8e8e9f52a236671534f8b8902dad"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:11:34+08:00",
+    "message": "feat(code-analysis): follow explicit Rust inherent source functions\n\n",
+    "categories": {
+      "analysis-product": 6,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "0c55d7ecfefa6fb295bb0fc15371baf11b666daf",
+    "parents": [
+      "1a1f6677e04ee074ae45e23502f789e13cdd0ece"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:11:34+08:00",
+    "message": "test(code-analysis): replay Rust inherent paths and changed definition callers\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "20ce8f32ad9002c408abeb11a6fedec539aba004",
+    "parents": [
+      "0c55d7ecfefa6fb295bb0fc15371baf11b666daf"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:14:48+08:00",
+    "message": "test(code-analysis): publish Rust source ZIP evidence and explicit gaps\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 7
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "1788ace7a692586332bdb7ceabf17ec8eab3d54e",
+    "parents": [
+      "20ce8f32ad9002c408abeb11a6fedec539aba004"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:39:16+08:00",
+    "message": "test(code-analysis): audit Rust source targets with pinned rust-analyzer\n\n",
+    "categories": {
+      "benchmark-evidence": 23
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "6f10d33a910b6344fa060d0c4de13a6098d03135",
+    "parents": [
+      "1788ace7a692586332bdb7ceabf17ec8eab3d54e"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:43:24+08:00",
+    "message": "test(code-analysis): freeze Go SDK typing investigation and explicit misses\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "1461daaaee1b5057b85eca04eaa0c961d793eea3",
+    "parents": [
+      "6f10d33a910b6344fa060d0c4de13a6098d03135"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:44:08+08:00",
+    "message": "test(code-analysis): correct interface control location before Go probe\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "4afde8e6fe6e243e1fa46efc84eb9d811834f367",
+    "parents": [
+      "1461daaaee1b5057b85eca04eaa0c961d793eea3"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T04:53:11+08:00",
+    "message": "test(code-analysis): compare SDK export types against 37 known Go misses\n\n",
+    "categories": {
+      "benchmark-evidence": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "61b28dc07958f22ab25b323de80b40181261294d",
+    "parents": [
+      "4afde8e6fe6e243e1fa46efc84eb9d811834f367"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:21:02+08:00",
+    "message": "feat(code-analysis): type Go source against required SDK exports\n\n",
+    "categories": {
+      "analysis-product": 7,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "58023b1aa3c26283d7752f52f277b4a4a4b6a30b",
+    "parents": [
+      "61b28dc07958f22ab25b323de80b40181261294d"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:21:02+08:00",
+    "message": "test(code-analysis): replay SDK type gaps through the normal CLI\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "f8470917f7f80e279555025bee25af81f544c8f1",
+    "parents": [
+      "58023b1aa3c26283d7752f52f277b4a4a4b6a30b"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:26:07+08:00",
+    "message": "test(code-analysis): publish SDK source ZIP and full-graph evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 11
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "fd116050e1f8b67d9469d7ea5b23084746fefa0c",
+    "parents": [
+      "f8470917f7f80e279555025bee25af81f544c8f1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:35:23+08:00",
+    "message": "test(code-analysis): freeze real Java fixed-arity overload questions\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b1bf9ce14e0bf32338280a59529834085d7f222d",
+    "parents": [
+      "fd116050e1f8b67d9469d7ea5b23084746fefa0c"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:36:48+08:00",
+    "message": "test(code-analysis): freeze javac arity and applicability controls\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "ee6992149440cfc8da5693a3545815d950ce2f09",
+    "parents": [
+      "b1bf9ce14e0bf32338280a59529834085d7f222d"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:37:20+08:00",
+    "message": "test(code-analysis): record real Java overload misses before rule changes\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "efcc0fd796e49fc8d985f0c52d56ea454ecf8262",
+    "parents": [
+      "ee6992149440cfc8da5693a3545815d950ce2f09"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:39:45+08:00",
+    "message": "test(code-analysis): distinguish Java overload gaps from caller scope guards\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "1a2d30c97a382b20b990a4ecc4b810e945e2d5cc",
+    "parents": [
+      "efcc0fd796e49fc8d985f0c52d56ea454ecf8262"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:40:38+08:00",
+    "message": "test(code-analysis): align annotated Java source target with owned declaration\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "ecbadd5cb419d79a94c0f56f90fcededa4defb89",
+    "parents": [
+      "1a2d30c97a382b20b990a4ecc4b810e945e2d5cc"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:51:09+08:00",
+    "message": "feat(code-analysis): select unique fixed-arity Java static sources\n\n",
+    "categories": {
+      "analysis-product": 6,
+      "tests-fixtures": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "41344376196679dd19fc3d63402aa1002937ae6e",
+    "parents": [
+      "ecbadd5cb419d79a94c0f56f90fcededa4defb89"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:51:09+08:00",
+    "message": "test(code-analysis): replay and audit real Java arity targets\n\n",
+    "categories": {
+      "benchmark-evidence": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "bbfa46ce6bee206f1bf17267168539902d36ab40",
+    "parents": [
+      "41344376196679dd19fc3d63402aa1002937ae6e"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:53:13+08:00",
+    "message": "test(code-analysis): publish Java arity source ZIP and compiler evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 9
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "7a906c06bd3dc63db0b868c1222d59ffd08d8c26",
+    "parents": [
+      "93378351dc97768fd7e0882a50f32ecc7a34e2a6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T05:59:27+08:00",
+    "message": "test(code-analysis): freeze Python package reexport source questions\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "ccb93f3a33b56615688a877dfb48270a1485ef57",
+    "parents": [
+      "7a906c06bd3dc63db0b868c1222d59ffd08d8c26"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:00:39+08:00",
+    "message": "test(code-analysis): retain package reexport baseline misses\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "73f2a22bd2f1a0a482bf5e0f4c995a7359b677a1",
+    "parents": [
+      "ccb93f3a33b56615688a877dfb48270a1485ef57"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:05:09+08:00",
+    "message": "feat(code-analysis): follow one explicit Python function reexport\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 2,
+      "analysis-product": 8,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "67ff4d770ca82d1b740fbf20595887fb80617866",
+    "parents": [
+      "73f2a22bd2f1a0a482bf5e0f4c995a7359b677a1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:10:48+08:00",
+    "message": "test(code-analysis): replay Python API calls and preserve changed references\n\n",
+    "categories": {
+      "tests-fixtures": 15,
+      "benchmark-evidence": 6
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b7495c1d73736a81c8e58d9763bfdea3e2d8e579",
+    "parents": [
+      "67ff4d770ca82d1b740fbf20595887fb80617866"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:14:42+08:00",
+    "message": "test(code-analysis): publish Python reexport source chain and ZIP evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 7
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "11a0350919efc5553eff118094aa9cf1a39106be",
+    "parents": [
+      "bbfa46ce6bee206f1bf17267168539902d36ab40",
+      "b7495c1d73736a81c8e58d9763bfdea3e2d8e579"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:18:15+08:00",
+    "message": "Merge independent Python API reexports into six-language candidate\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 2,
+      "analysis-product": 7,
+      "tests-fixtures": 16,
+      "benchmark-evidence": 13
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "1fa3cd0a097e973d653376721e6b8447f2be12b0",
+    "parents": [
+      "11a0350919efc5553eff118094aa9cf1a39106be"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:27:27+08:00",
+    "message": "test(code-analysis): verify current six-language source and ZIP composition\n\n",
+    "categories": {
+      "benchmark-evidence": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "d20ab450cc12170db3bc0947dd7b79a12d9bf3e6",
+    "parents": [
+      "1fa3cd0a097e973d653376721e6b8447f2be12b0"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:35:18+08:00",
+    "message": "test(code-analysis): freeze concrete-specialization Rust source questions\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "bd5519d03f4a54bf8e0702c41fe3b1541fabbdda",
+    "parents": [
+      "d20ab450cc12170db3bc0947dd7b79a12d9bf3e6"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:36:31+08:00",
+    "message": "test(code-analysis): freeze Rust specialization ambiguity controls\n\n",
+    "categories": {
+      "benchmark-evidence": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "10a06a32e48c10d10d3b89ea5230de0c3650335d",
+    "parents": [
+      "bd5519d03f4a54bf8e0702c41fe3b1541fabbdda"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:37:18+08:00",
+    "message": "test(code-analysis): retain specialization misses and compiler controls\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "f8ca96645cdd28418c31b8946fc993cc0128fa89",
+    "parents": [
+      "10a06a32e48c10d10d3b89ea5230de0c3650335d"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:46:07+08:00",
+    "message": "feat(code-analysis): identify unique concrete Rust specialization sources\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 2,
+      "analysis-product": 6,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "1ef5ed43de2335d2a6c718af8f3a82bdfb31dfc2",
+    "parents": [
+      "f8ca96645cdd28418c31b8946fc993cc0128fa89"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:46:50+08:00",
+    "message": "test(code-analysis): pass paired Rust capture configuration\n\n",
+    "categories": {
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "cdb0f101d4e556f2cd132a7f2eda625d7e284762",
+    "parents": [
+      "1ef5ed43de2335d2a6c718af8f3a82bdfb31dfc2"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T06:56:06+08:00",
+    "message": "test(code-analysis): audit all concrete Rust specialization targets\n\n",
+    "categories": {
+      "benchmark-evidence": 21
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "f066cb1118308cec9d50078b537116d27ebde9ae",
+    "parents": [
+      "cdb0f101d4e556f2cd132a7f2eda625d7e284762"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:08:00+08:00",
+    "message": "test(code-analysis): publish Rust specialization CLI ZIP and audit evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 8
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "3f42ee34b920b15cdd808fc54928e653f883cae1",
+    "parents": [
+      "f066cb1118308cec9d50078b537116d27ebde9ae"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:10:56+08:00",
+    "message": "test(code-analysis): verify audit workspace sources before navigation\n\n",
+    "categories": {
+      "benchmark-evidence": 11
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "09745753a3c0e2b31f601a600bcc95275d49c011",
+    "parents": [
+      "3f42ee34b920b15cdd808fc54928e653f883cae1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:22:59+08:00",
+    "message": "test(code-analysis): freeze Redux forwarded function source answers\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "2ae4a65a8a62765ee68aa5cbc2ab5ff727cf344d",
+    "parents": [
+      "09745753a3c0e2b31f601a600bcc95275d49c011"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:24:48+08:00",
+    "message": "test(code-analysis): retain forwarded Redux API baseline misses\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "5f75f58450eed28ef99f71880525dace6b6d9c58",
+    "parents": [
+      "2ae4a65a8a62765ee68aa5cbc2ab5ff727cf344d"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:32:31+08:00",
+    "message": "test(code-analysis): freeze ESM export reassignment control\n\n",
+    "categories": {
+      "benchmark-evidence": 4
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "ecb8d04e8bdeb17075eef60dd71fb21775328920",
+    "parents": [
+      "5f75f58450eed28ef99f71880525dace6b6d9c58"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:43:57+08:00",
+    "message": "test(code-analysis): freeze parenthesized eval export control\n\n",
+    "categories": {
+      "benchmark-evidence": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "1dc65d74a483c5575bd3a70d766b6d536461ce86",
+    "parents": [
+      "ecb8d04e8bdeb17075eef60dd71fb21775328920"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:48:22+08:00",
+    "message": "feat(code-analysis): trace stable explicit ESM forwarding paths\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 2,
+      "analysis-product": 7,
+      "tests-fixtures": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "30c4418bdd747a3a666aed76476d93d8271e872f",
+    "parents": [
+      "1dc65d74a483c5575bd3a70d766b6d536461ce86"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:51:39+08:00",
+    "message": "test(code-analysis): verify forwarded Redux implementations and freeze real change pair\n\n",
+    "categories": {
+      "benchmark-evidence": 6
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "28d5fe4674deb1cdbcac6638a29225717a564b2b",
+    "parents": [
+      "30c4418bdd747a3a666aed76476d93d8271e872f"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T07:57:06+08:00",
+    "message": "test(code-analysis): retain source ZIP and real-change forwarding evidence\n\n",
+    "categories": {
+      "benchmark-evidence": 10
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "2eb69c7b59e4174900dbd6b466e62f0241ec8320",
+    "parents": [
+      "28d5fe4674deb1cdbcac6638a29225717a564b2b"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:00:59+08:00",
+    "message": "build: refresh verified Code Analysis forwarding archive\n\n",
+    "categories": {
+      "generated-distribution": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "0e41f1e7fef84e19776305cfc8630311ff01e814",
+    "parents": [
+      "2eb69c7b59e4174900dbd6b466e62f0241ec8320"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:02:37+08:00",
+    "message": "test(code-analysis): retain historical alias grading under ESM v5\n\n",
+    "categories": {
+      "benchmark-evidence": 5
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "d4601c4936b9b674d1384ba58ff8dc491c6e73c0",
+    "parents": [
+      "0e41f1e7fef84e19776305cfc8630311ff01e814"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:07:01+08:00",
+    "message": "test(code-analysis): freeze captured Java superclass source questions\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "10bcf7ac4b7361aaa1c0ec4ccee0ed23e0360029",
+    "parents": [
+      "d4601c4936b9b674d1384ba58ff8dc491c6e73c0"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:08:04+08:00",
+    "message": "test(code-analysis): retain inherited caller baseline misses\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "0f6ba5d05b0dfac7ff10c48f287cff4d9f3b3f0d",
+    "parents": [
+      "10bcf7ac4b7361aaa1c0ec4ccee0ed23e0360029"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:14:08+08:00",
+    "message": "test(code-analysis): freeze compiler attribution for inherited qualifier names\n\n",
+    "categories": {
+      "benchmark-evidence": 7
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "c630a529d12fa3111cc2e9d41730c3effd7a3793",
+    "parents": [
+      "0f6ba5d05b0dfac7ff10c48f287cff4d9f3b3f0d"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:20:48+08:00",
+    "message": "feat(code-analysis): guard qualified Java calls with captured superclass evidence\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 7,
+      "tests-fixtures": 3
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "97cb39e0fce0dc3f7bf4e87a470a1dc10872c739",
+    "parents": [
+      "c630a529d12fa3111cc2e9d41730c3effd7a3793"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:32:55+08:00",
+    "message": "test(code-analysis): freeze SLF4J inherited-context module misnavigation\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "0ba2bb6777d5faae93591aeb60fa53417ca017de",
+    "parents": [
+      "97cb39e0fce0dc3f7bf4e87a470a1dc10872c739"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:34:48+08:00",
+    "message": "fix(code-analysis): withhold unproved inherited Java build-context targets\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 5,
+      "tests-fixtures": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "6c8f0e36e35e2ad5979c099b2c5915c02a9f16e5",
+    "parents": [
+      "0ba2bb6777d5faae93591aeb60fa53417ca017de"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:57:04+08:00",
+    "message": "test(code-analysis): retain Java parent-context attribution and ZIP evidence\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 24
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b5b14e8a9666a4a92e8a71d844f788bb28041c56",
+    "parents": [
+      "6c8f0e36e35e2ad5979c099b2c5915c02a9f16e5"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T08:58:57+08:00",
+    "message": "docs(code-analysis): clarify Java parent-context validation scope\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "29f24d845d817fd811502fdd72c729732a476585",
+    "parents": [
+      "b5b14e8a9666a4a92e8a71d844f788bb28041c56"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T09:15:33+08:00",
+    "message": "test(code-analysis): freeze declared Java project dependency source questions\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "ff8ef20bacc1fb0db1f7be8366a100675fbc1970",
+    "parents": [
+      "29f24d845d817fd811502fdd72c729732a476585"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T09:16:58+08:00",
+    "message": "test(code-analysis): retain declared Java dependency baseline misses\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "4e63145b8d0d09b111192d842b424167b570f289",
+    "parents": [
+      "ff8ef20bacc1fb0db1f7be8366a100675fbc1970"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T09:24:57+08:00",
+    "message": "test(code-analysis): compare XML parsers against frozen POM source\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "7f17c38570e65a5e02c6b1e724fc39d0030bc640",
+    "parents": [
+      "4e63145b8d0d09b111192d842b424167b570f289"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T09:47:18+08:00",
+    "message": "feat(code-analysis): record direct Maven project source routes\n\n",
+    "categories": {
+      "analysis-product": 12,
+      "analysis-authored-docs-contract": 1,
+      "tests-fixtures": 4
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "f2ab5a605749648b77ef5d4db82810f089a17285",
+    "parents": [
+      "7f17c38570e65a5e02c6b1e724fc39d0030bc640"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T09:52:19+08:00",
+    "message": "test(code-analysis): freeze supplemental upstream project migration\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "bc26eaddff7bbcaac494196a693d191ee265b9bd",
+    "parents": [
+      "f2ab5a605749648b77ef5d4db82810f089a17285"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T09:59:42+08:00",
+    "message": "fix(code-analysis): keep unresolved dependency fields unknown\n\n",
+    "categories": {
+      "analysis-product": 1,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "196dd3569efba785d456a6dd0825ea6ebdf489bf",
+    "parents": [
+      "bc26eaddff7bbcaac494196a693d191ee265b9bd"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T10:02:19+08:00",
+    "message": "test(code-analysis): publish direct project investigation evidence and ZIP\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 20
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "3cfe09f5f114dda7b80e61dbfda09f665fba78c1",
+    "parents": [
+      "3f42ee34b920b15cdd808fc54928e653f883cae1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T10:24:24+08:00",
+    "message": "test(code-analysis): freeze lifetime-only constructor source questions\n\n",
+    "categories": {
+      "benchmark-evidence": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "701cbff064609297e1f0b5894d8f9d6d2d1b4649",
+    "parents": [
+      "3cfe09f5f114dda7b80e61dbfda09f665fba78c1"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T10:27:11+08:00",
+    "message": "test(code-analysis): record unresolved lifetime constructor baseline\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "b569acada3916521ace539f1242d63a7aa42417a",
+    "parents": [
+      "701cbff064609297e1f0b5894d8f9d6d2d1b4649"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T10:31:56+08:00",
+    "message": "test(code-analysis): distinguish function target from owned doc range\n\n",
+    "categories": {
+      "benchmark-evidence": 2
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "a150e76822add69d0902b270bcd8d1fab843b58a",
+    "parents": [
+      "b569acada3916521ace539f1242d63a7aa42417a"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T10:33:25+08:00",
+    "message": "feat(code-analysis): navigate lifetime-only inherent source candidates\n\n",
+    "categories": {
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 6,
+      "tests-fixtures": 1
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "e02a1b3f3958486366f6337e6a69606dd3416c7d",
+    "parents": [
+      "a150e76822add69d0902b270bcd8d1fab843b58a"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T10:47:19+08:00",
+    "message": "test(code-analysis): validate lifetime source navigation and archive parity\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "benchmark-evidence": 21
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "915d528e584a6343ab79284bd274ed11762cf9c9",
+    "parents": [
+      "e02a1b3f3958486366f6337e6a69606dd3416c7d"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T10:53:17+08:00",
+    "message": "test(code-analysis): attribute all observed serde lifetime targets\n\n",
+    "categories": {
+      "benchmark-evidence": 13
+    },
+    "role": "content-change"
+  },
+  {
+    "sha": "4e684e4911e8ad001b39d472976eb89925862235",
+    "parents": [
+      "196dd3569efba785d456a6dd0825ea6ebdf489bf",
+      "915d528e584a6343ab79284bd274ed11762cf9c9"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T11:08:08+08:00",
+    "message": "feat(code-analysis): compose Rust lifetime navigation with current six-language candidate\n\n",
+    "categories": {
+      "generated-distribution": 1,
+      "analysis-authored-docs-contract": 1,
+      "analysis-product": 6,
+      "tests-fixtures": 1,
+      "benchmark-evidence": 38
+    },
+    "role": "history-preserving-merge"
+  },
+  {
+    "sha": "996e073ded7b99cbe885fbc4afab5d125412f6c1",
+    "parents": [
+      "4e684e4911e8ad001b39d472976eb89925862235"
+    ],
+    "author": "tt-a1i",
+    "committer": "tt-a1i",
+    "authoredAt": "2026-11-08T11:18:03+08:00",
+    "message": "test(code-analysis): verify composed Rust and six-language CLI contracts\n\n",
+    "categories": {
+      "benchmark-evidence": 11
+    },
+    "role": "content-change"
+  }
+]

@@ -1,0 +1,85 @@
+{
+  "go": {
+    "repository": "https://github.com/google/uuid",
+    "commit": "0f11ee6918f41a04c201eceeadf612a377bc7fbc",
+    "module": "github.com/google/uuid",
+    "scope": "darwin arm64, normal non-test build; no tags",
+    "cases": [
+      {
+        "caller": "uuid.go:167 MustParse",
+        "call": "Parse(s)",
+        "target": "uuid.go:68 Parse"
+      },
+      {
+        "caller": "version4.go:14 New",
+        "call": "NewRandom()",
+        "target": "version4.go:39 NewRandom"
+      },
+      {
+        "caller": "hash.go:50 NewMD5",
+        "call": "NewHash(...)",
+        "target": "hash.go:33 NewHash"
+      },
+      {
+        "caller": "node.go:40 setNodeInterface",
+        "call": "getHardwareInterface(name)",
+        "target": "node_net.go:19 getHardwareInterface"
+      },
+      {
+        "caller": "hash.go:35 NewHash",
+        "call": "h.Write(space[:])",
+        "target": "unknown: hash.Hash interface dispatch"
+      }
+    ],
+    "sha256": {
+      "go.mod": "73da47b6338b00a082fd451aa35a3273d3adc09b8e9bba98dab01091e402af6e",
+      "uuid.go": "0edec8e34c6b6fe0db31b71a29069a09ed832e3fd04ee0175916b58f2b60e5c1",
+      "version4.go": "f252aeb4028659d83cbf7b037d4524f7c9b76cde1fdca1f6f7de310dab6f4dcd",
+      "hash.go": "afe975c3f3e8b9a972c66165f06e978cc5c2f8ea5a4809dae4c46b4cfebbadce",
+      "node.go": "73a93d192ca24078e0f93b8c1675e13adb442421252d3974d697b0821c4832cf",
+      "node_net.go": "78e274b465de8da8690f4ab06281f41025b142c1d093e337fda1d6726b35662b"
+    }
+  },
+  "rust": {
+    "repository": "https://github.com/BurntSushi/walkdir",
+    "commit": "4f26be4d450910916ea11533b2efc52b9a6483bc",
+    "crate": "walkdir",
+    "scope": "host darwin arm64 unix, default features, workspace",
+    "cases": [
+      {
+        "caller": "lib.rs:690 IntoIter::next",
+        "call": "util::device_num(&start)",
+        "target": "util.rs:5 device_num (unix)"
+      },
+      {
+        "caller": "lib.rs:691 IntoIter::next",
+        "call": "Error::from_path(...)",
+        "target": "error.rs:162 Error::from_path"
+      },
+      {
+        "caller": "lib.rs:993 IntoIter::is_same_file_system",
+        "call": "Error::from_entry(...)",
+        "target": "error.rs:170 Error::from_entry"
+      },
+      {
+        "caller": "lib.rs:925 IntoIter method",
+        "call": "Error::from_io(...)",
+        "target": "error.rs:180 Error::from_io"
+      },
+      {
+        "caller": "lib.rs:691 IntoIter::next",
+        "call": "start.clone()",
+        "target": "unknown: standard-library method outside indexed project"
+      }
+    ],
+    "sha256": {
+      "Cargo.toml": "582ef63aacbbd705014ca5115306df84e108dc7da2b0af6587c12e697926a7d7",
+      "src/lib.rs": "3f7d673f9e278a71de2cb5f90353a44ea7803a98d49c2f72a68cb26dce8c966a",
+      "src/util.rs": "14e0da711cad4825ead21446cd61a1444fd49bab853a8a239d8cb74b2caab351",
+      "src/error.rs": "ba58bf6f59d196567435d4b66699a928cc237fc7c8df01dc37ab822509905b7c",
+      "src/dent.rs": "ca573f4533370a09851579f5940f7cd9bd121b2f30ec51d29a40afdce984683b"
+    }
+  },
+  "frozen_utc": "2026-11-08T04:13:31.347730+00:00",
+  "note": "Source inspection and hashes completed before any candidate CLI invocation; expectations do not depend on analyzer output."
+}

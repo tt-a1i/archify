@@ -1,0 +1,64 @@
+[
+  {
+    "command": [
+      "git",
+      "show",
+      "996e073ded7b99cbe885fbc4afab5d125412f6c1:archify.zip"
+    ],
+    "exit": 0,
+    "bytes": 7596031,
+    "revision": "996e073ded7b99cbe885fbc4afab5d125412f6c1"
+  },
+  {
+    "command": [
+      "git",
+      "show",
+      "996e073ded7b99cbe885fbc4afab5d125412f6c1:archify/modules/code-analysis/bin/check.mjs"
+    ],
+    "exit": 0,
+    "bytes": 13126,
+    "revision": "996e073ded7b99cbe885fbc4afab5d125412f6c1"
+  },
+  {
+    "command": [
+      "git",
+      "show",
+      "996e073ded7b99cbe885fbc4afab5d125412f6c1:archify/modules/code-analysis/extract/shared/diagnostics.mjs"
+    ],
+    "exit": 0,
+    "bytes": 703,
+    "revision": "996e073ded7b99cbe885fbc4afab5d125412f6c1"
+  },
+  {
+    "command": [
+      "git",
+      "show",
+      "e164cc32825267617db61d430b871a34fe0fe662:archify/modules/code-analysis/bin/check.mjs"
+    ],
+    "exit": 0,
+    "bytes": 11786,
+    "revision": "e164cc32825267617db61d430b871a34fe0fe662"
+  },
+  {
+    "command": [
+      "git",
+      "show",
+      "e164cc32825267617db61d430b871a34fe0fe662:archify/modules/code-analysis/extract/shared/diagnostics.mjs"
+    ],
+    "exit": 0,
+    "bytes": 703,
+    "revision": "e164cc32825267617db61d430b871a34fe0fe662"
+  },
+  {
+    "command": [
+      "/Users/tsk/.local/share/archify-tuning/rounds/pr671-20261025/tools/node-v22.23.3-darwin-arm64/bin/node",
+      "$REVIEW/history/probe.mjs"
+    ],
+    "exit": 0,
+    "stdout": "[{\"label\":\"candidate\",\"rawEscape\":true,\"injectedLine\":true,\"conforms\":false},{\"label\":\"candidate-zip\",\"rawEscape\":true,\"injectedLine\":true,\"conforms\":false},{\"label\":\"current-1223\",\"rawEscape\":false,\"injectedLine\":false,\"conforms\":true}]\n",
+    "stderr": "",
+    "revision": "996e073ded7b99cbe885fbc4afab5d125412f6c1",
+    "expected": "candidate/current PR formatter both escape controls",
+    "observedAt": "2026-11-08T04:18:18.258112+00:00"
+  }
+]

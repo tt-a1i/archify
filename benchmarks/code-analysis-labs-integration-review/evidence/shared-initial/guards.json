@@ -1,0 +1,107 @@
+{
+  "revision": "996e073ded7b99cbe885fbc4afab5d125412f6c1",
+  "results": [
+    {
+      "label": "js",
+      "model": "js-ts-lexical-v5",
+      "expected": "one unresolved call, no target under value/type parameter shadow",
+      "observed": [
+        {
+          "file": "entry.mjs",
+          "line": 1,
+          "column": 61,
+          "endLine": 1,
+          "endColumn": 64,
+          "resolution": "unresolved",
+          "reason": "no-local-function-binding"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "label": "ts",
+      "model": "js-ts-lexical-v5",
+      "expected": "one unresolved call, no target under value/type parameter shadow",
+      "observed": [
+        {
+          "file": "entry.ts",
+          "line": 1,
+          "column": 68,
+          "endLine": 1,
+          "endColumn": 71,
+          "resolution": "unresolved",
+          "reason": "no-local-function-binding"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "label": "py",
+      "model": "python-lexical-v2",
+      "expected": "one unresolved call, no target under value/type parameter shadow",
+      "observed": [
+        {
+          "file": "entry.py",
+          "line": 2,
+          "column": 20,
+          "endLine": 2,
+          "endColumn": 23,
+          "resolution": "unresolved",
+          "reason": "no-local-function-binding"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "label": "java",
+      "model": "java-static-lexical-v5",
+      "expected": "one unresolved call, no target under value/type parameter shadow",
+      "observed": [
+        {
+          "file": "Entry.java",
+          "line": 1,
+          "column": 63,
+          "endLine": 1,
+          "endColumn": 71,
+          "resolution": "unresolved",
+          "reason": "unsupported-callee"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "label": "go",
+      "model": "go-source-direct-v3",
+      "expected": "one unresolved call, no target under value/type parameter shadow",
+      "observed": [
+        {
+          "column": 61,
+          "endColumn": 64,
+          "endLine": 2,
+          "file": "entry.go",
+          "line": 2,
+          "reason": "no-local-function-binding",
+          "resolution": "unresolved"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "label": "rust",
+      "model": "rust-source-direct-v4",
+      "expected": "one unresolved call, no target under value/type parameter shadow",
+      "observed": [
+        {
+          "column": 61,
+          "endColumn": 67,
+          "endLine": 1,
+          "file": "src/lib.rs",
+          "line": 1,
+          "reason": "no-local-function-binding",
+          "resolution": "unresolved"
+        }
+      ],
+      "pass": true
+    }
+  ]
+}
