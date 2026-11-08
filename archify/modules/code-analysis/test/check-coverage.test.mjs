@@ -63,19 +63,31 @@ test('check: a clean run says nothing about coverage and the gate is unchanged',
   assert.doesNotMatch(text.stdout, /Not analyzed/);
 });
 
-test('check: the text summary escapes control characters in parse-failure paths', () => {
-  const text = formatText({
+function textWithParseError(parseError) {
+  return formatText({
     verdict: 'ok',
     counts: { findings: 0, error: 0, warning: 0, info: 0, accepted: 0 },
     language: 'py',
     files: 1,
     rules: [],
-    coverage: { parseErrors: ['src/\u001b[2Jbroken.py'], otherLanguages: [] },
+    coverage: { parseErrors: [parseError], otherLanguages: [] },
     review: {},
     staleBaseline: [],
     status: 'ok',
     gate: { failOn: 'warning', newOnly: false, failing: [] },
   });
+}
+
+test('check: the text summary escapes control characters in parse-failure paths', () => {
+  const text = textWithParseError('src/\u001b[2Jbroken.py');
   assert.match(text, /src\/\\u001b\[2Jbroken\.py/);
   assert.doesNotMatch(text, /\u001b/);
+});
+
+test('check: parse paths with literal escapes remain distinct from control characters', () => {
+  const controlCharacter = textWithParseError('src/bad\n.py');
+  const literalEscape = textWithParseError('src/bad\\u000a.py');
+  assert.match(controlCharacter, /src\/bad\\u000a\.py/);
+  assert.match(literalEscape, /src\/bad\\\\u000a\.py/);
+  assert.notEqual(controlCharacter, literalEscape);
 });

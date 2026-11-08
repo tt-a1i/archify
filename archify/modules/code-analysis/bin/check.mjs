@@ -154,7 +154,9 @@ export function formatText(r) {
 }
 
 function formatTerminalText(value) {
-  return String(value).replace(/[\u0000-\u001f\u007f-\u009f]/g, (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`);
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/[\u0000-\u001f\u007f-\u009f]/g, (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
