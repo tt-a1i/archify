@@ -1,0 +1,24 @@
+{
+  "after": {
+    "directCallerStatus": "wrong",
+    "scorer": "current run.py",
+    "status": "wrong",
+    "wrong": [
+      "direct-caller",
+      "direct-caller-line",
+      "direct-caller-name",
+      "outer-default-method-misreported"
+    ]
+  },
+  "before": {
+    "scorer": "5fdf60ae8 committed run.py",
+    "status": "correct",
+    "wrong": []
+  },
+  "call": "src/engine/mod.rs:251:33",
+  "injectedDirectCaller": {
+    "file": "src/engine/mod.rs",
+    "line": 243,
+    "name": "decode"
+  }
+}

@@ -53,7 +53,7 @@
     }
   ],
   "command": "node archify/bin/archify.mjs code-analysis task --base-root <samples>/base64-base --root <samples>/base64-head --entry src/engine/mod.rs --config <config> --question \"I changed Engine::decode in this revision. Which calls point to it, and is there a call inside a trait default method body?\" --format json --out <out>.json --json",
-  "conclusion": "The change query answers incoming references to a definition. To find a call inside a default body, the changed definition must be the callee (internal_decode or a changed free function). For the explored decode case, the query reports zero incoming references and does not expose the eight raw call positions.",
+  "conclusion": "The change query answers incoming references to a definition. To find a call inside a default body, the changed definition must be the callee (internal_decode or a changed free function). For the explored decode case, the query reports zero incoming references and does not expose the eight raw call positions. The six calls on 251-260 are inside inner; the two calls on 263 are directly in Engine::decode.",
   "focus": {
     "decode": {
       "cli": "listed as changed definition; knownReferences total 0; no outgoing calls are shown",
@@ -69,6 +69,15 @@
     }
   },
   "head": "d021c39ae782c91d88cf3a76030f3f7b1eed892b",
+  "line263": {
+    "calls": [
+      "263:9-263:36 inner(self, input.as_ref())",
+      "263:21-263:35 input.as_ref()"
+    ],
+    "directCaller": "Engine::decode (default method body)",
+    "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)",
+    "sourceEvidence": "Both calls are at the indentation level of Engine::decode after the nested inner function closes at line 261; the direct caller and the outer default method are the same."
+  },
   "macroBoundary": {
     "argumentMethod": "estimate.decoded_len_estimate() inside the macro token tree is not a separately inventoried call",
     "call": "252:30-252:70",
@@ -269,12 +278,14 @@
     },
     {
       "call": "263:21-263:35",
-      "directCaller": "inner (nested in Engine::decode)",
+      "directCaller": "Engine::decode (default method body)",
+      "note": "The call is directly in the default method body, not inside the nested inner function.",
       "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
     },
     {
       "call": "263:9-263:36",
-      "directCaller": "inner (nested in Engine::decode)",
+      "directCaller": "Engine::decode (default method body)",
+      "note": "The call is directly in the default method body, not inside the nested inner function.",
       "outerDefaultMethod": "engine::Engine::decode (src/engine/mod.rs:246)"
     }
   ],

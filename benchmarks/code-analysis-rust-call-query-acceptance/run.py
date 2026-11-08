@@ -2,14 +2,15 @@
 """Acceptance replay for a changed Rust definition called from a trait default body.
 
 Runs the normal change query in the v5 baseline and v6 candidate against the
-same base64 revisions. The candidate must expose all four call sites as trait
-candidates, retain the runtime target as unknown, and identify the concrete
-implementation only as a source candidate. The query has no directCaller
-field, so direct-caller attribution is scored by actual capability.
+same base64 revisions. The real query and the direct-caller controls all pass
+through the same scorer. Missing directCaller fields are recorded as
+"CLI 未提供"; injected fields are checked against the source caller name and
+position.
 """
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import subprocess
@@ -17,7 +18,6 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-TRAIT = "engine::Engine::internal_decode"
 
 
 def run(command: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
@@ -86,40 +86,61 @@ def call_key(item: dict) -> tuple:
     return tuple(item[field] for field in ("file", "line", "column", "endLine", "endColumn"))
 
 
+def position(fact_or_expected: dict) -> str:
+    return f"{fact_or_expected['file']}:{fact_or_expected['line']}:{fact_or_expected['column']}"
+
+
+def score_direct_caller(expected: dict, fact: dict) -> dict:
+    """Check a directCaller field when present; otherwise record CLI absence."""
+    if "directCaller" not in fact or fact.get("directCaller") is None:
+        return {"status": "CLI 未提供", "provided": False}
+    actual = fact["directCaller"]
+    caller = expected["directCaller"]
+    wrong = []
+    for field in ("file", "line", "name"):
+        if actual.get(field) != caller[field]:
+            wrong.append(f"direct-caller-{field}")
+    if (actual.get("name") == expected["defaultMethod"]["name"]
+            and actual.get("line") == expected["defaultMethod"]["line"]):
+        wrong.append("outer-default-method-misreported")
+    return {
+        "status": "wrong" if wrong else "correct",
+        "provided": True,
+        "actual": actual,
+        "expected": caller,
+        "wrong": wrong,
+    }
+
+
 def score_call(expected: dict, item: dict | None) -> dict:
     record = {"expected": expected, "actual": item, "captured": item is not None,
               "targetVerified": False, "wrong": [], "status": "missed"}
     if item is None:
+        record["directCallerStatus"] = "CLI 未提供"
         return record
     fact = item.get("fact") or {}
+    identity_wrong = []
     if call_key(fact) != call_key(expected):
-        record["wrong"].append("call-range")
+        identity_wrong.append("call-range")
     if fact.get("defaultMethod") != expected["defaultMethod"]:
-        record["wrong"].append("outer-default-method")
+        identity_wrong.append("outer-default-method")
     target = fact.get("target") or {}
     if any(target.get(field) != expected["target"][field] for field in ("file", "line", "column", "name")):
-        record["wrong"].append("target")
+        identity_wrong.append("target")
     if fact.get("resolution") != "rust-trait-method-candidate":
-        record["wrong"].append("resolution")
+        identity_wrong.append("resolution")
     if item.get("runtimeTarget") != "not-determined":
-        record["wrong"].append("runtime-target")
-    record["targetVerified"] = not record["wrong"]
-    record["directCallerField"] = "directCaller" in fact
+        identity_wrong.append("runtime-target")
+    record["targetVerified"] = not identity_wrong
+    record["wrong"] = list(identity_wrong)
+    direct = score_direct_caller(expected, fact)
+    record["directCaller"] = direct
+    record["directCallerStatus"] = direct["status"]
+    if direct["status"] == "wrong":
+        record["wrong"].append("direct-caller")
+        record["wrong"].extend(direct["wrong"])
     record["status"] = "correct" if not record["wrong"] else "wrong"
     return record
-
-
-def score_direct_caller(expected: dict, actual: dict | None) -> dict:
-    wrong = []
-    if actual is None:
-        return {"expected": expected, "actual": None, "wrong": ["missing"], "status": "missed"}
-    caller = expected["directCaller"]
-    if actual.get("file") != caller["file"] or actual.get("line") != caller["line"]:
-        wrong.append("direct-caller")
-    if actual.get("name") == expected["defaultMethod"]["name"] and actual.get("line") == expected["defaultMethod"]["line"]:
-        wrong.append("outer-default-method-misreported")
-    return {"expected": expected, "actual": actual, "wrong": wrong,
-            "status": "correct" if not wrong else "wrong"}
 
 
 def call_evidence(query: dict, meta: dict) -> dict:
@@ -135,12 +156,11 @@ def call_evidence(query: dict, meta: dict) -> dict:
     }
 
 
-def score_side(name: str, query: dict, meta: dict, facts: dict, out: Path) -> dict:
+def score_side(name: str, query: dict, meta: dict, facts: dict) -> dict:
     evidence = call_evidence(query, meta)
     items = evidence["traitCandidates"].get("items") or []
     by_key = {call_key(item.get("fact") or {}): item for item in items}
     rows = [score_call(expected, by_key.get(call_key(expected))) for expected in meta["expectedCallers"]]
-    used = {call_key(item.get("fact") or {}) for item in items}
     expected_keys = {call_key(expected) for expected in meta["expectedCallers"]}
     extras = [item for item in items if call_key(item.get("fact") or {}) not in expected_keys]
     raw_internal = [
@@ -149,7 +169,13 @@ def score_side(name: str, query: dict, meta: dict, facts: dict, out: Path) -> di
         and (call.get("defaultMethod") or {}).get("name") in
         ("decode", "decode_vec", "decode_slice", "decode_slice_unchecked")
     ]
-    direct_caller_available = any("directCaller" in (row.get("actual") or {}).get("fact", {}) for row in rows)
+    direct_failures = [
+        {"call": position(row["expected"]), "wrong": row["directCaller"]["wrong"],
+         "actual": row["directCaller"].get("actual"),
+         "expected": row["directCaller"].get("expected")}
+        for row in rows if row["directCallerStatus"] == "wrong"
+    ]
+    provided = [row for row in rows if row["directCallerStatus"] != "CLI 未提供"]
     result = {
         "side": name,
         "callModel": facts.get("callModel"),
@@ -169,19 +195,49 @@ def score_side(name: str, query: dict, meta: dict, facts: dict, out: Path) -> di
         "rows": rows,
         "extras": extras,
         "directCallerCapability": {
-            "available": direct_caller_available,
+            "status": "CLI 未提供" if not provided else "provided-and-checked",
+            "provided": bool(provided),
+            "checked": len(provided),
             "sourceDirectCaller": "inner (nested local function in each default body)",
             "outerDefaultMethodField": "defaultMethod",
         },
+        "directCallerFailures": direct_failures,
         "correct": sum(row["status"] == "correct" for row in rows),
-        "wrong": [f"{row['expected']['file']}:{row['expected']['line']}:{row['expected']['column']}"
-                  for row in rows if row["status"] == "wrong"] + [
-                  f"{call_key(item.get('fact') or {})}" for item in extras],
-        "missed": [f"{row['expected']['file']}:{row['expected']['line']}:{row['expected']['column']}"
-                   for row in rows if row["status"] == "missed"],
+        "wrong": [position(row["expected"]) for row in rows if row["status"] == "wrong"]
+                 + [f"{call_key(item.get('fact') or {})}" for item in extras],
+        "missed": [position(row["expected"]) for row in rows if row["status"] == "missed"],
         "targetVerified": sum(row["targetVerified"] for row in rows),
     }
     return result
+
+
+def acceptance_failures(side: dict, expected_count: int) -> list[str]:
+    failures = []
+    if side["correct"] != expected_count:
+        failures.append("calls:not-all-correct")
+    if side["wrong"]:
+        failures.append("calls:wrong")
+    if side["missed"]:
+        failures.append("calls:missed")
+    if side["rawFactsVsQuery"] != "equal":
+        failures.append("calls:raw-facts-query-mismatch")
+    if side["targetVerified"] != expected_count:
+        failures.append("target:not-verified")
+    if side["traitCandidates"]["runtimeTarget"] != "not-determined":
+        failures.append("runtime-target:overclaimed")
+    if not any(impl.get("selfType") == "GeneralPurpose" for impl in side["implementations"]):
+        failures.append("implementation-candidate:missing")
+    if side["directCallerFailures"]:
+        failures.append("direct-caller:wrong")
+    return failures
+
+
+def inject_first_direct_caller(query: dict, meta: dict, direct: dict) -> dict:
+    mutated = copy.deepcopy(query)
+    item = find_changed(mutated, meta)
+    candidates = item["head"]["traitCandidates"]["items"]
+    candidates[0]["fact"]["directCaller"] = dict(direct)
+    return mutated
 
 
 def main() -> int:
@@ -204,8 +260,12 @@ def main() -> int:
     candidate_dir.mkdir(exist_ok=True)
     baseline_query, baseline_cmd = task(args.baseline_cli.resolve(), samples, config, baseline_dir)
     candidate_query, candidate_cmd = task(args.candidate_cli.resolve(), samples, config, candidate_dir)
-    baseline_side = score_side("baseline", baseline_query, meta, check(args.baseline_cli.resolve(), samples, config, baseline_dir), baseline_dir)
-    candidate_side = score_side("candidate", candidate_query, meta, check(args.candidate_cli.resolve(), samples, config, candidate_dir), candidate_dir)
+    baseline_facts = check(args.baseline_cli.resolve(), samples, config, baseline_dir)
+    candidate_facts = check(args.candidate_cli.resolve(), samples, config, candidate_dir)
+    (out / "candidate-query.json").write_text(json.dumps(candidate_query, indent=2, sort_keys=True) + "\n")
+    saved_candidate = json.loads((out / "candidate-query.json").read_text())
+    baseline_side = score_side("baseline", baseline_query, meta, baseline_facts)
+    candidate_side = score_side("candidate", saved_candidate, meta, candidate_facts)
 
     if baseline_side["changedDefinition"] is None or candidate_side["changedDefinition"] is None:
         raise RuntimeError("changed definition missing")
@@ -214,41 +274,38 @@ def main() -> int:
     if baseline_side["callModel"] != "rust-source-direct-v5":
         raise RuntimeError(f"baseline model {baseline_side['callModel']}")
 
-    # The scorer must distinguish the outer default method from the direct caller.
     expected = meta["expectedCallers"][0]
-    control_bad = score_direct_caller(expected, {
+    wrong_outer = {
         "file": expected["defaultMethod"]["file"],
         "line": expected["defaultMethod"]["line"],
         "name": expected["defaultMethod"]["name"],
-    })
-    control_good = score_direct_caller(expected, expected["directCaller"])
-    controls = {
-        "outerDefaultMethodRejected": control_bad["status"] == "wrong"
-        and "outer-default-method-misreported" in control_bad["wrong"],
-        "nestedDirectCallerAccepted": control_good["status"] == "correct",
-        "bad": control_bad,
-        "good": control_good,
     }
-    if not all(controls[key] for key in ("outerDefaultMethodRejected", "nestedDirectCallerAccepted")):
-        raise RuntimeError(f"direct-caller controls failed: {controls}")
+    negative_query = inject_first_direct_caller(saved_candidate, meta, wrong_outer)
+    positive_query = inject_first_direct_caller(saved_candidate, meta, expected["directCaller"])
+    negative_side = score_side("negative-control", negative_query, meta, candidate_facts)
+    positive_side = score_side("positive-control", positive_query, meta, candidate_facts)
 
-    failures = []
-    if candidate_side["correct"] != len(meta["expectedCallers"]):
-        failures.append("candidate:not-all-calls-correct")
-    if candidate_side["wrong"]:
-        failures.append("candidate:wrong")
-    if candidate_side["missed"]:
-        failures.append("candidate:missed")
-    if candidate_side["rawFactsVsQuery"] != "equal":
-        failures.append("candidate:raw-facts-query-mismatch")
-    if candidate_side["targetVerified"] != len(meta["expectedCallers"]):
-        failures.append("candidate:target-not-verified")
-    if candidate_side["traitCandidates"]["runtimeTarget"] != "not-determined":
-        failures.append("candidate:runtime-target-overclaimed")
-    if not any(impl.get("selfType") == "GeneralPurpose" for impl in candidate_side["implementations"]):
-        failures.append("candidate:implementation-candidate-missing")
+    real_failures = acceptance_failures(candidate_side, len(meta["expectedCallers"]))
+    negative_failures = acceptance_failures(negative_side, len(meta["expectedCallers"]))
+    positive_failures = acceptance_failures(positive_side, len(meta["expectedCallers"]))
+    offending = negative_side["directCallerFailures"][0]["call"] if negative_side["directCallerFailures"] else None
+    checks = {
+        "realQueryAccepted": not real_failures,
+        "wrongOuterRejected": bool(negative_failures) and offending == position(expected),
+        "correctInnerAccepted": not positive_failures
+        and positive_side["correct"] == len(meta["expectedCallers"])
+        and positive_side["rows"][0]["directCallerStatus"] == "correct",
+    }
+    if not all(checks.values()):
+        raise RuntimeError(f"scoring controls failed: {checks}, failures={negative_failures}")
+
+    failures = list(real_failures)
     if baseline_side["queryShowsInternalDecodeCalls"] != 0:
         failures.append("baseline:unexpected-callers")
+    if not checks["wrongOuterRejected"]:
+        failures.append("control:wrong-outer-not-rejected")
+    if not checks["correctInnerAccepted"]:
+        failures.append("control:correct-inner-rejected")
 
     summary = {
         "case": meta["case"],
@@ -264,7 +321,7 @@ def main() -> int:
         "baseline": baseline_side,
         "candidate": candidate_side,
         "comparison": {
-            "newlyVisibleCalls": baseline_side["missed"].__len__(),
+            "newlyVisibleCalls": len(baseline_side["missed"]),
             "candidateCorrect": candidate_side["correct"],
             "candidateWrong": len(candidate_side["wrong"]),
             "candidateMissed": len(candidate_side["missed"]),
@@ -273,12 +330,55 @@ def main() -> int:
             "runtimeTarget": candidate_side["traitCandidates"]["runtimeTarget"],
             "directCallerCapability": candidate_side["directCallerCapability"],
         },
-        "controls": controls,
+        "controls": {
+            "sameScoringPath": True,
+            "realQuery": {
+                "accepted": not real_failures,
+                "failures": real_failures,
+                "correct": candidate_side["correct"],
+                "directCallerStatus": candidate_side["directCallerCapability"]["status"],
+            },
+            "negative": {
+                "accepted": not negative_failures,
+                "failures": negative_failures,
+                "offendingCall": offending,
+                "directCallerStatus": negative_side["directCallerCapability"]["status"],
+            },
+            "positive": {
+                "accepted": not positive_failures,
+                "failures": positive_failures,
+                "correct": positive_side["correct"],
+                "directCallerStatus": positive_side["directCallerCapability"]["status"],
+            },
+            "checks": checks,
+        },
+        "counterexample": {
+            "originalQuery": {
+                "query": "original candidate query with no directCaller field",
+                "accepted": not real_failures,
+                "correct": candidate_side["correct"],
+                "directCallerStatus": candidate_side["directCallerCapability"]["status"],
+            },
+            "injectedWrongOuter": {
+                "query": "copy of the saved candidate query with the first item's directCaller replaced by the outer default method",
+                "accepted": not negative_failures,
+                "failures": negative_failures,
+                "offendingCall": offending,
+                "wrongDirectCaller": wrong_outer,
+            },
+            "injectedCorrectInner": {
+                "query": "copy of the saved candidate query with the first item's directCaller set to the source inner caller",
+                "accepted": not positive_failures,
+                "correct": positive_side["correct"],
+            },
+        },
         "failures": failures,
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     (out / "baseline-query.json").write_text(json.dumps(baseline_query, indent=2, sort_keys=True) + "\n")
     (out / "candidate-query.json").write_text(json.dumps(candidate_query, indent=2, sort_keys=True) + "\n")
+    (out / "negative-control-query.json").write_text(json.dumps(negative_query, indent=2, sort_keys=True) + "\n")
+    (out / "positive-control-query.json").write_text(json.dumps(positive_query, indent=2, sort_keys=True) + "\n")
     print(json.dumps({
         "baseline": {key: baseline_side[key] for key in
                      ("callModel", "knownReferences", "queryShowsInternalDecodeCalls", "correct", "missed")},
@@ -287,6 +387,8 @@ def main() -> int:
         "runtimeTarget": candidate_side["traitCandidates"]["runtimeTarget"],
         "directCaller": candidate_side["directCallerCapability"],
         "comparison": summary["comparison"],
+        "counterexample": summary["counterexample"],
+        "controls": summary["controls"],
         "failures": failures,
     }, indent=2, sort_keys=True))
     return 1 if failures else 0

@@ -7,6 +7,7 @@
   "change": "Engine::internal_decode now returns DecodeSliceError; the GeneralPurpose implementation and the Engine default-body call sites are updated.",
   "question": "I changed GeneralPurpose::internal_decode in this revision. Which calls point to it, and is there a call inside a trait default method body?",
   "stage": "Recorded from the upstream diff and head source before the scored v5/v6 replay. Expected positions are source coordinates, not extractor output. The case was not previously run through the candidate analyzer.",
+  "freezeTiming": "The file was written before the scored replay, but no independent timestamp credential is included in the commit; freeze timing is not independently verified.",
   "profile": {
     "crate": "base64",
     "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",

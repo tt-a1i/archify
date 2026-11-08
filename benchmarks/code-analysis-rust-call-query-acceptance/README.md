@@ -25,12 +25,17 @@ default methods. The query command and output are recorded in
 | `decode` | trait default method at `src/engine/mod.rs:246` | listed as a changed definition; `knownReferences.total = 0`; no outgoing calls are shown |
 | `inner` | nested local function at `src/engine/mod.rs:247` inside `decode` | not a definition or a reference; no `directCaller` field |
 | `internal_decode` | trait method target at `src/engine/mod.rs:91` | not a changed definition and not shown as a caller; only a target in raw facts |
-| calls in the body | eight raw-fact positions, including calls inside `inner` | change query shows none because it publishes incoming references, not outgoing calls |
+| calls on lines 251-260 | inside the nested `inner` function | change query shows none because it publishes incoming references, not outgoing calls |
+| calls on line 263 | directly in `Engine::decode`: `inner(...)` and `input.as_ref()` | change query shows none; no `directCaller` field |
 
 Source callers and context:
 
-- The direct caller of `engine.internal_decode(...)` at `254:33-255:69` is
-  `inner`, nested inside `Engine::decode`.
+- The six calls on `251:28-260:23` are inside `inner` (`:247`), so their direct
+  caller is `inner`.
+- The two calls at `263:9-263:36` (`inner(...)`) and `263:21-263:35`
+  (`input.as_ref()`) are directly in the default method body after `inner`
+  closes. Their direct caller is `Engine::decode` itself; the outer default
+  method is the same `Engine::decode`.
 - The outer default method is `engine::Engine::decode` (`src/engine/mod.rs:246`).
 - The target is `Engine::internal_decode` (`src/engine/mod.rs:91`).
 - The macro boundary is explicit: `vec![0; estimate.decoded_len_estimate()]`
@@ -87,16 +92,44 @@ Raw facts versus change query:
 - Case A separately records the opposite boundary: eight raw-fact calls but
   zero query references for the changed enclosing default method.
 
-Direct-caller capability: the query has no `directCaller` field. It does expose
-the call location and the outer `defaultMethod`. The source answer's direct
-caller is `inner`; this is reported as a capability gap, not inferred from the
-outer default method.
+Direct-caller capability: the real query has no `directCaller` field, so every
+row records **`CLI 未提供`**. It does expose the call location and the outer
+`defaultMethod`. The source answer's direct caller is `inner` for the four new
+case calls; this is reported as a capability gap, not inferred from the outer
+default method. When a `directCaller` field is present, the scorer checks its
+source caller name, file and line.
 
-### Negative control
+### Shared scoring path and counterexample
 
-The scorer rejects a record that names the outer `Engine::decode` as the direct
-caller (`outer-default-method-misreported`) and accepts the nested `inner`
-declaration. The control is in [evidence/summary.json](evidence/summary.json).
+The real query and both controls call the same `score_side` / `score_call`
+path. The controls start from a deep copy of the saved full candidate query and
+inject a `directCaller` into its first trait-candidate item:
+
+| Run | Input | Actual result |
+| --- | --- | --- |
+| Real query | no `directCaller` field | accepted; 4/4 calls correct; caller status `CLI 未提供`; failures `[]` |
+| Negative control, current scorer | first item gets outer `Engine::decode` (`:243`) | rejected; failures `calls:not-all-correct`, `calls:wrong`, `direct-caller:wrong`; offending call `src/engine/mod.rs:251:33` |
+| Positive control, current scorer | first item gets correct `inner` (`:244`) | accepted; 4/4 calls correct; caller status `provided-and-checked` |
+
+The negative run proves the whole acceptance fails and names the exact call
+point when the outer default method is misreported as the direct caller. The
+positive run proves the same path accepts the correct nested caller.
+
+Counterexample before and after the scoring-path revision: with the committed
+scorer at `5fdf60ae8`, the same injected outer caller was **ignored** and the
+first item stayed `correct` with `wrong: []`. With the current scorer it is
+`wrong` with `direct-caller`, `direct-caller-line`, `direct-caller-name`, and
+`outer-default-method-misreported`, and the whole acceptance fails at
+`src/engine/mod.rs:251:33`. The actual probe is in
+[counterexample-before-after.json](evidence/counterexample-before-after.json).
+Full injected queries are saved as
+[negative-control-query.json](evidence/negative-control-query.json) and
+[positive-control-query.json](evidence/positive-control-query.json); aggregate
+results are in [evidence/summary.json](evidence/summary.json).
+
+Freeze timing: `source-first.json` was written before the scored replay, but
+the commit contains no independent timestamp credential. **Freeze timing is
+not independently verified.**
 
 ## Reader path
 
@@ -134,8 +167,10 @@ python3 benchmarks/code-analysis-rust-call-query-acceptance/run.py \
   --out /tmp/rust-call-query-acceptance
 ```
 
-The script writes the full baseline and candidate query JSON, the scorer
-summary, and exits nonzero on a missed, wrong or overclaimed caller.
+The script writes the full baseline and candidate query JSON, both injected
+control queries, the scorer summary, and exits nonzero on a missed, wrong or
+overclaimed caller. It uses the same scoring path for the real query and both
+controls.
 
 ## Result
 
