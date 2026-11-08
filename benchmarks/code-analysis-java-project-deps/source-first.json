@@ -1,0 +1,271 @@
+{
+  "baseline": "b5b14e8a9666a4a92e8a71d844f788bb28041c56",
+  "project": {
+    "url": "https://github.com/qos-ch/slf4j",
+    "revision": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+    "hashes": {
+      "pom.xml": "d23bce9b06f606f1805991d22f67bf5b3bfada28a5a5c0613c7060960fb1bfe6",
+      "parent-pom.xml": "c2c7c62740550b4de5e2f546ec78896f895f5190dea6a35db7f57e8b92eeb364",
+      "slf4j-simple/pom.xml": "a275a67ab656e4d8a59b962abe126ce0a477d59f01e89c9f2c98c145c50bc412",
+      "slf4j-api/pom.xml": "a02ba4400b7ec14aa13f440c96b42786d36c8c9f6ebf9c36218dbcecefcb3256",
+      "slf4j-reload4j/pom.xml": "fe3472b190f4289bc620a4152fa682443d8283cb93db907e60feea9d608b721d",
+      "log4j-over-slf4j/pom.xml": "fe9b1f613883fe6959263a0fe95a41cc226cccadb531fc2f7ae2cc2a5a2d51ed",
+      "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java": "5f634a164ca114d4dca07b4ab9651db57ae7830b4d7cf0503d286f8d582a0306",
+      "log4j-over-slf4j/src/main/java/org/apache/log4j/MDC.java": "250423488915b14e3339c45e425040e7639c632c7b71bb9fc4ceb18a2ad6d798",
+      "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java": "47ad4804a9aca1a78ed9b62a281c0b70622d71ea37ea4a9c989a1eff9ca8d858",
+      "slf4j-api/src/main/java/org/slf4j/MDC.java": "03e98d147265014921b722e34af0b1993fb40058f6647698a3120fbd90a43eff",
+      "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java": "8eea36d951e1e8473e1376107d62c7af7d7c9d337dd7daeadbff75b417eb00c6",
+      "slf4j-reload4j/src/test/java/org/slf4j/reload4j/Reload4jMultithreadedInitializationTest.java": "78d8003d46a8b5e1448bebc202ae8439dbc4c6c57abc82f835f62c4b200b7a15",
+      "log4j-over-slf4j/src/main/java/org/apache/log4j/LogManager.java": "12d5fc53c973bc5f81888dbe58b6bfc056eca22b53674baf83be20e6bb73f049"
+    }
+  },
+  "stage": "Source/POM inspected before any project-dependency implementation. Same previously analyzed SLF4J corpus; two old known misses and two preservation sites reserved from initial dependency-rule tuning, not blind samples.",
+  "question": "Can a declared project jar/test-jar dependency justify the Simple->Api direct call and its captured test-parent context, without selecting unrelated sibling compatibility source?",
+  "cases": [
+    {
+      "id": "simple-reset-setup",
+      "cohort": "design-prior-known-miss",
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 53,
+        "column": 9,
+        "endLine": 53,
+        "endColumn": 36,
+        "text": "LoggerFactoryFriend.reset()"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+        "name": "reset",
+        "line": 43,
+        "column": 5
+      },
+      "targetHeader": "    static public void reset() {"
+    },
+    {
+      "id": "simple-reset-teardown",
+      "cohort": "design-prior-known-miss",
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 58,
+        "column": 9,
+        "endLine": 58,
+        "endColumn": 36,
+        "text": "LoggerFactoryFriend.reset()"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+        "name": "reset",
+        "line": 43,
+        "column": 5
+      },
+      "targetHeader": "    static public void reset() {"
+    },
+    {
+      "id": "bridge-mdc-put",
+      "cohort": "reserved-from-initial-dependency-rule-tuning-preservation",
+      "call": {
+        "file": "log4j-over-slf4j/src/main/java/org/apache/log4j/MDC.java",
+        "line": 25,
+        "column": 9,
+        "endLine": 25,
+        "endColumn": 38,
+        "text": "org.slf4j.MDC.put(key, value)"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/MDC.java",
+        "name": "put",
+        "line": 116,
+        "column": 5
+      },
+      "targetHeader": "    public static void put(String key, String val) throws IllegalArgumentException {"
+    },
+    {
+      "id": "bridge-mdc-clear",
+      "cohort": "reserved-from-initial-dependency-rule-tuning-preservation",
+      "call": {
+        "file": "log4j-over-slf4j/src/main/java/org/apache/log4j/MDC.java",
+        "line": 45,
+        "column": 9,
+        "endLine": 45,
+        "endColumn": 30,
+        "text": "org.slf4j.MDC.clear()"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/MDC.java",
+        "name": "clear",
+        "line": 206,
+        "column": 5
+      },
+      "targetHeader": "    public static void clear() {"
+    }
+  ],
+  "parentChain": [
+    "slf4j-simple/pom.xml -> ../parent-pom.xml -> pom.xml",
+    "slf4j-api/pom.xml -> ../parent-pom.xml -> pom.xml"
+  ],
+  "sourcePomFacts": {
+    "pom.xml": {
+      "groupId": "org.slf4j",
+      "artifactId": "slf4j-bom",
+      "version": "2.0.8-SNAPSHOT",
+      "parent": null,
+      "dependencies": []
+    },
+    "parent-pom.xml": {
+      "groupId": null,
+      "artifactId": "slf4j-parent",
+      "version": null,
+      "parent": {
+        "groupId": "org.slf4j",
+        "artifactId": "slf4j-bom",
+        "version": "2.0.8-SNAPSHOT",
+        "relativePath": "pom.xml"
+      },
+      "dependencies": [
+        {
+          "groupId": "junit",
+          "artifactId": "junit",
+          "version": "${junit.version}",
+          "type": null,
+          "scope": "test",
+          "classifier": null
+        }
+      ]
+    },
+    "slf4j-simple/pom.xml": {
+      "groupId": null,
+      "artifactId": "slf4j-simple",
+      "version": null,
+      "parent": {
+        "groupId": "org.slf4j",
+        "artifactId": "slf4j-parent",
+        "version": "2.0.8-SNAPSHOT",
+        "relativePath": "../parent-pom.xml"
+      },
+      "dependencies": [
+        {
+          "groupId": "org.slf4j",
+          "artifactId": "slf4j-api",
+          "version": null,
+          "type": null,
+          "scope": null,
+          "classifier": null
+        },
+        {
+          "groupId": "org.slf4j",
+          "artifactId": "slf4j-api",
+          "version": "${project.version}",
+          "type": "test-jar",
+          "scope": "test",
+          "classifier": null
+        }
+      ]
+    },
+    "slf4j-api/pom.xml": {
+      "groupId": null,
+      "artifactId": "slf4j-api",
+      "version": null,
+      "parent": {
+        "groupId": "org.slf4j",
+        "artifactId": "slf4j-parent",
+        "version": "2.0.8-SNAPSHOT",
+        "relativePath": "../parent-pom.xml"
+      },
+      "dependencies": []
+    },
+    "slf4j-reload4j/pom.xml": {
+      "groupId": null,
+      "artifactId": "slf4j-reload4j",
+      "version": null,
+      "parent": {
+        "groupId": "org.slf4j",
+        "artifactId": "slf4j-parent",
+        "version": "2.0.8-SNAPSHOT",
+        "relativePath": "../parent-pom.xml"
+      },
+      "dependencies": [
+        {
+          "groupId": "org.slf4j",
+          "artifactId": "slf4j-api",
+          "version": null,
+          "type": null,
+          "scope": null,
+          "classifier": null
+        },
+        {
+          "groupId": "ch.qos.reload4j",
+          "artifactId": "reload4j",
+          "version": null,
+          "type": null,
+          "scope": null,
+          "classifier": null
+        },
+        {
+          "groupId": "org.slf4j",
+          "artifactId": "slf4j-api",
+          "version": "${project.version}",
+          "type": "test-jar",
+          "scope": "test",
+          "classifier": null
+        }
+      ]
+    },
+    "log4j-over-slf4j/pom.xml": {
+      "groupId": null,
+      "artifactId": "log4j-over-slf4j",
+      "version": null,
+      "parent": {
+        "groupId": "org.slf4j",
+        "artifactId": "slf4j-parent",
+        "version": "2.0.8-SNAPSHOT",
+        "relativePath": "../parent-pom.xml"
+      },
+      "dependencies": [
+        {
+          "groupId": "org.slf4j",
+          "artifactId": "slf4j-api",
+          "version": null,
+          "type": null,
+          "scope": null,
+          "classifier": null
+        },
+        {
+          "groupId": "org.slf4j",
+          "artifactId": "slf4j-jdk14",
+          "version": null,
+          "type": null,
+          "scope": "test",
+          "classifier": null
+        }
+      ]
+    }
+  },
+  "expectedEvidence": [
+    "Root pom.xml declares reactor modules and org.slf4j:slf4j-bom:2.0.8-SNAPSHOT.",
+    "Named parent-pom.xml inherits that root and defines slf4j-parent; not every parent is named pom.xml.",
+    "Simple declares slf4j-api jar and test-jar dependencies. The latter has test scope and project.version; the former gets its version from inherited dependencyManagement.",
+    "LoggerFactoryFriend is in API main source; MultithreadedInitializationTest is API test source. Main/test source visibility must remain distinct.",
+    "Root lists both reload4j and compatibility modules, but reactor co-location does not create a dependency between them."
+  ],
+  "counterexamples": [
+    {
+      "call": {
+        "file": "slf4j-reload4j/src/test/java/org/slf4j/reload4j/Reload4jMultithreadedInitializationTest.java",
+        "line": 66,
+        "column": 40,
+        "endLine": 66,
+        "endColumn": 66,
+        "text": "LogManager.getRootLogger()"
+      },
+      "expectedCapturedTarget": null,
+      "reason": "reload4j module declares external ch.qos.reload4j1.2.22; do not select log4j-over-slf4j sibling source."
+    }
+  ],
+  "knownUnknowns": [
+    "Maven profiles/property/parent/dependency ambiguity must be visible, not guessed.",
+    "Gradle or custom source layouts need their own evidence; no generic classpath completeness claim.",
+    "Classpath/source candidates do not prove compilation, runtime loading or complete references.",
+    "No external build, Maven extension, test, annotation processor or project bytecode execution."
+  ],
+  "projectExecuted": false
+}

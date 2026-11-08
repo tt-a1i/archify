@@ -1,0 +1,59 @@
+{
+  "commands": [
+    {
+      "label": "changed-pom",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-java-project-deps/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/java-project-deps-source-final/capture",
+        "--root",
+        "$WORKSPACE/work/java-project-deps-freshness-source-final/changed-metadata-root",
+        "--entry",
+        "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "--function",
+        "SimpleLoggerMultithreadedInitializationTest.setup()",
+        "--question",
+        "Can the saved call evidence still establish a current source route?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/java-project-deps-freshness-source-final/changed-pom.json",
+        "--json"
+      ],
+      "exit": 1,
+      "coverage": "unavailable",
+      "entryFactsStatus": "resolution-input-changed",
+      "callModel": "java-static-lexical-v5"
+    },
+    {
+      "label": "saved-java4",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-java-project-deps/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/slf4j",
+        "--entry",
+        "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "--function",
+        "SimpleLoggerMultithreadedInitializationTest.setup()",
+        "--question",
+        "Can the saved call evidence still establish a current source route?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/java-project-deps-freshness-source-final/saved-java4.json",
+        "--json"
+      ],
+      "exit": 0,
+      "coverage": "available",
+      "entryFactsStatus": "valid",
+      "callModel": "java-static-lexical-v4"
+    }
+  ],
+  "projectExecuted": false
+}

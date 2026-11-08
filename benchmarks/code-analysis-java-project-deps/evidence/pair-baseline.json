@@ -1,0 +1,210 @@
+{
+  "expect": "baseline",
+  "command": [
+    "node",
+    "$WORKSPACE/work/archify-java-superclass/archify/bin/archify.mjs",
+    "code-analysis",
+    "task",
+    "--base-root",
+    "$WORKSPACE/work/java-project-deps-upstream/slf4j-99e356974859a4cac2f5e533de2d8232d9d5dbe6",
+    "--root",
+    "$WORKSPACE/work/java-project-deps-upstream/slf4j-1c13755b2520e511bc41b5c6fdc8bd6c58e529c0",
+    "--entry",
+    "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+    "--question",
+    "Which captured callers refer to this newly shared implementation, and what was absent before the migration?",
+    "--format",
+    "json",
+    "--out",
+    "$WORKSPACE/work/java-project-deps-pair-baseline/question.json",
+    "--json"
+  ],
+  "exit": 1,
+  "status": "partial",
+  "baseRevision": "99e356974859a4cac2f5e533de2d8232d9d5dbe6",
+  "headRevision": "1c13755b2520e511bc41b5c6fdc8bd6c58e529c0",
+  "definitionCoverage": {
+    "base": "not-captured",
+    "head": "available"
+  },
+  "pairedChangedDefinitions": 0,
+  "headOnlyReset": {
+    "reason": "head-only",
+    "side": "head",
+    "snapshotId": "2181d0ae562538d56af1db5fe3fd62291d3f79532f1573d5ef8302d920748aa1",
+    "definition": {
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+      "name": "reset",
+      "qualname": "LoggerFactoryFriend.reset()",
+      "kind": "methodDeclaration",
+      "line": 19,
+      "column": 5,
+      "endLine": 21,
+      "endColumn": 6,
+      "sourceRange": {
+        "line": 19,
+        "column": 5,
+        "endLine": 21,
+        "endColumn": 6,
+        "sha256": "dbbdbc7105e46802aff96e42331bee19906bc642fe25d62e39303b26522117a9"
+      },
+      "textSha256": "dbbdbc7105e46802aff96e42331bee19906bc642fe25d62e39303b26522117a9"
+    },
+    "knownReferences": {
+      "coverage": "available",
+      "total": 2,
+      "included": 2,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "2181d0ae562538d56af1db5fe3fd62291d3f79532f1573d5ef8302d920748aa1",
+          "factIndex": 4108,
+          "fact": {
+            "file": "slf4j-nop/src/test/java/org/slf4j/nop/MultithreadedInitializationTest.java",
+            "line": 59,
+            "column": 9,
+            "endLine": 59,
+            "endColumn": 36,
+            "resolution": "java-qualified-static-method",
+            "target": {
+              "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+              "name": "reset",
+              "line": 19,
+              "column": 5
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "slf4j-nop/src/test/java/org/slf4j/nop/MultithreadedInitializationTest.java",
+              "line": 59,
+              "column": 9,
+              "endLine": 59,
+              "endColumn": 36
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "2181d0ae562538d56af1db5fe3fd62291d3f79532f1573d5ef8302d920748aa1",
+          "factIndex": 4110,
+          "fact": {
+            "file": "slf4j-nop/src/test/java/org/slf4j/nop/MultithreadedInitializationTest.java",
+            "line": 65,
+            "column": 9,
+            "endLine": 65,
+            "endColumn": 36,
+            "resolution": "java-qualified-static-method",
+            "target": {
+              "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+              "name": "reset",
+              "line": 19,
+              "column": 5
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "slf4j-nop/src/test/java/org/slf4j/nop/MultithreadedInitializationTest.java",
+              "line": 65,
+              "column": 9,
+              "endLine": 65,
+              "endColumn": 36
+            }
+          }
+        }
+      ]
+    },
+    "unresolvedWithinSourceRange": {
+      "coverage": "available",
+      "total": 1,
+      "included": 1,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "2181d0ae562538d56af1db5fe3fd62291d3f79532f1573d5ef8302d920748aa1",
+          "factIndex": 1052,
+          "fact": {
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java",
+            "line": 20,
+            "column": 9,
+            "endLine": 20,
+            "endColumn": 30,
+            "resolution": "unresolved",
+            "reason": "unsupported-callee"
+          }
+        }
+      ],
+      "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+    }
+  },
+  "sourceLimits": [
+    {
+      "side": "base",
+      "capturedFiles": 246,
+      "unavailable": {
+        "total": 2,
+        "included": 2,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "file": "slf4j-log4j12/src/main/java/module-info.java",
+            "status": "parse-error",
+            "parseError": "parsing errors detected in line: 1, column: 1! Expecting: one of these possible Token sequences:"
+          },
+          {
+            "file": "slf4j-migrator/jcl/jclcontent.java",
+            "status": "parse-error",
+            "parseError": "parsing errors detected in line: 19, column: 1! Expecting: one of these possible Token sequences:"
+          }
+        ]
+      },
+      "parseErrors": 2
+    },
+    {
+      "side": "head",
+      "capturedFiles": 248,
+      "unavailable": {
+        "total": 1,
+        "included": 1,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "file": "slf4j-migrator/jcl/jclcontent.java",
+            "status": "parse-error",
+            "parseError": "parsing errors detected in line: 19, column: 1! Expecting: one of these possible Token sequences:"
+          }
+        ]
+      },
+      "parseErrors": 1
+    }
+  ],
+  "reasons": [
+    {
+      "code": "source-regions-unavailable",
+      "side": "base",
+      "count": 2,
+      "message": "Some captured source regions failed parsing or freshness checks; other valid regions remain available."
+    },
+    {
+      "code": "source-regions-unavailable",
+      "side": "head",
+      "count": 1,
+      "message": "Some captured source regions failed parsing or freshness checks; other valid regions remain available."
+    }
+  ],
+  "limits": [
+    "Supplemental post-rule real upstream added-definition migration; not a changed-body pair or blind sample.",
+    "Base entry absent, POM contents differ, and unrelated sources fail parsing. Partial/exit1 is retained; no two-sided ready claim.",
+    "Two Simple callers are source-frozen before this pair was analyzed. Remaining head references are post-output preservation observations, not additional designed positive samples."
+  ],
+  "projectExecuted": false
+}

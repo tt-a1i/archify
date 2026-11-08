@@ -19,10 +19,10 @@ const capture = root => { const {facts}=extractFacts(root,{language:'java'});ass
 
 test('Java explicit imported, same-package and full class paths navigate across files',t=>{
  const root=fixture(t,{'p/Api.java':api,'q/Calls.java':'package q; import p.Api; public class Calls { public void caller(){Api.run();p.Api.args("😀");} }','p/Local.java':'package p; public class Local { public void caller(){Api.run();} }'});
- const facts=capture(root);assert.equal(facts.callModel,'java-static-lexical-v4');assert.equal(facts.calls.length,3);
+ const facts=capture(root);assert.equal(facts.callModel,'java-static-lexical-v5');assert.equal(facts.calls.length,3);
  assert.ok(facts.calls.every(c=>c.resolution==='java-qualified-static-method'&&c.target.file==='p/Api.java'));
  const q=buildQuestion({root,facts,entry:'q/Calls.java',symbol:'Calls.caller()',question:'Where is the implementation?'});
- assert.equal(q.calls.bindingCoverage,'top-level-class-static-source-candidates-with-captured-superclass-value-guards');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
+ assert.equal(q.calls.bindingCoverage,'static-source-candidates-with-captured-parents-and-declared-direct-project-dependencies');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
  fs.appendFileSync(path.join(root,'p/Api.java'),'// changed\n');
  const stale=buildQuestion({root,facts,entry:'q/Calls.java',symbol:'Calls.caller()',question:'Still current?'});
  assert.ok(stale.calls.records.every(r=>r.targetNavigation.status!=='valid'));
@@ -77,7 +77,7 @@ public class Api {
  public static String choose(String x,String y){return "two";}
  public static String local(){return choose(null)+choose(null,"x");}
 }`,'q/Calls.java':'package q; import p.Api; public class Calls { public void call(){Api.choose(null);Api.choose(null,"x");} }'});
- const facts=capture(root);assert.equal(facts.callModel,'java-static-lexical-v4');
+ const facts=capture(root);assert.equal(facts.callModel,'java-static-lexical-v5');
  const external=facts.calls.filter(c=>c.file==='q/Calls.java');
  assert.deepEqual(external.map(c=>[c.resolution,c.target.file,c.target.line]),[['java-qualified-static-method','p/Api.java',3],['java-qualified-static-method','p/Api.java',4]]);
  const local=facts.calls.filter(c=>c.file==='p/Api.java');assert.deepEqual(local.map(c=>[c.resolution,c.target.line]),[['same-file-static-method',3],['same-file-static-method',4]]);

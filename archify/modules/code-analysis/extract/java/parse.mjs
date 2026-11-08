@@ -1,7 +1,8 @@
 // Parse only captured source text. No application code, build files or annotation
 // processors are executed. The CST keeps source offsets for evidence/navigation.
 import { lexAndParse } from 'java-parser';
-import { classifyRole, lineCount, snapshotSources, PACKAGE_MARKERS, JAVA_BUILD_MARKERS } from '../shared/files.mjs';
+import { matcher } from '../shared/glob.mjs';
+import { classifyRole, lineCount, snapshotFiles, packageMarkersIn, PACKAGE_MARKERS, JAVA_BUILD_MARKERS } from '../shared/files.mjs';
 
 export const PARSER = 'java-parser@3.0.1';
 export const isJavaSource = file => file.endsWith('.java');
@@ -12,7 +13,11 @@ export function typeName(node) {
 }
 
 export function parseSources(root, config, consume = unit => unit) {
-  const snapshot = snapshotSources(root, config, isJavaSource, [...PACKAGE_MARKERS, ...JAVA_BUILD_MARKERS]);
+  const markers = [...PACKAGE_MARKERS, ...JAVA_BUILD_MARKERS], included = matcher(config.include);
+  const captured = snapshotFiles(root, { ...config, include: [...(config.include || ['**/*']), '**/*.xml', '**/*.pom', ...markers.map(name => '**/' + name)] },
+    file => included(file) && isJavaSource(file) || /\.(?:xml|pom)$/.test(file) || markers.includes(file.slice(file.lastIndexOf('/') + 1)));
+  const snapshot = { contents: new Map([...captured].filter(([file]) => included(file) && isJavaSource(file))),
+    packageMarkers: packageMarkersIn([...captured.keys()],config,markers) };
   const files = [], units = [], parse_errors = [];
   for (const [file, bytes] of snapshot.contents) {
     let sourceText;
@@ -43,7 +48,7 @@ export function parseSources(root, config, consume = unit => unit) {
       units.push(consume({ file, sourceText, ...parsed }));
     }
   }
-  return { files, units, packageMarkers: snapshot.packageMarkers, parse_errors };
+  return { files, units, packageMarkers: snapshot.packageMarkers, parse_errors, metadataContents: captured };
 }
 
 // The parser retains literal spellings and original offsets. Escapes inside

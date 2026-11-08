@@ -1,0 +1,264 @@
+{
+  "expect": "baseline",
+  "score": {
+    "correct": 2,
+    "wrong": 0,
+    "missed": 2,
+    "unknown-external-target": 1
+  },
+  "units": [
+    {
+      "id": "simple-reset-setup",
+      "cohort": "design-prior-known-miss",
+      "status": "missed",
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 53,
+        "column": 9,
+        "endLine": 53,
+        "endColumn": 36,
+        "resolution": "unresolved",
+        "reason": "java-inherited-build-scope"
+      },
+      "navigation": "unresolved"
+    },
+    {
+      "id": "simple-reset-teardown",
+      "cohort": "design-prior-known-miss",
+      "status": "missed",
+      "call": {
+        "file": "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "line": 58,
+        "column": 9,
+        "endLine": 58,
+        "endColumn": 36,
+        "resolution": "unresolved",
+        "reason": "java-inherited-build-scope"
+      },
+      "navigation": "unresolved"
+    },
+    {
+      "id": "bridge-mdc-put",
+      "cohort": "reserved-from-initial-dependency-rule-tuning-preservation",
+      "status": "correct",
+      "call": {
+        "file": "log4j-over-slf4j/src/main/java/org/apache/log4j/MDC.java",
+        "line": 25,
+        "column": 9,
+        "endLine": 25,
+        "endColumn": 38,
+        "resolution": "java-qualified-static-method",
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/MDC.java",
+          "name": "put",
+          "line": 116,
+          "column": 5
+        }
+      },
+      "navigation": "valid"
+    },
+    {
+      "id": "bridge-mdc-clear",
+      "cohort": "reserved-from-initial-dependency-rule-tuning-preservation",
+      "status": "correct",
+      "call": {
+        "file": "log4j-over-slf4j/src/main/java/org/apache/log4j/MDC.java",
+        "line": 45,
+        "column": 9,
+        "endLine": 45,
+        "endColumn": 30,
+        "resolution": "java-qualified-static-method",
+        "target": {
+          "file": "slf4j-api/src/main/java/org/slf4j/MDC.java",
+          "name": "clear",
+          "line": 206,
+          "column": 5
+        }
+      },
+      "navigation": "valid"
+    },
+    {
+      "id": "external-reload4j",
+      "cohort": "source-known-counterexample",
+      "status": "unknown-external-target",
+      "call": {
+        "file": "slf4j-reload4j/src/test/java/org/slf4j/reload4j/Reload4jMultithreadedInitializationTest.java",
+        "line": 66,
+        "column": 40,
+        "endLine": 66,
+        "endColumn": 66,
+        "resolution": "unresolved",
+        "reason": "java-inherited-build-scope"
+      },
+      "navigation": "unresolved"
+    }
+  ],
+  "commands": [
+    {
+      "label": "check",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-java-superclass/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "$WORKSPACE/work/samples/slf4j",
+        "--language",
+        "java",
+        "--fail-on",
+        "never",
+        "--out",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/capture",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 4.275368249975145
+    },
+    {
+      "label": "question-0",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-java-superclass/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/slf4j",
+        "--entry",
+        "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "--function",
+        "SimpleLoggerMultithreadedInitializationTest.setup()",
+        "--question",
+        "Which captured static source is justified by this project dependency route, and what remains unknown?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/question-0.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.6306779161095619
+    },
+    {
+      "label": "question-1",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-java-superclass/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/slf4j",
+        "--entry",
+        "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java",
+        "--function",
+        "SimpleLoggerMultithreadedInitializationTest.tearDown()",
+        "--question",
+        "Which captured static source is justified by this project dependency route, and what remains unknown?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/question-1.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.6342607500264421
+    },
+    {
+      "label": "question-2",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-java-superclass/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/slf4j",
+        "--entry",
+        "log4j-over-slf4j/src/main/java/org/apache/log4j/MDC.java",
+        "--function",
+        "MDC.put(String,String)",
+        "--question",
+        "Which captured static source is justified by this project dependency route, and what remains unknown?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/question-2.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.6346004579681903
+    },
+    {
+      "label": "question-3",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-java-superclass/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/slf4j",
+        "--entry",
+        "log4j-over-slf4j/src/main/java/org/apache/log4j/MDC.java",
+        "--function",
+        "MDC.clear()",
+        "--question",
+        "Which captured static source is justified by this project dependency route, and what remains unknown?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/question-3.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.6282394169829786
+    },
+    {
+      "label": "question-4",
+      "command": [
+        "node",
+        "$WORKSPACE/work/archify-java-superclass/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/capture",
+        "--root",
+        "$WORKSPACE/work/samples/slf4j",
+        "--entry",
+        "slf4j-reload4j/src/test/java/org/slf4j/reload4j/Reload4jMultithreadedInitializationTest.java",
+        "--function",
+        "Reload4jMultithreadedInitializationTest.getRecordedEvents()",
+        "--question",
+        "Which captured static source is justified by this project dependency route, and what remains unknown?",
+        "--format",
+        "json",
+        "--out",
+        "$WORKSPACE/work/java-project-deps-baseline-replay/question-4.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.6262718749931082
+    }
+  ],
+  "scope": {
+    "model": "java-static-lexical-v4",
+    "files": 260,
+    "calls": 4856,
+    "functions": 1608,
+    "parseErrors": [
+      {
+        "path": "slf4j-migrator/jcl/jclcontent.java",
+        "message": "parsing errors detected in line: 19, column: 1! Expecting: one of these possible Token sequences:"
+      }
+    ],
+    "metadataFiles": 0,
+    "metadataBytes": 0,
+    "projects": 0,
+    "unknowns": []
+  },
+  "limits": [
+    "Previously exposed corpus, not blind. Two preservation calls were reserved only from initial dependency-rule tuning.",
+    "Two correct existing targets are not new accuracy gains. Default fail-on=warning also returns 1 for an existing complexity warning; this replay selects --fail-on never explicitly.",
+    "Declared direct candidates do not prove complete classpaths, compilation, runtime dispatch or total impact."
+  ],
+  "projectExecuted": false
+}
