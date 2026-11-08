@@ -1,0 +1,170 @@
+{
+  "baseRevision": "99e356974859a4cac2f5e533de2d8232d9d5dbe6",
+  "headRevision": "1c13755b2520e511bc41b5c6fdc8bd6c58e529c0",
+  "stage": "Post-rule supplemental source-first pair; inspected before running either analyzer on these revisions. Not a rule-design holdout.",
+  "source": {
+    "99e356974859a4cac2f5e533de2d8232d9d5dbe6": {
+      "pom.xml": {
+        "sha256": "a304d7afdd9a99e1253859c1ecb9ac7e99e0435bc4960c7af30fea936a46c9d7",
+        "sourceAnswerLines": [
+          {
+            "line": 9,
+            "text": "  <version>1.8.0-SNAPSHOT</version>"
+          },
+          {
+            "line": 62,
+            "text": "    <module>slf4j-api</module>"
+          },
+          {
+            "line": 63,
+            "text": "    <module>slf4j-simple</module>"
+          },
+          {
+            "line": 91,
+            "text": "        <artifactId>slf4j-api</artifactId>"
+          }
+        ]
+      },
+      "slf4j-api/pom.xml": {
+        "sha256": "e6f9511c92943e9f426d08d111b5fb76fe4842143f59306217c9f9a2aadaa968",
+        "sourceAnswerLines": [
+          {
+            "line": 10,
+            "text": "    <version>1.8.0-SNAPSHOT</version>"
+          },
+          {
+            "line": 13,
+            "text": "  <artifactId>slf4j-api</artifactId>"
+          }
+        ]
+      },
+      "slf4j-simple/pom.xml": {
+        "sha256": "eeef14b5bca8ef78ea4063972b80ff827a8e87012237fc8199a28c2655c3fd17",
+        "sourceAnswerLines": [
+          {
+            "line": 10,
+            "text": "    <version>1.8.0-SNAPSHOT</version>"
+          },
+          {
+            "line": 22,
+            "text": "      <artifactId>slf4j-api</artifactId>"
+          },
+          {
+            "line": 27,
+            "text": "      <artifactId>slf4j-api</artifactId>"
+          },
+          {
+            "line": 28,
+            "text": "      <type>test-jar</type>"
+          }
+        ]
+      },
+      "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java": {
+        "absent": true
+      },
+      "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java": {
+        "absent": true
+      },
+      "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java": {
+        "absent": true
+      }
+    },
+    "1c13755b2520e511bc41b5c6fdc8bd6c58e529c0": {
+      "pom.xml": {
+        "sha256": "92d64fdca54ef5f76b68f32b38f8488ce1af1e6256ab84ceee155da2897d738b",
+        "sourceAnswerLines": [
+          {
+            "line": 9,
+            "text": "  <version>1.8.0-SNAPSHOT</version>"
+          },
+          {
+            "line": 62,
+            "text": "    <module>slf4j-api</module>"
+          },
+          {
+            "line": 63,
+            "text": "    <module>slf4j-simple</module>"
+          },
+          {
+            "line": 91,
+            "text": "        <artifactId>slf4j-api</artifactId>"
+          }
+        ]
+      },
+      "slf4j-api/pom.xml": {
+        "sha256": "e6f9511c92943e9f426d08d111b5fb76fe4842143f59306217c9f9a2aadaa968",
+        "sourceAnswerLines": [
+          {
+            "line": 10,
+            "text": "    <version>1.8.0-SNAPSHOT</version>"
+          },
+          {
+            "line": 13,
+            "text": "  <artifactId>slf4j-api</artifactId>"
+          }
+        ]
+      },
+      "slf4j-simple/pom.xml": {
+        "sha256": "eeef14b5bca8ef78ea4063972b80ff827a8e87012237fc8199a28c2655c3fd17",
+        "sourceAnswerLines": [
+          {
+            "line": 10,
+            "text": "    <version>1.8.0-SNAPSHOT</version>"
+          },
+          {
+            "line": 22,
+            "text": "      <artifactId>slf4j-api</artifactId>"
+          },
+          {
+            "line": 27,
+            "text": "      <artifactId>slf4j-api</artifactId>"
+          },
+          {
+            "line": 28,
+            "text": "      <type>test-jar</type>"
+          }
+        ]
+      },
+      "slf4j-api/src/main/java/org/slf4j/LoggerFactoryFriend.java": {
+        "sha256": "1fde93e42bcf2fcdf2d25cd7096b6877c9eaad3550f98f7fe65d803bb8a7d4fc",
+        "sourceAnswerLines": [
+          {
+            "line": 14,
+            "text": "public class LoggerFactoryFriend {"
+          },
+          {
+            "line": 19,
+            "text": "    static public void reset() {"
+          },
+          {
+            "line": 20,
+            "text": "        LoggerFactory.reset();"
+          }
+        ]
+      },
+      "slf4j-api/src/test/java/org/slf4j/testHarness/MultithreadedInitializationTest.java": {
+        "sha256": "80ce050fa3e7580faf986c3876e7b7bdda11c89a37c3648ef088f898bdd29d94",
+        "sourceAnswerLines": []
+      },
+      "slf4j-simple/src/test/java/org/slf4j/simple/SimpleLoggerMultithreadedInitializationTest.java": {
+        "sha256": "3bb7c8cb56d89e89766d2dc6b37131ec889d2b5e0404207e17d77b6fe916e9d3",
+        "sourceAnswerLines": [
+          {
+            "line": 38,
+            "text": "public class SimpleLoggerMultithreadedInitializationTest extends MultithreadedInitializationTest {"
+          },
+          {
+            "line": 56,
+            "text": "        LoggerFactoryFriend.reset();"
+          },
+          {
+            "line": 61,
+            "text": "        LoggerFactoryFriend.reset();"
+          }
+        ]
+      }
+    }
+  },
+  "question": "When shared LoggerFactoryFriend.reset is introduced and module-local helpers are removed, which direct cross-module callers can be recovered on the head? Base entry is absent; report that limitation instead of pretending a two-sided ready comparison.",
+  "projectExecuted": false
+}
