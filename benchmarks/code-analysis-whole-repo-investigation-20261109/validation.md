@@ -63,6 +63,14 @@ scripts/build-zip.sh /tmp/archify-whole-repo-investigation.zip
   `cargo check -p clap_builder` and 83 library tests pass; re-analysis drops
   28 → 27 findings and 4 → 3 import cycles.
 
+## Review delivery
+
+Draft PR #1303 adds the two commits after `2877c157` on
+`codex/whole-repo-investigation`. The Code Analysis module is absent from
+`main`, so the review base is `codex/code-analysis-labs-review-candidate`, the
+review head of #1301. The stack does not retarget or edit #1301, and nothing is
+merged.
+
 ## Not validated
 
 - No maintainer feedback was obtained for any case, so adoption is not claimed.
