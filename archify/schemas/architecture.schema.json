@@ -141,7 +141,16 @@
           "route": { "enum": ["auto", "straight", "orthogonal-h", "orthogonal-v"] },
           "via": {
             "type": "array",
-            "items": { "$ref": "common.schema.json#/$defs/point" }
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "$ref": "#/$defs/viaCoordinate" },
+                { "$ref": "#/$defs/viaCoordinate" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
           },
           "labelAt": { "$ref": "common.schema.json#/$defs/point" },
           "labelDx": { "type": "number" },
@@ -152,5 +161,21 @@
       }
     },
     "cards": { "$ref": "common.schema.json#/$defs/cards" }
+  },
+  "$defs": {
+    "viaCoordinate": {
+      "anyOf": [
+        { "type": "number" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["anchor"],
+          "properties": {
+            "anchor": { "enum": ["from", "to"] },
+            "offset": { "type": "number" }
+          }
+        }
+      ]
+    }
   }
 }
