@@ -136,7 +136,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v10');
+ assert.equal(facts.callModel,'rust-source-direct-v12');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -314,7 +314,7 @@ pub fn object(x: &dyn Left) { x.act(); }
 pub fn ambiguous(x: &A) { x.act(); }
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v10');
+ assert.equal(facts.callModel,'rust-source-direct-v12');
  const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
  assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
  assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
@@ -419,6 +419,226 @@ fn concrete(s: &S) -> bool { s.enabled() }
  assert.equal(ref.fact.target.column,8);
  assert.equal(ref.fact.directCaller.name,'accept');
  assert.equal(ref.fact.directCaller.kind,'function');
+});
+
+test('Rust default body self-calls bind the enclosing trait declaration only', t => {
+ const body = (result) => `pub trait Gate {
+    fn base(&self) -> u8 { ${result} }
+    fn via(&self) -> u8 { self.base() }
+    fn other(&self) -> u8 { self.missing() }
+}
+pub struct S;
+impl Gate for S { fn base(&self) -> u8 { 2 } }
+pub struct Plain;
+impl Gate for Plain {}
+fn concrete(s: &S) -> u8 { s.base() }
+fn plain(p: &Plain) -> u8 { p.base() }
+`;
+ const root=fixture(t,{'src/lib.rs':body('1')});
+ const headRoot=fixture(t,{'src/lib.rs':body('3')});
+ const facts=capture(headRoot);
+ const via=facts.calls.find(call=>call.directCaller?.name==='via');
+ assert.ok(via,'the self-call in the default body is captured');
+ assert.equal(via.resolution,'rust-trait-method-candidate');
+ assert.equal(via.target.line,2);
+ assert.equal(via.target.name,'base');
+ assert.equal(via.directCaller.kind,'trait-default-method');
+ const other=facts.calls.find(call=>call.directCaller?.name==='other');
+ assert.ok(other,'a self-call to a method outside the trait is still captured');
+ assert.equal(other.resolution,'unresolved');
+ assert.equal(other.target,undefined,'the current trait is not claimed for an unknown method');
+ const plain=facts.calls.find(call=>call.directCaller?.name==='plain');
+ assert.ok(plain,'a concrete call without an override reaches the inherited default');
+ assert.equal(plain.resolution,'rust-trait-method-candidate');
+ assert.equal(plain.target.line,2);
+ const concrete=facts.calls.find(call=>call.directCaller?.name==='concrete');
+ assert.ok(concrete,'a concrete override call resolves to the impl body');
+ assert.equal(concrete.resolution,'rust-trait-impl');
+ assert.equal(concrete.target.line,7);
+ const settings=config();
+ const pair=buildChangeQuestion({root:headRoot,baseRoot:root,base:captureChangeSide(root,settings,'rust'),head:captureChangeSide(headRoot,settings,'rust'),config:settings,entry:'src/lib.rs',question:'Who calls the changed default?'});
+ assert.equal(pair.status,'ready');
+ const refs=pair.changedDefinitions.items[0].head.knownReferences;
+ assert.deepEqual(refs.items.map(record=>record.fact.directCaller.name),['via','plain'],'the override call is not a reference to the default body');
+});
+
+test('Rust zero-argument impl-body macros expose forwarding calls as candidates', t => {
+ const source=`pub trait Gate { fn check(&self) -> u8 { 1 } }
+macro_rules! forward {
+    () => {
+        fn check(&self) -> u8 { (**self).check() }
+    };
+}
+impl<T: Gate + ?Sized> Gate for &mut T { forward!(); }
+impl<T: Gate + ?Sized> Gate for Box<T> { forward!(); }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const calls=facts.calls.filter(call=>call.line===4);
+ assert.equal(calls.length,1,'one physical template position is kept for both impls');
+ assert.equal(calls[0].resolution,'rust-trait-method-candidate');
+ assert.equal(calls[0].target.line,1);
+ assert.equal(calls[0].target.name,'check');
+ assert.equal(calls[0].directCaller.kind,'macro-generated-method');
+ assert.equal(calls[0].directCaller.line,4);
+ assert.ok(calls[0].directCaller.qualname.endsWith('::forward!::check'),'caller names the template, not the first impl');
+ assert.deepEqual(calls[0].macroTemplate.definition,{file:'src/lib.rs',name:'forward',line:2,column:14});
+ assert.deepEqual(calls[0].macroTemplate.expansions.map(origin=>[origin.line,origin.implLine,origin.selfType.replace(/\s/g,''),origin.trait]).sort(),[[7,7,'&mutT','Gate'],[8,8,'Box<T>','Gate']]);
+ const edges=facts.traitImplementations.filter(edge=>edge.implementation.name==='check');
+ assert.equal(edges.length,2,'both generated forwarding methods are inventoried');
+});
+
+test('Rust impl-body macro calls respect invocation, method, impl and expression cfg', t => {
+ const source=`pub fn target() {}
+macro_rules! invocation { () => { fn run() { target(); } }; }
+macro_rules! method { () => { #[cfg(feature="chosen")] fn run() { target(); } }; }
+macro_rules! outer { () => { fn run() { target(); } }; }
+macro_rules! expression { () => { fn run() { #[cfg(feature="chosen")] target(); } }; }
+macro_rules! unknown { () => { fn run() { target(); } }; }
+struct A; struct B; struct C; struct D; struct E;
+impl A { #[cfg_attr(not(feature="chosen"), cfg(any()))] invocation!(); }
+impl B { method!(); }
+#[cfg(feature="chosen")] impl C { outer!(); }
+impl D { expression!(); }
+impl E { #[cfg(build_unknown)] unknown!(); }
+macro_rules! nested { () => { fn run() { target(); } }; }
+struct F;
+impl F { #[cfg_attr(all(), cfg_attr(not(feature="chosen"), cfg(any())))] nested!(); }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ for(const enabled of [false,true]){
+  const facts=capture(root,{rust:{offline:false,features:{sample:enabled?['chosen']:[]}}});
+  assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+  assert.deepEqual(facts.calls.filter(call=>call.target?.name==='target').map(call=>call.line).sort((a,b)=>a-b),enabled?[2,3,4,5,13]:[]);
+  assert.deepEqual(facts.calls.map(call=>call.line).sort((a,b)=>a-b),enabled?[2,3,4,5,6,13]:[6],'excluded calls are absent, not merely unresolved');
+  const unknown=facts.calls.find(call=>call.line===6);
+  assert.equal(unknown.resolution,'unresolved');
+  assert.equal(unknown.reason,'rust-cfg-unselected');
+  assert.equal(unknown.target,undefined);
+  assert.equal(unknown.macroTemplate.expansions[0].line,12);
+ }
+});
+
+test('Rust shared macro positions preserve both origins without choosing divergent trait targets', t => {
+ const source=`pub trait Left { fn check(&self) -> u8 { 1 } }
+pub trait Right { fn check(&self) -> u8 { 2 } }
+macro_rules! forward { () => { fn check(&self) -> u8 { (**self).check() } }; }
+impl<T: Left + ?Sized> Left for &mut T { forward!(); }
+impl<T: Right + ?Sized> Right for Box<T> { forward!(); }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const [call]=facts.calls;
+ assert.equal(facts.calls.length,1);
+ assert.equal(call.resolution,'unresolved');
+ assert.equal(call.reason,'rust-context-dependent');
+ assert.equal(call.target,undefined);
+ assert.ok(call.directCaller.qualname.endsWith('::forward!::check'));
+ assert.deepEqual(call.macroTemplate.expansions.map(origin=>origin.trait).sort(),['Left','Right']);
+ const conditional=fixture(t,{'src/lib.rs':source.replace('Right for Box<T> { forward!(); }','Right for Box<T> { #[cfg(feature="chosen")] forward!(); }')});
+ const selected=capture(conditional).calls[0];
+ assert.equal(selected.target.line,1,'a disabled competing expansion does not contribute a target or origin');
+ assert.deepEqual(selected.macroTemplate.expansions.map(origin=>origin.trait),['Left']);
+ const uncertain=fixture(t,{'src/lib.rs':source.replace('Right for Box<T> { forward!(); }','Right for Box<T> { #[cfg(build_unknown)] forward!(); }')});
+ const unknown=capture(uncertain).calls[0];
+ assert.equal(unknown.resolution,'unresolved');
+ assert.equal(unknown.target,undefined,'an unknown competing expansion cannot be discarded to select Left');
+ assert.equal(unknown.macroTemplate.expansions.length,2);
+});
+
+test('Rust shared-file template callers do not discard an agreed target', t => {
+ const root=fixture(t,{'src/lib.rs':`pub fn target() {}
+#[path="shared.rs"] mod left;
+#[path="shared.rs"] mod right;
+`,'src/shared.rs':`macro_rules! forward { () => { pub fn run() { crate::target(); } }; }
+struct A;
+impl A { forward!(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.calls.length,1);
+ const [call]=facts.calls;
+ assert.equal(call.target.file,'src/lib.rs');
+ assert.equal(call.target.name,'target');
+ assert.equal(call.directCaller,undefined,'a shared source does not choose one module caller identity');
+ assert.equal(call.macroTemplate.definition.name,'forward');
+ assert.equal(call.macroTemplate.expansions.length,1,'physical expansion sites remain deduplicated');
+});
+
+test('Rust cfg-unknown macro accessors cannot establish return-type evidence', t => {
+ const source=`pub trait Left { fn enabled(&self) -> bool { true } }
+pub trait Right { fn enabled(&self) -> bool { false } }
+struct A; struct B; struct W;
+impl Left for A {} impl Right for B {}
+impl AsRef<A> for W { fn as_ref(&self) -> &A { &A } }
+macro_rules! accessor_b { () => { fn as_ref(&self) -> &B { &B } }; }
+#[cfg(build_unknown)] impl AsRef<B> for W { accessor_b!(); }
+macro_rules! check { () => { fn check(&self) -> bool { self.as_ref().enabled() } }; }
+impl W { check!(); }
+`;
+ for(const attribute of ['#[cfg(build_unknown)]','#[cfg(any())]']){
+  const root=fixture(t,{'src/lib.rs':source.replace('#[cfg(build_unknown)]',attribute)});
+  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+  const call=facts.calls.find(call=>call.line===8&&call.target?.name==='enabled')??facts.calls.find(call=>call.line===8);
+  if(attribute==='#[cfg(any())]') assert.equal(call.target.line,1,'excluded competitors do not block known accessors');
+  else {
+   assert.equal(call.resolution,'unresolved');
+   assert.equal(call.target,undefined,'unknown competitors prevent selecting the active accessor target');
+  }
+ }
+ const root=fixture(t,{'src/lib.rs':`pub trait Gate { fn enabled(&self) -> bool { true } }
+struct A; struct W;
+impl Gate for A {}
+macro_rules! accessor { () => { fn as_ref(&self) -> &A { &A } }; }
+impl W { #[cfg(build_unknown)] accessor!(); }
+macro_rules! check { () => { fn check(&self) -> bool { self.as_ref().enabled() } }; }
+impl W { check!(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const calls=facts.calls.filter(call=>call.line===6);
+ assert.equal(calls.length,2);
+ assert.ok(calls.every(call=>call.resolution==='unresolved'&&!call.target),'an unknown inherent accessor cannot lend a known return type');
+});
+
+test('Rust unknown generated trait implementations block method and qualified targets', t => {
+ const root=fixture(t,{'src/lib.rs':`struct W<T>(T);
+trait Gate { fn check(&self) {} }
+impl Gate for W<u8> { fn check(&self) {} }
+macro_rules! methods { () => { fn check(&self) {} }; }
+impl Gate for W<u16> { #[cfg(build_unknown)] methods!(); }
+fn caller(w: &W<u16>) {
+    w.check();
+    <W<u16> as Gate>::check(w);
+}
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.deepEqual(facts.calls.map(call=>call.line),[7,8]);
+ assert.ok(facts.calls.every(call=>call.resolution==='unresolved'&&!call.target),'an unknown specialization cannot disappear and select the other implementation');
+});
+
+test('Rust impl-body macro expansion keeps unsupported invocations and local derefs unknown', t => {
+ const source=`pub trait Gate { fn check(&self) -> u8 { 1 } }
+macro_rules! forward {
+    ($arg:expr) => {
+        fn check(&self) -> u8 { (**self).check() }
+    };
+}
+impl<T: Gate + ?Sized> Gate for &mut T { forward!(1); }
+fn local<G: Gate>(g: &mut G) -> u8 { (**g).check() }
+macro_rules! zero {
+    () => {
+        fn zeroed(&self) -> u8 { (**self).zeroed() }
+    };
+}
+impl<T: Gate + ?Sized> Gate for Box<T> { fn extra(&self) {} zero!(); }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.calls.filter(call=>call.line===4).length,0,'a non-empty matcher is not expanded');
+ assert.equal(facts.calls.filter(call=>call.line===12).length,0,'a macro mixed with other impl items is not treated as the whole body');
+ const local=facts.calls.find(call=>call.directCaller?.name==='local');
+ assert.ok(local,'the local deref call is captured');
+ assert.equal(local.resolution,'unresolved');
+ assert.equal(local.target,undefined,'deref of a local generic is not claimed without proof');
 });
 
 test('Rust method receiver fields resolve trait bounds and unique concrete impls', t => {

@@ -1,0 +1,43 @@
+Independent reader report — revision-v12
+
+Scope and execution
+- Read the named sample source and fresh normal-CLI output. Did not read benchmark answers/cases, pre-existing evidence, Archify implementation/diffs, or other-agent reports. A general CLI knowledge card was consulted; no benchmark knowledge was opened. No product edits, builds/tests, installations, or commits.
+- Verified the requested output parent with ls before creating reader/.
+- Both queries used the exact question: Who calls the changed method?
+- bytes: exit 0, status ready; 18 captured files per side, no parse errors.
+- futures: exit 1, status partial (source-regions-unavailable), but wrote valid JSON. Head reports a parse error in /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-head/futures-util/src/task/arc_wake.rs: cannot parse string into token stream. This file was not investigated or edited.
+- Both outputs report orientation-only, rust-source-direct-v12, sourceIdentity valid, and source-import-model-only attribution. The task is entry-file scoped, not restricted to one method; this report isolates the requested methods.
+
+1. bytes — Buf::try_get_int
+All following coordinates are in /private/tmp/archify-batch-20261108/samples/bytes-try-get-int-head/src/buf/buf_impl.rs. The corresponding base file is /private/tmp/archify-batch-20261108/samples/bytes-try-get-int-base/src/buf/buf_impl.rs; the relevant caller/template/declaration coordinates are the same.
+
+- Template call: (**self).try_get_int(nbytes), line 2836, inside the generated try_get_int method at 2835. Its template is macro_rules! deref_forward_buf, defined at 2461. This is one physical template call, not one ordinary concrete caller and not evidence of recursive execution of the trait default.
+- Expansion sites: deref_forward_buf!() at 2887 in impl<T: Buf + ?Sized> Buf for &mut T (impl begins 2886), and at 2891 in impl<T: Buf + ?Sized> Buf for Box<T> (impl begins 2890). These generate two forwarding implementations from the same method/template coordinates.
+- Ordinary direct source caller: Buf::try_get_int_ne, declaration 2156, calls self.try_get_int(nbytes) at 2158. This call is in the cfg!(target_endian = "big") branch at 2157. The CLI capture reports a little-endian host configuration, so this lexical reference must not be described as execution on that configuration.
+- Identifiable target declaration: Buf (trait at 122), method Buf::try_get_int at 2086. Both CLI reference facts anchor this declaration with resolution rust-trait-method-candidate. The two generated wrapper implementations are identifiable from their expansion sites, but are not thereby established as the concrete target of either call.
+- Runtime implementation: NOT determined. The template forwards to generic T: Buf + ?Sized; the ordinary call uses generic Self. The trait declaration/default body is known, but receiver instantiation, overrides, and any dynamic dispatch are not established.
+- Query agreement: the requested trait method has exactly two knownReferences per side, with neither omitted: ordinary caller at 2158 and template at 2836. directCaller, macroTemplate.definition, and both macroTemplate.expansions agree with source. The empty traitCandidates list is explicitly not-applicable for the trait declaration, not proof that no implementations exist.
+
+2. futures — AsyncRead::poll_vectored_read
+Template/declaration coordinates are in /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-head/futures-io/src/lib.rs; the corresponding base file is /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-base/futures-io/src/lib.rs. Relevant line numbers are unchanged; base uses lw/LocalWaker and head uses waker/Waker.
+
+- Template call: (**self).poll_vectored_read(waker, vec), line 259, inside generated method poll_vectored_read at 256. Template: macro_rules! deref_async_read at 244.
+- Expansion sites: deref_async_read!() at 265 in impl<T: ?Sized + AsyncRead> AsyncRead for Box<T> (264), and at 269 in impl<'a, T: ?Sized + AsyncRead> AsyncRead for &'a mut T (268). The generated methods share template coordinates; these are two separate wrapper implementation contexts.
+- Ordinary direct source caller: <ReadHalf<R> as AsyncRead>::poll_vectored_read at /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-head/futures-util/src/io/split.rs:46, in the impl at 39. Its closure calls l.poll_vectored_read(waker, vec) at 49. The closure, not the named helper's body, contains the method call. lock_and_then (19–31) invokes the closure on successful lock acquisition; its FnOnce(&mut T, &Waker) bound at 24, ReadHalf.handle: BiLock<T> at 9–10, and R: AsyncRead at 39 establish the generic receiver context. Base has the same caller at /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-base/futures-util/src/io/split.rs:46–49.
+- Identifiable declarations: AsyncRead trait at lib.rs:79 and its poll_vectored_read default method at 136; generated Box<T> and &'a mut T method bodies at template line 256 with the expansion contexts above; and the ReadHalf<R> implementation method at split.rs:46. The last is established from source, not from the task's caller list. These are declaration/implementation anchors, not an exhaustive or selected runtime target set.
+- Runtime implementation: NOT determined. The template's inner T and the closure's R are generic AsyncRead receivers. Nothing here proves whether a default, wrapper, ReadHalf, downstream override, or trait-object implementation actually executes. In particular, calling this trait method does not prove execution of the changed default body.
+- Missing query proof: the trait method's knownReferences contains only the template at 259 on each side (total 1, omitted 0). It does NOT include split.rs:49 or identify ReadHalf as the ordinary caller, even though split.rs is listed in selectedFiles on both sides. Source supplies this missing relationship. The query alone does not explain the omission; I do not attribute it to the separate arc_wake parse error or guess an extractor cause.
+- The generated &'a mut T method's traitCandidates separately identifies the trait declaration, lists Box<T> and &'a mut T implementation anchors, and explicitly says runtimeTarget: not-determined. These are not definite incoming runtime calls and do not supply the missing ReadHalf caller.
+
+Confidence and boundaries
+High confidence in all named source locations, template ownership, expansion sites, and the two ordinary caller relationships after checking source on both sides. High confidence that the query does not determine concrete runtime implementations. Caller completeness is not established: capture excludes tests/other configurations, Rust compilation and runtime behavior were not checked, futures is partial, and the selected futures source contains a caller absent from its knownReferences. No claim that the listed declarations cover every downstream implementation.
+
+Deliverables and reproduction
+Directory: /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/reader/
+Raw outputs: bytes-task.json and futures-task.json (unmodified CLI artifacts); corresponding *-cli.stdout.txt and *-cli.stderr.txt preserve command output. Both stdout files are empty; status messages are on stderr.
+Commands: reproduce.sh contains the exact CLI invocations, roots, entries, question, and --out paths. Re-run individually:
+  bash /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/reader/reproduce.sh bytes
+  bash /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/reader/reproduce.sh futures
+The futures command currently exits 1 because of its documented partial capture; its JSON is still usable within those limits. Re-running overwrites only this reader's query/log files.
+Focused query records, source excerpts with line numbers, and SHA-256 identities are saved in source-review.txt. Reproduce that inspection without rerunning the CLI:
+  python3 /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/reader/inspect-reader.py > /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/reader/source-review.txt

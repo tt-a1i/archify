@@ -1,0 +1,13 @@
+{
+  "summary": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/final/controls/summary.json",
+  "mode": "candidate",
+  "executionKind": "capture",
+  "runPassed": true,
+  "acceptancePassed": true,
+  "compiles": 8,
+  "baselineDefects": {
+    "disabledInvocationLeaksOnBothSides": false,
+    "divergentFirstCallerLosesSourcesInBothProfilesAndSides": false
+  },
+  "error": null
+}

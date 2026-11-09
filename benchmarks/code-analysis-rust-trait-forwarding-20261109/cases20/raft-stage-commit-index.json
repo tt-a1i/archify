@@ -1,0 +1,53 @@
+{
+  "id": "raft-stage-commit-index",
+  "language": "go",
+  "repo": "https://github.com/hashicorp/raft",
+  "base": "d3c912496caf9b94feab148b7d90643038d83862",
+  "head": "a2e8778364df5dd56ef5f61fc69b22a33104efa5",
+  "entry": "log.go",
+  "question": "CommitTrackingLogStore was added for fast recovery. Which calls reach StageCommitIndex, and which direct callers contain them?",
+  "changedDefinition": {
+    "qualname": "CommitTrackingLogStore.StageCommitIndex",
+    "file": "log.go",
+    "line": 211
+  },
+  "definitionScope": "unpaired",
+  "expectedCalls": [
+    {
+      "file": "raft.go",
+      "line": 1401,
+      "column": 12,
+      "endLine": 1401,
+      "endColumn": 47,
+      "inventory": "knownReferences",
+      "targetKind": "trait-declaration",
+      "target": {
+        "file": "log.go",
+        "line": 211,
+        "column": 2,
+        "name": "StageCommitIndex"
+      },
+      "directCaller": {
+        "name": "tryStageCommitIndex",
+        "line": 1393,
+        "kind": "method"
+      },
+      "runtime": "not-determined",
+      "context": "store is the type assertion r.logs.(CommitTrackingLogStore); the only captured implementation is *InmemCommitTrackingStore.StageCommitIndex"
+    }
+  ],
+  "expectedImplementations": [
+    "*InmemCommitTrackingStore.StageCommitIndex"
+  ],
+  "unknowns": [
+    "The concrete log store is chosen at construction time; the type assertion proves the interface method set, not the runtime implementation.",
+    "GetCommitIndex is a separate method on the same interface and is not part of this question."
+  ],
+  "expectedGap": false,
+  "reserved": false,
+  "regression": false,
+  "baseTree": "git worktree at the fixed base commit",
+  "build": "workspace read without executing the project build; no test executed",
+  "freeze": "source-first answer frozen at d3c9124 and a2e8778 before this run: log.go:211 declares StageCommitIndex, raft.go:1401 calls it on a CommitTrackingLogStore assertion, and inmem_store.go:156 is the only captured implementation",
+  "notes": "Adds a sixth real change group: a head-only interface definition with one direct interface-dispatch call and one captured implementation. The caller is the local method tryStageCommitIndex, not the two call sites of that helper."
+}

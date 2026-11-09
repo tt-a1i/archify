@@ -1,0 +1,245 @@
+{
+  "cli": "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+  "case": {
+    "id": "bytes-try-get-int",
+    "language": "rust",
+    "repo": "https://github.com/tokio-rs/bytes",
+    "base": "d5c8ad3227afe459c09f1d0d85455abf00f0381a",
+    "head": "7930d93d583757e922014312d4aa3e58a415131f",
+    "entry": "src/buf/buf_impl.rs",
+    "question": "Buf::try_get_int now sign-extends the unsigned result instead of using the byte-copy macro. Which source calls use this default method?",
+    "changedDefinition": {
+      "file": "src/buf/buf_impl.rs",
+      "line": 2086
+    },
+    "expectedCalls": [
+      {
+        "file": "src/buf/buf_impl.rs",
+        "line": 2158,
+        "column": 13,
+        "inventory": "knownReferences",
+        "targetKind": "trait-declaration",
+        "target": {
+          "file": "src/buf/buf_impl.rs",
+          "line": 2086,
+          "column": 8,
+          "name": "try_get_int"
+        },
+        "directCaller": {
+          "name": "try_get_int_ne",
+          "line": 2156,
+          "kind": "trait-default-method"
+        },
+        "runtime": "not-determined",
+        "context": "default method delegates by target endianness; concrete Self may use the default or an override"
+      },
+      {
+        "file": "src/buf/buf_impl.rs",
+        "line": 2836,
+        "column": 13,
+        "inventory": "knownReferences",
+        "targetKind": "trait-declaration",
+        "target": {
+          "file": "src/buf/buf_impl.rs",
+          "line": 2086,
+          "column": 8,
+          "name": "try_get_int"
+        },
+        "directCaller": {
+          "name": "try_get_int",
+          "line": 2835,
+          "kind": "macro-generated-method"
+        },
+        "macroTemplate": {
+          "definition": {
+            "file": "src/buf/buf_impl.rs",
+            "name": "deref_forward_buf",
+            "line": 2461,
+            "column": 14
+          },
+          "expansions": [
+            {
+              "file": "src/buf/buf_impl.rs",
+              "line": 2887,
+              "column": 5,
+              "implLine": 2886,
+              "implColumn": 1,
+              "selfType": "&mut T",
+              "trait": "Buf"
+            },
+            {
+              "file": "src/buf/buf_impl.rs",
+              "line": 2891,
+              "column": 5,
+              "implLine": 2890,
+              "implColumn": 1,
+              "selfType": "Box<T>",
+              "trait": "Buf"
+            }
+          ]
+        },
+        "runtime": "not-determined",
+        "context": "one template call, two captured impl expansions for &mut T and Box<T>; the concrete T is unknown"
+      }
+    ],
+    "unknowns": [
+      "The default method is inherited by many external Buf implementations; only captured calls are listed.",
+      "The concrete implementation chosen at either call is not determined; both are trait-declaration anchors.",
+      "A deref of a non-self generic receiver and macro invocations without a zero-argument whole-impl template stay unresolved.",
+      "The changed source also modifies try_get_int_le; this question freezes try_get_int only.",
+      "Unit tests added by the commit are outside the default Rust source profile."
+    ],
+    "expectedGap": false,
+    "reserved": false,
+    "baseTree": "git worktree at d5c8ad32^",
+    "build": "workspace read with the committed lockfile; no project build executed",
+    "freeze": "source answer frozen in answers/bytes-forwarding.md before the candidate change; the earlier 2836:26 column was corrected to the receiver start 2836:13",
+    "notes": "Call A is inside Buf::try_get_int_ne. Call B is inside the zero-argument deref_forward_buf! template used as the whole body of the &mut T and Box<T> impls. Neither call determines a concrete implementation."
+  },
+  "score": {
+    "definitionFound": true,
+    "definition": {
+      "file": "src/buf/buf_impl.rs",
+      "name": "try_get_int",
+      "qualname": "buf::buf_impl::Buf::try_get_int",
+      "kind": "RustItemFn",
+      "line": 2086,
+      "column": 5,
+      "endLine": 2088,
+      "endColumn": 6,
+      "sourceRange": {
+        "column": 5,
+        "endColumn": 6,
+        "endLine": 2088,
+        "line": 2058,
+        "sha256": "001bfc3d87f7575c0c450e76b4493478d9da80c7b91c37a301629e62cd7222d6"
+      },
+      "textSha256": "001bfc3d87f7575c0c450e76b4493478d9da80c7b91c37a301629e62cd7222d6"
+    },
+    "expectedCalls": 2,
+    "foundCalls": 2,
+    "correctCalls": 2,
+    "wrongCalls": 0,
+    "missedCalls": 0,
+    "extraCalls": 0,
+    "extraProvenErrors": 0,
+    "extraNeedsReview": 0,
+    "displayedTargets": {
+      "determined": 0,
+      "candidate": 2,
+      "unknown": 0
+    },
+    "expectedTargets": {
+      "determined": 0,
+      "candidate": 2,
+      "unknown": 0
+    },
+    "determinedTargets": 0,
+    "candidateTargets": 2,
+    "unknownTargets": 0,
+    "directCallerStatus": {
+      "correct": 2
+    },
+    "items": [
+      {
+        "index": 0,
+        "pool": "knownReferences",
+        "position": {
+          "file": "src/buf/buf_impl.rs",
+          "line": 2158,
+          "column": 13,
+          "endLine": 2158,
+          "endColumn": 37
+        },
+        "status": "correct",
+        "directCaller": {
+          "status": "correct",
+          "provided": true,
+          "actual": {
+            "column": 5,
+            "file": "src/buf/buf_impl.rs",
+            "kind": "trait-default-method",
+            "line": 2156,
+            "name": "try_get_int_ne",
+            "qualname": "buf::buf_impl::Buf::try_get_int_ne"
+          },
+          "wrong": []
+        },
+        "targetWrong": [],
+        "runtimeTarget": null,
+        "targetClass": "candidate",
+        "target": {
+          "column": 8,
+          "file": "src/buf/buf_impl.rs",
+          "line": 2086,
+          "name": "try_get_int"
+        }
+      },
+      {
+        "index": 1,
+        "pool": "knownReferences",
+        "position": {
+          "file": "src/buf/buf_impl.rs",
+          "line": 2836,
+          "column": 13,
+          "endLine": 2836,
+          "endColumn": 41
+        },
+        "status": "correct",
+        "directCaller": {
+          "status": "correct",
+          "provided": true,
+          "actual": {
+            "column": 9,
+            "file": "src/buf/buf_impl.rs",
+            "kind": "macro-generated-method",
+            "line": 2835,
+            "name": "try_get_int",
+            "qualname": "buf::buf_impl::& mut T::try_get_int"
+          },
+          "wrong": []
+        },
+        "targetWrong": [],
+        "runtimeTarget": null,
+        "targetClass": "candidate",
+        "target": {
+          "column": 8,
+          "file": "src/buf/buf_impl.rs",
+          "line": 2086,
+          "name": "try_get_int"
+        }
+      }
+    ],
+    "missed": [],
+    "extras": [],
+    "implementations": [],
+    "missingImplementations": [],
+    "consideredRecords": 2,
+    "expectedGap": false,
+    "status": "pass",
+    "id": "bytes-try-get-int",
+    "exitCode": 0,
+    "queryStatus": "ready",
+    "callModel": "rust-source-direct-v11"
+  },
+  "macroTemplates": {
+    "checks": [
+      {
+        "line": 2836,
+        "definition": false,
+        "expansions": false,
+        "templateCaller": false,
+        "actual": {},
+        "directCaller": {
+          "column": 9,
+          "file": "src/buf/buf_impl.rs",
+          "kind": "macro-generated-method",
+          "line": 2835,
+          "name": "try_get_int",
+          "qualname": "buf::buf_impl::& mut T::try_get_int"
+        }
+      }
+    ],
+    "passed": false
+  }
+}

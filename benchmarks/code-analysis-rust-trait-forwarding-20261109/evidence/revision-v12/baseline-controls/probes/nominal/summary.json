@@ -1,0 +1,2913 @@
+{
+  "mode": "baseline",
+  "revision": "70750e6ba7831634e4388f13114c952ffd1690bc",
+  "productStatus": "",
+  "cli": "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+  "startedAt": "2026-11-09T08:48:18.807190+00:00",
+  "oracle": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/answers/template-controls.json",
+  "oracleSha256": "b3d273773e2311156275d2a8dc957dbc48a4bfa0b0a1e4f1aa5c8ef7b21c5e6a",
+  "inputSha256": {
+    "fixtures/cfg-template/base/Cargo.toml": "481225bd9e2a4ad4d8a48afff2c30bd57b5fdcb90bc180824b2f15ed0d45586b",
+    "fixtures/cfg-template/base/Cargo.lock": "e79f9f067fd9434327fbc23d135fad1f86055a2c36beb1c61e8e2f58fe79b83d",
+    "fixtures/cfg-template/base/src/lib.rs": "24ff5b5f67fc294c3272e10edb3880131f94239ae5c863a8a7dc2144717cda76",
+    "fixtures/cfg-template/head/Cargo.toml": "481225bd9e2a4ad4d8a48afff2c30bd57b5fdcb90bc180824b2f15ed0d45586b",
+    "fixtures/cfg-template/head/Cargo.lock": "e79f9f067fd9434327fbc23d135fad1f86055a2c36beb1c61e8e2f58fe79b83d",
+    "fixtures/cfg-template/head/src/lib.rs": "ee64b921a92239bcbe221fad4b098d70cded3b6797fbca56d6fba33638536969",
+    "fixtures/cfg-template/off.config.json": "647eff8c8c32c9f5d8d3ebee48de913058d6473793756ba5a7c04c386470e41f",
+    "fixtures/cfg-template/on.config.json": "3e85aef6d69f26b2bb33beaf7e15ff3568340434a166b9f797851532de1aa0dc",
+    "fixtures/divergent-template/base/Cargo.toml": "1cb34c43219416f6e35de0f15dd575be1743ab2052107d09b11a7522934aba8b",
+    "fixtures/divergent-template/base/Cargo.lock": "b8d59ef3d5c18d87161d5bf3a45396e964f2bb522083ca75d377cbfe1f3eb6eb",
+    "fixtures/divergent-template/base/src/lib.rs": "60b7b8920f35b22e8d60f27d8e289da62842d447d071e3dfaa449399e2b3be3e",
+    "fixtures/divergent-template/head/Cargo.toml": "1cb34c43219416f6e35de0f15dd575be1743ab2052107d09b11a7522934aba8b",
+    "fixtures/divergent-template/head/Cargo.lock": "b8d59ef3d5c18d87161d5bf3a45396e964f2bb522083ca75d377cbfe1f3eb6eb",
+    "fixtures/divergent-template/head/src/lib.rs": "2de0f41ef08e11d09bbb0e689ecdec9dd72f3eed94ba68bc8bdd26009b1c1d1b",
+    "fixtures/divergent-template/off.config.json": "0a421166acc3b706959849ac7ddb49f801ff934c55fa81be7f0549d93c3d04e2",
+    "fixtures/divergent-template/on.config.json": "f933c664125402fa06ffd9302bd6cd528fea390ca9612ceae7ba8e653bae3163"
+  },
+  "callerQualnameFormat": "{macro}::{method}",
+  "commands": [
+    {
+      "argv": [
+        "/Users/tsk/.cargo/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--manifest-path",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base/Cargo.toml",
+        "--target-dir",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/cfg-template-off-base"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/compile/cfg-template-off-base"
+    },
+    {
+      "argv": [
+        "/Users/tsk/.cargo/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--manifest-path",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/head/Cargo.toml",
+        "--target-dir",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/cfg-template-off-head"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/compile/cfg-template-off-head"
+    },
+    {
+      "argv": [
+        "/Users/tsk/.cargo/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--manifest-path",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base/Cargo.toml",
+        "--target-dir",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/cfg-template-on-base",
+        "--features",
+        "chosen"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/compile/cfg-template-on-base"
+    },
+    {
+      "argv": [
+        "/Users/tsk/.cargo/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--manifest-path",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/head/Cargo.toml",
+        "--target-dir",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/cfg-template-on-head",
+        "--features",
+        "chosen"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/compile/cfg-template-on-head"
+    },
+    {
+      "argv": [
+        "/Users/tsk/.cargo/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--manifest-path",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/base/Cargo.toml",
+        "--target-dir",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/divergent-template-off-base"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/compile/divergent-template-off-base"
+    },
+    {
+      "argv": [
+        "/Users/tsk/.cargo/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--manifest-path",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head/Cargo.toml",
+        "--target-dir",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/divergent-template-off-head"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/compile/divergent-template-off-head"
+    },
+    {
+      "argv": [
+        "/Users/tsk/.cargo/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--manifest-path",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/base/Cargo.toml",
+        "--target-dir",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/divergent-template-on-base",
+        "--features",
+        "chosen"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/compile/divergent-template-on-base"
+    },
+    {
+      "argv": [
+        "/Users/tsk/.cargo/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--manifest-path",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head/Cargo.toml",
+        "--target-dir",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/divergent-template-on-head",
+        "--features",
+        "chosen"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/compile/divergent-template-on-head"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--question",
+        "Gate::check changed its default body. Which macro-template calls reach this declaration in the selected feature profile, and which remain unknown?",
+        "--base-root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/head",
+        "--entry",
+        "src/lib.rs",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/off.config.json",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-off-pair.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-off-pair"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base",
+        "--language",
+        "rust",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/off.config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/cfg-template-off-base",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/checks/cfg-template-off-base"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/cfg-template-off-base",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base",
+        "--entry",
+        "src/lib.rs",
+        "--question",
+        "Which calls in this file are known or unknown, and what are their template and expansion sources?",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-off-base.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-off-base"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/head",
+        "--language",
+        "rust",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/off.config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/cfg-template-off-head",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/checks/cfg-template-off-head"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/cfg-template-off-head",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/head",
+        "--entry",
+        "src/lib.rs",
+        "--question",
+        "Which calls in this file are known or unknown, and what are their template and expansion sources?",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-off-head.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-off-head"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--question",
+        "Gate::check changed its default body. Which macro-template calls reach this declaration in the selected feature profile, and which remain unknown?",
+        "--base-root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/head",
+        "--entry",
+        "src/lib.rs",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/on.config.json",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-on-pair.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-on-pair"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base",
+        "--language",
+        "rust",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/on.config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/cfg-template-on-base",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/checks/cfg-template-on-base"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/cfg-template-on-base",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base",
+        "--entry",
+        "src/lib.rs",
+        "--question",
+        "Which calls in this file are known or unknown, and what are their template and expansion sources?",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-on-base.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-on-base"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/head",
+        "--language",
+        "rust",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/on.config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/cfg-template-on-head",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/checks/cfg-template-on-head"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/cfg-template-on-head",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/head",
+        "--entry",
+        "src/lib.rs",
+        "--question",
+        "Which calls in this file are known or unknown, and what are their template and expansion sources?",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-on-head.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/cfg-template-on-head"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--question",
+        "Alpha::work changed its body. Does the shared macro call have one proven target, or do Alpha and Beta expansions require an unknown target with both sources preserved?",
+        "--base-root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/base",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head",
+        "--entry",
+        "src/lib.rs",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/off.config.json",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-off-pair.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-off-pair"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/base",
+        "--language",
+        "rust",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/off.config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/divergent-template-off-base",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/checks/divergent-template-off-base"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/divergent-template-off-base",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/base",
+        "--entry",
+        "src/lib.rs",
+        "--question",
+        "Which calls in this file are known or unknown, and what are their template and expansion sources?",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-off-base.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-off-base"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head",
+        "--language",
+        "rust",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/off.config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/divergent-template-off-head",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/checks/divergent-template-off-head"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/divergent-template-off-head",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head",
+        "--entry",
+        "src/lib.rs",
+        "--question",
+        "Which calls in this file are known or unknown, and what are their template and expansion sources?",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-off-head.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-off-head"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--question",
+        "Alpha::work changed its body. Does the shared macro call have one proven target, or do Alpha and Beta expansions require an unknown target with both sources preserved?",
+        "--base-root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/base",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head",
+        "--entry",
+        "src/lib.rs",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/on.config.json",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-on-pair.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-on-pair"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/base",
+        "--language",
+        "rust",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/on.config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/divergent-template-on-base",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/checks/divergent-template-on-base"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/divergent-template-on-base",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/base",
+        "--entry",
+        "src/lib.rs",
+        "--question",
+        "Which calls in this file are known or unknown, and what are their template and expansion sources?",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-on-base.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-on-base"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head",
+        "--language",
+        "rust",
+        "--config",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/on.config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/divergent-template-on-head",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/checks/divergent-template-on-head"
+    },
+    {
+      "argv": [
+        "node",
+        "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/analysis/divergent-template-on-head",
+        "--root",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head",
+        "--entry",
+        "src/lib.rs",
+        "--question",
+        "Which calls in this file are known or unknown, and what are their template and expansion sources?",
+        "--format",
+        "json",
+        "--out",
+        "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-on-head.json",
+        "--json"
+      ],
+      "cwd": "/private/tmp/archify-template-baseline-20261109",
+      "exitCode": 0,
+      "log": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/baseline-controls/queries/divergent-template-on-head"
+    }
+  ],
+  "compiles": [
+    {
+      "fixture": "cfg-template",
+      "profile": "off",
+      "side": "base",
+      "exitCode": 0
+    },
+    {
+      "fixture": "cfg-template",
+      "profile": "off",
+      "side": "head",
+      "exitCode": 0
+    },
+    {
+      "fixture": "cfg-template",
+      "profile": "on",
+      "side": "base",
+      "exitCode": 0
+    },
+    {
+      "fixture": "cfg-template",
+      "profile": "on",
+      "side": "head",
+      "exitCode": 0
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "off",
+      "side": "base",
+      "exitCode": 0
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "off",
+      "side": "head",
+      "exitCode": 0
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "on",
+      "side": "base",
+      "exitCode": 0
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "on",
+      "side": "head",
+      "exitCode": 0
+    }
+  ],
+  "results": [
+    {
+      "fixture": "cfg-template",
+      "profile": "off",
+      "checks": 74,
+      "failures": [
+        {
+          "check": "base:known-reference-set",
+          "expected": [],
+          "actual": [
+            [
+              "src/lib.rs",
+              14,
+              13
+            ],
+            [
+              "src/lib.rs",
+              56,
+              13
+            ],
+            [
+              "src/lib.rs",
+              85,
+              13
+            ]
+          ]
+        },
+        {
+          "check": "base:file-query-ready"
+        },
+        {
+          "check": "base:invocation-cfg:fact-count",
+          "expected": 0,
+          "actual": 1
+        },
+        {
+          "check": "base:invocation-cfg-attr:fact-count",
+          "expected": 0,
+          "actual": 1
+        },
+        {
+          "check": "base:unknown-invocation-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 84,
+            "column": 9,
+            "qualname": "unknown_invocation_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 84,
+            "name": "run",
+            "qualname": "::UnknownInvocation::run"
+          }
+        },
+        {
+          "check": "base:unknown-invocation-cfg:unknown",
+          "resolution": "rust-trait-method-candidate",
+          "target": {
+            "column": 8,
+            "file": "src/lib.rs",
+            "line": 4,
+            "name": "check"
+          }
+        },
+        {
+          "check": "base:unknown-invocation-cfg:template-definition"
+        },
+        {
+          "check": "base:unknown-invocation-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:unknown-invocation-cfg:expansion-source:UnknownInvocation"
+        },
+        {
+          "check": "base:unknown-method-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 99,
+            "column": 9,
+            "qualname": "unknown_method_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 99,
+            "name": "run",
+            "qualname": "::UnknownMethod::run"
+          }
+        },
+        {
+          "check": "base:unknown-method-cfg:template-definition"
+        },
+        {
+          "check": "base:unknown-method-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:unknown-method-cfg:expansion-source:UnknownMethod"
+        },
+        {
+          "check": "base:unknown-outer-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 112,
+            "column": 9,
+            "qualname": "unknown_outer_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 112,
+            "name": "run",
+            "qualname": "::UnknownOuter::run"
+          }
+        },
+        {
+          "check": "base:unknown-outer-cfg:template-definition"
+        },
+        {
+          "check": "base:unknown-outer-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:unknown-outer-cfg:expansion-source:UnknownOuter"
+        },
+        {
+          "check": "base:unknown-body-cfg:fact-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:known-reference-set",
+          "expected": [],
+          "actual": [
+            [
+              "src/lib.rs",
+              14,
+              13
+            ],
+            [
+              "src/lib.rs",
+              56,
+              13
+            ],
+            [
+              "src/lib.rs",
+              85,
+              13
+            ]
+          ]
+        },
+        {
+          "check": "head:file-query-ready"
+        },
+        {
+          "check": "head:invocation-cfg:fact-count",
+          "expected": 0,
+          "actual": 1
+        },
+        {
+          "check": "head:invocation-cfg-attr:fact-count",
+          "expected": 0,
+          "actual": 1
+        },
+        {
+          "check": "head:unknown-invocation-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 84,
+            "column": 9,
+            "qualname": "unknown_invocation_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 84,
+            "name": "run",
+            "qualname": "::UnknownInvocation::run"
+          }
+        },
+        {
+          "check": "head:unknown-invocation-cfg:unknown",
+          "resolution": "rust-trait-method-candidate",
+          "target": {
+            "column": 8,
+            "file": "src/lib.rs",
+            "line": 4,
+            "name": "check"
+          }
+        },
+        {
+          "check": "head:unknown-invocation-cfg:template-definition"
+        },
+        {
+          "check": "head:unknown-invocation-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:unknown-invocation-cfg:expansion-source:UnknownInvocation"
+        },
+        {
+          "check": "head:unknown-method-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 99,
+            "column": 9,
+            "qualname": "unknown_method_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 99,
+            "name": "run",
+            "qualname": "::UnknownMethod::run"
+          }
+        },
+        {
+          "check": "head:unknown-method-cfg:template-definition"
+        },
+        {
+          "check": "head:unknown-method-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:unknown-method-cfg:expansion-source:UnknownMethod"
+        },
+        {
+          "check": "head:unknown-outer-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 112,
+            "column": 9,
+            "qualname": "unknown_outer_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 112,
+            "name": "run",
+            "qualname": "::UnknownOuter::run"
+          }
+        },
+        {
+          "check": "head:unknown-outer-cfg:template-definition"
+        },
+        {
+          "check": "head:unknown-outer-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:unknown-outer-cfg:expansion-source:UnknownOuter"
+        },
+        {
+          "check": "head:unknown-body-cfg:fact-count",
+          "expected": 1,
+          "actual": 0
+        }
+      ],
+      "observations": [
+        {
+          "side": "base",
+          "control": "invocation-cfg",
+          "expected": "absent",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 13,
+                "name": "run",
+                "qualname": "::Invocation::run"
+              },
+              "endColumn": 25,
+              "endLine": 14,
+              "file": "src/lib.rs",
+              "line": 14,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "generated-method-cfg",
+          "expected": "absent",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "base",
+          "control": "outer-impl-cfg",
+          "expected": "absent",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "base",
+          "control": "invocation-cfg-attr",
+          "expected": "absent",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 55,
+                "name": "run",
+                "qualname": "::Attr::run"
+              },
+              "endColumn": 25,
+              "endLine": 56,
+              "file": "src/lib.rs",
+              "line": 56,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "body-call-cfg",
+          "expected": "absent",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "base",
+          "control": "unknown-invocation-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 84,
+                "name": "run",
+                "qualname": "::UnknownInvocation::run"
+              },
+              "endColumn": 25,
+              "endLine": 85,
+              "file": "src/lib.rs",
+              "line": 85,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "unknown-method-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 99,
+                "name": "run",
+                "qualname": "::UnknownMethod::run"
+              },
+              "endColumn": 25,
+              "endLine": 100,
+              "file": "src/lib.rs",
+              "line": 100,
+              "reason": "rust-cfg-unselected",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "unknown-outer-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 112,
+                "name": "run",
+                "qualname": "::UnknownOuter::run"
+              },
+              "endColumn": 25,
+              "endLine": 113,
+              "file": "src/lib.rs",
+              "line": 113,
+              "reason": "rust-cfg-unselected",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "unknown-body-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "head",
+          "control": "invocation-cfg",
+          "expected": "absent",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 13,
+                "name": "run",
+                "qualname": "::Invocation::run"
+              },
+              "endColumn": 25,
+              "endLine": 14,
+              "file": "src/lib.rs",
+              "line": 14,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "generated-method-cfg",
+          "expected": "absent",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "head",
+          "control": "outer-impl-cfg",
+          "expected": "absent",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "head",
+          "control": "invocation-cfg-attr",
+          "expected": "absent",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 55,
+                "name": "run",
+                "qualname": "::Attr::run"
+              },
+              "endColumn": 25,
+              "endLine": 56,
+              "file": "src/lib.rs",
+              "line": 56,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "body-call-cfg",
+          "expected": "absent",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "head",
+          "control": "unknown-invocation-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 84,
+                "name": "run",
+                "qualname": "::UnknownInvocation::run"
+              },
+              "endColumn": 25,
+              "endLine": 85,
+              "file": "src/lib.rs",
+              "line": 85,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "unknown-method-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 99,
+                "name": "run",
+                "qualname": "::UnknownMethod::run"
+              },
+              "endColumn": 25,
+              "endLine": 100,
+              "file": "src/lib.rs",
+              "line": 100,
+              "reason": "rust-cfg-unselected",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "unknown-outer-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 112,
+                "name": "run",
+                "qualname": "::UnknownOuter::run"
+              },
+              "endColumn": 25,
+              "endLine": 113,
+              "file": "src/lib.rs",
+              "line": 113,
+              "reason": "rust-cfg-unselected",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "unknown-body-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": []
+        }
+      ],
+      "pairStatus": "ready",
+      "passed": 38
+    },
+    {
+      "fixture": "cfg-template",
+      "profile": "on",
+      "checks": 170,
+      "failures": [
+        {
+          "check": "base:known-reference-set",
+          "expected": [
+            [
+              "src/lib.rs",
+              14,
+              13
+            ],
+            [
+              "src/lib.rs",
+              29,
+              13
+            ],
+            [
+              "src/lib.rs",
+              42,
+              13
+            ],
+            [
+              "src/lib.rs",
+              56,
+              13
+            ],
+            [
+              "src/lib.rs",
+              71,
+              13
+            ]
+          ],
+          "actual": [
+            [
+              "src/lib.rs",
+              14,
+              13
+            ],
+            [
+              "src/lib.rs",
+              29,
+              13
+            ],
+            [
+              "src/lib.rs",
+              42,
+              13
+            ],
+            [
+              "src/lib.rs",
+              56,
+              13
+            ],
+            [
+              "src/lib.rs",
+              70,
+              13
+            ],
+            [
+              "src/lib.rs",
+              85,
+              13
+            ]
+          ]
+        },
+        {
+          "check": "base:file-query-ready"
+        },
+        {
+          "check": "base:invocation-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 13,
+            "column": 9,
+            "qualname": "invocation_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 13,
+            "name": "run",
+            "qualname": "::Invocation::run"
+          }
+        },
+        {
+          "check": "base:invocation-cfg:template-definition"
+        },
+        {
+          "check": "base:invocation-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:invocation-cfg:expansion-source:Invocation"
+        },
+        {
+          "check": "base:invocation-cfg:paired:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 13,
+            "column": 9,
+            "qualname": "invocation_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 13,
+            "name": "run",
+            "qualname": "::Invocation::run"
+          }
+        },
+        {
+          "check": "base:invocation-cfg:paired:template-definition"
+        },
+        {
+          "check": "base:invocation-cfg:paired:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:invocation-cfg:paired:expansion-source:Invocation"
+        },
+        {
+          "check": "base:generated-method-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 28,
+            "column": 9,
+            "qualname": "method_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 28,
+            "name": "run",
+            "qualname": "::Method::run"
+          }
+        },
+        {
+          "check": "base:generated-method-cfg:template-definition"
+        },
+        {
+          "check": "base:generated-method-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:generated-method-cfg:expansion-source:Method"
+        },
+        {
+          "check": "base:generated-method-cfg:paired:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 28,
+            "column": 9,
+            "qualname": "method_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 28,
+            "name": "run",
+            "qualname": "::Method::run"
+          }
+        },
+        {
+          "check": "base:generated-method-cfg:paired:template-definition"
+        },
+        {
+          "check": "base:generated-method-cfg:paired:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:generated-method-cfg:paired:expansion-source:Method"
+        },
+        {
+          "check": "base:outer-impl-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 41,
+            "column": 9,
+            "qualname": "outer_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 41,
+            "name": "run",
+            "qualname": "::Outer::run"
+          }
+        },
+        {
+          "check": "base:outer-impl-cfg:template-definition"
+        },
+        {
+          "check": "base:outer-impl-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:outer-impl-cfg:expansion-source:Outer"
+        },
+        {
+          "check": "base:outer-impl-cfg:paired:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 41,
+            "column": 9,
+            "qualname": "outer_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 41,
+            "name": "run",
+            "qualname": "::Outer::run"
+          }
+        },
+        {
+          "check": "base:outer-impl-cfg:paired:template-definition"
+        },
+        {
+          "check": "base:outer-impl-cfg:paired:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:outer-impl-cfg:paired:expansion-source:Outer"
+        },
+        {
+          "check": "base:invocation-cfg-attr:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 55,
+            "column": 9,
+            "qualname": "attr_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 55,
+            "name": "run",
+            "qualname": "::Attr::run"
+          }
+        },
+        {
+          "check": "base:invocation-cfg-attr:template-definition"
+        },
+        {
+          "check": "base:invocation-cfg-attr:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:invocation-cfg-attr:expansion-source:Attr"
+        },
+        {
+          "check": "base:invocation-cfg-attr:paired:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 55,
+            "column": 9,
+            "qualname": "attr_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 55,
+            "name": "run",
+            "qualname": "::Attr::run"
+          }
+        },
+        {
+          "check": "base:invocation-cfg-attr:paired:template-definition"
+        },
+        {
+          "check": "base:invocation-cfg-attr:paired:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:invocation-cfg-attr:paired:expansion-source:Attr"
+        },
+        {
+          "check": "base:body-call-cfg:fact-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:unknown-invocation-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 84,
+            "column": 9,
+            "qualname": "unknown_invocation_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 84,
+            "name": "run",
+            "qualname": "::UnknownInvocation::run"
+          }
+        },
+        {
+          "check": "base:unknown-invocation-cfg:unknown",
+          "resolution": "rust-trait-method-candidate",
+          "target": {
+            "column": 8,
+            "file": "src/lib.rs",
+            "line": 4,
+            "name": "check"
+          }
+        },
+        {
+          "check": "base:unknown-invocation-cfg:template-definition"
+        },
+        {
+          "check": "base:unknown-invocation-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:unknown-invocation-cfg:expansion-source:UnknownInvocation"
+        },
+        {
+          "check": "base:unknown-method-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 99,
+            "column": 9,
+            "qualname": "unknown_method_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 99,
+            "name": "run",
+            "qualname": "::UnknownMethod::run"
+          }
+        },
+        {
+          "check": "base:unknown-method-cfg:template-definition"
+        },
+        {
+          "check": "base:unknown-method-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:unknown-method-cfg:expansion-source:UnknownMethod"
+        },
+        {
+          "check": "base:unknown-outer-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 112,
+            "column": 9,
+            "qualname": "unknown_outer_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 112,
+            "name": "run",
+            "qualname": "::UnknownOuter::run"
+          }
+        },
+        {
+          "check": "base:unknown-outer-cfg:template-definition"
+        },
+        {
+          "check": "base:unknown-outer-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "base:unknown-outer-cfg:expansion-source:UnknownOuter"
+        },
+        {
+          "check": "base:unknown-body-cfg:fact-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:known-reference-set",
+          "expected": [
+            [
+              "src/lib.rs",
+              14,
+              13
+            ],
+            [
+              "src/lib.rs",
+              29,
+              13
+            ],
+            [
+              "src/lib.rs",
+              42,
+              13
+            ],
+            [
+              "src/lib.rs",
+              56,
+              13
+            ],
+            [
+              "src/lib.rs",
+              71,
+              13
+            ]
+          ],
+          "actual": [
+            [
+              "src/lib.rs",
+              14,
+              13
+            ],
+            [
+              "src/lib.rs",
+              29,
+              13
+            ],
+            [
+              "src/lib.rs",
+              42,
+              13
+            ],
+            [
+              "src/lib.rs",
+              56,
+              13
+            ],
+            [
+              "src/lib.rs",
+              70,
+              13
+            ],
+            [
+              "src/lib.rs",
+              85,
+              13
+            ]
+          ]
+        },
+        {
+          "check": "head:file-query-ready"
+        },
+        {
+          "check": "head:invocation-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 13,
+            "column": 9,
+            "qualname": "invocation_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 13,
+            "name": "run",
+            "qualname": "::Invocation::run"
+          }
+        },
+        {
+          "check": "head:invocation-cfg:template-definition"
+        },
+        {
+          "check": "head:invocation-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:invocation-cfg:expansion-source:Invocation"
+        },
+        {
+          "check": "head:invocation-cfg:paired:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 13,
+            "column": 9,
+            "qualname": "invocation_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 13,
+            "name": "run",
+            "qualname": "::Invocation::run"
+          }
+        },
+        {
+          "check": "head:invocation-cfg:paired:template-definition"
+        },
+        {
+          "check": "head:invocation-cfg:paired:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:invocation-cfg:paired:expansion-source:Invocation"
+        },
+        {
+          "check": "head:generated-method-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 28,
+            "column": 9,
+            "qualname": "method_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 28,
+            "name": "run",
+            "qualname": "::Method::run"
+          }
+        },
+        {
+          "check": "head:generated-method-cfg:template-definition"
+        },
+        {
+          "check": "head:generated-method-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:generated-method-cfg:expansion-source:Method"
+        },
+        {
+          "check": "head:generated-method-cfg:paired:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 28,
+            "column": 9,
+            "qualname": "method_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 28,
+            "name": "run",
+            "qualname": "::Method::run"
+          }
+        },
+        {
+          "check": "head:generated-method-cfg:paired:template-definition"
+        },
+        {
+          "check": "head:generated-method-cfg:paired:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:generated-method-cfg:paired:expansion-source:Method"
+        },
+        {
+          "check": "head:outer-impl-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 41,
+            "column": 9,
+            "qualname": "outer_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 41,
+            "name": "run",
+            "qualname": "::Outer::run"
+          }
+        },
+        {
+          "check": "head:outer-impl-cfg:template-definition"
+        },
+        {
+          "check": "head:outer-impl-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:outer-impl-cfg:expansion-source:Outer"
+        },
+        {
+          "check": "head:outer-impl-cfg:paired:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 41,
+            "column": 9,
+            "qualname": "outer_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 41,
+            "name": "run",
+            "qualname": "::Outer::run"
+          }
+        },
+        {
+          "check": "head:outer-impl-cfg:paired:template-definition"
+        },
+        {
+          "check": "head:outer-impl-cfg:paired:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:outer-impl-cfg:paired:expansion-source:Outer"
+        },
+        {
+          "check": "head:invocation-cfg-attr:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 55,
+            "column": 9,
+            "qualname": "attr_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 55,
+            "name": "run",
+            "qualname": "::Attr::run"
+          }
+        },
+        {
+          "check": "head:invocation-cfg-attr:template-definition"
+        },
+        {
+          "check": "head:invocation-cfg-attr:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:invocation-cfg-attr:expansion-source:Attr"
+        },
+        {
+          "check": "head:invocation-cfg-attr:paired:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 55,
+            "column": 9,
+            "qualname": "attr_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 55,
+            "name": "run",
+            "qualname": "::Attr::run"
+          }
+        },
+        {
+          "check": "head:invocation-cfg-attr:paired:template-definition"
+        },
+        {
+          "check": "head:invocation-cfg-attr:paired:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:invocation-cfg-attr:paired:expansion-source:Attr"
+        },
+        {
+          "check": "head:body-call-cfg:fact-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:unknown-invocation-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 84,
+            "column": 9,
+            "qualname": "unknown_invocation_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 84,
+            "name": "run",
+            "qualname": "::UnknownInvocation::run"
+          }
+        },
+        {
+          "check": "head:unknown-invocation-cfg:unknown",
+          "resolution": "rust-trait-method-candidate",
+          "target": {
+            "column": 8,
+            "file": "src/lib.rs",
+            "line": 4,
+            "name": "check"
+          }
+        },
+        {
+          "check": "head:unknown-invocation-cfg:template-definition"
+        },
+        {
+          "check": "head:unknown-invocation-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:unknown-invocation-cfg:expansion-source:UnknownInvocation"
+        },
+        {
+          "check": "head:unknown-method-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 99,
+            "column": 9,
+            "qualname": "unknown_method_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 99,
+            "name": "run",
+            "qualname": "::UnknownMethod::run"
+          }
+        },
+        {
+          "check": "head:unknown-method-cfg:template-definition"
+        },
+        {
+          "check": "head:unknown-method-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:unknown-method-cfg:expansion-source:UnknownMethod"
+        },
+        {
+          "check": "head:unknown-outer-cfg:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 112,
+            "column": 9,
+            "qualname": "unknown_outer_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 112,
+            "name": "run",
+            "qualname": "::UnknownOuter::run"
+          }
+        },
+        {
+          "check": "head:unknown-outer-cfg:template-definition"
+        },
+        {
+          "check": "head:unknown-outer-cfg:expansion-count",
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "check": "head:unknown-outer-cfg:expansion-source:UnknownOuter"
+        },
+        {
+          "check": "head:unknown-body-cfg:fact-count",
+          "expected": 1,
+          "actual": 0
+        }
+      ],
+      "observations": [
+        {
+          "side": "base",
+          "control": "invocation-cfg",
+          "expected": "known",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 13,
+                "name": "run",
+                "qualname": "::Invocation::run"
+              },
+              "endColumn": 25,
+              "endLine": 14,
+              "file": "src/lib.rs",
+              "line": 14,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "generated-method-cfg",
+          "expected": "known",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 28,
+                "name": "run",
+                "qualname": "::Method::run"
+              },
+              "endColumn": 25,
+              "endLine": 29,
+              "file": "src/lib.rs",
+              "line": 29,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "outer-impl-cfg",
+          "expected": "known",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 41,
+                "name": "run",
+                "qualname": "::Outer::run"
+              },
+              "endColumn": 25,
+              "endLine": 42,
+              "file": "src/lib.rs",
+              "line": 42,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "invocation-cfg-attr",
+          "expected": "known",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 55,
+                "name": "run",
+                "qualname": "::Attr::run"
+              },
+              "endColumn": 25,
+              "endLine": 56,
+              "file": "src/lib.rs",
+              "line": 56,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "body-call-cfg",
+          "expected": "known",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "base",
+          "control": "unknown-invocation-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 84,
+                "name": "run",
+                "qualname": "::UnknownInvocation::run"
+              },
+              "endColumn": 25,
+              "endLine": 85,
+              "file": "src/lib.rs",
+              "line": 85,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "unknown-method-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 99,
+                "name": "run",
+                "qualname": "::UnknownMethod::run"
+              },
+              "endColumn": 25,
+              "endLine": 100,
+              "file": "src/lib.rs",
+              "line": 100,
+              "reason": "rust-cfg-unselected",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "unknown-outer-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 112,
+                "name": "run",
+                "qualname": "::UnknownOuter::run"
+              },
+              "endColumn": 25,
+              "endLine": 113,
+              "file": "src/lib.rs",
+              "line": 113,
+              "reason": "rust-cfg-unselected",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "base",
+          "control": "unknown-body-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "head",
+          "control": "invocation-cfg",
+          "expected": "known",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 13,
+                "name": "run",
+                "qualname": "::Invocation::run"
+              },
+              "endColumn": 25,
+              "endLine": 14,
+              "file": "src/lib.rs",
+              "line": 14,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "generated-method-cfg",
+          "expected": "known",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 28,
+                "name": "run",
+                "qualname": "::Method::run"
+              },
+              "endColumn": 25,
+              "endLine": 29,
+              "file": "src/lib.rs",
+              "line": 29,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "outer-impl-cfg",
+          "expected": "known",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 41,
+                "name": "run",
+                "qualname": "::Outer::run"
+              },
+              "endColumn": 25,
+              "endLine": 42,
+              "file": "src/lib.rs",
+              "line": 42,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "invocation-cfg-attr",
+          "expected": "known",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 55,
+                "name": "run",
+                "qualname": "::Attr::run"
+              },
+              "endColumn": 25,
+              "endLine": 56,
+              "file": "src/lib.rs",
+              "line": 56,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "body-call-cfg",
+          "expected": "known",
+          "knownReferenceCount": 0,
+          "facts": []
+        },
+        {
+          "side": "head",
+          "control": "unknown-invocation-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 1,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 84,
+                "name": "run",
+                "qualname": "::UnknownInvocation::run"
+              },
+              "endColumn": 25,
+              "endLine": 85,
+              "file": "src/lib.rs",
+              "line": 85,
+              "resolution": "rust-trait-method-candidate",
+              "target": {
+                "column": 8,
+                "file": "src/lib.rs",
+                "line": 4,
+                "name": "check"
+              }
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "unknown-method-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 99,
+                "name": "run",
+                "qualname": "::UnknownMethod::run"
+              },
+              "endColumn": 25,
+              "endLine": 100,
+              "file": "src/lib.rs",
+              "line": 100,
+              "reason": "rust-cfg-unselected",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "unknown-outer-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 112,
+                "name": "run",
+                "qualname": "::UnknownOuter::run"
+              },
+              "endColumn": 25,
+              "endLine": 113,
+              "file": "src/lib.rs",
+              "line": 113,
+              "reason": "rust-cfg-unselected",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "unknown-body-cfg",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": []
+        }
+      ],
+      "pairStatus": "ready",
+      "passed": 72
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "off",
+      "checks": 36,
+      "failures": [
+        {
+          "check": "base:changed-definition"
+        },
+        {
+          "check": "base:file-query-ready"
+        },
+        {
+          "check": "base:divergent-owners:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 19,
+            "column": 9,
+            "qualname": "shared_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 19,
+            "name": "run",
+            "qualname": "::Alpha::run"
+          }
+        },
+        {
+          "check": "base:divergent-owners:template-definition"
+        },
+        {
+          "check": "base:divergent-owners:expansion-count",
+          "expected": 2,
+          "actual": 0
+        },
+        {
+          "check": "base:divergent-owners:expansion-source:Alpha"
+        },
+        {
+          "check": "base:divergent-owners:expansion-source:Beta"
+        },
+        {
+          "check": "head:changed-definition"
+        },
+        {
+          "check": "head:file-query-ready"
+        },
+        {
+          "check": "head:divergent-owners:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 19,
+            "column": 9,
+            "qualname": "shared_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 19,
+            "name": "run",
+            "qualname": "::Alpha::run"
+          }
+        },
+        {
+          "check": "head:divergent-owners:template-definition"
+        },
+        {
+          "check": "head:divergent-owners:expansion-count",
+          "expected": 2,
+          "actual": 0
+        },
+        {
+          "check": "head:divergent-owners:expansion-source:Alpha"
+        },
+        {
+          "check": "head:divergent-owners:expansion-source:Beta"
+        }
+      ],
+      "observations": [
+        {
+          "side": "base",
+          "control": "divergent-owners",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 19,
+                "name": "run",
+                "qualname": "::Alpha::run"
+              },
+              "endColumn": 24,
+              "endLine": 20,
+              "file": "src/lib.rs",
+              "line": 20,
+              "reason": "rust-context-dependent",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "divergent-owners",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 19,
+                "name": "run",
+                "qualname": "::Alpha::run"
+              },
+              "endColumn": 24,
+              "endLine": 20,
+              "file": "src/lib.rs",
+              "line": 20,
+              "reason": "rust-context-dependent",
+              "resolution": "unresolved"
+            }
+          ]
+        }
+      ],
+      "pairStatus": "ready",
+      "passed": 22
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "on",
+      "checks": 36,
+      "failures": [
+        {
+          "check": "base:changed-definition"
+        },
+        {
+          "check": "base:file-query-ready"
+        },
+        {
+          "check": "base:divergent-owners:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 19,
+            "column": 9,
+            "qualname": "shared_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 19,
+            "name": "run",
+            "qualname": "::Alpha::run"
+          }
+        },
+        {
+          "check": "base:divergent-owners:template-definition"
+        },
+        {
+          "check": "base:divergent-owners:expansion-count",
+          "expected": 2,
+          "actual": 0
+        },
+        {
+          "check": "base:divergent-owners:expansion-source:Alpha"
+        },
+        {
+          "check": "base:divergent-owners:expansion-source:Beta"
+        },
+        {
+          "check": "head:changed-definition"
+        },
+        {
+          "check": "head:file-query-ready"
+        },
+        {
+          "check": "head:divergent-owners:template-caller",
+          "expected": {
+            "file": "src/lib.rs",
+            "name": "run",
+            "kind": "macro-generated-method",
+            "line": 19,
+            "column": 9,
+            "qualname": "shared_body::run"
+          },
+          "actual": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "kind": "macro-generated-method",
+            "line": 19,
+            "name": "run",
+            "qualname": "::Alpha::run"
+          }
+        },
+        {
+          "check": "head:divergent-owners:template-definition"
+        },
+        {
+          "check": "head:divergent-owners:expansion-count",
+          "expected": 2,
+          "actual": 0
+        },
+        {
+          "check": "head:divergent-owners:expansion-source:Alpha"
+        },
+        {
+          "check": "head:divergent-owners:expansion-source:Beta"
+        }
+      ],
+      "observations": [
+        {
+          "side": "base",
+          "control": "divergent-owners",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 19,
+                "name": "run",
+                "qualname": "::Alpha::run"
+              },
+              "endColumn": 24,
+              "endLine": 20,
+              "file": "src/lib.rs",
+              "line": 20,
+              "reason": "rust-context-dependent",
+              "resolution": "unresolved"
+            }
+          ]
+        },
+        {
+          "side": "head",
+          "control": "divergent-owners",
+          "expected": "unknown",
+          "knownReferenceCount": 0,
+          "facts": [
+            {
+              "column": 13,
+              "directCaller": {
+                "column": 9,
+                "file": "src/lib.rs",
+                "kind": "macro-generated-method",
+                "line": 19,
+                "name": "run",
+                "qualname": "::Alpha::run"
+              },
+              "endColumn": 24,
+              "endLine": 20,
+              "file": "src/lib.rs",
+              "line": 20,
+              "reason": "rust-context-dependent",
+              "resolution": "unresolved"
+            }
+          ]
+        }
+      ],
+      "pairStatus": "ready",
+      "passed": 22
+    }
+  ],
+  "environment": {
+    "cwd": "/private/tmp/archify-template-baseline-20261109",
+    "overrides": {
+      "ARCHIFY_CARGO": "/Users/tsk/.cargo/bin/cargo",
+      "ARCHIFY_RUSTC": "/Users/tsk/.cargo/bin/rustc",
+      "RUSTC": "/Users/tsk/.cargo/bin/rustc"
+    },
+    "removedVariableNames": [],
+    "node": "v22.23.3",
+    "cargo": "cargo 1.89.0 (c24e10642 2025-06-23)",
+    "rustc": "rustc 1.89.0 (29483883e 2025-08-04)",
+    "rustcCfg": [
+      "debug_assertions",
+      "panic=\"unwind\"",
+      "target_abi=\"\"",
+      "target_arch=\"aarch64\"",
+      "target_endian=\"little\"",
+      "target_env=\"\"",
+      "target_family=\"unix\"",
+      "target_feature=\"aes\"",
+      "target_feature=\"crc\"",
+      "target_feature=\"dit\"",
+      "target_feature=\"dotprod\"",
+      "target_feature=\"dpb\"",
+      "target_feature=\"dpb2\"",
+      "target_feature=\"fcma\"",
+      "target_feature=\"fhm\"",
+      "target_feature=\"flagm\"",
+      "target_feature=\"fp16\"",
+      "target_feature=\"frintts\"",
+      "target_feature=\"jsconv\"",
+      "target_feature=\"lor\"",
+      "target_feature=\"lse\"",
+      "target_feature=\"neon\"",
+      "target_feature=\"paca\"",
+      "target_feature=\"pacg\"",
+      "target_feature=\"pan\"",
+      "target_feature=\"pmuv3\"",
+      "target_feature=\"ras\"",
+      "target_feature=\"rcpc\"",
+      "target_feature=\"rcpc2\"",
+      "target_feature=\"rdm\"",
+      "target_feature=\"sb\"",
+      "target_feature=\"sha2\"",
+      "target_feature=\"sha3\"",
+      "target_feature=\"ssbs\"",
+      "target_feature=\"vh\"",
+      "target_has_atomic=\"128\"",
+      "target_has_atomic=\"16\"",
+      "target_has_atomic=\"32\"",
+      "target_has_atomic=\"64\"",
+      "target_has_atomic=\"8\"",
+      "target_has_atomic=\"ptr\"",
+      "target_os=\"macos\"",
+      "target_pointer_width=\"64\"",
+      "target_vendor=\"apple\"",
+      "unix"
+    ]
+  },
+  "acceptancePassed": false,
+  "baselineDefects": {
+    "disabledInvocationLeaksOnBothSides": true,
+    "divergentTemplateChoosesTargetInBothProfilesAndSides": false
+  },
+  "runPassed": false,
+  "artifacts": "Temporary Cargo targets and check captures removed; only source fixtures, raw task queries and logs retained.",
+  "finishedAt": "2026-11-09T08:48:56.334448+00:00"
+}

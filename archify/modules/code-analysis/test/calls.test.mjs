@@ -116,6 +116,77 @@ test('call schema rejects unsupported targets/positions and retains empty histor
 });
 
 
+test('call schema validates Rust v12 macro template origins without rebinding historical v11 callers', () => {
+  const template = ['macro_rules! forward {', '    () => { fn method(&self) { self.run(); } };', '}'].join('\n');
+  const body = template.split('\n')[1];
+  const facts = {
+    schema_version: 1, callModel: 'rust-source-direct-v12',
+    repository: { root: '.', revision: null, sourceKind: 'working-tree', snapshotId: '0'.repeat(64), language: 'rust', adapter: 'rust-syn@2.0.119', adapterRevision: 12 },
+    files: [
+      { path: 'template.rs', sourceText: template, loc: 3, role: 'source' },
+      { path: 'impls.rs', sourceText: 'impl<T: Gate> Gate for &T {\n    forward!();\n}\nimpl Owner {\n    forward!();\n}', loc: 6, role: 'source' },
+    ],
+    imports: [], symbols: [], functions: [], unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 },
+    calls: [{
+      file: 'template.rs', line: 2, column: body.indexOf('self.run()') + 1, endLine: 2, endColumn: body.indexOf('self.run()') + 11,
+      resolution: 'unresolved', reason: 'rust-context-dependent',
+      directCaller: { file: 'template.rs', name: 'method', qualname: 'forward!::method', kind: 'macro-generated-method', line: 2, column: body.indexOf('fn method') + 1 },
+      macroTemplate: {
+        definition: { file: 'template.rs', name: 'forward', line: 1, column: 14 },
+        expansions: [
+          { file: 'impls.rs', line: 2, column: 5, implLine: 1, implColumn: 1, selfType: '& T', trait: 'Gate' },
+          { file: 'impls.rs', line: 5, column: 5, implLine: 4, implColumn: 1, selfType: 'Owner' },
+        ],
+      },
+    }],
+  };
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
+  const bad = (mutate, expectedPath = '/calls/0/macroTemplate') => {
+    const copy = structuredClone(facts); mutate(copy);
+    assert.ok(schemaErrors('raw-facts', copy).some(error => error.path.startsWith(expectedPath)), expectedPath);
+  };
+  bad(f => { f.callModel = 'rust-source-direct-v11'; });
+  bad(f => { f.repository.language = 'ts'; });
+  for (const object of ['macroTemplate', 'definition', 'expansion']) {
+    bad(f => {
+      const macro = f.calls[0].macroTemplate;
+      (object === 'macroTemplate' ? macro : object === 'definition' ? macro.definition : macro.expansions[0]).extra = true;
+    });
+  }
+  bad(f => { f.calls[0].macroTemplate.expansions = []; });
+  bad(f => { delete f.calls[0].macroTemplate.definition.name; });
+  bad(f => { f.calls[0].macroTemplate.definition.name = ''; });
+  bad(f => { delete f.calls[0].macroTemplate.expansions[0].selfType; });
+  bad(f => { f.calls[0].macroTemplate.expansions[0].selfType = ''; });
+  bad(f => { f.calls[0].macroTemplate.expansions[0].trait = ''; });
+  for (const field of ['line', 'column', 'implLine', 'implColumn']) {
+    for (const value of [0, -1, 1.5, 999]) bad(f => { f.calls[0].macroTemplate.expansions[0][field] = value; });
+  }
+  for (const field of ['line', 'column']) {
+    for (const value of [0, -1, 1.5, 999]) bad(f => { f.calls[0].macroTemplate.definition[field] = value; });
+  }
+  bad(f => { f.calls[0].macroTemplate.definition.file = 'missing.rs'; });
+  bad(f => { f.calls[0].macroTemplate.expansions[0].file = 'missing.rs'; });
+  bad(f => { f.parse_errors = [{ path: 'impls.rs', message: 'invalid source' }]; });
+  bad(f => { f.parse_errors = [{ path: 'template.rs', message: 'invalid source' }]; });
+  bad(f => { f.calls[0].macroTemplate.expansions.push({ ...f.calls[0].macroTemplate.expansions[0] }); });
+  bad(f => { f.calls[0].macroTemplate.expansions.push({ ...f.calls[0].macroTemplate.expansions[0], selfType: 'Other' }); });
+  bad(f => { f.calls[0].target = { file: 'impls.rs', name: 'run', line: 1, column: 1 }; }, '/calls/0');
+  const local = structuredClone(facts);
+  local.calls[0].directCaller.kind = 'local-function';
+  local.calls[0].directCaller.qualname = 'forward!::method::nested';
+  assert.deepEqual(schemaErrors('raw-facts', local), []);
+  const historical = structuredClone(facts);
+  historical.callModel = 'rust-source-direct-v11'; historical.repository.adapterRevision = 11;
+  delete historical.calls[0].macroTemplate;
+  historical.calls[0].directCaller.qualname = 'Owner::method';
+  assert.deepEqual(schemaErrors('raw-facts', historical), []);
+  historical.callModel = 'rust-source-direct-v12';
+  assert.deepEqual(schemaErrors('raw-facts', historical), []);
+  historical.callModel = 'rust-source-direct-v10';
+  assert.ok(schemaErrors('raw-facts', historical).some(error => error.path === '/calls/0/directCaller/kind'));
+});
+
 test('nested call expressions sharing a start preserve every expression', (t) => {
   const { facts } = extract(t, { 'chain.js': 'function factory() { return () => {}; }\rfactory()();\u2028factory().then();' });
   assert.equal(facts.calls.length, 4);

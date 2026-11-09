@@ -1,0 +1,16 @@
+{
+  "sha256": "672fdb386c062b85876773574a59b04a7fd7380b8277c9fdf9523dfac28bb3ab",
+  "files": 405,
+  "unpacked": "/private/tmp/archify-v12-controls-zip",
+  "node": "v22.23.2",
+  "zlib": "1.3.1-e00f703",
+  "matchingProductFiles": {
+    "archify/modules/code-analysis/extract/rust/src/main.rs": true,
+    "archify/modules/code-analysis/extract/rust/index.mjs": true,
+    "archify/modules/code-analysis/extract/shared/semantics.mjs": true,
+    "archify/modules/code-analysis/lib/question-calls.mjs": true,
+    "archify/modules/code-analysis/lib/change-question.mjs": true,
+    "archify/modules/code-analysis/schemas/raw-facts.schema.json": true,
+    "archify/modules/code-analysis/docs/RUST.md": true
+  }
+}

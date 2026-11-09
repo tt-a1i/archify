@@ -1,0 +1,77 @@
+{
+ "id": "gin-hijack",
+ "language": "go",
+ "repo": "https://github.com/gin-gonic/gin",
+ "base": "8d0468f72897652485933b845253386f9147a8bf",
+ "head": "d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11",
+ "entry": "response_writer.go",
+ "question": "responseWriter.Hijack now returns http.ErrNotSupported instead of panicking. Which callers reach it, and which only prove the external http.Hijacker interface method?",
+ "changedDefinition": {
+  "qualname": "*responseWriter.Hijack",
+  "file": "response_writer.go",
+  "line": 111
+ },
+ "expectedCalls": [
+  {
+   "file": "response_writer_test.go",
+   "line": 120,
+   "column": 20,
+   "endLine": 120,
+   "endColumn": 30,
+   "inventory": "interfaceCandidates",
+   "targetKind": "unknown",
+   "directCaller": {
+    "name": "TestResponseWriterHijack",
+    "line": 110,
+    "kind": "function"
+   },
+   "target": null,
+   "runtime": "not-determined",
+   "interface": "gin.ResponseWriter via embedded http.Hijacker (external, uncaptured)"
+  },
+  {
+   "file": "response_writer_test.go",
+   "line": 190,
+   "column": 23,
+   "endLine": 190,
+   "endColumn": 33,
+   "inventory": "interfaceCandidates",
+   "targetKind": "unknown",
+   "directCaller": {
+    "name": "TestResponseWriterHijackAfterWrite",
+    "line": 143,
+    "kind": "function"
+   },
+   "target": null,
+   "runtime": "not-determined",
+   "interface": "gin.ResponseWriter via embedded http.Hijacker (external, uncaptured)"
+  },
+  {
+   "file": "response_writer_test.go",
+   "line": 245,
+   "column": 23,
+   "endLine": 245,
+   "endColumn": 33,
+   "inventory": "interfaceCandidates",
+   "targetKind": "unknown",
+   "directCaller": {
+    "name": "TestResponseWriterHijackAfterWriteHeaderNow",
+    "line": 201,
+    "kind": "function"
+   },
+   "target": null,
+   "runtime": "not-determined",
+   "interface": "gin.ResponseWriter via embedded http.Hijacker (external, uncaptured)"
+  }
+ ],
+ "unknowns": [
+  "All in-repo callers are tests. Production callers are outside this module.",
+  "The static target is net/http.Hijacker.Hijack, an external interface method."
+ ],
+ "expectedGap": true,
+ "reserved": false,
+ "baseTree": "git worktree at the fixed base commit",
+ "build": "root module only; Go 1.27.2; default GOOS/GOARCH; cgo disabled; tests included; no project build or test executed",
+ "freeze": "source answer derived from the upstream diff and HEAD source with go/parser (tools/callspans.go), before any candidate query",
+ "notes": "Retained zero/gap case: external embedded interface method."
+}

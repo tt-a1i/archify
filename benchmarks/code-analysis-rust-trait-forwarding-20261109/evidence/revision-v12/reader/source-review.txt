@@ -1,0 +1,1590 @@
+
+RAW QUERY: /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/reader/bytes-task.json
+sha256: 06df0ef98ac889da64e9af6a1db78530005b7674ff173f4a48965df4eb566cfa
+status: ready stage: orientation-only
+comparison: {
+  "sourceText": "reading-signals-only",
+  "bindingAttribution": "source-import-model-only",
+  "reasons": [],
+  "resolutionChanges": {
+    "optionChanges": {
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "inputChanges": {
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    }
+  }
+}
+base {
+  "snapshotId": "2a3172934c9fde2a0ad61af294b289d8869e32636d15cef3b4d2ffcae719ace8",
+  "callModel": "rust-source-direct-v12",
+  "capturedFiles": 18,
+  "sourceIdentity": "valid",
+  "unavailableFiles": {
+    "total": 0,
+    "included": 0,
+    "omitted": 0,
+    "limit": 40,
+    "items": []
+  },
+  "parseErrors": 0,
+  "tests": false,
+  "splitSelected": false
+}
+head {
+  "snapshotId": "d2bc4f64c1caab5544d294aa11373f66b84033addf1554e2ae58c7e9e78f10b3",
+  "callModel": "rust-source-direct-v12",
+  "capturedFiles": 18,
+  "sourceIdentity": "valid",
+  "unavailableFiles": {
+    "total": 0,
+    "included": 0,
+    "omitted": 0,
+    "limit": 40,
+    "items": []
+  },
+  "parseErrors": 0,
+  "tests": false,
+  "splitSelected": false
+}
+changedDefinitions: {'total': 2, 'included': 2, 'omitted': 0, 'limit': 40}
+{
+  "pairing": "unique-exact-source-slot",
+  "base": {
+    "side": "base",
+    "snapshotId": "2a3172934c9fde2a0ad61af294b289d8869e32636d15cef3b4d2ffcae719ace8",
+    "definition": {
+      "file": "src/buf/buf_impl.rs",
+      "name": "try_get_int",
+      "qualname": "buf::buf_impl::Buf::try_get_int",
+      "kind": "RustItemFn",
+      "line": 2086,
+      "column": 5,
+      "endLine": 2088,
+      "endColumn": 6,
+      "sourceRange": {
+        "column": 5,
+        "endColumn": 6,
+        "endLine": 2088,
+        "line": 2058,
+        "sha256": "712cc93c9413e3e868599230152c1038dc0ae0f87e6f154a76f0ca9818baed41"
+      },
+      "textSha256": "712cc93c9413e3e868599230152c1038dc0ae0f87e6f154a76f0ca9818baed41"
+    },
+    "knownReferences": {
+      "coverage": "available",
+      "total": 2,
+      "included": 2,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "base",
+          "snapshotId": "2a3172934c9fde2a0ad61af294b289d8869e32636d15cef3b4d2ffcae719ace8",
+          "factIndex": 71,
+          "fact": {
+            "column": 13,
+            "defaultMethod": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2156,
+              "name": "try_get_int_ne",
+              "qualname": "buf::buf_impl::Buf::try_get_int_ne",
+              "trait": "Buf"
+            },
+            "directCaller": {
+              "column": 5,
+              "file": "src/buf/buf_impl.rs",
+              "kind": "trait-default-method",
+              "line": 2156,
+              "name": "try_get_int_ne",
+              "qualname": "buf::buf_impl::Buf::try_get_int_ne"
+            },
+            "endColumn": 37,
+            "endLine": 2158,
+            "file": "src/buf/buf_impl.rs",
+            "line": 2158,
+            "resolution": "rust-trait-method-candidate",
+            "target": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2086,
+              "name": "try_get_int"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/buf_impl.rs",
+              "line": 2158,
+              "column": 13,
+              "endLine": 2158,
+              "endColumn": 37
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "2a3172934c9fde2a0ad61af294b289d8869e32636d15cef3b4d2ffcae719ace8",
+          "factIndex": 179,
+          "fact": {
+            "column": 13,
+            "directCaller": {
+              "column": 9,
+              "file": "src/buf/buf_impl.rs",
+              "kind": "macro-generated-method",
+              "line": 2835,
+              "name": "try_get_int",
+              "qualname": "buf::buf_impl::deref_forward_buf!::try_get_int"
+            },
+            "endColumn": 41,
+            "endLine": 2836,
+            "file": "src/buf/buf_impl.rs",
+            "line": 2836,
+            "macroTemplate": {
+              "definition": {
+                "column": 14,
+                "file": "src/buf/buf_impl.rs",
+                "line": 2461,
+                "name": "deref_forward_buf"
+              },
+              "expansions": [
+                {
+                  "column": 5,
+                  "file": "src/buf/buf_impl.rs",
+                  "implColumn": 1,
+                  "implLine": 2886,
+                  "line": 2887,
+                  "selfType": "& mut T",
+                  "trait": "Buf"
+                },
+                {
+                  "column": 5,
+                  "file": "src/buf/buf_impl.rs",
+                  "implColumn": 1,
+                  "implLine": 2890,
+                  "line": 2891,
+                  "selfType": "Box < T >",
+                  "trait": "Buf"
+                }
+              ]
+            },
+            "resolution": "rust-trait-method-candidate",
+            "target": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2086,
+              "name": "try_get_int"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/buf_impl.rs",
+              "line": 2836,
+              "column": 13,
+              "endLine": 2836,
+              "endColumn": 41
+            }
+          }
+        }
+      ]
+    },
+    "traitCandidates": {
+      "coverage": "not-applicable",
+      "reason": "definition-not-a-captured-trait-implementation",
+      "runtimeTarget": "not-determined",
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "unresolvedWithinSourceRange": {
+      "coverage": "available",
+      "total": 1,
+      "included": 1,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "base",
+          "snapshotId": "2a3172934c9fde2a0ad61af294b289d8869e32636d15cef3b4d2ffcae719ace8",
+          "factIndex": 67,
+          "fact": {
+            "column": 9,
+            "defaultMethod": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2086,
+              "name": "try_get_int",
+              "qualname": "buf::buf_impl::Buf::try_get_int",
+              "trait": "Buf"
+            },
+            "directCaller": {
+              "column": 5,
+              "file": "src/buf/buf_impl.rs",
+              "kind": "trait-default-method",
+              "line": 2086,
+              "name": "try_get_int",
+              "qualname": "buf::buf_impl::Buf::try_get_int"
+            },
+            "endColumn": 51,
+            "endLine": 2087,
+            "file": "src/buf/buf_impl.rs",
+            "line": 2087,
+            "reason": "rust-macro-not-expanded",
+            "resolution": "unresolved"
+          }
+        }
+      ],
+      "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+    }
+  },
+  "head": {
+    "side": "head",
+    "snapshotId": "d2bc4f64c1caab5544d294aa11373f66b84033addf1554e2ae58c7e9e78f10b3",
+    "definition": {
+      "file": "src/buf/buf_impl.rs",
+      "name": "try_get_int",
+      "qualname": "buf::buf_impl::Buf::try_get_int",
+      "kind": "RustItemFn",
+      "line": 2086,
+      "column": 5,
+      "endLine": 2088,
+      "endColumn": 6,
+      "sourceRange": {
+        "column": 5,
+        "endColumn": 6,
+        "endLine": 2088,
+        "line": 2058,
+        "sha256": "001bfc3d87f7575c0c450e76b4493478d9da80c7b91c37a301629e62cd7222d6"
+      },
+      "textSha256": "001bfc3d87f7575c0c450e76b4493478d9da80c7b91c37a301629e62cd7222d6"
+    },
+    "knownReferences": {
+      "coverage": "available",
+      "total": 2,
+      "included": 2,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "d2bc4f64c1caab5544d294aa11373f66b84033addf1554e2ae58c7e9e78f10b3",
+          "factIndex": 75,
+          "fact": {
+            "column": 13,
+            "defaultMethod": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2156,
+              "name": "try_get_int_ne",
+              "qualname": "buf::buf_impl::Buf::try_get_int_ne",
+              "trait": "Buf"
+            },
+            "directCaller": {
+              "column": 5,
+              "file": "src/buf/buf_impl.rs",
+              "kind": "trait-default-method",
+              "line": 2156,
+              "name": "try_get_int_ne",
+              "qualname": "buf::buf_impl::Buf::try_get_int_ne"
+            },
+            "endColumn": 37,
+            "endLine": 2158,
+            "file": "src/buf/buf_impl.rs",
+            "line": 2158,
+            "resolution": "rust-trait-method-candidate",
+            "target": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2086,
+              "name": "try_get_int"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/buf_impl.rs",
+              "line": 2158,
+              "column": 13,
+              "endLine": 2158,
+              "endColumn": 37
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "d2bc4f64c1caab5544d294aa11373f66b84033addf1554e2ae58c7e9e78f10b3",
+          "factIndex": 183,
+          "fact": {
+            "column": 13,
+            "directCaller": {
+              "column": 9,
+              "file": "src/buf/buf_impl.rs",
+              "kind": "macro-generated-method",
+              "line": 2835,
+              "name": "try_get_int",
+              "qualname": "buf::buf_impl::deref_forward_buf!::try_get_int"
+            },
+            "endColumn": 41,
+            "endLine": 2836,
+            "file": "src/buf/buf_impl.rs",
+            "line": 2836,
+            "macroTemplate": {
+              "definition": {
+                "column": 14,
+                "file": "src/buf/buf_impl.rs",
+                "line": 2461,
+                "name": "deref_forward_buf"
+              },
+              "expansions": [
+                {
+                  "column": 5,
+                  "file": "src/buf/buf_impl.rs",
+                  "implColumn": 1,
+                  "implLine": 2886,
+                  "line": 2887,
+                  "selfType": "& mut T",
+                  "trait": "Buf"
+                },
+                {
+                  "column": 5,
+                  "file": "src/buf/buf_impl.rs",
+                  "implColumn": 1,
+                  "implLine": 2890,
+                  "line": 2891,
+                  "selfType": "Box < T >",
+                  "trait": "Buf"
+                }
+              ]
+            },
+            "resolution": "rust-trait-method-candidate",
+            "target": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2086,
+              "name": "try_get_int"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/buf_impl.rs",
+              "line": 2836,
+              "column": 13,
+              "endLine": 2836,
+              "endColumn": 41
+            }
+          }
+        }
+      ]
+    },
+    "traitCandidates": {
+      "coverage": "not-applicable",
+      "reason": "definition-not-a-captured-trait-implementation",
+      "runtimeTarget": "not-determined",
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "unresolvedWithinSourceRange": {
+      "coverage": "available",
+      "total": 1,
+      "included": 1,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "d2bc4f64c1caab5544d294aa11373f66b84033addf1554e2ae58c7e9e78f10b3",
+          "factIndex": 69,
+          "fact": {
+            "column": 9,
+            "defaultMethod": {
+              "column": 8,
+              "file": "src/buf/buf_impl.rs",
+              "line": 2086,
+              "name": "try_get_int",
+              "qualname": "buf::buf_impl::Buf::try_get_int",
+              "trait": "Buf"
+            },
+            "directCaller": {
+              "column": 5,
+              "file": "src/buf/buf_impl.rs",
+              "kind": "trait-default-method",
+              "line": 2086,
+              "name": "try_get_int",
+              "qualname": "buf::buf_impl::Buf::try_get_int"
+            },
+            "endColumn": 60,
+            "endLine": 2087,
+            "file": "src/buf/buf_impl.rs",
+            "line": 2087,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          }
+        }
+      ],
+      "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+    }
+  }
+}
+
+RAW QUERY: /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/reader/futures-task.json
+sha256: b51c582d0e02d7854a0ebec8c31009893b8e99a8a17cf6df19203d54635f1358
+status: partial stage: orientation-only
+comparison: {
+  "sourceText": "reading-signals-only",
+  "bindingAttribution": "source-import-model-only",
+  "reasons": [
+    {
+      "code": "source-regions-unavailable",
+      "side": "head",
+      "count": 1,
+      "message": "Some captured source regions failed parsing or freshness checks; other valid regions remain available."
+    }
+  ],
+  "resolutionChanges": {
+    "optionChanges": {
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "inputChanges": {
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    }
+  }
+}
+base {
+  "snapshotId": "0f296c579378d296224cd327193deb37772aa7f2a896069504bed38632c602fb",
+  "callModel": "rust-source-direct-v12",
+  "capturedFiles": 164,
+  "sourceIdentity": "valid",
+  "unavailableFiles": {
+    "total": 0,
+    "included": 0,
+    "omitted": 0,
+    "limit": 40,
+    "items": []
+  },
+  "parseErrors": 0,
+  "tests": false,
+  "splitSelected": true
+}
+head {
+  "snapshotId": "3a1aabf884b13232c1a0bd45c878d560bb37cf0b7404350843dbb84f94838a54",
+  "callModel": "rust-source-direct-v12",
+  "capturedFiles": 165,
+  "sourceIdentity": "valid",
+  "unavailableFiles": {
+    "total": 1,
+    "included": 1,
+    "omitted": 0,
+    "limit": 40,
+    "items": [
+      {
+        "file": "futures-util/src/task/arc_wake.rs",
+        "status": "parse-error",
+        "parseError": "cannot parse string into token stream"
+      }
+    ]
+  },
+  "parseErrors": 1,
+  "tests": false,
+  "splitSelected": true
+}
+changedDefinitions: {'total': 15, 'included': 15, 'omitted': 0, 'limit': 40}
+{
+  "pairing": "unique-exact-source-slot",
+  "base": {
+    "side": "base",
+    "snapshotId": "0f296c579378d296224cd327193deb37772aa7f2a896069504bed38632c602fb",
+    "definition": {
+      "file": "futures-io/src/lib.rs",
+      "name": "poll_vectored_read",
+      "qualname": "if_std::AsyncRead::poll_vectored_read",
+      "kind": "RustItemFn",
+      "line": 136,
+      "column": 9,
+      "endLine": 145,
+      "endColumn": 10,
+      "sourceRange": {
+        "column": 9,
+        "endColumn": 10,
+        "endLine": 145,
+        "line": 114,
+        "sha256": "9acf91477cea11e835737da98fb8b745a3d9e18ad6f04c10f4a7e88f7e5a5e5a"
+      },
+      "textSha256": "9acf91477cea11e835737da98fb8b745a3d9e18ad6f04c10f4a7e88f7e5a5e5a"
+    },
+    "knownReferences": {
+      "coverage": "available",
+      "total": 1,
+      "included": 1,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "base",
+          "snapshotId": "0f296c579378d296224cd327193deb37772aa7f2a896069504bed38632c602fb",
+          "factIndex": 579,
+          "fact": {
+            "column": 17,
+            "directCaller": {
+              "column": 13,
+              "file": "futures-io/src/lib.rs",
+              "kind": "macro-generated-method",
+              "line": 256,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::deref_async_read!::poll_vectored_read"
+            },
+            "endColumn": 53,
+            "endLine": 259,
+            "file": "futures-io/src/lib.rs",
+            "line": 259,
+            "macroTemplate": {
+              "definition": {
+                "column": 18,
+                "file": "futures-io/src/lib.rs",
+                "line": 244,
+                "name": "deref_async_read"
+              },
+              "expansions": [
+                {
+                  "column": 9,
+                  "file": "futures-io/src/lib.rs",
+                  "implColumn": 5,
+                  "implLine": 264,
+                  "line": 265,
+                  "selfType": "Box < T >",
+                  "trait": "AsyncRead"
+                },
+                {
+                  "column": 9,
+                  "file": "futures-io/src/lib.rs",
+                  "implColumn": 5,
+                  "implLine": 268,
+                  "line": 269,
+                  "selfType": "& 'a mut T",
+                  "trait": "AsyncRead"
+                }
+              ]
+            },
+            "resolution": "rust-trait-method-candidate",
+            "target": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "futures-io/src/lib.rs",
+              "line": 259,
+              "column": 17,
+              "endLine": 259,
+              "endColumn": 53
+            }
+          }
+        }
+      ]
+    },
+    "traitCandidates": {
+      "coverage": "not-applicable",
+      "reason": "definition-not-a-captured-trait-implementation",
+      "runtimeTarget": "not-determined",
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "unresolvedWithinSourceRange": {
+      "coverage": "available",
+      "total": 3,
+      "included": 3,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "base",
+          "snapshotId": "0f296c579378d296224cd327193deb37772aa7f2a896069504bed38632c602fb",
+          "factIndex": 569,
+          "fact": {
+            "column": 48,
+            "defaultMethod": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read",
+              "trait": "AsyncRead"
+            },
+            "directCaller": {
+              "column": 9,
+              "file": "futures-io/src/lib.rs",
+              "kind": "trait-default-method",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read"
+            },
+            "endColumn": 62,
+            "endLine": 139,
+            "file": "futures-io/src/lib.rs",
+            "line": 139,
+            "reason": "rust-trait-or-method-dispatch",
+            "resolution": "unresolved"
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "0f296c579378d296224cd327193deb37772aa7f2a896069504bed38632c602fb",
+          "factIndex": 571,
+          "fact": {
+            "column": 17,
+            "defaultMethod": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read",
+              "trait": "AsyncRead"
+            },
+            "directCaller": {
+              "column": 9,
+              "file": "futures-io/src/lib.rs",
+              "kind": "trait-default-method",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read"
+            },
+            "endColumn": 35,
+            "endLine": 143,
+            "file": "futures-io/src/lib.rs",
+            "line": 143,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "0f296c579378d296224cd327193deb37772aa7f2a896069504bed38632c602fb",
+          "factIndex": 572,
+          "fact": {
+            "column": 29,
+            "defaultMethod": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read",
+              "trait": "AsyncRead"
+            },
+            "directCaller": {
+              "column": 9,
+              "file": "futures-io/src/lib.rs",
+              "kind": "trait-default-method",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read"
+            },
+            "endColumn": 34,
+            "endLine": 143,
+            "file": "futures-io/src/lib.rs",
+            "line": 143,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          }
+        }
+      ],
+      "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+    }
+  },
+  "head": {
+    "side": "head",
+    "snapshotId": "3a1aabf884b13232c1a0bd45c878d560bb37cf0b7404350843dbb84f94838a54",
+    "definition": {
+      "file": "futures-io/src/lib.rs",
+      "name": "poll_vectored_read",
+      "qualname": "if_std::AsyncRead::poll_vectored_read",
+      "kind": "RustItemFn",
+      "line": 136,
+      "column": 9,
+      "endLine": 145,
+      "endColumn": 10,
+      "sourceRange": {
+        "column": 9,
+        "endColumn": 10,
+        "endLine": 145,
+        "line": 114,
+        "sha256": "3aa51249c00abeab6cdc0f3ba30d77f7b4aab259c9bd765cff41f6ee183e7470"
+      },
+      "textSha256": "3aa51249c00abeab6cdc0f3ba30d77f7b4aab259c9bd765cff41f6ee183e7470"
+    },
+    "knownReferences": {
+      "coverage": "available",
+      "total": 1,
+      "included": 1,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "3a1aabf884b13232c1a0bd45c878d560bb37cf0b7404350843dbb84f94838a54",
+          "factIndex": 574,
+          "fact": {
+            "column": 17,
+            "directCaller": {
+              "column": 13,
+              "file": "futures-io/src/lib.rs",
+              "kind": "macro-generated-method",
+              "line": 256,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::deref_async_read!::poll_vectored_read"
+            },
+            "endColumn": 56,
+            "endLine": 259,
+            "file": "futures-io/src/lib.rs",
+            "line": 259,
+            "macroTemplate": {
+              "definition": {
+                "column": 18,
+                "file": "futures-io/src/lib.rs",
+                "line": 244,
+                "name": "deref_async_read"
+              },
+              "expansions": [
+                {
+                  "column": 9,
+                  "file": "futures-io/src/lib.rs",
+                  "implColumn": 5,
+                  "implLine": 264,
+                  "line": 265,
+                  "selfType": "Box < T >",
+                  "trait": "AsyncRead"
+                },
+                {
+                  "column": 9,
+                  "file": "futures-io/src/lib.rs",
+                  "implColumn": 5,
+                  "implLine": 268,
+                  "line": 269,
+                  "selfType": "& 'a mut T",
+                  "trait": "AsyncRead"
+                }
+              ]
+            },
+            "resolution": "rust-trait-method-candidate",
+            "target": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read"
+            }
+          },
+          "bindingAttribution": "source-import-model-only",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "futures-io/src/lib.rs",
+              "line": 259,
+              "column": 17,
+              "endLine": 259,
+              "endColumn": 56
+            }
+          }
+        }
+      ]
+    },
+    "traitCandidates": {
+      "coverage": "not-applicable",
+      "reason": "definition-not-a-captured-trait-implementation",
+      "runtimeTarget": "not-determined",
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "unresolvedWithinSourceRange": {
+      "coverage": "available",
+      "total": 3,
+      "included": 3,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "3a1aabf884b13232c1a0bd45c878d560bb37cf0b7404350843dbb84f94838a54",
+          "factIndex": 564,
+          "fact": {
+            "column": 48,
+            "defaultMethod": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read",
+              "trait": "AsyncRead"
+            },
+            "directCaller": {
+              "column": 9,
+              "file": "futures-io/src/lib.rs",
+              "kind": "trait-default-method",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read"
+            },
+            "endColumn": 62,
+            "endLine": 139,
+            "file": "futures-io/src/lib.rs",
+            "line": 139,
+            "reason": "rust-trait-or-method-dispatch",
+            "resolution": "unresolved"
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "3a1aabf884b13232c1a0bd45c878d560bb37cf0b7404350843dbb84f94838a54",
+          "factIndex": 566,
+          "fact": {
+            "column": 17,
+            "defaultMethod": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read",
+              "trait": "AsyncRead"
+            },
+            "directCaller": {
+              "column": 9,
+              "file": "futures-io/src/lib.rs",
+              "kind": "trait-default-method",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read"
+            },
+            "endColumn": 35,
+            "endLine": 143,
+            "file": "futures-io/src/lib.rs",
+            "line": 143,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "3a1aabf884b13232c1a0bd45c878d560bb37cf0b7404350843dbb84f94838a54",
+          "factIndex": 567,
+          "fact": {
+            "column": 29,
+            "defaultMethod": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read",
+              "trait": "AsyncRead"
+            },
+            "directCaller": {
+              "column": 9,
+              "file": "futures-io/src/lib.rs",
+              "kind": "trait-default-method",
+              "line": 136,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::AsyncRead::poll_vectored_read"
+            },
+            "endColumn": 34,
+            "endLine": 143,
+            "file": "futures-io/src/lib.rs",
+            "line": 143,
+            "reason": "no-local-function-binding",
+            "resolution": "unresolved"
+          }
+        }
+      ],
+      "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+    }
+  }
+}
+{
+  "pairing": "unique-exact-source-slot",
+  "base": {
+    "side": "base",
+    "snapshotId": "0f296c579378d296224cd327193deb37772aa7f2a896069504bed38632c602fb",
+    "definition": {
+      "file": "futures-io/src/lib.rs",
+      "name": "poll_vectored_read",
+      "qualname": "if_std::& 'a mut T::poll_vectored_read",
+      "kind": "RustItemFn",
+      "line": 256,
+      "column": 13,
+      "endLine": 260,
+      "endColumn": 14,
+      "sourceRange": {
+        "column": 13,
+        "endColumn": 14,
+        "endLine": 260,
+        "line": 256,
+        "sha256": "c6c4444cd0bc1ad7a4b52a8dabcabcdbcfeae5d9605fd7a1ecbdfc3e6608491c"
+      },
+      "textSha256": "c6c4444cd0bc1ad7a4b52a8dabcabcdbcfeae5d9605fd7a1ecbdfc3e6608491c"
+    },
+    "knownReferences": {
+      "coverage": "available",
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "traitCandidates": {
+      "coverage": "available",
+      "role": "trait-declaration anchors for review; not proof of runtime dispatch to the changed implementation",
+      "runtimeTarget": "not-determined",
+      "trait": {
+        "column": 15,
+        "file": "futures-io/src/lib.rs",
+        "line": 79,
+        "name": "AsyncRead",
+        "qualname": "if_std::AsyncRead"
+      },
+      "traitMethod": {
+        "column": 12,
+        "file": "futures-io/src/lib.rs",
+        "line": 136,
+        "name": "poll_vectored_read",
+        "qualname": "if_std::AsyncRead::poll_vectored_read"
+      },
+      "implementations": [
+        {
+          "selfType": "Box < T >",
+          "implementation": {
+            "column": 13,
+            "file": "futures-io/src/lib.rs",
+            "line": 256,
+            "name": "poll_vectored_read",
+            "qualname": "if_std::Box < T >::poll_vectored_read"
+          }
+        },
+        {
+          "selfType": "& 'a mut T",
+          "implementation": {
+            "column": 13,
+            "file": "futures-io/src/lib.rs",
+            "line": 256,
+            "name": "poll_vectored_read",
+            "qualname": "if_std::& 'a mut T::poll_vectored_read"
+          }
+        }
+      ],
+      "total": 1,
+      "included": 1,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "base",
+          "snapshotId": "0f296c579378d296224cd327193deb37772aa7f2a896069504bed38632c602fb",
+          "factIndex": 579,
+          "fact": {
+            "column": 17,
+            "directCaller": {
+              "column": 13,
+              "file": "futures-io/src/lib.rs",
+              "kind": "macro-generated-method",
+              "line": 256,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::deref_async_read!::poll_vectored_read"
+            },
+            "endColumn": 53,
+            "endLine": 259,
+            "file": "futures-io/src/lib.rs",
+            "line": 259,
+            "macroTemplate": {
+              "definition": {
+                "column": 18,
+                "file": "futures-io/src/lib.rs",
+                "line": 244,
+                "name": "deref_async_read"
+              },
+              "expansions": [
+                {
+                  "column": 9,
+                  "file": "futures-io/src/lib.rs",
+                  "implColumn": 5,
+                  "implLine": 264,
+                  "line": 265,
+                  "selfType": "Box < T >",
+                  "trait": "AsyncRead"
+                },
+                {
+                  "column": 9,
+                  "file": "futures-io/src/lib.rs",
+                  "implColumn": 5,
+                  "implLine": 268,
+                  "line": 269,
+                  "selfType": "& 'a mut T",
+                  "trait": "AsyncRead"
+                }
+              ]
+            },
+            "resolution": "rust-trait-method-candidate",
+            "target": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read"
+            }
+          },
+          "reason": "call site proves this trait method is used; compile-time or runtime concrete implementation is not determined",
+          "runtimeTarget": "not-determined",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "futures-io/src/lib.rs",
+              "line": 259,
+              "column": 17,
+              "endLine": 259,
+              "endColumn": 53
+            }
+          }
+        }
+      ]
+    },
+    "unresolvedWithinSourceRange": {
+      "coverage": "available",
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": [],
+      "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+    }
+  },
+  "head": {
+    "side": "head",
+    "snapshotId": "3a1aabf884b13232c1a0bd45c878d560bb37cf0b7404350843dbb84f94838a54",
+    "definition": {
+      "file": "futures-io/src/lib.rs",
+      "name": "poll_vectored_read",
+      "qualname": "if_std::& 'a mut T::poll_vectored_read",
+      "kind": "RustItemFn",
+      "line": 256,
+      "column": 13,
+      "endLine": 260,
+      "endColumn": 14,
+      "sourceRange": {
+        "column": 13,
+        "endColumn": 14,
+        "endLine": 260,
+        "line": 256,
+        "sha256": "0781e22c58bf41556f43e1638cf9d05500daaaa9ed2a8074f5a0c9a6ec1f12c8"
+      },
+      "textSha256": "0781e22c58bf41556f43e1638cf9d05500daaaa9ed2a8074f5a0c9a6ec1f12c8"
+    },
+    "knownReferences": {
+      "coverage": "available",
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "traitCandidates": {
+      "coverage": "available",
+      "role": "trait-declaration anchors for review; not proof of runtime dispatch to the changed implementation",
+      "runtimeTarget": "not-determined",
+      "trait": {
+        "column": 15,
+        "file": "futures-io/src/lib.rs",
+        "line": 79,
+        "name": "AsyncRead",
+        "qualname": "if_std::AsyncRead"
+      },
+      "traitMethod": {
+        "column": 12,
+        "file": "futures-io/src/lib.rs",
+        "line": 136,
+        "name": "poll_vectored_read",
+        "qualname": "if_std::AsyncRead::poll_vectored_read"
+      },
+      "implementations": [
+        {
+          "selfType": "Box < T >",
+          "implementation": {
+            "column": 13,
+            "file": "futures-io/src/lib.rs",
+            "line": 256,
+            "name": "poll_vectored_read",
+            "qualname": "if_std::Box < T >::poll_vectored_read"
+          }
+        },
+        {
+          "selfType": "& 'a mut T",
+          "implementation": {
+            "column": 13,
+            "file": "futures-io/src/lib.rs",
+            "line": 256,
+            "name": "poll_vectored_read",
+            "qualname": "if_std::& 'a mut T::poll_vectored_read"
+          }
+        }
+      ],
+      "total": 1,
+      "included": 1,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "3a1aabf884b13232c1a0bd45c878d560bb37cf0b7404350843dbb84f94838a54",
+          "factIndex": 574,
+          "fact": {
+            "column": 17,
+            "directCaller": {
+              "column": 13,
+              "file": "futures-io/src/lib.rs",
+              "kind": "macro-generated-method",
+              "line": 256,
+              "name": "poll_vectored_read",
+              "qualname": "if_std::deref_async_read!::poll_vectored_read"
+            },
+            "endColumn": 56,
+            "endLine": 259,
+            "file": "futures-io/src/lib.rs",
+            "line": 259,
+            "macroTemplate": {
+              "definition": {
+                "column": 18,
+                "file": "futures-io/src/lib.rs",
+                "line": 244,
+                "name": "deref_async_read"
+              },
+              "expansions": [
+                {
+                  "column": 9,
+                  "file": "futures-io/src/lib.rs",
+                  "implColumn": 5,
+                  "implLine": 264,
+                  "line": 265,
+                  "selfType": "Box < T >",
+                  "trait": "AsyncRead"
+                },
+                {
+                  "column": 9,
+                  "file": "futures-io/src/lib.rs",
+                  "implColumn": 5,
+                  "implLine": 268,
+                  "line": 269,
+                  "selfType": "& 'a mut T",
+                  "trait": "AsyncRead"
+                }
+              ]
+            },
+            "resolution": "rust-trait-method-candidate",
+            "target": {
+              "column": 12,
+              "file": "futures-io/src/lib.rs",
+              "line": 136,
+              "name": "poll_vectored_read"
+            }
+          },
+          "reason": "call site proves this trait method is used; compile-time or runtime concrete implementation is not determined",
+          "runtimeTarget": "not-determined",
+          "navigation": {
+            "status": "valid",
+            "location": {
+              "file": "futures-io/src/lib.rs",
+              "line": 259,
+              "column": 17,
+              "endLine": 259,
+              "endColumn": 56
+            }
+          }
+        }
+      ]
+    },
+    "unresolvedWithinSourceRange": {
+      "coverage": "available",
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": [],
+      "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+    }
+  }
+}
+
+SOURCE: /private/tmp/archify-batch-20261108/samples/bytes-try-get-int-base/src/buf/buf_impl.rs sha256: f1095872bba7c9d5170207750f4ebe4fa61c4e35a282569491c2ee8ea2dc6714
+LINES 118 - 125
+118: /// buf.copy_to_slice(&mut rest);
+119: ///
+120: /// assert_eq!(&rest[..], &b"lo world"[..]);
+121: /// ```
+122: pub trait Buf {
+123:     /// Returns the number of bytes between the current position and the end of
+124:     /// the buffer.
+125:     ///
+LINES 2083 - 2088
+2083:     /// # Panics
+2084:     ///
+2085:     /// This function panics if `nbytes` is greater than 8.
+2086:     fn try_get_int(&mut self, nbytes: usize) -> Result<i64, TryGetError> {
+2087:         buf_try_get_impl!(be => self, i64, nbytes);
+2088:     }
+LINES 2153 - 2162
+2153:     /// # Panics
+2154:     ///
+2155:     /// This function panics if `nbytes` is greater than 8.
+2156:     fn try_get_int_ne(&mut self, nbytes: usize) -> Result<i64, TryGetError> {
+2157:         if cfg!(target_endian = "big") {
+2158:             self.try_get_int(nbytes)
+2159:         } else {
+2160:             self.try_get_int_le(nbytes)
+2161:         }
+2162:     }
+LINES 2459 - 2465
+2459: }
+2460: 
+2461: macro_rules! deref_forward_buf {
+2462:     () => {
+2463:         #[inline]
+2464:         fn remaining(&self) -> usize {
+2465:             (**self).remaining()
+LINES 2833 - 2837
+2833: 
+2834:         #[inline]
+2835:         fn try_get_int(&mut self, nbytes: usize) -> Result<i64, TryGetError> {
+2836:             (**self).try_get_int(nbytes)
+2837:         }
+LINES 2883 - 2892
+2883:     };
+2884: }
+2885: 
+2886: impl<T: Buf + ?Sized> Buf for &mut T {
+2887:     deref_forward_buf!();
+2888: }
+2889: 
+2890: impl<T: Buf + ?Sized> Buf for Box<T> {
+2891:     deref_forward_buf!();
+2892: }
+
+SOURCE: /private/tmp/archify-batch-20261108/samples/bytes-try-get-int-head/src/buf/buf_impl.rs sha256: 36323d85a72c39a6aaa1827b316d4288e058b5b203c489abc36b1c86d13d6812
+LINES 118 - 125
+118: /// buf.copy_to_slice(&mut rest);
+119: ///
+120: /// assert_eq!(&rest[..], &b"lo world"[..]);
+121: /// ```
+122: pub trait Buf {
+123:     /// Returns the number of bytes between the current position and the end of
+124:     /// the buffer.
+125:     ///
+LINES 2083 - 2088
+2083:     /// # Panics
+2084:     ///
+2085:     /// This function panics if `nbytes` is greater than 8.
+2086:     fn try_get_int(&mut self, nbytes: usize) -> Result<i64, TryGetError> {
+2087:         Ok(sign_extend(self.try_get_uint(nbytes)?, nbytes))
+2088:     }
+LINES 2153 - 2162
+2153:     /// # Panics
+2154:     ///
+2155:     /// This function panics if `nbytes` is greater than 8.
+2156:     fn try_get_int_ne(&mut self, nbytes: usize) -> Result<i64, TryGetError> {
+2157:         if cfg!(target_endian = "big") {
+2158:             self.try_get_int(nbytes)
+2159:         } else {
+2160:             self.try_get_int_le(nbytes)
+2161:         }
+2162:     }
+LINES 2459 - 2465
+2459: }
+2460: 
+2461: macro_rules! deref_forward_buf {
+2462:     () => {
+2463:         #[inline]
+2464:         fn remaining(&self) -> usize {
+2465:             (**self).remaining()
+LINES 2833 - 2837
+2833: 
+2834:         #[inline]
+2835:         fn try_get_int(&mut self, nbytes: usize) -> Result<i64, TryGetError> {
+2836:             (**self).try_get_int(nbytes)
+2837:         }
+LINES 2883 - 2892
+2883:     };
+2884: }
+2885: 
+2886: impl<T: Buf + ?Sized> Buf for &mut T {
+2887:     deref_forward_buf!();
+2888: }
+2889: 
+2890: impl<T: Buf + ?Sized> Buf for Box<T> {
+2891:     deref_forward_buf!();
+2892: }
+
+SOURCE: /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-base/futures-io/src/lib.rs sha256: c7a74061f4c957ccf4dfbcc51725c4aee80ff27b91e2faaf01eec90fc88d2871
+LINES 75 - 83
+75:     /// with the asynchronous task system. In particular, the `poll_read`
+76:     /// method, unlike `Read::read`, will automatically queue the current task
+77:     /// for wakeup and return if data is not yet available, rather than blocking
+78:     /// the calling thread.
+79:     pub trait AsyncRead {
+80:         /// Determines if this `AsyncRead`er can work with buffers of
+81:         /// uninitialized memory.
+82:         ///
+83:         /// The default implementation returns an initializer which will zero
+LINES 130 - 146
+130:         /// # Implementation
+131:         ///
+132:         /// This function may not return errors of kind `WouldBlock` or
+133:         /// `Interrupted`.  Implementations must convert `WouldBlock` into
+134:         /// `Async::Pending` and either internally retry or convert
+135:         /// `Interrupted` into another error kind.
+136:         fn poll_vectored_read(&mut self, lw: &LocalWaker, vec: &mut [&mut IoVec])
+137:             -> Poll<Result<usize>>
+138:         {
+139:             if let Some(ref mut first_iovec) = vec.get_mut(0) {
+140:                 self.poll_read(lw, first_iovec)
+141:             } else {
+142:                 // `vec` is empty.
+143:                 Poll::Ready(Ok(0))
+144:             }
+145:         }
+146:     }
+LINES 244 - 270
+244:     macro_rules! deref_async_read {
+245:         () => {
+246:             unsafe fn initializer(&self) -> Initializer {
+247:                 (**self).initializer()
+248:             }
+249: 
+250:             fn poll_read(&mut self, lw: &LocalWaker, buf: &mut [u8])
+251:                 -> Poll<Result<usize>>
+252:             {
+253:                 (**self).poll_read(lw, buf)
+254:             }
+255: 
+256:             fn poll_vectored_read(&mut self, lw: &LocalWaker, vec: &mut [&mut IoVec])
+257:                 -> Poll<Result<usize>>
+258:             {
+259:                 (**self).poll_vectored_read(lw, vec)
+260:             }
+261:         }
+262:     }
+263: 
+264:     impl<T: ?Sized + AsyncRead> AsyncRead for Box<T> {
+265:         deref_async_read!();
+266:     }
+267: 
+268:     impl<'a, T: ?Sized + AsyncRead> AsyncRead for &'a mut T {
+269:         deref_async_read!();
+270:     }
+LINES 378 - 383
+378:         delegate_async_write_to_stdio!();
+379:     }
+380: }
+381: 
+382: #[cfg(feature = "std")]
+383: pub use self::if_std::*;
+
+SOURCE: /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-head/futures-io/src/lib.rs sha256: 5266892e82bd479786b1632f4695320ba9473701612f93c8aa578f43b4eda5cc
+LINES 75 - 83
+75:     /// with the asynchronous task system. In particular, the `poll_read`
+76:     /// method, unlike `Read::read`, will automatically queue the current task
+77:     /// for wakeup and return if data is not yet available, rather than blocking
+78:     /// the calling thread.
+79:     pub trait AsyncRead {
+80:         /// Determines if this `AsyncRead`er can work with buffers of
+81:         /// uninitialized memory.
+82:         ///
+83:         /// The default implementation returns an initializer which will zero
+LINES 130 - 146
+130:         /// # Implementation
+131:         ///
+132:         /// This function may not return errors of kind `WouldBlock` or
+133:         /// `Interrupted`.  Implementations must convert `WouldBlock` into
+134:         /// `Async::Pending` and either internally retry or convert
+135:         /// `Interrupted` into another error kind.
+136:         fn poll_vectored_read(&mut self, waker: &Waker, vec: &mut [&mut IoVec])
+137:             -> Poll<Result<usize>>
+138:         {
+139:             if let Some(ref mut first_iovec) = vec.get_mut(0) {
+140:                 self.poll_read(waker, first_iovec)
+141:             } else {
+142:                 // `vec` is empty.
+143:                 Poll::Ready(Ok(0))
+144:             }
+145:         }
+146:     }
+LINES 244 - 270
+244:     macro_rules! deref_async_read {
+245:         () => {
+246:             unsafe fn initializer(&self) -> Initializer {
+247:                 (**self).initializer()
+248:             }
+249: 
+250:             fn poll_read(&mut self, waker: &Waker, buf: &mut [u8])
+251:                 -> Poll<Result<usize>>
+252:             {
+253:                 (**self).poll_read(waker, buf)
+254:             }
+255: 
+256:             fn poll_vectored_read(&mut self, waker: &Waker, vec: &mut [&mut IoVec])
+257:                 -> Poll<Result<usize>>
+258:             {
+259:                 (**self).poll_vectored_read(waker, vec)
+260:             }
+261:         }
+262:     }
+263: 
+264:     impl<T: ?Sized + AsyncRead> AsyncRead for Box<T> {
+265:         deref_async_read!();
+266:     }
+267: 
+268:     impl<'a, T: ?Sized + AsyncRead> AsyncRead for &'a mut T {
+269:         deref_async_read!();
+270:     }
+LINES 378 - 383
+378:         delegate_async_write_to_stdio!();
+379:     }
+380: }
+381: 
+382: #[cfg(feature = "std")]
+383: pub use self::if_std::*;
+
+SOURCE: /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-base/futures-util/src/io/split.rs sha256: bd30c671b2ab7205f65738b50c8b8cbccdabfc5aa27de8edd12d282b0aadc6f7
+LINES 1 - 51
+1: use crate::lock::BiLock;
+2: use futures_core::task::{LocalWaker, Poll};
+3: use futures_io::{AsyncRead, AsyncWrite, IoVec};
+4: use std::io;
+5: use std::pin::Pin;
+6: 
+7: /// The readable half of an object returned from `AsyncRead::split`.
+8: #[derive(Debug)]
+9: pub struct ReadHalf<T> {
+10:     handle: BiLock<T>,
+11: }
+12: 
+13: /// The writable half of an object returned from `AsyncRead::split`.
+14: #[derive(Debug)]
+15: pub struct WriteHalf<T> {
+16:     handle: BiLock<T>,
+17: }
+18: 
+19: fn lock_and_then<T, U, E, F>(
+20:     lock: &BiLock<T>,
+21:     lw: &LocalWaker,
+22:     f: F
+23: ) -> Poll<Result<U, E>>
+24:     where F: FnOnce(&mut T, &LocalWaker) -> Poll<Result<U, E>>
+25: {
+26:     match lock.poll_lock(lw) {
+27:         // Safety: the value behind the bilock used by `ReadHalf` and `WriteHalf` is never exposed
+28:         // as a `Pin<&mut T>` anywhere other than here as a way to get to `&mut T`.
+29:         Poll::Ready(mut l) => f(unsafe { Pin::get_unchecked_mut(l.as_pin_mut()) }, lw),
+30:         Poll::Pending => Poll::Pending,
+31:     }
+32: }
+33: 
+34: pub fn split<T: AsyncRead + AsyncWrite>(t: T) -> (ReadHalf<T>, WriteHalf<T>) {
+35:     let (a, b) = BiLock::new(t);
+36:     (ReadHalf { handle: a }, WriteHalf { handle: b })
+37: }
+38: 
+39: impl<R: AsyncRead> AsyncRead for ReadHalf<R> {
+40:     fn poll_read(&mut self, lw: &LocalWaker, buf: &mut [u8])
+41:         -> Poll<io::Result<usize>>
+42:     {
+43:         lock_and_then(&self.handle, lw, |l, lw| l.poll_read(lw, buf))
+44:     }
+45: 
+46:     fn poll_vectored_read(&mut self, lw: &LocalWaker, vec: &mut [&mut IoVec])
+47:         -> Poll<io::Result<usize>>
+48:     {
+49:         lock_and_then(&self.handle, lw, |l, lw| l.poll_vectored_read(lw, vec))
+50:     }
+51: }
+
+SOURCE: /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-head/futures-util/src/io/split.rs sha256: f1f30fbd790d314cb39d3353a7495d23f087103fb042bbf3f0fff509bed352de
+LINES 1 - 51
+1: use crate::lock::BiLock;
+2: use futures_core::task::{Waker, Poll};
+3: use futures_io::{AsyncRead, AsyncWrite, IoVec};
+4: use std::io;
+5: use std::pin::Pin;
+6: 
+7: /// The readable half of an object returned from `AsyncRead::split`.
+8: #[derive(Debug)]
+9: pub struct ReadHalf<T> {
+10:     handle: BiLock<T>,
+11: }
+12: 
+13: /// The writable half of an object returned from `AsyncRead::split`.
+14: #[derive(Debug)]
+15: pub struct WriteHalf<T> {
+16:     handle: BiLock<T>,
+17: }
+18: 
+19: fn lock_and_then<T, U, E, F>(
+20:     lock: &BiLock<T>,
+21:     waker: &Waker,
+22:     f: F
+23: ) -> Poll<Result<U, E>>
+24:     where F: FnOnce(&mut T, &Waker) -> Poll<Result<U, E>>
+25: {
+26:     match lock.poll_lock(waker) {
+27:         // Safety: the value behind the bilock used by `ReadHalf` and `WriteHalf` is never exposed
+28:         // as a `Pin<&mut T>` anywhere other than here as a way to get to `&mut T`.
+29:         Poll::Ready(mut l) => f(unsafe { Pin::get_unchecked_mut(l.as_pin_mut()) }, waker),
+30:         Poll::Pending => Poll::Pending,
+31:     }
+32: }
+33: 
+34: pub fn split<T: AsyncRead + AsyncWrite>(t: T) -> (ReadHalf<T>, WriteHalf<T>) {
+35:     let (a, b) = BiLock::new(t);
+36:     (ReadHalf { handle: a }, WriteHalf { handle: b })
+37: }
+38: 
+39: impl<R: AsyncRead> AsyncRead for ReadHalf<R> {
+40:     fn poll_read(&mut self, waker: &Waker, buf: &mut [u8])
+41:         -> Poll<io::Result<usize>>
+42:     {
+43:         lock_and_then(&self.handle, waker, |l, waker| l.poll_read(waker, buf))
+44:     }
+45: 
+46:     fn poll_vectored_read(&mut self, waker: &Waker, vec: &mut [&mut IoVec])
+47:         -> Poll<io::Result<usize>>
+48:     {
+49:         lock_and_then(&self.handle, waker, |l, waker| l.poll_vectored_read(waker, vec))
+50:     }
+51: }

@@ -30,13 +30,13 @@ The coverage.languageScope and raw-facts languageScope report actual selected fi
 
 Crate-local crate/self/super paths, explicit paths, module use/use-as, grouped imports, unambiguous globs and local workspace library paths can identify free functions. Actual Cargo library names and renamed dependencies define the boundary. Module lookup observes editions, module file/path attributes, lexical shadowing and conditional imports. Unsupported or ambiguous paths stay unresolved. Cross-crate source bindings do not prove visibility or type correctness.
 
-The original v1 model leaves methods, trait dispatch, function values, associated functions, local item functions as targets, generated/expanded macros, external crates, and full type inference unknown. Later bounded inherent-function revisions are described below. v5 additionally records local trait declarations and impl edges, but trait-only call targets remain declaration anchors rather than runtime dispatch. v6 additionally inventories trait default method bodies once per source declaration. v7 replaces the unevidenced one-parameter wrapper accessor assumption with captured inherent return types and AsRef/Borrow/Deref implementation targets, and substitutes generic struct fields by declaration position. v8 resolves accessor traits from their captured local declaration (including aliases and defaulted generic parameters), reads impl where-clause bounds, applies default type parameters to field receivers, follows standard Box/Arc/Rc accessor payloads, and binds tuple-variant match payloads. v9 traverses the argument expression of a local `macro_rules!` invocation when that macro is defined exactly once across the selected crates, is textually visible at the callsite without an import or glob that could bind the same name, every rule matches a single `$x:expr`, and every expansion uses `$x` exactly once outside repetition and nested macro arguments; the resulting call records carry `macroEvidence`. v10 resolves the macro binding actually visible at the callsite, including a preceding block-local definition that shadows the module binding and the outer binding restored after that block, and requires every active expansion path to keep the argument use under the selected cfg; a use removed by cfg, nested in another macro or not provable in the active profile stays unknown. Syntactic function/method bodies and default bodies form the call inventory; all other macros have opaque records. Type/field definitions are not navigable entities yet. Structural cycles report source coupling; they do not imply runtime import order or partial initialization.
+The original v1 model leaves methods, trait dispatch, function values, associated functions, local item functions as targets, generated/expanded macros, external crates, and full type inference unknown. Later bounded inherent-function revisions are described below. v5 additionally records local trait declarations and impl edges, but trait-only call targets remain declaration anchors rather than runtime dispatch. v6 additionally inventories trait default method bodies once per source declaration. v7 replaces the unevidenced one-parameter wrapper accessor assumption with captured inherent return types and AsRef/Borrow/Deref implementation targets, and substitutes generic struct fields by declaration position. v8 resolves accessor traits from their captured local declaration (including aliases and defaulted generic parameters), reads impl where-clause bounds, applies default type parameters to field receivers, follows standard Box/Arc/Rc accessor payloads, and binds tuple-variant match payloads. v9 traverses the argument expression of a local `macro_rules!` invocation when that macro is defined exactly once across the selected crates, is textually visible at the callsite without an import or glob that could bind the same name, every rule matches a single `$x:expr`, and every expansion uses `$x` exactly once outside repetition and nested macro arguments; the resulting call records carry `macroEvidence`. v10 resolves the macro binding actually visible at the callsite, including a preceding block-local definition that shadows the module binding and the outer binding restored after that block, and requires every active expansion path to keep the argument use under the selected cfg; a use removed by cfg, nested in another macro or not provable in the active profile stays unknown. v11 binds `self` in a trait default body to the enclosing trait declaration when the called method exists there, and expands one zero-argument local macro used as the whole body of an impl so generated forwarding methods are inventoried with the impl self type and generics; calls through `*self`/`**self` keep the captured trait bound, generated callers are labeled `macro-generated-method`, and the concrete runtime implementation remains undetermined. Syntactic function/method bodies and default bodies form the call inventory; all other macros have opaque records. Type/field definitions are not navigable entities yet. Structural cycles report source coupling; they do not imply runtime import order or partial initialization.
 
 See the pinned real-project replay and source/ZIP evidence in benchmarks/code-analysis-go-rust/RUST.md. These finite cases are not whole-repository accuracy measurements.
 
 ## Current call model and trait impl candidates
 
-Current captures use rust-source-direct-v10 / adapter10. Historical v1 collects
+Current captures use rust-source-direct-v12 / adapter12. Historical v1 collects
 free functions; v2 additionally admits unique monomorphic inherent function
 paths; v3 additionally admits bare generic-struct paths to unique concrete type
 specializations. Historical facts keep their original scope without rebinding.
@@ -66,6 +66,58 @@ method name, so both source anchors are consulted for the same declaration.
 Module paths are crate-local, so a same-named trait in another workspace member
 is excluded rather than merged by qualname.
 
+v11 binds a bare `self` method call in a trait default body to the method on
+the enclosing trait declaration (`rust-trait-method-candidate`). A method that
+the trait does not declare stays unresolved; a call on a concrete type that
+overrides the method still resolves to that override, not to the default body.
+It also expands a zero-argument local `macro_rules!` when the invocation is the
+entire body of an impl. Generated methods inherit the impl self type, generic
+bounds and where-clause, and calls through `*self`/`**self` keep the receiver's
+captured trait bound, including `&mut T` and `Box<T>`. These calls are
+candidates anchored at the trait declaration, their direct caller is reported
+as `macro-generated-method`, and one physical source position represents all
+invocations. A non-empty matcher, an imported or ambiguous definition, an
+invocation mixed with other impl items, or a deref of a non-`self` generic
+receiver stays unknown.
+
+v12 propagates the macro invocation's attributes into generated method state,
+combined with the outer impl, generated method and body cfg, including nested
+`cfg_attr`. Removed methods/calls are omitted, while unknown conditions cannot
+establish a target or accessor return type; unknown accessors remain ambiguity
+blockers rather than disappearing from the candidate set. Unknown generated
+trait implementations likewise block uniqueness for method and qualified calls.
+Each physical template call is still inventoried once, with `macroTemplate`
+provenance retained across its contributing expansions:
+
+```json
+{
+  "definition": {"file": "src/lib.rs", "name": "forward", "line": 3, "column": 14},
+  "expansions": [
+    {"file": "src/lib.rs", "line": 12, "column": 5, "implLine": 11, "implColumn": 1, "selfType": "& T", "trait": "Gate"}
+  ]
+}
+```
+
+`definition` points at the macro name. Each expansion's `file`/`line`/`column`
+points at the invocation path; `implLine`/`implColumn` points at the outer `impl`
+token in that file. Coordinates are one-based UTF-16 source points. `selfType`
+is the printable original impl self type, including references and generic
+arguments; optional `trait` is the printable trait path (absent for inherent
+impls). There is at least one expansion, deduplicated by source origin.
+
+`directCaller.kind` remains `macro-generated-method`, but its qualname now
+identifies the template, such as `mod::forward!::method`, not a unique impl.
+A nested named function remains `local-function` with a template-qualified
+parent. If the same file is loaded under different module identities and callers
+disagree, `directCaller` is omitted without discarding an agreed target; the macro
+and physical expansion anchors remain. If expansions disagree on the target, the top-level call is
+`unresolved` with reason `rust-context-dependent` and no `target`; the same
+`macroTemplate` provenance remains available. No per-expansion targets or
+runtime implementation identities are supplied. Saved question records retain
+this object unchanged; target navigation also checks captured definition and
+expansion-file freshness. Historical v11 captures remain accepted under their
+original contract and are not retroactively assigned v12 provenance.
+
 v6 inventories a trait method's default body once per source declaration, not
 once per implementing type. A declaration without a body adds no call. Calls in
 the body carry `defaultMethod` context (file, name, qualname, line, column and
@@ -89,8 +141,8 @@ inherent accessor shadows the wrapping trait, and a wrapper without such
 evidence stays unresolved instead of being assumed to expose its generic
 parameter. Renamed generics between impl and struct (for example
 `impl<S> Subscriber for Layered<L, S>` where the field is declared `inner: I`),
-pattern bindings, loop variables, macro-produced receivers and other accessor
-chains remain unresolved.
+pattern bindings, loop variables, macro-produced receivers outside the
+zero-argument impl-body pattern and other accessor chains remain unresolved.
 
 Unsupported applicability remains explicit: external or macro-generated traits,
 supertrait/blanket impls, type aliases/Self, generic argument substitution,

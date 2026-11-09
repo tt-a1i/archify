@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "status": "ok",
+  "command": "task",
+  "action": "question",
+  "stage": "orientation-only",
+  "evidence": "valid",
+  "parseErrors": 0,
+  "calls": {
+    "coverage": "available",
+    "reason": null,
+    "model": "rust-source-direct-v12",
+    "total": 4,
+    "included": 4,
+    "omitted": 0
+  },
+  "out": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/final/zip-controls/queries/cfg-template-off-base.json",
+  "workflow": "/private/tmp/archify-v12-final-zip/archify/modules/code-analysis/docs/FUNCTION-ANALYSIS.md"
+}

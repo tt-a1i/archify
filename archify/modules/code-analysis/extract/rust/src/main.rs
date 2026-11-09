@@ -143,6 +143,7 @@ struct DefaultMethod {
     line: usize,
     column: usize,
     trait_name: String,
+    trait_index: Option<usize>,
 }
 #[derive(Clone)]
 struct TraitDecl {
@@ -176,6 +177,15 @@ struct TraitImpl {
     function: usize,
     state: State,
 }
+struct TraitImplOwner {
+    module: usize,
+    trait_path: Vec<String>,
+    absolute: bool,
+    self_path: Option<(Vec<String>, bool)>,
+    has_methods: BTreeSet<String>,
+    complete: bool,
+    plain: bool,
+}
 #[derive(Clone)]
 struct Module {
     krate: usize,
@@ -207,6 +217,7 @@ struct Function {
     self_type: Option<TypeHint>,
     self_args: Option<Vec<TypeHint>>,
     default_method: Option<DefaultMethod>,
+    macro_template: Option<Value>,
 }
 #[derive(Clone)]
 struct Krate {
@@ -299,6 +310,7 @@ struct WrapPending {
     method: String,
     args: Vec<TypeHint>,
     associated: Option<TypeHint>,
+    state: State,
 }
 #[derive(Clone)]
 struct MacroRule {
@@ -314,9 +326,20 @@ struct MacroDef {
     module: usize,
     krate: usize,
     preserves: bool,
+    rules: Vec<MacroRule>,
 }
 struct ParsedMacroDef {
     rules: Vec<MacroRule>,
+}
+struct ImplItems(Vec<ImplItem>);
+impl Parse for ImplItems {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let mut items = Vec::new();
+        while !input.is_empty() {
+            items.push(input.parse()?);
+        }
+        Ok(ImplItems(items))
+    }
 }
 impl Parse for ParsedMacroDef {
     fn parse(input: ParseStream) -> Result<Self> {
@@ -554,13 +577,14 @@ struct Analysis {
     inherent_pending: Vec<InherentPending>,
     inherent: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
     inherent_methods: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
-    inherent_returns: BTreeMap<(usize, String, String), Vec<TypeHint>>,
+    inherent_returns: BTreeMap<(usize, String, String), Vec<Option<TypeHint>>>,
     wrap_pending: Vec<WrapPending>,
-    wrap_targets: BTreeMap<(usize, String, String), Vec<TypeHint>>,
+    wrap_targets: BTreeMap<(usize, String, String), Vec<Option<TypeHint>>>,
     macro_defs: BTreeMap<String, Vec<MacroDef>>,
     traits: Vec<TraitDecl>,
     trait_pending: Vec<TraitImplPending>,
     trait_impls: Vec<TraitImpl>,
+    trait_impl_owners: Vec<TraitImplOwner>,
     variants: BTreeSet<(usize, String, String)>,
     cfg: BTreeSet<String>,
     tests: bool,
@@ -680,58 +704,40 @@ impl Analysis {
             }
         }
     }
-    fn attrs(&self, attrs: &[Attribute], krate: usize) -> State {
-        let mut state = 1;
-        for a in attrs {
-            if a.path().is_ident("cfg") {
-                if let Meta::List(m) = &a.meta {
-                    let items = meta_list(m);
-                    state = and(
-                        state,
-                        if items.len() == 1 {
-                            self.cfg_meta(&items[0], krate)
-                        } else {
-                            0
-                        },
-                    );
+    fn attr_meta(&self, meta: &Meta, krate: usize) -> State {
+        if meta.path().is_ident("cfg") {
+            if let Meta::List(m) = meta {
+                let items = meta_list(m);
+                if items.len() == 1 {
+                    return self.cfg_meta(&items[0], krate);
                 }
-            } else if a.path().is_ident("test") || a.path().is_ident("bench") {
-                state = and(state, if self.tests { 1 } else { -1 });
-            } else if a.path().is_ident("cfg_attr") {
-                if let Meta::List(m) = &a.meta {
-                    let items = meta_list(m);
-                    if items.len() > 1 {
-                        let condition = self.cfg_meta(&items[0], krate);
-                        for nested in &items[1..] {
-                            if nested.path().is_ident("cfg") {
-                                if condition == 0 {
-                                    state = and(state, 0)
-                                } else if condition == 1 {
-                                    if let Meta::List(x) = nested {
-                                        let args = meta_list(x);
-                                        state = and(
-                                            state,
-                                            if args.len() == 1 {
-                                                self.cfg_meta(&args[0], krate)
-                                            } else {
-                                                0
-                                            },
-                                        );
-                                    }
-                                }
-                            } else if (nested.path().is_ident("path") && condition == 0)
-                                || (condition >= 0 && !builtin_attribute(nested.path()))
-                            {
-                                state = and(state, 0)
-                            }
-                        }
-                    }
-                }
-            } else if !builtin_attribute(a.path()) {
-                state = and(state, 0);
             }
+            return 0;
         }
-        state
+        if meta.path().is_ident("test") || meta.path().is_ident("bench") {
+            return if self.tests { 1 } else { -1 };
+        }
+        if meta.path().is_ident("cfg_attr") {
+            let Meta::List(m) = meta else { return 0 };
+            let items = meta_list(m);
+            let Some(condition) = items.first() else { return 0 };
+            let condition = self.cfg_meta(condition, krate);
+            if condition < 0 {
+                return 1;
+            }
+            return items[1..].iter().fold(1, |state, nested| {
+                let selected = self.attr_meta(nested, krate);
+                and(state, if condition == 0 {
+                    if selected == 1 && !nested.path().is_ident("path") { 1 } else { 0 }
+                } else {
+                    selected
+                })
+            });
+        }
+        if builtin_attribute(meta.path()) { 1 } else { 0 }
+    }
+    fn attrs(&self, attrs: &[Attribute], krate: usize) -> State {
+        attrs.iter().fold(1, |state, attr| and(state, self.attr_meta(&attr.meta, krate)))
     }
     fn preserves_single_expr(&self, rules: &[MacroRule], krate: usize) -> bool {
         !rules.is_empty()
@@ -884,6 +890,7 @@ impl Analysis {
             self_type: None,
             self_args: None,
             default_method: None,
+            macro_template: None,
         });
         index
     }
@@ -1111,6 +1118,7 @@ impl Analysis {
                         trait_generics.iter().cloned().collect();
                     let mut methods = BTreeMap::new();
                     let mut returns = BTreeMap::new();
+                    let mut default_functions = Vec::new();
                     for item in &s.items {
                         if let TraitItem::Fn(m) = item {
                             let method_state = and(selected, self.attrs(&m.attrs, krate));
@@ -1159,7 +1167,9 @@ impl Analysis {
                                     line: mline,
                                     column: mcolumn,
                                     trait_name: name.clone(),
+                                    trait_index: None,
                                 });
+                                default_functions.push(index);
                                 for param in s.generics.type_params() {
                                     let generic = param.ident.to_string();
                                     self.functions[index].generics.push(generic.clone());
@@ -1191,6 +1201,11 @@ impl Analysis {
                         methods,
                         returns,
                     });
+                    for function in default_functions {
+                        if let Some(method) = self.functions[function].default_method.as_mut() {
+                            method.trait_index = Some(index);
+                        }
+                    }
                     self.add_binding(id, name, Binding::Trait(index));
                 }
                 Item::Union(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
@@ -1325,6 +1340,13 @@ impl Analysis {
                         .collect();
                     let impl_generics: BTreeSet<String> =
                         impl_types.iter().cloned().collect();
+                    let (impl_items, macro_template, item_state) =
+                        match self.expanded_impl_items(krate, id, &file, &im) {
+                            Some((items, template, state)) => (items, Some(template), and(selected, state)),
+                            None => (im.items.clone(), None, selected),
+                        };
+                    let mut impl_methods = BTreeSet::new();
+                    let mut impl_complete = selected == 1 && item_state != 0;
                     if let Some((trait_path, absolute)) = &trait_ref {
                         let mut args = Vec::new();
                         if let Some(segment) =
@@ -1346,12 +1368,14 @@ impl Analysis {
                             }
                             _ => None,
                         });
-                        for item in &im.items {
+                        for item in &impl_items {
                             let ImplItem::Fn(f) = item else {
                                 continue;
                             };
                             let method = f.sig.ident.to_string();
-                            if !["as_ref", "borrow", "deref"].contains(&method.as_str()) {
+                            let state = and(item_state, self.attrs(&f.attrs, krate));
+                            if state < 0
+                                || !["as_ref", "borrow", "deref"].contains(&method.as_str()) {
                                 continue;
                             }
                             self.wrap_pending.push(WrapPending {
@@ -1362,10 +1386,11 @@ impl Analysis {
                                 method,
                                 args: args.clone(),
                                 associated: associated.clone(),
+                                state,
                             });
                         }
                     }
-                    for i in im.items {
+                    for i in impl_items {
                         if let ImplItem::Fn(f) = i {
                             let item = ItemFn {
                                 attrs: f.attrs.clone(),
@@ -1373,7 +1398,13 @@ impl Analysis {
                                 sig: f.sig.clone(),
                                 block: Box::new(f.block),
                             };
-                            let cfg = and(selected, self.attrs(&item.attrs, krate));
+                            let cfg = and(item_state, self.attrs(&item.attrs, krate));
+                            if cfg == 0 {
+                                impl_complete = false;
+                            }
+                            if cfg == 1 {
+                                impl_methods.insert(item.sig.ident.to_string());
+                            }
                             if cfg >= 0 {
                                 let index = self.register_fn(
                                     id,
@@ -1383,6 +1414,7 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
+                                self.functions[index].macro_template = macro_template.clone();
                                 self.functions[index].self_type =
                                     type_hint(&im.self_ty, &impl_generics);
                                 let mut self_args = Vec::new();
@@ -1480,6 +1512,28 @@ impl Analysis {
                                     });
                                 }
                             }
+                        } else if let ImplItem::Macro(invocation) = i {
+                            if and(item_state, self.attrs(&invocation.attrs, krate)) >= 0 {
+                                impl_complete = false;
+                            }
+                        }
+                    }
+                    if selected == 1 {
+                        if let Some((trait_path, absolute)) = &trait_ref {
+                            let plain = im_generics.params.is_empty()
+                                && im_generics.where_clause.is_none()
+                                && matches!(im.self_ty.as_ref(), Type::Path(path)
+                                    if path.qself.is_none()
+                                        && path.path.segments.iter().all(|segment| matches!(segment.arguments, PathArguments::None)));
+                            self.trait_impl_owners.push(TraitImplOwner {
+                                module: id,
+                                trait_path: trait_path.clone(),
+                                absolute: *absolute,
+                                self_path: self_path.clone(),
+                                has_methods: impl_methods,
+                                complete: impl_complete,
+                                plain,
+                            });
                         }
                     }
                 }
@@ -1504,6 +1558,7 @@ impl Analysis {
                                             module: id,
                                             krate,
                                             preserves,
+                                            rules: def.rules,
                                         },
                                     );
                                 }
@@ -1548,6 +1603,61 @@ impl Analysis {
             return None;
         }
         Some(def.clone())
+    }
+
+    fn expanded_impl_items(
+        &self,
+        krate: usize,
+        module: usize,
+        file: &str,
+        implementation: &ItemImpl,
+    ) -> Option<(Vec<ImplItem>, Value, State)> {
+        let mut iter = implementation.items.iter();
+        let ImplItem::Macro(invocation) = iter.next()? else {
+            return None;
+        };
+        if iter.next().is_some()
+            || !invocation.mac.tokens.is_empty()
+            || invocation.mac.path.segments.len() != 1
+        {
+            return None;
+        }
+        let name = invocation.mac.path.segments[0].ident.to_string();
+        let (line, column) =
+            self.point(file, self.bytes(file, invocation.mac.path.span()).0);
+        let defs = self.macro_defs.get(&name)?;
+        let mut visible: Vec<&MacroDef> = defs
+            .iter()
+            .filter(|def| {
+                def.krate == krate
+                    && def.file == file
+                    && def.module == module
+                    && self.macro_visible(def, module, line)
+            })
+            .collect();
+        if visible.len() != 1 {
+            return None;
+        }
+        let def = visible.pop()?;
+        if def.rules.len() != 1 || !def.rules[0].matcher.is_empty() {
+            return None;
+        }
+        let expanded = syn::parse2::<ImplItems>(def.rules[0].expansion.clone()).ok()?;
+        let (impl_line, impl_column) =
+            self.point(file, self.bytes(file, implementation.impl_token.span).0);
+        let mut origin = json!({
+            "file": file, "line": line, "column": column,
+            "implLine": impl_line, "implColumn": impl_column,
+            "selfType": implementation.self_ty.to_token_stream().to_string(),
+        });
+        if let Some((_, path, _)) = &implementation.trait_ {
+            origin["trait"] = json!(path.to_token_stream().to_string());
+        }
+        let template = json!({
+            "definition": {"file":def.file,"name":def.name,"line":def.line,"column":def.column},
+            "expansions": [origin],
+        });
+        Some((expanded.0, template, self.attrs(&invocation.attrs, krate)))
     }
 
     fn ancestor_child(&self, ancestor: usize, module: usize) -> Option<usize> {
@@ -1933,12 +2043,12 @@ fn hint_key(hint: &TypeHint) -> String {
         }
     }
 }
-fn unique_hint(values: &[TypeHint]) -> Option<TypeHint> {
-    let first = values.first()?;
+fn unique_hint(values: &[Option<TypeHint>]) -> Option<TypeHint> {
+    let first = values.first()?.as_ref()?;
     let key = hint_key(first);
     values
         .iter()
-        .all(|value| hint_key(value) == key)
+        .all(|value| value.as_ref().is_some_and(|hint| hint_key(hint) == key))
         .then(|| first.clone())
 }
 fn unique_index(values: &[Option<usize>]) -> Option<usize> {
@@ -2087,6 +2197,16 @@ struct Caller {
     line: usize,
     column: usize,
 }
+fn self_deref_depth(expr: &Expr) -> Option<usize> {
+    match expr {
+        Expr::Path(path) if path.qself.is_none() && path.path.is_ident("self") => Some(0),
+        Expr::Paren(paren) => self_deref_depth(&paren.expr),
+        Expr::Unary(unary) if matches!(unary.op, UnOp::Deref(_)) => {
+            self_deref_depth(&unary.expr).map(|depth| depth + 1)
+        }
+        _ => None,
+    }
+}
 struct Scanner<'a> {
     a: &'a mut Analysis,
     function: Function,
@@ -2137,6 +2257,9 @@ impl Scanner<'_> {
             json!(self.a.crates[self.a.modules[self.function.module].krate].id);
         self.annotate_default(record);
         self.annotate_caller(record);
+        if let Some(template) = &self.function.macro_template {
+            record["macroTemplate"] = template.clone();
+        }
         if !self.macro_evidence.is_empty() {
             record["macroEvidence"] = Value::Array(self.macro_evidence.clone());
         }
@@ -2369,6 +2492,26 @@ impl Scanner<'_> {
             }
             Expr::Reference(r) => self.receiver_hint(&r.expr),
             Expr::Paren(p) => self.receiver_hint(&p.expr),
+            Expr::Unary(unary) if matches!(unary.op, UnOp::Deref(_)) => {
+                let depth = self_deref_depth(&unary.expr)? + 1;
+                if depth > 2 {
+                    return None;
+                }
+                let hint = self.function.self_type.clone()?;
+                if depth <= 1 {
+                    Some(hint)
+                } else {
+                    match hint {
+                        TypeHint::Generic(_) => Some(hint),
+                        TypeHint::Nominal(parts, _)
+                            if parts.len() == 1 && parts[0] == "Box" =>
+                        {
+                            self.function.self_args.as_ref()?.first().cloned()
+                        }
+                        _ => None,
+                    }
+                }
+            }
             Expr::Field(f) => {
                 let TypeHint::Nominal(parts, absolute) = self.receiver_hint(&f.base)? else {
                     return None;
@@ -2478,7 +2621,7 @@ impl Scanner<'_> {
         }
         let mut functions = BTreeSet::new();
         for edge in &self.a.trait_impls {
-            if edge.state == 1
+            if edge.state >= 0
                 && edge.self_module == Some(module)
                 && edge.self_name.as_deref() == Some(name)
                 && edge.method == method
@@ -2488,6 +2631,43 @@ impl Scanner<'_> {
         }
         if functions.len() == 1 {
             functions.pop_first()
+        } else {
+            None
+        }
+    }
+    fn inherited_trait_default(&self, module: usize, name: &str, method: &str) -> Option<usize> {
+        let mut found = Vec::new();
+        for owner in &self.a.trait_impl_owners {
+            if !owner.plain || !owner.complete || owner.has_methods.contains(method) {
+                continue;
+            }
+            let Some((parts, absolute)) = &owner.self_path else {
+                continue;
+            };
+            let resolved = match self.a.resolve(owner.module, parts, *absolute, false, 0) {
+                Some(Binding::Nominal(target_module, target_name))
+                | Some(Binding::Fields(target_module, target_name)) => (target_module, target_name),
+                _ => continue,
+            };
+            if resolved != (module, name.to_string()) {
+                continue;
+            }
+            let declaration = match self.a.resolve(
+                owner.module,
+                &owner.trait_path,
+                owner.absolute,
+                true,
+                0,
+            ) {
+                Some(Binding::Trait(index)) => index,
+                _ => continue,
+            };
+            if self.a.traits[declaration].methods.contains_key(method) {
+                found.push(declaration);
+            }
+        }
+        if found.len() == 1 {
+            found.pop()
         } else {
             None
         }
@@ -2560,7 +2740,7 @@ impl Scanner<'_> {
             };
             let mut functions = BTreeSet::new();
             for edge in &self.a.trait_impls {
-                if edge.state == 1
+                if edge.state >= 0
                     && edge.trait_decl == decl
                     && edge.self_module == Some(module)
                     && edge.self_name.as_deref() == Some(name.as_str())
@@ -2594,6 +2774,26 @@ impl Scanner<'_> {
     }
     fn method_call(&mut self, span: Span, call: &ExprMethodCall) {
         let method = call.method.to_string();
+        if let Expr::Path(path) = call.receiver.as_ref() {
+            if path.qself.is_none() && path.path.is_ident("self") {
+                if let Some(index) = self
+                    .function
+                    .default_method
+                    .as_ref()
+                    .and_then(|method| method.trait_index)
+                {
+                    if self.a.traits[index].methods.contains_key(&method) {
+                        self.trait_target(
+                            span,
+                            index,
+                            &method,
+                            "rust-trait-method-candidate",
+                        );
+                        return;
+                    }
+                }
+            }
+        }
         if let Some(hint) = self.receiver_hint(&call.receiver) {
             match hint {
                 TypeHint::Generic(name) => {
@@ -2630,6 +2830,15 @@ impl Scanner<'_> {
                         }
                         if let Some(index) = self.unique_trait_impl(module, &name, &method) {
                             self.impl_target(span, index, "rust-trait-impl");
+                            return;
+                        }
+                        if let Some(index) = self.inherited_trait_default(module, &name, &method) {
+                            self.trait_target(
+                                span,
+                                index,
+                                &method,
+                                "rust-trait-method-candidate",
+                            );
                             return;
                         }
                     }
@@ -2767,6 +2976,7 @@ impl Scanner<'_> {
                 module: self.function.module,
                 krate,
                 preserves,
+                rules: def.rules,
             });
         true
     }
@@ -3250,6 +3460,7 @@ fn main() {
         traits: Vec::new(),
         trait_pending: Vec::new(),
         trait_impls: Vec::new(),
+        trait_impl_owners: Vec::new(),
         variants: BTreeSet::new(),
         selected: BTreeSet::new(),
         excluded_regions: Vec::new(),
@@ -3285,12 +3496,10 @@ fn main() {
         | Some(Binding::Fields(owner_module, owner_name)) =
             a.resolve(pending.module, &pending.owner, false, false, 0)
         {
-            if let Some(returns) = pending.returns.clone() {
-                a.inherent_returns
-                    .entry((owner_module, owner_name.clone(), pending.name.clone()))
-                    .or_default()
-                    .push(returns);
-            }
+            a.inherent_returns
+                .entry((owner_module, owner_name.clone(), pending.name.clone()))
+                .or_default()
+                .push(if a.functions[pending.index].state == 1 { pending.returns.clone() } else { None });
             if !pending.static_function {
                 // Keep a method's receiver overload as a blocker for path calls,
                 // while allowing direct method-call resolution by receiver.
@@ -3360,7 +3569,7 @@ fn main() {
             a.wrap_targets
                 .entry((owner_module, owner_name, pending.method))
                 .or_default()
-                .push(target);
+                .push((pending.state == 1).then_some(target));
         }
     }
     // Resolve trait declarations and impl edges after all module trees exist.
@@ -3435,13 +3644,20 @@ fn main() {
         let state = f.state;
         let kind = if f.default_method.is_some() {
             "trait-default-method"
+        } else if f.macro_template.is_some() {
+            "macro-generated-method"
         } else if f.self_type.is_some() {
             "method"
         } else {
             "function"
         };
         let (line, column) = a.point(&f.file, f.start);
-        let caller = Caller { file: f.file.clone(), name: f.name.clone(), qualname: f.qualname.clone(), kind, line, column };
+        let qualname = if let Some(template) = &f.macro_template {
+            format!("{}::{}!::{}", a.modules[f.module].path, template["definition"]["name"].as_str().unwrap(), f.name)
+        } else {
+            f.qualname.clone()
+        };
+        let caller = Caller { file: f.file.clone(), name: f.name.clone(), qualname, kind, line, column };
         let mut scanner = Scanner {
             a: &mut a,
             function: f,
@@ -3508,7 +3724,29 @@ fn main() {
         .into_values()
         .map(|v| {
             let mut first = v[0].clone();
-            if v.iter().any(|x| x != &first) {
+            let outcome = |call: &Value| {
+                (
+                    call.get("resolution").cloned(),
+                    call.get("target").cloned(),
+                    call.get("reason").cloned(),
+                )
+            };
+            if first.get("macroTemplate").is_some() {
+                let mut origins = BTreeMap::new();
+                for call in &v {
+                    if let Some(expansions) = call["macroTemplate"]["expansions"].as_array() {
+                        for origin in expansions {
+                            origins.insert(origin.to_string(), origin.clone());
+                        }
+                    }
+                }
+                first["macroTemplate"]["expansions"] = json!(origins.into_values().collect::<Vec<_>>());
+            }
+            if v.iter().any(|call| call.get("directCaller") != first.get("directCaller")) {
+                first.as_object_mut().unwrap().remove("directCaller");
+            }
+            let first_outcome = outcome(&first);
+            if v.iter().any(|call| outcome(call) != first_outcome) {
                 first.as_object_mut().unwrap().remove("target");
                 first["resolution"] = json!("unresolved");
                 first["reason"] = json!("rust-context-dependent");
