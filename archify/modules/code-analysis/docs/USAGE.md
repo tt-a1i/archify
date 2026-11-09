@@ -53,6 +53,24 @@ Output defaults to a system temporary directory. Add `--out out/my-project` to c
 
 You can also run `node bin/archify.mjs start "/path/to/project" --ir architecture.json` directly. The legacy `code-analysis serve` command remains supported.
 
+## First look at an unfamiliar repository
+
+Run `check` without a diagram and write the artifacts to a directory:
+
+```sh
+node bin/archify.mjs code-analysis check /path/to/repo --language ts --out out/first-look --json
+```
+
+Choose `--language` when the repository contains more than one language; without it, `check` stops with `extract/adapter-ambiguous` and lists the detected adapters. Each run analyzes one language and reports the others under `coverage.otherLanguages`.
+
+Start from the JSON receipt, not the full finding list:
+
+- `investigation.leads` repeats the three ranked `priorities` with `message`, `where` (`path:line`), `symbol`, `impact`, and a runnable `task` command. The text output prints the same list under **Start here**.
+- `ruleCounts` shows how findings divide by rule, so a dominant rule is visible before reading every finding.
+- `coverage` lists parse failures and other languages left out. `overview.json` also lists files excluded by role.
+
+For each lead you keep, run its `task` command (or `archify code-analysis task out/first-look --finding <id> --root /path/to/repo --format json`) to get source excerpts, facts, suggestions, acceptance and evidence digests. Then read the cited source before changing code. A finding is static evidence, not a proven defect: a complexity warning says the function is harder to read and test, not that it must be split, and a coupling signal may be an intentional design. If the branching or dependency is inherent, record that and leave the code as it is.
+
 ## Architecture boundaries
 
 To check that layers only depend on what they should, pass a config file with `--config analysis.config.json`:
@@ -121,7 +139,7 @@ Nested named functions are measured on their own:
 - in Python: methods and nested `def`s;
 - in JS/TS: methods, constructors, accessors, and arrow or function expressions assigned to a name.
 
-Lambdas and anonymous callbacks count toward the function that contains them. A callback at module level has no such function, so it is measured on its own, named after the call it is passed to, and its first literal argument, such as `<callback of server.on("request")>`. Test and generated files are skipped.
+Lambdas and anonymous callbacks count toward the function that contains them. A callback at module level has no such function, so it is measured on its own, named after the call it is passed to, and its first literal argument, such as `<callback of server.on("request")>`. Test, generated and vendored files are skipped: `roles.generated` includes `vendor/`, `vendored/`, `third_party/` and `third-party/` by default, because bundles there are not first-party source. Override `roles.generated` in a config to measure those folders and keep them in the module graph.
 
 A function is reported as info from complexity 15 or nesting 5, and as a warning from complexity 25 or nesting 6. Function length is shown as context but never reported on its own. A high count is a maintenance signal, not a defect. The problem page links to the function's first line and its deepest nested block.
 

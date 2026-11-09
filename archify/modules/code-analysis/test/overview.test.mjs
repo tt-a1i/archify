@@ -53,6 +53,26 @@ test('overview: one rule with many instances does not take every priority slot',
   assert.deepEqual(o.priorities, ['COMP-000000000002', offDiagramHub.id, 'COMP-000000000003'], 'best of each warning rule first (largest complexity first), then by rank');
 });
 
+test('overview: investigation repeats priorities with message and source location', () => {
+  const tangled = {
+    ...finding('COMP-000000000010', 'complexity/function', 'warning', { file: 'e/f.py', function: 'f', line: 12 }, ['e']),
+    message: 'f in e/f.py has cyclomatic complexity 26. This is a maintenance signal, not a defect.',
+    evidence: { complexity: 26 },
+  };
+  const o = buildOverview({ findings: [tangled], graph });
+  assert.deepEqual(o.priorities, [tangled.id]);
+  assert.deepEqual(o.investigation.leads, [{
+    id: tangled.id,
+    code: 'complexity/function',
+    severity: 'warning',
+    message: tangled.message,
+    where: 'e/f.py:12',
+    symbol: 'f',
+    impact: { modules: 1, size: 26, fanIn: 3, files: 2 },
+  }]);
+  assert.deepEqual(buildOverview({ findings: [], graph }).investigation, { leads: [] });
+});
+
 test('overview: the verdict never claims more than the checks did', () => {
   assert.equal(buildOverview({ findings: [], graph }).verdict, 'none-found');
   assert.equal(buildOverview({ findings: [moduleCycle], graph }).verdict, 'signals-only');
