@@ -28,3 +28,11 @@ settings change. Every reference is still `valid`; the status describes the
 capture, not a finding. Case B is `ready`.
 
 Raw receipts: `case-a.json`, `case-b.json` (v9) and `baseline-v8/` (v8).
+
+## v10 accuracy revision (same branch, 2026-11-09)
+
+The two changes were re-run under `rust-source-direct-v10`. All three
+`ok!`-wrapped positions (`149:44`, `219:44`, `185:44`) still resolve to the
+named declarations with `macroEvidence`; `is_new_arg` at `331:29` remains a
+direct reference with no macro evidence. Receipts:
+`../revision-v10/real-changes/`.
