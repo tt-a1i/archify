@@ -10,6 +10,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Authored node explanations in the Semantic Passport.** Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text explanations up to1200 characters. Explain opens a viewport-bounded reading face with scrollable prose and a reachable Back action; Escape restores the Passport. Prose remains outside canonical SVG and visual exports, and existing diagram geometry is preserved.
 - **Cross-diagram navigation.** Nodes may list sibling `.html` targets via `drilldowns` or a one-entry `href` shorthand. One child uses a native SVG link and visible mark (click follows, Alt-click focuses). Several children keep click-to-focus, with Passport listing every target and Ctrl/double-click opening the first. Child pages can author `meta.parentHref` for header Back; the Viewer also accepts `?from=`.
 
+### Changed
+- **Explainer pages are proactive by default (#1299).** Like Answer me with HTML, the agent now also makes a one-page explainer unasked when an answer is a complex flow, a diagnosis, a comparison, a test or review report or a plan that needs structure. The reply keeps a short, directly readable conclusion and ends with a descriptive link to the page. Short answers, routine status updates, text-only or no-page requests and failed pages get no page or link. `[archify explainer: on-demand]` in the agent's global rules file restores request-only pages; `always-on` stays opt-in. The one-line offer to enable proactive mode after a requested page is removed.
+
 ### Fixed
 
 - **WebP brand container bounds (#602).** Reject missing or out-of-bounds image chunks, including incomplete animation frames, before reporting capture or pinned validation success. Preserve valid lossy, lossless, extended and animated containers and original-byte digests.
