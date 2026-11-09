@@ -17,7 +17,7 @@ Confirm this scope first:
 
 1. Discover the skill. This only lists the package; it does not install it.
 
-   `npx -y skills add tt-a1i/archify --list --full-depth`
+   `npx -y skills@latest add https://archify.si --list --full-depth`
 
    Stop unless the listing contains exactly one skill named `archify`.
 
@@ -27,11 +27,11 @@ Confirm this scope first:
 
    One agent:
 
-   `npx -y skills add tt-a1i/archify --skill archify --agent <agent> --global --copy --yes`
+   `npx -y skills@latest add https://archify.si --skill archify --agent <agent> --global --copy --yes`
 
    Several agents, by repeating `--agent`:
 
-   `npx -y skills add tt-a1i/archify --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes`
+   `npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes`
 
    Omit `--global` for a project-only install. Do not add other skills, agents, sources, or force flags.
 

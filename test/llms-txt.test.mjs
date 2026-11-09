@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const paste = 'Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt';
-const cursorCommand = 'npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes';
-const discovery = 'npx -y skills add tt-a1i/archify --list --full-depth';
+const cursorCommand = 'npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes';
+const discovery = 'npx -y skills@latest add https://archify.si --list --full-depth';
 const doctor = 'node <installed-path>/bin/archify.mjs doctor';
 
 const readmes = [
@@ -57,7 +57,7 @@ test('llms.txt states the package version and the bounded install', () => {
 
 test('localized quick starts show the agent prompt and non-interactive flags', () => {
   const agents = switcherAgents();
-  const multi = `npx -y skills add tt-a1i/archify --skill archify ${agents.map((agent) => `--agent ${agent}`).join(' ')} --global --copy --yes`;
+  const multi = `npx -y skills@latest add https://archify.si --skill archify ${agents.map((agent) => `--agent ${agent}`).join(' ')} --global --copy --yes`;
   const wall = 'https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg';
   const graph = 'https://github.com/tt-a1i/archify/graphs/contributors';
 
@@ -69,6 +69,7 @@ test('localized quick starts show the agent prompt and non-interactive flags', (
     const installSection = withoutDetails(readme.slice(installAt, nextHeading === -1 ? undefined : nextHeading));
     assert.ok(quickAt >= 0 && installAt > quickAt, `${filename}: install section must sit in Quick Start`);
     assert.ok(installSection.includes(paste), `${filename}: agent paste prompt is missing from Quick Start`);
+    assert.ok(installSection.indexOf(paste) < installSection.indexOf('```bash'), `${filename}: the agent prompt must precede terminal commands`);
     assert.ok(installSection.includes(cursorCommand), `${filename}: current-agent install must stay outside the collapsed details`);
     assert.ok(installSection.includes(multi), `${filename}: multi-agent install must list every switcher target`);
     const installBlocks = [...installSection.matchAll(/```bash\n([\s\S]*?)```/g)]

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
 const repoRoot = path.resolve(skillRoot, '..');
-const cursorCommand = 'npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes';
+const cursorCommand = 'npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes';
 
 test('Cursor onboarding stays explicit, bilingual, and backed by the same Skill', () => {
   const english = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
@@ -25,7 +25,9 @@ test('Cursor onboarding stays explicit, bilingual, and backed by the same Skill'
     assert.ok(chinese.includes(agent), `Chinese README must name ${agent}`);
     assert.ok(japanese.includes(agent), `Japanese README must name ${agent}`);
   }
-  for (const surface of [english, chinese, japanese, landing]) assert.ok(surface.includes(cursorCommand));
+  for (const surface of [english, chinese, japanese]) assert.ok(surface.includes(cursorCommand));
+  // The legacy static landing page keeps its original GitHub install source.
+  assert.ok(landing.includes('npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes'));
   for (const surface of [english, chinese, japanese, start, landing]) {
     assert.doesNotMatch(surface, /skills use[^\n<]*--agent cursor/);
     assert.doesNotMatch(surface, /~\/\.cursor\/skills\/archify/);

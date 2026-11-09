@@ -4,13 +4,26 @@ import SupportedDiagrams from '../components/SupportedDiagrams.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
 import Brand from '../components/Brand';
+import SponsorsStrip from '../components/SponsorsStrip.astro';
 import ProductFacts from '../components/ProductFacts.astro';
 import { defaultProofLabels } from '../data/default-proof-labels.mjs';
 import head from '../data/index-head.html?raw';
 import css from '../styles/index.css?raw';
 import pageScript from '../scripts/index.js?raw';
 
-const installCommand = 'npx -y skills add tt-a1i/archify --skill archify --agent claude-code --global --copy --yes';
+const diagramTypes = [
+  ['arch', 'Architecture', 'What is it made of?'],
+  ['wf', 'Workflow', 'What happens next?'],
+  ['seq', 'Sequence', 'Who says what, in what order?'],
+  ['flow', 'Data flow', 'Where does it all go?'],
+  ['life', 'Lifecycle', 'Where does it stand now?'],
+  ['erd', 'Entity-relationship', 'How does the data relate?'],
+  ['class', 'Class / interface', 'Which types fulfil which contracts?'],
+  ['tree', 'Tree', 'How is it organised?'],
+  ['timeline', 'Timeline', 'What happened, and when?'],
+  ['waterfall', 'Waterfall', 'Where did the time go?'],
+];
+const installCommand = 'npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes';
 const { lang = 'en' } = Astro.props;
 ---
 <SiteLayout page="index" lang={lang} head={versioned(head)} css={css}>
@@ -32,9 +45,8 @@ const { lang = 'en' } = Astro.props;
       <p class="hero-sub fade-up d2" data-i18n="hero-sub">A leave plan, a P99 spike, a first HTTPS visit, or a whole codebase — your AI agent answers with an explorable map, or a one-page answer that puts the conclusion first and cites its sources. Either way it is one HTML file, validated before it ships.</p>
       <div class="hero-actions fade-up d3">
         <div class="cmd-chip">
-          <span class="cmd-prompt" aria-hidden="true">$</span>
-          <code>npx skills add tt-a1i/archify -g</code>
-          <button class="cmd-copy" type="button" data-copy-text="npx skills add tt-a1i/archify -g" aria-label="Copy install command">
+          <span data-en="Paste into your agent to install" data-zh="复制给 Agent 安装">Paste into your agent to install</span>
+          <button class="cmd-copy" type="button" data-copy-text="Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt" aria-label="Copy installation prompt">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 4.5V3A1.5 1.5 0 0 0 8 1.5H3A1.5 1.5 0 0 0 1.5 3v5A1.5 1.5 0 0 0 3 9.5h1.5" stroke="currentColor" stroke-width="1.3"/></svg>
             <span class="cmd-copy-label" data-i18n="copy">Copy</span>
           </button>
@@ -49,7 +61,13 @@ const { lang = 'en' } = Astro.props;
         </button>
       </div>
       <div class="hero-meta fade-up d4">
-        <span class="hero-works"><span data-i18n="hero-works">Works with</span> <b>Claude Code</b> · <b>Codex</b> · <b>Cursor</b> · <b>OpenCode</b> · <b>Copilot</b></span>
+        <span class="hero-works"><span data-i18n="hero-works">Works with</span>
+          <span class="works-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#d97757" d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>Claude Code</span>
+          <span class="works-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>Codex</span>
+          <span class="works-item"><svg viewBox="0 0 800 800" aria-hidden="true"><path fill="#F09082" d="M165.29 165.29H517.36V400H400V282.65H165.29Z"/><path fill="#4D9ABF" d="M165.29 282.65H282.65V400H400V517.36H282.65V634.72H165.29Z"/><path fill="#F1BE58" d="M517.36 400H634.72V634.72H517.36Z"/></svg>Pi</span>
+          <span class="works-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22 24H2V0h20zM17 4.8H7v14.4h10z"/></svg>OpenCode</span>
+          <span class="works-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.922 16.997C23.061 18.492 18.063 22.02 12 22.02 5.937 22.02.939 18.492.078 16.997A.641.641 0 0 1 0 16.741v-2.869a.883.883 0 0 1 .053-.22c.372-.935 1.347-2.292 2.605-2.656.167-.429.414-1.055.644-1.517a10.098 10.098 0 0 1-.052-1.086c0-1.331.282-2.499 1.132-3.368.397-.406.89-.717 1.474-.952C7.255 2.937 9.248 1.98 11.978 1.98c2.731 0 4.767.957 6.166 2.093.584.235 1.077.546 1.474.952.85.869 1.132 2.037 1.132 3.368 0 .368-.014.733-.052 1.086.23.462.477 1.088.644 1.517 1.258.364 2.233 1.721 2.605 2.656a.841.841 0 0 1 .053.22v2.869a.641.641 0 0 1-.078.256Zm-11.75-5.992h-.344a4.359 4.359 0 0 1-.355.508c-.77.947-1.918 1.492-3.508 1.492-1.725 0-2.989-.359-3.782-1.259a2.137 2.137 0 0 1-.085-.104L4 11.746v6.585c1.435.779 4.514 2.179 8 2.179 3.486 0 6.565-1.4 8-2.179v-6.585l-.098-.104s-.033.045-.085.104c-.793.9-2.057 1.259-3.782 1.259-1.59 0-2.738-.545-3.508-1.492a4.359 4.359 0 0 1-.355-.508Zm2.328 3.25c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1-1-1Zm-5 0c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1-1-1Zm3.313-6.185c.136 1.057.403 1.913.878 2.497.442.544 1.134.938 2.344.938 1.573 0 2.292-.337 2.657-.751.384-.435.558-1.15.558-2.361 0-1.14-.243-1.847-.705-2.319-.477-.488-1.319-.862-2.824-1.025-1.487-.161-2.192.138-2.533.529-.269.307-.437.808-.438 1.578v.021c0 .265.021.562.063.893Zm-1.626 0c.042-.331.063-.628.063-.894v-.02c-.001-.77-.169-1.271-.438-1.578-.341-.391-1.046-.69-2.533-.529-1.505.163-2.347.537-2.824 1.025-.462.472-.705 1.179-.705 2.319 0 1.211.175 1.926.558 2.361.365.414 1.084.751 2.657.751 1.21 0 1.902-.394 2.344-.938.475-.584.742-1.44.878-2.497Z"/></svg>Copilot</span>
+        </span>
         <a class="hero-stars" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">
           <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 .2a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.66 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 .2Z"/></svg>
           <span class="stars-count" data-gh-stars hidden></span>
@@ -138,17 +156,19 @@ const { lang = 'en' } = Astro.props;
     </div>
   </section>
 
+  <!-- COMPACT SPONSORS STRIP — links to full matrix on /community#sponsors -->
+  <SponsorsStrip />
+
   <!-- ANSWERS — one-page explainers: the conclusion first, then panels that explain and can be checked -->
   <section id="answers">
     <div class="container">
-      <header class="section-head fade-up">
-        <p class="section-label"><span>01</span><span data-i18n="label-answers">One-page answers</span></p>
-        <h2 class="section-heading" data-i18n="answers-h2">Ask a question. <em>Get a page you can check.</em></h2>
-        <p class="section-body" data-i18n="answers-body">Not every answer is one diagram. Ask your agent to answer as a page: the conclusion comes first, then one panel per question with tables, steps, charts, code and validated diagrams. Steps light the diagram they walk through, claims cite their sources, and code is pinned to a commit.</p>
+      <header class="section-head section-head-row fade-up">
+        <div>
+          <p class="section-label"><span>01</span><span data-i18n="label-answers">One-page answers</span></p>
+          <h2 class="section-heading" data-i18n="answers-h2">Ask a question. <em>Get a page you can check.</em></h2>
+        </div>
+        <p class="section-body" data-i18n="answers-body">Conclusion first, then one panel per question: tables, steps, charts and checked diagrams, with numbered sources and code pinned to a commit.</p>
       </header>
-      <ul class="answer-traits fade-up" aria-label={lang === 'zh' ? '一页式解答包含什么' : 'What a one-page answer holds'}>
-        <li data-i18n="trait-1">Conclusion first</li><li data-i18n="trait-2">Steps beside the diagram</li><li data-i18n="trait-3">Numbered sources</li><li data-i18n="trait-4">Code pinned to a commit</li><li data-i18n="trait-5">Charts from your data</li><li data-i18n="trait-6">Checklists</li><li data-i18n="trait-7">Four styles · light and dark</li><li data-i18n="trait-8">Long image · PDF</li><li data-i18n="trait-9">Follow-up per panel</li>
-      </ul>
       <!-- Each plate holds the whole page; hovering scrolls through it top to bottom. -->
       <div class="page-grid">
         <a class="page-card fade-up" href="cases/explainer/p99-tail-latency.html" target="_blank" rel="noopener">
@@ -172,139 +192,46 @@ const { lang = 'en' } = Astro.props;
           <span class="life-q" data-i18n="answers-rent-q">What should I confirm before signing a lease?</span>
         </a>
       </div>
-      <p class="life-note fade-up" data-i18n="answers-note">Four page styles, light and dark, export to a long image or PDF. Ask about any panel and your agent revises just that panel.</p>
     </div>
   </section>
 
-  <!-- EVERYDAY — the same validated artifacts, for life outside the codebase -->
-  <section id="everyday">
-    <div class="container">
-      <header class="section-head fade-up">
-        <p class="section-label"><span>02</span><span data-i18n="label-life">Beyond code</span></p>
-        <h2 class="section-heading" data-i18n="life-h2">Not just for code. <em>For anything with steps.</em></h2>
-        <p class="section-body" data-i18n="life-body">Leave plans, job hunts, renting, a monthly budget — each one below is a real Archify artifact, generated and validated exactly like a system diagram. Open one and click around.</p>
-      </header>
-      <div class="life-grid">
-        <a class="life-card fade-up" href="cases/life/leave-plan.workflow.html?present=1" target="_blank" rel="noopener">
-          <span class="life-plate"><img src="assets/life/leave-plan.workflow.webp" alt="一年的年假怎么排" loading="lazy" decoding="async" width="2160" height="1350"></span>
-          <span class="life-meta"><span class="life-lang">中文</span><span class="life-kind" data-i18n="life-leave-k">Workflow</span><span class="life-open" aria-hidden="true">↗</span></span>
-          <span class="life-q" data-i18n="life-leave-q">How should I spread my leave across the year?</span>
-          <span class="life-title">一年的年假怎么排</span>
-        </a>
-        <a class="life-card fade-up" href="cases/life/job-search.lifecycle.html?present=1" target="_blank" rel="noopener">
-          <span class="life-plate"><img src="assets/life/job-search.lifecycle.webp" alt="Where Each Job Application Stands" loading="lazy" decoding="async" width="2160" height="1350"></span>
-          <span class="life-meta"><span class="life-lang">EN</span><span class="life-kind" data-i18n="life-job-k">Lifecycle</span><span class="life-open" aria-hidden="true">↗</span></span>
-          <span class="life-q" data-i18n="life-job-q">Where does each job application stand?</span>
-          <span class="life-title">Where Each Job Application Stands</span>
-        </a>
-        <a class="life-card fade-up" href="cases/life/monthly-money.dataflow.html?present=1" target="_blank" rel="noopener">
-          <span class="life-plate"><img src="assets/life/monthly-money.dataflow.webp" alt="Where a Paycheck Goes Each Month" loading="lazy" decoding="async" width="2160" height="1350"></span>
-          <span class="life-meta"><span class="life-lang">EN</span><span class="life-kind" data-i18n="life-money-k">Data flow</span><span class="life-open" aria-hidden="true">↗</span></span>
-          <span class="life-q" data-i18n="life-money-q">Where does my paycheck go each month?</span>
-          <span class="life-title">Where a Paycheck Goes Each Month</span>
-        </a>
-        <a class="life-card fade-up" href="cases/life/renting.sequence.html?present=1" target="_blank" rel="noopener">
-          <span class="life-plate"><img src="assets/life/renting.sequence.webp" alt="租一套房，一来一回" loading="lazy" decoding="async" width="2160" height="1350"></span>
-          <span class="life-meta"><span class="life-lang">中文</span><span class="life-kind" data-i18n="life-rent-k">Sequence</span><span class="life-open" aria-hidden="true">↗</span></span>
-          <span class="life-q" data-i18n="life-rent-q">Who says what when I rent a flat?</span>
-          <span class="life-title">租一套房，一来一回</span>
-        </a>
-      </div>
-      <p class="life-note fade-up" data-i18n="life-note">Numbers in these examples are illustrative. Describe your own situation and your agent draws yours.</p>
-    </div>
-  </section>
-
-  <!-- DIAGRAM TYPES — index list + lightbox preview -->
+  <!-- DIAGRAM TYPES — compact index drives one preview plate -->
   <section id="types">
     <div class="container">
-      <header class="section-head fade-up">
-        <p class="section-label"><span>03</span><span data-i18n="label-types">Diagram types</span></p>
-        <h2 class="section-heading" data-i18n="types-h2">Ten questions. <em>Ten kinds of map.</em></h2>
-        <p class="section-body" data-i18n="types-body">Ask the question you actually have. Archify picks the picture that answers it — for a software system, a database, a codebase, an incident, or something in your own life.</p>
+      <header class="section-head section-head-row fade-up">
+        <div>
+          <p class="section-label"><span>02</span><span data-i18n="label-types">Diagram types</span></p>
+          <h2 class="section-heading" data-i18n="types-h2">Ten questions. <em>Ten kinds of map.</em></h2>
+        </div>
+        <p class="section-body" data-i18n="types-body">Ask the question you have. Archify picks the picture that answers it, whether it is a system, a database, an incident or your own plans.</p>
       </header>
 
-      <SupportedDiagrams />
       <div class="types-index">
+        <div class="types-col">
         <ol class="types-list" id="types-list">
-          <li class="type-group" aria-hidden="true" data-i18n="types-group-1">Systems and flows</li>
-          <li class="type-item is-active" data-type="arch">
-            <button type="button" aria-controls="type-preview" aria-pressed="true">
-              <span class="type-no">01</span><span class="type-name"><small class="type-kind" data-i18n="arch-k">Architecture</small><span data-i18n="arch-h">What is it made of?</span></span>
-            </button>
-            <div class="type-detail"><div>
-              <p data-i18n="arch-p">The parts of something and how they connect — a household's accounts and cards, a team's roles, or a cloud system's services, databases, and security boundaries.</p>
-              <ul class="type-uses"><li data-i18n="arch-li1">Household accounts</li><li data-i18n="arch-li2">Team roles</li><li data-i18n="arch-li3">Microservices topology</li><li data-i18n="arch-li4">Cloud + security boundaries</li></ul>
-            </div></div>
-          </li>
-          <li class="type-item" data-type="wf">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">02</span><span class="type-name"><small class="type-kind" data-i18n="wf-k">Workflow</small><span data-i18n="wf-h">What happens next?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="wf-p">Steps across people or stages — a visa application, a leave plan, onboarding, an approval chain, or a CI/CD pipeline, lane by lane.</p></div></div>
-          </li>
-          <li class="type-item" data-type="seq">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">03</span><span class="type-name"><small class="type-kind" data-i18n="seq-k">Sequence</small><span data-i18n="seq-h">Who says what, in what order?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="seq-p">Back-and-forth in order — renting a flat through an agent, an expense claim, or an API call chain with its returns.</p></div></div>
-          </li>
-          <li class="type-item" data-type="flow">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">04</span><span class="type-name"><small class="type-kind" data-i18n="flow-k">Data Flow</small><span data-i18n="flow-h">Where does it all go?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="flow-p">Where something moves and where it lands — a paycheck into bills and savings, documents through review, or data through a pipeline.</p></div></div>
-          </li>
-          <li class="type-item" data-type="life">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">05</span><span class="type-name"><small class="type-kind" data-i18n="life-k">Lifecycle</small><span data-i18n="life-h">Where does it stand now?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="life-p">States and what moves between them — job applications, an order, a passport renewal, or a deployment — with waits, retries, and endings.</p></div></div>
-          </li>
-          <li class="type-group" aria-hidden="true" data-i18n="types-group-2">Structure and time</li>
-          <li class="type-item" data-type="erd">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">06</span><span class="type-name"><small class="type-kind" data-i18n="erd-k">Entity-relationship</small><span data-i18n="erd-h">How does the data relate?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="erd-p">Tables with their full column lists, primary, foreign and unique keys, and crow's-foot cardinality at both ends of every relationship.</p></div></div>
-          </li>
-          <li class="type-item" data-type="class">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">07</span><span class="type-name"><small class="type-kind" data-i18n="class-k">Class / interface</small><span data-i18n="class-h">Which types fulfil which contracts?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="class-p">Classes and interfaces with their members — inheritance, implementation, composition and dependencies, each drawn in its own notation.</p></div></div>
-          </li>
-          <li class="type-item" data-type="tree">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">08</span><span class="type-name"><small class="type-kind" data-i18n="tree-k">Tree</small><span data-i18n="tree-h">How is it organised?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="tree-p">One root and its branches — a repository's modules, a product platform, a team, or a taxonomy, level by level.</p></div></div>
-          </li>
-          <li class="type-item" data-type="timeline">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">09</span><span class="type-name"><small class="type-kind" data-i18n="timeline-k">Timeline</small><span data-i18n="timeline-h">What happened, and when?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="timeline-p">Events on a real time axis — an incident, a release history, a project — with time zones handled and long quiet stretches broken out.</p></div></div>
-          </li>
-          <li class="type-item" data-type="waterfall">
-            <button type="button" aria-controls="type-preview" aria-pressed="false">
-              <span class="type-no">10</span><span class="type-name"><small class="type-kind" data-i18n="waterfall-k">Waterfall</small><span data-i18n="waterfall-h">Where did the time go?</span></span>
-            </button>
-            <div class="type-detail"><div><p data-i18n="waterfall-p">Nested spans on one clock — a request, a build, an agent run — so the slow step and the work that ran in parallel stand out.</p></div></div>
-          </li>
+          {diagramTypes.map(([key, kind, question], index) => (
+            <li class={index === 0 ? 'type-item is-active' : 'type-item'} data-type={key}>
+              <button type="button" aria-controls="type-preview" aria-pressed={index === 0 ? 'true' : 'false'}>
+                <span class="type-no">{String(index + 1).padStart(2, '0')}</span><span class="type-name"><small class="type-kind" data-i18n={`${key}-k`}>{kind}</small><span data-i18n={`${key}-h`}>{question}</span></span>
+              </button>
+            </li>
+          ))}
         </ol>
+        <SupportedDiagrams />
+        </div>
 
         <div class="type-preview fade-up d1" id="type-preview">
           <div class="type-plate">
-            <img class="is-active" data-type="arch" src="assets/archify-architecture.png" alt="Architecture diagram" loading="lazy" decoding="async">
-            <img data-type="wf" src="assets/archify-workflow.png" alt="Workflow diagram" loading="lazy" decoding="async">
-            <img data-type="seq" src="assets/archify-sequence.png" alt="Sequence diagram" loading="lazy" decoding="async">
-            <img data-type="flow" src="assets/archify-dataflow.png" alt="Data flow diagram" loading="lazy" decoding="async">
-            <img data-type="life" src="assets/archify-lifecycle.png" alt="Lifecycle diagram" loading="lazy" decoding="async">
-            <img data-type="erd" src="assets/archify-erd.png" alt="Entity-relationship diagram" loading="lazy" decoding="async">
-            <img data-type="class" src="assets/archify-class.png" alt="Class and interface diagram" loading="lazy" decoding="async">
-            <img data-type="tree" src="assets/archify-tree.png" alt="Tree diagram" loading="lazy" decoding="async">
-            <img data-type="timeline" src="assets/archify-timeline.png" alt="Timeline diagram" loading="lazy" decoding="async">
-            <img data-type="waterfall" src="assets/archify-waterfall.png" alt="Waterfall diagram" loading="lazy" decoding="async">
+            <img class="is-active" data-type="arch" src="assets/archify-architecture.png" alt="Architecture diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="wf" src="assets/archify-workflow.png" alt="Workflow diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="seq" src="assets/archify-sequence.png" alt="Sequence diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="flow" src="assets/archify-dataflow.png" alt="Data flow diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="life" src="assets/archify-lifecycle.png" alt="Lifecycle diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="erd" src="assets/archify-erd.png" alt="Entity-relationship diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="class" src="assets/archify-class.png" alt="Class and interface diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="tree" src="assets/archify-tree.png" alt="Tree diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="timeline" src="assets/archify-timeline.png" alt="Timeline diagram" loading="lazy" decoding="async" width="2752" height="1544">
+            <img data-type="waterfall" src="assets/archify-waterfall.png" alt="Waterfall diagram" loading="lazy" decoding="async" width="2752" height="1544">
           </div>
           <a class="type-more" href="gallery.html">
             <span data-i18n="types-more">Browse the full proof gallery</span>
@@ -319,17 +246,19 @@ const { lang = 'en' } = Astro.props;
   <!-- TRUST — the four finalize gates beside a replay of a real run (output and receipt values are verbatim) -->
   <section id="trust">
     <div class="container">
-      <header class="section-head fade-up">
-        <p class="section-label"><span>04</span><span data-i18n="label-trust">Verified delivery</span></p>
-        <h2 class="section-heading" data-i18n="trust-h2">Checked before <em>it reaches you.</em></h2>
-        <p class="section-body" data-i18n="trust-body">Finalization validates and delivers the artifact, then checks the delivered file. Diagrams also run a browser check; one-page answers run it when requested. Later check failures are reported and do not roll back the delivered file.</p>
+      <header class="section-head section-head-row fade-up">
+        <div>
+          <p class="section-label"><span>03</span><span data-i18n="label-trust">Verified delivery</span></p>
+          <h2 class="section-heading" data-i18n="trust-h2">Checked before <em>it reaches you.</em></h2>
+        </div>
+        <p class="section-body" data-i18n="trust-body">Finalize validates and delivers the artifact, then checks the file it delivered. A failed render never replaces the last good one.</p>
       </header>
       <div class="trust-layout" id="trust-run">
         <ol class="gates">
-          <li class="gate" style="--d:1.5s"><span class="gate-no">01</span><div><h3><code>validate</code><span data-i18n="gate-1-h">The source means what it says</span></h3><p data-i18n="gate-1-p">Schema, IDs and references, then the layout itself: crossings, label clearance, corridors and legend room. A blank chart cell is an error, not a zero.</p></div><span class="gate-pass">PASS</span></li>
-          <li class="gate" style="--d:2.3s"><span class="gate-no">02</span><div><h3><code>deliver</code><span data-i18n="gate-2-h">Nothing half-written</span></h3><p data-i18n="gate-2-p">Rendered in a staging copy beside the target and swapped in atomically after delivery checks pass. A failed render does not replace the existing file.</p></div><span class="gate-pass">PASS</span></li>
-          <li class="gate" style="--d:2.9s"><span class="gate-no">03</span><div><h3><code>check</code><span data-i18n="gate-3-h">The file is the one that was checked</span></h3><p data-i18n="gate-3-p">The delivered HTML is read back and checked again, and the receipt records the hashes of the source and of this exact file.</p></div><span class="gate-pass">PASS</span></li>
-          <li class="gate" style="--d:3.6s"><span class="gate-no">04</span><div><h3><code>browser-check</code><span data-i18n="gate-4-h">Readable in a real browser</span></h3><p data-i18n="gate-4-p">When run, Chrome checks the artifact at several desktop sizes for overflow, text readability and controls. Browser checks are opt-in for one-page answers.</p></div><span class="gate-pass">PASS</span></li>
+          <li class="gate" style="--d:1.5s"><span class="gate-no">01</span><div><h3><code>validate</code><span data-i18n="gate-1-h">The source means what it says</span></h3><p data-i18n="gate-1-p">Schema and references, then the layout itself: crossings, label clearance and legend room.</p></div><span class="gate-pass">PASS</span></li>
+          <li class="gate" style="--d:2.3s"><span class="gate-no">02</span><div><h3><code>deliver</code><span data-i18n="gate-2-h">Nothing half-written</span></h3><p data-i18n="gate-2-p">Rendered beside the target and swapped in atomically, so a failed render leaves your file as it was.</p></div><span class="gate-pass">PASS</span></li>
+          <li class="gate" style="--d:2.9s"><span class="gate-no">03</span><div><h3><code>check</code><span data-i18n="gate-3-h">The file is the one that was checked</span></h3><p data-i18n="gate-3-p">The delivered HTML is read back and checked again; the receipt records its hash.</p></div><span class="gate-pass">PASS</span></li>
+          <li class="gate" style="--d:3.6s"><span class="gate-no">04</span><div><h3><code>browser-check</code><span data-i18n="gate-4-h">Readable in a real browser</span></h3><p data-i18n="gate-4-p">Chrome checks overflow and text size at several desktop sizes. Opt-in for one-page answers.</p></div><span class="gate-pass">PASS</span></li>
         </ol>
         <figure class="run">
           <div class="run-bar"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="run-title">finalize · cache-miss</span></div>
@@ -350,120 +279,14 @@ const { lang = 'en' } = Astro.props;
     </div>
   </section>
 
-  <!-- FEATURES — one interactive centerpiece + a tight grid -->
-  <section id="features">
-    <div class="container">
-      <header class="section-head fade-up">
-        <p class="section-label"><span>05</span><span data-i18n="label-features">Output</span></p>
-        <h2 class="section-heading" data-i18n="features-h2">One file. <em>Everything inside.</em></h2>
-      </header>
-
-      <div class="features-grid">
-        <figure class="feature compare fade-up">
-          <div class="compare-stage" id="compare-stage" style="--split:50%">
-            <img class="compare-dark" src="assets/archify-dark.png" alt="The same Archify diagram rendered in the dark theme" loading="lazy" decoding="async">
-            <img class="compare-light" src="assets/archify-light.png" alt="Archify architecture diagram rendered in the light theme" loading="lazy" decoding="async">
-            <span class="compare-handle" aria-hidden="true"><i></i></span>
-            <span class="compare-tag compare-tag-l" aria-hidden="true" data-i18n="cmp-light">Light</span>
-            <span class="compare-tag compare-tag-r" aria-hidden="true" data-i18n="cmp-dark">Dark</span>
-            <input class="compare-range" id="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare light and dark theme">
-          </div>
-          <figcaption class="feature-body">
-            <h3 data-i18n="fv1-h">Dual-theme output</h3>
-            <p data-i18n="fv1-p">Every diagram ships with coordinated dark and light variable sets. The HTML theme toggle and the SVG @media prefers-color-scheme rule switch together — one file follows the reader's theme.</p>
-            <span class="feature-tag" data-i18n="fv1-tag">LIGHT · DARK · ONE FILE</span>
-          </figcaption>
-        </figure>
-
-        <div class="feature export fade-up d1">
-          <div class="export-shot"><img src="assets/archify-menu.png" alt="Archify export menu listing PNG, JPEG, WebP, SVG, and WebM outputs" loading="lazy" decoding="async"></div>
-          <h3 data-i18n="fv2-h">One menu, every format</h3>
-          <p data-i18n="fv2-p">PNG, JPEG, WebP, dual-theme SVG, WebM motion, or straight to the clipboard — every export renders natively in the browser from the same menu.</p>
-          <ul class="formats" aria-label="Export formats">
-            <li>PNG</li><li>JPEG</li><li>WEBP</li><li>SVG</li><li>WEBM</li><li data-i18n="exp-clip-fmt">Clipboard</li>
-          </ul>
-        </div>
-
-        <div class="feature cell fade-up">
-          <span class="cell-glyph" aria-hidden="true">4×</span>
-          <h3 data-i18n="f2-h">Ultra-crisp 4× export</h3>
-          <p data-i18n="f2-p">PNG, JPEG, WebP — all rasterized natively at up to 4× source resolution by the browser. No upsampling blur. Sharp on retina displays, slides, and print.</p>
-        </div>
-        <div class="feature cell fade-up d1">
-          <span class="cell-glyph" aria-hidden="true">&lt;/&gt;</span>
-          <h3 data-i18n="f5-h">Self-contained HTML</h3>
-          <p data-i18n="f5-p">One HTML file. Zero dependencies, no server, no runtime. Open it in any browser and it works. Share by attaching it to an email or PR comment.</p>
-        </div>
-        <div class="feature cell fade-up d2">
-          <span class="cell-glyph" aria-hidden="true">“ ”</span>
-          <h3 data-i18n="f6-h">Iterate by chat</h3>
-          <p data-i18n="f6-p">"Move the summer trip to August", "add Redis", "make the deadline red" — refine in plain words. No diagram editor to learn.</p>
-        </div>
-        <div class="feature cell fade-up d3">
-          <span class="cell-glyph" aria-hidden="true">→</span>
-          <h3 data-i18n="f7-h">Inspect and play real routes</h3>
-          <p data-i18n="f7-p">Route Journey keeps the complete authored path visible while you inspect any stop or play one finite, reader-controlled pass over each exact incoming relationship.</p>
-          <span class="feature-tag" data-i18n="f7-tag">INSPECT · PLAY · PAUSE</span>
-        </div>
-        <div class="feature cell fade-up">
-          <span class="cell-glyph" aria-hidden="true">[1]</span>
-          <h3 data-i18n="f8-h">Sources pinned to a commit</h3>
-          <p data-i18n="f8-p">Diagram nodes and page claims can point at their sources. Repository links are pinned to a full commit on GitHub or GitLab, and a page quotes the code in a source card.</p>
-          <span class="feature-tag" data-i18n="f8-tag">GITHUB · GITLAB · PINNED</span>
-        </div>
-        <div class="feature cell fade-up d1">
-          <span class="cell-glyph" aria-hidden="true">?</span>
-          <h3 data-i18n="f9-h">Follow up on one panel</h3>
-          <p data-i18n="f9-p">Ask about any panel, or a passage you select, and copy a message that names it. Your agent revises that panel and leaves the rest of the page untouched.</p>
-          <span class="feature-tag" data-i18n="f9-tag">ASK · COPY · PATCH</span>
-        </div>
-        <div class="feature cell fade-up d2">
-          <span class="cell-glyph" aria-hidden="true">◐</span>
-          <h3 data-i18n="f10-h">Live by default</h3>
-          <p data-i18n="f10-p">Each diagram type moves in a way that matches how it reads. Readers can switch to Still; motion never changes the layout or the exported geometry.</p>
-        </div>
-        <div class="feature cell fade-up">
-          <span class="cell-glyph" aria-hidden="true">文A</span>
-          <h3 data-i18n="f11-h">Speaks your language</h3>
-          <p data-i18n="f11-p">Viewer controls ship in English, 简体中文, 繁體中文, Español and 한국어. Any other language can be supplied as data with <code>meta.translations</code>.</p>
-        </div>
-        <div class="feature cell fade-up d1">
-          <span class="cell-glyph" aria-hidden="true">Δ</span>
-          <h3 data-i18n="f13-h">See what changed</h3>
-          <p data-i18n="f13-p"><code>archify compare</code> draws an architecture's before and after as one delta diagram — added, removed and rerouted relationships — with a machine-readable receipt.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PALETTE — semantic legend -->
-  <section id="palette">
-    <div class="container">
-      <header class="section-head section-head-row fade-up">
-        <div>
-          <p class="section-label"><span>06</span><span data-i18n="label-palette">Design system</span></p>
-          <h2 class="section-heading" data-i18n="palette-h2">Color that <em>means something.</em></h2>
-        </div>
-        <p class="section-body" data-i18n="palette-body">Seven node colours, consistent in both themes. The legend renames them for your story — Backend can read as Vacation, Security as Rule.</p>
-      </header>
-      <div class="legend fade-up d1">
-        <div class="legend-chip" style="--node:var(--hue-cyan)"><span class="legend-node"><b>Web App</b><i>React SPA</i></span><span class="legend-label" data-i18n="chip-frontend">Frontend</span><span class="legend-use" data-i18n="chip-frontend-use">Client apps, browsers, mobile, UI</span></div>
-        <div class="legend-chip" style="--node:var(--hue-emerald)"><span class="legend-node"><b>API Server</b><i>Fastify :8080</i></span><span class="legend-label" data-i18n="chip-backend">Backend</span><span class="legend-use" data-i18n="chip-backend-use">Services, APIs, workers, daemons</span></div>
-        <div class="legend-chip" style="--node:var(--hue-violet)"><span class="legend-node"><b>Postgres</b><i>primary :5432</i></span><span class="legend-label" data-i18n="chip-database">Database</span><span class="legend-use" data-i18n="chip-database-use">DBs, caches, stores, AI/ML</span></div>
-        <div class="legend-chip" style="--node:var(--hue-amber)"><span class="legend-node"><b>CloudFront</b><i>CDN</i></span><span class="legend-label" data-i18n="chip-cloud">Cloud</span><span class="legend-use" data-i18n="chip-cloud-use">Managed services, infra</span></div>
-        <div class="legend-chip" style="--node:var(--hue-rose)"><span class="legend-node"><b>Auth Provider</b><i>OAuth 2.0</i></span><span class="legend-label" data-i18n="chip-security">Security</span><span class="legend-use" data-i18n="chip-security-use">Auth, secrets, guards</span></div>
-        <div class="legend-chip" style="--node:var(--hue-orange)"><span class="legend-node"><b>Kafka</b><i>events topic</i></span><span class="legend-label" data-i18n="chip-bus">Message Bus</span><span class="legend-use" data-i18n="chip-bus-use">Kafka, RabbitMQ, SNS</span></div>
-        <div class="legend-chip" style="--node:var(--hue-slate)"><span class="legend-node"><b>Users</b><i>browser · mobile</i></span><span class="legend-label" data-i18n="chip-external">External</span><span class="legend-use" data-i18n="chip-external-use">Users, 3rd parties, generic</span></div>
-      </div>
-    </div>
-  </section>
-
   <!-- QUICK START -->
   <section id="quickstart">
     <div class="container">
-      <header class="section-head fade-up">
-        <p class="section-label"><span>07</span><span data-i18n="label-qs">Quick start</span></p>
-        <h2 class="section-heading" data-i18n="qs-h2">Three steps. <em>One command.</em></h2>
+      <header class="section-head section-head-row fade-up">
+        <div>
+          <p class="section-label"><span>04</span><span data-i18n="label-qs">Quick start</span></p>
+          <h2 class="section-heading" data-i18n="qs-h2">Three steps. <em>One command.</em></h2>
+        </div>
         <p class="section-body" data-i18n="qs-body">One checked Skill for Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. Pick your agent for the exact command.</p>
       </header>
 
@@ -514,23 +337,28 @@ const { lang = 'en' } = Astro.props;
         </ol>
       </div>
 
-      <div class="shortcut-box fade-up d2">
-        <p class="shortcut-title" data-i18n="kbd-label">Inside every artifact</p>
-        <div class="shortcut-rows">
-          <div class="shortcut-row"><span data-i18n="kbd-guide">Diagram guide</span><kbd>?</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-theme">Toggle theme</span><kbd>T</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-find">Find node / route endpoint</span><kbd>/</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-route">Trace, inspect, and play a route</span><kbd>R</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-radar">Semantic radar</span><kbd>M</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-lens">Compare semantic kinds</span><kbd>L</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-present">Presentation stage</span><kbd>F</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-export">Open export menu</span><kbd>E</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-focus">Focus node</span><kbd>Enter</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-zoom">Reading depth / reset</span><kbd>+ − 0</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-nav">Navigate menu</span><kbd>↑ ↓</kbd></div>
-          <div class="shortcut-row"><span data-i18n="kbd-close">Close menu</span><kbd>Esc</kbd></div>
+      <details class="shortcut-drawer fade-up d2">
+        <summary class="shortcut-summary">
+          <span data-i18n="kbd-label">Inside every artifact</span>
+          <span class="shortcut-hint" data-en="12 viewer keyboard shortcuts · click to expand" data-zh="12 个 Viewer 键盘快捷键 · 点击展开">12 viewer keyboard shortcuts · click to expand</span>
+        </summary>
+        <div class="shortcut-box">
+          <div class="shortcut-rows">
+            <div class="shortcut-row"><span data-i18n="kbd-guide">Diagram guide</span><kbd>?</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-theme">Toggle theme</span><kbd>T</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-find">Find node / route endpoint</span><kbd>/</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-route">Trace, inspect, and play a route</span><kbd>R</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-radar">Semantic radar</span><kbd>M</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-lens">Compare semantic kinds</span><kbd>L</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-present">Presentation stage</span><kbd>F</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-export">Open export menu</span><kbd>E</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-focus">Focus node</span><kbd>Enter</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-zoom">Reading depth / reset</span><kbd>+ − 0</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-nav">Navigate menu</span><kbd>↑ ↓</kbd></div>
+            <div class="shortcut-row"><span data-i18n="kbd-close">Close menu</span><kbd>Esc</kbd></div>
+          </div>
         </div>
-      </div>
+      </details>
     </div>
   </section>
 

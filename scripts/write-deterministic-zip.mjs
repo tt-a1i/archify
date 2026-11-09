@@ -20,7 +20,7 @@ import { validatePortablePathSet } from '../archify/renderers/shared/portable-pa
 
 function usage() {
   console.error([
-    'Usage: node scripts/write-deterministic-zip.mjs <directory> <output.zip> --mode-manifest <modes.json>',
+    'Usage: node scripts/write-deterministic-zip.mjs <directory> <output.zip> --mode-manifest <modes.json> [--contents-only]',
     '       node scripts/write-deterministic-zip.mjs --validate-output <output.zip>',
   ].join('\n'));
   process.exit(2);
@@ -28,6 +28,7 @@ function usage() {
 
 const positionals = [];
 let modeManifestArg = null;
+let contentsOnly = false;
 const argv = process.argv.slice(2);
 if (argv[0] === '--validate-output') {
   if (argv.length !== 2) usage();
@@ -38,6 +39,8 @@ for (let index = 0; index < argv.length; index += 1) {
   if (argv[index] === '--mode-manifest') {
     modeManifestArg = argv[index + 1] ?? null;
     index += 1;
+  } else if (argv[index] === '--contents-only') {
+    contentsOnly = true;
   } else if (argv[index].startsWith('--')) {
     usage();
   } else {
@@ -195,14 +198,15 @@ const localParts = [];
 const centralParts = [];
 let offset = 0;
 const files = sortedEntries(root);
+const entryName = (file) => contentsOnly ? file.relative : `${path.basename(root)}/${file.relative}`;
 validatePortablePathSet(
-  files.map((file) => `${path.basename(root)}/${file.relative}`),
+  files.map(entryName),
   { profile: 'archive' },
 );
 requireZip32(files.length < ZIP32_MAX_ENTRIES, `entry count ${files.length} reaches ZIP64 sentinel ${ZIP32_MAX_ENTRIES}`);
 
 for (const file of files) {
-  const name = Buffer.from(`${path.basename(root)}/${file.relative}`, 'utf8');
+  const name = Buffer.from(entryName(file), 'utf8');
   const content = fs.readFileSync(file.absolute);
   const compressed = deflateRawSync(content, {
     level: 9,

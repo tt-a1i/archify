@@ -40,10 +40,6 @@ https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 
 Cursor, Claude Code, Codex CLI, OpenCode에서 사용할 수 있습니다.
 
-```bash
-npx skills add tt-a1i/archify -g
-```
-
 **AI 에이전트에게 맡기기.** 다음 문장을 그대로 붙여 넣으세요.
 
 ```text
@@ -100,10 +96,6 @@ Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐�
 
 ### 1. 설치
 
-```bash
-npx skills add tt-a1i/archify -g
-```
-
 **AI 에이전트에게 맡기기**
 
 다음 문장을 그대로 붙여 넣으세요.
@@ -117,13 +109,13 @@ Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archi
 Cursor에만 설치:
 
 ```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
 ```
 
 또는 다섯 에이전트가 모두 필요한 경우에만:
 
 ```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
 <details>

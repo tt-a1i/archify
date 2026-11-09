@@ -86,3 +86,41 @@ The ten main language pages contain their translated body text, metadata and rec
 The build produces `robots.txt` and `sitemap.xml` from the ten pages and the curated gallery inventory. It checks each advertised artifact's original manifest hashes before adding an explicitly marked metadata block in the deployed HTML head; exported source files, SVG, scripts and updater bytes retain their existing contracts. Source JSON remains accessible and receives `X-Robots-Tag: noindex` on Cloudflare. GitHub Pages cannot set that response header. Robots rules allow crawling these evidence URLs so their indexing headers can be read.
 
 After publication, verify the actual Cloudflare response, including any managed robots rules, redirects, sitemap URLs and headers. Submit the deployed sitemap to verified Google Search Console and Bing Webmaster Tools properties, then inspect real crawl and index results. Google AI controls, search impressions and Bing AI citation reports are separate account observations; successful builds and submissions do not establish rankings or AI citations. Avoid fabricated ratings, install statistics or daily sitemap modification dates. Search access and AI training permissions are independent decisions.
+## Lightweight Skill distribution
+
+The website build generates `/.well-known/agent-skills/index.json` and a
+content-addressed ZIP beside it. Both GitHub Pages (under `/archify`) and
+Cloudflare use relative archive URLs. The package comes from the same
+tracked-only `stage-clean-skill.mjs` selection used by the canonical ZIP and DSH;
+it contains `SKILL.md` at the archive root, as required by discovery schema 0.2.0.
+The original `archify.zip` format and GitHub installation source are unchanged.
+
+After deploying and verifying the endpoint, the lightweight source is:
+
+```sh
+npx -y skills@latest add https://archify.si --list --full-depth
+npx -y skills@latest add https://archify.si --skill archify --agent codex --copy
+```
+
+The second command selects a project installation; global installation requires
+an explicit `--global`. Skills CLI 1.7.4 is the validation baseline. It downloads
+the Skill archive instead of cloning the development repository, verifies its
+SHA-256 digest, and records the website source in its lock file. A project can
+apply subsequent updates with `npx -y skills@latest update archify --project`.
+An update replaces the installed Skill directory. Move any unmanaged files out
+of `.agents/skills/archify` before updating; this is not a read-only check.
+Existing GitHub-source installations keep their original update source; a new
+website endpoint does not silently migrate them. Bare ZIP URLs are not a
+substitute for the discovery source because their update tracking differs.
+
+This channel follows the website's deployed source revision, not necessarily the
+latest release tag. Deploy only accepted stable source to the production domain;
+development previews carry the development package. Do not advertise the new
+source until public discovery, installation, package smoke, and update behavior
+have been checked on the deployed endpoint. Website-source attribution is
+distinct from the GitHub-source skills.sh listing; do not promise that its
+install counts or audit links will be combined with that listing.
+
+No new server, installer, manually maintained Skill copy, or npm package is
+required. Roll back the complete website deployment to roll back the index and
+its archive together. Keep the existing GitHub source available as a fallback.

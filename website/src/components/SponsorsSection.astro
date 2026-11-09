@@ -1,0 +1,764 @@
+---
+import { featuredPartner, sponsorsList } from '../data/sponsors';
+
+interface Props {
+  lang?: 'en' | 'zh';
+}
+
+const { lang = 'en' } = Astro.props;
+---
+
+<section id="sponsors" class="sponsors-section" aria-labelledby="sponsors-heading">
+  <div class="shell sponsors-shell">
+    <header class="sponsors-head">
+      <div>
+        <p class="lead-label" data-en="Partners & sponsors" data-zh="合作伙伴与赞助">Partners & sponsors</p>
+        <h2 class="sponsors-heading" id="sponsors-heading" data-translation-html data-en="Free and open source.<br><em>Backed by our sponsors.</em>" data-zh="始终开源免费，<br><em>由赞助伙伴共同支持。</em>">
+          Free and open source.<br /><em>Backed by our sponsors.</em>
+        </h2>
+      </div>
+      <p
+        class="sponsors-sub"
+        data-en="Archify is Apache-2.0-licensed with zero runtime dependencies. Continued development is supported by the partners and sponsors below, in the same order as our repository README."
+        data-zh="Archify 采用 Apache-2.0 开源许可证且零运行时依赖。项目的持续研发与演进离不开以下合作伙伴与赞助商的支持。"
+      >
+        Archify is Apache-2.0-licensed with zero runtime dependencies. Continued development is supported by the partners and sponsors below, in the same order as our repository README.
+      </p>
+    </header>
+
+    <div class="drafting-plate fade-up d1">
+      <!-- 1. FEATURED SPOTLIGHT: KIMI WORK (LARGEST, TOP FULL-WIDTH) -->
+      <a
+        class="kimi-spotlight"
+        href={lang === 'zh' ? featuredPartner.href.zh : featuredPartner.href.en}
+        target="_blank"
+        rel="noopener sponsored"
+      >
+        <div class="kimi-copy">
+          <div class="kimi-eyebrow-row">
+            <span class="kimi-eyebrow">
+              <i class="kimi-dot" aria-hidden="true"></i>
+              <span data-en={featuredPartner.eyebrow.en} data-zh={featuredPartner.eyebrow.zh}>{featuredPartner.eyebrow.en}</span>
+            </span>
+            <span class="kimi-badge" data-en={featuredPartner.status.en} data-zh={featuredPartner.status.zh}>
+              {featuredPartner.status.en}
+            </span>
+          </div>
+
+          <div class="kimi-brand-row">
+            <svg class="kimi-logo-svg" viewBox="0 0 220 48" fill="none" aria-hidden="true">
+              <rect x="2" y="2" width="44" height="44" rx="11" class="kimi-tile" />
+              <path d="M16 14V34M16 24.5L29 14M21.5 20L30 34" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="34" cy="14" r="3.3" fill="#2563eb" />
+              <text x="58" y="31.5" class="lockup-wordmark" font-size="24" font-weight="600" letter-spacing="-0.03em">Kimi Work</text>
+            </svg>
+            <span class="kimi-collab-pill">× Archify</span>
+          </div>
+
+          <h3 class="kimi-headline" data-en={featuredPartner.headline.en} data-zh={featuredPartner.headline.zh}>
+            {featuredPartner.headline.en}
+          </h3>
+
+          <p class="kimi-summary" data-en={featuredPartner.summary.en} data-zh={featuredPartner.summary.zh}>
+            {featuredPartner.summary.en}
+          </p>
+
+          <div class="kimi-cta-row">
+            <span class="kimi-cta-btn">
+              <span data-en={featuredPartner.cta.en} data-zh={featuredPartner.cta.zh}>{featuredPartner.cta.en}</span>
+              <span aria-hidden="true">→</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="kimi-visual">
+          <div class="kimi-poster-frame">
+            <img
+              src={featuredPartner.poster}
+              alt={lang === 'zh' ? featuredPartner.posterAlt.zh : featuredPartner.posterAlt.en}
+              loading="lazy"
+              decoding="async"
+              width="800"
+              height="343"
+            />
+          </div>
+        </div>
+      </a>
+
+      <!-- DIVIDER RAIL -->
+      <div class="plate-rail">
+        <span class="plate-rail-title">
+          <i class="rail-dot" aria-hidden="true"></i>
+          <span data-en="SPONSORS & PARTNERS" data-zh="赞助与合作伙伴">SPONSORS & PARTNERS</span>
+        </span>
+        <span class="plate-rail-meta" data-en="01 — 06 · UNIFIED SPONSOR MATRIX" data-zh="01 — 06 · 赞助伙伴矩阵">
+          01 — 06 · UNIFIED SPONSOR MATRIX
+        </span>
+      </div>
+
+      <!-- 2. UNIFIED 3×2 GRID FOR ALL OTHER 6 SPONSORS IN EXACT README ORDER -->
+      <div class="sponsors-grid">
+        {sponsorsList.map((sponsor) => (
+          <a
+            class="sponsor-card"
+            href={sponsor.href}
+            target="_blank"
+            rel="noopener sponsored"
+          >
+            <div class="card-top">
+              <span class="card-index">
+                {sponsor.index} / <span data-en={sponsor.category.en} data-zh={sponsor.category.zh}>{sponsor.category.en}</span>
+              </span>
+              <span class="card-arrow" aria-hidden="true">↗</span>
+            </div>
+
+            <div class="card-brand" aria-label={sponsor.name.en}>
+              {sponsor.id === 'supercode' && (
+                <svg class="sponsor-svg" viewBox="0 0 216 42" fill="none" aria-hidden="true">
+                  <rect x="2" y="3" width="36" height="36" rx="9" class="supercode-tile" />
+                  <path d="M15 15L10 21L15 27M25 15L30 21L25 27M21.8 13L18.2 29" stroke="currentColor" class="supercode-glyph" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <text x="48" y="27.5" class="lockup-wordmark" font-size="21" font-weight="600" letter-spacing="-0.035em">supercode</text>
+                  <text x="152" y="27.5" class="lockup-tld" font-size="15.5" font-weight="500">.sh</text>
+                </svg>
+              )}
+
+              {sponsor.id === 'openlux' && (
+                <svg class="sponsor-svg" viewBox="0 0 200 42" fill="none" aria-hidden="true">
+                  <g transform="translate(2, 4)">
+                    <circle cx="17" cy="17" r="15" stroke="#ea580c" stroke-width="2.4" stroke-opacity="0.45" />
+                    <circle cx="17" cy="17" r="10.5" stroke="#ea580c" stroke-width="2.6" stroke-opacity="0.75" />
+                    <circle cx="17" cy="17" r="6" stroke="#ea580c" stroke-width="2.8" />
+                    <rect x="0" y="15.2" width="34" height="3.6" class="logo-cutout" />
+                    <path d="M0 18.8L34 18.8L17 20.4Z" fill="#ea580c" />
+                  </g>
+                  <text x="46" y="27.5" class="lockup-wordmark" font-size="21" font-weight="600" letter-spacing="-0.025em">OpenLux</text>
+                </svg>
+              )}
+
+              {sponsor.id === 'packycode' && (
+                <svg class="sponsor-svg" viewBox="0 0 206 42" fill="none" aria-hidden="true">
+                  <g transform="translate(2, 6)">
+                    <path d="M5 24L13 6C14.2 3.4 16.8 2 19.7 2H31C34.8 2 37.2 6 35.4 9.4L30.5 18.5C29.3 20.7 27 22 24.5 22H15.5L12.5 28H6.5C4.8 28 3.9 26 5 24Z" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" class="packy-mark" />
+                    <path d="M11 21L16.5 9.5H27.5L24.5 15.5H16.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="packy-mark" />
+                  </g>
+                  <text x="47" y="27.5" class="lockup-wordmark" font-size="21" font-weight="700" font-style="italic" letter-spacing="-0.03em">PackyCode</text>
+                </svg>
+              )}
+
+              {sponsor.id === 'aicodemirror' && (
+                <svg class="sponsor-svg" viewBox="0 0 216 42" fill="none" aria-hidden="true">
+                  <g transform="translate(2, 5)">
+                    <path d="M4 3L17.5 16L30 4L20.5 16.5L31 29L17 18.5L3 30L14 16.5L4 3Z" fill="#f97316" stroke="#ea580c" stroke-width="1.2" stroke-linejoin="round" />
+                  </g>
+                  <text x="42" y="27.5" class="lockup-wordmark" font-size="20" font-weight="600" letter-spacing="-0.03em">AICodeMirror</text>
+                </svg>
+              )}
+
+              {sponsor.id === 'infistar' && (
+                <svg class="sponsor-svg" viewBox="0 0 206 42" fill="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="infistar-grad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#0ea5e9" />
+                      <stop offset="52%" stop-color="#6366f1" />
+                      <stop offset="100%" stop-color="#a855f7" />
+                    </linearGradient>
+                  </defs>
+                  <g transform="translate(2, 7)">
+                    <path d="M11 6C6.5 6 3 9.6 3 14C3 18.4 6.5 22 11 22C14.8 22 17.6 19.2 20 15.5L22 12.5C24.4 8.8 27.2 6 31 6C35.5 6 39 9.6 39 14C39 18.4 35.5 22 31 22C27.2 22 24.4 19.2 22 15.5" stroke="url(#infistar-grad)" stroke-width="3.6" stroke-linecap="round" />
+                    <circle cx="33" cy="6" r="2.2" fill="#0ea5e9" />
+                  </g>
+                  <text x="50" y="27.5" class="lockup-wordmark" font-size="20.5" font-weight="600" letter-spacing="-0.025em">Infistar.cc</text>
+                </svg>
+              )}
+
+              {sponsor.id === 'zturbo' && (
+                <svg class="sponsor-svg" viewBox="0 0 196 42" fill="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="zturbo-grad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#f472b6" />
+                      <stop offset="55%" stop-color="#a855f7" />
+                      <stop offset="100%" stop-color="#3b82f6" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M9 6H33L16 20H29L8 37L13 25H3Z" fill="url(#zturbo-grad)" />
+                  <text x="42" y="27.5" class="lockup-wordmark" font-size="19.5" font-weight="700" font-style="italic" letter-spacing="-0.02em">ZTURBO</text>
+                </svg>
+              )}
+            </div>
+
+            <p class="card-summary" data-en={sponsor.summary.en} data-zh={sponsor.summary.zh}>
+              {sponsor.summary.en}
+            </p>
+
+            <div class="card-bottom">
+              <div class="card-perk">
+                <span class="perk-dot" aria-hidden="true"></span>
+                <span data-en={sponsor.highlight.en} data-zh={sponsor.highlight.zh}>{sponsor.highlight.en}</span>
+              </div>
+              <span class="card-cta" data-en={sponsor.cta.en} data-zh={sponsor.cta.zh}>{sponsor.cta.en}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <!-- FOOTER BAR: BECOME A SPONSOR + DISCLOSURE -->
+      <div class="plate-footer">
+        <p class="plate-disclosure">
+          <strong data-en="Official channels & third-party services:" data-zh="官方入口与第三方服务说明：">Official channels & third-party services:</strong>
+          <span
+            data-en=" Archify is free and open source under the Apache-2.0 License. Third-party online services and paid plans are operated by their respective providers and do not represent Archify."
+            data-zh=" Archify 遵循 Apache-2.0 许可证开源免费。第三方提供的在线服务、收费套餐由其运营方负责，不代表 Archify 官方。"
+          >
+            {' '}Archify is free and open source under the Apache-2.0 License. Third-party online services and paid plans are operated by their respective providers and do not represent Archify.
+          </span>
+        </p>
+        <a
+          class="plate-inquire"
+          href="mailto:2801884530@qq.com?subject=Sponsoring%20Archify"
+          data-en="Want to sponsor Archify? Contact us by email ↗"
+          data-zh="想赞助 Archify？欢迎通过邮件联系我们 ↗"
+        >
+          Want to sponsor Archify? Contact us by email ↗
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sponsors-section {
+    padding: 4.5rem 0 2rem;
+    position: relative;
+  }
+  .sponsors-shell {
+    max-width: var(--content, 1320px);
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  .sponsors-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem 3rem;
+    margin-bottom: 2.25rem;
+  }
+  .sponsors-heading {
+    margin-top: 0.65rem;
+    font-family: var(--font-grot);
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.06;
+    color: var(--text);
+  }
+  .sponsors-heading em {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+  html[lang^="zh"] .sponsors-heading em {
+    font-family: var(--font-grot);
+    font-style: normal;
+    font-weight: 600;
+  }
+  .sponsors-sub {
+    max-width: 52ch;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+
+  /* ══════════════════════════════════════
+     DRAFTING PLATE CONTAINER
+  ══════════════════════════════════════ */
+  .drafting-plate {
+    position: relative;
+    margin-top: 0;
+    border: 1px solid var(--line-hi);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 28px 70px -36px rgba(var(--shadow-rgb), calc(0.32 * var(--shadow-k)));
+    overflow: hidden;
+  }
+
+  /* Corner drafting crosshairs */
+  .drafting-plate::before,
+  .drafting-plate::after {
+    position: absolute;
+    z-index: 4;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-3);
+    line-height: 1;
+    pointer-events: none;
+    opacity: 0.65;
+  }
+  .drafting-plate::before {
+    content: '+';
+    top: 0.65rem;
+    left: 0.85rem;
+  }
+  .drafting-plate::after {
+    content: '+';
+    top: 0.65rem;
+    right: 0.85rem;
+  }
+
+  /* ══════════════════════════════════════
+     1. KIMI WORK SPOTLIGHT (LARGEST, FULL-WIDTH HERO CARD)
+  ══════════════════════════════════════ */
+  .kimi-spotlight {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 5.2fr) minmax(0, 6.8fr);
+    gap: 2.25rem;
+    align-items: center;
+    padding: 2.25rem 2.25rem 2.25rem 2.5rem;
+    text-decoration: none;
+    color: var(--text);
+    background:
+      radial-gradient(540px circle at 18% 0%, rgba(37, 99, 235, 0.08), transparent 72%),
+      radial-gradient(520px circle at 88% 100%, rgba(var(--accent-rgb), 0.08), transparent 72%);
+    transition: background 0.25s var(--ease-out);
+  }
+  .kimi-spotlight:hover {
+    background:
+      radial-gradient(580px circle at 18% 0%, rgba(37, 99, 235, 0.13), transparent 75%),
+      radial-gradient(560px circle at 88% 100%, rgba(var(--accent-rgb), 0.12), transparent 75%);
+  }
+
+  .kimi-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .kimi-eyebrow-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .kimi-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-2);
+    font-weight: 600;
+  }
+  .kimi-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2563eb;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.8);
+  }
+  .kimi-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(37, 99, 235, 0.35);
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--text);
+    font-size: 0.5625rem;
+    font-weight: 600;
+  }
+
+  .kimi-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .kimi-logo-svg {
+    height: 44px;
+    width: auto;
+    display: block;
+  }
+  .kimi-collab-pill {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-3);
+    padding: 0.25rem 0.65rem;
+    border-radius: 7px;
+    border: 1px dashed var(--line-hi);
+  }
+
+  .kimi-headline {
+    font-family: var(--font-grot);
+    font-size: clamp(1.35rem, 2.1vw, 1.75rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    text-wrap: balance;
+  }
+
+  .kimi-summary {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text-2);
+    margin-bottom: 1.5rem;
+    text-wrap: pretty;
+  }
+
+  .kimi-cta-row {
+    display: flex;
+    align-items: center;
+  }
+  .kimi-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.6rem 1.15rem;
+    border-radius: 10px;
+    background: var(--text);
+    color: var(--btn-fg);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition: background 0.2s var(--ease-out), color 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+  }
+  .kimi-spotlight:hover .kimi-cta-btn {
+    background: var(--accent);
+    color: var(--on-accent);
+    transform: translateY(-1px);
+  }
+
+  .kimi-visual {
+    min-width: 0;
+  }
+  .kimi-poster-frame {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--line-hi);
+    background: var(--plate);
+    box-shadow: 0 18px 46px -18px rgba(var(--shadow-rgb), calc(0.45 * var(--shadow-k)));
+    transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+  }
+  .kimi-spotlight:hover .kimi-poster-frame {
+    transform: translateY(-2px);
+    border-color: var(--line-strong);
+  }
+  .kimi-poster-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ══════════════════════════════════════
+     DIVIDER RAIL
+  ══════════════════════════════════════ */
+  .plate-rail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 2rem;
+    background: rgba(var(--fg-rgb), 0.028);
+    border-top: 1px solid var(--line-hi);
+    border-bottom: 1px solid var(--line-hi);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .plate-rail-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .rail-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.7);
+  }
+  .plate-rail-meta {
+    color: var(--text-3);
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+  }
+
+  /* ══════════════════════════════════════
+     2. UNIFIED 3×2 SPONSOR MATRIX (ALL 6 IDENTICAL IN SCALE & WEIGHT)
+  ══════════════════════════════════════ */
+  .sponsors-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sponsor-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.65rem 1.85rem 1.5rem;
+    border-left: 1px solid var(--line-hi);
+    border-top: 1px solid var(--line-hi);
+    text-decoration: none;
+    color: var(--text);
+    background: transparent;
+    transition: background 0.22s var(--ease-out);
+  }
+  .sponsor-card:nth-child(3n + 1) {
+    border-left: 0;
+  }
+  .sponsor-card:nth-child(-n + 3) {
+    border-top: 0;
+  }
+  .sponsor-card:hover,
+  .sponsor-card:focus-visible {
+    background: rgba(var(--fg-rgb), 0.028);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 1.15rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    color: var(--text-3);
+    text-transform: uppercase;
+  }
+  .card-index {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .card-arrow {
+    font-size: 0.8125rem;
+    color: var(--text-3);
+    flex-shrink: 0;
+    transition: transform 0.2s var(--ease-out), color 0.2s var(--ease-out);
+  }
+  .sponsor-card:hover .card-arrow {
+    color: var(--accent-text);
+    transform: translate(2px, -2px);
+  }
+
+  /* Unified Brand Lockup Slot */
+  .card-brand {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .sponsor-svg {
+    height: 38px;
+    width: auto;
+    max-width: 100%;
+    display: block;
+    transition: transform 0.22s var(--ease-out);
+  }
+  .sponsor-card:hover .sponsor-svg {
+    transform: translateY(-1px);
+  }
+
+  .lockup-wordmark {
+    fill: var(--text);
+    font-family: var(--font-grot);
+  }
+  .lockup-tld {
+    fill: var(--accent-text);
+    font-family: var(--font-mono);
+  }
+  .lockup-subword {
+    fill: var(--text-2);
+    font-family: var(--font-grot);
+  }
+  .kimi-tile {
+    fill: #0b0d12;
+    stroke: rgba(255, 255, 255, 0.16);
+    stroke-width: 1;
+  }
+  .supercode-tile {
+    fill: rgba(var(--fg-rgb), 0.06);
+    stroke: var(--line-strong);
+    stroke-width: 1.2;
+  }
+  .supercode-glyph {
+    color: var(--hue-amber);
+  }
+  .logo-cutout {
+    fill: var(--surface);
+  }
+  .packy-mark {
+    color: var(--text);
+  }
+  .card-summary {
+    flex: 1;
+    font-size: 0.84375rem;
+    line-height: 1.66;
+    color: var(--text-2);
+    margin-bottom: 1.25rem;
+    text-wrap: pretty;
+  }
+
+  .card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid var(--line);
+  }
+  .card-perk {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    padding: 0.28rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: rgba(var(--fg-rgb), 0.025);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    color: var(--text-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .perk-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--emerald);
+    flex-shrink: 0;
+  }
+  .card-cta {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: color 0.2s var(--ease-out);
+  }
+  .sponsor-card:hover .card-cta {
+    color: var(--accent-text);
+  }
+
+  /* ══════════════════════════════════════
+     PLATE FOOTER & DISCLOSURE
+  ══════════════════════════════════════ */
+  .plate-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    padding: 0.95rem 2rem;
+    border-top: 1px solid var(--line-hi);
+    background: rgba(var(--fg-rgb), 0.02);
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--text-3);
+  }
+  .plate-disclosure {
+    max-width: 78ch;
+  }
+  .plate-disclosure strong {
+    color: var(--text-2);
+    font-weight: 600;
+  }
+  .plate-inquire {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-2);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 0.32rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--line-hi);
+    transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+  }
+  .plate-inquire:hover {
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE BREAKPOINTS
+  ══════════════════════════════════════ */
+  @media (max-width: 1080px) {
+    .kimi-spotlight {
+      grid-template-columns: 1fr;
+      padding: 1.75rem;
+    }
+    .sponsors-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .sponsor-card:nth-child(3n + 1) {
+      border-left: 1px solid var(--line-hi);
+    }
+    .sponsor-card:nth-child(2n + 1) {
+      border-left: 0;
+    }
+    .sponsor-card:nth-child(3) {
+      border-top: 1px solid var(--line-hi);
+    }
+  }
+
+  @media (max-width: 680px) {
+    .sponsors-section {
+      padding: 3rem 0 1rem;
+    }
+    .sponsors-shell {
+      padding: 0 1rem;
+    }
+    .kimi-spotlight {
+      padding: 1.25rem;
+      gap: 1.25rem;
+    }
+    .kimi-logo-svg {
+      height: 34px;
+    }
+    .plate-rail {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.3rem;
+      padding: 0.85rem 1.25rem;
+    }
+    .sponsors-grid {
+      grid-template-columns: 1fr;
+    }
+    .sponsor-card {
+      border-left: 0 !important;
+      border-top: 1px solid var(--line-hi) !important;
+      padding: 1.25rem 1.15rem;
+    }
+    .sponsor-card:first-child {
+      border-top: 0 !important;
+    }
+    .card-bottom {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .card-perk {
+      max-width: 100%;
+    }
+    .plate-footer {
+      padding: 1rem 1.15rem;
+    }
+    .plate-inquire {
+      white-space: normal;
+    }
+  }
+</style>

@@ -1,4 +1,6 @@
 ---
+import { canonicalUrl } from '../data/site-urls.mjs';
+
 const facts = [
   {
     question: ['What is Archify?', 'Archify 是什么？'],
@@ -25,36 +27,52 @@ const facts = [
 <section class="product-facts" id="about-archify" aria-labelledby="product-facts-title">
   <div class="container">
     <div class="facts-heading"><span class="section-eyebrow" data-en="Product facts" data-zh="产品事实">Product facts</span><h2 id="product-facts-title" data-en="A map or a page you can inspect and keep." data-zh="能检查、能保留的图和答案。">A map or a page you can inspect and keep.</h2></div>
-    <div class="facts-grid">
-      {facts.map(fact => <article><h3 data-en={fact.question[0]} data-zh={fact.question[1]}>{fact.question[0]}</h3><p data-en={fact.answer[0]} data-zh={fact.answer[1]}>{fact.answer[0]}</p></article>)}
+    <div class="facts-body">
+      <p class="facts-identity"><span data-en="This Archify is the open-source diagram skill at " data-zh="这里的 Archify 指 ">This Archify is the open-source diagram skill at </span><a href={canonicalUrl('index')}>archify.si</a><span data-en=", maintained in the " data-zh=" 上的开源画图技能，项目源码位于 ">, maintained in the </span><a href="https://github.com/tt-a1i/archify">tt-a1i/archify</a><span data-en=" repository." data-zh=" 仓库。"> repository.</span></p>
+      <details class="facts-drawer">
+        <summary class="facts-summary">
+          <span data-en="Read frequent questions, supported inputs, and scope boundaries (5)" data-zh="展开常见问题、支持输入与能力边界说明（5 项）">Read frequent questions, supported inputs, and scope boundaries (5)</span>
+          <i aria-hidden="true">+</i>
+        </summary>
+        <div class="facts-grid">
+          {facts.map(fact => <article><h3 data-en={fact.question[0]} data-zh={fact.question[1]}>{fact.question[0]}</h3><p data-en={fact.answer[0]} data-zh={fact.answer[1]}>{fact.answer[0]}</p></article>)}
+        </div>
+        <p class="facts-exports" data-en="Exports include PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format." data-zh="导出格式包含 PNG、JPEG、WebP、SVG 和 WebM。具体可用性取决于格式、浏览器或本地工具；选择交付格式前，可先打开成品检查导出菜单。">Exports include PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format.</p>
+      </details>
+      <nav class="facts-links" aria-label="Product sources">
+        <a href="https://github.com/tt-a1i/archify/blob/main/archify/SKILL.md" data-en="Read the stable Skill ↗" data-zh="阅读稳定版 Skill ↗">Read the stable Skill ↗</a>
+        <a href="https://github.com/tt-a1i/archify/releases" data-en="Published releases ↗" data-zh="已发布版本 ↗">Published releases ↗</a>
+        <a href="https://github.com/tt-a1i/archify/blob/main/LICENSE" data-en="Apache-2.0 license ↗" data-zh="Apache-2.0 许可证 ↗">Apache-2.0 license ↗</a>
+        <a href="gallery.html" data-en="Inspect real artifacts →" data-zh="检查真实成品 →">Inspect real artifacts →</a>
+      </nav>
+      <p class="facts-channel" data-en="The default installation command uses the stable main source. Development examples describe their own build and may include features not yet in a stable release." data-zh="默认安装命令使用稳定版 main 源码。开发版示例反映各自的构建，可能包含尚未稳定发布的功能。">The default installation command uses the stable main source. Development examples describe their own build and may include features not yet in a stable release.</p>
     </div>
-    <p class="facts-exports" data-en="Exports include PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format." data-zh="导出格式包含 PNG、JPEG、WebP、SVG 和 WebM。具体可用性取决于格式、浏览器或本地工具；选择交付格式前，可先打开成品检查导出菜单。">Exports include PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format.</p>
-    <nav class="facts-links" aria-label="Product sources">
-      <a href="https://github.com/tt-a1i/archify/blob/main/archify/SKILL.md" data-en="Read the stable Skill ↗" data-zh="阅读稳定版 Skill ↗">Read the stable Skill ↗</a>
-      <a href="https://github.com/tt-a1i/archify/releases" data-en="Published releases ↗" data-zh="已发布版本 ↗">Published releases ↗</a>
-      <a href="https://github.com/tt-a1i/archify/blob/main/LICENSE" data-en="Apache-2.0 license ↗" data-zh="Apache-2.0 许可证 ↗">Apache-2.0 license ↗</a>
-      <a href="gallery.html" data-en="Inspect real artifacts →" data-zh="检查真实成品 →">Inspect real artifacts →</a>
-    </nav>
-    <p class="facts-channel" data-en="The default installation command uses the stable main source. Development examples describe their own build and may include features not yet in a stable release." data-zh="默认安装命令使用稳定版 main 源码。开发版示例反映各自的构建，可能包含尚未稳定发布的功能。">The default installation command uses the stable main source. Development examples describe their own build and may include features not yet in a stable release.</p>
   </div>
 </section>
 <style>
- /* a sticky heading beside question-and-answer rows, in the homepage's section language */
- .product-facts { padding:8rem 0 2rem; }
- .product-facts .container { display:grid; grid-template-columns:minmax(0,4fr) minmax(0,8fr); gap:0 4rem; }
- .facts-heading { position:sticky; top:calc(var(--nav-h) + 2rem); align-self:start; grid-row:1 / span 4; }
+ /* a compact summary beside expandable question-and-answer rows */
+ .product-facts { padding:5.5rem 0 1.5rem; }
+ .product-facts .container { display:grid; grid-template-columns:minmax(0,4fr) minmax(0,8fr); gap:0 4rem; align-items:start; }
+ .facts-heading { position:sticky; top:calc(var(--nav-h) + 2rem); align-self:start; }
  .section-eyebrow { font-family:var(--font-mono); font-size:.6875rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:var(--accent-text); }
- .facts-heading h2 { margin:1.1rem 0 0; font-family:var(--font-grot); font-size:clamp(2rem,3.4vw,2.9rem); font-weight:500; letter-spacing:-.035em; line-height:1.05; color:var(--text); text-wrap:balance; }
- .facts-grid { grid-column:2; border-top:1px solid var(--line-hi); }
- article { display:grid; grid-template-columns:minmax(0,4fr) minmax(0,7fr); gap:.5rem 2rem; padding:1.5rem 0; border-bottom:1px solid var(--line-hi); }
- h3 { margin:0; font-family:var(--font-grot); font-size:1.0625rem; font-weight:500; letter-spacing:-.015em; line-height:1.35; color:var(--text); }
- p { margin:0; font-size:.875rem; line-height:1.75; color:var(--text-2); text-wrap:pretty; }
- .facts-exports, .facts-links, .facts-channel { grid-column:2; }
- .facts-exports { margin-top:1.5rem; color:var(--text-3); }
- .facts-links { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.25rem; font-size:.8125rem; }
+ .facts-heading h2 { margin:.85rem 0 0; font-family:var(--font-grot); font-size:clamp(1.75rem,3vw,2.5rem); font-weight:500; letter-spacing:-.035em; line-height:1.08; color:var(--text); text-wrap:balance; }
+ .facts-body { grid-column:2; min-width:0; }
+ .facts-identity { font-size:.9375rem; line-height:1.7; color:var(--text-2); margin-bottom:1.15rem; }
+ .facts-identity a { color:var(--text); font-weight:500; text-underline-offset:3px; }
+ .facts-drawer { border:1px solid var(--line-hi); border-radius:12px; background:rgba(var(--fg-rgb),.02); padding:0 1.25rem; }
+ .facts-summary { list-style:none; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.95rem 0; cursor:pointer; font-family:var(--font-mono); font-size:.75rem; font-weight:500; color:var(--text); user-select:none; }
+ .facts-summary::-webkit-details-marker { display:none; }
+ .facts-summary i { font-style:normal; font-size:1rem; color:var(--accent-text); transition:transform .2s var(--ease-out); }
+ .facts-drawer[open] .facts-summary i { transform:rotate(45deg); }
+ .facts-grid { border-top:1px solid var(--line-hi); }
+ article { display:grid; grid-template-columns:minmax(0,4fr) minmax(0,7fr); gap:.5rem 2rem; padding:1.25rem 0; border-bottom:1px solid var(--line); }
+ h3 { margin:0; font-family:var(--font-grot); font-size:1rem; font-weight:500; letter-spacing:-.015em; line-height:1.35; color:var(--text); }
+ p { margin:0; font-size:.84375rem; line-height:1.72; color:var(--text-2); text-wrap:pretty; }
+ .facts-exports { padding:1rem 0 1.15rem; color:var(--text-3); font-size:.8125rem; }
+ .facts-links { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.15rem; font-size:.8125rem; }
  .facts-links a { padding:.4rem .8rem; border:1px solid var(--line-hi); border-radius:999px; color:var(--text); text-decoration:none; transition:border-color .2s,color .2s; }
  .facts-links a:hover { border-color:var(--accent); color:var(--accent-text); }
- .facts-channel { margin-top:1.25rem; font-size:.75rem; color:var(--text-3); }
- @media(max-width:900px) { .product-facts .container { grid-template-columns:1fr; } .facts-heading { position:static; grid-row:auto; margin-bottom:2rem; } .facts-grid, .facts-exports, .facts-links, .facts-channel { grid-column:1; } }
- @media(max-width:600px) { article { grid-template-columns:1fr; } .product-facts { padding:5rem 0 1rem; } }
+ .facts-channel { margin-top:1rem; font-size:.75rem; color:var(--text-3); }
+ @media(max-width:900px) { .product-facts .container { grid-template-columns:1fr; } .facts-heading { position:static; margin-bottom:1.5rem; } .facts-body { grid-column:1; } }
+ @media(max-width:600px) { article { grid-template-columns:1fr; } .product-facts { padding:4rem 0 1rem; } }
 </style>
