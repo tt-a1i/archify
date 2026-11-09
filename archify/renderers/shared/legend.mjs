@@ -58,12 +58,12 @@ function renderedLegendFontSize(fontSize) {
   return fontSize < 8 ? fontSize + 0.5 : fontSize + 2;
 }
 
-function measuredEntryWidth(entry, fontSize, swatchGap) {
+function measuredEntryWidth(entry, fontSize, swatchGap, textAdvance = () => 1) {
   const swatchWidth = entry.swatchWidth ?? 14;
   return Math.ceil(
     swatchWidth
     + swatchGap
-    + textUnits(entry.label) * renderedLegendFontSize(fontSize) * TEXT_ADVANCE_EM
+    + textUnits(entry.label) * renderedLegendFontSize(fontSize) * TEXT_ADVANCE_EM * textAdvance(entry.label, entry)
     + (entry.interactive ? INTERACTIVE_BADGE_ALLOWANCE : 0)
     + (entry.trailingWidth ?? 0),
   );
@@ -78,13 +78,14 @@ export function legendFootprint(entries, {
   itemGap = DEFAULT_ITEM_GAP,
   lineGap = DEFAULT_LINE_GAP,
   swatchGap = DEFAULT_SWATCH_GAP,
+  textAdvance = () => 1,
 } = {}) {
   if (!entries.length) {
     return { measured: [], rows: [], rowCount: 0, minWidth: 0, extraHeight: 0 };
   }
   const measured = entries.map((entry) => ({
     ...entry,
-    width: measuredEntryWidth(entry, fontSize, entry.swatchGap ?? swatchGap),
+    width: measuredEntryWidth(entry, fontSize, entry.swatchGap ?? swatchGap, textAdvance),
   }));
   const rows = [[]];
   let cursor = 0;
@@ -116,13 +117,14 @@ export function measureLegend(entries, {
   itemGap = DEFAULT_ITEM_GAP,
   lineGap = DEFAULT_LINE_GAP,
   swatchGap = DEFAULT_SWATCH_GAP,
+  textAdvance = () => 1,
   minTitleY = 0,
   obstacles = [],
   unfit = 'error',
   diagramType = 'diagram',
 } = {}) {
   if (!entries.length) return { entries: [], rowCount: 0, titleY: null };
-  const footprint = legendFootprint(entries, { width, fontSize, itemGap, lineGap, swatchGap });
+  const footprint = legendFootprint(entries, { width, fontSize, itemGap, lineGap, swatchGap, textAdvance });
   const tooWide = footprint.measured.find((entry) => entry.width > width);
   if (tooWide) {
     if (unfit === 'hide') return null;
