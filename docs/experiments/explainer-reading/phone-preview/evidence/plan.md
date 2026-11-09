@@ -1,4 +1,0 @@
-# Round 2: phone diagram reading
-Base dev 5ecbd1bfdbf83ea747072112493c940e707569cb; starting candidate 0f36a3a9a.
-Hypothesis: at <=760px, giving an overwide native diagram a local horizontal viewport with keyboard focus and a scrolling hint preserves readable labels without making the page overflow. Desktop complete-fit behavior, static reading, printing and export must remain unchanged. Existing toolbar overflow is a distinct known issue owned by #1076.
-Budget: one implementation candidate and up to two repair cycles before retaining/rejecting. Evidence: same final singleflight source, 390px light/dark screenshots, narrow-wide-narrow live resize, keyboard scroll, print fit, static desktop and existing desktop-native-fit test. No fresh generation/speed claim; two new source-backed author practices use frozen 0f36a3a9a runtime separately.

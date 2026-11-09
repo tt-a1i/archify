@@ -1,7 +1,0 @@
-Python: 3.15.0
-sibling: started
-failure: raising ValueError
-sibling: cleanup start
-sibling: cleanup done
-outside group: caught ExceptionGroup
-outside group: continued

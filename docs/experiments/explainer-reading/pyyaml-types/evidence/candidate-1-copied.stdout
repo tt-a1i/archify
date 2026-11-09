@@ -1,3 +1,0 @@
-flag: on => True bool
-flag: "on" => 'on' str
-flag: !!str on => 'on' str

@@ -1,7 +1,0 @@
-{
-  "allProseCodeSourcesUnchanged": true,
-  "allowedDifferences": [
-    "native diagram representation and geometry",
-    "references/check span 8/4 to 6/6"
-  ]
-}
