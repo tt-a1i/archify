@@ -143,6 +143,7 @@ struct DefaultMethod {
     line: usize,
     column: usize,
     trait_name: String,
+    trait_index: Option<usize>,
 }
 #[derive(Clone)]
 struct TraitDecl {
@@ -176,6 +177,15 @@ struct TraitImpl {
     function: usize,
     state: State,
 }
+struct TraitImplOwner {
+    module: usize,
+    trait_path: Vec<String>,
+    absolute: bool,
+    self_path: Option<(Vec<String>, bool)>,
+    has_methods: BTreeSet<String>,
+    complete: bool,
+    plain: bool,
+}
 #[derive(Clone)]
 struct Module {
     krate: usize,
@@ -207,6 +217,7 @@ struct Function {
     self_type: Option<TypeHint>,
     self_args: Option<Vec<TypeHint>>,
     default_method: Option<DefaultMethod>,
+    macro_expanded: bool,
 }
 #[derive(Clone)]
 struct Krate {
@@ -314,9 +325,20 @@ struct MacroDef {
     module: usize,
     krate: usize,
     preserves: bool,
+    rules: Vec<MacroRule>,
 }
 struct ParsedMacroDef {
     rules: Vec<MacroRule>,
+}
+struct ImplItems(Vec<ImplItem>);
+impl Parse for ImplItems {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let mut items = Vec::new();
+        while !input.is_empty() {
+            items.push(input.parse()?);
+        }
+        Ok(ImplItems(items))
+    }
 }
 impl Parse for ParsedMacroDef {
     fn parse(input: ParseStream) -> Result<Self> {
@@ -561,6 +583,7 @@ struct Analysis {
     traits: Vec<TraitDecl>,
     trait_pending: Vec<TraitImplPending>,
     trait_impls: Vec<TraitImpl>,
+    trait_impl_owners: Vec<TraitImplOwner>,
     variants: BTreeSet<(usize, String, String)>,
     cfg: BTreeSet<String>,
     tests: bool,
@@ -884,6 +907,7 @@ impl Analysis {
             self_type: None,
             self_args: None,
             default_method: None,
+            macro_expanded: false,
         });
         index
     }
@@ -1111,6 +1135,7 @@ impl Analysis {
                         trait_generics.iter().cloned().collect();
                     let mut methods = BTreeMap::new();
                     let mut returns = BTreeMap::new();
+                    let mut default_functions = Vec::new();
                     for item in &s.items {
                         if let TraitItem::Fn(m) = item {
                             let method_state = and(selected, self.attrs(&m.attrs, krate));
@@ -1159,7 +1184,9 @@ impl Analysis {
                                     line: mline,
                                     column: mcolumn,
                                     trait_name: name.clone(),
+                                    trait_index: None,
                                 });
+                                default_functions.push(index);
                                 for param in s.generics.type_params() {
                                     let generic = param.ident.to_string();
                                     self.functions[index].generics.push(generic.clone());
@@ -1191,6 +1218,11 @@ impl Analysis {
                         methods,
                         returns,
                     });
+                    for function in default_functions {
+                        if let Some(method) = self.functions[function].default_method.as_mut() {
+                            method.trait_index = Some(index);
+                        }
+                    }
                     self.add_binding(id, name, Binding::Trait(index));
                 }
                 Item::Union(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
@@ -1325,6 +1357,13 @@ impl Analysis {
                         .collect();
                     let impl_generics: BTreeSet<String> =
                         impl_types.iter().cloned().collect();
+                    let (impl_items, macro_expanded) =
+                        match self.expanded_impl_items(krate, id, &file, &im.items) {
+                            Some(items) => (items, true),
+                            None => (im.items.iter().cloned().collect(), false),
+                        };
+                    let mut impl_methods = BTreeSet::new();
+                    let mut impl_complete = selected == 1;
                     if let Some((trait_path, absolute)) = &trait_ref {
                         let mut args = Vec::new();
                         if let Some(segment) =
@@ -1346,7 +1385,7 @@ impl Analysis {
                             }
                             _ => None,
                         });
-                        for item in &im.items {
+                        for item in &impl_items {
                             let ImplItem::Fn(f) = item else {
                                 continue;
                             };
@@ -1365,7 +1404,7 @@ impl Analysis {
                             });
                         }
                     }
-                    for i in im.items {
+                    for i in impl_items {
                         if let ImplItem::Fn(f) = i {
                             let item = ItemFn {
                                 attrs: f.attrs.clone(),
@@ -1374,6 +1413,12 @@ impl Analysis {
                                 block: Box::new(f.block),
                             };
                             let cfg = and(selected, self.attrs(&item.attrs, krate));
+                            if cfg == 0 {
+                                impl_complete = false;
+                            }
+                            if cfg == 1 {
+                                impl_methods.insert(item.sig.ident.to_string());
+                            }
                             if cfg >= 0 {
                                 let index = self.register_fn(
                                     id,
@@ -1383,6 +1428,7 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
+                                self.functions[index].macro_expanded = macro_expanded;
                                 self.functions[index].self_type =
                                     type_hint(&im.self_ty, &impl_generics);
                                 let mut self_args = Vec::new();
@@ -1482,6 +1528,24 @@ impl Analysis {
                             }
                         }
                     }
+                    if selected == 1 {
+                        if let Some((trait_path, absolute)) = &trait_ref {
+                            let plain = im_generics.params.is_empty()
+                                && im_generics.where_clause.is_none()
+                                && matches!(im.self_ty.as_ref(), Type::Path(path)
+                                    if path.qself.is_none()
+                                        && path.path.segments.iter().all(|segment| matches!(segment.arguments, PathArguments::None)));
+                            self.trait_impl_owners.push(TraitImplOwner {
+                                module: id,
+                                trait_path: trait_path.clone(),
+                                absolute: *absolute,
+                                self_path: self_path.clone(),
+                                has_methods: impl_methods,
+                                complete: impl_complete,
+                                plain,
+                            });
+                        }
+                    }
                 }
                 Item::Macro(m) => {
                     if m.mac.path.is_ident("macro_rules") {
@@ -1504,6 +1568,7 @@ impl Analysis {
                                             module: id,
                                             krate,
                                             preserves,
+                                            rules: def.rules,
                                         },
                                     );
                                 }
@@ -1548,6 +1613,50 @@ impl Analysis {
             return None;
         }
         Some(def.clone())
+    }
+
+    // A zero-argument local macro used as the whole body of an impl is a
+    // textual method template. Expanding it here keeps generated forwarding
+    // methods visible without claiming general macro expansion.
+    fn expanded_impl_items(
+        &self,
+        krate: usize,
+        module: usize,
+        file: &str,
+        items: &[ImplItem],
+    ) -> Option<Vec<ImplItem>> {
+        let mut iter = items.iter();
+        let ImplItem::Macro(invocation) = iter.next()? else {
+            return None;
+        };
+        if iter.next().is_some()
+            || !invocation.mac.tokens.is_empty()
+            || invocation.mac.path.segments.len() != 1
+        {
+            return None;
+        }
+        let name = invocation.mac.path.segments[0].ident.to_string();
+        let (line, _) =
+            self.point(file, self.bytes(file, invocation.mac.path.span()).0);
+        let defs = self.macro_defs.get(&name)?;
+        let mut visible: Vec<&MacroDef> = defs
+            .iter()
+            .filter(|def| {
+                def.krate == krate
+                    && def.file == file
+                    && def.module == module
+                    && self.macro_visible(def, module, line)
+            })
+            .collect();
+        if visible.len() != 1 {
+            return None;
+        }
+        let def = visible.pop()?;
+        if def.rules.len() != 1 || !def.rules[0].matcher.is_empty() {
+            return None;
+        }
+        let expanded = syn::parse2::<ImplItems>(def.rules[0].expansion.clone()).ok()?;
+        Some(expanded.0)
     }
 
     fn ancestor_child(&self, ancestor: usize, module: usize) -> Option<usize> {
@@ -2087,6 +2196,16 @@ struct Caller {
     line: usize,
     column: usize,
 }
+fn self_deref_depth(expr: &Expr) -> Option<usize> {
+    match expr {
+        Expr::Path(path) if path.qself.is_none() && path.path.is_ident("self") => Some(0),
+        Expr::Paren(paren) => self_deref_depth(&paren.expr),
+        Expr::Unary(unary) if matches!(unary.op, UnOp::Deref(_)) => {
+            self_deref_depth(&unary.expr).map(|depth| depth + 1)
+        }
+        _ => None,
+    }
+}
 struct Scanner<'a> {
     a: &'a mut Analysis,
     function: Function,
@@ -2369,6 +2488,26 @@ impl Scanner<'_> {
             }
             Expr::Reference(r) => self.receiver_hint(&r.expr),
             Expr::Paren(p) => self.receiver_hint(&p.expr),
+            Expr::Unary(unary) if matches!(unary.op, UnOp::Deref(_)) => {
+                let depth = self_deref_depth(&unary.expr)? + 1;
+                if depth > 2 {
+                    return None;
+                }
+                let hint = self.function.self_type.clone()?;
+                if depth <= 1 {
+                    Some(hint)
+                } else {
+                    match hint {
+                        TypeHint::Generic(_) => Some(hint),
+                        TypeHint::Nominal(parts, _)
+                            if parts.len() == 1 && parts[0] == "Box" =>
+                        {
+                            self.function.self_args.as_ref()?.first().cloned()
+                        }
+                        _ => None,
+                    }
+                }
+            }
             Expr::Field(f) => {
                 let TypeHint::Nominal(parts, absolute) = self.receiver_hint(&f.base)? else {
                     return None;
@@ -2492,6 +2631,43 @@ impl Scanner<'_> {
             None
         }
     }
+    fn inherited_trait_default(&self, module: usize, name: &str, method: &str) -> Option<usize> {
+        let mut found = Vec::new();
+        for owner in &self.a.trait_impl_owners {
+            if !owner.plain || !owner.complete || owner.has_methods.contains(method) {
+                continue;
+            }
+            let Some((parts, absolute)) = &owner.self_path else {
+                continue;
+            };
+            let resolved = match self.a.resolve(owner.module, parts, *absolute, false, 0) {
+                Some(Binding::Nominal(target_module, target_name))
+                | Some(Binding::Fields(target_module, target_name)) => (target_module, target_name),
+                _ => continue,
+            };
+            if resolved != (module, name.to_string()) {
+                continue;
+            }
+            let declaration = match self.a.resolve(
+                owner.module,
+                &owner.trait_path,
+                owner.absolute,
+                true,
+                0,
+            ) {
+                Some(Binding::Trait(index)) => index,
+                _ => continue,
+            };
+            if self.a.traits[declaration].methods.contains_key(method) {
+                found.push(declaration);
+            }
+        }
+        if found.len() == 1 {
+            found.pop()
+        } else {
+            None
+        }
+    }
     fn trait_target(&mut self, span: Span, decl: usize, method: &str, resolution: &str) {
         if self.state == 0 {
             self.call(span, None, "rust-cfg-unselected");
@@ -2594,6 +2770,26 @@ impl Scanner<'_> {
     }
     fn method_call(&mut self, span: Span, call: &ExprMethodCall) {
         let method = call.method.to_string();
+        if let Expr::Path(path) = call.receiver.as_ref() {
+            if path.qself.is_none() && path.path.is_ident("self") {
+                if let Some(index) = self
+                    .function
+                    .default_method
+                    .as_ref()
+                    .and_then(|method| method.trait_index)
+                {
+                    if self.a.traits[index].methods.contains_key(&method) {
+                        self.trait_target(
+                            span,
+                            index,
+                            &method,
+                            "rust-trait-method-candidate",
+                        );
+                        return;
+                    }
+                }
+            }
+        }
         if let Some(hint) = self.receiver_hint(&call.receiver) {
             match hint {
                 TypeHint::Generic(name) => {
@@ -2630,6 +2826,15 @@ impl Scanner<'_> {
                         }
                         if let Some(index) = self.unique_trait_impl(module, &name, &method) {
                             self.impl_target(span, index, "rust-trait-impl");
+                            return;
+                        }
+                        if let Some(index) = self.inherited_trait_default(module, &name, &method) {
+                            self.trait_target(
+                                span,
+                                index,
+                                &method,
+                                "rust-trait-method-candidate",
+                            );
                             return;
                         }
                     }
@@ -2767,6 +2972,7 @@ impl Scanner<'_> {
                 module: self.function.module,
                 krate,
                 preserves,
+                rules: def.rules,
             });
         true
     }
@@ -3250,6 +3456,7 @@ fn main() {
         traits: Vec::new(),
         trait_pending: Vec::new(),
         trait_impls: Vec::new(),
+        trait_impl_owners: Vec::new(),
         variants: BTreeSet::new(),
         selected: BTreeSet::new(),
         excluded_regions: Vec::new(),
@@ -3435,6 +3642,8 @@ fn main() {
         let state = f.state;
         let kind = if f.default_method.is_some() {
             "trait-default-method"
+        } else if f.macro_expanded {
+            "macro-generated-method"
         } else if f.self_type.is_some() {
             "method"
         } else {
@@ -3508,7 +3717,15 @@ fn main() {
         .into_values()
         .map(|v| {
             let mut first = v[0].clone();
-            if v.iter().any(|x| x != &first) {
+            let outcome = |call: &Value| {
+                (
+                    call.get("resolution").cloned(),
+                    call.get("target").cloned(),
+                    call.get("reason").cloned(),
+                )
+            };
+            let first_outcome = outcome(&first);
+            if v.iter().any(|call| outcome(call) != first_outcome) {
                 first.as_object_mut().unwrap().remove("target");
                 first["resolution"] = json!("unresolved");
                 first["reason"] = json!("rust-context-dependent");

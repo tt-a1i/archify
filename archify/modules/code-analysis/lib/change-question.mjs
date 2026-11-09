@@ -137,7 +137,7 @@ function inspectSide(capture, side) {
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2'].includes(facts.callModel))
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(facts.callModel))
-    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10'].includes(facts.callModel));
+    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11'].includes(facts.callModel));
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings,
     interfaceReferences, externalInterfaceReferences, interfaceEdges, interfaceMethods, externalInterfaceMethods, interfaceEvidence: evidence, hasInterfaceEvidence };
 }

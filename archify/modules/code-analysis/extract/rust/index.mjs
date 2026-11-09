@@ -10,8 +10,8 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'rust';
-export const REVISION = 10;
-export const CALL_MODEL = 'rust-source-direct-v10';
+export const REVISION = 11;
+export const CALL_MODEL = 'rust-source-direct-v11';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.rs'));
 export const countSources = (root, config) => listFiles(root, config).filter(file => file.endsWith('.rs')).length;
 const manifest = fileURLToPath(new URL('./Cargo.toml', import.meta.url));
