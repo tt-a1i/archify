@@ -217,7 +217,7 @@ struct Function {
     self_type: Option<TypeHint>,
     self_args: Option<Vec<TypeHint>>,
     default_method: Option<DefaultMethod>,
-    macro_expanded: bool,
+    macro_template: Option<Value>,
 }
 #[derive(Clone)]
 struct Krate {
@@ -310,6 +310,7 @@ struct WrapPending {
     method: String,
     args: Vec<TypeHint>,
     associated: Option<TypeHint>,
+    state: State,
 }
 #[derive(Clone)]
 struct MacroRule {
@@ -576,9 +577,9 @@ struct Analysis {
     inherent_pending: Vec<InherentPending>,
     inherent: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
     inherent_methods: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
-    inherent_returns: BTreeMap<(usize, String, String), Vec<TypeHint>>,
+    inherent_returns: BTreeMap<(usize, String, String), Vec<Option<TypeHint>>>,
     wrap_pending: Vec<WrapPending>,
-    wrap_targets: BTreeMap<(usize, String, String), Vec<TypeHint>>,
+    wrap_targets: BTreeMap<(usize, String, String), Vec<Option<TypeHint>>>,
     macro_defs: BTreeMap<String, Vec<MacroDef>>,
     traits: Vec<TraitDecl>,
     trait_pending: Vec<TraitImplPending>,
@@ -703,58 +704,40 @@ impl Analysis {
             }
         }
     }
-    fn attrs(&self, attrs: &[Attribute], krate: usize) -> State {
-        let mut state = 1;
-        for a in attrs {
-            if a.path().is_ident("cfg") {
-                if let Meta::List(m) = &a.meta {
-                    let items = meta_list(m);
-                    state = and(
-                        state,
-                        if items.len() == 1 {
-                            self.cfg_meta(&items[0], krate)
-                        } else {
-                            0
-                        },
-                    );
+    fn attr_meta(&self, meta: &Meta, krate: usize) -> State {
+        if meta.path().is_ident("cfg") {
+            if let Meta::List(m) = meta {
+                let items = meta_list(m);
+                if items.len() == 1 {
+                    return self.cfg_meta(&items[0], krate);
                 }
-            } else if a.path().is_ident("test") || a.path().is_ident("bench") {
-                state = and(state, if self.tests { 1 } else { -1 });
-            } else if a.path().is_ident("cfg_attr") {
-                if let Meta::List(m) = &a.meta {
-                    let items = meta_list(m);
-                    if items.len() > 1 {
-                        let condition = self.cfg_meta(&items[0], krate);
-                        for nested in &items[1..] {
-                            if nested.path().is_ident("cfg") {
-                                if condition == 0 {
-                                    state = and(state, 0)
-                                } else if condition == 1 {
-                                    if let Meta::List(x) = nested {
-                                        let args = meta_list(x);
-                                        state = and(
-                                            state,
-                                            if args.len() == 1 {
-                                                self.cfg_meta(&args[0], krate)
-                                            } else {
-                                                0
-                                            },
-                                        );
-                                    }
-                                }
-                            } else if (nested.path().is_ident("path") && condition == 0)
-                                || (condition >= 0 && !builtin_attribute(nested.path()))
-                            {
-                                state = and(state, 0)
-                            }
-                        }
-                    }
-                }
-            } else if !builtin_attribute(a.path()) {
-                state = and(state, 0);
             }
+            return 0;
         }
-        state
+        if meta.path().is_ident("test") || meta.path().is_ident("bench") {
+            return if self.tests { 1 } else { -1 };
+        }
+        if meta.path().is_ident("cfg_attr") {
+            let Meta::List(m) = meta else { return 0 };
+            let items = meta_list(m);
+            let Some(condition) = items.first() else { return 0 };
+            let condition = self.cfg_meta(condition, krate);
+            if condition < 0 {
+                return 1;
+            }
+            return items[1..].iter().fold(1, |state, nested| {
+                let selected = self.attr_meta(nested, krate);
+                and(state, if condition == 0 {
+                    if selected == 1 && !nested.path().is_ident("path") { 1 } else { 0 }
+                } else {
+                    selected
+                })
+            });
+        }
+        if builtin_attribute(meta.path()) { 1 } else { 0 }
+    }
+    fn attrs(&self, attrs: &[Attribute], krate: usize) -> State {
+        attrs.iter().fold(1, |state, attr| and(state, self.attr_meta(&attr.meta, krate)))
     }
     fn preserves_single_expr(&self, rules: &[MacroRule], krate: usize) -> bool {
         !rules.is_empty()
@@ -907,7 +890,7 @@ impl Analysis {
             self_type: None,
             self_args: None,
             default_method: None,
-            macro_expanded: false,
+            macro_template: None,
         });
         index
     }
@@ -1357,13 +1340,13 @@ impl Analysis {
                         .collect();
                     let impl_generics: BTreeSet<String> =
                         impl_types.iter().cloned().collect();
-                    let (impl_items, macro_expanded) =
-                        match self.expanded_impl_items(krate, id, &file, &im.items) {
-                            Some(items) => (items, true),
-                            None => (im.items.iter().cloned().collect(), false),
+                    let (impl_items, macro_template, item_state) =
+                        match self.expanded_impl_items(krate, id, &file, &im) {
+                            Some((items, template, state)) => (items, Some(template), and(selected, state)),
+                            None => (im.items.clone(), None, selected),
                         };
                     let mut impl_methods = BTreeSet::new();
-                    let mut impl_complete = selected == 1;
+                    let mut impl_complete = selected == 1 && item_state != 0;
                     if let Some((trait_path, absolute)) = &trait_ref {
                         let mut args = Vec::new();
                         if let Some(segment) =
@@ -1390,7 +1373,9 @@ impl Analysis {
                                 continue;
                             };
                             let method = f.sig.ident.to_string();
-                            if !["as_ref", "borrow", "deref"].contains(&method.as_str()) {
+                            let state = and(item_state, self.attrs(&f.attrs, krate));
+                            if state < 0
+                                || !["as_ref", "borrow", "deref"].contains(&method.as_str()) {
                                 continue;
                             }
                             self.wrap_pending.push(WrapPending {
@@ -1401,6 +1386,7 @@ impl Analysis {
                                 method,
                                 args: args.clone(),
                                 associated: associated.clone(),
+                                state,
                             });
                         }
                     }
@@ -1412,7 +1398,7 @@ impl Analysis {
                                 sig: f.sig.clone(),
                                 block: Box::new(f.block),
                             };
-                            let cfg = and(selected, self.attrs(&item.attrs, krate));
+                            let cfg = and(item_state, self.attrs(&item.attrs, krate));
                             if cfg == 0 {
                                 impl_complete = false;
                             }
@@ -1428,7 +1414,7 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
-                                self.functions[index].macro_expanded = macro_expanded;
+                                self.functions[index].macro_template = macro_template.clone();
                                 self.functions[index].self_type =
                                     type_hint(&im.self_ty, &impl_generics);
                                 let mut self_args = Vec::new();
@@ -1526,6 +1512,10 @@ impl Analysis {
                                     });
                                 }
                             }
+                        } else if let ImplItem::Macro(invocation) = i {
+                            if and(item_state, self.attrs(&invocation.attrs, krate)) >= 0 {
+                                impl_complete = false;
+                            }
                         }
                     }
                     if selected == 1 {
@@ -1615,17 +1605,14 @@ impl Analysis {
         Some(def.clone())
     }
 
-    // A zero-argument local macro used as the whole body of an impl is a
-    // textual method template. Expanding it here keeps generated forwarding
-    // methods visible without claiming general macro expansion.
     fn expanded_impl_items(
         &self,
         krate: usize,
         module: usize,
         file: &str,
-        items: &[ImplItem],
-    ) -> Option<Vec<ImplItem>> {
-        let mut iter = items.iter();
+        implementation: &ItemImpl,
+    ) -> Option<(Vec<ImplItem>, Value, State)> {
+        let mut iter = implementation.items.iter();
         let ImplItem::Macro(invocation) = iter.next()? else {
             return None;
         };
@@ -1636,7 +1623,7 @@ impl Analysis {
             return None;
         }
         let name = invocation.mac.path.segments[0].ident.to_string();
-        let (line, _) =
+        let (line, column) =
             self.point(file, self.bytes(file, invocation.mac.path.span()).0);
         let defs = self.macro_defs.get(&name)?;
         let mut visible: Vec<&MacroDef> = defs
@@ -1656,7 +1643,21 @@ impl Analysis {
             return None;
         }
         let expanded = syn::parse2::<ImplItems>(def.rules[0].expansion.clone()).ok()?;
-        Some(expanded.0)
+        let (impl_line, impl_column) =
+            self.point(file, self.bytes(file, implementation.impl_token.span).0);
+        let mut origin = json!({
+            "file": file, "line": line, "column": column,
+            "implLine": impl_line, "implColumn": impl_column,
+            "selfType": implementation.self_ty.to_token_stream().to_string(),
+        });
+        if let Some((_, path, _)) = &implementation.trait_ {
+            origin["trait"] = json!(path.to_token_stream().to_string());
+        }
+        let template = json!({
+            "definition": {"file":def.file,"name":def.name,"line":def.line,"column":def.column},
+            "expansions": [origin],
+        });
+        Some((expanded.0, template, self.attrs(&invocation.attrs, krate)))
     }
 
     fn ancestor_child(&self, ancestor: usize, module: usize) -> Option<usize> {
@@ -2042,12 +2043,12 @@ fn hint_key(hint: &TypeHint) -> String {
         }
     }
 }
-fn unique_hint(values: &[TypeHint]) -> Option<TypeHint> {
-    let first = values.first()?;
+fn unique_hint(values: &[Option<TypeHint>]) -> Option<TypeHint> {
+    let first = values.first()?.as_ref()?;
     let key = hint_key(first);
     values
         .iter()
-        .all(|value| hint_key(value) == key)
+        .all(|value| value.as_ref().is_some_and(|hint| hint_key(hint) == key))
         .then(|| first.clone())
 }
 fn unique_index(values: &[Option<usize>]) -> Option<usize> {
@@ -2256,6 +2257,9 @@ impl Scanner<'_> {
             json!(self.a.crates[self.a.modules[self.function.module].krate].id);
         self.annotate_default(record);
         self.annotate_caller(record);
+        if let Some(template) = &self.function.macro_template {
+            record["macroTemplate"] = template.clone();
+        }
         if !self.macro_evidence.is_empty() {
             record["macroEvidence"] = Value::Array(self.macro_evidence.clone());
         }
@@ -2617,7 +2621,7 @@ impl Scanner<'_> {
         }
         let mut functions = BTreeSet::new();
         for edge in &self.a.trait_impls {
-            if edge.state == 1
+            if edge.state >= 0
                 && edge.self_module == Some(module)
                 && edge.self_name.as_deref() == Some(name)
                 && edge.method == method
@@ -2736,7 +2740,7 @@ impl Scanner<'_> {
             };
             let mut functions = BTreeSet::new();
             for edge in &self.a.trait_impls {
-                if edge.state == 1
+                if edge.state >= 0
                     && edge.trait_decl == decl
                     && edge.self_module == Some(module)
                     && edge.self_name.as_deref() == Some(name.as_str())
@@ -3492,12 +3496,10 @@ fn main() {
         | Some(Binding::Fields(owner_module, owner_name)) =
             a.resolve(pending.module, &pending.owner, false, false, 0)
         {
-            if let Some(returns) = pending.returns.clone() {
-                a.inherent_returns
-                    .entry((owner_module, owner_name.clone(), pending.name.clone()))
-                    .or_default()
-                    .push(returns);
-            }
+            a.inherent_returns
+                .entry((owner_module, owner_name.clone(), pending.name.clone()))
+                .or_default()
+                .push(if a.functions[pending.index].state == 1 { pending.returns.clone() } else { None });
             if !pending.static_function {
                 // Keep a method's receiver overload as a blocker for path calls,
                 // while allowing direct method-call resolution by receiver.
@@ -3567,7 +3569,7 @@ fn main() {
             a.wrap_targets
                 .entry((owner_module, owner_name, pending.method))
                 .or_default()
-                .push(target);
+                .push((pending.state == 1).then_some(target));
         }
     }
     // Resolve trait declarations and impl edges after all module trees exist.
@@ -3642,7 +3644,7 @@ fn main() {
         let state = f.state;
         let kind = if f.default_method.is_some() {
             "trait-default-method"
-        } else if f.macro_expanded {
+        } else if f.macro_template.is_some() {
             "macro-generated-method"
         } else if f.self_type.is_some() {
             "method"
@@ -3650,7 +3652,12 @@ fn main() {
             "function"
         };
         let (line, column) = a.point(&f.file, f.start);
-        let caller = Caller { file: f.file.clone(), name: f.name.clone(), qualname: f.qualname.clone(), kind, line, column };
+        let qualname = if let Some(template) = &f.macro_template {
+            format!("{}::{}!::{}", a.modules[f.module].path, template["definition"]["name"].as_str().unwrap(), f.name)
+        } else {
+            f.qualname.clone()
+        };
+        let caller = Caller { file: f.file.clone(), name: f.name.clone(), qualname, kind, line, column };
         let mut scanner = Scanner {
             a: &mut a,
             function: f,
@@ -3724,6 +3731,20 @@ fn main() {
                     call.get("reason").cloned(),
                 )
             };
+            if first.get("macroTemplate").is_some() {
+                let mut origins = BTreeMap::new();
+                for call in &v {
+                    if let Some(expansions) = call["macroTemplate"]["expansions"].as_array() {
+                        for origin in expansions {
+                            origins.insert(origin.to_string(), origin.clone());
+                        }
+                    }
+                }
+                first["macroTemplate"]["expansions"] = json!(origins.into_values().collect::<Vec<_>>());
+            }
+            if v.iter().any(|call| call.get("directCaller") != first.get("directCaller")) {
+                first.as_object_mut().unwrap().remove("directCaller");
+            }
             let first_outcome = outcome(&first);
             if v.iter().any(|call| outcome(call) != first_outcome) {
                 first.as_object_mut().unwrap().remove("target");

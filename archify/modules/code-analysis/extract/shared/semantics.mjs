@@ -37,7 +37,7 @@ export function semanticErrors(name, data) {
     const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(data.callModel);
     if (goCalls && ['go-source-direct-v3', 'go-source-direct-v4'].includes(data.callModel) && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
-    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11'].includes(data.callModel);
+    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12'].includes(data.callModel);
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     const javaProjects = javaCalls && data.callModel === 'java-static-lexical-v5';
     if (javaProjects && data.languageScope?.language !== 'java') add('/languageScope','requires Java v5 declared project scope');
@@ -105,11 +105,24 @@ export function semanticErrors(name, data) {
       if (brokenFiles.has(call.file)) add(at, 'calls must be omitted for files with parse errors');
       if (call.defaultMethod) {
         const method = call.defaultMethod;
-        if (!rustCalls || !['rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11'].includes(data.callModel)) add(`${at}/defaultMethod`, 'requires the Rust v6+ trait default-body model');
+        if (!rustCalls || !['rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12'].includes(data.callModel)) add(`${at}/defaultMethod`, 'requires the Rust v6+ trait default-body model');
         else if (!files.has(method.file) || brokenFiles.has(method.file) || !validPoint(method.file, method)
           || !traitDeclarations.has(JSON.stringify([method.file, method.name, method.line, method.column]))) add(`${at}/defaultMethod`, 'must match a captured trait method declaration');
       }
-      if (call.directCaller?.kind === 'macro-generated-method' && (!rustCalls || data.callModel !== 'rust-source-direct-v11')) add(`${at}/directCaller/kind`, 'requires the Rust v11 impl-body macro model');
+      if (call.macroTemplate) {
+        const { definition, expansions } = call.macroTemplate;
+        if (!rustCalls || data.callModel !== 'rust-source-direct-v12') add(`${at}/macroTemplate`, 'requires the Rust v12 impl-body macro provenance model');
+        if (!files.has(definition.file) || brokenFiles.has(definition.file) || !validPoint(definition.file, definition)) add(`${at}/macroTemplate/definition`, 'must reference a valid captured macro definition point');
+        const origins = new Set();
+        for (const [j, expansion] of expansions.entries()) {
+          const origin = JSON.stringify([expansion.file, expansion.line, expansion.column, expansion.implLine, expansion.implColumn]);
+          if (origins.has(origin)) add(`${at}/macroTemplate/expansions/${j}`, 'must contain distinct expansion origins');
+          origins.add(origin);
+          if (!files.has(expansion.file) || brokenFiles.has(expansion.file) || !validPoint(expansion.file, expansion)
+            || !validPoint(expansion.file, { line: expansion.implLine, column: expansion.implColumn })) add(`${at}/macroTemplate/expansions/${j}`, 'must reference valid captured invocation and impl points');
+        }
+      }
+      if (call.directCaller?.kind === 'macro-generated-method' && (!rustCalls || !['rust-source-direct-v11', 'rust-source-direct-v12'].includes(data.callModel))) add(`${at}/directCaller/kind`, 'requires the Rust v11+ impl-body macro model');
       if (call.reason === 'java-inherited-build-scope' && (!javaCalls || !['java-static-lexical-v4','java-static-lexical-v5'].includes(data.callModel))) add(at + '/reason', 'requires the Java v4 inherited-context model');
       if (call.buildEvidence) {
         if (!javaProjects || call.resolution !== 'java-qualified-static-method') add(at + '/buildEvidence','requires a qualified Java v5 project-source candidate');
@@ -143,12 +156,12 @@ export function semanticErrors(name, data) {
           if (targetFile === call.file || (!direct && !forwarded)) add(`${at}/target/file`, 'must follow a recorded static import or supported reexport to another captured file');
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }
-        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
-        if (call.resolution === 'rust-specialized-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v3 concrete-specialization source-candidate model');
-        if (call.resolution === 'rust-lifetime-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v4 lifetime-only inherent source-candidate model');
+        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
+        if (call.resolution === 'rust-specialized-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v3 concrete-specialization source-candidate model');
+        if (call.resolution === 'rust-lifetime-inherent-source-candidate' && (!rustCalls || !['rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v4 lifetime-only inherent source-candidate model');
         if (call.resolution === 'rust-direct-function' && !rustCalls) add(`${at}/resolution`, 'requires the Rust source-direct model');
-        if (call.resolution === 'rust-trait-impl' && (!rustCalls || !['rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v5 trait impl model');
-        if (call.resolution === 'rust-trait-method-candidate' && (!rustCalls || !['rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v5 trait candidate model');
+        if (call.resolution === 'rust-trait-impl' && (!rustCalls || !['rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v5 trait impl model');
+        if (call.resolution === 'rust-trait-method-candidate' && (!rustCalls || !['rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Rust v5 trait candidate model');
         if (call.resolution === 'rust-trait-method-candidate' && !traitDeclarations.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured trait method declaration');
         if (call.resolution === 'go-direct-method' && (!goCalls || !['go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
         if (call.resolution === 'go-interface-method' && (!goCalls || !['go-source-direct-v3', 'go-source-direct-v4'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Go v3 interface-declaration model');

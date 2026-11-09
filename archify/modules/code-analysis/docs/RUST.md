@@ -36,7 +36,7 @@ See the pinned real-project replay and source/ZIP evidence in benchmarks/code-an
 
 ## Current call model and trait impl candidates
 
-Current captures use rust-source-direct-v11 / adapter11. Historical v1 collects
+Current captures use rust-source-direct-v12 / adapter12. Historical v1 collects
 free functions; v2 additionally admits unique monomorphic inherent function
 paths; v3 additionally admits bare generic-struct paths to unique concrete type
 specializations. Historical facts keep their original scope without rebinding.
@@ -79,6 +79,44 @@ as `macro-generated-method`, and one physical source position represents all
 invocations. A non-empty matcher, an imported or ambiguous definition, an
 invocation mixed with other impl items, or a deref of a non-`self` generic
 receiver stays unknown.
+
+v12 propagates the macro invocation's attributes into generated method state,
+combined with the outer impl, generated method and body cfg, including nested
+`cfg_attr`. Removed methods/calls are omitted, while unknown conditions cannot
+establish a target or accessor return type; unknown accessors remain ambiguity
+blockers rather than disappearing from the candidate set. Unknown generated
+trait implementations likewise block uniqueness for method and qualified calls.
+Each physical template call is still inventoried once, with `macroTemplate`
+provenance retained across its contributing expansions:
+
+```json
+{
+  "definition": {"file": "src/lib.rs", "name": "forward", "line": 3, "column": 14},
+  "expansions": [
+    {"file": "src/lib.rs", "line": 12, "column": 5, "implLine": 11, "implColumn": 1, "selfType": "& T", "trait": "Gate"}
+  ]
+}
+```
+
+`definition` points at the macro name. Each expansion's `file`/`line`/`column`
+points at the invocation path; `implLine`/`implColumn` points at the outer `impl`
+token in that file. Coordinates are one-based UTF-16 source points. `selfType`
+is the printable original impl self type, including references and generic
+arguments; optional `trait` is the printable trait path (absent for inherent
+impls). There is at least one expansion, deduplicated by source origin.
+
+`directCaller.kind` remains `macro-generated-method`, but its qualname now
+identifies the template, such as `mod::forward!::method`, not a unique impl.
+A nested named function remains `local-function` with a template-qualified
+parent. If the same file is loaded under different module identities and callers
+disagree, `directCaller` is omitted without discarding an agreed target; the macro
+and physical expansion anchors remain. If expansions disagree on the target, the top-level call is
+`unresolved` with reason `rust-context-dependent` and no `target`; the same
+`macroTemplate` provenance remains available. No per-expansion targets or
+runtime implementation identities are supplied. Saved question records retain
+this object unchanged; target navigation also checks captured definition and
+expansion-file freshness. Historical v11 captures remain accepted under their
+original contract and are not retroactively assigned v12 provenance.
 
 v6 inventories a trait method's default body once per source declaration, not
 once per implementing type. A declaration without a body adds no call. Calls in
