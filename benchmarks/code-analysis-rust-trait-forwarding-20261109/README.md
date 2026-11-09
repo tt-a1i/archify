@@ -51,6 +51,7 @@ Regression evidence:
 | Futures positions | 2/2, partial | 2/2, partial |
 | Original 20 calls | 81/86, 5 missed, 0 wrong, 2 extras | identical per position |
 | Code-analysis module suite | 469 passed | **472 passed, 0 failed** |
+| Closure control | 2/2 sides, 18 assertions | 2/2 sides, 18 assertions |
 
 [Comparison](evidence/revision-v14/comparison-final.json),
 [20-case summary](evidence/revision-v14/original20-summary-v14.json),

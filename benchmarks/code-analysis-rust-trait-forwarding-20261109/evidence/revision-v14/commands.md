@@ -24,6 +24,7 @@ python3 run-case.py ... --case cases/ripgrep-ignore-ref-is-absolute-parent.json 
 python3 run-case.py ... --case cases/futures-io-waker-vectored-read.json --out evidence/revision-v14/futures  # 2/2 gap
 python3 run20-corrected.py --cli ... --include-reserved --out .../batch20        # 81/86, 5 missed, 0 wrong, 2 extras
 python3 run-closure-provenance.py --cli ... --out .../provenance                 # provider 2, caller 0
+python3 run-closure-controls.py --cli ... --out .../controls                    # 2 sides, 18 assertions
 ```
 
 The `--out` directory in the saved commands was
