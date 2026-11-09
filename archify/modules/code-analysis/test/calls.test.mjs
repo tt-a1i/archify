@@ -116,12 +116,12 @@ test('call schema rejects unsupported targets/positions and retains empty histor
 });
 
 
-test('call schema validates Rust v12 macro template origins without rebinding historical v11 callers', () => {
+test('call schema validates Rust v13 closure and macro-template origins without rebinding historical callers', () => {
   const template = ['macro_rules! forward {', '    () => { fn method(&self) { self.run(); } };', '}'].join('\n');
   const body = template.split('\n')[1];
   const facts = {
-    schema_version: 1, callModel: 'rust-source-direct-v12',
-    repository: { root: '.', revision: null, sourceKind: 'working-tree', snapshotId: '0'.repeat(64), language: 'rust', adapter: 'rust-syn@2.0.119', adapterRevision: 12 },
+    schema_version: 1, callModel: 'rust-source-direct-v13',
+    repository: { root: '.', revision: null, sourceKind: 'working-tree', snapshotId: '0'.repeat(64), language: 'rust', adapter: 'rust-syn@2.0.119', adapterRevision: 13 },
     files: [
       { path: 'template.rs', sourceText: template, loc: 3, role: 'source' },
       { path: 'impls.rs', sourceText: 'impl<T: Gate> Gate for &T {\n    forward!();\n}\nimpl Owner {\n    forward!();\n}', loc: 6, role: 'source' },
@@ -131,6 +131,7 @@ test('call schema validates Rust v12 macro template origins without rebinding hi
       file: 'template.rs', line: 2, column: body.indexOf('self.run()') + 1, endLine: 2, endColumn: body.indexOf('self.run()') + 11,
       resolution: 'unresolved', reason: 'rust-context-dependent',
       directCaller: { file: 'template.rs', name: 'method', qualname: 'forward!::method', kind: 'macro-generated-method', line: 2, column: body.indexOf('fn method') + 1 },
+      closure: { file: 'template.rs', line: 2, column: 1 },
       macroTemplate: {
         definition: { file: 'template.rs', name: 'forward', line: 1, column: 14 },
         expansions: [
@@ -172,17 +173,26 @@ test('call schema validates Rust v12 macro template origins without rebinding hi
   bad(f => { f.calls[0].macroTemplate.expansions.push({ ...f.calls[0].macroTemplate.expansions[0] }); });
   bad(f => { f.calls[0].macroTemplate.expansions.push({ ...f.calls[0].macroTemplate.expansions[0], selfType: 'Other' }); });
   bad(f => { f.calls[0].target = { file: 'impls.rs', name: 'run', line: 1, column: 1 }; }, '/calls/0');
+  bad(f => { f.calls[0].closure.extra = true; }, '/calls/0/closure');
+  bad(f => { delete f.calls[0].closure.line; }, '/calls/0/closure');
+  bad(f => { f.calls[0].closure.line = 0; }, '/calls/0/closure');
+  bad(f => { f.calls[0].closure.file = 'impls.rs'; }, '/calls/0/closure');
+  bad(f => { f.calls[0].closure.line = 99; }, '/calls/0/closure');
+  bad(f => { f.calls[0].closure.file = 'missing.rs'; }, '/calls/0/closure');
   const local = structuredClone(facts);
   local.calls[0].directCaller.kind = 'local-function';
   local.calls[0].directCaller.qualname = 'forward!::method::nested';
   assert.deepEqual(schemaErrors('raw-facts', local), []);
   const historical = structuredClone(facts);
   historical.callModel = 'rust-source-direct-v11'; historical.repository.adapterRevision = 11;
-  delete historical.calls[0].macroTemplate;
+  delete historical.calls[0].macroTemplate; delete historical.calls[0].closure;
   historical.calls[0].directCaller.qualname = 'Owner::method';
   assert.deepEqual(schemaErrors('raw-facts', historical), []);
   historical.callModel = 'rust-source-direct-v12';
   assert.deepEqual(schemaErrors('raw-facts', historical), []);
+  const legacyClosure = structuredClone(facts);
+  legacyClosure.callModel = 'rust-source-direct-v12'; legacyClosure.repository.adapterRevision = 12;
+  assert.ok(schemaErrors('raw-facts', legacyClosure).some(error => error.path === '/calls/0/closure'));
   historical.callModel = 'rust-source-direct-v10';
   assert.ok(schemaErrors('raw-facts', historical).some(error => error.path === '/calls/0/directCaller/kind'));
 });

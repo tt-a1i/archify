@@ -136,7 +136,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v12');
+ assert.equal(facts.callModel,'rust-source-direct-v13');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -314,7 +314,7 @@ pub fn object(x: &dyn Left) { x.act(); }
 pub fn ambiguous(x: &A) { x.act(); }
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v12');
+ assert.equal(facts.callModel,'rust-source-direct-v13');
  const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
  assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
  assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
@@ -613,6 +613,154 @@ fn caller(w: &W<u16>) {
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
  assert.deepEqual(facts.calls.map(call=>call.line),[7,8]);
  assert.ok(facts.calls.every(call=>call.resolution==='unresolved'&&!call.target),'an unknown specialization cannot disappear and select the other implementation');
+});
+
+test('Rust closure inputs inherit a local helper Fn bound and keep the trait target', t => {
+ const source=`pub trait Gate { fn check(&self) -> u8 { 1 } }
+struct W<T>(T);
+fn with<T, F: FnOnce(&mut T)>(value: &mut T, f: F) { f(value) }
+impl<R: Gate> W<R> {
+    fn call(&self, value: &mut R) { with(value, |inner| { inner.check(); }); }
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.callModel,'rust-source-direct-v13');
+ const calls=facts.calls.filter(call=>call.file==='src/lib.rs'&&call.line===5);
+ const check=calls.find(call=>call.target?.name==='check')??calls.find(call=>call.reason==='rust-trait-or-method-dispatch');
+ assert.equal(check.resolution,'rust-trait-method-candidate');
+ assert.equal(check.target.file,'src/lib.rs');assert.equal(check.target.line,1);
+ assert.equal(check.directCaller.kind,'method');assert.ok(check.directCaller.qualname.endsWith('::call'));
+ assert.deepEqual({line:check.closure.line,column:check.closure.column},{line:5,column:source.split('\n')[4].indexOf('|')+1});
+ assert.equal(source.split('\n')[check.closure.line-1][check.closure.column-1],'|');
+});
+
+test('Rust closure inputs follow an impl FnOnce helper parameter', t => {
+ const source=`pub trait Gate { fn check(&self) {} }
+struct W;
+impl Gate for W { fn check(&self) {} }
+fn with(value: &mut W, f: impl FnOnce(&mut W)) { f(value) }
+fn call(value: &mut W) { with(value, |inner| { inner.check(); }); }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(call=>call.line===5&&call.target?.name==='check');
+ assert.equal(call.resolution,'rust-trait-impl');assert.equal(call.target.line,3);
+ assert.equal(call.closure.line,5);
+});
+
+test('Rust closure binding does not choose between same-name methods in different traits', t => {
+ const source=`pub trait Left { fn step(&self) {} }
+pub trait Right { fn step(&self) {} }
+struct W<T>(T);
+fn with<T, F: FnOnce(&mut T)>(value: &mut T, f: F) { f(value) }
+impl<R: Left + Right> W<R> {
+    fn call(&self, value: &mut R) { with(value, |inner| { inner.step(); }); }
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(call=>call.line===6&&call.closure&&call.reason==='rust-trait-or-method-dispatch');
+ assert.ok(call,'the ambiguous method call is still inventoried');
+ assert.equal(call.resolution,'unresolved');assert.equal(call.target,undefined);
+ assert.ok(call.closure,'closure ownership is retained even without a target');
+});
+
+test('Rust closure binding never substitutes an unconstrained callee generic', t => {
+ const source=`pub trait Gate { fn check(&self) {} }
+struct W;
+impl Gate for W {}
+fn with<T, F: FnOnce(&mut T)>(f: F) { let _ = f; }
+fn call(value: &mut W) { let _ = value; with(|inner| { inner.check(); }); }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(call=>call.line===5&&call.reason==='rust-trait-or-method-dispatch');
+ assert.ok(call,'the closure call remains unresolved');
+ assert.equal(call.target,undefined,'unbound callee T must not reuse the caller generic or select W');
+ assert.ok(call.closure);
+});
+
+test('Rust closure inputs follow a bare fn parameter and nested functions drop closure context', t => {
+ const source=`pub trait Gate { fn check(&self) {} }
+struct W;
+impl Gate for W { fn check(&self) {} }
+fn with_fn(f: fn(&mut W)) { let _ = f; }
+fn typed() { with_fn(|inner| { inner.check(); }); }
+pub fn work() {}
+fn run<F: FnOnce()>(f: F) { f(); }
+fn outer() {
+    let _ = || {
+        let _ = || { work(); };
+        fn nested() { work(); }
+    };
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const typed=facts.calls.find(call=>call.line===5&&call.target?.name==='check');
+ assert.equal(typed.resolution,'rust-trait-impl');assert.equal(typed.target.line,3);
+ const inner=facts.calls.find(call=>call.line===10&&call.target?.name==='work');
+ assert.deepEqual({line:inner.closure.line,column:inner.closure.column},{line:10,column:source.split('\n')[9].indexOf('|')+1},'innermost closure anchors the call');
+ const nested=facts.calls.find(call=>call.line===11&&call.target?.name==='work');
+ assert.equal(nested.closure,undefined,'a nested named function is not attributed to the outer closure');
+});
+
+test('Rust closure binding does not apply an aggregate shape to destructured inputs', t => {
+ const source=`pub trait Gate { fn check(&self) {} }
+struct W;
+impl Gate for W { fn check(&self) {} }
+struct Holder<T>(T);
+impl<T> Holder<T> { fn check(&self) {} }
+fn with<T, F: FnOnce(Holder<T>)>(value: T, f: F) { let _ = value; let _ = f; }
+fn call(value: W) { with(value, |Holder(inner)| { inner.check(); }); }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(c=>c.line===7&&(c.target?.name==='check'||c.reason==='rust-trait-or-method-dispatch'));
+ assert.ok(call,'the destructured closure call is inventoried');
+ assert.equal(call.target,undefined,'the inner binding must not inherit Holder<W> and select Holder::check');
+ assert.ok(call.closure,'closure ownership is retained');
+});
+
+test('Rust closure shapes drop on reassignment and without a shaped shadow', t => {
+ const source=`pub trait Gate { fn check(&self) {} }
+struct W;
+impl Gate for W { fn check(&self) {} }
+struct Other;
+impl Other { fn check(&self) {} }
+fn with<T, F: FnOnce(&mut T)>(value: &mut T, f: F) { let _ = value; let _ = f; }
+fn make() -> Other { Other }
+fn call() {
+    let mut value = W;
+    value = Other;
+    with(&mut value, |inner| { inner.check(); });
+}
+fn shadow() {
+    let value = W;
+    { let value = make(); with(&mut value, |inner| { inner.check(); }); }
+}
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const calls=facts.calls.filter(c=>c.closure&&(c.target?.name==='check'||c.reason==='rust-trait-or-method-dispatch'));
+ assert.equal(calls.length,2);
+ assert.ok(calls.every(c=>c.target===undefined),'an invalidated or unshaped binding must not reuse the earlier W shape');
+});
+
+test('Rust closure binding ignores an explicit turbofish instantiation', t => {
+ const source=`pub trait Gate { fn check(&self) {} }
+struct W;
+impl Gate for W { fn check(&self) {} }
+fn with<T, F: FnOnce(&mut T)>(value: &mut T, f: F) { let _ = value; let _ = f; }
+fn call(value: &mut W) { with::<W, _>(value, |inner| { inner.check(); }); }
+`;
+ const root=fixture(t,{'src/lib.rs':source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=facts.calls.find(c=>c.line===5&&(c.target?.name==='check'||c.reason==='rust-trait-or-method-dispatch'));
+ assert.ok(call,'the turbofish closure call is inventoried');
+ assert.equal(call.target,undefined,'explicit generic call arguments stay outside the closure binding rule');
+ assert.ok(call.closure);
 });
 
 test('Rust impl-body macro expansion keeps unsupported invocations and local derefs unknown', t => {

@@ -36,7 +36,7 @@ See the pinned real-project replay and source/ZIP evidence in benchmarks/code-an
 
 ## Current call model and trait impl candidates
 
-Current captures use rust-source-direct-v12 / adapter12. Historical v1 collects
+Current captures use rust-source-direct-v13 / adapter13. Historical v1 collects
 free functions; v2 additionally admits unique monomorphic inherent function
 paths; v3 additionally admits bare generic-struct paths to unique concrete type
 specializations. Historical facts keep their original scope without rebinding.
@@ -117,6 +117,19 @@ runtime implementation identities are supplied. Saved question records retain
 this object unchanged; target navigation also checks captured definition and
 expansion-file freshness. Historical v11 captures remain accepted under their
 original contract and are not retroactively assigned v12 provenance.
+
+v13 binds closure input types from a captured local free-function signature:
+a bare `fn(...)` parameter, an `impl Fn/FnMut/FnOnce(...)` parameter, or a
+generic parameter with exactly one such bound. Call-argument shapes substitute
+the callee's generics (for example `&BiLock<T>` against `&BiLock<R>`); the
+closure inputs then receive the declared reference-stripped types. Every call
+inside a closure carries an innermost `closure` anchor at the opening `|` while
+`directCaller` remains the enclosing named function or method. Unbound or
+conflicting callee generics, competing callable bounds, arity mismatches and
+method-callee helpers bind nothing, so unresolved closure calls keep no target.
+A destructured closure input does not give its sub-bindings the aggregate type.
+Closures passed through method calls, iterator adapters or external APIs remain
+outside this bounded rule.
 
 v6 inventories a trait method's default body once per source declaration, not
 once per implementing type. A declaration without a body adds no call. Calls in
