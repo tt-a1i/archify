@@ -196,3 +196,21 @@ test('waterfall: services past the five colours share a legend entry instead of 
   assert.ok(labels.includes('auth · postgres'), labels.join(' | '));
   assert.ok(labels.includes('cart'), labels.join(' | '));
 });
+
+test('waterfall: the incomplete key appears only when a bar is drawn open', () => {
+  const closed = clone(small);
+  closed.spans = [
+    { id: 'a', name: 'A', start: 0, end: 100 },
+    { id: 'b', name: 'B', start: 10, end: 50, status: 'incomplete', parent: 'a' },
+  ];
+  const closedHtml = fs.readFileSync(run(closed).output, 'utf8');
+  assert.doesNotMatch(closedHtml, /Incomplete \(no recorded end\)/, 'a recorded end paints a solid bar, so no open key is claimed');
+
+  const open = clone(small);
+  open.spans = [
+    { id: 'a', name: 'A', start: 0, end: 100 },
+    { id: 'b', name: 'B', start: 10, status: 'incomplete', parent: 'a' },
+  ];
+  const openHtml = fs.readFileSync(run(open).output, 'utf8');
+  assert.match(openHtml, /Incomplete \(no recorded end\)/, 'an open incomplete bar keeps its key');
+});
