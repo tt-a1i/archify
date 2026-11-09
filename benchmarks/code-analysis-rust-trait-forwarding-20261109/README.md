@@ -6,10 +6,107 @@ revision uses **`70750e6ba` as its fixed v11 baseline**, on the original #1297
 branch; #1296's counterexample-statistics correction is not product benefit.
 
 The round asks a maintainer changing a Rust trait method to find the callers
-that are worth checking through a default body and `&mut B` forwarding. The two
-real misses are in `tokio-rs/bytes`, change
+that are worth checking through a default body, `&mut B` forwarding and calls
+written inside closures. The two real misses are in `tokio-rs/bytes`, change
 `d5c8ad32..7930d93d`, changed definition `Buf::try_get_int` at
 `src/buf/buf_impl.rs:2086`.
+
+## v13: closure-argument call evidence
+
+Model: `rust-source-direct-v13` / adapter revision 13. This revision starts at
+`3b09a193e` (v12 final) and changes one mechanism: a call whose receiver is a
+closure parameter can now inherit that parameter's type from a local
+free-function signature.
+
+The futures-rs miss was diagnosed before changing code and with the same
+capture as v12: `futures-util/src/io/split.rs` and the call at `:49` were
+present in raw facts, but the closure parameter `l` had no type. Signature
+scope and receiver hints were only populated from enclosing function
+parameters, so `l.poll_vectored_read(...)` fell to
+`rust-trait-or-method-dispatch` with no target. The fix is bounded:
+
+```diff
+ closure passed to a local helper
+- parameter has no shape; receiver-bearing call stays unresolved
++ capture helper param shapes; Fn/FnMut/FnOnce bound gives closure inputs
++ unify call-argument shapes to substitute the helper's generics
++ record the innermost closure anchor at its opening '|'
++ keep directCaller as the enclosing named function or method
+```
+
+Supported helper forms are a bare `fn(...)`, `impl Fn/FnMut/FnOnce(...)`, or a
+bare generic parameter with exactly one Fn-family bound from inline or where
+clause bounds. Competing Fn bounds, arity mismatch, method callees, iterator
+adapters, `dyn` receivers and external APIs bind nothing. Shapes are retained
+only for closure evidence; the broader receiver typing model is unchanged.
+
+### v12 → v13 comparison
+
+[Computed comparison](evidence/revision-v13/comparison-final.json).
+
+| Measure | v12 | v13 | Fresh ZIP v13 |
+| --- | --- | --- | --- |
+| Original 20 calls | 81/86, 5 missed, 0 wrong, 2 extras | 81/86, identical per position | not rerun in full |
+| Futures positions | 1/2, partial | **2/2, partial** | 2/2, partial |
+| Tracing regression | 4/7 | 4/7 | not rerun |
+| Bytes forwarding | 2/2 | 2/2 | not rerun |
+| Reserved tracing-core answer | not run | 4/5 completed answer | 4/5 |
+| Closure control | not present | 2/2 sides, 18 assertions, 2 Cargo builds | same, 4 builds total |
+
+The new real position is `futures-util/src/io/split.rs:49:55`, with closure
+anchor `49:44`, caller `io::split::ReadHalf<R>::poll_vectored_read`, and target
+`futures-io/src/lib.rs:136`. Source already proved it: `lock_and_then` takes
+`F: FnOnce(&mut T, &Waker)` and `&self.handle` is `&BiLock<R>`, so `l` is
+`&mut R` and `R: AsyncRead` makes the call a trait-declaration reference. The
+call remains a declaration candidate; no concrete runtime implementation is
+claimed. The historical futures head still has an unrelated `arc_wake.rs` parse
+error, so both captures are partial.
+
+No original-20 position was added, withdrawn or retargeted, and there are no new
+wrong targets or regressions. The reserved tracing-core case was frozen at four
+calls; an independent reader later found `tracing-subscriber/src/fmt/mod.rs:402`
+in source. That call is real but sits behind the crate's `feature!`-gated module
+and is outside the selected module tree, so completing the answer makes the case
+**4/5 with one known miss** instead of 4/4. This is answer-key completion, not a
+product gain or regression. The earlier 4/4 is reported separately wherever the
+frozen four-call answer is used.
+
+The compiled control `fixtures/closure-calls` differs only in `Gate::check`'s
+default body and covers a generic `FnOnce` helper, a concrete `impl FnOnce`
+helper, a `dyn` receiver, a method-callee helper and an iterator adapter. Both
+sides build and each side passes nine assertions; the three out-of-rule forms
+produce no known call. A final scoped review found stale shapes surviving
+reassignment or shadowing, explicit turbofish and arity shifts, and aggregate
+types leaking into destructured bindings; each is now fail-closed with a
+regression test before the final acceptance run.
+
+Final module suite: **469 passed, 0 failed, 0 skipped**, including **62 Rust
+tests** (`evidence/revision-v13/module-tests-final.log`).
+[ZIP identity](evidence/revision-v13/zip-identity-final.json): official Node
+22.23.2 / zlib `1.3.1-e00f703`, 405 files, SHA-256
+`179cdbdbab4c2fb015058a94dd2236f11b211c46bc63f0a43efaf4ee076d42cf`, verified
+against product hashes after a fresh unpack; a second build is byte-identical.
+All source/test hashes are in
+[product-sha256-final.json](evidence/revision-v13/product-sha256-final.json).
+Commands, including the one transient ZIP tooling failure and its immediate
+successful retry, are in
+[commands.md](evidence/revision-v13/commands.md).
+
+### Reader
+
+Two readers ran without benchmark answers or product diffs. Reports:
+[futures](evidence/revision-v13/reader/futures-report.txt) and
+[reserved](evidence/revision-v13/reader/reserved-report.txt).
+
+1. Futures: both calls confirmed. `lib.rs:259` is inside
+   `deref_async_read!` and expands for `Box<T>` / `&mut T`; `split.rs:49` is
+   inside the closure, constrained by `lock_and_then`'s FnOnce bound, in the
+   `ReadHalf<R>` method. All receivers are generic, so only the trait
+   declaration is proven.
+2. Reserved: the four tracing-core/Layered calls were confirmed, and the reader
+   additionally found the omitted `fmt/mod.rs:402` call and its capture cause.
+   It also checked arity and the receiver bound to keep
+   `Subscriber::event_enabled` separate from the same-name `Layer` method.
 
 ## v12: cfg and template ownership revision
 
@@ -230,6 +327,28 @@ remaining five misses are `clap-any-value-parser` (1), `tracing-layer` (3) and
 `tracing-subscriber` (1), all with the previously documented mechanisms; no
 case regressed.
 
+## Reproduce v13
+
+Build the ZIP with the pinned official Node distribution, unpack it, install the
+module dependencies, then run `replay-v13.sh`. The output directory must be new.
+
+```sh
+export PATH=/private/tmp/node-v22.23.2-darwin-arm64/bin:$PATH
+scripts/build-zip.sh /private/tmp/archify-v13-final.zip
+rm -rf /private/tmp/archify-v13-final-zip
+mkdir -p /private/tmp/archify-v13-final-zip
+unzip -q /private/tmp/archify-v13-final.zip -d /private/tmp/archify-v13-final-zip
+npm ci --prefix /private/tmp/archify-v13-final-zip/archify/modules/code-analysis \
+  --no-audit --no-fund
+bash benchmarks/code-analysis-rust-trait-forwarding-20261109/replay-v13.sh /tmp/archify-v13-replay-new
+```
+
+The script runs the corrected 20 cases, closure control, futures, reserved
+tracing-core, bytes and tracing against the source CLI, then futures, reserved,
+closure control and `bytes-truncate-zero` from the extracted ZIP. Exact commands
+and the observed retry are in
+[evidence/revision-v13/commands.md](evidence/revision-v13/commands.md).
+
 ## Reproduce v12
 
 Run from the repository root. Keep the source checkouts at the pins in the case
@@ -284,5 +403,13 @@ extractor.
 - Concrete inheritance is claimed only for a plain local `impl Trait for Type`
   with no generics/where clause and no selected override. Conditional,
   generic, external or uncaptured impls stay unknown.
+- Closure inputs are typed only from a local free-function `fn` /
+  `impl Fn` / single generic Fn-family bound plus call-argument shapes. Closures
+  passed to methods, iterator adapters, `dyn` receivers, external APIs or with
+  explicit turbofish arguments stay unknown.
+- A module declared inside an item-expansion macro such as tracing's `feature!`
+  is not read even when its cfg is active. The reserved case's
+  `fmt/mod.rs:402` call is a known miss from this capture boundary, not a
+  resolution error.
 - Every accepted call is anchored at the trait declaration (candidate), not a
   concrete runtime implementation; overrides may still change the behavior.

@@ -1,0 +1,60 @@
+{
+  "status": "pass",
+  "expectedCalls": 2,
+  "foundCalls": 2,
+  "correctCalls": 2,
+  "wrongCalls": 0,
+  "missedCalls": 0,
+  "extraCalls": 0,
+  "extraNeedsReview": 0,
+  "callModel": "rust-source-direct-v13"
+}
+{
+  "macroTemplates": {
+    "checks": [
+      {
+        "line": 2836,
+        "definition": true,
+        "expansions": true,
+        "templateCaller": true,
+        "actual": {
+          "definition": {
+            "column": 14,
+            "file": "src/buf/buf_impl.rs",
+            "line": 2461,
+            "name": "deref_forward_buf"
+          },
+          "expansions": [
+            {
+              "column": 5,
+              "file": "src/buf/buf_impl.rs",
+              "implColumn": 1,
+              "implLine": 2886,
+              "line": 2887,
+              "selfType": "& mut T",
+              "trait": "Buf"
+            },
+            {
+              "column": 5,
+              "file": "src/buf/buf_impl.rs",
+              "implColumn": 1,
+              "implLine": 2890,
+              "line": 2891,
+              "selfType": "Box < T >",
+              "trait": "Buf"
+            }
+          ]
+        },
+        "directCaller": {
+          "column": 9,
+          "file": "src/buf/buf_impl.rs",
+          "kind": "macro-generated-method",
+          "line": 2835,
+          "name": "try_get_int",
+          "qualname": "buf::buf_impl::deref_forward_buf!::try_get_int"
+        }
+      }
+    ],
+    "passed": true
+  }
+}

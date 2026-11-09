@@ -32,10 +32,31 @@
         "kind": "macro-generated-method"
       },
       "macroTemplate": {
-        "definition": {"file": "futures-io/src/lib.rs", "name": "deref_async_read", "line": 244, "column": 18},
+        "definition": {
+          "file": "futures-io/src/lib.rs",
+          "name": "deref_async_read",
+          "line": 244,
+          "column": 18
+        },
         "expansions": [
-          {"file": "futures-io/src/lib.rs", "line": 265, "column": 9, "implLine": 264, "implColumn": 5, "selfType": "Box<T>", "trait": "AsyncRead"},
-          {"file": "futures-io/src/lib.rs", "line": 269, "column": 9, "implLine": 268, "implColumn": 5, "selfType": "&'a mut T", "trait": "AsyncRead"}
+          {
+            "file": "futures-io/src/lib.rs",
+            "line": 265,
+            "column": 9,
+            "implLine": 264,
+            "implColumn": 5,
+            "selfType": "Box<T>",
+            "trait": "AsyncRead"
+          },
+          {
+            "file": "futures-io/src/lib.rs",
+            "line": 269,
+            "column": 9,
+            "implLine": 268,
+            "implColumn": 5,
+            "selfType": "&'a mut T",
+            "trait": "AsyncRead"
+          }
         ]
       },
       "runtime": "not-determined",
@@ -61,21 +82,21 @@
         "kind": "method"
       },
       "runtime": "not-determined",
-      "context": "ReadHalf<R> where R: AsyncRead calls lock_and_then(&self.handle, waker, |l, waker| l.poll_vectored_read(waker, vec)). handle: BiLock<R> and helper F: FnOnce(&mut T, &Waker) establish l: &mut R by source. This separate closure-argument inference gap is retained, not counted as a macro-rule improvement."
+      "context": "ReadHalf<R> where R: AsyncRead calls lock_and_then(&self.handle, waker, |l, waker| l.poll_vectored_read(waker, vec)). handle: BiLock<R> and helper F: FnOnce(&mut T, &Waker) establish l: &mut R by source. v13 binds the closure input from that local signature and reports the trait declaration; the concrete R remains unknown."
     }
   ],
   "unknowns": [
     "Neither generic T nor R determines a concrete implementing type or whether its override rather than the trait default runs.",
     "The whole-impl macro emits the same source call into two impl contexts; invocation positions are not additional unique source call positions.",
-    "The split.rs call needs generic helper-to-closure parameter inference beyond expanded_impl_items; it remains part of the source answer even if the CLI cannot resolve it.",
+    "v13 closes the split.rs closure-parameter inference gap: the closure anchor is at 49 and the call targets the AsyncRead declaration. Iterator-adapter closures and method-callee helpers remain outside the bounded rule.",
     "This historical API migration changes other declarations too; this case freezes AsyncRead::poll_vectored_read only.",
-    "No baseline or candidate CLI was run on this case during source research; measured improvement is not established.",
+    "Both captures remain partial because a separate arc_wake.rs parse error is reported; the two expected calls are nonetheless found in source and ZIP.",
     "The upstream source requires historical futures_api support; metadata readiness is not a project build or runtime validation."
   ],
   "expectedGap": true,
   "reserved": false,
   "baseTree": "Clean detached git worktree at 446134c14f1b49217597e1b796cd0b4eb090daff; paired samples are /private/tmp/archify-batch-20261108/samples/futures-io-waker-vectored-read-{base,head}",
-  "build": "Default workspace features with std; tests excluded. No committed or generated Cargo.lock. cargo 1.89.0 metadata --offline --locked --no-deps succeeded on both source trees (9 packages). No project build, test, Archify CLI or candidate query executed.",
+  "build": "Default workspace features with std; tests excluded. No committed or generated Cargo.lock. cargo 1.89.0 metadata --offline --locked --no-deps succeeded on both source trees (9 packages). No project build, test, Archify CLI or candidate query was executed while freezing this answer; candidate source/ZIP runs are recorded separately under evidence/revision-v13.",
   "freeze": "Frozen from immutable upstream base/head diff and source, independent syn AST checks and exact source coordinates in answers/futures-io-waker-vectored-read.md; rule compared to Archify baseline 70750e6ba7831634e4388f13114c952ffd1690bc, not concurrent product edits.",
-  "notes": "Two source-proven calls: one template position from a same-file/same-module whole-impl zero-argument macro used twice, plus one helper callback. Only the macro position exercises the bytes expansion rule; expectedGap retains the independent callback inference limitation. Previous tracing evidence is unchanged."
+  "notes": "Two source-proven calls: one template position from a same-file/same-module whole-impl zero-argument macro used twice, plus one helper callback. v13 additionally binds the callback closure input from lock_and_then's local signature; the separate arc_wake.rs parse failure keeps the capture partial. Previous tracing evidence is unchanged."
 }

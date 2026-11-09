@@ -1,0 +1,22 @@
+{
+  "sha256": "179cdbdbab4c2fb015058a94dd2236f11b211c46bc63f0a43efaf4ee076d42cf",
+  "files": 405,
+  "unpacked": "/private/tmp/archify-v13-final-zip",
+  "node": "v22.23.2",
+  "zlib": "1.3.1-e00f703",
+  "matchingProductFiles": {
+    "archify/modules/code-analysis/docs/RUST.md": true,
+    "archify/modules/code-analysis/extract/rust/index.mjs": true,
+    "archify/modules/code-analysis/extract/rust/src/main.rs": true,
+    "archify/modules/code-analysis/extract/shared/semantics.mjs": true,
+    "archify/modules/code-analysis/lib/change-question.mjs": true,
+    "archify/modules/code-analysis/lib/question-calls.mjs": true,
+    "archify/modules/code-analysis/schemas/raw-facts.schema.json": true,
+    "archify/modules/code-analysis/test/calls.test.mjs": true,
+    "archify/modules/code-analysis/test/rust-calls.test.mjs": true
+  },
+  "repeatBuildSha256": "179cdbdbab4c2fb015058a94dd2236f11b211c46bc63f0a43efaf4ee076d42cf",
+  "repeatBuildIdentical": true,
+  "trackedZipSha256": "179cdbdbab4c2fb015058a94dd2236f11b211c46bc63f0a43efaf4ee076d42cf",
+  "trackedZipIdentical": true
+}

@@ -1,0 +1,59 @@
+{
+  "status": "ready",
+  "checks": [
+    {
+      "side": "base",
+      "knownTotal": 1,
+      "helperClosureCalls": 1,
+      "outOfScopeKnownCalls": 0,
+      "target": {
+        "column": 8,
+        "file": "src/lib.rs",
+        "line": 2,
+        "name": "check"
+      },
+      "resolution": "rust-trait-method-candidate",
+      "closure": {
+        "column": 21,
+        "file": "src/lib.rs",
+        "line": 13
+      },
+      "directCaller": {
+        "column": 5,
+        "file": "src/lib.rs",
+        "kind": "method",
+        "line": 12,
+        "name": "generic",
+        "qualname": "::W < R >::generic"
+      },
+      "callModel": "rust-source-direct-v13"
+    },
+    {
+      "side": "head",
+      "knownTotal": 1,
+      "helperClosureCalls": 1,
+      "outOfScopeKnownCalls": 0,
+      "target": {
+        "column": 8,
+        "file": "src/lib.rs",
+        "line": 2,
+        "name": "check"
+      },
+      "resolution": "rust-trait-method-candidate",
+      "closure": {
+        "column": 21,
+        "file": "src/lib.rs",
+        "line": 13
+      },
+      "directCaller": {
+        "column": 5,
+        "file": "src/lib.rs",
+        "kind": "method",
+        "line": 12,
+        "name": "generic",
+        "qualname": "::W < R >::generic"
+      },
+      "callModel": "rust-source-direct-v13"
+    }
+  ]
+}

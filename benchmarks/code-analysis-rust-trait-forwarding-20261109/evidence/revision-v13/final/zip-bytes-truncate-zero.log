@@ -1,0 +1,17 @@
+{
+  "status": "pass",
+  "expectedCalls": 1,
+  "foundCalls": 1,
+  "correctCalls": 1,
+  "wrongCalls": 0,
+  "missedCalls": 0,
+  "extraCalls": 0,
+  "extraNeedsReview": 0,
+  "callModel": "rust-source-direct-v13"
+}
+{
+  "macroTemplates": {
+    "checks": [],
+    "passed": true
+  }
+}

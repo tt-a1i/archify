@@ -1,0 +1,19 @@
+{
+  "archify/modules/code-analysis/extract/rust/src/main.rs": "9aa5a5d679af2539aba8cccb1663a73ebb0bfbb874d23d8c04a58a5341873ff5",
+  "archify/modules/code-analysis/extract/rust/index.mjs": "5d47514315d3b845e2024446543fe069a2f3b22b9199a151d2ea61bef2f202b6",
+  "archify/modules/code-analysis/extract/shared/semantics.mjs": "043eb627918ae2bf8a7e8196a8639da95ceea75b0fa199310fba17049205cef4",
+  "archify/modules/code-analysis/lib/question-calls.mjs": "acaa3f109517a342ec978f1d09e4cbc654e9855dbfd20df8178c66b956812b52",
+  "archify/modules/code-analysis/lib/change-question.mjs": "865dea0214b19f974e4fbafeea3b64baf36588229ef6e1547acaefaa18b2ce12",
+  "archify/modules/code-analysis/schemas/raw-facts.schema.json": "25f085025f52ade635c631e090cefce9b68e08c9113f59b17f798b91a4d7136c",
+  "archify/modules/code-analysis/docs/RUST.md": "c85a1f3babb934aed75f77d475bc90abaee1153c1a939175acb957f469adb50a",
+  "archify/modules/code-analysis/test/rust-calls.test.mjs": "ad356619b5bf5044dd463fe32b7a5808a7b5db39f2a4d6522d785d8f363c7e8f",
+  "archify/modules/code-analysis/test/calls.test.mjs": "f39f7f9df0c3b675b3fffee9d481d8f7282475ab9ce5da0f95cd1a0110036846",
+  "benchmarks/code-analysis-go-rust-investigation-batch-20261108/run.py": "812e99238736b31588a28d97f2062696214ad921ee0d100613ce2dfb1f861b52",
+  "benchmarks/code-analysis-rust-trait-forwarding-20261109/cases/futures-io-waker-vectored-read.json": "ac5cdd9fed932f756c5a09ba4305f17cd4672b0ddfe2a2e0246dbc660e588ed5",
+  "benchmarks/code-analysis-rust-trait-forwarding-20261109/cases/tracing-layer-event-enabled.json": "454f9177d3a3621133d4b2f69878ede99e70278c21e325234eee7e8a8e51697d",
+  "benchmarks/code-analysis-rust-trait-forwarding-20261109/cases/tracing-core-subscriber-event-enabled.json": "1ea023ae50d39ceb296ea3544c20ec041af53ebb7dea512644e007f44fe40839",
+  "benchmarks/code-analysis-rust-trait-forwarding-20261109/answers/tracing-core-subscriber-event-enabled.md": "b22ed1e838add8b8ee8ad0ed4c3b50629642096299d3a6eac70e98ee4fa30a4b",
+  "benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/closure-calls/base/src/lib.rs": "2b21b03bf13efe1bcd706e9014ae19e3258bf70f95fb3a07465973afcb133b9a",
+  "benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/closure-calls/head/src/lib.rs": "645b06d975cd8a38a58960fa187d4dbcc261f9debc73ae4bbcc4bf18bc9871b2",
+  "benchmarks/code-analysis-rust-trait-forwarding-20261109/run-closure-controls.py": "64b9130e6e15be7937324b1714a98d04fe0e027140cfe95885254d9411ee775a"
+}
