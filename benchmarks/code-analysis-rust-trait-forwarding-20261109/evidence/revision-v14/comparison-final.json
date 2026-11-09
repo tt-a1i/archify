@@ -1,0 +1,155 @@
+{
+ "revision": "rust-source-direct-v14",
+ "futures": {
+  "v13": {
+   "expectedCalls": 2,
+   "correctCalls": 2,
+   "missedCalls": 0,
+   "wrongCalls": 0,
+   "extraCalls": 0,
+   "definitionsFound": true
+  },
+  "v14": {
+   "expectedCalls": 2,
+   "correctCalls": 2,
+   "missedCalls": 0,
+   "wrongCalls": 0,
+   "extraCalls": 0,
+   "definitionsFound": true
+  },
+  "positionChanges": []
+ },
+ "original20": {
+  "v13": {
+   "expectedCalls": 86,
+   "correctCalls": 81,
+   "missedCalls": 5,
+   "wrongCalls": 0,
+   "extraCalls": 2
+  },
+  "v14": {
+   "expectedCalls": 86,
+   "correctCalls": 81,
+   "missedCalls": 5,
+   "wrongCalls": 0,
+   "extraCalls": 2
+  },
+  "positionChanges": []
+ },
+ "newRealCases": {
+  "tracing-dispatch-event": {
+   "v13": {
+    "expectedCalls": 3,
+    "correctCalls": 0,
+    "missedCalls": 3,
+    "wrongCalls": 0,
+    "extraCalls": 0,
+    "definitionsFound": true
+   },
+   "v14": {
+    "expectedCalls": 3,
+    "correctCalls": 3,
+    "missedCalls": 0,
+    "wrongCalls": 0,
+    "extraCalls": 0,
+    "definitionsFound": true
+   },
+   "addedCalls": [
+    {
+     "file": "tracing-core/src/event.rs",
+     "line": 35,
+     "column": 13
+    },
+    {
+     "file": "tracing-core/src/event.rs",
+     "line": 78,
+     "column": 13
+    },
+    {
+     "file": "tracing-log/src/lib.rs",
+     "line": 209,
+     "column": 9
+    }
+   ],
+   "withdrawnCalls": []
+  },
+  "ripgrep-ignore-ref-is-absolute-parent": {
+   "v13": {
+    "expectedCalls": 1,
+    "correctCalls": 0,
+    "missedCalls": 1,
+    "wrongCalls": 0,
+    "extraCalls": 0,
+    "definitionsFound": true
+   },
+   "v14": {
+    "expectedCalls": 1,
+    "correctCalls": 0,
+    "missedCalls": 1,
+    "wrongCalls": 0,
+    "extraCalls": 0,
+    "definitionsFound": true
+   },
+   "addedCalls": [],
+   "withdrawnCalls": []
+  }
+ },
+ "providerCallerCounterexample": {
+  "provider": {
+   "before": {
+    "knownTotal": 0,
+    "positions": []
+   },
+   "after": {
+    "knownTotal": 2,
+    "positions": [
+     {
+      "file": "src/lib.rs",
+      "line": 24,
+      "column": 36,
+      "target": {
+       "column": 9,
+       "file": "src/lib.rs",
+       "line": 5,
+       "name": "mark"
+      }
+     },
+     {
+      "file": "src/lib.rs",
+      "line": 41,
+      "column": 26,
+      "target": {
+       "column": 9,
+       "file": "src/lib.rs",
+       "line": 5,
+       "name": "mark"
+      }
+     }
+    ]
+   }
+  },
+  "caller": {
+   "before": {
+    "knownTotal": 1,
+    "positions": [
+     {
+      "file": "src/lib.rs",
+      "line": 41,
+      "column": 26,
+      "target": {
+       "column": 9,
+       "file": "src/lib.rs",
+       "line": 35,
+       "name": "mark"
+      }
+     }
+    ]
+   },
+   "after": {
+    "knownTotal": 0,
+    "positions": []
+   }
+  },
+  "withdrawnWrongTargets": 1
+ }
+}

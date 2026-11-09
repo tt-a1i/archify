@@ -1,0 +1,4 @@
+[package]
+name = "closure-calls-sample"
+version = "0.1.0"
+edition = "2021"

@@ -1,0 +1,47 @@
+Scoped defect review — Rust v13 closure call evidence
+Reviewed revision: working tree after 3b09a193e, before the final v13 commits.
+Reviewer: read-only review agent, no edits, tests, Rust tooling or delegation.
+Rechecked by the implementing session after each fix.
+
+Findings and disposition
+1. P1 stale closure shapes. Assignment cleared local_types but not local_shapes;
+   a shapeless `let` did not remove an earlier shape, and lookup fell through a
+   shadowing scope. Fixed by clearing both maps on assignment, removing shapes
+   for every newly declared name, and stopping shape lookup at the first scope
+   that declares the name. Regression: reassignment and unshaped shadow both
+   stay unresolved.
+2. P2 explicit turbofish. A call such as `with::<W, _>(...)` bound closure inputs
+   from the arguments even though explicit generic arguments are outside the
+   documented model, producing an over-specific target. Fixed by rejecting any
+   callee path segment with explicit arguments. Regression added.
+3. P2 positional arity. closure_bindings indexed arguments without requiring
+   `call.args.len() == param_shapes.len()`, so a UFCS call spelling the receiver
+   could shift closure bindings. Fixed with an exact arity guard. No dedicated
+   fixture; the guard is fail-closed and the existing closure tests still pass.
+4. P3 test discrimination. Added rejection of a closure record under v12 (not
+   only acceptance of v12 without closure), plus the reassignment/shadow and
+   turbofish regressions above.
+5. P3 provenance wording. The futures case `build` string said no candidate
+   query ran; it now states that this describes freeze time and points to the
+   separate source/ZIP runs.
+
+Residual-risk review
+- Aggregate shape leaking into destructured closure bindings: fixed with
+  whole_binding_names; only a whole-value binding inherits a shape. Regression
+  covers a tuple-struct pattern whose inner binding has a same-name method.
+- Positional field substitution with concrete impl arguments: field_shape now
+  requires equal struct parameter and argument counts; self_shape validates the
+  same before returning a shape.
+- Cast expressions could fabricate a nominal shape from an empty generic set;
+  cast expressions now yield no shape.
+
+Validation after fixes
+- Rust call tests: 62 pass. Schema tests: 15 pass. Full module suite: 469 pass,
+  0 fail, 0 skipped (evidence/revision-v13/module-tests-final.log).
+- Final acceptance rerun after the fixes: original 20 unchanged at 81/86; futures
+  2/2; reserved 4/5 completed answer; bytes 2/2; tracing 4/7; closure control
+  2/2 sides. Fresh ZIP 179cdbdb… replays futures 2/2, reserved 4/5, control and
+  bytes-truncate-zero.
+- Transient `extract/rust-parser-failed` runs during the first post-fix batch are
+  recorded in commands.md; the affected case and complete batch passed on retry,
+  and no failed run contributed queries or scores.

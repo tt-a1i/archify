@@ -56,8 +56,9 @@ def load_cases(include_reserved, only):
 
 
 def run_query(cli, case, samples, out_dir):
-    base_root = samples / f"{case['id']}-base"
-    head_root = samples / f"{case['id']}-head"
+    roots = case.get("sampleRoots") or {}
+    base_root = samples / roots.get("base", f"{case['id']}-base")
+    head_root = samples / roots.get("head", f"{case['id']}-head")
     if not base_root.is_dir() or not head_root.is_dir():
         raise SystemExit(f"{case['id']}: missing sample roots under {samples}")
     out_dir.mkdir(parents=True, exist_ok=True)

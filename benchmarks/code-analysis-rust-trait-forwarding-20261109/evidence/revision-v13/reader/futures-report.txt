@@ -1,0 +1,20 @@
+TASK A - futures-rs AsyncRead::poll_vectored_read (head root: futures-io-waker-vectored-read-head)
+
+Target definition: futures-io/src/lib.rs:136, in `mod if_std` (#[cfg(feature = "std")]), re-exported by `pub use self::if_std::*` at :383. Head takes `waker: &Waker` (base took `lw: &LocalWaker`).
+
+1. Where the calls are written
+- futures-io/src/lib.rs:259 `(**self).poll_vectored_read(waker, vec)`, inside the macro body `macro_rules! deref_async_read` (:244). Not in a closure. Invoked twice: `impl<T: ?Sized + AsyncRead> AsyncRead for Box<T>` (:264) and `impl<'a, T: ?Sized + AsyncRead> AsyncRead for &'a mut T` (:268); CLI records both expansions. Receiver is generic T, so this is bound-based dispatch.
+- futures-util/src/io/split.rs:49, inside a closure: `lock_and_then(&self.handle, waker, |l, waker| l.poll_vectored_read(waker, vec))`. The closure is written in `fn poll_vectored_read` (:46) of `impl<R: AsyncRead> AsyncRead for ReadHalf<R>` (:39). Parameter type is fixed by the local helper `fn lock_and_then<T, U, E, F>(lock: &BiLock<T>, waker: &Waker, f: F)` (:19) with `where F: FnOnce(&mut T, &Waker) -> Poll<Result<U, E>>` (:24). With `&self.handle: &BiLock<R>`, T = R, so `l: &mut R`; the only candidate is AsyncRead::poll_vectored_read from the impl bound R: AsyncRead.
+- Exhaustive grep of the head tree finds no other textual call (only :136 definition and split.rs:46 impl).
+
+2. Why this trait method, not a same-name one
+Both callers reach `futures_io::AsyncRead` (split.rs:3 imports it; the macro lives in the same if_std module). Argument shape `(&Waker, &mut [&mut IoVec])` matches only this declaration; `unsafe_delegate_async_read_to_stdio!` (:274) defines poll_read only, `std::io::Read` has no such method, and no inherent method of this name exists on Box<T>, &mut T or BiLock.
+
+3. Missing evidence for a concrete runtime target
+Every receiver is generic: `T: ?Sized + AsyncRead` and `R: AsyncRead`. No workspace call instantiates either. Workspace AsyncRead impls are Box<T>, &mut T, &[u8], StdIo::Repeat, StdIo::Cursor<T>, ReadHalf<R>, AllowStdIo<T>, IntoAsyncRead<St>; only ReadHalf overrides poll_vectored_read and it forwards again. So the chain never lands on a concrete type; a real target needs out-of-workspace implementors plus monomorphization, which the model lacks.
+
+4. CLI omissions / unjustified points
+- knownReferences = 2 and matches source exactly; no call was omitted. The macro call is reported once with two expansions rather than as two call sites.
+- Closure context is recorded (`closure` 49:44, directCaller ReadHalf<R>::poll_vectored_read) but the FnOnce bound that fixes `l` and the `R: AsyncRead` origin are not, so the "generic" conclusion is not carried by the JSON.
+- traitCandidates is `not-applicable` ("definition-not-a-captured-trait-implementation") although this IS the trait method; runtimeTarget is asserted as not-determined with no implementation anchors, so "which targets remain undetermined" is asserted, not enumerated.
+- Status partial (one head parse error, futures-util/src/task/arc_wake.rs); excluded files futures/tests/split.rs and futures-io/tests/cursor.rs contain no poll_vectored_read, so capture loss does not affect this answer.

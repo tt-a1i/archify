@@ -1,0 +1,138 @@
+{
+  "cli": "/private/tmp/archify-v14-final-zip/archify/bin/archify.mjs",
+  "case": {
+    "id": "ripgrep-ignore-ref-is-absolute-parent",
+    "language": "rust",
+    "repo": "https://github.com/BurntSushi/ripgrep",
+    "base": "79a23e0",
+    "head": "43e2f08edef8c00e5d7719212c3e6a869bca1151",
+    "entry": "crates/ignore/src/dir.rs",
+    "question": "The multi-root parent-matching fix replaces Ignore::is_absolute_parent with an IgnoreRef accessor. Which source calls reference IgnoreRef::is_absolute_parent, including the call written inside the parents() iterator callback?",
+    "changedDefinition": {
+      "file": "crates/ignore/src/dir.rs",
+      "line": 610,
+      "column": 5
+    },
+    "definitionScope": "unpaired",
+    "sampleRoots": {
+      "base": "/private/tmp/archify-v14-samples/ripgrep-ref-base",
+      "head": "/private/tmp/archify-v14-samples/ripgrep-ref-head"
+    },
+    "expectedCalls": [
+      {
+        "file": "crates/ignore/src/walk.rs",
+        "line": 1900,
+        "column": 52,
+        "endLine": 1900,
+        "endColumn": 75,
+        "inventory": "knownReferences",
+        "targetKind": "concrete",
+        "target": {
+          "file": "crates/ignore/src/dir.rs",
+          "line": 610,
+          "name": "is_absolute_parent"
+        },
+        "directCaller": {
+          "name": "check_symlink_loop",
+          "line": 1892
+        },
+        "runtime": "determined",
+        "context": "check_symlink_loop iterates ig_parent.parents() and passes |ig| !ig.is_absolute_parent() to take_while. Head Ignore::parents returns Parents<'_>, whose Iterator::Item is IgnoreRef<'a>; base Parents::Item was &Ignore. The same physical call therefore changes receiver identity from Ignore to IgnoreRef."
+      }
+    ],
+    "unknowns": [
+      "The closure is handed to the standard Iterator::take_while adapter and its input type comes from the local Parents iterator declaration rather than an Fn parameter of a helper function; a zero-result candidate answer is a retained coverage gap.",
+      "dir.rs:563, 606 and 630 read ig.inner.is_absolute_parent as a field, and dir.rs:240/846 assign it; they are not accessor calls.",
+      "The walk.rs:2629 filter_entry test is unit-test code outside the default source profile."
+    ],
+    "expectedGap": true,
+    "reserved": false,
+    "baseTree": "clean detached worktree at 79a23e0 (43e2f08^); paired worktrees under /private/tmp/archify-v14-samples/ripgrep-ref-{base,head}",
+    "build": "committed Cargo.lock; Cargo 1.89.0 metadata --offline --no-deps succeeded on both checkouts; no dependencies were built",
+    "freeze": "source answer written in answers/ripgrep-ignore-ref-is-absolute-parent.md before any candidate query; head definition, both Parents declarations and the single call read from the worktrees",
+    "notes": "v14 receiver-identity closure case. The method moved from Ignore to IgnoreRef in the same physical call. Name-only matching must not keep the base Ignore accessor as the head target."
+  },
+  "score": {
+    "definitionFound": true,
+    "definition": {
+      "file": "crates/ignore/src/dir.rs",
+      "name": "is_absolute_parent",
+      "qualname": "dir::IgnoreRef < '_ >::is_absolute_parent",
+      "kind": "RustItemFn",
+      "line": 610,
+      "column": 5,
+      "endLine": 612,
+      "endColumn": 6,
+      "sourceRange": {
+        "column": 5,
+        "endColumn": 6,
+        "endLine": 612,
+        "line": 610,
+        "sha256": "6a544d97c87d6231cacbf88172e005bfccb0e1aed366d86cd82cea6fb384ca86"
+      },
+      "textSha256": "6a544d97c87d6231cacbf88172e005bfccb0e1aed366d86cd82cea6fb384ca86"
+    },
+    "expectedCalls": 1,
+    "foundCalls": 0,
+    "correctCalls": 0,
+    "wrongCalls": 0,
+    "missedCalls": 1,
+    "extraCalls": 0,
+    "extraProvenErrors": 0,
+    "extraNeedsReview": 0,
+    "displayedTargets": {
+      "determined": 0,
+      "candidate": 0,
+      "unknown": 0
+    },
+    "expectedTargets": {
+      "determined": 1,
+      "candidate": 0,
+      "unknown": 0
+    },
+    "determinedTargets": 1,
+    "candidateTargets": 0,
+    "unknownTargets": 0,
+    "directCallerStatus": {},
+    "items": [],
+    "missed": [
+      {
+        "index": 0,
+        "call": {
+          "file": "crates/ignore/src/walk.rs",
+          "line": 1900,
+          "column": 52,
+          "endLine": 1900,
+          "endColumn": 75,
+          "inventory": "knownReferences",
+          "targetKind": "concrete",
+          "target": {
+            "file": "crates/ignore/src/dir.rs",
+            "line": 610,
+            "name": "is_absolute_parent"
+          },
+          "directCaller": {
+            "name": "check_symlink_loop",
+            "line": 1892
+          },
+          "runtime": "determined",
+          "context": "check_symlink_loop iterates ig_parent.parents() and passes |ig| !ig.is_absolute_parent() to take_while. Head Ignore::parents returns Parents<'_>, whose Iterator::Item is IgnoreRef<'a>; base Parents::Item was &Ignore. The same physical call therefore changes receiver identity from Ignore to IgnoreRef."
+        }
+      }
+    ],
+    "extras": [],
+    "implementations": [],
+    "missingImplementations": [],
+    "consideredRecords": 0,
+    "expectedGap": true,
+    "status": "gap",
+    "id": "ripgrep-ignore-ref-is-absolute-parent",
+    "exitCode": 0,
+    "queryStatus": "ready",
+    "callModel": "rust-source-direct-v14"
+  },
+  "macroTemplates": {
+    "checks": [],
+    "passed": true
+  }
+}

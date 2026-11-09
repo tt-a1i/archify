@@ -176,5 +176,5 @@
  "baseTree": "git worktree at the fixed base commit",
  "build": "workspace read with a generated Cargo.lock because the extractor uses --locked; no project build or test executed",
  "freeze": "source answer derived from the upstream diff and HEAD source before any candidate query",
- "notes": "Expected call positions are the full method-call expressions. Direct callers are the enclosing impl methods; the Vec<L> closure is attributed to its enclosing method."
+ "notes": "Expected call positions are the full method-call expressions. Direct callers are the enclosing impl methods; the Vec<L> closure is attributed to its enclosing method. v13 binds closure inputs only from local free-function signatures, so the three iterator-adapter closures remain unresolved; they are retained as misses rather than promoted to a target."
 }

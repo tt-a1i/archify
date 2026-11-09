@@ -1,0 +1,1 @@
+Change orientation written to /private/tmp/archify-v14-probe/zip-replay/ripgrep/queries/ripgrep-ignore-ref-is-absolute-parent.json (ready); partial means capture/configuration limits, not a finding gate failure. Complete docs/FUNCTION-ANALYSIS.md.

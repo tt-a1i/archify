@@ -1,0 +1,52 @@
+{
+ "archify/modules/code-analysis/docs/RUST.md": {
+  "worktree": "573a7dfb41468938b371cb1e36f0cc246dfa041449844e61fdd0ae61e0b9b961",
+  "zip": "573a7dfb41468938b371cb1e36f0cc246dfa041449844e61fdd0ae61e0b9b961",
+  "equal": true
+ },
+ "archify/modules/code-analysis/extract/rust/index.mjs": {
+  "worktree": "27a13c7499594963267d23a2e9c4c585d7dcc2aee8387736f3295284d5f465c9",
+  "zip": "27a13c7499594963267d23a2e9c4c585d7dcc2aee8387736f3295284d5f465c9",
+  "equal": true
+ },
+ "archify/modules/code-analysis/extract/rust/src/main.rs": {
+  "worktree": "3c594de9f4f2020810104d573b11e4f70aa1f09272f33d0dda4349addd03990d",
+  "zip": "3c594de9f4f2020810104d573b11e4f70aa1f09272f33d0dda4349addd03990d",
+  "equal": true
+ },
+ "archify/modules/code-analysis/extract/shared/semantics.mjs": {
+  "worktree": "49281006c9ce326fc28483d031ef0ca68afff407e9aaf79b085c14cdea6f24c6",
+  "zip": "49281006c9ce326fc28483d031ef0ca68afff407e9aaf79b085c14cdea6f24c6",
+  "equal": true
+ },
+ "archify/modules/code-analysis/lib/change-question.mjs": {
+  "worktree": "fd5d9c6737548e40b5233af1c1ab1ce7dfbb6e69191d757a7cd31ba40c033d31",
+  "zip": "fd5d9c6737548e40b5233af1c1ab1ce7dfbb6e69191d757a7cd31ba40c033d31",
+  "equal": true
+ },
+ "archify/modules/code-analysis/lib/question-calls.mjs": {
+  "worktree": "0665255a20f5f4b7fafee9629b576c08a914b19e903bb57b54b36d3ff0d044aa",
+  "zip": "0665255a20f5f4b7fafee9629b576c08a914b19e903bb57b54b36d3ff0d044aa",
+  "equal": true
+ },
+ "archify/modules/code-analysis/schemas/raw-facts.schema.json": {
+  "worktree": "f9337276c25528a133d7905943316c58ef43ec6df312602f16b01d8cdd045bdd",
+  "zip": "f9337276c25528a133d7905943316c58ef43ec6df312602f16b01d8cdd045bdd",
+  "equal": true
+ },
+ "archify/modules/code-analysis/test/calls.test.mjs": {
+  "worktree": "4439e48518ad0c0ee4f5d8b7451aadbe54761c076bcaf8770cad09d404c5314e",
+  "zip": "4439e48518ad0c0ee4f5d8b7451aadbe54761c076bcaf8770cad09d404c5314e",
+  "equal": true
+ },
+ "archify/modules/code-analysis/test/rust-calls.test.mjs": {
+  "worktree": "ffe193f5cdcaff3a0172ec9ba56069ba42573cd570744e28ebf6e7b61de973b2",
+  "zip": "ffe193f5cdcaff3a0172ec9ba56069ba42573cd570744e28ebf6e7b61de973b2",
+  "equal": true
+ },
+ "archify.zip": {
+  "worktree": "e7358404773caef411c60e0b22d593922d6a4dd5c00e59c46f27b5ee7b77a27c",
+  "zip": "e7358404773caef411c60e0b22d593922d6a4dd5c00e59c46f27b5ee7b77a27c",
+  "equal": true
+ }
+}
