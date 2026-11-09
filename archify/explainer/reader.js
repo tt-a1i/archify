@@ -608,11 +608,12 @@
     dialog.innerHTML = `<form method="dialog"><header><div><h2 id="ask-title">${words.ask}</h2><p class="ask-where"></p></div><button type="button" class="ask-close" data-ask-cancel aria-label="${words.askCancel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></header><blockquote hidden></blockquote><div class="ask-chips" role="group" aria-label="${words.askQuestion}">${words.askChips.map(chip=>`<button type="button" data-chip>${chip}</button>`).join('')}</div><textarea rows="4" aria-labelledby="ask-title" placeholder="${words.askPlaceholder}"></textarea><footer><p class="ask-note" role="status">${words.askNote}</p><button type="button" data-ask-cancel>${words.askCancel}</button><button type="submit" class="primary">${words.askCopy}<kbd>${mac ? '⌘↵' : 'Ctrl ↵'}</kbd></button></footer></form>`;
     document.body.append(dialog);
     const area = dialog.querySelector('textarea'), quoteBox = dialog.querySelector('blockquote'), note = dialog.querySelector('.ask-note');
-    let context = null;
+    // The generated message left in the textarea after a failed copy; a retry copies it unchanged.
+    let context = null, manual = null;
     const open = (panel, quote = '') => {
       const number = panel.id === 'answer' ? words.answer : panel.querySelector('.panel-id')?.textContent.trim();
       const title = panel.id === 'answer' ? words.answer : panel.dataset.title || panel.querySelector('h2')?.textContent.trim();
-      context = {panel,quote,number,title};
+      context = {panel,quote,number,title}; manual = null;
       dialog.querySelector('.ask-where').textContent = panel.id === 'answer' ? title : say(`Panel ${number} · ${title}`,`面板 ${number} · ${title}`);
       all('[data-chip]',dialog).forEach(chip=>chip.setAttribute('aria-pressed','false'));
       quoteBox.hidden = !quote; quoteBox.textContent = quote;
@@ -626,8 +627,7 @@
     }));
     area.addEventListener('keydown',event=>{ if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); dialog.querySelector('form').requestSubmit(); } });
     dialog.querySelectorAll('[data-ask-cancel]').forEach(button=>button.addEventListener('click',()=>dialog.close()));
-    dialog.querySelector('form').addEventListener('submit',event=>{
-      event.preventDefault();
+    function buildMessage() {
       const {panel,quote,number,title} = context, page = document.querySelector('h1')?.textContent.trim();
       const file = location.protocol === 'file:' ? decodeURIComponent(location.pathname) : location.href.split('#')[0];
       const quoteMark = text => english ? `"${text}"` : `「${text}」`;
@@ -639,8 +639,12 @@
         `${words.askQuestion}${say(': ','：')}${area.value.trim() || words.askChips[0]}`,
         ...(panel.id === 'answer' ? [] : [words.askPatch]),
       ];
-      const text = lines.join('\n');
-      copyText(text).then(()=>{ dialog.close(); notify(words.askCopied); },()=>{ area.value = text; area.focus(); area.select(); note.textContent = say('Copy failed. The text is selected; copy it manually.','复制失败，已选中文本，请手动复制。'); });
+      return lines.join('\n');
+    }
+    dialog.querySelector('form').addEventListener('submit',event=>{
+      event.preventDefault();
+      const text = manual !== null && area.value === manual ? manual : buildMessage();
+      copyText(text).then(()=>{ manual = null; dialog.close(); notify(words.askCopied); },()=>{ manual = text; area.value = text; area.focus(); area.select(); note.textContent = say('Copy failed. The text is selected; copy it manually.','复制失败，已选中文本，请手动复制。'); });
     });
     all('.panel').forEach(panel=>{
       const button = document.createElement('button'); button.type = 'button'; button.className = 'ask-button interactive'; button.textContent = words.ask;

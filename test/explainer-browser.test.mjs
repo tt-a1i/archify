@@ -284,9 +284,9 @@ test('copy controls report confirmed writes and retain manual-copy text on clipb
     const pendingDialog=await pageValue(browser,'document.querySelector(".ask-dialog").open');
     if(mode==='success')await pageValue(browser,'finishCopy()');
     const ask=await pageValue(browser,`(()=>{const area=document.querySelector('.ask-dialog textarea');return {open:document.querySelector('.ask-dialog').open,text:area.value,selection:[area.selectionStart,area.selectionEnd],focused:document.activeElement===area,note:document.querySelector('.ask-note').textContent,noteRole:document.querySelector('.ask-note').getAttribute('role'),toast:document.querySelector('#toast').textContent,written:[...written],errors:copyErrors};})()`);
-    let reopened;
-    if(mode!=='success'){await keyboardActivate(browser,'.ask-dialog footer [data-ask-cancel]');await keyboardActivate(browser,'#why .ask-button');reopened=await pageValue(browser,`({note:document.querySelector('.ask-note').textContent,expected:JSON.parse(document.getElementById('explainer-reader-words').textContent).askNote,text:document.querySelector('.ask-dialog textarea').value})`);}
-    observations.push({locale,mode,pendingSnippet,pendingDialog,snippet,ask,reopened});
+    let reopened,retry;
+    if(mode!=='success'){await keyboardActivate(browser,'.ask-dialog [type=submit]');retry=await pageValue(browser,`({open:document.querySelector('.ask-dialog').open,text:document.querySelector('.ask-dialog textarea').value,written:[...written]})`);await keyboardActivate(browser,'.ask-dialog footer [data-ask-cancel]');await keyboardActivate(browser,'#why .ask-button');reopened=await pageValue(browser,`({note:document.querySelector('.ask-note').textContent,expected:JSON.parse(document.getElementById('explainer-reader-words').textContent).askNote,text:document.querySelector('.ask-dialog textarea').value})`);}
+    observations.push({locale,mode,pendingSnippet,pendingDialog,snippet,ask,retry,reopened});
    }
   }
   for(const entry of observations) {
@@ -301,6 +301,8 @@ test('copy controls report confirmed writes and retain manual-copy text on clipb
     assert.equal(snippet.label,copy,JSON.stringify(entry));assert.ok(snippet.toast.startsWith(failed),JSON.stringify(entry));
     assert.equal(ask.open,true,JSON.stringify(entry));assert.equal(ask.text,success.ask.written[1],'manual copy retains the complete successful payload');
     assert.deepEqual(ask.selection,[0,ask.text.length]);assert.equal(ask.focused,true);assert.ok(ask.note.startsWith(failed));assert.equal(ask.noteRole,'status');
+    assert.equal(entry.retry.open,true);assert.equal(entry.retry.text,ask.text,'a retry keeps the manual-copy text instead of nesting it');
+    if(mode!=='missing')assert.equal(entry.retry.written.at(-1),ask.text,'a retry copies the original message unchanged');
     assert.equal(entry.reopened.note,entry.reopened.expected,'a new question restores its normal instruction');assert.equal(entry.reopened.text,'');
    }
   }
