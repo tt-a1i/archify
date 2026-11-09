@@ -18322,7 +18322,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function select(id) {
         var item = items.find(function (candidate) { return candidate.id === id; });
         if (!item) return false;
-        var routeSelection = context.kind === &#39;route-source&#39; || context.kind === &#39;route-target&#39;;
+        // The stored context is fixed when the panel opens, so it goes stale
+        // when route picking starts afterwards. Resolve the live route state
+        // here, or a programmatic selection (Node index) focuses the node
+        // and cancels the pick instead of choosing the endpoint.
+        var kind = context.kind;
+        if (kind !== &#39;route-source&#39; &amp;&amp; kind !== &#39;route-target&#39;) kind = resolveContext({}).kind;
+        var routeSelection = kind === &#39;route-source&#39; || kind === &#39;route-target&#39;;
         if (routeSelection) {
           if (!Archify.routeProbe || typeof Archify.routeProbe.choose !== &#39;function&#39; || !Archify.routeProbe.choose(id)) return false;
           if (Archify.routeProbe.active() === &#39;target&#39; &amp;&amp; Archify.view &amp;&amp; typeof Archify.view.reveal === &#39;function&#39;) {
@@ -34086,7 +34092,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function select(id) {
         var item = items.find(function (candidate) { return candidate.id === id; });
         if (!item) return false;
-        var routeSelection = context.kind === &#39;route-source&#39; || context.kind === &#39;route-target&#39;;
+        // The stored context is fixed when the panel opens, so it goes stale
+        // when route picking starts afterwards. Resolve the live route state
+        // here, or a programmatic selection (Node index) focuses the node
+        // and cancels the pick instead of choosing the endpoint.
+        var kind = context.kind;
+        if (kind !== &#39;route-source&#39; &amp;&amp; kind !== &#39;route-target&#39;) kind = resolveContext({}).kind;
+        var routeSelection = kind === &#39;route-source&#39; || kind === &#39;route-target&#39;;
         if (routeSelection) {
           if (!Archify.routeProbe || typeof Archify.routeProbe.choose !== &#39;function&#39; || !Archify.routeProbe.choose(id)) return false;
           if (Archify.routeProbe.active() === &#39;target&#39; &amp;&amp; Archify.view &amp;&amp; typeof Archify.view.reveal === &#39;function&#39;) {
