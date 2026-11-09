@@ -154,6 +154,16 @@ The two clap pairs are `clap-rs/clap` at `ba89563c^..ba89563c` and
 
 ## ZIP replay
 
-The distributable `archify.zip` built from this branch with the canonical Node 22
-/ zlib toolchain was replayed on the AsRef counterexample and case B. Results are
-recorded in `evidence/zip/`.
+The distributable `archify.zip` (`fa78fa4c…`, 405 files) was built from commit
+`8aa4aafe6` with `scripts/build-zip.sh` under official Node 22.23.4 and bundled
+zlib `1.3.1-e00f703`, then unpacked into a fresh directory with `npm ci`. The
+ZIP's own CLI reported `rust-syn@2.0.119`, revision 9,
+`rust-source-direct-v9` for both replays:
+
+| Replay | Result |
+| --- | --- |
+| AsRef counterexample | `Other::enabled` at `src/lib.rs:11`; 2 references (`32:9`, `37:5`); no `First::enabled` target |
+| case B | `parse_short_arg` at `parser.rs:831`; reference `185:44` with `ok` evidence at `macros.rs:554:14`; `is_new_arg` reference `331:29` direct |
+
+Receipts, stderr and exact commands are in `evidence/zip/`. The ZIP and unpacked
+tree are not committed; rebuild with `scripts/build-zip.sh` to reproduce.
