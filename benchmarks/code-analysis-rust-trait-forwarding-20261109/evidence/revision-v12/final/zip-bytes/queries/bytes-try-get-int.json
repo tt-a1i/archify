@@ -1,0 +1,4066 @@
+{
+  "kind": "archify-change-question",
+  "stage": "orientation-only",
+  "status": "ready",
+  "question": "Buf::try_get_int now sign-extends the unsigned result instead of using the byte-copy macro. Which source calls use this default method?",
+  "entry": "src/buf/buf_impl.rs",
+  "workflow": "docs/FUNCTION-ANALYSIS.md",
+  "language": "rust",
+  "capture": "fresh-pair; same current language extractor and effective analysis configuration",
+  "analysisConfigDigest": "8951d9eb428985e18ffd7d2520bfb1cf4f6d2e2d6d038e154c801a55ba147362",
+  "sides": {
+    "base": {
+      "side": "base",
+      "root": "/private/tmp/archify-batch-20261108/samples/bytes-try-get-int-base",
+      "snapshot": {
+        "revision": null,
+        "baseRevision": "d5c8ad3227afe459c09f1d0d85455abf00f0381a",
+        "sourceKind": "working-tree",
+        "root": ".",
+        "url": "https://github.com/tokio-rs/bytes.git",
+        "language": "rust",
+        "adapter": "rust-syn@2.0.119",
+        "adapterRevision": 12,
+        "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c"
+      },
+      "language": "rust",
+      "producer": {
+        "adapter": "rust-syn@2.0.119",
+        "adapterRevision": 12
+      },
+      "callModel": "rust-source-direct-v12",
+      "analysisConfigDigest": "8951d9eb428985e18ffd7d2520bfb1cf4f6d2e2d6d038e154c801a55ba147362",
+      "capturedFiles": 18,
+      "sourceIdentity": "valid",
+      "unavailableFiles": {
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      },
+      "parseErrors": 0,
+      "languageScope": {
+        "language": "rust",
+        "build": {
+          "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+          "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+          "helperHost": "aarch64-apple-darwin",
+          "targetCfg": [
+            "debug_assertions",
+            "panic=\"unwind\"",
+            "target_abi=\"\"",
+            "target_arch=\"aarch64\"",
+            "target_endian=\"little\"",
+            "target_env=\"\"",
+            "target_family=\"unix\"",
+            "target_feature=\"aes\"",
+            "target_feature=\"crc\"",
+            "target_feature=\"dit\"",
+            "target_feature=\"dotprod\"",
+            "target_feature=\"dpb\"",
+            "target_feature=\"dpb2\"",
+            "target_feature=\"fcma\"",
+            "target_feature=\"fhm\"",
+            "target_feature=\"flagm\"",
+            "target_feature=\"fp16\"",
+            "target_feature=\"frintts\"",
+            "target_feature=\"jsconv\"",
+            "target_feature=\"lor\"",
+            "target_feature=\"lse\"",
+            "target_feature=\"neon\"",
+            "target_feature=\"paca\"",
+            "target_feature=\"pacg\"",
+            "target_feature=\"pan\"",
+            "target_feature=\"pmuv3\"",
+            "target_feature=\"ras\"",
+            "target_feature=\"rcpc\"",
+            "target_feature=\"rcpc2\"",
+            "target_feature=\"rdm\"",
+            "target_feature=\"sb\"",
+            "target_feature=\"sha2\"",
+            "target_feature=\"sha3\"",
+            "target_feature=\"ssbs\"",
+            "target_feature=\"vh\"",
+            "target_has_atomic=\"128\"",
+            "target_has_atomic=\"16\"",
+            "target_has_atomic=\"32\"",
+            "target_has_atomic=\"64\"",
+            "target_has_atomic=\"8\"",
+            "target_has_atomic=\"ptr\"",
+            "target_os=\"macos\"",
+            "target_pointer_width=\"64\"",
+            "target_vendor=\"apple\"",
+            "unix"
+          ],
+          "customCfg": [],
+          "tests": false,
+          "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+          "buildScripts": false,
+          "procMacros": false,
+          "cargoConfig": "not-loaded"
+        },
+        "crates": [
+          {
+            "id": "Cargo.toml#lib:bytes",
+            "package": "bytes",
+            "name": "bytes",
+            "root": "src/lib.rs",
+            "edition": "2021",
+            "deps": {},
+            "features": [
+              "default",
+              "std"
+            ],
+            "targetKinds": [
+              "lib"
+            ],
+            "files": [
+              "src/lib.rs",
+              "src/buf/mod.rs",
+              "src/buf/buf_impl.rs",
+              "src/buf/buf_mut.rs",
+              "src/buf/chain.rs",
+              "src/buf/iter.rs",
+              "src/buf/limit.rs",
+              "src/buf/reader.rs",
+              "src/buf/take.rs",
+              "src/buf/uninit_slice.rs",
+              "src/buf/vec_deque.rs",
+              "src/buf/writer.rs",
+              "src/bytes.rs",
+              "src/bytes_mut.rs",
+              "src/fmt/mod.rs",
+              "src/fmt/debug.rs",
+              "src/fmt/hex.rs",
+              "src/loom.rs"
+            ]
+          }
+        ],
+        "selectedFiles": [
+          "src/buf/buf_impl.rs",
+          "src/buf/buf_mut.rs",
+          "src/buf/chain.rs",
+          "src/buf/iter.rs",
+          "src/buf/limit.rs",
+          "src/buf/mod.rs",
+          "src/buf/reader.rs",
+          "src/buf/take.rs",
+          "src/buf/uninit_slice.rs",
+          "src/buf/vec_deque.rs",
+          "src/buf/writer.rs",
+          "src/bytes.rs",
+          "src/bytes_mut.rs",
+          "src/fmt/debug.rs",
+          "src/fmt/hex.rs",
+          "src/fmt/mod.rs",
+          "src/lib.rs",
+          "src/loom.rs"
+        ],
+        "excludedFiles": [
+          {
+            "file": "benches/buf.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "benches/bytes.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "benches/bytes_mut.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "src/serde.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_buf.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_buf_mut.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_bytes.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_bytes_odd_alloc.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_bytes_vec_alloc.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_chain.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_debug.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_iter.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_limit.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_reader.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_serde.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_take.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          }
+        ],
+        "metadata": [
+          {
+            "file": "Cargo.toml",
+            "sourceText": "[package]\n\nname = \"bytes\"\n# When releasing to crates.io:\n# - Update CHANGELOG.md.\n# - Create \"v1.x.y\" git tag.\nversion = \"1.12.1\"\nedition = \"2021\"\nrust-version = \"1.57\"\nlicense = \"MIT\"\nauthors = [\n    \"Carl Lerche <me@carllerche.com>\",\n    \"Sean McArthur <sean@seanmonstar.com>\",\n]\ndescription = \"Types and traits for working with bytes\"\nrepository = \"https://github.com/tokio-rs/bytes\"\nreadme = \"README.md\"\nkeywords = [\"buffers\", \"zero-copy\", \"io\"]\ncategories = [\"network-programming\", \"data-structures\"]\ninclude = [\"CHANGELOG.md\", \"LICENSE\", \"README.md\", \"SECURITY.md\", \"Cargo.toml\", \"src/**/*.rs\", \"tests/**/*.rs\", \"clippy.toml\"]\n\n[features]\ndefault = [\"std\"]\nstd = []\n\n[dependencies]\nserde = { version = \"1.0.60\", optional = true, default-features = false, features = [\"alloc\"] }\n# Use portable-atomic crate to support platforms without atomic CAS.\n# See \"no_std support\" section in readme for more information.\n#\n# Enable require-cas feature to provide a better error message if the end user forgets to use the cfg or feature.\nextra-platforms = { package = \"portable-atomic\", version = \"1.3\", optional = true, default-features = false, features = [\"require-cas\"] }\n\n[dev-dependencies]\nserde_test = \"1.0\"\n\n[target.'cfg(loom)'.dev-dependencies]\nloom = \"0.7\"\n\n[package.metadata.docs.rs]\nrustdoc-args = [\"--cfg\", \"docsrs\"]\n\n[lints.rust]\nunexpected_cfgs = { level = \"warn\", check-cfg = [\n  'cfg(loom)',\n] }\n",
+            "sha256": "4fc0d14d77a47a1fac1fbb445890db63e67360535c940dd47ffd69badc30cdc6"
+          }
+        ],
+        "excludedTargets": [
+          {
+            "package": "bytes",
+            "name": "test_buf",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_buf.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_buf_mut",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_buf_mut.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_bytes",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_bytes.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_bytes_odd_alloc",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_bytes_odd_alloc.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_bytes_vec_alloc",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_bytes_vec_alloc.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_chain",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_chain.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_debug",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_debug.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_iter",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_iter.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_limit",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_limit.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_reader",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_reader.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_serde",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_serde.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_take",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_take.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "buf",
+            "kinds": [
+              "bench"
+            ],
+            "source": "benches/buf.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "bytes",
+            "kinds": [
+              "bench"
+            ],
+            "source": "benches/bytes.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "bytes_mut",
+            "kinds": [
+              "bench"
+            ],
+            "source": "benches/bytes_mut.rs",
+            "reason": "target-not-in-source-profile"
+          }
+        ],
+        "conditionalDefinitions": [
+          {
+            "file": "src/bytes.rs",
+            "name": "ptr_map",
+            "line": 1587,
+            "reason": "enclosing cfg or attribute not established by the source profile"
+          },
+          {
+            "file": "src/bytes.rs",
+            "name": "ptr_map",
+            "line": 1598,
+            "reason": "enclosing cfg or attribute not established by the source profile"
+          }
+        ],
+        "excludedRegions": [
+          {
+            "file": "src/bytes.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 1664,
+              "line": 1634
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 29,
+              "endLine": 129,
+              "line": 128
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 1665,
+              "line": 1613
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 2034,
+              "line": 2002
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/loom.rs",
+            "range": {
+              "column": 9,
+              "endColumn": 76,
+              "endLine": 7,
+              "line": 6
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/loom.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 33,
+              "line": 26
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/lib.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 11,
+              "endLine": 91,
+              "line": 90
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/lib.rs",
+            "range": {
+              "column": 5,
+              "endColumn": 6,
+              "endLine": 111,
+              "line": 101
+            },
+            "reason": "cfg-expression-not-selected"
+          }
+        ],
+        "opaqueMacros": [
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "definition",
+            "line": 13
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "definition",
+            "line": 72
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "definition",
+            "line": 2461
+          },
+          {
+            "file": "src/buf/buf_mut.rs",
+            "kind": "definition",
+            "line": 1353
+          },
+          {
+            "file": "src/buf/uninit_slice.rs",
+            "kind": "definition",
+            "line": 228
+          },
+          {
+            "file": "src/buf/uninit_slice.rs",
+            "kind": "item-expansion",
+            "line": 250
+          },
+          {
+            "file": "src/fmt/mod.rs",
+            "kind": "definition",
+            "line": 1
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "item-expansion",
+            "line": 39
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "item-expansion",
+            "line": 40
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "item-expansion",
+            "line": 24
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "item-expansion",
+            "line": 25
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "item-expansion",
+            "line": 26
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "item-expansion",
+            "line": 27
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 377
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 397
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 420
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 440
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 460
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 483
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 503
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 523
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 546
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 566
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 586
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 609
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 629
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 649
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 672
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 692
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 712
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 735
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 755
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 775
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 798
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 818
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 838
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 861
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 882
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 903
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 927
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 997
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1281
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1309
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1340
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1368
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1396
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1427
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1455
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1483
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1514
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1542
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1570
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1601
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1629
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1657
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1688
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1716
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1744
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1775
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1803
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1831
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1862
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1890
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1918
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1949
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1981
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 2013
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 2051
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 2087
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 2119
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 2157
+          },
+          {
+            "file": "src/buf/buf_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1024
+          },
+          {
+            "file": "src/buf/buf_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1112
+          },
+          {
+            "file": "src/buf/chain.rs",
+            "kind": "expression-expansion",
+            "line": 179
+          },
+          {
+            "file": "src/buf/limit.rs",
+            "kind": "expression-expansion",
+            "line": 71
+          },
+          {
+            "file": "src/buf/take.rs",
+            "kind": "expression-expansion",
+            "line": 146
+          },
+          {
+            "file": "src/buf/take.rs",
+            "kind": "expression-expansion",
+            "line": 152
+          },
+          {
+            "file": "src/buf/uninit_slice.rs",
+            "kind": "expression-expansion",
+            "line": 108
+          },
+          {
+            "file": "src/buf/uninit_slice.rs",
+            "kind": "expression-expansion",
+            "line": 137
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 193
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 426
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 432
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 481
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 533
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 653
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 696
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 973
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1151
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1193
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1211
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1239
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1270
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1283
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1302
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1508
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1524
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 271
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 301
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 334
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 413
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 550
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 688
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 695
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 705
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 725
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 773
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 809
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 899
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1028
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1112
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1113
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1144
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1168
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1175
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1176
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1251
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1337
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1863
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1878
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 14
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 18
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 20
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 22
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 24
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 26
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 29
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 31
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 34
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "expression-expansion",
+            "line": 9
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "expression-expansion",
+            "line": 18
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 153
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 159
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 185
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 207
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 215
+          }
+        ],
+        "missingModules": [],
+        "limitations": [
+          "Explicit free-function paths, monomorphic inherent source candidates and bare generic-struct paths to unique concrete-specialization source candidates. Lifetime-only struct/enum owners additionally allow bare paths to unique receiver-free inherent declarations when unbounded impl lifetime names map one-to-one to owner arguments; unsupported siblings and enum variant names block selection. Specializations require named type arguments and no impl generics/where clause; competing unsupported inherent declarations block the candidate. No type/argument inference, visibility checking, Self/type-alias resolution, explicit generic call arguments, mixed lifetime/type parameters, concrete or bounded lifetime specializations, const/bounded/defaulted generic owners, receiver types beyond explicit parameters, adjacent-before-let bindings and trait objects, general macro expansion, build-script execution or external dependency source loading.",
+          "Cargo metadata reads captured manifests with zero-byte source inventory stubs, offline/no-deps/locked; the syntax parser reads captured source text only. Active cfg derives from rustc target cfg plus the declared local feature profile; custom build-script cfg stays unknown.",
+          "Call inventory covers parsed function/method bodies plus trait default method bodies, each once per source declaration; declarations without a body add no calls and calls depending on the concrete Self remain unresolved. A local macro_rules! invocation is traversed as its source argument expression only when the binding actually visible at the callsite (including a preceding block-local definition) is defined exactly once across the selected crates, is textually visible without an import or glob that could bind the same name, and every rule matches a single $x:expr used exactly once outside repetition and nested macro arguments under the active cfg; such calls carry macroEvidence. A zero-argument local macro used as the whole body of an impl may supply generated methods, subject to the combined cfg on the outer impl, macro invocation, generated methods and their bodies; removed calls are omitted and unknown conditions do not establish targets. Calls in these templates carry macroTemplate with the captured macro-name definition and distinct invocation/outer-impl origins, retaining printable original self types and optional trait paths. One physical call represents all contributing expansions; directCaller uses a template-qualified macro-generated-method identity, or local-function for a nested function. Divergent targets remain unresolved with rust-context-dependent, retaining provenance but no per-expansion targets. Other macros stay opaque records. Missing/excluded modules, conditional scopes and unsupported local items limit target/caller completeness."
+        ]
+      },
+      "resolution": {
+        "digest": "532ae2a4ab562869543c4c183c67d904b8628cf6221f4bde2a195e292b94c7f8",
+        "fresh": true,
+        "options": {
+          "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+          "cfg": [
+            "debug_assertions",
+            "panic=\"unwind\"",
+            "target_abi=\"\"",
+            "target_arch=\"aarch64\"",
+            "target_endian=\"little\"",
+            "target_env=\"\"",
+            "target_family=\"unix\"",
+            "target_feature=\"aes\"",
+            "target_feature=\"crc\"",
+            "target_feature=\"dit\"",
+            "target_feature=\"dotprod\"",
+            "target_feature=\"dpb\"",
+            "target_feature=\"dpb2\"",
+            "target_feature=\"fcma\"",
+            "target_feature=\"fhm\"",
+            "target_feature=\"flagm\"",
+            "target_feature=\"fp16\"",
+            "target_feature=\"frintts\"",
+            "target_feature=\"jsconv\"",
+            "target_feature=\"lor\"",
+            "target_feature=\"lse\"",
+            "target_feature=\"neon\"",
+            "target_feature=\"paca\"",
+            "target_feature=\"pacg\"",
+            "target_feature=\"pan\"",
+            "target_feature=\"pmuv3\"",
+            "target_feature=\"ras\"",
+            "target_feature=\"rcpc\"",
+            "target_feature=\"rcpc2\"",
+            "target_feature=\"rdm\"",
+            "target_feature=\"sb\"",
+            "target_feature=\"sha2\"",
+            "target_feature=\"sha3\"",
+            "target_feature=\"ssbs\"",
+            "target_feature=\"vh\"",
+            "target_has_atomic=\"128\"",
+            "target_has_atomic=\"16\"",
+            "target_has_atomic=\"32\"",
+            "target_has_atomic=\"64\"",
+            "target_has_atomic=\"8\"",
+            "target_has_atomic=\"ptr\"",
+            "target_os=\"macos\"",
+            "target_pointer_width=\"64\"",
+            "target_vendor=\"apple\"",
+            "unix"
+          ],
+          "crates": [
+            {
+              "deps": {},
+              "edition": "2021",
+              "features": [
+                "default",
+                "std"
+              ],
+              "id": "Cargo.toml#lib:bytes",
+              "name": "bytes",
+              "package": "bytes",
+              "root": "src/lib.rs",
+              "targetKinds": [
+                "lib"
+              ]
+            }
+          ],
+          "helperHost": "aarch64-apple-darwin",
+          "tests": false,
+          "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)"
+        },
+        "inputs": {
+          "total": 1,
+          "included": 1,
+          "omitted": 0,
+          "limit": 40,
+          "items": [
+            {
+              "file": "<root>/Cargo.toml",
+              "sha256": "4fc0d14d77a47a1fac1fbb445890db63e67360535c940dd47ffd69badc30cdc6"
+            }
+          ]
+        }
+      }
+    },
+    "head": {
+      "side": "head",
+      "root": "/private/tmp/archify-batch-20261108/samples/bytes-try-get-int-head",
+      "snapshot": {
+        "revision": null,
+        "baseRevision": "7930d93d583757e922014312d4aa3e58a415131f",
+        "sourceKind": "working-tree",
+        "root": ".",
+        "url": "https://github.com/tokio-rs/bytes.git",
+        "language": "rust",
+        "adapter": "rust-syn@2.0.119",
+        "adapterRevision": 12,
+        "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81"
+      },
+      "language": "rust",
+      "producer": {
+        "adapter": "rust-syn@2.0.119",
+        "adapterRevision": 12
+      },
+      "callModel": "rust-source-direct-v12",
+      "analysisConfigDigest": "8951d9eb428985e18ffd7d2520bfb1cf4f6d2e2d6d038e154c801a55ba147362",
+      "capturedFiles": 18,
+      "sourceIdentity": "valid",
+      "unavailableFiles": {
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      },
+      "parseErrors": 0,
+      "languageScope": {
+        "language": "rust",
+        "build": {
+          "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+          "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+          "helperHost": "aarch64-apple-darwin",
+          "targetCfg": [
+            "debug_assertions",
+            "panic=\"unwind\"",
+            "target_abi=\"\"",
+            "target_arch=\"aarch64\"",
+            "target_endian=\"little\"",
+            "target_env=\"\"",
+            "target_family=\"unix\"",
+            "target_feature=\"aes\"",
+            "target_feature=\"crc\"",
+            "target_feature=\"dit\"",
+            "target_feature=\"dotprod\"",
+            "target_feature=\"dpb\"",
+            "target_feature=\"dpb2\"",
+            "target_feature=\"fcma\"",
+            "target_feature=\"fhm\"",
+            "target_feature=\"flagm\"",
+            "target_feature=\"fp16\"",
+            "target_feature=\"frintts\"",
+            "target_feature=\"jsconv\"",
+            "target_feature=\"lor\"",
+            "target_feature=\"lse\"",
+            "target_feature=\"neon\"",
+            "target_feature=\"paca\"",
+            "target_feature=\"pacg\"",
+            "target_feature=\"pan\"",
+            "target_feature=\"pmuv3\"",
+            "target_feature=\"ras\"",
+            "target_feature=\"rcpc\"",
+            "target_feature=\"rcpc2\"",
+            "target_feature=\"rdm\"",
+            "target_feature=\"sb\"",
+            "target_feature=\"sha2\"",
+            "target_feature=\"sha3\"",
+            "target_feature=\"ssbs\"",
+            "target_feature=\"vh\"",
+            "target_has_atomic=\"128\"",
+            "target_has_atomic=\"16\"",
+            "target_has_atomic=\"32\"",
+            "target_has_atomic=\"64\"",
+            "target_has_atomic=\"8\"",
+            "target_has_atomic=\"ptr\"",
+            "target_os=\"macos\"",
+            "target_pointer_width=\"64\"",
+            "target_vendor=\"apple\"",
+            "unix"
+          ],
+          "customCfg": [],
+          "tests": false,
+          "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+          "buildScripts": false,
+          "procMacros": false,
+          "cargoConfig": "not-loaded"
+        },
+        "crates": [
+          {
+            "id": "Cargo.toml#lib:bytes",
+            "package": "bytes",
+            "name": "bytes",
+            "root": "src/lib.rs",
+            "edition": "2021",
+            "deps": {},
+            "features": [
+              "default",
+              "std"
+            ],
+            "targetKinds": [
+              "lib"
+            ],
+            "files": [
+              "src/lib.rs",
+              "src/buf/mod.rs",
+              "src/buf/buf_impl.rs",
+              "src/buf/buf_mut.rs",
+              "src/buf/chain.rs",
+              "src/buf/iter.rs",
+              "src/buf/limit.rs",
+              "src/buf/reader.rs",
+              "src/buf/take.rs",
+              "src/buf/uninit_slice.rs",
+              "src/buf/vec_deque.rs",
+              "src/buf/writer.rs",
+              "src/bytes.rs",
+              "src/bytes_mut.rs",
+              "src/fmt/mod.rs",
+              "src/fmt/debug.rs",
+              "src/fmt/hex.rs",
+              "src/loom.rs"
+            ]
+          }
+        ],
+        "selectedFiles": [
+          "src/buf/buf_impl.rs",
+          "src/buf/buf_mut.rs",
+          "src/buf/chain.rs",
+          "src/buf/iter.rs",
+          "src/buf/limit.rs",
+          "src/buf/mod.rs",
+          "src/buf/reader.rs",
+          "src/buf/take.rs",
+          "src/buf/uninit_slice.rs",
+          "src/buf/vec_deque.rs",
+          "src/buf/writer.rs",
+          "src/bytes.rs",
+          "src/bytes_mut.rs",
+          "src/fmt/debug.rs",
+          "src/fmt/hex.rs",
+          "src/fmt/mod.rs",
+          "src/lib.rs",
+          "src/loom.rs"
+        ],
+        "excludedFiles": [
+          {
+            "file": "benches/buf.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "benches/bytes.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "benches/bytes_mut.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "src/serde.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_buf.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_buf_mut.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_bytes.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_bytes_odd_alloc.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_bytes_vec_alloc.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_chain.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_debug.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_iter.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_limit.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_reader.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_serde.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          },
+          {
+            "file": "tests/test_take.rs",
+            "reason": "not-in-selected-crate-module-tree"
+          }
+        ],
+        "metadata": [
+          {
+            "file": "Cargo.toml",
+            "sourceText": "[package]\n\nname = \"bytes\"\n# When releasing to crates.io:\n# - Update CHANGELOG.md.\n# - Create \"v1.x.y\" git tag.\nversion = \"1.12.1\"\nedition = \"2021\"\nrust-version = \"1.57\"\nlicense = \"MIT\"\nauthors = [\n    \"Carl Lerche <me@carllerche.com>\",\n    \"Sean McArthur <sean@seanmonstar.com>\",\n]\ndescription = \"Types and traits for working with bytes\"\nrepository = \"https://github.com/tokio-rs/bytes\"\nreadme = \"README.md\"\nkeywords = [\"buffers\", \"zero-copy\", \"io\"]\ncategories = [\"network-programming\", \"data-structures\"]\ninclude = [\"CHANGELOG.md\", \"LICENSE\", \"README.md\", \"SECURITY.md\", \"Cargo.toml\", \"src/**/*.rs\", \"tests/**/*.rs\", \"clippy.toml\"]\n\n[features]\ndefault = [\"std\"]\nstd = []\n\n[dependencies]\nserde = { version = \"1.0.60\", optional = true, default-features = false, features = [\"alloc\"] }\n# Use portable-atomic crate to support platforms without atomic CAS.\n# See \"no_std support\" section in readme for more information.\n#\n# Enable require-cas feature to provide a better error message if the end user forgets to use the cfg or feature.\nextra-platforms = { package = \"portable-atomic\", version = \"1.3\", optional = true, default-features = false, features = [\"require-cas\"] }\n\n[dev-dependencies]\nserde_test = \"1.0\"\n\n[target.'cfg(loom)'.dev-dependencies]\nloom = \"0.7\"\n\n[package.metadata.docs.rs]\nrustdoc-args = [\"--cfg\", \"docsrs\"]\n\n[lints.rust]\nunexpected_cfgs = { level = \"warn\", check-cfg = [\n  'cfg(loom)',\n] }\n",
+            "sha256": "4fc0d14d77a47a1fac1fbb445890db63e67360535c940dd47ffd69badc30cdc6"
+          }
+        ],
+        "excludedTargets": [
+          {
+            "package": "bytes",
+            "name": "test_buf",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_buf.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_buf_mut",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_buf_mut.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_bytes",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_bytes.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_bytes_odd_alloc",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_bytes_odd_alloc.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_bytes_vec_alloc",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_bytes_vec_alloc.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_chain",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_chain.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_debug",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_debug.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_iter",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_iter.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_limit",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_limit.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_reader",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_reader.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_serde",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_serde.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "test_take",
+            "kinds": [
+              "test"
+            ],
+            "source": "tests/test_take.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "buf",
+            "kinds": [
+              "bench"
+            ],
+            "source": "benches/buf.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "bytes",
+            "kinds": [
+              "bench"
+            ],
+            "source": "benches/bytes.rs",
+            "reason": "target-not-in-source-profile"
+          },
+          {
+            "package": "bytes",
+            "name": "bytes_mut",
+            "kinds": [
+              "bench"
+            ],
+            "source": "benches/bytes_mut.rs",
+            "reason": "target-not-in-source-profile"
+          }
+        ],
+        "conditionalDefinitions": [
+          {
+            "file": "src/bytes.rs",
+            "name": "ptr_map",
+            "line": 1587,
+            "reason": "enclosing cfg or attribute not established by the source profile"
+          },
+          {
+            "file": "src/bytes.rs",
+            "name": "ptr_map",
+            "line": 1598,
+            "reason": "enclosing cfg or attribute not established by the source profile"
+          }
+        ],
+        "excludedRegions": [
+          {
+            "file": "src/bytes.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 1664,
+              "line": 1634
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 29,
+              "endLine": 129,
+              "line": 128
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 1665,
+              "line": 1613
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 2034,
+              "line": 2002
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/loom.rs",
+            "range": {
+              "column": 9,
+              "endColumn": 76,
+              "endLine": 7,
+              "line": 6
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/loom.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 2,
+              "endLine": 33,
+              "line": 26
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/lib.rs",
+            "range": {
+              "column": 1,
+              "endColumn": 11,
+              "endLine": 91,
+              "line": 90
+            },
+            "reason": "cfg-or-test-not-selected"
+          },
+          {
+            "file": "src/lib.rs",
+            "range": {
+              "column": 5,
+              "endColumn": 6,
+              "endLine": 111,
+              "line": 101
+            },
+            "reason": "cfg-expression-not-selected"
+          }
+        ],
+        "opaqueMacros": [
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "definition",
+            "line": 13
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "definition",
+            "line": 72
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "definition",
+            "line": 2461
+          },
+          {
+            "file": "src/buf/buf_mut.rs",
+            "kind": "definition",
+            "line": 1353
+          },
+          {
+            "file": "src/buf/uninit_slice.rs",
+            "kind": "definition",
+            "line": 228
+          },
+          {
+            "file": "src/buf/uninit_slice.rs",
+            "kind": "item-expansion",
+            "line": 250
+          },
+          {
+            "file": "src/fmt/mod.rs",
+            "kind": "definition",
+            "line": 1
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "item-expansion",
+            "line": 39
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "item-expansion",
+            "line": 40
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "item-expansion",
+            "line": 24
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "item-expansion",
+            "line": 25
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "item-expansion",
+            "line": 26
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "item-expansion",
+            "line": 27
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 377
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 397
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 420
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 440
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 460
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 483
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 503
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 523
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 546
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 566
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 586
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 609
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 629
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 649
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 672
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 692
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 712
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 735
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 755
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 775
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 798
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 818
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 838
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 861
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 882
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 903
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 927
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 997
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1281
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1309
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1340
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1368
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1396
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1427
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1455
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1483
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1514
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1542
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1570
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1601
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1629
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1657
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1688
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1716
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1744
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1775
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1803
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1831
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1862
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1890
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1918
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1949
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 1981
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 2013
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 2051
+          },
+          {
+            "file": "src/buf/buf_impl.rs",
+            "kind": "expression-expansion",
+            "line": 2157
+          },
+          {
+            "file": "src/buf/buf_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1024
+          },
+          {
+            "file": "src/buf/buf_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1112
+          },
+          {
+            "file": "src/buf/chain.rs",
+            "kind": "expression-expansion",
+            "line": 179
+          },
+          {
+            "file": "src/buf/limit.rs",
+            "kind": "expression-expansion",
+            "line": 71
+          },
+          {
+            "file": "src/buf/take.rs",
+            "kind": "expression-expansion",
+            "line": 146
+          },
+          {
+            "file": "src/buf/take.rs",
+            "kind": "expression-expansion",
+            "line": 152
+          },
+          {
+            "file": "src/buf/uninit_slice.rs",
+            "kind": "expression-expansion",
+            "line": 108
+          },
+          {
+            "file": "src/buf/uninit_slice.rs",
+            "kind": "expression-expansion",
+            "line": 137
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 193
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 426
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 432
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 481
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 533
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 653
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 696
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 973
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1151
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1193
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1211
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1239
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1270
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1283
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1302
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1508
+          },
+          {
+            "file": "src/bytes.rs",
+            "kind": "expression-expansion",
+            "line": 1524
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 271
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 301
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 334
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 413
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 550
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 688
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 695
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 705
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 725
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 773
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 809
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 899
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1028
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1112
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1113
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1144
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1168
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1175
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1176
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1251
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1337
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1863
+          },
+          {
+            "file": "src/bytes_mut.rs",
+            "kind": "expression-expansion",
+            "line": 1878
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 14
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 18
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 20
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 22
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 24
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 26
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 29
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 31
+          },
+          {
+            "file": "src/fmt/debug.rs",
+            "kind": "expression-expansion",
+            "line": 34
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "expression-expansion",
+            "line": 9
+          },
+          {
+            "file": "src/fmt/hex.rs",
+            "kind": "expression-expansion",
+            "line": 18
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 153
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 159
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 185
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 207
+          },
+          {
+            "file": "src/lib.rs",
+            "kind": "expression-expansion",
+            "line": 215
+          }
+        ],
+        "missingModules": [],
+        "limitations": [
+          "Explicit free-function paths, monomorphic inherent source candidates and bare generic-struct paths to unique concrete-specialization source candidates. Lifetime-only struct/enum owners additionally allow bare paths to unique receiver-free inherent declarations when unbounded impl lifetime names map one-to-one to owner arguments; unsupported siblings and enum variant names block selection. Specializations require named type arguments and no impl generics/where clause; competing unsupported inherent declarations block the candidate. No type/argument inference, visibility checking, Self/type-alias resolution, explicit generic call arguments, mixed lifetime/type parameters, concrete or bounded lifetime specializations, const/bounded/defaulted generic owners, receiver types beyond explicit parameters, adjacent-before-let bindings and trait objects, general macro expansion, build-script execution or external dependency source loading.",
+          "Cargo metadata reads captured manifests with zero-byte source inventory stubs, offline/no-deps/locked; the syntax parser reads captured source text only. Active cfg derives from rustc target cfg plus the declared local feature profile; custom build-script cfg stays unknown.",
+          "Call inventory covers parsed function/method bodies plus trait default method bodies, each once per source declaration; declarations without a body add no calls and calls depending on the concrete Self remain unresolved. A local macro_rules! invocation is traversed as its source argument expression only when the binding actually visible at the callsite (including a preceding block-local definition) is defined exactly once across the selected crates, is textually visible without an import or glob that could bind the same name, and every rule matches a single $x:expr used exactly once outside repetition and nested macro arguments under the active cfg; such calls carry macroEvidence. A zero-argument local macro used as the whole body of an impl may supply generated methods, subject to the combined cfg on the outer impl, macro invocation, generated methods and their bodies; removed calls are omitted and unknown conditions do not establish targets. Calls in these templates carry macroTemplate with the captured macro-name definition and distinct invocation/outer-impl origins, retaining printable original self types and optional trait paths. One physical call represents all contributing expansions; directCaller uses a template-qualified macro-generated-method identity, or local-function for a nested function. Divergent targets remain unresolved with rust-context-dependent, retaining provenance but no per-expansion targets. Other macros stay opaque records. Missing/excluded modules, conditional scopes and unsupported local items limit target/caller completeness."
+        ]
+      },
+      "resolution": {
+        "digest": "532ae2a4ab562869543c4c183c67d904b8628cf6221f4bde2a195e292b94c7f8",
+        "fresh": true,
+        "options": {
+          "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+          "cfg": [
+            "debug_assertions",
+            "panic=\"unwind\"",
+            "target_abi=\"\"",
+            "target_arch=\"aarch64\"",
+            "target_endian=\"little\"",
+            "target_env=\"\"",
+            "target_family=\"unix\"",
+            "target_feature=\"aes\"",
+            "target_feature=\"crc\"",
+            "target_feature=\"dit\"",
+            "target_feature=\"dotprod\"",
+            "target_feature=\"dpb\"",
+            "target_feature=\"dpb2\"",
+            "target_feature=\"fcma\"",
+            "target_feature=\"fhm\"",
+            "target_feature=\"flagm\"",
+            "target_feature=\"fp16\"",
+            "target_feature=\"frintts\"",
+            "target_feature=\"jsconv\"",
+            "target_feature=\"lor\"",
+            "target_feature=\"lse\"",
+            "target_feature=\"neon\"",
+            "target_feature=\"paca\"",
+            "target_feature=\"pacg\"",
+            "target_feature=\"pan\"",
+            "target_feature=\"pmuv3\"",
+            "target_feature=\"ras\"",
+            "target_feature=\"rcpc\"",
+            "target_feature=\"rcpc2\"",
+            "target_feature=\"rdm\"",
+            "target_feature=\"sb\"",
+            "target_feature=\"sha2\"",
+            "target_feature=\"sha3\"",
+            "target_feature=\"ssbs\"",
+            "target_feature=\"vh\"",
+            "target_has_atomic=\"128\"",
+            "target_has_atomic=\"16\"",
+            "target_has_atomic=\"32\"",
+            "target_has_atomic=\"64\"",
+            "target_has_atomic=\"8\"",
+            "target_has_atomic=\"ptr\"",
+            "target_os=\"macos\"",
+            "target_pointer_width=\"64\"",
+            "target_vendor=\"apple\"",
+            "unix"
+          ],
+          "crates": [
+            {
+              "deps": {},
+              "edition": "2021",
+              "features": [
+                "default",
+                "std"
+              ],
+              "id": "Cargo.toml#lib:bytes",
+              "name": "bytes",
+              "package": "bytes",
+              "root": "src/lib.rs",
+              "targetKinds": [
+                "lib"
+              ]
+            }
+          ],
+          "helperHost": "aarch64-apple-darwin",
+          "tests": false,
+          "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)"
+        },
+        "inputs": {
+          "total": 1,
+          "included": 1,
+          "omitted": 0,
+          "limit": 40,
+          "items": [
+            {
+              "file": "<root>/Cargo.toml",
+              "sha256": "4fc0d14d77a47a1fac1fbb445890db63e67360535c940dd47ffd69badc30cdc6"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "comparison": {
+    "sourceText": "reading-signals-only",
+    "bindingAttribution": "source-import-model-only",
+    "reasons": [],
+    "resolutionChanges": {
+      "optionChanges": {
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      },
+      "inputChanges": {
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      }
+    }
+  },
+  "fileChanges": {
+    "total": 1,
+    "included": 1,
+    "omitted": 0,
+    "limit": 40,
+    "items": [
+      {
+        "file": "src/buf/buf_impl.rs",
+        "status": "text-changed",
+        "base": {
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "sha256": "f1095872bba7c9d5170207750f4ebe4fa61c4e35a282569491c2ee8ea2dc6714",
+          "status": "valid"
+        },
+        "head": {
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "sha256": "36323d85a72c39a6aaa1827b316d4288e058b5b203c489abc36b1c86d13d6812",
+          "status": "valid"
+        }
+      }
+    ]
+  },
+  "definitionCoverage": {
+    "base": "available",
+    "head": "available"
+  },
+  "unavailableDefinitions": {
+    "base": {
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    },
+    "head": {
+      "total": 0,
+      "included": 0,
+      "omitted": 0,
+      "limit": 40,
+      "items": []
+    }
+  },
+  "outgoingImports": {
+    "role": "entry-file-wide source reading evidence, not selected-definition calls or execution timing",
+    "base": {
+      "side": "base",
+      "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+      "originStatus": "valid",
+      "total": 13,
+      "included": 13,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 30,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 11,
+            "names": [
+              "Box"
+            ],
+            "resolved": false,
+            "specifier": "alloc::boxed::Box"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 31,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 3,
+            "names": [
+              "Chain"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::Chain",
+            "to": "src/buf/chain.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/chain.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 32,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 9,
+            "names": [
+              "IoSlice"
+            ],
+            "resolved": false,
+            "specifier": "std::io::IoSlice"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 33,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 2,
+            "names": [
+              "Reader"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::Reader",
+            "to": "src/buf/reader.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/reader.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 34,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 3,
+            "names": [
+              "Take"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::Take",
+            "to": "src/buf/take.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/take.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 35,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 6,
+            "names": [
+              "TryGetError"
+            ],
+            "resolved": true,
+            "specifier": "crate::TryGetError",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 36,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 5,
+            "names": [
+              "min_u64_usize"
+            ],
+            "resolved": true,
+            "specifier": "crate::min_u64_usize",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 37,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 6,
+            "names": [
+              "panic_advance"
+            ],
+            "resolved": true,
+            "specifier": "crate::panic_advance",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 38,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 6,
+            "names": [
+              "panic_does_not_fit"
+            ],
+            "resolved": true,
+            "specifier": "crate::panic_does_not_fit",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 39,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 2,
+            "names": [
+              "reader"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::reader",
+            "to": "src/buf/reader.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/reader.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 40,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 5,
+            "names": [
+              "saturating_sub_usize_u64"
+            ],
+            "resolved": true,
+            "specifier": "crate::saturating_sub_usize_u64",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 41,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 3,
+            "names": [
+              "take"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::take",
+            "to": "src/buf/take.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/take.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "factIndex": 154,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 2364,
+            "names": [
+              "BufMut"
+            ],
+            "resolved": false,
+            "specifier": "super::BufMut"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        }
+      ]
+    },
+    "head": {
+      "side": "head",
+      "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+      "originStatus": "valid",
+      "total": 13,
+      "included": 13,
+      "omitted": 0,
+      "limit": 40,
+      "items": [
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 30,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 11,
+            "names": [
+              "Box"
+            ],
+            "resolved": false,
+            "specifier": "alloc::boxed::Box"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 31,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 3,
+            "names": [
+              "Chain"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::Chain",
+            "to": "src/buf/chain.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/chain.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 32,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 9,
+            "names": [
+              "IoSlice"
+            ],
+            "resolved": false,
+            "specifier": "std::io::IoSlice"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 33,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 2,
+            "names": [
+              "Reader"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::Reader",
+            "to": "src/buf/reader.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/reader.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 34,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 3,
+            "names": [
+              "Take"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::Take",
+            "to": "src/buf/take.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/take.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 35,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 6,
+            "names": [
+              "TryGetError"
+            ],
+            "resolved": true,
+            "specifier": "crate::TryGetError",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 36,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 5,
+            "names": [
+              "min_u64_usize"
+            ],
+            "resolved": true,
+            "specifier": "crate::min_u64_usize",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 37,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 6,
+            "names": [
+              "panic_advance"
+            ],
+            "resolved": true,
+            "specifier": "crate::panic_advance",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 38,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 6,
+            "names": [
+              "panic_does_not_fit"
+            ],
+            "resolved": true,
+            "specifier": "crate::panic_does_not_fit",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 39,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 2,
+            "names": [
+              "reader"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::reader",
+            "to": "src/buf/reader.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/reader.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 40,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 5,
+            "names": [
+              "saturating_sub_usize_u64"
+            ],
+            "resolved": true,
+            "specifier": "crate::saturating_sub_usize_u64",
+            "to": "src/lib.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/lib.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 41,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 3,
+            "names": [
+              "take"
+            ],
+            "resolved": true,
+            "specifier": "crate::buf::take",
+            "to": "src/buf/take.rs"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "valid",
+            "location": {
+              "file": "src/buf/take.rs",
+              "line": 1
+            }
+          }
+        },
+        {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "factIndex": 154,
+          "fact": {
+            "from": "src/buf/buf_impl.rs",
+            "kind": "static",
+            "line": 2364,
+            "names": [
+              "BufMut"
+            ],
+            "resolved": false,
+            "specifier": "super::BufMut"
+          },
+          "originStatus": "valid",
+          "bindingAttribution": "source-import-model-only",
+          "targetNavigation": {
+            "status": "external-or-unresolved",
+            "location": null,
+            "reason": "external-or-unresolved-import-destination"
+          }
+        }
+      ]
+    }
+  },
+  "moduleReading": {
+    "role": "dependency reading locations, separate from calls; not proof of execution or affected behavior",
+    "base": {
+      "side": "base",
+      "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+      "entryStatus": "valid",
+      "resolvedReferences": {
+        "total": 1,
+        "included": 1,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "side": "base",
+            "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+            "factIndex": 0,
+            "fact": {
+              "from": "src/buf/mod.rs",
+              "kind": "static",
+              "line": 17,
+              "resolved": true,
+              "specifier": "mod buf_impl",
+              "to": "src/buf/buf_impl.rs"
+            },
+            "bindingAttribution": "source-import-model-only",
+            "originStatus": "valid",
+            "entryStatus": "valid",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "src/buf/mod.rs",
+                "line": 17
+              }
+            }
+          }
+        ]
+      },
+      "unresolvedImports": 96,
+      "unknown": "Unresolved import destinations cannot be attributed to this entry. The count covers all captured sources, not potential consumers of this file."
+    },
+    "head": {
+      "side": "head",
+      "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+      "entryStatus": "valid",
+      "resolvedReferences": {
+        "total": 1,
+        "included": 1,
+        "omitted": 0,
+        "limit": 40,
+        "items": [
+          {
+            "side": "head",
+            "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+            "factIndex": 0,
+            "fact": {
+              "from": "src/buf/mod.rs",
+              "kind": "static",
+              "line": 17,
+              "resolved": true,
+              "specifier": "mod buf_impl",
+              "to": "src/buf/buf_impl.rs"
+            },
+            "bindingAttribution": "source-import-model-only",
+            "originStatus": "valid",
+            "entryStatus": "valid",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "src/buf/mod.rs",
+                "line": 17
+              }
+            }
+          }
+        ]
+      },
+      "unresolvedImports": 96,
+      "unknown": "Unresolved import destinations cannot be attributed to this entry. The count covers all captured sources, not potential consumers of this file."
+    },
+    "factRole": "Original records from this side/snapshot imports array. Preserve kind, typeOnly and lazy; absent typeOnly/lazy mean false. Use navigation.location only when valid."
+  },
+  "changedDefinitions": {
+    "total": 2,
+    "included": 2,
+    "omitted": 0,
+    "limit": 40,
+    "items": [
+      {
+        "pairing": "unique-exact-source-slot",
+        "base": {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "definition": {
+            "file": "src/buf/buf_impl.rs",
+            "name": "try_get_int",
+            "qualname": "buf::buf_impl::Buf::try_get_int",
+            "kind": "RustItemFn",
+            "line": 2086,
+            "column": 5,
+            "endLine": 2088,
+            "endColumn": 6,
+            "sourceRange": {
+              "column": 5,
+              "endColumn": 6,
+              "endLine": 2088,
+              "line": 2058,
+              "sha256": "712cc93c9413e3e868599230152c1038dc0ae0f87e6f154a76f0ca9818baed41"
+            },
+            "textSha256": "712cc93c9413e3e868599230152c1038dc0ae0f87e6f154a76f0ca9818baed41"
+          },
+          "knownReferences": {
+            "coverage": "available",
+            "total": 2,
+            "included": 2,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "base",
+                "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+                "factIndex": 71,
+                "fact": {
+                  "column": 13,
+                  "defaultMethod": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2156,
+                    "name": "try_get_int_ne",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_ne",
+                    "trait": "Buf"
+                  },
+                  "directCaller": {
+                    "column": 5,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "trait-default-method",
+                    "line": 2156,
+                    "name": "try_get_int_ne",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_ne"
+                  },
+                  "endColumn": 37,
+                  "endLine": 2158,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2158,
+                  "resolution": "rust-trait-method-candidate",
+                  "target": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2086,
+                    "name": "try_get_int"
+                  }
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2158,
+                    "column": 13,
+                    "endLine": 2158,
+                    "endColumn": 37
+                  }
+                }
+              },
+              {
+                "side": "base",
+                "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+                "factIndex": 179,
+                "fact": {
+                  "column": 13,
+                  "directCaller": {
+                    "column": 9,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "macro-generated-method",
+                    "line": 2835,
+                    "name": "try_get_int",
+                    "qualname": "buf::buf_impl::deref_forward_buf!::try_get_int"
+                  },
+                  "endColumn": 41,
+                  "endLine": 2836,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2836,
+                  "macroTemplate": {
+                    "definition": {
+                      "column": 14,
+                      "file": "src/buf/buf_impl.rs",
+                      "line": 2461,
+                      "name": "deref_forward_buf"
+                    },
+                    "expansions": [
+                      {
+                        "column": 5,
+                        "file": "src/buf/buf_impl.rs",
+                        "implColumn": 1,
+                        "implLine": 2886,
+                        "line": 2887,
+                        "selfType": "& mut T",
+                        "trait": "Buf"
+                      },
+                      {
+                        "column": 5,
+                        "file": "src/buf/buf_impl.rs",
+                        "implColumn": 1,
+                        "implLine": 2890,
+                        "line": 2891,
+                        "selfType": "Box < T >",
+                        "trait": "Buf"
+                      }
+                    ]
+                  },
+                  "resolution": "rust-trait-method-candidate",
+                  "target": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2086,
+                    "name": "try_get_int"
+                  }
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2836,
+                    "column": 13,
+                    "endLine": 2836,
+                    "endColumn": 41
+                  }
+                }
+              }
+            ]
+          },
+          "traitCandidates": {
+            "coverage": "not-applicable",
+            "reason": "definition-not-a-captured-trait-implementation",
+            "runtimeTarget": "not-determined",
+            "total": 0,
+            "included": 0,
+            "omitted": 0,
+            "limit": 40,
+            "items": []
+          },
+          "unresolvedWithinSourceRange": {
+            "coverage": "available",
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "base",
+                "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+                "factIndex": 67,
+                "fact": {
+                  "column": 9,
+                  "defaultMethod": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2086,
+                    "name": "try_get_int",
+                    "qualname": "buf::buf_impl::Buf::try_get_int",
+                    "trait": "Buf"
+                  },
+                  "directCaller": {
+                    "column": 5,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "trait-default-method",
+                    "line": 2086,
+                    "name": "try_get_int",
+                    "qualname": "buf::buf_impl::Buf::try_get_int"
+                  },
+                  "endColumn": 51,
+                  "endLine": 2087,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2087,
+                  "reason": "rust-macro-not-expanded",
+                  "resolution": "unresolved"
+                }
+              }
+            ],
+            "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+          }
+        },
+        "head": {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "definition": {
+            "file": "src/buf/buf_impl.rs",
+            "name": "try_get_int",
+            "qualname": "buf::buf_impl::Buf::try_get_int",
+            "kind": "RustItemFn",
+            "line": 2086,
+            "column": 5,
+            "endLine": 2088,
+            "endColumn": 6,
+            "sourceRange": {
+              "column": 5,
+              "endColumn": 6,
+              "endLine": 2088,
+              "line": 2058,
+              "sha256": "001bfc3d87f7575c0c450e76b4493478d9da80c7b91c37a301629e62cd7222d6"
+            },
+            "textSha256": "001bfc3d87f7575c0c450e76b4493478d9da80c7b91c37a301629e62cd7222d6"
+          },
+          "knownReferences": {
+            "coverage": "available",
+            "total": 2,
+            "included": 2,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "head",
+                "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+                "factIndex": 75,
+                "fact": {
+                  "column": 13,
+                  "defaultMethod": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2156,
+                    "name": "try_get_int_ne",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_ne",
+                    "trait": "Buf"
+                  },
+                  "directCaller": {
+                    "column": 5,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "trait-default-method",
+                    "line": 2156,
+                    "name": "try_get_int_ne",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_ne"
+                  },
+                  "endColumn": 37,
+                  "endLine": 2158,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2158,
+                  "resolution": "rust-trait-method-candidate",
+                  "target": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2086,
+                    "name": "try_get_int"
+                  }
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2158,
+                    "column": 13,
+                    "endLine": 2158,
+                    "endColumn": 37
+                  }
+                }
+              },
+              {
+                "side": "head",
+                "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+                "factIndex": 183,
+                "fact": {
+                  "column": 13,
+                  "directCaller": {
+                    "column": 9,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "macro-generated-method",
+                    "line": 2835,
+                    "name": "try_get_int",
+                    "qualname": "buf::buf_impl::deref_forward_buf!::try_get_int"
+                  },
+                  "endColumn": 41,
+                  "endLine": 2836,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2836,
+                  "macroTemplate": {
+                    "definition": {
+                      "column": 14,
+                      "file": "src/buf/buf_impl.rs",
+                      "line": 2461,
+                      "name": "deref_forward_buf"
+                    },
+                    "expansions": [
+                      {
+                        "column": 5,
+                        "file": "src/buf/buf_impl.rs",
+                        "implColumn": 1,
+                        "implLine": 2886,
+                        "line": 2887,
+                        "selfType": "& mut T",
+                        "trait": "Buf"
+                      },
+                      {
+                        "column": 5,
+                        "file": "src/buf/buf_impl.rs",
+                        "implColumn": 1,
+                        "implLine": 2890,
+                        "line": 2891,
+                        "selfType": "Box < T >",
+                        "trait": "Buf"
+                      }
+                    ]
+                  },
+                  "resolution": "rust-trait-method-candidate",
+                  "target": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2086,
+                    "name": "try_get_int"
+                  }
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2836,
+                    "column": 13,
+                    "endLine": 2836,
+                    "endColumn": 41
+                  }
+                }
+              }
+            ]
+          },
+          "traitCandidates": {
+            "coverage": "not-applicable",
+            "reason": "definition-not-a-captured-trait-implementation",
+            "runtimeTarget": "not-determined",
+            "total": 0,
+            "included": 0,
+            "omitted": 0,
+            "limit": 40,
+            "items": []
+          },
+          "unresolvedWithinSourceRange": {
+            "coverage": "available",
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "head",
+                "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+                "factIndex": 69,
+                "fact": {
+                  "column": 9,
+                  "defaultMethod": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2086,
+                    "name": "try_get_int",
+                    "qualname": "buf::buf_impl::Buf::try_get_int",
+                    "trait": "Buf"
+                  },
+                  "directCaller": {
+                    "column": 5,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "trait-default-method",
+                    "line": 2086,
+                    "name": "try_get_int",
+                    "qualname": "buf::buf_impl::Buf::try_get_int"
+                  },
+                  "endColumn": 60,
+                  "endLine": 2087,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2087,
+                  "reason": "no-local-function-binding",
+                  "resolution": "unresolved"
+                }
+              }
+            ],
+            "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+          }
+        }
+      },
+      {
+        "pairing": "unique-exact-source-slot",
+        "base": {
+          "side": "base",
+          "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+          "definition": {
+            "file": "src/buf/buf_impl.rs",
+            "name": "try_get_int_le",
+            "qualname": "buf::buf_impl::Buf::try_get_int_le",
+            "kind": "RustItemFn",
+            "line": 2118,
+            "column": 5,
+            "endLine": 2120,
+            "endColumn": 6,
+            "sourceRange": {
+              "column": 5,
+              "endColumn": 6,
+              "endLine": 2120,
+              "line": 2090,
+              "sha256": "bd14e171e41b4a21a2991f94350ee947b54d1890c82957fea26bebc082b62b8c"
+            },
+            "textSha256": "bd14e171e41b4a21a2991f94350ee947b54d1890c82957fea26bebc082b62b8c"
+          },
+          "knownReferences": {
+            "coverage": "available",
+            "total": 2,
+            "included": 2,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "base",
+                "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+                "factIndex": 72,
+                "fact": {
+                  "column": 13,
+                  "defaultMethod": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2156,
+                    "name": "try_get_int_ne",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_ne",
+                    "trait": "Buf"
+                  },
+                  "directCaller": {
+                    "column": 5,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "trait-default-method",
+                    "line": 2156,
+                    "name": "try_get_int_ne",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_ne"
+                  },
+                  "endColumn": 40,
+                  "endLine": 2160,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2160,
+                  "resolution": "rust-trait-method-candidate",
+                  "target": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2118,
+                    "name": "try_get_int_le"
+                  }
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2160,
+                    "column": 13,
+                    "endLine": 2160,
+                    "endColumn": 40
+                  }
+                }
+              },
+              {
+                "side": "base",
+                "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+                "factIndex": 180,
+                "fact": {
+                  "column": 13,
+                  "directCaller": {
+                    "column": 9,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "macro-generated-method",
+                    "line": 2840,
+                    "name": "try_get_int_le",
+                    "qualname": "buf::buf_impl::deref_forward_buf!::try_get_int_le"
+                  },
+                  "endColumn": 44,
+                  "endLine": 2841,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2841,
+                  "macroTemplate": {
+                    "definition": {
+                      "column": 14,
+                      "file": "src/buf/buf_impl.rs",
+                      "line": 2461,
+                      "name": "deref_forward_buf"
+                    },
+                    "expansions": [
+                      {
+                        "column": 5,
+                        "file": "src/buf/buf_impl.rs",
+                        "implColumn": 1,
+                        "implLine": 2886,
+                        "line": 2887,
+                        "selfType": "& mut T",
+                        "trait": "Buf"
+                      },
+                      {
+                        "column": 5,
+                        "file": "src/buf/buf_impl.rs",
+                        "implColumn": 1,
+                        "implLine": 2890,
+                        "line": 2891,
+                        "selfType": "Box < T >",
+                        "trait": "Buf"
+                      }
+                    ]
+                  },
+                  "resolution": "rust-trait-method-candidate",
+                  "target": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2118,
+                    "name": "try_get_int_le"
+                  }
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2841,
+                    "column": 13,
+                    "endLine": 2841,
+                    "endColumn": 44
+                  }
+                }
+              }
+            ]
+          },
+          "traitCandidates": {
+            "coverage": "not-applicable",
+            "reason": "definition-not-a-captured-trait-implementation",
+            "runtimeTarget": "not-determined",
+            "total": 0,
+            "included": 0,
+            "omitted": 0,
+            "limit": 40,
+            "items": []
+          },
+          "unresolvedWithinSourceRange": {
+            "coverage": "available",
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "base",
+                "snapshotId": "c4e0889a159786851a5b85f49c04f34eb4d11ba2a600a437c92c0812ff0e3e0c",
+                "factIndex": 68,
+                "fact": {
+                  "column": 9,
+                  "defaultMethod": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2118,
+                    "name": "try_get_int_le",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_le",
+                    "trait": "Buf"
+                  },
+                  "directCaller": {
+                    "column": 5,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "trait-default-method",
+                    "line": 2118,
+                    "name": "try_get_int_le",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_le"
+                  },
+                  "endColumn": 51,
+                  "endLine": 2119,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2119,
+                  "reason": "rust-macro-not-expanded",
+                  "resolution": "unresolved"
+                }
+              }
+            ],
+            "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+          }
+        },
+        "head": {
+          "side": "head",
+          "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+          "definition": {
+            "file": "src/buf/buf_impl.rs",
+            "name": "try_get_int_le",
+            "qualname": "buf::buf_impl::Buf::try_get_int_le",
+            "kind": "RustItemFn",
+            "line": 2118,
+            "column": 5,
+            "endLine": 2120,
+            "endColumn": 6,
+            "sourceRange": {
+              "column": 5,
+              "endColumn": 6,
+              "endLine": 2120,
+              "line": 2090,
+              "sha256": "a11c567a1c56509e2119741d22343c78244d96af7e6a90c602e2200efd2c606b"
+            },
+            "textSha256": "a11c567a1c56509e2119741d22343c78244d96af7e6a90c602e2200efd2c606b"
+          },
+          "knownReferences": {
+            "coverage": "available",
+            "total": 2,
+            "included": 2,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "head",
+                "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+                "factIndex": 76,
+                "fact": {
+                  "column": 13,
+                  "defaultMethod": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2156,
+                    "name": "try_get_int_ne",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_ne",
+                    "trait": "Buf"
+                  },
+                  "directCaller": {
+                    "column": 5,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "trait-default-method",
+                    "line": 2156,
+                    "name": "try_get_int_ne",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_ne"
+                  },
+                  "endColumn": 40,
+                  "endLine": 2160,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2160,
+                  "resolution": "rust-trait-method-candidate",
+                  "target": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2118,
+                    "name": "try_get_int_le"
+                  }
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2160,
+                    "column": 13,
+                    "endLine": 2160,
+                    "endColumn": 40
+                  }
+                }
+              },
+              {
+                "side": "head",
+                "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+                "factIndex": 184,
+                "fact": {
+                  "column": 13,
+                  "directCaller": {
+                    "column": 9,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "macro-generated-method",
+                    "line": 2840,
+                    "name": "try_get_int_le",
+                    "qualname": "buf::buf_impl::deref_forward_buf!::try_get_int_le"
+                  },
+                  "endColumn": 44,
+                  "endLine": 2841,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2841,
+                  "macroTemplate": {
+                    "definition": {
+                      "column": 14,
+                      "file": "src/buf/buf_impl.rs",
+                      "line": 2461,
+                      "name": "deref_forward_buf"
+                    },
+                    "expansions": [
+                      {
+                        "column": 5,
+                        "file": "src/buf/buf_impl.rs",
+                        "implColumn": 1,
+                        "implLine": 2886,
+                        "line": 2887,
+                        "selfType": "& mut T",
+                        "trait": "Buf"
+                      },
+                      {
+                        "column": 5,
+                        "file": "src/buf/buf_impl.rs",
+                        "implColumn": 1,
+                        "implLine": 2890,
+                        "line": 2891,
+                        "selfType": "Box < T >",
+                        "trait": "Buf"
+                      }
+                    ]
+                  },
+                  "resolution": "rust-trait-method-candidate",
+                  "target": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2118,
+                    "name": "try_get_int_le"
+                  }
+                },
+                "bindingAttribution": "source-import-model-only",
+                "navigation": {
+                  "status": "valid",
+                  "location": {
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2841,
+                    "column": 13,
+                    "endLine": 2841,
+                    "endColumn": 44
+                  }
+                }
+              }
+            ]
+          },
+          "traitCandidates": {
+            "coverage": "not-applicable",
+            "reason": "definition-not-a-captured-trait-implementation",
+            "runtimeTarget": "not-determined",
+            "total": 0,
+            "included": 0,
+            "omitted": 0,
+            "limit": 40,
+            "items": []
+          },
+          "unresolvedWithinSourceRange": {
+            "coverage": "available",
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "side": "head",
+                "snapshotId": "62b1fd3f3b12048d8bb4af7abe1f2c27c324dff84d053b811abd8ee172322b81",
+                "factIndex": 72,
+                "fact": {
+                  "column": 9,
+                  "defaultMethod": {
+                    "column": 8,
+                    "file": "src/buf/buf_impl.rs",
+                    "line": 2118,
+                    "name": "try_get_int_le",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_le",
+                    "trait": "Buf"
+                  },
+                  "directCaller": {
+                    "column": 5,
+                    "file": "src/buf/buf_impl.rs",
+                    "kind": "trait-default-method",
+                    "line": 2118,
+                    "name": "try_get_int_le",
+                    "qualname": "buf::buf_impl::Buf::try_get_int_le"
+                  },
+                  "endColumn": 63,
+                  "endLine": 2119,
+                  "file": "src/buf/buf_impl.rs",
+                  "line": 2119,
+                  "reason": "no-local-function-binding",
+                  "resolution": "unresolved"
+                }
+              }
+            ],
+            "containment": "physical-source-range-including-nested-definitions-and-owned-headers"
+          }
+        }
+      }
+    ]
+  },
+  "positionOnlyDefinitions": {
+    "total": 0,
+    "included": 0,
+    "omitted": 0,
+    "limit": 40,
+    "items": []
+  },
+  "unpairedDefinitions": {
+    "total": 0,
+    "included": 0,
+    "omitted": 0,
+    "limit": 40,
+    "items": []
+  },
+  "limitations": [
+    "File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.",
+    "Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.",
+    "Known references are conservative source callsites, not runtime callers or complete/transitive impact. Dynamic dispatch, unsupported member calls, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets ordinary undecorated module definitions or direct from-import aliases; v2 additionally follows one unique unconditional explicit reexport. Longer/rebound/conditional chains, decorated/method targets and runtime module initialization remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; v3 additionally distinguishes different fixed arities while same-arity/varargs competition, member dispatch and inherited owners remain unresolved. Go v1 binds captured free functions; v2 additionally follows compiler-selected concrete methods, including promotion, expressions and generic instances; v3 additionally binds interface method declarations captured in source as declaration anchors, while runtime interface dispatch and function variables remain unknown under incomplete external typing. Current Go change orientation additionally lists interface-mediated candidate callsites when captured go/types method sets prove that the changed concrete method is in an interface implementation; candidates are not definite runtime callers. Captures without interface implementation edges report interfaceCandidates as unavailable rather than zero. Argument type applicability and complete compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.",
+    "Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.",
+    "Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.",
+    "Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits."
+  ],
+  "nextSteps": [
+    "Read the changed source and the known callsite in each named side; inspect unresolved calls, adapter/configuration inputs and omitted regions relevant to the question.",
+    "For Go concrete methods, compare knownReferences (direct calls) with interfaceCandidates (interface-mediated possibilities). A candidate names the interface method declaration, the satisfying type and method, and any other captured implementations; the runtime receiver is not determined.",
+    "Explain the behavior from source and appropriate project checks. Keep inference and unknowns explicit; this orientation is not a completed change review."
+  ]
+}

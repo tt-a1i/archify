@@ -48,8 +48,15 @@
         "line": 2835,
         "kind": "macro-generated-method"
       },
+      "macroTemplate": {
+        "definition": {"file": "src/buf/buf_impl.rs", "name": "deref_forward_buf", "line": 2461, "column": 14},
+        "expansions": [
+          {"file": "src/buf/buf_impl.rs", "line": 2887, "column": 5, "implLine": 2886, "implColumn": 1, "selfType": "&mut T", "trait": "Buf"},
+          {"file": "src/buf/buf_impl.rs", "line": 2891, "column": 5, "implLine": 2890, "implColumn": 1, "selfType": "Box<T>", "trait": "Buf"}
+        ]
+      },
       "runtime": "not-determined",
-      "context": "macro-generated forwarding impl for &mut T and Box<T>; the concrete T is unknown"
+      "context": "one template call, two captured impl expansions for &mut T and Box<T>; the concrete T is unknown"
     }
   ],
   "unknowns": [

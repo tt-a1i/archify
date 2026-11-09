@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "status": "ok",
+  "command": "task",
+  "action": "change-question",
+  "stage": "orientation-only",
+  "evidence": "ready",
+  "out": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/revision-v12/final/zip-controls/queries/divergent-template-off-pair.json",
+  "workflow": "docs/FUNCTION-ANALYSIS.md",
+  "snapshots": {
+    "base": "080356e14c1a4a8b7a6979e929b42a180fae600dc480de17b0f20423b0344c52",
+    "head": "d85e8f38fe1bd707fcafe9a2dafbb9498ef00aeb8653082d49b9cbfff04b24c7"
+  },
+  "definitionCoverage": {
+    "base": "available",
+    "head": "available"
+  },
+  "reasons": [],
+  "meaning": "Source orientation status; partial means capture/configuration limits, not a finding gate failure."
+}

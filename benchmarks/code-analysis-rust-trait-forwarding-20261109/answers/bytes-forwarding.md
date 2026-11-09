@@ -1,7 +1,9 @@
 # Frozen source answer: bytes default method and `&mut B` forwarding (2026-11-09)
 
-Frozen from source before any candidate change on this branch. The pin is
-`a840c2d07`; the product change starts from that commit.
+The original answer was read at `a840c2d07`. The `70750e6ba` review exposed
+that its caller key did not require template identity or both expansion origins;
+those source requirements are added below for the v12 revision. Correcting an
+answer key is not removal of a product wrong-target result.
 
 - Repository: `tokio-rs/bytes`
 - Base: `d5c8ad3227afe459c09f1d0d85455abf00f0381a`
@@ -31,7 +33,7 @@ Frozen from source before any candidate change on this branch. The pin is
 
 ## B. Call inside the `&mut B` forwarding macro
 
-- Call expression: `(**self).try_get_int(nbytes)` at `2836:13-2836:49`.
+- Call expression: `(**self).try_get_int(nbytes)` at `2836:13-2836:41`.
   The invocation expression starts at the receiver `(**self)`; the earlier
   batch's frozen column `26` pointed into the method identifier and is
   corrected here.
@@ -40,8 +42,10 @@ Frozen from source before any candidate change on this branch. The pin is
 - Invocations: `deref_forward_buf!()` is the whole body of
   `impl<T: Buf + ?Sized> Buf for &mut T` at `2886-2888` and of
   `impl<T: Buf + ?Sized> Buf for Box<T>` at `2890-2892`.
-- Direct caller: the generated `try_get_int` forwarding method for each of
-  those two impls, declared at macro source `2835:9`.
+- Direct caller: the `deref_forward_buf!::try_get_int` method template at
+  `2835:9`, not one uniquely selected impl. The macro name anchor is `2461:14`;
+  expansion anchors are `2887:5` (`&mut T`, outer impl `2886:1`) and `2891:5`
+  (`Box<T>`, outer impl `2890:1`). A deduplicated call must retain both origins.
 - Receiver type: `self` is `&mut Self`. For `Self = &mut T`, `*self` is
   `&mut T` and `**self` is `T`; for `Self = Box<T>`, `**self` is `T` through
   `Box`'s `Deref`. Both give `T: Buf + ?Sized`.

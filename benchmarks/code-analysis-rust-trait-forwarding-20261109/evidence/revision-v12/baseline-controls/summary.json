@@ -1,0 +1,182 @@
+{
+  "mode": "baseline",
+  "revision": "70750e6ba7831634e4388f13114c952ffd1690bc",
+  "productStatus": "",
+  "cli": "/private/tmp/archify-template-baseline-20261109/archify/bin/archify.mjs",
+  "startedAt": "2026-11-09T08:53:57.068680+00:00",
+  "oracle": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/answers/template-controls.json",
+  "oracleSha256": "099782063509e20dfb7a74f43ab818415abff393a80e58371ec4db3b99f868e3",
+  "inputSha256": {
+    "fixtures/cfg-template/base/Cargo.toml": "481225bd9e2a4ad4d8a48afff2c30bd57b5fdcb90bc180824b2f15ed0d45586b",
+    "fixtures/cfg-template/base/Cargo.lock": "e79f9f067fd9434327fbc23d135fad1f86055a2c36beb1c61e8e2f58fe79b83d",
+    "fixtures/cfg-template/base/src/lib.rs": "24ff5b5f67fc294c3272e10edb3880131f94239ae5c863a8a7dc2144717cda76",
+    "fixtures/cfg-template/head/Cargo.toml": "481225bd9e2a4ad4d8a48afff2c30bd57b5fdcb90bc180824b2f15ed0d45586b",
+    "fixtures/cfg-template/head/Cargo.lock": "e79f9f067fd9434327fbc23d135fad1f86055a2c36beb1c61e8e2f58fe79b83d",
+    "fixtures/cfg-template/head/src/lib.rs": "ee64b921a92239bcbe221fad4b098d70cded3b6797fbca56d6fba33638536969",
+    "fixtures/cfg-template/off.config.json": "647eff8c8c32c9f5d8d3ebee48de913058d6473793756ba5a7c04c386470e41f",
+    "fixtures/cfg-template/on.config.json": "3e85aef6d69f26b2bb33beaf7e15ff3568340434a166b9f797851532de1aa0dc",
+    "fixtures/divergent-template/base/Cargo.toml": "1cb34c43219416f6e35de0f15dd575be1743ab2052107d09b11a7522934aba8b",
+    "fixtures/divergent-template/base/Cargo.lock": "b8d59ef3d5c18d87161d5bf3a45396e964f2bb522083ca75d377cbfe1f3eb6eb",
+    "fixtures/divergent-template/base/src/lib.rs": "83b8d114215877b1b16b54aabd587bef04632f006c2b07ac390bb0c3493e87d0",
+    "fixtures/divergent-template/head/Cargo.toml": "1cb34c43219416f6e35de0f15dd575be1743ab2052107d09b11a7522934aba8b",
+    "fixtures/divergent-template/head/Cargo.lock": "b8d59ef3d5c18d87161d5bf3a45396e964f2bb522083ca75d377cbfe1f3eb6eb",
+    "fixtures/divergent-template/head/src/lib.rs": "850f4dd3287098d2bff51624e0c2cf33cf140c08a1ea3e5273f21d40db2efa8a",
+    "fixtures/divergent-template/off.config.json": "0a421166acc3b706959849ac7ddb49f801ff934c55fa81be7f0549d93c3d04e2",
+    "fixtures/divergent-template/on.config.json": "f933c664125402fa06ffd9302bd6cd528fea390ca9612ceae7ba8e653bae3163"
+  },
+  "callerQualnameFormat": "{macro}::{method}",
+  "compiles": [
+    {
+      "fixture": "cfg-template",
+      "profile": "off",
+      "side": "base",
+      "exitCode": 0
+    },
+    {
+      "fixture": "cfg-template",
+      "profile": "off",
+      "side": "head",
+      "exitCode": 0
+    },
+    {
+      "fixture": "cfg-template",
+      "profile": "on",
+      "side": "base",
+      "exitCode": 0
+    },
+    {
+      "fixture": "cfg-template",
+      "profile": "on",
+      "side": "head",
+      "exitCode": 0
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "off",
+      "side": "base",
+      "exitCode": 0
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "off",
+      "side": "head",
+      "exitCode": 0
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "on",
+      "side": "base",
+      "exitCode": 0
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "on",
+      "side": "head",
+      "exitCode": 0
+    }
+  ],
+  "results": [
+    {
+      "fixture": "cfg-template",
+      "profile": "off",
+      "checks": 86,
+      "passed": 46,
+      "failed": 40
+    },
+    {
+      "fixture": "cfg-template",
+      "profile": "on",
+      "checks": 206,
+      "passed": 90,
+      "failed": 116
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "off",
+      "checks": 36,
+      "passed": 26,
+      "failed": 10
+    },
+    {
+      "fixture": "divergent-template",
+      "profile": "on",
+      "checks": 36,
+      "passed": 26,
+      "failed": 10
+    }
+  ],
+  "environment": {
+    "cwd": "/private/tmp/archify-template-baseline-20261109",
+    "overrides": {
+      "ARCHIFY_CARGO": "/Users/tsk/.cargo/bin/cargo",
+      "ARCHIFY_RUSTC": "/Users/tsk/.cargo/bin/rustc",
+      "RUSTC": "/Users/tsk/.cargo/bin/rustc"
+    },
+    "removedVariableNames": [],
+    "node": "v22.23.3",
+    "cargo": "cargo 1.89.0 (c24e10642 2025-06-23)",
+    "rustc": "rustc 1.89.0 (29483883e 2025-08-04)",
+    "rustcCfg": [
+      "debug_assertions",
+      "panic=\"unwind\"",
+      "target_abi=\"\"",
+      "target_arch=\"aarch64\"",
+      "target_endian=\"little\"",
+      "target_env=\"\"",
+      "target_family=\"unix\"",
+      "target_feature=\"aes\"",
+      "target_feature=\"crc\"",
+      "target_feature=\"dit\"",
+      "target_feature=\"dotprod\"",
+      "target_feature=\"dpb\"",
+      "target_feature=\"dpb2\"",
+      "target_feature=\"fcma\"",
+      "target_feature=\"fhm\"",
+      "target_feature=\"flagm\"",
+      "target_feature=\"fp16\"",
+      "target_feature=\"frintts\"",
+      "target_feature=\"jsconv\"",
+      "target_feature=\"lor\"",
+      "target_feature=\"lse\"",
+      "target_feature=\"neon\"",
+      "target_feature=\"paca\"",
+      "target_feature=\"pacg\"",
+      "target_feature=\"pan\"",
+      "target_feature=\"pmuv3\"",
+      "target_feature=\"ras\"",
+      "target_feature=\"rcpc\"",
+      "target_feature=\"rcpc2\"",
+      "target_feature=\"rdm\"",
+      "target_feature=\"sb\"",
+      "target_feature=\"sha2\"",
+      "target_feature=\"sha3\"",
+      "target_feature=\"ssbs\"",
+      "target_feature=\"vh\"",
+      "target_has_atomic=\"128\"",
+      "target_has_atomic=\"16\"",
+      "target_has_atomic=\"32\"",
+      "target_has_atomic=\"64\"",
+      "target_has_atomic=\"8\"",
+      "target_has_atomic=\"ptr\"",
+      "target_os=\"macos\"",
+      "target_pointer_width=\"64\"",
+      "target_vendor=\"apple\"",
+      "unix"
+    ]
+  },
+  "acceptancePassed": false,
+  "baselineDefects": {
+    "disabledInvocationLeaksOnBothSides": true,
+    "divergentFirstCallerLosesSourcesInBothProfilesAndSides": true
+  },
+  "divergentTargetRemainsUnknown": true,
+  "captureChecksPassed": true,
+  "runPassed": true,
+  "findings": [
+    "Disabled invocation and unknown custom cfg must never become known references.",
+    "Baseline divergent target is already conservative; its first-expansion caller and missing source provenance are the defect, not a proven wrong target.",
+    "Candidate assertions require one unknown divergent fact, no known reference, template caller identity and both expansion sources. Candidate was not run by baseline mode."
+  ],
+  "artifacts": "Temporary Cargo targets and check captures removed; only source fixtures, raw task queries and logs retained.",
+  "finishedAt": "2026-11-09T08:54:26.176362+00:00"
+}

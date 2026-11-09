@@ -1,0 +1,1 @@
+/Users/tsk/.cargo/bin/cargo build --offline --locked --no-default-features --manifest-path /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/divergent-template/head/Cargo.toml --target-dir /private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-template-controls-d1xmbhv8/cargo/divergent-template-off-head
