@@ -116,12 +116,12 @@ test('call schema rejects unsupported targets/positions and retains empty histor
 });
 
 
-test('call schema validates Rust v13 closure and macro-template origins without rebinding historical callers', () => {
+test('call schema validates Rust v14 closure and macro-template origins without rebinding historical callers', () => {
   const template = ['macro_rules! forward {', '    () => { fn method(&self) { self.run(); } };', '}'].join('\n');
   const body = template.split('\n')[1];
   const facts = {
-    schema_version: 1, callModel: 'rust-source-direct-v13',
-    repository: { root: '.', revision: null, sourceKind: 'working-tree', snapshotId: '0'.repeat(64), language: 'rust', adapter: 'rust-syn@2.0.119', adapterRevision: 13 },
+    schema_version: 1, callModel: 'rust-source-direct-v14',
+    repository: { root: '.', revision: null, sourceKind: 'working-tree', snapshotId: '0'.repeat(64), language: 'rust', adapter: 'rust-syn@2.0.119', adapterRevision: 14 },
     files: [
       { path: 'template.rs', sourceText: template, loc: 3, role: 'source' },
       { path: 'impls.rs', sourceText: 'impl<T: Gate> Gate for &T {\n    forward!();\n}\nimpl Owner {\n    forward!();\n}', loc: 6, role: 'source' },
@@ -190,6 +190,9 @@ test('call schema validates Rust v13 closure and macro-template origins without 
   assert.deepEqual(schemaErrors('raw-facts', historical), []);
   historical.callModel = 'rust-source-direct-v12';
   assert.deepEqual(schemaErrors('raw-facts', historical), []);
+  const v13Facts = structuredClone(facts);
+  v13Facts.callModel = 'rust-source-direct-v13'; v13Facts.repository.adapterRevision = 13;
+  assert.deepEqual(schemaErrors('raw-facts', v13Facts), []);
   const legacyClosure = structuredClone(facts);
   legacyClosure.callModel = 'rust-source-direct-v12'; legacyClosure.repository.adapterRevision = 12;
   assert.ok(schemaErrors('raw-facts', legacyClosure).some(error => error.path === '/calls/0/closure'));

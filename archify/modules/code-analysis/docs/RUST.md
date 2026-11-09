@@ -36,7 +36,7 @@ See the pinned real-project replay and source/ZIP evidence in benchmarks/code-an
 
 ## Current call model and trait impl candidates
 
-Current captures use rust-source-direct-v13 / adapter13. Historical v1 collects
+Current captures use rust-source-direct-v14 / adapter14. Historical v1 collects
 free functions; v2 additionally admits unique monomorphic inherent function
 paths; v3 additionally admits bare generic-struct paths to unique concrete type
 specializations. Historical facts keep their original scope without rebinding.
@@ -130,6 +130,14 @@ method-callee helpers bind nothing, so unresolved closure calls keep no target.
 A destructured closure input does not give its sub-bindings the aggregate type.
 Closures passed through method calls, iterator adapters or external APIs remain
 outside this bounded rule.
+
+v14 keeps name provenance in that closure typing. A type written in the helper
+signature resolves in the module that declared the helper, so a module-local
+short name or import alias cannot fall back to a same-name type in the caller.
+A generic substituted from a call argument keeps the actual type's module
+identity, including aliases at the call site. Unresolved or external types are
+kept distinct and never select a captured local type with the same spelling;
+insufficient identity leaves the closure call unknown.
 
 v6 inventories a trait method's default body once per source declaration, not
 once per implementing type. A declaration without a body adds no call. Calls in

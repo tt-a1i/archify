@@ -872,7 +872,8 @@ impl Analysis {
             })
             .collect();
         let generic_set: BTreeSet<String> = generics.iter().cloned().collect();
-        let (param_shapes, closure_params) = closure_signature(&f.sig, &generic_set);
+        let (param_shapes, closure_params) =
+            self.closure_signature(&f.sig, &generic_set, module);
         for attr in &f.attrs {
             if !builtin_attribute(attr.path()) {
                 self.opaque.push(json!({"file":file,"line":self.point(file,self.bytes(file,attr.span()).0).0,"kind":"attribute-expansion","name":attr.path().to_token_stream().to_string()}));
@@ -891,7 +892,7 @@ impl Analysis {
             body: *f.block.clone(),
             params,
             generics,
-            signature: signature_scope(&f.sig),
+            signature: self.signature_scope(module, &f.sig, &generic_set),
             param_shapes,
             closure_params,
             self_type: None,
@@ -1194,15 +1195,18 @@ impl Analysis {
                                         }
                                     }
                                 }
+                                let module = self.functions[index].module;
                                 let all_generics: BTreeSet<String> = self.functions[index]
                                     .generics
                                     .iter()
                                     .cloned()
                                     .collect();
                                 let (param_shapes, closure_params) =
-                                    closure_signature(&item.sig, &all_generics);
+                                    self.closure_signature(&item.sig, &all_generics, module);
                                 self.functions[index].param_shapes = param_shapes;
                                 self.functions[index].closure_params = closure_params;
+                                self.functions[index].signature =
+                                    self.signature_scope(module, &item.sig, &all_generics);
                             }
                         }
                     }
@@ -1253,7 +1257,7 @@ impl Analysis {
                                 self.fields
                                     .insert((id, name.clone(), ident.to_string()), hint);
                             }
-                            if let Some(shape) = type_shape(&field.ty, &struct_generics) {
+                            if let Some(shape) = self.type_shape(&field.ty, &struct_generics, id) {
                                 self.field_shapes
                                     .insert((id, name.clone(), ident.to_string()), shape);
                             }
@@ -1434,15 +1438,18 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
+                                let module = self.functions[index].module;
                                 let all_generics: BTreeSet<String> = self.functions[index]
                                     .generics
                                     .iter()
                                     .cloned()
                                     .collect();
                                 let (param_shapes, closure_params) =
-                                    closure_signature(&item.sig, &all_generics);
+                                    self.closure_signature(&item.sig, &all_generics, module);
                                 self.functions[index].param_shapes = param_shapes;
                                 self.functions[index].closure_params = closure_params;
+                                self.functions[index].signature =
+                                    self.signature_scope(module, &item.sig, &all_generics);
                                 self.functions[index].macro_template = macro_template.clone();
                                 self.functions[index].self_type =
                                     type_hint(&im.self_ty, &impl_generics);
@@ -1918,6 +1925,264 @@ impl Analysis {
         }
         Some(current)
     }
+    // Resolve a written type in the module that declared it. A captured
+    // nominal keeps its module identity; everything else stays external and
+    // can never be mistaken for a same-spelled local type in another module.
+    fn shape_base(&self, module: usize, parts: &[String], absolute: bool) -> Shape {
+        match self.resolve(module, parts, absolute, false, 0) {
+            Some(Binding::Nominal(module, name)) | Some(Binding::Fields(module, name)) => {
+                Shape::Local {
+                    module,
+                    name,
+                    args: Vec::new(),
+                }
+            }
+            _ => Shape::External {
+                path: self.external_shape_path(module, parts, absolute, 0),
+                args: Vec::new(),
+            },
+        }
+    }
+    fn external_shape_path(
+        &self,
+        module: usize,
+        parts: &[String],
+        absolute: bool,
+        depth: usize,
+    ) -> Vec<String> {
+        if parts.is_empty() || depth > 16 {
+            return parts.to_vec();
+        }
+        if !absolute && !matches!(parts[0].as_str(), "crate" | "self" | "super") {
+            if let Some(bindings) = self.modules[module].bindings.get(&parts[0]) {
+                if bindings.len() == 1 {
+                    if let Binding::Use(target, target_absolute) = &bindings[0] {
+                        let mut full = target.clone();
+                        full.extend_from_slice(&parts[1..]);
+                        return self.external_shape_path(
+                            module,
+                            &full,
+                            *target_absolute,
+                            depth + 1,
+                        );
+                    }
+                }
+            }
+        }
+        parts.to_vec()
+    }
+    fn type_shape(
+        &self,
+        ty: &Type,
+        generics: &BTreeSet<String>,
+        module: usize,
+    ) -> Option<Shape> {
+        match ty {
+            Type::Reference(r) => self.type_shape(&r.elem, generics, module),
+            Type::Paren(p) => self.type_shape(&p.elem, generics, module),
+            Type::Group(g) => self.type_shape(&g.elem, generics, module),
+            Type::Path(p) if p.qself.is_none() => {
+                let parts = path_parts(&p.path);
+                let mut args = Vec::new();
+                for (index, segment) in p.path.segments.iter().enumerate() {
+                    match &segment.arguments {
+                        PathArguments::None => {}
+                        PathArguments::AngleBracketed(list)
+                            if index + 1 == p.path.segments.len() =>
+                        {
+                            for arg in &list.args {
+                                match arg {
+                                    GenericArgument::Type(inner) => {
+                                        args.push(self.type_shape(inner, generics, module)?)
+                                    }
+                                    GenericArgument::Lifetime(_) => {}
+                                    _ => return None,
+                                }
+                            }
+                        }
+                        _ => return None,
+                    }
+                }
+                if args.is_empty() && parts.len() == 1 && generics.contains(&parts[0]) {
+                    return Some(Shape::Generic(parts[0].clone()));
+                }
+                Some(match self.shape_base(module, &parts, p.path.leading_colon.is_some()) {
+                    Shape::Local { module, name, .. } => Shape::Local {
+                        module,
+                        name,
+                        args,
+                    },
+                    Shape::External { path, .. } => Shape::External { path, args },
+                    Shape::Generic(name) => Shape::Generic(name),
+                })
+            }
+            _ => None,
+        }
+    }
+    fn fn_bound_inputs(
+        &self,
+        bound: &TypeParamBound,
+        generics: &BTreeSet<String>,
+        module: usize,
+    ) -> Option<Vec<Shape>> {
+        let TypeParamBound::Trait(trait_bound) = bound else {
+            return None;
+        };
+        let segment = trait_bound.path.segments.last()?;
+        if !matches!(
+            segment.ident.to_string().as_str(),
+            "Fn" | "FnMut" | "FnOnce"
+        ) {
+            return None;
+        }
+        let PathArguments::Parenthesized(arguments) = &segment.arguments else {
+            return None;
+        };
+        arguments
+            .inputs
+            .iter()
+            .map(|input| self.type_shape(input, generics, module))
+            .collect()
+    }
+    fn closure_inputs(
+        &self,
+        ty: &Type,
+        generics: &BTreeSet<String>,
+        fn_bounds: &BTreeMap<String, Vec<Vec<Shape>>>,
+        module: usize,
+    ) -> Option<Vec<Shape>> {
+        let inputs: Vec<Shape> = match ty {
+            Type::BareFn(function) => function
+                .inputs
+                .iter()
+                .map(|arg| self.type_shape(&arg.ty, generics, module))
+                .collect::<Option<Vec<_>>>()?,
+            Type::ImplTrait(implementation) => {
+                let mut found: Option<Vec<Shape>> = None;
+                for bound in &implementation.bounds {
+                    if let Some(inputs) = self.fn_bound_inputs(bound, generics, module) {
+                        if found.is_some() {
+                            return None;
+                        }
+                        found = Some(inputs);
+                    }
+                }
+                found?
+            }
+            Type::Path(path)
+                if path.qself.is_none()
+                    && path.path.segments.len() == 1
+                    && matches!(path.path.segments[0].arguments, PathArguments::None) =>
+            {
+                let name = path.path.segments[0].ident.to_string();
+                if !generics.contains(&name) {
+                    return None;
+                }
+                let bounds = fn_bounds.get(&name)?;
+                // Competing callable bounds could describe different signatures.
+                if bounds.len() != 1 {
+                    return None;
+                }
+                bounds[0].clone()
+            }
+            _ => return None,
+        };
+        (!inputs.is_empty()).then_some(inputs)
+    }
+    // Closure parameter types come only from a local callee's declared signature:
+    // a bare `fn(...)` parameter or a generic parameter with one Fn-family bound.
+    fn closure_signature(
+        &self,
+        sig: &Signature,
+        generics: &BTreeSet<String>,
+        module: usize,
+    ) -> (Vec<Option<Shape>>, Vec<(usize, Vec<Shape>)>) {
+        let mut fn_bounds: BTreeMap<String, Vec<Vec<Shape>>> = BTreeMap::new();
+        for param in sig.generics.type_params() {
+            for bound in &param.bounds {
+                if let Some(inputs) = self.fn_bound_inputs(bound, generics, module) {
+                    fn_bounds
+                        .entry(param.ident.to_string())
+                        .or_default()
+                        .push(inputs);
+                }
+            }
+        }
+        if let Some(clause) = &sig.generics.where_clause {
+            for predicate in &clause.predicates {
+                let WherePredicate::Type(predicate) = predicate else {
+                    continue;
+                };
+                let Type::Path(bounded) = &predicate.bounded_ty else {
+                    continue;
+                };
+                if bounded.qself.is_some() || bounded.path.segments.len() != 1 {
+                    continue;
+                }
+                let name = bounded.path.segments[0].ident.to_string();
+                for bound in &predicate.bounds {
+                    if let Some(inputs) = self.fn_bound_inputs(bound, generics, module) {
+                        fn_bounds.entry(name.clone()).or_default().push(inputs);
+                    }
+                }
+            }
+        }
+        let mut shapes = Vec::new();
+        let mut closures = Vec::new();
+        for (index, argument) in sig
+            .inputs
+            .iter()
+            .filter_map(|arg| match arg {
+                FnArg::Typed(p) => Some(p),
+                _ => None,
+            })
+            .enumerate()
+        {
+            shapes.push(self.type_shape(&argument.ty, generics, module));
+            if let Some(inputs) =
+                self.closure_inputs(&argument.ty, generics, &fn_bounds, module)
+            {
+                closures.push((index, inputs));
+            }
+        }
+        (shapes, closures)
+    }
+    fn signature_scope(
+        &self,
+        module: usize,
+        sig: &Signature,
+        extra: &BTreeSet<String>,
+    ) -> Scope {
+        let mut scope = Scope::default();
+        let generics: BTreeSet<String> = sig
+            .generics
+            .type_params()
+            .map(|p| p.ident.to_string())
+            .chain(extra.iter().cloned())
+            .collect();
+        scope.types.extend(generics.iter().cloned());
+        add_generic_bounds(&mut scope, &sig.generics);
+        for arg in &sig.inputs {
+            if let FnArg::Typed(p) = arg {
+                let mut names = Vec::new();
+                pattern_names(&p.pat, &mut names);
+                scope.values.extend(names.iter().cloned());
+                if let Some(hint) = type_hint(&p.ty, &generics) {
+                    for name in names.iter().cloned() {
+                        scope.local_types.insert(name, hint.clone());
+                    }
+                }
+                if let Some(shape) = self.type_shape(&p.ty, &generics, module) {
+                    if let Some(bindings) = whole_binding_names(&p.pat) {
+                        for name in bindings {
+                            scope.local_shapes.insert(name, shape.clone());
+                        }
+                    }
+                }
+            }
+        }
+        scope
+    }
 }
 fn builtin_attribute(path: &syn::Path) -> bool {
     let name = path
@@ -2002,6 +2267,42 @@ fn whole_binding_names(p: &Pat) -> Option<Vec<String>> {
         _ => None,
     }
 }
+fn add_generic_bounds(scope: &mut Scope, generics: &Generics) {
+    for param in generics.type_params() {
+        for bound in &param.bounds {
+            if let TypeParamBound::Trait(b) = bound {
+                scope
+                    .generic_bounds
+                    .entry(param.ident.to_string())
+                    .or_default()
+                    .push((path_parts(&b.path), b.path.leading_colon.is_some()));
+            }
+        }
+    }
+    if let Some(where_clause) = &generics.where_clause {
+        for predicate in &where_clause.predicates {
+            let WherePredicate::Type(p) = predicate else {
+                continue;
+            };
+            let Type::Path(t) = &p.bounded_ty else {
+                continue;
+            };
+            if t.qself.is_some() || t.path.segments.len() != 1 {
+                continue;
+            }
+            let name = t.path.segments[0].ident.to_string();
+            for bound in &p.bounds {
+                if let TypeParamBound::Trait(b) = bound {
+                    scope
+                        .generic_bounds
+                        .entry(name.clone())
+                        .or_default()
+                        .push((path_parts(&b.path), b.path.leading_colon.is_some()));
+                }
+            }
+        }
+    }
+}
 fn expr_attrs(expr: &Expr) -> &[Attribute] {
     macro_rules! get {($($kind:ident),*)=>{match expr {$(Expr::$kind(x)=>&x.attrs,)* _=>&[]}}}
     get!(
@@ -2024,7 +2325,19 @@ enum TypeHint {
 #[derive(Clone, PartialEq, Eq)]
 enum Shape {
     Generic(String),
-    Nominal(Vec<String>, Vec<Shape>),
+    // A type resolved to a captured module. Identity is the module, not the
+    // spelling at the use site; import aliases therefore cannot collide.
+    Local {
+        module: usize,
+        name: String,
+        args: Vec<Shape>,
+    },
+    // A type outside captured modules. It may unify only with another external
+    // path of the same final name; it can never select a captured local type.
+    External {
+        path: Vec<String>,
+        args: Vec<Shape>,
+    },
 }
 #[derive(Clone, Default)]
 struct Scope {
@@ -2144,66 +2457,40 @@ fn substitute_hint(hint: &TypeHint, params: &[String], args: &[TypeHint]) -> Opt
         }
     }
 }
-fn shape_hint(shape: &Shape) -> TypeHint {
-    match shape {
-        Shape::Generic(name) => TypeHint::Generic(name.clone()),
-        Shape::Nominal(parts, _) => TypeHint::Nominal(parts.clone(), false),
-    }
-}
-fn hint_shape(hint: &TypeHint) -> Option<Shape> {
-    match hint {
-        TypeHint::Generic(name) => Some(Shape::Generic(name.clone())),
-        TypeHint::Nominal(parts, _) => Some(Shape::Nominal(parts.clone(), Vec::new())),
-        TypeHint::Dyn(_, _) => None,
-    }
-}
-fn type_shape(ty: &Type, generics: &BTreeSet<String>) -> Option<Shape> {
-    match ty {
-        Type::Reference(r) => type_shape(&r.elem, generics),
-        Type::Paren(p) => type_shape(&p.elem, generics),
-        Type::Group(g) => type_shape(&g.elem, generics),
-        Type::Path(p) if p.qself.is_none() => {
-            let parts = path_parts(&p.path);
-            let mut args = Vec::new();
-            for (index, segment) in p.path.segments.iter().enumerate() {
-                match &segment.arguments {
-                    PathArguments::None => {}
-                    PathArguments::AngleBracketed(list) if index + 1 == p.path.segments.len() => {
-                        for arg in &list.args {
-                            match arg {
-                                GenericArgument::Type(inner) => {
-                                    args.push(type_shape(inner, generics)?)
-                                }
-                                GenericArgument::Lifetime(_) => {}
-                                _ => return None,
-                            }
-                        }
-                    }
-                    _ => return None,
-                }
-            }
-            if args.is_empty() && parts.len() == 1 && generics.contains(&parts[0]) {
-                Some(Shape::Generic(parts[0].clone()))
-            } else {
-                Some(Shape::Nominal(parts, args))
-            }
-        }
-        _ => None,
-    }
-}
 fn substitute_shape(shape: &Shape, subs: &BTreeMap<String, Shape>) -> Option<Shape> {
     match shape {
         Shape::Generic(name) => subs.get(name).cloned(),
-        Shape::Nominal(parts, args) => {
+        Shape::Local { module, name, args } => {
             let mut replaced = Vec::new();
             for arg in args {
                 replaced.push(substitute_shape(arg, subs)?);
             }
-            Some(Shape::Nominal(parts.clone(), replaced))
+            Some(Shape::Local {
+                module: *module,
+                name: name.clone(),
+                args: replaced,
+            })
+        }
+        Shape::External { path, args } => {
+            let mut replaced = Vec::new();
+            for arg in args {
+                replaced.push(substitute_shape(arg, subs)?);
+            }
+            Some(Shape::External {
+                path: path.clone(),
+                args: replaced,
+            })
         }
     }
 }
 fn unify_shape(pattern: &Shape, actual: &Shape, subs: &mut BTreeMap<String, Shape>) -> bool {
+    let same_args = |args: &[Shape], actual_args: &[Shape], subs: &mut BTreeMap<String, Shape>| {
+        args.len() == actual_args.len()
+            && args
+                .iter()
+                .zip(actual_args)
+                .all(|(pattern, actual)| unify_shape(pattern, actual, subs))
+    };
     match pattern {
         Shape::Generic(name) => match subs.get(name) {
             Some(bound) => bound == actual,
@@ -2212,131 +2499,27 @@ fn unify_shape(pattern: &Shape, actual: &Shape, subs: &mut BTreeMap<String, Shap
                 true
             }
         },
-        Shape::Nominal(parts, args) => match actual {
-            Shape::Nominal(actual_parts, actual_args)
-                if actual_parts == parts && actual_args.len() == args.len() =>
-            {
-                args.iter()
-                    .zip(actual_args)
-                    .all(|(pattern, actual)| unify_shape(pattern, actual, subs))
+        Shape::Local { module, name, args } => match actual {
+            Shape::Local {
+                module: actual_module,
+                name: actual_name,
+                args: actual_args,
+            } if actual_module == module && actual_name == name => {
+                same_args(args, actual_args, subs)
             }
             _ => false,
         },
+        // External paths can be spelled through different aliases. The final
+        // name plus arity is the strongest identity available; it is never
+        // allowed to bind a captured local type.
+        Shape::External { path, args } => match actual {
+            Shape::External {
+                path: actual_path,
+                args: actual_args,
+            } if actual_path.last() == path.last() => same_args(args, actual_args, subs),
+            _ => false,
+        },
     }
-}
-fn fn_bound_inputs(bound: &TypeParamBound, generics: &BTreeSet<String>) -> Option<Vec<Shape>> {
-    let TypeParamBound::Trait(trait_bound) = bound else {
-        return None;
-    };
-    let segment = trait_bound.path.segments.last()?;
-    if !matches!(segment.ident.to_string().as_str(), "Fn" | "FnMut" | "FnOnce") {
-        return None;
-    }
-    let PathArguments::Parenthesized(arguments) = &segment.arguments else {
-        return None;
-    };
-    arguments
-        .inputs
-        .iter()
-        .map(|input| type_shape(input, generics))
-        .collect()
-}
-fn closure_inputs(
-    ty: &Type,
-    generics: &BTreeSet<String>,
-    fn_bounds: &BTreeMap<String, Vec<Vec<Shape>>>,
-) -> Option<Vec<Shape>> {
-    let inputs: Vec<Shape> = match ty {
-        Type::BareFn(function) => function
-            .inputs
-            .iter()
-            .map(|arg| type_shape(&arg.ty, generics))
-            .collect::<Option<Vec<_>>>()?,
-        Type::ImplTrait(implementation) => {
-            let mut found: Option<Vec<Shape>> = None;
-            for bound in &implementation.bounds {
-                if let Some(inputs) = fn_bound_inputs(bound, generics) {
-                    if found.is_some() {
-                        return None;
-                    }
-                    found = Some(inputs);
-                }
-            }
-            found?
-        }
-        Type::Path(path)
-            if path.qself.is_none()
-                && path.path.segments.len() == 1
-                && matches!(path.path.segments[0].arguments, PathArguments::None) =>
-        {
-            let name = path.path.segments[0].ident.to_string();
-            if !generics.contains(&name) {
-                return None;
-            }
-            let bounds = fn_bounds.get(&name)?;
-            // Competing callable bounds could describe different signatures.
-            if bounds.len() != 1 {
-                return None;
-            }
-            bounds[0].clone()
-        }
-        _ => return None,
-    };
-    (!inputs.is_empty()).then_some(inputs)
-}
-// Closure parameter types come only from a local callee's declared signature:
-// a bare `fn(...)` parameter or a generic parameter with one Fn-family bound.
-fn closure_signature(
-    sig: &Signature,
-    generics: &BTreeSet<String>,
-) -> (Vec<Option<Shape>>, Vec<(usize, Vec<Shape>)>) {
-    let mut fn_bounds: BTreeMap<String, Vec<Vec<Shape>>> = BTreeMap::new();
-    for param in sig.generics.type_params() {
-        for bound in &param.bounds {
-            if let Some(inputs) = fn_bound_inputs(bound, generics) {
-                fn_bounds
-                    .entry(param.ident.to_string())
-                    .or_default()
-                    .push(inputs);
-            }
-        }
-    }
-    if let Some(clause) = &sig.generics.where_clause {
-        for predicate in &clause.predicates {
-            let WherePredicate::Type(predicate) = predicate else {
-                continue;
-            };
-            let Type::Path(bounded) = &predicate.bounded_ty else {
-                continue;
-            };
-            if bounded.qself.is_some() || bounded.path.segments.len() != 1 {
-                continue;
-            }
-            let name = bounded.path.segments[0].ident.to_string();
-            for bound in &predicate.bounds {
-                if let Some(inputs) = fn_bound_inputs(bound, generics) {
-                    fn_bounds.entry(name.clone()).or_default().push(inputs);
-                }
-            }
-        }
-    }
-    let mut shapes = Vec::new();
-    let mut closures = Vec::new();
-    for (index, argument) in sig
-        .inputs
-        .iter()
-        .filter_map(|arg| match arg {
-            FnArg::Typed(p) => Some(p),
-            _ => None,
-        })
-        .enumerate()
-    {
-        shapes.push(type_shape(&argument.ty, generics));
-        if let Some(inputs) = closure_inputs(&argument.ty, generics, &fn_bounds) {
-            closures.push((index, inputs));
-        }
-    }
-    (shapes, closures)
 }
 fn type_hint_from_expr(expr: &Expr) -> Option<TypeHint> {    match expr {
         Expr::Reference(r) => type_hint_from_expr(&r.expr),
@@ -2375,66 +2558,6 @@ fn builtin_variant(name: &str, variant: &str) -> Option<(Vec<String>, Vec<TypeHi
         )),
         _ => None,
     }
-}
-fn signature_scope(sig: &Signature) -> Scope {
-    let mut scope = Scope::default();
-    let generics: BTreeSet<String> = sig
-        .generics
-        .type_params()
-        .map(|p| p.ident.to_string())
-        .collect();
-    scope.types.extend(generics.iter().cloned());
-    for param in sig.generics.type_params() {
-        for bound in &param.bounds {
-            if let TypeParamBound::Trait(b) = bound {
-                scope
-                    .generic_bounds
-                    .entry(param.ident.to_string())
-                    .or_default()
-                    .push((path_parts(&b.path), b.path.leading_colon.is_some()));
-            }
-        }
-    }
-    if let Some(where_clause) = &sig.generics.where_clause {
-        for predicate in &where_clause.predicates {
-            if let WherePredicate::Type(p) = predicate {
-                if let Type::Path(t) = &p.bounded_ty {
-                    if t.qself.is_none() && t.path.segments.len() == 1 {
-                        let name = t.path.segments[0].ident.to_string();
-                        for bound in &p.bounds {
-                            if let TypeParamBound::Trait(b) = bound {
-                                scope
-                                    .generic_bounds
-                                    .entry(name.clone())
-                                    .or_default()
-                                    .push((path_parts(&b.path), b.path.leading_colon.is_some()));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    for arg in &sig.inputs {
-        if let FnArg::Typed(p) = arg {
-            let mut names = Vec::new();
-            pattern_names(&p.pat, &mut names);
-            scope.values.extend(names.iter().cloned());
-            if let Some(hint) = type_hint(&p.ty, &generics) {
-                for name in names.iter().cloned() {
-                    scope.local_types.insert(name, hint.clone());
-                }
-            }
-            if let Some(shape) = type_shape(&p.ty, &generics) {
-                if let Some(bindings) = whole_binding_names(&p.pat) {
-                    for name in bindings {
-                        scope.local_shapes.insert(name, shape.clone());
-                    }
-                }
-            }
-        }
-    }
-    scope
 }
 #[derive(Clone)]
 struct Caller {
@@ -2864,22 +2987,59 @@ impl Scanner<'_> {
             _ => None,
         }
     }
-    // Method signatures are parsed before impl generics are known, so a local
-    // parameter may still look nominal. Recognise the enclosing generics here
-    // instead of changing non-closure receiver typing.
-    fn normalize_shape(&self, shape: Shape) -> Shape {
-        if let Shape::Nominal(parts, args) = &shape {
-            if parts.len() == 1
-                && args.is_empty()
-                && self.function.generics.iter().any(|name| name == &parts[0])
-            {
-                return Shape::Generic(parts[0].clone());
-            }
+    fn hint_shape(&self, hint: &TypeHint) -> Option<Shape> {
+        match hint {
+            TypeHint::Generic(name) => Some(Shape::Generic(name.clone())),
+            TypeHint::Nominal(parts, absolute) => Some(
+                self.a
+                    .shape_base(self.function.module, parts, *absolute),
+            ),
+            TypeHint::Dyn(_, _) => None,
         }
-        shape
+    }
+    // A resolved local identity becomes a path that the current module can
+    // resolve: `crate::...` inside the crate, or the caller's dependency alias
+    // for another captured crate. External types stay unknown as receivers.
+    fn shape_hint(&self, shape: &Shape) -> Option<TypeHint> {
+        match shape {
+            Shape::Generic(name) => Some(TypeHint::Generic(name.clone())),
+            Shape::Local { module, name, .. } => {
+                let caller = self.a.modules[self.function.module].krate;
+                let target = self.a.modules[*module].krate;
+                let mut parts = Vec::new();
+                if caller == target {
+                    parts.push("crate".into());
+                } else {
+                    let id = &self.a.crates[target].id;
+                    let alias = self.a.crates[caller]
+                        .deps
+                        .iter()
+                        .find(|(_, value)| *value == id)
+                        .map(|(name, _)| name.clone())?;
+                    parts.push(alias);
+                }
+                let path = &self.a.modules[*module].path;
+                if !path.is_empty() {
+                    parts.extend(path.split("::").map(str::to_string));
+                }
+                parts.push(name.clone());
+                Some(TypeHint::Nominal(parts, false))
+            }
+            Shape::External { .. } => None,
+        }
     }
     fn self_shape(&self) -> Option<Shape> {
         let TypeHint::Nominal(parts, absolute) = self.function.self_type.clone()? else {
+            return None;
+        };
+        let Shape::Local {
+            module,
+            name,
+            ..
+        } = self
+            .a
+            .shape_base(self.function.module, &parts, absolute)
+        else {
             return None;
         };
         let args = self
@@ -2887,45 +3047,65 @@ impl Scanner<'_> {
             .self_args
             .clone()?
             .iter()
-            .map(hint_shape)
+            .map(|hint| self.hint_shape(hint))
             .collect::<Option<Vec<_>>>()?;
-        let (module, name) = self.resolve_nominal(&parts, absolute)?;
-        let params = self.a.struct_params.get(&(module, name))?;
+        let params = self.a.struct_params.get(&(module, name.clone()))?;
         if args.len() != params.len() {
             return None;
         }
-        Some(Shape::Nominal(parts, args))
+        Some(Shape::Local {
+            module,
+            name,
+            args,
+        })
     }
     fn expr_shape(&self, expr: &Expr) -> Option<Shape> {
         match expr {
             Expr::Reference(r) => self.expr_shape(&r.expr),
             Expr::Paren(p) => self.expr_shape(&p.expr),
             Expr::Group(g) => self.expr_shape(&g.expr),
-            Expr::Path(p) if p.qself.is_none() && p.path.segments.len() == 1 => {
-                let name = p.path.segments[0].ident.to_string();
-                if name == "self" {
-                    return self.self_shape();
-                }
-                for scope in self.scopes.iter().rev() {
-                    if let Some(shape) = scope.local_shapes.get(&name) {
-                        return Some(self.normalize_shape(shape.clone()));
+            Expr::Path(p) if p.qself.is_none() => {
+                if p.path.segments.len() == 1 {
+                    let name = p.path.segments[0].ident.to_string();
+                    if name == "self" {
+                        return self.self_shape();
                     }
-                    if scope.values.contains(&name) {
-                        return None;
+                    for scope in self.scopes.iter().rev() {
+                        if let Some(shape) = scope.local_shapes.get(&name) {
+                            return Some(shape.clone());
+                        }
+                        if scope.values.contains(&name) {
+                            return None;
+                        }
                     }
                 }
-                None
+                // A unit struct (or another value path) is a nominal
+                // constructor, not a local binding.
+                let shape = self.a.shape_base(
+                    self.function.module,
+                    &path_parts(&p.path),
+                    p.path.leading_colon.is_some(),
+                );
+                matches!(shape, Shape::Local { .. }).then_some(shape)
             }
             Expr::Field(f) => self.field_shape(f),
-            Expr::Struct(s) => Some(Shape::Nominal(path_parts(&s.path), Vec::new())),
+            Expr::Struct(s) => Some(self.a.shape_base(
+                self.function.module,
+                &path_parts(&s.path),
+                s.path.leading_colon.is_some(),
+            )),
             _ => None,
         }
     }
     fn field_shape(&self, field: &ExprField) -> Option<Shape> {
-        let Shape::Nominal(parts, args) = self.expr_shape(&field.base)? else {
+        let Shape::Local {
+            module,
+            name,
+            args,
+        } = self.expr_shape(&field.base)?
+        else {
             return None;
         };
-        let (module, name) = self.resolve_nominal(&parts, false)?;
         let member = match &field.member {
             syn::Member::Named(ident) => ident.to_string(),
             syn::Member::Unnamed(index) => index.index.to_string(),
@@ -3467,7 +3647,9 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
                 .flat_map(|scope| scope.types.iter().cloned())
                 .collect();
             let shape = match &local.pat {
-                Pat::Type(t) => type_shape(&t.ty, &generics),
+                Pat::Type(t) => self
+                    .a
+                    .type_shape(&t.ty, &generics, self.function.module),
                 _ => None,
             }
             .or_else(|| {
@@ -3498,7 +3680,14 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         let previous = self.state;
         self.state = and(previous, self.a.attrs(&f.attrs, krate));
         if self.state >= 0 {
-            let scope = signature_scope(&f.sig);
+            let extra: BTreeSet<String> = self
+                .scopes
+                .iter()
+                .flat_map(|scope| scope.types.iter().cloned())
+                .collect();
+            let scope = self
+                .a
+                .signature_scope(self.function.module, &f.sig, &extra);
             let old = self.scopes.clone();
             let old_closures = std::mem::take(&mut self.closures);
             self.scopes.push(scope);
@@ -3525,6 +3714,7 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         scope
             .types
             .extend(item.generics.type_params().map(|p| p.ident.to_string()));
+        add_generic_bounds(&mut scope, &item.generics);
         self.scopes.push(scope);
         let old_closures = std::mem::take(&mut self.closures);
         if self.state >= 0 {
@@ -3540,7 +3730,14 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         let previous = self.state;
         let krate = self.a.modules[self.function.module].krate;
         self.state = and(previous, self.a.attrs(&item.attrs, krate));
-        let scope = signature_scope(&item.sig);
+        let extra: BTreeSet<String> = self
+            .scopes
+            .iter()
+            .flat_map(|scope| scope.types.iter().cloned())
+            .collect();
+        let scope = self
+            .a
+            .signature_scope(self.function.module, &item.sig, &extra);
         self.scopes.push(scope);
         let old_closures = std::mem::take(&mut self.closures);
         if self.state >= 0 {
@@ -3565,6 +3762,7 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         scope
             .types
             .extend(item.generics.type_params().map(|p| p.ident.to_string()));
+        add_generic_bounds(&mut scope, &item.generics);
         self.scopes.push(scope);
         let old_closures = std::mem::take(&mut self.closures);
         if self.state >= 0 {
@@ -3580,7 +3778,15 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         let previous = self.state;
         let krate = self.a.modules[self.function.module].krate;
         self.state = and(previous, self.a.attrs(&item.attrs, krate));
-        self.scopes.push(signature_scope(&item.sig));
+        let extra: BTreeSet<String> = self
+            .scopes
+            .iter()
+            .flat_map(|scope| scope.types.iter().cloned())
+            .collect();
+        let scope = self
+            .a
+            .signature_scope(self.function.module, &item.sig, &extra);
+        self.scopes.push(scope);
         let old_closures = std::mem::take(&mut self.closures);
         if self.state >= 0 {
             if let Some(body) = &item.default {
@@ -3729,7 +3935,10 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
             let mut names = Vec::new();
             pattern_names(input, &mut names);
             let annotation = match input {
-                Pat::Type(typed) => type_shape(&typed.ty, &generics),
+                Pat::Type(typed) => {
+                    self.a
+                        .type_shape(&typed.ty, &generics, self.function.module)
+                }
                 _ => None,
             };
             let shaped = whole_binding_names(input);
@@ -3745,7 +3954,9 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
             for name in names {
                 if let Some(shape) = &shape {
                     scope.local_shapes.insert(name.clone(), shape.clone());
-                    scope.local_types.insert(name.clone(), shape_hint(shape));
+                    if let Some(hint) = self.shape_hint(shape) {
+                        scope.local_types.insert(name.clone(), hint);
+                    }
                 }
                 scope.values.insert(name);
             }
