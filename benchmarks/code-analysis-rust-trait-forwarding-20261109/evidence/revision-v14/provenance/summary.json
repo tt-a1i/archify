@@ -1,0 +1,121 @@
+{
+  "fixture": "/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/closure-provenance",
+  "sourceSHA256": {
+    "base/src/lib.rs": "9fd20b3d35ae05ae9597fc434c0e5891f2c5157cb56e9dc3d766c1997e5c437d",
+    "provider-head/src/lib.rs": "a1b8979a0b0d65d6cb2263a2936ae3d3a49ecd5e1313514edcae735c340adab1",
+    "caller-head/src/lib.rs": "1a84efe1d25b0368cff34586605fbfd5a5f4ce37278aaffa0bc076485426a037",
+    "base/Cargo.toml": "f6c0893fc3f66d4d5ddf8997b8b6e6bdca1c33ea84f66ad777de3cda8e07bda1",
+    "provider-head/Cargo.toml": "f6c0893fc3f66d4d5ddf8997b8b6e6bdca1c33ea84f66ad777de3cda8e07bda1",
+    "caller-head/Cargo.toml": "f6c0893fc3f66d4d5ddf8997b8b6e6bdca1c33ea84f66ad777de3cda8e07bda1"
+  },
+  "builds": [
+    {
+      "side": "base",
+      "exit": 0,
+      "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.00s\n"
+    },
+    {
+      "side": "provider-head",
+      "exit": 0,
+      "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.00s\n"
+    },
+    {
+      "side": "caller-head",
+      "exit": 0,
+      "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.00s\n"
+    }
+  ],
+  "cases": [
+    {
+      "label": "provider",
+      "changedDefinition": "provider::Item::mark",
+      "knownTotal": 2,
+      "references": [
+        {
+          "closure": {
+            "column": 29,
+            "file": "src/lib.rs",
+            "line": 24
+          },
+          "column": 36,
+          "directCaller": {
+            "column": 5,
+            "file": "src/lib.rs",
+            "kind": "function",
+            "line": 22,
+            "name": "run",
+            "qualname": "generic::run"
+          },
+          "endColumn": 47,
+          "endLine": 24,
+          "file": "src/lib.rs",
+          "line": 24,
+          "resolution": "rust-inherent-source-candidate",
+          "target": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "line": 5,
+            "name": "mark"
+          }
+        },
+        {
+          "closure": {
+            "column": 19,
+            "file": "src/lib.rs",
+            "line": 41
+          },
+          "column": 26,
+          "directCaller": {
+            "column": 5,
+            "file": "src/lib.rs",
+            "kind": "function",
+            "line": 40,
+            "name": "run",
+            "qualname": "consumer::run"
+          },
+          "endColumn": 37,
+          "endLine": 41,
+          "file": "src/lib.rs",
+          "line": 41,
+          "resolution": "rust-inherent-source-candidate",
+          "target": {
+            "column": 9,
+            "file": "src/lib.rs",
+            "line": 5,
+            "name": "mark"
+          }
+        }
+      ]
+    },
+    {
+      "label": "caller",
+      "changedDefinition": "consumer::Item::mark",
+      "knownTotal": 0,
+      "references": []
+    }
+  ],
+  "expected": {
+    "provider": {
+      "knownTotal": 2,
+      "positions": [
+        [
+          24,
+          36
+        ],
+        [
+          41,
+          26
+        ]
+      ],
+      "target": {
+        "file": "src/lib.rs",
+        "line": 5,
+        "column": 9,
+        "name": "mark"
+      }
+    },
+    "caller": {
+      "knownTotal": 0
+    }
+  }
+}

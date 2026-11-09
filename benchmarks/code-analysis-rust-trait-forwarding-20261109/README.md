@@ -11,6 +11,56 @@ written inside closures. The two real misses are in `tokio-rs/bytes`, change
 `d5c8ad32..7930d93d`, changed definition `Buf::try_get_int` at
 `src/buf/buf_impl.rs:2086`.
 
+## v14: closure type provenance
+
+Model: `rust-source-direct-v14` / adapter revision 14. This revision starts at
+`3ab78d5be` (v13 final) and changes only how closure input types keep their
+identity:
+
+```diff
+ closure input from a local helper signature
+- written type is stored as a path and resolved in the caller module
++ written type resolves in the helper's declaring module
++ generic substitution keeps the actual argument's module identity
++ unresolved/external types never select a same-spelled local type
+```
+
+The reproduction is a compiled fixture: `fixtures/closure-provenance` gives the
+provider and the caller each a `Item::mark`. Before the fix, changing the
+provider returned **0** known references and changing the caller returned **1**
+wrong reference to the caller's own `Item::mark`. After the fix the provider
+returns both closure calls at `24:36` and `41:26` (target provider `Item::mark`
+at `5:9`), and the caller returns **0**. All three roots build and the check is
+`run-closure-provenance.py`.
+
+Two real-repository closure cases were frozen from source before querying:
+
+| Case | Path | v13 | v14 |
+| --- | --- | --- | --- |
+| [tracing `Dispatch::event`](answers/tracing-dispatch-event.md) | `get_default(FnMut(&Dispatch))` closure in two same-crate callers and one `tracing-log` caller | 0/3 | **3/3** |
+| [ripgrep `IgnoreRef::is_absolute_parent`](answers/ripgrep-ignore-ref-is-absolute-parent.md) | `parents()` iterator feed into `take_while` | 0/1 | 0/1 (retained gap) |
+
+The tracing case is a new real capture. The ripgrep case is deliberately kept
+as a measured miss: the closure input comes from a local iterator declaration
+through a standard adapter, which the bounded rule does not model.
+
+Regression evidence:
+
+| Measure | v13 | v14 |
+| --- | --- | --- |
+| Futures positions | 2/2, partial | 2/2, partial |
+| Original 20 calls | 81/86, 5 missed, 0 wrong, 2 extras | identical per position |
+| Code-analysis module suite | 469 passed | **472 passed, 0 failed** |
+
+[Comparison](evidence/revision-v14/comparison-final.json),
+[20-case summary](evidence/revision-v14/original20-summary-v14.json),
+[module tests](evidence/revision-v14/module-tests-final.log). The 20-case
+rerun keeps all 81 hits, withdraws no correct target (the batch had no wrong
+targets in either revision), and still misses the same five positions:
+`clap-any-value-parser`, three `tracing-layer-event-enabled` positions, and
+`tracing-subscriber-event-enabled`. The one withdrawn wrong target belongs to
+the provider/caller counterexample above, not to the 20-case batch.
+
 ## v13: closure-argument call evidence
 
 Model: `rust-source-direct-v13` / adapter revision 13. This revision starts at

@@ -1,0 +1,5 @@
+
+> archify@3.2.1-dev.1 check:release-identity
+> node ../scripts/check-release-identity.mjs
+
+release identity ok: 3.2.1-dev.1

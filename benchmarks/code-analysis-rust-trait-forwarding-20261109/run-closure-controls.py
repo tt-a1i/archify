@@ -83,7 +83,7 @@ def main():
         })
     expected_target = {"file": "src/lib.rs", "line": 2, "column": 8, "name": "check"}
     for row in checks:
-        assert row["callModel"] == "rust-source-direct-v13", row
+        assert row["callModel"] == "rust-source-direct-v14", row
         assert row["knownTotal"] == 1, row
         assert row["helperClosureCalls"] == 1, row
         assert row["outOfScopeKnownCalls"] == 0, row
