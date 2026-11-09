@@ -1,0 +1,1 @@
+Change orientation written to /private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/evidence/final-v11/queries/bytes-try-get-int.json (ready); partial means capture/configuration limits, not a finding gate failure. Complete docs/FUNCTION-ANALYSIS.md.

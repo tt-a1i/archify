@@ -1,0 +1,60 @@
+{
+ "id": "gin-close",
+ "language": "go",
+ "repo": "https://github.com/gin-gonic/gin",
+ "base": "8d0468f72897652485933b845253386f9147a8bf",
+ "head": "d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11",
+ "entry": "response_writer.go",
+ "question": "responseWriter.CloseNotify changed to return nil when the wrapped ResponseWriter does not support CloseNotify. Which callers reach the changed method, and are they statically determined?",
+ "changedDefinition": {
+  "qualname": "*responseWriter.CloseNotify",
+  "file": "response_writer.go",
+  "line": 128
+ },
+ "expectedCalls": [
+  {
+   "file": "context.go",
+   "line": 1357,
+   "column": 16,
+   "endLine": 1357,
+   "endColumn": 31,
+   "inventory": "interfaceCandidates",
+   "targetKind": "unknown",
+   "directCaller": {
+    "name": "Stream",
+    "line": 1355,
+    "kind": "method"
+   },
+   "target": null,
+   "runtime": "not-determined",
+   "interface": "gin.ResponseWriter via embedded http.CloseNotifier (external, uncaptured)"
+  },
+  {
+   "file": "response_writer_test.go",
+   "line": 127,
+   "column": 16,
+   "endLine": 127,
+   "endColumn": 31,
+   "inventory": "interfaceCandidates",
+   "targetKind": "unknown",
+   "directCaller": {
+    "name": "TestResponseWriterHijack",
+    "line": 110,
+    "kind": "function"
+   },
+   "target": null,
+   "runtime": "not-determined",
+   "interface": "gin.ResponseWriter via embedded http.CloseNotifier (external, uncaptured)"
+  }
+ ],
+ "unknowns": [
+  "The production call at context.go:1357 dispatches through gin.ResponseWriter, which embeds the external http.CloseNotifier. The static target is net/http.CloseNotifier.CloseNotify, not the changed method.",
+  "Runtime identity is not proven at the call site; Context.reset installs *responseWriter in production, but a caller can replace Context.Writer."
+ ],
+ "expectedGap": true,
+ "reserved": false,
+ "baseTree": "git worktree at the fixed base commit",
+ "build": "root module only; Go 1.27.2; default GOOS/GOARCH; cgo disabled; tests included; no project build or test executed",
+ "freeze": "source answer derived from the upstream diff and HEAD source with go/parser (tools/callspans.go), before any candidate query",
+ "notes": "Retained zero/gap case: the changed method implements an external embedded interface, which the in-repo interface evidence cannot name."
+}
