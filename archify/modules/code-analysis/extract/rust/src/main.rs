@@ -1,7 +1,7 @@
 // Source-only Rust evidence. Input is captured JSON; project files and build
 // scripts are never opened or executed by this helper.
-use proc_macro2::{Span, TokenStream, TokenTree};
-use quote::ToTokens;
+use proc_macro2::{Group, Span, TokenStream, TokenTree};
+use quote::{quote, ToTokens};
 use serde_json::{json, Value};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -425,12 +425,117 @@ fn metavariable_once(expansion: &TokenStream, name: &str) -> bool {
     walk(expansion.clone(), name, false, &mut count, &mut unsafe_use);
     !unsafe_use && count == 1
 }
-fn preserves_single_expr(rules: &[MacroRule]) -> bool {
-    !rules.is_empty()
-        && rules.iter().all(|rule| {
-            single_expr_matcher(&rule.matcher)
-                .is_some_and(|name| metavariable_once(&rule.expansion, &name))
-        })
+const MACRO_ARGUMENT_SENTINEL: &str = "__archify_macro_argument";
+fn substitute_metavariable(expansion: &TokenStream, name: &str) -> TokenStream {
+    fn walk(stream: TokenStream, name: &str, out: &mut TokenStream) {
+        let tokens: Vec<TokenTree> = stream.into_iter().collect();
+        let mut index = 0;
+        while index < tokens.len() {
+            if let (TokenTree::Punct(p), Some(TokenTree::Ident(id))) =
+                (&tokens[index], tokens.get(index + 1))
+            {
+                if p.as_char() == '$' && id == name {
+                    out.extend([TokenTree::Ident(Ident::new(
+                        MACRO_ARGUMENT_SENTINEL,
+                        id.span(),
+                    ))]);
+                    index += 2;
+                    continue;
+                }
+            }
+            match &tokens[index] {
+                TokenTree::Group(group) => {
+                    let mut inner = TokenStream::new();
+                    walk(group.stream(), name, &mut inner);
+                    let mut replaced = Group::new(group.delimiter(), inner);
+                    replaced.set_span(group.span());
+                    out.extend([TokenTree::Group(replaced)]);
+                }
+                token => out.extend([token.clone()]),
+            }
+            index += 1;
+        }
+    }
+    let mut out = TokenStream::new();
+    walk(expansion.clone(), name, &mut out);
+    out
+}
+struct PreserveScan<'a> {
+    analysis: &'a Analysis,
+    krate: usize,
+    count: usize,
+    uncertain: bool,
+}
+impl<'ast> Visit<'ast> for PreserveScan<'_> {
+    fn visit_path(&mut self, path: &'ast Path) {
+        if path.is_ident(MACRO_ARGUMENT_SENTINEL) {
+            self.count += 1;
+        }
+        visit::visit_path(self, path);
+    }
+    fn visit_expr(&mut self, expr: &'ast Expr) {
+        let state = self.analysis.attrs(expr_attrs(expr), self.krate);
+        if state < 0 {
+            return;
+        }
+        if state == 0 {
+            self.uncertain = true;
+            return;
+        }
+        visit::visit_expr(self, expr);
+    }
+    fn visit_local(&mut self, local: &'ast Local) {
+        let state = self.analysis.attrs(&local.attrs, self.krate);
+        if state < 0 {
+            return;
+        }
+        if state == 0 {
+            self.uncertain = true;
+            return;
+        }
+        visit::visit_local(self, local);
+    }
+    fn visit_item(&mut self, item: &'ast Item) {
+        let state = self.analysis.attrs(item_attrs(item), self.krate);
+        if state < 0 {
+            return;
+        }
+        if state == 0 {
+            self.uncertain = true;
+            return;
+        }
+        visit::visit_item(self, item);
+    }
+    fn visit_arm(&mut self, arm: &'ast Arm) {
+        let state = self.analysis.attrs(&arm.attrs, self.krate);
+        if state < 0 {
+            return;
+        }
+        if state == 0 {
+            self.uncertain = true;
+            return;
+        }
+        visit::visit_arm(self, arm);
+    }
+    fn visit_stmt(&mut self, stmt: &'ast Stmt) {
+        if let Stmt::Macro(m) = stmt {
+            let state = self.analysis.attrs(&m.attrs, self.krate);
+            if state < 0 {
+                return;
+            }
+            if state == 0 {
+                self.uncertain = true;
+                return;
+            }
+        }
+        visit::visit_stmt(self, stmt);
+    }
+    fn visit_macro(&mut self, m: &'ast Macro) {
+        // A use nested in another macro argument cannot be proven preserved.
+        if m.tokens.to_string().contains(MACRO_ARGUMENT_SENTINEL) {
+            self.uncertain = true;
+        }
+    }
 }
 struct Analysis {
     sources: BTreeMap<String, String>,
@@ -627,6 +732,29 @@ impl Analysis {
             }
         }
         state
+    }
+    fn preserves_single_expr(&self, rules: &[MacroRule], krate: usize) -> bool {
+        !rules.is_empty()
+            && rules.iter().all(|rule| {
+                let Some(name) = single_expr_matcher(&rule.matcher) else {
+                    return false;
+                };
+                if !metavariable_once(&rule.expansion, &name) {
+                    return false;
+                }
+                let substituted = substitute_metavariable(&rule.expansion, &name);
+                let Ok(block) = syn::parse2::<Block>(quote!({ #substituted })) else {
+                    return false;
+                };
+                let mut scan = PreserveScan {
+                    analysis: self,
+                    krate,
+                    count: 0,
+                    uncertain: false,
+                };
+                scan.visit_block(&block);
+                scan.count == 1 && !scan.uncertain
+            })
     }
     fn add_binding(&mut self, module: usize, name: String, binding: Binding) {
         self.modules[module]
@@ -1366,7 +1494,7 @@ impl Analysis {
                                     let name = name_ident.to_string();
                                     let (line, column) =
                                         self.point(&file, self.bytes(&file, name_ident.span()).0);
-                                    let preserves = preserves_single_expr(&def.rules);
+                                    let preserves = self.preserves_single_expr(&def.rules, krate);
                                     self.macro_defs.entry(name.clone()).or_default().push(
                                         MacroDef {
                                             name,
@@ -1751,6 +1879,7 @@ struct Scope {
     globs: Vec<Vec<String>>,
     local_types: BTreeMap<String, TypeHint>,
     generic_bounds: BTreeMap<String, Vec<(Vec<String>, bool)>>,
+    macros: BTreeMap<String, Vec<MacroDef>>,
 }
 fn type_hint(ty: &Type, generics: &BTreeSet<String>) -> Option<TypeHint> {
     match ty {
@@ -2599,6 +2728,63 @@ impl Scanner<'_> {
         scope
     }
 }
+impl Scanner<'_> {
+    fn register_block_macro(&mut self, stmt: &Stmt) -> bool {
+        let Stmt::Item(Item::Macro(m)) = stmt else {
+            return false;
+        };
+        if !m.mac.path.is_ident("macro_rules") {
+            return false;
+        }
+        let krate = self.a.modules[self.function.module].krate;
+        let state = self.a.attrs(&m.attrs, krate);
+        if state < 0 {
+            return true;
+        }
+        let Some(name_ident) = &m.ident else {
+            return true;
+        };
+        let Ok(def) = syn::parse2::<ParsedMacroDef>(m.mac.tokens.clone()) else {
+            return true;
+        };
+        let name = name_ident.to_string();
+        let (line, column) = self.a.point(
+            &self.function.file,
+            self.a.bytes(&self.function.file, name_ident.span()).0,
+        );
+        let preserves = state == 1 && self.a.preserves_single_expr(&def.rules, krate);
+        self.scopes
+            .last_mut()
+            .unwrap()
+            .macros
+            .entry(name.clone())
+            .or_default()
+            .push(MacroDef {
+                name,
+                file: self.function.file.clone(),
+                line,
+                column,
+                module: self.function.module,
+                krate,
+                preserves,
+            });
+        true
+    }
+    fn block_macro(&self, name: &str, line: usize, column: usize) -> Option<MacroDef> {
+        for scope in self.scopes.iter().rev() {
+            if let Some(defs) = scope.macros.get(name) {
+                if let Some(def) = defs
+                    .iter()
+                    .rev()
+                    .find(|def| (def.line, def.column) < (line, column))
+                {
+                    return Some(def.clone());
+                }
+            }
+        }
+        None
+    }
+}
 impl<'ast> Visit<'ast> for Scanner<'_> {
     fn visit_expr(&mut self, expr: &'ast Expr) {
         let old = self.state;
@@ -2617,6 +2803,9 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         let scope = self.block_scope(block);
         self.scopes.push(scope);
         for stmt in &block.stmts {
+            if self.register_block_macro(stmt) {
+                continue;
+            }
             self.visit_stmt(stmt)
         }
         self.scopes.pop();
@@ -2921,10 +3110,13 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
     fn visit_macro(&mut self, m: &'ast Macro) {
         let krate = self.a.modules[self.function.module].krate;
         let name = m.path.segments.last().map(|s| s.ident.to_string()).unwrap_or_default();
-        let line = self.a.point(&self.function.file, self.a.bytes(&self.function.file, m.path.segments[0].ident.span()).0).0;
+        let (line, column) = self.a.point(&self.function.file, self.a.bytes(&self.function.file, m.path.segments[0].ident.span()).0);
         let shadowed = self.scopes.iter().any(|scope| scope.uses.contains_key(&name) || scope.uncertain_glob || !scope.globs.is_empty());
+        let def = self.block_macro(&name, line, column).or_else(|| {
+            self.a.preserving_macro(krate, self.function.module, line, m)
+        });
         if self.state > 0 && !shadowed {
-            if let Some(def) = self.a.preserving_macro(krate, self.function.module, line, m) {
+            if let Some(def) = def.filter(|def| def.preserves) {
                 if let Ok(expr) = syn::parse2::<Expr>(m.tokens.clone()) {
                     self.macro_evidence.push(json!({
                         "name": def.name,

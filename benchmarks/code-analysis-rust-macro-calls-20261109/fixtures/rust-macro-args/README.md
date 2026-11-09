@@ -11,6 +11,7 @@ One preserving macro and four controls live in `src/lib.rs`:
 | `twice` | `$e:expr` | twice | stays `rust-macro-not-expanded` |
 | `wrapped` | `$e:expr` | once, but as a nested macro argument | stays `rust-macro-not-expanded` |
 | `listed` | `$($e:expr),*` | repetition | stays `rust-macro-not-expanded` |
+| `gated` | `$e:expr` | once, inside `#[cfg(feature = "extra")]` | resolves only when `extra` is selected |
 
 `feature_call` is gated by `#[cfg(feature = "extra")]`; `extra` is not a default
 feature.
@@ -44,6 +45,10 @@ Default profile, `src/lib.rs` positions:
 
 With `-c '{"rust":{"features":{"sample":["extra"]}}}'` the call at line 30 also
 resolves with the same `macroEvidence`.
+
+The `gated` macro is the same source analyzed under both profiles: with `extra`
+off the argument use is removed by cfg and line 35 stays unknown; with `extra`
+on line 35 resolves and carries `gated` evidence at 32:14.
 
 The same assertions are automated in
 `archify/modules/code-analysis/test/rust-calls.test.mjs` ("Rust preserves only

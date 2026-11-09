@@ -28,3 +28,8 @@ pub fn repeated(p: Parser) { let _ = listed!(p.parse().is_ok(), true); }
 
 #[cfg(feature = "extra")]
 pub fn feature_call(p: Parser) -> u8 { ok!(p.parse()) }
+
+macro_rules! gated {
+    ($e:expr) => { { #[cfg(feature = "extra")] let _ = $e; } };
+}
+pub fn gated_call(p: Parser) { gated!(p.parse()); }

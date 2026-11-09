@@ -10,8 +10,8 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'rust';
-export const REVISION = 9;
-export const CALL_MODEL = 'rust-source-direct-v9';
+export const REVISION = 10;
+export const CALL_MODEL = 'rust-source-direct-v10';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.rs'));
 export const countSources = (root, config) => listFiles(root, config).filter(file => file.endsWith('.rs')).length;
 const manifest = fileURLToPath(new URL('./Cargo.toml', import.meta.url));
@@ -148,6 +148,6 @@ export function extract(root, config, { onCapture } = {}) {
       excludedRegions: output.excludedRegions, opaqueMacros: output.opaqueMacros, missingModules: output.missingModules,
       limitations: ['Explicit free-function paths, monomorphic inherent source candidates and bare generic-struct paths to unique concrete-specialization source candidates. Lifetime-only struct/enum owners additionally allow bare paths to unique receiver-free inherent declarations when unbounded impl lifetime names map one-to-one to owner arguments; unsupported siblings and enum variant names block selection. Specializations require named type arguments and no impl generics/where clause; competing unsupported inherent declarations block the candidate. No type/argument inference, visibility checking, Self/type-alias resolution, explicit generic call arguments, mixed lifetime/type parameters, concrete or bounded lifetime specializations, const/bounded/defaulted generic owners, receiver types beyond explicit parameters, adjacent-before-let bindings and trait objects, general macro expansion, build-script execution or external dependency source loading.',
         'Cargo metadata reads captured manifests with zero-byte source inventory stubs, offline/no-deps/locked; the syntax parser reads captured source text only. Active cfg derives from rustc target cfg plus the declared local feature profile; custom build-script cfg stays unknown.',
-        'Call inventory covers parsed function/method bodies plus trait default method bodies, each once per source declaration; declarations without a body add no calls and calls depending on the concrete Self remain unresolved. A local macro_rules! invocation is traversed as its source argument expression only when that macro is defined exactly once across the selected crates, is textually visible at the callsite without an import or glob that could bind the same name, and every rule matches a single $x:expr used exactly once outside repetition and nested macro arguments; such calls carry macroEvidence. Other macros stay opaque records. Missing/excluded modules, conditional scopes and unsupported local items limit target/caller completeness.'] },
+        'Call inventory covers parsed function/method bodies plus trait default method bodies, each once per source declaration; declarations without a body add no calls and calls depending on the concrete Self remain unresolved. A local macro_rules! invocation is traversed as its source argument expression only when the binding actually visible at the callsite (including a preceding block-local definition) is defined exactly once across the selected crates, is textually visible without an import or glob that could bind the same name, and every rule matches a single $x:expr used exactly once outside repetition and nested macro arguments under the active cfg; such calls carry macroEvidence. Other macros stay opaque records. Missing/excluded modules, conditional scopes and unsupported local items limit target/caller completeness.'] },
   };
 }

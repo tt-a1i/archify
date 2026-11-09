@@ -136,7 +136,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v9');
+ assert.equal(facts.callModel,'rust-source-direct-v10');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -314,7 +314,7 @@ pub fn object(x: &dyn Left) { x.act(); }
 pub fn ambiguous(x: &A) { x.act(); }
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v9');
+ assert.equal(facts.callModel,'rust-source-direct-v10');
  const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
  assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
  assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
@@ -843,3 +843,59 @@ test('Rust requires a cfg-gated macro definition to be selected', t => {
  assert.equal(active.macroEvidence[0].name, 'ok');
 });
 
+
+test('Rust follows the block-local macro binding and restores the outer one after the block', t => {
+ const source = [
+  'pub struct Parser;',
+  'impl Parser { pub fn parse(&self) -> bool { true } }',
+  'macro_rules! ok { ($e:expr) => { $e }; }',
+  'pub fn local_discard(p: Parser) { macro_rules! ok { ($e:expr) => { () }; } let _ = ok!(p.parse()); }',
+  'pub fn restored(p: Parser) { let _ = ok!(p.parse()); }',
+  'pub fn before_local(p: Parser) { let _ = ok!(p.parse()); macro_rules! ok { ($e:expr) => { () }; } }',
+  'pub fn local_keep(p: Parser) { macro_rules! ok { ($e:expr) => { $e }; } let _ = ok!(p.parse()); }',
+ ].join('\n') + '\n';
+ const facts = capture(fixture(t, {'src/lib.rs': source}));
+ assert.deepEqual(schemaErrors('raw-facts', facts), []);
+ const at = line => calls(facts, 'src/lib.rs').find(c => c.line === line);
+ const local = at(4);
+ assert.equal(local.resolution, 'unresolved');
+ assert.equal(local.reason, 'rust-macro-not-expanded');
+ assert.equal(local.macroEvidence, undefined);
+ const restored = at(5);
+ assert.equal(restored.resolution, 'rust-inherent-source-candidate');
+ assert.equal(restored.macroEvidence[0].definition.line, 3);
+ const beforeLocal = at(6);
+ assert.equal(beforeLocal.resolution, 'rust-inherent-source-candidate');
+ assert.equal(beforeLocal.macroEvidence[0].definition.line, 3);
+ const localKeep = at(7);
+ assert.equal(localKeep.resolution, 'rust-inherent-source-candidate');
+ assert.equal(localKeep.macroEvidence[0].definition.line, 7);
+});
+
+test('Rust keeps a macro argument only when the active cfg keeps its use', t => {
+ const source = [
+  'pub struct Parser;',
+  'impl Parser { pub fn parse(&self) -> bool { true } }',
+  'macro_rules! gated { ($e:expr) => { { #[cfg(feature = "extra")] let _ = $e; } }; }',
+  'macro_rules! dead { ($e:expr) => { { #[cfg(any())] let _ = $e; } }; }',
+  'pub fn kept(p: Parser) { let _ = gated!(p.parse()); }',
+  'pub fn deleted(p: Parser) { let _ = dead!(p.parse()); }',
+ ].join('\n') + '\n';
+ const files = {'src/lib.rs': source, 'Cargo.toml': '[package]\nname="sample"\nversion="0.1.0"\nedition="2021"\n[features]\ndefault=[]\nextra=[]\n'};
+ const root = fixture(t, files);
+ const inactive = capture(root);
+ for (const line of [5, 6]) {
+  const row = calls(inactive, 'src/lib.rs').find(c => c.line === line);
+  assert.equal(row.resolution, 'unresolved', `line ${line} stays unknown while the cfg is off`);
+  assert.equal(row.reason, 'rust-macro-not-expanded');
+  assert.equal(row.macroEvidence, undefined);
+ }
+ const active = calls(capture(root, {rust:{features:{sample:['extra']}}}), 'src/lib.rs');
+ const kept = active.find(c => c.line === 5);
+ assert.equal(kept.resolution, 'rust-inherent-source-candidate');
+ assert.equal(kept.macroEvidence[0].name, 'gated');
+ assert.equal(kept.macroEvidence[0].definition.line, 3);
+ const stillDeleted = active.find(c => c.line === 6);
+ assert.equal(stillDeleted.resolution, 'unresolved');
+ assert.equal(stillDeleted.macroEvidence, undefined);
+});
