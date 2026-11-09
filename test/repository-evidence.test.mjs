@@ -222,6 +222,7 @@ test('Gitee evidence generates provider-specific revision and line links', (t) =
     git(data.root, 'remote', 'set-url', 'origin', remote);
     const evidence = verifyRemoteEvidence(data, output, { cli: index === 0 });
     assert.equal(evidence.repository.href, `https://gitee.com/example/evidence-repo/tree/${data.revision}`);
+    assert.equal(evidence.repository.label, 'gitee.com/example/evidence-repo');
     assert.equal(evidence.nodes.users[0].href, `https://gitee.com/example/evidence-repo/blob/${data.revision}/src/router.js#L1-3`);
     assert.equal(evidence.nodes.users[1].href, `https://gitee.com/example/evidence-repo/blob/${data.revision}/src/store.js#L1`);
   }
@@ -251,6 +252,7 @@ test('GitLab evidence links nested groups and accepts SSH, HTTPS, suffix and cas
     git(data.root, 'remote', 'set-url', 'origin', remote);
     const evidence = verifyRemoteEvidence(data, output, { cli: index === 1 || index === 2 });
     assert.equal(evidence.repository.href, `${base}/-/tree/${revision}`);
+    assert.equal(evidence.repository.label, 'gitlab.com/example/platform/evidence-repo');
     assert.deepEqual(evidence.nodes.users.map((source) => source.href), [
       `${base}/-/blob/${revision}/src/router.js#L1-3`,
       `${base}/-/blob/${revision}/src/store.js#L1`,
@@ -273,6 +275,7 @@ test('self-managed GitLab links require an explicit provider and keep endpoint i
     git(data.root, 'remote', 'set-url', 'origin', remote);
     const evidence = verifyRemoteEvidence(data, output, { cli: index === 0 });
     assert.equal(evidence.repository.href, `${url}/-/tree/${data.revision}`);
+    assert.equal(evidence.repository.label, 'git.example.internal/Platform/Services/evidence-repo');
     assert.equal(evidence.nodes.users[0].href, `${url}/-/blob/${data.revision}/src/router.js#L1-3`);
   }
   for (const [repository, remote, code] of [
@@ -284,6 +287,57 @@ test('self-managed GitLab links require an explicit provider and keep endpoint i
     [{ url: 'http://git.example.internal/Platform/evidence-repo', provider: 'gitlab' }, 'http://git.example.internal/Platform/evidence-repo', 'repository-evidence/links-unsupported'],
     [{ url, provider: 'gitlab' }, 'ssh://git@git.example.internal:2222/Platform/Services/evidence-repo.git', 'repository-evidence/origin-mismatch'],
     [{ url, provider: 'gitlab' }, 'git@ssh.example.internal:Platform/Services/evidence-repo.git', 'repository-evidence/origin-mismatch'],
+  ]) {
+    data.diagram.meta.repository = { revision: data.revision, ...repository };
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, `${JSON.stringify(repository)} with ${remote}`);
+    assert.ok(JSON.parse(result.stdout).diagnostics.some((diagnostic) => diagnostic.code === code), `${JSON.stringify(repository)}: ${result.stdout}`);
+  }
+});
+
+test('GitHub Enterprise hosts link with the github.com layout on a declared host', (t) => {
+  const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  const url = 'https://ghe.example.com/Platform/evidence-repo';
+  const output = path.join(data.root, 'ghe.html');
+  data.diagram.meta.repository = { url, revision: data.revision, provider: 'github' };
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  // GitHub Enterprise Server and GHE.com serve the github.com blob/tree layout.
+  for (const [index, remote] of [
+    `${url}.git/`,
+    'git@ghe.example.com:Platform/evidence-repo.git',
+    'ssh://git@ghe.example.com/Platform/evidence-repo',
+    'git@ghe.example.com:platform/EVIDENCE-REPO.git',
+  ].entries()) {
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const evidence = verifyRemoteEvidence(data, output, { cli: index === 0 });
+    assert.equal(evidence.repository.href, `${url}/tree/${data.revision}`);
+    assert.equal(evidence.nodes.users[0].href, `${url}/blob/${data.revision}/src/router.js#L1-L3`);
+    assert.equal(evidence.nodes.users[1].href, `${url}/blob/${data.revision}/src/store.js#L1`);
+    // A host other than github.com stays visible in the label instead of
+    // abbreviating to an owner/repository path that implies github.com.
+    assert.equal(evidence.repository.label, 'ghe.example.com/Platform/evidence-repo');
+  }
+});
+
+test('GitHub Enterprise hosts keep provider, transport and endpoint guards', (t) => {
+  const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  const url = 'https://ghe.example.com/Platform/evidence-repo';
+  for (const [repository, remote, code] of [
+    // Without the declaration an unknown host still has no web links.
+    [{ url }, url, 'repository-evidence/links-unsupported'],
+    // A declared provider still must agree with the detected public host.
+    [{ url: 'https://gitlab.com/example/platform/evidence-repo', provider: 'github' }, 'https://gitlab.com/example/platform/evidence-repo', 'repository-evidence/provider-invalid'],
+    [{ url: 'http://ghe.example.com/Platform/evidence-repo', provider: 'github' }, 'http://ghe.example.com/Platform/evidence-repo', 'repository-evidence/links-unsupported'],
+    // A GitHub-family path is owner/repository; only GitLab names nested groups.
+    [{ url: 'https://ghe.example.com/org/team/evidence-repo', provider: 'github' }, 'https://ghe.example.com/org/team/evidence-repo', 'repository-evidence/links-unsupported'],
+    // Web links need the standard HTTPS port.
+    [{ url: 'https://ghe.example.com:8443/Platform/evidence-repo', provider: 'github' }, 'https://ghe.example.com:8443/Platform/evidence-repo', 'repository-evidence/links-unsupported'],
+    [{ url, provider: 'github' }, 'ssh://git@ghe.example.com:2222/Platform/evidence-repo.git', 'repository-evidence/origin-mismatch'],
+    [{ url, provider: 'github' }, 'git@git.example.internal:Platform/evidence-repo.git', 'repository-evidence/origin-mismatch'],
   ]) {
     data.diagram.meta.repository = { revision: data.revision, ...repository };
     fs.writeFileSync(data.input, JSON.stringify(data.diagram));
@@ -526,6 +580,9 @@ test('repository evidence accepts canonical HTTPS and common SSH remotes', (t) =
     git(data.root, 'remote', 'set-url', 'origin', remote);
     const evidence = verifyRemoteEvidence(data, output, { cli: index === 1 || index === 3 });
     assert.equal(evidence.repository.href, `https://github.com/example/evidence-repo/tree/${data.revision}`);
+    // github.com keeps the owner/repository label; the label is rendered into
+    // every artifact, so its bytes stay pinned here.
+    assert.equal(evidence.repository.label, 'example/evidence-repo');
     assert.equal(evidence.nodes.users[0].href, `https://github.com/example/evidence-repo/blob/${data.revision}/src/router.js#L1-L3`);
   }
 });

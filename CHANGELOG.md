@@ -9,6 +9,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 ### Added
 - **Authored node explanations in the Semantic Passport.** Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text explanations up to1200 characters. Explain opens a viewport-bounded reading face with scrollable prose and a reachable Back action; Escape restores the Passport. Prose remains outside canonical SVG and visual exports, and existing diagram geometry is preserved.
 - **Cross-diagram navigation.** Nodes may list sibling `.html` targets via `drilldowns` or a one-entry `href` shorthand. One child uses a native SVG link and visible mark (click follows, Alt-click focuses). Several children keep click-to-focus, with Passport listing every target and Ctrl/double-click opening the first. Child pages can author `meta.parentHref` for header Back; the Viewer also accepts `?from=`.
+- **GitHub Enterprise source links (#1034).** Repository evidence on a GitHub Enterprise Server or GHE.com host declared with `provider: "github"` now generates revision-pinned web links (`<url>/blob/<revision>/<path>#L<a>-L<b>` and `<url>/tree/<revision>`) instead of failing with `repository-evidence/provider-invalid`. The declared host keeps its own name in the evidence label, SSH and HTTPS origins on the same host match, and verification against the local checkout is unchanged.
 
 ### Fixed
 

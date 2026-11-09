@@ -1,7 +1,8 @@
 // Repository identity and forge links are independent of local Git object checks.
 // This module never contacts a remote server or reads the user's SSH config.
-// Public forge hosts select their provider automatically. GitLab is also
-// self-hosted, so an explicit `provider: "gitlab"` hint selects it on any host.
+// Public forge hosts select their provider automatically. GitLab and GitHub are
+// also self-hosted, so an explicit `provider: "gitlab"` or `provider: "github"`
+// hint selects that forge on any host.
 const PROVIDER_HOSTS = { 'github.com': 'github', 'gitee.com': 'gitee', 'gitlab.com': 'gitlab' };
 
 export function parseRepositoryRemote(value, { authored = false, provider: providerHint } = {}) {
@@ -29,7 +30,8 @@ export function parseRepositoryRemote(value, { authored = false, provider: provi
   if (authored && protocol !== 'ssh:' && (url.username || url.password)) return null;
   const hostname = url.hostname.toLowerCase();
   if (!hostname) return null;
-  const provider = Object.hasOwn(PROVIDER_HOSTS, hostname) ? PROVIDER_HOSTS[hostname] : providerHint === 'gitlab' ? 'gitlab' : null;
+  const provider = Object.hasOwn(PROVIDER_HOSTS, hostname) ? PROVIDER_HOSTS[hostname]
+    : providerHint === 'gitlab' || providerHint === 'github' ? providerHint : null;
   const last = segments.length - 1;
   if (provider) segments[last] = segments[last].replace(provider === 'github' ? /\.git$/i : /\.git$/, '');
   if (!segments[last] || segments[last] === '.' || segments[last] === '..') return null;
@@ -45,7 +47,7 @@ export function parseRepositoryRemote(value, { authored = false, provider: provi
   const encodedPath = segments.map(encodeURIComponent).join('/');
   const canonicalUrl = scp ? `git@${hostname}:${scpAbsolute ? '/' : ''}${repositoryPath}`
     : `${protocol}//${protocol === 'ssh:' ? 'git@' : ''}${url.host}/${encodedPath}`;
-  return { identity: JSON.stringify([hostname, endpoint, pathKind, identityPath]), url: canonicalUrl, provider, protocol, path: repositoryPath, endpoint };
+  return { identity: JSON.stringify([hostname, endpoint, pathKind, identityPath]), url: canonicalUrl, publicHost: Object.hasOwn(PROVIDER_HOSTS, hostname), provider, protocol, path: repositoryPath, endpoint };
 }
 
 export function redactRepositoryRemote(value) {
