@@ -1,8 +1,0 @@
-{
-  "originalFreeze": "java-cross-file-source-first.json",
-  "correction": "Negative control line was transcribed as 434; exact fixed source search locates iLoggerFactory.getLogger(name) at line 427. Positive source answer line454 and target98 unchanged. Corrected after initial baseline capture, before rule design; not blind evidence.",
-  "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
-  "line": 427,
-  "needle": "iLoggerFactory.getLogger(name)",
-  "expected": null
-}

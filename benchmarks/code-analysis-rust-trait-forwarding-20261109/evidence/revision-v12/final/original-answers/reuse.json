@@ -1,6 +1,0 @@
-{
-  "kind": "rescore-only",
-  "source": "../batch/queries",
-  "productIdentity": "../../product-sha256-final.json",
-  "note": "Identical final normal-CLI outputs, original frozen answer keys; no new CLI run."
-}

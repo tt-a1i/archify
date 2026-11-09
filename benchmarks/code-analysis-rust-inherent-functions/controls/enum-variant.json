@@ -1,7 +1,0 @@
-{
-  "rustc": "rustc 1.89.0",
-  "edition": "2021",
-  "compilation": "success",
-  "sourceAnswer": "E::Make(1) and E::Make(0) choose tuple variant Make, not the same-named inherent function Make. Do not attach either call to that function.",
-  "stage": "Compiler check after first rule, before variant guard; directly evidenced wrong-target risk."
-}

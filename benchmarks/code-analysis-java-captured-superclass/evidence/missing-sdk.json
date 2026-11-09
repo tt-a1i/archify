@@ -1,6 +1,0 @@
-{
-  "exit": 1,
-  "message": "Optional audit needs a JDK17+ home with bin/java and bin/javac; normal Java analysis does not need this SDK.",
-  "downloadedFiles": [],
-  "productJavaRequiresJdk": false
-}

@@ -1,6 +1,0 @@
-{
-  "kind": "rescore-only",
-  "source": "../batch-baseline/queries",
-  "revision": "70750e6ba7831634e4388f13114c952ffd1690bc",
-  "note": "Identical normal-CLI outputs, original frozen answer keys; no new CLI run."
-}

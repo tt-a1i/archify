@@ -1,1 +1,0 @@
-Change orientation written to /private/tmp/archify-batch-20261108/combined/benchmarks/code-analysis-go-rust-investigation-batch-20261108/evidence/after-all/queries/certmagic-store.json (ready); partial means capture/configuration limits, not a finding gate failure. Complete docs/FUNCTION-ANALYSIS.md.

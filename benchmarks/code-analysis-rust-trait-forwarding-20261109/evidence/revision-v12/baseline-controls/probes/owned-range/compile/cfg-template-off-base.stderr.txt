@@ -1,2 +1,0 @@
-   Compiling cfg-template v0.1.0 (/private/tmp/archify-bytes-20261109/benchmarks/code-analysis-rust-trait-forwarding-20261109/fixtures/cfg-template/base)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s

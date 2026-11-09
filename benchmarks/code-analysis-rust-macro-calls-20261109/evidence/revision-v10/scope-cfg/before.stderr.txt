@@ -1,1 +1,0 @@
-Change orientation written to /tmp/macro-scope-before/query.json (ready); partial means capture/configuration limits, not a finding gate failure. Complete docs/FUNCTION-ANALYSIS.md.

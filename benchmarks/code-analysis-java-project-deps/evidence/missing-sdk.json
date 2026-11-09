@@ -1,7 +1,0 @@
-{
-  "exit": 1,
-  "diagnostic": "Optional audit requires an installed JDK17+ home with bin/java and bin/javac. Normal Java analysis needs no JDK or Maven.",
-  "dependencyDirectoryCreated": false,
-  "normalJavaNeedsSdk": false,
-  "projectExecuted": false
-}

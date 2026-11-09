@@ -1,7 +1,0 @@
-$WORKSPACE/work/samples/slf4j/slf4j-api/src/test/java/org/slf4j/LoggerFactoryTest.java:59: error: org.slf4j.LoggerFactoryTest.TestingProvider is not abstract and does not override abstract method getRequestedApiVersion() in org.slf4j.spi.SLF4JServiceProvider
-    public static class TestingProvider implements SLF4JServiceProvider {
-                  ^
-$WORKSPACE/work/samples/slf4j/slf4j-api/src/test/java/org/slf4j/LoggerFactoryTest.java:75: error: method does not override or implement a method from a supertype
-        @Override
-        ^
-FILES	78	ERRORS	2

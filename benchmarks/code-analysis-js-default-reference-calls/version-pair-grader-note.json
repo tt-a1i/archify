@@ -1,7 +1,0 @@
-{
-  "correction": "First replay incorrectly reused head caller line39 for both versions. Frozen per-side source evidence already records base40/head39. Final replay derives caller and target coordinates from that evidence; no analyzer change.",
-  "baseCaller": 40,
-  "headCaller": 39,
-  "baseTarget": 9,
-  "headTarget": 10
-}

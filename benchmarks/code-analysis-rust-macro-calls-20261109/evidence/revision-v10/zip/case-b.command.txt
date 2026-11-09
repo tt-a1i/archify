@@ -1,1 +1,0 @@
-node /Users/tsk/.cache/archify-zip-replay/archify/bin/archify.mjs code-analysis task --question "What changed?" --base-root /tmp/clap-c2-base --root /tmp/clap-c2-head --entry clap_builder/src/parser/parser.rs --format json --out /tmp/archify-macro-20261109/benchmarks/code-analysis-rust-macro-calls-20261109/evidence/revision-v10/zip/case-b.json

@@ -1,8 +1,0 @@
-{
-  "rust": {
-    "offline": true,
-    "tests": false,
-    "defaultFeatures": true,
-    "target": "aarch64-apple-darwin"
-  }
-}

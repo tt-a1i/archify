@@ -1,8 +1,0 @@
-{
-  "stage": "Supplemental control after first implementation; not original frozen score",
-  "node": "v26.12.0",
-  "source": "function f(){return \"original\";}function unused(f){f=()=>\"replacement\";}f.extra=1;export default f;",
-  "exit": 0,
-  "result": "original",
-  "expectation": "Property mutation and a write to another lexical binding do not replace exported f"
-}

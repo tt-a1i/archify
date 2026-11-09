@@ -1,4 +1,0 @@
-
-> archify@3.2.1-dev.1 check:validators
-> node scripts/generate-validators.mjs --check
-

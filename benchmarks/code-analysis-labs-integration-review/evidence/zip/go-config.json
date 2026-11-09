@@ -1,8 +1,0 @@
-{
-  "go": {
-    "goos": "darwin",
-    "goarch": "arm64",
-    "tests": false,
-    "cgo": false
-  }
-}

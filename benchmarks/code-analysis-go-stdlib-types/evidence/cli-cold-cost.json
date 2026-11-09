@@ -1,9 +1,0 @@
-{
-  "exit": 0,
-  "seconds": 6.903289832989685,
-  "initiallyEmptyLocalGoCache": true,
-  "cacheKiB": 154952,
-  "toolchainAlreadyInstalled": true,
-  "scope": "Normal CLI, selected Chi sources, required SDK closure and analysis outputs; no project Go build/test/run",
-  "cacheProgramConfigured": false
-}

@@ -1,9 +1,0 @@
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/client_ip_security_test.go:37:80-86
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/client_ip_security_test.go:38:59-65
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/client_ip_security_test.go:51:76-82
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/context_test.go:1306:36-42
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/context_test.go:81:5-11
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/middleware/logger.go:342:32-38
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/middleware/proxy.go:292:18-24
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/middleware/rate_limiter.go:51:13-19
-/private/tmp/archify-go-gopls-20261108/.samples/echo-head/middleware/request_logger.go:369:20-26
