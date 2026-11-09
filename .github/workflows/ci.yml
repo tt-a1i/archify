@@ -243,6 +243,36 @@ jobs:
         with:
           chrome-version: stable
           install-dependencies: true
+      # Some ubuntu-latest hosts set kernel.apparmor_restrict_unprivileged_userns=1,
+      # which denies the unconfined Chrome for Testing binary the user namespace its
+      # sandbox needs ("No usable sandbox!"). Grant exactly that binary the userns
+      # permission with its own AppArmor profile, as Chromium documents, rather than
+      # disabling the sandbox or relaxing the restriction for the whole runner.
+      - name: Let the provisioned Chrome start with its sandbox
+        if: needs.scope.outputs.webm == 'true'
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        shell: bash
+        run: |
+          restrict="$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null || echo 0)"
+          echo "kernel.apparmor_restrict_unprivileged_userns=$restrict"
+          if [ "$restrict" = 1 ]; then
+            chrome_binary="$(readlink -f "$CHROME_PATH")"
+            sudo tee /etc/apparmor.d/archify-ci-chrome >/dev/null <<EOF
+          abi <abi/4.0>,
+          include <tunables/global>
+
+          profile archify-ci-chrome "$chrome_binary" flags=(unconfined) {
+            userns,
+            include if exists <local/archify-ci-chrome>
+          }
+          EOF
+            sudo apparmor_parser -r /etc/apparmor.d/archify-ci-chrome
+          fi
+          # Fail here with a clear cause if sandboxed Chrome still cannot start.
+          profile_dir="$(mktemp -d)"
+          timeout 60 "$CHROME_PATH" --headless=new --disable-gpu --user-data-dir="$profile_dir" --dump-dom about:blank >/dev/null
+          rm -rf "$profile_dir"
       - name: Install the WebM decoder
         if: needs.scope.outputs.webm == 'true'
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
