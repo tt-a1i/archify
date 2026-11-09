@@ -12,6 +12,8 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ### Fixed
 
+- **Sequence note repairs (#903, #923).** A joint or single note-overlap repair is withheld when moving a message would change which authored phase it belongs to, instead of silently reassigning the authored scenario; the two boundary cases now assert the refusal.
+
 - **WebP brand container bounds (#602).** Reject missing or out-of-bounds image chunks, including incomplete animation frames, before reporting capture or pinned validation success. Preserve valid lossy, lossless, extended and animated containers and original-byte digests.
 
 - **Architecture Delta translation changes (#600).** Compare reports additions, removals and edits to `meta.translations` as presentation changes; translation-key order and empty-versus-omitted catalogs do not affect presentation classification or entity-change counts.
