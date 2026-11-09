@@ -10,6 +10,15 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Authored node explanations in the Semantic Passport.** Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text explanations up to1200 characters. Explain opens a viewport-bounded reading face with scrollable prose and a reachable Back action; Escape restores the Passport. Prose remains outside canonical SVG and visual exports, and existing diagram geometry is preserved.
 - **Cross-diagram navigation.** Nodes may list sibling `.html` targets via `drilldowns` or a one-entry `href` shorthand. One child uses a native SVG link and visible mark (click follows, Alt-click focuses). Several children keep click-to-focus, with Passport listing every target and Ctrl/double-click opening the first. Child pages can author `meta.parentHref` for header Back; the Viewer also accepts `?from=`.
 
+### Changed
+- **Explainer pages are proactive by default (#1299).** Like Answer me with HTML, the agent now also makes a one-page explainer unasked when an answer is a complex flow, a diagnosis, a comparison, a test or review report or a plan that needs structure. The reply keeps a short, directly readable conclusion and ends with a descriptive link to the page. Short answers, routine status updates, text-only or no-page requests and failed pages get no page or link. `[archify explainer: on-demand]` in the agent's global rules file restores request-only pages; `always-on` stays opt-in. The one-line offer to enable proactive mode after a requested page is removed.
+- **Explainer authored widths (#1302).** `@answer` accepts an optional `span=1..12`, and authored `span` values on the conclusion and panels are used exactly in the measured desktop layout instead of being widened or narrowed; phones still stack panels at full width. Omit spans for automatic placement.
+- **Explainer writing checks relaxed (#1302).** The `qualification` rule (“示例”, “未实测”, “illustrative”, “not measured” outside scope) and the chained-「的」 rule are removed. A local assumption, exception or uncertainty may now sit next to the claim it qualifies in the body; page-wide conditions still belong in scope. Drafts that previously failed `--writing strict` only for these rules now pass.
+
+### Upgrade notes
+- **Default explainer behavior changed: pages are now proactive (#1299).** After upgrading, the agent may make an explainer page you did not ask for when an answer needs structure, and the reply ends with a link to it. To keep the previous request-only behavior, add `[archify explainer: on-demand]` to your agent's global rules file (for example `~/.codex/AGENTS.md` or `~/.claude/CLAUDE.md`), or tell the agent "only make pages when I ask". Remove the line to return to the default. `always-on` is never enabled automatically.
+- **默认行为变化：解释页面改为主动生成（#1299）。** 升级后，遇到需要结构化说明的回答，agent 可能会主动生成解释页面，并在回复最后附上链接。如果想保持以前「只在要求时生成」的行为，请在 agent 的全局规则文件（例如 `~/.codex/AGENTS.md`、`~/.claude/CLAUDE.md`）里加一行 `[archify explainer: on-demand]`，或直接对 agent 说「只在我要求时做页面」。删掉这一行即恢复默认。`always-on` 永远不会被自动开启。
+
 ### Fixed
 
 - **WebP brand container bounds (#602).** Reject missing or out-of-bounds image chunks, including incomplete animation frames, before reporting capture or pinned validation success. Preserve valid lossy, lossless, extended and animated containers and original-byte digests.
@@ -25,10 +34,6 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Explainer pie legends keep configured values (#1302).** A pie chart with configuration lines or `showData` still shows each slice's value and share in the legend.
 - **Explainer comparison rows with repeated labels (#1302).** Rows that share a label keep separate IDs, so none is dropped; the first row keeps its existing ID and links.
 - **Explainer copy failures are reported (#1302).** When the clipboard is unavailable or refuses, the reader shows an error instead of claiming success and keeps the follow-up question selected in the open dialog so it can be copied by hand.
-
-### Changed
-- **Explainer authored widths (#1302).** `@answer` accepts an optional `span=1..12`, and authored `span` values on the conclusion and panels are used exactly in the measured desktop layout instead of being widened or narrowed; phones still stack panels at full width. Omit spans for automatic placement.
-- **Explainer writing checks relaxed (#1302).** The `qualification` rule (“示例”, “未实测”, “illustrative”, “not measured” outside scope) and the chained-「的」 rule are removed. A local assumption, exception or uncertainty may now sit next to the claim it qualifies in the body; page-wide conditions still belong in scope. Drafts that previously failed `--writing strict` only for these rules now pass.
 
 ## [3.2.0] — 2026-10-18
 
