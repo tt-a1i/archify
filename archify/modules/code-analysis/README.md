@@ -29,6 +29,12 @@ It has two entry points that share the same pipeline:
 optimization task (JSON or Markdown) and checks its evidence against the current
 working tree; the page uses the same logic through the server.
 
+`check --json` also returns an `investigation` object for a first look: its
+`leads` repeat the ranked priorities with the message, `path:line`, symbol and a
+runnable `task` command, and `ruleCounts` shows how findings divide by rule. Run
+`check` with `--out` so each lead is drillable. See
+[First look at an unfamiliar repository](docs/USAGE.md#first-look-at-an-unfamiliar-repository).
+
 `task --question` prepares source orientation without requiring a finding: source
 identity, captured function ranges and direct imports. JS/TS implementation entries
 and fresh Python/Java captures can also include bounded lexical call evidence.
@@ -51,7 +57,7 @@ No separate setup: the first run installs the module's parser and schema depende
 (typescript, java-parser, ajv) into `modules/code-analysis/node_modules`; `npm ci` in
 `archify/` does the same through its `postinstall`. Open the URL the command
 prints and keep the process running. Options:
-`--language ts|py|java|go` (required when the scan matches both JS/TS and Python, or Java beside them under a root Maven/Gradle build file), `--map overlay-map.json`
+`--language ts|py|java|go|rust` (required when the scan matches more than one adapter), `--map overlay-map.json`
 (`{"componentId": ["moduleId", …]}` when the IR's `sources` do not say which
 modules a component stands for), `--config file.json` (thresholds, include /
 exclude, roles), `--quality standard|showcase` (passed to `archify deliver`).
@@ -83,4 +89,4 @@ potential import-time risks without claiming that execution is safe or that a ru
 npm run test:code-analysis
 ```
 
-Go source investigation supports root-module packages, function definitions and conservative direct function bindings. It requires Go 1.18+; build conditions, exclusions and incomplete typing are explicit. See [Go source scope and limitations](docs/GO.md). Rust is not supported yet.
+Go source investigation supports root-module packages, function definitions and conservative direct function bindings. It requires Go 1.18+; build conditions, exclusions and incomplete typing are explicit. See [Go source scope and limitations](docs/GO.md). Rust source investigation uses a source-only `rust-syn` profile and reports cfg/feature limits, opaque macros and unknown dispatch explicitly; see [Rust source investigation](docs/RUST.md).
