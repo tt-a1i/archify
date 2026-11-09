@@ -136,7 +136,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v8');
+ assert.equal(facts.callModel,'rust-source-direct-v9');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -314,7 +314,7 @@ pub fn object(x: &dyn Left) { x.act(); }
 pub fn ambiguous(x: &A) { x.act(); }
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v8');
+ assert.equal(facts.callModel,'rust-source-direct-v9');
  const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
  assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
  assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
@@ -727,3 +727,119 @@ pub fn use_gate<G: Gate>(gate: &G) -> bool { gate.enabled() }
  assert.equal(row.head.knownReferences.total, 1);
  assert.deepEqual(row.head.knownReferences.items.map(item => item.fact.file), ['api/src/lib.rs']);
 });
+
+test('Rust preserves only single-expression local macro arguments proven used once', t => {
+ const source = [
+  'pub struct Parser;',
+  'pub struct Error;',
+  'impl Parser {',
+  '    pub fn parse(&self) -> Result<u8, Error> { Ok(1) }',
+  '}',
+  'macro_rules! ok {',
+  '    ($e:expr) => { match $e { Ok(v) => v, Err(_) => panic!() } };',
+  '}',
+  'macro_rules! discard {',
+  '    ($e:expr) => { () };',
+  '}',
+  'macro_rules! twice {',
+  '    ($e:expr) => { let _ = ($e, $e); };',
+  '}',
+  'macro_rules! wrapped {',
+  '    ($e:expr) => { assert!($e) };',
+  '}',
+  'macro_rules! listed {',
+  '    ($($e:expr),*) => { vec![$($e),*] };',
+  '}',
+  'pub fn preserved(p: Parser) -> u8 { ok!(p.parse()) }',
+  'pub fn discarded(p: Parser) { discard!(p.parse()); }',
+  'pub fn duplicated(p: Parser) { twice!(p.parse()); }',
+  'pub fn wrapped_call(p: Parser) { wrapped!(p.parse().is_ok()); }',
+  'pub fn repeated(p: Parser) { let _ = listed!(p.parse().is_ok(), true); }',
+ ].join('\n') + '\n';
+ const root = fixture(t, {'src/lib.rs': source});
+ const facts = capture(root); assert.deepEqual(schemaErrors('raw-facts', facts), []);
+ const at = line => calls(facts, 'src/lib.rs').find(c => c.line === line);
+ const preserved = at(21);
+ assert.equal(preserved.resolution, 'rust-inherent-source-candidate');
+ assert.deepEqual(preserved.target, {file:'src/lib.rs', name:'parse', line:4, column:5});
+ assert.deepEqual(preserved.macroEvidence, [{name:'ok', definition:{file:'src/lib.rs', line:6, column:14}, argumentUse:'once', expansion:'preserved'}]);
+ for (const line of [22, 23, 24, 25]) {
+  const control = at(line);
+  assert.equal(control.resolution, 'unresolved', `line ${line} stays opaque`);
+  assert.equal(control.reason, 'rust-macro-not-expanded');
+  assert.equal(control.macroEvidence, undefined);
+ }
+});
+
+test('Rust traverses a preserving macro only when cfg selects the callsite', t => {
+ const source = 'pub struct Parser;\nimpl Parser { pub fn parse(&self) -> bool { true } }\nmacro_rules! ok { ($e:expr) => { $e }; }\npub fn plain(p: Parser) { ok!(p.parse()); }\n#[cfg(feature = "extra")]\npub fn gated(p: Parser) { ok!(p.parse()); }\n';
+ const files = {'src/lib.rs': source, 'Cargo.toml': '[package]\nname="sample"\nversion="0.1.0"\nedition="2021"\n[features]\ndefault=[]\nextra=[]\n'};
+ const root = fixture(t, files);
+ const active = line => calls(capture(root, {rust:{features:{sample:['extra']}}}), 'src/lib.rs').filter(c => c.line === line);
+ const inactive = line => calls(capture(root), 'src/lib.rs').filter(c => c.line === line);
+ assert.equal(active(4)[0].macroEvidence[0].name, 'ok');
+ assert.equal(active(6)[0].macroEvidence[0].name, 'ok');
+ assert.equal(inactive(4)[0].macroEvidence[0].name, 'ok');
+ assert.deepEqual(inactive(6), []);
+});
+
+test('Rust duplicate macro definitions stay opaque instead of choosing one', t => {
+ const source = 'pub struct Parser;\nimpl Parser { pub fn parse(&self) -> bool { true } }\nmod a { macro_rules! ok { ($e:expr) => { $e }; } pub fn one(p: super::Parser) { ok!(p.parse()); } }\nmod b { macro_rules! ok { ($e:expr) => { $e }; } pub fn two(p: super::Parser) { ok!(p.parse()); } }\n';
+ const facts = capture(fixture(t, {'src/lib.rs': source}));
+ assert.deepEqual(schemaErrors('raw-facts', facts), []);
+ const macroCalls = calls(facts, 'src/lib.rs').filter(c => c.reason === 'rust-macro-not-expanded');
+ assert.equal(macroCalls.length, 2);
+ assert.ok(macroCalls.every(c => c.macroEvidence === undefined));
+});
+
+test('Rust does not attribute an imported macro name to a local definition', t => {
+ const source = [
+  'pub struct Parser;',
+  'impl Parser { pub fn parse(&self) -> bool { true } }',
+  '#[macro_use]',
+  'mod helpers { macro_rules! ok { ($e:expr) => { $e }; } }',
+  'mod user { use other::ok; pub fn f(p: super::Parser) { ok!(p.parse()); } }',
+ ].join('\n') + '\n';
+ const facts = capture(fixture(t, {'src/lib.rs': source}));
+ assert.deepEqual(schemaErrors('raw-facts', facts), []);
+ const macroCall = calls(facts, 'src/lib.rs').find(c => c.line === 5);
+ assert.equal(macroCall.resolution, 'unresolved');
+ assert.equal(macroCall.reason, 'rust-macro-not-expanded');
+ assert.equal(macroCall.macroEvidence, undefined);
+});
+
+test('Rust follows a #[macro_use] sibling only when it precedes the callsite module', t => {
+ const before = [
+  'pub struct Parser;',
+  'impl Parser { pub fn parse(&self) -> bool { true } }',
+  '#[macro_use]',
+  'mod macros { macro_rules! ok { ($e:expr) => { $e }; } }',
+  'mod user { pub fn f(p: super::Parser) { ok!(p.parse()); } }',
+ ].join('\n') + '\n';
+ const after = [
+  'pub struct Parser;',
+  'impl Parser { pub fn parse(&self) -> bool { true } }',
+  'mod user { pub fn f(p: super::Parser) { ok!(p.parse()); } }',
+  '#[macro_use]',
+  'mod macros { macro_rules! ok { ($e:expr) => { $e }; } }',
+ ].join('\n') + '\n';
+ const visible = calls(capture(fixture(t, {'src/lib.rs': before})), 'src/lib.rs').find(c => c.line === 5);
+ assert.equal(visible.resolution, 'rust-inherent-source-candidate');
+ assert.equal(visible.macroEvidence[0].name, 'ok');
+ const opaque = calls(capture(fixture(t, {'src/lib.rs': after})), 'src/lib.rs').find(c => c.line === 3);
+ assert.equal(opaque.resolution, 'unresolved');
+ assert.equal(opaque.macroEvidence, undefined);
+});
+
+test('Rust requires a cfg-gated macro definition to be selected', t => {
+ const source = 'pub struct Parser;\nimpl Parser { pub fn parse(&self) -> bool { true } }\n#[cfg(feature = "extra")]\nmacro_rules! ok { ($e:expr) => { $e }; }\npub fn f(p: Parser) { ok!(p.parse()); }\n';
+ const files = {'src/lib.rs': source, 'Cargo.toml': '[package]\nname="sample"\nversion="0.1.0"\nedition="2021"\n[features]\ndefault=[]\nextra=[]\n'};
+ const root = fixture(t, files);
+ const inactive = calls(capture(root), 'src/lib.rs').find(c => c.line === 5);
+ assert.equal(inactive.resolution, 'unresolved');
+ assert.equal(inactive.macroEvidence, undefined);
+ const active = calls(capture(root, {rust:{features:{sample:['extra']}}}), 'src/lib.rs').find(c => c.line === 5);
+ assert.equal(active.resolution, 'rust-inherent-source-candidate');
+ assert.equal(active.macroEvidence[0].name, 'ok');
+});
+
