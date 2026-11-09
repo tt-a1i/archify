@@ -302,6 +302,7 @@ test('copy controls report confirmed writes and retain manual-copy text on clipb
     assert.equal(ask.open,true,JSON.stringify(entry));assert.equal(ask.text,success.ask.written[1],'manual copy retains the complete successful payload');
     assert.deepEqual(ask.selection,[0,ask.text.length]);assert.equal(ask.focused,true);assert.ok(ask.note.startsWith(failed));assert.equal(ask.noteRole,'status');
     assert.equal(entry.retry.open,true);assert.equal(entry.retry.text,ask.text,'a retry keeps the manual-copy text instead of nesting it');
+    if(mode!=='missing')assert.ok(entry.retry.written.length>ask.written.length,'a retry writes to the clipboard again');
     if(mode!=='missing')assert.equal(entry.retry.written.at(-1),ask.text,'a retry copies the original message unchanged');
     assert.equal(entry.reopened.note,entry.reopened.expected,'a new question restores its normal instruction');assert.equal(entry.reopened.text,'');
    }
