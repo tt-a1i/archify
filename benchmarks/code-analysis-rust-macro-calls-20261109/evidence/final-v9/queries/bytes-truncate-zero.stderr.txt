@@ -1,0 +1,1 @@
+Change orientation written to /private/tmp/archify-macro-20261109/benchmarks/code-analysis-rust-macro-calls-20261109/evidence/final-v9/queries/bytes-truncate-zero.json (ready); partial means capture/configuration limits, not a finding gate failure. Complete docs/FUNCTION-ANALYSIS.md.

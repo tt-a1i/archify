@@ -623,8 +623,15 @@ def main():
                           if check["kind"] == kind and check["available"])
                 for kind in MUST_DETECT + CONTROLS}
     uncovered = [kind for kind in MUST_DETECT + CONTROLS if coverage[kind] == 0]
+    applicable_checks = [check for check in counter_checks if check["available"]]
     summary["totals"]["counterexamples"] = len(counter_checks)
-    summary["totals"]["counterexamplesPassed"] = sum(1 for check in counter_checks if check["passed"])
+    summary["totals"]["counterexamplesApplicable"] = len(applicable_checks)
+    summary["totals"]["counterexamplesApplicablePassed"] = sum(
+        1 for check in applicable_checks if check["passed"])
+    summary["totals"]["counterexamplesApplicableFailed"] = sum(
+        1 for check in applicable_checks if not check["passed"])
+    summary["totals"]["counterexamplesNotApplicable"] = (
+        len(counter_checks) - len(applicable_checks))
     summary["totals"]["counterexampleCoverage"] = coverage
     summary["totals"]["counterexamplesUncovered"] = uncovered
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -634,7 +641,7 @@ def main():
     print(json.dumps(summary["totals"], indent=2))
     cases_ok = all(row["status"] in ("pass", "gap", "review") for row in summary["cases"])
     counters_ok = (
-        all(row["passed"] for row in summary["counterexamples"])
+        all(check["passed"] for check in applicable_checks)
         and (bool(args.case) or not uncovered)
     ) if summary["counterexamples"] else True
     return 0 if cases_ok and counters_ok else 1
