@@ -126,7 +126,10 @@ question they protect.
 ## Original 20-case regression
 
 The previous batch was replayed unchanged with v9 (20 cases, 86 expected call
-positions, reserved included). Counterexample scoring stayed at 144/144.
+positions, reserved included). Of the 144 counterexample checks, 114 are
+applicable and all pass; 30 are not applicable because the saved query has no
+record for the mutation to act on; all 8 check kinds have at least one applicable
+case.
 
 | Metric | Stage-2 baseline (v8) | First candidate (v9) | Accuracy revision (v10) |
 | --- | ---: | ---: | ---: |
@@ -135,7 +138,13 @@ positions, reserved included). Counterexample scoring stayed at 144/144.
 | Wrong targets | 0 | **0** | **0** |
 | Extra positions needing review | 2 | 2 | 2 |
 | Definitions found | 20/20 | 20/20 | 20/20 |
-| Counterexamples | 144/144 | 144/144 | 144/144 |
+| Counterexample checks (applicable / passed) | 104: 84 / 82 | **144: 114 / 114** | **144: 114 / 114** |
+
+The stage-2 baseline predates the reserved cases and has 104 checks. Of the 144
+final checks, 30 are not applicable: `delete-target` 9, `promote-candidate` 9,
+`omit-target-file` 10 and `wrong-declaration` 2 have no concrete, candidate or
+same-file target record to mutate. Totals are computed from each check's
+`available` and `passed` fields, not from a blanket pass count.
 
 The only changed case against v8 is `clap-typed-value-parser`: 0/1 to 1/1, the
 same `ok!` class. `evidence/comparison/comparison.md` is the v8→v9 comparison;
@@ -196,6 +205,11 @@ python3 benchmarks/code-analysis-go-rust-investigation-batch-20261108/run.py \
   --samples /private/tmp/archify-batch-20261108/samples \
   --out benchmarks/code-analysis-rust-macro-calls-20261109/evidence/final-v10 \
   --include-reserved
+
+python3 benchmarks/code-analysis-go-rust-investigation-batch-20261108/replay-counterexamples.py \
+  --evidence benchmarks/code-analysis-rust-macro-calls-20261109/evidence/final-v9 \
+  --evidence benchmarks/code-analysis-rust-macro-calls-20261109/evidence/final-v10 \
+  --check
 ```
 
 The sample roots are fixed `git worktree` checkouts used by the previous batch.

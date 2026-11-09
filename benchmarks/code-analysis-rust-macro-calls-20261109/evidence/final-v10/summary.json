@@ -6325,7 +6325,6 @@
     "definitionsFound": 20,
     "cases": 20,
     "counterexamples": 144,
-    "counterexamplesPassed": 144,
     "counterexampleCoverage": {
       "delete-target": 9,
       "wrong-declaration": 16,
@@ -6336,6 +6335,10 @@
       "omit-target-file": 8,
       "omit-end-position": 18
     },
-    "counterexamplesUncovered": []
+    "counterexamplesUncovered": [],
+    "counterexamplesApplicable": 114,
+    "counterexamplesApplicablePassed": 114,
+    "counterexamplesApplicableFailed": 0,
+    "counterexamplesNotApplicable": 30
   }
 }
