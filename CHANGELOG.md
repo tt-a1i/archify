@@ -20,6 +20,15 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 - Viewer toolbar arrow-key and Home/End navigation includes visible Style and Export triggers (#899).
 - Finder and Semantic Lens preserve input-method composition before handling navigation shortcuts (#928).
+- **Explainer narrow-screen tools (#1302).** On narrow screens the reader toolbar wraps so every control stays reachable; on a phone, a diagram too wide for readable text scrolls locally (swipe, or focus it and use the arrow keys) instead of shrinking. Desktop keeps the complete-fit warning.
+- **Explainer long images keep complete content (#1302).** PNG, WebP and JPG exports widen for wide tables and wrap overflowing code and diffs, so no rows or lines are clipped, and floating source cards are left out of the image.
+- **Explainer pie legends keep configured values (#1302).** A pie chart with configuration lines or `showData` still shows each slice's value and share in the legend.
+- **Explainer comparison rows with repeated labels (#1302).** Rows that share a label keep separate IDs, so none is dropped; the first row keeps its existing ID and links.
+- **Explainer copy failures are reported (#1302).** When the clipboard is unavailable or refuses, the reader shows an error instead of claiming success and keeps the follow-up question selected in the open dialog so it can be copied by hand.
+
+### Changed
+- **Explainer authored widths (#1302).** `@answer` accepts an optional `span=1..12`, and authored `span` values on the conclusion and panels are used exactly in the measured desktop layout instead of being widened or narrowed; phones still stack panels at full width. Omit spans for automatic placement.
+- **Explainer writing checks relaxed (#1302).** The `qualification` rule (“示例”, “未实测”, “illustrative”, “not measured” outside scope) and the chained-「的」 rule are removed. A local assumption, exception or uncertainty may now sit next to the claim it qualifies in the body; page-wide conditions still belong in scope. Drafts that previously failed `--writing strict` only for these rules now pass.
 
 ## [3.2.0] — 2026-10-18
 
