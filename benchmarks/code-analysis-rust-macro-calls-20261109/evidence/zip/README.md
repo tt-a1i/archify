@@ -1,6 +1,6 @@
 # Fresh-ZIP replay
 
-Archive: `/tmp/archify.zip`, SHA256
+Archive: `archify.zip` at the repository root, SHA256
 `fa78fa4cb8e68ea372dde9fe1de045501476062b796866e813d075bfcb5da92a`,
 405 files. Built from commit `8aa4aafe6` with `scripts/build-zip.sh` under
 official Node `v22.23.4`, bundled zlib `1.3.1-e00f703` (Linux `node:22`
@@ -22,5 +22,6 @@ macro evidence as `../real-changes/case-b.json`, so the packaged artifact agrees
 with the source-tree run.
 
 Query JSON, stderr and the exact commands are stored beside this file. The ZIP
-and its unpacked tree were not committed; rebuild with `scripts/build-zip.sh`
-under the canonical Node 22 toolchain to reproduce the bytes.
+is committed at the repository root as required by the `zip-freshness` check;
+the unpacked tree is not. Rebuild with `scripts/build-zip.sh` under the
+canonical Node 22 toolchain to reproduce the bytes.
