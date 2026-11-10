@@ -287,7 +287,7 @@
       var start = full ? 0 : line ? Math.max(0, Math.min(line - 5, snip.lines.length - 9)) : 0;
       var end = full ? snip.lines.length : Math.min(snip.lines.length, start + (line ? 9 : 12));
       h += '<div class="why">Lines ' + (start + 1) + '–' + end + ' of ' + snip.lines.length + (line || full ? '' : ' · opening lines, not finding evidence') + '</div>';
-      if (rangeStart && rangeEnd) h += '<div class="why">Highlighted function: lines ' + rangeStart + '–' + rangeEnd + (full ? '' : ' · excerpt only; expand for the complete function') + '</div>';
+      if (rangeStart && rangeEnd) h += '<div class="why">Highlighted range: lines ' + rangeStart + '–' + rangeEnd + (full ? '' : ' · excerpt only; expand for all of it') + '</div>';
       if (snip.lines.length > (line ? 9 : 12)) h += '<button type="button" class="source-file source-toggle">' + (full ? 'Show excerpt' : 'Show full file') + '</button>';
       h += '<pre' + (full ? '' : ' class="excerpt"') + '>';
       if (!start) h += deletion(0);
