@@ -26,6 +26,8 @@ If the architecture JSON changes or becomes unavailable after startup, the analy
 
 Python, JS/TS and Java are supported in the diagram view. For mixed-language projects, add `--language py`, `--language ts` or `--language java`; each run analyzes one language. A JS/TS or Python tree that also holds `.java` files keeps its language unless its root has a Maven/Gradle build file (see the [upgrade note](JAVA.md)). Add `--map overlay-map.json` when you need an explicit mapping between diagram components and code modules. For a terminal first look, `check` also supports Go and Rust; see [Go](GO.md) and [Rust](RUST.md) for their source-only profiles.
 
+The checked-in language examples and their limitations are summarized in [Language reference](LANGUAGE-REFERENCE.md).
+
 For a Java analysis without a diagram, run `node bin/archify.mjs code-analysis check /path/to/java-repo --language java --out out/java`. No JDK or project build is required. See [Java support and limitations](JAVA.md) for conservative dependency resolution, complexity measurements and syntax coverage.
 
 Output defaults to a system temporary directory. Add `--out out/my-project` to choose a persistent output directory. Use the printed URL: double-clicking a static HTML file cannot start local code analysis.
@@ -261,6 +263,8 @@ An offline report exports the captured snapshot and labels it as not checked aga
 
 Relationships and metrics are folded below the code evidence. A source link opens the nine-line context; **Show full file** expands the file while preserving function-range highlighting. On narrow screens, **View diagram** / **Show analysis** switches between the canvas and reading column. Unchecked categories remain visible in the overview; a clean result only covers the rules that ran.
 
-### Go source investigation
+### Go and Rust source investigation
 
-Use `--language go` at a root containing `go.mod`. An installed Go 1.18+ compiler is required. Saved and paired questions can follow captured direct function declarations and known callers; build scope, test inclusion, excluded files and incomplete typing remain explicit. See [Go support](GO.md) for commands, toolchain cost and limitations. Rust remains unsupported.
+Use `--language go` at a root containing `go.mod`. An installed Go 1.18+ compiler is required. Saved and paired questions can follow captured direct function declarations and known callers; build scope, test inclusion, excluded files and incomplete typing remain explicit. See [Go support](GO.md) for commands, toolchain cost and limitations.
+
+Use `--language rust` for experimental Rust source investigation. Cargo/rustc 1.71+ are required. Workspace scope, conditional compilation, unsupported paths and unresolved dispatch remain explicit rather than becoming a complete build or runtime call graph. See [Rust support](RUST.md) for toolchain setup, commands and limitations.

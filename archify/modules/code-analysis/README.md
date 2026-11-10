@@ -6,7 +6,7 @@ Start Archify with `npm start -- "/path/to/project" --ir architecture.json` from
 
 Code Analysis is Archify's integrated static code analysis module, imported from
 Bauify (commit 4bb811c) and maintained here. It reads source dependencies
-(Python, JS/TS, Java and Go), folds files into modules, checks import cycles, coupling,
+(Python, JS/TS, Java, Go and Rust), folds files into modules, checks import cycles, coupling,
 function complexity and configured architecture boundaries, and shows the result on the architecture diagram Archify delivered — as an
 extra layer the reader switches on, never as a change to the diagram itself.
 

@@ -103,6 +103,53 @@ test('hub: fires only when both fan-in and fan-out meet the configured threshold
   assert.ok(!stricter.diagnostics.some((d) => d.code === 'coupling/hub'));
 });
 
+test('concentration: counts transitive dependents, reports denominators, and handles missing file facts', () => {
+  const graph = graphOf([['a', 'core'], ['b', 'core'], ['leaf', 'a']]);
+  graph.modules = graph.modules.map((m) => ({ ...m, loc: m.id === 'core' ? 80 : 10 }));
+  graph.fileModules = { 'core/main.mjs': 'core', 'a/a.mjs': 'a', 'b/b.mjs': 'b', 'leaf/leaf.mjs': 'leaf' };
+  graph.excluded = { roles: ['test'], files: 1 };
+  const facts = factsOf([]);
+  facts.files = [
+    { path: 'core/main.mjs', loc: 150, role: 'source' },
+    { path: 'core/test.mjs', loc: 800, role: 'test' },
+    { path: 'a/a.mjs', loc: 20, role: 'source' },
+    { path: 'b/b.mjs', loc: 30, role: 'source' },
+    { path: 'leaf/leaf.mjs', loc: 10, role: 'source' },
+  ];
+  const config = { rules: { coupling: { concentration: { reachRatio: 0.5, moduleLocRatio: 0.5, fileLoc: 100 } } } };
+  const out = evaluate(graph, config, facts);
+  const core = out.diagnostics.find((d) => d.code === 'coupling/concentration' && d.subject.module === 'core');
+  assert.ok(core);
+  assert.deepEqual(core.evidence.dependentModules, ['a', 'b', 'leaf']);
+  assert.equal(core.evidence.dependentCount, 3, 'direct and transitive dependents count once');
+  assert.equal(core.evidence.totalExternalModules, 3);
+  assert.equal(core.evidence.dependentRatio, 1);
+  assert.ok(!out.diagnostics.some((d) => d.code === 'coupling/concentration' && d.subject.module === 'leaf' && d.evidence.dependentCount > 0), 'a module is not concentrated merely because it depends on others');
+  assert.equal(core.evidence.moduleLoc, 80);
+  assert.equal(core.evidence.totalAnalyzedLoc, 110, 'graph module LOC, not raw file LOC, defines the denominator');
+  assert.deepEqual(core.evidence.largestFile, { path: 'core/main.mjs', loc: 150 });
+  assert.deepEqual(core.evidenceDigest.files, ['a/a.mjs', 'b/b.mjs', 'core/main.mjs', 'leaf/leaf.mjs'], 'changes in a dependent module reopen the accepted concentration finding');
+  assert.deepEqual(schemaErrors('findings', out), []);
+  const withoutFacts = evaluate(graph, config).diagnostics.find((d) => d.code === 'coupling/concentration' && d.subject.module === 'core');
+  assert.deepEqual(withoutFacts.evidence.largestFile, { path: null, loc: null });
+  assert.throws(() => evaluate(graph, { rules: { coupling: { concentration: { reachRatio: '50%' } } } }, facts), (error) => error.diagnostics[0].code === 'config/concentration-threshold-invalid');
+});
+
+test('concentration: zero and single-module denominators stay finite and generated files do not become largest evidence', () => {
+  const one = graphOf([]);
+  one.modules = [{ id: 'solo', label: 'solo', loc: 10 }];
+  one.fileModules = { 'solo/generated.mjs': 'solo' };
+  one.excluded = { roles: ['generated'], files: 1 };
+  const facts = factsOf([]);
+  facts.files = [{ path: 'solo/generated.mjs', loc: 900, role: 'generated' }];
+  const config = { rules: { coupling: { concentration: { reachRatio: 0, moduleLocRatio: 0, fileLoc: 1 } } } };
+  const finding = evaluate(one, config, facts).diagnostics.find((item) => item.code === 'coupling/concentration');
+  assert.ok(finding);
+  assert.equal(finding.evidence.totalExternalModules, 0);
+  assert.equal(finding.evidence.dependentRatio, 0);
+  assert.deepEqual(finding.evidence.largestFile, { path: null, loc: null });
+});
+
 test('evaluate: ignore list suppresses a rule and counts it', () => {
   const out = evaluate(graphOf([['a', 'b'], ['b', 'a']]), { ignore: ['coupling/cycle'] });
   assert.deepEqual(out.diagnostics, []);

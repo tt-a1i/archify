@@ -7,6 +7,7 @@
 // the finding's evidence so a reader can re-check the call.
 import * as cycle from './rules/coupling/cycle.mjs';
 import * as hub from './rules/coupling/hub.mjs';
+import * as concentration from './rules/coupling/concentration.mjs';
 import * as internalLeak from './rules/coupling/internal-leak.mjs';
 import * as importCycle from './rules/coupling/import-cycle.mjs';
 import * as boundary from './rules/architecture/boundary.mjs';
@@ -16,7 +17,7 @@ import fs from 'node:fs';
 
 const PACKAGE = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-export const RULES = [importCycle, cycle, hub, internalLeak, boundary, complexity];
+export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boundary, complexity];
 
 export function evaluate(graph, config = {}, facts = null) {
   const suppressed = new Set(config.ignore || []);
@@ -61,6 +62,10 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
     // any key therefore reads as a config change, which errs toward "not comparable".
     configDigest: sha256(JSON.stringify(settings)),
     ruleVersions: Object.fromEntries(active.filter((r) => !suppressed.has(r.code)).map((r) => [r.code, r.version ?? 1]).sort(([a], [b]) => compareText(a, b))),
+    ...(active.some((rule) => rule.code === 'coupling/concentration' && !suppressed.has(rule.code)) ? { concentrationContext: {
+      modules: graph?.modules?.length ?? 0,
+      totalLoc: (graph?.modules || []).reduce((sum, module) => sum + (Number.isFinite(module.loc) ? module.loc : 0), 0),
+    } } : {}),
     coverage: {
       files: facts ? facts.files.filter((f) => !excludedRoles.has(f.role)).length : null,
       excludedRoles: [...excludedRoles].sort(compareText),
@@ -123,7 +128,8 @@ function subjectFiles(finding, moduleFiles) {
   // A boundary or internal-leak finding is about the imports it cites: both ends of each.
   if (subject?.boundary || finding.code === 'coupling/internal-leak') return (finding.evidence?.imports || []).flatMap((i) => [i.file, i.to]);
   const modules = Array.isArray(subject?.modules) ? subject.modules : typeof subject?.module === 'string' ? [subject.module] : [];
-  return modules.flatMap((id) => moduleFiles.get(id) || []);
+  const related = finding.code === 'coupling/concentration' ? finding.evidence?.dependentModules || [] : [];
+  return [...new Set([...modules, ...related].flatMap((id) => moduleFiles.get(id) || []))].sort(compareText);
 }
 
 function sha256(text) { return createHash('sha256').update(text).digest('hex'); }
@@ -134,6 +140,7 @@ function idFor(dimension, identity) {
 
 function identityOf(subject, anchors) {
   const anchor = (id) => anchors.get(id) ?? `id:${id}`;
+  if (typeof subject?.groupId === 'string') return { groupId: subject.groupId };
   // A function is identified by file and qualified name, not by its lines, so edits above it keep its id.
   if (typeof subject?.file === 'string' && typeof subject?.function === 'string') return { file: subject.file, function: subject.function };
   if (Array.isArray(subject?.files)) return { files: [...subject.files].sort(compareText) };

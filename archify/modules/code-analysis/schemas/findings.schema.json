@@ -32,6 +32,16 @@
         "adapterRevision": { "type": ["integer", "null"], "minimum": 1, "description": "Revision of the adapter's extraction logic (raw facts repository.adapterRevision); null when the facts did not record one." },
         "configDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of the effective (merged) configuration in its key order, schema_version excluded." },
         "ruleVersions": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 }, "description": "Rules that ran (suppressed rules excluded) and the version of their logic." },
+        "concentrationContext": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["modules", "totalLoc"],
+          "properties": {
+            "modules": { "type": "integer", "minimum": 0 },
+            "totalLoc": { "type": "integer", "minimum": 0 }
+          },
+          "description": "Denominators used by coupling/concentration; changes make its ratios incomparable."
+        },
         "coverage": {
           "type": "object",
           "additionalProperties": false,
