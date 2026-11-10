@@ -118,7 +118,7 @@ Source references with line numbers show a nine-line context window and highligh
 - `evaluate/rules/complexity/`: shared function complexity and nesting thresholds; measurements come from each language extractor.
 - `lib/`: the data stages (extract → graph → evaluate), config merging, intermediate-data checks, review (`review.mjs`: baseline, run comparison and comparability), AI tasks (`task.mjs`: task model and Markdown rendering) and evidence checks (`evidence.mjs`: captured source against the working tree).
 - `bin/check.mjs`: headless analysis for terminals and CI; `bin/task.mjs`: AI task export and evidence check; `bin/analyze-run.mjs`: one analysis run in a child process for the server.
-- `overlay/`: mapping and browser presentation; `overlay/page.mjs` is the whole analysis for one delivered page. `overlay/` builds on `lib/`, never the reverse.
+- `overlay/`: mapping and browser presentation; `overlay/page.mjs` is the whole analysis for one delivered page; `overlay/client/` holds the browser scripts and styles as plain files, inlined at build time by `overlay/client-assets.mjs`. `overlay/` builds on `lib/`, never the reverse.
 - `schemas/`: raw-facts, module-graph, findings, baseline, and AI task contracts, with their validator (`validate.mjs`) and the cross-reference invariants a JSON schema cannot express (`semantics.mjs`), imported through `schemas/index.mjs`.
 - `test/`: regression tests, small source fixtures, and expected extraction results.
 - `docs/`: usage and technical documentation.

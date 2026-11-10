@@ -371,7 +371,7 @@ The second panel's diagrams are plain SVG strings built in the page: the cycle r
 
 ### Where it bites
 
-- The overlay script lives inside a JavaScript template literal in `inject.mjs`, so a backslash in a regular expression there has to be doubled (`\\.git$`) or the template literal eats it before the browser sees it.
+- The browser scripts and styles are ordinary files in `overlay/client/` (`overlay.js`, `overlay.css`, `atlas.js`, `atlas.css`), inlined into the page by `overlay/client-assets.mjs`. They used to be JavaScript template literals, where every backslash had to be doubled; write them as normal code now. Each script is a classic IIFE: no `import`/`export`, and never the text `</script`.
 - Archify's viewer defines the CSS variables the panels use (`--panel`, `--bg`, `--text`, …). A variable that does not exist (`--panel-bg` was one such guess) silently falls back to nothing and makes text invisible in one theme.
 
 ---
