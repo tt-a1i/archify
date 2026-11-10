@@ -1,0 +1,16 @@
+// The rule registry. Every rule is a module exporting { code, dimension,
+// severity, confidence, run({ graph, config, facts }) -> Finding[] } and
+// optionally enabled(config, facts). Adding a rule means adding its file and
+// one line here; the order is the order rules run in, and findings are sorted
+// afterwards, so it never changes an id.
+import * as importCycle from './coupling/import-cycle.mjs';
+import * as cycle from './coupling/cycle.mjs';
+import * as hub from './coupling/hub.mjs';
+import * as internalLeak from './coupling/internal-leak.mjs';
+import * as boundary from './architecture/boundary.mjs';
+import * as complexity from './complexity/function.mjs';
+
+export const RULES = [importCycle, cycle, hub, internalLeak, boundary, complexity];
+
+// Layer statistics the overview shows next to boundary findings.
+export { layerCounts } from './architecture/boundary.mjs';

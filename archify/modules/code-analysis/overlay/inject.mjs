@@ -27,7 +27,7 @@
 // Nothing in the authored IR is changed or inferred.
 import fs from 'node:fs';
 import path from 'node:path';
-import { fail } from '../extract/shared/diagnostics.mjs';
+import { fail } from '../core/index.mjs';
 import { sourceChanges } from './source-changes.mjs';
 import { buildOverview } from './overview.mjs';
 import { buildTaskPayloads } from '../lib/task.mjs';

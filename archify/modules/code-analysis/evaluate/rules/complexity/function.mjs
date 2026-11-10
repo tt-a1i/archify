@@ -1,4 +1,4 @@
-import { fail } from '../../../extract/shared/diagnostics.mjs';
+import { fail } from '../../../core/index.mjs';
 
 // Function complexity: functions whose cyclomatic complexity or block nesting
 // reaches the configured thresholds. A high count is a maintenance signal (more

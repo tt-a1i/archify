@@ -21,7 +21,7 @@
 // Everything here is derived from data already in the payload; no wording is
 // produced, so the page and an agent read the same facts.
 
-import { layerCounts } from '../evaluate/rules/architecture/boundary.mjs';
+import { layerCounts } from '../evaluate/index.mjs';
 
 export const MAX_PRIORITIES = 3;
 const SEVERITY_RANK = { error: 0, warning: 1, info: 2 };

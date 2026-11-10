@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readInside } from './evidence.mjs';
 import { questionCalls } from './question-calls.mjs';
-import { fail } from '../extract/shared/diagnostics.mjs';
+import { fail } from '../core/index.mjs';
 
 const hash = (text) => createHash('sha256').update(text).digest('hex');
 export const WORKFLOW = fileURLToPath(new URL('../docs/FUNCTION-ANALYSIS.md', import.meta.url));

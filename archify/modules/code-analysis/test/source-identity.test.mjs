@@ -4,7 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
-import { extractFacts, buildGraph, evaluateGraph, overlayHtml } from '../lib/analysis.mjs';
+import { extractFacts, buildGraph, evaluateGraph } from '../lib/analysis.mjs';
+import { overlayHtml } from '../overlay/page.mjs';
 
 for (const language of ['ts', 'py']) {
   test(`${language}: dirty and untracked sources retain truthful identity and captured snippets`, t => {

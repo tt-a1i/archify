@@ -15,8 +15,8 @@
 // exported brief always tells the agent to re-read the current source first.
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
-import { fail } from '../extract/shared/diagnostics.mjs';
-import { schemaErrors } from '../extract/shared/schema.mjs';
+import { fail } from '../core/index.mjs';
+import { schemaErrors } from '../schemas/index.mjs';
 
 export const TASK_SCHEMA_VERSION = 1;
 export const KIND = 'archify-code-analysis-task';

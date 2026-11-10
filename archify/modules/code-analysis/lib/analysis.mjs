@@ -1,20 +1,18 @@
-// Code Analysis as a library. The only product entry point is `serve`
-// (bin/serve.mjs): Archify delivers the authored diagram first, and the
-// analysis below runs when the reader clicks the button on that page. Every
-// stage is still a pure JSON → JSON step with a schema, written to the output
-// directory so a result can be inspected or diffed; none of them is a
-// command of its own.
+// Code Analysis as a library: the three data stages (extract → graph →
+// evaluate) plus config, baseline and comparison loading. Every stage is a pure
+// JSON → JSON step with a schema, so a result can be inspected or diffed. The
+// page-building stage that turns these into the analysis view lives in
+// overlay/page.mjs: this file must not import overlay/, which builds on it.
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { otherLanguageFiles, selectAdapter } from '../extract/index.mjs';
-import { fail, receipt } from '../extract/shared/diagnostics.mjs';
-import { schemaErrors } from '../extract/shared/schema.mjs';
+import { fail } from '../core/index.mjs';
+import { schemaErrors } from '../schemas/index.mjs';
 import { buildModuleGraph } from '../graphs/module.mjs';
-import { buildOverlay } from '../overlay/inject.mjs';
 import { evaluate } from '../evaluate/index.mjs';
-import { reviewFindings, validateBaseline } from './review.mjs';
+import { validateBaseline } from './review.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -154,15 +152,6 @@ export function validateFacts(graph, facts) {
   if (errors.length) fail('input/facts-incompatible', 'Raw facts are invalid or do not match the module graph.', { evidence: { errors: errors.slice(0, 20) }, supportedFixes: ['regenerate raw-facts and module-graph together'] });
 }
 
-// Stage 4: delivered HTML + authored IR + graph → a new HTML with the analysis layer.
-export function overlayHtml({ html, ir, graph, facts = null, findings = [], findingsDocument = null, map = null, sourceRoot = null, run = {} }) {
-  const graphErrors = schemaErrors('module-graph', graph);
-  if (graphErrors.length) fail('overlay/input-schema-invalid', 'module-graph input does not conform to its schema.', { evidence: { errors: graphErrors.slice(0, 20) }, supportedFixes: ['regenerate the module graph'] });
-  validateFacts(graph, facts);
-  if (sourceRoot && !fs.existsSync(sourceRoot)) fail('cli/input-invalid', `Not a directory: ${sourceRoot}`, { subject: { dir: sourceRoot }, supportedFixes: ['pass the directory that was analyzed'] });
-  return buildOverlay({ ir, graph, html, map, facts, findings, findingsDocument, sourceRoot, run });
-}
-
 // Baseline file → validated document, or null when none was given.
 export function loadBaseline(file) {
   return file ? validateBaseline(readJsonInput(file, 'analysis --baseline'), file) : null;
@@ -185,43 +174,4 @@ export function loadPrevious(file, { strict = false } = {}) {
     const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
     return schemaErrors('findings', doc).length ? null : doc;
   } catch { return null; }
-}
-
-// The whole analysis for one delivered page, as the button runs it:
-// extract → graphs → evaluate → overlay, each stage written to `out`.
-// `html` is the page Archify delivered for `ir`; it is read, never modified.
-// `baseline` (file) marks accepted findings; `previous` (a findings.json from
-// an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir, html, out, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null }) {
-  const absRoot = path.resolve(root);
-  const irPath = path.resolve(ir);
-  const htmlPath = path.resolve(html);
-  const dir = path.resolve(out);
-  if (!fs.existsSync(irPath)) fail('cli/input-invalid', `Not a file: ${ir}`, { subject: { file: ir }, supportedFixes: ['pass the authored architecture IR'] });
-  if (!fs.existsSync(htmlPath)) fail('cli/input-invalid', `Not a file: ${html}`, { subject: { file: html }, supportedFixes: ['deliver the diagram with `archify deliver` first'] });
-  if (path.resolve(dir, 'repo.analysis.html') === htmlPath) fail('cli/out-invalid', 'The analysis output must not overwrite the delivered HTML.', { supportedFixes: ['use a different --out directory'] });
-  fs.mkdirSync(dir, { recursive: true });
-  const { adapter, facts, config: cfg, otherLanguages } = extractFacts(absRoot, { language, config });
-  fs.writeFileSync(path.join(dir, 'raw-facts.json'), stableJson(facts));
-  const graph = buildGraph(facts, cfg);
-  fs.writeFileSync(path.join(dir, 'module-graph.json'), stableJson(graph));
-  const findings = evaluateGraph(graph, cfg, facts);
-  fs.writeFileSync(path.join(dir, 'findings.json'), stableJson(findings));
-  const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: facts.files.map((f) => f.path) });
-  fs.writeFileSync(path.join(dir, 'review.json'), stableJson(review));
-  const irDoc = irSnapshot ?? readJsonInput(irPath, 'analysis --ir');
-  const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
-  const run = { rules: findings.rules, suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null, review };
-  const overlay = overlayHtml({ html: fs.readFileSync(htmlPath, 'utf8'), ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });
-  fs.writeFileSync(path.join(dir, 'overview.json'), stableJson(overlay.overview));
-  const outHtml = path.join(dir, 'repo.analysis.html');
-  fs.writeFileSync(outHtml, overlay.html);
-  return receipt('ok', {
-    command: 'analysis', out: dir,
-    extract: { adapter, files: facts.files.length, imports: facts.imports.length, resolved: facts.imports.filter((i) => i.resolved).length, unresolved: facts.unresolved, revision: facts.repository.revision },
-    graphs: { modules: graph.modules.length, edges: graph.edges.length, excludedFiles: graph.excluded.files },
-    evaluate: findings.summary,
-    overlay: { html: outHtml, components: overlay.components, mapped: overlay.mapped, findings: findings.diagnostics.length, snippets: overlay.snippets, verdict: overlay.overview.verdict, priorities: overlay.overview.priorities, otherLanguages },
-    review: reviewSummary(review),
-  });
 }

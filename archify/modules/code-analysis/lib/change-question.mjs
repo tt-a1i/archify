@@ -5,8 +5,7 @@ import ts from 'typescript';
 import { extractFacts, loadConfig } from './analysis.mjs';
 import { readInside } from './evidence.mjs';
 import { measureFunctions } from '../extract/ts/functions.mjs';
-import { rangeText } from '../extract/shared/source-range.mjs';
-import { fail } from '../extract/shared/diagnostics.mjs';
+import { fail, rangeText } from '../core/index.mjs';
 
 const LIMIT = 40;
 const digest = text => createHash('sha256').update(text).digest('hex');

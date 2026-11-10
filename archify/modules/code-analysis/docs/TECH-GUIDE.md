@@ -43,7 +43,7 @@ export function extract(root, config) { … }
 
 **JSON Schema** is a standard for describing, in JSON, what a JSON document should look like. Each JSON-producing stage of Bauify has a schema for its output: `schemas/raw-facts.schema.json`, `schemas/module-graph.schema.json`, `schemas/findings.schema.json`.
 
-**ajv** is the most widely used JSON Schema validator for Node. The code is in `extract/shared/schema.mjs`:
+**ajv** is the most widely used JSON Schema validator for Node. The code is in `schemas/validate.mjs`:
 
 ```js
 import Ajv2020 from 'ajv/dist/2020.js';           // the draft 2020-12 flavour
@@ -208,7 +208,7 @@ A single Java static import of a field or method does not hide an unrelated type
 
 ### glob → regular expression
 
-`**/test/**` and `**/*.{js,mjs}` in `config/defaults.json` are **glob** patterns, a shorthand for paths. Node 18 has no stable built-in glob, so `extract/shared/glob.mjs` hand-writes a translator from glob to regular expression: `**` → any number of directory levels, `*` → any characters within one segment, `{a,b}` → either. A reviewer added one edge case: an unclosed `{` used to loop forever and now reports `cli/config-invalid`.
+`**/test/**` and `**/*.{js,mjs}` in `config/defaults.json` are **glob** patterns, a shorthand for paths. Node 18 has no stable built-in glob, so `core/glob.mjs` hand-writes a translator from glob to regular expression: `**` → any number of directory levels, `*` → any characters within one segment, `{a,b}` → either. A reviewer added one edge case: an unclosed `{` used to loop forever and now reports `cli/config-invalid`.
 
 ### File roles
 
@@ -438,7 +438,7 @@ One test runs the pipeline twice and compares bytes.
 
 ## 12. Failure is a structured diagnostic
 
-Bauify never prints a Node stack trace to the user. Every failure is an object of a fixed shape (`extract/shared/diagnostics.mjs`):
+Bauify never prints a Node stack trace to the user. Every failure is an object of a fixed shape (`core/diagnostics.mjs`):
 
 ```json
 { "code": "extract/adapter-ambiguous", "severity": "error",

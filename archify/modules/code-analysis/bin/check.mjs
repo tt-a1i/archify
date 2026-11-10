@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DiagnosticError, fail, receipt } from '../extract/shared/diagnostics.mjs';
+import { DiagnosticError, fail, receipt } from '../core/index.mjs';
 
 export const USAGE = `Usage:
   archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]

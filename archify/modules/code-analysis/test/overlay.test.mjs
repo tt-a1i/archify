@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { ARCHIFY_AVAILABLE, ARCHIFY_PACKAGE, BAUIFY_ROOT } from './helpers.mjs';
 import { buildOverlay, scriptSafeJson } from '../overlay/inject.mjs';
-import { analyzeRepository } from '../lib/analysis.mjs';
+import { analyzeRepository } from '../overlay/page.mjs';
 import { DiagnosticError } from '../extract/shared/diagnostics.mjs';
 
 const FAKE_HTML = '<html><body><div class="toolbar"></div><svg><g data-node-id="app"></g><g data-node-id="lib"></g></svg></body></html>';
