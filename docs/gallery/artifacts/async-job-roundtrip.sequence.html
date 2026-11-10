@@ -840,6 +840,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
+    /* A Viewer an explainer page opens keeps its tools and the preset's look; the page names the
+       diagram, so the standalone badges stay off, as the embedded plate does. */
+    html[data-hosted="explainer"][data-preset] .header-row::after,
+    html[data-hosted="explainer"][data-preset="editorial"] .diagram-container::after { display: none; }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
@@ -6286,10 +6290,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function diagramFilename() {
-        var title = (document.title || 'diagram')
-          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
-          .replace(/\s+Diagram$/i, '')
-          .trim();
+        // Prefer the authored heading: the document title may carry a
+        // locale-specific page decoration ("Diagram", "Diagrama", ...).
+        // Without a heading, keep the complete document title; suffix-like
+        // words in either source are authored text and are not stripped.
+        var heading = document.querySelector('.header h1');
+        var title = (heading && heading.textContent || '').trim() ||
+          (document.title || '').trim();
         // A mark is kept only while attached to a letter or number base;
         // a detached mark (the variation selector after an emoji, say)
         // would otherwise survive as an invisible filename.
@@ -11305,7 +11312,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+        // Body and stage padding already bound the actual viewport. The
+        // optional bottom gap may yield to the source-text floor; otherwise
+        // a late header reflow can select an enlarged, scrolling diagram
+        // even though its original size still fits the screen.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth + SAFE_BOTTOM_GAP * ratio, maxWidth) >=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading && !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;
