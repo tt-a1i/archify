@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { Script } from 'node:vm';
 import { parse } from 'parse5';
 import { renderExplainer } from '../archify/explainer/render.mjs';
 import { computeExplainerRevision } from '../archify/explainer/revision.mjs';
 import { unpackPageBundle } from '../archify/explainer/page-bundle.mjs';
+import { scanHtml } from '../archify/explainer/check.mjs';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const all = (node, test) => [ ...(test(node) ? [node] : []), ...(node.childNodes || []).flatMap(child=>all(child,test)) ];
@@ -260,4 +262,15 @@ test('renderer: page titles render validated inline content in reading order wit
   assert.match(text(find(tree,'explainer-typical-1')),/Illustrative only/);
   assert.match(text(find(tree,'explainer-typical-3')),/not measured here/);
   assert.deepEqual(payload(tree,'archify-explainer-prepared').document,input,'rendering must not rewrite the canonical title');
+});
+
+test('renderer: inline reader keeps parsing after a Live Server style injection before the first closing body tag',()=>{
+  const html=renderExplainer(fixture(),resources());
+  const reader=scanHtml(html).scripts.find(script=>!script.attrs.type);
+  assert.ok(reader,'the rendered page carries one executable reader script');
+  assert.equal(/<\/body>/i.test(reader.text),false,'the serialized reader must not contain a literal closing body tag');
+  const injected=html.replace(/<\/body>/i,'<script src="/livereload.js"></script></body>');
+  const injectedReader=scanHtml(injected).scripts.find(script=>!script.attrs.type);
+  assert.ok(injectedReader,'the reader script survives the injection');
+  assert.doesNotThrow(()=>new Script(injectedReader.text),'a reload script injected before the first closing body tag must not cut the reader script short');
 });

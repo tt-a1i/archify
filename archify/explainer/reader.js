@@ -440,7 +440,7 @@
     viewerDialog.append(frame);
     nativeHtml(diagram).then(html=>{
       if (viewer?.frame !== frame) return;
-      const end = html.toLowerCase().lastIndexOf('</body>');
+      const end = html.toLowerCase().lastIndexOf('<\/body>');
       frame.srcdoc = end < 0 ? html + script : html.slice(0,end) + script + html.slice(end);
     },()=>notify(say('This diagram could not be opened.','无法打开此交互图。')));
   }
