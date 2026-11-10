@@ -213,7 +213,7 @@ export const ATLAS_JS = `
   var atlas = JSON.parse(source.textContent);
   var root = document.documentElement;
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
-  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations' };
+  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'redundancy/duplicate-block': 'Duplicate code' };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }

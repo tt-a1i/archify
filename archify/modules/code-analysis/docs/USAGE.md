@@ -24,7 +24,28 @@ The source panel marks captured changes against the base commit: green gutters f
 
 If the architecture JSON changes or becomes unavailable after startup, the analysis request is rejected and the page asks you to regenerate the diagram. Restart with the updated JSON and open the new URL. The server never rewrites your input JSON or silently combines a new architecture with the previous diagram.
 
-Python, JS/TS and Java are supported. For mixed-language projects, add `--language py`, `--language ts` or `--language java`; each run analyzes one language. A JS/TS or Python tree that also holds `.java` files keeps its language unless its root has a Maven/Gradle build file (see the [upgrade note](JAVA.md)). Add `--map overlay-map.json` when you need an explicit mapping between diagram components and code modules.
+JavaScript, TypeScript, Python, Java, Go and Rust use five adapters. Select one
+with `--language ts|py|java|go|rust`; `ts` covers both JavaScript and TypeScript.
+Each run uses one adapter. A JS/TS or Python tree that also holds `.java` files
+keeps its language unless its root has a Maven/Gradle build file (see the
+[upgrade note](JAVA.md)). Choose explicitly for a mixed-language root. Add
+`--map overlay-map.json` when you need an explicit mapping between diagram
+components and code modules.
+
+Language extraction has its own prerequisites:
+
+| Adapter | Required tools and source scope |
+| --- | --- |
+| `ts` | Node.js and the module's installed TypeScript parser dependencies. |
+| `py` | Python 3; `BAUIFY_PYTHON` can select the interpreter. |
+| `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
+| `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
+| `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
+
+The Go and Rust adapters compile Archify's source helper, not the target
+project. Rust's first use may fetch the helper's locked dependencies; cached
+dependencies are required for `rust.offline`. These tools remain necessary
+when optional duplicate detection is enabled.
 
 For a Java analysis without a diagram, run `node bin/archify.mjs code-analysis check /path/to/java-repo --language java --out out/java`. No JDK or project build is required. See [Java support and limitations](JAVA.md) for conservative dependency resolution, complexity measurements and syntax coverage.
 
@@ -111,6 +132,99 @@ To change the thresholds, set any of them in the `--config` file; unset values k
 ```
 
 
+## Duplicate code (C6, optional)
+
+All six source languages can use **jscpd 5.4.3** to report token duplicates as
+`redundancy/duplicate-block` warnings. Install the native executable separately
+using [jscpd's distribution instructions](https://github.com/kucherenko/jscpd/blob/b82d84186389590fed0813d005391f3b8147dcfa/README.md#quick-start),
+then enable it in the existing analysis config:
+
+```json
+{
+  "duplicates": {
+    "enabled": true,
+    "executable": "/absolute/path/to/jscpd",
+    "minTokens": 50,
+    "minLines": 5,
+    "identifiers": "exact",
+    "timeoutMs": 30000,
+    "maxFileBytes": 1000000
+  }
+}
+```
+
+Run from the `archify/` package directory:
+
+```sh
+node bin/archify.mjs code-analysis check /path/to/project --language ts --config analysis.config.json --out out/analysis --json
+```
+
+Use the same `duplicates` configuration with `--language py`, `java`, `go` or
+`rust`. Each invocation checks the selected adapter's captured source scope;
+it does not combine all languages in a mixed repository or expand Go/Rust
+build/profile coverage.
+
+C6 compares the raw text of those selected files. In Rust, text inside an
+inactive `cfg` region or an opaque macro can still match. Duplicate coverage
+describes scanned files; it does not establish runtime reachability or coverage
+of every build profile.
+
+These are the defaults when `enabled` is true. `executable` defaults to `jscpd`
+on PATH; a relative path containing a directory separator is resolved from the
+caller's working directory. On Windows select the native `.exe`, not an npm
+`.cmd` launcher. No detector is downloaded or installed by an analysis run.
+When the block is absent, `enabled` is false, or `ignore` includes
+`redundancy/duplicate-block`, the optional executable is not probed or run.
+The selected language's extraction prerequisites above still apply. C6 adds
+the jscpd executable to that setup; it does not replace the language adapter.
+
+The mode is `weak`: whitespace and comments are ignored, while identifiers and
+literals remain significant. Set `identifiers` to `consistent` to also consider
+consistent renaming; this is a different matching policy, not a more accurate
+default. Python docstrings and TypeScript declarations can still be repeated
+tokens. Review their purpose before deciding to change code. These thresholds
+have been sampled on real source but are not a universal maintenance threshold.
+
+The detector scans a temporary UTF-8 copy of the already captured source,
+following the selected language and module file roles. Test/generated roles
+follow `modules.excludeRoles`; conventional `vendor`, `vendored`, `third_party`
+and `third-party` directories are omitted. Parse failures, unsupported formats
+and files above `maxFileBytes` are also recorded as omissions. The temporary
+tree is removed after the invocation; the target project's code is not executed.
+
+`findings.json` records engine/version, effective settings and selected/analyzed/
+omitted paths under `analysis.duplicates`; `check --json` includes the same data
+under `duplicates`. Native reports also omit files below their token/line limits;
+when the report does not state an individual reason, it stays
+`not-reported-by-engine`. An incomplete or empty scan is visible even with zero
+findings: the CLI summary warns, `overview.json` records `coverage.duplicates`
+(analyzed/selected/omitted counts and `complete`), and the page marks Coverage as
+incomplete with `Duplicate code: x/y files analyzed · incomplete`. Comparisons involving incomplete coverage, a changed scan scope,
+settings or engine are marked not directly comparable. Missing tools, wrong
+versions, timeouts and invalid reports fail the analysis with exit 2; they do not
+become clean results, even with `--fail-on never`.
+
+Each finding retains one **native pair** and both locations, including duplicates
+within one file. It does not infer every pair in a larger group. Coordinates are
+converted from jscpd's UTF-8 byte offsets to UTF-16 source offsets and one-based
+columns. IDs distinguish content, file, enclosing symbol and repeated occurrence;
+leading lines and unrelated findings do not change them, but changing clone
+content or the number of identical occurrences can produce new IDs.
+
+The existing `task` command exports both sides and their allowed files. Evidence
+hashes cover the complete cited lines, including context beside a partial-line
+match. Both sides are checked independently; unique unchanged ranges can move,
+while ambiguous moves or a changed number of identical copies invalidate the
+old evidence. The original line-level evidence formats remain supported.
+In the page, **Duplicate code** shows both file paths and complete short matched
+ranges. Theme-coloured highlighting and an underline follow the recorded columns; text
+beside a partial-line match stays unmarked. The mark denotes the detector's token
+range, whose whitespace or comments may differ under `weak` mode. Long ranges
+show bounded beginning/end excerpts with an explicit omission count. Open either
+file to inspect its complete source; the exact marks survive full-file expansion
+and returning to the finding. Older results without columns show a notice and
+leave the source unmarked. The two locations are stacked in the existing reader.
+
 ## Accepting known findings (baseline)
 
 Real projects have findings the team knows about and has decided to leave for now. A baseline file records them, so the overview and CI focus on what is new:
@@ -154,7 +268,10 @@ Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the
 - arrays replace the default list as a whole — `include`, `exclude`, `ignore` and each role's globs. To add an exclusion, copy the default `exclude` list and append to it;
 - other values replace the default.
 
-Rules are switched off only with `"ignore": ["rule/code"]`. A config that is not a JSON object stops analysis with `cli/config-invalid`.
+Use `"ignore": ["rule/code"]` to suppress rules. Optional duplicate detection must
+first be enabled through `duplicates.enabled`; absent input or configuration
+also leaves rules such as architecture boundaries unchecked. A config that is
+not a JSON object stops analysis with `cli/config-invalid`.
 
 ## Atlas view
 
@@ -245,4 +362,12 @@ Relationships and metrics are folded below the code evidence. A source link open
 
 ### Go source investigation
 
-Use `--language go` at a root containing `go.mod`. An installed Go 1.18+ compiler is required. Saved and paired questions can follow captured direct function declarations and known callers; build scope, test inclusion, excluded files and incomplete typing remain explicit. See [Go support](GO.md) for commands, toolchain cost and limitations. Rust remains unsupported.
+Use `--language go` at a root containing `go.mod`. An installed Go 1.18+ compiler is required. Saved and paired questions can follow captured direct function declarations and known callers; build scope, test inclusion, excluded files and incomplete typing remain explicit. See [Go support](GO.md) for commands, toolchain cost and limitations.
+
+### Rust source investigation
+
+Use `--language rust` at a Cargo workspace/package root. Cargo/rustc 1.71+ and
+the locked helper dependencies are required. Saved and paired questions retain
+the captured source profile, cfg/features, omitted regions and bounded call
+model; a source binding does not establish compilation or runtime dispatch.
+See [Rust support](RUST.md) for setup, profile settings and limitations.
