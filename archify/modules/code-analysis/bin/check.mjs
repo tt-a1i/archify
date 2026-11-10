@@ -97,6 +97,7 @@ export async function runCheck(argv) {
     receipt: receipt(status, {
       command: 'check', root, out,
       language: facts.repository.language, files: facts.files.length, rules: findings.rules,
+      ...(findings.analysis?.duplicates ? { duplicates: findings.analysis.duplicates } : {}),
       verdict: overview.verdict, counts: overview.counts,
       gate: { failOn, newOnly, ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: where(d), message: d.message })) },
       review: reviewSummary(review),
@@ -119,6 +120,7 @@ export async function runCheck(argv) {
 // The most useful single location for a finding, as path:line when known.
 export function where(d) {
   const s = d.subject || {};
+  if (d.code === 'redundancy/duplicate-block' && Array.isArray(s.locations)) return s.locations.map(l => `${l.file}:${l.line}`).join(' <-> ');
   if (s.file) return s.line ? `${s.file}:${s.line}` : s.file;
   const first = d.evidence?.imports?.[0];
   if (first) return `${first.file}:${first.line}`;
@@ -150,6 +152,11 @@ export function formatText(r) {
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
   if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.map(formatTerminalText).join(', ')}`);
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);
+  if (r.duplicates) {
+    const { engine, coverage } = r.duplicates;
+    lines.push(`  Duplicate detection: ${engine.name} ${engine.version} · ${coverage.analyzed.length}/${coverage.selected.length} selected files analyzed${coverage.complete ? '' : ' · incomplete coverage'}`);
+    if (!coverage.complete) lines.push('  Duplicate detection did not cover every selected file. Empty findings do not mean the full scope was checked; see duplicates.coverage in --json.');
+  }
   if (r.review.comparison) {
     const c = r.review.comparison;
     lines.push(`  Since the previous run: ${c.new} new, ${c.notDetected} no longer detected, ${c.evidenceChanged} with changed evidence`);

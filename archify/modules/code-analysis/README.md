@@ -6,7 +6,7 @@ Start Archify with `npm start -- "/path/to/project" --ir architecture.json` from
 
 Code Analysis is Archify's integrated static code analysis module, imported from
 Bauify (commit 4bb811c) and maintained here. It reads source dependencies
-(Python, JS/TS, Java and Go), folds files into modules, checks import cycles, coupling,
+(JavaScript, TypeScript, Python, Java, Go and Rust), folds files into modules, checks import cycles, coupling,
 function complexity and configured architecture boundaries, and shows the result on the architecture diagram Archify delivered — as an
 extra layer the reader switches on, never as a change to the diagram itself.
 
@@ -41,17 +41,24 @@ Adding `--base-root` with a required `--entry` prepares a fresh before/after sou
 comparison, including separate call and module-reading references and explicit
 coverage limits. See [change questions](docs/FUNCTION-ANALYSIS.md#change-questions).
 
+Optional [C6 duplicate detection](docs/USAGE.md#duplicate-code-c6-optional) uses a
+separately installed jscpd 5.4.3 executable for all six languages. They use five
+analysis adapters: `ts` covers JavaScript and TypeScript, alongside `py`, `java`,
+`go` and `rust`. C6 preserves
+both source locations, scan coverage, baselines and AI task evidence. It is
+disabled by default and does not replace dependency or function analysis.
+
 From the `archify/` package directory:
 
 ```sh
 node bin/archify.mjs code-analysis serve /path/to/repo --ir architecture.json --out out/analysis --language py
 ```
 
-No separate setup: the first run installs the module's parser and schema dependencies
+The first run installs the module's Node parser and schema dependencies
 (typescript, java-parser, ajv) into `modules/code-analysis/node_modules`; `npm ci` in
 `archify/` does the same through its `postinstall`. Open the URL the command
 prints and keep the process running. Options:
-`--language ts|py|java|go` (required when the scan matches both JS/TS and Python, or Java beside them under a root Maven/Gradle build file), `--map overlay-map.json`
+`--language ts|py|java|go|rust` (choose explicitly for a mixed-language root), `--map overlay-map.json`
 (`{"componentId": ["moduleId", …]}` when the IR's `sources` do not say which
 modules a component stands for), `--config file.json` (thresholds, include /
 exclude, roles), `--quality standard|showcase` (passed to `archify deliver`).
@@ -83,4 +90,11 @@ potential import-time risks without claiming that execution is safe or that a ru
 npm run test:code-analysis
 ```
 
-Go source investigation supports root-module packages, function definitions and conservative direct function bindings. It requires Go 1.18+; build conditions, exclusions and incomplete typing are explicit. See [Go source scope and limitations](docs/GO.md). Rust is not supported yet.
+Go source investigation supports root-module packages, function definitions and conservative direct function bindings. It requires Go 1.18+; build conditions, exclusions and incomplete typing are explicit. See [Go source scope and limitations](docs/GO.md).
+
+Rust source investigation uses Cargo/rustc 1.71+ and a bundled source helper with
+locked parser dependencies; its first run compiles that helper and may fetch
+those dependencies. Captured Cargo metadata, cfg/features, omitted sources and
+unknown dispatch remain explicit. See [Rust source scope and tooling](docs/RUST.md).
+Enabling C6 retains these language tools and parsers; jscpd supplies token
+duplicate detection and does not replace dependency, call or language-scope facts.

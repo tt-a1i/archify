@@ -31,6 +31,7 @@ const IMPACT = {
   'coupling/hub': 'Changes here reach many dependents, and the module may combine several responsibilities.',
   'coupling/internal-leak': 'Other modules depend on this module\'s internal files, so moving, renaming or splitting any of them breaks importers; there is no single interface to keep stable.',
   'architecture/boundary': 'Code in one layer depends on a layer the configured rule forbids, so changes in that layer can break it and the intended layering erodes.',
+  'redundancy/duplicate-block': 'Similar token sequences may require parallel maintenance. The detector does not establish semantic equivalence or whether sharing an implementation is appropriate.',
 };
 
 const PRESERVE = {
@@ -57,6 +58,10 @@ const PRESERVE = {
     `Behaviour of the code in layer "${d.subject.boundary.from}" that currently imports layer "${d.subject.boundary.to}".`,
     'The boundary rule itself: do not change the analysis config to make the finding disappear unless the rule is confirmed wrong.',
   ],
+  'redundancy/duplicate-block': () => [
+    'Observable behaviour at both cited locations: inputs, return values, errors and side effects.',
+    'Each location\'s callers, interfaces and business constraints; similar tokens can serve different purposes.',
+  ],
 };
 
 const ACCEPTANCE = {
@@ -79,6 +84,10 @@ const ACCEPTANCE = {
   'coupling/internal-leak': (d) => [d.evidence.entries.length
     ? `No module outside ${d.subject.module} imports its internal files; they import ${d.evidence.entries.join(', ')} instead.`
     : `${d.subject.module} has an entry file other modules import instead of its internal files (or fewer than ${d.evidence.threshold.minFiles} internal files remain imported from outside).`],
+  'redundancy/duplicate-block': () => [
+    'Both cited blocks have been reviewed in context; duplication is reduced where sharing is appropriate, or the reason to retain separate implementations is recorded.',
+    'Re-analysis uses the same duplicate detector version and settings; project tests confirm behaviour at both locations.',
+  ],
 };
 
 // Build one task for the given finding ids from one analysis snapshot.
@@ -202,6 +211,11 @@ export function validateTask(doc, file = null) {
 // evidence check hashes; the excerpt around it is added by withExcerpt.
 export function locationsOf(d) {
   const s = d.subject || {}, ev = d.evidence || {};
+  if (d.code === 'redundancy/duplicate-block') return (s.locations || []).map((loc) => ({
+    file: loc.file, startLine: loc.line, endLine: loc.endLine, kind: 'range',
+    ...(Number.isInteger(loc.column) ? { startColumn: loc.column, endColumn: loc.endColumn, startOffset: loc.start, endOffset: loc.end } : {}),
+    note: 'Duplicate candidate; the evidence hash covers the full cited lines, including text beside any partial-line match.',
+  }));
   if (d.code === 'complexity/function' && s.file && Number.isInteger(s.line)) {
     return [{ file: s.file, startLine: s.line, endLine: Number.isInteger(s.endLine) ? s.endLine : s.line, kind: 'function', symbol: s.function, ...(Number.isInteger(ev.deepestLine) ? { focusLine: ev.deepestLine } : {}), note: `complexity ${ev.complexity}, nesting ${ev.nesting}` }];
   }
@@ -244,7 +258,7 @@ export function withExcerpt(loc, lines) {
     if (last && a <= last.endLine + 1) { last.lines.push(...lines.slice(last.endLine, b)); last.endLine = Math.max(last.endLine, b); return; }
     segments.push({ startLine: a, endLine: b, lines: lines.slice(a - 1, b) });
   };
-  if (loc.kind === 'function') {
+  if (loc.kind === 'function' || (loc.kind === 'range' && loc.endLine - loc.startLine + 1 > EXCERPT.functionFull)) {
     const length = loc.endLine - loc.startLine + 1;
     if (length <= EXCERPT.functionFull) push(loc.startLine, loc.endLine);
     else {
@@ -318,6 +332,7 @@ function keyEvidence(d) {
     case 'coupling/hub': return pick(['fanIn', 'fanOut', 'instability', 'threshold']);
     case 'architecture/boundary': return { ...pick(['rule', 'totalImports', 'files']), boundary: d.subject.boundary };
     case 'coupling/internal-leak': return pick(['entries', 'entrySource', 'internalFiles', 'consumers', 'totalImports', 'threshold']);
+    case 'redundancy/duplicate-block': return pick(['engine', 'identifiers', 'kind', 'tokens', 'lines', 'threshold']);
     default: return pick(['threshold']);
   }
 }
@@ -332,6 +347,7 @@ function titleOf(selected, language) {
     if (d.code === 'coupling/hub') return `Reduce the coupling of hub module ${s.module}`;
     if (d.code === 'coupling/internal-leak') return `Give module ${s.module} one entry point and import through it`;
     if (d.code === 'architecture/boundary') return `Remove the "${s.boundary.from}" → "${s.boundary.to}" boundary violation`;
+    if (d.code === 'redundancy/duplicate-block') return `Review duplicated code in ${(s.files || []).join(' and ')}`;
     return `Address ${d.code}`;
   };
   return selected.length === 1 ? one(selected[0]) : `${one(selected[0])} and ${selected.length - 1} related finding${selected.length === 2 ? '' : 's'}`;
