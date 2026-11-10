@@ -1,6 +1,6 @@
 # Break the import cycle between 2 files
 
-Task `TASK-eb0ff4a2ea71` · from Archify code analysis · findings `COUP-65773eadb104` (coupling/import-cycle, warning)
+Task `TASK-eb0ff4a2ea71` · from Archify code analysis · findings `COUP-65773eadb104` (coupling/import-cycle, error)
 
 **Evidence:** Captured at analysis time — not yet checked against the current working tree.
 

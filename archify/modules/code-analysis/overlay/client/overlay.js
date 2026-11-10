@@ -64,9 +64,9 @@
   reader.appendChild(codePane);
   // Danger levels behind the colours. Same wording everywhere: legend, badge, detail header.
   var LEVELS = {
-    red: { name: 'critical', text: 'an error was reported; inspect its evidence and assumptions' },
-    amber: { name: 'warning', text: 'eager import cycle (potentially import-order dependent), hub module, crossed architecture boundary, or very complex function' },
-    blue: { name: 'info', text: 'structural coupling; initialization behavior is not established' },
+    red: { name: 'critical', text: 'circular dependency: the parts cannot be understood, tested or changed on their own. A structural problem to fix, not a proven runtime failure' },
+    amber: { name: 'warning', text: 'maintenance burden: cycle through deferred imports, hub or concentrated module, very large file, crossed architecture boundary, or very complex function' },
+    blue: { name: 'info', text: 'a signal to read; no change is required' },
     green: { name: 'clean', text: 'no rule fired' },
     grey: { name: 'unmapped', text: 'no source code maps to this component' },
     neutral: { name: 'metric', text: 'a number, not a verdict' }
@@ -197,6 +197,7 @@
   }
   function nextStepHtml(f) {
     var text = f.code === 'coupling/hub' ? 'Check whether dependencies cluster by responsibility before splitting this module.'
+      : f.code === 'coupling/concentration' ? 'Decide whether this concentration is intended. A small shared kernel or one cohesive responsibility can be accepted with that reason; otherwise look for parts that change for different reasons or are used by only a few modules.'
       : f.code === 'coupling/import-cycle' ? 'Inspect the cited imports and initialization behavior before changing this dependency.'
       : f.code === 'coupling/cycle' ? 'Check which shared responsibility links these modules. A module cycle does not establish a file-level failure.'
       : f.code === 'architecture/boundary' ? 'Check what the cited imports need from the other layer: move it behind an interface in an allowed layer, or update the rule if this dependency is intended.'
@@ -336,7 +337,7 @@
     'signals-only': { tone: 'blue', text: 'Signals only' },
     'none-found': { tone: 'green', text: 'No findings within the checks that ran' }
   };
-  var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions' };
+  var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions' };
   var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java' };
   function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
   function toneOf(severity) { return severity === 'error' ? 'red' : severity === 'warning' ? 'amber' : 'blue'; }
@@ -346,14 +347,24 @@
     if (f.code === 'coupling/import-cycle' && s.files) return 'Import cycle · ' + plural(s.files.length, 'file');
     if (f.code === 'coupling/cycle' && s.modules) return 'Module cycle · ' + plural(s.modules.length, 'module');
     if (f.code === 'coupling/hub' && s.module) return modLabel(s.module) + ' connects many modules';
+    if (f.code === 'coupling/concentration') return s.file ? short(s.file) + ' is a very large file' : modLabel(s.module) + ' concentrates the project';
     if (f.code === 'coupling/internal-leak' && s.module) return modLabel(s.module) + ' is imported through its internals';
     if (f.code === 'architecture/boundary' && s.boundary) return s.boundary.from + ' depends on ' + s.boundary.to;
     // Java names carry their parameter types to tell overloads apart.
     if (f.code === 'complexity/function' && s.function) return s.function + (s.function.endsWith(')') ? '' : '()') + ' is complex';
     return f.code;
   }
+  function concentrationWhat(ev) {
+    var pct = function (share) { return Math.round(share * 100) + '%'; };
+    var parts = [];
+    if (ev.reach) parts.push(ev.reach.dependents + ' of ' + plural(ev.reach.modules, 'other module') + ' depend on it (' + pct(ev.reach.share) + ')');
+    if (ev.size) parts.push(pct(ev.size.share) + ' of the analyzed lines (' + ev.size.loc + ' of ' + ev.size.totalLoc + ')');
+    if (ev.loc) parts.push(plural(ev.loc, 'line') + ' · threshold ' + ev.threshold.fileLines);
+    return parts.join(' · ');
+  }
   function findingWhat(f) {
     var s = f.subject || {};
+    if (f.code === 'coupling/concentration' && f.evidence) return concentrationWhat(f.evidence);
     if (s.files) return 'Files: ' + s.files.slice(0, 3).map(short).join(', ') + (s.files.length > 3 ? ' …' : '');
     if (s.modules) return 'Modules: ' + s.modules.slice(0, 4).map(modLabel).join(', ') + (s.modules.length > 4 ? ' …' : '');
     if (f.code === 'coupling/hub' && f.evidence) return f.evidence.fanIn + ' modules depend on it; it depends on ' + f.evidence.fanOut + '.';
@@ -374,8 +385,8 @@
     var f = findingById[id]; if (!f) return '';
     var r = f.review || {};
     var badges = (r.since === 'new' ? '<span class="badge-new">new</span>' : '') +
-      (r.status === 'accepted' ? '<span class="badge-accepted">accepted</span>' : r.status === 'accepted-changed' ? '<span class="badge-accepted">accepted · evidence changed</span>' : '');
-    return '<button type="button" class="bauify-item ' + toneOf(f.severity) + (r.status === 'accepted' ? ' accepted' : '') + '" data-finding="' + esc(id) + '"' + (r.reason ? ' title="Accepted: ' + esc(r.reason) + '"' : '') + '>' + (n ? '<span class="n">' + n + '</span>' : '') +
+      (r.status === 'accepted' ? '<span class="badge-accepted">' + (f.severity === 'error' ? 'accepted · still to fix' : 'accepted') + '</span>' : r.status === 'accepted-changed' ? '<span class="badge-accepted">accepted · evidence changed</span>' : '');
+    return '<button type="button" class="bauify-item ' + toneOf(f.severity) + (r.status === 'accepted' ? (f.severity === 'error' ? ' accepted-error' : ' accepted') : '') + '" data-finding="' + esc(id) + '"' + (r.reason ? ' title="Accepted: ' + esc(r.reason) + '"' : '') + '>' + (n ? '<span class="n">' + n + '</span>' : '') +
       '<b>' + esc(findingTitle(f)) + '</b> <em>' + esc(f.severity) + '</em>' + badges + '<span class="what">' + esc(findingWhat(f)) + '</span><span class="where">' + esc(findingWhere(f)) + '</span>' + (n && data.tasks && data.tasks[id] ? '<span class="what">' + esc(data.tasks[id].task.impact.map(function (v) { return v.statement; }).join(' ')) + '</span>' : '') + '</button>';
   }
   function coverageHtml(c) {
@@ -427,7 +438,11 @@
     if (!o) { overview.innerHTML = '<div class="k">Code analysis</div>' + legend(); return; }
     var v = VERDICT[o.verdict] || VERDICT['none-found'];
     var acceptedCount = o.counts.accepted || 0;
-    var verdictText = o.verdict === 'none-found' && acceptedCount ? 'No open findings · ' + acceptedCount + ' accepted in the baseline' : v.text;
+    var acceptedErrors = o.counts.acceptedErrors || 0;
+    // An error stays red after it is accepted: the baseline unblocks CI, it does not fix the structure.
+    if (o.counts.error) v = { tone: 'red', text: 'Structural problems to fix' };
+    else if (acceptedErrors) v = { tone: 'red', text: 'Accepted structural problems still present' };
+    var verdictText = !o.counts.error && !acceptedErrors && o.verdict === 'none-found' && acceptedCount ? 'No open findings · ' + acceptedCount + ' accepted in the baseline' : v.text;
     var counts = [plural(o.counts.findings, 'finding')]
       .concat(['error', 'warning', 'info'].filter(function (k) { return o.counts[k]; }).map(function (k) { return o.counts[k] + ' ' + k; }))
       .concat(acceptedCount ? [acceptedCount + ' accepted'] : [])
@@ -455,7 +470,7 @@
     if (o.priorities.length) {
       h += '<div class="k">Look at first</div>';
       o.priorities.forEach(function (id, i) { h += findingRow(id, i + 1); });
-    } else if (acceptedCount) h += '<div class="ev" style="margin-top:8px">Every finding is accepted in the baseline. New findings, and accepted ones whose code changes, will show up here.</div>';
+    } else if (acceptedCount) h += '<div class="ev" style="margin-top:8px">Every finding is accepted in the baseline' + (acceptedErrors ? ', including ' + plural(acceptedErrors, 'circular dependency finding') + ' that ' + (acceptedErrors === 1 ? 'is' : 'are') + ' still in the code and stay' + (acceptedErrors === 1 ? 's' : '') + ' red' : '') + '. New findings, and accepted ones whose code changes, will show up here.</div>';
     else h += '<div class="ev" style="margin-top:8px">No rule fired. This covers only the checks listed under Coverage; it is not a quality guarantee.</div>';
     if (o.groups.length) {
       h += '<div class="k">All findings · click a component on the diagram for its own view</div>';
@@ -587,11 +602,12 @@
     var h = '<button class="close" aria-label="Close">×</button><button class="back" type="button">← Overview</button>';
     h += '<div class="k">' + esc(GROUPS[f.code] || f.code) + ' · ' + esc(scope.label) + '</div><h3><i class="bauify-' + tone + '"></i>' + esc(findingTitle(f)) + '</h3>';
     var explanation = f.code === 'coupling/hub' ? 'High incoming and outgoing coupling; inspect responsibilities before deciding to split.'
+      : f.code === 'coupling/concentration' ? 'Much of the project depends on, or lives in, this one place. These are static counts with their thresholds, not proof that it must be split.'
       : f.code === 'architecture/boundary' ? 'These imports break a boundary declared in the analysis config. The rule comes from the config, not from the diagram.'
       : f.code === 'coupling/internal-leak' ? (f.evidence && f.evidence.entrySource === 'config' ? 'These imports bypass the entry files declared in the analysis config.' : 'Other modules depend on this module\'s internal files, so moving or renaming any of them breaks importers. Deep imports can be a deliberate convention; this is a signal, not a defect.')
       : f.code === 'complexity/function' ? 'Cyclomatic complexity counts independent paths through the function. A high count is a maintenance signal, not a defect.' : lvl.text;
     h += '<div class="level"><b>' + esc(lvl.name) + '</b> — ' + esc(findingWhat(f)) + '<br>' + esc(explanation) + '</div>';
-    if (f.review && f.review.reason) h += '<p class="ev"><span class="badge-accepted">' + (f.review.status === 'accepted-changed' ? 'accepted · evidence changed' : 'accepted') + '</span> ' + esc(f.review.reason) + (f.review.status === 'accepted-changed' ? ' — the code behind it changed since it was accepted; review it again.' : '') + '</p>';
+    if (f.review && f.review.reason) h += '<p class="ev"><span class="badge-accepted">' + (f.review.status === 'accepted-changed' ? 'accepted · evidence changed' : f.severity === 'error' ? 'accepted · still to fix' : 'accepted') + '</span> ' + esc(f.review.reason) + (f.review.status === 'accepted-changed' ? ' — the code behind it changed since it was accepted; review it again.' : f.severity === 'error' ? ' — accepting it keeps CI from failing; the cycle is still there and stays red.' : '') + '</p>';
     h += quickHandoff(f) + '<div class="k">Code evidence</div>' + evidencePreview(f);
     h += nextStepHtml(f) + taskHtml(f);
     if ((f.componentIds || []).length) h += '<button type="button" class="locate">Locate related components</button>';

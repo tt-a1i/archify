@@ -63,7 +63,8 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
   const accepted = entries.length - open.length;
   return {
     verdict: bySeverity.error + bySeverity.warning > 0 ? 'attention' : bySeverity.info > 0 ? 'signals-only' : 'none-found',
-    counts: { findings: findings.length, ...bySeverity, accepted, offDiagram: entries.filter((e) => !e.componentIds.length).length },
+    // acceptedErrors: errors in the baseline. They do not fail a run, but a reader must still see them as unresolved.
+    counts: { findings: findings.length, ...bySeverity, accepted, acceptedErrors: entries.filter((e) => e.status === 'accepted' && e.severity === 'error').length, offDiagram: entries.filter((e) => !e.componentIds.length).length },
     review: reviewOf(run.review),
     groups: groupsOf(ranked),
     priorities,

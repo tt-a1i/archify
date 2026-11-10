@@ -4,7 +4,7 @@
   var atlas = JSON.parse(source.textContent);
   var root = document.documentElement;
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
-  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations' };
+  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations' };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
@@ -102,7 +102,8 @@
       sel.any = true; sel.tone = TONE[f.severity] || TONE.info;
       if (f.kind === 'function' && f.fn != null) { sel.fns[f.fn] = true; sel.files[FN[f.fn][0]] = true; sel.anchor = FN[f.fn][0]; }
       if (f.kind === 'cycle') { f.files.forEach(function (x) { sel.files[x] = true; }); sel.edges = f.path.map(function (x, i) { return [x, f.path[(i + 1) % f.path.length]]; }); }
-      if (f.kind === 'module') sel.modules[f.module] = true;
+      if (f.kind === 'module' || f.kind === 'area') sel.modules[f.module] = true;
+      if (f.kind === 'file') { sel.files[f.file] = true; sel.anchor = f.file; }
       if (f.kind === 'modules') f.modules.forEach(function (x) { sel.modules[x] = true; });
       if (f.kind === 'edges') { sel.edges = f.edges; f.edges.forEach(function (e) { sel.files[e[0]] = true; sel.files[e[1]] = true; }); }
       if (f.kind === 'edges' && f.module != null) { sel.arcs[f.module] = true; (f.entries || []).forEach(function (x) { sel.entries[x] = true; }); }
@@ -262,7 +263,7 @@
       ctx.strokeStyle = hit ? TONE[hit.severity] || TONE.info : t.muted;
       ctx.globalAlpha = (hit ? 1 : fn[3] >= 8 ? 0.85 : 0.45) * (on ? 1 : 0.15);
       ctx.lineWidth = hit ? 1.6 : 0.8; ctx.stroke(); ctx.globalAlpha = 1;
-      if (hit && !hit.accepted) dots.push([p1, TONE[hit.severity] || TONE.info, on, sel.fns[i]]);
+      if (hit && (!hit.accepted || hit.severity === 'error')) dots.push([p1, TONE[hit.severity] || TONE.info, on, sel.fns[i]]);
     });
     dots.forEach(function (d) {
       ctx.globalAlpha = d[2] ? 1 : 0.2; ctx.beginPath(); ctx.arc(d[0][0], d[0][1], d[3] ? 5 : 3, 0, 2 * Math.PI); ctx.fillStyle = d[1]; ctx.fill();
@@ -364,7 +365,8 @@
       if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + ' · complexity ' + fn[3] + ' · nesting ' + fn[4] + ' · ' + plural(fn[5], 'line') + '. Curves: dependencies of its file.'; }
       if (f.kind === 'cycle') what = 'Path: ' + f.path.map(function (x) { return F[x][0].split('/').pop(); }).join(' → ') + ' → back';
       if (f.kind === 'modules') what = f.modules.map(function (x) { return M[x].label; }).join(', ');
-      if (f.kind === 'module') what = 'fan-in ' + M[f.module].fanIn + ' · fan-out ' + M[f.module].fanOut;
+      if (f.kind === 'module' || f.kind === 'area') what = 'fan-in ' + M[f.module].fanIn + ' · fan-out ' + M[f.module].fanOut;
+      if (f.kind === 'file') what = F[f.file][0];
       if (f.kind === 'edges') what = plural(f.edges.length, 'import') + ' cross the rule.';
       if (f.kind === 'edges' && f.module != null) {
         var reachedIn = {}; f.edges.forEach(function (e) { reachedIn[e[1]] = true; });

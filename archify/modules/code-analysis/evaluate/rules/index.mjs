@@ -7,10 +7,11 @@ import * as importCycle from './coupling/import-cycle.mjs';
 import * as cycle from './coupling/cycle.mjs';
 import * as hub from './coupling/hub.mjs';
 import * as internalLeak from './coupling/internal-leak.mjs';
+import * as concentration from './coupling/concentration.mjs';
 import * as boundary from './architecture/boundary.mjs';
 import * as complexity from './complexity/function.mjs';
 
-export const RULES = [importCycle, cycle, hub, internalLeak, boundary, complexity];
+export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boundary, complexity];
 
 // Layer statistics the overview shows next to boundary findings.
 export { layerCounts } from './architecture/boundary.mjs';

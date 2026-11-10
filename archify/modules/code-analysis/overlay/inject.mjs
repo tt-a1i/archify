@@ -3,9 +3,9 @@
 // The delivered artifact is never modified; a new file is written next to it.
 // The overlay adds one toolbar button ("Code analysis"). When it is on, the
 // authored diagram and guided views recede and every mapped component gets a
-// status ring around its box: pulsing red for supplied error findings,
-// amber when a rule warns (eager cycle, hub), blue when only informational facts exist
-// (lazy/runtime or package-level cycle), green when nothing fired, grey when no code maps to it.
+// status ring around its box: pulsing red for an error (a circular dependency),
+// amber when a rule warns (deferred cycle, hub, complex function), blue when only
+// informational facts exist, green when nothing fired, grey when no code maps to it.
 // The left column opens on a project overview (verdict, up to three findings
 // to look at first, every finding by rule, coverage, and the colour key);
 // opening a finding there switches the shared reading column and dims the
@@ -51,10 +51,12 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     if (key) (findingsByFile.get(key) || findingsByFile.set(key, []).get(key)).push(f);
   }
 
-  // Indicators and the diagram rings show open findings: a finding accepted in
-  // the baseline (with unchanged evidence) stays listed but does not colour the diagram.
+  // Indicators and the diagram rings show open findings: a warning or info
+  // accepted in the baseline (with unchanged evidence) stays listed but does not
+  // colour the diagram. An accepted error keeps its red ring: the baseline stops
+  // it from failing CI, it does not make the structure sound.
   const accepted = new Set(Object.entries(run.review ? run.review.findings : {}).filter(([, r]) => r.status === 'accepted').map(([id]) => id));
-  const openFindings = findings.filter((f) => !accepted.has(f.id));
+  const openFindings = findings.filter((f) => !accepted.has(f.id) || f.severity === 'error');
   const components = ir.components.map((c) => {
     const ids = mapping.get(c.id) || [];
     const mods = ids.map((id) => modules.get(id)).filter(Boolean);
@@ -167,30 +169,33 @@ function indicators(set, mods, findings, mapping, filePaths) {
   if (!mods.length) return { status: 'grey', items: [] };
   const owner = new Map();
   for (const [cid, ids] of mapping) for (const id of ids) owner.set(id, cid);
-  // Tiers follow reported severity. Current cycle rules use warning or info;
-  // neither a deferred cycle nor a missing finding establishes import safety.
+  // The colour follows the highest reported severity among the cycles here
+  // (module-scope and Java cycles are errors, deferred ones warnings, Rust
+  // ones info); the text follows the kind of cycle. Neither a deferred cycle
+  // nor a missing finding establishes import safety.
   const fileCycles = findings.filter((f) => f.code === 'coupling/import-cycle' && f.subject.files.some((p) => filePaths.has(p)));
-  const proven = fileCycles.filter((f) => f.severity === 'error');
-  const eagerFileCycles = fileCycles.filter((f) => f.evidence.kind === 'eager' && f.severity !== 'error');
+  const eagerFileCycles = fileCycles.filter((f) => f.evidence.kind === 'eager');
   const structuralFileCycles = fileCycles.filter((f) => f.evidence.kind === 'structural');
   const lazyFileCycles = fileCycles.filter((f) => !['eager', 'structural'].includes(f.evidence.kind));
   const cycles = findings.filter((f) => f.code === 'coupling/cycle' && f.subject.modules.some((m) => set.has(m)));
   const partners = new Set();
   for (const f of cycles) for (const m of f.subject.modules) if (!set.has(m)) partners.add(owner.get(m) ? `component:${owner.get(m)}` : `module:${m}`);
   const internalOnly = cycles.length > 0 && partners.size === 0;
-  const cycleStatus = proven.length ? 'red' : eagerFileCycles.length ? 'amber' : (structuralFileCycles.length || lazyFileCycles.length || cycles.length) ? 'blue' : 'green';
-  const cycleValue = proven.length
-    ? `reported import-cycle error (${proven.map((f) => f.subject.files.length).join(', ')} files) ${proven[0].evidence.risk ? ` — ${proven[0].evidence.risk.loadingNote}` : ""}`
-    : eagerFileCycles.length
+  const worst = ['error', 'warning', 'info'].find((level) => [...fileCycles, ...cycles].some((f) => f.severity === level));
+  const cycleStatus = worst ? { error: 'red', warning: 'amber', info: 'blue' }[worst] : 'green';
+  const rustCycle = structuralFileCycles.some((f) => /^Rust /.test(f.evidence.risk?.loadingNote || ''));
+  const cycleValue = eagerFileCycles.length
       ? `module-scope import cycle (${eagerFileCycles.map((f) => f.subject.files.length).join(', ')} files); load-time behavior unverified`
       : structuralFileCycles.length
-        ? `structural Java dependency cycle (${structuralFileCycles.map(f => f.subject.files.length).join(', ')} files); class initialization not assessed`
+        ? `structural ${rustCycle ? 'Rust' : 'Java'} dependency cycle (${structuralFileCycles.map(f => f.subject.files.length).join(', ')} files); ${rustCycle ? 'runtime loading order not implied' : 'class initialization not assessed'}`
       : lazyFileCycles.length
         ? `cycle with deferred or conditional imports (${lazyFileCycles.map((f) => f.subject.files.length).join(', ')} files); initialization behavior not proven`
         : cycles.length
           ? (internalOnly ? 'package-level cycle inside this component; no file cycles' : `package-level cycle with ${partners.size} other${partners.size === 1 ? '' : 's'}; no file cycles`)
           : 'none';
   const hubs = findings.filter((f) => f.code === 'coupling/hub' && set.has(f.subject.module));
+  // Only present when the rule reported a module or file here.
+  const concentrated = findings.filter((f) => f.code === 'coupling/concentration' && (set.has(f.subject.module) || filePaths.has(f.subject.file)));
   // Only present when boundaries are configured and one is crossed here: an
   // unconfigured check must not show up as a green "no violations".
   const boundaries = findings.filter((f) => f.code === 'architecture/boundary' && boundaryFiles(f).some((p) => filePaths.has(p)));
@@ -217,6 +222,15 @@ function indicators(set, mods, findings, mapping, filePaths) {
       detail: [],
       findings: hubs.map((f) => f.id).filter(Boolean),
     },
+    ...(concentrated.length ? [{
+      key: 'concentration', label: 'Concentration',
+      status: concentrated.some((f) => f.severity === 'warning') ? 'amber' : 'blue',
+      value: concentrated.map((f) => f.subject.file
+        ? `${f.subject.file}: ${f.evidence.loc} lines`
+        : `${f.subject.module}: ${[f.evidence.reach ? `${f.evidence.reach.dependents} of ${f.evidence.reach.modules} other modules depend on it` : null, f.evidence.size ? `${Math.round(f.evidence.size.share * 100)}% of the analyzed lines` : null].filter(Boolean).join(', ')}`).join('; '),
+      detail: [],
+      findings: concentrated.map((f) => f.id).filter(Boolean),
+    }] : []),
     ...(boundaries.length ? [{
       key: 'boundary', label: 'Architecture boundary',
       status: boundaries.some((f) => f.severity === 'error') ? 'red' : 'amber',

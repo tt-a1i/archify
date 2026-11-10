@@ -8,7 +8,7 @@
       "id": "COUP-65773eadb104",
       "code": "coupling/import-cycle",
       "dimension": "coupling",
-      "severity": "warning",
+      "severity": "error",
       "confidence": 0.7,
       "evidenceDigest": {
         "files": [

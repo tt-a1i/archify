@@ -223,7 +223,7 @@ test('Python match evaluates its subject before conditionally loading case guard
   assert.deepEqual(loads.map(edge => [edge.to, Boolean(edge.conditional)]), [
     ['subject.py', false], ['guard.py', true], ['b.py', true],
   ]);
-  assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['info', 'deferred']]);
+  assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['warning', 'deferred']]);
 });
 
 test('Python dynamic and opaque imports inherit function scope; default expressions do not', (t) => {
@@ -257,7 +257,7 @@ test('Python submodule imports include package initialization, exposing the real
     'pkg/__init__.py': 'from a import A\n', 'pkg/sub.py': 'B = 1\n',
   });
   assert.ok(facts.imports.some((e) => e.from === 'a.py' && e.to === 'pkg/__init__.py' && e.implicit && e.line === 1));
-  assert.ok(cycles.some((f) => f.severity === 'warning' && f.subject.files.includes('pkg/__init__.py')));
+  assert.ok(cycles.some((f) => f.severity === 'error' && f.subject.files.includes('pkg/__init__.py')));
   assert.match(python(root, 'import a').stderr, /ImportError/);
 });
 
@@ -270,7 +270,7 @@ test('Python nested package initializers are included once, without false ancest
 test('Python simple eager failure is a candidate, not a claim that static line order is proof', (t) => {
   const { root, cycles } = analyze(t, { 'a.py': 'from b import B\nclass A: pass\n', 'b.py': 'from a import A\nclass B: pass\n' });
   assert.match(python(root, 'import a').stderr, /ImportError/);
-  assert.equal(cycles[0].severity, 'warning');
+  assert.equal(cycles[0].severity, 'error');
   assert.equal(cycles[0].evidence.risk.loading, 'potential-partial-init');
   assert.ok(cycles[0].evidence.partialInitCandidate);
   assert.ok(cycles[0].confidence < 1);
@@ -327,7 +327,7 @@ test('CommonJS guarded requires are conditional while the expressions selecting 
   for (const edge of loads) {
     assert.equal(Boolean(edge.conditional), edge.specifier !== './eager.cjs', `line ${edge.line}: ${edge.specifier}`);
   }
-  assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['info', 'deferred']]);
+  assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['warning', 'deferred']]);
 });
 
 test('CommonJS optional-chain arguments and computed keys retain their syntactic guard', t => {
@@ -341,7 +341,7 @@ test('CommonJS optional-chain arguments and computed keys retain their syntactic
   ]) {
     const { facts, cycles } = analyze(t, { 'a.cjs': expression, 'b.cjs': 'require("./a.cjs");' }, 'ts');
     assert.equal(facts.imports.find(e => e.from === 'a.cjs').conditional, true, expression);
-    assert.deepEqual(cycles.map(c => [c.severity, c.evidence.kind]), [['info', 'deferred']], expression);
+    assert.deepEqual(cycles.map(c => [c.severity, c.evidence.kind]), [['warning', 'deferred']], expression);
   }
   const { facts } = analyze(t, {
     'a.cjs': 'function load() { return sink?.(require("./b.cjs")); }\nif (flag) (sink?.use)(require("./b.cjs"));\nsink?.(require(name));',
@@ -364,7 +364,7 @@ test('CommonJS optional-chain bases and grouped chain breaks remain eager', t =>
     const { facts, cycles } = analyze(t, { 'a.cjs': expression, 'b.cjs': 'require("./a.cjs");' }, 'ts');
     const edge = facts.imports.find(e => e.from === 'a.cjs');
     assert.equal(edge.conditional, undefined, expression); assert.equal(edge.lazy, undefined, expression);
-    assert.deepEqual(cycles.map(c => [c.severity, c.evidence.kind]), [['warning', 'eager']], expression);
+    assert.deepEqual(cycles.map(c => [c.severity, c.evidence.kind]), [['error', 'eager']], expression);
   }
   const { facts } = analyze(t, { 'a.mjs': 'sink?.(import("./b.mjs"));', 'b.mjs': '' }, 'ts');
   assert.equal(facts.imports[0].conditional, undefined, 'dynamic import keeps its existing separate deferred contract');
@@ -496,7 +496,7 @@ test('single-file runtime cycles retain eager and deferred risk semantics', (t) 
   assert.equal(eager.cycles.length, 1);
   assert.deepEqual(eager.cycles[0].subject.files, ['a/x.py']);
   assert.deepEqual(eager.cycles[0].evidence.path, ['a/x.py']);
-  assert.equal(eager.cycles[0].severity, 'warning');
+  assert.equal(eager.cycles[0].severity, 'error');
   assert.equal(eager.cycles[0].evidence.risk.loading, 'potential-partial-init');
   const lazy = analyze(t, { 'a/x.py': 'def load():\n    import a.x\n' });
   assert.equal(lazy.cycles.length, 1);
@@ -674,14 +674,14 @@ test('Python expression guards preserve eager prefixes and deferred bodies', (t)
   for (const expression of expressions) {
     const { facts, cycles } = analyze(t, { 'a.py': `value = ${expression}\n`, 'b.py': 'import a\n' });
     assert.equal(facts.imports.find(e => e.to === 'b.py').conditional, true, expression);
-    assert.equal(cycles[0].severity, 'info', expression);
+    assert.equal(cycles[0].severity, 'warning', expression);
   }
   for (const expression of ['__import__("b") and flag', 'value if __import__("b") else None', '(x for x in __import__("b"))', '[x for x in __import__("b")]']) {
     const { facts, cycles } = analyze(t, { 'a.py': `value = ${expression}\n`, 'b.py': 'import a\n' });
     const edge = facts.imports.find(e => e.to === 'b.py');
     assert.equal(edge.conditional, undefined, expression);
     assert.equal(edge.lazy, undefined, expression);
-    assert.equal(cycles[0].severity, 'warning', expression);
+    assert.equal(cycles[0].severity, 'error', expression);
   }
   const { facts } = analyze(t, {
     'a.py': 'value = (__import__("elt") for x in __import__("outer") if __import__("guard") for y in __import__("inner"))\ndef f():\n    return [x for x in __import__("nested")]\n',

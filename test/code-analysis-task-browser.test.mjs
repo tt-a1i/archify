@@ -141,7 +141,7 @@ test('AI task reader: evidence first, live validation, clipboard fallback, downl
     await wait("document.documentElement.getAttribute('data-bauify') === 'on' && !document.getElementById('bauify-overview').hidden");
   };
   await reanalyze();
-  assert.equal(await run("JSON.parse(document.getElementById('bauify-analysis').textContent).totals.findings"), 121);
+  assert.equal(await run("JSON.parse(document.getElementById('bauify-analysis').textContent).totals.findings"), 122, '121 complex functions plus many.py itself, reported as a very large file');
   assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 3);
   await screenshot('many-390');
   fs.unlinkSync(manyFile); fs.writeFileSync(sourceFile, 'value = 1\n');

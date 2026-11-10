@@ -29,6 +29,7 @@ const IMPACT = {
   'coupling/import-cycle': 'These files cannot be read, tested or loaded independently of each other; load order may matter at import time (not proven).',
   'coupling/cycle': 'These modules cannot be changed, tested or reused independently of each other.',
   'coupling/hub': 'Changes here reach many dependents, and the module may combine several responsibilities.',
+  'coupling/concentration': 'A large part of the project depends on, or lives in, this one place: changes here are harder to review and reach further than changes elsewhere.',
   'coupling/internal-leak': 'Other modules depend on this module\'s internal files, so moving, renaming or splitting any of them breaks importers; there is no single interface to keep stable.',
   'architecture/boundary': 'Code in one layer depends on a layer the configured rule forbids, so changes in that layer can break it and the intended layering erodes.',
 };
@@ -48,6 +49,10 @@ const PRESERVE = {
   ],
   'coupling/hub': () => [
     'The interface dependents use; moving code must keep their imports working or update them in the same change.',
+  ],
+  'coupling/concentration': () => [
+    'Every name and import path other modules use from this code; moving code must keep their imports working or update them in the same change.',
+    'Runtime behaviour: this task reorganizes code, it does not change what it does.',
   ],
   'coupling/internal-leak': (d) => [
     `Every name the cited importers use from ${d.subject.module}: export it from the entry file with the same behaviour.`,
@@ -75,6 +80,7 @@ const ACCEPTANCE = {
   'coupling/import-cycle': () => ['The files no longer import each other in a cycle (re-analysis no longer reports this import cycle).'],
   'coupling/cycle': () => ['The modules no longer depend on each other in a cycle (re-analysis no longer reports this module cycle).'],
   'coupling/hub': (d) => [`Fan-in or fan-out of the module falls below the configured threshold (fan-in ${d.evidence.threshold.fanIn}, fan-out ${d.evidence.threshold.fanOut}), or the split is explained.`],
+  'coupling/concentration': (d) => [concentrationAcceptance(d)],
   'architecture/boundary': (d) => [`No import from layer "${d.subject.boundary.from}" to layer "${d.subject.boundary.to}" remains.`],
   'coupling/internal-leak': (d) => [d.evidence.entries.length
     ? `No module outside ${d.subject.module} imports its internal files; they import ${d.evidence.entries.join(', ')} instead.`
@@ -308,6 +314,17 @@ function reanalyzeCommand(findings) {
   };
 }
 
+// Which numbers have to move for the finding to disappear, per reason it fired.
+function concentrationAcceptance(d) {
+  const ev = d.evidence || {}, t = ev.threshold || {};
+  const percent = (share) => `${Math.round(share * 100)}%`;
+  const goals = (ev.reasons || []).map((reason) => reason === 'file' ? `the file is shorter than ${t.fileLines} lines`
+    : reason === 'reach' ? `fewer than ${percent(t.reachShare)} of the other modules depend on the module directly or indirectly`
+    : `the module holds less than ${percent(t.sizeShare)} of the analyzed source lines`);
+  const goal = goals.join(' and ') || 'the finding is no longer reported';
+  return `${goal[0].toUpperCase()}${goal.slice(1)} (re-analysis no longer reports this finding), or the concentration is confirmed as intended and accepted with that reason.`;
+}
+
 function keyEvidence(d) {
   const ev = d.evidence || {};
   const pick = (keys) => Object.fromEntries(keys.filter((k) => ev[k] !== undefined).map((k) => [k, ev[k]]));
@@ -316,6 +333,7 @@ function keyEvidence(d) {
     case 'coupling/import-cycle': return { ...pick(['kind', 'path', 'totalImports', 'lazyImports']), ...(ev.risk ? { loading: ev.risk.loading } : {}) };
     case 'coupling/cycle': return pick(['kind', 'path', 'totalImports']);
     case 'coupling/hub': return pick(['fanIn', 'fanOut', 'instability', 'threshold']);
+    case 'coupling/concentration': return pick(['reasons', 'reach', 'size', 'loc', 'module', 'threshold']);
     case 'architecture/boundary': return { ...pick(['rule', 'totalImports', 'files']), boundary: d.subject.boundary };
     case 'coupling/internal-leak': return pick(['entries', 'entrySource', 'internalFiles', 'consumers', 'totalImports', 'threshold']);
     default: return pick(['threshold']);
@@ -330,6 +348,7 @@ function titleOf(selected, language) {
     if (d.code === 'coupling/import-cycle') return `Break the import cycle between ${s.files.length} files`;
     if (d.code === 'coupling/cycle') return `Break the dependency cycle between ${s.modules.length} modules`;
     if (d.code === 'coupling/hub') return `Reduce the coupling of hub module ${s.module}`;
+    if (d.code === 'coupling/concentration') return s.file ? `Review the size of ${s.file}` : `Review how much of the project is concentrated in module ${s.module}`;
     if (d.code === 'coupling/internal-leak') return `Give module ${s.module} one entry point and import through it`;
     if (d.code === 'architecture/boundary') return `Remove the "${s.boundary.from}" → "${s.boundary.to}" boundary violation`;
     return `Address ${d.code}`;

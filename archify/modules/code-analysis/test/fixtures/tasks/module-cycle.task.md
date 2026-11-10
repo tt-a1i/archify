@@ -1,6 +1,6 @@
 # Break the dependency cycle between 2 modules
 
-Task `TASK-2436c2bc9441` · from Archify code analysis · findings `COUP-543346eb7923` (coupling/cycle, info)
+Task `TASK-2436c2bc9441` · from Archify code analysis · findings `COUP-543346eb7923` (coupling/cycle, error)
 
 **Evidence:** Captured at analysis time — not yet checked against the current working tree.
 

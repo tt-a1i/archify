@@ -111,6 +111,57 @@ To change the thresholds, set any of them in the `--config` file; unset values k
 ```
 
 
+## Severity levels
+
+The colour says what kind of problem a finding is, not which rule reported it.
+
+| Colour | Level | Meaning | What to do |
+| --- | --- | --- | --- |
+| Red | `error` | A structural problem: a circular dependency. The parts involved cannot be understood, tested or changed on their own, and cycles tend to grow. | Fix it. It can be accepted in the baseline so CI is not blocked, but it stays red on the page. |
+| Yellow | `warning` | The code runs, but people will find it hard to maintain: a hub or concentrated module, a very large file, a very complex function, a crossed boundary. | Review it. Fix it, or accept it with a reason. |
+| Blue | `info` | A signal to read. | Nothing is required; it does not affect the verdict or CI. |
+
+Red means "structure that should be fixed", not "proven to fail at runtime". An import cycle shows static structure and a possible load-order risk; the messages keep that wording.
+
+How cycles are graded:
+
+| Finding | Level |
+| --- | --- |
+| `coupling/import-cycle`: files that import each other at module scope | error |
+| `coupling/import-cycle`: a cycle that only closes through deferred or conditional imports | warning |
+| `coupling/import-cycle` and `coupling/cycle` in Java | error |
+| `coupling/cycle`: modules that depend on each other through module-scope imports | error |
+| `coupling/cycle`: a component that only closes through deferred, conditional or type-only edges | warning |
+| Rust file and module cycles | info: files of one crate compile together, and mutual `use` is ordinary there |
+
+**Upgrading.** Before rule version 2, file cycles were warnings and module and Java cycles were info. `check` fails on warnings by default, so a project whose only cycles were module-level or Java cycles passed and will now fail. To adopt the new levels without blocking CI on existing cycles, record them once and commit the file:
+
+```sh
+node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-baseline.json --update-baseline --reason "existing cycle, tracked in <issue>"
+```
+
+A comparison with a run made before the change is marked not comparable (the rule versions differ), so a changed level is not misread as a new or fixed problem.
+
+## Concentration
+
+`coupling/concentration` reports where too much of the project sits in, or depends on, one place. It reports numbers, not a verdict that something must be split.
+
+| Reason | Reported when | Default |
+| --- | --- | --- |
+| reach | a share of the other modules depend on a module, directly or through other modules | `reachShare: 0.5` |
+| size | a module holds a share of the analyzed source lines | `sizeShare: 0.4` |
+| file | a source file reaches a number of lines | `fileLines: 1500` |
+
+Reach and size compare one module with the rest, so they are only checked when the project has at least `minModules` modules (default 6). Reach counts static dependencies of every kind, including deferred and type-only imports; it is not runtime impact. Test and generated files are not measured.
+
+Findings are warnings, with one exception: high reach alone in a module that depends on no other module is info. That is a shared kernel, which is what the cycle rules recommend moving shared code into. A high-reach module with dependencies of its own passes their changes on to most of the project, so it stays a warning.
+
+```json
+{ "rules": { "coupling": { "concentration": { "reachShare": 0.6, "fileLines": 2000 } } } }
+```
+
+If the concentration is intended, accept the finding with that reason. An accepted finding is shown again when the module's or file's source changes.
+
 ## Accepting known findings (baseline)
 
 Real projects have findings the team knows about and has decided to leave for now. A baseline file records them, so the overview and CI focus on what is new:
@@ -122,6 +173,7 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 This writes every current finding to `analysis-baseline.json` with that reason. Edit the reasons per entry if you like, and commit the file. Pass it to the page with `--baseline analysis-baseline.json` (`npm start -- … --baseline …`) or to `check`.
 
 - Accepted findings stay listed, marked **accepted** with their reason, but no longer count toward the verdict, the priorities, the diagram colours, or a CI failure.
+- An accepted **error** is the exception for colour: it no longer fails CI or counts toward the priorities, but its component stays red and it is marked **accepted · still to fix**. The baseline records a decision to wait, not a repair.
 - Each entry remembers a fingerprint of the code it was about. If that code changes, the finding is shown again as **accepted · evidence changed** so someone looks at it once more.
 - Entries whose finding no longer occurs are listed as no longer found: the problem was fixed or moved, and the entry can be removed. Running `--update-baseline` again keeps existing reasons, adds new findings, and drops those entries.
 

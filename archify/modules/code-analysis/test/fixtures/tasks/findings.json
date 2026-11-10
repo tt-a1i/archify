@@ -15,14 +15,15 @@
     "coupling/import-cycle",
     "coupling/cycle",
     "coupling/hub",
+    "coupling/concentration",
     "coupling/internal-leak",
     "architecture/boundary",
     "complexity/function"
   ],
   "summary": {
-    "errors": 0,
-    "warnings": 2,
-    "info": 4,
+    "errors": 2,
+    "warnings": 1,
+    "info": 3,
     "suppressed": 0
   },
   "analysis": {
@@ -37,9 +38,10 @@
     "ruleVersions": {
       "architecture/boundary": 1,
       "complexity/function": 1,
-      "coupling/cycle": 1,
+      "coupling/concentration": 1,
+      "coupling/cycle": 2,
       "coupling/hub": 1,
-      "coupling/import-cycle": 1,
+      "coupling/import-cycle": 2,
       "coupling/internal-leak": 1
     },
     "coverage": {
@@ -159,7 +161,7 @@
       "id": "COUP-543346eb7923",
       "code": "coupling/cycle",
       "dimension": "coupling",
-      "severity": "info",
+      "severity": "error",
       "confidence": 1,
       "message": "2 modules depend on each other at package level: domain → ui → domain. See coupling/import-cycle for whether any file actually cycles.",
       "subject": {
@@ -237,7 +239,7 @@
       "code": "coupling/import-cycle",
       "dimension": "coupling",
       "confidence": 0.7,
-      "severity": "warning",
+      "severity": "error",
       "message": "2 files form a module-scope import cycle with a possible partial-initialization read: app/a.py:2 imports Handler from app/b.py, whose recorded binding is at line 5, after its line-2 import. Inspect the candidate load order starting with app/b.py; static line ordering alone does not prove failure.",
       "subject": {
         "files": [

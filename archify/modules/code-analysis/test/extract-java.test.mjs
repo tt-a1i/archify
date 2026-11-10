@@ -284,7 +284,7 @@ test('java: the public pipeline preserves deterministic facts, structural cycles
   assert.ok(graph.edges.every(e => e.kinds.eager === 0));
   const findings = evaluateGraph(graph, config, facts);
   const cycle = findings.diagnostics.find(f => f.code === 'coupling/import-cycle');
-  assert.equal(cycle.severity, 'info');
+  assert.equal(cycle.severity, 'error');
   assert.equal(cycle.evidence.kind, 'structural');
   assert.doesNotMatch(JSON.stringify(cycle), /partial-initialization|function-scope import|from module import/);
   const task = buildTask({ findings, facts, ids: [cycle.id] });
