@@ -1,2 +1,2 @@
 // Moved to schemas/: kept so extractor adapters keep one local import path.
-export * from '../../schemas/validate.mjs';
+export { schemaErrors, validator } from '../../schemas/index.mjs';

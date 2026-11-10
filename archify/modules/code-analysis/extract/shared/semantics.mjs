@@ -1,2 +1,2 @@
-// Moved to schemas/: kept so existing imports keep working.
-export * from '../../schemas/semantics.mjs';
+// Moved to schemas/: kept so extractor adapters keep one local import path.
+export { semanticErrors } from '../../schemas/index.mjs';
