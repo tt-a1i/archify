@@ -19,7 +19,8 @@ const isEager = (e) => e.kinds.eager !== undefined ? e.kinds.eager > 0
   : !['lazy', 'typeOnly', 'conditional'].some((flag) => e.kinds[flag] > 0);
 
 export function run({ graph }) {
-  const java = graph.repository?.language === 'java';
+  const java = ['java', 'rust'].includes(graph.repository?.language);
+  const rust = graph.repository?.language === 'rust';
   const ids = graph.modules.map((m) => m.id).sort();
   const sccsOf = (edges) => cyclicComponents(ids, edges);
   const all = sccsOf(graph.edges);
@@ -45,7 +46,7 @@ export function run({ graph }) {
     return {
       code, dimension, severity, confidence,
       message: java
-        ? `${scc.length} modules form a structural Java dependency cycle: ${path.map(id => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. Directory grouping does not establish file cycles or class initialization behavior.`
+        ? `${scc.length} modules form a structural ${rust ? 'Rust' : 'Java'} dependency cycle: ${path.map(id => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. ${rust ? 'Source references do not establish runtime import order or partial initialization.' : 'Directory grouping does not establish file cycles or class initialization behavior.'}`
         : eagerSurvives
         ? `${scc.length} modules depend on each other at package level: ${path.map((id) => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. See coupling/import-cycle for whether any file actually cycles.`
         : `${scc.length} modules form a package-level dependency component containing deferred, conditional, or type-only edges: ${path.map((id) => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. This grouping does not establish initialization behavior; it may also contain module-scope subcycles.`,

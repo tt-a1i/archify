@@ -12,7 +12,7 @@ import { describeRepository } from '../shared/git.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 1;
+export const REVISION = 10;
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'extract.py');
 const PY_EXT = /\.py$/;
@@ -58,8 +58,28 @@ export function extract(root, config) {
   const { contents: snapshot, packageMarkers } = snapshotSources(absRoot, config, f => PY_EXT.test(f));
   const files = [...snapshot.keys()];
   const fileSet = new Set(files);
+  const directories = new Set();
+  for (const file of files) {
+    const parts = file.split('/');
+    for (let i = 1; i < parts.length; i += 1) directories.add(parts.slice(0, i).join('/'));
+  }
   const { command, output } = runPython({ files, sources: Object.fromEntries([...snapshot].map(([rel, bytes]) => [rel, bytes.toString('base64')])) });
 
+  const calls = [];
+  const parsedFiles = new Map(output.files.filter(record => !record.error).map(record => [record.path, record]));
+  // Reuse captured import resolution for one explicit reexport. No project
+  // import or arbitrary chain traversal; ambiguous/rebound bindings are absent.
+  const importedDefinition = (from, binding, reexports = 1) => {
+    const edges = resolveDeclaredImport({ module: binding.module, level: binding.level, names: [binding.name] }, from, fileSet, directories);
+    const targets = edges.filter(edge => edge.to && edge.to !== from && edge.names?.includes(binding.name));
+    if (targets.length !== 1) return null;
+    const file = targets[0].to, record = parsedFiles.get(file);
+    if (!record) return null;
+    const target = Object.hasOwn(record.definitions, binding.name) ? record.definitions[binding.name] : null;
+    if (target) return { file, name: target.name, line: target.line, column: target.column };
+    const forwarded = Object.hasOwn(record.importBindings, binding.name) ? record.importBindings[binding.name] : null;
+    return reexports && forwarded ? importedDefinition(file, forwarded, reexports - 1) : null;
+  };
   const imports = [];
   const unresolved = { external: 0, outside: 0, unknown: 0, opaque: 0 };
   const parseErrors = [];
@@ -71,6 +91,17 @@ export function extract(root, config) {
     for (const b of record.symbols || []) symbols.push({ file: record.path, name: b.name, kind: b.kind, line: b.line });
     for (const fn of record.functions || []) functions.push({ file: record.path, ...fn });
     if (record.error) { parseErrors.push({ path: record.path, message: record.error }); continue; }
+    for (const found of record.calls || []) {
+      const { _import: binding, ...call } = found;
+      if (binding) {
+        const target = importedDefinition(record.path, binding);
+        if (target && target.file !== record.path) {
+          call.resolution = 'imported-function'; delete call.reason;
+          call.target = target;
+        }
+      }
+      calls.push({ file: record.path, ...call });
+    }
     const implicitStatements = new Set();
     for (const found of record.imports) {
       const flags = Object.fromEntries(['lazy', 'typeOnly', 'conditional'].filter((key) => found[key]).map((key) => [key, true]));
@@ -79,7 +110,7 @@ export function extract(root, config) {
         unresolved.opaque += 1;
         continue;
       }
-      for (const edge of resolveImport(found, record.path, fileSet)) {
+      for (const edge of resolveImport(found, record.path, fileSet, directories)) {
         // Aliases share an AST statement position; semicolon-separated statements do not.
         if (edge.implicit) {
           const key = JSON.stringify([found.line, found.column, edge.to]);
@@ -105,7 +136,8 @@ export function extract(root, config) {
     imports,
     symbols: symbols.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.name, b.name)),
     functions: functions.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.qualname, b.qualname)),
-    calls: [],
+    callModel: 'python-lexical-v2',
+    calls,
     unresolved,
   };
   if (parseErrors.length) facts.parse_errors = parseErrors.sort((a, b) => compareText(a.path, b.path));
@@ -119,8 +151,8 @@ function compareText(a, b) {
 // Returns one or more edges for a raw import. A `from pkg import a, b` whose
 // names are themselves submodules yields one edge per submodule plus the
 // package edge when any name is an attribute rather than a submodule.
-function resolveImport(found, fromFile, fileSet) {
-  const declared = resolveDeclaredImport(found, fromFile, fileSet);
+function resolveImport(found, fromFile, fileSet, directories) {
+  const declared = resolveDeclaredImport(found, fromFile, fileSet, directories);
   const seen = new Set(declared.filter((e) => e.to).map((e) => e.to));
   const initializers = [];
   for (const edge of declared) {
@@ -139,7 +171,7 @@ function resolveImport(found, fromFile, fileSet) {
   return [...initializers, ...declared];
 }
 
-function resolveDeclaredImport(found, fromFile, fileSet) {
+function resolveDeclaredImport(found, fromFile, fileSet, directories) {
   const { level, module, names } = found;
   const specifier = `${'.'.repeat(level)}${module}`;
   if (level === 0 && !module) return [];
@@ -156,41 +188,56 @@ function resolveDeclaredImport(found, fromFile, fileSet) {
     if (base === undefined) return [{ specifier, names, reason: 'outside' }];
   }
 
-  const moduleTarget = module ? resolveDotted(module, base, fileSet) : packageFile(base, fileSet);
+  const searchDirs = base === null ? ['', 'src'] : relativeSearchDirs(base, fileSet, directories);
+  const target = module ? resolveDotted(module, searchDirs, fileSet, directories)
+    : { file: packageFile(base, fileSet), dirs: searchDirs };
+  const moduleTarget = target?.file;
 
   // PEP 420 namespace package: a directory with no __init__.py. It has no file
   // of its own, so only `from ns import submodule` can produce edges.
   if (!moduleTarget) {
-    const nsDir = module ? namespaceDir(module, base, fileSet) : base;
-    if (nsDir !== null && names.length && names[0] !== '*') {
+    if (target?.dirs.length && names.length && names[0] !== '*') {
       const edges = [];
       for (const name of names) {
-        const sub = resolveDotted(name, nsDir, fileSet);
-        if (sub) edges.push({ specifier: `${specifier}.${name}`, names: ['*'], to: sub });
-        else edges.push({ specifier: `${specifier}.${name}`, names: ['*'], reason: 'unknown' });
+        const sub = resolveDotted(name, target.dirs, fileSet, directories)?.file;
+        const member = module ? `${specifier}.${name}` : `${specifier}${name}`;
+        if (sub) edges.push({ specifier: member, names: ['*'], to: sub });
+        else edges.push({ specifier: member, names: ['*'], reason: 'unknown' });
       }
       return edges;
     }
     if (level > 0) return [{ specifier, names, reason: 'unknown' }];
     const head = module.split('.')[0];
     const inTree = fileSet.has(`${head}.py`) || fileSet.has(`src/${head}.py`)
-      || [...fileSet].some((f) => f.startsWith(`${head}/`) || f.startsWith(`src/${head}/`));
+      || directories.has(head) || directories.has(`src/${head}`);
     return [{ specifier, names, reason: inTree ? 'unknown' : 'external' }];
   }
 
   const isPackage = moduleTarget.endsWith('__init__.py');
   if (!isPackage || !names.length || names[0] === '*') return [{ specifier, names, to: moduleTarget }];
 
-  const pkgDir = moduleTarget === '__init__.py' ? '' : moduleTarget.slice(0, -'/__init__.py'.length);
   const edges = [];
   const attributeNames = [];
   for (const name of names) {
-    const sub = resolveDotted(name, pkgDir, fileSet);
+    const sub = resolveDotted(name, target.dirs, fileSet, directories)?.file;
     if (sub) edges.push({ specifier: module ? `${specifier}.${name}` : `${specifier}${name}`, names: ['*'], to: sub });
     else attributeNames.push(name);
   }
   if (attributeNames.length || !edges.length) edges.unshift({ specifier, names: attributeNames.length ? attributeNames : names, to: moduleTarget });
   return edges;
+}
+
+// A namespace package can have portions in both conventional search roots.
+// Expand only when the inferred package includes this physical directory.
+// An analyzed package root has no known external import name; keep its lexical
+// relative paths, as for regular packages and shadowed source directories.
+function relativeSearchDirs(base, fileSet, directories) {
+  if (!base || fileSet.has('__init__.py') || packageFile(base, fileSet)) return [base];
+  const parts = base.split('/');
+  if (parts[0] === 'src' && !fileSet.has('src/__init__.py')) parts.shift();
+  if (!parts.length) return [base];
+  const target = resolveDotted(parts.join('.'), ['', 'src'], fileSet, directories);
+  return target && !target.file && target.dirs.includes(base) ? target.dirs : [base];
 }
 
 // Walk `up` parent directories from dir; returns undefined when leaving the tree.
@@ -208,25 +255,24 @@ function packageFile(dir, fileSet) {
   return fileSet.has(candidate) ? candidate : null;
 }
 
-// A dotted name that is a directory in the tree but has no __init__.py.
-function namespaceDir(dotted, base, fileSet) {
-  const rel = dotted.split('.').join('/');
-  const prefixes = base === null ? ['', 'src/'] : [base ? `${base}/` : ''];
-  for (const prefix of prefixes) {
-    const dir = `${prefix}${rel}`;
-    for (const file of fileSet) if (file.startsWith(`${dir}/`)) return dir;
-  }
-  return null;
-}
-
-// base: null = absolute (root, then src/); '' = repository root; 'a/b' = directory.
-function resolveDotted(dotted, base, fileSet) {
-  const rel = dotted.split('.').join('/');
-  const prefixes = base === null ? ['', 'src/'] : [base ? `${base}/` : ''];
-  for (const prefix of prefixes) {
-    for (const candidate of [`${prefix}${rel}.py`, `${prefix}${rel}/__init__.py`]) {
-      if (fileSet.has(candidate)) return candidate;
+// Resolve each parent before its children. A regular package confines lookup
+// to its directory; a module has no children. PEP 420 portions accumulate only
+// until a regular package or module is found in the ordered search paths.
+function resolveDotted(dotted, searchDirs, fileSet, directories) {
+  let target;
+  for (const part of dotted.split('.')) {
+    const portions = [];
+    target = null;
+    for (const parent of searchDirs) {
+      const dir = parent ? `${parent}/${part}` : part;
+      const init = packageFile(dir, fileSet);
+      if (init) { target = { file: init, dirs: [dir] }; break; }
+      if (fileSet.has(`${dir}.py`)) { target = { file: `${dir}.py`, dirs: [] }; break; }
+      if (directories.has(dir)) portions.push(dir);
     }
+    if (!target && portions.length) target = { file: null, dirs: portions };
+    if (!target) return null;
+    searchDirs = target.dirs;
   }
-  return null;
+  return target;
 }

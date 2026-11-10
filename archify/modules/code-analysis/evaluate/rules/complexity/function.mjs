@@ -1,3 +1,5 @@
+import { fail } from '../../../extract/shared/diagnostics.mjs';
+
 // Function complexity: functions whose cyclomatic complexity or block nesting
 // reaches the configured thresholds. A high count is a maintenance signal (more
 // paths to read and test), not a defect, so the strongest level is a warning.
@@ -26,12 +28,28 @@ export function enabled(config, facts) {
   return Boolean(facts && Array.isArray(facts.functions));
 }
 
+// A threshold must be a whole number of 0 or more. Anything else (a string such as
+// "oops", a negative, a fraction) would compare as NaN and silently match nothing,
+// so a misconfigured run would report a clean result. Name the setting and stop.
+function wholeNumber(value, where) {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0) return value;
+  fail('config/threshold-invalid', `The complexity threshold "${where}" must be a whole number of 0 or more, got ${JSON.stringify(value)}.`, {
+    subject: { option: where },
+    evidence: { value },
+    supportedFixes: ['set it to a whole number, or remove it to use the default'],
+  });
+}
+
 export function thresholds(config) {
   const custom = config?.rules?.complexity?.function || {};
-  return {
-    info: { ...DEFAULTS.info, ...(custom.info || {}) },
-    warning: { ...DEFAULTS.warning, ...(custom.warning || {}) },
+  const level = (name, defaults) => {
+    const source = custom[name] || {};
+    return {
+      complexity: source.complexity === undefined ? defaults.complexity : wholeNumber(source.complexity, `rules.complexity.function.${name}.complexity`),
+      nesting: source.nesting === undefined ? defaults.nesting : wholeNumber(source.nesting, `rules.complexity.function.${name}.nesting`),
+    };
   };
+  return { info: level('info', DEFAULTS.info), warning: level('warning', DEFAULTS.warning) };
 }
 
 export function run({ graph, config, facts }) {

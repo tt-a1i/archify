@@ -72,14 +72,14 @@ export function readJsonInput(file, what) {
 }
 
 // Stage 1: source → raw facts (files, imports, symbols, unresolved counters).
-export function extractFacts(root, { language = null, config = null } = {}) {
+export function extractFacts(root, { language = null, config = null, onCapture } = {}) {
   if (!root) fail('cli/root-missing', 'a <repo-root> is required.', { supportedFixes: ['pass a directory path'] });
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) fail('cli/root-invalid', `Not a directory: ${root}`, {
     subject: { root }, supportedFixes: ['pass an existing directory'],
   });
   const cfg = config && typeof config === 'object' ? config : loadConfig(config);
   const adapter = selectAdapter(root, cfg, language);
-  const facts = adapter.extract(root, cfg);
+  const facts = adapter.extract(root, cfg, { onCapture });
   facts.repository.snapshotId = createHash('sha256').update(stableJson(facts)).digest('hex');
   const errors = schemaErrors('raw-facts', facts);
   if (errors.length) fail('extract/schema-invalid', 'Extractor output violates raw-facts.schema.json.', {
@@ -138,7 +138,7 @@ export function validateFacts(graph, facts) {
       for (const kind of [imp.kind, ...['lazy', 'conditional', 'typeOnly', 'implicit'].filter((flag) => imp[flag])]) {
         aggregate.kinds[kind] = (aggregate.kinds[kind] || 0) + 1;
       }
-      if (facts.repository.language !== 'java' && !imp.lazy && !imp.conditional && !imp.typeOnly && !(facts.repository.language === 'ts' && imp.kind === 'dynamic')) aggregate.kinds.eager += 1;
+      if (!['java', 'rust'].includes(facts.repository.language) && !imp.lazy && !imp.conditional && !imp.typeOnly && !(facts.repository.language === 'ts' && imp.kind === 'dynamic')) aggregate.kinds.eager += 1;
     }
     const mismatch = graph.edges.length !== aggregates.size || graph.edges.some((edge) => {
       const expected = aggregates.get(JSON.stringify([edge.from, edge.to]));

@@ -34,23 +34,33 @@ export function snapshotHost(root, { contents, names, assertFileUnchanged }) {
     if (captured(file)) assertFileUnchanged(path.relative(root, file).split(path.sep).join('/'));
     return observed.get(key).value;
   };
+  const reads = new Map();
+  const readFile = file => {
+    if (captured(file)) {
+      const data = bytes.get(canonical(file));
+      if (data !== undefined) return decodeText(data);
+      if (!files.has(canonical(file))) return undefined;
+      // Unusual config extensions are pinned on their first live read.
+    }
+    return live('readFile', file);
+  };
   return {
+    reads,
     useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
     getCurrentDirectory: () => root,
-    fileExists: file => captured(file) ? files.has(canonical(file)) : live('fileExists', file),
+    fileExists(file) {
+      const exists = captured(file) ? files.has(canonical(file)) : live('fileExists', file);
+      if (!exists && file.endsWith('.json')) reads.set(path.resolve(file), undefined);
+      return exists;
+    },
     directoryExists: dir => captured(dir) ? directories.has(canonical(dir)) : live('directoryExists', dir),
     getDirectories: dir => captured(dir)
       ? [...directories].filter(child => child !== canonical(dir) && canonical(path.dirname(child)) === canonical(dir)).sort()
       : live('getDirectories', dir),
     readFile(file) {
-      if (captured(file)) {
-        const data = bytes.get(canonical(file));
-        if (data !== undefined) return decodeText(data);
-        if (!files.has(canonical(file))) return undefined;
-        // Unusual config extensions are not eagerly copied. Pin their first
-        // read and reject the operation if their content subsequently changes.
-      }
-      return live('readFile', file);
+      const text = readFile(file);
+      reads.set(path.resolve(file), text);
+      return text;
     },
     realpath: file => captured(file) ? path.resolve(file) : live('realpath', file),
     // Analysis selects its own files; tsconfig include/exclude discovery is not

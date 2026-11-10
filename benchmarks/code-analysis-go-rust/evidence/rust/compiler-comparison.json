@@ -1,0 +1,17 @@
+{
+  "revision": "9870c06e6c772daaad7ab612faab29130753e41c",
+  "command": [
+    "cargo",
+    "check",
+    "--manifest-path",
+    "<WORKSPACE>/work/samples/regex/regex-syntax/Cargo.toml",
+    "--lib",
+    "--offline",
+    "--locked"
+  ],
+  "exit": 101,
+  "seconds": 0.0341764580225572,
+  "stdout": "",
+  "stderr": "error: no matching package named `lexopt` found\nlocation searched: crates.io index\nrequired by package `regex-cli v0.2.1 (<WORKSPACE>/work/samples/regex/regex-cli)`\nAs a reminder, you're using offline mode (--offline) which can sometimes cause surprising resolution failures, if this error is too confusing you may wish to retry without `--offline`.\n",
+  "note": "Real regex-syntax compiler comparison, no test/binary execution; offline preserves missing-dependency failure instead of downloading."
+}

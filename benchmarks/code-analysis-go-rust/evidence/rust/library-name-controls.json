@@ -1,0 +1,8 @@
+{
+  "actualLibraryNameCompiles": true,
+  "packageNameRejected": true,
+  "implicitSelfNameRejected": true,
+  "positiveLog": "    Checking real-api v0.1.0 (<WORKSPACE>/work/rust-controls/custom-library/api)\n    Checking app v0.1.0 (<WORKSPACE>/work/rust-controls/custom-library/app)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s\n",
+  "packageNameLog": "    Checking app v0.1.0 (<WORKSPACE>/work/rust-controls/custom-library/app)\nerror[E0433]: failed to resolve: use of unresolved module or unlinked crate `real_api`\n --> app/src/lib.rs:1:17\n  |\n1 | pub fn caller(){real_api::work();}\n  |                 ^^^^^^^^ use of unresolved module or unlinked crate `real_api`\n  |\n  = help: if you wanted to use a crate named `real_api`, use `cargo add real_api` to add it to your `Cargo.toml`\n\nFor more information about this error, try `rustc --explain E0433`.\nerror: could not compile `app` (lib) due to 1 previous error\n",
+  "implicitSelfLog": "    Checking real-api v0.1.0 (<WORKSPACE>/work/rust-controls/custom-library/api)\nerror[E0433]: failed to resolve: use of unresolved module or unlinked crate `actual_api`\n --> api/src/lib.rs:2:14\n  |\n2 | pub fn own(){actual_api::work();}\n  |              ^^^^^^^^^^ use of unresolved module or unlinked crate `actual_api`\n  |\n  = help: if you wanted to use a crate named `actual_api`, use `cargo add actual_api` to add it to your `Cargo.toml`\n\nFor more information about this error, try `rustc --explain E0433`.\nerror: could not compile `real-api` (lib) due to 1 previous error\n"
+}

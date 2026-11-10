@@ -27,7 +27,11 @@ const LOGICAL = new Set([
   ts.SyntaxKind.AmpersandAmpersandEqualsToken, ts.SyntaxKind.BarBarEqualsToken, ts.SyntaxKind.QuestionQuestionEqualsToken,
 ]);
 
-export function measureFunctions(source, file) {
+export function isShortCircuitExpression(node) {
+  return ts.isBinaryExpression(node) && LOGICAL.has(node.operatorToken.kind);
+}
+
+export function measureFunctions(source, file, onFunction) {
   const records = [];
   const seen = new Map(); // qualname -> count, for anonymous names that repeat
 
@@ -42,7 +46,9 @@ export function measureFunctions(source, file) {
             seen.set(qualname, n);
             if (n > 1) qualname += `#${n}`;
           }
-          records.push(record(child, source, file, name || qualname.slice(prefix.length), qualname));
+          const measured = record(child, source, file, name || qualname.slice(prefix.length), qualname);
+          records.push(measured);
+          onFunction?.(measured, child);
           walk(child, `${qualname}.<locals>.`, true);
           return;
         }
@@ -92,7 +98,7 @@ function measure(fn, source) {
       if (ts.isIfStatement(child) || ts.isConditionalExpression(child) || ts.isCatchClause(child)
         || ts.isForStatement(child) || ts.isForInStatement(child) || ts.isForOfStatement(child)
         || ts.isWhileStatement(child) || ts.isDoStatement(child) || ts.isCaseClause(child)) state.complexity += 1;
-      else if (ts.isBinaryExpression(child) && LOGICAL.has(child.operatorToken.kind)) state.complexity += 1;
+      else if (isShortCircuitExpression(child)) state.complexity += 1;
       let childDepth = depth;
       if (isBlock(child)) {
         const elseIf = ts.isIfStatement(child) && ts.isIfStatement(node) && node.elseStatement === child;

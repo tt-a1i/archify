@@ -72,7 +72,10 @@ function isLatin1(declared) {
 }
 
 export function decodeSource(buffer, rel) {
-  if (!/\.pyi?$/i.test(rel) || (buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf)) return buffer.toString('utf8');
+  if (!/\.pyi?$/i.test(rel)) return buffer.toString('utf8');
+  // tokenize.detect_encoding selects utf-8-sig for Python's UTF-8 signature.
+  // Strip it before comparing decoded text or interpreting first-line columns.
+  if (buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) return buffer.subarray(3).toString('utf8');
   const head = buffer.subarray(0, 512).toString('latin1').split(/\r?\n/).slice(0, 2);
   let declared = null;
   for (const line of head) {

@@ -40,10 +40,11 @@ export function describeUnit(unit) {
         if (local) { shadowed.add(name); uncertainScopes.push(node.location); }
         else types.push({ name, fullName: [packageName, ...owners, name].filter(Boolean).join('.'), file: unit.file, owners,
           startOffset: node.location.startOffset, endOffset: node.location.endOffset,
+          line: node.location.startLine, column: node.location.startColumn,
           memberScopeStartOffset: body?.location.startOffset ?? node.location.startOffset,
           // A record's implements clause follows its header but is outside the member scope.
           scopeGap: node.name === 'recordDeclaration' ? node.children.classImplements?.[0]?.location : undefined,
-          staticMembers: staticMembers(node), kind: node.name, supertypes: supertypes(node) });
+          ...memberNames(node), kind: node.name, supertypes: supertypes(node) });
         owners = [...owners, name];
       }
     }
@@ -121,11 +122,15 @@ export function resolveImports(units) {
   const inheritedMembers = type => {
     if (inherited.has(type)) return inherited.get(type);
     // A cyclic chain is reported as incomplete.
-    inherited.set(type, { names: new Map(), complete: false });
+    inherited.set(type, { names: new Map(), complete: false, values: new Set(), valuesComplete: false, ancestors: new Set() });
     // Every enum implicitly extends java.lang.Enum, which declares EnumDesc.
     const names = new Map(type.kind === 'enumDeclaration' ? [['EnumDesc', false]] : []);
     const inherit = (name, analyzed) => names.set(name, names.get(name) || analyzed);
     let complete = true;
+    const values = new Set(), ancestors = new Set();
+    // Value absence is proved only through captured ordinary top-level classes.
+    // The type-only JDK allowlist does not inventory inherited value fields.
+    let valuesComplete = type.kind === 'normalClassDeclaration' && !type.owners.length;
     for (const supertype of type.supertypes) {
       // A supertype name is bound in the scope of its declaration header.
       const unit = unitOf.get(type.file);
@@ -134,14 +139,20 @@ export function resolveImports(units) {
         const jdk = targets.length ? null : jdkSupertype(unit, supertype);
         if (jdk) for (const name of JDK_MEMBERS.get(jdk)) inherit(name, false);
         else complete = false;
+        valuesComplete = false;
         continue;
       }
       const deeper = inheritedMembers(targets[0]);
       complete &&= deeper.complete;
+      valuesComplete &&= deeper.valuesComplete;
+      ancestors.add(targets[0]);
+      for (const ancestor of deeper.ancestors) ancestors.add(ancestor);
+      for (const name of targets[0].valueMembers) values.add(name);
+      for (const name of deeper.values) values.add(name);
       for (const name of declaredMembers.get(targets[0].fullName) || []) inherit(name, true);
       for (const [name, analyzed] of deeper.names) inherit(name, analyzed);
     }
-    const result = { names, complete };
+    const result = { names, complete, values, valuesComplete, ancestors };
     inherited.set(type, result);
     return result;
   };
@@ -225,7 +236,18 @@ export function resolveImports(units) {
   const entries = [...unique.values()].sort((a, b) => compare(a.record.from, b.record.from) || a.record.line - b.record.line || compare(a.record.specifier, b.record.specifier));
   const unresolved = { external: 0, outside: 0, unknown: 0, opaque: 0 };
   for (const { reason } of entries) if (reason) unresolved[reason] += 1;
-  return { imports: entries.map(entry => entry.record), unresolved };
+  return { imports: entries.map(entry => entry.record), unresolved,
+    resolveType: (unit, reference) => referenceTargets(unit, reference, reference.name, index, lookup, inheritedMembers),
+    qualifierAncestry: (unit, reference, first) => {
+      const ancestors = new Set(), scopes = enclosingTypes(unit, reference);
+      if (!scopes.length) return null;
+      for (const type of scopes) {
+        const scope = inheritedMembers(type);
+        if (lookup(type.fullName).length !== 1 || !scope.valuesComplete || scope.values.has(first)) return null;
+        for (const ancestor of scope.ancestors) ancestors.add(ancestor);
+      }
+      return [...ancestors].map(type => ({ file: type.file, line: type.line, column: type.column }));
+    } };
 }
 
 // Types whose member scope contains the node, outermost first.
@@ -256,9 +278,17 @@ function referenceTargets(unit, node, name, index, lookup, inheritedMembers) {
     if (!complete || names.has(first)) return [];
   }
   // Member types in scope shadow imports (JLS 6.4.1). Below them, a single
-  // static import may name a member type and override package lookup. Its
-  // declaration is recorded above; do not infer the reference's type scope.
-  if (unit.imports.some(i => i.isStatic && !i.wildcard && i.name.split('.').at(-1) === first)) return [];
+  // static import may name a member type and override package lookup. A
+  // proven value/method-only import occupies a different namespace (JLS 6.5.5.1).
+  // Keep the guard unless its unique analyzed owner has the static member and
+  // a complete type-member scope that excludes this name, including ancestors.
+  for (const imp of unit.imports.filter(i => i.isStatic && !i.wildcard && i.name.split('.').at(-1) === first)) {
+    const ownerName = imp.name.slice(0, -(first.length + 1));
+    const owners = lookup(ownerName);
+    if (owners.length !== 1 || !owners[0].staticMembers.has(first) || index.has(imp.name)) return [];
+    const { names, complete } = inheritedMembers(owners[0]);
+    if (!complete || names.has(first)) return [];
+  }
   const own = unit.types.filter(t => !t.owners.length && t.name === first);
   if (own.length) return name.includes('.') ? lookup(`${unit.packageName ? unit.packageName + '.' : ''}${name}`) : own;
   const singles = unit.imports.filter(i => !i.wildcard && !i.isStatic && i.name.split('.').at(-1) === first);
@@ -288,8 +318,8 @@ function supertypes(type) {
     .map(node => ({ name: identifiers(node), startOffset: node.location.startOffset, endOffset: node.location.endOffset }));
 }
 
-function staticMembers(type) {
-  const names = new Set();
+function memberNames(type) {
+  const names = new Set(), values = new Set();
   const ownerIsInterface = type.name === 'normalInterfaceDeclaration' || type.name === 'annotationInterfaceDeclaration';
   // Member enums, records and interfaces, and every member type of an
   // interface, are implicitly static (JLS 8.5.1, 9.5); member classes need
@@ -315,7 +345,11 @@ function staticMembers(type) {
     if (node.name === 'fieldDeclaration' || node.name === 'constantDeclaration') {
       const isStatic = node.name === 'constantDeclaration' || (node.children.fieldModifier || []).some(m => m.children.Static);
       const list = node.children.variableDeclaratorList?.[0];
-      if (isStatic) for (const n of list?.children.variableDeclarator || []) names.add(n.children.variableDeclaratorId?.[0]?.children.Identifier?.[0]?.image);
+      for (const n of list?.children.variableDeclarator || []) {
+        const name = n.children.variableDeclaratorId?.[0]?.children.Identifier?.[0]?.image;
+        values.add(name);
+        if (isStatic) names.add(name);
+      }
       return;
     }
     if (node.name === 'enumConstant') { names.add(node.children.Identifier?.[0]?.image); return; }
@@ -323,5 +357,5 @@ function staticMembers(type) {
     for (const child of children(node)) visit(child);
   };
   visit(type);
-  return names;
+  return { staticMembers: names, valueMembers: values };
 }

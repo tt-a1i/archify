@@ -18,8 +18,8 @@ export const ARCHIFY_AVAILABLE = fs.existsSync(path.join(ARCHIFY_PACKAGE, 'bin',
 // separate process (a different locale, a clean environment) and the
 // structured failure shape. There is no product CLI for single stages.
 export const EXTRACT_RUNNER = path.join(MODULE_ROOT, 'test', 'run-extract.mjs');
-export function runExtract(args, env = process.env) {
-  const result = spawnSync(process.execPath, [EXTRACT_RUNNER, ...args], { encoding: 'utf8', cwd: MODULE_ROOT, env, timeout: 20000 });
+export function runExtract(args, env = process.env, timeout = 20000) {
+  const result = spawnSync(process.execPath, [EXTRACT_RUNNER, ...args], { encoding: 'utf8', cwd: MODULE_ROOT, env, timeout });
   return { ...result, json: safeJson(result.stdout) };
 }
 

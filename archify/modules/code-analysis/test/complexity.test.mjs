@@ -58,7 +58,8 @@ test('python extraction: functions carry complexity, nesting and location; neste
     assert.deepEqual(schemaErrors('raw-facts', facts), []);
     const byName = Object.fromEntries(facts.functions.map((f) => [f.qualname, f]));
     assert.deepEqual(Object.keys(byName).sort(), ['K.method', 'K.method.<locals>.inner', 'branches', 'lam', 'simple']);
-    assert.deepEqual(byName.simple, { file: 'pkg/sample.py', name: 'simple', qualname: 'simple', line: 1, endLine: 2, complexity: 1, nesting: 0, deepestLine: 1 });
+    const { sourceRange: _range, definition: _definition, ...simpleMetrics } = byName.simple;
+    assert.deepEqual(simpleMetrics, { file: 'pkg/sample.py', name: 'simple', qualname: 'simple', line: 1, endLine: 2, complexity: 1, nesting: 0, deepestLine: 1 });
     // 1 + if + (or, and) + elif + for + if + while + 2 except + comprehension (1 for + 2 ifs) + conditional expression
     assert.equal(byName.branches.complexity, 14);
     assert.equal(byName.branches.nesting, 4, 'elif stays at its if\'s depth: if/elif > for > if > while');
@@ -110,6 +111,28 @@ test('complexity: thresholds come from the config, level by level', () => {
   const d = evaluate(graph, config, factsOf([fn('a.py', 'tangled', 26, 2)])).diagnostics[0];
   assert.equal(d.severity, 'info', 'the raised warning threshold is not reached');
   assert.deepEqual(d.evidence.threshold, { complexity: 15, nesting: 5 }, 'unconfigured values keep their defaults');
+});
+
+test('complexity: a threshold that is not a whole number names the setting and stops', () => {
+  const config = { rules: { complexity: { function: { warning: { complexity: 'oops' } } } } };
+  assert.throws(
+    () => evaluate(graph, config, factsOf([fn('a.py', 'tangled', 26, 2)])),
+    (error) => {
+      const diagnostic = error.diagnostics?.[0];
+      assert.equal(diagnostic?.code, 'config/threshold-invalid');
+      assert.match(diagnostic.message, /rules\.complexity\.function\.warning\.complexity/);
+      assert.match(diagnostic.message, /"oops"/);
+      return true;
+    },
+  );
+});
+
+test('complexity: a valid threshold still overrides just that one value', () => {
+  const config = { rules: { complexity: { function: { warning: { complexity: 30 } } } } };
+  const d = evaluate(graph, config, factsOf([fn('a.py', 'tangled', 26, 2)])).diagnostics[0];
+  assert.equal(d.severity, 'info');
+  assert.equal(d.evidence.thresholds.warning.complexity, 30);
+  assert.equal(d.evidence.thresholds.warning.nesting, 6, 'the unset value keeps its default');
 });
 
 test('complexity: a warning threshold set below the info threshold still reports the function', () => {

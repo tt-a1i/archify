@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "status": "error",
+  "command": "check",
+  "diagnostics": [
+    {
+      "code": "extract/adapter-unknown",
+      "severity": "error",
+      "message": "No language adapter named \"rust\".",
+      "subject": {
+        "option": "--language"
+      },
+      "evidence": {
+        "requested": "rust",
+        "supported": [
+          "ts",
+          "py",
+          "java"
+        ]
+      },
+      "supportedFixes": [
+        "choose one of the supported adapters"
+      ]
+    }
+  ]
+}

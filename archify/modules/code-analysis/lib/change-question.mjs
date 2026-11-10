@@ -1,0 +1,478 @@
+// Fresh paired source orientation. Slots are reading aids, never persistent IDs.
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import ts from 'typescript';
+import { extractFacts, loadConfig } from './analysis.mjs';
+import { readInside } from './evidence.mjs';
+import { measureFunctions } from '../extract/ts/functions.mjs';
+import { rangeText } from '../extract/shared/source-range.mjs';
+import { fail } from '../extract/shared/diagnostics.mjs';
+
+const LIMIT = 40;
+const digest = text => createHash('sha256').update(text).digest('hex');
+const bounded = items => ({ total: items.length, included: Math.min(items.length, LIMIT), omitted: Math.max(0, items.length - LIMIT), limit: LIMIT, items: items.slice(0, LIMIT) });
+const key = (...parts) => JSON.stringify(parts);
+const point = (source, offset) => {
+  const p = source.getLineAndCharacterOfPosition(offset);
+  return { line: p.line + 1, column: p.character + 1 };
+};
+const before = (a, b) => a.line < b.line || (a.line === b.line && a.column <= b.column);
+const end = range => ({ line: range.endLine, column: range.endColumn });
+
+// Normalize root-relative compiler paths, without rewriting arbitrary strings
+// such as path patterns. External paths remain explicit comparison differences.
+function normalize(value, root) {
+  if (Array.isArray(value)) return value.map(item => normalize(item, root));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(k => [k, normalize(value[k], root)]));
+  if (typeof value === 'string' && path.isAbsolute(value)) {
+    const rel = path.relative(root, value);
+    if (rel !== '..' && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel)) return `<root>/${rel.split(path.sep).join('/')}`;
+  }
+  return value;
+}
+
+export function changeEntryLanguage(entry) {
+  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go or .rs source file with --entry.');
+  if (/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry)) return 'ts';
+  if (/\.py$/.test(entry)) return 'py';
+  if (/\.java$/.test(entry)) return 'java';
+  if (/\.go$/.test(entry)) return 'go';
+  if (/\.rs$/.test(entry)) return 'rust';
+  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go or .rs source file with --entry.');
+}
+
+export function captureChangeSide(root, config, language = 'ts') {
+  root = path.resolve(root);
+  let resolution;
+  const { facts } = extractFacts(root, { language, config, onCapture: input => { resolution = input; } });
+  if (!['ts', 'go', 'rust', 'java'].includes(language)) resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
+  return { root, facts, resolution, language, configDigest: digest(JSON.stringify(config)) };
+}
+
+function inspectSide(capture, side) {
+  const { root, facts, resolution } = capture;
+  const errors = new Map((facts.parse_errors || []).map(error => [error.path, error.message]));
+  const files = new Map();
+  for (const file of facts.files) {
+    const current = readInside(root, file.path);
+    const status = current.status !== 'ok' ? current.status : current.text !== file.sourceText ? 'changed' : errors.has(file.path) ? 'parse-error' : 'valid';
+    files.set(file.path, { ...file, status, ...(errors.has(file.path) ? { parseError: errors.get(file.path) } : {}) });
+  }
+  const inputs = [];
+  let resolutionFresh = true;
+  for (const [file, text] of resolution.reads || []) {
+    // Includes absent reads for freshness, but only actual content contributes
+    // to the settings digest: adding an import may probe new absent paths.
+    const javaInput = capture.language === 'java' ? readInside(root,path.relative(root,file).split(path.sep).join('/')) : null;
+    const status = (capture.language === 'java' ? javaInput.status === 'ok' && javaInput.text === text : ts.sys.readFile(file) === text) ? 'valid' : 'changed';
+    if (status !== 'valid') resolutionFresh = false;
+    if (text !== undefined) inputs.push({ file: normalize(file, root), sha256: digest(text) });
+  }
+  inputs.sort((a, b) => a.file.localeCompare(b.file));
+  const settings = { options: normalize(resolution.options || {}, root), inputs };
+  const unavailable = [...files.values()].filter(file => file.status !== 'valid').map(file => ({ file: file.path, status: file.status, ...(file.parseError ? { parseError: file.parseError } : {}) }));
+  const evidence = facts.languageScope?.interfaceEvidence || null;
+  const summary = {
+    side, root, snapshot: facts.repository, language: facts.repository.language, producer: { adapter: facts.repository.adapter, adapterRevision: facts.repository.adapterRevision }, callModel: facts.callModel ?? null, analysisConfigDigest: capture.configDigest, capturedFiles: files.size,
+    sourceIdentity: unavailable.some(file => file.status !== 'parse-error') ? 'incomplete' : 'valid',
+    unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
+    ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
+    ...(evidence ? { interfaceEvidence: evidence } : {}),
+    resolution: ['ts', 'go', 'rust', 'java'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
+  };
+  const references = new Map(), calls = new Map(), interfaceReferences = new Map(), externalInterfaceReferences = new Map();
+  (facts.calls || []).forEach((fact, factIndex) => {
+    const record = { side, snapshotId: facts.repository.snapshotId, factIndex, fact };
+    const fileCalls = calls.get(fact.file) || [];
+    fileCalls.push(record); calls.set(fact.file, fileCalls);
+    if (fact.target) {
+      const targetKey = key(fact.target.file || fact.file, fact.target.line, fact.target.column, fact.target.name);
+      const refs = references.get(targetKey) || [];
+      refs.push(record); references.set(targetKey, refs);
+      if (fact.receiverInterface) {
+        const interfaceKey = key(fact.receiverInterface.package, fact.receiverInterface.qualname);
+        const interfaceRefs = interfaceReferences.get(key(targetKey, interfaceKey)) || [];
+        interfaceRefs.push(record); interfaceReferences.set(key(targetKey, interfaceKey), interfaceRefs);
+      }
+    } else if (fact.receiverInterface && fact.interfaceMethod) {
+      // The static receiver is a captured interface, but the selected method
+      // was declared in an uncaptured package. Keep the callsite without a target.
+      const externalKey = key(fact.receiverInterface.package, fact.receiverInterface.qualname,
+        fact.interfaceMethod.package, fact.interfaceMethod.name);
+      const interfaceRefs = externalInterfaceReferences.get(externalKey) || [];
+      interfaceRefs.push(record); externalInterfaceReferences.set(externalKey, interfaceRefs);
+    }
+  });
+  const hasInterfaceEvidence = Array.isArray(facts.interfaceImplementations) && ['captured-interface-implementations-v1', 'captured-interface-implementations-v2'].includes(evidence?.model);
+  const interfaceEdges = new Map(), interfaceMethods = new Map(), externalInterfaceMethods = new Map();
+  if (hasInterfaceEvidence) {
+    for (const edge of facts.interfaceImplementations) {
+      const method = edge.implementation.method;
+      if (method) {
+        const edgeKey = key(method.file, method.line, method.column, method.qualname);
+        const rows = interfaceEdges.get(edgeKey) || [];
+        rows.push(edge); interfaceEdges.set(edgeKey, rows);
+      }
+      if (edge.method.external) {
+        const externalKey = key(edge.interface.package, edge.interface.qualname, edge.method.package, edge.method.name);
+        const rows = externalInterfaceMethods.get(externalKey) || [];
+        rows.push(edge); externalInterfaceMethods.set(externalKey, rows);
+      } else {
+        const methodKey = key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+        const rows = interfaceMethods.get(methodKey) || [];
+        rows.push(edge); interfaceMethods.set(methodKey, rows);
+      }
+    }
+  }
+  const importsByTarget = new Map();
+  let unresolvedImports = 0;
+  facts.imports.forEach((fact, factIndex) => {
+    const record = { side, snapshotId: facts.repository.snapshotId, factIndex, fact };
+    if (!fact.resolved) { unresolvedImports += 1; return; }
+    const targets = importsByTarget.get(fact.to) || [];
+    targets.push(record); importsByTarget.set(fact.to, targets);
+  });
+  for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
+  const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5'].includes(facts.callModel))
+    || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2'].includes(facts.callModel))
+    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
+    || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(facts.callModel))
+    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12', 'rust-source-direct-v13', 'rust-source-direct-v14'].includes(facts.callModel));
+  return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings,
+    interfaceReferences, externalInterfaceReferences, interfaceEdges, interfaceMethods, externalInterfaceMethods, interfaceEvidence: evidence, hasInterfaceEvidence };
+}
+
+function compareSettings(base, head) {
+  const optionChanges = [];
+  for (const option of [...new Set([...Object.keys(base.options), ...Object.keys(head.options)])].sort()) {
+    if (JSON.stringify(base.options[option]) !== JSON.stringify(head.options[option])) optionChanges.push({ option, base: base.options[option] ?? null, head: head.options[option] ?? null });
+  }
+  const a = new Map(base.inputs.map(input => [input.file, input.sha256]));
+  const b = new Map(head.inputs.map(input => [input.file, input.sha256]));
+  const inputChanges = [...new Set([...a.keys(), ...b.keys()])].sort().filter(file => a.get(file) !== b.get(file)).map(file => ({ file, baseSha256: a.get(file) ?? null, headSha256: b.get(file) ?? null }));
+  return { optionChanges: bounded(optionChanges), inputChanges: bounded(inputChanges) };
+}
+
+function definitions(side, file) {
+  const captured = side.files.get(file);
+  if (!captured || captured.status !== 'valid') return { coverage: captured?.status || 'not-captured', records: [] };
+  if (side.facts.repository.language !== 'ts') {
+    const result = [], unavailable = [];
+    const kinds = side.facts.repository.language === 'rust' ? ['RustItemFn'] : side.facts.repository.language === 'go' ? ['FuncDecl', 'InterfaceMethod'] : side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
+    for (const fn of side.facts.functions.filter(fn => fn.file === file)) {
+      const metadata = fn.definition;
+      const slice = rangeText(captured.sourceText, metadata?.sourceRange, side.facts.repository.language);
+      if (!metadata || !kinds.includes(metadata.kind) || slice === null || digest(slice) !== metadata.sourceRange.sha256) {
+        unavailable.push({ file, name: fn.name, qualname: fn.qualname, reason: !metadata ? 'definition-metadata-unavailable' : 'definition-metadata-invalid' });
+        continue;
+      }
+      // Identity remains the original def-start, independently of decorated headers.
+      const identity = fn.sourceRange || metadata.sourceRange;
+      result.push({ file, name: fn.name, qualname: fn.qualname, kind: metadata.kind,
+        line: identity.line, column: identity.column || fn.column || 1,
+        endLine: metadata.sourceRange.endLine, endColumn: metadata.sourceRange.endColumn,
+        sourceRange: metadata.sourceRange, textSha256: metadata.sourceRange.sha256 });
+    }
+    return { coverage: unavailable.length ? 'definition-regions-unavailable' : 'available', records: result, unavailable };
+  }
+  const source = ts.createSourceFile(file, captured.sourceText, ts.ScriptTarget.Latest, true);
+  if (source.isDeclarationFile) return { coverage: 'declaration-file-unsupported', records: [] };
+  const result = [];
+  measureFunctions(source, file, (fn, node) => {
+    const start = point(source, node.getStart(source));
+    const finish = point(source, node.getEnd());
+    result.push({ file, name: fn.name, qualname: fn.qualname, kind: ts.SyntaxKind[node.kind], ...start,
+      endLine: finish.line, endColumn: finish.column, textSha256: digest(source.text.slice(node.getStart(source), node.getEnd())) });
+  });
+  return { coverage: 'available', records: result };
+}
+
+function callsInRange(records, range) {
+  // Calls are sorted by source start. Seek to the selected definition rather
+  // than scanning the whole file for every adjacent function.
+  let low = 0, high = records.length;
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    if (before(range, records[middle].fact)) high = middle;
+    else low = middle + 1;
+  }
+  const selected = [];
+  for (let i = low; i < records.length && before(records[i].fact, end(range)); i += 1) {
+    const record = records[i];
+    if (record.fact.resolution === 'unresolved' && before(end(record.fact), end(range))) selected.push(record);
+  }
+  return selected;
+}
+
+function traitCandidates(side, definition) {
+  if (side.facts.repository.language !== 'rust') return null;
+  const edges = side.facts.traitImplementations;
+  if (!Array.isArray(edges)) return { coverage: 'unavailable', reason: 'rust-trait-edges-not-captured', runtimeTarget: 'not-determined', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  const matching = edges.filter(edge => edge.implementation.file === definition.file && edge.implementation.line === definition.line && edge.implementation.column === definition.column);
+  if (!matching.length) return { coverage: 'not-applicable', reason: 'definition-not-a-captured-trait-implementation', runtimeTarget: 'not-determined', total: 0, included: 0, omitted: 0, limit: LIMIT, items: [] };
+  const targets = new Set(matching.map(edge => key(edge.traitMethod.file, edge.traitMethod.line, edge.traitMethod.column, edge.traitMethod.name)));
+  const items = [];
+  for (const record of [...side.calls.values()].flat()) {
+    if (record.fact.resolution !== 'rust-trait-method-candidate' || !record.fact.target) continue;
+    const target = record.fact.target;
+    if (!targets.has(key(target.file || record.fact.file, target.line, target.column, target.name))) continue;
+    const status = !side.resolutionFresh ? 'resolution-input-changed' : side.files.get(record.fact.file)?.status || 'unverifiable';
+    items.push({ ...record, reason: 'call site proves this trait method is used; compile-time or runtime concrete implementation is not determined', runtimeTarget: 'not-determined',
+      navigation: { status, location: status === 'valid' ? { file: record.fact.file, line: record.fact.line, column: record.fact.column, endLine: record.fact.endLine, endColumn: record.fact.endColumn } : null } });
+  }
+  items.sort((a, b) => a.fact.file.localeCompare(b.fact.file) || a.fact.line - b.fact.line || a.fact.column - b.fact.column);
+  return { coverage: 'available', role: 'trait-declaration anchors for review; not proof of runtime dispatch to the changed implementation', runtimeTarget: 'not-determined',
+    trait: matching[0].trait, traitMethod: matching[0].traitMethod, implementations: matching.map(edge => ({ selfType: edge.selfType, implementation: edge.implementation })), ...bounded(items) };
+}
+
+function interfaceCandidateReason(edge, record, hasAlternatives) {
+  const iface = edge.interface.qualname, method = edge.method.name, impl = edge.implementation;
+  const type = impl.type.qualname;
+  const forms = impl.valueSatisfies && impl.pointerSatisfies ? 'T and *T' : impl.valueSatisfies ? 'T' : '*T';
+  const location = impl.method ? `${impl.method.qualname} (${impl.method.file}:${impl.method.line})`
+    : impl.promotedDeclaration ? `${impl.promotedDeclaration.qualname} (${impl.promotedDeclaration.file}:${impl.promotedDeclaration.line})`
+      : 'an uncaptured method body';
+  const promotion = record.fact.receiverPromotion === 'embedded-interface' ? ' The call is on a concrete wrapper and reaches the interface through an embedded field.' : '';
+  const alternatives = hasAlternatives ? 'The runtime receiver may be another implementation; it is not determined.' : 'No other captured implementation is listed, but runtime identity is still not determined.';
+  if (edge.method.external) return `Call through ${iface}.${method}: ${type} (${forms}) satisfies ${iface}, but ${method} is declared in ${edge.method.package}, whose source is not captured. The callsite is recorded without a source target.${promotion} ${alternatives}`;
+  if (impl.reason === 'promoted-interface-method') return `Call through ${iface}.${method}: ${type} satisfies ${iface}, but the method is promoted from ${location}; the concrete body is not captured.${promotion} ${alternatives}`;
+  if (impl.reason === 'method-body-not-captured') return `Call through ${iface}.${method}: ${type} satisfies ${iface}, but the implementing body is not captured.${promotion} ${alternatives}`;
+  return `Call through ${iface}.${method}: ${type} (${forms}) satisfies ${iface} via ${location}.${promotion} ${alternatives}`;
+}
+
+function interfaceMethodImplementations(side, definition) {
+  const unique = new Map();
+  for (const edges of side.interfaceEdges.values()) {
+    for (const edge of edges) {
+      if (edge.method.file !== definition.file || edge.method.line !== definition.line || edge.method.column !== definition.column) continue;
+      if (`${edge.interface.qualname}.${edge.method.name}` !== definition.qualname) continue;
+      const impl = edge.implementation;
+      const id = key(impl.type.package, impl.type.qualname, impl.reason, impl.method?.qualname || impl.promotedDeclaration?.qualname || null);
+      if (!unique.has(id)) unique.set(id, { interface: edge.interface, method: edge.method, implementation: impl });
+    }
+  }
+  const records = [...unique.values()].sort((a, b) => a.implementation.type.qualname.localeCompare(b.implementation.type.qualname));
+  return { coverage: 'available', role: 'captured implementations of this interface method; method-set evidence only, not runtime dispatch', runtimeTarget: 'not-determined', implementations: bounded(records), items: [], total: 0, included: 0, omitted: 0, limit: LIMIT };
+}
+
+function interfaceCandidates(side, definition) {
+  if (side.facts.repository.language !== 'go') return null;
+  if (!side.hasInterfaceEvidence) {
+    return { coverage: 'unavailable', reason: 'interface-implementation-evidence-not-captured', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  }
+  if (definition.kind === 'InterfaceMethod') return interfaceMethodImplementations(side, definition);
+  if (definition.kind !== 'FuncDecl' || definition.qualname === definition.name) {
+    return { coverage: 'not-applicable', reason: 'not-a-concrete-method', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  }
+  const edges = side.interfaceEdges.get(key(definition.file, definition.line, definition.column, definition.qualname)) || [];
+  const items = [], seen = new Set(), edgeSeen = new Set();
+  for (const edge of edges) {
+    const edgeKey = key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column,
+      edge.implementation.type.package, edge.implementation.type.qualname, edge.implementation.reason,
+      edge.implementation.method?.qualname || edge.implementation.promotedDeclaration?.qualname || null);
+    if (edgeSeen.has(edgeKey)) continue;
+    edgeSeen.add(edgeKey);
+    const external = edge.method.external === true;
+    const targetKey = external ? null : key(edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+    const methodKey = external
+      ? key(edge.interface.package, edge.interface.qualname, edge.method.package, edge.method.name)
+      : key(edge.interface.package, edge.interface.qualname, edge.method.file, edge.method.line, edge.method.column, edge.method.name);
+    const implementations = ((external ? side.externalInterfaceMethods.get(methodKey) : side.interfaceMethods.get(methodKey)) || [edge]).map(row => row.implementation);
+    const refs = (external
+      ? side.externalInterfaceReferences.get(methodKey)
+      : side.interfaceReferences.get(key(targetKey, key(edge.interface.package, edge.interface.qualname)))) || [];
+    for (const record of refs) {
+      const id = `${record.snapshotId}:${record.factIndex}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const status = !side.resolutionFresh ? 'resolution-input-changed' : side.files.get(record.fact.file)?.status || 'unverifiable';
+      items.push({ ...record, bindingAttribution: side.bindingAttribution,
+        navigation: { status, location: status === 'valid' ? { file: record.fact.file, line: record.fact.line, column: record.fact.column, endLine: record.fact.endLine, endColumn: record.fact.endColumn } : null },
+        interface: edge.interface, interfaceMethod: edge.method, changedImplementation: edge.implementation,
+        implementations: bounded(implementations), runtimeTarget: 'not-determined', reason: interfaceCandidateReason(edge, record, implementations.length > 1) });
+    }
+  }
+  items.sort((a, b) => a.fact.file.localeCompare(b.fact.file) || a.fact.line - b.fact.line || a.fact.column - b.fact.column);
+  const incomplete = side.interfaceEvidence?.incompleteInterfaces?.length || 0;
+  return { coverage: 'available', ...bounded(items),
+    ...(incomplete ? { unknown: `${incomplete} captured interface(s) were omitted from the edge set because their method evidence was incomplete. Absence of a candidate is not proof of non-implementation.` } : {}) };
+}
+
+function directReferences(side, definition) {
+  const keys = new Set([key(definition.file, definition.line, definition.column, definition.name)]);
+  // A Rust default body is registered at its fn keyword, while trait calls target the method name.
+  if (side.facts.repository.language === 'rust' && Array.isArray(side.facts.traits)) {
+    for (const trait of side.facts.traits) {
+      for (const method of trait.methods || []) {
+        // Module paths are crate-local, so a same-named trait in another workspace member has the same qualname.
+        if (method.file === definition.file && method.qualname === definition.qualname) keys.add(key(method.file, method.line, method.column, method.name));
+      }
+    }
+  }
+  const seen = new Set(), records = [];
+  for (const target of keys) {
+    for (const record of side.references.get(target) || []) {
+      if (seen.has(record.factIndex)) continue;
+      seen.add(record.factIndex);
+      records.push(record);
+    }
+  }
+  records.sort((a, b) => a.fact.file.localeCompare(b.fact.file) || a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
+  return records;
+}
+
+function describeDefinition(side, definition) {
+  const refs = directReferences(side, definition);
+  const knownReferences = refs.map(record => {
+    const status = !side.resolutionFresh ? 'resolution-input-changed' : side.files.get(record.fact.file)?.status || 'unverifiable';
+    return { ...record, bindingAttribution: side.bindingAttribution, navigation: { status, location: status === 'valid' ? { file: record.fact.file, line: record.fact.line, column: record.fact.column, endLine: record.fact.endLine, endColumn: record.fact.endColumn } : null } };
+  });
+  const unresolved = callsInRange(side.calls.get(definition.file) || [], definition.sourceRange || definition);
+  const unavailable = { coverage: 'unavailable', reason: 'unsupported-or-unknown-call-model', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  const available = items => ({ coverage: 'available', ...bounded(items) });
+  const traitCandidateList = traitCandidates(side, definition);
+  const interfaceCandidateList = interfaceCandidates(side, definition);
+  return { side: side.side, snapshotId: side.facts.repository.snapshotId, definition,
+    knownReferences: side.callCoverage ? available(knownReferences) : { ...unavailable }, ...(traitCandidateList ? { traitCandidates: traitCandidateList } : {}), ...(interfaceCandidateList ? { interfaceCandidates: interfaceCandidateList } : {}), unresolvedWithinSourceRange: side.callCoverage ? { ...available(unresolved), containment: 'physical-source-range-including-nested-definitions-and-owned-headers' } : { ...unavailable } };
+}
+
+function moduleReferences(side, entry) {
+  const entryStatus = side.files.get(entry)?.status || 'not-captured';
+  const records = (side.importsByTarget.get(entry) || []).map(record => {
+    const originStatus = side.files.get(record.fact.from)?.status || 'not-captured';
+    const status = !side.resolutionFresh ? 'resolution-input-changed' : entryStatus !== 'valid' ? `entry-${entryStatus}` : originStatus;
+    return { ...record, bindingAttribution: side.bindingAttribution, originStatus, entryStatus,
+      navigation: { status, location: status === 'valid' ? { file: record.fact.from, line: record.fact.line } : null } };
+  });
+  return { side: side.side, snapshotId: side.facts.repository.snapshotId, entryStatus,
+    resolvedReferences: bounded(records), unresolvedImports: side.unresolvedImports,
+    unknown: 'Unresolved import destinations cannot be attributed to this entry. The count covers all captured sources, not potential consumers of this file.' };
+}
+
+function outgoingImports(side, entry) {
+  const originStatus = side.files.get(entry)?.status || 'not-captured';
+  const records = side.facts.imports.flatMap((fact, factIndex) => {
+    if (fact.from !== entry) return [];
+    const status = !side.resolutionFresh ? 'resolution-input-changed' : originStatus !== 'valid' ? `origin-${originStatus}` : !fact.resolved ? 'external-or-unresolved' : side.files.get(fact.to)?.status || 'not-captured';
+    return [{ side: side.side, snapshotId: side.facts.repository.snapshotId, factIndex, fact, originStatus,
+      bindingAttribution: side.bindingAttribution,
+      targetNavigation: { status, location: status === 'valid' ? { file: fact.to, line: 1 } : null,
+        ...(!fact.resolved ? { reason: 'external-or-unresolved-import-destination' } : {}) } }];
+  });
+  return { side: side.side, snapshotId: side.facts.repository.snapshotId, originStatus, ...bounded(records) };
+}
+
+function fileQuestion(sides, entry) {
+  const definitionCoverage = {}, unavailableDefinitions = {};
+  const slots = { base: new Map(), head: new Map() };
+  for (const [name, side] of Object.entries(sides)) {
+    const measured = definitions(side, entry);
+    definitionCoverage[name] = measured.coverage;
+    unavailableDefinitions[name] = bounded(measured.unavailable || []);
+    for (const definition of measured.records) {
+      const slot = key(definition.file, definition.qualname, definition.kind);
+      const group = slots[name].get(slot) || [];
+      group.push(definition); slots[name].set(slot, group);
+    }
+  }
+  const changed = [], shifted = [], unpaired = [];
+  for (const slot of new Set([...slots.base.keys(), ...slots.head.keys()])) {
+    const a = slots.base.get(slot) || [], b = slots.head.get(slot) || [];
+    if (a.length !== 1 || b.length !== 1) {
+      for (const [name, defs] of [['base', a], ['head', b]]) {
+        const other = sides[name === 'base' ? 'head' : 'base'].files.get(entry);
+        const otherCoverage = definitionCoverage[name === 'base' ? 'head' : 'base'];
+        const reason = a.length > 1 || b.length > 1 ? 'duplicate-slot' : (other && other.status !== 'valid') || otherCoverage === 'definition-regions-unavailable' ? 'counterpart-unavailable' : `${name}-only`;
+        for (const definition of defs) unpaired.push({ reason, ...describeDefinition(sides[name], definition) });
+      }
+      continue;
+    }
+    if (a[0].textSha256 !== b[0].textSha256) changed.push({ pairing: 'unique-exact-source-slot', base: describeDefinition(sides.base, a[0]), head: describeDefinition(sides.head, b[0]) });
+    else if (a[0].line !== b[0].line || a[0].column !== b[0].column) shifted.push({ base: { side: 'base', snapshotId: sides.base.facts.repository.snapshotId, definition: a[0] }, head: { side: 'head', snapshotId: sides.head.facts.repository.snapshotId, definition: b[0] } });
+  }
+  return {
+    definitionCoverage, unavailableDefinitions,
+    outgoingImports: { role: 'entry-file-wide source reading evidence, not selected-definition calls or execution timing', base: outgoingImports(sides.base, entry), head: outgoingImports(sides.head, entry) },
+    moduleReading: {
+      role: 'dependency reading locations, separate from calls; not proof of execution or affected behavior',
+      base: moduleReferences(sides.base, entry), head: moduleReferences(sides.head, entry),
+      factRole: 'Original records from this side/snapshot imports array. Preserve kind, typeOnly and lazy; absent typeOnly/lazy mean false. Use navigation.location only when valid.',
+    },
+    changedDefinitions: bounded(changed), positionOnlyDefinitions: bounded(shifted), unpairedDefinitions: bounded(unpaired),
+  };
+}
+
+// Only accepts captures made by captureChangeSide in this invocation; not an
+// import API for old analysis artifacts or user-supplied provenance receipts.
+export function buildChangeQuestion({ question, entry, base, head, config }) {
+  if (typeof question !== 'string' || !question.trim()) fail('task/question-invalid', 'Pass a nonempty --question.');
+  const language = changeEntryLanguage(entry);
+  const expectedConfig = digest(JSON.stringify(config));
+  for (const capture of [base, head]) {
+    const repo = capture.facts.repository;
+    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^go-parser@/.test(repo.adapter) : language === 'rust' ? /^rust-syn@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
+    if (capture.language !== language || repo.language !== language || !producerMatches || capture.configDigest !== expectedConfig) fail('task/capture-mismatch', 'Both captures must use the entry language, matching producers and the same analysis configuration.');
+  }
+  if (base.facts.repository.adapter !== head.facts.repository.adapter || base.facts.repository.adapterRevision !== head.facts.repository.adapterRevision || base.facts.callModel !== head.facts.callModel) fail('task/capture-mismatch', 'Paired capture producers, revisions and call models must match.');
+  entry = path.posix.normalize(entry.split(path.sep).join('/'));
+  const sides = { base: inspectSide(base, 'base'), head: inspectSide(head, 'head') };
+  const reasons = [];
+  for (const [name, side] of Object.entries(sides)) {
+    if (side.summary.unavailableFiles.total) reasons.push({ code: 'source-regions-unavailable', side: name, count: side.summary.unavailableFiles.total, message: 'Some captured source regions failed parsing or freshness checks; other valid regions remain available.' });
+    if (!side.resolutionFresh) reasons.push({ code: 'resolution-input-changed', side: name, message: 'A configuration/package input changed after capture; call and dependency navigation for this side is unavailable.' });
+    if (language === 'go' && !side.hasInterfaceEvidence) reasons.push({ code: 'interface-implementation-evidence-unavailable', side: name, message: 'This capture has no interface implementation edges. Direct references remain available; interface-mediated candidates are unavailable, not zero.' });
+  }
+  const settingsEqual = sides.base.summary.resolution.digest === sides.head.summary.resolution.digest;
+  const bindingAttribution = language !== 'ts' ? 'source-import-model-only' : settingsEqual && sides.base.resolutionFresh && sides.head.resolutionFresh ? 'same-observed-settings' : 'limited';
+  for (const side of Object.values(sides)) side.bindingAttribution = bindingAttribution;
+  const resolutionChanges = compareSettings(sides.base.settings, sides.head.settings);
+  if (!settingsEqual) reasons.push({ code: 'resolution-settings-differ', message: 'Observed compiler options or configuration/package input contents differ. Binding differences cannot be attributed to source text alone.' });
+  if (!sides.base.files.has(entry) && !sides.head.files.has(entry)) reasons.push({ code: 'entry-not-captured', file: entry, message: 'The entry was not captured on either side; check source path and filters.' });
+  const fileChanges = [];
+  for (const file of [...new Set([...sides.base.files.keys(), ...sides.head.files.keys()])].sort()) {
+    const a = sides.base.files.get(file), b = sides.head.files.get(file);
+    if (a?.sourceText === b?.sourceText) continue;
+    fileChanges.push({ file, status: !a ? 'head-only' : !b ? 'base-only' : 'text-changed',
+      base: a ? { snapshotId: base.facts.repository.snapshotId, sha256: digest(a.sourceText), status: a.status } : null,
+      head: b ? { snapshotId: head.facts.repository.snapshotId, sha256: digest(b.sourceText), status: b.status } : null });
+  }
+  const selected = fileQuestion(sides, entry);
+  if (Object.values(selected.definitionCoverage).some(coverage => ['declaration-file-unsupported', 'definition-regions-unavailable'].includes(coverage))) {
+    reasons.push({ code: 'definition-regions-unsupported', count: 1 });
+  }
+  return {
+    kind: 'archify-change-question', stage: 'orientation-only', status: reasons.length ? 'partial' : 'ready', question: question.trim(), entry,
+    workflow: 'docs/FUNCTION-ANALYSIS.md', language, capture: 'fresh-pair; same current language extractor and effective analysis configuration',
+    analysisConfigDigest: digest(JSON.stringify(config)),
+    sides: { base: sides.base.summary, head: sides.head.summary },
+    comparison: { sourceText: 'reading-signals-only', bindingAttribution, reasons, resolutionChanges },
+    fileChanges: bounded(fileChanges), ...selected,
+    limitations: [
+      'File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.',
+      'Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.',
+      'Known references are conservative source callsites, not runtime callers or complete/transitive impact. Dynamic dispatch, unsupported member calls, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets ordinary undecorated module definitions or direct from-import aliases; v2 additionally follows one unique unconditional explicit reexport. Longer/rebound/conditional chains, decorated/method targets and runtime module initialization remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; v3 additionally distinguishes different fixed arities while same-arity/varargs competition, member dispatch and inherited owners remain unresolved. Go v1 binds captured free functions; v2 additionally follows compiler-selected concrete methods, including promotion, expressions and generic instances; v3 additionally binds interface method declarations captured in source as declaration anchors, while runtime interface dispatch and function variables remain unknown under incomplete external typing. Current Go change orientation additionally lists interface-mediated candidate callsites when captured go/types method sets prove that the changed concrete method is in an interface implementation; candidates are not definite runtime callers. Captures without interface implementation edges report interfaceCandidates as unavailable rather than zero. Argument type applicability and complete compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.',
+      'Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.',
+      'Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.',
+      'Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits.',
+    ],
+    nextSteps: [
+      'Read the changed source and the known callsite in each named side; inspect unresolved calls, adapter/configuration inputs and omitted regions relevant to the question.',
+      'For Go concrete methods, compare knownReferences (direct calls) with interfaceCandidates (interface-mediated possibilities). A candidate names the interface method declaration, the satisfying type and method, and any other captured implementations; the runtime receiver is not determined.',
+      'Explain the behavior from source and appropriate project checks. Keep inference and unknowns explicit; this orientation is not a completed change review.',
+    ],
+  };
+}
+
+export function captureChangeQuestion({ question, entry, baseRoot, root, configPath = null }) {
+  const language = changeEntryLanguage(entry);
+  const config = loadConfig(configPath);
+  const base = captureChangeSide(baseRoot, config, language);
+  const head = captureChangeSide(root, config, language);
+  return buildChangeQuestion({ question, entry, base, head, config });
+}
+
+export function renderChangeQuestionMarkdown(brief) {
+  // Keep every bounded evidence record available to the host Agent in either
+  // output format, without maintaining a second selection/interpretation path.
+  return `# Change question orientation\n\n${brief.question}\n\nStatus: ${brief.status}${brief.status === 'partial' ? ' (capture/configuration limits, not a finding gate)' : ''}. Read ${brief.workflow} and complete the analysis.\n\n\`\`\`json\n${JSON.stringify(brief, null, 2)}\n\`\`\`\n`;
+}

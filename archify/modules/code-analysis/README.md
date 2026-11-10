@@ -6,7 +6,7 @@ Start Archify with `npm start -- "/path/to/project" --ir architecture.json` from
 
 Code Analysis is Archify's integrated static code analysis module, imported from
 Bauify (commit 4bb811c) and maintained here. It reads source dependencies
-(Python, JS/TS and Java), folds files into modules, checks import cycles, coupling,
+(Python, JS/TS, Java and Go), folds files into modules, checks import cycles, coupling,
 function complexity and configured architecture boundaries, and shows the result on the architecture diagram Archify delivered — as an
 extra layer the reader switches on, never as a change to the diagram itself.
 
@@ -29,6 +29,18 @@ It has two entry points that share the same pipeline:
 optimization task (JSON or Markdown) and checks its evidence against the current
 working tree; the page uses the same logic through the server.
 
+`task --question` prepares source orientation without requiring a finding: source
+identity, captured function ranges and direct imports. JS/TS implementation entries
+and fresh Python/Java captures can also include bounded lexical call evidence.
+Python/Java entries require a saved analysis directory containing the .py/.java
+entry from its matching adapter. Historical Python/Java captures without a
+recognized call model retain unavailable coverage and unknown totals.
+The host Agent then follows [the function analysis workflow](docs/FUNCTION-ANALYSIS.md)
+to answer the question from source. The CLI output is an intermediate reading aid.
+Adding `--base-root` with a required `--entry` prepares a fresh before/after source
+comparison, including separate call and module-reading references and explicit
+coverage limits. See [change questions](docs/FUNCTION-ANALYSIS.md#change-questions).
+
 From the `archify/` package directory:
 
 ```sh
@@ -39,7 +51,7 @@ No separate setup: the first run installs the module's parser and schema depende
 (typescript, java-parser, ajv) into `modules/code-analysis/node_modules`; `npm ci` in
 `archify/` does the same through its `postinstall`. Open the URL the command
 prints and keep the process running. Options:
-`--language ts|py|java` (required when the scan matches both JS/TS and Python, or Java beside them under a root Maven/Gradle build file), `--map overlay-map.json`
+`--language ts|py|java|go` (required when the scan matches both JS/TS and Python, or Java beside them under a root Maven/Gradle build file), `--map overlay-map.json`
 (`{"componentId": ["moduleId", …]}` when the IR's `sources` do not say which
 modules a component stands for), `--config file.json` (thresholds, include /
 exclude, roles), `--quality standard|showcase` (passed to `archify deliver`).
@@ -70,3 +82,5 @@ potential import-time risks without claiming that execution is safe or that a ru
 ```sh
 npm run test:code-analysis
 ```
+
+Go source investigation supports root-module packages, function definitions and conservative direct function bindings. It requires Go 1.18+; build conditions, exclusions and incomplete typing are explicit. See [Go source scope and limitations](docs/GO.md). Rust is not supported yet.

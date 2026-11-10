@@ -159,8 +159,8 @@ split. Setting `modules.depth` or `modules.packageBoundaries: false` restores
 directory-depth grouping. JPMS modules are not read.
 
 This grouping is inferred from build-file locations and source directories;
-Maven and Gradle models (declared modules, source sets, dependencies) are not
-evaluated. Adding a second build module, moving sources or changing a shared
+Module grouping does not evaluate Maven or Gradle models. Java v5 separately reads
+a bounded set of Maven declarations for static-call candidates, described below. Adding a second build module, moving sources or changing a shared
 directory prefix can change the modules, and with them module edges, module
 cycles and hubs, without any dependency change. Compare module-level findings
 across runs only under the same grouping: for longitudinal comparison, pin
@@ -191,6 +191,68 @@ try/synchronized blocks; `else if` stays at the preceding if's depth, and
 catch/finally blocks stay at their try's depth. Comments and strings do not add
 branches. Existing thresholds and source-evidence views are reused.
 
+## Method invocation source navigation
+
+Current captures use `java-static-lexical-v5` (adapter revision 11). Historical
+v1 restrictions below describe the original collection contract. Later revisions
+add explicit class-qualified public static methods (v2), unique fixed-arity
+candidates among different-arity siblings (v3), and qualifier lookups from callers
+with closed captured ordinary-class ancestry (v4). Captured ancestors must have
+no inherited field or member-type blocker for the qualifier; this is not general
+inheritance or overload/type inference.
+
+Java v5 additionally admits these inherited-context static calls across Maven
+project roots when captured POMs establish a unique **direct** project dependency.
+It reads literal project coordinates, local parents (including named parent XML
+files), inherited default properties and dependency management, and a shared
+literal reactor declaration. Main sources require compile/provided jar routes;
+test sources may also use test/runtime scope. A target in `src/test/java` requires
+a test-jar dependency; an ordinary jar does not expose test fixtures. Both the
+target and any captured ancestor used for qualifier absence need a valid route.
+Reactor co-location alone grants no dependency.
+
+`languageScope` records the exact used UTF-8 POM text and SHA-256, effective
+project coordinates/direct dependencies, profile identifiers, unsupported models
+and limitations. `calls[].buildEvidence` contains jumpable POM declaration
+points. Saved and paired investigations check these inputs for changes before
+allowing call navigation. POMs are metadata, not analyzed Java source files.
+The scanner captures configured XML/POM files so a named local parent can be
+read from the same snapshot; only used metadata is emitted. Excludes still apply.
+
+Relevant dependency/module profiles, unresolved parents/properties, duplicate
+coordinates, imported BOMs, custom main/test layouts and Gradle dependencies
+cannot grant these new routes. This does not execute Maven, Gradle, plugins,
+annotation processors or project code, and requires no JDK or Maven installation.
+The XML reader pins `@xmldom/xmldom@0.9.12`. Existing same-root and no-parent
+source candidates retain their previous contract; dependency evidence does not
+turn the global source type index into a complete classpath or disambiguate
+multiple declarations. External artifacts, transitive dependencies, CLI/settings
+activation, generated code, runtime loading and complete impact remain unknown.
+
+
+The original v1 captures declare `callModel: "java-static-lexical-v1"`. They inventory
+all parsed method invocation expressions with full original-source UTF-16 start
+and end-exclusive positions, including chained calls and lambda/nested type
+bodies. Constructors, method references and implicit invocations are excluded.
+A zero is known only for a current, parse-valid selected range with this marker;
+older Java empty arrays remain unavailable.
+
+`same-file-static-method` supplies a lexical source candidate only for a bare
+identifier invocation inside a measured ordinary method directly owned by a
+top-level ordinary class without `extends` or `implements`. The class must
+have exactly one method declaration of that name, explicitly `static` with a
+captured body and matching fixed arity. Overloads, varargs, explicit invocation
+type arguments, inherited Object method names and nested/local/anonymous owners
+remain unresolved, as do qualified/member calls. Calls inside lambdas retain
+the enclosing method context. Java function measurements include exact UTF-16
+`column`/`endColumn` positions so adjacent methods on one line stay distinct.
+
+This is source reading assistance, not Java compiler attribution: argument type
+applicability, compilation, virtual dispatch, reflection, provider selection and
+execution are unmodeled. All other invocation sites stay explicit unknowns.
+Saved question tasks expose these bounds and gate target navigation on captured
+source freshness; see [function analysis](FUNCTION-ANALYSIS.md).
+
 ## Parser choice and boundaries
 
 The implementation pins `java-parser@3.0.1`, a synchronous JavaScript parser
@@ -209,10 +271,12 @@ rewrites these nodes into record declarations and restores the nested types
 as member types.
 
 Java Unicode escapes are expanded before lexing, including inside comments.
-This parser does not implement that preprocessing. Files containing a
-`\uXXXX`-style sequence are therefore reported as unsupported, including
-sequences inside strings and those preceded by another backslash, rather than
-risking silently missing code. Other source
+The adapter accepts escapes within parsed comments, string/character literals
+and text blocks when their decoded characters preserve token boundaries.
+It keeps the original text and source offsets. Paired raw backslashes leave
+the following `u` ineligible as an escape marker. Escaped quotes, comment
+delimiters, backslashes and line breaks still produce a diagnostic, as do
+malformed escapes and escapes outside those token ranges. Other source
 encodings, build-aware symbol resolution, generated/Lombok symbols, Spring
 injection, inheritance/call graphs and class initialization analysis are outside
 this adapter's scope.
