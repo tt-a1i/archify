@@ -181,3 +181,59 @@ test('class: mixed hierarchy fallback keeps dependency notation in focus and SVG
     }
   }
 });
+
+test('class: method parameter delimiters retain visible spaces and tabs', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run class parameter browser checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-class-parameters-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const parameters = ['value: Literal["a,b"]', 'value: Literal["a, b"]',
+    'value: Literal["a,  b"]', 'value: Literal["a,\tb"]', 'value: Literal["a,\t\tb"]', 'a: X,  b: Y'];
+  const expected = parameters.map((value, index) => `parse${index}(${value})`);
+  const input = path.join(scratch, 'parameters.class.json');
+  const output = path.join(scratch, 'parameters.html');
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'class', meta: { title: 'Literal fidelity' },
+    types: [
+      { id: 'parser', label: 'Parser', kind: 'class', width: 600, row: 0, col: 0,
+        methods: parameters.map((value, index) => ({ name: `parse${index}`, parameters: value, returns: 'Result' })) },
+      { id: 'narrow', label: 'Narrow', kind: 'class', width: 196, row: 1, col: 0,
+        methods: [{ name: 'parse', parameters: 'value: Literal["a,  b"]', returns: 'Result' }] },
+    ],
+  }));
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'class', input, output]);
+  const browser = desktopBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  for (const theme of ['light', 'dark']) {
+    const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: pathToFileURL(output).href + '?theme=' + theme });
+    await loaded;
+    const result = await send('Runtime.evaluate', {
+      expression: `(async () => {
+        await document.fonts.ready;
+        await Archify.viewerChromeLayout.whenStable();
+        const rows = root => [...root.querySelectorAll('text[data-class-member="methods"]')].map(el => ({
+          text: el.textContent, characters: el.getNumberOfChars(),
+          whitespace: [...el.textContent].flatMap((char, index) => /[ \\t]/.test(char)
+            ? [el.getSubStringLength(index, 1)] : []),
+        }));
+        return { wide: rows(document.querySelector('#node-parser')), narrow: rows(document.querySelector('#node-narrow')) };
+      })()`, awaitPromise: true, returnByValue: true,
+    });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    const { wide, narrow } = result.result.value;
+    assert.deepEqual(wide.map(row => row.text), expected);
+    const spaceAdvance = wide[1].whitespace.at(-1);
+    for (const tabAdvance of [...wide[3].whitespace.slice(-1), ...wide[4].whitespace.slice(-2)]) {
+      assert.ok(Math.abs(tabAdvance - spaceAdvance) < 0.1, `${theme}: ${JSON.stringify({ tabAdvance, spaceAdvance })}`);
+    }
+    assert.equal(narrow.map(row => row.text).join(''), 'parse(value: Literal["a,  b"]): Result');
+    for (const row of [...wide, ...narrow]) {
+      assert.equal(row.characters, row.text.length, `${theme}: ${JSON.stringify(row)}`);
+      assert.ok(row.whitespace.every(advance => advance > 0), `${theme}: ${JSON.stringify(row)}`);
+    }
+  }
+});
