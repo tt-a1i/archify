@@ -214,7 +214,14 @@ hashes cover the complete cited lines, including context beside a partial-line
 match. Both sides are checked independently; unique unchanged ranges can move,
 while ambiguous moves or a changed number of identical copies invalidate the
 old evidence. The original line-level evidence formats remain supported.
-The first C6 implementation adds no dedicated duplicate comparison UI.
+In the page, **Duplicate code** shows both file paths and complete short matched
+ranges. Theme-coloured highlighting and an underline follow the recorded columns; text
+beside a partial-line match stays unmarked. The mark denotes the detector's token
+range, whose whitespace or comments may differ under `weak` mode. Long ranges
+show bounded beginning/end excerpts with an explicit omission count. Open either
+file to inspect its complete source; the exact marks survive full-file expansion
+and returning to the finding. Older results without columns show a notice and
+leave the source unmarked. The two locations are stacked in the existing reader.
 
 ## Accepting known findings (baseline)
 
