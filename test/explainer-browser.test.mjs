@@ -206,6 +206,37 @@ test('native step opens the complete Viewer and focuses exact nodes and edges wi
  }finally{await browser.close();}
 });
 
+test('a hosted Viewer keeps preset controls and blueprint decoration without standalone badges',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const spec=compileExplainerDiagram('sequence',['actor api | API | backend','actor redis | Redis | database','api | redis | Read cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
+ const doc=formalDocument();doc.meta.id='hosted-browser';doc.meta.style='editorial';doc.meta.quality_profile='showcase';doc.panels.push({id:'how',title:'Where does the request go?',blocks:[{id:'native',type:'diagram',diagramType:'sequence',spec},{id:'step',type:'steps',items:[{id:'read-step',text:'Read cache',target:{diagram:'native',node:'api',edges:['api-to-redis-1']}}]}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'source.json'),quality:'showcase'});
+ const file=artifact('hosted',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
+ const browser=new ChromeVisualBrowser(chrome);try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:1440,keyboard:false});
+  await keyboardActivate(browser,'[data-block-type=steps] [data-diagram-hash="focus=api"]');
+  // The host applies the page's preset once the Viewer reports ready.
+  let viewer;for(let attempt=0;attempt<40;attempt++){viewer=await inspectNativeViewer(browser);if(viewer.available&&viewer.preset==='editorial')break;await new Promise(resolve=>setTimeout(resolve,50));}
+  assert.equal(viewer.preset,'editorial',JSON.stringify(viewer));
+  assert.deepEqual(viewer.badges,['none','none'],'The header badge and the plate stay off in a hosted Viewer');
+  const attached=await browser.cdp.send('Target.attachToTarget',{targetId:viewer.targetId,flatten:true});
+  try {
+   for(const preset of ['signal-flow','blueprint','editorial','classic']) {
+    for(const selector of ['#btn-preset',`[data-preset-value="${preset}"]`]) {
+     const focused=await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)}).focus();document.activeElement.matches(${JSON.stringify(selector)})`,returnByValue:true},attached.sessionId);
+     assert.equal(focused.result.value,true);
+     for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key:'Enter',code:'Enter',windowsVirtualKeyCode:13,...(type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})},attached.sessionId);
+    }
+    const result=await browser.cdp.send('Runtime.evaluate',{expression:`({preset:document.documentElement.dataset.preset,selected:document.querySelector('[data-preset-value="${preset}"]').getAttribute('aria-checked'),header:getComputedStyle(document.querySelector('.header-row'),'::after').display,decoration:getComputedStyle(document.querySelector('.diagram-container'),'::after').display,background:getComputedStyle(document.querySelector('.diagram-container'),'::after').backgroundImage})`,returnByValue:true},attached.sessionId);
+    const actual=result.result.value;
+    assert.equal(actual.preset,preset);assert.equal(actual.selected,'true');assert.equal(actual.header,'none');
+    if(preset==='editorial')assert.equal(actual.decoration,'none');
+    if(preset==='blueprint'){assert.notEqual(actual.decoration,'none');assert.match(actual.background,/linear-gradient/);}
+   }
+  }finally{await browser.cdp.send('Target.detachFromTarget',{sessionId:attached.sessionId});}
+ }finally{await browser.close();}
+});
+
 test('wide frozen native previews keep every node visible at 1280 and reclaim the 1440 text floor on live resize',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs'),{prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
  const components=[{id:'browser',type:'external',label:'Browser',pos:[40,40],size:[120,64]},{id:'api',type:'backend',label:'API',pos:[300,40],size:[150,72]},{id:'postgres',type:'database',label:'PostgreSQL',pos:[690,40],size:[150,72]}];
