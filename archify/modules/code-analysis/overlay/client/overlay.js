@@ -82,10 +82,26 @@
     var b = g.getBBox();
     return { x: b.x, y: b.y, w: b.width, h: b.height, cx: b.x + b.width / 2, cy: b.y + b.height / 2 };
   }
+  // Open findings of a component at its own level (errors for red, warnings for
+  // amber, info for blue). Accepted findings are not open, except errors.
+  var LEVEL_OF = { red: 'error', amber: 'warning', blue: 'info' };
+  function levelCount(c) {
+    var level = LEVEL_OF[c.indicators.status]; if (!level) return 0;
+    var seen = {}, n = 0;
+    c.indicators.items.forEach(function (i) { (i.findings || []).forEach(function (id) {
+      var f = findingById[id]; if (!f || seen[id] || f.severity !== level) return;
+      seen[id] = true;
+      if (f.review && f.review.status === 'accepted' && level !== 'error') return;
+      n += 1;
+    }); });
+    return n;
+  }
   function drawLayer() {
     if (layer) layer.remove();
     layer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     layer.id = 'bauify-layer';
+    var counts = {}, most = { amber: 0, blue: 0 };
+    data.components.forEach(function (c) { counts[c.id] = levelCount(c); if (c.indicators.status in most) most[c.indicators.status] = Math.max(most[c.indicators.status], counts[c.id]); });
     data.components.forEach(function (c) {
       var b = nodeBox(c.id); if (!b) return;
       // Status ring: a rounded outline just outside the node box. Red pulses, amber glows softly, green/grey stay quiet.
@@ -94,11 +110,29 @@
       ring.setAttribute('x', b.x - pad); ring.setAttribute('y', b.y - pad);
       ring.setAttribute('width', b.w + pad * 2); ring.setAttribute('height', b.h + pad * 2);
       ring.setAttribute('rx', 14); ring.setAttribute('ry', 14);
-      ring.setAttribute('class', c.indicators.status + (focused.indexOf(c.id) !== -1 ? ' focus' : ''));
+      // When every component warns, a glow on all of them says nothing: only the
+      // components with at least half of the highest count keep it.
+      var status = c.indicators.status, isFocus = focused.indexOf(c.id) !== -1;
+      var quiet = status in most && counts[c.id] * 2 < most[status];
+      ring.setAttribute('class', status + (quiet ? ' quiet' : '') + (isFocus ? ' focus' : ''));
       var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
       title.textContent = c.label + ': ' + c.indicators.items.map(function (i) { return i.label + ' — ' + i.value; }).join('; ');
       ring.appendChild(title);
       layer.appendChild(ring);
+    });
+    // Count badges sit above every ring, at the top-right corner of the node.
+    data.components.forEach(function (c) {
+      var b = nodeBox(c.id), n = counts[c.id]; if (!b || !n) return;
+      var label = String(n), w = 14 + label.length * 6.5, h = 16;
+      var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'count ' + c.indicators.status + (focused.indexOf(c.id) !== -1 ? ' focus' : ''));
+      g.setAttribute('transform', 'translate(' + (b.x + b.w - w + 6) + ' ' + (b.y - h / 2 - 2) + ')');
+      var pill = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      pill.setAttribute('width', w); pill.setAttribute('height', h); pill.setAttribute('rx', h / 2); pill.setAttribute('ry', h / 2);
+      var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', w / 2); text.setAttribute('y', h / 2); text.textContent = label;
+      g.appendChild(pill); g.appendChild(text);
+      layer.appendChild(g);
     });
     svg.appendChild(layer);
   }
@@ -473,7 +507,7 @@
       .concat(['error', 'warning', 'info'].filter(function (k) { return o.counts[k]; }).map(function (k) { return [k, o.counts[k] + ' ' + k]; }))
       .concat(acceptedCount ? [['accepted', acceptedCount + ' accepted']] : [])
       .concat(o.counts.offDiagram ? [['off', o.counts.offDiagram + ' not on this diagram']] : [])
-      .map(function (c) { return '<span class="count ' + c[0] + '">' + esc(c[1]) + '</span>'; }).join(' · ');
+      .map(function (c, i) { var one = '<span class="count ' + c[0] + '">' + esc(c[1]) + '</span>'; return i ? '<span class="nw">· ' + one + '</span>' : one; }).join(' ');
     var h = typeof window.__archifyReanalyze === 'function' ? '<button type="button" class="bauify-reanalyze" title="Read the repository again and compare with this result">Re-analyze</button>' : '';
     h += '<h3><i class="bauify-' + v.tone + '"></i>' + esc(verdictText) + '</h3>';
     h += '<div class="ev counts">' + counts + '</div>';
@@ -510,7 +544,7 @@
       });
     }
     h += coverageHtml(o.coverage);
-    h += '<details><summary>Colour key</summary>' + legend() + '</details>';
+    h += '<details><summary>Colour key</summary>' + legend() + '<div class="ev">The number on a component counts its open findings at its highest level. A solid glow marks the components with the most; the rest get a thin outline.</div></details>';
     overview.innerHTML = h;
     var again = overview.querySelector('.bauify-reanalyze');
     if (again) again.addEventListener('click', function () {

@@ -277,3 +277,23 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-overview .counts .count { white-space: nowrap; }
 /* Headings receive focus from script so assistive technology announces the new page; they are not in the tab order and take no focus ring. */
 #bauify-reader h3[tabindex="-1"]:focus { outline: none; }
+/* Diagram signal: a glow only where the findings concentrate, and a count on every component that has any. */
+#bauify-layer rect.amber.quiet, #bauify-layer rect.blue.quiet { stroke-width: 1.5; opacity: .8; filter: none; }
+#bauify-layer g.count rect { fill: var(--panel, #0f172a); stroke: #94a3b8; stroke-width: 1.25; opacity: 1; filter: none; animation: none; }
+#bauify-layer g.count.red rect { stroke: #FB7185; fill: color-mix(in srgb, #FB7185 14%, var(--panel, #0f172a)); }
+#bauify-layer g.count.amber rect { stroke: #FBBF24; }
+#bauify-layer g.count.blue rect { stroke: #60A5FA; }
+#bauify-layer g.count text { fill: var(--text, #f8fafc); font: 600 10px system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; text-anchor: middle; dominant-baseline: central; }
+html[data-bauify-focus="on"] #bauify-layer g.count:not(.focus) { opacity: .15; }
+html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
+#bauify-overview .counts .nw { white-space: nowrap; }
+/* Source page: code needs width more than the diagram does while it is being read. */
+@media (min-width: 1181px) {
+  html[data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: calc(min(760px, 54vw) + 24px); }
+  #bauify-reader { transition: width .16s ease; }
+}
+@media (prefers-reduced-motion: reduce) { #bauify-reader { transition: none; } }
+/* The page's own reader rail sits beside the analysis column, not under it. */
+@media (min-width: 1001px) { html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: 444px; } }
