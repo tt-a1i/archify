@@ -12320,7 +12320,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           state.y = height > window.innerHeight ? 0 : height * (1 - state.scale) / 2;
           return;
         }
-        if (window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram')) {
+        if (state.scale > 1 && window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram')) {
           // A wide diagram's container scrolls horizontally, so the camera
           // alone cannot reach the diagram's far edge: the old clamp stopped
           // at width - width * scale, which leaves the rightmost
@@ -12328,7 +12328,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           // touch-action: none freezes native scrolling above 100% zoom.
           // Pin the combined scrollLeft - x offset to the SVG's scaled width
           // instead, so an empty-canvas drag covers the whole diagram and
-          // can return to the left edge again.
+          // can return to the left edge again. Above 100% zoom only: at
+          // exactly 100% the camera must clear (x = 0, per the ordinary
+          // clamp below) and hand navigation back to native scrolling, or
+          // a retained negative x pins the viewport near the right edge and
+          // native scrolling can never show the left edge again.
           var maxTravel = width * state.scale - container.clientWidth;
           var minX = container.scrollLeft - Math.max(0, maxTravel);
           var maxX = container.scrollLeft;
@@ -12363,9 +12367,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var width;
         var height;
         if (window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram') && camera.scale >= 1) {
-          x = viewBox.x + container.scrollLeft / metrics.scale;
+          // The visible window starts where the container's scroll offset and
+          // the camera translation meet: a zoomed drag moves state.x while
+          // scrollLeft stays fixed, so the viewport must account for both
+          // (and for the zoom) or the overview map keeps showing the left
+          // edge while the reader sees the right edge. y and height stay
+          // full-diagram here; the window intersection below clips them.
+          x = viewBox.x + (((container.scrollLeft - camera.x) / camera.scale) - metrics.offsetX) / metrics.scale;
           y = viewBox.y;
-          width = Math.min(viewBox.width, Math.max(1, container.clientWidth / metrics.scale));
+          width = Math.min(viewBox.width, Math.min(metrics.width, container.clientWidth) / camera.scale / metrics.scale);
           height = viewBox.height;
         } else {
           x = viewBox.x + (((container.scrollLeft - camera.x) / camera.scale) - metrics.offsetX) / metrics.scale;
