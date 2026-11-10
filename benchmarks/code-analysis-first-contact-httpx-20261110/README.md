@@ -21,7 +21,9 @@ outcome either way; it is not a claim that the scan improves every session.
   `trustme`, `uvicorn`, and optional extras). Both sessions hit this mismatch
   and worked around it differently.
 - Sessions: same `general-purpose` agent configuration, same prompt skeleton,
-  12-minute cap, separate directories, no shared scratch files.
+  12-minute cap, separate directories, no shared scratch files. The underlying
+  model identity was not exposed to the experiment, so “same model” rests on the
+  identical configuration, not on a recorded model id.
 - Start: `2026-11-10T00:59:08Z`. Both sessions returned after about two minutes,
   so the 12-minute cap was never exercised.
 
