@@ -134,6 +134,7 @@ export function validatePreparedTargets(document, diagrams, options = {}) {
       visit(entry,`${pointer}/${key}`,panelId,component);
     }
   };
+  visit(document.meta?.title,'/meta/title',undefined,'title');
   visit(document.answer,'/answer',undefined,'answer');
   document.panels.forEach((panel,index)=>{
     visit(panel.title,`/panels/${index}/title`,panel.id,'panel');

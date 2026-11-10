@@ -93,6 +93,8 @@ Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 6
 平均はほとんど変わらない。考えられる原因と調べ方は？
 ```
 
+既定では、複雑な流れ、トラブルシューティングの結果、選択肢の比較、テストレポートのような回答では、頼まなくてもエージェントがページを作ります。返信にはチャットでそのまま読める短い結論が残り、最後の行が「テストレポートを開く」のようなページへのリンクになります。短い答え、テキストだけの依頼、生成に失敗したページでは、ページもリンクも出しません。頼んだときだけページを作らせたい場合は、エージェントにそう伝えるか、グローバルルールファイル（`~/.codex/AGENTS.md` や `~/.claude/CLAUDE.md` など）に `[archify explainer: on-demand]` を追加します。`[archify explainer: always-on]` は結論のあるすべての回答にコンパクトなページを付けます。この行を消すと既定に戻ります。
+
 ライブ例：[初めての HTTPS 接続（英語）](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 レイテンシ（中国語）](https://archify.si/cases/explainer/p99-tail-latency.html) · [Archify の finalize をリポジトリから読む（中国語）](https://archify.si/cases/explainer/finalize-delivery.html) · [初めての賃貸チェックリスト（中国語）](https://archify.si/cases/explainer/first-rental.html)
 
 ## ❤️ スポンサー
