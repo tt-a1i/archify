@@ -13,16 +13,17 @@ is this branch. Both ran on the same checkout with `--language ts`.
 | `complexity/function` | 501 | 445 |
 | Files analyzed | 264 | 242 |
 | Files excluded by role | 367 | 389 |
-| Vendor findings | 56 in 12 files | 0 |
+| Vendor-path complexity findings | 56 in 12 files | 0 |
 | Top priorities | `build`, `semanticErrors`, `createReadableLayout` | unchanged |
 | Receipt has `ruleCounts` | no | yes |
 | Receipt has `investigation.leads` | no | yes |
 
-The 56 removed findings are the vendored-bundle false positives. The candidate
-classifies `vendor/`, `vendored/`, `third_party/` and `third-party/` as
-`generated` by default; users can override `roles.generated` in a config. The
-analysis still captures those files in raw facts, but they no longer produce
-first-party complexity findings.
+The 56 findings are complexity measurements of 12 bundled third-party files under
+`/vendor/` (12 of 242 analyzed files), not incorrect measurements. They are
+outside first-party scope. The candidate classifies `vendor/`, `vendored/`,
+`third_party/` and `third-party/` as `generated` by default; users can override
+`roles.generated` in a config. The analysis still captures those files in raw
+facts, but they no longer produce first-party complexity findings.
 
 The new receipt adds:
 
@@ -46,7 +47,7 @@ was given findings, files, a language or a maintenance target.
 | Duration | 150.6 s | 237.8 s |
 | Files/artifacts read | ~18 | ~20 |
 | `findings.json` read | 850 KB | 758 KB |
-| First lead | vendor false positives | `compileDataflow.build` (top priority) |
+| First lead | vendor-path complexity findings | `compileDataflow.build` (top priority) |
 | Other leads | `scripts` ↔ `website` cycle; `commandDeliver` | `semanticErrors`; `archify` internal-leak signal |
 | Source verification | yes, all three | yes, all three + a 64-test dataflow run |
 | False-defect readings | none; complexity and coverage treated as signals/scope | none; same, plus module-level `impact` critique |
@@ -61,8 +62,8 @@ with no library entry point.
 The session did not get cheaper: 49 tool uses and 2.20 M tokens are close to the
 old session, and wall-clock time increased because it ran a 58-second dataflow
 test and verified more source. On this repository, the measurable product gains
-are the 56 removed false positives and the self-contained first lead, not a
-large context reduction.
+are the 56 third-party bundle findings removed from the first-party count and
+the self-contained first lead, not a large context reduction.
 
 ## What the comparison does not show
 
