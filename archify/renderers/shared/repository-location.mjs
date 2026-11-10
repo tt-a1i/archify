@@ -59,10 +59,10 @@ export function repositorySourceHref(provider, url, revision, source) {
   const end = source.endLine && source.endLine !== source.line
     ? `-${provider === 'github' ? 'L' : ''}${source.endLine}` : '';
   const fragment = source.line ? `#L${source.line}${end}` : '';
-  if (provider !== 'gitlab') return `${url}/blob/${revision}/${encodedPath}${fragment}`;
-  // GitLab renders Markdown blobs, where line anchors select nothing; the
+  // GitHub and GitLab render Markdown blobs, where line anchors select nothing; the
   // plain view keeps the cited lines highlighted.
-  const plain = source.line && /\.(?:md|markdown)$/i.test(source.path) ? '?plain=1' : '';
+  const plain = ['github', 'gitlab'].includes(provider) && source.line && /\.(?:md|markdown)$/i.test(source.path) ? '?plain=1' : '';
+  if (provider !== 'gitlab') return `${url}/blob/${revision}/${encodedPath}${plain}${fragment}`;
   return `${url}/-/blob/${revision}/${encodedPath}${plain}${fragment}`;
 }
 
