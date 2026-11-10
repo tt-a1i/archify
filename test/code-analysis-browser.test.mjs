@@ -185,6 +185,67 @@ test('Code Analysis highlights exact duplicate characters and retains both locat
   assert.equal(await run('globalThis.__c6Injected ?? null'), null);
 });
 
+test('Code Analysis marks an empty or incomplete duplicate scan instead of showing a checked all-clear', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  await ensureDependencies();
+  const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
+  const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-c6-coverage-browser-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const repository = { revision: null, baseRevision: null, sourceKind: 'working-tree', root: '.',
+    url: null, language: 'ts', adapter: 'typescript@5.9.3', adapterRevision: 22, snapshotId: 'd'.repeat(64) };
+  const sources = { 'src/a.ts': 'export const a = 1;\n', 'vendor/b.ts': 'export const b = 2;\n' };
+  const facts = { schema_version: 1, repository, files: Object.entries(sources).map(([file, sourceText]) => ({ path: file, loc: 1, role: 'source', sourceText })),
+    packageMarkers: [], imports: [], symbols: [], calls: [], functions: [], unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 } };
+  const graph = buildGraph(facts, { modules: { groups: { app: ['**'] }, excludeRoles: [] } });
+  const ir = { schema_version: 1, diagram_type: 'architecture', meta: { title: 'Duplicate coverage', output: 'base.html' },
+    components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [180, 64] }], connections: [] };
+  const irPath = path.join(scratch, 'input.json'), basePath = path.join(scratch, 'base.html');
+  fs.writeFileSync(irPath, JSON.stringify(ir));
+  execFileSync(process.execPath, [fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url)),
+    'render', 'architecture', irPath, basePath], { encoding: 'utf8' });
+  const rules = ['complexity/function', 'redundancy/duplicate-block'];
+  const page = (name, coverage) => {
+    const file = path.join(scratch, `${name}.html`);
+    fs.writeFileSync(file, buildOverlay({ ir, graph, html: fs.readFileSync(basePath, 'utf8'), map: { app: graph.modules.map(mod => mod.id) },
+      facts, findings: [], sourceRoot: scratch, run: { rules, duplicates: { coverage } } }).html);
+    return file;
+  };
+  // Matches a real jscpd scan where one file is vendored and the other is below the token limit.
+  const empty = page('empty', { selected: ['src/a.ts', 'vendor/b.ts'], analyzed: [], omitted: [
+    { file: 'src/a.ts', reason: 'not-reported-by-engine' }, { file: 'vendor/b.ts', reason: 'vendored' }], complete: false });
+  const complete = page('complete', { selected: ['src/a.ts', 'vendor/b.ts'], analyzed: ['src/a.ts', 'vendor/b.ts'], omitted: [], complete: true });
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const run = async expression => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    return response.result?.value;
+  };
+  const open = async file => {
+    const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: pathToFileURL(file).href });
+    await loaded;
+    await run("document.getElementById('btn-bauify').click()");
+    return {
+      notices: await run("Array.from(document.querySelectorAll('#bauify-overview .coverage-notice'), el => el.textContent)"),
+      summary: await run("document.querySelector('#bauify-overview details.coverage summary').textContent"),
+      coverage: await run("document.querySelector('#bauify-overview details.coverage .cov').textContent"),
+    };
+  };
+  const partial = await open(empty);
+  assert.ok(partial.notices.some(text => /^Duplicate code: 0\/2 files analyzed · incomplete\./.test(text)), JSON.stringify(partial.notices));
+  assert.match(partial.summary, / · incomplete$/, 'zero findings from an empty duplicate scan is not a complete result');
+  assert.match(partial.coverage, /Duplicate code: 0\/2 files analyzed · incomplete/);
+  const full = await open(complete);
+  assert.equal(full.notices.some(text => /Duplicate code/.test(text)), false, JSON.stringify(full.notices));
+  assert.doesNotMatch(full.summary, /incomplete/);
+  assert.match(full.coverage, /Duplicate code: 2\/2 files analyzed(?! · incomplete)/);
+});
+
 test('Code Analysis presents Java cycles as structural dependencies in the browser', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {

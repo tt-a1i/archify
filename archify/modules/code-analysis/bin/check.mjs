@@ -77,7 +77,7 @@ export async function runCheck(argv) {
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baselineFile), previous, analysis: findings.analysis, files: facts.files.map((f) => f.path) });
   const fileModule = new Map(Object.entries(graph.fileModules || {}));
   const listed = findings.diagnostics.map((d) => ({ ...d, ...(review.findings[d.id] ? { review: review.findings[d.id] } : {}), moduleIds: findingModules(d, fileModule), componentIds: [] }));
-  const overview = buildOverview({ findings: listed, graph, facts, run: { rules: findings.rules, suppressed: config.ignore || [], exclude: config.exclude || [], otherLanguages, boundaries: config.boundaries || null, review } });
+  const overview = buildOverview({ findings: listed, graph, facts, run: { rules: findings.rules, suppressed: config.ignore || [], exclude: config.exclude || [], otherLanguages, boundaries: config.boundaries || null, duplicates: findings.analysis?.duplicates || null, review } });
 
   if (out) {
     fs.mkdirSync(out, { recursive: true });

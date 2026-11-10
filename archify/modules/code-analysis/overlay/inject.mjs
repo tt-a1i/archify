@@ -986,6 +986,8 @@ const JS = `
     if ((c.unmappedModules || []).length) lines.push(plural(c.unmappedModules.length, 'module') + ' not on this diagram');
     var run = (c.rules && c.rules.run) || [], off = (c.rules && c.rules.suppressed) || [];
     lines.push('Checked: ' + (run.length ? run.map(function (r) { return (GROUPS[r] || r).toLowerCase(); }).join(', ') : 'nothing') + (off.length ? ' · switched off: ' + off.join(', ') : ''));
+    var dup = duplicateCoverageLine(c);
+    if (dup) lines.push(dup.text);
     var b = c.boundaries;
     if (b) {
       lines.push('Boundaries: ' + plural(b.layers.length, 'layer') + ', ' + plural(b.rules, 'rule') + ' from the analysis config');
@@ -993,8 +995,17 @@ const JS = `
     }
     var missing = [['complexity/', 'complexity'], ['redundancy/', 'duplication'], ['architecture/', 'architecture boundaries (none configured)']].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push('Not checked: ' + missing.join(', '));
-    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length;
+    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (dup && !dup.complete);
     return '<details class="coverage"><summary>Coverage · ' + esc(LANGS[c.language] || c.language || 'Unknown') + ' · ' + (files.analyzed == null ? 'file count unavailable' : plural(files.analyzed, 'file')) + (incomplete ? ' · incomplete' : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
+  }
+  // Duplicate detection reports its own file coverage: files it skipped (vendored,
+  // below the token/line limits, unsupported) are not checked even with zero findings.
+  function duplicateCoverageLine(c) {
+    var run = (c && c.rules && c.rules.run) || [];
+    if (run.indexOf('redundancy/duplicate-block') === -1) return null;
+    var d = c.duplicates;
+    if (!d) return { complete: false, text: 'Duplicate code: file coverage unavailable · incomplete' };
+    return { complete: d.complete === true, text: 'Duplicate code: ' + d.analyzed + '/' + plural(d.selected, 'file') + ' analyzed' + (d.complete === true ? '' : ' · incomplete') };
   }
   // Since the previous run, and against the baseline. Fixed findings are no longer
   // in this result, so they are listed from the comparison itself.
@@ -1031,6 +1042,8 @@ const JS = `
     var checkedRules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
     var unchecked = [['redundancy/', 'duplicate code'], ['conventions/', 'project coding conventions']].filter(function (x) { return !checkedRules.some(function (r) { return r.indexOf(x[0]) === 0; }); }).map(function (x) { return x[1]; });
     if (unchecked.length) h += '<div class="coverage-notice">Not checked: ' + esc(unchecked.join(', ')) + '. See Coverage for the full scope.</div>';
+    var dupLine = duplicateCoverageLine(o.coverage);
+    if (dupLine && !dupLine.complete) h += '<div class="coverage-notice">' + esc(dupLine.text) + '. Files it did not analyze were not checked for duplicates. See Coverage for the full scope.</div>';
     h += reviewHtml(o.review);
     if (o.priorities.length) {
       var picks = o.priorities.map(function (id) { return findingById[id]; }).filter(Boolean);

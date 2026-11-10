@@ -197,7 +197,9 @@ omitted paths under `analysis.duplicates`; `check --json` includes the same data
 under `duplicates`. Native reports also omit files below their token/line limits;
 when the report does not state an individual reason, it stays
 `not-reported-by-engine`. An incomplete or empty scan is visible even with zero
-findings. Comparisons involving incomplete coverage, a changed scan scope,
+findings: the CLI summary warns, `overview.json` records `coverage.duplicates`
+(analyzed/selected/omitted counts and `complete`), and the page marks Coverage as
+incomplete with `Duplicate code: x/y files analyzed · incomplete`. Comparisons involving incomplete coverage, a changed scan scope,
 settings or engine are marked not directly comparable. Missing tools, wrong
 versions, timeouts and invalid reports fail the analysis with exit 2; they do not
 become clean results, even with `--fail-on never`.

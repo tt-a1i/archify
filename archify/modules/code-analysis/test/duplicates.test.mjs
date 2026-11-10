@@ -260,6 +260,25 @@ test('duplicates: CLI failure preserves previous output and never updates the ba
   }
 });
 
+test('duplicates: an empty real scan reaches overview.json as incomplete, not as a checked all-clear', {
+  skip: !REAL_TOOL && 'set ARCHIFY_TEST_JSCPD to exercise native partial-scan behavior',
+}, t => {
+  const input = fixture(t);
+  const run = (name, overrides) => {
+    const out = path.join(input.dir, name), configFile = path.join(input.dir, `${name}.json`);
+    fs.writeFileSync(configFile, JSON.stringify({ duplicates: enabled(path.resolve(REAL_TOOL), overrides) }));
+    const result = check([input.root, '--language', 'ts', '--config', configFile, '--out', out, '--fail-on', 'never'], input.dir);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    return JSON.parse(fs.readFileSync(path.join(out, 'overview.json'), 'utf8'));
+  };
+  const empty = run('empty', { maxFileBytes: 1 });
+  assert.equal(empty.counts.findings, 0);
+  assert.ok(empty.coverage.rules.run.includes(CODE));
+  assert.deepEqual(empty.coverage.duplicates, { analyzed: 0, selected: 4, omitted: 4, complete: false });
+  const complete = run('complete', {});
+  assert.deepEqual(complete.coverage.duplicates, { analyzed: 4, selected: 4, omitted: 0, complete: true });
+});
+
 test('duplicates: service worker failure preserves the last successful analysis', { skip: !ARCHIFY_AVAILABLE && 'needs an Archify checkout', timeout: 30000 }, async t => {
   const input = fixture(t);
   const ir = path.join(input.dir, 'architecture.json');
