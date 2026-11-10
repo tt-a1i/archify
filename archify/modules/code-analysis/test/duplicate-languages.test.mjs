@@ -257,7 +257,9 @@ function fixture(t, sample) {
 function scan(root, language) {
   const config = mergeConfig(loadConfig(null), {
     include: ['**'], exclude: [], modules: { excludeRoles: [] },
-    go: { stdlib: false, tests: false }, rust: { offline: true, tests: false },
+    // The trusted parser helper may fetch its locked dependencies on cold CI.
+    // Project metadata remains offline/no-deps; fixture sources are never built.
+    go: { stdlib: false, tests: false }, rust: { offline: false, tests: false },
     duplicates: { enabled: true, executable: path.resolve(BINARY), minTokens: 50, minLines: 5, identifiers: 'exact' },
   });
   const { facts } = extractFacts(root, { language, config });

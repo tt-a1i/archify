@@ -32,11 +32,13 @@ ARCHIFY_TEST_JSCPD=/absolute/path/to/jscpd npm --prefix archify/modules/code-ana
 ARCHIFY_TEST_JSCPD=/absolute/path/to/jscpd npm run test:full
 ```
 
-Python 用例沿用已有的 `BAUIFY_PYTHON` 选择器；Go/Rust 用例仍需相应工具链与 helper 缓存。2026-11-10 在 macOS arm64、Node 22.23.0、官方 npm 平台包 jscpd 5.4.3 上完成本地组合验证：Code Analysis 模块 507 passed、0 failed、0 skipped；仓库 `npm run test:full` 为3,543 passed、0 failed、143 skipped，另有生成物检查通过。跳过项保留其浏览器/平台等环境条件，不能称为这些路径也已验收。
+Python 用例沿用已有的 `BAUIFY_PYTHON` 选择器；Go/Rust 用例仍需相应工具链与 helper 依赖。2026-11-10 在 macOS arm64、Node 22.23.0、官方 npm 平台包 jscpd 5.4.3 上对提交 `1ceace958d96a0d69f8050c2787291356d5a14fd` 完成本地组合验证：Code Analysis 模块 507 passed、0 failed、0 skipped；仓库 `npm run test:full` 为3,543 passed、0 failed、143 skipped，另有生成物检查通过。跳过项保留其浏览器/平台等环境条件，不能称为这些路径也已验收。
 
 六语言 API 正负例使用默认50 tokens / 5 lines，覆盖双侧源范围、Java/Go/Rust Unicode与CRLF、调用事实保留及任务验证；Java另串联移动、基线和重新分析。源码与解包 ZIP 另经42次公开 CLI 调用，核对原有facts/graph/非C6 findings不变、两端任务证据有效及源码/ZIP输出一致。CLI 控制例显式使用40 tokens / 5 lines：其中Python重复片段只有49 tokens，低于默认阈值时应省略，未填充源码或修改默认值以制造结果。
 
-ZIP 已按官方 Node 22 / zlib `1.3.1-e00f703` 重建并通过macOS解包冒烟，SHA-256 为 `e6c78fa97eb64566df38de1e73e9dc08338a193ef384d2211e094d6cc7eae664`。完整CI的模块分片安装固定5.4.3，避免真实工具检查静默跳过。远端CI和其他平台须保留各自结果，不用本地回执替代。
+ZIP 已按官方 Node 22 / zlib `1.3.1-e00f703` 重建，当前 SHA-256 为 `d12c484785bb526f02830350a66759cb2ab3f628655b715acd131638454a878d`。完整CI的模块分片安装固定5.4.3，避免真实工具检查静默跳过。远端CI和其他平台须保留各自结果，不用本地回执替代。
+
+首次远端 CI 暴露新增 Rust 用例误设 `offline=true`：空缓存无法获取锁定 helper 依赖，模块分片及其 Node 22 汇总门失败。空 `CARGO_HOME` 精确复现后，仅把该测试恢复为允许 helper 获取锁定依赖；目标项目 metadata 仍固定 offline/no-deps，源码不会被编译。修复后的冷缓存单测和六语言整文件分别为1 passed、6 passed，均无失败或跳过。重建 ZIP 的412个条目中只有这一测试文件改变，411个条目完全一致，产品运行时代码不变。因此复用上述原提交的全量回归、42次CLI和性能结果，保留原版本身份；新提交的远端CI另行记录，不能将复用数据标成新跑的结果。
 
 简化检查移除了adapter内重复的ignore判断，抑制由evaluator唯一调用点负责；再移除外层抑制会误运行不存在的工具。超时回归明确区分版本探测和扫描启动；隔离副本移除进程组清理后，测试因扫描子进程仍存活而失败，因此保留该生命周期保护。
 
