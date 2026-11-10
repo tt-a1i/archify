@@ -95,6 +95,8 @@ Use Archify to answer as one page: our API's P99 went from 80 ms to 600 ms
 while the mean barely moved. What is the likely cause, and how should we investigate?
 ```
 
+By default your agent also makes a page unasked when an answer is a complex flow, a diagnosis, a comparison or a test report. The reply still gives a short conclusion you can read in chat, and its last line links to the page, such as “Open the test report”. Short answers, text-only requests and failed pages get no page or link. To get pages only when you ask, tell your agent so, or add `[archify explainer: on-demand]` to its global rules file (such as `~/.codex/AGENTS.md` or `~/.claude/CLAUDE.md`). `[archify explainer: always-on]` adds a compact page to every answer that reaches a conclusion; deleting the line restores the default.
+
 Live examples: [First HTTPS visit](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 latency (Chinese)](https://archify.si/cases/explainer/p99-tail-latency.html) · [How Archify finalize keeps the last good file, read from this repository (Chinese)](https://archify.si/cases/explainer/finalize-delivery.html) · [First rental checklist (Chinese)](https://archify.si/cases/explainer/first-rental.html)
 
 <a id="sponsors"></a>
