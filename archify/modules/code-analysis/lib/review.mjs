@@ -35,8 +35,8 @@
 //                  function, a cycle that gained a file); `candidates` lists their ids
 // `fixed` is kept as a deprecated alias of `notDetected` (same entries) for
 // existing consumers; new consumers should read `notDetected`.
-import { fail } from '../extract/shared/diagnostics.mjs';
-import { schemaErrors } from '../extract/shared/schema.mjs';
+import { fail } from '../core/index.mjs';
+import { schemaErrors } from '../schemas/index.mjs';
 
 export function validateBaseline(doc, file = null) {
   const errors = schemaErrors('baseline', doc);

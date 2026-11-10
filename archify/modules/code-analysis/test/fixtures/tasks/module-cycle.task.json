@@ -8,7 +8,7 @@
       "id": "COUP-543346eb7923",
       "code": "coupling/cycle",
       "dimension": "coupling",
-      "severity": "info",
+      "severity": "error",
       "confidence": 1,
       "evidenceDigest": {
         "files": [

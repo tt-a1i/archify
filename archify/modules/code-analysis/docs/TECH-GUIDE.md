@@ -43,7 +43,7 @@ export function extract(root, config) { … }
 
 **JSON Schema** is a standard for describing, in JSON, what a JSON document should look like. Each JSON-producing stage of Bauify has a schema for its output: `schemas/raw-facts.schema.json`, `schemas/module-graph.schema.json`, `schemas/findings.schema.json`.
 
-**ajv** is the most widely used JSON Schema validator for Node. The code is in `extract/shared/schema.mjs`:
+**ajv** is the most widely used JSON Schema validator for Node. The code is in `schemas/validate.mjs`:
 
 ```js
 import Ajv2020 from 'ajv/dist/2020.js';           // the draft 2020-12 flavour
@@ -208,7 +208,7 @@ A single Java static import of a field or method does not hide an unrelated type
 
 ### glob → regular expression
 
-`**/test/**` and `**/*.{js,mjs}` in `config/defaults.json` are **glob** patterns, a shorthand for paths. Node 18 has no stable built-in glob, so `extract/shared/glob.mjs` hand-writes a translator from glob to regular expression: `**` → any number of directory levels, `*` → any characters within one segment, `{a,b}` → either. A reviewer added one edge case: an unclosed `{` used to loop forever and now reports `cli/config-invalid`.
+`**/test/**` and `**/*.{js,mjs}` in `config/defaults.json` are **glob** patterns, a shorthand for paths. Node 18 has no stable built-in glob, so `core/glob.mjs` hand-writes a translator from glob to regular expression: `**` → any number of directory levels, `*` → any characters within one segment, `{a,b}` → either. A reviewer added one edge case: an unclosed `{` used to loop forever and now reports `cli/config-invalid`.
 
 ### File roles
 
@@ -371,7 +371,7 @@ The second panel's diagrams are plain SVG strings built in the page: the cycle r
 
 ### Where it bites
 
-- The overlay script lives inside a JavaScript template literal in `inject.mjs`, so a backslash in a regular expression there has to be doubled (`\\.git$`) or the template literal eats it before the browser sees it.
+- The browser scripts and styles are ordinary files in `overlay/client/` (`overlay.js`, `overlay.css`, `atlas.js`, `atlas.css`), inlined into the page by `overlay/client-assets.mjs`. They used to be JavaScript template literals, where every backslash had to be doubled; write them as normal code now. Each script is a classic IIFE: no `import`/`export`, and never the text `</script`.
 - Archify's viewer defines the CSS variables the panels use (`--panel`, `--bg`, `--text`, …). A variable that does not exist (`--panel-bg` was one such guess) silently falls back to nothing and makes text invisible in one theme.
 
 ---
@@ -438,7 +438,7 @@ One test runs the pipeline twice and compares bytes.
 
 ## 12. Failure is a structured diagnostic
 
-Bauify never prints a Node stack trace to the user. Every failure is an object of a fixed shape (`extract/shared/diagnostics.mjs`):
+Bauify never prints a Node stack trace to the user. Every failure is an object of a fixed shape (`core/diagnostics.mjs`):
 
 ```json
 { "code": "extract/adapter-ambiguous", "severity": "error",

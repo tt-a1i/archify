@@ -96,11 +96,11 @@ test('check: exit codes follow the gate, the baseline and the comparison', () =>
   const dir = pyTree();
   try {
     const first = check(['.', '--language', 'py', '--out', 'out', '--json'], dir);
-    assert.equal(first.code, 1, 'an eager import cycle is a warning');
+    assert.equal(first.code, 1, 'an eager import cycle is an error');
     assert.equal(first.json.status, 'failed');
     assert.equal(first.json.gate.failing[0].code, 'coupling/import-cycle');
     for (const f of ['raw-facts', 'module-graph', 'findings', 'review', 'overview']) assert.ok(fs.existsSync(path.join(dir, 'out', `${f}.json`)), f);
-    assert.equal(check(['.', '--language', 'py', '--fail-on', 'error'], dir).code, 0, 'no error-level finding');
+    assert.equal(check(['.', '--language', 'py', '--fail-on', 'error'], dir).code, 1, 'the cycle fails even the strictest gate');
     assert.equal(check(['.', '--language', 'py', '--fail-on', 'never'], dir).code, 0);
 
     const written = check(['.', '--language', 'py', '--baseline', 'baseline.json', '--update-baseline', '--reason', 'known cycle'], dir);

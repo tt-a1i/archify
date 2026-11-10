@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DiagnosticError, fail, receipt } from '../extract/shared/diagnostics.mjs';
+import { DiagnosticError, fail, receipt } from '../core/index.mjs';
 
 export const USAGE = `Usage:
   archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
@@ -135,6 +135,7 @@ export function formatText(r) {
   const lines = [];
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
+  if (c.acceptedErrors) lines.push(`  ${c.acceptedErrors} accepted error${c.acceptedErrors === 1 ? ' is' : 's are'} still present: the baseline keeps ${c.acceptedErrors === 1 ? 'it' : 'them'} from failing this run, the cycle${c.acceptedErrors === 1 ? '' : 's'} remain${c.acceptedErrors === 1 ? 's' : ''}.`);
   lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
   if (r.coverage?.languageScope?.language === 'go') {
     const scope = r.coverage.languageScope;

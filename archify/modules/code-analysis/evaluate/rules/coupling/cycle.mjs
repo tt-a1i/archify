@@ -2,13 +2,24 @@ import { cyclicComponents } from './scc.mjs';
 // coupling/cycle — module-level (package / directory) strongly connected
 // components. A module cycle says two directories each need something from
 // the other; it does NOT by itself mean a file imports itself back, which is
-// what coupling/import-cycle checks. Module granularity can manufacture a
-// cycle out of two unrelated files in one directory, so this is reported as
-// info: a design signal to read next to the file-level result.
+// what coupling/import-cycle checks.
+//
+// Severity (version 2, product plan section 0.2): a cyclic dependency is the
+// structural problem the analysis reports first, so it is an error. The
+// modules cannot be understood, tested or changed independently, whether or
+// not a file cycle exists underneath. That is a statement about structure, not
+// proof of a runtime failure.
+//   - error:   every edge of the cycle has a module-scope import, or the
+//              language is Java (structural references);
+//   - warning: the component only closes through deferred, conditional or
+//              type-only edges, so it is coupling without a load-time cycle;
+//   - info:    Rust. Modules of one crate compile together and mutual `use`
+//              is ordinary there, so the cycle is recorded without a verdict.
 export const code = 'coupling/cycle';
 export const dimension = 'coupling';
-export const severity = 'info';
+export const severity = 'error';
 export const confidence = 1.0;
+export const version = 2;
 
 // An edge is "lazy-only" when every import behind it sits inside a function
 // body. This is lexical evidence only; the function may run at import time.
@@ -38,13 +49,14 @@ export function run({ graph }) {
     const eagerSurvives = eagerKey.has(scc.join(' ')) || eager.some((e) => e.length > 1 && e.every((m) => set.has(m)) && e.length === scc.length);
     const lazyEdges = internal.filter(lazyOnly);
     const kind = java ? 'structural' : eagerSurvives ? 'eager' : 'mixed';
+    const level = rust ? 'info' : kind === 'mixed' ? 'warning' : severity;
     const pathEdges = eagerSurvives ? internal.filter(isEager) : internal;
     const pathOut = new Map(scc.map((id) => [id, []]));
     for (const edge of pathEdges) pathOut.get(edge.from).push(edge.to);
     for (const targets of pathOut.values()) targets.sort();
     const path = shortestCycle(scc[0], pathOut, set);
     return {
-      code, dimension, severity, confidence,
+      code, dimension, severity: level, confidence,
       message: java
         ? `${scc.length} modules form a structural ${rust ? 'Rust' : 'Java'} dependency cycle: ${path.map(id => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. ${rust ? 'Source references do not establish runtime import order or partial initialization.' : 'Directory grouping does not establish file cycles or class initialization behavior.'}`
         : eagerSurvives

@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { fail } from '../extract/shared/diagnostics.mjs';
+import { fail } from '../core/index.mjs';
 
 export const JSCPD_VERSION = '5.4.3';
 export const DUPLICATE_RULE = 'redundancy/duplicate-block';

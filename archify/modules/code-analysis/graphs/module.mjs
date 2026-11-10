@@ -5,7 +5,7 @@
 // modules are Maven/Gradle modules, or packages in a single-module build.
 // Files whose role is listed in `modules.excludeRoles` (default test, generated)
 // are dropped from the graph but counted, so the omission stays visible.
-import { matcher } from '../extract/shared/glob.mjs';
+import { matcher } from '../core/index.mjs';
 import { PACKAGE_MARKERS, JAVA_BUILD_MARKERS } from '../extract/shared/files.mjs';
 import { createHash } from 'node:crypto';
 

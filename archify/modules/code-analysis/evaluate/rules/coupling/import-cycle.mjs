@@ -5,10 +5,18 @@ import { cyclicComponents } from './scc.mjs';
 // time. Module-scope cycles warn; binding line order supplies an inspectable
 // partial-initialization candidate, never an execution proof.
 // Test and generated files follow the module graph's exclusion policy.
+//
+// Severity (version 2, product plan section 0.2): a file cycle through
+// module-scope imports, and a Java structural cycle, are errors: structure
+// that should be fixed, not a proven runtime failure. A cycle that only closes
+// through deferred or conditional imports is a warning, since the coupling is
+// real but nothing shows it running at load time. Rust file cycles stay info:
+// files of one crate compile together and mutual `use` is ordinary there.
 export const code = 'coupling/import-cycle';
 export const dimension = 'coupling';
-export const severity = 'warning';
+export const severity = 'error';
 export const confidence = 0.7;
+export const version = 2;
 
 /** Canonicalize ties before choosing candidates or truncating evidence. */
 const canonical = (v) => JSON.stringify(Array.isArray(v) ? v.map(canonical) : v && typeof v === 'object'
@@ -27,7 +35,7 @@ export function run({ graph, facts }) {
     const internal = edges.filter(e => set.has(e.from) && set.has(e.to));
     const path = shortestCycle(scc[0], internal, set);
     return {
-      code, dimension, confidence, severity: 'info',
+      code, dimension, confidence, severity: facts.repository.language === 'rust' ? 'info' : severity,
       message: `${scc.length} ${facts.repository.language === 'rust' ? 'Rust' : 'Java'} files form a structural dependency cycle: ${path.join(' → ')} → ${path[0]}. ${facts.repository.language === 'rust' ? 'Rust mod/use declarations are compile-time source relationships, not runtime imports or partial initialization.' : 'Imports and type references do not establish class initialization order or runtime failure.'}`,
       subject: { files: scc },
       evidence: {
@@ -62,7 +70,7 @@ export function run({ graph, facts }) {
     const internal = (isEager ? eagerEdges : edges).filter((e) => set.has(e.from) && set.has(e.to));
     const path = shortestCycle(scc[0], internal, set);
     const candidate = isEager ? findPartialInitCandidate(set, internal, bindings) : null;
-    const tier = isEager ? 'warning' : 'info';
+    const tier = isEager ? severity : 'warning';
     const cycleText = `${path.join(' → ')} → ${path[0]}`;
     findings.push({
       code, dimension, confidence,

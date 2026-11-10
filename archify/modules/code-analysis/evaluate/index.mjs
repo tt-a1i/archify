@@ -5,22 +5,17 @@
 // left out of `rules`, so "not checked" is never reported as "clean". Rules are independent —
 // none reads another's output — and every threshold they use is echoed in
 // the finding's evidence so a reader can re-check the call.
-import * as cycle from './rules/coupling/cycle.mjs';
-import * as hub from './rules/coupling/hub.mjs';
-import * as internalLeak from './rules/coupling/internal-leak.mjs';
-import * as importCycle from './rules/coupling/import-cycle.mjs';
-import * as boundary from './rules/architecture/boundary.mjs';
-import * as complexity from './rules/complexity/function.mjs';
-import * as duplicate from './rules/redundancy/duplicate-block.mjs';
+import { RULES, duplicateBlock as duplicate } from './rules/index.mjs';
 import { analyzeDuplicates } from '../lib/duplicates.mjs';
 import { createRangeDigest } from '../lib/evidence.mjs';
-import { fail } from '../extract/shared/diagnostics.mjs';
+import { fail } from '../core/index.mjs';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
 const PACKAGE = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-export const RULES = [importCycle, cycle, hub, internalLeak, boundary, complexity, duplicate];
+export { RULES };
+export { layerCounts } from './rules/index.mjs';
 
 export function evaluate(graph, config = {}, facts = null) {
   const suppressed = new Set(config.ignore || []);

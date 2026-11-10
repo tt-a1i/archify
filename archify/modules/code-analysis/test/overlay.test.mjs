@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { ARCHIFY_AVAILABLE, ARCHIFY_PACKAGE, BAUIFY_ROOT } from './helpers.mjs';
 import { buildOverlay, scriptSafeJson } from '../overlay/inject.mjs';
-import { analyzeRepository } from '../lib/analysis.mjs';
+import { analyzeRepository } from '../overlay/page.mjs';
 import { DiagnosticError } from '../extract/shared/diagnostics.mjs';
 
 const FAKE_HTML = '<html><body><div class="toolbar"></div><svg><g data-node-id="app"></g><g data-node-id="lib"></g></svg></body></html>';
@@ -54,19 +54,28 @@ test('overlay: components map to modules through their sources; descendants foll
   assert.equal(result.mapped, 2);
 });
 
-test('overlay: indicators are red for a proven load-time failure, amber for an eager cycle, blue for a lazy-closed or package-level one, green otherwise', () => {
+test('overlay: the cycle indicator takes the colour of the highest severity among its file and module cycles, green otherwise', () => {
   const facts = { schema_version: 1, repository: graph.repository, files: [{ path: 'src/index.mjs', loc: 1, role: 'source' }, { path: 'src/lib/helper.mjs', loc: 1, role: 'source' }], symbols: [], calls: [], imports: [], unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 } };
   const base = { id: 'COUP-0001', dimension: 'coupling', confidence: 1, message: 'm', supportedFixes: [] };
   const fileCycle = (kind, severity = kind === 'eager' ? 'warning' : 'info') => ({ ...base, code: 'coupling/import-cycle', severity, subject: { files: ['src/index.mjs', 'src/lib/helper.mjs'] }, evidence: { kind, risk: { loading: severity === 'error' ? 'proven-failure' : kind === 'eager' ? 'order-dependent' : 'none-at-import', coupling: 'present', loadingNote: 'n' }, path: [], imports: [], lazyImports: 0, totalImports: 2, threshold: null } });
   const pkgCycle = { ...base, code: 'coupling/cycle', severity: 'info', subject: { modules: ['src', 'src-lib'] }, evidence: { kind: 'eager', path: [], edges: [], imports: [], totalImports: 2, threshold: null } };
   const status = (findings) => payloadOf(buildOverlay({ ir, graph, html: FAKE_HTML, map: null, facts, findings }).html).components.find((c) => c.id === 'app').indicators;
   assert.equal(status([fileCycle('eager', 'error')]).status, 'red');
+  assert.match(status([fileCycle('eager', 'error')]).items[0].value, /^module-scope import cycle \(2 files\)/);
+  assert.equal(status([fileCycle('lazy-closed', 'warning')]).status, 'amber');
+  assert.equal(status([{ ...pkgCycle, severity: 'error' }]).status, 'red', 'a module cycle with no file cycle is still an error');
+  assert.equal(status([{ ...pkgCycle, severity: 'error' }, fileCycle('lazy-closed', 'warning')]).status, 'red');
+  // Findings from runs made before cycles became errors keep the colour of their recorded severity.
   assert.equal(status([fileCycle('eager')]).status, 'amber');
   assert.equal(status([fileCycle('lazy-closed')]).status, 'blue');
   const pkg = status([pkgCycle]);
   assert.equal(pkg.status, 'blue');
   assert.deepEqual(pkg.items[0].detail, ['component:lib']);
   assert.match(pkg.items[0].value, /package-level cycle/);
+  // Accepting a warning clears its colour; accepting an error does not.
+  const reviewed = (finding) => payloadOf(buildOverlay({ ir, graph, html: FAKE_HTML, map: null, facts, findings: [finding], run: { review: { findings: { [finding.id]: { status: 'accepted', reason: 'known' } } } } }).html).components.find((c) => c.id === 'app').indicators.status;
+  assert.equal(reviewed(fileCycle('lazy-closed', 'warning')), 'green');
+  assert.equal(reviewed(fileCycle('eager', 'error')), 'red');
   const clean = status([]);
   assert.equal(clean.status, 'green');
   assert.equal(clean.items[0].value, 'none');

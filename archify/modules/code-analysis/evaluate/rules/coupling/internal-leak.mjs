@@ -23,8 +23,7 @@
 // Java is not checked: a package's public classes are its interface, and the
 // language has no entry-file convention to compare against. Without raw facts
 // the rule cannot see file-level imports and does not run.
-import { matcher } from '../../../extract/shared/glob.mjs';
-import { fail } from '../../../extract/shared/diagnostics.mjs';
+import { fail, matcher } from '../../../core/index.mjs';
 
 export const code = 'coupling/internal-leak';
 export const dimension = 'coupling';

@@ -44,7 +44,7 @@ test('overview: priorities rank by severity, then reach, and stop at the limit',
   assert.deepEqual(o.priorities, [fileCycle.id, offDiagramHub.id, innerCycle.id]);
   assert.deepEqual(o.findings.find((f) => f.id === offDiagramHub.id).impact, { modules: 1, size: 0, fanIn: 6, files: 4 });
   assert.deepEqual(o.groups.map((g) => [g.code, g.severity, g.count]), [['coupling/import-cycle', 'warning', 3], ['coupling/hub', 'warning', 1], ['coupling/cycle', 'info', 1]]);
-  assert.deepEqual(o.counts, { findings: 5, error: 0, warning: 3, info: 2, accepted: 0, offDiagram: 1 });
+  assert.deepEqual(o.counts, { findings: 5, error: 0, warning: 3, info: 2, accepted: 0, acceptedErrors: 0, offDiagram: 1 });
 });
 
 test('overview: one rule with many instances does not take every priority slot', () => {
@@ -93,4 +93,15 @@ test('extract: files of the language not analyzed are counted', () => {
   assert.deepEqual(otherLanguageFiles(dir, config, 'py'), [{ adapter: 'ts', files: 1 }]);
   assert.deepEqual(otherLanguageFiles(dir, config, 'ts'), [{ adapter: 'py', files: 2 }]);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('overview: an accepted error leaves the open counts but is still counted as present', () => {
+  const cycle = { ...finding('COUP-0000000000e1', 'coupling/cycle', 'error', { modules: ['a', 'b'] }, ['a', 'b']), review: { status: 'accepted', reason: 'planned for Q2' } };
+  const hub = { ...finding('COUP-0000000000e2', 'coupling/hub', 'warning', { module: 'c' }, ['c']), review: { status: 'accepted', reason: 'by design' } };
+  const o = buildOverview({ findings: [cycle, hub], graph });
+  assert.equal(o.verdict, 'none-found', 'accepted findings do not fail a run');
+  assert.deepEqual(o.priorities, []);
+  assert.equal(o.counts.error, 0);
+  assert.equal(o.counts.accepted, 2);
+  assert.equal(o.counts.acceptedErrors, 1, 'the page keeps an accepted cycle red');
 });

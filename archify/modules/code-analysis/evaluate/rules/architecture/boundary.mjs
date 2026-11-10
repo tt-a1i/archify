@@ -19,8 +19,7 @@
 // Test and generated files follow the module graph's exclusion policy.
 // Type-only imports are still dependencies on the other layer's code, so they
 // count; the evidence marks them so a reader can weigh them.
-import { matcher } from '../../../extract/shared/glob.mjs';
-import { fail } from '../../../extract/shared/diagnostics.mjs';
+import { fail, matcher } from '../../../core/index.mjs';
 
 export const code = 'architecture/boundary';
 export const dimension = 'architecture';

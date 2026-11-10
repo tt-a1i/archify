@@ -19,7 +19,7 @@ import { randomBytes } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { DiagnosticError } from '../extract/shared/diagnostics.mjs';
+import { DiagnosticError } from '../core/index.mjs';
 import { withInstallLock } from '../lib/install-lock.mjs';
 
 const execute = promisify(execFile);
