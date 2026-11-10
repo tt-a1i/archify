@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1240,
+  "author": "tt-a1i",
+  "title": "fix(check): backport complete piped Explainer receipts to stable",
+  "mergedAt": "2026-11-10T01:32:12Z",
+  "mergeCommit": "7e45f36c66de1254d5ad6ba1d878f6499ea269fd",
+  "url": "https://github.com/tt-a1i/archify/pull/1240"
+}
