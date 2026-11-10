@@ -65,7 +65,7 @@
   // Danger levels behind the colours. Same wording everywhere: legend, badge, detail header.
   var LEVELS = {
     red: { name: 'critical', text: 'circular dependency: the parts cannot be understood, tested or changed on their own. A structural problem to fix, not a proven runtime failure' },
-    amber: { name: 'warning', text: 'maintenance burden: cycle through deferred imports, hub or concentrated module, very large file, crossed architecture boundary, or very complex function' },
+    amber: { name: 'warning', text: 'maintenance burden: cycle through deferred imports, hub or concentrated module, very large file, duplicated code, crossed architecture boundary, or very complex function' },
     blue: { name: 'info', text: 'a signal to read; no change is required' },
     green: { name: 'clean', text: 'no rule fired' },
     grey: { name: 'unmapped', text: 'no source code maps to this component' },
@@ -197,6 +197,7 @@
   }
   function nextStepHtml(f) {
     var text = f.code === 'coupling/hub' ? 'Check whether dependencies cluster by responsibility before splitting this module.'
+      : f.code === 'redundancy/duplicate-block' ? 'Open two of the copies and compare them. If they must stay the same, move the lines into one function both places call; if they are expected to diverge, accept the finding with that reason.'
       : f.code === 'coupling/concentration' ? 'Decide whether this concentration is intended. A small shared kernel or one cohesive responsibility can be accepted with that reason; otherwise look for parts that change for different reasons or are used by only a few modules.'
       : f.code === 'coupling/import-cycle' ? 'Inspect the cited imports and initialization behavior before changing this dependency.'
       : f.code === 'coupling/cycle' ? 'Check which shared responsibility links these modules. A module cycle does not establish a file-level failure.'
@@ -221,6 +222,17 @@
       ev += '<div class="ev" style="margin-top:4px">Where to look — click to see the code:</div>';
       ev += ref(f.subject.file, f.subject.line, '<span>' + esc(f.subject.function) + '() starts</span> <em>· ' + plural(f.evidence.length, 'line') + '</em>', 'The function this finding measures (lines ' + f.subject.line + '–' + f.subject.endLine + ').', tone, f.subject.line, f.subject.endLine);
       if (f.evidence.deepestLine && f.evidence.deepestLine !== f.subject.line) ev += ref(f.subject.file, f.evidence.deepestLine, '<span>deepest nesting (' + f.evidence.nesting + ' levels)</span>', 'The most deeply nested block; usually the best place to start simplifying.', tone, f.subject.line, f.subject.endLine);
+    }
+    if (f.code === 'redundancy/duplicate-block' && f.evidence && f.evidence.occurrences) {
+      ev += '<div class="ev" style="margin-top:4px">Every copy — click one to see the code:</div>';
+      f.evidence.occurrences.forEach(function (o, i) {
+        ev += ref(o.file, o.line, '<span>copy ' + (i + 1) + '</span> <em>· lines ' + o.line + '–' + o.endLine + '</em>', 'One of ' + plural(f.evidence.totalOccurrences, 'place') + ' with the same ' + plural(f.evidence.lines, 'code line') + '.', tone, o.line, o.endLine);
+      });
+      if (f.evidence.totalOccurrences > f.evidence.occurrences.length) ev += '<div class="ev">… ' + (f.evidence.totalOccurrences - f.evidence.occurrences.length) + ' more in findings.json</div>';
+    }
+    if (f.code === 'coupling/concentration' && f.subject && f.subject.file) {
+      ev += '<div class="ev" style="margin-top:4px">Where to look — click to see the code:</div>';
+      ev += ref(f.subject.file, 1, '<span>' + plural(f.evidence.loc, 'line') + '</span>', 'This file is longer than the configured ' + f.evidence.threshold.fileLines + ' lines.', tone);
     }
     if (f.evidence && f.evidence.imports && f.evidence.imports.length) {
       var isCycle = f.code === 'coupling/import-cycle' || f.code === 'coupling/cycle';
@@ -337,7 +349,7 @@
     'signals-only': { tone: 'blue', text: 'Signals only' },
     'none-found': { tone: 'green', text: 'No findings within the checks that ran' }
   };
-  var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions' };
+  var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'redundancy/duplicate-block': 'Duplicate code', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions' };
   var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java' };
   function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
   function toneOf(severity) { return severity === 'error' ? 'red' : severity === 'warning' ? 'amber' : 'blue'; }
@@ -347,6 +359,7 @@
     if (f.code === 'coupling/import-cycle' && s.files) return 'Import cycle · ' + plural(s.files.length, 'file');
     if (f.code === 'coupling/cycle' && s.modules) return 'Module cycle · ' + plural(s.modules.length, 'module');
     if (f.code === 'coupling/hub' && s.module) return modLabel(s.module) + ' connects many modules';
+    if (f.code === 'redundancy/duplicate-block' && f.evidence) return plural(f.evidence.lines, 'line') + ' repeated in ' + plural(f.evidence.totalOccurrences, 'place');
     if (f.code === 'coupling/concentration') return s.file ? short(s.file) + ' is a very large file' : modLabel(s.module) + ' concentrates the project';
     if (f.code === 'coupling/internal-leak' && s.module) return modLabel(s.module) + ' is imported through its internals';
     if (f.code === 'architecture/boundary' && s.boundary) return s.boundary.from + ' depends on ' + s.boundary.to;
@@ -365,6 +378,7 @@
   function findingWhat(f) {
     var s = f.subject || {};
     if (f.code === 'coupling/concentration' && f.evidence) return concentrationWhat(f.evidence);
+    if (f.code === 'redundancy/duplicate-block' && f.evidence) return f.evidence.occurrences.slice(0, 3).map(function (o) { return short(o.file) + ':' + o.line + '–' + o.endLine; }).join(' · ') + (f.evidence.totalOccurrences > 3 ? ' …' : '');
     if (s.files) return 'Files: ' + s.files.slice(0, 3).map(short).join(', ') + (s.files.length > 3 ? ' …' : '');
     if (s.modules) return 'Modules: ' + s.modules.slice(0, 4).map(modLabel).join(', ') + (s.modules.length > 4 ? ' …' : '');
     if (f.code === 'coupling/hub' && f.evidence) return f.evidence.fanIn + ' modules depend on it; it depends on ' + f.evidence.fanOut + '.';
@@ -602,6 +616,7 @@
     var h = '<button class="close" aria-label="Close">×</button><button class="back" type="button">← Overview</button>';
     h += '<div class="k">' + esc(GROUPS[f.code] || f.code) + ' · ' + esc(scope.label) + '</div><h3><i class="bauify-' + tone + '"></i>' + esc(findingTitle(f)) + '</h3>';
     var explanation = f.code === 'coupling/hub' ? 'High incoming and outgoing coupling; inspect responsibilities before deciding to split.'
+      : f.code === 'redundancy/duplicate-block' ? 'These lines are the same in every listed place, ignoring whitespace, comments and imports. A change to one copy has to be repeated in the others.'
       : f.code === 'coupling/concentration' ? 'Much of the project depends on, or lives in, this one place. These are static counts with their thresholds, not proof that it must be split.'
       : f.code === 'architecture/boundary' ? 'These imports break a boundary declared in the analysis config. The rule comes from the config, not from the diagram.'
       : f.code === 'coupling/internal-leak' ? (f.evidence && f.evidence.entrySource === 'config' ? 'These imports bypass the entry files declared in the analysis config.' : 'Other modules depend on this module\'s internal files, so moving or renaming any of them breaks importers. Deep imports can be a deliberate convention; this is a signal, not a defect.')

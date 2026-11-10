@@ -130,6 +130,8 @@ function idFor(dimension, identity) {
 
 function identityOf(subject, anchors) {
   const anchor = (id) => anchors.get(id) ?? `id:${id}`;
+  // A duplicated block is identified by its text, not by where its copies are, so moving or adding a copy keeps its id.
+  if (typeof subject?.block === 'string') return { block: subject.block };
   // A function is identified by file and qualified name, not by its lines, so edits above it keep its id.
   if (typeof subject?.file === 'string' && typeof subject?.function === 'string') return { file: subject.file, function: subject.function };
   if (Array.isArray(subject?.files)) return { files: [...subject.files].sort(compareText) };

@@ -18,7 +18,8 @@
     "coupling/concentration",
     "coupling/internal-leak",
     "architecture/boundary",
-    "complexity/function"
+    "complexity/function",
+    "redundancy/duplicate-block"
   ],
   "summary": {
     "errors": 2,
@@ -42,7 +43,8 @@
       "coupling/cycle": 2,
       "coupling/hub": 1,
       "coupling/import-cycle": 2,
-      "coupling/internal-leak": 1
+      "coupling/internal-leak": 1,
+      "redundancy/duplicate-block": 1
     },
     "coverage": {
       "files": 9,

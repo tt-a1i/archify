@@ -196,6 +196,9 @@ function indicators(set, mods, findings, mapping, filePaths) {
   const hubs = findings.filter((f) => f.code === 'coupling/hub' && set.has(f.subject.module));
   // Only present when the rule reported a module or file here.
   const concentrated = findings.filter((f) => f.code === 'coupling/concentration' && (set.has(f.subject.module) || filePaths.has(f.subject.file)));
+  // Only present when a duplicated block has a copy in one of these files.
+  const duplicates = findings.filter((f) => f.code === 'redundancy/duplicate-block' && f.subject.files.some((p) => filePaths.has(p)))
+    .sort((a, b) => b.evidence.duplicatedLines - a.evidence.duplicatedLines);
   // Only present when boundaries are configured and one is crossed here: an
   // unconfigured check must not show up as a green "no violations".
   const boundaries = findings.filter((f) => f.code === 'architecture/boundary' && boundaryFiles(f).some((p) => filePaths.has(p)));
@@ -230,6 +233,13 @@ function indicators(set, mods, findings, mapping, filePaths) {
         : `${f.subject.module}: ${[f.evidence.reach ? `${f.evidence.reach.dependents} of ${f.evidence.reach.modules} other modules depend on it` : null, f.evidence.size ? `${Math.round(f.evidence.size.share * 100)}% of the analyzed lines` : null].filter(Boolean).join(', ')}`).join('; '),
       detail: [],
       findings: concentrated.map((f) => f.id).filter(Boolean),
+    }] : []),
+    ...(duplicates.length ? [{
+      key: 'duplicate', label: 'Duplicate code',
+      status: duplicates.some((f) => f.severity === 'warning') ? 'amber' : 'blue',
+      value: `${duplicates.length} repeated block${duplicates.length === 1 ? '' : 's'}; largest ${duplicates[0].evidence.lines} lines in ${duplicates[0].evidence.totalOccurrences} places`,
+      detail: [],
+      findings: duplicates.map((f) => f.id).filter(Boolean),
     }] : []),
     ...(boundaries.length ? [{
       key: 'boundary', label: 'Architecture boundary',
@@ -354,6 +364,7 @@ function collectSnippets(findings, sourceRoot, components, facts) {
     const candidate = ev.partialInitCandidate || ev.proof;
     if (candidate) { wanted.add(candidate.entry); wanted.add(candidate.importer); }
     if (f.subject && f.subject.file) wanted.add(f.subject.file);
+    for (const o of ev.occurrences || []) if (o.file) wanted.add(o.file);
   }
   const out = {};
   for (const file of [...wanted].sort()) {

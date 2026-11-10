@@ -118,7 +118,7 @@ The colour says what kind of problem a finding is, not which rule reported it.
 | Colour | Level | Meaning | What to do |
 | --- | --- | --- | --- |
 | Red | `error` | A structural problem: a circular dependency. The parts involved cannot be understood, tested or changed on their own, and cycles tend to grow. | Fix it. It can be accepted in the baseline so CI is not blocked, but it stays red on the page. |
-| Yellow | `warning` | The code runs, but people will find it hard to maintain: a hub or concentrated module, a very large file, a very complex function, a crossed boundary. | Review it. Fix it, or accept it with a reason. |
+| Yellow | `warning` | The code runs, but people will find it hard to maintain: duplicated code, a hub or concentrated module, a very large file, a very complex function, a crossed boundary. | Review it. Fix it, or accept it with a reason. |
 | Blue | `info` | A signal to read. | Nothing is required; it does not affect the verdict or CI. |
 
 Red means "structure that should be fixed", not "proven to fail at runtime". An import cycle shows static structure and a possible load-order risk; the messages keep that wording.
@@ -161,6 +161,28 @@ Findings are warnings, with one exception: high reach alone in a module that dep
 ```
 
 If the concentration is intended, accept the finding with that reason. An accepted finding is shown again when the module's or file's source changes.
+
+## Duplicate code
+
+`redundancy/duplicate-block` reports runs of code lines that appear in more than one place. The code works, but a change to one copy has to be found and repeated in the others.
+
+- Lines are compared after trimming and collapsing whitespace. Blank lines, comment lines, lines with no letter or digit (a lone brace) and import lines are left out first, so formatting or a different comment does not hide a match.
+- Nothing is renamed or abstracted. Two blocks that differ in one identifier are not reported. Every finding can be checked by reading the ranges it cites.
+- Each finding lists every copy as `file:line-endLine`. Three copies are one finding. Its id follows the repeated text, so it stays the same when a copy moves or another appears.
+- Test and generated files are not compared.
+
+| Setting | Meaning | Default |
+| --- | --- | --- |
+| `minLines` | shortest run of code lines reported (at least 3) | 10 |
+| `minChars` | fewest non-space characters in the block | 300 |
+
+```json
+{ "rules": { "redundancy": { "duplicateBlock": { "minLines": 12, "minChars": 400 } } } }
+```
+
+A block where more than half of the lines are the same line (a table of similar rows) is not reported. Comments and imports are recognized per line from the language's usual prefixes, not by parsing; a code line that looks like one is skipped, which can shorten a match but cannot create one.
+
+Copies that are meant to diverge, or that mirror each other by design (a synchronous and an asynchronous client), are still reported: accept them with that reason. An AI task for a finding lists every copy as a range, so they can be compared before deciding. The first calibration of the defaults is recorded in [`benchmarks/code-analysis-duplicate-block`](../../../../benchmarks/code-analysis-duplicate-block/README.md).
 
 ## Accepting known findings (baseline)
 

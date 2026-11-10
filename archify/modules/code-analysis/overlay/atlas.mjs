@@ -55,6 +55,7 @@ function title(f, labelOf) {
   if (f.code === 'coupling/cycle' && s.modules) return `Module cycle · ${s.modules.length} modules`;
   if (f.code === 'coupling/hub' && s.module) return `Hub · ${labelOf(s.module)}`;
   if (f.code === 'coupling/concentration') return s.file ? `Large file · ${s.file.split('/').pop()}` : `Concentration · ${labelOf(s.module)}`;
+  if (f.code === 'redundancy/duplicate-block' && f.evidence) return `Duplicate · ${f.evidence.lines} lines × ${f.evidence.totalOccurrences}`;
   if (f.code === 'coupling/internal-leak' && s.module) return `Internal imports · ${labelOf(s.module)}`;
   if (f.code === 'architecture/boundary' && s.boundary) return `${s.boundary.from} → ${s.boundary.to}`;
   return f.code;
@@ -123,6 +124,9 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
     } else if (f.code === 'coupling/concentration' && fileIndex.has(s.file)) {
       entry.kind = 'file';
       entry.file = fileIndex.get(s.file);
+    } else if (f.code === 'redundancy/duplicate-block' && Array.isArray(s.files)) {
+      entry.kind = 'files';
+      entry.files = s.files.filter((p) => fileIndex.has(p)).map((p) => fileIndex.get(p));
     } else if (f.code === 'coupling/internal-leak' && moduleIndex.has(s.module)) {
       // Drawn like a boundary finding (the cited imports), plus the module whose
       // internals they reach and its entry files, if it has any.

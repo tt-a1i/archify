@@ -10,8 +10,9 @@ import * as internalLeak from './coupling/internal-leak.mjs';
 import * as concentration from './coupling/concentration.mjs';
 import * as boundary from './architecture/boundary.mjs';
 import * as complexity from './complexity/function.mjs';
+import * as duplicateBlock from './redundancy/duplicate-block.mjs';
 
-export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boundary, complexity];
+export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boundary, complexity, duplicateBlock];
 
 // Layer statistics the overview shows next to boundary findings.
 export { layerCounts } from './architecture/boundary.mjs';
