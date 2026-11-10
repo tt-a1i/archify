@@ -294,6 +294,7 @@ const tickSeconds = ticks.some((tick) => tick.interval < MINUTE);
 const lanes = asArray(tl.lanes).length ? tl.lanes : [{ id: '__all', label: '' }];
 const laneOf = (event) => (asArray(tl.lanes).length ? event.lane : '__all');
 
+const TITLE_GRAPHEMES = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 function wrapTitle(text, maxWidth) {
   const limit = Math.max(6, Math.floor(maxWidth / (layout.titleFont * ADVANCE * 1.05)));
   const words = String(text).split(/(\s+)/);
@@ -304,7 +305,7 @@ function wrapTitle(text, maxWidth) {
     if (current.trim()) lines.push(current.trim());
     current = word.trimStart();
     while (textUnits(current) > limit) {
-      const chars = Array.from(current);
+      const chars = [...TITLE_GRAPHEMES.segment(current)].map(({ segment }) => segment);
       let cut = 0;
       for (let units = 0; cut < chars.length && units + textUnits(chars[cut]) <= limit; cut += 1) units += textUnits(chars[cut]);
       lines.push(chars.slice(0, Math.max(1, cut)).join(''));
