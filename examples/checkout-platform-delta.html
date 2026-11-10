@@ -16364,7 +16364,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence &amp;&amp; Math.min(desiredWidth, maxWidth) &gt;=
+        // Body and stage padding already bound the actual viewport. The
+        // optional bottom gap may yield to the source-text floor; otherwise
+        // a late header reflow can select an enlarged, scrolling diagram
+        // even though its original size still fits the screen.
+        var sequenceFits = automaticSequence &amp;&amp; Math.min(desiredWidth + SAFE_BOTTOM_GAP * ratio, maxWidth) &gt;=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading &amp;&amp; !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;
@@ -32117,7 +32121,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence &amp;&amp; Math.min(desiredWidth, maxWidth) &gt;=
+        // Body and stage padding already bound the actual viewport. The
+        // optional bottom gap may yield to the source-text floor; otherwise
+        // a late header reflow can select an enlarged, scrolling diagram
+        // even though its original size still fits the screen.
+        var sequenceFits = automaticSequence &amp;&amp; Math.min(desiredWidth + SAFE_BOTTOM_GAP * ratio, maxWidth) &gt;=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading &amp;&amp; !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;

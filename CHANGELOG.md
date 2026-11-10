@@ -34,6 +34,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Explainer pie legends keep configured values (#1302).** A pie chart with configuration lines or `showData` still shows each slice's value and share in the legend.
 - **Explainer comparison rows with repeated labels (#1302).** Rows that share a label keep separate IDs, so none is dropped; the first row keeps its existing ID and links.
 - **Explainer copy failures are reported (#1302).** When the clipboard is unavailable or refuses, the reader shows an error instead of claiming success and keeps the follow-up question selected in the open dialog so it can be copied by hand.
+- **Compact automatic Sequence recovers first-screen fit after header reflow (#1151).** When a compact automatic Sequence header settles, the optional 12px bottom gap may yield to the original text-size floor, so the reader no longer chooses an enlarged scrolling diagram that still fits the first screen. Long sequences still scroll, and source text is not shrunk. Thanks to [@BlueboxC](https://github.com/BlueboxC).
 - **README motion proof refreshed after Sequence header centering (#1293).** The README animation and its receipt are rebuilt from the current gallery artifacts, so the freshness check passes again. Thanks to [@BlueboxC](https://github.com/BlueboxC), who first identified the stale proof and recaptured it in [#1174](https://github.com/tt-a1i/archify/pull/1174); #1293 follows the same approach.
 
 ## [3.2.0] — 2026-10-18
