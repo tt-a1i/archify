@@ -40,7 +40,28 @@
           "severity": { "enum": ["error", "warning", "info"] },
           "confidence": { "type": "number" },
           "review": { "type": "object", "description": "Baseline / comparison status from review.json, when known." },
-          "evidenceDigest": { "type": "object", "required": ["files", "sha256"], "properties": { "files": { "type": "array", "items": { "type": "string" } }, "lines": { "type": "array", "items": { "type": "integer" } }, "sha256": { "$ref": "#/$defs/sha" } } }
+          "evidenceDigest": {
+            "type": "object", "required": ["files", "sha256"],
+            "properties": {
+              "files": { "type": "array", "items": { "type": "string" } },
+              "lines": { "type": "array", "items": { "type": "integer" } },
+              "sha256": { "$ref": "#/$defs/sha" },
+              "ranges": {
+                "type": "array", "minItems": 1,
+                "items": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["file", "startLine", "endLine", "sha256", "capturedOccurrences"],
+                  "properties": {
+                    "file": { "type": "string", "minLength": 1 },
+                    "startLine": { "type": "integer", "minimum": 1 },
+                    "endLine": { "type": "integer", "minimum": 1 },
+                    "sha256": { "$ref": "#/$defs/sha" },
+                    "capturedOccurrences": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -67,6 +88,10 @@
         "required": ["findingId", "file", "kind", "sha256", "excerpt"],
         "properties": {
           "findingId": { "$ref": "#/$defs/findingId" },
+          "startColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 column in the captured source." },
+          "endColumn": { "type": "integer", "minimum": 1, "description": "Exclusive one-based UTF-16 column in the captured source." },
+          "startOffset": { "type": "integer", "minimum": 0, "description": "Zero-based UTF-16 offset in the captured source." },
+          "endOffset": { "type": "integer", "minimum": 0, "description": "Exclusive UTF-16 offset in the captured source." },
           "file": { "type": "string", "minLength": 1 },
           "kind": { "enum": ["function", "import", "range", "file"] },
           "startLine": { "type": "integer", "minimum": 1 },

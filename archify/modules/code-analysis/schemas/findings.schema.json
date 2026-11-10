@@ -32,6 +32,39 @@
         "adapterRevision": { "type": ["integer", "null"], "minimum": 1, "description": "Revision of the adapter's extraction logic (raw facts repository.adapterRevision); null when the facts did not record one." },
         "configDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of the effective (merged) configuration in its key order, schema_version excluded." },
         "ruleVersions": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 }, "description": "Rules that ran (suppressed rules excluded) and the version of their logic." },
+        "duplicates": {
+          "type": "object", "additionalProperties": false,
+          "required": ["engine", "settings", "coverage"],
+          "properties": {
+            "engine": {
+              "type": "object", "additionalProperties": false,
+              "required": ["name", "version", "adapterRevision"],
+              "properties": { "name": { "const": "jscpd" }, "version": { "type": "string" }, "adapterRevision": { "type": "integer", "minimum": 1 } }
+            },
+            "settings": {
+              "type": "object", "additionalProperties": false,
+              "required": ["mode", "identifiers", "minTokens", "minLines", "maxFileBytes"],
+              "properties": {
+                "mode": { "const": "weak" }, "identifiers": { "enum": ["exact", "consistent"] },
+                "minTokens": { "type": "integer", "minimum": 1 }, "minLines": { "type": "integer", "minimum": 1 },
+                "maxFileBytes": { "type": "integer", "minimum": 1 }
+              }
+            },
+            "coverage": {
+              "type": "object", "additionalProperties": false,
+              "required": ["selected", "analyzed", "omitted", "complete"],
+              "properties": {
+                "selected": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                "analyzed": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+                "omitted": { "type": "array", "items": {
+                  "type": "object", "additionalProperties": false, "required": ["file", "reason"],
+                  "properties": { "file": { "type": "string" }, "reason": { "enum": ["vendored", "parse-error", "unsupported-format", "max-file-bytes", "not-reported-by-engine"] } }
+                } },
+                "complete": { "type": "boolean" }
+              }
+            }
+          }
+        },
         "coverage": {
           "type": "object",
           "additionalProperties": false,
@@ -68,6 +101,23 @@
             "properties": {
               "files": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
               "lines": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 1 }, "description": "For a function finding: the first and last line hashed." },
+              "ranges": {
+                "type": "array",
+                "minItems": 1,
+                "description": "Each cited line envelope, including separate ranges in the same file. The aggregate hash covers file, snippet hash and capturedOccurrences in this order, excluding positions.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["file", "startLine", "endLine", "sha256", "capturedOccurrences"],
+                  "properties": {
+                    "file": { "type": "string", "minLength": 1 },
+                    "startLine": { "type": "integer", "minimum": 1 },
+                    "endLine": { "type": "integer", "minimum": 1 },
+                    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                    "capturedOccurrences": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              },
               "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
             }
           }

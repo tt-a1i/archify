@@ -43,7 +43,7 @@ export function analyzeRepository({ root, ir, html, out, language = null, config
   fs.writeFileSync(path.join(dir, 'review.json'), stableJson(review));
   const irDoc = irSnapshot ?? readJsonInput(irPath, 'analysis --ir');
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
-  const run = { rules: findings.rules, suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null, review };
+  const run = { rules: findings.rules, suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null, duplicates: findings.analysis?.duplicates || null, review };
   const overlay = overlayHtml({ html: fs.readFileSync(htmlPath, 'utf8'), ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });
   fs.writeFileSync(path.join(dir, 'overview.json'), stableJson(overlay.overview));
   const outHtml = path.join(dir, 'repo.analysis.html');

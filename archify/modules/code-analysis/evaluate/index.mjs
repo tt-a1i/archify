@@ -5,7 +5,10 @@
 // left out of `rules`, so "not checked" is never reported as "clean". Rules are independent —
 // none reads another's output — and every threshold they use is echoed in
 // the finding's evidence so a reader can re-check the call.
-import { RULES } from './rules/index.mjs';
+import { RULES, duplicateBlock as duplicate } from './rules/index.mjs';
+import { analyzeDuplicates } from '../lib/duplicates.mjs';
+import { createRangeDigest } from '../lib/evidence.mjs';
+import { fail } from '../core/index.mjs';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
@@ -19,9 +22,10 @@ export function evaluate(graph, config = {}, facts = null) {
   const diagnostics = [];
   let suppressedCount = 0;
   const active = RULES.filter((rule) => !rule.enabled || rule.enabled(config, facts));
+  const duplicates = active.includes(duplicate) && !suppressed.has(duplicate.code) ? analyzeDuplicates(graph, config, facts) : null;
   for (const rule of active) {
     if (suppressed.has(rule.code)) { suppressedCount += 1; continue; }
-    for (const finding of rule.run({ graph, config, facts })) diagnostics.push({ id: '', ...finding });
+    for (const finding of rule.run({ graph, config, facts, duplicates })) diagnostics.push({ id: '', ...finding });
   }
   // Deterministic output order; ids do not depend on it (see assignIds).
   diagnostics.sort((a, b) => compareText(a.code, b.code) || compareText(JSON.stringify(a.subject), JSON.stringify(b.subject)));
@@ -35,7 +39,7 @@ export function evaluate(graph, config = {}, facts = null) {
     repository: graph.repository,
     rules: active.map((r) => r.code),
     summary: { ...summary, suppressed: suppressedCount },
-    analysis: analysisContext({ graph, config, facts, active, suppressed }),
+    analysis: analysisContext({ graph, config, facts, active, suppressed, duplicates }),
     diagnostics,
   };
 }
@@ -44,7 +48,7 @@ export function evaluate(graph, config = {}, facts = null) {
 // directly comparable only when these match: a finding that disappears after
 // a rule was switched off, a threshold raised, the scan scope changed or a file
 // stopped parsing was not fixed. lib/review.mjs compares two of these.
-export function analysisContext({ graph, config = {}, facts = null, active = RULES, suppressed = new Set(config.ignore || []) }) {
+export function analysisContext({ graph, config = {}, facts = null, active = RULES, suppressed = new Set(config.ignore || []), duplicates = null }) {
   const excludedRoles = new Set(graph?.excluded?.roles || []);
   const { schema_version: _ignored, ...settings } = config || {};
   return {
@@ -57,6 +61,7 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
     // any key therefore reads as a config change, which errs toward "not comparable".
     configDigest: sha256(JSON.stringify(settings)),
     ruleVersions: Object.fromEntries(active.filter((r) => !suppressed.has(r.code)).map((r) => [r.code, r.version ?? 1]).sort(([a], [b]) => compareText(a, b))),
+    ...(duplicates ? { duplicates: duplicates.analysis } : {}),
     coverage: {
       files: facts ? facts.files.filter((f) => !excludedRoles.has(f.role)).length : null,
       excludedRoles: [...excludedRoles].sort(compareText),
@@ -98,6 +103,12 @@ function attachEvidenceDigests(diagnostics, graph, facts) {
     moduleFiles.get(id).push(file);
   }
   for (const d of diagnostics) {
+    if (d.code === duplicate.code) {
+      const digest = createRangeDigest(d.subject.locations, text);
+      if (!digest) fail('duplicates/report-invalid', 'Duplicate source ranges could not be bound to the captured evidence.', { supportedFixes: ['regenerate the analysis and report the invalid range'] });
+      d.evidenceDigest = digest;
+      continue;
+    }
     const files = [...new Set(subjectFiles(d, moduleFiles))].sort(compareText);
     if (!files.length) continue;
     const sub = d.subject || {};
@@ -130,8 +141,7 @@ function idFor(dimension, identity) {
 
 function identityOf(subject, anchors) {
   const anchor = (id) => anchors.get(id) ?? `id:${id}`;
-  // A duplicated block is identified by its text, not by where its copies are, so moving or adding a copy keeps its id.
-  if (typeof subject?.block === 'string') return { block: subject.block };
+  if (Array.isArray(subject.locations) && subject.locations.every(l => typeof l.identity === 'string')) return { locations: subject.locations.map(l => l.identity).sort(compareText) };
   // A function is identified by file and qualified name, not by its lines, so edits above it keep its id.
   if (typeof subject?.file === 'string' && typeof subject?.function === 'string') return { file: subject.file, function: subject.function };
   if (Array.isArray(subject?.files)) return { files: [...subject.files].sort(compareText) };
