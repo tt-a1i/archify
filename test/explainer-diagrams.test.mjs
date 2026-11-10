@@ -147,6 +147,20 @@ test('explainer diagrams: structural changes decorate only explicit preview targ
     { changes: [{ target: 'nonexistent', change: 'removed' }] })])), error => error.archifyDiagnostics[0].code === 'explainer/diagram-change-target');
 });
 
+test('explainer diagrams: structural changes name their targets as the preview shows them and outline them in their colour', async () => {
+  const spec = compileExplainerDiagram('sequence', rows.sequence, { id: 'request' });
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'changed-request', title: 'Changed request', locale: 'en' },
+    answer: { summary: 'The API now reads Redis.' }, sources: [], panels: [{ id: 'request', title: 'What changed?',
+      blocks: [blockOf('sequence', spec, { id: 'request', changes: [{ target: 'api', change: 'modified' }, { target: 'api-to-redis-1', change: 'added' }] })] }] };
+  const html = renderExplainer(document, { preparedDiagrams: await prepareExplainerDiagrams(document) });
+  const changes = html.match(/<dl class="changes">[\s\S]*?<\/dl>/)[0];
+  assert.match(changes, /<dd data-change-target="api"><span class="chip modified">[^<]+<\/span> API<\/dd>/);
+  assert.match(changes, /<dd data-change-target="api-to-redis-1"><span class="chip added">[^<]+<\/span> API → Redis · Read<\/dd>/);
+  assert.doesNotMatch(changes, /<code>/, 'readers see names, not authoring IDs');
+  for (const change of ['added', 'modified', 'removed'])
+    assert.match(html, new RegExp(`\\[data-explainer-change="${change}"\\]>:is\\(`), `the page styles ${change} marks`);
+});
+
 test('explainer diagrams: rejected native causes retain author line, component and repair example', async () => {
   assert.throws(() => compileExplainerDiagram('sequence', [
     { text: 'Client | API | Request', line: 18 }, { text: 'API | Client | Reply | strange', line: 23 },
