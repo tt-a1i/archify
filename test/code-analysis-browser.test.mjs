@@ -6,15 +6,17 @@ import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
-import { startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mjs';
-import { buildGraph } from '../archify/modules/code-analysis/lib/analysis.mjs';
-import { buildOverlay } from '../archify/modules/code-analysis/overlay/inject.mjs';
+import { ensureDependencies, startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mjs';
 
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
 test('Code Analysis highlights exact duplicate characters and retains both locations through source navigation', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {
+  // Match the service's preparation order before loading parser/schema libraries.
+  await ensureDependencies();
+  const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
+  const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-c6-browser-'));
   t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
   // A UI contract fixture: detector correctness belongs to the real-engine
