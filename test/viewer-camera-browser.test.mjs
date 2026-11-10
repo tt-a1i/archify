@@ -1043,10 +1043,23 @@ test('zooming a panned wide diagram out to 100% hands navigation back to native 
   })()`);
   assert.ok(Math.abs(leftEdge) < 2,
     `the left edge must be visible at scrollLeft 0 after zooming out: ${leftEdge}`);
+  // The wide-diagram container scrolls smoothly (scroll-behavior: smooth),
+  // so a programmatic scrollLeft assignment animates: wait for the scroll
+  // to settle instead of a fixed delay, or the read below catches the
+  // animation mid-flight (CI read scrollLeft 7 on the way back to 0).
+  const waitForScroll = async (target) => {
+    const deadline = Date.now() + 3000;
+    for (;;) {
+      const left = await run(`document.querySelector('.diagram-container').scrollLeft`);
+      if (Math.abs(left - target) < 1) return left;
+      if (Date.now() > deadline) assert.fail(`the container must settle at scrollLeft ${target}: ${left}`);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  };
   // Native scrolling must actually move the view now: scrolling to 100px must
   // show the diagram 100px in, not stay pinned near the right edge.
   await run(`(() => { document.querySelector('.diagram-container').scrollLeft = 100; return true; })()`);
-  await new Promise((resolve) => setTimeout(resolve, 120));
+  await waitForScroll(100);
   const scrolled = await run(`(() => {
     const c = document.querySelector('.diagram-container');
     const s = Archify.view.state();
@@ -1055,7 +1068,7 @@ test('zooming a panned wide diagram out to 100% hands navigation back to native 
   assert.ok(Math.abs(scrolled.offset - 100) < 30,
     `native scrolling must move the view at 100% zoom: ${JSON.stringify(scrolled)}`);
   await run(`(() => { const c = document.querySelector('.diagram-container'); c.scrollLeft = 0; return true; })()`);
-  await new Promise((resolve) => setTimeout(resolve, 120));
+  await waitForScroll(0);
   const back = await run(`(() => {
     const c = document.querySelector('.diagram-container');
     const s = Archify.view.state();
@@ -1112,7 +1125,8 @@ test('the overview map viewport follows camera panning on a zoomed wide diagram 
     const svg = c.querySelector('svg');
     const vb = svg.getAttribute('viewBox').split(' ').map(Number);
     return { viewport: Archify.view.logicalViewport(), state: Archify.view.state(),
-      viewBoxWidth: vb[2], clientWidth: c.clientWidth, scrollLeft: c.scrollLeft };
+      viewBoxWidth: vb[2], viewBoxHeight: vb[3], svgWidth: svg.clientWidth,
+      svgHeight: svg.clientHeight, clientWidth: c.clientWidth, scrollLeft: c.scrollLeft };
   })()`);
   // The viewport's left edge must follow the camera, not the container's
   // scroll offset alone: with the old formula it stayed at the viewBox's
@@ -1121,6 +1135,12 @@ test('the overview map viewport follows camera panning on a zoomed wide diagram 
     `the map viewport must leave the left edge once panned right: ${JSON.stringify(seen)}`);
   assert.ok(Math.abs((seen.viewport.x + seen.viewport.width) - seen.viewBoxWidth) < 30,
     `the map viewport must cover the diagram's right edge: ${JSON.stringify(seen)}`);
-  assert.ok(Math.abs(seen.viewport.width - seen.clientWidth / seen.state.scale) < 30,
-    `the map viewport width must account for the zoom: ${JSON.stringify(seen)}`);
+  // The viewport width is in viewBox units, and the SVG is letterboxed
+  // (720 CSS px showing a 1080-unit viewBox): the visible window is the
+  // container width divided by both the camera zoom and the content scale,
+  // not by the zoom alone (that reads 187 here, the width in SVG pixels).
+  const contentScale = Math.min(seen.svgWidth / seen.viewBoxWidth, seen.svgHeight / seen.viewBoxHeight);
+  const expectedWidth = seen.clientWidth / seen.state.scale / contentScale;
+  assert.ok(Math.abs(seen.viewport.width - expectedWidth) < 30,
+    `the map viewport width must account for the zoom: ${JSON.stringify({ ...seen, expectedWidth })}`);
 });

@@ -182,7 +182,10 @@ test('Semantic Radar derives semantic node bounds and focuses stable IDs', () =>
 test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   const html = render('sequence', CASES.sequence);
   assert.match(html, /function logicalViewport\(\)/);
-  assert.match(html, /x = viewBox\.x \+ container\.scrollLeft \/ metrics\.scale/);
+  // The viewport now accounts for the camera translation and zoom: the
+  // visible window starts where the container scroll and the camera meet,
+  // so the old scrollLeft-only pin no longer appears in the rendered code.
+  assert.match(html, /x = viewBox\.x \+ \(\(\(container\.scrollLeft - camera\.x\) \/ camera\.scale\) - metrics\.offsetX\) \/ metrics\.scale/);
   assert.match(html, /var visible = Archify\.view\.logicalViewport\(\)/);
   assert.match(html, /viewport\.setAttribute\('width', String\(visible\.width\)\)/);
   assert.match(html, /viewerText\('viewer\.radar\.viewport\.width'/);
