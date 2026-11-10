@@ -131,19 +131,28 @@
     var heading = overview.querySelector('h3'); if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
+  // One line about this component: how many of its checks reported something, by level.
+  function indicatorSummary(indicators) {
+    if (indicators.status === 'grey') return LEVELS.grey.text;
+    var checks = indicators.items.filter(function (i) { return i.status !== 'neutral'; });
+    var count = function (status) { return checks.filter(function (i) { return i.status === status; }).length; };
+    var parts = [[count('red'), 'critical'], [count('amber'), 'warning'], [count('blue'), 'info']].filter(function (p) { return p[0]; }).map(function (p) { return p[0] + ' ' + p[1]; });
+    if (!parts.length) return 'No rule fired in ' + plural(checks.length, 'check') + '.';
+    return parts.join(' · ') + ' across ' + plural(checks.length, 'check') + '. Open one for its findings.';
+  }
   function show(id) {
     readerPage('Component');
     root.removeAttribute('data-bauify-source');
     var c = byId[id]; if (!c) return;
     overview.hidden = true; setFocus([]);
     var h = '<button class="close" aria-label="Close">×</button><button type="button" class="back">← Overview</button>';
-    h += '<div class="k">Bauify · code analysis</div><h3>' + esc(c.label) + '<span class="badge ' + c.indicators.status + '">' + c.indicators.status + ' · ' + LEVELS[c.indicators.status].name + '</span></h3>';
-    h += '<div class="ev">' + esc(LEVELS[c.indicators.status].text) + '</div>';
+    h += '<div class="k">Bauify · code analysis</div><h3>' + esc(c.label) + '<span class="badge ' + c.indicators.status + '">' + LEVELS[c.indicators.status].name + '</span></h3>';
+    h += '<div class="ev">' + esc(indicatorSummary(c.indicators)) + '</div>';
     if (c.indicators.items.length) {
       h += '<div class="k">Indicators · click one for its findings and a diagram</div>';
       c.indicators.items.forEach(function (i) {
         var n = (i.findings || []).length;
-        h += '<div class="ind link" data-ind="' + i.key + '" role="button" tabindex="0"><i class="' + i.status + '"></i><div><b>' + esc(i.label) + ' <span class="more">' + (n ? n + ' finding' + (n === 1 ? '' : 's') + ' ›' : 'details ›') + '</span></b><span class="v">' + esc(i.value) + '</span>' +
+        h += '<div class="ind link' + (i.status === 'green' ? ' quiet' : '') + '" data-ind="' + i.key + '" role="button" tabindex="0"><i class="' + i.status + '"></i><div><b>' + esc(i.label) + ' <span class="more">' + (n ? n + ' finding' + (n === 1 ? '' : 's') + ' ›' : 'details ›') + '</span></b><span class="v">' + esc(i.value) + '</span>' +
           (i.detail.length ? '<div class="detail">with: ' + i.detail.map(function (d) { var m = d.split(':'); return m[0] === 'component' && byId[m[1]] ? esc(byId[m[1]].label) : esc(m[1]) + ' (not on diagram)'; }).join(', ') + '</div>' : '') + '</div></div>';
       });
     }
@@ -460,13 +469,14 @@
     if (o.counts.error) v = { tone: 'red', text: 'Structural problems to fix' };
     else if (acceptedErrors) v = { tone: 'red', text: 'Accepted structural problems still present' };
     var verdictText = !o.counts.error && !acceptedErrors && o.verdict === 'none-found' && acceptedCount ? 'No open findings · ' + acceptedCount + ' accepted in the baseline' : v.text;
-    var counts = [plural(o.counts.findings, 'finding')]
-      .concat(['error', 'warning', 'info'].filter(function (k) { return o.counts[k]; }).map(function (k) { return o.counts[k] + ' ' + k; }))
-      .concat(acceptedCount ? [acceptedCount + ' accepted'] : [])
-      .concat(o.counts.offDiagram ? [o.counts.offDiagram + ' not on this diagram'] : []).join(' · ');
+    var counts = [['total', plural(o.counts.findings, 'finding')]]
+      .concat(['error', 'warning', 'info'].filter(function (k) { return o.counts[k]; }).map(function (k) { return [k, o.counts[k] + ' ' + k]; }))
+      .concat(acceptedCount ? [['accepted', acceptedCount + ' accepted']] : [])
+      .concat(o.counts.offDiagram ? [['off', o.counts.offDiagram + ' not on this diagram']] : [])
+      .map(function (c) { return '<span class="count ' + c[0] + '">' + esc(c[1]) + '</span>'; }).join(' · ');
     var h = typeof window.__archifyReanalyze === 'function' ? '<button type="button" class="bauify-reanalyze" title="Read the repository again and compare with this result">Re-analyze</button>' : '';
     h += '<h3><i class="bauify-' + v.tone + '"></i>' + esc(verdictText) + '</h3>';
-    h += '<div class="ev">' + esc(counts) + '</div>';
+    h += '<div class="ev counts">' + counts + '</div>';
     var checkedRules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
     var unchecked = [['redundancy/', 'duplicate code'], ['conventions/', 'project coding conventions']].filter(function (x) { return !checkedRules.some(function (r) { return r.indexOf(x[0]) === 0; }); }).map(function (x) { return x[1]; });
     if (unchecked.length) h += '<div class="coverage-notice">Not checked: ' + esc(unchecked.join(', ')) + '. See Coverage for the full scope.</div>';
@@ -482,6 +492,8 @@
       var first = picks[0] || {};
       var lead = first.code === 'coupling/hub' ? 'Start with responsibility boundaries in ' + hubs.map(function (f) { return esc(modLabel(f.subject.module)); }).join(' and ') + '. '
         : first.code === 'complexity/function' ? 'Start with the most complex functions below. '
+        : first.code === 'redundancy/duplicate-block' ? 'Start with the repeated code below. '
+        : first.code === 'coupling/concentration' ? 'Start with where the project is concentrated. '
         : onlyBoundaries ? 'Start with the layer rules broken below. '
         : 'Start with the dependency structures below. ';
       h += '<p class="verdict-note">' + lead + 'Each finding links to its evidence' + (anyCycle ? '; runtime failure is not proven.' : '.') + '</p>';
@@ -492,7 +504,7 @@
     } else if (acceptedCount) h += '<div class="ev" style="margin-top:8px">Every finding is accepted in the baseline' + (acceptedErrors ? ', including ' + plural(acceptedErrors, 'circular dependency finding') + ' that ' + (acceptedErrors === 1 ? 'is' : 'are') + ' still in the code and stay' + (acceptedErrors === 1 ? 's' : '') + ' red' : '') + '. New findings, and accepted ones whose code changes, will show up here.</div>';
     else h += '<div class="ev" style="margin-top:8px">No rule fired. This covers only the checks listed under Coverage; it is not a quality guarantee.</div>';
     if (o.groups.length) {
-      h += '<div class="k">All findings · click a component on the diagram for its own view</div>';
+      h += '<div class="k">All findings</div><div class="ev hint">By rule. Click a component on the diagram for its own view.</div>';
       o.groups.forEach(function (g) {
         h += '<details><summary><i class="bauify-' + toneOf(g.severity) + '"></i>' + esc(GROUPS[g.code] || g.code) + ' · ' + g.count + '</summary>' + g.ids.map(function (id) { return findingRow(id); }).join('') + '</details>';
       });
