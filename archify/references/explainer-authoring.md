@@ -1,6 +1,6 @@
 # Explainer authoring
 
-An explainer turns an answer with a conclusion and some structure (an explanation, comparison, decision, diagnosis, review or plan) into one page. The page leads with the conclusion and shows the reasoning as panels: diagrams, tables, steps and short text. When to make one, and the opt-in modes, are in the Skill under “Choose the artifact”. A request to draw a system uses a native diagram type.
+An explainer turns an answer with a conclusion and some structure (an explanation, comparison, decision, diagnosis, review or plan) into one page. The page leads with the conclusion and shows the reasoning as panels: diagrams, tables, steps and short text. When to make one (the default `proactive` mode, `on-demand` and opt-in `always-on`) is in the Skill under “Choose the artifact”. A request to draw a system uses a native diagram type.
 
 This guide is the complete draft language. Write the draft from it directly.
 
@@ -91,7 +91,7 @@ Write for a reader who will act on the page and may check it. Use the user's lan
 - Cover what the reader needs to act on the answer: the mechanism behind the conclusion, how to check it, and the cases where it does not hold. The next question a careful reader would ask gets a panel, a table row or a line in scope; a fact the reader could get wrong without it is not optional.
 - Each panel takes one question and each sentence makes one claim. A claim a table or diagram already shows is not restated; the text adds its reason or exception.
 - Keep one term per thing across the title, panels, diagram labels and table headers, and prefer the reader's own term. The page links a name in the text to the node with that label, so a reader can point at it in the diagram.
-- Give results with their evidence: a number with its unit, a file position, a source. When a value is unknown or estimated, say so in scope.
+- Give results with their evidence: a number with its unit, a file position, a source. Keep page-wide conditions in scope. Put a local assumption, exception or uncertainty next to the claim, chart or example it qualifies; do not move it away just to shorten the prose. Label illustrative or unmeasured values where the reader encounters them.
 - Cite a `@source` for each claim the reader cannot check alone: protocol details, thresholds, benchmark figures, API behaviour. A rule of thumb without a source is labelled as one, or left out.
 - Recompute every derived number before delivery and show the arithmetic once: “990 of 1000 requests at 80 ms → P99 = 80 ms; 11 slow → P99 = 600 ms.” Totals in tables add up.
 - Phrase an action as an imperative with its trigger in front: “If the migration reports a schema mismatch, roll it back before retrying.”
@@ -99,7 +99,7 @@ Write for a reader who will act on the page and may check it. Use the user's lan
 
 English: short sentences (under about 25 words), common words (use, before, to, because), active voice with a named actor.
 
-中文：短句，每句不超过约 50 字；动词直接用（检查、决定，而不是进行检查、做出决定）；一句话里的“的”不超过两个；数字后写清边界（超过 3 次、不超过 1 秒）；用具体结果代替套话（赋能、全方位、至关重要）。
+中文：短句，每句不超过约 50 字；动词直接用（检查、决定，而不是进行检查、做出决定）；修饰语层层嵌套、中心词不清楚时拆句；数字后写清边界（超过 3 次、不超过 1 秒）；用具体结果代替套话（赋能、全方位、至关重要）。
 
 ## Compact native diagrams
 
@@ -219,7 +219,7 @@ A chart states where its numbers come from the same way text does: measured, fro
 
 | Directive | Header arguments | Rows |
 | --- | --- | --- |
-| `@answer` | `scope="..."` | none |
+| `@answer` | `scope="..."`, optional `span=1..12` (exact desktop columns, like panel spans) | none |
 | `@meta` | `locale` (`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`), `quality_profile`, `style` (`clean`, `editorial`, `product`, `swiss`; readers can switch), `repo_url`, `repo_revision` | none |
 | `@source <id>` | `title`, `url`, or `path` with `lines=start:end` | none |
 | `@steps` | `id` | `id | title | detail? | diagram-id? | node? | from~to? | edge-ids?` (node and route are exclusive) |
@@ -257,7 +257,9 @@ Pass `--repo-root /path/to/repository` for code excerpts. With it, every cited r
 
 ## Panels and layout
 
-Prefer a specific question as each panel title. `{#id}` gives a stable ID for links and panel replacement; `{#id span=7}` fixes a width of 1–12 columns. Omit spans: the page measures each panel and plans the board, keeping source order with the conclusion top-left, giving each diagram enough width for readable labels, and keeping tables and code from clipping. Without JavaScript, below 1100 px and in print, static widths apply.
+Prefer a specific question as each panel title. `{#id}` gives a stable ID for links and panel replacement; `{#id span=7}` fixes a width of 1–12 columns. Omit spans: the page measures each panel and plans the board, keeping source order with the conclusion top-left, giving each diagram enough width for readable labels, and keeping tables and code from clipping. Without JavaScript, static widths apply; narrow screens and print stack panels.
+
+When two examples need to start side by side below the conclusion, use `@answer span=12` with `span=6` on each example panel. The optional answer span uses the same 1–12 column range as panels; phone layouts still stack at full width. Leave it out for automatic placement.
 
 ## Delivery
 
@@ -265,11 +267,13 @@ Prefer a specific question as each panel title. `{#id}` gives a stable ID for li
 node archify/bin/archify.mjs finalize explainer candidate.archify.md answer.html --json
 ```
 
-After a pass, reply in two or three lines: the conclusion, then a Markdown link to the page with a descriptive title. Do not list gates. When the user asked for this page and no `[archify explainer: ...]` rules line is in context, end with the one-line mode offer from the Skill's Output section.
+After a pass, keep the reply readable on its own: the conclusion in one to three lines, then, as the last line, a Markdown link to the page with a descriptive title in the user's language, such as `[查看测试报告](/abs/path/test-report.html)`. Do not list gates, and do not replace the link with a directory, a log or `--open`. The same reply shape applies whether the page was requested or made by the proactive or always-on mode in the Skill's Choose the artifact section. When finalize does not pass and repair stops, answer in text, say the page was not produced, and give no page link.
+
+Link form: use the absolute local path as the Markdown link target, wrapped in `<...>` when it contains spaces, not `file://`. Hosts differ. A desktop or IDE chat that renders local Markdown links can open the page on click; a terminal interface may show it as styled text that does not open on click; for example, Codex CLI hyperlinks web URLs but not local files (openai/codex#25934, openai/codex#22585). Keep the absolute path so the page can still be opened by hand, and do not tell the user a link is clickable or was opened in a host where you have not seen that happen.
 
 Add `--repo-root <path>` when the draft uses `@code`. Finalize validates, atomically delivers and checks the HTML; it does not launch a browser, and its receipt records the browser gate as not run. A failure names the line, component, reason and a repair example; fix the draft and rerun to the same output path.
 
-Writing warnings apply the [Writing](#writing) rules: sentences over 50 Chinese units or 28 English words, paragraphs over four sentences or 120 units, chained “的”, light verbs, set phrases, openers and sign-offs, unbounded quantities, “以上/以下/以内” after a number, long English words with a common equivalent, qualifiers such as “示例”, “未实测” or “illustrative” outside scope, a mostly bold conclusion and a scope over 50 units. Each warning names the matched text and a repair; fix it when the repair keeps the meaning. `--writing warn|strict|off` sets the severity.
+Writing warnings apply the [Writing](#writing) rules: sentences over 50 Chinese units or 28 English words, paragraphs over four sentences or 120 units, light verbs, set phrases, openers and sign-offs, unbounded quantities, “以上/以下/以内” after a number, long English words with a common equivalent, a mostly bold conclusion and a scope over 50 units. Each warning names the matched text and a repair; fix it when the repair keeps the meaning. `--writing warn|strict|off` sets the severity.
 
 ## Panel replacement
 
