@@ -95,7 +95,18 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
       // Diagrams keep their ID because node and route links name it.
       if (block.id && block.id === panel.id && block.type !== 'diagram') block.id = `${panel.id}-${block.type}`;
       block.id ||= stable(block.type,`${panel.id}\0${JSON.stringify(block)}`);
-      if (block.type === 'comparison') for (const row of block.rows) row.id ||= stable('row', `${block.id}\0${row.label}`);
+      if (block.type === 'comparison') {
+        const occurrences = new Map();
+        for (const row of block.rows) {
+          if (row.id) continue;
+          const occurrence = occurrences.get(row.label) || 0;
+          occurrences.set(row.label, occurrence + 1);
+          // Repeated labels still represent separate rows. Keep the first automatic ID
+          // unchanged so existing row links and delivered source bindings remain valid.
+          const key = `${block.id}\0${row.label}`;
+          row.id = stable('row', occurrence ? `${key}\0${occurrence}` : key);
+        }
+      }
       const pointer = `/panels/${panelIndex}/blocks/${panel.blocks.length}`;
       panel.blocks.push(block); map(pointer,block,descriptor(at,until));
       const property = {facts:'entries',comparison:'rows',steps:'items',list:'items'}[block.type];
@@ -174,7 +185,7 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
         }
       }
       const allowed = {
-        source:['title','url','path','lines','revision'],meta:['locale','quality_profile','style','repo_url','repo_revision','repo_provider','repo_link_mode'],answer:['scope'],
+        source:['title','url','path','lines','revision'],meta:['locale','quality_profile','style','repo_url','repo_revision','repo_provider','repo_link_mode'],answer:['scope','span'],
         prose:['id','text'],list:['id','ordered'],callout:['id','level','title','text'],facts:['id'],metric:['id','label','value','limit','unit','note','typical'],steps:['id'],diagram:['id','source','spec','title','changes'],code:['id','source','language'],diff:['id','caption'],image:['id','path','alt','caption'],comparison:['id','columns','label'],chart:['id','title','type','data','x','y','unit']
       }[type];
       if (!allowed) { fail(at+1,'directive',`Unsupported component @${type}.`,'@facts\n| key | value |'); return; }
@@ -189,7 +200,7 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
         const pointer=`/sources/${document.sources.length}`;document.sources.push(source);map(pointer,source,descriptor(at,cursor));return;
       }
       if (type==='meta') { Object.assign(document.meta,select(a,['locale','quality_profile','style'])); if(a.repo_url || a.repo_revision) document.meta.repository={url:a.repo_url,revision:a.repo_revision,...(a.repo_provider?{provider:a.repo_provider}:{}),...(a.repo_link_mode?{link_mode:a.repo_link_mode}:{})}; for(const key of ['locale','quality_profile','style','repository'])if(document.meta[key]!==undefined)map(`/meta/${key}`,document.meta[key],descriptor(at,cursor));return; }
-      if (type==='answer') { if(a.scope!==undefined){document.answer.scope=a.scope;sourceMap['/answer/scope']=descriptor(at,cursor);}return; }
+      if (type==='answer') { for(const key of ['scope','span'])if(a[key]!==undefined){document.answer[key]=key==='span'?number(a[key],at,type):a[key];sourceMap[`/answer/${key}`]=descriptor(at,cursor);}return; }
       let block={type,...(a.id?{id:a.id}:{})};
       switch(type) {
         case 'prose': rowWidth(rows,1,1,type);block.text=a.text??rows.map(r=>r.cells[0]).join('\n');break;

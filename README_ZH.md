@@ -95,6 +95,8 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 可能是什么原因，应该怎么排查？
 ```
 
+默认情况下，遇到复杂流程、排查结果、方案对比或测试报告这类回答，agent 也会主动做一页。回复里照样先给能直接读懂的简短结论，最后一行是页面链接，比如“查看测试报告”。简短问答、只要文字的请求和生成失败的页面，都不会出现页面或链接。只想在要求时才做页面，直接告诉 agent，或者在它的全局规则文件（如 `~/.codex/AGENTS.md`、`~/.claude/CLAUDE.md`）里加一行 `[archify explainer: on-demand]`。`[archify explainer: always-on]` 会给每个得出结论的回答附一页精简页面；删掉这一行就回到默认行为。
+
 在线示例：[P99 延迟排查](https://archify.si/cases/explainer/p99-tail-latency.html) · [读 Archify 仓库：finalize 怎么保住旧产物](https://archify.si/cases/explainer/finalize-delivery.html) · [第一次租房要确认什么](https://archify.si/cases/explainer/first-rental.html) · [第一次打开 HTTPS 网站（英文）](https://archify.si/cases/explainer/tls-first-visit.html)
 
 <a id="sponsors"></a>
