@@ -130,7 +130,7 @@ targets preselected. Its transcript and measured effort are in
 [clean-session-baseline.md](clean-session-baseline.md).
 
 It found the analysis path and delivered a source-verified lead with no human
-hint. It selected the vendored-bundle false positives first, then a real
+hint. It selected the vendor-path complexity findings first, then a real
 `scripts` ↔ `website` cycle, then `commandDeliver` as “maintain as is with a
 test gap”. It did not select the built-in `priorities`, and it did not treat the
 501 complexity findings or the role/language exclusions as defects.

@@ -43,6 +43,9 @@ directly. It did not mine `raw-facts.json` beyond key inspection.
   `vendor/` is skipped by the internal-leak rule but not by complexity.
 - Recommendation: add `**/vendor/**` to `roles.generated` and test that a
   minified vendor file yields no complexity finding.
+- Scope, not accuracy: these 56 findings measure real complexity in third-party
+  bundles. The defect is that first-party analysis counts them, not that the
+  measurements are wrong.
 
 This claim was independently checked: the baseline has 56 findings under
 `/vendor/`, all in 12 files; the default roles do not include vendor; excluded
