@@ -201,18 +201,18 @@
     var fl = (c.findings || []).concat((c.fileList || []).flatMap(function (f) { return f.findings; }));
     var seen = {}; return fl.filter(function (f) { var k = f.id || f.code + JSON.stringify(f.subject); if (seen[k]) return false; seen[k] = true; return true; });
   }
-  function ref(file, line, rest, why, tone, rangeStart, rangeEnd) {
-    return '<button type="button" class="ref" data-file="' + esc(file) + '" data-line="' + line + '" data-range-start="' + (rangeStart || '') + '" data-range-end="' + (rangeEnd || '') + '" data-why="' + esc(why || '') + '" data-tone="' + (tone || '') + '"><b>' + esc(short(file)) + '</b> <em>(line ' + line + ')</em>' + (rest ? ' ' + rest : '') + '</button>';
+  function ref(file, line, rest, why, tone, rangeStart, rangeEnd, match) {
+    return '<button type="button" class="ref" data-file="' + esc(file) + '" data-line="' + line + '" data-range-start="' + (rangeStart || '') + '" data-range-end="' + (rangeEnd || '') + '" data-match="' + (match ? esc(JSON.stringify(match)) : '') + '" data-why="' + esc(why || '') + '" data-tone="' + (tone || '') + '"><b>' + esc(match ? file : short(file)) + '</b> <em>(' + (match ? 'lines ' + rangeStart + '–' + rangeEnd : 'line ' + line) + ')</em>' + (rest ? ' ' + rest : '') + '</button>';
   }
   function nextStepHtml(f) {
     var text = f.code === 'coupling/hub' ? 'Check whether dependencies cluster by responsibility before splitting this module.'
-      : f.code === 'redundancy/duplicate-block' ? 'Open two of the copies and compare them. If they must stay the same, move the lines into one function both places call; if they are expected to diverge, accept the finding with that reason.'
       : f.code === 'coupling/concentration' ? 'Decide whether this concentration is intended. A small shared kernel or one cohesive responsibility can be accepted with that reason; otherwise look for parts that change for different reasons or are used by only a few modules.'
       : f.code === 'coupling/import-cycle' ? 'Inspect the cited imports and initialization behavior before changing this dependency.'
       : f.code === 'coupling/cycle' ? 'Check which shared responsibility links these modules. A module cycle does not establish a file-level failure.'
       : f.code === 'architecture/boundary' ? 'Check what the cited imports need from the other layer: move it behind an interface in an allowed layer, or update the rule if this dependency is intended.'
       : f.code === 'coupling/internal-leak' ? 'List what the cited imports use, export it from one entry file of the module, and point the imports there. If deep imports are the convention here, declare the entry files in the analysis config instead.'
       : f.code === 'complexity/function' ? 'Start at the deepest nested block: extract it into a named helper, or return early for edge cases. Make sure the current behavior is covered by tests before restructuring.'
+      : f.code === 'redundancy/duplicate-block' ? 'Compare both uses and their callers. Share the code only when their behavior should change together.'
       : 'Review the evidence and assumptions before changing code.';
     return '<div class="next-step"><b>Suggested next step</b><p>' + esc(text) + '</p></div>';
   }
@@ -231,17 +231,6 @@
       ev += '<div class="ev" style="margin-top:4px">Where to look — click to see the code:</div>';
       ev += ref(f.subject.file, f.subject.line, '<span>' + esc(f.subject.function) + '() starts</span> <em>· ' + plural(f.evidence.length, 'line') + '</em>', 'The function this finding measures (lines ' + f.subject.line + '–' + f.subject.endLine + ').', tone, f.subject.line, f.subject.endLine);
       if (f.evidence.deepestLine && f.evidence.deepestLine !== f.subject.line) ev += ref(f.subject.file, f.evidence.deepestLine, '<span>deepest nesting (' + f.evidence.nesting + ' levels)</span>', 'The most deeply nested block; usually the best place to start simplifying.', tone, f.subject.line, f.subject.endLine);
-    }
-    if (f.code === 'redundancy/duplicate-block' && f.evidence && f.evidence.occurrences) {
-      ev += '<div class="ev" style="margin-top:4px">Every copy — click one to see the code:</div>';
-      f.evidence.occurrences.forEach(function (o, i) {
-        ev += ref(o.file, o.line, '<span>copy ' + (i + 1) + '</span> <em>· lines ' + o.line + '–' + o.endLine + '</em>', 'One of ' + plural(f.evidence.totalOccurrences, 'place') + ' with the same ' + plural(f.evidence.lines, 'code line') + '.', tone, o.line, o.endLine);
-      });
-      if (f.evidence.totalOccurrences > f.evidence.occurrences.length) ev += '<div class="ev">… ' + (f.evidence.totalOccurrences - f.evidence.occurrences.length) + ' more in findings.json</div>';
-    }
-    if (f.code === 'coupling/concentration' && f.subject && f.subject.file) {
-      ev += '<div class="ev" style="margin-top:4px">Where to look — click to see the code:</div>';
-      ev += ref(f.subject.file, 1, '<span>' + plural(f.evidence.loc, 'line') + '</span>', 'This file is longer than the configured ' + f.evidence.threshold.fileLines + ' lines.', tone);
     }
     if (f.evidence && f.evidence.imports && f.evidence.imports.length) {
       var isCycle = f.code === 'coupling/import-cycle' || f.code === 'coupling/cycle';
@@ -272,7 +261,7 @@
     return (compact ? '' : nextStepHtml(f)) + '<div class="finding ' + esc(f.severity) + '">' + ev + '<details class="technical"><summary>Rule details and alternatives</summary><b>' + esc(f.code) + '</b> · ' + esc(f.severity) + (f.id ? ' · ' + esc(f.id) : '') + '<p>' + esc(f.message) + '</p>' + fixes + '</details></div>';
   }
   // Source excerpt for one file:line, from the windows embedded at overlay time.
-  function showCode(file, line, why, tone, full, rangeStart, rangeEnd) {
+  function showCode(file, line, why, tone, full, rangeStart, rangeEnd, match) {
     readerPage('Source');
     var snip = (data.snippets || {})[file];
     line = Number.isInteger(line) && line > 0 ? line : null;
@@ -296,15 +285,16 @@
       var start = full ? 0 : line ? Math.max(0, Math.min(line - 5, snip.lines.length - 9)) : 0;
       var end = full ? snip.lines.length : Math.min(snip.lines.length, start + (line ? 9 : 12));
       h += '<div class="why">Lines ' + (start + 1) + '–' + end + ' of ' + snip.lines.length + (line || full ? '' : ' · opening lines, not finding evidence') + '</div>';
-      if (rangeStart && rangeEnd) h += '<div class="why">Highlighted range: lines ' + rangeStart + '–' + rangeEnd + (full ? '' : ' · excerpt only; expand for all of it') + '</div>';
+      if (match) h += '<div class="why duplicate-legend"><mark class="duplicate-match">Matched code</mark> · lines ' + rangeStart + '–' + rangeEnd + (full ? '' : ' · expand for the complete range') + '</div>';
+      else if (rangeStart && rangeEnd) h += '<div class="why">Highlighted function: lines ' + rangeStart + '–' + rangeEnd + (full ? '' : ' · excerpt only; expand for the complete function') + '</div>';
       if (snip.lines.length > (line ? 9 : 12)) h += '<button type="button" class="source-file source-toggle">' + (full ? 'Show excerpt' : 'Show full file') + '</button>';
-      h += '<pre' + (full ? '' : ' class="excerpt"') + '>';
+      h += '<pre class="' + (full ? '' : 'excerpt') + (match ? ' duplicate-source' : '') + '">';
       if (!start) h += deletion(0);
       snip.lines.forEach(function (text, i) {
         if (i < start || i >= end) return;
         var n = i + 1;
         var kind = added.has(n) ? 'added' : modified.has(n) ? 'modified' : '';
-        h += '<span class="ln' + (rangeStart && n >= rangeStart && n <= rangeEnd ? ' range-hit' : '') + (n === line ? ' hit ' + (tone || '') : '') + (kind ? ' diff-' + kind : '') + '"' + (kind ? ' title="' + (kind === 'added' ? 'Added' : 'Modified') + ' since base commit"' : '') + '><i>' + n + '</i>' + esc(text) + '</span>';
+        h += '<span class="ln' + (!match && rangeStart && n >= rangeStart && n <= rangeEnd ? ' range-hit' : '') + (n === line ? ' hit ' + (tone || '') : '') + (kind ? ' diff-' + kind : '') + '"' + (kind ? ' title="' + (kind === 'added' ? 'Added' : 'Modified') + ' since base commit"' : '') + '><i>' + n + '</i>' + (match ? duplicateText(text, n, match) : esc(text)) + '</span>';
         h += deletion(n);
       });
       h += '</pre>';
@@ -313,7 +303,7 @@
     codePane.hidden = false;
     document.documentElement.setAttribute('data-bauify-source', 'on');
     var sourceToggle = codePane.querySelector('.source-toggle');
-    if (sourceToggle) sourceToggle.addEventListener('click', function () { showCode(file, line, why, tone, !full, rangeStart, rangeEnd); });
+    if (sourceToggle) sourceToggle.addEventListener('click', function () { showCode(file, line, why, tone, !full, rangeStart, rangeEnd, match); });
     var backToSourceParent = function () { codePane.hidden = true; document.documentElement.removeAttribute('data-bauify-source'); readerPage(sourceParent); var active = detail.querySelector('.ref.active'); if (active) active.focus({ preventScroll: true }); detail.querySelectorAll('.ref.active').forEach(function (x) { x.classList.remove('active'); }); };
     codePane.querySelector('.close').addEventListener('click', backToSourceParent);
     codePane.querySelector('.source-back').addEventListener('click', backToSourceParent);
@@ -348,7 +338,8 @@
     detail.querySelectorAll('.ref').forEach(function (el) {
       el.addEventListener('click', function () {
         detail.querySelectorAll('.ref.active').forEach(function (x) { x.classList.remove('active'); }); el.classList.add('active');
-        showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), el.getAttribute('data-why'), el.getAttribute('data-tone'), false, Number(el.getAttribute('data-range-start')), Number(el.getAttribute('data-range-end')));
+        var match = el.getAttribute('data-match');
+        showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), el.getAttribute('data-why'), el.getAttribute('data-tone'), false, Number(el.getAttribute('data-range-start')), Number(el.getAttribute('data-range-end')), match ? JSON.parse(match) : null);
       });
     });
   }
@@ -358,17 +349,17 @@
     'signals-only': { tone: 'blue', text: 'Signals only' },
     'none-found': { tone: 'green', text: 'No findings within the checks that ran' }
   };
-  var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'redundancy/duplicate-block': 'Duplicate code', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions' };
+  var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions', 'redundancy/duplicate-block': 'Duplicate code' };
   var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java' };
   function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
   function toneOf(severity) { return severity === 'error' ? 'red' : severity === 'warning' ? 'amber' : 'blue'; }
   function modLabel(id) { return moduleInfo[id] ? moduleInfo[id].label : id; }
   function findingTitle(f) {
     var s = f.subject || {};
+    if (f.code === 'redundancy/duplicate-block') return 'Duplicate code';
     if (f.code === 'coupling/import-cycle' && s.files) return 'Import cycle · ' + plural(s.files.length, 'file');
     if (f.code === 'coupling/cycle' && s.modules) return 'Module cycle · ' + plural(s.modules.length, 'module');
     if (f.code === 'coupling/hub' && s.module) return modLabel(s.module) + ' connects many modules';
-    if (f.code === 'redundancy/duplicate-block' && f.evidence) return plural(f.evidence.lines, 'line') + ' repeated in ' + plural(f.evidence.totalOccurrences, 'place');
     if (f.code === 'coupling/concentration') return s.file ? short(s.file) + ' is a very large file' : modLabel(s.module) + ' concentrates the project';
     if (f.code === 'coupling/internal-leak' && s.module) return modLabel(s.module) + ' is imported through its internals';
     if (f.code === 'architecture/boundary' && s.boundary) return s.boundary.from + ' depends on ' + s.boundary.to;
@@ -386,8 +377,8 @@
   }
   function findingWhat(f) {
     var s = f.subject || {};
+    if (f.code === 'redundancy/duplicate-block' && f.evidence) return plural(f.evidence.tokens, 'matching token') + ' · ' + plural(f.evidence.lines, 'line') + (f.evidence.kind === 'renamed' ? ' · renamed identifiers' : ' · exact tokens');
     if (f.code === 'coupling/concentration' && f.evidence) return concentrationWhat(f.evidence);
-    if (f.code === 'redundancy/duplicate-block' && f.evidence) return f.evidence.occurrences.slice(0, 3).map(function (o) { return short(o.file) + ':' + o.line + '–' + o.endLine; }).join(' · ') + (f.evidence.totalOccurrences > 3 ? ' …' : '');
     if (s.files) return 'Files: ' + s.files.slice(0, 3).map(short).join(', ') + (s.files.length > 3 ? ' …' : '');
     if (s.modules) return 'Modules: ' + s.modules.slice(0, 4).map(modLabel).join(', ') + (s.modules.length > 4 ? ' …' : '');
     if (f.code === 'coupling/hub' && f.evidence) return f.evidence.fanIn + ' modules depend on it; it depends on ' + f.evidence.fanOut + '.';
@@ -401,6 +392,7 @@
     var where = ids.length ? ids.map(function (id) { return byId[id] ? byId[id].label : id; }).join(', ') : 'not on this diagram';
     var e = entryById[f.id];
     var s = f.subject || {}, first = (f.evidence && f.evidence.imports || [])[0];
+    if (f.code === 'redundancy/duplicate-block' && s.locations) return s.locations.map(function (loc) { return loc.file + ':' + loc.line; }).join(' ↔ ');
     var path = s.file ? s.file + (s.line ? ':' + s.line : '') : first ? first.file + ':' + first.line : '';
     return (path ? path + ' · ' : '') + where + (e && e.relatedIds.length ? ' · +' + e.relatedIds.length + ' related' : '');
   }
@@ -427,6 +419,8 @@
     if ((c.unmappedModules || []).length) lines.push(plural(c.unmappedModules.length, 'module') + ' not on this diagram');
     var run = (c.rules && c.rules.run) || [], off = (c.rules && c.rules.suppressed) || [];
     lines.push('Checked: ' + (run.length ? run.map(function (r) { return (GROUPS[r] || r).toLowerCase(); }).join(', ') : 'nothing') + (off.length ? ' · switched off: ' + off.join(', ') : ''));
+    var dup = duplicateCoverageLine(c);
+    if (dup) lines.push(dup.text);
     var b = c.boundaries;
     if (b) {
       lines.push('Boundaries: ' + plural(b.layers.length, 'layer') + ', ' + plural(b.rules, 'rule') + ' from the analysis config');
@@ -434,8 +428,17 @@
     }
     var missing = [['complexity/', 'complexity'], ['redundancy/', 'duplication'], ['architecture/', 'architecture boundaries (none configured)']].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push('Not checked: ' + missing.join(', '));
-    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length;
+    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (dup && !dup.complete);
     return '<details class="coverage"><summary>Coverage · ' + esc(LANGS[c.language] || c.language || 'Unknown') + ' · ' + (files.analyzed == null ? 'file count unavailable' : plural(files.analyzed, 'file')) + (incomplete ? ' · incomplete' : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
+  }
+  // Duplicate detection reports its own file coverage: files it skipped (vendored,
+  // below the token/line limits, unsupported) are not checked even with zero findings.
+  function duplicateCoverageLine(c) {
+    var run = (c && c.rules && c.rules.run) || [];
+    if (run.indexOf('redundancy/duplicate-block') === -1) return null;
+    var d = c.duplicates;
+    if (!d) return { complete: false, text: 'Duplicate code: file coverage unavailable · incomplete' };
+    return { complete: d.complete === true, text: 'Duplicate code: ' + d.analyzed + '/' + plural(d.selected, 'file') + ' analyzed' + (d.complete === true ? '' : ' · incomplete') };
   }
   // Since the previous run, and against the baseline. Fixed findings are no longer
   // in this result, so they are listed from the comparison itself.
@@ -477,6 +480,8 @@
     var checkedRules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
     var unchecked = [['redundancy/', 'duplicate code'], ['conventions/', 'project coding conventions']].filter(function (x) { return !checkedRules.some(function (r) { return r.indexOf(x[0]) === 0; }); }).map(function (x) { return x[1]; });
     if (unchecked.length) h += '<div class="coverage-notice">Not checked: ' + esc(unchecked.join(', ')) + '. See Coverage for the full scope.</div>';
+    var dupLine = duplicateCoverageLine(o.coverage);
+    if (dupLine && !dupLine.complete) h += '<div class="coverage-notice">' + esc(dupLine.text) + '. Files it did not analyze were not checked for duplicates. See Coverage for the full scope.</div>';
     h += reviewHtml(o.review);
     if (o.priorities.length) {
       var picks = o.priorities.map(function (id) { return findingById[id]; }).filter(Boolean);
@@ -534,7 +539,35 @@
     (f.moduleIds || []).forEach(function (id) { ((moduleInfo[id] || {}).fileList || []).forEach(function (file) { if (!files.some(function (v) { return v.path === file.path; })) files.push(file); }); });
     return { label: comps.map(function (c) { return c.label; }).join(', ') || 'not on this diagram', modules: mods, fileList: files, incoming: [], outgoing: [], findings: [f] };
   }
+  // Columns are one-based UTF-16 positions, with an exclusive end. Escape
+  // each piece separately so captured source can never become page markup.
+  function duplicateText(text, line, match) {
+    if (line < match.line || line > match.endLine || !Number.isInteger(match.column) || match.column < 1 || !Number.isInteger(match.endColumn) || match.endColumn < 1) return esc(text);
+    var start = line === match.line ? Math.min(text.length, match.column - 1) : 0;
+    var end = line === match.endLine ? Math.min(text.length, match.endColumn - 1) : text.length;
+    if (end <= start) return esc(text);
+    return esc(text.slice(0, start)) + '<mark class="duplicate-match">' + esc(text.slice(start, end)) + '</mark>' + esc(text.slice(end));
+  }
+  function duplicateEvidence(f) {
+    var h = '<section class="duplicate-evidence" aria-label="Duplicate code locations"><p class="duplicate-legend"><mark class="duplicate-match">Matched code</mark> is highlighted and underlined. Other text is context.</p>';
+    (f.subject.locations || []).slice(0, 2).forEach(function (loc) {
+      var match = { line: loc.line, endLine: loc.endLine, column: loc.column, endColumn: loc.endColumn };
+      var snip = (data.snippets || {})[loc.file];
+      h += '<div class="inline-evidence duplicate-location">' + ref(loc.file, loc.line, '', 'Read both matched ranges and their callers before changing code.', toneOf(f.severity), loc.line, loc.endLine, match);
+      if (!snip) { h += '<div class="ev">Source unavailable in this report. Open the file in your editor or re-analyze.</div></div>'; return; }
+      if (!Number.isInteger(loc.column) || !Number.isInteger(loc.endColumn)) h += '<div class="ev">Exact highlight unavailable: this result has no column coordinates.</div>';
+      var start = Math.max(0, loc.line - 1), end = Math.min(snip.lines.length, loc.endLine);
+      h += '<pre aria-label="Matched code in ' + esc(loc.file) + '">';
+      for (var i = start; i < end; i++) {
+        if (end - start > 24 && i === start + 8) { h += '<span class="duplicate-omitted">… ' + (end - start - 16) + ' matching lines omitted. Open the file above for the complete range.</span>'; i = end - 9; continue; }
+        h += '<span class="evidence-line"><span class="line-number">' + (i + 1) + '  </span>' + duplicateText(snip.lines[i], i + 1, match) + '</span>';
+      }
+      h += '</pre></div>';
+    });
+    return h + '</section>';
+  }
   function evidencePreview(f) {
+    if (f.code === 'redundancy/duplicate-block') return duplicateEvidence(f);
     var captured = (data.tasks || {})[f.id];
     var locations = captured ? captured.task.locations.filter(function (l) { return l.startLine; }).slice(0, 2) : [];
     if (!locations.length && f.subject && f.subject.file && f.subject.line) locations = [{ file: f.subject.file, startLine: f.subject.line, endLine: f.subject.endLine }];
@@ -626,16 +659,17 @@
     var scope = findingScope(f);
     setFocus(f.componentIds || []);
     var h = '<button class="close" aria-label="Close">×</button><button class="back" type="button">← Overview</button>';
-    h += '<div class="k">' + esc(GROUPS[f.code] || f.code) + ' · ' + esc(scope.label) + '</div><h3><i class="bauify-' + tone + '"></i>' + esc(findingTitle(f)) + '</h3>';
+    if (f.code !== 'redundancy/duplicate-block') h += '<div class="k">' + esc(GROUPS[f.code] || f.code) + ' · ' + esc(scope.label) + '</div>';
+    h += '<h3><i class="bauify-' + tone + '"></i>' + esc(findingTitle(f)) + '</h3>';
     var explanation = f.code === 'coupling/hub' ? 'High incoming and outgoing coupling; inspect responsibilities before deciding to split.'
-      : f.code === 'redundancy/duplicate-block' ? 'These lines are the same in every listed place, ignoring whitespace, comments and imports. A change to one copy has to be repeated in the others.'
       : f.code === 'coupling/concentration' ? 'Much of the project depends on, or lives in, this one place. These are static counts with their thresholds, not proof that it must be split.'
       : f.code === 'architecture/boundary' ? 'These imports break a boundary declared in the analysis config. The rule comes from the config, not from the diagram.'
       : f.code === 'coupling/internal-leak' ? (f.evidence && f.evidence.entrySource === 'config' ? 'These imports bypass the entry files declared in the analysis config.' : 'Other modules depend on this module\'s internal files, so moving or renaming any of them breaks importers. Deep imports can be a deliberate convention; this is a signal, not a defect.')
       : f.code === 'complexity/function' ? 'Cyclomatic complexity counts independent paths through the function. A high count is a maintenance signal, not a defect.' : lvl.text;
-    h += '<div class="level"><b>' + esc(lvl.name) + '</b> — ' + esc(findingWhat(f)) + '<br>' + esc(explanation) + '</div>';
+    h += '<div class="level"><b>' + esc(lvl.name) + '</b> — ' + esc(findingWhat(f)) + (f.code === 'redundancy/duplicate-block' ? '' : '<br>' + esc(explanation)) + '</div>';
     if (f.review && f.review.reason) h += '<p class="ev"><span class="badge-accepted">' + (f.review.status === 'accepted-changed' ? 'accepted · evidence changed' : f.severity === 'error' ? 'accepted · still to fix' : 'accepted') + '</span> ' + esc(f.review.reason) + (f.review.status === 'accepted-changed' ? ' — the code behind it changed since it was accepted; review it again.' : f.severity === 'error' ? ' — accepting it keeps CI from failing; the cycle is still there and stays red.' : '') + '</p>';
-    h += quickHandoff(f) + '<div class="k">Code evidence</div>' + evidencePreview(f);
+    h += (f.code === 'redundancy/duplicate-block' ? '' : quickHandoff(f)) + '<div class="k">Code evidence</div>' + evidencePreview(f);
+    if (f.code === 'redundancy/duplicate-block') h += quickHandoff(f);
     h += nextStepHtml(f) + taskHtml(f);
     if ((f.componentIds || []).length) h += '<button type="button" class="locate">Locate related components</button>';
     else h += '<p class="ev">Not mapped to this diagram. Use the code evidence above.</p>';

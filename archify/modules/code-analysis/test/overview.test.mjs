@@ -72,6 +72,18 @@ test('overview: coverage names what was analyzed, left out, and switched off', (
   assert.equal(buildOverview({ findings: [], graph }).coverage.files.analyzed, null, 'without facts the count is unknown, not zero');
 });
 
+test('overview: duplicate detection carries its own file coverage so an empty scan is not an all-clear', () => {
+  const rules = ['coupling/import-cycle', 'redundancy/duplicate-block'];
+  const coverage = (analyzed, omitted) => ({ coverage: { selected: ['src/a.ts', 'vendor/b.ts'], analyzed, omitted, complete: !omitted.length } });
+  const empty = buildOverview({ findings: [], graph, run: { rules, duplicates: coverage([], [{ file: 'src/a.ts', reason: 'not-reported-by-engine' }, { file: 'vendor/b.ts', reason: 'vendored' }]) } });
+  assert.equal(empty.verdict, 'none-found');
+  assert.ok(empty.coverage.rules.run.includes('redundancy/duplicate-block'));
+  assert.deepEqual(empty.coverage.duplicates, { analyzed: 0, selected: 2, omitted: 2, complete: false }, 'zero findings from zero analyzed files stays visibly incomplete');
+  const full = buildOverview({ findings: [], graph, run: { rules, duplicates: coverage(['src/a.ts', 'vendor/b.ts'], []) } });
+  assert.deepEqual(full.coverage.duplicates, { analyzed: 2, selected: 2, omitted: 0, complete: true });
+  assert.equal(buildOverview({ findings: [], graph, run: { rules: ['coupling/import-cycle'] } }).coverage.duplicates, null, 'not run: no duplicate coverage is invented');
+});
+
 test('extract: files of the language not analyzed are counted', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-mixed-'));
   fs.writeFileSync(path.join(dir, 'a.py'), 'import b\n');

@@ -63,7 +63,7 @@ test('AI task reader: evidence first, live validation, clipboard fallback, downl
   await navigate(view.url);
   await run("document.getElementById('code-analysis-start').click()");
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
-  assert.match(await run("document.getElementById('bauify-overview').innerText"), /Not checked: project coding conventions\. See Coverage/);
+  assert.match(await run("document.getElementById('bauify-overview').innerText"), /Not checked: duplicate code, project coding conventions/);
   assert.match(await run("document.querySelector('#bauify-overview .bauify-item .where').textContent"), /deeply_nested.*\.py:1/);
   await screenshot('overview-1440');
   const openFinding = async () => {
@@ -141,7 +141,7 @@ test('AI task reader: evidence first, live validation, clipboard fallback, downl
     await wait("document.documentElement.getAttribute('data-bauify') === 'on' && !document.getElementById('bauify-overview').hidden");
   };
   await reanalyze();
-  assert.equal(await run("JSON.parse(document.getElementById('bauify-analysis').textContent).totals.findings"), 123, '121 complex functions, many.py reported as a very large file, and its 120 copies of one function body reported as one duplicated block');
+  assert.equal(await run("JSON.parse(document.getElementById('bauify-analysis').textContent).totals.findings"), 122, '121 complex functions plus many.py itself, reported as a very large file');
   assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 3);
   await screenshot('many-390');
   fs.unlinkSync(manyFile); fs.writeFileSync(sourceFile, 'value = 1\n');

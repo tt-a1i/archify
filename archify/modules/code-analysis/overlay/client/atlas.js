@@ -4,7 +4,7 @@
   var atlas = JSON.parse(source.textContent);
   var root = document.documentElement;
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
-  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'redundancy/duplicate-block': 'Duplicate code', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations' };
+  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'redundancy/duplicate-block': 'Duplicate code' };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
@@ -104,7 +104,6 @@
       if (f.kind === 'cycle') { f.files.forEach(function (x) { sel.files[x] = true; }); sel.edges = f.path.map(function (x, i) { return [x, f.path[(i + 1) % f.path.length]]; }); }
       if (f.kind === 'module' || f.kind === 'area') sel.modules[f.module] = true;
       if (f.kind === 'file') { sel.files[f.file] = true; sel.anchor = f.file; }
-      if (f.kind === 'files') { f.files.forEach(function (x) { sel.files[x] = true; }); sel.anchor = f.files[0]; }
       if (f.kind === 'modules') f.modules.forEach(function (x) { sel.modules[x] = true; });
       if (f.kind === 'edges') { sel.edges = f.edges; f.edges.forEach(function (e) { sel.files[e[0]] = true; sel.files[e[1]] = true; }); }
       if (f.kind === 'edges' && f.module != null) { sel.arcs[f.module] = true; (f.entries || []).forEach(function (x) { sel.entries[x] = true; }); }
@@ -368,7 +367,6 @@
       if (f.kind === 'modules') what = f.modules.map(function (x) { return M[x].label; }).join(', ');
       if (f.kind === 'module' || f.kind === 'area') what = 'fan-in ' + M[f.module].fanIn + ' · fan-out ' + M[f.module].fanOut;
       if (f.kind === 'file') what = F[f.file][0];
-      if (f.kind === 'files') what = f.files.map(function (x) { return F[x][0].split('/').pop(); }).join(', ');
       if (f.kind === 'edges') what = plural(f.edges.length, 'import') + ' cross the rule.';
       if (f.kind === 'edges' && f.module != null) {
         var reachedIn = {}; f.edges.forEach(function (e) { reachedIn[e[1]] = true; });

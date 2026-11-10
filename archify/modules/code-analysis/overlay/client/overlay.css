@@ -199,6 +199,13 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-reader .inline-evidence .evidence-line { display: block; }
 #bauify-reader .inline-evidence .focus-line, #bauify-code .ln.range-hit { background: color-mix(in srgb, var(--backend-stroke, #159f88) 12%, transparent); }
 #bauify-reader .inline-evidence .line-number { color: var(--text-muted, #94a3b8); user-select: none; }
+#bauify-reader .duplicate-match { color: inherit; background: color-mix(in srgb, var(--backend-stroke, #159f88) 18%, transparent); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--backend-stroke, #159f88) 75%, currentColor); text-underline-offset: 3px; border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+#bauify-reader .duplicate-legend { margin: 8px 0; font-size: 12px; }
+#bauify-reader .duplicate-legend mark { padding: 1px 3px; }
+#bauify-reader .duplicate-location .ref { font-size: 12px; }
+#bauify-reader .duplicate-location pre { margin-bottom: 0; }
+#bauify-reader .duplicate-omitted { display: block; padding: 6px 0; color: var(--text-muted, #94a3b8); font: 12px/1.5 system-ui, sans-serif; }
+#bauify-code .duplicate-source .ln.hit { background: none; }
 #bauify-reader .ai-task { margin: 16px 0; padding: 12px 0; border-top: 1px solid var(--panel-border, #1e293b); border-bottom: 1px solid var(--panel-border, #1e293b); }
 #bauify-reader .ai-task > summary { color: var(--text, #f8fafc); font-weight: 600; }
 #bauify-reader .task-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }

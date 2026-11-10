@@ -136,6 +136,19 @@ export function comparability(before, after) {
   if (removed.length) add('rules-removed', `Rules that ran before did not run now: ${removed.join(', ')}.`);
   if (added.length) add('rules-added', `Rules ran now that did not before: ${added.join(', ')}.`);
   if (changed.length) add('rules-changed', `Rule logic changed: ${changed.join(', ')}.`);
+  const duplicateRule = 'redundancy/duplicate-block';
+  if (duplicateRule in rulesBefore || duplicateRule in rulesAfter) {
+    const left = before.duplicates, right = after.duplicates;
+    if (!left || !right) add('duplicates-context-missing', 'Duplicate detection did not record its engine and coverage in both runs.');
+    else {
+      if (JSON.stringify(left.engine) !== JSON.stringify(right.engine)) add('duplicates-engine-changed', 'The duplicate detector version or adapter changed.');
+      if (JSON.stringify(left.settings) !== JSON.stringify(right.settings)) add('duplicates-settings-changed', 'The effective duplicate detection settings changed.');
+      if (!left.coverage?.complete || !right.coverage?.complete) add('duplicates-coverage-incomplete', 'At least one duplicate scan omitted selected files or had no eligible input; absence of a clone does not establish a fix.');
+      const paths = (c, field) => [...(c?.coverage?.[field] || [])].sort(compareText);
+      if (JSON.stringify(paths(left, 'selected')) !== JSON.stringify(paths(right, 'selected'))
+        || JSON.stringify(paths(left, 'analyzed')) !== JSON.stringify(paths(right, 'analyzed'))) add('duplicates-scope-changed', 'The selected or analyzed files for duplicate detection changed.');
+    }
+  }
   const roles = (c) => (c?.excludedRoles || []).join(',');
   if (roles(before.coverage) !== roles(after.coverage)) add('scope-changed', 'Excluded file roles changed.');
   const newParseErrors = (after.coverage?.parseErrors || []).filter((f) => !(before.coverage?.parseErrors || []).includes(f));

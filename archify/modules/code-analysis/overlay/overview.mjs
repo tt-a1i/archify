@@ -152,7 +152,17 @@ function coverageOf({ graph, facts, unmapped, run }) {
     unmappedModules: unmapped.map((m) => m.id),
     // Declared layers and how many analyzed files each one matched; null when no boundaries are configured.
     boundaries: run.boundaries && facts ? layerCounts(run.boundaries, facts.files.filter((f) => !excludedRoles.has(f.role)).map((f) => f.path)) : null,
+    // Files the duplicate detector analyzed out of those selected for it; null when it did not run.
+    duplicates: duplicateCoverage(run.duplicates),
   };
+}
+
+function duplicateCoverage(analysis) {
+  const c = analysis?.coverage;
+  if (!c) return null;
+  const selected = (c.selected || []).length;
+  const analyzed = (c.analyzed || []).length;
+  return { analyzed, selected, omitted: (c.omitted || []).length, complete: c.complete === true && selected > 0 && analyzed === selected };
 }
 
 function isSubset(small, big) {

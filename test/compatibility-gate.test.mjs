@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { parse } from 'yaml';
+import { JSCPD_VERSION } from '../archify/modules/code-analysis/lib/duplicates.mjs';
 
 const manifest = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const ci = parse(fs.readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8'));
@@ -41,6 +42,11 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.equal(hermes.if, 'matrix.shard == 2');
   const moduleSuite = full.steps.find(step => step.run === 'npm --prefix archify run test:code-analysis');
   assert.equal(moduleSuite?.if, 'matrix.shard == 1', 'the Code Analysis module suite runs once, outside the root runner');
+  const duplicateTool = full.steps.find(step => step.name === 'Install Code Analysis duplicate detector');
+  assert.equal(duplicateTool?.if, moduleSuite.if, 'the real clone detector is installed in the shard that runs its integration tests');
+  assert.ok(duplicateTool.run.includes(`jscpd@${JSCPD_VERSION}`), 'CI must use the detector version accepted by the adapter');
+  assert.equal(moduleSuite.env.ARCHIFY_TEST_JSCPD, '${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd',
+    'real duplicate and six-language integration tests must execute instead of silently skipping in CI');
   assert.equal(full.steps.filter(step => step.run === 'npm run test:generated').length, 1);
   const coreGenerated = canonical.steps.find(step => step.run === 'npm run test:generated');
   assert.equal(coreGenerated.if, "needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'");
