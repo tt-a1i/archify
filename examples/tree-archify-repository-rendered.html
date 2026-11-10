@@ -12064,25 +12064,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var metrics = contentMetrics();
         if (!metrics) return null;
         var camera = sampleRenderedState();
-        var x;
+        // The visible window starts where the container's scroll offset and
+        // the camera translation meet: a zoomed drag moves state.x while
+        // scrollLeft stays fixed, so the viewport must account for both
+        // (and for the zoom) or the overview map keeps showing the left
+        // edge while the reader sees the right edge. x and width are the
+        // same in both branches, so they are computed once here.
+        var x = viewBox.x + (((container.scrollLeft - camera.x) / camera.scale) - metrics.offsetX) / metrics.scale;
+        var width = Math.min(viewBox.width, Math.min(metrics.width, container.clientWidth) / camera.scale / metrics.scale);
         var y;
-        var width;
         var height;
         if (window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram') && camera.scale >= 1) {
-          // The visible window starts where the container's scroll offset and
-          // the camera translation meet: a zoomed drag moves state.x while
-          // scrollLeft stays fixed, so the viewport must account for both
-          // (and for the zoom) or the overview map keeps showing the left
-          // edge while the reader sees the right edge. y and height stay
-          // full-diagram here; the window intersection below clips them.
-          x = viewBox.x + (((container.scrollLeft - camera.x) / camera.scale) - metrics.offsetX) / metrics.scale;
+          // y and height stay full-diagram here; the window intersection below clips them.
           y = viewBox.y;
-          width = Math.min(viewBox.width, Math.min(metrics.width, container.clientWidth) / camera.scale / metrics.scale);
           height = viewBox.height;
         } else {
-          x = viewBox.x + (((container.scrollLeft - camera.x) / camera.scale) - metrics.offsetX) / metrics.scale;
           y = viewBox.y + ((-camera.y / camera.scale) - metrics.offsetY) / metrics.scale;
-          width = Math.min(viewBox.width, Math.min(metrics.width, container.clientWidth) / camera.scale / metrics.scale);
           height = Math.min(viewBox.height, metrics.height / camera.scale / metrics.scale);
         }
         width = Math.max(1, Math.min(viewBox.width, width));

@@ -873,6 +873,34 @@ test('touch drag pans the full distance once zoomed above 100% (issue #1253)', {
   assert.ok(Math.abs((result.state.y - start.state.y) - 90) < 2, `camera must follow the finger 90px: ${JSON.stringify(result)}`);
 });
 
+// One touch-drag helper for the three zoomed-wide-diagram browser tests
+// (reach, zoom-out, overview map): find a draggable point, then stroke
+// through it. Takes the test's run/send/stable closures so each test keeps
+// its own session; returns the camera state after the stroke settles.
+async function touchStroke(run, send, stable, dx, dy) {
+  const start = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const box = c.getBoundingClientRect();
+    for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
+      for (let x = box.left + 40; x < box.right - 40; x += 20) {
+        const el = document.elementFromPoint(x, y);
+        if (el && !el.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') && !el.closest('[data-node-id]') && !el.closest('[data-relationship-hit-key]')) return { x, y };
+      }
+    }
+    return null;
+  })()`);
+  assert.ok(start, 'a drag start point is needed for every stroke');
+  const points = Array.from({ length: 16 }, (_, i) => ({ x: start.x + (dx * i) / 15, y: start.y + (dy * i) / 15, id: 1 }));
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[0]] });
+  for (const point of points.slice(1)) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
+    await new Promise((resolve) => setTimeout(resolve, 16));
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await stable();
+  return run(`Archify.view.state()`);
+}
+
 test('touch drag reaches both edges of a zoomed wide diagram (Devin review on #1254)', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser camera checks.',
 }, async (t) => {
@@ -919,38 +947,13 @@ test('touch drag reaches both edges of a zoomed wide diagram (Devin review on #1
   // combined scrollLeft - x offset to the SVG's scaled width.
   const maxTravel = geometry.svgWidth * geometry.scale - geometry.clientWidth;
   assert.ok(maxTravel > 0, `the fixture must be wider than the viewport: ${JSON.stringify(geometry)}`);
-  async function findStart() {
-    return run(`(() => {
-      const c = document.querySelector('.diagram-container');
-      const box = c.getBoundingClientRect();
-      for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
-        for (let x = box.left + 40; x < box.right - 40; x += 20) {
-          const el = document.elementFromPoint(x, y);
-          if (el && !el.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') && !el.closest('[data-node-id]') && !el.closest('[data-relationship-hit-key]')) return { x, y };
-        }
-      }
-      return null;
-    })()`);
-  }
-  async function stroke(dx, dy) {
-    const start = await findStart();
-    assert.ok(start, 'a drag start point is needed for every stroke');
-    const points = Array.from({ length: 16 }, (_, i) => ({ x: start.x + (dx * i) / 15, y: start.y + (dy * i) / 15, id: 1 }));
-    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[0]] });
-    for (const point of points.slice(1)) {
-      await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
-      await new Promise((resolve) => setTimeout(resolve, 16));
-    }
-    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await stable();
-    return run(`(() => ({ state: Archify.view.state(), scrollLeft: document.querySelector('.diagram-container').scrollLeft }))()`);
-  }
+  const stroke = (dx, dy) => touchStroke(run, send, stable, dx, dy);
   // Drag left in strokes until the camera stops: the far edge must be reachable.
   let left = await run(`Archify.view.state()`);
   for (let i = 0; i < 12; i++) {
     const next = await stroke(-150, 0);
-    if (next.state.x >= left.x - 0.5) break;
-    left = next.state;
+    if (next.x >= left.x - 0.5) break;
+    left = next;
   }
   const expectedLeft = geometry.scrollLeft - maxTravel;
   assert.ok(Math.abs(left.x - expectedLeft) < 30,
@@ -967,8 +970,8 @@ test('touch drag reaches both edges of a zoomed wide diagram (Devin review on #1
   let right = left;
   for (let i = 0; i < 12; i++) {
     const next = await stroke(150, 0);
-    if (next.state.x <= right.x + 0.5) break;
-    right = next.state;
+    if (next.x <= right.x + 0.5) break;
+    right = next;
   }
   assert.ok(Math.abs(right.x - geometry.scrollLeft) < 30,
     `the camera must return to the left edge: x=${right.x}, scrollLeft=${geometry.scrollLeft}`);
@@ -1014,32 +1017,7 @@ test('zooming a panned wide diagram out to 100% hands navigation back to native 
   })()`);
   const maxTravel = geometry.svgWidth * geometry.scale - geometry.clientWidth;
   assert.ok(maxTravel > 0, `the fixture must be wider than the viewport: ${JSON.stringify(geometry)}`);
-  async function findStart() {
-    return run(`(() => {
-      const c = document.querySelector('.diagram-container');
-      const box = c.getBoundingClientRect();
-      for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
-        for (let x = box.left + 40; x < box.right - 40; x += 20) {
-          const el = document.elementFromPoint(x, y);
-          if (el && !el.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') && !el.closest('[data-node-id]') && !el.closest('[data-relationship-hit-key]')) return { x, y };
-        }
-      }
-      return null;
-    })()`);
-  }
-  async function stroke(dx, dy) {
-    const start = await findStart();
-    assert.ok(start, 'a drag start point is needed for every stroke');
-    const points = Array.from({ length: 16 }, (_, i) => ({ x: start.x + (dx * i) / 15, y: start.y + (dy * i) / 15, id: 1 }));
-    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[0]] });
-    for (const point of points.slice(1)) {
-      await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
-      await new Promise((resolve) => setTimeout(resolve, 16));
-    }
-    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await stable();
-    return run(`Archify.view.state()`);
-  }
+  const stroke = (dx, dy) => touchStroke(run, send, stable, dx, dy);
   // Pan right to the far edge first: without a retained negative x there is
   // nothing for the zoom-out to clear.
   let left = await run(`Archify.view.state()`);
@@ -1117,32 +1095,7 @@ test('the overview map viewport follows camera panning on a zoomed wide diagram 
   for (let i = 0; i < 3; i++) await run(`Archify.view.zoomIn()`);
   await stable();
   assert.equal(await run(`Archify.view.state().scale`), 1.75);
-  async function findStart() {
-    return run(`(() => {
-      const c = document.querySelector('.diagram-container');
-      const box = c.getBoundingClientRect();
-      for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
-        for (let x = box.left + 40; x < box.right - 40; x += 20) {
-          const el = document.elementFromPoint(x, y);
-          if (el && !el.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') && !el.closest('[data-node-id]') && !el.closest('[data-relationship-hit-key]')) return { x, y };
-        }
-      }
-      return null;
-    })()`);
-  }
-  async function stroke(dx, dy) {
-    const start = await findStart();
-    assert.ok(start, 'a drag start point is needed for every stroke');
-    const points = Array.from({ length: 16 }, (_, i) => ({ x: start.x + (dx * i) / 15, y: start.y + (dy * i) / 15, id: 1 }));
-    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[0]] });
-    for (const point of points.slice(1)) {
-      await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
-      await new Promise((resolve) => setTimeout(resolve, 16));
-    }
-    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await stable();
-    return run(`Archify.view.state()`);
-  }
+  const stroke = (dx, dy) => touchStroke(run, send, stable, dx, dy);
   // Pan right to the far edge: the camera translation is now large while
   // scrollLeft stays fixed, which is exactly the case the map viewport
   // used to ignore (it reported the left edge while the reader saw the
