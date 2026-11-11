@@ -102,7 +102,13 @@ const ACCEPTANCE = {
 //   ids:      finding ids to include (1–EXCERPT.maxLocations; order kept)
 //   commands: optional verification commands already known to be valid for
 //             this project, as [{ command, purpose, source }]; never invented
-export function buildTask({ findings, facts, ids, commands = [], review = null }) {
+export function buildTask(options) {
+  return buildTaskWithContext(options);
+}
+
+// The batch owns this context. Standalone calls get a fresh one; no captured
+// source or finding index survives into a later analysis or public call.
+function buildTaskWithContext({ findings, facts, ids, commands = [], review = null }, context = {}) {
   if (!findings || !Array.isArray(findings.diagnostics)) fail('task/input-invalid', 'buildTask needs a findings document.', { supportedFixes: ['pass findings.json of the analysis run'] });
   if (!facts || !Array.isArray(facts.files)) fail('task/input-invalid', 'buildTask needs the raw facts of the same run.', { supportedFixes: ['pass raw-facts.json of the analysis run'] });
   if (findings.repository?.snapshotId && facts.repository?.snapshotId && findings.repository.snapshotId !== facts.repository.snapshotId) {
@@ -112,13 +118,13 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
   }
   const wanted = [...new Set(ids || [])];
   if (!wanted.length) fail('task/no-findings', 'Select at least one finding for the task.', { supportedFixes: ['pass one or more finding ids'] });
-  const byId = new Map(findings.diagnostics.map((d) => [d.id, d]));
+  const byId = context.byId ??= new Map(findings.diagnostics.map((d) => [d.id, d]));
   const unknown = wanted.filter((id) => !byId.has(id));
   if (unknown.length) fail('task/finding-unknown', `Unknown finding id${unknown.length === 1 ? '' : 's'}: ${unknown.join(', ')}.`, {
     subject: { ids: unknown }, supportedFixes: ['use ids from findings.json of the same run', 're-run the analysis if the ids come from an older page'],
   });
   const selected = wanted.map((id) => byId.get(id));
-  const source = new Map(facts.files.map((f) => [f.path, typeof f.sourceText === 'string' ? splitLines(f.sourceText) : null]));
+  const source = context.source ??= new Map(facts.files.map((f) => [f.path, typeof f.sourceText === 'string' ? splitLines(f.sourceText) : null]));
 
   const locations = [];
   const truncated = [];
@@ -197,9 +203,10 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
 // finding without a server. Status stays `captured`.
 export function buildTaskPayloads({ findings, facts, ids = null, commands = [], review = null }) {
   const out = {};
+  const context = {};
   for (const d of findings.diagnostics) {
     if (ids && !ids.includes(d.id)) continue;
-    const task = buildTask({ findings, facts, ids: [d.id], commands, review });
+    const task = buildTaskWithContext({ findings, facts, ids: [d.id], commands, review }, context);
     out[d.id] = { task, markdown: renderTaskMarkdown(task) };
   }
   return out;
@@ -255,7 +262,11 @@ export function withExcerpt(loc, lines) {
   // How often the same lines occur in the captured file. More than once (two
   // identical methods, a repeated import line) means a later match elsewhere
   // cannot be taken as this location having moved.
-  const capturedOccurrences = countOccurrences(lines, loc.endLine - loc.startLine + 1, sha256);
+  // A different first line cannot match for valid Unicode. UTF-8 hashing folds
+  // lone surrogates to U+FFFD, so historical JSON strings containing them keep
+  // the original digest-only search across every candidate window.
+  const firstLine = lines.some(line => /[\uD800-\uDFFF]/u.test(line)) ? null : lines[loc.startLine - 1];
+  const capturedOccurrences = findRanges(lines, loc.endLine - loc.startLine + 1, sha256, firstLine).length;
   const segments = [];
   const push = (a, b) => {
     a = Math.max(1, a); b = Math.min(lines.length, b);
@@ -287,10 +298,6 @@ export function findRanges(lines, length, sha, firstLine = null) {
     if (rangeDigest(lines, start, start + length - 1) === sha) starts.push(start);
   }
   return starts;
-}
-
-function countOccurrences(lines, length, sha) {
-  return findRanges(lines, length, sha).length;
 }
 
 export function rangeDigest(lines, startLine, endLine) {
