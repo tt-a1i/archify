@@ -34,8 +34,8 @@ function analyze(t, files, language = 'py', options = {}) {
 function python(root, code) {
   const commands = process.env.BAUIFY_PYTHON ? [[process.env.BAUIFY_PYTHON]] : [['python3'], ['python'], ['py', '-3']];
   for (const [command, ...args] of commands) {
-    const result = spawnSync(command, [...args, '-c', code], { cwd: root, encoding: 'utf8', timeout: 10000 });
-    if (!result.error) return result;
+    const probe = spawnSync(command, [...args, '-c', 'import sys; sys.exit(0)'], { cwd: root, encoding: 'utf8', timeout: 10000 });
+    if (!probe.error && probe.status === 0) return spawnSync(command, [...args, '-c', code], { cwd: root, encoding: 'utf8', timeout: 10000 });
   }
   assert.fail('Python interpreter unavailable');
 }
