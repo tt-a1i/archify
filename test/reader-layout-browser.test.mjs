@@ -804,8 +804,22 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
 
       const wide = { ...compact, segments: [], cards: [],
         messages: [{ from: 'client', to: 'worker', y: 160, label: 'Check status' }] };
-      await load(renderSequence('short-wide-sequence', wide), { width: 1396, height: 480 });
+      // Isolate the 1px height-rounding boundary from a prior settle cap: the
+      // cap can otherwise mask the wrong fit decision on this same canvas.
+      const shortWideFile = renderSequence('short-wide-sequence', wide);
+      const html = fs.readFileSync(shortWideFile, 'utf8');
+      const capAnchor = '        var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth, settledCap || desiredWidth));';
+      assert.ok(html.includes(capAnchor), 'the test fixture can isolate the fit decision');
+      fs.writeFileSync(shortWideFile, html.replace(capAnchor,
+        '        if (automaticSequence && viewBox.width === 560 && viewBox.height === 327) settledCap = 0;\n' + capAnchor));
+      await load(shortWideFile, { width: 1396, height: 480 });
       const shortWide = await stage('short-wide-sequence');
+      assert.equal(shortWide.sourceWidth, 560, 'exercise the reproduced 560 × 327 boundary');
+      assert.equal(Number(shortWide.geometry[0].split(/\s+/)[3]), 327);
+      if (evidence) {
+        const capture = await send('Page.captureScreenshot', { format: 'png' });
+        fs.writeFileSync(path.join(evidence, 'short-wide-sequence.png'), Buffer.from(capture.data, 'base64'));
+      }
       assert.ok(shortWide.sourceWidth < 960 && shortWide.sourceWidth /
         Number(shortWide.geometry[0].split(/\s+/)[3]) >= 1.55, 'exercise a small wide canvas');
       fits(shortWide);
