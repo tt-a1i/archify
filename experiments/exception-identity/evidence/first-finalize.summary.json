@@ -1,0 +1,54 @@
+{
+  "note": "Portable summary; not an original provenance receipt",
+  "result": {
+    "schemaVersion": 1,
+    "ok": true,
+    "command": "finalize",
+    "status": "pass",
+    "type": "architecture",
+    "quality": "showcase",
+    "specification": {
+      "path": "experiments/exception-identity/candidate.json",
+      "sha256": "4d2d4c6340236472af47a128dba79702b197379172ed67b264422d3bd333cb84",
+      "bytes": 2666
+    },
+    "artifact": {
+      "path": "experiments/exception-identity/exception-identity.html",
+      "sha256": "273db33079fca2b2daef57aedca6275448ee06ba10517fdf771b71e30bf4e6da",
+      "bytes": 859916
+    },
+    "gates": {
+      "validate": "pass",
+      "deliver": "pass",
+      "check": "pass",
+      "browser-check": "pass"
+    },
+    "diagnostics": [],
+    "diagnosticSummary": {
+      "total": 0,
+      "shown": 0,
+      "truncated": false
+    },
+    "evidence": {
+      "receipt": "experiments/exception-identity/exception-identity.finalize.json",
+      "summaryReceipt": "experiments/exception-identity/exception-identity.finalize-summary.json",
+      "browserCheckReceipt": "experiments/exception-identity/exception-identity.browser-check.json"
+    },
+    "update": {
+      "status": "current",
+      "installedVersion": "3.2.1-dev.1",
+      "availableVersion": "3.2.0",
+      "releaseNotes": null,
+      "checkedAt": "2026-10-26T23:50:51.017Z",
+      "source": "network",
+      "noticeRequired": false,
+      "noticeText": null
+    },
+    "visualReview": "not-requested",
+    "durationMs": 2098,
+    "browserCheck": {
+      "requested": true,
+      "ran": true
+    }
+  }
+}

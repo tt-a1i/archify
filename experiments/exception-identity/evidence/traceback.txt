@@ -1,0 +1,25 @@
+  | ExceptionGroup: outer-marker (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "fixture.py", line 18, in construct
+    |     raise inner from outer
+    | ExceptionGroup: inner-marker (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "fixture.py", line 12, in construct
+      |     raise ValueError("leaf-marker")
+      | ValueError: leaf-marker
+      +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+  + Exception Group Traceback (most recent call last):
+  |   File "fixture.py", line 18, in construct
+  |     raise inner from outer
+  | ExceptionGroup: inner-marker (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "fixture.py", line 12, in construct
+    |     raise ValueError("leaf-marker")
+    | ValueError: leaf-marker
+    +------------------------------------
