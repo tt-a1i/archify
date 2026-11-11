@@ -209,3 +209,22 @@ test('timeline: automatic breaks leave room for proportional time on a narrow ax
   const receipt = JSON.parse(spawnSync(process.execPath, [checker, result.output], { encoding: 'utf8' }).stdout);
   assert.equal(receipt.ok, true, JSON.stringify(receipt.checks.filter((entry) => !entry.ok)));
 });
+
+test('timeline: repeated DST wall-clock hours keep distinct elapsed instants and offsets', () => {
+  const diagram = clone(small);
+  diagram.meta.timezone = 'America/New_York';
+  diagram.events = [
+    { id: 'second_hour', at: '2026-11-01T01:30:00-05:00', title: 'After fallback', lane: diagram.lanes[0].id },
+    { id: 'first_hour', at: '2026-11-01T01:30:00-04:00', title: 'Before fallback', lane: diagram.lanes[0].id },
+  ];
+  const report = layoutOf(diagram);
+  assert.deepEqual(report.events.map(event => event.id), ['first_hour', 'second_hour']);
+  assert.equal(report.events[1].t - report.events[0].t, 60 * 60 * 1000);
+  assert.ok(report.events[1].x > report.events[0].x);
+  const result = run(diagram);
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(result.output, 'utf8');
+  const node = id => html.match(new RegExp(`<g [^>]*data-node-id="${id}"[^>]*>`))?.[0];
+  assert.match(node('first_hour'), /UTC-04:00/);
+  assert.match(node('second_hour'), /UTC-05:00/);
+});
