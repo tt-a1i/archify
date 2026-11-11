@@ -48,6 +48,7 @@ export function checkCloudflareOutput(root) {
         assert.ok(candidates.some(candidate => fs.existsSync(candidate) && fs.statSync(candidate).isFile()), `${page}: missing local target ${value}`);
       }
       for (const child of node.childNodes ?? []) visit(child);
+      if (node.tagName === 'template' && node.content) visit(node.content);
     };
     visit(document);
   }
