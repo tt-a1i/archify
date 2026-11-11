@@ -112,6 +112,10 @@ The following are executed authored-fixture checks, separate from the actual too
 
 The serve case confirms malformed and missing reports return structured errors while the saved successful HTML/findings and its tasks remain available. Restoring a report permits a fresh run, and a retired finding cannot be exported as current. A later test simplification removed redundant response-body cloning; the affected serve case was rerun successfully.
 
+## Selected UI screenshots
+
+The draft PR includes selected screenshots captured from the real local service: [diagnostic counts on the directory map](../assets/code-analysis-c7/overview-map.jpg), [finding filters and list](../assets/code-analysis-c7/findings-list.jpg), and [the original rule with captured code evidence](../assets/code-analysis-c7/finding-evidence.jpg). These use the pinned Trail of Bits source and the explicitly labeled Ruff 0.17.1 compatibility report with 77 results. The map groups real directories and does not assert inferred runtime dependencies. Raw source snapshots and the rest of the local evidence remain outside this checkout.
+
 ## Follow-up and remaining validation
 
 The draft-preparation review identified acceptance transfer between repeated SARIF results, extension results deduplicated together, related locations presented as primary, an old page receiving a changed external task claim, and indistinguishable same-tool source labels. These five defects received focused corrections and regressions. Explicit SARIF `toolComponent.index: -1` was excluded as a defect after checking the specification body; schema acceptance alone was not treated as proof that the producer input was valid.
