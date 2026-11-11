@@ -1,0 +1,42 @@
+{
+  "mode": "shared",
+  "flow": "delivered",
+  "testCount": 1,
+  "expected": 1,
+  "nodeCount": 3,
+  "url": "http://127.0.0.1:18745/experiments/task-flow-tests/upstream-frontend/pages/shared.html#view=graph&focus=flow%3Adelivered",
+  "title": "task-view 研究夹具 · shared",
+  "nodes": [
+    {
+      "text": "新增：交付条件\ncode · comparison.mjs:137–139\n+1",
+      "classes": "gn modified unresolved",
+      "rect": [
+        812.8,
+        467.3,
+        242.9,
+        59.3
+      ]
+    },
+    {
+      "text": "回归测试：缺失产物\ntest · diagram-quality-comparison.test.mjs:85–95",
+      "classes": "gn modified unresolved",
+      "rect": [
+        370.3,
+        467.3,
+        330.7,
+        59.3
+      ]
+    },
+    {
+      "text": "报告展示缺测原因\ncode · score-report.mjs:55\n+1",
+      "classes": "gn modified unresolved",
+      "rect": [
+        1167.5,
+        467.3,
+        221.3,
+        59.3
+      ]
+    }
+  ],
+  "text": "task-view\n/\n/\n研究夹具·未校验 / shared\n0\nverified\n0\ncontradicted\n5\nunresolved\n4\nagent statements\n0\nerrors\n1\nwarning\n0/5\nread\nSUMMARY\nAGENT SAYS\n\n研究夹具 · 未运行上游校验器/历史测试。比较代码节点关联与路径声明。\n\nREPOSITORIES\n0\nFINDINGS\n1\nOther warnings\n1\nAGENT NOTES\n5\n研究夹具：只运行固定上游前端。没有运行 Go、schema/Git 校验或历史测试。0 verified 不表示引用不存在；0 errors 不表示校验成功。\n节点由夹具作者标为 Unresolved（本轮未确认，并非已查找失败）；边为 Agent statement。归档片段不是完整文件；旧 reference-matches 未作为本轮 verified 导入。\nmissing：缺产物且存在历史评分的源码阅读；未执行历史代码；步骤说明：条件不是 delivered 且存在历史评分，追加未绑定原因。 / 报告对象把 evidence.missing 暴露为 evidenceMissing。；路径声明的测试：regression → guard\ndelivered：已交付分支的源码阅读；未执行历史代码；步骤说明：条件为 delivered，遍历 storedReviews 并绑定评分。 / 报告对象仍列出 evidenceMissing，缺失数组可以为空。；路径声明的测试：未声明（不等于无测试）\nomitted-link：人为遗漏关联的合成对照；Git 映射与源码未变；步骤说明：与缺产物路径相同，但作者没有给出测试关联。 / 没有声明关联，不表示不存在测试，也不表示代码有缺陷。；路径声明的测试：未声明（不等于无测试）\nGenerated 2026/10/29 04:35:28 · task-view a3fa217 frontend fixture; validator NOT RUN\nFlows\n3\nGraph\n5\nDiff map\n0\nClaims\n0\n产物已交付：沿用历史评分\nCollapse all\nUnchanged (0)\nTests (1)\n→\n↓\n新增：交付条件\ncode · comparison.mjs:137–139\n+1\n回归测试：缺失产物\ntest · diagram-quality-comparison.test.mjs:85–95\n报告展示缺测原因\ncode · score-report.mjs:55\n+1\nREFERENCE STATUS\nVerified\nContradicted\nUnresolved\nAgent statement\nCHANGE\nAdded\nModified\nDeleted\nUnchanged\nEDGES\nVerified site\nNo reference"
+}

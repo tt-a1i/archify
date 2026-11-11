@@ -1,0 +1,117 @@
+[
+  {
+    "name": "clone",
+    "argv": [
+      "git",
+      "clone",
+      "--shared",
+      "--no-checkout",
+      "ARCHIVED_WORKSPACE",
+      "repository"
+    ],
+    "exitCode": 0,
+    "seconds": 0.061793875007424504,
+    "stdoutBytes": 0,
+    "stderrBytes": 35
+  },
+  {
+    "name": "checkout",
+    "argv": [
+      "git",
+      "-C",
+      "repository",
+      "checkout",
+      "--detach",
+      "ed62bfefaf490e831259261fdc12f985267590fb"
+    ],
+    "exitCode": 0,
+    "seconds": 0.4995373749989085,
+    "stdoutBytes": 0,
+    "stderrBytes": 95
+  },
+  {
+    "name": "status-before",
+    "argv": [
+      "git",
+      "-C",
+      "repository",
+      "status",
+      "--porcelain"
+    ],
+    "exitCode": 0,
+    "seconds": 0.15514437500678468,
+    "stdoutBytes": 0,
+    "stderrBytes": 0
+  },
+  {
+    "name": "head",
+    "argv": [
+      "git",
+      "-C",
+      "repository",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exitCode": 0,
+    "seconds": 0.020352584004285745,
+    "stdoutBytes": 41,
+    "stderrBytes": 0
+  },
+  {
+    "name": "shared-review-validate",
+    "argv": [
+      "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+      "validate",
+      "shared-review.json",
+      "--format",
+      "json"
+    ],
+    "exitCode": 1,
+    "seconds": 0.4105753750045551,
+    "stdoutBytes": 3070,
+    "stderrBytes": 0
+  },
+  {
+    "name": "shared-review-invalid-range-validate",
+    "argv": [
+      "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+      "validate",
+      "shared-review-invalid-range.json",
+      "--format",
+      "json"
+    ],
+    "exitCode": 1,
+    "seconds": 0.4836068339936901,
+    "stdoutBytes": 3506,
+    "stderrBytes": 0
+  },
+  {
+    "name": "shared-review-open",
+    "argv": [
+      "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+      "open",
+      "shared-review.json",
+      "--out",
+      "native.html",
+      "--no-browser"
+    ],
+    "exitCode": 1,
+    "seconds": 0.529006249998929,
+    "stdoutBytes": 98,
+    "stderrBytes": 2044
+  },
+  {
+    "name": "status-after",
+    "argv": [
+      "git",
+      "-C",
+      "repository",
+      "status",
+      "--porcelain"
+    ],
+    "exitCode": 0,
+    "seconds": 0.15299274999415502,
+    "stdoutBytes": 0,
+    "stderrBytes": 0
+  }
+]

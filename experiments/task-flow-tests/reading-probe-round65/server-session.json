@@ -1,0 +1,7 @@
+{
+  "chunk_id": "fad699",
+  "wall_time_seconds": 0.010683208,
+  "exit_code": 0,
+  "original_token_count": 68,
+  "output": "127.0.0.1 - - [29/Oct/2026 22:54:05] \"GET /upstream-cli/native/final.html HTTP/1.1\" 200 -\n127.0.0.1 - - [29/Oct/2026 22:55:26] \"GET /final/review.html HTTP/1.1\" 200 -\nServing HTTP on 127.0.0.1 port 8882 (http://127.0.0.1:8882/) ...\n\nKeyboard interrupt received, exiting.\n"
+}

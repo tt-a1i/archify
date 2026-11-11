@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "author": "Codex 实验作者；路径和测试关联未经历史提交作者确认",
+  "knownTests": ["regression"],
+  "flows": [
+    {
+      "id": "delivered",
+      "title": "产物已交付：沿用历史评分",
+      "scope": "已交付分支的源码阅读；未执行历史代码",
+      "path": ["guard", "report"],
+      "details": ["条件为 delivered，遍历 storedReviews 并绑定评分。", "报告对象仍列出 evidenceMissing，缺失数组可以为空。"],
+      "testLinks": []
+    },
+    {
+      "id": "missing",
+      "title": "缺少产物：记录评分未绑定",
+      "scope": "缺产物且存在历史评分的源码阅读；未执行历史代码",
+      "path": ["guard", "report"],
+      "details": ["条件不是 delivered 且存在历史评分，追加未绑定原因。", "报告对象把 evidence.missing 暴露为 evidenceMissing。"],
+      "testLinks": [
+        {"test": "regression", "step": "guard", "why": "测试源码移除产物，断言 delivery 为 unverified、human 为 null，并检查缺失原因。"}
+      ]
+    },
+    {
+      "id": "omitted-link",
+      "title": "对照：移除测试关联声明",
+      "scope": "人为遗漏关联的合成对照；Git 映射与源码未变",
+      "synthetic": true,
+      "path": ["guard", "report"],
+      "details": ["与缺产物路径相同，但作者没有给出测试关联。", "没有声明关联，不表示不存在测试，也不表示代码有缺陷。"],
+      "testLinks": []
+    }
+  ]
+}

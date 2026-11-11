@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: normal, missing-artifact and synthetic omission keep distinct test associations
+ok 1 - normal, missing-artifact and synthetic omission keep distinct test associations
+  ---
+  duration_ms: 1.526208
+  type: 'test'
+  ...
+# Subtest: step targets, linked test and original snippets remain one identity across projections
+ok 2 - step targets, linked test and original snippets remain one identity across projections
+  ---
+  duration_ms: 0.537375
+  type: 'test'
+  ...
+# Subtest: changed, missing or forged mapping references cannot inherit reused verification
+ok 3 - changed, missing or forged mapping references cannot inherit reused verification
+  ---
+  duration_ms: 0.281542
+  type: 'test'
+  ...
+# Subtest: unknown node and non-directed path fail instead of drawing a misleading walk
+ok 4 - unknown node and non-directed path fail instead of drawing a misleading walk
+  ---
+  duration_ms: 0.184917
+  type: 'test'
+  ...
+# Subtest: test links cannot point outside the path or invent a test result
+ok 5 - test links cannot point outside the path or invent a test result
+  ---
+  duration_ms: 0.237209
+  type: 'test'
+  ...
+# Subtest: duplicate flow, step and test-link identity is rejected
+ok 6 - duplicate flow, step and test-link identity is rejected
+  ---
+  duration_ms: 0.259708
+  type: 'test'
+  ...
+# Subtest: an authored alternate one-step reading remains allowed without new topology
+ok 7 - an authored alternate one-step reading remains allowed without new topology
+  ---
+  duration_ms: 0.4465
+  type: 'test'
+  ...
+# Subtest: a delivered-only sidecar cannot inherit missing-branch links or a three-path headline
+ok 8 - a delivered-only sidecar cannot inherit missing-branch links or a three-path headline
+  ---
+  duration_ms: 0.178834
+  type: 'test'
+  ...
+# Subtest: builder refuses an occupied output directory without changing existing contents
+ok 9 - builder refuses an occupied output directory without changing existing contents
+  ---
+  duration_ms: 48.296667
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 115.450875

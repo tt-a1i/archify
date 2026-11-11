@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-27",
+  "implementation": "0d5f46834bbe8e631b6c20d2acc81c206583812d",
+  "artifactSha256": "f8c908b1d9e4e2eccf127387d886eba425aa06106448fbd212eac931f6f4b17b",
+  "tool": "ego-browser",
+  "observations": [
+    "Light1440x900 main overview makes missing-branch test link and not-run status visible.",
+    "Started first step group, advanced to second step, ended presentation, followed regression source link to #source-regression.",
+    "Actual Tab traversal with no focus injection reached three source links at44-46 and Archify footer at47; see tab-traversal.json. This does not rewrite the failed automated keyboard-check receipt.",
+    "Dark1440x900 overview and390x844 dark viewport captured and visually inspected.390 page has no document-level horizontal overflow; long code remains locally horizontally scrollable.",
+    "No human comprehension-speed or assistive-technology acceptance claimed."
+  ],
+  "browserGate": "Existing visual-check still fails with16 keyboard traversal diagnostics across4 states; retained in final/captures/summary.json.",
+  "images": [
+    {
+      "path": "root-review/footer-tab.png",
+      "pixels": [
+        1440,
+        900
+      ],
+      "sha256": "97aa677cdc0958ac52f72949205dc791c89106a4a7bba4341b9b842717b3a68d"
+    },
+    {
+      "path": "root-review/mobile-dark.png",
+      "pixels": [
+        390,
+        844
+      ],
+      "sha256": "db4f19fc9a71058bb12d091a8d7d65a682b737cd97de7dab471a4ad283485170"
+    },
+    {
+      "path": "root-review/overview-dark.png",
+      "pixels": [
+        1440,
+        900
+      ],
+      "sha256": "c7388fb90c79ac7fda726d341bdba1bea6c21341eb0c2fe21c4a8dbfda76898c"
+    },
+    {
+      "path": "root-review/overview-light.png",
+      "pixels": [
+        1440,
+        900
+      ],
+      "sha256": "c29656d7faf285ea8be29644a9506c598db59f15611248fbba41b262d709e467"
+    },
+    {
+      "path": "root-review/test-source.png",
+      "pixels": [
+        1440,
+        900
+      ],
+      "sha256": "b09a769735bcdab16098404e35508bb393cee130664291696b8089b04a1d7439"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+startedAt 2026-10-29T14:55:56.873Z
+[p1 "这条改动路径，关联了哪个测试？ · Archify" | space "Archify research 20261026"(17): 1 managed, 0 untracked — p1* "这条改动路径，关联了哪个测试？ · Archify"]
+root
+  container
+    container
+      container
+        container
+          text "同一组变更节点"
+          button [ref=73]
+            svg_root
+            text "打开交互图"
+        image "同一组变更节点"
+          image "新增：交付条件 作者声明 · 非运行轨迹 报告展示缺测原因 作者声明 · 非运行轨迹 声明：缺测呈现 图例 后端"
+            text "新增：交付条件"
+            text "作者声明 · 非运行轨迹"
+            text "报告展示缺测原因"
+            text "作者声明 · 非运行轨迹"
+            text "声明：缺测呈现"
+      container
+        paragraph
+          text "产物已交付：沿用历史评分"
+          text "。已交付分支的源码阅读；未执行历史代码。"
+        container
+          button [ref=78]
+            text "▶ 逐步看"
+          ordered_list
+            list_item
+              text "1"
+              anchor [ref=79, url=http://127.0.0.1:8882/final/review.html#change-path]
+                text "新增：交付条件"
+                text "↗"
+              paragraph
+                text "条件为 delivered，遍历 storedReviews 并绑定评分。 此步骤未声明测试关联。"
+            list_item
+              text "2"
+              anchor [ref=80, url=http://127.0.0.1:8882/final/review.html#change-path]
+                text "报告展示缺测原因"
+                text "↗"
+              paragraph
+                text "报告对象仍列出 evidenceMissing，缺失数组可以为空。 此步骤未声明测试关联。"
+        paragraph
+          text "本路径未分配的已知测试："
+          anchor [ref=81, url=http://127.0.0.1:8882/final/review.html#source-regression]
+            text "回归测试：缺失产物"
+          text "。未分配不等于没有测试。"
+        paragraph
+          text "对照：移除测试关联声明"
+          text "。合成对照。人为遗漏关联的合成对照；Git 映射与源码未变。"
+        container
+          button [ref=82]
+            text "▶ 逐步看"
+          ordered_list
+            list_item
+              text "1"
+              anchor [ref=83, url=http://127.0.0.1:8882/final/review.html#change-path]
+                text "新增：交付条件"
+                text "↗"
+              paragraph
+                text "与缺产物路径相同，但作者没有给出测试关联。 此步骤未声明测试关联。"
+            list_item
+              text "2"
+              anchor [ref=84, url=http://127.0.0.1:8882/final/review.html#change-path]
+                text "报告展示缺测原因"
+                text "↗"
+              paragraph
+                text "没有声明关联，不表示不存在测试，也不表示代码有缺陷。 此步骤未声明测试关联。"
+        paragraph
+          text "本路径未分配的已知测试："
+          anchor [ref=85, url=http://127.0.0.1:8882/final/review.html#source-regression]
+            text "回归测试：缺失产物"
+          text "。未分配不等于没有测试。"
+    container
+      anchor "新增：交付条件" [ref=86, loc=css:a[aria-label="新增：交付条件"], url=http://127.0.0.1:8882/final/review.html#node-guard]
+        text "2"
+      heading
+        text "新增：交付条件"
+      button [ref=87]
+        text "追问"
+
+screenshot ARCHIVED_RUNTIME/archify/other-paths.png
+finishedAt 2026-10-29T14:55:57.471Z
+

@@ -1,0 +1,174 @@
+{
+  "initialRemovedAtFields": [
+    {
+      "path": "/nodes/0/ref/at",
+      "value": "de004edf47228b6134fd3d29ef91cd5e010c867b"
+    },
+    {
+      "path": "/nodes/1/ref/at",
+      "value": "ed62bfefaf490e831259261fdc12f985267590fb"
+    },
+    {
+      "path": "/nodes/2/ref/at",
+      "value": "ed62bfefaf490e831259261fdc12f985267590fb"
+    },
+    {
+      "path": "/nodes/3/ref/at",
+      "value": "de004edf47228b6134fd3d29ef91cd5e010c867b"
+    },
+    {
+      "path": "/nodes/4/ref/at",
+      "value": "ed62bfefaf490e831259261fdc12f985267590fb"
+    }
+  ],
+  "finalAtFields": [],
+  "otherwiseEqualAfterRepositoryPathNormalization": true,
+  "finalResults": {
+    "commands": [
+      {
+        "name": "shared-review-validate",
+        "argv": [
+          "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+          "validate",
+          "shared-review.json",
+          "--format",
+          "json"
+        ],
+        "exitCode": 0,
+        "seconds": 0.3735507499950472,
+        "stdoutBytes": 1294,
+        "stderrBytes": 0
+      },
+      {
+        "name": "shared-review-invalid-range-validate",
+        "argv": [
+          "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+          "validate",
+          "shared-review-invalid-range.json",
+          "--format",
+          "json"
+        ],
+        "exitCode": 1,
+        "seconds": 0.38849604199640453,
+        "stdoutBytes": 2057,
+        "stderrBytes": 0
+      },
+      {
+        "name": "shared-review-open",
+        "argv": [
+          "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+          "open",
+          "shared-review.json",
+          "--out",
+          "native.html",
+          "--no-browser"
+        ],
+        "exitCode": 0,
+        "seconds": 0.4564092500077095,
+        "stdoutBytes": 104,
+        "stderrBytes": 0
+      }
+    ],
+    "validate": {
+      "valid": true,
+      "exitCode": 0,
+      "schemaVersion": 1,
+      "errors": [],
+      "warnings": [
+        {
+          "code": "no_language",
+          "path": "/nodes/0/ref",
+          "repo": "archify",
+          "file": "benchmarks/diagram-quality/comparison.mjs",
+          "message": "benchmarks/diagram-quality/comparison.mjs matches no language; it is shown as plain text",
+          "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+        },
+        {
+          "code": "no_language",
+          "path": "/nodes/2/ref",
+          "repo": "archify",
+          "file": "test/diagram-quality-comparison.test.mjs",
+          "message": "test/diagram-quality-comparison.test.mjs matches no language; it is shown as plain text",
+          "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+        },
+        {
+          "code": "no_language",
+          "path": "/nodes/3/ref",
+          "repo": "archify",
+          "file": "benchmarks/diagram-quality/score-report.mjs",
+          "message": "benchmarks/diagram-quality/score-report.mjs matches no language; it is shown as plain text",
+          "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+        }
+      ],
+      "summary": {
+        "verified": 5,
+        "contradicted": 0,
+        "unresolved": 0,
+        "agentStatements": 9
+      }
+    },
+    "invalidRangeValidate": {
+      "valid": false,
+      "exitCode": 1,
+      "schemaVersion": 1,
+      "errors": [
+        {
+          "code": "range_out_of_bounds",
+          "path": "/nodes/1/ref",
+          "status": "unresolved",
+          "repo": "archify",
+          "file": "benchmarks/diagram-quality/comparison.mjs",
+          "lines": [
+            999999,
+            999999
+          ],
+          "message": "lines 999999-999999 end past the last line (158) of benchmarks/diagram-quality/comparison.mjs",
+          "hint": "the file has 158 lines in this state; adjust the range"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "unmentioned_hunk",
+          "repo": "archify",
+          "file": "benchmarks/diagram-quality/comparison.mjs",
+          "lines": [
+            137,
+            139
+          ],
+          "message": "changed lines not covered by any node",
+          "hint": "add a node with a range covering lines 137-139, or explain in notes"
+        },
+        {
+          "code": "no_language",
+          "path": "/nodes/0/ref",
+          "repo": "archify",
+          "file": "benchmarks/diagram-quality/comparison.mjs",
+          "message": "benchmarks/diagram-quality/comparison.mjs matches no language; it is shown as plain text",
+          "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+        },
+        {
+          "code": "no_language",
+          "path": "/nodes/2/ref",
+          "repo": "archify",
+          "file": "test/diagram-quality-comparison.test.mjs",
+          "message": "test/diagram-quality-comparison.test.mjs matches no language; it is shown as plain text",
+          "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+        },
+        {
+          "code": "no_language",
+          "path": "/nodes/3/ref",
+          "repo": "archify",
+          "file": "benchmarks/diagram-quality/score-report.mjs",
+          "message": "benchmarks/diagram-quality/score-report.mjs matches no language; it is shown as plain text",
+          "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+        }
+      ],
+      "summary": {
+        "verified": 4,
+        "contradicted": 0,
+        "unresolved": 1,
+        "agentStatements": 9
+      }
+    }
+  }
+}

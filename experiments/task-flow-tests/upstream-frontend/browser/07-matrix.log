@@ -1,0 +1,57 @@
+[
+  {
+    "mode": "shared",
+    "flow": "missing",
+    "testCount": 1,
+    "nodeCount": 3
+  },
+  {
+    "mode": "shared",
+    "flow": "delivered",
+    "testCount": 1,
+    "nodeCount": 3
+  },
+  {
+    "mode": "shared",
+    "flow": "omitted-link",
+    "testCount": 1,
+    "nodeCount": 3
+  },
+  {
+    "mode": "legacy-only",
+    "flow": "missing",
+    "testCount": 0,
+    "nodeCount": 2
+  },
+  {
+    "mode": "legacy-only",
+    "flow": "delivered",
+    "testCount": 0,
+    "nodeCount": 2
+  },
+  {
+    "mode": "legacy-only",
+    "flow": "omitted-link",
+    "testCount": 0,
+    "nodeCount": 2
+  },
+  {
+    "mode": "occurrences",
+    "flow": "missing",
+    "testCount": 1,
+    "nodeCount": 3
+  },
+  {
+    "mode": "occurrences",
+    "flow": "delivered",
+    "testCount": 0,
+    "nodeCount": 2
+  },
+  {
+    "mode": "occurrences",
+    "flow": "omitted-link",
+    "testCount": 0,
+    "nodeCount": 2
+  }
+]
+

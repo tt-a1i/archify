@@ -1,0 +1,250 @@
+startedAt 2026-10-29T14:55:26.923Z
+info { url: 'http://127.0.0.1:8882/final/review.html', title: '这条改动路径，关联了哪个测试？ · Archify', w: 1512, h: 762, sx: 0, sy: 0, pw: 1512, ph: 2895 }
+viewport { width: 1512, height: 762, devicePixelRatio: 2 }
+[p1 "这条改动路径，关联了哪个测试？ · Archify" | space "Archify research 20261026"(17): 1 managed, 0 untracked — p1* "这条改动路径，关联了哪个测试？ · Archify"]
+root
+  anchor [ref=64, loc=href:/final/review.html#board, url=http://127.0.0.1:8882/final/review.html#board]
+    text "跳至正文"
+  container
+    container
+      heading
+        text "这条改动路径，关联了哪个测试？"
+      container
+        group "主题"
+          button [ref=65]
+            text "系统"
+          button [ref=66]
+            text "浅色"
+          button [ref=67]
+            text "深色"
+        button "样式" [ref=68, loc=css:button[aria-label="样式"]]
+          text "简洁"
+          svg_root
+        button [ref=69]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=70]
+            text "追问"
+        container
+          paragraph
+            text "逐步对照测试关联声明；所列历史测试未执行。"
+          ordered_list
+            list_item
+              text "1"
+              text "3 条声明路径复用同一份固定 Git 映射。"
+            list_item
+              text "2"
+              text "步骤、测试关联与未分配测试分开呈现。"
+            list_item
+              text "3"
+              text "引用吻合只说明代码指针吻合。"
+        paragraph
+          text "适用于"
+          text "固定历史提交"
+          text "作者编写路径"
+          text "非运行轨迹"
+      container
+        container
+          anchor "沿同一张图比较路径与测试声明" [ref=71, loc=css:a[aria-label="沿同一张图比较路径与测试声明"], url=http://127.0.0.1:8882/final/review.html#paths]
+            text "1"
+          heading
+            text "沿同一张图比较路径与测试声明"
+          button [ref=72]
+            text "追问"
+        container
+          container
+            container
+              text "同一组变更节点"
+              button [ref=73]
+                svg_root
+                text "打开交互图"
+            image "同一组变更节点"
+              image "新增：交付条件 作者声明 · 非运行轨迹 报告展示缺测原因 作者声明 · 非运行轨迹 声明：缺测呈现 图例 后端"
+                text "新增：交付条件"
+                text "作者声明 · 非运行轨迹"
+                text "报告展示缺测原因"
+                text "作者声明 · 非运行轨迹"
+                text "声明：缺测呈现"
+                text "图例"
+                text "后端"
+          container
+            container
+              heading
+                text "声明关联，未执行"
+              paragraph
+                text "路径与关联由实验作者编写。源码引用吻合不证明代码正确或测试通过。正常路径未分配回归测试，不表示它没有测试。"
+            paragraph
+              text "缺少产物：记录评分未绑定"
+              text "。缺产物且存在历史评分的源码阅读；未执行历史代码。"
+            container
+              button [ref=74]
+                text "▶ 逐步看"
+              ordered_list
+                list_item
+                  text "1"
+                  anchor [ref=75, url=http://127.0.0.1:8882/final/review.html#change-path]
+                    text "新增：交付条件"
+                    text "↗"
+                  paragraph
+                    text "条件不是 delivered 且存在历史评分，追加未绑定原因。 声明关联："
+                    anchor [ref=76, url=http://127.0.0.1:8882/final/review.html#source-regression]
+                      text "回归测试：缺失产物"
+                    text "；未执行。测试源码移除产物，断言 delivery 为 unverified、human 为 null，并检查缺失原因。"
+                list_item
+                  text "2"
+                  anchor [ref=77, url=http://127.0.0.1:8882/final/review.html#change-path]
+                    text "报告展示缺测原因"
+                    text "↗"
+                  paragraph
+                    text "报告对象把 evidence.missing 暴露为 evidenceMissing。 此步骤未声明测试关联。"
+            paragraph
+              text "本路径的已知测试均有声明关联；未执行，不表示测试覆盖完整。"
+            paragraph
+              text "产物已交付：沿用历史评分"
+              text "。已交付分支的源码阅读；未执行历史代码。"
+            button [ref=78]
+              text "▶ 逐步看"
+            ordered_list
+              list_item
+                text "1"
+                anchor [ref=79, url=http://127.0.0.1:8882/final/review.html#change-path]
+                  text "新增：交付条件"
+                  text "↗"
+                paragraph
+                  text "条件为 delivered，遍历 storedReviews 并绑定评分。 此步骤未声明测试关联。"
+              list_item
+                text "2"
+                anchor [ref=80, url=http://127.0.0.1:8882/final/review.html#change-path]
+                  text "报告展示缺测原因"
+                  text "↗"
+                paragraph
+                  text "报告对象仍列出 evidenceMissing，缺失数组可以为空。 此步骤未声明测试关联。"
+            paragraph
+              text "本路径未分配的已知测试："
+              anchor [ref=81, url=http://127.0.0.1:8882/final/review.html#source-regression]
+                text "回归测试：缺失产物"
+              text "。未分配不等于没有测试。"
+            paragraph
+              text "对照：移除测试关联声明"
+              text "。合成对照。人为遗漏关联的合成对照；Git 映射与源码未变。"
+            button [ref=82]
+              text "▶ 逐步看"
+            ordered_list
+              list_item
+                text "1"
+                anchor [ref=83, url=http://127.0.0.1:8882/final/review.html#change-path]
+                  text "新增：交付条件"
+                  text "↗"
+                paragraph
+                  text "与缺产物路径相同，但作者没有给出测试关联。 此步骤未声明测试关联。"
+              list_item
+                text "2"
+                anchor [ref=84, url=http://127.0.0.1:8882/final/review.html#change-path]
+                  text "报告展示缺测原因"
+                  text "↗"
+                paragraph
+                  text "没有声明关联，不表示不存在测试，也不表示代码有缺陷。 此步骤未声明测试关联。"
+            paragraph
+              text "本路径未分配的已知测试："
+              anchor [ref=85, url=http://127.0.0.1:8882/final/review.html#source-regression]
+                text "回归测试：缺失产物"
+              text "。未分配不等于没有测试。"
+      container
+        container
+          anchor "新增：交付条件" [ref=86, loc=css:a[aria-label="新增：交付条件"], url=http://127.0.0.1:8882/final/review.html#node-guard]
+            text "2"
+          heading
+            text "新增：交付条件"
+          button [ref=87]
+            text "追问"
+        paragraph
+          text "我的解释：只有 delivered 才复用历史评分，否则记录评分无法绑定的缺测原因。此代码引用吻合不能证明所有评分流程正确。"
+        paragraph
+          text "固定源码位置"
+          anchor [ref=88, loc=href:/final/review.html#source-ref-guard, url=http://127.0.0.1:8882/final/review.html#source-ref-guard]
+            text "1"
+          text "。复用原映射的引用吻合结果，本轮未重做 Git 核对。"
+        container
+          text "head · L137–L139 · 原映射摘录"
+          text "js"
+          button [ref=89]
+            text "复制"
+          text "const storedReviews=original.human?.reviews??[]; if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review); else if(storedReviews.length)evid..."
+      container
+        container
+          anchor "报告展示缺测原因" [ref=90, loc=css:a[aria-label="报告展示缺测原因"], url=http://127.0.0.1:8882/final/review.html#node-report]
+            text "3"
+          heading
+            text "报告展示缺测原因"
+          button [ref=91]
+            text "追问"
+        paragraph
+          text "我的解释：报告详情新增 evidenceMissing，供读者看到历史评分没有绑定的原因。具体页面效果仍需独立浏览器验收。"
+        paragraph
+          text "固定源码位置"
+          anchor [ref=92, loc=href:/final/review.html#source-ref-report, url=http://127.0.0.1:8882/final/review.html#source-ref-report]
+            text "2"
+          text "。复用原映射的引用吻合结果，本轮未重做 Git 核对。"
+        container
+          text "head · L55–L55 · 原映射摘录"
+          text "js"
+          button [ref=93]
+            text "复制"
+          container [ref=94]
+            text "const defects={evidenceMissing:evidence.missing??[],semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row..."
+      container
+        container
+          anchor "回归测试：缺失产物" [ref=95, loc=css:a[aria-label="回归测试：缺失产物"], url=http://127.0.0.1:8882/final/review.html#node-regression]
+            text "4"
+          heading
+            text "回归测试：缺失产物"
+          button [ref=96]
+            text "追问"
+        paragraph
+          text "我的解释：新增测试构造历史评分但缺少产物的情形，断言无人工分并保留报告。这里只审阅测试源码，本实验没有执行该历史测试。"
+        paragraph
+          text "固定源码位置"
+          anchor [ref=97, loc=href:/final/review.html#source-ref-regression, url=http://127.0.0.1:8882/final/review.html#source-ref-regression]
+            text "3"
+          text "。复用原映射的引用吻合结果，本轮未重做 Git 核对。测试源码，不是执行结果。"
+        container
+          text "head · L85–L95 · 原映射摘录"
+          text "js"
+          button [ref=98]
+            text "复制"
+          container [ref=99]
+            text "test('stored ratings with a missing artifact do not abort the comparison or gain human credit',async t=>{ const dir=temp(t),{plan,write}=comparisonFixture(dir); const receipt=JSON.parse(fs.readFileSyn..."
+    container
+      container
+        heading
+          text "来源"
+        ordered_list
+          list_item
+            anchor [ref=100, url=https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/comparison.mjs#L137-L139]
+              text "新增：交付条件 · benchmarks/diagram-quality/comparison.mjs:137–139"
+          list_item
+            anchor [ref=101, url=https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/score-report.mjs#L55-L55]
+              text "报告展示缺测原因 · benchmarks/diagram-quality/score-report.mjs:55–55"
+          list_item
+            anchor [ref=102, url=https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/test/diagram-quality-comparison.test.mjs#L85-L95]
+              text "回归测试：缺失产物 · test/diagram-quality-comparison.test.mjs:85–95"
+      anchor [ref=103, loc=href:https://github.com/tt-a1i/archify, url=https://github.com/tt-a1i/archify]
+        svg_root
+        text "Archify"
+        text "把你想理解、规划或分享的事，变成可以互动的可视化作品。"
+      paragraph
+        text "4 个面板"
+        text "·"
+        text "1 张图已通过结构校验"
+        text "·"
+        text "3 个来源"
+
+finishedAt 2026-10-29T14:55:27.396Z
+

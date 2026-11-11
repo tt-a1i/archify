@@ -1,0 +1,37 @@
+{
+  "kind": "authored summary of observed failures; not raw tool output",
+  "items": [
+    {
+      "action": "GitHub connector guessed internal/render/assets/page.html",
+      "result": "404; corrected to index.html after reading html.go"
+    },
+    {
+      "action": "GitHub connector elk.bundled.js",
+      "result": "400; file may be too large or unsupported; fetched same pinned raw URL with Python urllib and verified Git blob"
+    },
+    {
+      "action": "ego-browser nodejs path/to/file",
+      "result": "accepts at most one source argument; corrected using documented -e await import(fileURL)"
+    },
+    {
+      "action": "early CLI log redirection",
+      "result": "01-shared.log and 02-shared.log empty because stderr was not redirected; subsequent calls capture both streams"
+    },
+    {
+      "action": "browser/09-inspector.mjs",
+      "result": "Stale ref @820; used observed tab role/order CSS selector in final script"
+    },
+    {
+      "action": "fixture data",
+      "result": "Empty findings, invalid generated date, note suppressing code table, agent status for referenced nodes and generic depends_on labels corrected; initial artifacts retained."
+    },
+    {
+      "action": "ELK tag source lookup",
+      "result": "Guessed v0.11.0 ref returned 404; GitHub connector tag collection returned unsupported endpoint; one attempted parse of error content failed. Git ls-remote verified actual refs/tags/0.11.0 at 37e798513db6e88b2e205b8239ed4e387d5f24d0."
+    },
+    {
+      "action": "Full git diff --cached --check",
+      "result": "Exit 2 for exact raw log EOF blank lines and original vendor whitespace. Scoped check excluding source/ and browser/*.log passed; raw bytes retained."
+    }
+  ]
+}

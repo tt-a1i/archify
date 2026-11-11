@@ -1,0 +1,13 @@
+你是独立阅读参与者。只从给定的实际网页回答下列问题，不预设结论。该任务研究页面能提供的证据，无法确定时明确说明。
+使用 ego-browser（先读 /Users/tsk/.agents_skills/ego-browser/SKILL.md 并运行 ego-browser skill），复用已授权 TaskSpace 17 的 p1，进入给定 URL。不要新建空间、不要 finish 空间。只有你正在操作该页。可自由使用完整网页的备注、图、差异、Inspector、源码和其它现有交互；不限制到某个面板。
+浏览器操作仅用 Ego 文档 API。可读取页面实际呈现的 DOM 文本和截图；不得读取隐藏 app state、内嵌 JSON/script、源 HTML 文件、仓库文件、其它实验结果或外部网页；不得用 shell/fetch 代替页面阅读。文件读取只限浏览器技能/指南和你自己的输出记录。不得改动网页/原始产物，只做正常阅读交互。
+你并非代码库唯一参与者，不得修改或回滚他人文件。独占写入给定 output 目录。按顺序保存完整 browser-NN.mjs、对应 stdout/stderr（含失败）、开始/结束 ISO 时间、实际 viewport、你看到的关键证据原文和动作顺序。保留最多两张能支持结论的真实截图并使用 view_image 打开检查。开始前不接触其它输出。
+完成后保存 answer.json：每题 answer/evidence/limitations，以及 actions、viewedImages、startedAt/finishedAt、runtime（知道的模型与浏览器信息）、unresolved。不要打分或比较其它页面。不要以用时声称效率。建议 12 分钟内结束；工具失败可一次有根据的恢复，无法完成保留证据和未解答。将最终结论发给父 agent。
+问题：
+1. 在 delivered（产物已交付：沿用历史评分）路径，作者明确将 regression（回归测试）关联到哪个步骤？若没有请说明。请给出页面证据。
+2. 在 missing（缺少产物：记录评分未绑定）路径，regression 的源码断言是否足以证明生成报告包含 evidenceMissing？请区分测试断言与报告实现，并指出证据。页面是否证明历史测试本次已经执行通过？
+3. 在 omitted-link（对照：移除测试关联声明）路径，没有步骤测试关联声明能否推出不存在相关测试？请说明依据和限制。
+
+URL: http://127.0.0.1:8882/upstream-cli/native/final.html
+output: ARCHIVED_RUNTIME/native
+Model: gpt-6.1-terra, reasoning medium

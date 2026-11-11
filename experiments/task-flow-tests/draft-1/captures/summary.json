@@ -1,0 +1,175 @@
+{
+  "kind": "portable-browser-summary-not-original-receipt",
+  "artifactSha256": "f31bce0ec7ddcdc83598547f14fd389895b11e6d157f865c767f4f56626cb07a",
+  "status": "fail",
+  "diagnostics": [
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 新增：交付条件 · benchmarks/diagram-quality/comparison.mjs:137–139",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 报告展示缺测原因 · benchmarks/diagram-quality/score-report.mjs:55–55",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 回归测试：缺失产物 · test/diagram-quality-comparison.test.mjs:85–95",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 新增：交付条件 · benchmarks/diagram-quality/comparison.mjs:137–139",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 报告展示缺测原因 · benchmarks/diagram-quality/score-report.mjs:55–55",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 回归测试：缺失产物 · test/diagram-quality-comparison.test.mjs:85–95",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 新增：交付条件 · benchmarks/diagram-quality/comparison.mjs:137–139",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 报告展示缺测原因 · benchmarks/diagram-quality/score-report.mjs:55–55",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 回归测试：缺失产物 · test/diagram-quality-comparison.test.mjs:85–95",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 新增：交付条件 · benchmarks/diagram-quality/comparison.mjs:137–139",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 报告展示缺测原因 · benchmarks/diagram-quality/score-report.mjs:55–55",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 回归测试：缺失产物 · test/diagram-quality-comparison.test.mjs:85–95",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "dark"
+      }
+    }
+  ],
+  "diagnosticCount": 16,
+  "screenshots": [
+    {
+      "path": "overview-light.png",
+      "sha256": "865d1dbfca253925852addc8f0bef821648d2f13c82f3d9c8eaf1e51dfa9e845"
+    }
+  ],
+  "visualReview": "Agent viewed light overview; human review pending"
+}

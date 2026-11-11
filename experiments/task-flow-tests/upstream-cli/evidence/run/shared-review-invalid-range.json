@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "summary": "历史评分绑定与缺失产物报告的作者声明式审阅；未执行历史代码或测试。",
+  "repos": [
+    {
+      "id": "archify",
+      "path": "repository",
+      "role": "changed",
+      "commits": [
+        "ed62bfefaf490e831259261fdc12f985267590fb"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "before-guard",
+      "kind": "code",
+      "label": "原逻辑：直接绑定评分",
+      "change": "deleted",
+      "ref": {
+        "type": "range",
+        "repo": "archify",
+        "file": "benchmarks/diagram-quality/comparison.mjs",
+        "lines": [
+          137,
+          137
+        ],
+        "at": "de004edf47228b6134fd3d29ef91cd5e010c867b"
+      },
+      "why": "我的解释：原逻辑尝试绑定已保存的人工评分，没有先检查最终产物是否真的交付。这里只引用被删除的一行。"
+    },
+    {
+      "id": "guard",
+      "kind": "code",
+      "label": "新增：交付条件",
+      "change": "modified",
+      "ref": {
+        "type": "range",
+        "repo": "archify",
+        "file": "benchmarks/diagram-quality/comparison.mjs",
+        "lines": [
+          999999,
+          999999
+        ],
+        "at": "ed62bfefaf490e831259261fdc12f985267590fb"
+      },
+      "why": "我的解释：只有 delivered 才复用历史评分，否则记录评分无法绑定的缺测原因。此代码引用吻合不能证明所有评分流程正确。"
+    },
+    {
+      "id": "regression",
+      "kind": "test",
+      "label": "回归测试：缺失产物",
+      "change": "added",
+      "ref": {
+        "type": "range",
+        "repo": "archify",
+        "file": "test/diagram-quality-comparison.test.mjs",
+        "lines": [
+          85,
+          95
+        ],
+        "at": "ed62bfefaf490e831259261fdc12f985267590fb"
+      },
+      "why": "我的解释：新增测试构造历史评分但缺少产物的情形，断言无人工分并保留报告。这里只审阅测试源码，本实验没有执行该历史测试。"
+    },
+    {
+      "id": "before-report",
+      "kind": "code",
+      "label": "原报告：无缺测字段",
+      "change": "deleted",
+      "ref": {
+        "type": "range",
+        "repo": "archify",
+        "file": "benchmarks/diagram-quality/score-report.mjs",
+        "lines": [
+          55,
+          55
+        ],
+        "at": "de004edf47228b6134fd3d29ef91cd5e010c867b"
+      },
+      "why": "我的解释：原报告的详情对象未列出 evidence.missing。这里引用被替换的一行，供审阅前后变化。"
+    },
+    {
+      "id": "report",
+      "kind": "code",
+      "label": "报告展示缺测原因",
+      "change": "modified",
+      "ref": {
+        "type": "range",
+        "repo": "archify",
+        "file": "benchmarks/diagram-quality/score-report.mjs",
+        "lines": [
+          55,
+          55
+        ],
+        "at": "ed62bfefaf490e831259261fdc12f985267590fb"
+      },
+      "why": "我的解释：报告详情新增 evidenceMissing，供读者看到历史评分没有绑定的原因。具体页面效果仍需独立浏览器验收。"
+    }
+  ],
+  "edges": [
+    {
+      "from": "before-guard",
+      "to": "guard",
+      "kind": "声明：替换"
+    },
+    {
+      "from": "regression",
+      "to": "guard",
+      "kind": "tests"
+    },
+    {
+      "from": "guard",
+      "to": "report",
+      "kind": "声明：缺测呈现"
+    },
+    {
+      "from": "before-report",
+      "to": "report",
+      "kind": "声明：替换"
+    }
+  ],
+  "flows": [
+    {
+      "id": "missing",
+      "title": "缺少产物：记录评分未绑定",
+      "path": [
+        "guard",
+        "report"
+      ]
+    },
+    {
+      "id": "delivered",
+      "title": "产物已交付：沿用历史评分",
+      "path": [
+        "guard",
+        "report"
+      ]
+    },
+    {
+      "id": "omitted-link",
+      "title": "对照：移除测试关联声明",
+      "path": [
+        "guard",
+        "report"
+      ]
+    }
+  ],
+  "notes": [
+    "路径和关联均由实验作者声明，未经历史提交作者确认；路径不表示真实运行轨迹。",
+    "全局 tests 边只表示代码级测试关联，不表示测试执行、通过或分支覆盖。",
+    "历史 mapping 的 reference-matches 和 range-accounted 是此前记录，未在本输入中作为当前验证结果。",
+    "路径 missing：缺产物且存在历史评分的源码阅读；未执行历史代码；条件不是 delivered 且存在历史评分，追加未绑定原因。；报告对象把 evidence.missing 暴露为 evidenceMissing。",
+    "路径 missing 的作者声明：测试 regression 关联步骤 guard；测试源码移除产物，断言 delivery 为 unverified、human 为 null，并检查缺失原因。",
+    "路径 delivered：已交付分支的源码阅读；未执行历史代码；条件为 delivered，遍历 storedReviews 并绑定评分。；报告对象仍列出 evidenceMissing，缺失数组可以为空。",
+    "路径 delivered：作者未声明步骤测试关联；这不表示没有测试。",
+    "路径 omitted-link：人为遗漏关联的合成对照；Git 映射与源码未变；与缺产物路径相同，但作者没有给出测试关联。；没有声明关联，不表示不存在测试，也不表示代码有缺陷。",
+    "路径 omitted-link：作者未声明步骤测试关联；这不表示没有测试。",
+    "边原始标签：before-guard → guard「声明：替换」；regression → guard「声明：测试关联」（转为 tests）；guard → report「声明：缺测呈现」；before-report → report「声明：替换」。这些边不是调用关系。"
+  ]
+}

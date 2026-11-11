@@ -1,0 +1,6 @@
+ElementResolutionError: page.click timed out after 3000ms: Locator text=新增：交付条件 matched 1 elements, but none can receive input; <canvas> intercepts pointer events
+    at #retryElementAction (file:////[eval1]:19158:27)
+    at async file:////[eval1]:19242:29
+    at async file:////[eval1]:16940:28
+
+ego's nodejs process exited with code 1.

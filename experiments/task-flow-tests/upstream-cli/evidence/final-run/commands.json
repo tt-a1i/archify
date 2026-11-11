@@ -1,0 +1,45 @@
+[
+  {
+    "name": "shared-review-validate",
+    "argv": [
+      "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+      "validate",
+      "shared-review.json",
+      "--format",
+      "json"
+    ],
+    "exitCode": 0,
+    "seconds": 0.3735507499950472,
+    "stdoutBytes": 1294,
+    "stderrBytes": 0
+  },
+  {
+    "name": "shared-review-invalid-range-validate",
+    "argv": [
+      "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+      "validate",
+      "shared-review-invalid-range.json",
+      "--format",
+      "json"
+    ],
+    "exitCode": 1,
+    "seconds": 0.38849604199640453,
+    "stdoutBytes": 2057,
+    "stderrBytes": 0
+  },
+  {
+    "name": "shared-review-open",
+    "argv": [
+      "ARCHIVED_RUNTIME/task-view-darwin-arm64",
+      "open",
+      "shared-review.json",
+      "--out",
+      "native.html",
+      "--no-browser"
+    ],
+    "exitCode": 0,
+    "seconds": 0.4564092500077095,
+    "stdoutBytes": 104,
+    "stderrBytes": 0
+  }
+]

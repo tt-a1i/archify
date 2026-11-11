@@ -1,0 +1,217 @@
+INFO {"url":"http://127.0.0.1:8882/upstream-cli/native/final.html","title":"Change review · archify","w":1512,"h":762,"sx":0,"sy":0,"pw":1512,"ph":762}
+VIEWPORT {"width":1512,"height":762,"devicePixelRatio":2}
+[p1 "Change review · archify" | space "Archify research 20261026"(17): 1 managed, 0 untracked — p1* "Change review · archify"]
+root
+  container
+    button [ref=1]
+      svg_root
+    container
+      svg_root
+      text "task-view"
+    container
+      text "/"
+      text "archify"
+      text "/"
+      text "shared-review.json"
+    container
+      button [ref=2]
+        svg_root
+        text "5"
+        text "verified"
+      button [ref=3]
+        svg_root
+        text "0"
+        text "contradicted"
+      button [ref=4]
+        svg_root
+        text "0"
+        text "unresolved"
+      button [ref=5]
+        svg_root
+        text "9"
+        text "agent statements"
+      button [ref=6]
+        svg_root
+        text "0"
+        text "errors"
+      button [ref=7]
+        svg_root
+        text "3"
+        text "warnings"
+      container
+        svg_root
+        text "0/5"
+        text "read"
+    button [ref=8]
+      svg_root
+  container
+    container [ref=9]
+      container
+        heading
+          svg_root
+          text "SUMMARY"
+        container
+          container
+            svg_root
+            text "AGENT SAYS"
+          paragraph
+            text "历史评分绑定与缺失产物报告的作者声明式审阅；未执行历史代码或测试。"
+      container
+        heading
+          svg_root
+          text "REPOSITORIES"
+          text "1"
+        container
+          container
+            svg_root
+            text "archify"
+            text "changed"
+            container
+              text "3 files"
+              text "+15"
+              text "−2"
+          text "../run/repository"
+          container
+            container
+              text "ed62bfefa"
+              text "fix(benchmarks): preserve reports when reviewed artifacts are missing"
+            container
+              text "de004edf4"
+              text "base · fix(benchmarks): retain malformed candidates as failed evidence"
+      container
+        heading
+          svg_root
+          text "FINDINGS"
+          text "3"
+        button [ref=10]
+          svg_root
+          text "Other warnings"
+          text "3"
+        button [ref=11]
+          svg_root
+          text "Changed tests"
+          text "1"
+      container
+        heading
+          svg_root
+          text "AGENT NOTES"
+          text "10"
+        unordered_list
+          list_item
+            text "路径和关联均由实验作者声明，未经历史提交作者确认；路径不表示真实运行轨迹。"
+          list_item
+            text "全局 tests 边只表示代码级测试关联，不表示测试执行、通过或分支覆盖。"
+          list_item
+            text "历史 mapping 的 reference-matches 和 range-accounted 是此前记录，未在本输入中作为当前验证结果。"
+          list_item
+            text "路径 missing：缺产物且存在历史评分的源码阅读；未执行历史代码；条件不是 delivered 且存在历史评分，追加未绑定原因。；报告对象把 evidence.missing 暴�..."
+          list_item
+            text "路径 missing 的作者声明：测试 regression 关联步骤 guard；测试源码移除产物，断言 delivery 为 unverified、human 为 null，并检查缺失原因。"
+          list_item
+            text "路径 delivered：已交付分支的源码阅读；未执行历史代码；条件为 delivered，遍历 storedReviews 并绑定评分。；报告对象仍列出 evidenceMissing，缺失数组可以�..."
+          list_item
+            text "路径 delivered：作者未声明步骤测试关联；这不表示没有测试。"
+          list_item
+            text "路径 omitted-link：人为遗漏关联的合成对照；Git 映射与源码未变；与缺产物路径相同，但作者没有给出测试关联。；没有声明关联，不表示不存在测试，..."
+          list_item
+            text "路径 omitted-link：作者未声明步骤测试关联；这不表示没有测试。"
+          list_item
+            text "边原始标签：before-guard → guard「声明：替换」；regression → guard「声明：测试关联」（转为 tests）；guard → report「声明：缺测呈现」；before-report → repo..."
+      text "Generated 2026/10/29 22:28:21 · task-view 1.2.0"
+    splitter
+    container
+      container
+        button [ref=12]
+          svg_root
+          text "Flows"
+          text "3"
+        button [ref=13]
+          svg_root
+          text "Graph"
+          text "5"
+        button [ref=14]
+          svg_root
+          text "Diff map"
+          text "3"
+        button [ref=15]
+          svg_root
+          text "Claims"
+          text "0"
+      container
+        container
+          container
+            svg_root
+            heading
+              button [ref=16]
+                text "缺少产物：记录评分未绑定"
+            text "missing"
+            container
+              text "0/2 steps read"
+              button [ref=17]
+                svg_root
+                text "Mark reviewed"
+          container
+            svg_root
+            button [ref=18]
+              svg_root
+              container
+                text "新增：交付条件"
+                text "code · comparison.mjs:137–139"
+            button [ref=19]
+              svg_root
+              container
+                text "报告展示缺测原因"
+                text "code · score-report.mjs:55"
+            text "声明：缺测呈现"
+        container
+          container
+            svg_root
+            heading
+              button [ref=20]
+                text "产物已交付：沿用历史评分"
+            text "delivered"
+            container
+              text "0/2 steps read"
+              button [ref=21]
+                svg_root
+                text "Mark reviewed"
+          container
+            svg_root
+            button [ref=22]
+              svg_root
+              container
+                text "新增：交付条件"
+                text "code · comparison.mjs:137–139"
+            button [ref=23]
+              svg_root
+              container
+                text "报告展示缺测原因"
+                text "code · score-report.mjs:55"
+            text "声明：缺测呈现"
+        container
+          container
+            svg_root
+            heading
+              button [ref=24]
+                text "对照：移除测试关联声明"
+            text "omitted-link"
+            container
+              text "0/2 steps read"
+              button [ref=25]
+                svg_root
+                text "Mark reviewed"
+          container
+            svg_root
+            button [ref=26]
+              svg_root
+              container
+                text "新增：交付条件"
+                text "code · comparison.mjs:137–139"
+            button [ref=27]
+              svg_root
+              container
+                text "报告展示缺测原因"
+                text "code · score-report.mjs:55"
+            text "声明：缺测呈现"
+
+
