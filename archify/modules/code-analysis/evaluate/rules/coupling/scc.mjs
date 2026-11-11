@@ -1,40 +1,30 @@
-// Iterative Tarjan traversal: dependency depth must not consume the JS call stack.
+import { tarjanLabels } from '../../../vendor/graphty/scc.mjs';
+
+// Adapt source IDs to the two CSR arrays read by the vendored Tarjan kernel.
 export function cyclicComponents(nodes, edges, includeSelf = false) {
-  const out = new Map(nodes.map((node) => [node, []]));
-  for (const edge of edges) out.get(edge.from).push(edge.to);
-  for (const targets of out.values()) targets.sort();
-  const indices = new Map(), low = new Map(), active = new Set(), stack = [];
-  const components = [];
-  let index = 0;
-  const enter = (node) => {
-    indices.set(node, index); low.set(node, index++);
-    active.add(node); stack.push(node);
-    return { node, next: 0 };
-  };
-  for (const start of nodes) {
-    if (indices.has(start)) continue;
-    const frames = [enter(start)];
-    while (frames.length) {
-      const frame = frames[frames.length - 1];
-      const targets = out.get(frame.node);
-      if (frame.next < targets.length) {
-        const target = targets[frame.next++];
-        if (!indices.has(target)) frames.push(enter(target));
-        else if (active.has(target)) low.set(frame.node, Math.min(low.get(frame.node), indices.get(target)));
-        continue;
-      }
-      frames.pop();
-      if (frames.length) {
-        const parent = frames[frames.length - 1].node;
-        low.set(parent, Math.min(low.get(parent), low.get(frame.node)));
-      }
-      if (low.get(frame.node) === indices.get(frame.node)) {
-        const component = [];
-        let node;
-        do { node = stack.pop(); active.delete(node); component.push(node); } while (node !== frame.node);
-        if (component.length > 1 || (includeSelf && targets.includes(frame.node))) components.push(component.sort());
-      }
-    }
+  const index = new Map();
+  for (const node of nodes) if (!index.has(node)) index.set(node, index.size);
+  if (index.size !== nodes.length) nodes = [...index.keys()];
+  const rowPtr = new Uint32Array(nodes.length + 1);
+  const self = includeSelf ? new Set() : null;
+  for (const edge of edges) {
+    const from = index.get(edge.from), to = index.get(edge.to);
+    if (from === undefined || to === undefined) throw new TypeError('SCC edge endpoint is outside the node scope');
+    rowPtr[from + 1]++;
+    if (self && from === to) self.add(edge.from);
   }
-  return components.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
+  for (let i = 1; i < rowPtr.length; i++) rowPtr[i] += rowPtr[i - 1];
+  const cursor = rowPtr.slice(0, nodes.length), colIdx = new Uint32Array(edges.length);
+  for (const edge of edges) colIdx[cursor[index.get(edge.from)]++] = index.get(edge.to);
+  const { labels, count } = tarjanLabels({ nodeCount: nodes.length, rowPtr, colIdx });
+
+  // Most DAG components are singletons; do not allocate groups to discard.
+  const sizes = new Uint32Array(count), groups = new Array(count);
+  for (const label of labels) sizes[label]++;
+  for (let i = 0; i < nodes.length; i++) {
+    const label = labels[i], node = nodes[i];
+    if (sizes[label] > 1 || self?.has(node)) (groups[label] ||= []).push(node);
+  }
+  return groups.filter(Boolean).map(group => group.sort())
+    .sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
 }

@@ -83,3 +83,11 @@ The Node story scanner and builder include parse5 7.3.0 (MIT) and entities
 6.0.1 (BSD-2-Clause), bundled into `story/vendor/html-parser.mjs`. The parser is
 not embedded in generated HTML. Pinned sources, rebuild instructions and the
 complete licenses are in `story/vendor/`.
+
+## Graphty SCC kernel
+
+Code Analysis includes an adapted Tarjan traversal from
+[@graphty/algorithms 3.4.14](https://github.com/graphty-org/graphty-monorepo),
+copyright (c) 2025 Adam Powers, under the MIT License. Only the SCC kernel is
+vendored; no Graphty npm runtime is required. The complete license, pinned
+source identity and local changes are in `modules/code-analysis/vendor/graphty/`.
