@@ -204,10 +204,10 @@ test('relationship comparison communicates differences and partial coverage', {
   await loaded;
   await evaluate("document.getElementById('code-analysis-start').click()");
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
-  const text = () => evaluate("document.getElementById('bauify-overview').textContent");
-  assert.match(await text(), /Static source relationships differ from the authored diagram/);
+  const coverageText = () => evaluate("(() => { const details = document.querySelector('#bauify-overview details.coverage'); details.open = true; return details.innerText; })()");
+  assert.match(await coverageText(), /Static source relationships differ from the authored diagram/);
   fs.writeFileSync(source, "export async function later() { return import('../lib/b.mjs'); }\n");
   await evaluate("document.querySelector('#bauify-overview .bauify-reanalyze').click()");
   await wait("document.documentElement.getAttribute('data-bauify') === 'on' && document.getElementById('bauify-overview').textContent.includes('Static relationship comparison is partial')");
-  assert.match(await text(), /some edges are unmapped or deferred and require review/);
+  assert.match(await coverageText(), /some edges are unmapped or deferred and require review/);
 });
