@@ -238,3 +238,21 @@ test('open artifact: live preview opens only an exact loopback HTTP root', () =>
     assert.throws(() => openLoopbackUrl(rejected), /loopback|valid/i, rejected);
   }
 });
+
+test('preview opener rejects credentials, fragments, and absent nondefault ports before launch', () => {
+  for (const target of [
+    'http://user@127.0.0.1:43127/',
+    'http://user:password@127.0.0.1:43127/',
+    'http://:password@127.0.0.1:43127/',
+    'http://127.0.0.1:43127/#state',
+    'http://127.0.0.1/',
+    'http://127.0.0.1:80/',
+  ]) {
+    let launches = 0;
+    assert.throws(() => openLoopbackUrl(target, {
+      platform: 'win32',
+      spawn() { launches += 1; return { status: 0 }; },
+    }), TypeError, target);
+    assert.equal(launches, 0, 'invalid preview URL reached a platform opener');
+  }
+});
