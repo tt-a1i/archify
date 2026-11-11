@@ -1,0 +1,191 @@
+{
+  "date": "2026-11-02T08:17:27.095Z",
+  "base": "63c9263e84bd3993cab8e09b3d69888857858635",
+  "checks": [
+    {
+      "target": "github",
+      "language": "en",
+      "width": 1440,
+      "kind": "native-preview-enter",
+      "label": "Open verified example\nPayment module types\n↗",
+      "hash": "#proof-payments",
+      "type": "class",
+      "hidden": false,
+      "cardTop": 86.046875,
+      "navBottom": 64
+    },
+    {
+      "target": "github",
+      "language": "en",
+      "width": 1440,
+      "kind": "no-js-recipe-reading",
+      "title": "Payment module types",
+      "headingTop": 159.453125,
+      "navBottom": 64,
+      "overflow": 0,
+      "promptVisible": true
+    },
+    {
+      "target": "github",
+      "language": "en",
+      "width": 390,
+      "kind": "native-preview-enter",
+      "label": "Open verified example\nPayment module types\n↗",
+      "hash": "#proof-payments",
+      "type": "class",
+      "hidden": false,
+      "cardTop": 86.40625,
+      "navBottom": 104
+    },
+    {
+      "target": "github",
+      "language": "en",
+      "width": 390,
+      "kind": "no-js-recipe-reading",
+      "title": "Payment module types",
+      "headingTop": 150.734375,
+      "navBottom": 104,
+      "overflow": 0,
+      "promptVisible": true
+    },
+    {
+      "target": "github",
+      "language": "zh",
+      "width": 1440,
+      "kind": "native-preview-enter",
+      "label": "打开验证实例\n支付模块类型\n↗",
+      "hash": "#proof-payments",
+      "type": "class",
+      "hidden": false,
+      "cardTop": 85.78125,
+      "navBottom": 64
+    },
+    {
+      "target": "github",
+      "language": "zh",
+      "width": 1440,
+      "kind": "no-js-recipe-reading",
+      "title": "支付模块类型",
+      "headingTop": 157.203125,
+      "navBottom": 64,
+      "overflow": 0,
+      "promptVisible": true
+    },
+    {
+      "target": "github",
+      "language": "zh",
+      "width": 390,
+      "kind": "native-preview-enter",
+      "label": "打开验证实例\n支付模块类型\n↗",
+      "hash": "#proof-payments",
+      "type": "class",
+      "hidden": false,
+      "cardTop": 85.515625,
+      "navBottom": 104
+    },
+    {
+      "target": "github",
+      "language": "zh",
+      "width": 390,
+      "kind": "no-js-recipe-reading",
+      "title": "支付模块类型",
+      "headingTop": 151.484375,
+      "navBottom": 104,
+      "overflow": 0,
+      "promptVisible": true
+    },
+    {
+      "target": "cloudflare",
+      "language": "en",
+      "width": 1440,
+      "kind": "native-preview-enter",
+      "label": "Open verified example\nPayment module types\n↗",
+      "hash": "#proof-payments",
+      "type": "class",
+      "hidden": false,
+      "cardTop": 86.046875,
+      "navBottom": 64
+    },
+    {
+      "target": "cloudflare",
+      "language": "en",
+      "width": 1440,
+      "kind": "no-js-recipe-reading",
+      "title": "Payment module types",
+      "headingTop": 157.453125,
+      "navBottom": 64,
+      "overflow": 0,
+      "promptVisible": true
+    },
+    {
+      "target": "cloudflare",
+      "language": "en",
+      "width": 390,
+      "kind": "native-preview-enter",
+      "label": "Open verified example\nPayment module types\n↗",
+      "hash": "#proof-payments",
+      "type": "class",
+      "hidden": false,
+      "cardTop": 86.40625,
+      "navBottom": 104
+    },
+    {
+      "target": "cloudflare",
+      "language": "en",
+      "width": 390,
+      "kind": "no-js-recipe-reading",
+      "title": "Payment module types",
+      "headingTop": 150.734375,
+      "navBottom": 104,
+      "overflow": 0,
+      "promptVisible": true
+    },
+    {
+      "target": "cloudflare",
+      "language": "zh",
+      "width": 1440,
+      "kind": "native-preview-enter",
+      "label": "打开验证实例\n支付模块类型\n↗",
+      "hash": "#proof-payments",
+      "type": "class",
+      "hidden": false,
+      "cardTop": 85.78125,
+      "navBottom": 64
+    },
+    {
+      "target": "cloudflare",
+      "language": "zh",
+      "width": 1440,
+      "kind": "no-js-recipe-reading",
+      "title": "支付模块类型",
+      "headingTop": 157.203125,
+      "navBottom": 64,
+      "overflow": 0,
+      "promptVisible": true
+    },
+    {
+      "target": "cloudflare",
+      "language": "zh",
+      "width": 390,
+      "kind": "native-preview-enter",
+      "label": "打开验证实例\n支付模块类型\n↗",
+      "hash": "#proof-payments",
+      "type": "class",
+      "hidden": false,
+      "cardTop": 85.515625,
+      "navBottom": 104
+    },
+    {
+      "target": "cloudflare",
+      "language": "zh",
+      "width": 390,
+      "kind": "no-js-recipe-reading",
+      "title": "支付模块类型",
+      "headingTop": 151.484375,
+      "navBottom": 104,
+      "overflow": 0,
+      "promptVisible": true
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,374 @@
+
+> @archify/website@0.0.0 test
+> node --test test/*.test.mjs
+
+TAP version 13
+# Subtest: Cloudflare output accepts static files and extensionless canonical routes
+ok 1 - Cloudflare output accepts static files and extensionless canonical routes
+  ---
+  duration_ms: 19.716791
+  type: 'test'
+  ...
+# Subtest: Cloudflare output rejects a missing 404 before implicit SPA fallback can ship
+ok 2 - Cloudflare output rejects a missing 404 before implicit SPA fallback can ship
+  ---
+  duration_ms: 15.051125
+  type: 'test'
+  ...
+# Subtest: Cloudflare output rejects a referenced asset missing from the deployment
+ok 3 - Cloudflare output rejects a referenced asset missing from the deployment
+  ---
+  duration_ms: 13.90825
+  type: 'test'
+  ...
+# Subtest: Cloudflare output rejects a Worker accidentally bundled into the static site
+ok 4 - Cloudflare output rejects a Worker accidentally bundled into the static site
+  ---
+  duration_ms: 9.294792
+  type: 'test'
+  ...
+# Subtest: Cloudflare output rejects an asset exceeding the Pages upload limit
+ok 5 - Cloudflare output rejects an asset exceeding the Pages upload limit
+  ---
+  duration_ms: 10.779375
+  type: 'test'
+  ...
+# Subtest: Cloudflare output resolves nested-page assets against the HTML base
+ok 6 - Cloudflare output resolves nested-page assets against the HTML base
+  ---
+  duration_ms: 20.3045
+  type: 'test'
+  ...
+# Subtest: real Chrome: community metadata remains text through language, filter and navigation changes
+ok 7 - real Chrome: community metadata remains text through language, filter and navigation changes # SKIP Set ARCHIFY_SITE_INTEGRATION=1 and ARCHIFY_CHROME to run the community browser regression.
+  ---
+  duration_ms: 0.447291
+  type: 'test'
+  ...
+# Subtest: community catalog: real build rejects invalid metadata before displaying PASS
+ok 8 - community catalog: real build rejects invalid metadata before displaying PASS
+  ---
+  duration_ms: 8078.894791
+  type: 'test'
+  ...
+# Subtest: community catalog: renders one card per registry package, derived not hand-pasted
+ok 9 - community catalog: renders one card per registry package, derived not hand-pasted
+  ---
+  duration_ms: 46.55825
+  type: 'test'
+  ...
+# Subtest: community catalog: filter buttons cover the types present in the registry
+ok 10 - community catalog: filter buttons cover the types present in the registry
+  ---
+  duration_ms: 14.727666
+  type: 'test'
+  ...
+# Subtest: community catalog: navigation, language toggle and disclaimer are present
+ok 11 - community catalog: navigation, language toggle and disclaimer are present
+  ---
+  duration_ms: 10.564917
+  type: 'test'
+  ...
+# Subtest: community catalog: every evidence link preserves its registry label and URL
+ok 12 - community catalog: every evidence link preserves its registry label and URL
+  ---
+  duration_ms: 9.758084
+  type: 'test'
+  ...
+# Subtest: community sponsors: homepage strip anchor resolves and sponsor links disclose sponsorship
+ok 13 - community sponsors: homepage strip anchor resolves and sponsor links disclose sponsorship
+  ---
+  duration_ms: 26.128875
+  type: 'test'
+  ...
+# Subtest: built deployment uses host-compatible generated assets and canonical metadata in both languages
+ok 14 - built deployment uses host-compatible generated assets and canonical metadata in both languages
+  ---
+  duration_ms: 228.92325
+  type: 'test'
+  ...
+# Subtest: deployment preserves standalone proof outside its exact metadata block and updater bytes; only Cloudflare gets a 404
+ok 15 - deployment preserves standalone proof outside its exact metadata block and updater bytes; only Cloudflare gets a 404
+  ---
+  duration_ms: 26.186458
+  type: 'test'
+  ...
+# Subtest: guide language navigation preserves a draft, filter and selected recipe once
+ok 16 - guide language navigation preserves a draft, filter and selected recipe once
+  ---
+  duration_ms: 5.714375
+  type: 'test'
+  ...
+# Subtest: guide discards stale, malformed and unrelated navigation state; denied storage stays usable
+ok 17 - guide discards stale, malformed and unrelated navigation state; denied storage stays usable
+  ---
+  duration_ms: 7.551709
+  type: 'test'
+  ...
+# Subtest: guide draft uses the live query and hash when the language anchor is stale
+ok 18 - guide draft uses the live query and hash when the language anchor is stale
+  ---
+  duration_ms: 1.987709
+  type: 'test'
+  ...
+# Subtest: public key is a root verification file and default mode only reads the deployed sitemap
+ok 19 - public key is a root verification file and default mode only reads the deployed sitemap
+  ---
+  duration_ms: 5.808458
+  type: 'test'
+  ...
+# Subtest: HTTP 200 confirms receipt without claiming indexing
+ok 20 - HTTP 200 confirms receipt without claiming indexing
+  ---
+  duration_ms: 2.255167
+  type: 'test'
+  ...
+# Subtest: HTTP 202 confirms receipt without claiming indexing
+ok 21 - HTTP 202 confirms receipt without claiming indexing
+  ---
+  duration_ms: 0.703458
+  type: 'test'
+  ...
+# Subtest: HTTP 400 fails once without retry
+ok 22 - HTTP 400 fails once without retry
+  ---
+  duration_ms: 2.00325
+  type: 'test'
+  ...
+# Subtest: HTTP 403 fails once without retry
+ok 23 - HTTP 403 fails once without retry
+  ---
+  duration_ms: 0.620791
+  type: 'test'
+  ...
+# Subtest: HTTP 422 fails once without retry
+ok 24 - HTTP 422 fails once without retry
+  ---
+  duration_ms: 1.2665
+  type: 'test'
+  ...
+# Subtest: HTTP 429 fails once without retry
+ok 25 - HTTP 429 fails once without retry
+  ---
+  duration_ms: 0.647792
+  type: 'test'
+  ...
+# Subtest: HTTP 500 fails once without retry
+ok 26 - HTTP 500 fails once without retry
+  ---
+  duration_ms: 0.454625
+  type: 'test'
+  ...
+# Subtest: public preflight requires HTTP 200 and matching deployed key before POST
+ok 27 - public preflight requires HTTP 200 and matching deployed key before POST
+  ---
+  duration_ms: 0.9945
+  type: 'test'
+  ...
+# Subtest: sitemap XML parser rejects foreign, query, source, duplicate, incomplete and malformed inventories
+ok 28 - sitemap XML parser rejects foreign, query, source, duplicate, incomplete and malformed inventories
+  ---
+  duration_ms: 0.636708
+  type: 'test'
+  ...
+# Subtest: local font declarations preserve the original families, weights and swap behavior
+ok 29 - local font declarations preserve the original families, weights and swap behavior
+  ---
+  duration_ms: 2.318542
+  type: 'test'
+  ...
+# Subtest: tracked public staging ships authentic WOFF2 bytes, licenses and the CSS references
+ok 30 - tracked public staging ships authentic WOFF2 bytes, licenses and the CSS references
+  ---
+  duration_ms: 1307.488083
+  type: 'test'
+  ...
+# Subtest: shared static localization translates authored copy and preserves markup contracts
+ok 31 - shared static localization translates authored copy and preserves markup contracts
+  ---
+  duration_ms: 7.549875
+  type: 'test'
+  ...
+# Subtest: metadata points both hosts to real localized canonical pages and honest source schema
+ok 32 - metadata points both hosts to real localized canonical pages and honest source schema
+  ---
+  duration_ms: 0.574542
+  type: 'test'
+  ...
+# Subtest: URL locale wins stored preference and route switches preserve query and hash
+ok 33 - URL locale wins stored preference and route switches preserve query and hash
+  ---
+  duration_ms: 5.034625
+  type: 'test'
+  ...
+# Subtest: built pages contain localized HTML and reciprocal language metadata before JavaScript
+ok 34 - built pages contain localized HTML and reciprocal language metadata before JavaScript
+  ---
+  duration_ms: 271.033917
+  type: 'test'
+  ...
+# Subtest: index.html: DOM, content, accessibility, scripts and styles match the migration baseline
+ok 35 - index.html: DOM, content, accessibility, scripts and styles match the migration baseline
+  ---
+  duration_ms: 78.76725
+  type: 'test'
+  ...
+# Subtest: gallery.html: DOM, content, accessibility, scripts and styles match the migration baseline
+ok 36 - gallery.html: DOM, content, accessibility, scripts and styles match the migration baseline
+  ---
+  duration_ms: 40.129458
+  type: 'test'
+  ...
+# Subtest: guide.html: DOM, content, accessibility, scripts and styles match the migration baseline
+ok 37 - guide.html: DOM, content, accessibility, scripts and styles match the migration baseline
+  ---
+  duration_ms: 42.27775
+  type: 'test'
+  ...
+# Subtest: start.html: DOM, content, accessibility, scripts and styles match the migration baseline
+ok 38 - start.html: DOM, content, accessibility, scripts and styles match the migration baseline
+  ---
+  duration_ms: 9.277375
+  type: 'test'
+  ...
+# Subtest: homepage version labels and translations match the release identity baseline
+ok 39 - homepage version labels and translations match the release identity baseline
+  ---
+  duration_ms: 30.509916
+  type: 'test'
+  ...
+# Subtest: all existing non-page public URLs retain exact bytes outside the declared artifact metadata block
+ok 40 - all existing non-page public URLs retain exact bytes outside the declared artifact metadata block
+  ---
+  duration_ms: 387.907625
+  type: 'test'
+  ...
+# Subtest: every generated Astro asset referenced by a page exists under the Pages base
+ok 41 - every generated Astro asset referenced by a page exists under the Pages base
+  ---
+  duration_ms: 6.586125
+  type: 'test'
+  ...
+# Subtest: all five built pages expose one shared top navigation and the correct current page
+ok 42 - all five built pages expose one shared top navigation and the correct current page
+  ---
+  duration_ms: 206.257416
+  type: 'test'
+  ...
+# Subtest: the homepage retains its footer catalog link alongside the top entry
+ok 43 - the homepage retains its footer catalog link alongside the top entry
+  ---
+  duration_ms: 8.486666
+  type: 'test'
+  ...
+# Subtest: public staging excludes untracked files and rejects external symlinks and URL collisions
+ok 44 - public staging excludes untracked files and rejects external symlinks and URL collisions
+  ---
+  duration_ms: 360.368209
+  type: 'test'
+  ...
+# Subtest: cloudflare: published discovery metadata retains proof bytes and advertises only real canonical HTML
+ok 45 - cloudflare: published discovery metadata retains proof bytes and advertises only real canonical HTML
+  ---
+  duration_ms: 737.660667
+  type: 'test'
+  ...
+# Subtest: github: published discovery metadata retains proof bytes and advertises only real canonical HTML
+ok 46 - github: published discovery metadata retains proof bytes and advertises only real canonical HTML
+  ---
+  duration_ms: 566.987917
+  type: 'test'
+  ...
+# Subtest: publication fails closed for missing localized pages or changed proof artifacts/sources
+ok 47 - publication fails closed for missing localized pages or changed proof artifacts/sources
+  ---
+  duration_ms: 54.432458
+  type: 'test'
+  ...
+# Subtest: initial en start HTML exposes every canonical diagram type as a selectable tab
+ok 48 - initial en start HTML exposes every canonical diagram type as a selectable tab
+  ---
+  duration_ms: 45.02425
+  type: 'test'
+  ...
+# Subtest: initial en guide HTML contains every canonical recipe and its evidence without JavaScript
+ok 49 - initial en guide HTML contains every canonical recipe and its evidence without JavaScript
+  ---
+  duration_ms: 45.080458
+  type: 'test'
+  ...
+# Subtest: initial en gallery count reflects the current source inventory
+ok 50 - initial en gallery count reflects the current source inventory
+  ---
+  duration_ms: 14.46475
+  type: 'test'
+  ...
+# Subtest: initial en start HTML contains a usable default prompt, evidence, install, and proof
+ok 51 - initial en start HTML contains a usable default prompt, evidence, install, and proof
+  ---
+  duration_ms: 8.145125
+  type: 'test'
+  ...
+# Subtest: initial zh start HTML exposes every canonical diagram type as a selectable tab
+ok 52 - initial zh start HTML exposes every canonical diagram type as a selectable tab
+  ---
+  duration_ms: 8.244917
+  type: 'test'
+  ...
+# Subtest: initial zh guide HTML contains every canonical recipe and its evidence without JavaScript
+ok 53 - initial zh guide HTML contains every canonical recipe and its evidence without JavaScript
+  ---
+  duration_ms: 24.481292
+  type: 'test'
+  ...
+# Subtest: initial zh gallery count reflects the current source inventory
+ok 54 - initial zh gallery count reflects the current source inventory
+  ---
+  duration_ms: 9.875042
+  type: 'test'
+  ...
+# Subtest: initial zh start HTML contains a usable default prompt, evidence, install, and proof
+ok 55 - initial zh start HTML contains a usable default prompt, evidence, install, and proof
+  ---
+  duration_ms: 18.069292
+  type: 'test'
+  ...
+# Subtest: initial homepage product facts explain identity, inputs, delivery, license and limits
+ok 56 - initial homepage product facts explain identity, inputs, delivery, license and limits
+  ---
+  duration_ms: 15.127042
+  type: 'test'
+  ...
+# Subtest: initial en pages distinguish supported types from selected recipes and use the release channel
+ok 57 - initial en pages distinguish supported types from selected recipes and use the release channel
+  ---
+  duration_ms: 28.025
+  type: 'test'
+  ...
+# Subtest: initial zh pages distinguish supported types from selected recipes and use the release channel
+ok 58 - initial zh pages distinguish supported types from selected recipes and use the release channel
+  ---
+  duration_ms: 24.092167
+  type: 'test'
+  ...
+# Subtest: SEO insertion preserves replacement tokens in authored gallery copy
+ok 59 - SEO insertion preserves replacement tokens in authored gallery copy
+  ---
+  duration_ms: 57.141667
+  type: 'test'
+  ...
+# Subtest: discovery archive preserves every canonical package file without its wrapper
+ok 60 - discovery archive preserves every canonical package file without its wrapper
+  ---
+  duration_ms: 5941.181416
+  type: 'test'
+  ...
+1..60
+# tests 60
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 8159.788

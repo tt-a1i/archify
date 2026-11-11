@@ -1,5 +1,5 @@
 ---
-import { version, versioned } from '../data/site';
+import { version, versioned, starts } from '../data/site';
 import SupportedDiagrams from '../components/SupportedDiagrams.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
@@ -12,11 +12,11 @@ import css from '../styles/index.css?raw';
 import pageScript from '../scripts/index.js?raw';
 
 const diagramTypes = [
-  ['arch', 'Architecture', 'What is it made of?'],
-  ['wf', 'Workflow', 'What happens next?'],
-  ['seq', 'Sequence', 'Who says what, in what order?'],
-  ['flow', 'Data flow', 'Where does it all go?'],
-  ['life', 'Lifecycle', 'Where does it stand now?'],
+  ['arch', 'Architecture', 'What is it made of?', 'architecture'],
+  ['wf', 'Workflow', 'What happens next?', 'workflow'],
+  ['seq', 'Sequence', 'Who says what, in what order?', 'sequence'],
+  ['flow', 'Data flow', 'Where does it all go?', 'dataflow'],
+  ['life', 'Lifecycle', 'Where does it stand now?', 'lifecycle'],
   ['erd', 'Entity-relationship', 'How does the data relate?'],
   ['class', 'Class / interface', 'Which types fulfil which contracts?'],
   ['tree', 'Tree', 'How is it organised?'],
@@ -208,20 +208,24 @@ const { lang = 'en' } = Astro.props;
 
       <div class="types-index">
         <div class="types-col">
-        <ol class="types-list" id="types-list">
-          {diagramTypes.map(([key, kind, question], index) => (
-            <li class={index === 0 ? 'type-item is-active' : 'type-item'} data-type={key}>
+        <ol class="types-list" id="types-list" hidden>
+          {diagramTypes.map(([key, kind, question, type = key], index) => (
+            <li class={index === 0 ? 'type-item is-active' : 'type-item'} data-type={key} data-diagram-type={type} data-proof={starts[type].proof} data-title-en={starts[type].en.title} data-title-zh={starts[type].zh.title}>
               <button type="button" aria-controls="type-preview" aria-pressed={index === 0 ? 'true' : 'false'}>
                 <span class="type-no">{String(index + 1).padStart(2, '0')}</span><span class="type-name"><small class="type-kind" data-i18n={`${key}-k`}>{kind}</small><span data-i18n={`${key}-h`}>{question}</span></span>
               </button>
             </li>
           ))}
         </ol>
+        <nav class="type-recipes" id="type-recipes" aria-label={lang === 'zh' ? '图表配方' : 'Diagram recipes'}>
+          <p data-en="Read a complete recipe and open its verified example." data-zh="阅读完整配方，并打开对应的验证实例。">Read a complete recipe and open its verified example.</p>
+          {Object.values(starts).map(recipe => <a href={`guide.html#recipe-${recipe.id}`} data-en={recipe.en.title} data-zh={recipe.zh.title}>{recipe.en.title}</a>)}
+        </nav>
         <SupportedDiagrams />
         </div>
 
         <div class="type-preview fade-up d1" id="type-preview">
-          <div class="type-plate">
+          <a class="type-plate" href={`gallery.html?type=architecture#proof-${starts.architecture.proof}`} aria-labelledby="type-example-label type-example-title">
             <img class="is-active" data-type="arch" src="assets/archify-architecture.png" alt="Architecture diagram" loading="lazy" decoding="async" width="2752" height="1544">
             <img data-type="wf" src="assets/archify-workflow.png" alt="Workflow diagram" loading="lazy" decoding="async" width="2752" height="1544">
             <img data-type="seq" src="assets/archify-sequence.png" alt="Sequence diagram" loading="lazy" decoding="async" width="2752" height="1544">
@@ -232,10 +236,10 @@ const { lang = 'en' } = Astro.props;
             <img data-type="tree" src="assets/archify-tree.png" alt="Tree diagram" loading="lazy" decoding="async" width="2752" height="1544">
             <img data-type="timeline" src="assets/archify-timeline.png" alt="Timeline diagram" loading="lazy" decoding="async" width="2752" height="1544">
             <img data-type="waterfall" src="assets/archify-waterfall.png" alt="Waterfall diagram" loading="lazy" decoding="async" width="2752" height="1544">
-          </div>
-          <a class="type-more" href="gallery.html">
-            <span data-i18n="types-more">Browse the full proof gallery</span>
-            <span class="type-more-sub" data-i18n="types-more-sub">Live artifacts · every preset · every type</span>
+          </a>
+          <a class="type-more" href={`gallery.html?type=architecture#proof-${starts.architecture.proof}`}>
+            <span id="type-example-label" data-en="Open verified example" data-zh="打开验证实例">Open verified example</span>
+            <span class="type-more-sub" id="type-example-title" data-en={starts.architecture.en.title} data-zh={starts.architecture.zh.title}>{starts.architecture.en.title}</span>
             <span class="type-more-arrow" aria-hidden="true">↗</span>
           </a>
         </div>

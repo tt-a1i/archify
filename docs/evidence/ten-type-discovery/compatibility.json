@@ -1,0 +1,5575 @@
+{
+  "base": "63c9263e84bd3993cab8e09b3d69888857858635",
+  "at": "2026-11-02T08:09:23.306Z",
+  "scope": "Real local Chrome. Clipboard API payload intercepted; no agent installation or OS clipboard assertion.",
+  "home": [
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=architecture#proof-web-app",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=workflow#proof-agent-tool-call",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=sequence#proof-cache-miss",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=dataflow#proof-event-stream",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=lifecycle#proof-agent-run",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=erd#proof-orders",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=class#proof-payments",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=tree#proof-payment-platform",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=timeline#proof-payment-incident",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "href": "http://127.0.0.1:8769/archify/gallery.html?type=waterfall#proof-checkout-request",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=architecture#proof-web-app",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=workflow#proof-agent-tool-call",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=sequence#proof-cache-miss",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=dataflow#proof-event-stream",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=lifecycle#proof-agent-run",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=erd#proof-orders",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=class#proof-payments",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=tree#proof-payment-platform",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=timeline#proof-payment-incident",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "href": "http://127.0.0.1:8769/archify/zh/gallery.html?type=waterfall#proof-checkout-request",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "href": "http://127.0.0.1:8770/gallery?type=architecture#proof-web-app",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "href": "http://127.0.0.1:8770/gallery?type=workflow#proof-agent-tool-call",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "href": "http://127.0.0.1:8770/gallery?type=sequence#proof-cache-miss",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "href": "http://127.0.0.1:8770/gallery?type=dataflow#proof-event-stream",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "href": "http://127.0.0.1:8770/gallery?type=lifecycle#proof-agent-run",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "href": "http://127.0.0.1:8770/gallery?type=erd#proof-orders",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "href": "http://127.0.0.1:8770/gallery?type=class#proof-payments",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "href": "http://127.0.0.1:8770/gallery?type=tree#proof-payment-platform",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "href": "http://127.0.0.1:8770/gallery?type=timeline#proof-payment-incident",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "href": "http://127.0.0.1:8770/gallery?type=waterfall#proof-checkout-request",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=architecture#proof-web-app",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=workflow#proof-agent-tool-call",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=sequence#proof-cache-miss",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=dataflow#proof-event-stream",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=lifecycle#proof-agent-run",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=erd#proof-orders",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=class#proof-payments",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=tree#proof-payment-platform",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=timeline#proof-payment-incident",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "href": "http://127.0.0.1:8770/zh/gallery?type=waterfall#proof-checkout-request",
+      "passed": true
+    }
+  ],
+  "start": [
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "description",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "cursor",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "codex",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "claude-code",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "opencode",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "input": "repository",
+      "agent": "github-copilot",
+      "passed": true
+    }
+  ],
+  "keyboard": [
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "type",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "type",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "type",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "type",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "agent",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "agent",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "agent",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "agent",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "input",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "input",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "input",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "attribute": "input",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "type",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "type",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "type",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "type",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "agent",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "agent",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "agent",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "agent",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "input",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "input",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "input",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "attribute": "input",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "type",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "type",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "type",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "type",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "agent",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "agent",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "agent",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "agent",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "input",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "input",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "input",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "attribute": "input",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "type",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "type",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "type",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "type",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "agent",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "agent",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "agent",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "agent",
+      "key": "ArrowRight",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "input",
+      "key": "End",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "input",
+      "key": "Home",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "input",
+      "key": "ArrowLeft",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "attribute": "input",
+      "key": "ArrowRight",
+      "passed": true
+    }
+  ],
+  "fallback": [
+    {
+      "target": "github",
+      "lang": "en",
+      "mode": "no-js",
+      "page": "index",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "mode": "no-js",
+      "page": "start",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "mode": "initialization-failure",
+      "page": "index",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "mode": "initialization-failure",
+      "page": "start",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "mode": "no-js",
+      "page": "index",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "mode": "no-js",
+      "page": "start",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "mode": "initialization-failure",
+      "page": "index",
+      "passed": true
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "mode": "initialization-failure",
+      "page": "start",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "mode": "no-js",
+      "page": "index",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "mode": "no-js",
+      "page": "start",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "mode": "initialization-failure",
+      "page": "index",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "mode": "initialization-failure",
+      "page": "start",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "mode": "no-js",
+      "page": "index",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "mode": "no-js",
+      "page": "start",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "mode": "initialization-failure",
+      "page": "index",
+      "passed": true
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "mode": "initialization-failure",
+      "page": "start",
+      "passed": true
+    }
+  ],
+  "proofLinks": [
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/production-deployment.architecture.html#focus=gateway",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/production-deployment.architecture.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/production-deployment.architecture.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=architecture&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/web-app.architecture.html#focus=api",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/web-app.architecture.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/web-app.architecture.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/agent-tool-call.workflow.html#focus=planner",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/agent-tool-call.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/agent-tool-call.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=workflow&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/release-delivery.workflow.html#focus=approval",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/release-delivery.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/release-delivery.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/incident-response.workflow.html#focus=triage",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/incident-response.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/incident-response.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/cache-miss.sequence.html#focus=redis",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/cache-miss.sequence.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/cache-miss-request.sequence.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=sequence&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/async-job-roundtrip.sequence.html#focus=queue",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/async-job-roundtrip.sequence.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/async-job-roundtrip.sequence.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/product-analytics.dataflow.html#focus=consent",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/product-analytics.dataflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/product-analytics.dataflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=dataflow&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/event-stream.dataflow.html#focus=orders",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/event-stream.dataflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/event-stream.dataflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/agent-run.lifecycle.html#focus=approval",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/agent-run.lifecycle.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/agent-run.lifecycle.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=lifecycle&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/deployment-release.lifecycle.html#focus=live",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/deployment-release.lifecycle.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/deployment-release.lifecycle.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/orders.erd.html#focus=order",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/orders.erd.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/orders.erd.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "erd",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=erd&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payments.class.html#focus=payment_gateway",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payments.class.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/payments.class.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "class",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=class&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payment-platform.tree.html#focus=payments",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payment-platform.tree.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/payment-platform.tree.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "tree",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=tree&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payment-incident.timeline.html#focus=rollback",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payment-incident.timeline.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/payment-incident.timeline.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=timeline&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/checkout-request.waterfall.html#focus=payment",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/checkout-request.waterfall.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/checkout-request.waterfall.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "en",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8769/archify/start.html?type=waterfall&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/production-deployment.architecture.html#focus=gateway",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/production-deployment.architecture.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/production-deployment.architecture.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=architecture&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/web-app.architecture.html#focus=api",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/web-app.architecture.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/web-app.architecture.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/agent-tool-call.workflow.html#focus=planner",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/agent-tool-call.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/agent-tool-call.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=workflow&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/release-delivery.workflow.html#focus=approval",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/release-delivery.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/release-delivery.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/incident-response.workflow.html#focus=triage",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/incident-response.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/incident-response.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/cache-miss.sequence.html#focus=redis",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/cache-miss.sequence.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/cache-miss-request.sequence.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=sequence&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/async-job-roundtrip.sequence.html#focus=queue",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/async-job-roundtrip.sequence.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/async-job-roundtrip.sequence.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/product-analytics.dataflow.html#focus=consent",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/product-analytics.dataflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/product-analytics.dataflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=dataflow&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/event-stream.dataflow.html#focus=orders",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/event-stream.dataflow.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/event-stream.dataflow.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/agent-run.lifecycle.html#focus=approval",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/agent-run.lifecycle.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/agent-run.lifecycle.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=lifecycle&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/deployment-release.lifecycle.html#focus=live",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/deployment-release.lifecycle.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/deployment-release.lifecycle.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/orders.erd.html#focus=order",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/orders.erd.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/orders.erd.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "erd",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=erd&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payments.class.html#focus=payment_gateway",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payments.class.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/payments.class.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "class",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=class&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payment-platform.tree.html#focus=payments",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payment-platform.tree.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/payment-platform.tree.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "tree",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=tree&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payment-incident.timeline.html#focus=rollback",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/payment-incident.timeline.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/payment-incident.timeline.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=timeline&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/checkout-request.waterfall.html#focus=payment",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8769/archify/gallery/artifacts/checkout-request.waterfall.html",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8769/archify/gallery/sources/checkout-request.waterfall.json",
+      "status": 200
+    },
+    {
+      "target": "github",
+      "lang": "zh",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8769/archify/zh/start.html?type=waterfall&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/production-deployment.architecture.html#focus=gateway",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/production-deployment.architecture.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/sources/production-deployment.architecture.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/start?type=architecture&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/web-app.architecture.html#focus=api",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/web-app.architecture.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/sources/web-app.architecture.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/agent-tool-call.workflow.html#focus=planner",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/agent-tool-call.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/agent-tool-call.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/start?type=workflow&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/release-delivery.workflow.html#focus=approval",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/release-delivery.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/release-delivery.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/incident-response.workflow.html#focus=triage",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/incident-response.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/incident-response.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/cache-miss.sequence.html#focus=redis",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/cache-miss.sequence.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/sources/cache-miss-request.sequence.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/start?type=sequence&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/async-job-roundtrip.sequence.html#focus=queue",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/async-job-roundtrip.sequence.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/sources/async-job-roundtrip.sequence.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/product-analytics.dataflow.html#focus=consent",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/product-analytics.dataflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/product-analytics.dataflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/start?type=dataflow&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/event-stream.dataflow.html#focus=orders",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/event-stream.dataflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/event-stream.dataflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/agent-run.lifecycle.html#focus=approval",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/agent-run.lifecycle.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/sources/agent-run.lifecycle.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/start?type=lifecycle&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/deployment-release.lifecycle.html#focus=live",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/deployment-release.lifecycle.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/sources/deployment-release.lifecycle.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/orders.erd.html#focus=order",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/orders.erd.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "url": "http://127.0.0.1:8770/gallery/sources/orders.erd.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "erd",
+      "url": "http://127.0.0.1:8770/start?type=erd&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payments.class.html#focus=payment_gateway",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payments.class.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "url": "http://127.0.0.1:8770/gallery/sources/payments.class.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "class",
+      "url": "http://127.0.0.1:8770/start?type=class&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payment-platform.tree.html#focus=payments",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payment-platform.tree.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "url": "http://127.0.0.1:8770/gallery/sources/payment-platform.tree.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "tree",
+      "url": "http://127.0.0.1:8770/start?type=tree&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payment-incident.timeline.html#focus=rollback",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payment-incident.timeline.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8770/gallery/sources/payment-incident.timeline.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8770/start?type=timeline&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/checkout-request.waterfall.html#focus=payment",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/checkout-request.waterfall.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8770/gallery/sources/checkout-request.waterfall.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "en",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8770/start?type=waterfall&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/production-deployment.architecture.html#focus=gateway",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/production-deployment.architecture.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/sources/production-deployment.architecture.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/zh/start?type=architecture&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/web-app.architecture.html#focus=api",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/web-app.architecture.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "architecture",
+      "url": "http://127.0.0.1:8770/gallery/sources/web-app.architecture.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/agent-tool-call.workflow.html#focus=planner",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/agent-tool-call.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/agent-tool-call.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/zh/start?type=workflow&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/release-delivery.workflow.html#focus=approval",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/release-delivery.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/release-delivery.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/incident-response.workflow.html#focus=triage",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/incident-response.workflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "workflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/incident-response.workflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/cache-miss.sequence.html#focus=redis",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/cache-miss.sequence.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/sources/cache-miss-request.sequence.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/zh/start?type=sequence&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/async-job-roundtrip.sequence.html#focus=queue",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/async-job-roundtrip.sequence.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "sequence",
+      "url": "http://127.0.0.1:8770/gallery/sources/async-job-roundtrip.sequence.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/product-analytics.dataflow.html#focus=consent",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/product-analytics.dataflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/product-analytics.dataflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/zh/start?type=dataflow&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/event-stream.dataflow.html#focus=orders",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/event-stream.dataflow.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "dataflow",
+      "url": "http://127.0.0.1:8770/gallery/sources/event-stream.dataflow.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/agent-run.lifecycle.html#focus=approval",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/agent-run.lifecycle.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/sources/agent-run.lifecycle.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/zh/start?type=lifecycle&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/deployment-release.lifecycle.html#focus=live",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/deployment-release.lifecycle.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "lifecycle",
+      "url": "http://127.0.0.1:8770/gallery/sources/deployment-release.lifecycle.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/orders.erd.html#focus=order",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/orders.erd.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "url": "http://127.0.0.1:8770/gallery/sources/orders.erd.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "erd",
+      "url": "http://127.0.0.1:8770/zh/start?type=erd&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payments.class.html#focus=payment_gateway",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payments.class.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "url": "http://127.0.0.1:8770/gallery/sources/payments.class.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "class",
+      "url": "http://127.0.0.1:8770/zh/start?type=class&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payment-platform.tree.html#focus=payments",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payment-platform.tree.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "url": "http://127.0.0.1:8770/gallery/sources/payment-platform.tree.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "tree",
+      "url": "http://127.0.0.1:8770/zh/start?type=tree&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payment-incident.timeline.html#focus=rollback",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/payment-incident.timeline.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8770/gallery/sources/payment-incident.timeline.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "timeline",
+      "url": "http://127.0.0.1:8770/zh/start?type=timeline&source=gallery",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/checkout-request.waterfall.html#focus=payment",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8770/gallery/artifacts/checkout-request.waterfall.html",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8770/gallery/sources/checkout-request.waterfall.json",
+      "status": 200
+    },
+    {
+      "target": "cloudflare",
+      "lang": "zh",
+      "type": "waterfall",
+      "url": "http://127.0.0.1:8770/zh/start?type=waterfall&source=gallery",
+      "status": 200
+    }
+  ],
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/156.0.8078.74",
+    "revision": "@d331de35ca8ab1358c7a17e4bd41627d55eaef51",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "jsVersion": "15.6.75.25"
+  },
+  "passed": true
+}

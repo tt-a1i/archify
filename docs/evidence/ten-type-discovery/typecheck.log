@@ -1,0 +1,21 @@
+
+> @archify/website@0.0.0 check
+> astro check
+
+17:26:46 [vite] Re-optimizing dependencies because vite config has changed
+17:26:46 [types] Generated 108ms
+17:26:46 [check] Getting diagnostics for Astro files in $SOURCE/website...
+src/scripts/clipboard.js:21:23 - warning ts(6387): The signature '(commandId: string, showUI?: boolean | undefined, value?: string | undefined): boolean' of 'document.execCommand' is deprecated.
+
+21       return document.execCommand('copy') === true;
+                         ~~~~~~~~~~~
+
+src/scripts/start.js:138:27 - warning ts(6387): The signature '(commandId: string, showUI?: boolean | undefined, value?: string | undefined): boolean' of 'document.execCommand' is deprecated.
+
+138         var ok = document.execCommand('copy');
+                              ~~~~~~~~~~~
+
+Result (61 files):
+- 0 errors
+- 0 warnings
+- 2 hints

@@ -238,4 +238,6 @@
 
       render();
       recordStep('start_view');
+      document.querySelectorAll('[data-start-enhanced]').forEach(function (element) { element.hidden = false; });
+      document.getElementById('start-fallback').hidden = true;
     })();

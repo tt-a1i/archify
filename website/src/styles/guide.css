@@ -59,6 +59,8 @@
     .prompt-bar { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
     .copy { border:0; background:none; color:var(--accent); padding:0; font-family:var(--font-mono); font-size:.5625rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
     .copy:hover { color:var(--ink); }
+    .copy-status { color:var(--text-2); font-size:.85rem; overflow-wrap:anywhere; }
+    .copy-status:empty { margin:0; }
     .prompt-text { color:var(--ink-soft); font-family:var(--font-mono); font-size:.6875rem; line-height:1.75; white-space:pre-wrap; }
     .alternatives { padding:.9rem 2rem; border-top:1px solid var(--line); color:var(--dim); font-size:.75rem; }
     .alternatives button { margin-left:.5rem; padding:0; border:0; background:none; color:var(--muted); cursor:pointer; font-size:.75rem; text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--line-hi); }

@@ -7,6 +7,7 @@ import RecipeReference from '../components/RecipeReference.astro';
 import head from '../data/guide-head.html?raw';
 import css from '../styles/guide.css?raw';
 import pageScript from '../scripts/guide.js?raw';
+import clipboardScript from '../scripts/clipboard.js?raw';
 const { lang = 'en' } = Astro.props;
 ---
 <SiteLayout page="guide" lang={lang} head={versioned(head)} css={css}>
@@ -59,6 +60,6 @@ const { lang = 'en' } = Astro.props;
 
   <script is:inline id="guide-data" type="application/json" set:html={jsonScript(guide)}></script>
   <script is:inline src="assets/site-language.js"></script>
-  <script is:inline set:html={versioned(pageScript)}></script>
+  <script is:inline set:html={versioned(clipboardScript + "\n" + pageScript)}></script>
 
 </SiteLayout>

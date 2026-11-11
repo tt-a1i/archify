@@ -450,19 +450,37 @@
   /* ══ Diagram types — index list drives the preview plate ══ */
   const typeItems = [...document.querySelectorAll('.type-item')];
   const typeImgs = [...document.querySelectorAll('.type-plate img')];
-  function selectType(key) {
+  function selectType(selected, updateUrl = false) {
+    const key = selected.dataset.type;
     typeItems.forEach(item => {
       const on = item.dataset.type === key;
       item.classList.toggle('is-active', on);
       item.querySelector('button').setAttribute('aria-pressed', String(on));
     });
-    typeImgs.forEach(img => img.classList.toggle('is-active', img.dataset.type === key));
+    typeImgs.forEach(img => {
+      const active = img.dataset.type === key;
+      img.classList.toggle('is-active', active);
+      img.setAttribute('aria-hidden', String(!active));
+    });
+    const href = ArchifySiteLanguage.page('gallery', `?type=${selected.dataset.diagramType}#proof-${selected.dataset.proof}`);
+    document.querySelector('.type-plate').href = href;
+    document.querySelector('.type-more').href = href;
+    document.getElementById('type-example-title').textContent = lang === 'zh' ? selected.dataset.titleZh : selected.dataset.titleEn;
+    if (updateUrl) {
+      const url = new URL(location.href);
+      url.searchParams.set('type', selected.dataset.diagramType);
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
   }
   typeItems.forEach(item => {
     const button = item.querySelector('button');
-    button.addEventListener('click', () => selectType(item.dataset.type));
-    button.addEventListener('mouseenter', () => { if (window.matchMedia('(hover: hover)').matches) selectType(item.dataset.type); });
+    button.addEventListener('click', () => selectType(item, true));
+    button.addEventListener('mouseenter', () => { if (window.matchMedia('(hover: hover)').matches) selectType(item, true); });
   });
+  const requestedType = new URLSearchParams(location.search).get('type');
+  selectType(typeItems.find(item => item.dataset.diagramType === requestedType) || typeItems[0]);
+  document.getElementById('types-list').hidden = false;
+  document.getElementById('type-recipes').hidden = true;
 
   /* ══ Agent command switcher ══ */
   const agentCommand = $('agent-command');
