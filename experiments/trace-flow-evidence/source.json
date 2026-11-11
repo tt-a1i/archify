@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/catapult-project/catapult",
+  "commit": "6fd8bbe723677254ff1130a1a416988b8b3e285e",
+  "path": "tracing/test_data/flow.json",
+  "sha256": "b17fa02df4a8584d230ad1014ef3578c2f141795681a8c682a644cf7eaf9d1f2",
+  "bytes": 690902,
+  "rawEventCount": 5017,
+  "selection": "6 explicitly selected records; all other raw records remain in the frozen input but are not projected",
+  "provenance": "Upstream published historical Chrome30 fixture, not independently recorded or replayed in this experiment.",
+  "sourceLicence": "BSD-3-Clause-style Catapult license; full original included in upstream/LICENSE.catapult"
+}

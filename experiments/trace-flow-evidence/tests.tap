@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: published full fixture and exact six record fields are preserved
+ok 1 - published full fixture and exact six record fields are preserved
+  ---
+  duration_ms: 5.310667
+  type: 'test'
+  ...
+# Subtest: flow direction and complete-file uniqueness use explicit raw identity
+ok 2 - flow direction and complete-file uniqueness use explicit raw identity
+  ---
+  duration_ms: 4.575417
+  type: 'test'
+  ...
+# Subtest: endpoint difference stays separate from raw queue_duration and slice intervals
+ok 3 - endpoint difference stays separate from raw queue_duration and slice intervals
+  ---
+  duration_ms: 2.560667
+  type: 'test'
+  ...
+# Subtest: changed source, missing field and changed selection cannot inherit source evidence
+ok 4 - changed source, missing field and changed selection cannot inherit source evidence
+  ---
+  duration_ms: 5.349
+  type: 'test'
+  ...
+# Subtest: a nearby non-flow record cannot be substituted as the causal endpoint
+ok 5 - a nearby non-flow record cannot be substituted as the causal endpoint
+  ---
+  duration_ms: 1.59075
+  type: 'test'
+  ...
+# Subtest: builder refuses an occupied output directory and preserves content
+ok 6 - builder refuses an occupied output directory and preserves content
+  ---
+  duration_ms: 50.462709
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129.579209
