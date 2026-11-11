@@ -22,6 +22,12 @@ const DEFAULTS = { executable: 'jscpd', minTokens: 50, minLines: 5, identifiers:
 const compare = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const sha256 = text => createHash('sha256').update(text).digest('hex');
 
+// jscpd on Windows may use extended-length prefixes and either separator.
+// Compare equivalent spellings without widening the captured inventory.
+const inputKey = name => process.platform === 'win32'
+  ? path.toNamespacedPath(path.normalize(name)).toLowerCase()
+  : path.normalize(name);
+
 export function duplicateOptions(config = {}) {
   const raw = config.duplicates;
   if (raw === undefined) return null;
@@ -127,10 +133,11 @@ export function analyzeDuplicates(graph, config, facts) {
       const rel = file.path;
       if (!rel || path.isAbsolute(rel) || path.win32.isAbsolute(rel) || rel.includes('\\') || rel.split('/').some(p => p === '..' || p === '.' || !p)) invalidReport('captured source path is not repository-relative.');
       const target = path.join(sourceRoot, rel);
-      if (inputs.has(target)) invalidReport('duplicate input path.');
+      const key = inputKey(target);
+      if (inputs.has(key)) invalidReport('duplicate input path.');
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, file.sourceText, 'utf8');
-      inputs.set(target, { file, buffer: Buffer.from(file.sourceText, 'utf8') });
+      inputs.set(key, { file, buffer: Buffer.from(file.sourceText, 'utf8') });
     }
     const args = ['--config', configuration, '--no-gitignore', '--absolute', '--workers', '1', '--silent', '--no-tips',
       '--reporters', 'json', '--output', output, '--summary', '--summary-top', String(staged.length),
@@ -152,8 +159,8 @@ export function analyzeDuplicates(graph, config, facts) {
       || !Number.isSafeInteger(report.summary.totalFiles) || report.summary.totalFiles < 0
       || report.summary.files.length !== report.summary.totalFiles || report.statistics?.total?.sources !== report.summary.totalFiles) invalidReport('missing or truncated analyzed-file inventory.');
     const inputFor = name => {
-      if (typeof name !== 'string' || !path.isAbsolute(name) || !inputs.has(path.normalize(name))) invalidReport('reported path is outside the captured input inventory.');
-      return inputs.get(path.normalize(name));
+      if (typeof name !== 'string' || !path.isAbsolute(name) || !inputs.has(inputKey(name))) invalidReport('reported path is outside the captured input inventory.');
+      return inputs.get(inputKey(name));
     };
     for (const row of report.summary.files) {
       const file = inputFor(row?.path).file.path;
