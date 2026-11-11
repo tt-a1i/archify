@@ -43,7 +43,8 @@ export function readInside(root, rel) {
   if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return { status: 'unverifiable', reason: 'file resolves outside the analysis root' };
   try {
     if (!fs.statSync(real).isFile()) return { status: 'missing', reason: 'path is no longer a file' };
-    return { status: 'ok', text: decodeSource(fs.readFileSync(real), rel) };
+    const bytes = fs.readFileSync(real);
+    return { status: 'ok', text: decodeSource(bytes, rel), byteSha256: sha256(bytes) };
   } catch (error) { return { status: 'unverifiable', reason: `file cannot be read (${error.code || error.message})` }; }
 }
 
@@ -208,14 +209,42 @@ export function verifyTask(task, root, { now = new Date() } = {}) {
     else if (!located.length && matches === true) { status = 'valid'; reason = 'the files this finding was computed from are unchanged'; }
     else if (!located.length && matches === false) { status = own.some((l) => readFile(l.file).status === 'missing') || f.evidenceDigest?.files?.some((x) => readFile(x).status === 'missing') ? 'missing' : 'changed'; reason = 'the files this finding was computed from changed'; }
     else if (status === 'valid' && matches === null) reason = f.evidenceDigest ? 'cited lines unchanged; the finding digest could not be recomputed' : 'cited lines unchanged; the finding has no evidence digest';
-    perFinding[f.id] = { status, ...(reason ? { reason } : {}), digestMatches: matches };
+    // Matching today's bytes only verifies the captured source. It cannot
+    // establish that a separately produced report checked those bytes. Preserve
+    // both results so a stale or unbound report is never promoted to valid.
+    const sourceStatus = status;
+    let reportBinding;
+    if (f.external) {
+      const source = task.source?.external?.find((entry) => entry.id === f.external.sourceId);
+      let scopeReason;
+      reportBinding = f.external.binding === 'changed' || source?.binding === 'changed' ? 'changed'
+        : source?.tool === f.external.tool && source.binding === 'verified' && f.external.binding === 'verified' ? 'verified' : 'unverified';
+      // A report may depend on scanned files beyond the cited location (for
+      // example another file's use of an exported name). Generation-time byte
+      // hashes preserve that scope without loading those files into the graph.
+      for (const [file, expected] of Object.entries(source?.sourceHashes || {})) {
+        const current = readFile(file);
+        if (current.status === 'missing' || (current.status === 'ok' && current.byteSha256 !== expected)) {
+          reportBinding = 'changed'; scopeReason = `scanned file ${file} ${current.status === 'missing' ? 'is missing' : 'changed since the external report was generated'}`; break;
+        }
+        if (current.status !== 'ok' && reportBinding !== 'changed') { reportBinding = 'unverified'; scopeReason = `scanned file ${file} could not be checked (${current.reason})`; }
+      }
+      if (reportBinding !== 'verified') {
+        status = worst([status, reportBinding === 'changed' ? 'changed' : 'unverifiable']);
+        reason = [reason, scopeReason, reportBinding === 'changed'
+          ? 'the external report does not match the source it claims to check; regenerate and import it again'
+          : 'the external report was not verified against its source; unchanged captured code does not establish report freshness'].filter(Boolean).join('; ');
+      }
+    }
+    perFinding[f.id] = { status, ...(reason ? { reason } : {}), digestMatches: matches, ...(f.external ? { sourceStatus, reportBinding } : {}) };
   }
   const status = worst(Object.values(perFinding).map((f) => f.status));
   const counts = {};
   for (const l of locations) counts[l.status] = (counts[l.status] || 0) + 1;
+  const unboundReports = Object.values(perFinding).filter((finding) => finding.reportBinding && finding.reportBinding !== 'verified').length;
   const reason = status === 'valid'
     ? 'Every cited location and evidence digest matches the current working tree.'
-    : `${Object.entries(counts).filter(([s]) => s !== 'valid').map(([s, n]) => `${n} location${n === 1 ? '' : 's'} ${s}`).join(', ') || 'evidence digest changed'}; see each location.`;
+    : `${[Object.entries(counts).filter(([s]) => s !== 'valid').map(([s, n]) => `${n} location${n === 1 ? '' : 's'} ${s}`).join(', '), unboundReports ? `${unboundReports} external report binding${unboundReports === 1 ? '' : 's'} need verification` : ''].filter(Boolean).join('; ') || 'evidence digest changed'}; see each location${unboundReports ? ' and finding' : ''}.`;
   return { ...task, locations, evidence: { status, checkedAt: now.toISOString(), reason, findings: perFinding } };
 }
 

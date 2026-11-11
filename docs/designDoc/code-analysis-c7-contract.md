@@ -1,0 +1,69 @@
+# C7 implementation contract
+
+Base: `labs/code-analysis` at `10a608a743be58ede8069959cc6e502175677d7c`. The user authorized implementation on 2026-11-11, accepted the v3 interaction prototype, then authorized the real viewer and follow-up fixes. The viewer is connected; the withdrawn v1 and the illustrative v3 prototype are design history, not evidence of native tool output. This independent change is being prepared as a draft PR; overlap with [Draft #1322](https://github.com/tt-a1i/archify/pull/1322) remains for maintainers to coordinate, without claiming replacement or importing its separate jscpd changes. Issue #1182 does not establish C7 scope approval.
+
+## Delivered scope and implementation boundaries
+
+The CLI and local viewer import existing ESLint JSON, Ruff JSON, SARIF 2.1.0 and GitHub review exports. Findings share Archify's evidence, task, baseline and comparison pipeline. The viewer adds source-aware browsing, coverage, evidence, task export and accept/revoke controls. Static reports retain captured data and tasks; they do not receive the local server's write/verification token.
+
+| Responsibility | Reuse or adaptation | Archify-specific work |
+|---|---|---|
+| Lint detection | Existing ESLint/Ruff results | Native JSON adapters; no implementation or execution of their lint rules |
+| SARIF validation | Pinned official OASIS schema; Ajv draft-04 and formats | Supported-subset normalization, local path/position handling, source binding and explicit partial/unsupported cases |
+| Fallback source anchors | Adapted GitHub CodeQL Action line-hashing algorithm | Source/rule/component identity and repeated-occurrence handling; fingerprints are an identity aid, not proof that two claims are equivalent |
+| Parser organization | reviewdog/DefectDojo as implementation references | Local adapters; their parser/runtime sources are not embedded |
+| Evidence and review | Existing captured facts, hashing, task and baseline pipeline | External source contexts, supplemental text, claim digests, per-source comparability and safe acceptance checks |
+| Viewer | Existing reader, component mapping, Classic/Atlas and page builder | Source filters/details, external evidence and review controls; no parallel browser implementation of overview/indicator derivation |
+| GitHub collection | GitHub REST review-comment data | Explicit bounded GET-only collector and read-only import; no posting, automatic reviewer invocation or inferred thread resolution |
+
+Pins, adaptations and preserved terms are recorded in [vendor references](../../archify/modules/code-analysis/import/vendor/README.md). Interface inspiration is listed in the [v3 design](code-analysis-c7-interaction-v3.md). References do not imply runtime dependencies. This scope does not add report upload/configuration editing in the browser, an embedded lint runner, or an independent issue-management system.
+
+## Configuration
+
+`config.external = { sources: [...], severity: "source" }` is optional. Each source has `{ id, format, file, pathBase?, pathMappings?, tool?, manifest?, author? }`. Formats: `eslint`, `ruff`, `sarif`, `github-review`. `id` is stable, unique and user configured; source labels must distinguish different ids even when tool/version are the same. `file`/`pathBase`/manifest file paths resolve relative to the analyzed root. Manifest `scope.files` and `files` keys are always repository-relative, independent of the producer's `pathBase`. `pathMappings` is an optional array of `{ from, to }` for an explicit producer-root to repository-root mapping. Manifest may be an object or a JSON file path. `author` selects GitHub root comments while retaining replies as context.
+
+Manifest shape: `{ schema_version: 1, toolVersion?, configDigest?, scope?: { files: string[], complete: boolean }, files?: { [repoRelativePath]: sha256 }, command?, exitCode? }`. Generated-time source hashes bind a report; importing and hashing today's source does not establish the report's freshness. No lint command is executed by an import. Severity policy `source` maps lint's source severity; `warning` demotes lint to warning. AI review is always warning. Missing source severity defaults to warning and is recorded as defaulted. External confidence is null, not an invented score.
+
+## Import API and result
+
+`lib/external.mjs` exports `importExternal({ root, config, facts }) -> { diagnostics, sources, evidenceFiles }` (sync to match the current synchronous analysis pipeline). Missing config returns three empty arrays. Configured missing/malformed reports fail with DiagnosticError and precise actionable evidence. Supported partial input remains visible with partial coverage. Never infer a successful complete scan from zero results.
+
+`sources` entries contain `{ id, code, format, tool, toolVersion: string|null, adapterRevision, identityRevision, reportSha256, configDigest: string|null, severityPolicy, importSettingsDigest, status: "imported"|"partial", coverage: { files: string[], complete: boolean|null }, binding: "verified"|"unverified"|"changed", suppressed: number, notices: [{code,message}], sourceHashes?, command?, reportFile? }`. Adapter/identity revisions are positive versioned integers, not a permanent value of 1. `sourceHashes` retains generation-time raw-byte assertions. Multiple SARIF runs have distinct deterministic source ids derived from the configured source id (and recorded as such on findings). Source lists and path arrays are deterministic.
+
+`evidenceFiles` captures only repository files absent from facts: `[{ path, sourceText, sha256 }]`. Root integration stores this optional array as `findings.externalEvidence`, source contexts as `findings.analysis.external`. Preserve existing facts/snapshot semantics; supplemental text is evidence, not a claim of AST or dependency analysis. Consumers combine facts.files and externalEvidence into one source map. Capture is bounded; excluded/unreadable/outside files remain explicit unverifiable evidence, not guessed files.
+
+## External diagnostic
+
+Existing fields remain. Lint uses `dimension: "conventions"`, `code: "conventions/<tool-slug>"`; AI uses `dimension: "external-review"`, `code: "external/<tool-slug>"`. Slugs fit the existing lowercase-letter/hyphen code contract. `confidence: null`. `message` retains source text. `evidence` need not fabricate threshold. `subject` has primary `{ file?, line?, endLine?, column?, endColumn? }` only when a primary location is available, and optional `locations` for citations. A related location is readable context, not an inferred primary. All normalized columns are UTF-16, 1-based, end-exclusive. Whole-file/unknown positions are not invented line ranges.
+
+`diagnostic.external = { sourceId, tool, ruleId: string|null, originalSeverity: string|number|null, severityDefaulted?: boolean, helpUri?: string, reportPointer, identityRevision, fingerprint?: string, binding: "verified"|"unverified"|"changed", reviewDigest: sha256, locations: [{file,line?,endLine?,column?,endColumn?,role?}], origin?: object, suggestions?: string[] }`. SARIF locations explicitly use `role: "primary"|"related"`; optional roles preserve existing tasks and other formats. `origin` carries AI comment id/url/commit/diff side/native location, `toolComponent: {name,guid?,version?}` for SARIF and notebook cell metadata where applicable. Source suppressions are counted and preserved as source context, not copied into local baseline acceptance.
+
+Importer assigns versioned stable ids (`CONV-` / `EXT-` + 12 hex) and standard source-only evidenceDigest. Prefer upstream fingerprints when usable; fallback anchors use source context. Identity must distinguish repeated occurrences and SARIF rule components: removing one occurrence must not transfer its acceptance to another, and two extensions' results must not be collapsed merely because their local rule ids/messages agree. Metadata changes alter reviewDigest, not the source-only evidenceDigest. Reimport does not append duplicate findings. Different configured sources remain distinct. An identity-algorithm revision can change ids and make earlier baselines/comparisons require review; do not migrate acceptance by occurrence order.
+
+The follow-up SARIF adapter/identity revisions are 2; ESLint, Ruff and GitHub review remain at 1. Partial fingerprints combine all named contributors in sorted order with captured source/column anchors rather than treating one partial value as unique. Complete fingerprints retain the producer's identity assertion. Rule-component provenance participates in deduplication, identity and the reviewed claim; normalized SARIF locations also participate in the claim digest. Old SARIF acceptance is not automatically migrated to revision-2 ids.
+
+Same-name components without GUIDs remain explicitly ambiguous: their provenance also records an index and `identityAmbiguous`, coverage becomes partial, and the claim digest binds that report's SHA. A changed report therefore requires re-review in this specific ambiguous case rather than inheriting acceptance by slot. Ordinary unambiguous sources still do not use changing report bytes as a claim-equivalence key.
+
+## Integration and review lifecycle
+
+Imported diagnostics merge after internal evaluation; counts are recalculated and the combined findings validated. Sources/evidence travel through CLI/page/task paths. External ids are not reassigned through internal assignIds. Relevant external codes are added to rules and ruleVersions using their source adapter revision. Existing defaults retain internal analysis when no external config is present.
+
+Baseline entries gain optional `externalReviewDigest`. Acceptance for external findings requires recorded source evidence plus matching reviewDigest; missing digest or binding=changed remains open/review-needed. Explicit reason may accept a source-unverified report when the user reviewed its captured current evidence; that never upgrades report binding or comparison completeness. Missing external metadata in an old baseline must not silently accept a new external finding. Existing internal baseline semantics stay compatible.
+
+Comparability compares external source set, tool/version, configDigest, coverage/scope/completeness, binding, adapter/identity revisions. Report hash changing is provenance, not automatically settings changed. Missing source, failed/partial/unknown scope or source binding cannot imply fixed. Attach source-qualified reasons and likelyCause to disappeared external findings. Keep internal results when an external source is unknown. `externalEvidence` must be included when determining current available files.
+
+Tasks explicitly project external fields, primary and related positions, snippets, source-only hashes, and report binding. Commands come only from explicit manifest metadata; otherwise task instructs regenerating the external report with original settings and importing it again, with unknown commands listed toConfirm. Never present raw Archify-only reanalysis as rerunning lint. JSON and Markdown are generated from one task document.
+
+Task locations retain optional primary/related roles. Related excerpts contribute to `scope.read`, but do not authorize changes through `scope.modify`; a related-only result asks the agent to confirm its primary location and modification scope first.
+
+## Local viewer requests and snapshot rendering
+
+All live POST requests require the local origin and `X-Analysis-Token`; paths are fixed by the service. `POST /review` accepts `{action, id, reason?, expected?}`. Acceptance requires a reason and the page's `reviewTargetDigest` (projected as `reviewTarget`); matching only the stable id is insufficient. Revocation does not require current source evidence and remains available for `accepted-changed` entries.
+
+A review first prepares the new view, then saves the baseline and updates the HTML cache. `view-context.json` captures the original IR, mapping and presentation scope. The existing page builder reconstructs overview, component indicators, Atlas and captured tasks from that context plus the original facts/graph/findings, without extraction or report import. Successful review returns `{saved:true, review, html, refreshRequired:false, artifactsSaved}`. If artifact publication fails after the baseline was saved, the response remains explicit about `saved:true`, includes warnings and retains usable authoritative HTML in memory. Review does not rotate `analysis.previous`.
+
+`POST /analyze` returns HTML, reuses the cache normally and starts a new analysis only for an initial request or explicit `X-Analysis-Refresh: 1`. A failed refresh preserves the last successful files and cache. `POST /task` accepts `{ids, expected?}` and returns `{task, markdown}` with current source verification; task validity and report binding remain separate from HTTP success. Live pages send `expected: {[id]: reviewTarget}` so a changed claim on the same AST snapshot is rejected with HTTP 409 and `task/finding-changed`. CLI and legacy ids-only task clients retain their existing task contract.
+
+## Validation boundary
+
+[Real-project validation](../validation/code-analysis-c7-real-repos.md) separates actual tool reports, illustrative fixtures, prototype checks, real viewer evidence and test runs before/after follow-up fixes. Reused passing results are not relabeled as final-commit runs. Native Windows execution, live GitHub collection, mixed-list browser acceptance and final release/CI checks require their own evidence.

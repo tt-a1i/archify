@@ -4,6 +4,8 @@ Start Archify with `npm start -- "/path/to/project" --ir architecture.json` from
 
 [Quick start guide](docs/USAGE.md) — installation, startup, and viewing analysis results.
 
+[External diagnostics (C7)](docs/EXTERNAL-DIAGNOSTICS.md) — import existing ESLint, Ruff, SARIF and GitHub review results; browse/filter them with source coverage and evidence; export tasks and accept/revoke baseline decisions in the CLI or local viewer. Static reports retain reading and captured task export.
+
 Code Analysis is Archify's integrated static code analysis module, imported from
 Bauify (commit 4bb811c) and maintained here. It reads source dependencies
 (JavaScript, TypeScript, Python, Java, Go and Rust), folds files into modules, checks import cycles, coupling,
@@ -55,19 +57,23 @@ node bin/archify.mjs code-analysis serve /path/to/repo --ir architecture.json --
 ```
 
 The first run installs the module's Node parser and schema dependencies
-(typescript, java-parser, ajv) into `modules/code-analysis/node_modules`; `npm ci` in
+(including typescript, java-parser and Ajv with SARIF draft/format support) into `modules/code-analysis/node_modules`; `npm ci` in
 `archify/` does the same through its `postinstall`. Open the URL the command
 prints and keep the process running. Options:
 `--language ts|py|java|go|rust` (choose explicitly for a mixed-language root), `--map overlay-map.json`
 (`{"componentId": ["moduleId", …]}` when the IR's `sources` do not say which
 modules a component stands for), `--config file.json` (thresholds, include /
 exclude, roles), `--quality standard|showcase` (passed to `archify deliver`).
+Use `--baseline baseline.json` to retain review decisions at a stable project
+path; otherwise the local viewer writes `<out>/baseline.json`.
 
 Output under `--out`: `architecture.html` (Archify's artifact, untouched) and,
 after the click, `analysis/raw-facts.json`, `analysis/module-graph.json`,
 `analysis/findings.json`, `analysis/review.json`, `analysis/overview.json` and
 `analysis/repo.analysis.html` — the delivered page plus the appended analysis
-layer, self-contained. Click **Re-analyze** for a fresh analysis after changing
+layer, self-contained. `analysis/view-context.json` retains the original view
+mapping and scope so review decisions can rebuild that captured page without a
+new analysis. Click **Re-analyze** for a fresh analysis after changing
 source code or the `--config` file; only a changed architecture JSON needs a
 restart. The previous run is kept in `analysis.previous/` and compared with.
 
