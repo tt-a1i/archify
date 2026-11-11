@@ -108,3 +108,56 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.equal(await run("document.querySelector('#bauify-overview .bauify-reanalyze').disabled"), false, 'the reader can retry');
   assert.equal(fs.readFileSync(path.join(out, 'analysis', 'findings.json'), 'utf8'), before);
 });
+
+test('imported findings can be filtered by rule, severity, source and status', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-external-filter-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const root = path.join(scratch, 'repo');
+  fs.mkdirSync(root);
+  fs.writeFileSync(path.join(root, 'a.mjs'), 'export const value = 1;\n');
+  const report = path.join(scratch, 'report.sarif');
+  const result = (ruleId, level, text) => ({ ruleId, level, message: { text }, locations: [{ physicalLocation: { artifactLocation: { uri: 'a.mjs' }, region: { startLine: 1 } } }] });
+  const run = (name, results) => ({ tool: { driver: { name, version: '1' } }, results });
+  fs.writeFileSync(report, JSON.stringify({ version: '2.1.0', runs: [run('eslint', [result('no-alert', 'error', 'Accepted external alert')])] }));
+  const baseline = path.join(scratch, 'baseline.json');
+  const accepted = await runCheck([root, '--language', 'ts', '--sarif', report, '--baseline', baseline, '--update-baseline', '--reason', 'known issue']);
+  assert.equal(accepted.exitCode, 0);
+  fs.writeFileSync(report, JSON.stringify({ version: '2.1.0', runs: [run('eslint', [result('no-alert', 'error', 'Accepted external alert')]), run('ruff', [result('F401', 'warning', 'Open external warning')])] }));
+  const ir = path.join(scratch, 'input.json');
+  fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'External filters', output: 'architecture.html' }, components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] }));
+  const view = await startAnalysisView([root, '--ir', ir, '--baseline', baseline, '--out', path.join(scratch, 'view'), '--language', 'ts', '--sarif', report]);
+  t.after(() => new Promise(resolve => { view.server.close(resolve); view.server.closeAllConnections?.(); }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const evaluate = async expression => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    return response.result?.value;
+  };
+  await send('Emulation.setDeviceMetricsOverride', { width: 1500, height: 950, deviceScaleFactor: 1, mobile: false });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: view.url });
+  await loaded;
+  await evaluate("document.getElementById('code-analysis-start').click()");
+  for (let i = 0; i < 600 && !(await evaluate("document.documentElement.getAttribute('data-bauify') === 'on'")); i++) await new Promise(resolve => setTimeout(resolve, 100));
+  assert.equal(await evaluate("document.documentElement.getAttribute('data-bauify')"), 'on');
+  const choose = async (filter, value) => {
+    await evaluate(`(() => { const el = document.querySelector('#bauify-overview .finding-${filter}'); el.value = ${JSON.stringify(value)}; el.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    return evaluate("document.querySelector('#bauify-overview .counts').innerText");
+  };
+  assert.match(await choose('rule', 'external/eslint'), /1 finding shown/);
+  assert.match(await choose('severity', 'info'), /0 findings shown/);
+  await choose('severity', 'warning');
+  await choose('rule', '');
+  assert.match(await choose('source', 'ruff'), /1 finding shown/);
+  assert.match(await choose('status', 'accepted'), /0 findings shown/);
+  await choose('source', 'eslint');
+  await choose('severity', 'warning');
+  assert.match(await choose('status', 'accepted'), /1 finding shown/);
+  await evaluate("document.querySelector('#bauify-overview .finding-clear').click()");
+  assert.match(await evaluate("document.querySelector('#bauify-overview .counts').innerText"), /2 findings/);
+});
