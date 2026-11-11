@@ -22,9 +22,11 @@ runtime dependencies.
 ## Python
 
 ```sh
-BAUIFY_PYTHON=/path/to/python node archify/bin/archify.mjs code-analysis check archify/modules/code-analysis/test/fixtures/py-basic --language py --out out/py
+BAUIFY_PYTHON=/path/to/python node archify/bin/archify.mjs code-analysis check archify/modules/code-analysis/test/fixtures/py-basic --language py --out out/py --fail-on never
 ```
 
+The fixture can report warnings. `--fail-on never` keeps this demonstration
+from failing the findings gate; it does not mean the default gate would pass.
 The adapter records package-relative imports and measures functions. Namespace
 packages and `__init__.py` package initialization affect dependency resolution.
 The `py-basic` fixture includes malformed source and a namespace package to
@@ -35,10 +37,12 @@ recovered by silently choosing another interpreter.
 ## Java
 
 ```sh
-node archify/bin/archify.mjs code-analysis check archify/modules/code-analysis/test/fixtures/java-basic --language java --out out/java
+node archify/bin/archify.mjs code-analysis check archify/modules/code-analysis/test/fixtures/java-basic --language java --out out/java --fail-on never
 ```
 
-The adapter records unambiguous source-level type dependencies and method
+As with the Python example, `--fail-on never` demonstrates the analysis without
+asserting that the default findings gate passes. The adapter records
+unambiguous source-level type dependencies and method
 complexity without running a JDK, Maven, Gradle or project tests. The fixture
 includes declarations, imports and an external-supertype case whose inherited
 member type is deliberately left unresolved. Java cycles are structural
