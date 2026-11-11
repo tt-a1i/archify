@@ -403,8 +403,7 @@ export function compileDataflow({ dataflow, sourceEvidence, qualityProfile: requ
 
       const flowList = asArray(dataflow.flows);
       const stageById = new Map(asArray(dataflow.nodes).map((node) => [node.id, node.stage]));
-      for (const flow of flowList) {
-        const flowIndex = flowList.indexOf(flow);
+      for (const [flowIndex, flow] of flowList.entries()) {
         for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
           if (nodes.has(flow[field])) continue;
           const problem = `Flow "${flow.label || flow[field]}" references unknown ${endpoint} "${flow[field]}".`;
