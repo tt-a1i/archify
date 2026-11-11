@@ -44,3 +44,18 @@ test('a legal but enormous box is answered without walking cells', () => {
   grid.insert({ minX: 0, minY: 0, maxX: 0, maxY: 0 }, only);
   assert.deepEqual(grid.query({ minX: 0, minY: 0, maxX: 1e9, maxY: 1e9 }), [only]);
 });
+
+test('cell-boundary contact retains candidates on positive and negative coordinates', () => {
+  for (const origin of [-200, -100, 0, 100]) {
+    const grid = createSpatialGrid(100);
+    const item = { id: String(origin) };
+    grid.insert({ minX: origin, minY: origin, maxX: origin + 100, maxY: origin + 100 }, item);
+    for (const [x, y] of [
+      [origin, origin], [origin + 100, origin],
+      [origin, origin + 100], [origin + 100, origin + 100],
+    ]) {
+      assert.ok(grid.query({ minX: x, minY: y, maxX: x, maxY: y }).includes(item),
+        `point contact at ${x},${y} must reach the inserted box`);
+    }
+  }
+});
