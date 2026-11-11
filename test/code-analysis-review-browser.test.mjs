@@ -161,3 +161,53 @@ test('imported findings can be filtered by rule, severity, source and status', {
   await evaluate("document.querySelector('#bauify-overview .finding-clear').click()");
   assert.match(await evaluate("document.querySelector('#bauify-overview .counts').innerText"), /2 findings/);
 });
+
+test('relationship comparison communicates differences and partial coverage', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-relations-browser-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const root = path.join(scratch, 'repo');
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'lib'));
+  const source = path.join(root, 'src', 'a.mjs');
+  fs.writeFileSync(source, "import '../lib/b.mjs';\n");
+  fs.writeFileSync(path.join(root, 'lib', 'b.mjs'), 'export const b = 1;\n');
+  const ir = path.join(scratch, 'input.json');
+  fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Relationship comparison', output: 'architecture.html' }, components: [
+    { id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] },
+    { id: 'lib', type: 'backend', label: 'Lib', pos: [320, 40], size: [170, 64] },
+  ], connections: [{ from: 'lib', to: 'app', label: 'uses' }] }));
+  const map = path.join(scratch, 'map.json');
+  fs.writeFileSync(map, JSON.stringify({ app: ['src'], lib: ['lib'] }));
+  const view = await startAnalysisView([root, '--ir', ir, '--map', map, '--out', path.join(scratch, 'view'), '--language', 'ts']);
+  t.after(() => new Promise(resolve => { view.server.close(resolve); view.server.closeAllConnections?.(); }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const evaluate = async expression => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    return response.result?.value;
+  };
+  const wait = async expression => {
+    for (let i = 0; i < 600; i++) {
+      try { if (await evaluate(`Boolean(${expression})`)) return; } catch { /* page reloading */ }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error(`Timed out waiting for ${expression}`);
+  };
+  await send('Emulation.setDeviceMetricsOverride', { width: 1500, height: 950, deviceScaleFactor: 1, mobile: false });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: view.url });
+  await loaded;
+  await evaluate("document.getElementById('code-analysis-start').click()");
+  await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
+  const text = () => evaluate("document.getElementById('bauify-overview').textContent");
+  assert.match(await text(), /Static source relationships differ from the authored diagram/);
+  fs.writeFileSync(source, "export async function later() { return import('../lib/b.mjs'); }\n");
+  await evaluate("document.querySelector('#bauify-overview .bauify-reanalyze').click()");
+  await wait("document.documentElement.getAttribute('data-bauify') === 'on' && document.getElementById('bauify-overview').textContent.includes('Static relationship comparison is partial')");
+  assert.match(await text(), /some edges are unmapped or deferred and require review/);
+});
