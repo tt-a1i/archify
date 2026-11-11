@@ -25,6 +25,8 @@ done
 
 temp_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
 snapshot_dir="$(mktemp -d "${temp_root%/}/archify-star-history.XXXXXX")"
+# Remove only an empty snapshot; failed publication retains charts for recovery.
+trap 'rmdir -- "$snapshot_dir" 2>/dev/null || true' EXIT
 mv -- "$light_chart" "$snapshot_dir/light.svg"
 mv -- "$dark_chart" "$snapshot_dir/dark.svg"
 
