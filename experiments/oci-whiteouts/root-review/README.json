@@ -1,0 +1,104 @@
+{
+  "recordedAt": "2026-10-27T00:08:15.276502+00:00",
+  "implementationReviewedRevision": "2db99eb885d97c1b7cc26a55fde3b93796369008",
+  "artifacts": [
+    {
+      "path": "final/explainer.html",
+      "sha256": "5b4790c282740cf6d94e71e4b072ad7a3d2b5daab90228e73340c2d716815043"
+    },
+    {
+      "path": "final/native.html",
+      "sha256": "42650d4b3b8c10fa296b7736858f68edf18429482dc8493cf88a5c17b690c3e2"
+    },
+    {
+      "path": "draft-1/native.html",
+      "sha256": "42650d4b3b8c10fa296b7736858f68edf18429482dc8493cf88a5c17b690c3e2"
+    }
+  ],
+  "browser": "Ego Lite, existing TaskSpace4/p1; CSS viewport set through CDP per round; deviceScaleFactor1",
+  "observations": [
+    "Desktop 1440x900 native and Explainer: lower targets and same-layer survivor are distinct, title/sublabels identify spec-derived visibility; final page answer states original synthetic input and no container execution.",
+    "Actual dark theme and Open interactive diagram worked; Escape closed modal and restored focus to Open interactive diagram.",
+    "Fresh full Tab traversal without focus injection reached inventory copy 32,order-json copy 33,OCI source links 34/35 and Archify footer 36;37 returned BODY. Those rows vertically visible; footer screenshot includes focus ring.",
+    "Mobile 390x844 light and dark: document scrollWidth 390, summary and evidence boundary readable. Full diagram and inventory require scrolling.",
+    "Final 16 keyboard-traversal diagnostics remain failed. This observation does not replace the automated result, human AT testing or actual OCI filesystem application."
+  ],
+  "images": [
+    {
+      "path": "draft-1-native-light.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "5b8e0543ffcf8dc8e6d4dc532dbc5b8b5e036c071ef760da28f1577afc57b8df",
+      "bytes": 91494,
+      "inspectedBy": "root via view_image",
+      "artifact": "draft-1/native.html",
+      "artifactSha256": "42650d4b3b8c10fa296b7736858f68edf18429482dc8493cf88a5c17b690c3e2"
+    },
+    {
+      "path": "final-dark.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "7db8edb5ab60b176048a00f14e745a77aecd0490714d19137d95e292d46f0ef8",
+      "bytes": 123048,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/explainer.html",
+      "artifactSha256": "5b4790c282740cf6d94e71e4b072ad7a3d2b5daab90228e73340c2d716815043"
+    },
+    {
+      "path": "final-light.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "68abb2f1f6b21cc67e5a0daee843adfb65d8d0fdf442be5980d71c1a16d39d6c",
+      "bytes": 123536,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/explainer.html",
+      "artifactSha256": "5b4790c282740cf6d94e71e4b072ad7a3d2b5daab90228e73340c2d716815043"
+    },
+    {
+      "path": "footer-tab.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "506f8c1c7305db93f9cdf35a2954e105d71818cb2ba01dd7c877cb73b54c9c41",
+      "bytes": 90838,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/explainer.html",
+      "artifactSha256": "5b4790c282740cf6d94e71e4b072ad7a3d2b5daab90228e73340c2d716815043"
+    },
+    {
+      "path": "mobile-dark.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "1db22e1d67358515ec3e4a27b1f1afbda8f90e195e5433c9a717ac55bce49cc8",
+      "bytes": 88521,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/explainer.html",
+      "artifactSha256": "5b4790c282740cf6d94e71e4b072ad7a3d2b5daab90228e73340c2d716815043"
+    },
+    {
+      "path": "mobile-light.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "55b9e600edff910c02d8d2439e4a8924b80d01c6e6abde532060cc6a79021ff9",
+      "bytes": 89057,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/explainer.html",
+      "artifactSha256": "5b4790c282740cf6d94e71e4b072ad7a3d2b5daab90228e73340c2d716815043"
+    },
+    {
+      "path": "open-diagram-dark.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "d7431a4349e44cf3bd28af4660c20e20680602b895b9b93e20df17564093be5d",
+      "bytes": 95697,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/explainer.html",
+      "artifactSha256": "5b4790c282740cf6d94e71e4b072ad7a3d2b5daab90228e73340c2d716815043"
+    }
+  ],
+  "keyboardEvidence": "tab-traversal.json",
+  "limitations": [
+    "agent-operated browser observations, not human acceptance",
+    "no speed or comprehension improvement measured",
+    "screenshots do not override failed gates"
+  ]
+}

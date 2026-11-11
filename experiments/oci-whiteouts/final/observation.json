@@ -1,0 +1,166 @@
+{
+  "kind": "original-synthetic-fixture",
+  "measured": "Archive inventory, order and payload hashes only",
+  "projectionEvidence": "SPEC-DERIVED fixed model; no Docker, OCI runtime, mount or extracted filesystem was observed",
+  "archives": {
+    "lower": {
+      "sha256": "124e05344310e0520e2a65a94701241ceab1a0b80ab09dcfc06f2c34087b4127",
+      "bytes": 10240
+    },
+    "upper": {
+      "sha256": "fc96ae9972d9ea3d17612c6e5797d574cb409f7809e42eba5f0b5c7a8b12cddc",
+      "bytes": 10240
+    }
+  },
+  "inventory": {
+    "lower": [
+      {
+        "path": "app",
+        "type": "directory",
+        "size": 0,
+        "payloadSha256": null
+      },
+      {
+        "path": "app/cache",
+        "type": "directory",
+        "size": 0,
+        "payloadSha256": null
+      },
+      {
+        "path": "app/config.txt",
+        "type": "regular",
+        "size": 10,
+        "payloadSha256": "fb4d01e88dcb199d055c31268146167f20ab6b34dde368277de25c766cd74aa9"
+      },
+      {
+        "path": "app/cache/old.txt",
+        "type": "regular",
+        "size": 10,
+        "payloadSha256": "dedbb5907274af69e59a05472fa0069aaa25f597655fa453a170d6dae380e3fe"
+      },
+      {
+        "path": "app/keep.txt",
+        "type": "regular",
+        "size": 8,
+        "payloadSha256": "60d8b5ad876211494154448e80a187a80db2bfc9a5b608fce966dfb286d9ec77"
+      }
+    ],
+    "upper": [
+      {
+        "path": "app",
+        "type": "directory",
+        "size": 0,
+        "payloadSha256": null
+      },
+      {
+        "path": "app/cache",
+        "type": "directory",
+        "size": 0,
+        "payloadSha256": null
+      },
+      {
+        "path": "app/cache/new.txt",
+        "type": "regular",
+        "size": 10,
+        "payloadSha256": "e6402482646d8c43353d0439d52abaf6cc0edbb0db80fb6c21f497dca5f9da57"
+      },
+      {
+        "path": "app/.wh.config.txt",
+        "type": "regular",
+        "size": 0,
+        "payloadSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "app/cache/.wh..wh..opq",
+        "type": "regular",
+        "size": 0,
+        "payloadSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "specDerivedVisibleRegularPaths": {
+    "app/keep.txt": "lower",
+    "app/cache/new.txt": "upper"
+  },
+  "orderVariants": [
+    {
+      "upperRegularOrder": [
+        "app/cache/new.txt",
+        "app/.wh.config.txt",
+        "app/cache/.wh..wh..opq"
+      ],
+      "tarSha256": "fc96ae9972d9ea3d17612c6e5797d574cb409f7809e42eba5f0b5c7a8b12cddc",
+      "projection": {
+        "app/keep.txt": "lower",
+        "app/cache/new.txt": "upper"
+      }
+    },
+    {
+      "upperRegularOrder": [
+        "app/cache/new.txt",
+        "app/cache/.wh..wh..opq",
+        "app/.wh.config.txt"
+      ],
+      "tarSha256": "ffd94e13b97bd6a113f8a6d88130151e0590ea92d25a8059875e0ffa6d4465d8",
+      "projection": {
+        "app/keep.txt": "lower",
+        "app/cache/new.txt": "upper"
+      }
+    },
+    {
+      "upperRegularOrder": [
+        "app/.wh.config.txt",
+        "app/cache/new.txt",
+        "app/cache/.wh..wh..opq"
+      ],
+      "tarSha256": "d1306362fed2906eb0d0c14e5dcb68131161c1fd9c2b77f05e6c14554a82fa1d",
+      "projection": {
+        "app/keep.txt": "lower",
+        "app/cache/new.txt": "upper"
+      }
+    },
+    {
+      "upperRegularOrder": [
+        "app/.wh.config.txt",
+        "app/cache/.wh..wh..opq",
+        "app/cache/new.txt"
+      ],
+      "tarSha256": "b2938b2e1e822fdab377747cbb34e7af3b35d553e247597e6f4e5c68b63ac5ae",
+      "projection": {
+        "app/keep.txt": "lower",
+        "app/cache/new.txt": "upper"
+      }
+    },
+    {
+      "upperRegularOrder": [
+        "app/cache/.wh..wh..opq",
+        "app/cache/new.txt",
+        "app/.wh.config.txt"
+      ],
+      "tarSha256": "62e53e82d63abe560667e3fb4790b67082ab8e6837f596c5c700c7ca0dc589d6",
+      "projection": {
+        "app/keep.txt": "lower",
+        "app/cache/new.txt": "upper"
+      }
+    },
+    {
+      "upperRegularOrder": [
+        "app/cache/.wh..wh..opq",
+        "app/.wh.config.txt",
+        "app/cache/new.txt"
+      ],
+      "tarSha256": "a34d311e65e5bc2c30ab2070334f4598bc00b63b5cdeeaf86200fbaf2827d2eb",
+      "projection": {
+        "app/keep.txt": "lower",
+        "app/cache/new.txt": "upper"
+      }
+    }
+  ],
+  "notMeasured": [
+    "runtime filesystem",
+    "disk allocation",
+    "compressed image size",
+    "space savings",
+    "OCI conformance"
+  ]
+}

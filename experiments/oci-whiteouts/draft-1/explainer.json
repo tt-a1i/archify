@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "diagram_type": "explainer",
+  "meta": {
+    "id": "oci-whiteouts",
+    "locale": "zh-CN",
+    "title": "删的是下层：同层新增文件为什么还在？"
+  },
+  "answer": {
+    "summary": "app/cache/new.txt 保留。归档内容是实测；可见结果是 OCI 规范推导，未运行容器。",
+    "reasons": [
+      "普通 whiteout 只隐藏下层指定目标。",
+      "opaque 隐藏目录的下层子项，同层新文件仍保留。",
+      "tar 中 marker 在前或在后，不改变这个范围。"
+    ],
+    "scope": "原创合成两层 · 仅六个 regular 成员 · 不是完整镜像或运行观测"
+  },
+  "panels": [
+    {
+      "id": "meaning",
+      "title": "先分清归档成员与可见性",
+      "span": 12,
+      "blocks": [
+        {
+          "id": "boundary",
+          "type": "callout",
+          "level": "warning",
+          "title": "实测 inventory ≠ 实测容器文件系统",
+          "text": "这两份小 tar 由本实验原创构造。visible 路径按固定 OCI 规范推导；没有执行 Docker、mount、解压或上游工具。"
+        },
+        {
+          "id": "whiteout-map",
+          "type": "diagram",
+          "diagramType": "architecture",
+          "source": "native.json",
+          "nodeBlocks": {
+            "opaque": "rule-opaque",
+            "new": "rule-same-layer",
+            "ordinary": "rule-explicit",
+            "visible-new": "projection-table"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rules",
+      "title": "标记只作用于下层",
+      "span": 12,
+      "blocks": [
+        {
+          "id": "rule-opaque",
+          "type": "prose",
+          "text": "**Opaque：** upper 的 app/cache/.wh..wh..opq 隐藏 lower 中 app/cache/ 的子项与后代。这里 old.txt 不可见。标记本身也不可见。[](source:oci-opaque)"
+        },
+        {
+          "id": "rule-same-layer",
+          "type": "prose",
+          "text": "**同层 new：** upper 中 new.txt 先于 opaque 记录，仍然可见。六种 upper regular 成员排列的固定模型得到相同投影；这是规范规则的模型演示，不是六次容器运行。[](source:oci-whiteouts)"
+        },
+        {
+          "id": "rule-explicit",
+          "type": "prose",
+          "text": "**普通 whiteout：** upper 的 app/.wh.config.txt 只隐藏 lower 的 app/config.txt。它不是一个要显示的新业务文件，也不会改写 lower.tar 原始字节。[](source:oci-whiteouts)"
+        }
+      ]
+    },
+    {
+      "id": "projection",
+      "title": "规范推导：哪些 regular 路径可见？",
+      "span": 12,
+      "blocks": [
+        {
+          "id": "projection-table",
+          "type": "comparison",
+          "labelColumn": "路径",
+          "columns": [
+            "原始归档",
+            "规范推导结果"
+          ],
+          "rows": [
+            {
+              "id": "p-config",
+              "label": "app/config.txt",
+              "cells": [
+                {
+                  "text": "lower"
+                },
+                {
+                  "text": "不可见：普通 whiteout"
+                }
+              ]
+            },
+            {
+              "id": "p-old",
+              "label": "app/cache/old.txt",
+              "cells": [
+                {
+                  "text": "lower"
+                },
+                {
+                  "text": "不可见：opaque 隐藏下层 children"
+                }
+              ]
+            },
+            {
+              "id": "p-new",
+              "label": "app/cache/new.txt",
+              "cells": [
+                {
+                  "text": "upper"
+                },
+                {
+                  "text": "可见：同层新增，不被同层 opaque 隐藏"
+                }
+              ]
+            },
+            {
+              "id": "p-keep",
+              "label": "app/keep.txt",
+              "cells": [
+                {
+                  "text": "lower"
+                },
+                {
+                  "text": "可见：无标记影响"
+                }
+              ]
+            },
+            {
+              "id": "p-markers",
+              "label": "两份 .wh.* 标记",
+              "cells": [
+                {
+                  "text": "upper；空 payload"
+                },
+                {
+                  "text": "标记自身不可见"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "projection-json",
+          "type": "snippet",
+          "language": "json",
+          "title": "SPEC-DERIVED；不是 runtime filesystem",
+          "text": "{\n  \"app/keep.txt\": \"lower\",\n  \"app/cache/new.txt\": \"upper\"\n}"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "title": "实际 tar 成员：目录、顺序与 payload 摘要",
+      "span": 12,
+      "blocks": [
+        {
+          "id": "inventory-scope",
+          "type": "prose",
+          "text": "下列记录由标准库逐成员读取两份原创 tar；完整包含每层两个目录和三个 regular 成员。读取 payload 不向文件系统提取。归档长度包括 tar metadata/padding，不等于 payload 总和，也不是镜像压缩大小。"
+        },
+        {
+          "id": "inventory-json",
+          "type": "snippet",
+          "language": "json",
+          "title": "实际 inventory；顺序保留",
+          "text": "{\n  \"lower\": [\n    {\n      \"path\": \"app\",\n      \"type\": \"directory\",\n      \"size\": 0,\n      \"payloadSha256\": null\n    },\n    {\n      \"path\": \"app/cache\",\n      \"type\": \"directory\",\n      \"size\": 0,\n      \"payloadSha256\": null\n    },\n    {\n      \"path\": \"app/config.txt\",\n      \"type\": \"regular\",\n      \"size\": 10,\n      \"payloadSha256\": \"fb4d01e88dcb199d055c31268146167f20ab6b34dde368277de25c766cd74aa9\"\n    },\n    {\n      \"path\": \"app/cache/old.txt\",\n      \"type\": \"regular\",\n      \"size\": 10,\n      \"payloadSha256\": \"dedbb5907274af69e59a05472fa0069aaa25f597655fa453a170d6dae380e3fe\"\n    },\n    {\n      \"path\": \"app/keep.txt\",\n      \"type\": \"regular\",\n      \"size\": 8,\n      \"payloadSha256\": \"60d8b5ad876211494154448e80a187a80db2bfc9a5b608fce966dfb286d9ec77\"\n    }\n  ],\n  \"upper\": [\n    {\n      \"path\": \"app\",\n      \"type\": \"directory\",\n      \"size\": 0,\n      \"payloadSha256\": null\n    },\n    {\n      \"path\": \"app/cache\",\n      \"type\": \"directory\",\n      \"size\": 0,\n      \"payloadSha256\": null\n    },\n    {\n      \"path\": \"app/cache/new.txt\",\n      \"type\": \"regular\",\n      \"size\": 10,\n      \"payloadSha256\": \"e6402482646d8c43353d0439d52abaf6cc0edbb0db80fb6c21f497dca5f9da57\"\n    },\n    {\n      \"path\": \"app/.wh.config.txt\",\n      \"type\": \"regular\",\n      \"size\": 0,\n      \"payloadSha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n    },\n    {\n      \"path\": \"app/cache/.wh..wh..opq\",\n      \"type\": \"regular\",\n      \"size\": 0,\n      \"payloadSha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n    }\n  ]\n}"
+        },
+        {
+          "id": "order-json",
+          "type": "snippet",
+          "language": "json",
+          "title": "六种顺序与固定规范模型；不是容器实跑",
+          "text": "[\n  {\n    \"upperRegularOrder\": [\n      \"app/cache/new.txt\",\n      \"app/.wh.config.txt\",\n      \"app/cache/.wh..wh..opq\"\n    ],\n    \"tarSha256\": \"fc96ae9972d9ea3d17612c6e5797d574cb409f7809e42eba5f0b5c7a8b12cddc\",\n    \"projection\": {\n      \"app/keep.txt\": \"lower\",\n      \"app/cache/new.txt\": \"upper\"\n    }\n  },\n  {\n    \"upperRegularOrder\": [\n      \"app/cache/new.txt\",\n      \"app/cache/.wh..wh..opq\",\n      \"app/.wh.config.txt\"\n    ],\n    \"tarSha256\": \"ffd94e13b97bd6a113f8a6d88130151e0590ea92d25a8059875e0ffa6d4465d8\",\n    \"projection\": {\n      \"app/keep.txt\": \"lower\",\n      \"app/cache/new.txt\": \"upper\"\n    }\n  },\n  {\n    \"upperRegularOrder\": [\n      \"app/.wh.config.txt\",\n      \"app/cache/new.txt\",\n      \"app/cache/.wh..wh..opq\"\n    ],\n    \"tarSha256\": \"d1306362fed2906eb0d0c14e5dcb68131161c1fd9c2b77f05e6c14554a82fa1d\",\n    \"projection\": {\n      \"app/keep.txt\": \"lower\",\n      \"app/cache/new.txt\": \"upper\"\n    }\n  },\n  {\n    \"upperRegularOrder\": [\n      \"app/.wh.config.txt\",\n      \"app/cache/.wh..wh..opq\",\n      \"app/cache/new.txt\"\n    ],\n    \"tarSha256\": \"b2938b2e1e822fdab377747cbb34e7af3b35d553e247597e6f4e5c68b63ac5ae\",\n    \"projection\": {\n      \"app/keep.txt\": \"lower\",\n      \"app/cache/new.txt\": \"upper\"\n    }\n  },\n  {\n    \"upperRegularOrder\": [\n      \"app/cache/.wh..wh..opq\",\n      \"app/cache/new.txt\",\n      \"app/.wh.config.txt\"\n    ],\n    \"tarSha256\": \"62e53e82d63abe560667e3fb4790b67082ab8e6837f596c5c700c7ca0dc589d6\",\n    \"projection\": {\n      \"app/keep.txt\": \"lower\",\n      \"app/cache/new.txt\": \"upper\"\n    }\n  },\n  {\n    \"upperRegularOrder\": [\n      \"app/cache/.wh..wh..opq\",\n      \"app/.wh.config.txt\",\n      \"app/cache/new.txt\"\n    ],\n    \"tarSha256\": \"a34d311e65e5bc2c30ab2070334f4598bc00b63b5cdeeaf86200fbaf2827d2eb\",\n    \"projection\": {\n      \"app/keep.txt\": \"lower\",\n      \"app/cache/new.txt\": \"upper\"\n    }\n  }\n]"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "oci-whiteouts",
+      "title": "OCI Image Spec · Whiteouts（固定 commit）",
+      "url": "https://github.com/opencontainers/image-spec/blob/4feed4a6674e59d301b9294f187ac46acb2de99f/layer.md#whiteouts"
+    },
+    {
+      "id": "oci-opaque",
+      "title": "OCI Image Spec · Opaque Whiteout（固定 commit）",
+      "url": "https://github.com/opencontainers/image-spec/blob/4feed4a6674e59d301b9294f187ac46acb2de99f/layer.md#opaque-whiteout"
+    }
+  ]
+}

@@ -1,0 +1,384 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "browser-check",
+  "status": "fail",
+  "provenance": "current",
+  "artifact": {
+    "path": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+    "sha256": "5b4790c282740cf6d94e71e4b072ad7a3d2b5daab90228e73340c2d716815043",
+    "bytes": 583634
+  },
+  "diagnostics": [
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. BUTTON 复制",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 169,
+        "component": "order-json",
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "theme": "light"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. BUTTON 复制",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Opaque Whiteout（固定 commit）",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "theme": "light"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Opaque Whiteout（固定 commit）",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Whiteouts（固定 commit）",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "theme": "light"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Whiteouts（固定 commit）",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "theme": "light"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. BUTTON 复制",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 169,
+        "component": "order-json",
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "theme": "light"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. BUTTON 复制",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Opaque Whiteout（固定 commit）",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "theme": "light"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Opaque Whiteout（固定 commit）",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Whiteouts（固定 commit）",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "theme": "light"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Whiteouts（固定 commit）",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "theme": "light"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. BUTTON 复制",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 169,
+        "component": "order-json",
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "theme": "dark"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. BUTTON 复制",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Opaque Whiteout（固定 commit）",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "theme": "dark"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Opaque Whiteout（固定 commit）",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Whiteouts（固定 commit）",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "theme": "dark"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Whiteouts（固定 commit）",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "theme": "dark"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. BUTTON 复制",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 169,
+        "component": "order-json",
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "theme": "dark"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. BUTTON 复制",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Opaque Whiteout（固定 commit）",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "theme": "dark"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Opaque Whiteout（固定 commit）",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Whiteouts（固定 commit）",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "theme": "dark"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A OCI Image Spec · Whiteouts（固定 commit）",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "subject": {
+        "artifact": "<checkout>/experiments/oci-whiteouts/final/explainer.html",
+        "input": "explainer.json",
+        "line": 1,
+        "component": "a",
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "theme": "dark"
+        }
+      },
+      "evidence": {
+        "reason": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+        "example": "Use a native button/link/input with visible focus and keyboard activation."
+      },
+      "supportedFixes": [
+        "Use a native button/link/input with visible focus and keyboard activation."
+      ]
+    }
+  ],
+  "kind": "portable-stage-summary-not-original-receipt",
+  "originalReceiptSha256": "e890d2f8ae6dabac8b7e148e78c880e90b00d17c2ae468101fbbedd5b2681077"
+}
