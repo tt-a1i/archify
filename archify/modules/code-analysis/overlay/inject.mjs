@@ -132,6 +132,7 @@ export function findingModules(f, fileModule) {
   if (Array.isArray(sub.modules)) for (const m of sub.modules) ids.add(m);
   if (Array.isArray(sub.files)) for (const file of sub.files) if (fileModule.has(file)) ids.add(fileModule.get(file));
   if (typeof sub.file === 'string' && fileModule.has(sub.file)) ids.add(fileModule.get(sub.file));
+  if (f.code === 'organization/folder-roles') for (const file of f.evidenceDigest?.files || []) if (fileModule.has(file)) ids.add(fileModule.get(file));
   for (const file of boundaryFiles(f)) if (fileModule.has(file)) ids.add(fileModule.get(file));
   return [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
@@ -157,6 +158,7 @@ function touches(f, set, componentId, filePaths) {
   if (sub.component === componentId) return true;
   if (sub.boundary && filePaths && boundaryFiles(f).some((p) => filePaths.has(p))) return true;
   if (typeof sub.file === 'string' && filePaths && filePaths.has(sub.file)) return true;
+  if (f.code === 'organization/folder-roles' && filePaths && (f.evidenceDigest?.files || []).some((file) => filePaths.has(file))) return true;
   if (Array.isArray(sub.files) && filePaths && sub.files.some((p) => filePaths.has(p))) return true;
   if (sub.module && set.has(sub.module)) return true;
   if (Array.isArray(sub.modules) && sub.modules.some((m) => set.has(m))) return true;
@@ -354,6 +356,7 @@ function collectSnippets(findings, sourceRoot, components, facts) {
     const candidate = ev.partialInitCandidate || ev.proof;
     if (candidate) { wanted.add(candidate.entry); wanted.add(candidate.importer); }
     if (f.subject && f.subject.file) wanted.add(f.subject.file);
+    if (f.code === 'organization/folder-roles') for (const file of f.evidenceDigest?.files || []) wanted.add(file);
   }
   const out = {};
   for (const file of [...wanted].sort()) {

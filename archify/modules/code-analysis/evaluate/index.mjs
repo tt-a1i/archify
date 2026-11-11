@@ -129,6 +129,7 @@ function subjectFiles(finding, moduleFiles) {
   if (typeof subject?.file === 'string') return [subject.file];
   // A boundary or internal-leak finding is about the imports it cites: both ends of each.
   if (subject?.boundary || finding.code === 'coupling/internal-leak') return (finding.evidence?.imports || []).flatMap((i) => [i.file, i.to]);
+  if (finding.code === 'organization/folder-roles') return Object.values(finding.evidence?.roles || {}).flatMap((entries) => entries.map((entry) => entry.file));
   const modules = Array.isArray(subject?.modules) ? subject.modules : typeof subject?.module === 'string' ? [subject.module] : [];
   return modules.flatMap((id) => moduleFiles.get(id) || []);
 }

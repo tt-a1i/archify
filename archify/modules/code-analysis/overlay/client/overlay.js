@@ -600,7 +600,23 @@
     });
     return h + '</section>';
   }
+  function organizationEvidence(f, tone) {
+    var ev = '';
+      var matches = [];
+      if (f.code === 'organization/mixed-roles') matches = (f.evidence.triggers || []).map(function (v) { return { file: f.subject.file, role: v.role, line: v.line, text: v.text }; });
+      if (f.code === 'organization/folder-roles') Object.keys(f.evidence.roles || {}).sort().forEach(function (role) {
+        (f.evidence.roles[role] || []).forEach(function (entry) { (entry.triggers || []).forEach(function (v) { matches.push({ file: entry.file, role: role, line: v.line, text: v.text }); }); });
+      });
+      ev += '<div class="ev">Lexical matches are review signals, not proof of responsibility.</div>';
+      matches.slice(0, 12).forEach(function (match) {
+        ev += ref(match.file, match.line, '<span>' + esc(match.role) + ': ' + esc(match.text) + '</span>', 'Matched text may be in a comment or string; read the surrounding source before acting.', tone);
+      });
+      if (matches.length > 12) ev += '<div class="ev">' + (matches.length - 12) + ' more matches are recorded in findings.json.</div>';
+      if (f.code === 'organization/generic-name' && f.subject.file) ev += ref(f.subject.file, null, '<span>Generic basename</span>', 'Review the project naming convention before changing it.', tone);
+    return ev;
+  }
   function evidencePreview(f) {
+    if (f.code.indexOf('organization/') === 0) return organizationEvidence(f, toneOf(f.severity));
     if (f.code === 'redundancy/duplicate-block') return duplicateEvidence(f);
     var captured = (data.tasks || {})[f.id];
     var locations = captured ? captured.task.locations.filter(function (l) { return l.startLine; }).slice(0, 2) : [];

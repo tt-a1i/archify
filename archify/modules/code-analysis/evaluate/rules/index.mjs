@@ -11,8 +11,11 @@ import * as concentration from './coupling/concentration.mjs';
 import * as boundary from './architecture/boundary.mjs';
 import * as complexity from './complexity/function.mjs';
 import * as duplicate from './redundancy/duplicate-block.mjs';
+import * as mixedRoles from './organization/mixed-roles.mjs';
+import * as folderRoles from './organization/folder-roles.mjs';
+import * as genericName from './organization/generic-name.mjs';
 
-export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boundary, complexity, duplicate];
+export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boundary, complexity, duplicate, mixedRoles, folderRoles, genericName];
 
 // evaluate/index.mjs runs the duplicate scan once for this rule and pins its ranges.
 export { duplicate as duplicateBlock };

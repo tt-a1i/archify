@@ -114,6 +114,7 @@ Source references with line numbers show a nine-line context window and highligh
 - `graphs/`: module grouping and dependency aggregation.
 - `evaluate/rules/index.mjs`: the rule registry; a new rule is its own file plus one line here.
 - `evaluate/rules/coupling/`: import-cycle, module-cycle, hub, concentration and internal-leak rules. Cycles are errors; see [Severity levels](docs/USAGE.md#severity-levels).
+- `evaluate/rules/organization/`: independently opt-in, lexical organization review signals with explicit trigger evidence.
 - `evaluate/rules/architecture/`: opt-in layer boundary rules declared in the config.
 - `evaluate/rules/complexity/`: shared function complexity and nesting thresholds; measurements come from each language extractor.
 - `lib/`: the data stages (extract → graph → evaluate), config merging, intermediate-data checks, review (`review.mjs`: baseline, run comparison and comparability), AI tasks (`task.mjs`: task model and Markdown rendering) and evidence checks (`evidence.mjs`: captured source against the working tree).

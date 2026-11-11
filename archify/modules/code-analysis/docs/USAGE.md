@@ -99,6 +99,24 @@ Imports within one module, test and generated files, and modules under a `vendor
 
 In the Atlas, focusing any module marks the files other modules import, whether or not the rule fired; see [Atlas view](#atlas-view).
 
+## Experimental organization signals
+
+Three independently opt-in checks identify candidates for human review:
+
+```json
+{"rules":{"organization":{"mixedRoles":{"enabled":true},"folderRoles":{"enabled":true},"genericName":{"enabled":true}}}}
+```
+
+`mixedRoles` reports files matching entry and I/O patterns plus a view or model
+pattern; `folderRoles` reports directories containing at least three of those
+pattern groups; `genericName` flags selected generic basenames. The text checks
+are regular-expression matches, not parsing or evidence of actual ownership:
+comments, strings, names and framework conventions can trigger them. Findings
+are warning-level with confidence 0.7 and all three checks are disabled unless
+explicitly enabled. Review trigger text and paths before acting; these checks
+have not been calibrated as a general measure of design quality. Test and
+generated roles excluded by the graph are not considered.
+
 ## Function complexity
 
 Every Python and JS/TS function is measured the same way. **Cyclomatic complexity** is 1 plus one for each decision point:

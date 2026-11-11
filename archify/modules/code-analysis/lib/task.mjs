@@ -351,6 +351,9 @@ function keyEvidence(d) {
     case 'architecture/boundary': return { ...pick(['rule', 'totalImports', 'files']), boundary: d.subject.boundary };
     case 'coupling/internal-leak': return pick(['entries', 'entrySource', 'internalFiles', 'consumers', 'totalImports', 'threshold']);
     case 'redundancy/duplicate-block': return pick(['engine', 'identifiers', 'kind', 'tokens', 'lines', 'threshold']);
+    case 'organization/mixed-roles': return pick(['roles', 'triggers', 'threshold']);
+    case 'organization/folder-roles': return pick(['roles', 'threshold']);
+    case 'organization/generic-name': return pick(['path', 'bytes', 'threshold']);
     default: return pick(['threshold']);
   }
 }
@@ -367,6 +370,8 @@ function titleOf(selected, language) {
     if (d.code === 'coupling/internal-leak') return `Give module ${s.module} one entry point and import through it`;
     if (d.code === 'architecture/boundary') return `Remove the "${s.boundary.from}" → "${s.boundary.to}" boundary violation`;
     if (d.code === 'redundancy/duplicate-block') return `Review duplicated code in ${(s.files || []).join(' and ')}`;
+    if (d.code === 'organization/folder-roles') return `Review role patterns in ${s.directory}`;
+    if (d.code === 'organization/mixed-roles' || d.code === 'organization/generic-name') return `Review organization signal in ${s.file}`;
     return `Address ${d.code}`;
   };
   return selected.length === 1 ? one(selected[0]) : `${one(selected[0])} and ${selected.length - 1} related finding${selected.length === 2 ? '' : 's'}`;
