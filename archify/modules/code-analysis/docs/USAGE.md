@@ -99,8 +99,6 @@ Imports within one module, test and generated files, and modules under a `vendor
 
 In the Atlas, focusing any module marks the files other modules import, whether or not the rule fired; see [Atlas view](#atlas-view).
 
-`coupling/concentration` is opt-in. Configure at least one of `rules.coupling.concentration.reachRatio`, `moduleLocRatio`, or `fileLoc`; unset thresholds remain inactive. It reports warning-level maintenance signals for reachable dependents, module LOC share, and largest-file LOC, without inferring business responsibilities. No concentration threshold is enabled by default.
-
 ## Function complexity
 
 Every Python and JS/TS function is measured the same way. **Cyclomatic complexity** is 1 plus one for each decision point:
