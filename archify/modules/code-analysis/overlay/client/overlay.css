@@ -216,3 +216,84 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-reader .coverage-notice { padding: 8px 0; color: var(--text-muted, #94a3b8); font-size: 12px; }
 #bauify-reader .relationship { margin: 16px 0; }
 @media (max-width: 600px) { html[data-bauify="on"] .toolbar #btn-preset, html[data-bauify="on"] .toolbar #btn-present { display: none; } }
+/* Presentation pass: flat, bordered surfaces instead of tinted washes, so colour
+   marks severity and nothing else (DESIGN.md: flat at rest, quiet chips, one
+   meaning per saturated colour). Rules here refine the ones above; none changes
+   layout width, structure or behaviour. */
+.bauify-item { --tone: #60A5FA; margin-top: 8px; padding: 10px 12px 10px 13px; border: 1px solid var(--panel-border, #1e293b); border-left: 3px solid var(--tone); border-radius: 8px; background: color-mix(in srgb, var(--text, #f8fafc) 2%, transparent); transition: border-color .16s ease, background-color .16s ease; }
+.bauify-item.amber { --tone: #FBBF24; border-left-color: var(--tone); background: color-mix(in srgb, var(--text, #f8fafc) 2%, transparent); }
+.bauify-item.red { --tone: #FB7185; border-left-color: var(--tone); background: color-mix(in srgb, #FB7185 5%, transparent); }
+.bauify-item:hover, .bauify-item.active { outline: 0; border-color: color-mix(in srgb, var(--backend-stroke, #34D399) 60%, var(--panel-border, #1e293b)); border-left-color: var(--tone); background: color-mix(in srgb, var(--text, #f8fafc) 5%, transparent); }
+.bauify-item b { font-weight: 600; }
+/* The severity word is a quiet capsule: readable without relying on the accent colour. */
+.bauify-item em { display: inline-block; margin-left: 6px; padding: 0 7px; border: 1px solid color-mix(in srgb, var(--tone) 60%, var(--panel-border, #1e293b)); border-radius: 999px; font-size: 11px; line-height: 17px; color: var(--text, #f8fafc); vertical-align: 1px; }
+.bauify-item .n { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-right: 8px; border: 1px solid var(--panel-border, #1e293b); border-radius: 999px; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-muted, #94a3b8); vertical-align: 1px; }
+.bauify-item .what { margin-top: 3px; }
+.bauify-item .where { opacity: .85; }
+/* An accepted error is not faded like an accepted warning: it is still to fix. */
+.bauify-item.accepted-error { border-style: dashed; border-left-style: solid; }
+/* Counts: the total reads first, severity counts carry their colour as a dot. */
+#bauify-overview .counts { margin-top: 2px; font-variant-numeric: tabular-nums; }
+#bauify-overview .counts .count.total { color: var(--text, #f8fafc); font-weight: 600; }
+#bauify-overview .counts .count.error::before, #bauify-overview .counts .count.warning::before, #bauify-overview .counts .count.info::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; vertical-align: 1px; }
+#bauify-overview .counts .count.error::before { background: #FB7185; }
+#bauify-overview .counts .count.warning::before { background: #FBBF24; }
+#bauify-overview .counts .count.info::before { background: #60A5FA; }
+#bauify-overview .hint { margin-top: 2px; }
+/* Rule groups read as a list: one row each, separated by hairlines. */
+#bauify-overview .k + .hint + details, #bauify-overview .k + details { margin-top: 8px; }
+#bauify-overview > details > summary { padding: 7px 2px; border-top: 1px solid var(--panel-border, #1e293b); color: var(--text, #f8fafc); transition: background-color .16s ease; }
+#bauify-overview > details > summary:hover { background: color-mix(in srgb, var(--text, #f8fafc) 4%, transparent); }
+#bauify-overview > details { margin-top: 0; }
+#bauify-overview > details[open] { padding-bottom: 10px; }
+/* Component page: the level is a labelled capsule, and checks that found nothing take one line. */
+#bauify-panel h3 .badge, #bauify-panel h3 .badge.red, #bauify-panel h3 .badge.amber, #bauify-panel h3 .badge.blue, #bauify-panel h3 .badge.green, #bauify-panel h3 .badge.grey { background: none; border: 1px solid var(--panel-border, #1e293b); color: var(--text, #f8fafc); font-weight: 500; letter-spacing: .04em; vertical-align: 3px; }
+#bauify-panel h3 .badge::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: #94a3b8; }
+#bauify-panel h3 .badge.red::before { background: #FB7185; } #bauify-panel h3 .badge.amber::before { background: #FBBF24; } #bauify-panel h3 .badge.blue::before { background: #60A5FA; } #bauify-panel h3 .badge.green::before { background: #34D399; }
+#bauify-panel .ind { padding: 8px 4px; transition: background-color .16s ease; }
+#bauify-panel .ind.quiet { align-items: center; padding: 5px 4px; }
+#bauify-panel .ind.quiet i { margin-top: 0; }
+#bauify-panel .ind.quiet > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+#bauify-panel .ind.quiet b { font-weight: 500; }
+#bauify-panel .ind.quiet span.v { flex: none; }
+#bauify-panel .stat { margin: 8px 6px 0 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+/* Wrapped source lines continue under the code, not under the line number. */
+#bauify-reader .inline-evidence .evidence-line { padding-left: 6ch; text-indent: -6ch; }
+#bauify-code pre.excerpt .ln { padding-left: calc(3.5em + 20px); text-indent: calc(-3.5em - 10px); }
+#bauify-code pre.excerpt .ln.diff-added, #bauify-code pre.excerpt .ln.diff-modified { padding-left: calc(3.5em + 17px); }
+#bauify-code pre .ln i { text-indent: 0; }
+#bauify-reader .ref, #bauify-reader .reader-nav button, #bauify-reader .locate, #bauify-reader .task-actions button { transition: border-color .16s ease, background-color .16s ease; }
+#bauify-reader .reader-nav button:hover, #bauify-reader .locate:hover { border-color: color-mix(in srgb, var(--backend-stroke, #34D399) 60%, var(--panel-border, #1e293b)); }
+/* The halo marks a component without drowning its own border when most components carry one. */
+#bauify-layer rect.amber { stroke-width: 4; opacity: .6; filter: blur(3px); }
+@media (prefers-reduced-motion: reduce) { .bauify-item, #bauify-reader .ref, #bauify-reader .reader-nav button, #bauify-reader .locate, #bauify-reader .task-actions button, #bauify-panel .ind, #bauify-overview summary { transition: none; } }
+/* Title row: number, title and severity capsule stay on one row however long the title is. */
+.bauify-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; }
+.bauify-item .n { grid-column: 1; grid-row: 1; margin-top: 1px; }
+.bauify-item b { grid-column: 2; grid-row: 1; }
+.bauify-item em { grid-column: 3; grid-row: 1; margin: 2px 0 0 8px; }
+.bauify-item .what, .bauify-item .where { grid-column: 1 / -1; }
+.bauify-item .badge-new, .bauify-item .badge-accepted { grid-column: 1 / -1; justify-self: start; margin: 4px 0 0; }
+#bauify-overview .counts .count { white-space: nowrap; }
+/* Headings receive focus from script so assistive technology announces the new page; they are not in the tab order and take no focus ring. */
+#bauify-reader h3[tabindex="-1"]:focus { outline: none; }
+/* Diagram signal: a glow only where the findings concentrate, and a count on every component that has any. */
+#bauify-layer rect.amber.quiet, #bauify-layer rect.blue.quiet { stroke-width: 1.5; opacity: .8; filter: none; }
+#bauify-layer g.count rect { fill: var(--panel, #0f172a); stroke: #94a3b8; stroke-width: 1.25; opacity: 1; filter: none; animation: none; }
+#bauify-layer g.count.red rect { stroke: #FB7185; fill: color-mix(in srgb, #FB7185 14%, var(--panel, #0f172a)); }
+#bauify-layer g.count.amber rect { stroke: #FBBF24; }
+#bauify-layer g.count.blue rect { stroke: #60A5FA; }
+#bauify-layer g.count text { fill: var(--text, #f8fafc); font: 600 10px system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; text-anchor: middle; dominant-baseline: central; }
+html[data-bauify-focus="on"] #bauify-layer g.count:not(.focus) { opacity: .15; }
+html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
+#bauify-overview .counts .nw { white-space: nowrap; }
+/* Source page: code needs width more than the diagram does while it is being read. */
+@media (min-width: 1181px) {
+  html[data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: calc(min(760px, 54vw) + 24px); }
+  #bauify-reader { transition: width .16s ease; }
+}
+@media (prefers-reduced-motion: reduce) { #bauify-reader { transition: none; } }
+/* The page's own reader rail sits beside the analysis column, not under it. */
+@media (min-width: 1001px) { html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: 444px; } }
