@@ -78,3 +78,22 @@ test('finds the existing bot reply beyond the first comment page',async()=>{
  await publishCard(wrapped,record,png,options);
  assert.equal(state.posts,1);assert.equal(state.updates,0);
 });
+
+test('a truncated existing card tree aborts before publication or replies',async()=>{
+ const {api,state}=mock();
+ state.ref='existing';
+ state.tree=[{path:'cards/pr-1.png',sha:'preserved'}];
+ const calls=[];
+ let imageChecks=0;
+ const wrapped=async(route,args={})=>{
+  calls.push({route,method:args.method||'GET'});
+  const result=await api(route,args);
+  return route.includes('/git/trees/') ? {...result,truncated:true} : result;
+ };
+ await assert.rejects(publishCard(wrapped,record,png,{verifyImage:async()=>{imageChecks++;}}),/Card data tree exceeds the supported size/);
+ assert.ok(calls.some(call=>call.route.includes('/git/trees/')),'existing data tree was inspected');
+ assert.ok(calls.every(call=>call.method==='GET'),'truncated data must not trigger a write');
+ assert.equal(state.ref,'existing');assert.deepEqual(state.tree,[{path:'cards/pr-1.png',sha:'preserved'}]);
+ assert.equal(state.blobs.size,0);assert.equal(state.commits,0);assert.equal(state.refWrites,0);
+ assert.equal(state.posts,0);assert.equal(state.updates,0);assert.equal(imageChecks,0);
+});
