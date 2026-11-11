@@ -950,11 +950,16 @@ function createWorkflowLaneGeometry(workflow, layout, legendExtraHeight, minimum
     return layout.groupFooterHeights?.[index] ?? 0;
   }
 
+  const laneTops = [];
+  let precedingLaneHeight = 0;
+  for (let index = 0; index < asArray(workflow.lanes).length; index += 1) {
+    laneTops[index] = layout.laneY + precedingLaneHeight + index * layout.laneGap;
+    precedingLaneHeight += laneHeight(index);
+  }
+
   function laneTop(id) {
     const index = laneIndex.get(id);
-    const precedingHeight = asArray(workflow.lanes).slice(0, index)
-      .reduce((total, _lane, lanePosition) => total + laneHeight(lanePosition), 0);
-    return layout.laneY + precedingHeight + index * layout.laneGap;
+    return laneTops[index] ?? Number.NaN;
   }
 
   function lastLaneBottom() {
@@ -1046,16 +1051,21 @@ function workflowNodeTextProblems(node, nodeTextFit) {
 // Step indexes: where each edge and node sits on the main path. Lifted out so
 // the compiler body keeps only the phases that read them.
 function createWorkflowStepIndexes(workflow) {
-  const mainPathSteps = new Map(asArray(workflow.mainPath).map((id, index) => [id, index]));
+  const mainPath = asArray(workflow.mainPath);
+  const mainPathSteps = new Map(mainPath.map((id, index) => [id, index]));
   const edgeSteps = new Map(asArray(workflow.edges).map((edge, index) => {
     const fromStep = mainPathSteps.get(edge.from);
     const toStep = mainPathSteps.get(edge.to);
     const mainStep = Number.isInteger(fromStep) && toStep === fromStep + 1 ? fromStep : null;
-    return [edge, mainStep ?? asArray(workflow.mainPath).length + index];
+    return [edge, mainStep ?? mainPath.length + index];
   }));
+  const nodeIndexes = new Map();
+  for (const [index, node] of asArray(workflow.nodes).entries()) {
+    if (!nodeIndexes.has(node.id)) nodeIndexes.set(node.id, index);
+  }
 
   function nodeStep(node) {
-    return mainPathSteps.get(node.id) ?? asArray(workflow.mainPath).length + asArray(workflow.nodes).findIndex((item) => item.id === node.id);
+    return mainPathSteps.get(node.id) ?? mainPath.length + (nodeIndexes.get(node.id) ?? -1);
   }
 
   return { mainPathSteps, edgeSteps, nodeStep };
