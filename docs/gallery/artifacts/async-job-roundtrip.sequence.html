@@ -11305,7 +11305,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+        // Browser geometry can round the final SVG and page by one CSS pixel.
+        // Include that vertical allowance (expressed as width) so rounding
+        // alone does not switch a compact Sequence to authored scrolling.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth + ratio, maxWidth) >=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading && !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;
