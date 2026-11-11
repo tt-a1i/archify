@@ -26,7 +26,7 @@ If the architecture JSON changes or becomes unavailable after startup, the analy
 
 JavaScript, TypeScript, Python, Java, Go and Rust use five adapters. Select one
 with `--language ts|py|java|go|rust`; `ts` covers both JavaScript and TypeScript.
-Each run uses one adapter. A JS/TS or Python tree that also holds `.java` files
+Each run uses one adapter; the [language reference](LANGUAGE-REFERENCE.md) has example commands and limits. A JS/TS or Python tree that also holds `.java` files
 keeps its language unless its root has a Maven/Gradle build file (see the
 [upgrade note](JAVA.md)). Choose explicitly for a mixed-language root. Add
 `--map overlay-map.json` when you need an explicit mapping between diagram
