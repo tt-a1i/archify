@@ -275,3 +275,30 @@ test('release description stays separate from the local update offer', async (t)
   assert.ok(!result.noticeText.includes(summary));
   assert.match(result.noticeText, /Would you like me to update Archify/);
 });
+
+test('bounded service rejects overflowing checker output before accepting a notice', async (t) => {
+  const testFixture = fixture(t);
+  const checkerPath = path.join(testFixture.root, 'overflow-checker.mjs');
+  // Keep the writer alive: rejection must come from the output ceiling, not
+  // a clean child exit or the independent deadline boundary.
+  fs.writeFileSync(checkerPath, `process.stdout.write(Buffer.alloc(20 * 1024, 'x'));
+setInterval(() => {}, 1000);
+`);
+  const result = await startDeliveryUpdateCheck({ env: env(testFixture), checkerPath });
+  assert.equal(result.status, 'unavailable');
+  assert.equal(result.reason, 'invalid-result');
+  assert.equal(result.noticeRequired, false);
+  assert.equal(result.noticeText, null);
+});
+
+test('bounded service rejects malformed or unterminated checker receipts', async (t) => {
+  const testFixture = fixture(t);
+  const checkerPath = path.join(testFixture.root, 'invalid-checker.mjs');
+  for (const output of ['{broken JSON}\n', '{"status":"current"}']) {
+    fs.writeFileSync(checkerPath, `process.stdout.write(${JSON.stringify(output)});\n`);
+    const result = await startDeliveryUpdateCheck({ env: env(testFixture), checkerPath });
+    assert.equal(result.status, 'unavailable');
+    assert.equal(result.reason, output.endsWith('\n') ? 'invalid-result' : 'check-failed');
+    assert.equal(result.noticeRequired, false);
+  }
+});
