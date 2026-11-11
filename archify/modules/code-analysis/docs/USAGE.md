@@ -99,6 +99,8 @@ Imports within one module, test and generated files, and modules under a `vendor
 
 In the Atlas, focusing any module marks the files other modules import, whether or not the rule fired; see [Atlas view](#atlas-view).
 
+`coupling/concentration` is opt-in. Configure at least one of `rules.coupling.concentration.reachRatio`, `moduleLocRatio`, or `fileLoc`; unset thresholds remain inactive. It reports warning-level maintenance signals for reachable dependents, module LOC share, and largest-file LOC, without inferring business responsibilities. No concentration threshold is enabled by default.
+
 ## Function complexity
 
 Every Python and JS/TS function is measured the same way. **Cyclomatic complexity** is 1 plus one for each decision point:
@@ -294,6 +296,10 @@ This writes every current finding to `analysis-baseline.json` with that reason. 
 ## Terminal and CI: `code-analysis check`
 
 `check` runs the same analysis without a diagram and exits with a status a pipeline can use:
+
+To review existing tool output without running the producing tool, pass `--sarif results.sarif`, `--eslint results.json`, or `--ruff results.json`. These adapters keep the tool, rule, original level, message and locations in finding evidence, normalize imported diagnostics to warning, and mark root-external or missing locations as unverifiable. Unverifiable locations are not included in task modification scope. The adapters do not fetch artifacts or execute lint commands.
+
+`analysis.externalDiagnostics[]` records each input's format, SHA-256, finding count and rule inventory, plus optional replay metadata `file`; `check` and `serve` set `file` to the resolved absolute local path. Comparability excludes `file`, so moving or renaming a report does not by itself make otherwise identical imported content incomparable. Generated reanalysis commands reuse nonempty saved paths as `--sarif`, `--eslint` or `--ruff` arguments, retain the other placeholders, and use Windows or POSIX quoting selected on the generating host. Adjust paths and quoting when replaying elsewhere. Absolute paths can reveal usernames or local directory layout and may not exist on another machine, so review findings and generated tasks before sharing them.
 
 ```sh
 node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-baseline.json --fail-on warning --out .analysis

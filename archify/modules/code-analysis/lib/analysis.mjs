@@ -20,6 +20,16 @@ export function stableJson(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
+export function externalIdentity(file, format, findings) {
+  return {
+    format,
+    file,
+    sha256: createHash('sha256').update(fs.readFileSync(file)).digest('hex'),
+    findings: findings.length,
+    rules: [...new Set(findings.map((finding) => `${finding.evidence?.tool || format}:${finding.evidence?.rule || 'unknown'}`))].sort(),
+  };
+}
+
 export function loadConfig(explicit) {
   const defaults = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'config', 'defaults.json'), 'utf8'));
   if (!explicit) return defaults;
@@ -61,9 +71,13 @@ export function reviewSummary(review) {
   };
 }
 
-export function readJsonInput(file, what) {
+export function readJsonInput(file, what, { maxBytes = null } = {}) {
   if (!file) fail('cli/input-missing', `${what} requires an input file argument.`, { supportedFixes: ['pass the JSON file path'] });
   if (!fs.existsSync(file)) fail('cli/input-invalid', `Not a file: ${file}`, { subject: { file }, supportedFixes: ['pass an existing JSON file'] });
+  if (maxBytes !== null) {
+    const bytes = fs.statSync(file).size;
+    if (bytes > maxBytes) fail('diagnostics/input-too-large', `${file} is larger than the ${maxBytes}-byte diagnostic import limit.`, { subject: { file }, evidence: { bytes, maxBytes }, supportedFixes: ['split the diagnostic export into smaller files'] });
+  }
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (error) {
     fail('cli/input-not-json', `${file} is not valid JSON.`, { subject: { file }, evidence: { reason: error.message }, supportedFixes: ['regenerate the input'] });
   }
@@ -105,7 +119,10 @@ export function evaluateGraph(graph, config, facts = null) {
   const graphErrors = schemaErrors('module-graph', graph);
   if (graphErrors.length) fail('evaluate/input-schema-invalid', 'Input does not conform to module-graph.schema.json.', { evidence: { errors: graphErrors.slice(0, 20) }, supportedFixes: ['regenerate the module graph'] });
   validateFacts(graph, facts);
-  const findings = evaluate(graph, config, facts);
+  return validateFindings(evaluate(graph, config, facts));
+}
+
+export function validateFindings(findings) {
   const errors = schemaErrors('findings', findings);
   if (errors.length) fail('evaluate/schema-invalid', 'Findings violate findings.schema.json.', { evidence: { errors: errors.slice(0, 20) }, supportedFixes: ['this is an analyzer bug; report it with the evidence'] });
   return findings;

@@ -9,6 +9,8 @@ import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { formatText } from '../bin/check.mjs';
+import { buildTask } from '../lib/task.mjs';
+import { schemaErrors } from '../extract/shared/schema.mjs';
 
 const CHECK = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'check.mjs');
 
@@ -121,4 +123,100 @@ test('check: parse paths with literal escapes remain distinct from control chara
   assert.match(controlCharacter, /src\/bad\\u000a\.py/);
   assert.match(literalEscape, /src\/bad\\\\u000a\.py/);
   assert.notEqual(controlCharacter, literalEscape);
+});
+
+test('check: imports bounded SARIF findings without running the external tool', (t) => {
+  const root = fixture(t, { 'src/ok.py': 'value = 1\n' });
+  const sarif = path.join(root, 'results.sarif');
+  fs.writeFileSync(sarif, JSON.stringify({ version: '2.1.0', runs: [{ tool: { driver: { name: 'ruff' } }, results: [{ ruleId: 'X001', level: 'error', message: { text: 'review this' }, locations: [{ physicalLocation: { artifactLocation: { uri: 'src/ok.py' }, region: { startLine: 1 } } }] }] }] }));
+  const json = check(root, ['--language', 'py', '--sarif', sarif, '--json']);
+  assert.equal(json.status, 1, json.stdout + json.stderr);
+  const receipt = JSON.parse(json.stdout);
+  assert.equal(receipt.gate.failing[0].code, 'external/ruff');
+  assert.equal(receipt.gate.failing[0].severity, 'warning');
+  assert.equal(receipt.rules.includes('external/ruff'), true);
+});
+
+test('check: digit-bearing SARIF tool names still produce a schema-valid combined document', (t) => {
+  const root = fixture(t, { 'src/ok.py': 'value = 1\n' });
+  const sarif = path.join(root, 'results.sarif');
+  const out = path.join(root, 'out');
+  fs.writeFileSync(sarif, JSON.stringify({
+    version: '2.1.0',
+    runs: [{
+      tool: { driver: { name: 'tool2' } },
+      results: [{
+        ruleId: 'X001',
+        message: { text: 'review this' },
+        locations: [{ physicalLocation: { artifactLocation: { uri: 'src/ok.py' }, region: { startLine: 1 } } }],
+      }],
+    }],
+  }));
+
+  const run = check(root, ['--language', 'py', '--sarif', sarif, '--out', out, '--fail-on', 'never', '--json']);
+  assert.equal(run.status, 0, run.stdout + run.stderr);
+  const findings = JSON.parse(fs.readFileSync(path.join(out, 'findings.json'), 'utf8'));
+  assert.deepEqual(schemaErrors('findings', findings), []);
+  const finding = findings.diagnostics.find((item) => item.evidence.tool === 'tool2');
+  assert.ok(finding, 'the original tool identity remains visible in the evidence');
+  assert.match(finding.code, /^external\/[a-z-]+$/);
+});
+
+test('check: imports native ESLint and Ruff JSON without executing either tool', (t) => {
+  const root = fixture(t, { 'src/ok.py': 'value = 1\n', 'src/app.js': 'alert(1)\n' });
+  const eslint = path.join(root, 'eslint.json');
+  fs.writeFileSync(eslint, JSON.stringify([{ filePath: path.join(root, 'src/app.js'), messages: [{ ruleId: 'no-alert', severity: 2, message: 'Avoid alert', line: 1, column: 1 }] }]));
+  const eslintRun = check(root, ['--language', 'py', '--eslint', eslint, '--json']);
+  assert.equal(eslintRun.status, 1, eslintRun.stdout + eslintRun.stderr);
+  const eslintReceipt = JSON.parse(eslintRun.stdout);
+  assert.equal(eslintReceipt.gate.failing[0].code, 'external/eslint');
+  const ruff = path.join(root, 'ruff.json');
+  fs.writeFileSync(ruff, JSON.stringify([{ filename: 'src/ok.py', code: 'F401', message: 'unused import', location: { row: 1, column: 1 } }]));
+  const ruffRun = check(root, ['--language', 'py', '--ruff', ruff, '--json']);
+  assert.equal(ruffRun.status, 1, ruffRun.stdout + ruffRun.stderr);
+  assert.equal(JSON.parse(ruffRun.stdout).gate.failing[0].code, 'external/ruff');
+});
+
+test('check: imports ESLint and Ruff together without dropping either input', (t) => {
+  const root = fixture(t, { 'src/ok.py': 'value = 1\n', 'src/app.js': 'alert(1)\n' });
+  const eslint = path.join(root, 'eslint.json');
+  const ruff = path.join(root, 'ruff.json');
+  fs.writeFileSync(eslint, JSON.stringify([{ filePath: path.join(root, 'src/app.js'), messages: [{ ruleId: 'no-alert', severity: 2, message: 'Avoid alert', line: 1, column: 1 }] }]));
+  fs.writeFileSync(ruff, JSON.stringify([{ filename: 'src/ok.py', code: 'F401', message: 'unused import', location: { row: 1, column: 1 } }]));
+  const run = check(root, ['--language', 'py', '--eslint', eslint, '--ruff', ruff, '--json']);
+  assert.equal(run.status, 1, run.stdout + run.stderr);
+  const receipt = JSON.parse(run.stdout);
+  assert.equal(receipt.gate.failing.length, 2);
+  assert.deepEqual(receipt.rules.filter((rule) => rule.startsWith('external/')), ['external/eslint', 'external/ruff']);
+});
+
+test('check: external diagnostics participate in a comparable follow-up run', (t) => {
+  const root = fixture(t, { 'src/app.js': 'alert(1)\n', 'analysis config.json': '{}\n' });
+  const report = path.join(root, 'external report.json');
+  const config = path.join(root, 'analysis config.json');
+  const out = path.join(root, 'out');
+  fs.writeFileSync(report, JSON.stringify([{ filePath: path.join(root, 'src/app.js'), messages: [{ ruleId: 'no-alert', severity: 2, message: 'Avoid alert', line: 1, column: 1 }] }]));
+  const first = check(root, ['--language', 'ts', '--config', config, '--eslint', report, '--out', out, '--json', '--fail-on', 'never']);
+  assert.equal(first.status, 0, JSON.stringify({ error: first.error?.message, signal: first.signal, stdout: first.stdout, stderr: first.stderr }));
+  const previous = path.join(out, 'findings.json');
+  fs.writeFileSync(path.join(root, 'src/app.js'), 'alert(2)\n');
+  const second = check(root, ['--language', 'ts', '--config', config, '--eslint', report, '--compare', previous, '--json', '--fail-on', 'never']);
+  assert.equal(second.status, 0, second.stdout + second.stderr);
+  const receipt = JSON.parse(second.stdout);
+  assert.equal(receipt.review.comparison.comparable, true);
+  assert.equal(receipt.review.comparison.evidenceChanged, 1);
+
+  const findings = JSON.parse(fs.readFileSync(previous, 'utf8'));
+  const facts = JSON.parse(fs.readFileSync(path.join(out, 'raw-facts.json'), 'utf8'));
+  const finding = findings.diagnostics.find((item) => item.code === 'external/eslint');
+  const task = buildTask({ findings, facts, ids: [finding.id] });
+  assert.equal(findings.analysis.externalDiagnostics[0].file, report);
+  const command = task.verification.reanalyze.command
+    .replace('archify code-analysis check', `"${process.execPath}" "${CHECK}"`)
+    .replace('<repo-root>', `"${root}"`)
+    .replace('<same config>', `"${config}"`)
+    .replace("<this run's findings.json>", `"${previous}"`);
+  const replay = spawnSync(`${command} --fail-on never --json`, { shell: true, encoding: 'utf8', timeout: 60000 });
+  assert.equal(replay.status, 0, replay.stdout + replay.stderr);
+  assert.equal(JSON.parse(replay.stdout).review.comparison.comparable, true);
 });

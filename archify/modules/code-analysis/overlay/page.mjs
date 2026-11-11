@@ -7,6 +7,8 @@ import path from 'node:path';
 import { fail, receipt } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { buildGraph, evaluateGraph, extractFacts, loadBaseline, loadPrevious, readJsonInput, reviewSummary, stableJson, validateFacts } from '../lib/analysis.mjs';
+import { externalIdentity, validateFindings } from '../lib/analysis.mjs';
+import { importEslint, importRuff, importSarif } from '../lib/diagnostics.mjs';
 import { reviewFindings } from '../lib/review.mjs';
 import { buildOverlay } from './inject.mjs';
 
@@ -24,7 +26,7 @@ export function overlayHtml({ html, ir, graph, facts = null, findings = [], find
 // `html` is the page Archify delivered for `ir`; it is read, never modified.
 // `baseline` (file) marks accepted findings; `previous` (a findings.json from
 // an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir, html, out, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null }) {
+export function analyzeRepository({ root, ir, html, out, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, external = [] }) {
   const absRoot = path.resolve(root);
   const irPath = path.resolve(ir);
   const htmlPath = path.resolve(html);
@@ -38,6 +40,22 @@ export function analyzeRepository({ root, ir, html, out, language = null, config
   const graph = buildGraph(facts, cfg);
   fs.writeFileSync(path.join(dir, 'module-graph.json'), stableJson(graph));
   const findings = evaluateGraph(graph, cfg, facts);
+  const externalDiagnostics = [];
+  if (external.length) {
+    const importedAt = new Date().toISOString();
+    for (const input of external) {
+      const document = readJsonInput(input.file, `analysis --${input.format}`, { maxBytes: 50 * 1024 * 1024 });
+      const imported = input.format === 'sarif' ? importSarif(document, { root: absRoot, source: input.format, importedAt })
+        : input.format === 'eslint' ? importEslint(document, { root: absRoot, source: input.format, importedAt })
+          : importRuff(document, { root: absRoot, source: input.format, importedAt });
+      findings.diagnostics.push(...imported);
+      externalDiagnostics.push(externalIdentity(input.file, input.format, imported));
+      findings.rules = [...findings.rules, ...new Set(imported.map((finding) => finding.code))].sort();
+      findings.summary.warnings += imported.length;
+    }
+  }
+  findings.analysis.externalDiagnostics = externalDiagnostics.sort((a, b) => a.format < b.format ? -1 : a.format > b.format ? 1 : a.sha256 < b.sha256 ? -1 : 1);
+  validateFindings(findings);
   fs.writeFileSync(path.join(dir, 'findings.json'), stableJson(findings));
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: facts.files.map((f) => f.path) });
   fs.writeFileSync(path.join(dir, 'review.json'), stableJson(review));

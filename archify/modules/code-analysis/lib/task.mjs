@@ -222,6 +222,14 @@ export function locationsOf(d) {
     ...(Number.isInteger(loc.column) ? { startColumn: loc.column, endColumn: loc.endColumn, startOffset: loc.start, endOffset: loc.end } : {}),
     note: 'Duplicate candidate; the evidence hash covers the full cited lines, including text beside any partial-line match.',
   }));
+  if (d.code.startsWith('external/')) return uniqueLocations((ev.locations || [])
+    .filter((location) => location.role !== 'related' && location.status === 'ok' && location.file && Number.isInteger(location.line) && location.line >= 1)
+    .map((location) => ({
+      file: location.file,
+      startLine: location.line,
+      endLine: Number.isInteger(location.endLine) && location.endLine >= location.line ? location.endLine : location.line,
+      kind: 'range',
+    })));
   if (d.code === 'complexity/function' && s.file && Number.isInteger(s.line)) {
     return [{ file: s.file, startLine: s.line, endLine: Number.isInteger(s.endLine) ? s.endLine : s.line, kind: 'function', symbol: s.function, ...(Number.isInteger(ev.deepestLine) ? { focusLine: ev.deepestLine } : {}), note: `complexity ${ev.complexity}, nesting ${ev.nesting}` }];
   }
@@ -236,13 +244,22 @@ export function locationsOf(d) {
 // One location per cited line; a line importing several resolved files
 // (a package and its submodule) lists every target.
 function uniqueLocations(list) {
-  const byLine = new Map();
-  for (const l of list) {
-    const k = `${l.file}:${l.startLine}`;
-    if (!byLine.has(k)) byLine.set(k, { ...l, targets: [...l.targets] });
-    else for (const t of l.targets) if (!byLine.get(k).targets.includes(t)) byLine.get(k).targets.push(t);
+  const unique = new Map();
+  for (const location of list) {
+    if (!Array.isArray(location.targets)) {
+      const key = `${location.file}:${location.startLine}:${location.endLine}:${location.kind}`;
+      if (!unique.has(key)) unique.set(key, { ...location });
+      continue;
+    }
+    const key = `${location.file}:${location.startLine}:import`;
+    if (!unique.has(key)) unique.set(key, { ...location, targets: [...location.targets] });
+    else for (const target of location.targets) if (!unique.get(key).targets.includes(target)) unique.get(key).targets.push(target);
   }
-  return [...byLine.values()].map(({ targets, ...l }) => ({ ...l, note: `imports ${targets.join(', ')}` }));
+  return [...unique.values()].map((location) => {
+    if (!Array.isArray(location.targets)) return location;
+    const { targets, ...rest } = location;
+    return { ...rest, note: `imports ${targets.join(', ')}` };
+  });
 }
 
 // Adds the hash of the exact range and a bounded excerpt with explicit
@@ -322,8 +339,12 @@ function sourceOf(findings, facts) {
 
 function reanalyzeCommand(findings) {
   const language = findings.repository?.language;
+  const inputs = (findings.analysis?.externalDiagnostics || [])
+    .filter((input) => ['sarif', 'eslint', 'ruff'].includes(input.format) && typeof input.file === 'string' && input.file)
+    .map((input) => ` --${input.format} ${commandArgument(input.file)}`)
+    .join('');
   return {
-    command: `archify code-analysis check <repo-root>${language ? ` --language ${language}` : ''} --config <same config> --compare <this run's findings.json>`,
+    command: `archify code-analysis check <repo-root>${language ? ` --language ${language}` : ''} --config <same config>${inputs} --compare <this run's findings.json>`,
     purpose: 'Re-run the same analysis and compare: the finding should be no longer detected, with the comparison marked comparable.',
   };
 }
@@ -339,6 +360,13 @@ function concentrationAcceptance(d) {
   return `${goal[0].toUpperCase()}${goal.slice(1)} (re-analysis no longer reports this finding), or the concentration is confirmed as intended and accepted with that reason.`;
 }
 
+function commandArgument(value) {
+  if (/^[A-Za-z0-9_./:=@+-]+$/.test(value)) return value;
+  return process.platform === 'win32'
+    ? `"${value.replace(/"/g, '""')}"`
+    : `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
 function keyEvidence(d) {
   const ev = d.evidence || {};
   const pick = (keys) => Object.fromEntries(keys.filter((k) => ev[k] !== undefined).map((k) => [k, ev[k]]));
@@ -351,7 +379,7 @@ function keyEvidence(d) {
     case 'architecture/boundary': return { ...pick(['rule', 'totalImports', 'files']), boundary: d.subject.boundary };
     case 'coupling/internal-leak': return pick(['entries', 'entrySource', 'internalFiles', 'consumers', 'totalImports', 'threshold']);
     case 'redundancy/duplicate-block': return pick(['engine', 'identifiers', 'kind', 'tokens', 'lines', 'threshold']);
-    default: return pick(['threshold']);
+    default: return d.code.startsWith('external/') ? pick(['source', 'tool', 'toolVersion', 'rule', 'originalLevel', 'ruleDescription', 'locations', 'importedAt']) : pick(['threshold']);
   }
 }
 
@@ -431,6 +459,20 @@ export function renderTaskMarkdown(task) {
     for (const text of body) line(text);
     line(fence);
     if (!loc.excerpt.complete) line('_Excerpt shortened; read the whole range in the working tree._');
+    line();
+  }
+  const related = task.facts.flatMap((fact) => (fact.evidence?.locations || [])
+    .filter((location) => location.role === 'related')
+    .map((location) => ({ findingId: fact.findingId, ...location })));
+  if (related.length) {
+    line('Related locations (read-only context):');
+    line();
+    for (const location of related) {
+      const range = Number.isInteger(location.line)
+        ? `:${location.line}${Number.isInteger(location.endLine) && location.endLine !== location.line ? `-${location.endLine}` : ''}`
+        : '';
+      line(`- \`${location.file || 'unresolved location'}${range}\` — ${location.status || 'unverifiable'}${location.reason ? `: ${location.reason}` : ''} (${location.findingId})`);
+    }
     line();
   }
   line('## Suggested directions (to evaluate, not confirmed)');

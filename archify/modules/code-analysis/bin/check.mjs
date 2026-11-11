@@ -11,7 +11,7 @@ export const USAGE = `Usage:
   archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
                               [--baseline baseline.json] [--compare findings.json] [--out dir]
                               [--fail-on error|warning|info|never] [--new-only]
-                              [--update-baseline] [--reason text] [--json]
+                              [--update-baseline] [--reason text] [--sarif file] [--eslint file] [--ruff file] [--json]
 
 Analyzes <repo-root> without a diagram and exits 1 when an open finding reaches
 --fail-on (default: warning). Findings accepted in --baseline do not fail the run
@@ -23,7 +23,7 @@ reasons; new entries get --reason) and exits 0.
 Exit codes: 0 passed, 1 gate failed, 2 analysis or usage error.
 Outputs with --out: raw-facts, module-graph, findings, review, overview (.json).`;
 
-const VALUE_OPTIONS = ['--language', '--config', '--baseline', '--compare', '--out', '--fail-on', '--reason'];
+const VALUE_OPTIONS = ['--language', '--config', '--baseline', '--compare', '--out', '--fail-on', '--reason', '--sarif', '--eslint', '--ruff'];
 const FLAG_OPTIONS = ['--new-only', '--update-baseline', '--json'];
 const SEVERITY = { error: 0, warning: 1, info: 2 };
 
@@ -48,7 +48,7 @@ export async function runCheck(argv) {
   const { repo, options } = parseCheckArgs(argv);
   const { ensureDependencies } = await import('./serve.mjs');
   await ensureDependencies();
-  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, loadPrevious, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
+  const { extractFacts, buildGraph, evaluateGraph, validateFindings, externalIdentity, loadBaseline, loadPrevious, stableJson, reviewSummary, readJsonInput } = await import('../lib/analysis.mjs');
   const { reviewFindings, baselineFrom, isOpen } = await import('../lib/review.mjs');
   const { buildOverview } = await import('../overlay/overview.mjs');
   const { findingModules } = await import('../overlay/inject.mjs');
@@ -63,6 +63,31 @@ export async function runCheck(argv) {
   const { facts, config, otherLanguages } = extractFacts(root, { language: options['--language'] || null, config: options['--config'] || null });
   const graph = buildGraph(facts, config);
   const findings = evaluateGraph(graph, config, facts);
+  const externalDiagnostics = [];
+  const importedAt = new Date().toISOString();
+  if (options['--sarif']) {
+    const { importSarif } = await import('../lib/diagnostics.mjs');
+    const sarifFile = path.resolve(options['--sarif']);
+    const imported = importSarif(readJsonInput(sarifFile, 'check --sarif', { maxBytes: 50 * 1024 * 1024 }), { root, source: 'sarif', importedAt });
+    findings.diagnostics.push(...imported);
+    externalDiagnostics.push(externalIdentity(sarifFile, 'sarif', imported));
+    findings.rules = [...findings.rules, ...new Set(imported.map((finding) => finding.code))].sort();
+    findings.summary.warnings += imported.length;
+  }
+  for (const format of ['eslint', 'ruff']) {
+    if (!options[`--${format}`]) continue;
+    const { importEslint, importRuff } = await import('../lib/diagnostics.mjs');
+    const externalFile = path.resolve(options[`--${format}`]);
+    const imported = format === 'eslint'
+      ? importEslint(readJsonInput(externalFile, 'check --eslint', { maxBytes: 50 * 1024 * 1024 }), { root, source: 'eslint', importedAt })
+      : importRuff(readJsonInput(externalFile, 'check --ruff', { maxBytes: 50 * 1024 * 1024 }), { root, source: 'ruff', importedAt });
+    findings.diagnostics.push(...imported);
+    externalDiagnostics.push(externalIdentity(externalFile, format, imported));
+    findings.rules = [...findings.rules, ...new Set(imported.map((finding) => finding.code))].sort();
+    findings.summary.warnings += imported.length;
+  }
+  findings.analysis.externalDiagnostics = externalDiagnostics.sort((a, b) => a.format < b.format ? -1 : a.format > b.format ? 1 : a.sha256 < b.sha256 ? -1 : 1);
+  validateFindings(findings);
   const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : null;
 
   if (options['--update-baseline']) {

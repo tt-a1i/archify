@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { ARCHIFY_AVAILABLE, BAUIFY_ROOT } from './helpers.mjs';
-import { startAnalysisView, parseArgs } from '../bin/serve.mjs';
+import { startAnalysisView, parseArgs, USAGE } from '../bin/serve.mjs';
 
 test('serve: delivers, waits for an authorized click, reuses the completed analysis', { skip: ARCHIFY_AVAILABLE ? false : 'needs an Archify checkout' }, async (t) => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-click-analysis-'));
@@ -90,10 +90,41 @@ test('serve: editing or removing the IR requires redelivery before the first ana
 });
 
 test('serve: arguments are validated up front', () => {
+  assert.match(USAGE, /--language ts\|py\|java\|go\|rust/);
   assert.throws(() => parseArgs([]), /Usage/);
   assert.throws(() => parseArgs(['repo', '--ir', 'x.json']), /--out/);
   assert.throws(() => parseArgs(['repo', '--ir', 'x.json', '--out', 'o', '--bogus', '1']), /Invalid option/);
   assert.deepEqual(parseArgs(['repo', '--ir', 'x.json', '--out', 'o', '--language', 'py']).options, { '--ir': 'x.json', '--out': 'o', '--language': 'py' });
+});
+
+test('serve: imported multi-location SARIF finding reaches the page and checked task endpoint', { skip: ARCHIFY_AVAILABLE ? false : 'needs an Archify checkout' }, async (t) => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-external-serve-'));
+  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
+  const repo = path.join(out, 'repo'); fs.cpSync(path.join(BAUIFY_ROOT, 'test/fixtures/ts-basic'), repo, { recursive: true });
+  const report = path.join(out, 'report.sarif');
+  fs.writeFileSync(report, JSON.stringify({ version: '2.1.0', runs: [{ tool: { driver: { name: 'eslint', version: '9' } }, results: [{ ruleId: 'no-alert', level: 'error', message: { text: 'Avoid alert' }, locations: [{ physicalLocation: { artifactLocation: { uri: 'src/index.mjs' }, region: { startLine: 1, startColumn: 1 } } }], relatedLocations: [{ physicalLocation: { artifactLocation: { uri: 'src/lib/helper.mjs' }, region: { startLine: 1, startColumn: 1 } } }] }] }] }));
+  const ir = path.join(out, 'arch.json');
+  fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'external', output: 'architecture.html' }, components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] }));
+  const view = await startAnalysisView([repo, '--ir', ir, '--out', path.join(out, 'view'), '--language', 'ts', '--sarif', report]);
+  t.after(() => new Promise((resolve) => { view.server.close(resolve); view.server.closeAllConnections?.(); }));
+  const headers = { Origin: view.url, 'X-Analysis-Token': view.token, 'Content-Type': 'application/json' };
+  const response = await fetch(view.url + '/analyze', { method: 'POST', headers });
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /external\/eslint/);
+  const findings = JSON.parse(fs.readFileSync(path.join(out, 'view/analysis/findings.json'), 'utf8'));
+  const finding = findings.diagnostics.find((item) => item.code === 'external/eslint');
+  assert.ok(finding);
+  const taskResponse = await fetch(view.url + '/task', { method: 'POST', headers, body: JSON.stringify({ ids: [finding.id] }) });
+  assert.equal(taskResponse.status, 200);
+  const task = (await taskResponse.json()).task;
+  assert.equal(task.evidence.status, 'valid');
+  assert.deepEqual(task.scope.modify, ['src/index.mjs']);
+  assert.deepEqual(task.scope.read, ['src/lib/helper.mjs']);
+  assert.deepEqual(task.locations.map((location) => location.file), ['src/index.mjs']);
+  assert.equal(task.facts[0].evidence.locations[1].role, 'related');
+  assert.equal(task.facts[0].evidence.tool, 'eslint');
+  assert.equal(task.facts[0].evidence.originalLevel, 'error');
 });
 
 test('serve: reads the required IR before creating output', async (t) => {

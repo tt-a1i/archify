@@ -13,6 +13,7 @@ import { DiagnosticError } from '../extract/shared/diagnostics.mjs';
 import { schemaErrors } from '../extract/shared/schema.mjs';
 import { analyzeFixture, copySource } from './task-fixtures.mjs';
 import { buildGraph, evaluateGraph, extractFacts } from '../lib/analysis.mjs';
+import { importSarif } from '../lib/diagnostics.mjs';
 
 const CONFIG = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures', 'py-tasks', 'analysis.config.json');
 
@@ -93,6 +94,47 @@ test('comparison: switching a rule off, changing thresholds or deleting a file i
   assert.equal(deleted.notDetected.find((f) => f.code === 'architecture/boundary').likelyCause, 'files-missing');
 });
 
+test('comparison: a disappeared external result is not a native rule that stopped running', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-external-comparison-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  for (const file of ['src/a.js', 'src/b.js']) {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), 'source\n');
+  }
+  const result = (file) => ({ ruleId: 'no-alert', message: { text: `Review ${file}` }, locations: [{ physicalLocation: { artifactLocation: { uri: file }, region: { startLine: 1 } } }] });
+  const imported = importSarif({ version: '2.1.0', runs: [{ tool: { driver: { name: 'eslint' } }, results: [result('src/a.js'), result('src/b.js')] }] }, { root });
+  const external = (findings) => [{ format: 'sarif', sha256: 'a'.repeat(64), findings, rules: ['eslint:no-alert'] }];
+  const analysis = { ruleVersions: {}, coverage: { parseErrors: [] }, externalDiagnostics: external(1) };
+  const previous = { diagnostics: imported, analysis: { ...analysis, externalDiagnostics: external(2) } };
+  const comparison = reviewFindings([imported[1]], { previous, analysis, files: ['src/a.js', 'src/b.js'] }).comparison;
+  assert.equal(comparison.comparable, false);
+  assert.deepEqual(comparison.reasons.map((reason) => reason.code), ['external-diagnostics-changed']);
+  assert.equal(comparison.unchanged, 1, 'another result from the same imported rule remains');
+  assert.deepEqual(comparison.notDetected.map((finding) => finding.id), [imported[0].id]);
+  assert.equal(comparison.notDetected[0].likelyCause, undefined);
+});
+
+test('comparison: disappeared external results do not inherit native file causes or rename candidates', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-external-causes-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src/a.js'), 'source\n');
+  const result = (message) => ({ ruleId: 'no-alert', message: { text: message }, locations: [{ physicalLocation: { artifactLocation: { uri: 'src/a.js' }, region: { startLine: 1 } } }] });
+  const [before, added] = importSarif({ runs: [{ tool: { driver: { name: 'eslint' } }, results: [result('before'), result('after')] }] }, { root });
+  const analysis = { ruleVersions: {}, coverage: { parseErrors: ['src/a.js'] } };
+  const comparison = reviewFindings([added], { previous: { diagnostics: [before] }, analysis, files: [] }).comparison;
+  assert.deepEqual(comparison.notDetected.map((finding) => finding.id), [before.id]);
+  assert.equal(comparison.notDetected[0].likelyCause, undefined);
+  assert.equal(comparison.notDetected[0].candidates, undefined);
+});
+
+test('comparison: external input paths are reproducibility metadata, not content identity', () => {
+  const input = (file) => [{ format: 'sarif', file, sha256: 'a'.repeat(64), findings: 1, rules: ['eslint:no-alert'] }];
+  const before = { externalDiagnostics: input('C:/before/report.sarif') };
+  const after = { externalDiagnostics: input('D:/after/report.sarif') };
+  assert.deepEqual(comparability(before, after), { comparable: true, reasons: [] });
+});
+
 test('comparison: renaming a function changes its id; the old one is not detected because its function is gone', (t) => {
   const dir = copySource();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -121,6 +163,10 @@ test('comparison: a previous run without analysis context has unknown comparabil
   assert.equal(comparability(findings.analysis, findings.analysis).comparable, true);
   const parse = comparability(findings.analysis, { ...findings.analysis, coverage: { ...findings.analysis.coverage, parseErrors: ['app/x.py'] } });
   assert.deepEqual(parse.reasons.map((r) => r.code), ['parse-errors']);
+  const external = comparability({ ...findings.analysis, externalDiagnostics: [] }, { ...findings.analysis, externalDiagnostics: [{ format: 'eslint', sha256: 'a'.repeat(64), findings: 1, rules: ['eslint:no-alert'] }] });
+  assert.deepEqual(external.reasons.map((r) => r.code), ['external-diagnostics-changed']);
+  const concentration = comparability({ ...findings.analysis, concentrationContext: { modules: 2, totalLoc: 100 } }, { ...findings.analysis, concentrationContext: { modules: 3, totalLoc: 200 } });
+  assert.deepEqual(concentration.reasons.map((r) => r.code), ['concentration-denominator-changed']);
 });
 
 // ---- review findings on PR #992 -------------------------------------------

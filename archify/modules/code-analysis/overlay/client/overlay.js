@@ -1,5 +1,6 @@
 (function () {
   var data = JSON.parse(document.getElementById('bauify-analysis').textContent);
+  var findingFilter = { rule: '', severity: '', source: '', status: '', query: '' };
   var root = document.documentElement;
   var toolbar = document.querySelector('.toolbar');
   var svg = document.querySelector('svg');
@@ -399,6 +400,7 @@
     if (f.code === 'architecture/boundary' && s.boundary) return s.boundary.from + ' depends on ' + s.boundary.to;
     // Java names carry their parameter types to tell overloads apart.
     if (f.code === 'complexity/function' && s.function) return s.function + (s.function.endsWith(')') ? '' : '()') + ' is complex';
+    if (f.code.startsWith('external/')) return (f.evidence?.tool || s.tool || 'external tool') + ': ' + (f.evidence?.rule || s.rule || 'diagnostic');
     return f.code;
   }
   function concentrationWhat(ev) {
@@ -419,6 +421,7 @@
     if (f.code === 'coupling/internal-leak' && f.evidence) return plural(f.evidence.totalImports, 'import') + ' from ' + plural(f.evidence.consumers.length, 'module') + ' reach ' + plural(f.evidence.internalFiles.length, 'internal file') + ' of ' + f.evidence.moduleFiles + (f.evidence.entries.length ? ' · entry point: ' + f.evidence.entries.map(short).join(', ') : ' · no entry file');
     if (f.code === 'complexity/function' && f.evidence) return 'complexity ' + f.evidence.complexity + ' · nesting ' + f.evidence.nesting + ' · ' + plural(f.evidence.length, 'line') + ' · ' + short(s.file);
     if (f.code === 'architecture/boundary' && f.evidence) return plural(f.evidence.totalImports, 'import') + ' in ' + plural(f.evidence.files.length, 'file') + ' · rule: ' + (f.evidence.rule.reason || s.boundary.from + ' must not depend on ' + s.boundary.to);
+    if (f.code.startsWith('external/') && f.evidence) return 'original level ' + (f.evidence.originalLevel || 'unknown') + ' · ' + plural((f.evidence.locations || []).length, 'location') + (f.evidence.importedAt ? ' · imported ' + f.evidence.importedAt : '');
     return f.message;
   }
   function findingWhere(f) {
@@ -448,6 +451,12 @@
     var pe = files.parseErrors || [];
     if (pe.length) lines.push(plural(pe.length, 'file') + ' could not be parsed: ' + pe.slice(0, 3).join(', ') + (pe.length > 3 ? ' …' : ''));
     var u = c.unresolved || {}, unresolved = (u.unknown || 0) + (u.opaque || 0);
+    if (data.consistency) {
+      var consistency = data.consistency;
+      if (consistency.status === 'comparable' && (consistency.missing.length || consistency.extra.length)) lines.push('Static source relationships differ from the authored diagram; review the declared and observed edges.');
+      else if (consistency.status === 'partial') lines.push('Static relationship comparison is partial; some edges are unmapped or deferred and require review.');
+      else if (consistency.status === 'unknown') lines.push('Static relationship comparison is unavailable for this authored diagram.');
+    }
     // Java counts each unresolved type reference as well as imports.
     if (unresolved) lines.push(plural(unresolved, c.language === 'java' ? 'dependency record' : 'import') + ' could not be resolved');
     if ((c.unmappedModules || []).length) lines.push(plural(c.unmappedModules.length, 'module') + ' not on this diagram');
@@ -503,22 +512,45 @@
     if (o.counts.error) v = { tone: 'red', text: 'Structural problems to fix' };
     else if (acceptedErrors) v = { tone: 'red', text: 'Accepted structural problems still present' };
     var verdictText = !o.counts.error && !acceptedErrors && o.verdict === 'none-found' && acceptedCount ? 'No open findings · ' + acceptedCount + ' accepted in the baseline' : v.text;
-    var counts = [['total', plural(o.counts.findings, 'finding')]]
-      .concat(['error', 'warning', 'info'].filter(function (k) { return o.counts[k]; }).map(function (k) { return [k, o.counts[k] + ' ' + k]; }))
-      .concat(acceptedCount ? [['accepted', acceptedCount + ' accepted']] : [])
+    var visible = (o.findings || []).filter(function (entry) {
+      var finding = findingById[entry.id] || {};
+      return (!findingFilter.rule || finding.code === findingFilter.rule)
+        && (!findingFilter.severity || finding.severity === findingFilter.severity)
+        && (!findingFilter.source || (finding.evidence && (finding.evidence.source === findingFilter.source || finding.evidence.tool === findingFilter.source)))
+        && (!findingFilter.status || (findingFilter.status === 'accepted' ? entry.status === 'accepted' : entry.status !== 'accepted'))
+        && (!findingFilter.query || String(finding.message || '').toLowerCase().includes(findingFilter.query) || JSON.stringify([finding.subject || {}, finding.evidence || {}]).toLowerCase().includes(findingFilter.query));
+    });
+    var visibleIds = new Set(visible.map(function (entry) { return entry.id; }));
+    var visibleCounts = { error: 0, warning: 0, info: 0, accepted: 0 };
+    visible.forEach(function (entry) { if (entry.status === 'accepted') visibleCounts.accepted += 1; else visibleCounts[entry.severity] += 1; });
+    var counts = [['total', plural(visible.length, 'finding') + (visible.length === o.findings.length ? '' : ' shown')]]
+      .concat(['error', 'warning', 'info'].filter(function (k) { return visibleCounts[k]; }).map(function (k) { return [k, visibleCounts[k] + ' ' + k]; }))
+      .concat(visibleCounts.accepted ? [['accepted', visibleCounts.accepted + ' accepted']] : [])
       .concat(o.counts.offDiagram ? [['off', o.counts.offDiagram + ' not on this diagram']] : [])
       .map(function (c, i) { var one = '<span class="count ' + c[0] + '">' + esc(c[1]) + '</span>'; return i ? '<span class="nw">· ' + one + '</span>' : one; }).join(' ');
     var h = typeof window.__archifyReanalyze === 'function' ? '<button type="button" class="bauify-reanalyze" title="Read the repository again and compare with this result">Re-analyze</button>' : '';
     h += '<h3><i class="bauify-' + v.tone + '"></i>' + esc(verdictText) + '</h3>';
     h += '<div class="ev counts">' + counts + '</div>';
+    var sources = [...new Set((o.findings || []).map(function (entry) { var f = findingById[entry.id] || {}; return f.evidence && (f.evidence.tool || f.evidence.source); }).filter(Boolean))].sort();
+    h += '<div class="finding-filters"><label>Rule <select class="finding-rule"><option value="">All rules</option>' + o.groups.map(function (g) { return '<option value="' + esc(g.code) + '"' + (findingFilter.rule === g.code ? ' selected' : '') + '>' + esc(GROUPS[g.code] || g.code) + '</option>'; }).join('') + '</select></label><label>Severity <select class="finding-severity"><option value="">All levels</option>' + ['error', 'warning', 'info'].map(function (level) { return '<option value="' + level + '"' + (findingFilter.severity === level ? ' selected' : '') + '>' + level + '</option>'; }).join('') + '</select></label><label>Source <select class="finding-source"><option value="">All sources</option>' + sources.map(function (source) { return '<option value="' + esc(source) + '"' + (findingFilter.source === source ? ' selected' : '') + '>' + esc(source) + '</option>'; }).join('') + '</select></label><label>Status <select class="finding-status"><option value="">All statuses</option><option value="open"' + (findingFilter.status === 'open' ? ' selected' : '') + '>Open</option><option value="accepted"' + (findingFilter.status === 'accepted' ? ' selected' : '') + '>Accepted</option></select></label><label>Search <input class="finding-search" type="search" value="' + esc(findingFilter.query) + '" placeholder="path or message"></label><button type="button" class="finding-clear" title="Clear finding filters">Clear</button></div>';
     var checkedRules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
     var unchecked = [['redundancy/', 'duplicate code'], ['conventions/', 'project coding conventions']].filter(function (x) { return !checkedRules.some(function (r) { return r.indexOf(x[0]) === 0; }); }).map(function (x) { return x[1]; });
     if (unchecked.length) h += '<div class="coverage-notice">Not checked: ' + esc(unchecked.join(', ')) + '. See Coverage for the full scope.</div>';
     var dupLine = duplicateCoverageLine(o.coverage);
     if (dupLine && !dupLine.complete) h += '<div class="coverage-notice">' + esc(dupLine.text) + '. Files it did not analyze were not checked for duplicates. See Coverage for the full scope.</div>';
     h += reviewHtml(o.review);
-    if (o.priorities.length) {
-      var picks = o.priorities.map(function (id) { return findingById[id]; }).filter(Boolean);
+    var priorities = [], priorityRules = new Set(), priorityCovered = new Set();
+    var openVisible = visible.filter(function (entry) { return entry.status !== 'accepted' || entry.severity === 'error'; });
+    var topVisibleSeverity = openVisible.length ? openVisible[0].severity : null;
+    openVisible.forEach(function (entry) {
+      if (priorities.length >= 3 || entry.severity !== topVisibleSeverity || priorityRules.has(entry.code) || priorityCovered.has(entry.id)) return;
+      priorityRules.add(entry.code); priorityCovered.add(entry.id); priorities.push(entry.id);
+      (entry.relatedIds || []).forEach(function (id) { priorityCovered.add(id); });
+    });
+    openVisible.forEach(function (entry) { if (priorities.length < 3 && !priorityCovered.has(entry.id)) { priorities.push(entry.id); priorityCovered.add(entry.id); } });
+    if (!findingFilter.rule && !findingFilter.severity && !findingFilter.source && !findingFilter.status && !findingFilter.query) priorities = o.priorities;
+    if (priorities.length) {
+      var picks = priorities.map(function (id) { return findingById[id]; }).filter(Boolean);
       var hubs = picks.filter(function (f) { return f.code === 'coupling/hub'; });
       var onlyBoundaries = picks.every(function (f) { return f.code === 'architecture/boundary'; });
       var anyCycle = picks.some(function (f) { return f.code === 'coupling/import-cycle' || f.code === 'coupling/cycle'; });
@@ -532,20 +564,37 @@
         : 'Start with the dependency structures below. ';
       h += '<p class="verdict-note">' + lead + 'Each finding links to its evidence' + (anyCycle ? '; runtime failure is not proven.' : '.') + '</p>';
     }
-    if (o.priorities.length) {
+    if (!visible.length && o.findings.length) h += '<div class="ev" style="margin-top:8px">No findings match these filters.</div>';
+    else if (priorities.length) {
       h += '<div class="k">Look at first</div>';
-      o.priorities.forEach(function (id, i) { h += findingRow(id, i + 1); });
-    } else if (acceptedCount) h += '<div class="ev" style="margin-top:8px">Every finding is accepted in the baseline' + (acceptedErrors ? ', including ' + plural(acceptedErrors, 'circular dependency finding') + ' that ' + (acceptedErrors === 1 ? 'is' : 'are') + ' still in the code and stay' + (acceptedErrors === 1 ? 's' : '') + ' red' : '') + '. New findings, and accepted ones whose code changes, will show up here.</div>';
-    else h += '<div class="ev" style="margin-top:8px">No rule fired. This covers only the checks listed under Coverage; it is not a quality guarantee.</div>';
+      priorities.forEach(function (id, i) { h += findingRow(id, i + 1); });
+    } else if (visible.length && acceptedCount && visible.every(function (entry) { return entry.status === 'accepted'; })) h += '<div class="ev" style="margin-top:8px">Every finding is accepted in the baseline' + (acceptedErrors ? ', including ' + plural(acceptedErrors, 'circular dependency finding') + ' that ' + (acceptedErrors === 1 ? 'is' : 'are') + ' still in the code and stay' + (acceptedErrors === 1 ? 's' : '') + ' red' : '') + '.</div>';
+    else if (!o.findings.length && acceptedCount) h += '<div class="ev" style="margin-top:8px">Every finding is accepted in the baseline' + (acceptedErrors ? ', including ' + plural(acceptedErrors, 'circular dependency finding') + ' that ' + (acceptedErrors === 1 ? 'is' : 'are') + ' still in the code and stay' + (acceptedErrors === 1 ? 's' : '') + ' red' : '') + '. New findings, and accepted ones whose code changes, will show up here.</div>';
+    else if (!o.findings.length) h += '<div class="ev" style="margin-top:8px">No rule fired. This covers only the checks listed under Coverage; it is not a quality guarantee.</div>';
     if (o.groups.length) {
       h += '<div class="k">All findings</div><div class="ev hint">By rule. Click a component on the diagram for its own view.</div>';
       o.groups.forEach(function (g) {
-        h += '<details><summary><i class="bauify-' + toneOf(g.severity) + '"></i>' + esc(GROUPS[g.code] || g.code) + ' · ' + g.count + '</summary>' + g.ids.map(function (id) { return findingRow(id); }).join('') + '</details>';
+        var ids = g.ids.filter(function (id) { return visibleIds.has(id); });
+        if (!ids.length) return;
+        h += '<details><summary><i class="bauify-' + toneOf(g.severity) + '"></i>' + esc(GROUPS[g.code] || g.code) + ' · ' + ids.length + '</summary>' + ids.map(function (id) { return findingRow(id); }).join('') + '</details>';
       });
     }
     h += coverageHtml(o.coverage);
     h += '<details><summary>Colour key</summary>' + legend() + '<div class="ev">The number on a component counts its open findings at its highest level. A solid glow marks the components with the most; the rest get a thin outline.</div></details>';
     overview.innerHTML = h;
+    var ruleSelect = overview.querySelector('.finding-rule'), severitySelect = overview.querySelector('.finding-severity'), sourceSelect = overview.querySelector('.finding-source'), statusSelect = overview.querySelector('.finding-status'), clear = overview.querySelector('.finding-clear'), search = overview.querySelector('.finding-search');
+    ruleSelect.addEventListener('change', function () { findingFilter.rule = ruleSelect.value; renderOverview(); });
+    severitySelect.addEventListener('change', function () { findingFilter.severity = severitySelect.value; renderOverview(); });
+    sourceSelect.addEventListener('change', function () { findingFilter.source = sourceSelect.value; renderOverview(); });
+    statusSelect.addEventListener('change', function () { findingFilter.status = statusSelect.value; renderOverview(); });
+    clear.addEventListener('click', function () { findingFilter = { rule: '', severity: '', source: '', status: '', query: '' }; renderOverview(); });
+    search.addEventListener('input', function () {
+      findingFilter.query = search.value.trim().toLowerCase();
+      var cursor = search.selectionStart;
+      renderOverview();
+      var next = overview.querySelector('.finding-search');
+      if (next) { next.focus(); next.setSelectionRange(cursor, cursor); }
+    });
     var again = overview.querySelector('.bauify-reanalyze');
     if (again) again.addEventListener('click', function () {
       again.disabled = true; again.textContent = 'Analyzing…';
@@ -616,6 +665,32 @@
       h += '</pre><div class="ev">Captured lines ' + (start + 1) + '–' + end + ' of ' + snip.lines.length + ' · excerpt only; click the path to expand.</div></div>';
       return h;
     }).join('');
+  }
+  function multiLocationsHtml(f) {
+    var locations = f.evidence && f.evidence.locations;
+    if (!Array.isArray(locations) || (!f.code.startsWith('external/') && f.code !== 'coupling/duplicate-code')) return '';
+    var label = f.code === 'coupling/duplicate-code' ? 'Duplicate locations' : 'Diagnostic locations';
+    return '<details class="finding-locations" data-locations-id="' + esc(f.id) + '"><summary>' + label + ' · ' + locations.length + '</summary><div class="locations-page"></div><div class="task-actions"><button type="button" class="locations-prev">Previous</button><span class="ev locations-status"></span><button type="button" class="locations-next">Next</button></div></details>';
+  }
+  function wireMultiLocations(f) {
+    var box = detail.querySelector('[data-locations-id="' + f.id + '"]'); if (!box) return;
+    var locations = (f.evidence.locations || []).filter(function (location) { return location.file; }), pageSize = 20, page = 0, pages = Math.max(1, Math.ceil(locations.length / pageSize));
+    var list = box.querySelector('.locations-page'), status = box.querySelector('.locations-status'), previous = box.querySelector('.locations-prev'), next = box.querySelector('.locations-next');
+    var render = function () {
+      var start = page * pageSize, current = locations.slice(start, start + pageSize);
+      list.innerHTML = current.map(function (location) {
+        var startLine = location.startLine || location.line, endLine = location.endLine || location.line;
+        if (location.status && location.status !== 'ok') return '<div class="ev"><b>' + esc(short(location.file)) + '</b>' + (startLine ? ':' + startLine : '') + ' · ' + esc(location.reason || 'unverifiable location') + '</div>';
+        var why = f.code === 'coupling/duplicate-code' ? 'Exact token duplicate; compare responsibilities before sharing code.' : 'External diagnostic location; verify the original tool result against current source.';
+        return ref(location.file, startLine, 'lines ' + startLine + '–' + endLine, why, toneOf(f.severity), startLine, endLine);
+      }).join('');
+      status.textContent = 'Page ' + (page + 1) + ' of ' + pages + ' · ' + (start + 1) + '–' + (start + current.length) + ' of ' + locations.length;
+      previous.disabled = page === 0; next.disabled = page + 1 >= pages; wireRefs();
+    };
+    previous.addEventListener('click', function () { if (page > 0) { page -= 1; render(); } });
+    next.addEventListener('click', function () { if (page + 1 < pages) { page += 1; render(); } });
+    box.addEventListener('toggle', function () { if (box.open) render(); });
+    render();
   }
   function taskHtml(f) {
     return '<details class="ai-task" data-task-id="' + esc(f.id) + '"><summary>Task preview and download</summary><p class="ev">Review the brief, then give it to your coding AI. Exporting does not modify code.</p><p class="task-status ev" role="status" aria-live="polite">Open to prepare the task.</p><div class="task-actions"><button type="button" class="task-copy" disabled>Copy AI task</button><button type="button" class="task-download" disabled>Download .md</button><button type="button" class="task-refresh">Check again</button></div><label class="ev">Task preview · select text to copy manually<textarea class="task-preview" readonly spellcheck="false" aria-label="AI task preview"></textarea></label></details>';
@@ -702,7 +777,7 @@
       : f.code === 'complexity/function' ? 'Cyclomatic complexity counts independent paths through the function. A high count is a maintenance signal, not a defect.' : lvl.text;
     h += '<div class="level"><b>' + esc(lvl.name) + '</b> — ' + esc(findingWhat(f)) + (f.code === 'redundancy/duplicate-block' ? '' : '<br>' + esc(explanation)) + '</div>';
     if (f.review && f.review.reason) h += '<p class="ev"><span class="badge-accepted">' + (f.review.status === 'accepted-changed' ? 'accepted · evidence changed' : f.severity === 'error' ? 'accepted · still to fix' : 'accepted') + '</span> ' + esc(f.review.reason) + (f.review.status === 'accepted-changed' ? ' — the code behind it changed since it was accepted; review it again.' : f.severity === 'error' ? ' — accepting it keeps CI from failing; the cycle is still there and stays red.' : '') + '</p>';
-    h += (f.code === 'redundancy/duplicate-block' ? '' : quickHandoff(f)) + '<div class="k">Code evidence</div>' + evidencePreview(f);
+    h += (f.code === 'redundancy/duplicate-block' ? '' : quickHandoff(f)) + '<div class="k">Code evidence</div>' + evidencePreview(f) + multiLocationsHtml(f);
     if (f.code === 'redundancy/duplicate-block') h += quickHandoff(f);
     h += nextStepHtml(f) + taskHtml(f);
     if ((f.componentIds || []).length) h += '<button type="button" class="locate">Locate related components</button>';
@@ -721,6 +796,7 @@
     if (locate) locate.addEventListener('click', function () { locateComponents(f.componentIds, true); });
     detail.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { showFinding(el.getAttribute('data-finding')); }); });
     wireRefs();
+    wireMultiLocations(f);
     wireTasks();
     var heading = detail.querySelector('h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
   }

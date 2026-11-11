@@ -65,6 +65,22 @@
             }
           }
         },
+        "externalDiagnostics": {
+          "type": "array",
+          "description": "Identity and replay metadata of imported diagnostic files. Content identity is the SHA-256, findings and rule inventory; file is only the local input path used to re-run the analysis. Changed content or a missing input makes runs incomparable.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["format", "sha256", "findings", "rules"],
+            "properties": {
+              "format": { "enum": ["sarif", "eslint", "ruff"] },
+              "file": { "type": "string", "minLength": 1, "description": "Local diagnostic input path for reproducing this run; not part of content identity or comparability." },
+              "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+              "findings": { "type": "integer", "minimum": 0 },
+              "rules": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
         "coverage": {
           "type": "object",
           "additionalProperties": false,

@@ -77,8 +77,8 @@ export async function ensureDependencies(root = moduleRoot) {
 
 export const USAGE = `Usage:
   archify code-analysis serve <repo-root> --ir <architecture.json> --out <dir>
-                              [--language ts|py|java] [--map overlay-map.json] [--config file.json]
-                              [--baseline baseline.json] [--quality standard|showcase]
+                              [--language ts|py|java|go|rust] [--map overlay-map.json] [--config file.json]
+                              [--baseline baseline.json] [--sarif file] [--eslint file] [--ruff file] [--quality standard|showcase]
 
 Delivers the authored diagram with Archify, serves it on a local port, and runs the
 code analysis for <repo-root> when "Code Analysis" is clicked on that page. Nothing
@@ -95,7 +95,7 @@ export function parseArgs(argv) {
   const options = {};
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i];
-    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw new Error(`Invalid option: ${key}\n${USAGE}`);
+    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--sarif', '--eslint', '--ruff'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw new Error(`Invalid option: ${key}\n${USAGE}`);
     options[key] = rest[i + 1];
   }
   if (!options['--ir'] || !options['--out']) throw new Error(`serve requires --ir and --out\n${USAGE}`);
@@ -155,6 +155,9 @@ export async function startAnalysisView(argv) {
         root, ir, irSnapshot: doc, html: delivered, out: next,
         language: options['--language'] || null, config: options['--config'] ? path.resolve(options['--config']) : null,
         map: options['--map'] ? path.resolve(options['--map']) : null, baseline: options['--baseline'] ? path.resolve(options['--baseline']) : null,
+        external: ['--sarif', '--eslint', '--ruff']
+          .filter((key) => options[key])
+          .map((key) => ({ format: key.slice(2), file: path.resolve(options[key]) })),
         previous: path.join(analysisDir, 'findings.json'),
       });
     } catch (error) {

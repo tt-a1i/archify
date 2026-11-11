@@ -70,6 +70,12 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.match(await run("document.querySelector('#bauify-overview .bauify-item.accepted-error').title"), /Accepted: legacy loader pair/);
   assert.match(await run("document.querySelector('#bauify-overview .bauify-item.accepted-error').textContent"), /accepted · still to fix/);
 
+  // Filtering should narrow the visible findings and leave the underlying review intact.
+  await run("const input = document.querySelector('#bauify-overview .finding-search'); input.value = 'no-such-finding'; input.dispatchEvent(new Event('input', { bubbles: true }))");
+  assert.match(await run("document.getElementById('bauify-overview').innerText"), /No findings match these filters/);
+  await run("document.querySelector('#bauify-overview .finding-clear').click()");
+  assert.ok(await run("document.querySelectorAll('#bauify-overview .bauify-item.accepted-error').length >= 1"), 'clearing filters restores accepted findings');
+
   if (process.env.ARCHIFY_ANALYSIS_REVIEW_SCREENSHOT) {
     await run("document.querySelectorAll('#bauify-overview details').forEach(d => { d.open = /Import cycles|Module cycles/.test(d.textContent); })");
     const shot = await send('Page.captureScreenshot', { format: 'png' });

@@ -92,9 +92,10 @@ function comparisonOf({ previous, before, current, findings, ids, analysis, file
   const parseErrors = new Set(analysis?.coverage?.parseErrors || []);
   const added = [...current.values()].filter((d) => findings[d.id].since === 'new');
   const notDetected = [...before.values()].filter((d) => !current.has(d.id)).map((d) => {
+    const external = d.code.startsWith('external/');
     const involved = d.evidenceDigest?.files || [];
-    const candidates = added.filter((n) => n.code === d.code && (n.evidenceDigest?.files || []).some((f) => involved.includes(f))).map((n) => n.id).sort(compareText);
-    const likelyCause = ran && !ran.has(d.code) ? 'rule-not-run'
+    const candidates = external ? [] : added.filter((n) => n.code === d.code && (n.evidenceDigest?.files || []).some((f) => involved.includes(f))).map((n) => n.id).sort(compareText);
+    const likelyCause = external ? null : ran && !ran.has(d.code) ? 'rule-not-run'
       : involved.some((f) => parseErrors.has(f)) ? 'parse-error'
         : known && involved.some((f) => !known.has(f)) ? 'files-missing'
           : candidates.length ? 'possibly-renamed' : null;
@@ -129,6 +130,9 @@ export function comparability(before, after) {
   if (revision(before) !== revision(after)) changes.push(`Extraction logic changed from revision ${revision(before) ?? 'unrecorded'} to ${revision(after) ?? 'unrecorded'}.`);
   if (changes.length) add('adapter-changed', changes.join(' '));
   if (before.configDigest !== after.configDigest) add('config-changed', 'The analysis configuration changed (thresholds, include/exclude, roles, boundaries or ignored rules).');
+  const externalContent = (context) => (context.externalDiagnostics || []).map(({ format, sha256, findings, rules }) => ({ format, sha256, findings, rules }));
+  if (JSON.stringify(externalContent(before)) !== JSON.stringify(externalContent(after))) add('external-diagnostics-changed', 'The imported diagnostic content, formats or rule inventory changed.');
+  if (JSON.stringify(before.concentrationContext || null) !== JSON.stringify(after.concentrationContext || null)) add('concentration-denominator-changed', 'The module count or analyzed LOC denominator used by concentration changed.');
   const rulesBefore = before.ruleVersions || {}, rulesAfter = after.ruleVersions || {};
   const removed = Object.keys(rulesBefore).filter((r) => !(r in rulesAfter)).sort(compareText);
   const added = Object.keys(rulesAfter).filter((r) => !(r in rulesBefore)).sort(compareText);

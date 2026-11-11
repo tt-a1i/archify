@@ -42,7 +42,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     });
   }
   const modules = new Map(graph.modules.map((m) => [m.id, m]));
-  const mapping = resolveMapping(ir, graph, map);
+  const mapping = resolveMapping(ir, graph, map, facts);
   const claimed = new Set([...mapping.values()].flat());
   const fileIndex = indexFiles(graph, facts);
   const findingsByFile = new Map();
@@ -86,6 +86,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     edgeMap.set(key, { from: c.id, to: o.component, weight: o.weight, evidence: o.evidence });
   }
   const edges = [...edgeMap.values()].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.to < b.to ? -1 : 1));
+  const consistency = compareDeclaredEdges(ir, graph, mapping);
   const unmapped = graph.modules.filter((m) => !claimed.has(m.id)).map((m) => ({ id: m.id, label: m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: (fileIndex.get(m.id) || []).map((f) => ({ ...f, module: m.id })) }));
   const fileModule = new Map([...fileIndex].flatMap(([id, list]) => list.map((f) => [f.path, id])));
   const reviewed = run.review ? run.review.findings : {};
@@ -105,6 +106,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     hasFileFacts: Boolean(facts),
     components,
     edges,
+    consistency,
     unmapped,
     findings: listed,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
@@ -121,6 +123,24 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
   const idx = html.lastIndexOf('</body>');
   const out = idx === -1 ? html + injection : html.slice(0, idx) + injection + html.slice(idx);
   return { html: out, overview: payload.overview, mapped: components.filter((c) => c.modules.length).length, components: components.length, edges: edges.length, unmapped: unmapped.length, snippets: Object.keys(payload.snippets).length };
+}
+
+// Compare only resolved static module relationships that can be mapped to an
+// authored component. Dynamic/unmapped relationships stay unknown rather than
+// being presented as architecture errors.
+function compareDeclaredEdges(ir, graph, mapping) {
+  const declared = new Set((ir.connections || []).filter((edge) => edge && edge.from && edge.to).map((edge) => `${edge.from}>${edge.to}`));
+  if (!declared.size) return { status: 'unknown', reason: 'the authored diagram declares no comparable connections', missing: [], extra: [] };
+  const componentForModule = new Map();
+  for (const [component, modules] of mapping) for (const module of modules) componentForModule.set(module, component);
+  const actual = new Set(), unknown = [];
+  for (const edge of graph.edges || []) {
+    const from = componentForModule.get(edge.from), to = componentForModule.get(edge.to);
+    if (!from || !to) { unknown.push({ from: edge.from, to: edge.to, reason: 'module is not mapped to an authored component' }); continue; }
+    if ((edge.kinds?.lazy || edge.kinds?.conditional || edge.kinds?.typeOnly) && !edge.kinds?.eager) { unknown.push({ from, to, reason: 'relationship is deferred, conditional, or type-only' }); continue; }
+    actual.add(`${from}>${to}`);
+  }
+  return { status: unknown.length ? 'partial' : 'comparable', missing: [...actual].filter((edge) => !declared.has(edge)).sort(), extra: [...declared].filter((edge) => !actual.has(edge)).sort(), unknown };
 }
 
 // Modules a finding is about: named directly, or owning one of its files.
@@ -292,11 +312,13 @@ function indexFiles(graph, facts) {
 // componentId -> [moduleId]. Explicit `map` wins; otherwise derive from each
 // component's `sources` paths: a source under a module's path claims that
 // module and, when no other component claims them, its descendant modules.
-function resolveMapping(ir, graph, map) {
+function resolveMapping(ir, graph, map, facts) {
   const result = new Map();
   const byPathDepth = [...graph.modules].sort((a, b) => b.path.split('/').length - a.path.split('/').length);
+  const knownFiles = facts ? new Set(facts.files.map((file) => file.path)) : graph.fileModules ? new Set(Object.keys(graph.fileModules)) : null;
   const moduleForFile = (file) => {
     const rel = graph.repository.root && graph.repository.root !== '.' && file.startsWith(`${graph.repository.root}/`) ? file.slice(graph.repository.root.length + 1) : file;
+    if (knownFiles && !knownFiles.has(rel)) return null;
     if (graph.fileModules && graph.fileModules[rel]) return graph.fileModules[rel];
     for (const m of byPathDepth) {
       if (m.path === '' ) continue;

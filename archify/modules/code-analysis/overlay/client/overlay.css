@@ -214,6 +214,9 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-reader .task-actions button:disabled { opacity: .5; cursor: wait; }
 #bauify-reader .task-preview { display: block; box-sizing: border-box; width: 100%; min-height: 180px; max-height: 360px; resize: vertical; padding: 10px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; color: var(--text, #f8fafc); background: var(--bg, #0b1220); font: 12px/1.6 ui-monospace, monospace; }
 #bauify-reader .coverage-notice { padding: 8px 0; color: var(--text-muted, #94a3b8); font-size: 12px; }
+#bauify-reader .finding-filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; margin: 10px 0; }
+#bauify-reader .finding-filters label { display: grid; gap: 4px; color: var(--text-muted, #94a3b8); font-size: 12px; }
+#bauify-reader .finding-filters select, #bauify-reader .finding-filters input { min-height: 32px; max-width: 100%; padding: 5px 8px; color: var(--text, #f8fafc); background: var(--bg, #0b1220); border: 1px solid var(--panel-border, #1e293b); border-radius: 4px; font: inherit; }
 #bauify-reader .relationship { margin: 16px 0; }
 @media (max-width: 600px) { html[data-bauify="on"] .toolbar #btn-preset, html[data-bauify="on"] .toolbar #btn-present { display: none; } }
 /* Presentation pass: flat, bordered surfaces instead of tinted washes, so colour
