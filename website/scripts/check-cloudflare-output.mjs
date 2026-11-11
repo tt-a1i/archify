@@ -62,7 +62,13 @@ export function checkCloudflareOutput(root) {
     const relative = url.pathname.slice(1);
     const file = !relative || relative.endsWith('/') ? `${relative}index.html` : `${relative}.html`;
     const html = fs.readFileSync(path.join(root, file), 'utf8');
-    assert.ok(html.includes(`rel="canonical" href="${location}"`), `Missing matching canonical: ${location}`);
+    const hasCanonical = node => {
+      const attributes = Object.fromEntries((node.attrs ?? []).map(({ name, value }) => [name, value]));
+      return (node.tagName === 'link' && (attributes.rel ?? '').toLowerCase().split(/[ \t\n\f\r]+/).includes('canonical')
+        && attributes.href === location)
+        || (node.childNodes ?? []).some(hasCanonical);
+    };
+    assert.ok(hasCanonical(parse(html)), `Missing matching canonical: ${location}`);
     assert.ok(!/<meta[^>]+(?:name="robots"[^>]+content="[^"]*noindex|content="[^"]*noindex[^>]+name="robots")/i.test(html), `Noindex sitemap page: ${location}`);
   }
   assert.equal(fs.readFileSync(path.join(root, 'robots.txt'), 'utf8').includes('Sitemap: https://archify.si/sitemap.xml'), true);
