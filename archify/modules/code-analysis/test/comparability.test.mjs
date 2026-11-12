@@ -42,14 +42,56 @@ test('config: a file overriding one role keeps the default exclude list and othe
   }
 });
 
-function run(dir, config) {
-  const { facts } = extractFacts(dir, { language: 'py', config });
+function run(dir, config, language = 'py') {
+  const { facts } = extractFacts(dir, { language, config });
   const graph = buildGraph(facts, config);
   return { facts, findings: evaluateGraph(graph, config, facts) };
 }
 function compare(prev, next) {
   return reviewFindings(next.findings.diagnostics, { previous: prev.findings, analysis: next.findings.analysis, files: next.facts.files.map((f) => f.path) }).comparison;
 }
+
+test('comparison: effective Go platforms differ even with identical config and file counts', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-go-comparison-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'go.mod'), 'module example.org/review\n\ngo 1.18\n');
+  fs.writeFileSync(path.join(dir, 'work_linux.go'), 'package review\nfunc Work(v int) int { if v > 0 { return v }; if v < 0 { return -v }; return 0 }\n');
+  fs.writeFileSync(path.join(dir, 'work_windows.go'), 'package review\nfunc Work(v int) int { return v }\n');
+  const config = mergeConfig(loadConfig(), { go: { stdlib: false }, rules: { complexity: { function: { info: { complexity: 2, nesting: 10 }, warning: { complexity: 3, nesting: 10 } } } } });
+  const previousOS = process.env.GOOS;
+  t.after(() => { if (previousOS === undefined) delete process.env.GOOS; else process.env.GOOS = previousOS; });
+  process.env.GOOS = 'linux';
+  const linux = run(dir, config, 'go');
+  assert.equal(compare(linux, run(dir, config, 'go')).comparable, true);
+  process.env.GOOS = 'windows';
+  const windows = run(dir, config, 'go');
+  assert.equal(linux.findings.analysis.configDigest, windows.findings.analysis.configDigest);
+  assert.equal(linux.findings.analysis.coverage.files, windows.findings.analysis.coverage.files);
+  assert.equal(linux.facts.languageScope.build.goos, 'linux');
+  assert.equal(windows.facts.languageScope.build.goos, 'windows');
+  const changed = compare(linux, windows);
+  assert.equal(changed.notDetected.length, 1, 'the Linux-only complexity finding is absent');
+  assert.equal(changed.comparable, false);
+  assert.deepEqual(changed.reasons.map((r) => r.code), ['go-build-scope-changed']);
+  assert.deepEqual(schemaErrors('findings', linux.findings), []);
+  assert.deepEqual(schemaErrors('findings', windows.findings), []);
+  for (const [key, value] of Object.entries({ goarch: 'different-arch', cgo: true, tests: false, tags: ['extra'], releaseTags: ['go1.18'], toolTags: ['different-feature'] })) {
+    const different = { ...linux.findings.analysis, goBuildScope: { ...linux.findings.analysis.goBuildScope, [key]: value } };
+    assert.equal(comparability(linux.findings.analysis, different).comparable, false, `${key} affects source selection`);
+  }
+  const reordered = Object.fromEntries(Object.entries(linux.findings.analysis.goBuildScope).reverse());
+  assert.equal(comparability(linux.findings.analysis, { ...linux.findings.analysis, goBuildScope: reordered }).comparable, true, 'JSON property order does not change build scope');
+
+  // Historical schema-v1 findings are accepted, but their scope is unknown.
+  const { goBuildScope: _scope, ...historical } = linux.findings.analysis;
+  const legacy = { ...linux.findings, analysis: historical };
+  assert.deepEqual(schemaErrors('findings', legacy), []);
+  assert.equal(comparability(historical, historical).comparable, null);
+  const unknown = comparability(historical, linux.findings.analysis);
+  assert.equal(unknown.comparable, null);
+  assert.deepEqual(unknown.reasons.map((r) => r.code), ['go-build-scope-missing']);
+  assert.equal(comparability(historical, { ...linux.findings.analysis, configDigest: 'changed' }).comparable, false, 'a known config difference still establishes non-comparability');
+});
 
 test('comparison: the same analysis of edited code is comparable; a fixed cycle is no longer detected', (t) => {
   const dir = copySource();
