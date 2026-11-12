@@ -174,6 +174,74 @@ test('evidence: a UTF-8 BOM captured without it by Python still verifies', (t) =
   assert.equal(verifyTask(task, dir).evidence.status, 'valid');
 });
 
+test('evidence: unreadable digest-only context fails strict verification', (t) => {
+  const { dir, findings, facts } = fixtureRun(t);
+  const task = buildTask({ findings, facts, ids: [byCode(findings, 'architecture/boundary').id] });
+  const id = task.findings[0].id;
+  assert.ok(task.findings[0].evidenceDigest.files.includes('ui/view.py'));
+  assert.ok(task.locations.every((l) => l.file !== 'ui/view.py'));
+  assert.equal(verifyTask(task, dir).evidence.status, 'valid');
+
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-digest-context-'));
+  t.after(() => fs.rmSync(outside, { recursive: true, force: true }));
+  const target = path.join(dir, 'ui/view.py');
+  const copy = path.join(outside, 'view.py');
+  fs.copyFileSync(target, copy);
+  fs.rmSync(target);
+  try { fs.symlinkSync(copy, target); } catch (error) { t.skip(`file symlink unavailable: ${error.code}`); return; }
+  const checked = verifyTask(task, dir);
+  assert.ok(checked.locations.every((l) => l.status === 'valid'));
+  assert.equal(checked.evidence.findings[id].digestMatches, null);
+  assert.equal(checked.evidence.status, 'unverifiable');
+  assert.match(checked.evidence.reason, /could not be recomputed/);
+  assert.deepEqual(schemaErrors('ai-task', checked), []);
+
+  const file = path.join(outside, 'task.json');
+  fs.writeFileSync(file, JSON.stringify(task));
+  const result = spawnSync(process.execPath, [TASK_BIN, '--verify', file, '--root', dir, '--require-valid', '--json'], { encoding: 'utf8', timeout: 20000 });
+  assert.equal(result.status, 1, result.stderr);
+  assert.equal(JSON.parse(result.stdout).evidence, 'unverifiable');
+
+  // Historical tasks without a digest can still verify their captured lines.
+  delete task.findings[0].evidenceDigest;
+  assert.equal(verifyTask(task, dir).evidence.status, 'valid');
+});
+
+test('evidence: many BOM files verify within a bounded CLI heap', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-bom-cycle-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  for (const bom of [false, true]) {
+    for (let i = 0; i < 22; i++) fs.writeFileSync(path.join(dir, `f${i}.mjs`), `${bom ? '\ufeff' : ''}import "./f${(i + 1) % 22}.mjs";\nexport const value${i}=${i};\n`);
+    const { facts, config } = extractFacts(dir, { language: 'ts' });
+    const findings = evaluateGraph(buildGraph(facts, config), config, facts);
+    const finding = byCode(findings, 'coupling/import-cycle');
+    assert.equal(finding.evidenceDigest.files.length, 22);
+    const task = buildTask({ findings, facts, ids: [finding.id] });
+    const file = path.join(dir, 'task.json');
+    fs.writeFileSync(file, JSON.stringify(task));
+    // The child owns the heap budget so a regression cannot exhaust the test runner.
+    const result = spawnSync(process.execPath, ['--max-old-space-size=192', TASK_BIN, '--verify', file, '--root', dir, '--require-valid', '--json'], { encoding: 'utf8', timeout: 20000 });
+    assert.equal(result.status, 0, `BOM=${bom}: ${result.error || result.signal || ''} ${result.stderr}`);
+    assert.equal(JSON.parse(result.stdout).evidence, 'valid');
+  }
+});
+
+test('evidence: saved BOM representations match within budget and stay unknown beyond it', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-bom-budget-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  for (let i = 0; i < 7; i++) fs.writeFileSync(path.join(dir, `f${i}.mjs`), `import "./f${(i + 1) % 7}.mjs";\n`);
+  const { facts, config } = extractFacts(dir, { language: 'ts' });
+  const findings = evaluateGraph(buildGraph(facts, config), config, facts);
+  const task = buildTask({ findings, facts, ids: [byCode(findings, 'coupling/import-cycle').id] });
+  for (let i = 0; i < 6; i++) edit(dir, `f${i}.mjs`, (text) => `\ufeff${text}`);
+  assert.equal(verifyTask(task, dir).evidence.status, 'valid', 'the last of 64 representations still matches the saved digest');
+  edit(dir, 'f6.mjs', (text) => `\ufeff${text}`);
+  const checked = verifyTask(task, dir);
+  assert.ok(checked.locations.every((l) => l.status === 'valid'));
+  assert.equal(checked.evidence.findings[task.findings[0].id].digestMatches, null);
+  assert.equal(checked.evidence.status, 'unverifiable');
+});
+
 test('payloads: one captured task and its Markdown per finding, for a page without a server', (t) => {
   const { findings, facts } = fixtureRun(t);
   const payloads = buildTaskPayloads({ findings, facts });
