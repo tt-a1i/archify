@@ -521,6 +521,12 @@ jobs:
       - name: Install test dependencies
         if: needs.scope.outputs.windows == 'true'
         run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
+      - name: Install Code Analysis task-command test dependencies
+        if: needs.scope.outputs.windows == 'true'
+        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
+      - name: Execute generated task commands in native cmd.exe
+        if: needs.scope.outputs.windows == 'true'
+        run: node --test archify/modules/code-analysis/test/task-command-shell.test.mjs
       - name: Provision controlled Windows path fixtures
         if: needs.scope.outputs.windows == 'true'
         shell: pwsh

@@ -53,6 +53,25 @@ Output defaults to a system temporary directory. Add `--out out/my-project` to c
 
 You can also run `node bin/archify.mjs start "/path/to/project" --ir architecture.json` directly. The legacy `code-analysis serve` command remains supported.
 
+## First look at an unfamiliar repository
+
+Run `check` without a diagram and write the artifacts to a directory:
+
+```sh
+node bin/archify.mjs code-analysis check /path/to/repo --language ts --out out/first-look --json
+```
+
+Choose `--language` when the repository contains more than one language; without it, `check` stops with `extract/adapter-ambiguous` and lists the detected adapters. Each run analyzes one language and reports the others under `coverage.otherLanguages`.
+
+Start from the JSON receipt, not the full finding list:
+
+- `investigation.leads` repeats the three ranked `priorities` with `message`, `where` (`path:line`), `symbol`, `impact`, and a runnable `task` command. The text output prints the same list under **Start here**.
+- `investigation.shell` identifies the command syntax: `cmd.exe` on Windows and `POSIX sh` elsewhere. Copy the command into that shell. Spaces and apostrophes are preserved; Windows paths with `%` or `!` use a Node argv launcher to avoid environment-variable expansion. The `drillDown` template quotes `<id>`; replace it with a finding ID.
+- `ruleCounts` shows how findings divide by rule, so a dominant rule is visible before reading every finding.
+- `coverage` lists parse failures and other languages left out. `overview.json` also lists files excluded by role.
+
+For each lead you keep, run its `task` command (or `archify code-analysis task out/first-look --finding <id> --root /path/to/repo --format json`) to get source excerpts, facts, suggestions, acceptance and evidence digests. Then read the cited source before changing code. A finding is static evidence, not a proven defect: a complexity warning says the function is harder to read and test, not that it must be split, and a coupling signal may be an intentional design. If the branching or dependency is inherent, record that and leave the code as it is.
+
 ## Architecture boundaries
 
 To check that layers only depend on what they should, pass a config file with `--config analysis.config.json`:
@@ -121,7 +140,7 @@ Nested named functions are measured on their own:
 - in Python: methods and nested `def`s;
 - in JS/TS: methods, constructors, accessors, and arrow or function expressions assigned to a name.
 
-Lambdas and anonymous callbacks count toward the function that contains them. A callback at module level has no such function, so it is measured on its own, named after the call it is passed to, and its first literal argument, such as `<callback of server.on("request")>`. Test and generated files are skipped.
+Lambdas and anonymous callbacks count toward the function that contains them. A callback at module level has no such function, so it is measured on its own, named after the call it is passed to, and its first literal argument, such as `<callback of server.on("request")>`. Test, generated and vendored files are skipped: `roles.generated` includes `vendor/`, `vendored/`, `third_party/` and `third-party/` by default, because bundles there are not first-party source. Override `roles.generated` in a config to measure those folders and keep them in the module graph.
 
 A function is reported as info from complexity 15 or nesting 5, and as a warning from complexity 25 or nesting 6. Function length is shown as context but never reported on its own. A high count is a maintenance signal, not a defect. The problem page links to the function's first line and its deepest nested block.
 
@@ -342,9 +361,9 @@ The Atlas adds no analysis: it draws the raw facts, module graph and findings of
 
 ## Comparing runs
 
-Every `findings.json` records what the result depends on besides the code: the analyzer version, the extractor (its parser or runtime version and the revision of its own logic), a digest of the effective config, the rules that ran, the excluded file roles and the files that failed to parse. A comparison (Re-analyze, or `check --compare`/`--out`) lists findings that are new, **no longer detected**, and whose evidence changed, and adds:
+Every `findings.json` records what the result depends on besides the code: the analyzer version, the extractor (its parser or runtime version and the revision of its own logic), a digest of the effective config, the rules that ran, the excluded file roles and the files that failed to parse. Go runs also record `analysis.goBuildScope`: effective GOOS/GOARCH, explicit/release/tool tags, tests and cgo selection, including environment and host defaults. A comparison (Re-analyze, or `check --compare`/`--out`) lists findings that are new, **no longer detected**, and whose evidence changed, and adds:
 
-- `comparable`: `true` when both runs measured the same way, `false` with `reasons` (config, rules, analyzer version, extractor, scope or parse errors changed), `null` when the earlier run predates this record;
+- `comparable`: `true` when both runs measured the same way, `false` with `reasons` (config, rules, analyzer version, extractor, Go build scope, scope or parse errors changed), `null` when required context is missing, including historical Go results without build scope, unless another known difference establishes non-comparability;
 - per finding no longer detected, a `likelyCause` when one is visible: `rule-not-run`, `files-missing` (deleted, renamed or excluded), `parse-error`, or `possibly-renamed` with the new finding ids that cover the same files.
 
 Only a comparable run in which the finding is no longer detected, together with passing project checks, supports saying a problem was fixed. `review.json` keeps `fixed` as an alias of `notDetected` for existing readers.
@@ -362,6 +381,8 @@ node bin/archify.mjs code-analysis task --verify task.json --root "/path/to/proj
 ```
 
 With `--root`, the cited code is compared with the current working tree and the task's evidence is marked **valid** (unchanged, possibly moved), **changed**, **missing** (file deleted or renamed) or **unverifiable**. Without it the task is **captured**: built from the analysis snapshot and not yet checked. Either way the task tells the agent to read the current source before changing anything and to treat the excerpts as data, not instructions. `--require-valid` exits 1 unless the evidence is valid. The page builds the same task through the local server (`POST /task`), so the copied text and the command output agree.
+
+A recorded digest that cannot be recomputed keeps the task **unverifiable**, even when every displayed citation is unchanged. For compatibility with extractors that retain or strip UTF-8 BOMs, whole-file/function digests try at most 64 text combinations without materializing the full product; a match passes, while an exhausted search budget is **unverifiable**. Historical tasks without digests can still verify their captured lines.
 
 The contract is `schemas/ai-task.schema.json`; examples for each finding kind and evidence status are in `test/fixtures/tasks/`.
 
