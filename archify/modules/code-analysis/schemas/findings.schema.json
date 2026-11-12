@@ -9,6 +9,14 @@
     "schema_version": { "const": 1 },
     "repository": { "type": "object" },
     "rules": { "type": "array", "items": { "type": "string" } },
+    "externalEvidence": {
+      "type": "array",
+      "description": "Captured repository text cited by external reports, beyond the selected AST extractor's files.",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["path", "sourceText", "sha256"],
+        "properties": { "path": { "type": "string", "minLength": 1 }, "sourceText": { "type": "string" }, "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+      }
+    },
     "summary": {
       "type": "object",
       "additionalProperties": false,
@@ -32,6 +40,7 @@
         "adapterRevision": { "type": ["integer", "null"], "minimum": 1, "description": "Revision of the adapter's extraction logic (raw facts repository.adapterRevision); null when the facts did not record one." },
         "configDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of the effective (merged) configuration in its key order, schema_version excluded." },
         "ruleVersions": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 }, "description": "Rules that ran (suppressed rules excluded) and the version of their logic." },
+        "external": { "type": "array", "items": { "$ref": "#/$defs/externalSource" } },
         "goBuildScope": {
           "type": "object", "additionalProperties": false,
           "description": "Effective Go source selection, including environment/host defaults. Optional for historical findings; absent scope makes a Go comparison unknown unless another difference is known.",
@@ -98,12 +107,13 @@
         "properties": {
           "id": { "type": "string", "pattern": "^[A-Z]{2,4}-(?:[0-9a-f]{12}|[0-9]{4,})$", "description": "Stable id: dimension prefix + 12 hex digits of a hash of the rule and subject. Findings written before stable ids used a position number (COUP-0001); those stay valid schema-v1 documents but their ids cannot be matched across runs." },
           "code": { "type": "string", "pattern": "^[a-z-]+/[a-z-]+$" },
-          "dimension": { "enum": ["coupling", "architecture", "complexity", "redundancy", "error-handling", "impact", "ai-smell"] },
+          "dimension": { "enum": ["coupling", "architecture", "complexity", "redundancy", "error-handling", "impact", "ai-smell", "conventions", "external-review"] },
           "severity": { "enum": ["error", "warning", "info"] },
-          "confidence": { "enum": [1, 0.7, 0.5] },
+          "confidence": { "enum": [1, 0.7, 0.5, null] },
           "message": { "type": "string", "minLength": 1 },
           "subject": { "type": "object" },
-          "evidence": { "type": "object", "required": ["threshold"] },
+          "evidence": { "type": "object" },
+          "external": { "$ref": "#/$defs/externalDiagnostic" },
           "supportedFixes": { "type": "array", "items": { "type": "string" } },
           "evidenceDigest": {
             "type": "object",
@@ -133,7 +143,51 @@
               "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
             }
           }
-        }
+        },
+        "allOf": [{ "if": { "required": ["external"] }, "then": { "properties": { "confidence": { "const": null } } }, "else": { "properties": { "evidence": { "type": "object", "required": ["threshold"] }, "confidence": { "enum": [1, 0.7, 0.5] } } } }]
+      }
+    }
+  },
+  "$defs": {
+    "externalLocation": {
+      "type": "object", "required": ["file"],
+      "properties": {
+        "role": { "enum": ["primary", "related"], "description": "SARIF distinguishes result locations from related source context." },
+        "file": { "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 }, "endLine": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }, "endColumn": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "externalDiagnostic": {
+      "type": "object",
+      "required": ["sourceId", "tool", "ruleId", "originalSeverity", "reportPointer", "identityRevision", "binding", "reviewDigest", "locations"],
+      "properties": {
+        "sourceId": { "type": "string", "minLength": 1 }, "tool": { "type": "string", "minLength": 1 },
+        "ruleId": { "type": ["string", "null"] }, "originalSeverity": { "anyOf": [{ "type": "string" }, { "type": "number" }, { "type": "null" }] },
+        "severityDefaulted": { "type": "boolean" }, "helpUri": { "type": "string" }, "reportPointer": { "type": "string" },
+        "identityRevision": { "type": "integer", "minimum": 1 }, "fingerprint": { "type": "string" },
+        "binding": { "enum": ["verified", "unverified", "changed"] },
+        "reviewDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "locations": { "type": "array", "items": { "$ref": "#/$defs/externalLocation" } },
+        "origin": { "type": "object" }, "suggestions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "externalSource": {
+      "type": "object",
+      "required": ["id", "format", "tool", "toolVersion", "adapterRevision", "identityRevision", "reportSha256", "configDigest", "status", "coverage", "binding", "suppressed", "notices"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "code": { "type": "string", "pattern": "^[a-z-]+/[a-z-]+$" }, "format": { "enum": ["eslint", "ruff", "sarif", "github-review"] },
+        "tool": { "type": "string", "minLength": 1 }, "toolVersion": { "type": ["string", "null"] },
+        "adapterRevision": { "type": "integer", "minimum": 1 }, "identityRevision": { "type": "integer", "minimum": 1 },
+        "reportSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }, "configDigest": { "type": ["string", "null"] },
+        "status": { "enum": ["imported", "partial"] }, "binding": { "enum": ["verified", "unverified", "changed"] },
+        "coverage": { "type": "object", "required": ["files", "complete"], "properties": { "files": { "type": "array", "items": { "type": "string" } }, "complete": { "type": ["boolean", "null"] } } },
+        "suppressed": { "type": "integer", "minimum": 0 }, "notices": { "type": "array", "items": { "type": "object", "required": ["code", "message"], "properties": { "code": { "type": "string" }, "message": { "type": "string" } } } },
+        "command": { "type": "string" }, "reportFile": { "type": "string" },
+        "severityPolicy": { "enum": ["source", "warning"] },
+        "importSettingsDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "sourceHashes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" } },
+        "sourceTextHashes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
       }
     }
   }

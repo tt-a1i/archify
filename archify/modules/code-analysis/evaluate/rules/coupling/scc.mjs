@@ -1,38 +1,59 @@
-// Iterative Tarjan traversal: dependency depth must not consume the JS call stack.
+// Iterative Tarjan traversal over integer IDs: dependency depth must not
+// consume the JS call stack or allocate a frame object for every node.
 export function cyclicComponents(nodes, edges, includeSelf = false) {
-  const out = new Map(nodes.map((node) => [node, []]));
-  for (const edge of edges) out.get(edge.from).push(edge.to);
-  for (const targets of out.values()) targets.sort();
-  const indices = new Map(), low = new Map(), active = new Set(), stack = [];
-  const components = [];
-  let index = 0;
+  const ids = new Map();
+  for (const node of nodes) if (!ids.has(node)) ids.set(node, ids.size);
+  if (ids.size !== nodes.length) nodes = [...ids.keys()];
+  const rowPtr = new Uint32Array(nodes.length + 1);
+  const self = includeSelf ? new Uint8Array(nodes.length) : null;
+  for (const edge of edges) {
+    const from = ids.get(edge.from), to = ids.get(edge.to);
+    if (from === undefined || to === undefined) throw new TypeError('SCC edge endpoint is outside the node scope');
+    rowPtr[from + 1]++;
+    if (self && from === to) self[from] = 1;
+  }
+  for (let i = 1; i < rowPtr.length; i++) rowPtr[i] += rowPtr[i - 1];
+  const cursor = rowPtr.slice(0, nodes.length), colIdx = new Uint32Array(edges.length);
+  for (const edge of edges) colIdx[cursor[ids.get(edge.from)]++] = ids.get(edge.to);
+  const indices = new Uint32Array(nodes.length), low = new Uint32Array(nodes.length);
+  const active = new Uint8Array(nodes.length), stack = new Uint32Array(nodes.length);
+  const frames = new Uint32Array(nodes.length), components = [];
+  let index = 0, stackSize = 0, depth = 0;
   const enter = (node) => {
-    indices.set(node, index); low.set(node, index++);
-    active.add(node); stack.push(node);
-    return { node, next: 0 };
+    // Zero is unvisited; discovery numbers start at one.
+    indices[node] = low[node] = ++index;
+    // Reuse the fill cursor as this frame's next-edge position.
+    cursor[node] = rowPtr[node];
+    active[node] = 1; stack[stackSize++] = node;
+    frames[depth++] = node;
   };
-  for (const start of nodes) {
-    if (indices.has(start)) continue;
-    const frames = [enter(start)];
-    while (frames.length) {
-      const frame = frames[frames.length - 1];
-      const targets = out.get(frame.node);
-      if (frame.next < targets.length) {
-        const target = targets[frame.next++];
-        if (!indices.has(target)) frames.push(enter(target));
-        else if (active.has(target)) low.set(frame.node, Math.min(low.get(frame.node), indices.get(target)));
+  for (let start = 0; start < nodes.length; start++) {
+    if (indices[start]) continue;
+    enter(start);
+    while (depth) {
+      const node = frames[depth - 1];
+      if (cursor[node] < rowPtr[node + 1]) {
+        const target = colIdx[cursor[node]++];
+        if (!indices[target]) enter(target);
+        else if (active[target]) low[node] = Math.min(low[node], indices[target]);
         continue;
       }
-      frames.pop();
-      if (frames.length) {
-        const parent = frames[frames.length - 1].node;
-        low.set(parent, Math.min(low.get(parent), low.get(frame.node)));
+      depth--;
+      if (depth) {
+        const parent = frames[depth - 1];
+        low[parent] = Math.min(low[parent], low[node]);
       }
-      if (low.get(frame.node) === indices.get(frame.node)) {
-        const component = [];
-        let node;
-        do { node = stack.pop(); active.delete(node); component.push(node); } while (node !== frame.node);
-        if (component.length > 1 || (includeSelf && targets.includes(frame.node))) components.push(component.sort());
+      if (low[node] === indices[node]) {
+        const end = stackSize;
+        let member;
+        do { member = stack[--stackSize]; active[member] = 0; } while (member !== node);
+        // Popped IDs remain in the buffer until the next entry. Materialize
+        // only reported cycles, avoiding a temporary array for every DAG node.
+        if (end - stackSize > 1 || self?.[node]) {
+          const component = [];
+          for (let at = stackSize; at < end; at++) component.push(nodes[stack[at]]);
+          components.push(component.sort());
+        }
       }
     }
   }
