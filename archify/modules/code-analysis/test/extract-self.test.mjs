@@ -59,11 +59,13 @@ test('extract: hand-verified import lists for two archify files', { skip: SKIP }
   const binImports = facts.imports.filter((i) => i.from === 'bin/archify.mjs' && i.resolved);
   assert.ok(binImports.length > 0);
   assert.ok(binImports.some((i) => i.kind === 'dynamic' && i.to.startsWith('renderers/')));
-  // roles: test wins over generated (test/generated-artifact-xml.test.mjs is a test),
-  // and the two real generated files carry the generated role.
+  // roles: test wins over generated (test/generated-artifact-xml.test.mjs is a test).
+  // The two real generated files carry the generated role, and vendored bundles
+  // default to generated so they are not reported as first-party complexity.
   for (const f of facts.files) if (f.path.startsWith('test/')) assert.equal(f.role, 'test', f.path);
-  assert.deepEqual(facts.files.filter((f) => f.role === 'generated').map((f) => f.path), [
-    'renderers/shared/generated-brand-marks.mjs',
-    'renderers/shared/generated-validators.mjs',
-  ]);
+  const generated = facts.files.filter((f) => f.role === 'generated').map((f) => f.path);
+  assert.ok(generated.includes('renderers/shared/generated-brand-marks.mjs'));
+  assert.ok(generated.includes('renderers/shared/generated-validators.mjs'));
+  assert.ok(generated.includes('story/vendor/html-parser.mjs'));
+  assert.ok(generated.some((p) => p.startsWith('explainer/vendor/pele/chunks/')));
 });
