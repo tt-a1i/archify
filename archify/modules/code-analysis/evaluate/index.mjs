@@ -53,6 +53,7 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
   // Imported report transport is provenance; source adapters record their own
   // settings and coverage. It must not change the internal analyzer's context.
   const { schema_version: _ignored, external: _external, ...settings } = config || {};
+  const goBuild = graph?.repository?.language === 'go' ? facts?.languageScope?.build : null;
   return {
     analyzer: { name: PACKAGE.name, version: PACKAGE.version },
     language: graph?.repository?.language ?? null,
@@ -64,6 +65,12 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
     configDigest: sha256(JSON.stringify(settings)),
     ruleVersions: Object.fromEntries(active.filter((r) => !suppressed.has(r.code)).map((r) => [r.code, r.version ?? 1]).sort(([a], [b]) => compareText(a, b))),
     ...(duplicates ? { duplicates: duplicates.analysis } : {}),
+    ...(goBuild ? { goBuildScope: {
+      goos: goBuild.goos, goarch: goBuild.goarch, cgo: goBuild.cgo, tests: goBuild.tests,
+      tags: [...new Set(goBuild.tags || [])].sort(compareText),
+      releaseTags: [...new Set(goBuild.releaseTags || [])].sort(compareText),
+      toolTags: [...new Set(goBuild.toolTags || [])].sort(compareText),
+    } } : {}),
     coverage: {
       files: facts ? facts.files.filter((f) => !excludedRoles.has(f.role)).length : null,
       excludedRoles: [...excludedRoles].sort(compareText),

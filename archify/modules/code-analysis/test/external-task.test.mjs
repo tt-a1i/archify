@@ -147,6 +147,34 @@ test('external task: unknown report binding stays unverifiable after source byte
   assert.deepEqual(schemaErrors('ai-task', checked), []);
 });
 
+test('external task: verified report binding cannot upgrade an exhausted source digest budget', (t) => {
+  const run = capturedRun(t);
+  const captured = new Map(Object.entries(run.files));
+  // Model source text captured without a UTF-8 signature, while generation-time
+  // byte hashes correctly bind the signed files. Seven independent signatures
+  // need more representations than the bounded legacy digest search examines.
+  for (let i = 0; i < 7; i++) {
+    const file = `context${i}.ts`, text = `export const context${i} = 1;\n`;
+    fs.writeFileSync(path.join(run.root, file), `\ufeff${text}`);
+    captured.set(file, text);
+    run.findings.externalEvidence.push({ path: file, sourceText: text, sha256: hash(text) });
+    run.diagnostic.external.locations.push({ file, line: 1, endLine: 1, role: 'related' });
+  }
+  const files = [...captured.keys()].sort();
+  run.diagnostic.evidenceDigest = { files, sha256: hash(JSON.stringify(files.map(file => [file, hash(captured.get(file))]))) };
+  run.context.coverage.files = files;
+  run.context.sourceHashes = Object.fromEntries(files.map(file => [file, hash(fs.readFileSync(path.join(run.root, file)))]));
+
+  const checked = verifyTask(buildTask({ ...run, ids: [ID] }), run.root);
+  assert.ok(checked.locations.every(location => location.status === 'valid'));
+  assert.equal(checked.evidence.findings[ID].digestMatches, null);
+  assert.equal(checked.evidence.findings[ID].reportBinding, 'verified');
+  assert.equal(checked.evidence.findings[ID].sourceStatus, 'unverifiable');
+  assert.equal(checked.evidence.status, 'unverifiable');
+  assert.match(checked.evidence.reason, /could not be recomputed/);
+  assert.deepEqual(schemaErrors('ai-task', checked), []);
+});
+
 test('external task schema: null confidence cannot silently remove external provenance', (t) => {
   const task = buildTask({ ...capturedRun(t), ids: [ID] });
   delete task.findings[0].external;

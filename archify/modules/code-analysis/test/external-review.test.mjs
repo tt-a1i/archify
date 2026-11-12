@@ -146,6 +146,19 @@ test('source-qualified comparison reasons explain changed and unknown external m
   }
 });
 
+test('missing Go build scope stays unknown unless an external measurement difference is known', () => {
+  const before = { ...context(), language: 'go', adapter: 'go@test' };
+  const unknown = comparability(before, clone(before));
+  assert.equal(unknown.comparable, null, 'matching external context cannot establish a missing native build scope');
+  assert.deepEqual(unknown.reasons.map(reason => reason.code), ['go-build-scope-missing']);
+
+  const after = { ...clone(before), external: [source({ severityPolicy: 'warning', importSettingsDigest: sha('f') })] };
+  const changed = comparability(before, after);
+  assert.equal(changed.comparable, false, 'known external differences must not be hidden by unknown Go scope');
+  assert.ok(changed.reasons.some(reason => reason.code === 'go-build-scope-missing'));
+  assert.ok(changed.reasons.some(reason => reason.code === 'external-import-settings-changed' && reason.sourceId === 'web-eslint'));
+});
+
 test('an absent external source is not a fix, while a fresh complete empty report is comparable', () => {
   const original = finding();
   const previous = { diagnostics: [original], analysis: context() };

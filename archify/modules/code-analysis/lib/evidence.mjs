@@ -25,6 +25,7 @@ import path from 'node:path';
 import { findRanges, rangeDigest, splitLines } from './task.mjs';
 
 const RANK = { valid: 0, unverifiable: 1, changed: 2, missing: 3 };
+const MAX_DIGEST_CANDIDATES = 64;
 
 export function worst(statuses) {
   return statuses.reduce((a, b) => (RANK[b] > RANK[a] ? b : a), 'valid');
@@ -171,14 +172,26 @@ export function digestMatches(digest, readFile, shift = null) {
   }
   const span = Array.isArray(digest.lines) ? (shift || digest.lines) : null;
   const options = [];
+  let combinations = 1;
   for (const f of digest.files) {
     const current = readFile(f);
     if (current.status !== 'ok') return current.status === 'missing' ? false : null;
     options.push(variants(current.text).map((text) => [f, sha256(span ? text.split(/\r?\n/).slice(span[0] - 1, span[1]).join('\n') : text)]));
+    combinations = Math.min(MAX_DIGEST_CANDIDATES + 1, combinations * options[options.length - 1].length);
   }
-  // Try the with-BOM and without-BOM form of every file (almost always one form each).
-  const combos = options.reduce((acc, list) => acc.flatMap((prefix) => list.map((part) => [...prefix, part])), [[]]);
-  return combos.slice(0, 64).some((parts) => sha256(JSON.stringify(parts)) === digest.sha256);
+  // Keep the historical candidate order and digest format, but construct only
+  // one candidate at a time. Materializing the product first costs 2^N for BOMs.
+  for (let candidate = 0; candidate < Math.min(combinations, MAX_DIGEST_CANDIDATES); candidate++) {
+    let cursor = candidate;
+    const parts = new Array(options.length);
+    for (let i = options.length - 1; i >= 0; i--) {
+      parts[i] = options[i][cursor % options[i].length];
+      cursor = Math.floor(cursor / options[i].length);
+    }
+    if (sha256(JSON.stringify(parts)) === digest.sha256) return true;
+  }
+  // Unexamined representations could still match; exhaustion is not a change.
+  return combinations > MAX_DIGEST_CANDIDATES ? null : false;
 }
 
 // Returns a copy of the task with evidence status set from the current tree.
@@ -208,7 +221,10 @@ export function verifyTask(task, root, { now = new Date() } = {}) {
     } else if (status === 'valid' && matches === false) { status = 'changed'; reason = 'the cited lines are unchanged, but other code this finding was computed from changed; re-run the analysis to confirm it still applies'; }
     else if (!located.length && matches === true) { status = 'valid'; reason = 'the files this finding was computed from are unchanged'; }
     else if (!located.length && matches === false) { status = own.some((l) => readFile(l.file).status === 'missing') || f.evidenceDigest?.files?.some((x) => readFile(x).status === 'missing') ? 'missing' : 'changed'; reason = 'the files this finding was computed from changed'; }
-    else if (status === 'valid' && matches === null) reason = f.evidenceDigest ? 'cited lines unchanged; the finding digest could not be recomputed' : 'cited lines unchanged; the finding has no evidence digest';
+    else if (status === 'valid' && matches === null) {
+      if (f.evidenceDigest) { status = 'unverifiable'; reason = 'cited lines unchanged; the finding digest could not be recomputed'; }
+      else reason = 'cited lines unchanged; the finding has no evidence digest';
+    }
     // Matching today's bytes only verifies the captured source. It cannot
     // establish that a separately produced report checked those bytes. Preserve
     // both results so a stale or unbound report is never promoted to valid.
@@ -241,10 +257,13 @@ export function verifyTask(task, root, { now = new Date() } = {}) {
   const status = worst(Object.values(perFinding).map((f) => f.status));
   const counts = {};
   for (const l of locations) counts[l.status] = (counts[l.status] || 0) + 1;
+  const locationFailures = Object.entries(counts).filter(([s]) => s !== 'valid').map(([s, n]) => `${n} location${n === 1 ? '' : 's'} ${s}`).join(', ');
   const unboundReports = Object.values(perFinding).filter((finding) => finding.reportBinding && finding.reportBinding !== 'verified').length;
+  const failures = [locationFailures, unboundReports ? `${unboundReports} external report binding${unboundReports === 1 ? '' : 's'} need verification` : ''].filter(Boolean).join('; ');
   const reason = status === 'valid'
     ? 'Every cited location and evidence digest matches the current working tree.'
-    : `${[Object.entries(counts).filter(([s]) => s !== 'valid').map(([s, n]) => `${n} location${n === 1 ? '' : 's'} ${s}`).join(', '), unboundReports ? `${unboundReports} external report binding${unboundReports === 1 ? '' : 's'} need verification` : ''].filter(Boolean).join('; ') || 'evidence digest changed'}; see each location${unboundReports ? ' and finding' : ''}.`;
+    : failures ? `${failures}; see each location${unboundReports ? ' and finding' : ''}.`
+      : Object.values(perFinding).find((f) => f.status !== 'valid')?.reason || 'The finding evidence could not be checked.';
   return { ...task, locations, evidence: { status, checkedAt: now.toISOString(), reason, findings: perFinding } };
 }
 

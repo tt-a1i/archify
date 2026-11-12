@@ -41,6 +41,18 @@
         "configDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of the effective (merged) configuration in its key order, schema_version excluded." },
         "ruleVersions": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 }, "description": "Rules that ran (suppressed rules excluded) and the version of their logic." },
         "external": { "type": "array", "items": { "$ref": "#/$defs/externalSource" } },
+        "goBuildScope": {
+          "type": "object", "additionalProperties": false,
+          "description": "Effective Go source selection, including environment/host defaults. Optional for historical findings; absent scope makes a Go comparison unknown unless another difference is known.",
+          "required": ["goos", "goarch", "cgo", "tests", "tags", "releaseTags", "toolTags"],
+          "properties": {
+            "goos": { "type": "string" }, "goarch": { "type": "string" },
+            "cgo": { "type": "boolean" }, "tests": { "type": "boolean" },
+            "tags": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+            "releaseTags": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+            "toolTags": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+          }
+        },
         "duplicates": {
           "type": "object", "additionalProperties": false,
           "required": ["engine", "settings", "coverage"],
