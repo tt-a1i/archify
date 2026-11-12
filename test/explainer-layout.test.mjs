@@ -31,6 +31,17 @@ test('native width is estimated from the prepared viewBox; authored spans stay e
  assert.ok(rows.every(row=>row.reduce((sum,p)=>sum+p.span,0)===12));
 });
 
+test('an authored answer width preserves its columns and the following comparison row',()=>{
+ for(let span=1;span<=12;span++){
+  const d=document([{...panel('view'),span:6},{...panel('copy'),span:6}]);d.answer.span=span;
+  const rows=layoutExplainerPanels(d);
+  assert.equal(rows[0][0].span,span);
+  if(span===12)assert.deepEqual(rows.map(row=>row.map(item=>item.id)),[['answer'],['view','copy']]);
+  const html=renderExplainer(d),tree=parse(html),answer=all(tree,n=>attr(n,'id')==='answer')[0];
+  assert.equal(attr(answer,'data-span-fixed'),String(span));
+ }
+});
+
 test('all three example HTML boards start with the conclusion and every panel row totals twelve',async()=>{
  for(const name of ['comparison','mechanism','diagram']){
   const url=new URL(`../docs/specs/explainer/examples/${name}.md`,import.meta.url),text=fs.readFileSync(url,'utf8');

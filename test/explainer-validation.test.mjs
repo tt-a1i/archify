@@ -81,9 +81,19 @@ test('source links resolve forward IDs and code requires a repository location',
  const d=base();blocks(d)[0].text='Read [facts](source:evidence) and [](source:evidence).';assert.equal(validateExplainer(d).ok,true);
  blocks(d)[0].text='[](source:missing)';check(d,'unresolved-reference');blocks(d)[0].text='Plain.';blocks(d).push({id:'code',type:'code',source:'evidence'});check(d,'code-source-kind');
 });
-test('answer accepts at most four reasons and qualifier checks exclude scope and sources',()=>{
+test('answer accepts four reasons and local qualifications remain valid in strict writing mode',()=>{
  const d=base();d.answer.reasons=['Lower latency','Local transactions'];d.answer.scope='示例，未实测，仅供参考 [5 ms](typical:illustrative, not measured)';d.sources[0].title='illustrative, not measured';
  assert.deepEqual(validateExplainer(d).diagnostics,[]);
- for(const field of ['summary','reasons','body']){const changed=structuredClone(d);if(field==='summary')changed.answer.summary='示例判断';if(field==='reasons')changed.answer.reasons=['本例适用'];if(field==='body')blocks(changed)[0].text='Illustrative, not measured.';const issues=validateExplainer(changed).diagnostics.filter(d=>d.code==='explainer/writing-qualification');assert.ok(issues.length,field);assert.ok(JSON.stringify(issues).includes('把限定条件写进 scope 或来源'));}
+ for(const field of ['summary','reasons','body']){
+   const changed=structuredClone(d);
+   const text=field==='body'?'The counts are illustrative, not measured.':'示例中的请求共用一次调用，不代表结果会被缓存。';
+   if(field==='summary')changed.answer.summary=text;
+   if(field==='reasons')changed.answer.reasons=[text];
+   if(field==='body')blocks(changed)[0].text=text;
+   const result=validateExplainer(changed,{writingMode:'strict'});
+   assert.equal(result.ok,true,JSON.stringify(result.diagnostics));
+   assert.deepEqual(result.diagnostics,[]);
+ }
+
  d.answer.reasons=Array(5).fill('Reason');check(d,'schema-maxItems');
 });

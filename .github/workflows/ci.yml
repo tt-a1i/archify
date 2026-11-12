@@ -243,6 +243,36 @@ jobs:
         with:
           chrome-version: stable
           install-dependencies: true
+      # Some ubuntu-latest hosts set kernel.apparmor_restrict_unprivileged_userns=1,
+      # which denies the unconfined Chrome for Testing binary the user namespace its
+      # sandbox needs ("No usable sandbox!"). Grant exactly that binary the userns
+      # permission with its own AppArmor profile, as Chromium documents, rather than
+      # disabling the sandbox or relaxing the restriction for the whole runner.
+      - name: Let the provisioned Chrome start with its sandbox
+        if: needs.scope.outputs.webm == 'true'
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        shell: bash
+        run: |
+          restrict="$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null || echo 0)"
+          echo "kernel.apparmor_restrict_unprivileged_userns=$restrict"
+          if [ "$restrict" = 1 ]; then
+            chrome_binary="$(readlink -f "$CHROME_PATH")"
+            sudo tee /etc/apparmor.d/archify-ci-chrome >/dev/null <<EOF
+          abi <abi/4.0>,
+          include <tunables/global>
+
+          profile archify-ci-chrome "$chrome_binary" flags=(unconfined) {
+            userns,
+            include if exists <local/archify-ci-chrome>
+          }
+          EOF
+            sudo apparmor_parser -r /etc/apparmor.d/archify-ci-chrome
+          fi
+          # Fail here with a clear cause if sandboxed Chrome still cannot start.
+          profile_dir="$(mktemp -d)"
+          timeout 60 "$CHROME_PATH" --headless=new --disable-gpu --user-data-dir="$profile_dir" --dump-dom about:blank >/dev/null
+          rm -rf "$profile_dir"
       - name: Install the WebM decoder
         if: needs.scope.outputs.webm == 'true'
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
@@ -251,7 +281,6 @@ jobs:
         run: npm run test:webm
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          ARCHIFY_CHROME_NO_SANDBOX: '1'
 
   webm-artifact:
     needs: [scope, browser-regression, webm-decode]
@@ -327,7 +356,11 @@ jobs:
         run: |
           set -euo pipefail
           manifest_version="$(node --input-type=module -e 'import fs from "node:fs"; import { validateStableUpdateManifest } from "./archify/scripts/update-contract.mjs"; process.stdout.write(validateStableUpdateManifest(JSON.parse(fs.readFileSync("./docs/skill-updates/archify/stable.json", "utf8"))).version);')"
-          latest_stable_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq 'select(.draft == false and .prerelease == false) | .tag_name')"
+          # Independent adapter releases such as archify-dsh-v1.1.0 are stable
+          # GitHub releases too, so releases/latest can name them instead of the
+          # Archify Skill. Select the newest release whose tag is an Archify
+          # v<major>.<minor>.<patch> tag.
+          latest_stable_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --jq '[.[] | select(.draft == false and .prerelease == false) | select(.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))][0].tag_name')"
           if [[ "$latest_stable_tag" != "v${manifest_version}" ]]; then
             echo "::error::stable.json v${manifest_version} must match the latest published stable Release ${latest_stable_tag:-'(missing)'}"
             exit 1
@@ -450,6 +483,10 @@ jobs:
         with:
           chrome-version: stable
           install-dependencies: true
+      - name: Install Chinese font coverage for website screenshots
+        run: |
+          sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
+          fc-match 'sans-serif:lang=zh-cn'
       - name: Verify built website navigation and language continuity
         run: npm run test:browser
         working-directory: website
@@ -472,6 +509,13 @@ jobs:
           ARCHIFY_SITE_INTEGRATION: '1'
           ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Upload homepage visual evidence
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: website-homepage-evidence
+          path: website/.browser-evidence
+          if-no-files-found: warn
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: website-dist
