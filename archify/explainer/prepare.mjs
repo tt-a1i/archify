@@ -29,7 +29,7 @@ export function parseValidatedExplainer(sourceText, options = {}) {
 
 // Discover declared inputs before reading their contents: failed preparation
 // must not overwrite the very JSON resource that made preparation fail.
-export function declaredExplainerInputPaths(sourceText, inputPath) {
+export function declaredExplainerInputPaths(sourceText, inputPath, { localOnly = false } = {}) {
   if (Buffer.byteLength(sourceText) > MAX_SOURCE_BYTES) fail('source-limit', 'Explainer draft exceeds the 16 MiB source budget.', inputPath, 'source-byte-limit');
   const parsed = parseExplainer(sourceText, { inputPath });
   if (!parsed.document || parsed.diagnostics.some(entry => entry.severity !== 'warning')) throwDiagnosticError('Explainer inputs could not be inspected.', parsed.diagnostics);
@@ -40,7 +40,10 @@ export function declaredExplainerInputPaths(sourceText, inputPath) {
         : block?.type === 'diagram' ? block.source
           : block?.type === 'image' ? block.path
             : undefined;
-      if (typeof reference === 'string') inputs.push(path.resolve(path.dirname(inputPath), reference));
+      if (typeof reference !== 'string') continue;
+      if (localOnly && (/^[\/\\]|[\\:\u0000-\u001f\u007f?#]/.test(reference)
+          || reference.split('/').some(part => !part || part === '.' || part === '..' || part.toLowerCase() === '.git'))) continue;
+      inputs.push(path.resolve(path.dirname(inputPath), reference));
     }
   }
   return [...new Set(inputs)];
@@ -137,6 +140,7 @@ export function validatePreparedTargets(document, diagrams, options = {}) {
       visit(entry,`${pointer}/${key}`,panelId,component);
     }
   };
+  visit(document.meta?.title,'/meta/title',undefined,'title');
   visit(document.answer,'/answer',undefined,'answer');
   document.panels.forEach((panel,index)=>{
     visit(panel.title,`/panels/${index}/title`,panel.id,'panel');

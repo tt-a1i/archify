@@ -810,6 +810,26 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
         Number(shortWide.geometry[0].split(/\s+/)[3]) >= 1.55, 'exercise a small wide canvas');
       fits(shortWide);
 
+      // Start with a header that needs scrolling, as can happen before font
+      // metrics settle. Recover the normal fit without a viewport resize.
+      const reflowFile = path.join(scratch, 'short-wide-header-reflow.html');
+      fs.writeFileSync(reflowFile, fs.readFileSync(renderSequence('short-wide-reflow', wide), 'utf8')
+        .replace('</head>', '<style id="header-reflow">.header { min-height: 90px !important; }</style></head>'));
+      await load(reflowFile, { width: 1396, height: 480 });
+      const expandedHeader = await stage('short-wide-expanded-header');
+      assert.ok(expandedHeader.stage.bottom > expandedHeader.viewportHeight,
+        'a taller header retains scrolling instead of shrinking source text');
+      assert.ok(expandedHeader.minimumTextScale >= 1 - 0.01);
+      await evaluate("document.getElementById('header-reflow').remove()");
+      await stable();
+      const recoveredHeader = await stage('short-wide-recovered-header');
+      if (evidence) {
+        const capture = await send('Page.captureScreenshot', { format: 'png' });
+        fs.writeFileSync(path.join(evidence, 'short-wide-recovered-header.png'), Buffer.from(capture.data, 'base64'));
+      }
+      fits(recoveredHeader);
+      assert.deepEqual(recoveredHeader.geometry, shortWide.geometry);
+
       const long = { ...compact, segments: [], cards: [], messages: Array.from({ length: 20 }, (_, index) => ({
         from: index % 2 ? 'service' : 'client', to: index % 2 ? 'client' : 'service',
         y: 160 + index * 100, label: `Message ${index + 1}`,
