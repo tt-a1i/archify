@@ -17,7 +17,8 @@
           "id": { "type": "string", "pattern": "^[A-Z]{2,4}-[0-9a-f]{12}$", "description": "Stable finding id from findings.json." },
           "code": { "type": "string", "pattern": "^[a-z-]+/[a-z-]+$", "description": "Rule code, for readers of the file." },
           "reason": { "type": "string", "minLength": 1, "description": "Why the finding is accepted for now." },
-          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "evidenceDigest.sha256 when accepted; if the evidence later differs, the finding is shown for re-review." }
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "evidenceDigest.sha256 when accepted; if the evidence later differs, the finding is shown for re-review." },
+          "externalReviewDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "The imported source claim and its rule context when accepted. Separate from source-only sha256; changing either requires re-review." }
         }
       }
     }

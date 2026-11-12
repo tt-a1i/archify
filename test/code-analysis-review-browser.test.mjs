@@ -81,10 +81,10 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   await run("document.querySelector('#bauify-overview .bauify-reanalyze').click()");
   await wait("location.search === '' && document.documentElement.getAttribute('data-bauify') === 'on' && /no longer detected/.test(document.getElementById('bauify-overview').innerText)");
   overview = await run("document.getElementById('bauify-overview').innerText");
-  assert.match(overview, /Accepted structural problems still present/, 'accepting a cycle unblocks CI; it does not turn the page green');
+  assert.equal(await run("Boolean(document.querySelector('#bauify-overview h3 .bauify-red'))"), true, 'accepting an error unblocks CI; the overview still shows its error severity');
   assert.match(overview, /Since the previous analysis: 0 new · \d+ no longer detected/);
   assert.match(overview, /2 findings · 2 accepted\n/, 'counts read cleanly when nothing is open');
-  assert.match(overview, /Every finding is accepted in the baseline, including 2 circular dependency findings that are still in the code and stay red/);
+  assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 0, 'accepted findings stay listed without taking open priority slots');
   assert.equal(await run("document.querySelector('#bauify-layer rect').getAttribute('class').split(' ')[0]"), 'red', 'an accepted cycle keeps its component red');
   assert.ok(fs.existsSync(path.join(out, 'analysis.previous', 'findings.json')), 'the replaced run is kept for comparison');
   assert.deepEqual(fs.readdirSync(out).filter(name => name.startsWith('analysis.next-')), [], 'no half-written run is left behind');

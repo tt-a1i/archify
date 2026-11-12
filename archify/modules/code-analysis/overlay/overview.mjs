@@ -32,6 +32,7 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
   const entries = findings.map((f) => ({
     id: f.id,
     code: f.code,
+    ...(f.external ? { sourceId: f.external.sourceId, ruleId: f.external.ruleId } : {}),
     severity: f.severity,
     componentIds: f.componentIds || [],
     moduleIds: f.moduleIds || [],
@@ -193,6 +194,7 @@ function coverageOf({ graph, facts, unmapped, run }) {
     boundaries: run.boundaries && facts ? layerCounts(run.boundaries, facts.files.filter((f) => !excludedRoles.has(f.role)).map((f) => f.path)) : null,
     // Files the duplicate detector analyzed out of those selected for it; null when it did not run.
     duplicates: duplicateCoverage(run.duplicates),
+    ...(run.external?.length ? { external: run.external } : {}),
   };
 }
 

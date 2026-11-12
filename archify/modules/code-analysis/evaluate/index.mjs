@@ -50,7 +50,9 @@ export function evaluate(graph, config = {}, facts = null) {
 // stopped parsing was not fixed. lib/review.mjs compares two of these.
 export function analysisContext({ graph, config = {}, facts = null, active = RULES, suppressed = new Set(config.ignore || []), duplicates = null }) {
   const excludedRoles = new Set(graph?.excluded?.roles || []);
-  const { schema_version: _ignored, ...settings } = config || {};
+  // Imported report transport is provenance; source adapters record their own
+  // settings and coverage. It must not change the internal analyzer's context.
+  const { schema_version: _ignored, external: _external, ...settings } = config || {};
   const goBuild = graph?.repository?.language === 'go' ? facts?.languageScope?.build : null;
   return {
     analyzer: { name: PACKAGE.name, version: PACKAGE.version },

@@ -103,7 +103,7 @@
       if (f.kind === 'function' && f.fn != null) { sel.fns[f.fn] = true; sel.files[FN[f.fn][0]] = true; sel.anchor = FN[f.fn][0]; }
       if (f.kind === 'cycle') { f.files.forEach(function (x) { sel.files[x] = true; }); sel.edges = f.path.map(function (x, i) { return [x, f.path[(i + 1) % f.path.length]]; }); }
       if (f.kind === 'module' || f.kind === 'area') sel.modules[f.module] = true;
-      if (f.kind === 'file') { sel.files[f.file] = true; sel.anchor = f.file; }
+      if (f.kind === 'file') { (f.files || [f.file]).forEach(function (file) { sel.files[file] = true; }); sel.anchor = f.file; }
       if (f.kind === 'modules') f.modules.forEach(function (x) { sel.modules[x] = true; });
       if (f.kind === 'edges') { sel.edges = f.edges; f.edges.forEach(function (e) { sel.files[e[0]] = true; sel.files[e[1]] = true; }); }
       if (f.kind === 'edges' && f.module != null) { sel.arcs[f.module] = true; (f.entries || []).forEach(function (x) { sel.entries[x] = true; }); }
@@ -366,7 +366,7 @@
       if (f.kind === 'cycle') what = 'Path: ' + f.path.map(function (x) { return F[x][0].split('/').pop(); }).join(' → ') + ' → back';
       if (f.kind === 'modules') what = f.modules.map(function (x) { return M[x].label; }).join(', ');
       if (f.kind === 'module' || f.kind === 'area') what = 'fan-in ' + M[f.module].fanIn + ' · fan-out ' + M[f.module].fanOut;
-      if (f.kind === 'file') what = F[f.file][0];
+      if (f.kind === 'file') what = (f.files || [f.file]).map(function (file) { return F[file][0]; }).join(' · ');
       if (f.kind === 'edges') what = plural(f.edges.length, 'import') + ' cross the rule.';
       if (f.kind === 'edges' && f.module != null) {
         var reachedIn = {}; f.edges.forEach(function (e) { reachedIn[e[1]] = true; });
