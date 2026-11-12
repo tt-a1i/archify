@@ -31,6 +31,7 @@ import { fail } from '../core/index.mjs';
 import { sourceChanges } from './source-changes.mjs';
 import { buildOverview } from './overview.mjs';
 import { buildTaskPayloads } from '../lib/task.mjs';
+import { reviewTargetDigest } from '../lib/review.mjs';
 import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
 import { clientAsset } from './client-assets.mjs';
 
@@ -47,8 +48,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
   const fileIndex = indexFiles(graph, facts);
   const findingsByFile = new Map();
   for (const f of findings) {
-    const key = f.subject && f.subject.file ? f.subject.file : null;
-    if (key) (findingsByFile.get(key) || findingsByFile.set(key, []).get(key)).push(f);
+    for (const file of findingFiles(f)) (findingsByFile.get(file) || findingsByFile.set(file, []).get(file)).push(f);
   }
 
   // Indicators and the diagram rings show open findings: a warning or info
@@ -92,6 +92,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
   const listed = findings.map((f) => ({
     ...(reviewed[f.id] ? { review: reviewed[f.id] } : {}),
     ...f,
+    reviewTarget: reviewTargetDigest(f),
     moduleIds: findingModules(f, fileModule),
     componentIds: components.filter((c) => c.findings.includes(f)).map((c) => c.id),
   }));
@@ -109,7 +110,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     findings: listed,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
     overview: buildOverview({ findings: listed, graph, facts, unmapped, run }),
-    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts) : {},
+    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts, findingsDocument?.externalEvidence) : {},
   };
 
   // The Atlas view needs raw facts (files, dependencies, functions); without them only the Classic view exists.
@@ -130,9 +131,7 @@ export function findingModules(f, fileModule) {
   const ids = new Set();
   if (typeof sub.module === 'string') ids.add(sub.module);
   if (Array.isArray(sub.modules)) for (const m of sub.modules) ids.add(m);
-  if (Array.isArray(sub.files)) for (const file of sub.files) if (fileModule.has(file)) ids.add(fileModule.get(file));
-  if (typeof sub.file === 'string' && fileModule.has(sub.file)) ids.add(fileModule.get(sub.file));
-  for (const file of boundaryFiles(f)) if (fileModule.has(file)) ids.add(fileModule.get(file));
+  for (const file of findingFiles(f)) if (fileModule.has(file)) ids.add(fileModule.get(file));
   return [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
@@ -140,6 +139,19 @@ export function findingModules(f, fileModule) {
 function boundaryFiles(f) {
   if (!f.subject || !f.subject.boundary) return [];
   return ((f.evidence && f.evidence.imports) || []).flatMap((i) => [i.file, i.to]);
+}
+
+// Subject files and source-tool related locations refer to the same owned
+// files. Supplemental captured text supplies evidence, never graph ownership.
+function findingFiles(f) {
+  const subject = f.subject || {};
+  return [...new Set([
+    ...(typeof subject.file === 'string' ? [subject.file] : []),
+    ...(Array.isArray(subject.files) ? subject.files : []),
+    ...(Array.isArray(subject.locations) ? subject.locations : []).map(location => location.file),
+    ...(f.external?.locations || []).map(location => location.file),
+    ...boundaryFiles(f),
+  ].filter(file => typeof file === 'string'))];
 }
 
 // Embedded source text can contain `<!--` or `<script`, which move the HTML
@@ -155,9 +167,7 @@ export function scriptSafeJson(value) {
 function touches(f, set, componentId, filePaths) {
   const sub = f.subject || {};
   if (sub.component === componentId) return true;
-  if (sub.boundary && filePaths && boundaryFiles(f).some((p) => filePaths.has(p))) return true;
-  if (typeof sub.file === 'string' && filePaths && filePaths.has(sub.file)) return true;
-  if (Array.isArray(sub.files) && filePaths && sub.files.some((p) => filePaths.has(p))) return true;
+  if (filePaths && findingFiles(f).some(file => filePaths.has(file))) return true;
   if (sub.module && set.has(sub.module)) return true;
   if (Array.isArray(sub.modules) && sub.modules.some((m) => set.has(m))) return true;
   return false;
@@ -204,6 +214,16 @@ function indicators(set, mods, findings, mapping, filePaths) {
   // Only present when functions were measured and one here reaches a threshold.
   const complex = findings.filter((f) => f.code === 'complexity/function' && filePaths.has(f.subject.file))
     .sort((a, b) => b.evidence.complexity - a.evidence.complexity || b.evidence.nesting - a.evidence.nesting);
+  const imported = findings.filter(f => f.external && findingFiles(f).some(file => filePaths.has(file)));
+  const externalItems = [
+    ['conventions', 'Project conventions', imported.filter(f => f.dimension !== 'external-review')],
+    ['external-review', 'External review', imported.filter(f => f.dimension === 'external-review')],
+  ].filter(([, , group]) => group.length).map(([key, label, group]) => ({
+    key, label,
+    status: { error: 'red', warning: 'amber', info: 'blue' }[['error', 'warning', 'info'].find(severity => group.some(f => f.severity === severity))],
+    value: `${group.length} finding${group.length === 1 ? '' : 's'} from ${[...new Set(group.map(f => f.external.tool))].sort().join(', ')}`,
+    detail: [], findings: group.map(f => f.id),
+  }));
   const fanIn = mods.reduce((n, m) => n + m.fanIn, 0);
   const fanOut = mods.reduce((n, m) => n + m.fanOut, 0);
   const instability = fanIn + fanOut === 0 ? null : Math.round((fanOut / (fanIn + fanOut)) * 100) / 100;
@@ -252,6 +272,7 @@ function indicators(set, mods, findings, mapping, filePaths) {
       detail: [],
       findings: complex.map((f) => f.id).filter(Boolean),
     }] : []),
+    ...externalItems,
     {
       key: 'instability', label: 'Instability',
       status: 'neutral',
@@ -344,8 +365,8 @@ function aggregate(edges, side, mapping) {
 // partial-init proof), captured by the extractor, so the
 // page can show the cited line with the whole file around it to scroll
 // through. Include listed component files as well as cited evidence files.
-function collectSnippets(findings, sourceRoot, components, facts) {
-  const captured = new Map((facts?.files || []).filter(f => typeof f.sourceText === 'string').map(f => [f.path, f.sourceText]));
+function collectSnippets(findings, sourceRoot, components, facts, externalEvidence = []) {
+  const captured = new Map([...externalEvidence, ...(facts?.files || [])].filter(f => typeof f.sourceText === 'string').map(f => [f.path, f.sourceText]));
   const wanted = new Set(components.flatMap((c) => (c.fileList || []).map((f) => f.path)));
   for (const f of findings) {
     const ev = f.evidence || {};
@@ -354,6 +375,7 @@ function collectSnippets(findings, sourceRoot, components, facts) {
     const candidate = ev.partialInitCandidate || ev.proof;
     if (candidate) { wanted.add(candidate.entry); wanted.add(candidate.importer); }
     if (f.subject && f.subject.file) wanted.add(f.subject.file);
+    for (const location of f.external?.locations || []) if (location.file) wanted.add(location.file);
   }
   const out = {};
   for (const file of [...wanted].sort()) {

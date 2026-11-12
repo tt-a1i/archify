@@ -50,6 +50,7 @@ function fileModuleOf(graph) {
 
 function title(f, labelOf) {
   const s = f.subject || {};
+  if (f.external) return `${f.external.tool}${f.external.ruleId ? ` / ${f.external.ruleId}` : ''} · ${f.message}`;
   if (f.code === 'complexity/function' && s.function) return s.function + (s.function.endsWith(')') ? '' : '()');
   if (f.code === 'coupling/import-cycle' && s.files) return `Import cycle · ${s.files.length} files`;
   if (f.code === 'coupling/cycle' && s.modules) return `Module cycle · ${s.modules.length} modules`;
@@ -102,7 +103,14 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
   for (const f of findings) {
     const s = f.subject || {};
     const entry = { id: f.id, code: f.code, severity: f.severity, title: title(f, labelOf), accepted: accepted.has(f.id) };
-    if (f.code === 'complexity/function' && fileIndex.has(s.file)) {
+    if (f.external) {
+      const paths = [...new Set([s.file, ...(f.external.locations || []).map(location => location.file)].filter(file => fileIndex.has(file)))];
+      entry.kind = paths.length ? 'file' : 'other';
+      if (paths.length) {
+        entry.file = fileIndex.get(paths[0]);
+        entry.files = paths.map(file => fileIndex.get(file));
+      }
+    } else if (f.code === 'complexity/function' && fileIndex.has(s.file)) {
       entry.kind = 'function';
       functionFinding.set(`${s.file}\u0000${s.function}`, listed.length);
     } else if (f.code === 'coupling/import-cycle' && Array.isArray(s.files)) {

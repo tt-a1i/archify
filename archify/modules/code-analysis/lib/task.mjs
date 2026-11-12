@@ -119,6 +119,27 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
   });
   const selected = wanted.map((id) => byId.get(id));
   const source = new Map(facts.files.map((f) => [f.path, typeof f.sourceText === 'string' ? splitLines(f.sourceText) : null]));
+  const external = selected.filter((d) => d.external);
+  const sourceIds = new Set(external.map((d) => d.external.sourceId));
+  const externalSources = (findings.analysis?.external || []).filter((s) => sourceIds.has(s.id)).sort((a, b) => compareText(a.id, b.id));
+  const externalFiles = new Set(external.flatMap((d) => [...(d.evidenceDigest?.files || []), ...locationsOf(d).map((l) => l.file)]));
+  for (const file of findings.externalEvidence || []) {
+    if (!externalFiles.has(file.path)) continue;
+    if (source.has(file.path) || typeof file.sourceText !== 'string' || sha256(file.sourceText) !== file.sha256) {
+      fail('task/evidence-invalid', 'Supplemental source evidence conflicts with the captured analysis or its hash.', {
+        subject: { file: file.path }, supportedFixes: ['regenerate findings.json and raw-facts.json together'],
+      });
+    }
+    source.set(file.path, splitLines(file.sourceText));
+  }
+  const verificationCommands = [
+    ...commands.map((c) => ({ command: c.command, purpose: c.purpose || 'project check', source: c.source || 'provided' })),
+    ...externalSources.filter((s) => typeof s.command === 'string' && s.command.trim()).map((s) => ({
+      command: s.command,
+      purpose: `Regenerate the ${s.tool} report for ${s.id} using its original configuration and scan scope, then import the updated report.`,
+      source: `external source manifest: ${s.id}`,
+    })),
+  ];
 
   const locations = [];
   const truncated = [];
@@ -129,16 +150,23 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
     for (const loc of kept) locations.push(withExcerpt({ findingId: d.id, ...loc }, source.get(loc.file)));
   }
 
-  // Files with cited lines are the ones to change; the other files the finding
-  // was computed from (an import's target, the rest of a module) are context.
-  const modify = [...new Set(locations.filter((l) => l.kind !== 'file').map((l) => l.file))].sort(compareText);
+  // Primary cited lines may be changed; related locations and the other files
+  // the finding was computed from remain readable context.
+  const modify = [...new Set(locations.filter((loc) => {
+    const imported = byId.get(loc.findingId).external;
+    return loc.kind !== 'file' && loc.role !== 'related' && (!imported || (loc.sha256 && imported.binding !== 'changed'));
+  }).map((l) => l.file))].sort(compareText);
   const read = [...new Set(selected.flatMap((d) => [...(d.evidenceDigest?.files || []), ...locations.map((l) => l.file)]))].filter((f) => !modify.includes(f)).sort(compareText);
   const toConfirm = [
     'Business constraints and intended behaviour that the code alone does not show (ask the project owner or read the docs before redesigning).',
-    ...(commands.length ? [] : ['Which test, lint or type-check commands verify this change; none were provided with the task.']),
+    ...(verificationCommands.length ? [] : ['Which test, lint or type-check commands verify this change; none were provided with the task.']),
     'Whether files beyond the allowed scope may be changed (callers, tests, configuration).',
     ...truncated.map((t) => `Only ${t.shown} of ${t.total} locations of ${t.findingId} are listed; the rest are in findings.json.`),
     ...selected.filter((d) => !d.evidenceDigest).map((d) => `${d.id} has no evidence digest; whether it still applies cannot be checked automatically.`),
+    ...[...sourceIds].filter((id) => !externalSources.some((s) => s.id === id && typeof s.command === 'string' && s.command.trim()))
+      .map((id) => `How to refresh external source ${id} using the original tool configuration and scan scope; no generation command was recorded.`),
+    ...external.filter((d) => d.external.binding !== 'verified').map((d) => `${d.id}: the external report's relation to the captured source is ${d.external.binding}; confirm that the source claim still applies before editing.`),
+    ...external.filter((d) => !locationsOf(d).some(loc => loc.role !== 'related')).map((d) => `${d.id} has no primary source location; confirm its file and modification scope before changing code.`),
   ];
 
   const task = {
@@ -150,11 +178,14 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
       id: d.id, code: d.code, dimension: d.dimension, severity: d.severity, confidence: d.confidence,
       ...(review?.findings?.[d.id] ? { review: review.findings[d.id] } : {}),
       ...(d.evidenceDigest ? { evidenceDigest: d.evidenceDigest } : {}),
+      ...(d.external ? { external: d.external } : {}),
     })),
-    source: sourceOf(findings, facts),
+    source: { ...sourceOf(findings, facts), ...(external.length ? { external: externalSources } : {}) },
     locations,
     facts: selected.map((d) => ({ findingId: d.id, statement: d.message, evidence: keyEvidence(d) })),
-    impact: selected.map((d) => ({ findingId: d.id, statement: facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? 'These Rust files have mutual compile-time source references. Review coupling without inferring runtime import order or partial initialization.' : facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
+    impact: selected.map((d) => ({ findingId: d.id, statement: d.external
+      ? `This is a claim reported by ${d.external.tool}${d.external.ruleId ? ` (${d.external.ruleId})` : ''}; its runtime or maintenance impact has not been independently established. Review the current code and intended behaviour.`
+      : facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? 'These Rust files have mutual compile-time source references. Review coupling without inferring runtime import order or partial initialization.' : facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
       ? 'These Java files depend on each other structurally. This can couple changes and tests; class initialization order and runtime failure were not assessed.'
       : IMPACT[d.code] || 'See the finding message.' })),
     suggestions: selected.flatMap((d) => (d.supportedFixes || []).map((text) => ({ findingId: d.id, text }))),
@@ -165,17 +196,24 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
         ? 'Change the files under "modify"; "read" lists files the finding was computed from, for context. Before changing any other file, say which and why.'
         : 'No line evidence: read the listed files and propose a scope before changing anything.',
     },
-    preserve: [...new Set(selected.flatMap((d) => facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Rust public paths, API behavior and valid cfg/feature profiles.'] : facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
+    preserve: [...new Set(selected.flatMap((d) => d.external
+      ? ['Existing behaviour and business constraints of the cited code.', 'The external tool configuration and scan scope; do not disable a rule or narrow its coverage just to remove the reported result.']
+      : facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Rust public paths, API behavior and valid cfg/feature profiles.'] : facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
       ? ['Public Java type names, packages and APIs used by callers.', 'Class initialization behavior and observable side effects.']
       : (PRESERVE[d.code] || (() => ['Existing behaviour of the code involved.']))(d)))],
     acceptance: [
-      ...selected.flatMap((d) => facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Verify the intended source responsibility boundary; document an intentionally retained structural cycle without claiming a runtime import failure.'] : (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
+      ...selected.flatMap((d) => d.external
+        ? [d.dimension === 'external-review'
+          ? `The ${d.external.tool} review claim ${d.id} has been checked against the current source; a justified change is verified, or the retained behaviour is accepted with an explicit reason.`
+          : `A freshly generated ${d.external.tool} report using the original rule settings and scan scope no longer reports ${d.external.ruleId || d.id} at the cited code, or the retained result is accepted with an explicit reason.`]
+        : facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Verify the intended source responsibility boundary; document an intentionally retained structural cycle without claiming a runtime import failure.'] : (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
+      ...(external.length ? ['Refresh the external sources after the change and reimport them; re-reading a previous report is not a new tool run or a new AI review.'] : []),
       'A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.',
       'The project checks that cover the changed code pass (see verification).',
     ],
     verification: {
-      reanalyze: { ...reanalyzeCommand(findings), ...(facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
-      commands: commands.map((c) => ({ command: c.command, purpose: c.purpose || 'project check', source: c.source || 'provided' })),
+      reanalyze: { ...reanalyzeCommand(findings), ...(external.length ? { purpose: 'First refresh the external reports using their original tool settings and scope, then import and compare them with the same analysis configuration. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
+      commands: verificationCommands,
     },
     toConfirm,
     evidence: { status: 'captured', checkedAt: null, reason: 'Built from the analysis snapshot; not yet compared with the current working tree.' },
@@ -217,6 +255,20 @@ export function validateTask(doc, file = null) {
 // evidence check hashes; the excerpt around it is added by withExcerpt.
 export function locationsOf(d) {
   const s = d.subject || {}, ev = d.evidence || {};
+  if (d.external) {
+    const reported = d.external.locations?.length ? d.external.locations : s.file ? [s] : [];
+    return reported.filter((loc) => typeof loc.file === 'string' && loc.file).map((loc) => {
+      const role = loc.role ? { role: loc.role } : {};
+      if (!Number.isInteger(loc.line) || loc.line < 1) return { file: loc.file, kind: 'file', ...role };
+      return {
+        file: loc.file, startLine: loc.line, endLine: Number.isInteger(loc.endLine) ? loc.endLine : loc.line, kind: 'range',
+        ...role,
+        ...(Number.isInteger(loc.column) ? { startColumn: loc.column } : {}),
+        ...(Number.isInteger(loc.endColumn) ? { endColumn: loc.endColumn } : {}),
+        note: loc.role === 'related' ? 'Related source context; read this excerpt without treating it as a modification target.' : 'Location reported by the external source; the excerpt and hash cover its captured source lines.',
+      };
+    });
+  }
   if (d.code === 'redundancy/duplicate-block') return (s.locations || []).map((loc) => ({
     file: loc.file, startLine: loc.line, endLine: loc.endLine, kind: 'range',
     ...(Number.isInteger(loc.column) ? { startColumn: loc.column, endColumn: loc.endColumn, startOffset: loc.start, endOffset: loc.end } : {}),
@@ -341,6 +393,7 @@ function concentrationAcceptance(d) {
 
 function keyEvidence(d) {
   const ev = d.evidence || {};
+  if (d.external) return { ...ev };
   const pick = (keys) => Object.fromEntries(keys.filter((k) => ev[k] !== undefined).map((k) => [k, ev[k]]));
   switch (d.code) {
     case 'complexity/function': return pick(['complexity', 'nesting', 'length', 'deepestLine', 'threshold', 'thresholds']);
@@ -358,6 +411,7 @@ function keyEvidence(d) {
 function titleOf(selected, language) {
   const one = (d) => {
     const s = d.subject || {};
+    if (d.external) return `Review ${d.external.tool}${d.external.ruleId ? ` ${d.external.ruleId}` : ' result'}${s.file ? ` (${s.file})` : ''}`;
     if (d.code === 'complexity/function') return `Reduce the complexity of ${s.function} (${s.file})`;
     if (language === 'rust' && ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) return 'Review the Rust structural dependency cycle';
     if (d.code === 'coupling/import-cycle') return `Break the import cycle between ${s.files.length} files`;
@@ -373,7 +427,7 @@ function titleOf(selected, language) {
 }
 
 function taskIdOf(selected) {
-  const identity = selected.map((d) => [d.id, d.evidenceDigest?.sha256 || null]).sort((a, b) => compareText(a[0], b[0]));
+  const identity = selected.map((d) => [d.id, d.evidenceDigest?.sha256 || null, ...(d.external ? [d.external.reviewDigest] : [])]).sort((a, b) => compareText(a[0], b[0]));
   return `TASK-${sha256(JSON.stringify(identity)).slice(0, 12)}`;
 }
 
@@ -400,10 +454,33 @@ export function renderTaskMarkdown(task) {
   line();
   task.instructions.forEach((text, i) => line(`${i + 1}. ${text}`));
   line();
-  line('## What the analysis detected');
+  const external = task.findings.filter((f) => f.external);
+  line(external.length ? `## What ${external.length === task.findings.length ? 'the external sources' : 'the analysis and external sources'} reported` : '## What the analysis detected');
   line();
   for (const f of task.facts) line(`- **${f.findingId}** — ${f.statement}`);
   line();
+  if (external.length) {
+    line('## External report provenance');
+    line();
+    for (const finding of external) {
+      const e = finding.external;
+      line(`- **${finding.id}** — ${e.tool}; source \`${e.sourceId}\`; rule \`${e.ruleId ?? 'not reported'}\`.`);
+      line(`  Source severity: ${e.originalSeverity ?? 'not reported'}${e.severityDefaulted ? ' (adapter default used)' : ''}; product severity: ${finding.severity}. Report-to-source binding: **${e.binding}**.`);
+      line(`  Original report item: \`${e.reportPointer}\`${e.helpUri ? `; rule reference: ${e.helpUri}` : ''}.`);
+      if (e.origin && Object.keys(e.origin).length) {
+        const text = JSON.stringify(e.origin, null, 2);
+        const fence = '`'.repeat(Math.max(3, longestBacktickRun(text) + 1));
+        line(); line(`${fence}json`); line(text); line(fence);
+      }
+    }
+    for (const s of task.source.external || []) {
+      line(`- Report source \`${s.id}\`: ${s.tool}${s.toolVersion ? ` ${s.toolVersion}` : ' (version unknown)'}; report SHA-256 \`${s.reportSha256 ?? 'unknown'}\`.`);
+      line(`  Scan scope: ${s.coverage?.files?.length ?? 0} recorded file(s); completeness: ${s.coverage?.complete === true ? 'complete' : s.coverage?.complete === false ? 'incomplete' : 'unknown'}; configuration digest: \`${s.configDigest ?? 'unknown'}\`.`);
+    }
+    line();
+    line('Source claims remain external claims. Matching current source bytes does not establish that an old report was generated from those bytes.');
+    line();
+  }
   line('## Possible impact');
   line();
   for (const i of task.impact) line(`- ${task.impact.length > 1 ? `**${i.findingId}** — ` : ''}${i.statement}`);
@@ -415,11 +492,16 @@ export function renderTaskMarkdown(task) {
     const status = loc.status ? ` — ${loc.status}${loc.currentStartLine && loc.currentStartLine !== loc.startLine ? ` (now at line ${loc.currentStartLine})` : ''}` : '';
     line(`### \`${loc.file}${range}\`${loc.symbol ? ` · \`${loc.symbol}\`` : ''}`);
     line();
+    if (external.some((f) => f.id === loc.findingId) && Number.isInteger(loc.startColumn)) {
+      line(`Columns: ${loc.startColumn}${Number.isInteger(loc.endColumn) ? `–${loc.endColumn}` : ''} (one-based UTF-16; end column exclusive).`);
+    }
     if (loc.note) line(`${loc.note}${status}`);
     else if (status) line(status.slice(3));
     if (!loc.excerpt) { line(); line(loc.kind === 'file' ? '_No line evidence for this file; read it in the working tree._' : '_Source text was not captured; read the file in the working tree._'); line(); continue; }
     line();
-    const lang = ({ py: 'python', ts: 'ts', java: 'java' })[task.source.language] || '';
+    const lang = external.some((f) => f.id === loc.findingId)
+      ? ({ py: 'python', pyi: 'python', js: 'js', mjs: 'js', cjs: 'js', jsx: 'jsx', ts: 'ts', tsx: 'tsx', java: 'java', go: 'go', rs: 'rust' })[loc.file.split('.').at(-1)] || ''
+      : ({ py: 'python', ts: 'ts', java: 'java' })[task.source.language] || '';
     const width = String(loc.excerpt.segments[loc.excerpt.segments.length - 1].endLine).length;
     const body = [];
     loc.excerpt.segments.forEach((seg, i) => {
