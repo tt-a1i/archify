@@ -188,9 +188,11 @@ test('external task reader: source identity and the displayed claim survive same
   const root = path.join(scratch, 'repo'), out = path.join(scratch, 'view');
   fs.mkdirSync(root);
   fs.writeFileSync(path.join(root, 'main.mjs'), 'export const value = 1;\n');
+  fs.writeFileSync(path.join(root, 'native.mjs'), ['export function dispatch(kind) {',
+    ...Array.from({ length: 25 }, (_, i) => `  if (kind === ${i}) return ${i};`), '  return -1;', '}', ''].join('\n'));
   const report = [{ filePath: 'main.mjs', messages: [{ ruleId: 'example-rule', severity: 1, message: 'Original claim visible on this page', line: 1, column: 14, endLine: 1, endColumn: 19 }] }];
   fs.writeFileSync(path.join(root, 'web.json'), JSON.stringify(report));
-  fs.writeFileSync(path.join(root, 'api.json'), JSON.stringify([{ filePath: 'main.mjs', messages: [] }]));
+  fs.writeFileSync(path.join(root, 'api.json'), JSON.stringify([{ filePath: 'main.mjs', messages: Array.from({ length: 40 }, (_, i) => ({ ...report[0].messages[0], ruleId: `api-rule-${i}`, message: `API lint finding ${i}` })) }]));
   fs.writeFileSync(path.join(root, 'manifest.json'), JSON.stringify({ schema_version: 1, toolVersion: 'ESLint 9.0.0' }));
   const config = path.join(scratch, 'config.json');
   fs.writeFileSync(config, JSON.stringify({ external: { sources: [
@@ -254,8 +256,81 @@ test('external task reader: source identity and the displayed claim survive same
     }
   });
 
+  await t.test('mixed native and external findings filter by source and category while preserving keyboard pagination', async () => {
+    const findings = await run("JSON.parse(document.getElementById('bauify-analysis').textContent).findings");
+    const native = findings.filter(f => !f.external), web = findings.filter(f => f.external?.sourceId === 'web-eslint'), api = findings.filter(f => f.external?.sourceId === 'api-eslint');
+    assert.equal(native.length, 1);
+    assert.equal(native[0].dimension, 'complexity');
+    assert.equal(web.length, 1);
+    assert.equal(api.length, 40);
+    assert.ok([...web, ...api].every(f => f.dimension === 'conventions' && f.severity === 'warning'));
+    const ids = entries => entries.map(f => f.id).sort();
+    const rows = () => run("[...document.querySelectorAll('.finding-list [data-finding]')].map(button => button.getAttribute('data-finding')).sort()");
+    const choose = (name, value) => run(`var control = document.querySelector('select[aria-label=${JSON.stringify(name)}]'); control.value = ${JSON.stringify(value)}; control.dispatchEvent(new Event('change', { bubbles: true }));`);
+    const enter = async () => {
+      await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' });
+      await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+    };
+    await run("document.getElementById('btn-bauify').click(); document.getElementById('btn-bauify').click(); document.querySelector('.browse-findings').click(); document.querySelector('select[aria-label=\"Finding source\"]').focus()");
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+    assert.equal(await run("document.activeElement.getAttribute('aria-label')"), 'Finding category', 'the category control participates in keyboard navigation for mixed results');
+
+    const firstPage = await rows();
+    assert.equal(firstPage.length, 40);
+    await run("document.querySelector('.finding-pagination [data-page=\"1\"]').focus()");
+    await enter();
+    const secondPage = await rows();
+    assert.equal(secondPage.length, 2);
+    assert.deepEqual([...firstPage, ...secondPage].sort(), ids(findings), 'pagination covers each native and external result once without prescribing its order');
+    await choose('Finding source', 'external');
+    assert.equal((await rows()).length, 40, 'changing the source resets to the first filtered page even when that source also has multiple pages');
+
+    for (const [source, category, expected] of [
+      ['internal', 'all', native],
+      ['all', 'complexity', native],
+      ['source:web-eslint', 'conventions', web],
+      ['source:api-eslint', 'conventions', api],
+    ]) {
+      await choose('Finding source', source);
+      await choose('Finding category', category);
+      assert.deepEqual(await rows(), ids(expected), `source=${source}, category=${category} selects only the matching findings`);
+    }
+
+    await choose('Finding source', 'external');
+    await choose('Finding category', 'conventions');
+    const externalFirstPage = await rows();
+    await run("document.querySelector('.finding-pagination [data-page=\"1\"]').focus()");
+    await enter();
+    const externalSecondPage = await rows();
+    assert.equal(externalSecondPage.length, 1);
+    assert.deepEqual([...externalFirstPage, ...externalSecondPage].sort(), ids([...web, ...api]));
+    await run("document.querySelector('.finding-list [data-finding]').focus()");
+    await enter();
+    assert.equal(await run("document.getElementById('bauify-detail').hidden"), false, 'a filtered row opens with Enter');
+    await run("document.querySelector('#bauify-detail .back').focus()");
+    await enter();
+    assert.equal(await run("document.getElementById('bauify-overview').hidden"), false);
+    assert.equal(await run("document.querySelector('select[aria-label=\"Finding source\"]').value"), 'external');
+    assert.equal(await run("document.querySelector('select[aria-label=\"Finding category\"]').value"), 'conventions');
+    assert.deepEqual(await rows(), externalSecondPage, 'returning from a finding retains both filters and the selected result page');
+
+    await choose('Finding source', 'internal');
+    assert.deepEqual(await rows(), [], 'native findings do not match an external-only category');
+    await run("document.querySelector('.reset-filters').focus()");
+    await enter();
+    assert.equal(await run("document.querySelector('select[aria-label=\"Finding source\"]').value"), 'all');
+    assert.equal(await run("document.querySelector('select[aria-label=\"Finding category\"]').value"), 'all');
+    assert.equal(await run("document.querySelector('.finding-pagination [data-page=\"-1\"]').disabled"), true, 'reset returns to the first page');
+    const resetFirstPage = await rows();
+    await run("document.querySelector('.finding-pagination [data-page=\"1\"]').focus()");
+    await enter();
+    assert.deepEqual([...resetFirstPage, ...await rows()].sort(), ids(findings), 'reset restores the complete native and external result set');
+    await run("document.querySelector('.findings-back').click()");
+  });
+
   await t.test('live task actions reject a changed claim without falling back to the captured task', async () => {
-    await run("window.__archifyShowFinding(JSON.parse(document.getElementById('bauify-analysis').textContent).findings[0].id); Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.copiedTask = text; } } }); document.querySelector('.preview-external-task').click()");
+    await run("window.__archifyShowFinding(JSON.parse(document.getElementById('bauify-analysis').textContent).findings.find(f => f.external?.sourceId === 'web-eslint').id); Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.copiedTask = text; } } }); document.querySelector('.preview-external-task').click()");
     await wait("!document.querySelector('.task-copy').disabled");
     assert.match(await run("document.querySelector('.task-preview').value"), /Original claim visible on this page/);
     await run("document.querySelector('.task-copy').click()");
@@ -269,8 +344,9 @@ test('external task reader: source identity and the displayed claim survive same
     assert.equal(refreshed.status, 200);
     const latest = JSON.parse((await refreshed.text()).match(/id="bauify-analysis">([\s\S]*?)<\/script>/)[1]);
     assert.equal(latest.repository.snapshotId, old.repository.snapshotId);
-    assert.equal(latest.findings[0].id, old.findings[0].id);
-    assert.notEqual(latest.findings[0].reviewTarget, old.findings[0].reviewTarget);
+    const oldFinding = old.findings.find(f => f.external?.sourceId === 'web-eslint'), latestFinding = latest.findings.find(f => f.external?.sourceId === 'web-eslint');
+    assert.equal(latestFinding.id, oldFinding.id);
+    assert.notEqual(latestFinding.reviewTarget, oldFinding.reviewTarget);
     await run("document.querySelector('.task-copy').click()");
     await wait("!document.querySelector('.task-refresh').disabled");
     assert.match(await run("document.querySelector('.task-status').textContent"), /Could not prepare task:.*finding changed/i);
@@ -296,8 +372,8 @@ test('external task reader: source identity and the displayed claim survive same
   assert.equal(refreshed.status, 200, sarifHtml);
   const embedded = sarifHtml.match(/id="bauify-analysis">([\s\S]*?)<\/script>/);
   const sarifPayload = JSON.parse(embedded[1]);
-  const related = sarifPayload.findings.find(finding => finding.external.ruleId === 'related-only');
-  const multiple = sarifPayload.findings.find(finding => finding.external.ruleId === 'multiple-primary');
+  const related = sarifPayload.findings.find(finding => finding.external?.ruleId === 'related-only');
+  const multiple = sarifPayload.findings.find(finding => finding.external?.ruleId === 'multiple-primary');
   const reloaded = browser.cdp.waitFor('Page.loadEventFired', session);
   await send('Page.navigate', { url: view.url + '?analysis=open' }); await reloaded;
   await wait("typeof window.__archifyShowFinding === 'function'");

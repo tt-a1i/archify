@@ -13,7 +13,6 @@ Add sources to the same analysis configuration used by `check` or `serve`:
 ```json
 {
   "external": {
-    "severity": "source",
     "sources": [
       { "id": "web-eslint", "format": "eslint", "file": "reports/eslint.json" },
       { "id": "api-ruff", "format": "ruff", "file": "reports/ruff.json" }
@@ -47,7 +46,11 @@ Viewer source choices include this id alongside the tool/version, so reports fro
 
 For example, `pathBase: "packages/web"` maps a native report's `src/index.ts` to `packages/web/src/index.ts`. Manifest `scope.files` and `files` keys always name repository-relative paths; `pathBase` is not applied to them. Absolute CI paths outside the local root require an explicit `pathMappings` entry. Source paths resolving outside the root, symlink escapes and non-file URLs do not supply source evidence.
 
-`external.severity: "source"` preserves lint error/warning/info mappings. `"warning"` caps lint errors at warning and retains info signals. AI review comments are always warning. A report without a source severity uses warning and records that default; the original missing value remains visible. External `confidence` is unknown (`null`), not a new Archify quality score.
+Omitting `external.severity` uses the default `"warning"` policy: imported lint errors are capped at warning, warnings stay warning and info stays info. The source value remains in `external.originalSeverity`. AI review comments are always warning. A report without a source severity uses warning and records that default; the original missing value remains visible. External `confidence` is unknown (`null`), not a new Archify quality score.
+
+Set `external.severity: "source"` explicitly to preserve the normalized source error/warning/info levels. Open source-mode errors can make a component red and fail `--fail-on error`; this mode does not establish a confirmed structural or runtime defect.
+
+The CLI's default threshold remains `--fail-on warning`. Capping an imported error at warning therefore does not make the default check pass. An otherwise clean run containing only those imported claims can pass `--fail-on error` under the default policy; explicit `"source"` can fail that threshold. Internal findings keep their existing severity policy.
 
 ## Supported report formats
 
@@ -131,7 +134,7 @@ Open its local URL and click **Code Analysis**. **Browse findings** and **Extern
 
 Open a finding to read its original rule/message, primary and related source excerpts, position and provenance. Task preview/export uses that captured evidence; the live service checks it against current source before returning a task. Imported findings can highlight their existing file owners on the component diagram and Atlas. Supplemental evidence does not create new dependency nodes or edges.
 
-**Accept…** requires a reason. **Revoke acceptance** removes the local baseline decision. Saving rebuilds the page from the same captured facts and scan scope; it does not rerun extraction, duplicate detection or an external tool. A stale page or changed source cannot silently accept a different claim. Accepted errors remain visible at error severity. If view-file publication fails after the baseline was saved, the viewer confirms the saved decision and reports the file warning while retaining the updated live page.
+**Accept…** requires a reason. **Revoke acceptance** removes the local baseline decision. Saving rebuilds the page from the same captured facts and scan scope; it does not rerun extraction, duplicate detection or an external tool. A stale page or changed source cannot silently accept a different claim. Accepted external findings retain their configured and original severities for inspection. Default-mapped warnings stop coloring the diagram after acceptance; explicit source-mode errors follow the existing accepted-error rule and retain their red indication. If view-file publication fails after the baseline was saved, the viewer confirms the saved decision and reports the file warning while retaining the updated live page.
 
 After regenerating reports or changing source/configuration, use **Re-analyze** for a new analysis and comparison. A failed re-analysis keeps the last successful result. Add or change imported report sources in the configuration file above; the viewer reads those files rather than running the external tools.
 
@@ -174,6 +177,8 @@ node bin/archify.mjs code-analysis check /path/to/repo --baseline /path/to/repo/
 Both operations preserve unrelated baseline entries. Accept requires a non-empty reason. `--update-baseline --reason "..."` accepts all current findings and replaces the baseline's current set; unlike a single-item accept, it drops entries no longer present. External findings without captured source evidence or with `binding: "changed"` cannot be accepted. A user may explicitly accept a source-unverified claim after reviewing its captured current evidence, but this does not upgrade report binding or comparison coverage.
 
 External baseline entries store both the source `sha256` and a separate `externalReviewDigest` for the tool's claim/context. A changed or missing source/claim digest reopens the item as `accepted-changed`. Existing internal baselines retain their prior compatibility behavior.
+
+Earlier C7 builds used `"source"` when `external.severity` was omitted. To retain that behavior, now set `"source"` explicitly. Moving a lint source from the old source policy to the new warning default changes its import-settings and review digests, even when source bytes, finding ids and original severities are unchanged. Prior acceptances require re-review; comparisons across those policies are not directly comparable, and `--new-only` with such a previous run returns exit code 2. Review the current result and record a new reason instead of migrating acceptance silently. This policy change does not alter AI review's always-warning mapping.
 
 Compare fresh runs with the same `--out` directory, or name a previous `findings.json` explicitly:
 

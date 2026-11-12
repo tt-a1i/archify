@@ -33,11 +33,43 @@ test('external imports are absent by default and never require a readable root',
   assert.deepEqual(importExternal({ root: '/nonexistent', config: {} }), { diagnostics: [], sources: [], evidenceFiles: [] });
 });
 
-test('ESLint metadata keeps original rule, message, source severity, links and source suppressions', t => {
+test('external lint defaults to a warning cap while source severity and explicit source policy remain available', t => {
+  const w = workspace(t, { 'a.js': 'const unused = 1;\n', 'a.py': 'unused = 1\n' });
+  const reports = [
+    ['eslint', [{ filePath: 'a.js', messages: [eslintMessage()] }], 2],
+    ['ruff', [{ filename: 'a.py', code: 'F841', severity: 'error', message: 'Unused variable', location: { row: 1, column: 1 } }], 'error'],
+    ['sarif', { version: '2.1.0', runs: [{ tool: { driver: { name: 'Checker' } }, results: [{ ruleId: 'R', level: 'error', message: { text: 'Source error' }, locations: [{ physicalLocation: { artifactLocation: { uri: 'a.py' }, region: { startLine: 1 } } }] }] }] }, 'error'],
+  ];
+  for (const [format, report, originalSeverity] of reports) {
+    const normal = w.load(format, report);
+    const capped = w.load(format, report, { severity: 'warning' });
+    const source = w.load(format, report, { severity: 'source' });
+    assert.equal(normal.diagnostics[0].severity, 'warning', format);
+    assert.equal(normal.diagnostics[0].external.originalSeverity, originalSeverity);
+    assert.equal(normal.diagnostics[0].external.severityDefaulted, undefined, 'a policy cap does not invent a missing native severity');
+    assert.equal(normal.sources[0].severityPolicy, 'warning');
+    assert.equal(normal.sources[0].importSettingsDigest, capped.sources[0].importSettingsDigest);
+    assert.equal(normal.diagnostics[0].external.reviewDigest, capped.diagnostics[0].external.reviewDigest);
+    assert.equal(source.diagnostics[0].severity, 'error');
+    assert.equal(source.diagnostics[0].external.originalSeverity, originalSeverity);
+    assert.equal(source.diagnostics[0].id, normal.diagnostics[0].id);
+    assert.notEqual(source.diagnostics[0].external.reviewDigest, normal.diagnostics[0].external.reviewDigest);
+  }
+  for (const severity of ['warning', 'info']) {
+    const result = w.load('ruff', [{ filename: 'a.py', code: 'R', severity, message: 'Source signal', location: { row: 1, column: 1 } }]);
+    assert.equal(result.diagnostics[0].severity, severity);
+    assert.equal(result.diagnostics[0].external.originalSeverity, severity);
+  }
+  const review = w.load('github-review', [{ id: 1, body: 'Review claim', path: 'a.py' }], { severity: 'source' });
+  assert.equal(review.diagnostics[0].severity, 'warning');
+  assert.equal(review.sources[0].severityPolicy, 'warning');
+});
+
+test('ESLint metadata keeps original rule, message, explicit source severity, links and source suppressions', t => {
   const source = 'const unused = 1;\n';
   const w = workspace(t, { 'src/a.js': source });
   const report = { results: [{ filePath: 'src/a.js', source, messages: [eslintMessage('@typescript-eslint/no-unused-vars')], suppressedMessages: [{ ruleId: 'semi' }] }], metadata: { rulesMeta: { '@typescript-eslint/no-unused-vars': { docs: { url: 'https://typescript-eslint.io/rules/no-unused-vars' } } } } };
-  const { diagnostics: [d], sources: [s], evidenceFiles } = w.load('eslint', report);
+  const { diagnostics: [d], sources: [s], evidenceFiles } = w.load('eslint', report, { severity: 'source' });
   assert.equal(d.external.ruleId, '@typescript-eslint/no-unused-vars');
   assert.equal(d.message, report.results[0].messages[0].message);
   assert.equal(d.severity, 'error');
@@ -103,13 +135,13 @@ test('explicit Windows producer roots map exactly; an unrelated absolute root ne
 test('source-context identity survives leading lines, while whole-file evidence and policy changes require re-review', t => {
   const w = workspace(t, { 'a.js': 'const unused = 1;\nexport const value = 1;\n' });
   const report = [{ filePath: 'a.js', messages: [eslintMessage()] }];
-  const first = w.load('eslint', report).diagnostics[0];
+  const first = w.load('eslint', report, { severity: 'source' }).diagnostics[0];
   w.write('a.js', '// Heading\nconst unused = 1;\nexport const value = 1;\n');
-  const moved = w.load('eslint', [{ filePath: 'a.js', messages: [eslintMessage('no-unused-vars', { line: 2, endLine: 2 })] }]).diagnostics[0];
+  const moved = w.load('eslint', [{ filePath: 'a.js', messages: [eslintMessage('no-unused-vars', { line: 2, endLine: 2 })] }], { severity: 'source' }).diagnostics[0];
   assert.equal(moved.id, first.id);
   assert.notEqual(moved.evidenceDigest.sha256, first.evidenceDigest.sha256);
   assert.equal(moved.external.reviewDigest, first.external.reviewDigest);
-  const demoted = w.load('eslint', [{ filePath: 'a.js', messages: [eslintMessage('no-unused-vars', { line: 2, endLine: 2 })] }], { severity: 'warning' }).diagnostics[0];
+  const demoted = w.load('eslint', [{ filePath: 'a.js', messages: [eslintMessage('no-unused-vars', { line: 2, endLine: 2 })] }]).diagnostics[0];
   assert.equal(demoted.id, moved.id);
   assert.equal(demoted.severity, 'warning');
   assert.notEqual(demoted.external.reviewDigest, moved.external.reviewDigest);

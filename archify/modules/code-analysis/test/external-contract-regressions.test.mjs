@@ -42,7 +42,8 @@ test('SARIF relative URI escapes resolve to the actual repository filename', (t)
 test('SARIF descriptor references with an empty toolComponent default to the driver', (t) => {
   const imported = workspace(t)('sarif', sarif({ rule: { id: 'R', toolComponent: {} } }));
   assert.equal(imported.diagnostics[0].external.ruleId, 'R');
-  assert.equal(imported.diagnostics[0].severity, 'error', 'driver rule metadata remains available');
+  assert.equal(imported.diagnostics[0].external.originalSeverity, 'error', 'driver rule metadata remains available');
+  assert.equal(imported.diagnostics[0].severity, 'warning');
 });
 
 test('SARIF hierarchical rule IDs preserve the variant while resolving descriptor metadata by index', (t) => {
@@ -50,7 +51,8 @@ test('SARIF hierarchical rule IDs preserve the variant while resolving descripto
   // identifier (for example CA5350/sha-1) while rule.index selects CA5350.
   const imported = workspace(t)('sarif', sarif({ ruleId: 'R/variant', rule: { index: 0 } }));
   assert.equal(imported.diagnostics[0].external.ruleId, 'R/variant');
-  assert.equal(imported.diagnostics[0].severity, 'error');
+  assert.equal(imported.diagnostics[0].external.originalSeverity, 'error');
+  assert.equal(imported.diagnostics[0].severity, 'warning');
 });
 
 test('GitHub author filtering does not bypass structured validation of malformed comments', (t) => {
@@ -73,7 +75,8 @@ test('SARIF GUID descriptor references retain the descriptor rule and default se
   report.runs[0].tool.driver.rules[0].guid = report.runs[0].results[0].rule.guid;
   const imported = workspace(t)('sarif', report);
   assert.equal(imported.diagnostics[0].external.ruleId, 'R');
-  assert.equal(imported.diagnostics[0].severity, 'error');
+  assert.equal(imported.diagnostics[0].external.originalSeverity, 'error');
+  assert.equal(imported.diagnostics[0].severity, 'warning');
 });
 
 test('an explicit SARIF unknown offset does not erase an available source line range', (t) => {

@@ -1,18 +1,20 @@
 # C7 external diagnostics: real-project validation
 
-Date: 2026-11-11. Base: `labs/code-analysis` commit `10a608a743be58ede8069959cc6e502175677d7c`. This record separates actual native tool runs, authored contract tests, illustrative prototypes and subsequent real-viewer checks. All were run against the evolving C7 working tree; earlier passing results are reused for their unchanged scope, not relabeled as final-commit validation. The change is being prepared as an independent draft PR, not a complete release gate or a replacement for another open proposal.
+Native runs recorded: 2026-11-11. Default-severity follow-up approved: 2026-11-12. Original reviewed base: `labs/code-analysis` commit `10a608a743be58ede8069959cc6e502175677d7c`. This record separates actual native tool runs, authored contract tests, illustrative prototypes and subsequent real-viewer checks. All were run against the evolving C7 working tree; earlier passing results are reused for their unchanged scope, not relabeled as final-commit or later-target-base validation. This independent draft PR is not a complete release gate or a replacement for another open proposal.
 
 The two upstream checkouts remained unchanged and clean. Their configured lint rules were retained. Tool generation ran explicitly during this validation; Archify's import/check/task paths only read the resulting files and did not execute their recorded commands.
 
-## Source and tool identities
+## Source and tool identities: historical source policy
 
 | Project and fixed source | Tool and configuration | Actual scan | Imported result |
 |---|---|---|---|
 | [Understand-Anything `4e6d3299`](https://github.com/Egonex-AI/Understand-Anything/tree/4e6d3299017a7432da15957874992837a315c5b4) | ESLint `9.39.4`; unchanged `eslint.config.mjs`; direct runtime versions match upstream `pnpm-lock.yaml` | 304 checked JS/TS/config source files; 0 findings | 0 findings; source binding verified; complete declared scope; repeated import comparable |
 | [Trail of Bits skills `711af095`](https://github.com/trailofbits/skills/tree/711af095215ad4ecde5b90cd1d0124b3f1c4ca9e) | Ruff `0.14.13`, the root `.pre-commit-config.yaml` pin; existing root and nested configurations | 190 selected files (175 Python and 15 TOML); 0 findings | 0 findings; source binding verified; repeated import comparable |
-| Same Trail of Bits source, isolated copy | Ruff `0.17.1`; same configuration inputs; this version is also pinned by a nested plugin's development group, but is **not the root CI version** | 191 selected files; 77 findings | All 77 imported; source binding verified; repeated import comparable; real-data task/export/refresh sequence completed |
+| Same Trail of Bits source, isolated copy | Ruff `0.17.1`; same configuration inputs; this version is also pinned by a nested plugin's development group, but is **not the root CI version** | 191 selected files; 77 findings | All 77 imported as error under the then-effective source policy; source binding verified; repeated import comparable; real-data task/export/refresh sequence completed |
 
 The `0.17.1` row is a compatibility probe with a newer tool version. Its additional diagnostics are source-tool claims, not independently reviewed defects or evidence that canonical upstream lint fails. File discovery also differs between the two Ruff versions; their scope counts must not be presented as the same scan.
+
+These runs predate the warning-cap default. At that time omitted severity selected source mapping; the same mapping now requires explicit `external.severity: "source"`. The original 77-error artifacts are preserved as source-mode evidence rather than relabeled as a new default-mode run.
 
 ESLint ran over unchanged source/config copies with an isolated npm runtime: `@eslint/js@9.39.4`, `eslint@9.39.4`, `typescript-eslint@8.59.4`, `globals@17.6.0`, `typescript@5.9.3`. The isolated package lock pins the transitive runtime used here; this was not a complete installation of the upstream pnpm workspace.
 
@@ -74,7 +76,7 @@ node "$c7_checkout/archify/bin/archify.mjs" start "$c7_case/source" \
 
 Set `C7_EVIDENCE_ROOT` to a local validation workspace and `C7_CHECKOUT` to this repository checkout. The command reuses a prepared case; cloning this repository alone does not supply the local evidence files. Reconstruct tool reports from the fixed upstream revisions/configurations above, recording generation-time hashes as described in [External diagnostics](../../archify/modules/code-analysis/docs/EXTERNAL-DIAGNOSTICS.md#bind-a-report-to-its-actual-source). The placeholders do not imply that another machine has the original author's directories or cached executables.
 
-Open the printed localhost URL and click **Code Analysis**. The IR is a directory grouping of the actual source: five directories containing the reported diagnostics and 22 other selected directory groups. It draws no inferred runtime dependency arrows. The explicit map covers all 27 modules; `modules.excludeRoles: []` includes the tests that Ruff actually scanned, so their 19 diagnostics are also mapped. The native findings and severity remain unchanged. Internal finding rules are disabled only in the Archify case configuration to keep this import-focused tryout separate from structural findings.
+Open the printed localhost URL and click **Code Analysis**. The IR is a directory grouping of the actual source: five directories containing the reported diagnostics and 22 other selected directory groups. It draws no inferred runtime dependency arrows. The explicit map covers all 27 modules; `modules.excludeRoles: []` includes the tests that Ruff actually scanned, so their 19 diagnostics are also mapped. The native report and its original levels are unchanged; mapped severity depends on the case configuration. Set explicit `external.severity: "source"` when reproducing the historical 77-error presentation; omitting it now selects warning. Internal finding rules are disabled only in the Archify case configuration to keep this import-focused tryout separate from structural findings.
 
 `serve-validation.json` records the initial public-entrypoint HTTP/data checks, and `task.json` / `task.md` hold a source-verified real `ISC004` task. Later frontend checks used `view-live/analysis/`; the earlier `view/analysis/` still contains an older script snapshot and must not be presented as current UI evidence. A fresh invocation of the command above builds the current source into its chosen output. The localhost port is allocated at each start; the directory and command are reusable after stopping the current server.
 
@@ -88,12 +90,12 @@ A second persistent case at `real-repos/tryout-ruff-canonical/` reuses the exist
 
 The user accepted the illustrative v3 prototype before production controls were connected. Prototype counts, in-memory state changes, theme checks and narrow-viewport comparisons are design evidence only; they do not establish that a real baseline was saved or that a native tool produced the sample messages.
 
-The later real-page checks used the 77 native Ruff compatibility findings above. Local records are under `tryout-ruff-0171/browser-evidence/`:
+The historical real-page checks used the 77 native Ruff compatibility findings above with source mapping. Local records are under `tryout-ruff-0171/browser-evidence/`:
 
 | Record | Directly established behavior |
 |---|---|
 | `source-changed-rejected.jpg`, `rejected-review.json` | A source edit after analysis is rejected by live acceptance; no baseline is created and the entered reason remains available. |
-| `accepted-persisted.jpg`, `accepted-review.json` | A Chinese reason is saved to the real baseline; the accepted error retains its severity. Captured facts and the previous-analysis timestamp are unchanged, confirming review did not start another analysis. |
+| `accepted-persisted.jpg`, `accepted-review.json` | Under source mapping, a Chinese reason is saved to the real baseline and the accepted error retains its configured/original severity. Captured facts and the previous-analysis timestamp are unchanged, confirming review did not start another analysis. This is not warning-default evidence. |
 | `revoked-after-evidence-change.json` | An accepted item that needs re-review can still have its old baseline decision revoked. |
 | `final-clean-result.json` | After restoring source and regenerating the actual Ruff report: 77 findings, verified content binding, comparable reimport and zero accepted entries. |
 | `empty-report.jpg` | The separate canonical zero-diagnostic report is shown with its coverage rather than an invented positive result. |
@@ -102,7 +104,7 @@ The recorded `view-live` HTML for both Ruff cases embeds the same `overlay.js`/`
 
 ## Automated contract and failure-path evidence
 
-The following are executed authored-fixture checks, separate from the actual tool runs above. The full 578-case run preceded the final UI semantic adjustments and the later identity/component/primary-location/task/source-label fixes:
+The following are executed authored-fixture checks, separate from the actual tool runs above. The full 578-case run preceded the final UI semantic adjustments, the later identity/component/primary-location/task/source-label fixes and the warning-default switch:
 
 | Selection | Executed result | Behavior covered |
 |---|---|---|
@@ -112,9 +114,11 @@ The following are executed authored-fixture checks, separate from the actual too
 
 The serve case confirms malformed and missing reports return structured errors while the saved successful HTML/findings and its tasks remain available. Restoring a report permits a fresh run, and a retired finding cannot be exported as current. A later test simplification removed redundant response-body cloning; the affected serve case was rerun successfully.
 
-## Selected UI screenshots
+## Selected UI screenshots: warning default
 
-The draft PR includes selected screenshots captured from the real local service: [diagnostic counts on the directory map](../assets/code-analysis-c7/overview-map.jpg), [finding filters and list](../assets/code-analysis-c7/findings-list.jpg), and [the original rule with captured code evidence](../assets/code-analysis-c7/finding-evidence.jpg). These use the pinned Trail of Bits source and the explicitly labeled Ruff 0.17.1 compatibility report with 77 results. The map groups real directories and does not assert inferred runtime dependencies. Raw source snapshots and the rest of the local evidence remain outside this checkout.
+The draft PR includes current screenshots from the 2026-11-12 warning-default replay on the real local service: [diagnostic counts on the directory map](../assets/code-analysis-c7/overview-map.jpg), [finding filters and list](../assets/code-analysis-c7/findings-list.jpg), and [the original rule with captured code evidence](../assets/code-analysis-c7/finding-evidence.jpg). The same pinned Trail of Bits source, Ruff 0.17.1 report and manifest now yield 77 warnings and zero errors, with original error severity and verified source binding preserved; Ruff was not rerun. Conditions are 1280×720, Light, Classic, Still, 100% zoom and a 420px reader. The main-thread Codex agent inspected these images; human approval is not claimed. The map groups real directories and does not assert inferred runtime dependencies.
+
+The previous source-mode versions of these three images remain in Git history at `bdd477bb7f76dedb7975bf9ecb1b86018b3ed44d`; the historical local browser evidence also remains source-mode evidence. The current links above must not be used to illustrate the old 77-error presentation. Raw source snapshots and the rest of the local evidence remain outside this checkout.
 
 ## Follow-up and remaining validation
 
@@ -124,6 +128,31 @@ The SARIF follow-up ran `node --test test/external-contract-regressions.test.mjs
 
 The task/source-label follow-up reproduced the old page's claim mismatch with real HTTP and Chrome interactions, then passed the existing root browser selection `node --test test/code-analysis-task-browser.test.mjs` with 4 passed, 0 skipped. The live page supplies the displayed claim digest, the service rejects changed claims with HTTP 409, HTTP rejection does not fall back to a captured offline task, and same-tool source options remain distinct by id. The task guard was also ablated: removing it made the stale-claim HTTP regression fail again; restoring it passed the focused check.
 
+A later run of that browser selection passed 7/7, including an authored mixed fixture with one native finding and 41 ESLint findings. It covers source/category intersections and keyboard pagination, alongside the existing task/source and location-role cases. This is fixture browser evidence; the distinct 184-finding real mixed case remains HTTP/data-only.
+
 These follow-up results establish the corrected boundaries at the tested working-tree state. Final candidate checks, package freshness and remote CI belong to the actual submitted revision; none is implied by the earlier green totals. The PR records that final revision's commands and results rather than backdating them into this evidence.
 
-Environment for the recorded native runs: macOS, Node `20.20.2`, Python `3.14.3`. This evidence does not cover native Windows execution, a real nonempty canonical ESLint case, live GitHub review collection, full project behavioral tests, mixed-list browser acceptance, or exhaustive keyboard/accessibility and final-version visual acceptance. Those claims require their own scoped evidence rather than treating the earlier import and viewer checks as a substitute.
+## Native fixed-input Viewer comparison
+
+The 2026-11-12 comparison uses a constructed two-file native fixture, not a fresh real-repository generation benchmark. The route is **fixed-input Viewer presentation/export replay**: base `10a608a743be58ede8069959cc6e502175677d7c` versus the candidate working tree based on `bdd477bb7f76dedb7975bf9ecb1b86018b3ed44d`. The [comparison record](../assets/code-analysis-c7/review-20261112/native-viewer-comparison.json) contains the source, authored IR/map, input/file hashes, finding ids, DOM measurements and agent observations.
+
+Both samples use the same input SHA-256 `a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef`, the same two structural errors and one complexity warning, and identical finding ids, severity and component mapping. Conditions are 1280×720, Light, Classic, Still, 100% zoom and a 420px reader. Both nodes' measured DOM geometry matches value for value.
+
+| View | Base | Candidate |
+|---|---|---|
+| Overview | [Base overview](../assets/code-analysis-c7/review-20261112/native-base-overview.jpg) | [Candidate overview](../assets/code-analysis-c7/review-20261112/native-candidate-overview.jpg) |
+| Native finding | [Base evidence](../assets/code-analysis-c7/review-20261112/native-base-finding.jpg) | [Candidate evidence](../assets/code-analysis-c7/review-20261112/native-candidate-finding.jpg) |
+
+The main-thread Codex agent inspected all four images. It observed no unexpected change in diagram content, code evidence, highlighted line or task entry. Expected changes are the Browse findings entry, Problem → Finding navigation wording and the offline Accept control below the evidence. The entry adds about 48px to the overview: the second priority card needs more scrolling at this viewport, while the source evidence remains at the same visible position. These perceptual observations and the stated tradeoff are separate from the matching geometry; they do not claim human approval or acceptance of every mode, viewport or theme.
+
+## Warning-default follow-up
+
+The user approved the review-requested policy: cap imported lint errors at warning when severity is omitted, preserve info and `originalSeverity`, retain explicit source mode and keep AI review at warning. The default CLI threshold remains warning; an error-only gate can now pass when the only findings are default-capped external claims. Moving an earlier lint source from source mapping to the warning default requires baseline re-review and an incomparable comparison; `--new-only` refuses that policy transition.
+
+The [real Ruff replay receipt](../assets/code-analysis-c7/review-20261112/ruff-warning-replay.json) records the 2026-11-12 import and Viewer replay. The local `analysis.default-warning-20261112.config.json` differs only by removal of `external.severity`; the original report, manifest and source were reused without running Ruff again. The `view-default-warning-20261112` service and current screenshots show 77 warnings, zero errors, amber component indications and the original error level in import details.
+
+All 77 records were checked individually: error became warning; `originalSeverity` remained error and binding remained verified; ids, source-only evidence digests and locations were unchanged; every review digest changed. The report SHA was unchanged while `importSettingsDigest` changed. This is newer-tool compatibility evidence rather than a failing canonical root CI scan, and the 77 tool claims were not independently confirmed as defects. It does not establish browser acceptance of the 184-finding mixed case.
+
+Before synchronization with the newer target branch, the working tree based on `bdd477bb7f76dedb7975bf9ecb1b86018b3ed44d` plus the warning-default change passed the complete module suite (583/583, real jscpd, zero skips), the mixed browser selection (7/7) and `npm run test:generated`. These are pre-merge results, not validation of a later merged revision.
+
+Environment for the original native runs: macOS, Node `20.20.2`, Python `3.14.3`. This evidence does not cover native Windows execution, a real nonempty canonical ESLint case, live GitHub review collection, full project behavioral tests, real 184-finding mixed-list browser acceptance, or exhaustive keyboard/accessibility and final-version visual acceptance. Those claims require their own scoped evidence rather than treating the earlier import and viewer checks as a substitute.

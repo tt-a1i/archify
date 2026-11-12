@@ -111,6 +111,50 @@ test('external workflow: evaluateGraph validates combined findings and records c
   );
 });
 
+test('external workflow: warning defaults preserve CLI gates and require re-review when the source policy changes', (t) => {
+  const f = fixture(t);
+  write(path.join(f.root, 'reports/ruff.json'), []);
+  const sourceOut = path.join(f.dir, 'source-policy');
+  f.check(['--out', sourceOut, '--fail-on', 'error'], 1);
+  const before = read(path.join(sourceOut, 'findings.json'));
+  const original = before.diagnostics[0];
+  assert.equal(original.severity, 'error');
+  f.check(['--baseline', f.baseline, '--accept', original.id, '--reason', 'Reviewed under explicit source severity.']);
+  const baselineBefore = read(f.baseline);
+
+  delete f.config.external.severity;
+  write(f.configFile, f.config);
+  const normal = f.check(['--out', f.out], 1);
+  assert.deepEqual([normal.counts.error, normal.counts.warning], [0, 1], 'default fail-on warning still fails an open capped diagnostic');
+  const after = read(path.join(f.out, 'findings.json'));
+  assert.equal(after.diagnostics[0].severity, 'warning');
+  assert.equal(after.diagnostics[0].external.originalSeverity, 2);
+  assert.equal(after.diagnostics[0].id, original.id);
+  assert.deepEqual(after.diagnostics[0].evidenceDigest, original.evidenceDigest);
+  assert.ok(after.analysis.external.every(source => source.severityPolicy === 'warning'));
+  f.check(['--fail-on', 'error']);
+
+  f.check(['--out', f.out, '--baseline', f.baseline, '--compare', path.join(sourceOut, 'findings.json')], 1);
+  const reviewed = read(path.join(f.out, 'review.json'));
+  assert.equal(reviewed.findings[original.id].status, 'accepted-changed');
+  assert.equal(reviewed.findings[original.id].since, 'evidence-changed');
+  assert.equal(reviewed.comparison.comparable, false);
+  assert.ok(reviewed.comparison.reasons.some(reason => reason.code === 'external-import-settings-changed'));
+  assert.deepEqual(reviewed.comparison.notDetected, []);
+  assert.deepEqual(read(f.baseline), baselineBefore, 'changing the default never silently rewrites acceptance');
+  const refused = f.check(['--baseline', f.baseline, '--compare', path.join(sourceOut, 'findings.json'), '--new-only'], 2);
+  assert.equal(refused.diagnostics[0].code, 'external/comparison-unverified');
+
+  for (const [input, code] of [['{', 'external/input-not-json'], [{}, 'external/report-invalid'], [null, 'external/input-unreadable']]) {
+    const reportFile = path.join(f.root, 'reports/eslint.json');
+    if (input === null) fs.rmSync(reportFile);
+    else if (typeof input === 'string') fs.writeFileSync(reportFile, input);
+    else write(reportFile, input);
+    const failed = f.check([], 2);
+    assert.equal(failed.diagnostics[0].code, code, 'input failures remain analysis errors under the warning default');
+  }
+});
+
 test('external workflow: check, task, explicit acceptance, revocation and changed source share one captured result', (t) => {
   const f = fixture(t);
   const first = f.check(['--out', f.out], 1);

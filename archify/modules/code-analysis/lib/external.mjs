@@ -141,7 +141,7 @@ export function importExternal({ root, config = {}, facts = null }) {
       const tool = run.tool;
       const ai = source.format === 'github-review';
       const code = `${ai ? 'external' : 'conventions'}/${toolSlug(tool)}`;
-      const severityPolicy = ai ? 'warning' : settings.severity || 'source';
+      const severityPolicy = ai ? 'warning' : settings.severity || 'warning';
       const importSettingsDigest = sha256(JSON.stringify({ format: source.format, tool, severityPolicy, pathBase: source.pathBase || '.', pathMappings: source.pathMappings || [], author: source.author || null }));
       const sourceHashEntries = [];
       for (const [file, assertions] of evidenceHashes) {
@@ -187,7 +187,7 @@ export function importExternal({ root, config = {}, facts = null }) {
         const ordinal = (identityCounts.get(identity) || 0) + 1;
         identityCounts.set(identity, ordinal);
         const id = `${ai ? 'EXT' : 'CONV'}-${sha256(`${identity}:${ordinal}`).slice(0, 12)}`;
-        const severity = ai || settings.severity === 'warning' ? (record.severity === 'info' && !ai ? 'info' : 'warning') : record.severity;
+        const severity = severityPolicy === 'warning' ? (record.severity === 'info' && !ai ? 'info' : 'warning') : record.severity;
         const primary = { ...(locations.find(loc => loc.role !== 'related') || {}) };
         delete primary.role;
         const external = {

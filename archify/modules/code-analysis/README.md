@@ -6,6 +6,14 @@ Start Archify with `npm start -- "/path/to/project" --ir architecture.json` from
 
 [External diagnostics (C7)](docs/EXTERNAL-DIAGNOSTICS.md) — import existing ESLint, Ruff, SARIF and GitHub review results; browse/filter them with source coverage and evidence; export tasks and accept/revoke baseline decisions in the CLI or local viewer. Static reports retain reading and captured task export.
 
+Imported lint errors default to warning; info stays info and the original source
+level is retained. Set `external.severity: "source"` explicitly for original
+error/warning/info mapping, which can show open errors in red and fail
+`--fail-on error`. AI review is always warning. The CLI's default
+`--fail-on warning` is unchanged. Switching an earlier source-mode import to the
+new default requires baseline re-review; comparisons across that policy change
+are incomparable and cannot be used for `--new-only` gating.
+
 Code Analysis is Archify's integrated static code analysis module, imported from
 Bauify (commit 4bb811c) and maintained here. It reads source dependencies
 (JavaScript, TypeScript, Python, Java, Go and Rust), folds files into modules, checks import cycles, coupling,
