@@ -1,4 +1,5 @@
 import { cyclicComponents } from './scc.mjs';
+import { partitionEdges, shortestCycle } from './cycle-graph.mjs';
 // coupling/cycle — module-level (package / directory) strongly connected
 // components. A module cycle says two directories each need something from
 // the other; it does NOT by itself mean a file imports itself back, which is
@@ -35,18 +36,18 @@ export function run({ graph }) {
   const ids = graph.modules.map((m) => m.id).sort();
   const sccsOf = (edges) => cyclicComponents(ids, edges);
   const all = sccsOf(graph.edges);
-  const eager = sccsOf(graph.edges.filter(isEager));
+  const eagerEdges = graph.edges.filter(isEager);
+  const eager = eagerEdges.length === graph.edges.length ? all : sccsOf(eagerEdges);
   const eagerKey = new Set(eager.map((scc) => scc.join(' ')));
+  const parts = partitionEdges(all, graph.edges);
 
   const labelOf = new Map(graph.modules.map((m) => [m.id, m.label]));
-  const sccs = all;
-  return sccs.sort((a, b) => b.length - a.length || (a[0] < b[0] ? -1 : 1)).map((scc) => {
-    const set = new Set(scc);
-    const internal = graph.edges.filter((e) => set.has(e.from) && set.has(e.to));
+  return all.sort((a, b) => b.length - a.length || (a[0] < b[0] ? -1 : 1)).map((scc) => {
+    const internal = parts.get(scc[0]);
 
     // Check this whole component. A smaller module-scope SCC may still be
     // nested inside it, so a mixed component is never described as safe.
-    const eagerSurvives = eagerKey.has(scc.join(' ')) || eager.some((e) => e.length > 1 && e.every((m) => set.has(m)) && e.length === scc.length);
+    const eagerSurvives = eagerKey.has(scc.join(' '));
     const lazyEdges = internal.filter(lazyOnly);
     const kind = java ? 'structural' : eagerSurvives ? 'eager' : 'mixed';
     const level = rust ? 'info' : kind === 'mixed' ? 'warning' : severity;
@@ -54,7 +55,7 @@ export function run({ graph }) {
     const pathOut = new Map(scc.map((id) => [id, []]));
     for (const edge of pathEdges) pathOut.get(edge.from).push(edge.to);
     for (const targets of pathOut.values()) targets.sort();
-    const path = shortestCycle(scc[0], pathOut, set);
+    const path = shortestCycle(scc[0], node => pathOut.get(node));
     return {
       code, dimension, severity: level, confidence,
       message: java
@@ -79,24 +80,4 @@ export function run({ graph }) {
       ],
     };
   });
-}
-
-
-function shortestCycle(start, out, set) {
-  const prev = new Map([[start, null]]);
-  const queue = [start];
-  while (queue.length) {
-    const v = queue.shift();
-    for (const w of out.get(v)) {
-      if (!set.has(w)) continue;
-      if (w === start) {
-        const path = [v];
-        let p = prev.get(v);
-        while (p !== null) { path.unshift(p); p = prev.get(p); }
-        return path;
-      }
-      if (!prev.has(w)) { prev.set(w, v); queue.push(w); }
-    }
-  }
-  return [start];
 }
