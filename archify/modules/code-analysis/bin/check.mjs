@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
+import { taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
   archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
@@ -112,9 +113,10 @@ export async function runCheck(argv) {
       // ready-to-run task command attached. The data already exists in the
       // overview and the diagnostics; this only saves a manual join.
       investigation: {
-        leads: overview.investigation.leads.map((lead) => ({ ...lead, task: taskCommand(lead.id, root, out) })),
+        shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh',
+        leads: overview.investigation.leads.map((lead) => ({ ...lead, task: taskCommand(CLI, lead.id, root, out) })),
         drillDown: out
-          ? `node ${shellQuote(CLI)} code-analysis task ${shellQuote(out)} --finding <id> --root ${shellQuote(root)} --format json`
+          ? taskCommand(CLI, '<id>', root, out)
           : 'Re-run with --out <dir> to drill down with the task command.',
       },
       // Already computed for the overview. Repeated here so a reader of the CLI
@@ -145,15 +147,6 @@ function openRuleCounts(findings) {
 }
 
 const CLI = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
-
-function taskCommand(id, root, out) {
-  return out ? `node ${shellQuote(CLI)} code-analysis task ${shellQuote(out)} --finding ${shellQuote(id)} --root ${shellQuote(root)} --format json` : null;
-}
-
-function shellQuote(value) {
-  const text = String(value);
-  return /^[A-Za-z0-9_./:=@+-]+$/.test(text) ? text : `'${text.replace(/'/g, `'\\''`)}'`;
-}
 
 export function formatText(r) {
   if (r.action === 'update-baseline') return `Baseline written: ${r.baseline}\n  ${r.entries} accepted findings (${r.kept} kept, ${r.added} added, ${r.dropped} no longer found and dropped)`;
@@ -186,7 +179,7 @@ export function formatText(r) {
   if (r.investigation?.leads?.length) {
     lines.push(`Start here: ${r.investigation.leads.length} ranked lead${r.investigation.leads.length === 1 ? '' : 's'}. Each is static evidence, not a proven defect; read the cited source first.`);
     r.investigation.leads.forEach((lead, i) => lines.push(`  ${i + 1}. ${lead.severity.padEnd(7)} ${lead.code}  ${lead.where ?? lead.id}  [${lead.id}]`));
-    if (r.investigation.drillDown) lines.push(`  Drill down: ${r.investigation.drillDown}`);
+    if (r.investigation.drillDown) lines.push(`  Drill down (${r.investigation.shell}): ${r.investigation.drillDown}`);
   }
   if (r.review.comparison) {
     const c = r.review.comparison;

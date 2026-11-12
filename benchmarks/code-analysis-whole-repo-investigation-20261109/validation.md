@@ -1,5 +1,56 @@
 # Validation record
 
+The original experiment below is historical evidence for `563508ce4`, not a
+fresh test of the Labs port. The later PR body records the `7b75aec67` run.
+
+## Command-shell follow-up (2026-11-12)
+
+This follow-up fixes PR #1338's Command Prompt review finding relative to
+`7b75aec670c1bedbc554268b154b56d525389153`, retaining the Labs target at
+`91270ea08d53baf676bd2270d7805233a8798351`. The evidence in this section applies
+to the source and archive in the commit that adds this section.
+
+- Windows receipts explicitly target `cmd.exe`; other hosts target POSIX sh.
+  Both lead commands and the drill-down template use the same formatter.
+  Ordinary Windows paths use readable native quoting. `%`/`!` paths use a
+  Node argv launcher because cmd expands those characters even inside quotes.
+  The quoted `<id>` placeholder is an argument rather than shell redirection.
+- This is a local CLI command-formatting change. Analysis findings, task
+  contents, diagram generation, and defaults are unchanged. Roll back the
+  follow-up commit to restore the prior formatting.
+- Linux, official Node 22.23.3 / zlib `1.3.1-e00f703`: source focused tests
+  (`check-coverage.test.mjs` and `task-command-shell.test.mjs`) **9/9 passed**,
+  zero skips. The shell suite executes the command through `/bin/sh`, compares
+  exact argv for CLI/output/root paths containing spaces, apostrophes,
+  metacharacters and trailing separators, verifies exit 2 propagation, and
+  prepares an actual task whose evidence is `valid`.
+- Unpacked ZIP: the same shell suite **3/3 passed**, zero skips, after installing
+  the package's locked module dependencies. Two canonical ZIP builds were
+  byte-identical: **431 entries**, SHA-256
+  `c85655b4a50f38155806e2b0e2d14b968dd748c6839d500e04b0ddb5a4bd0c9e`.
+- Core smoke: **19/19 passed**, zero skips, with `NODE_NO_WARNINGS=1`. The first
+  run had 17 passes and 2 failures (one child assertion plus its parent) because
+  this cloud runtime's injected Node proxy warning polluted a diagnostic
+  stream. Suppressing runtime warnings made the unchanged smoke pass.
+- Full module run with real jscpd 5.4.3: **441/532 passed, 91 failed, zero
+  skipped**. All failures report unavailable language tooling: 25 Go helper
+  failures (the `go` executable here is not the Go compiler) and 66 Cargo/rustc
+  helper failures. This is not a full local pass; final-head CI must supply
+  the complete module result.
+- Native Windows is not available locally. CI now explicitly runs the shell
+  suite under real `cmd.exe`, with delayed expansion enabled, on Windows Node
+  22 and 24. Those final-head job logs, not unrelated green checks, must confirm
+  Windows acceptance. Native Windows verification is pending at commit time.
+- Scoped test-value review replaced text-only confidence with actual command
+  execution. Focused simplification review unified the two command producers;
+  no broader refactor was warranted. Independent code inspection found no
+  blocker, but is not runtime or human acceptance.
+
+AI-assisted implementation, tests and documentation: OpenAI Codex; model
+identity is unavailable. No human review or acceptance is asserted here.
+
+## Original experiment
+
 ## Environment
 
 - Source CLI: Node v22.23.3, macOS arm64.

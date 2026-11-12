@@ -66,6 +66,7 @@ Choose `--language` when the repository contains more than one language; without
 Start from the JSON receipt, not the full finding list:
 
 - `investigation.leads` repeats the three ranked `priorities` with `message`, `where` (`path:line`), `symbol`, `impact`, and a runnable `task` command. The text output prints the same list under **Start here**.
+- `investigation.shell` identifies the command syntax: `cmd.exe` on Windows and `POSIX sh` elsewhere. Copy the command into that shell. Spaces and apostrophes are preserved; Windows paths with `%` or `!` use a Node argv launcher to avoid environment-variable expansion. The `drillDown` template quotes `<id>`; replace it with a finding ID.
 - `ruleCounts` shows how findings divide by rule, so a dominant rule is visible before reading every finding.
 - `coverage` lists parse failures and other languages left out. `overview.json` also lists files excluded by role.
 
