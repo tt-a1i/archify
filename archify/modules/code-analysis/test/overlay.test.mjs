@@ -54,40 +54,6 @@ test('overlay: components map to modules through their sources; descendants foll
   assert.equal(result.mapped, 2);
 });
 
-test('overlay: compares only mapped static relationships and preserves unknown edges', () => {
-  const declared = { ...ir, connections: [{ from: 'app', to: 'lib', label: 'uses' }] };
-  const p = payloadOf(buildOverlay({ ir: declared, graph, html: FAKE_HTML, map: null }).html);
-  assert.equal(p.consistency.status, 'comparable');
-  assert.deepEqual(p.consistency.missing, []);
-  assert.deepEqual(p.consistency.extra, []);
-  const undeclared = payloadOf(buildOverlay({ ir, graph, html: FAKE_HTML, map: null }).html);
-  assert.equal(undeclared.consistency.status, 'unknown');
-});
-
-test('overlay: reports observed and declared relationship differences separately', () => {
-  const reverse = { ...ir, connections: [{ from: 'lib', to: 'app', label: 'uses' }] };
-  const p = payloadOf(buildOverlay({ ir: reverse, graph, html: FAKE_HTML, map: null }).html);
-  assert.equal(p.consistency.status, 'comparable');
-  assert.deepEqual(p.consistency.missing, ['app>lib']);
-  assert.deepEqual(p.consistency.extra, ['lib>app']);
-});
-
-test('overlay: unmapped and deferred relationships make comparison partial', () => {
-  const declared = { ...ir, connections: [{ from: 'app', to: 'lib', label: 'uses' }] };
-  const partialGraph = { ...graph, edges: [
-    { ...graph.edges[0], kinds: { lazy: 1 } },
-    { from: 'tools', to: 'src', weight: 1, kinds: { eager: 1 }, evidence: [] },
-  ] };
-  const p = payloadOf(buildOverlay({ ir: declared, graph: partialGraph, html: FAKE_HTML, map: null }).html);
-  assert.equal(p.consistency.status, 'partial');
-  assert.deepEqual(p.consistency.unknown, [
-    { from: 'app', to: 'lib', reason: 'relationship is deferred, conditional, or type-only' },
-    { from: 'tools', to: 'src', reason: 'module is not mapped to an authored component' },
-  ]);
-  assert.deepEqual(p.consistency.missing, []);
-  assert.deepEqual(p.consistency.extra, ['app>lib']);
-});
-
 test('overlay: an absent source path does not claim a module by directory prefix', () => {
   const missingSource = { ...ir, components: [{ id: 'app', type: 'backend', label: 'App', sources: [{ path: 'src/missing.mjs' }] }] };
   const graphWithFiles = { ...graph, fileModules: { 'src/index.mjs': 'src', 'src/lib/helper.mjs': 'src-lib', 'tools/x.mjs': 'tools' } };

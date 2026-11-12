@@ -118,6 +118,8 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
     subject: { ids: unknown }, supportedFixes: ['use ids from findings.json of the same run', 're-run the analysis if the ids come from an older page'],
   });
   const selected = wanted.map((id) => byId.get(id));
+  const hasExternalReports = selected.some((d) => d.code.startsWith('external/'))
+    || (findings.analysis?.externalDiagnostics?.length || 0) > 0;
   const source = new Map(facts.files.map((f) => [f.path, typeof f.sourceText === 'string' ? splitLines(f.sourceText) : null]));
 
   const locations = [];
@@ -137,6 +139,7 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
     'Business constraints and intended behaviour that the code alone does not show (ask the project owner or read the docs before redesigning).',
     ...(commands.length ? [] : ['Which test, lint or type-check commands verify this change; none were provided with the task.']),
     'Whether files beyond the allowed scope may be changed (callers, tests, configuration).',
+    ...(hasExternalReports ? ['Confirm the external report producer command and output path, including its intended version, rule settings and scan scope.'] : []),
     ...truncated.map((t) => `Only ${t.shown} of ${t.total} locations of ${t.findingId} are listed; the rest are in findings.json.`),
     ...selected.filter((d) => !d.evidenceDigest).map((d) => `${d.id} has no evidence digest; whether it still applies cannot be checked automatically.`),
   ];
@@ -169,12 +172,14 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
       ? ['Public Java type names, packages and APIs used by callers.', 'Class initialization behavior and observable side effects.']
       : (PRESERVE[d.code] || (() => ['Existing behaviour of the code involved.']))(d)))],
     acceptance: [
-      ...selected.flatMap((d) => facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Verify the intended source responsibility boundary; document an intentionally retained structural cycle without claiming a runtime import failure.'] : (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
-      'A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.',
+      ...selected.flatMap((d) => d.code.startsWith('external/') ? [`Regenerate the external report with the intended producer version, rule settings and scan scope; import it and verify ${d.id} is no longer reported. Disappearance alone is not proof of a fix.`] : facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Verify the intended source responsibility boundary; document an intentionally retained structural cycle without claiming a runtime import failure.'] : (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
+      hasExternalReports
+        ? 'Regenerate each external report with the intended producer version, rule settings and scan scope; re-analyze with the same language and configuration, assess comparison limitations, and inspect any new findings in changed files. Disappearance alone is not proof of a fix.'
+        : 'A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.',
       'The project checks that cover the changed code pass (see verification).',
     ],
     verification: {
-      reanalyze: { ...reanalyzeCommand(findings), ...(facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
+      reanalyze: { ...reanalyzeCommand(findings), ...(hasExternalReports ? { purpose: 'Regenerate external reports with the intended producer version, rules and scan scope before importing them; assess comparison limitations and do not treat disappearance alone as proof of a fix.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
       commands: commands.map((c) => ({ command: c.command, purpose: c.purpose || 'project check', source: c.source || 'provided' })),
     },
     toConfirm,

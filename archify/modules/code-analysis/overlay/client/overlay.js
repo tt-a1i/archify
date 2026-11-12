@@ -451,12 +451,6 @@
     var pe = files.parseErrors || [];
     if (pe.length) lines.push(plural(pe.length, 'file') + ' could not be parsed: ' + pe.slice(0, 3).join(', ') + (pe.length > 3 ? ' …' : ''));
     var u = c.unresolved || {}, unresolved = (u.unknown || 0) + (u.opaque || 0);
-    if (data.consistency) {
-      var consistency = data.consistency;
-      if (consistency.status === 'comparable' && (consistency.missing.length || consistency.extra.length)) lines.push('Static source relationships differ from the authored diagram; review the declared and observed edges.');
-      else if (consistency.status === 'partial') lines.push('Static relationship comparison is partial; some edges are unmapped or deferred and require review.');
-      else if (consistency.status === 'unknown') lines.push('Static relationship comparison is unavailable for this authored diagram.');
-    }
     // Java counts each unresolved type reference as well as imports.
     if (unresolved) lines.push(plural(unresolved, c.language === 'java' ? 'dependency record' : 'import') + ' could not be resolved');
     if ((c.unmappedModules || []).length) lines.push(plural(c.unmappedModules.length, 'module') + ' not on this diagram');

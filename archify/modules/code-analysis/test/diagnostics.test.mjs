@@ -175,6 +175,33 @@ test('external adapters preserve ranges through tasks and re-analysis inputs', (
   assert.equal(externalIdentity(report, 'sarif', []).file, report);
 });
 
+test('external report tasks require a fresh producer report and disclose comparison limits', (t) => {
+  const root = rootWithFiles(['src/a.js']); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const [external] = importEslint([{ filePath: 'src/a.js', messages: [{ ruleId: 'no-alert', message: 'Avoid alert', line: 1 }] }], { root });
+  const native = { id: 'COUP-000000000001', code: 'coupling/import-cycle', dimension: 'coupling', severity: 'warning', confidence: 1, message: 'cycle', subject: { files: ['src/a.js'] }, evidence: { kind: 'structural', path: [], totalImports: 0, lazyImports: 0, threshold: null }, supportedFixes: [] };
+  const reports = [{ format: 'eslint', file: 'reports/eslint.json', sha256: 'a'.repeat(64), findings: 1, rules: [] }];
+  const facts = { files: [{ path: 'src/a.js', sourceText: 'source\n' }], repository: { language: 'rust' } };
+  for (const [label, diagnostics, selected, inputs] of [
+    ['external only', [external], [external.id], reports],
+    ['external without replay metadata', [external], [external.id], undefined],
+    ['mixed', [external, native], [external.id, native.id], reports],
+    ['native selected from imported run', [external, native], [native.id], reports],
+    ['native selected with no findings imported', [native], [native.id], reports],
+  ]) {
+    const findings = { diagnostics, repository: { language: 'rust' }, analysis: { externalDiagnostics: inputs } };
+    const task = buildTask({ findings, facts, ids: selected });
+    assert.match(task.toConfirm.join(' '), /producer.*command.*output/i, label);
+    assert.match(task.verification.reanalyze.purpose, /regenerat/i, label);
+    assert.match(task.acceptance.join(' '), /version.*rule.*scope/i, label);
+    assert.match(task.acceptance.join(' '), /comparison.*limit/i, label);
+    assert.match(task.acceptance.join(' '), /disappearance.*not.*proof/i, label);
+    assert.doesNotMatch(task.acceptance.join(' '), /comparison is marked comparable/i, label);
+  }
+  const task = buildTask({ findings: { diagnostics: [native], repository: { language: 'rust' } }, facts, ids: [native.id] });
+  assert.match(task.acceptance.join(' '), /comparison is marked comparable/i);
+  assert.match(task.verification.reanalyze.purpose, /structural cycle/i);
+});
+
 test('external tasks fall back to one line for an inverted reported range', (t) => {
   const root = rootWithFiles(['src/a.py']); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const [finding] = importRuff([{ filename: 'src/a.py', code: 'F401', message: 'unused import', location: { row: 3, column: 1 }, end_location: { row: 2, column: 5 } }], { root });
