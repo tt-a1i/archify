@@ -1,0 +1,39 @@
+diff --git a/httpx/_urlparse.py b/httpx/_urlparse.py
+index 6a4b55b..442da2a 100644
+--- a/httpx/_urlparse.py
++++ b/httpx/_urlparse.py
+@@ -172,7 +172,14 @@ def urlparse(url: str = "", **kwargs: str | None) -> ParseResult:
+     # Replace "netloc" with "host and "port".
+     if "netloc" in kwargs:
+         netloc = kwargs.pop("netloc") or ""
+-        kwargs["host"], _, kwargs["port"] = netloc.partition(":")
++        if netloc.startswith("["):
++            host, bracket, remainder = netloc[1:].partition("]")
++            if not bracket:
++                raise InvalidURL(f"Invalid netloc: {netloc!r}")
++            kwargs["host"] = f"[{host}]"
++            kwargs["port"] = remainder[1:] if remainder.startswith(":") else remainder
++        else:
++            kwargs["host"], _, kwargs["port"] = netloc.partition(":")
+ 
+     # Replace "username" and/or "password" with "userinfo".
+     if "username" in kwargs or "password" in kwargs:
+diff --git a/tests/models/test_url.py b/tests/models/test_url.py
+index 79e1605..31d4eb0 100644
+--- a/tests/models/test_url.py
++++ b/tests/models/test_url.py
+@@ -566,6 +566,14 @@ def test_url_copywith_netloc():
+     assert str(new) == "https://example.net:444"
+ 
+ 
++def test_url_copywith_netloc_ipv6():
++    url = httpx.URL("http://[::1]:8080/a")
++    assert url.netloc == b"[::1]:8080"
++    assert url.copy_with(netloc=url.netloc) == url
++    assert str(httpx.URL(netloc=b"[::1]:8080", scheme="http")) == "http://[::1]:8080"
++    assert str(httpx.URL(netloc=b"[::1]", scheme="http")) == "http://[::1]"
++
++
+ def test_url_copywith_userinfo_subcomponents():
+     copy_with_kwargs = {
+         "username": "tom@example.org",

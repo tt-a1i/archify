@@ -39,6 +39,12 @@ It has two entry points that share the same pipeline:
 optimization task (JSON or Markdown) and checks its evidence against the current
 working tree; the page uses the same logic through the server.
 
+`check --json` also returns an `investigation` object for a first look: its
+`leads` repeat the ranked priorities with the message, `path:line`, symbol and a
+runnable `task` command, and `ruleCounts` shows how findings divide by rule. Run
+`check` with `--out` so each lead is drillable. See
+[First look at an unfamiliar repository](docs/USAGE.md#first-look-at-an-unfamiliar-repository).
+
 `task --question` prepares source orientation without requiring a finding: source
 identity, captured function ranges and direct imports. JS/TS implementation entries
 and fresh Python/Java captures can also include bounded lexical call evidence.
