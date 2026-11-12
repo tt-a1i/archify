@@ -4,11 +4,11 @@ Community DeepSeek Harness integration for [Archify](https://github.com/tt-a1i/a
 
 This package bundles **Archify 3.2.0** from stable commit `edf158c4e7a1d18d20cc329840f864289634c090`, including the Apache-2.0 transition and standalone third-party notice fixes after the `v3.2.0` tag; it is not a byte-for-byte copy of that tag. Both bundled version manifests declare 3.2.0. Adapter and Archify versions are independent.
 
-The candidate acceptance target is the exact developer-preview host **`@deepseek-ai/dsh@0.2.1-rc.2`** and Node.js **`^22.19.0 || >=24.0.0`**. It does not make the host stable or guarantee compatibility with other DSH versions. The release gate must establish clean installation and same-profile upgrades from both plugin 0.1.0 and 1.0.0 to 1.1.0 on Linux, macOS, and Windows using Node 22. Configuring this target is not evidence that acceptance has passed; consult the repository release record. CLI acceptance does not establish Desktop/Electron or running-host updater support.
+The accepted host is the exact developer-preview **`@deepseek-ai/dsh@0.2.1-rc.2`** on Node.js **`^22.19.0 || >=24.0.0`**. It does not make the host stable or guarantee compatibility with other DSH versions. The three-platform release gate established clean installation and same-profile upgrades from both plugin 0.1.0 and 1.0.0 to 1.1.0 on Linux, macOS, and Windows using Node 22; the release record carries the verified tarball digest. CLI acceptance does not establish Desktop/Electron or running-host updater support.
 
 ## Install or upgrade
 
-After this version is available in the npm registry, install the exact version in each profile that uses Archify:
+Install the exact version in each profile that uses Archify:
 
 ```bash
 dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0
