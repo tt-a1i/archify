@@ -238,12 +238,12 @@ meter{width:100%;height:8px;accent-color:var(--accent)}
 .diagram-semantics code,.changes code{font-size:10px}
 .diagram-fit-status:not([hidden]){margin-top:6px}
 .changes{font-size:11px;margin-top:8px}
-/* The preview outlines each node and edge a structural change marks, in the colour of its change. */
-.diagram svg [data-explainer-change]>:is(rect,path,circle,ellipse,polygon,line):not(.c-mask){stroke-width:2.5px}
-.diagram svg [data-explainer-change="added"]>:is(rect,path,circle,ellipse,polygon,line):not(.c-mask){stroke:var(--good)}
-.diagram svg [data-explainer-change="modified"]>:is(rect,path,circle,ellipse,polygon,line):not(.c-mask){stroke:var(--caution)}
-.diagram svg [data-explainer-change="removed"]>:is(rect,path,circle,ellipse,polygon,line):not(.c-mask){stroke:var(--bad);stroke-dasharray:6 4}
-.diagram svg [data-explainer-change="removed"]{opacity:.62}
+/* The preview outlines each node and edge a structural change marks, in the colour of its change: the marked shape itself, such as an edge's path, or the shapes a marked group draws. The native preview styles are more specific in both themes, so the outline is important. */
+.diagram svg [data-explainer-change="added"]{--explainer-change:var(--good)}
+.diagram svg [data-explainer-change="modified"]{--explainer-change:var(--caution)}
+.diagram svg [data-explainer-change="removed"]{--explainer-change:var(--bad);opacity:.62}
+.diagram svg :is([data-explainer-change]:is(rect,path,circle,ellipse,polygon,polyline,line),[data-explainer-change]>:is(rect,path,circle,ellipse,polygon,polyline,line):not(.c-mask)){stroke:var(--explainer-change)!important;stroke-width:2.5px!important}
+.diagram svg :is([data-explainer-change="removed"]:is(rect,path,circle,ellipse,polygon,polyline,line),[data-explainer-change="removed"]>:is(rect,path,circle,ellipse,polygon,polyline,line):not(.c-mask)){stroke-dasharray:6 4!important}
 .changes dd{margin-top:3px}
 .added{color:var(--good)}.removed{color:var(--bad)}.modified{color:var(--caution)}
 
