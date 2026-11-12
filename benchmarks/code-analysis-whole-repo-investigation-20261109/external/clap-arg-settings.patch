@@ -1,0 +1,11 @@
+diff --git a/clap_builder/src/builder/arg_settings.rs b/clap_builder/src/builder/arg_settings.rs
+index fd475040..e2ac633c 100644
+--- a/clap_builder/src/builder/arg_settings.rs
++++ b/clap_builder/src/builder/arg_settings.rs
+@@ -1,6 +1,3 @@
+-#[allow(unused)]
+-use crate::Arg;
+-
+ #[derive(Default, Copy, Clone, Debug, PartialEq, Eq)]
+ pub(crate) struct ArgFlags(u32);
+ 
