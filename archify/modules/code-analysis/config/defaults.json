@@ -37,7 +37,11 @@
     ],
     "generated": [
       "**/generated-*",
-      "**/*.generated.*"
+      "**/*.generated.*",
+      "**/vendor/**",
+      "**/vendored/**",
+      "**/third_party/**",
+      "**/third-party/**"
     ]
   }
 }

@@ -2193,7 +2193,7 @@ const COMMAND_USAGE = {
   start: '<repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
     'serve <repo-root> --ir <architecture.json> --out <dir> [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
-    'check <repo-root> [--language ts|py|java] [--config file] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline] [--reason text] [--json]',
+    'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline] [--reason text] [--json]',
     'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
     'task --verify <task.json> --root <repo-root> [--format md|json] [--out file] [--require-valid]',
   ],
