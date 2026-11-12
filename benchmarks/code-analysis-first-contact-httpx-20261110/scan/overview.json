@@ -1,0 +1,288 @@
+{
+  "verdict": "attention",
+  "counts": {
+    "findings": 8,
+    "error": 0,
+    "warning": 1,
+    "info": 7,
+    "accepted": 0,
+    "offDiagram": 8
+  },
+  "review": null,
+  "groups": [
+    {
+      "code": "complexity/function",
+      "severity": "warning",
+      "count": 4,
+      "ids": [
+        "COMP-c96d5a89f434",
+        "COMP-af208f4d9024",
+        "COMP-474a99d6abbd",
+        "COMP-911a2f469140"
+      ]
+    },
+    {
+      "code": "coupling/internal-leak",
+      "severity": "info",
+      "count": 2,
+      "ids": [
+        "COUP-0b3b46f8e89a",
+        "COUP-e22d59674302"
+      ]
+    },
+    {
+      "code": "coupling/cycle",
+      "severity": "info",
+      "count": 1,
+      "ids": [
+        "COUP-1c4b02649d1e"
+      ]
+    },
+    {
+      "code": "coupling/import-cycle",
+      "severity": "info",
+      "count": 1,
+      "ids": [
+        "COUP-c286cebf0577"
+      ]
+    }
+  ],
+  "priorities": [
+    "COMP-c96d5a89f434",
+    "COUP-1c4b02649d1e",
+    "COMP-af208f4d9024"
+  ],
+  "investigation": {
+    "leads": [
+      {
+        "id": "COMP-c96d5a89f434",
+        "code": "complexity/function",
+        "severity": "warning",
+        "message": "urlparse in httpx/_urlparse.py has cyclomatic complexity 39 (133 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+        "where": "httpx/_urlparse.py:151",
+        "symbol": "urlparse",
+        "impact": {
+          "modules": 1,
+          "size": 39,
+          "fanIn": 1,
+          "files": 18
+        }
+      },
+      {
+        "id": "COUP-1c4b02649d1e",
+        "code": "coupling/cycle",
+        "severity": "info",
+        "message": "2 modules depend on each other at package level: httpx → httpx/_transports → httpx. See coupling/import-cycle for whether any file actually cycles.",
+        "where": "httpx/__init__.py:39",
+        "symbol": null,
+        "impact": {
+          "modules": 2,
+          "size": 0,
+          "fanIn": 2,
+          "files": 24
+        }
+      },
+      {
+        "id": "COMP-af208f4d9024",
+        "code": "complexity/function",
+        "severity": "info",
+        "message": "main in httpx/_main.py has nesting depth 5 (60 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+        "where": "httpx/_main.py:450",
+        "symbol": "main",
+        "impact": {
+          "modules": 1,
+          "size": 10,
+          "fanIn": 1,
+          "files": 18
+        }
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "COMP-c96d5a89f434",
+      "code": "complexity/function",
+      "severity": "warning",
+      "componentIds": [],
+      "moduleIds": [
+        "httpx"
+      ],
+      "impact": {
+        "modules": 1,
+        "size": 39,
+        "fanIn": 1,
+        "files": 18
+      },
+      "relatedIds": [],
+      "status": "open"
+    },
+    {
+      "id": "COUP-1c4b02649d1e",
+      "code": "coupling/cycle",
+      "severity": "info",
+      "componentIds": [],
+      "moduleIds": [
+        "httpx",
+        "httpx-_transports"
+      ],
+      "impact": {
+        "modules": 2,
+        "size": 0,
+        "fanIn": 2,
+        "files": 24
+      },
+      "relatedIds": [],
+      "status": "open"
+    },
+    {
+      "id": "COMP-af208f4d9024",
+      "code": "complexity/function",
+      "severity": "info",
+      "componentIds": [],
+      "moduleIds": [
+        "httpx"
+      ],
+      "impact": {
+        "modules": 1,
+        "size": 10,
+        "fanIn": 1,
+        "files": 18
+      },
+      "relatedIds": [],
+      "status": "open"
+    },
+    {
+      "id": "COMP-474a99d6abbd",
+      "code": "complexity/function",
+      "severity": "info",
+      "componentIds": [],
+      "moduleIds": [
+        "httpx"
+      ],
+      "impact": {
+        "modules": 1,
+        "size": 9,
+        "fanIn": 1,
+        "files": 18
+      },
+      "relatedIds": [],
+      "status": "open"
+    },
+    {
+      "id": "COMP-911a2f469140",
+      "code": "complexity/function",
+      "severity": "info",
+      "componentIds": [],
+      "moduleIds": [
+        "httpx"
+      ],
+      "impact": {
+        "modules": 1,
+        "size": 8,
+        "fanIn": 1,
+        "files": 18
+      },
+      "relatedIds": [],
+      "status": "open"
+    },
+    {
+      "id": "COUP-0b3b46f8e89a",
+      "code": "coupling/internal-leak",
+      "severity": "info",
+      "componentIds": [],
+      "moduleIds": [
+        "httpx"
+      ],
+      "impact": {
+        "modules": 1,
+        "size": 0,
+        "fanIn": 1,
+        "files": 18
+      },
+      "relatedIds": [],
+      "status": "open"
+    },
+    {
+      "id": "COUP-e22d59674302",
+      "code": "coupling/internal-leak",
+      "severity": "info",
+      "componentIds": [],
+      "moduleIds": [
+        "httpx-_transports"
+      ],
+      "impact": {
+        "modules": 1,
+        "size": 0,
+        "fanIn": 1,
+        "files": 6
+      },
+      "relatedIds": [],
+      "status": "open"
+    },
+    {
+      "id": "COUP-c286cebf0577",
+      "code": "coupling/import-cycle",
+      "severity": "info",
+      "componentIds": [],
+      "moduleIds": [
+        "httpx"
+      ],
+      "impact": {
+        "modules": 1,
+        "size": 0,
+        "fanIn": 1,
+        "files": 2
+      },
+      "relatedIds": [],
+      "status": "open"
+    }
+  ],
+  "coverage": {
+    "language": "py",
+    "adapter": "python@3.15.0",
+    "files": {
+      "analyzed": 24,
+      "excludedByRole": 36,
+      "excludedRoles": [
+        "generated",
+        "test"
+      ],
+      "excludePatterns": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/target/**/*.java",
+        "**/coverage/**",
+        "**/*.d.ts",
+        "**/venv/**",
+        "**/venv-*/**",
+        "**/.venv/**",
+        "**/site-packages/**",
+        "**/__pycache__/**",
+        "**/.pytest_cache/**",
+        "**/.git/**",
+        "**/_archive/**"
+      ],
+      "parseErrors": []
+    },
+    "otherLanguages": [],
+    "unresolved": {
+      "external": 233,
+      "outside": 0,
+      "unknown": 0,
+      "opaque": 0
+    },
+    "rules": {
+      "run": [
+        "coupling/import-cycle",
+        "coupling/cycle",
+        "coupling/hub",
+        "coupling/internal-leak",
+        "complexity/function"
+      ],
+      "suppressed": []
+    },
+    "unmappedModules": [],
+    "boundaries": null
+  }
+}
