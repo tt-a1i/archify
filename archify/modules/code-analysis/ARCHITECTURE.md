@@ -109,19 +109,30 @@ Source references with line numbers show a nine-line context window and highligh
 - `extract/py/`: Python extraction and adapter integration.
 - `extract/ts/`: JavaScript and TypeScript extraction.
 - `extract/java/`: Java parsing, conservative source dependency resolution, and method/constructor metrics. See [Java support](docs/JAVA.md).
-- `core/`: dependency-free helpers every stage shares (structured diagnostics, glob matching, exact source ranges), imported through `core/index.mjs`. It imports no stage and no third-party package.
+- `core/`: dependency-free helpers every stage shares (structured diagnostics, glob matching, exact source ranges, line-range digests in `line-ranges.mjs`), imported through `core/index.mjs`. It imports no stage and no third-party package.
 - `extract/shared/`: file walking, file roles and Git metadata for the adapters. Its `diagnostics`, `glob`, `source-range`, `schema` and `semantics` files only re-export `core/` and `schemas/` so adapters keep one local import path.
 - `graphs/`: module grouping and dependency aggregation.
 - `evaluate/rules/index.mjs`: the rule registry; a new rule is its own file plus one line here.
 - `evaluate/rules/coupling/`: import-cycle, module-cycle, hub, concentration and internal-leak rules. Cycles are errors; see [Severity levels](docs/USAGE.md#severity-levels).
+- `evaluate/rules/redundancy/`: duplicate code (C6). `jscpd.mjs` runs the optional jscpd scanner; `duplicate-block.mjs` turns its output into findings. `lib/duplicates.mjs` only re-exports it for older callers.
 - `evaluate/rules/architecture/`: opt-in layer boundary rules declared in the config.
 - `evaluate/rules/complexity/`: shared function complexity and nesting thresholds; measurements come from each language extractor.
 - `lib/`: the data stages (extract → graph → evaluate), config merging, intermediate-data checks, review (`review.mjs`: baseline, run comparison and comparability), AI tasks (`task.mjs`: task model and Markdown rendering) and evidence checks (`evidence.mjs`: captured source against the working tree).
 - `bin/check.mjs`: headless analysis for terminals and CI; `bin/task.mjs`: AI task export and evidence check; `bin/analyze-run.mjs`: one analysis run in a child process for the server.
 - `overlay/`: mapping and browser presentation; `overlay/page.mjs` is the whole analysis for one delivered page; `overlay/client/` holds the browser scripts and styles as plain files, inlined at build time by `overlay/client-assets.mjs`. `overlay/` builds on `lib/`, never the reverse.
 - `schemas/`: raw-facts, module-graph, findings, baseline, and AI task contracts, with their validator (`validate.mjs`) and the cross-reference invariants a JSON schema cannot express (`semantics.mjs`), imported through `schemas/index.mjs`.
-- `test/`: regression tests, small source fixtures, and expected extraction results.
+- `test/`: regression tests, small source fixtures, and expected extraction results. `self-check.test.mjs` runs the analyzer on this module and fails on any cycle or error, so the layering above (`core` ← `schemas` ← `evaluate` ← `lib` ← `overlay`; `evaluate` never imports `lib`) is checked, not only described.
 - `docs/`: usage and technical documentation.
+
+## Working on this module in parallel
+
+Several people change this module at once. These rules come from the conflicts and duplicate work seen in the November 2026 PRs; the general process is in [CONTRIBUTING.md](../../../CONTRIBUTING.md#coordinate-related-work).
+
+- **Claim the rule or view first.** Before adding a rule, a view or an analyzer integration, say on its issue which finding codes and files you will touch. Two implementations of the same signal (seen with C7 and concentration) cost a review each and one gets thrown away.
+- **Branch from `labs/code-analysis`, not from another open PR.** Stacked PRs are squash-merged into their base, which leaves the next PR in the stack with a stale base or merged into the wrong branch. If you must stack, retarget to `labs/code-analysis` as soon as the lower PR merges.
+- **Do not hand-merge `archify.zip`.** Every runtime change rebuilds it, so almost every PR conflicts there. Resolve source conflicts first, then rebuild with `scripts/build-zip.sh` from the combined tree and commit only that result.
+- **Prefer a small in-house implementation to vendored code.** Third-party code needs a license notice, and the notice is part of every delivered page, so adding or changing one touches dozens of generated files. Use a third-party package only when it does work that would be hard to get right (a parser, a scanner), and add it as a dependency rather than copying its source.
+- **Keep the self-check green.** `test/self-check.test.mjs` runs the analyzer on this module. A change that introduces a cycle or an error-level finding here fails CI; fix the structure rather than accepting it.
 
 ## Outputs
 

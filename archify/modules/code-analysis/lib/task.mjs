@@ -14,6 +14,10 @@
 // it (verifyTask) and sets valid / changed / missing / unverifiable. The
 // exported brief always tells the agent to re-read the current source first.
 import { createHash } from 'node:crypto';
+import { findRanges, rangeDigest, splitLines } from '../core/index.mjs';
+
+// Kept as exports of this module for existing callers; they live in core/.
+export { findRanges, rangeDigest, splitLines };
 import fs from 'node:fs';
 import { fail } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
@@ -331,29 +335,12 @@ export function withExcerpt(loc, lines) {
   return { ...loc, sha256, ...(capturedOccurrences > 1 ? { capturedOccurrences } : {}), excerpt: { segments, omitted, complete: !omitted.length } };
 }
 
-// Start lines of every range of `length` lines whose digest is `sha`.
-export function findRanges(lines, length, sha, firstLine = null) {
-  const starts = [];
-  for (let start = 1; start + length - 1 <= lines.length; start += 1) {
-    if (firstLine !== null && lines[start - 1] !== firstLine) continue;
-    if (rangeDigest(lines, start, start + length - 1) === sha) starts.push(start);
-  }
-  return starts;
-}
 
 function countOccurrences(lines, length, sha) {
   return findRanges(lines, length, sha).length;
 }
 
-export function rangeDigest(lines, startLine, endLine) {
-  return sha256(lines.slice(startLine - 1, endLine).join('\n'));
-}
 
-export function splitLines(text) {
-  const lines = text.split(/\r?\n/);
-  if (lines.length && lines[lines.length - 1] === '') lines.pop();
-  return lines;
-}
 
 // ---- metadata ----------------------------------------------------------
 

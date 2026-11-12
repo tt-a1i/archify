@@ -17,5 +17,9 @@ export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boun
 // evaluate/index.mjs runs the duplicate scan once for this rule and pins its ranges.
 export { duplicate as duplicateBlock };
 
+// The jscpd scan behind the duplicate rule. evaluate/index.mjs runs it once per
+// evaluation; other callers reach it through evaluate/index.mjs.
+export { analyzeDuplicates, duplicateOptions, DUPLICATE_RULE, JSCPD_VERSION } from './redundancy/jscpd.mjs';
+
 // Layer statistics the overview shows next to boundary findings.
 export { layerCounts } from './architecture/boundary.mjs';
