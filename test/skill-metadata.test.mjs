@@ -11,6 +11,8 @@ const skill = readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
 const defaults = readFileSync(path.join(skillRoot, 'references', 'authoring-defaults.md'), 'utf8');
 const updateAwareness = readFileSync(path.join(skillRoot, 'references', 'update-awareness.md'), 'utf8');
 const authoringContract = readFileSync(path.join(skillRoot, 'references', 'authoring-contract.md'), 'utf8');
+const explainerAuthoring = readFileSync(path.join(skillRoot, 'references', 'explainer-authoring.md'), 'utf8');
+const repositoryRoot = path.join(skillRoot, '..');
 const frontmatter = skill.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
 
 test('skill description is portable across 1024-character runtimes and remains searchable', () => {
@@ -102,5 +104,51 @@ test('contributor review skill is internal and retains its repository references
   for (const document of ['../../../REVIEWING.md', '../../../CONTRIBUTING.md']) {
     assert.ok(review.includes(document));
     assert.ok(existsSync(path.resolve(reviewRoot, document)));
+  }
+});
+
+// #1299: explainer pages are proactive by default (like Answer me with HTML),
+// remain switchable back to on-demand through the existing rules line, and a
+// produced page is always reachable from the last line of the final reply.
+test('explainer mode defaults to proactive and switches through the existing rules line', () => {
+  const metadata = parse(frontmatter[1]);
+  assert.match(metadata.description, /by default unasked/i);
+  assert.match(metadata.description, /\[archify explainer: on-demand\]/);
+  assert.match(skill, /Explainer mode is `proactive` by default/);
+  assert.match(skill, /`proactive` \(default, no line needed\)[^\n]*complex flow[^\n]*diagnosis or troubleshooting[^\n]*comparison[^\n]*test or review report/);
+  assert.match(skill, /`on-demand`: make a page only when asked/);
+  assert.match(skill, /`always-on` \(opt-in only\)/);
+  assert.match(skill, /Never switch to `always-on` unasked/);
+  assert.match(skill, /only when the user asks[^\n]*`\[archify explainer: <mode>\]` line in the current agent's global rules file[^\n]*deleting the line restores `proactive`/);
+  // The retired on-request upsell would contradict the new default and push the link off the last line.
+  assert.doesNotMatch(skill, /offering the proactive mode|mode offer/);
+  assert.doesNotMatch(explainerAuthoring, /mode offer/);
+  assert.match(explainerAuthoring, /default `proactive` mode, `on-demand` and opt-in `always-on`/);
+});
+
+test('explainer suppression rules keep short, text-only and failed answers free of pages and links', () => {
+  assert.match(skill, /short or one-line answers, routine status updates[^\n]*raw command output, a requested native diagram and any reply where the user asks for text only or no page/);
+  assert.match(skill, /at most one page per reply, and none when the user names another page tool or another skill already made a page/);
+  assert.match(skill, /When `finalize explainer` fails or the renderer is unavailable, answer in text, say in one line that the page was not produced, and give no page link/);
+  assert.match(explainerAuthoring, /When finalize does not pass and repair stops, answer in text, say the page was not produced, and give no page link/);
+});
+
+test('a delivered explainer ends its reply with a descriptive absolute-path link', () => {
+  for (const [name, text] of [['SKILL.md', skill], ['explainer-authoring.md', explainerAuthoring]]) {
+    assert.match(text, /conclusion in one to three lines/, `${name} keeps a directly readable conclusion`);
+    assert.match(text, /last line, a Markdown link[^\n]*descriptive title in the user's language/, `${name} puts the link last`);
+    assert.match(text, /\[查看测试报告\]\(\/abs\/path\/test-report\.html\)/, `${name} shows a descriptive link example`);
+  }
+  assert.match(skill, /Use the absolute path, wrapped in `<\.\.\.>` when it contains spaces, not `file:\/\/`; put any update notice before it/);
+  assert.match(skill, /Never offer a directory, terminal log or auto-open \(`--open`\) instead of the link/);
+  assert.match(explainerAuthoring, /Hosts differ[^\n]*do not tell the user a link is clickable or was opened in a host where you have not seen that happen/);
+});
+
+test('every README documents the proactive default and the on-demand switch', () => {
+  for (const name of ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md', 'README_KO.md']) {
+    const readme = readFileSync(path.join(repositoryRoot, name), 'utf8');
+    assert.match(readme, /`\[archify explainer: on-demand\]`/, `${name} names the on-demand switch`);
+    assert.match(readme, /`\[archify explainer: always-on\]`/, `${name} names the opt-in always-on mode`);
+    assert.match(readme, /~\/\.codex\/AGENTS\.md/, `${name} names a global rules file`);
   }
 });
