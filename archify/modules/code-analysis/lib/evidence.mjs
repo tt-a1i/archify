@@ -236,14 +236,19 @@ export function verifyTask(task, root, { now = new Date() } = {}) {
       reportBinding = f.external.binding === 'changed' || source?.binding === 'changed' ? 'changed'
         : source?.tool === f.external.tool && source.binding === 'verified' && f.external.binding === 'verified' ? 'verified' : 'unverified';
       // A report may depend on scanned files beyond the cited location (for
-      // example another file's use of an exported name). Generation-time byte
-      // hashes preserve that scope without loading those files into the graph.
-      for (const [file, expected] of Object.entries(source?.sourceHashes || {})) {
-        const current = readFile(file);
-        if (current.status === 'missing' || (current.status === 'ok' && current.byteSha256 !== expected)) {
-          reportBinding = 'changed'; scopeReason = `scanned file ${file} ${current.status === 'missing' ? 'is missing' : 'changed since the external report was generated'}`; break;
+      // example another file's use of an exported name). Recheck each retained
+      // assertion in its original representation: bytes and decoded text differ
+      // for encodings and BOMs.
+      for (const [hashes, kind] of [[source?.sourceHashes, 'bytes'], [source?.sourceTextHashes, 'text']]) {
+        for (const [file, expected] of Object.entries(hashes || {})) {
+          const current = readFile(file);
+          const actual = current.status === 'ok' ? kind === 'text' ? sha256(current.text) : current.byteSha256 : null;
+          if (current.status === 'missing' || (current.status === 'ok' && actual !== expected)) {
+            reportBinding = 'changed'; scopeReason = `scanned file ${file} ${current.status === 'missing' ? 'is missing' : 'changed since the external report was generated'}`; break;
+          }
+          if (current.status !== 'ok' && reportBinding !== 'changed') { reportBinding = 'unverified'; scopeReason = `scanned file ${file} could not be checked (${current.reason})`; }
         }
-        if (current.status !== 'ok' && reportBinding !== 'changed') { reportBinding = 'unverified'; scopeReason = `scanned file ${file} could not be checked (${current.reason})`; }
+        if (reportBinding === 'changed') break;
       }
       if (reportBinding !== 'verified') {
         status = worst([status, reportBinding === 'changed' ? 'changed' : 'unverifiable']);

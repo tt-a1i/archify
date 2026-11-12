@@ -143,12 +143,15 @@ export function importExternal({ root, config = {}, facts = null }) {
       const code = `${ai ? 'external' : 'conventions'}/${toolSlug(tool)}`;
       const severityPolicy = ai ? 'warning' : settings.severity || 'warning';
       const importSettingsDigest = sha256(JSON.stringify({ format: source.format, tool, severityPolicy, pathBase: source.pathBase || '.', pathMappings: source.pathMappings || [], author: source.author || null }));
-      const sourceHashEntries = [];
+      const sourceHashEntries = [], sourceTextHashEntries = [];
       for (const [file, assertions] of evidenceHashes) {
         const hashes = [...new Set(assertions.filter(a => a.kind === 'bytes').map(a => a.hash))];
         if (hashes.length === 1) sourceHashEntries.push([file, hashes[0]]);
+        const textHashes = [...new Set(assertions.filter(a => a.kind === 'text').map(a => a.hash))];
+        if (textHashes.length === 1) sourceTextHashEntries.push([file, textHashes[0]]);
       }
       const sourceHashes = Object.fromEntries(sourceHashEntries.sort(([a], [b]) => textOrder(a, b)));
+      const sourceTextHashes = Object.fromEntries(sourceTextHashEntries.sort(([a], [b]) => textOrder(a, b)));
       const context = {
         id: sourceId, code, format: source.format, tool, toolVersion: manifest?.toolVersion ?? run.version ?? null,
         adapterRevision: source.format === 'sarif' ? 2 : 1, identityRevision: source.format === 'sarif' ? 2 : 1, reportSha256: digest,
@@ -157,6 +160,7 @@ export function importExternal({ root, config = {}, facts = null }) {
         coverage: { files: scopeFiles, complete: manifest?.scope?.complete ?? null },
         binding, suppressed: run.suppressed || 0, notices,
         ...(Object.keys(sourceHashes).length ? { sourceHashes } : {}),
+        ...(Object.keys(sourceTextHashes).length ? { sourceTextHashes } : {}),
         ...(manifest?.command ? { command: manifest.command } : {}), reportFile: source.file,
       };
       const seenRecords = new Set(), identityCounts = new Map();

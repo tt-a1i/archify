@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { buildTask, renderTaskMarkdown, validateTask } from '../lib/task.mjs';
 import { createRangeDigest, verifyTask } from '../lib/evidence.mjs';
+import { importExternal } from '../lib/external.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -145,6 +146,50 @@ test('external task: unknown report binding stays unverifiable after source byte
   assert.equal(checked.evidence.findings[ID].sourceStatus, 'valid');
   assert.equal(checked.evidence.findings[ID].reportBinding, 'unverified');
   assert.deepEqual(schemaErrors('ai-task', checked), []);
+});
+
+test('SARIF text assertions keep uncited scanned files bound during task verification', (t) => {
+  const run = capturedRun(t);
+  const report = { version: '2.1.0', runs: [{
+    tool: { driver: { name: 'ExampleLint', version: '1.0' } },
+    artifacts: [
+      { location: { uri: 'main.ts' }, contents: { text: run.files['main.ts'] } },
+      { location: { uri: 'worker.py' }, contents: { text: run.files['worker.py'] } },
+    ],
+    results: [{ ruleId: 'example-rule', message: { text: 'Review the exported value.' }, locations: [
+      { physicalLocation: { artifactLocation: { index: 0 }, region: { startLine: 1 } } },
+    ] }],
+  }] };
+  fs.writeFileSync(path.join(run.root, 'report.json'), JSON.stringify(report));
+  const imported = importExternal({ root: run.root, facts: run.facts, config: { external: { sources: [{ id: 'example-sarif', format: 'sarif', file: 'report.json' }] } } });
+  assert.equal(imported.sources[0].binding, 'verified');
+  assert.equal(imported.sources[0].sourceHashes, undefined, 'the report contains only text assertions');
+  const findings = {
+    ...run.findings,
+    diagnostics: imported.diagnostics,
+    externalEvidence: imported.evidenceFiles,
+    analysis: { ...run.findings.analysis, external: imported.sources },
+  };
+  assert.deepEqual(schemaErrors('findings', findings), []);
+  const id = imported.diagnostics[0].id;
+  const task = buildTask({ findings, facts: run.facts, ids: [id] });
+  assert.deepEqual(task.source.external[0].sourceTextHashes, {
+    'main.ts': hash(run.files['main.ts']),
+    'worker.py': hash(run.files['worker.py']),
+  });
+  assert.deepEqual(schemaErrors('ai-task', task), []);
+  assert.equal(verifyTask(task, run.root).evidence.status, 'valid');
+  fs.writeFileSync(path.join(run.root, 'worker.py'), `\ufeff${run.files['worker.py']}`);
+  assert.equal(verifyTask(task, run.root).evidence.status, 'valid', 'a text-only assertion accepts an equivalent decoded Python BOM');
+  fs.writeFileSync(path.join(run.root, 'worker.py'), `\ufeff${run.files['worker.py'].replace('ready', 'changed')}`);
+  const stale = verifyTask(task, run.root);
+  assert.equal(stale.evidence.findings[id].reportBinding, 'changed');
+  assert.equal(stale.evidence.status, 'changed');
+  const taskFile = path.join(run.root, 'task.json');
+  fs.writeFileSync(taskFile, JSON.stringify(task));
+  const required = spawnSync(process.execPath, [BIN, '--verify', taskFile, '--root', run.root, '--require-valid', '--json'], { encoding: 'utf8', timeout: 30000 });
+  assert.equal(required.status, 1, required.stderr);
+  assert.equal(JSON.parse(required.stdout).evidence, 'changed');
 });
 
 test('external task: verified report binding cannot upgrade an exhausted source digest budget', (t) => {

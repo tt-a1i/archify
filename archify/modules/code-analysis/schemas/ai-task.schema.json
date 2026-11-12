@@ -118,6 +118,7 @@
               "tool": { "type": "string", "minLength": 1 },
               "binding": { "enum": ["verified", "unverified", "changed"] },
               "sourceHashes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" }, "description": "Generation-time source byte hashes retained for report binding verification." },
+              "sourceTextHashes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" }, "description": "Embedded source text hashes retained separately from byte assertions for report binding verification." },
               "command": { "type": "string" }
             }
           }

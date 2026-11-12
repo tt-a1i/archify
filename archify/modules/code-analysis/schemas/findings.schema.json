@@ -186,7 +186,8 @@
         "command": { "type": "string" }, "reportFile": { "type": "string" },
         "severityPolicy": { "enum": ["source", "warning"] },
         "importSettingsDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "sourceHashes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+        "sourceHashes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" } },
+        "sourceTextHashes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
       }
     }
   }

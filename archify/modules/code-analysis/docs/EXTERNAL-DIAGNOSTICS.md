@@ -110,7 +110,7 @@ The angle-bracket values are placeholders, not valid digest values. Supply lower
 
 Generate the manifest from the same frozen source/configuration as the report. Creating source hashes later from an edited working tree cannot establish the report's original inputs. A matching Git HEAD alone does not prove that the working tree was clean.
 
-Manifest raw-byte hashes, SARIF artifact hashes and embedded source text are checked against their respective byte/text representations. This matters for Python encodings and BOMs. Retained raw-byte assertions appear as `analysis.external[].sourceHashes`; task verification can recheck scanned files beyond the finding's own citation.
+Manifest raw-byte hashes, SARIF artifact hashes and embedded source text are checked against their respective byte/text representations. This matters for Python encodings and BOMs. Retained raw-byte assertions appear as `analysis.external[].sourceHashes`; embedded text assertions appear separately as `analysis.external[].sourceTextHashes`. Task verification rechecks both across scanned files beyond the finding's own citation.
 
 | Recorded state | Meaning |
 |---|---|
@@ -156,7 +156,7 @@ Related excerpts remain in the task's read scope, while automatic modification s
 
 Stable finding identity is separate from evidence freshness. Source fingerprints or a versioned source-context fallback help match a finding after line movement. Precise location hashes identify the excerpts; the finding's source-only `evidenceDigest` covers whole cited files because a lint rule can depend on other lines in the same file. A code change can therefore require review even when the highlighted line is unchanged.
 
-Task verification preserves the source-byte result as `sourceStatus` and the report relationship as `reportBinding`. Unchanged current code cannot make an unverified report valid. A changed scanned file in retained `sourceHashes` also invalidates the report binding, including a scanned file beyond the cited location. Missing or ambiguous source evidence remains explicit.
+Task verification preserves the captured-source result as `sourceStatus` and the report relationship as `reportBinding`. Unchanged current code cannot make an unverified report valid. A changed scanned file in retained `sourceHashes` or `sourceTextHashes` invalidates the report binding, including a scanned file beyond the cited location. Missing or ambiguous source evidence remains explicit.
 
 Generation commands are included only when supplied through the source manifest or explicit task arguments. They are instructions to evaluate, never commands executed by import/task generation. Re-running Archify against the same saved lint report does not re-run lint; regenerate the report with the original settings and scope, then import it again.
 
