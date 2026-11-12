@@ -96,6 +96,37 @@ test('check: threshold errors stay errors and partial coverage does not change t
   }
 });
 
+test('check: investigation leads carry the message, location and a task command', (t) => {
+  const root = fixture(t, { 'src/app.py': 'def f(x):\n    if x:\n        return 1\n    return 0\n' });
+  const out = path.join(root, 'out');
+  const config = path.join(root, 'analysis.json');
+  fs.writeFileSync(config, JSON.stringify({ rules: { complexity: { function: { warning: { complexity: 0 } } } } }));
+
+  const json = check(root, ['--language', 'py', '--config', config, '--out', out, '--json']);
+  const receipt = JSON.parse(json.stdout);
+  assert.equal(receipt.investigation.leads.length, receipt.priorities.length);
+  const lead = receipt.investigation.leads[0];
+  assert.equal(lead.id, receipt.priorities[0]);
+  assert.equal(lead.where, 'src/app.py:1');
+  assert.match(lead.message, /maintenance signal, not a defect/);
+  assert.match(lead.task, /--finding COMP-[0-9a-f]{12}$/);
+  assert.match(lead.task, /--format json /);
+  assert.equal(receipt.investigation.shell, process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh');
+  assert.match(receipt.investigation.drillDown, /--finding ['"]<id>['"]/);
+  assert.deepEqual(receipt.ruleCounts, [{ code: 'complexity/function', severity: 'warning', count: 1 }]);
+
+  const overview = JSON.parse(fs.readFileSync(path.join(out, 'overview.json'), 'utf8'));
+  assert.deepEqual(overview.investigation.leads.map((l) => l.id), receipt.priorities);
+  assert.equal(overview.investigation.leads[0].where, 'src/app.py:1');
+
+  const text = check(root, ['--language', 'py', '--config', config, '--out', path.join(root, 'text-out')]);
+  assert.match(text.stdout, /Start here: 1 ranked lead\./);
+  assert.match(text.stdout, /Drill down \((?:cmd\.exe|POSIX sh)\): node .*code-analysis task /);
+
+  const noOut = check(root, ['--language', 'py', '--config', config]);
+  assert.match(noOut.stdout, /Re-run with --out <dir>/);
+});
+
 function textWithParseError(parseError) {
   return formatText({
     verdict: 'ok',

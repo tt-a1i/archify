@@ -104,7 +104,10 @@ export function analyzeDuplicates(graph, config, facts) {
   const engine = { name: 'jscpd', version: JSCPD_VERSION, adapterRevision: 2 };
   const settings = { mode: 'weak', identifiers: options.identifiers, minTokens: options.minTokens, minLines: options.minLines, maxFileBytes: options.maxFileBytes };
   const owned = new Set(Object.keys(graph.fileModules || {}));
-  const selected = facts.files.filter(f => owned.has(f.path)).sort((a, b) => compare(a.path, b.path));
+  // Retain the omission record when the module graph excludes vendored sources as generated.
+  const selected = facts.files
+    .filter(f => owned.has(f.path) || (f.role === 'generated' && VENDORED.test(f.path)))
+    .sort((a, b) => compare(a.path, b.path));
   const parseErrors = new Set((facts.parse_errors || []).map(e => e.path));
   const coverage = { selected: selected.map(f => f.path), analyzed: [], omitted: [], complete: false };
   const staged = [];

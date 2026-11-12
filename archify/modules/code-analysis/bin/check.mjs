@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
+import { taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
   archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
@@ -50,7 +51,7 @@ export async function runCheck(argv) {
   await ensureDependencies();
   const { extractFacts, buildGraph, evaluateGraph, validateFindings, externalIdentity, loadBaseline, loadPrevious, stableJson, reviewSummary, readJsonInput } = await import('../lib/analysis.mjs');
   const { reviewFindings, baselineFrom, isOpen } = await import('../lib/review.mjs');
-  const { buildOverview } = await import('../overlay/overview.mjs');
+  const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');
   const { findingModules } = await import('../overlay/inject.mjs');
 
   const root = path.resolve(repo);
@@ -124,11 +125,25 @@ export async function runCheck(argv) {
       language: facts.repository.language, files: facts.files.length, rules: findings.rules,
       ...(findings.analysis?.duplicates ? { duplicates: findings.analysis.duplicates } : {}),
       verdict: overview.verdict, counts: overview.counts,
-      gate: { failOn, newOnly, ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: where(d), message: d.message })) },
+      gate: { failOn, newOnly, ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: findingWhere(d), message: d.message })) },
       review: reviewSummary(review),
       comparisonReasons: review.comparison ? review.comparison.reasons : [],
       staleBaseline: review.baseline ? review.baseline.stale : [],
       priorities: overview.priorities,
+      // How the open findings divide by rule. The overview groups keep every
+      // id, including accepted ones; the receipt needs only open sizes, so they
+      // agree with `counts` and a dominant rule is visible before choosing a lead.
+      ruleCounts: openRuleCounts(overview.findings),
+      // The same three leads as `priorities`, with message, location and a
+      // ready-to-run task command attached. The data already exists in the
+      // overview and the diagnostics; this only saves a manual join.
+      investigation: {
+        shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh',
+        leads: overview.investigation.leads.map((lead) => ({ ...lead, task: taskCommand(CLI, lead.id, root, out) })),
+        drillDown: out
+          ? taskCommand(CLI, '<id>', root, out)
+          : 'Re-run with --out <dir> to drill down with the task command.',
+      },
       // Already computed for the overview. Repeated here so a reader of the CLI
       // output sees a file that failed to parse, or files left out because a
       // language was selected, without opening the output directory. The gate
@@ -142,18 +157,21 @@ export async function runCheck(argv) {
   };
 }
 
-// The most useful single location for a finding, as path:line when known.
-export function where(d) {
-  const s = d.subject || {};
-  if (d.code === 'redundancy/duplicate-block' && Array.isArray(s.locations)) return s.locations.map(l => `${l.file}:${l.line}`).join(' <-> ');
-  if (s.file) return s.line ? `${s.file}:${s.line}` : s.file;
-  const first = d.evidence?.imports?.[0];
-  if (first) return `${first.file}:${first.line}`;
-  if (Array.isArray(s.files) && s.files.length) return s.files[0];
-  if (s.module) return `module ${s.module}`;
-  if (Array.isArray(s.modules)) return `modules ${s.modules.join(', ')}`;
-  return d.code;
+export { findingWhere as where } from '../overlay/overview.mjs';
+
+function openRuleCounts(findings) {
+  const byCode = new Map();
+  for (const f of findings) {
+    if (f.status === 'accepted') continue;
+    const entry = byCode.get(f.code) || { code: f.code, severity: f.severity, count: 0 };
+    entry.count += 1;
+    if (SEVERITY[f.severity] < SEVERITY[entry.severity]) entry.severity = f.severity;
+    byCode.set(f.code, entry);
+  }
+  return [...byCode.values()].sort((a, b) => SEVERITY[a.severity] - SEVERITY[b.severity] || b.count - a.count || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
 }
+
+const CLI = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
 
 export function formatText(r) {
   if (r.action === 'update-baseline') return `Baseline written: ${r.baseline}\n  ${r.entries} accepted findings (${r.kept} kept, ${r.added} added, ${r.dropped} no longer found and dropped)`;
@@ -182,6 +200,11 @@ export function formatText(r) {
     const { engine, coverage } = r.duplicates;
     lines.push(`  Duplicate detection: ${engine.name} ${engine.version} · ${coverage.analyzed.length}/${coverage.selected.length} selected files analyzed${coverage.complete ? '' : ' · incomplete coverage'}`);
     if (!coverage.complete) lines.push('  Duplicate detection did not cover every selected file. Empty findings do not mean the full scope was checked; see duplicates.coverage in --json.');
+  }
+  if (r.investigation?.leads?.length) {
+    lines.push(`Start here: ${r.investigation.leads.length} ranked lead${r.investigation.leads.length === 1 ? '' : 's'}. Each is static evidence, not a proven defect; read the cited source first.`);
+    r.investigation.leads.forEach((lead, i) => lines.push(`  ${i + 1}. ${lead.severity.padEnd(7)} ${lead.code}  ${lead.where ?? lead.id}  [${lead.id}]`));
+    if (r.investigation.drillDown) lines.push(`  Drill down (${r.investigation.shell}): ${r.investigation.drillDown}`);
   }
   if (r.review.comparison) {
     const c = r.review.comparison;
