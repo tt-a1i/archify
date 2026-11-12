@@ -27,6 +27,11 @@ the findings, their code locations and captured excerpts, what to keep, when it
 is done, and what is still to confirm. With --root the cited code is compared
 with the current working tree (valid, changed, missing, unverifiable);
 without it the task is marked as captured, not checked.
+Imported findings carry their original tool/rule, report provenance and any
+supplemental source captured in findings.json. Checking current source bytes
+does not establish that an imported report was generated from those bytes;
+unverified report binding also fails --require-valid. Regenerate reports with
+their original tools/settings before importing and comparing updated results.
 --command adds a verification command you know is right for the project
 (repeatable); none is guessed. --require-valid exits 1 unless the evidence is valid.
 Question mode prepares source orientation for the host Agent workflow, not a completed
@@ -139,7 +144,9 @@ export async function runTask(argv, { now = new Date() } = {}) {
   const exitCode = options['--require-valid'] && !valid ? 1 : 0;
   return {
     exitCode, body: out ? null : body,
-    receipt: receipt(exitCode ? 'failed' : 'ok', { command: 'task', action: options['--verify'] ? 'verify' : 'create', taskId: task.taskId, findings: task.findings.map((f) => f.id), evidence: task.evidence.status, locations: task.locations.length, out, format: options['--format'] }),
+    receipt: receipt(exitCode ? 'failed' : 'ok', { command: 'task', action: options['--verify'] ? 'verify' : 'create', taskId: task.taskId, findings: task.findings.map((f) => f.id), evidence: task.evidence.status, locations: task.locations.length,
+      ...(task.source.external ? { external: task.source.external.map((s) => ({ id: s.id, tool: s.tool, binding: s.binding })) } : {}),
+      out, format: options['--format'] }),
   };
 }
 

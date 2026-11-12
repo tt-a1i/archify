@@ -24,7 +24,7 @@
   "properties": {
     "schema_version": { "const": 1 },
     "kind": { "const": "archify-code-analysis-task" },
-    "taskId": { "type": "string", "pattern": "^TASK-[0-9a-f]{12}$", "description": "Hash of the finding ids and their evidence digests: the same findings with the same evidence give the same id." },
+    "taskId": { "type": "string", "pattern": "^TASK-[0-9a-f]{12}$", "description": "Hash of the finding ids, source evidence digests and, for external findings, the source claim review digests." },
     "title": { "type": "string", "minLength": 1 },
     "findings": {
       "type": "array",
@@ -33,12 +33,43 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["id", "code", "dimension", "severity", "confidence"],
+        "allOf": [{
+          "if": { "properties": { "confidence": { "type": "null" } }, "required": ["confidence"] },
+          "then": { "required": ["external"] }
+        }],
         "properties": {
           "id": { "$ref": "#/$defs/findingId" },
           "code": { "type": "string" },
           "dimension": { "type": "string" },
           "severity": { "enum": ["error", "warning", "info"] },
-          "confidence": { "type": "number" },
+          "confidence": { "type": ["number", "null"], "description": "External claims may have no independently established confidence; null requires external provenance." },
+          "external": {
+            "type": "object",
+            "required": ["sourceId", "tool", "ruleId", "originalSeverity", "reportPointer", "identityRevision", "binding", "reviewDigest", "locations"],
+            "description": "Captured external claim and provenance, preserved from the imported finding. Source-only evidenceDigest remains separate.",
+            "properties": {
+              "sourceId": { "type": "string", "minLength": 1 },
+              "tool": { "type": "string", "minLength": 1 },
+              "ruleId": { "type": ["string", "null"] },
+              "originalSeverity": { "oneOf": [{ "type": "string" }, { "type": "number" }, { "type": "null" }] },
+              "reportPointer": { "type": "string" },
+              "identityRevision": { "type": "integer", "minimum": 1 },
+              "binding": { "enum": ["verified", "unverified", "changed"] },
+              "reviewDigest": { "$ref": "#/$defs/sha" },
+              "locations": {
+                "type": "array", "items": {
+                  "type": "object", "required": ["file"],
+                  "properties": {
+                    "file": { "type": "string", "minLength": 1 },
+                    "line": { "type": "integer", "minimum": 1 },
+                    "endLine": { "type": "integer", "minimum": 1 },
+                    "column": { "type": "integer", "minimum": 1 },
+                    "endColumn": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              }
+            }
+          },
           "review": { "type": "object", "description": "Baseline / comparison status from review.json, when known." },
           "evidenceDigest": {
             "type": "object", "required": ["files", "sha256"],
@@ -77,7 +108,21 @@
         "snapshotId": { "type": ["string", "null"] },
         "configDigest": { "type": ["string", "null"] },
         "analyzer": { "type": ["object", "null"] },
-        "gitHead": { "type": ["string", "null"], "description": "Context only; the analyzed text is the working tree." }
+        "gitHead": { "type": ["string", "null"], "description": "Context only; the analyzed text is the working tree." },
+        "external": {
+          "type": "array", "description": "Only the external report contexts used by the selected findings; never a statement that the tools were rerun by this task.",
+          "items": {
+            "type": "object", "required": ["id", "tool", "binding"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "tool": { "type": "string", "minLength": 1 },
+              "binding": { "enum": ["verified", "unverified", "changed"] },
+              "sourceHashes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" }, "description": "Generation-time source byte hashes retained for report binding verification." },
+              "sourceTextHashes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" }, "description": "Embedded source text hashes retained separately from byte assertions for report binding verification." },
+              "command": { "type": "string" }
+            }
+          }
+        }
       }
     },
     "locations": {
@@ -88,6 +133,7 @@
         "required": ["findingId", "file", "kind", "sha256", "excerpt"],
         "properties": {
           "findingId": { "$ref": "#/$defs/findingId" },
+          "role": { "enum": ["primary", "related"], "description": "Related source locations are readable context and do not grant modification scope." },
           "startColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 column in the captured source." },
           "endColumn": { "type": "integer", "minimum": 1, "description": "Exclusive one-based UTF-16 column in the captured source." },
           "startOffset": { "type": "integer", "minimum": 0, "description": "Zero-based UTF-16 offset in the captured source." },
@@ -144,7 +190,7 @@
         "status": { "$ref": "#/$defs/status" },
         "checkedAt": { "type": ["string", "null"], "description": "ISO time of the last check against the working tree; null when only captured." },
         "reason": { "type": ["string", "null"] },
-        "findings": { "type": "object", "description": "Per finding id: { status, reason, digestMatches }.", "additionalProperties": { "type": "object", "required": ["status"], "properties": { "status": { "$ref": "#/$defs/status" }, "reason": { "type": "string" }, "digestMatches": { "type": ["boolean", "null"] } } } }
+        "findings": { "type": "object", "description": "Per finding: source checks and, for external claims, report binding remain distinguishable.", "additionalProperties": { "type": "object", "required": ["status"], "properties": { "status": { "$ref": "#/$defs/status" }, "reason": { "type": "string" }, "digestMatches": { "type": ["boolean", "null"] }, "sourceStatus": { "$ref": "#/$defs/status" }, "reportBinding": { "enum": ["verified", "unverified", "changed", "missing"] } } } }
       }
     },
     "instructions": { "type": "array", "minItems": 1, "items": { "type": "string" } }
