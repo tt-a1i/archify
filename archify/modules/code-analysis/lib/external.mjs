@@ -38,7 +38,7 @@ export function importExternal({ root, config = {}, facts = null }) {
   let absRoot;
   try { absRoot = fs.realpathSync(root); } catch { configError('External imports require a readable analysis root.'); }
   const captured = new Map((facts?.files || []).filter(f => typeof f.sourceText === 'string').map(f => [f.path, f.sourceText]));
-  const supplemental = new Map(), fileCache = new Map(), fingerprintCache = new Map();
+  const supplemental = new Map(), fileCache = new Map(), fingerprintCache = new Map(), comparisonLines = new Map();
   const excluded = matcher(config.exclude || []);
   let capturedBytes = 0, recordCount = 0;
   const sourceText = (file, persist = false) => {
@@ -194,12 +194,26 @@ export function importExternal({ root, config = {}, facts = null }) {
         const severity = severityPolicy === 'warning' ? (record.severity === 'info' && !ai ? 'info' : 'warning') : record.severity;
         const primary = { ...(locations.find(loc => loc.role !== 'related') || {}) };
         delete primary.role;
+        // Keep a comparison-only anchor separate from finding IDs and approval digests.
+        let comparisonLineSha256;
+        if (source.format === 'eslint' && !record.fingerprint && recordBinding === 'verified' && locations.length === 1
+          && primary.line && primary.column && (primary.endLine ?? primary.line) === primary.line) {
+          if (!comparisonLines.has(primary.file)) {
+            const value = sourceText(primary.file);
+            comparisonLines.set(primary.file, { lines: value.status === 'ok' ? value.text.split(/\r\n|\r|\n/) : [], hashes: new Map() });
+          }
+          const { lines, hashes } = comparisonLines.get(primary.file);
+          const line = lines[primary.line - 1];
+          if (line && !hashes.has(primary.line)) hashes.set(primary.line, sha256(line));
+          comparisonLineSha256 = hashes.get(primary.line);
+        }
         const external = {
           sourceId, tool, ruleId: record.ruleId ?? null, originalSeverity: record.originalSeverity ?? null,
           ...(record.severityDefaulted ? { severityDefaulted: true } : {}),
           ...(record.helpUri ? { helpUri: record.helpUri } : {}),
           reportPointer: record.pointer, identityRevision: context.identityRevision, fingerprint,
           binding: recordBinding,
+          ...(comparisonLineSha256 ? { comparisonLineSha256 } : {}),
           reviewDigest: sha256(JSON.stringify([tool, context.toolVersion, context.configDigest, context.adapterRevision, context.identityRevision, importSettingsDigest, record.ruleId, record.message, record.originalSeverity, severity, record.helpUri, record.suggestions, reviewOrigin(record.origin), ...(source.format === 'sarif' ? [locations] : []), ...(component?.identityAmbiguous ? [context.reportSha256] : [])])),
           locations,
           origin: { ...(record.origin || {}), nativeLocations: record.locations },
