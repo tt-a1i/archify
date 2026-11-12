@@ -243,6 +243,30 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 
 Issue, Pull Request, 실제 사용 사례 다이어그램을 환영합니다. [기여 가이드](CONTRIBUTING.md)에서 시작하세요. 실패는 재현 가능한 버그 양식으로 제보하고, 검증된 다이어그램은 [커뮤니티 Showcase 양식](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)으로 제출할 수 있습니다.
 
+## Archify 지원하기
+
+Archify가 도움이 되었다면, 지속적인 개발을 지원해 주실 수 있습니다. 프로젝트가 계속 이어지도록 응원해 주셔서 감사합니다 ❤️
+
+<details>
+<summary>WeChat Pay로 지원하기</summary>
+
+아래 QR 코드를 WeChat으로 스캔하거나, 이미지를 저장한 뒤 WeChat에서 인식하세요.
+
+<p align="center"><img src="docs/assets/support/wechat-pay.png" alt="Archify 유지 관리자를 지원하는 WeChat Pay QR 코드" width="240" /></p>
+
+</details>
+
+<details>
+<summary>Alipay로 지원하기</summary>
+
+아래 QR 코드를 Alipay로 스캔하거나, 이미지를 저장한 뒤 Alipay에서 인식하세요.
+
+<p align="center"><img src="docs/assets/support/alipay.png" alt="Archify 유지 관리자를 지원하는 Alipay QR 코드(이름은 가려져 있습니다)" width="240" /></p>
+
+</details>
+
+Archify를 사용하고, 공유하고, 버그를 제보하고, 개선에 기여하는 것도 프로젝트에 도움이 됩니다.
+
 ## 기여자
 
 Archify를 함께 만들어 준 모든 분께 감사합니다. [팔로우해 보세요.](https://github.com/tt-a1i/archify/graphs/contributors) ❤️
