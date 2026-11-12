@@ -160,5 +160,3 @@ test('imported findings can be filtered by rule, severity, source and status', {
   await evaluate("document.querySelector('#bauify-overview .finding-clear').click()");
   assert.match(await evaluate("document.querySelector('#bauify-overview .counts').innerText"), /2 findings/);
 });
-
-\n

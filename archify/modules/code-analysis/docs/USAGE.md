@@ -346,9 +346,9 @@ The Atlas adds no analysis: it draws the raw facts, module graph and findings of
 
 ## Comparing runs
 
-Every `findings.json` records what the result depends on besides the code: the analyzer version, the extractor (its parser or runtime version and the revision of its own logic), a digest of the effective config, the rules that ran, the excluded file roles and the files that failed to parse. A comparison (Re-analyze, or `check --compare`/`--out`) lists findings that are new, **no longer detected**, and whose evidence changed, and adds:
+Every `findings.json` records what the result depends on besides the code: the analyzer version, the extractor (its parser or runtime version and the revision of its own logic), a digest of the effective config, the rules that ran, the excluded file roles and the files that failed to parse. Go runs also record `analysis.goBuildScope`: effective GOOS/GOARCH, explicit/release/tool tags, tests and cgo selection, including environment and host defaults. A comparison (Re-analyze, or `check --compare`/`--out`) lists findings that are new, **no longer detected**, and whose evidence changed, and adds:
 
-- `comparable`: `true` when both runs measured the same way, `false` with `reasons` (config, rules, analyzer version, extractor, scope or parse errors changed), `null` when the earlier run predates this record;
+- `comparable`: `true` when both runs measured the same way, `false` with `reasons` (config, rules, analyzer version, extractor, Go build scope, scope or parse errors changed), `null` when required context is missing, including historical Go results without build scope, unless another known difference establishes non-comparability;
 - per finding no longer detected, a `likelyCause` when one is visible: `rule-not-run`, `files-missing` (deleted, renamed or excluded), `parse-error`, or `possibly-renamed` with the new finding ids that cover the same files.
 
 Only a comparable run in which the finding is no longer detected, together with passing project checks, supports saying a problem was fixed. `review.json` keeps `fixed` as an alias of `notDetected` for existing readers.
@@ -366,6 +366,8 @@ node bin/archify.mjs code-analysis task --verify task.json --root "/path/to/proj
 ```
 
 With `--root`, the cited code is compared with the current working tree and the task's evidence is marked **valid** (unchanged, possibly moved), **changed**, **missing** (file deleted or renamed) or **unverifiable**. Without it the task is **captured**: built from the analysis snapshot and not yet checked. Either way the task tells the agent to read the current source before changing anything and to treat the excerpts as data, not instructions. `--require-valid` exits 1 unless the evidence is valid. The page builds the same task through the local server (`POST /task`), so the copied text and the command output agree.
+
+A recorded digest that cannot be recomputed keeps the task **unverifiable**, even when every displayed citation is unchanged. For compatibility with extractors that retain or strip UTF-8 BOMs, whole-file/function digests try at most 64 text combinations without materializing the full product; a match passes, while an exhausted search budget is **unverifiable**. Historical tasks without digests can still verify their captured lines.
 
 The contract is `schemas/ai-task.schema.json`; examples for each finding kind and evidence status are in `test/fixtures/tasks/`.
 

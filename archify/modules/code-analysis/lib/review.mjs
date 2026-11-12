@@ -113,7 +113,8 @@ function comparisonOf({ previous, before, current, findings, ids, analysis, file
 }
 
 // Whether two runs measured the same way. Returns { comparable, reasons[] }:
-// comparable is null when either side has no recorded analysis context.
+// comparable is null when required context is unrecorded, unless another
+// known difference already establishes that the runs are not comparable.
 export function comparability(before, after) {
   if (!before || !after) return { comparable: null, reasons: [{ code: 'context-missing', message: `The ${before ? 'current' : 'previous'} run recorded no analysis context (written by an older version); differences cannot be attributed to code changes alone.` }] };
   const reasons = [];
@@ -133,6 +134,11 @@ export function comparability(before, after) {
   const externalContent = (context) => (context.externalDiagnostics || []).map(({ format, sha256, findings, rules }) => ({ format, sha256, findings, rules }));
   if (JSON.stringify(externalContent(before)) !== JSON.stringify(externalContent(after))) add('external-diagnostics-changed', 'The imported diagnostic content, formats or rule inventory changed.');
   if (JSON.stringify(before.concentrationContext || null) !== JSON.stringify(after.concentrationContext || null)) add('concentration-denominator-changed', 'The module count or analyzed LOC denominator used by concentration changed.');
+  if (before.language === 'go' && after.language === 'go') {
+    const left = before.goBuildScope, right = after.goBuildScope;
+    if (!left || !right) add('go-build-scope-missing', 'At least one Go run recorded no effective build scope; platform and build-tag selection cannot be compared.');
+    else if (!['goos', 'goarch', 'cgo', 'tests', 'tags', 'releaseTags', 'toolTags'].every((key) => JSON.stringify(left[key]) === JSON.stringify(right[key]))) add('go-build-scope-changed', 'The effective Go platform, build tags, test or cgo selection changed.');
+  }
   const rulesBefore = before.ruleVersions || {}, rulesAfter = after.ruleVersions || {};
   const removed = Object.keys(rulesBefore).filter((r) => !(r in rulesAfter)).sort(compareText);
   const added = Object.keys(rulesAfter).filter((r) => !(r in rulesBefore)).sort(compareText);
@@ -157,7 +163,7 @@ export function comparability(before, after) {
   if (roles(before.coverage) !== roles(after.coverage)) add('scope-changed', 'Excluded file roles changed.');
   const newParseErrors = (after.coverage?.parseErrors || []).filter((f) => !(before.coverage?.parseErrors || []).includes(f));
   if (newParseErrors.length) add('parse-errors', `${newParseErrors.length} file${newParseErrors.length === 1 ? '' : 's'} failed to parse this time: ${newParseErrors.slice(0, 5).join(', ')}${newParseErrors.length > 5 ? ', …' : ''}.`);
-  return { comparable: reasons.length === 0, reasons };
+  return { comparable: reasons.some((r) => r.code !== 'go-build-scope-missing') ? false : reasons.length ? null : true, reasons };
 }
 
 // A finding counts against a gate unless it is accepted with unchanged evidence.
