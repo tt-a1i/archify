@@ -68,6 +68,11 @@
         "evidence": {
           "$ref": "#/$defs/refs"
         },
+        "span": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
         "reasons": {
           "type": "array",
           "items": {

@@ -79,6 +79,8 @@ Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐�
 평균은 거의 그대로야. 원인은 무엇이고 어떻게 조사해야 해?
 ```
 
+기본적으로 복잡한 흐름, 문제 진단 결과, 선택지 비교, 테스트 보고서 같은 답에서는 요청하지 않아도 에이전트가 페이지를 만듭니다. 답장에는 채팅에서 바로 읽을 수 있는 짧은 결론이 남고, 마지막 줄은 "테스트 보고서 열기" 같은 페이지 링크입니다. 짧은 답, 텍스트만 원하는 요청, 생성에 실패한 페이지에는 페이지도 링크도 붙지 않습니다. 요청할 때만 페이지를 만들게 하려면 에이전트에게 그렇게 말하거나 전역 규칙 파일(`~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md` 등)에 `[archify explainer: on-demand]`를 추가하세요. `[archify explainer: always-on]`은 결론이 있는 모든 답에 간결한 페이지를 붙이며, 이 줄을 지우면 기본 동작으로 돌아갑니다.
+
 라이브 예시: [처음 HTTPS 접속(영어)](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 지연(중국어)](https://archify.si/cases/explainer/p99-tail-latency.html) · [저장소에서 읽은 Archify finalize(중국어)](https://archify.si/cases/explainer/finalize-delivery.html) · [첫 임대 체크리스트(중국어)](https://archify.si/cases/explainer/first-rental.html)
 
 ## 무엇을 보여줄 수 있나요?
