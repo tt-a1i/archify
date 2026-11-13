@@ -117,17 +117,21 @@ corrected after hidden-script and multi-match waits failed.
 - [Core, Skill and package checks](evidence/contracts.txt).
 - [Source/ZIP parity summary](evidence/zip-summary.json) and [archive receipt](evidence/zip.json).
 
-The repository module wrapper passed its two outer tests. After the legacy-graph
-compatibility addition, the final direct module run used Node 22.23.3 and local
+The repository module wrapper passed its two outer tests. On `4b95e64e5`, after the legacy-graph
+compatibility addition, the direct module run used Node 22.23.3 and local
 `--test-concurrency=2`, with 595 passing and 16 skipped cases. Those skips require
 an explicitly configured native jscpd executable; the skipped duplication tests
-were outside this mapping change. The core/Skill/package selection passed 70
+were outside this mapping change. The core/Skill/package selection on that revision passed 70
 cases and skipped two environment-specific archive checks (a noncanonical
 toolchain probe and a Windows-only path). Generated-output checks passed.
 
 The ZIP contains 455 files and was built with official Node 22.23.3 and bundled
 zlib 1.3.1-e00f703. A second build under Pacific/Honolulu produced identical bytes.
-Its SHA256 is `64caa4fa72a52ae4ec48360cbbfeacc246784482e50111e622e98086e982e094`.
+Its SHA256 is `b88b5c0a136494f3dd6c864411d173117aa453b9d5f9647ef4371bcb1b9a3b59`.
 Unpacked normal CLI replay produced identical fixture and self-analysis summaries.
 That replay reused the source checkout's parser dependencies. Remote CI results
 belong to the final submitted head and are recorded on the PR.
+
+## Labs integration follow-up
+
+Labs advanced to `960da7477` during the original head CI. Its #1349 Java class-cycle severity change merged cleanly in source; the sole ZIP conflict was rebuilt from the combined tree using the repository helper. Both histories remain in the merge commit. Java extraction, mapping, coverage and review checks then passed 65/65 with zero skips. Source and unpacked ZIP replay still match, and the combined archive was rebuilt byte-identically across timezones. The earlier broad local logs retain their original revision and scope. Final-head remote CI is recorded on the PR.
