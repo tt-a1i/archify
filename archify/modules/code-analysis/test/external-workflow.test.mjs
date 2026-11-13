@@ -13,6 +13,7 @@ import { RULES } from '../evaluate/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { startAnalysisView } from '../bin/serve.mjs';
 import { formatText } from '../bin/check.mjs';
+import { buildTask, renderTaskMarkdown } from '../lib/task.mjs';
 import { ARCHIFY_AVAILABLE } from './helpers.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -260,4 +261,54 @@ test('external workflow: serve keeps the last complete analysis and tasks after 
   assert.equal(read(findingsFile).diagnostics.some((d) => d.code === 'conventions/ruff'), false);
   const stale = await fetch(`${view.url}/task`, { method: 'POST', headers, body: JSON.stringify({ ids: [ruff.id] }) });
   assert.equal(stale.status, 422, 'a retired source result cannot be exported as a current task');
+});
+
+test('tasks with imported ESLint output require a fresh report without requiring a comparable comparison', (t) => {
+  const f = fixture(t);
+  fs.appendFileSync(path.join(f.root, 'src/main.ts'), 'import "./other";\n');
+  fs.writeFileSync(path.join(f.root, 'src/other.ts'), 'import "./main";\n');
+  write(path.join(f.root, 'reports/eslint.manifest.json'), f.manifest('eslint'));
+  f.config.ignore = f.config.ignore.filter(code => code !== 'coupling/import-cycle');
+  write(f.configFile, f.config);
+  const config = loadConfig(f.configFile);
+  const { facts } = extractFacts(f.root, { language: 'ts', config });
+  const findings = evaluateGraph(buildGraph(facts, config), config, facts, { root: f.root });
+  const native = findings.diagnostics.find(d => d.code === 'coupling/import-cycle');
+  const externalId = findings.diagnostics.find(d => d.code === 'conventions/eslint').id;
+  assert.ok(native, 'fixture produces a native import cycle');
+  for (const ids of [[externalId], [native.id, externalId], [native.id]]) {
+    const task = buildTask({ findings, facts, ids });
+    assert.match(task.toConfirm.join(' '), /producer command and output path/);
+    assert.match(task.acceptance.join(' '), /disappearance alone is not proof/i);
+    assert.match(task.acceptance.join(' '), /verify that no new finding appears in the files changed/);
+    assert.match(task.acceptance.join(' '), /If the comparison is limited, check the previous findings, fresh reports and current source directly before treating this criterion as met/);
+    assert.doesNotMatch(task.acceptance.join(' '), /is marked comparable/);
+    assert.match(task.verification.reanalyze.purpose, /does not run the external tools/);
+    assert.match(task.verification.reanalyze.purpose, /Verify no new finding appears in changed files/);
+  }
+  const nativeOnly = buildTask({ findings, facts, ids: [native.id] });
+  const mixed = buildTask({ findings, facts, ids: [native.id, externalId] });
+  assert.match(renderTaskMarkdown(nativeOnly), /project-eslint .* from reports\/eslint\.json/);
+  assert.match(renderTaskMarkdown(nativeOnly), /project-ruff .* from reports\/ruff\.json/);
+  assert.equal(nativeOnly.source.external, undefined, 'run-level sources are replay context, not evidence for the selected finding');
+  assert.deepEqual(nativeOnly.verification.commands, [], 'commands from unselected sources are not exported');
+  assert.match(renderTaskMarkdown(mixed), /project-ruff .* from reports\/ruff\.json/);
+  assert.deepEqual(mixed.source.external.map(s => s.id), ['project-eslint']);
+  assert.deepEqual(mixed.verification.commands.map(c => c.source), ['external source manifest: project-eslint']);
+  const imported = findings.analysis.external.map(source => ({ ...source,
+    tool: 'untrusted-tool-marker', toolVersion: 'untrusted-version-marker',
+    ...(source.format === 'ruff' ? { reportFile: 'reports/ruff.json\nuntrusted-path-marker' } : {}),
+  }));
+  const untrusted = buildTask({ findings: { ...findings, analysis: { ...findings.analysis, external: imported } }, facts, ids: [native.id] });
+  const exported = renderTaskMarkdown(untrusted);
+  assert.match(exported, /project-eslint .* from .*reports\/eslint\.json/);
+  assert.match(exported, /project-ruff/);
+  assert.doesNotMatch(exported, /untrusted-(?:tool|version|path)-marker/);
+  const rustFacts = { ...facts, repository: { ...facts.repository, language: 'rust' } };
+  const rust = buildTask({ findings, facts: rustFacts, ids: [native.id] });
+  assert.match(rust.acceptance.join(' '), /intentionally retained structural cycle/);
+  assert.match(rust.verification.reanalyze.purpose, /refresh the external reports/);
+  const plain = buildTask({ findings: { ...findings, analysis: { ...findings.analysis, external: [] } }, facts, ids: [native.id] });
+  assert.match(plain.acceptance.join(' '), /comparison is marked comparable/);
+  assert.doesNotMatch(plain.verification.reanalyze.purpose, /external reports/);
 });
