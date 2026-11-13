@@ -79,7 +79,7 @@ A diagram replaces the paragraph that would describe it. When the answer involve
 | A change to code | `@diff` or a ```` ```diff ```` fence |
 | A command, config or code that does not exist yet | Plain fence |
 
-Steps that walk through a diagram belong in the diagram's panel: the page reads them beside it, each step lighting its part, and the reader can step through them. Title each step with the label of the node it points at, so the text and the diagram match at a glance; the detail column says what to do there.
+Steps that walk through a diagram belong in the diagram's panel: the panel automatically receives a full-width 12-column row so the page reads them beside the sticky diagram without needing `span=12`, each step lighting its part. Title each step with the label of the node it points at, so the text and the diagram match at a glance; the detail column says what to do there.
 
 Keep tables to two or three columns so phones and narrow windows show each row without horizontal scrolling; split wider matrices into separate focused tables. For runnable behaviour, pair a complete copyable fenced snippet with its actual observed output rather than fragments.
 
@@ -107,7 +107,7 @@ English: short sentences (under about 25 words), common words (use, before, to, 
 
 ## Compact native diagrams
 
-Write `@<type> id=<diagram-id> title="..."` followed by pipe rows. Each compiles to a full native Archify diagram, with native validation and layout, and opens in the full Viewer from the page. A document holds up to four native diagrams.
+Write `@<type> id=<diagram-id> title="..."` followed by pipe rows (`role <type> | <label>` for domain concepts in `@architecture`/`@workflow`/`@sequence`). Each compiles to a full native Archify diagram, with native validation and layout, and opens in the full Viewer from the page. A document holds up to four native diagrams.
 
 Any node, actor or entity row may end with a `source:<id>` cell naming a declared `@source`; hovering that node shows the source, and for a repository file its pinned lines, so a code diagram doubles as a code tour.
 
