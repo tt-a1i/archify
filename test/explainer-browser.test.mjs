@@ -208,8 +208,8 @@ test('native step opens the complete Viewer and focuses exact nodes and edges wi
 
 test('a hosted Viewer keeps preset controls and blueprint decoration without standalone badges',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
- const spec=compileExplainerDiagram('sequence',['actor api | API | backend','actor redis | Redis | database','api | redis | Read cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
- const doc=formalDocument();doc.meta.id='hosted-browser';doc.meta.style='editorial';doc.meta.quality_profile='showcase';doc.panels.push({id:'how',title:'Where does the request go?',blocks:[{id:'native',type:'diagram',diagramType:'sequence',spec},{id:'step',type:'steps',items:[{id:'read-step',text:'Read cache',target:{diagram:'native',node:'api',edges:['api-to-redis-1']}}]}]});
+ const spec=compileExplainerDiagram('sequence',['role backend | Cache engine','actor api | API | backend','actor redis | Redis | database','api | redis | Read cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
+ const doc=formalDocument();delete doc.meta.locale;doc.meta.id='hosted-browser';doc.meta.style='editorial';doc.meta.quality_profile='showcase';doc.panels.push({id:'how',title:'Where does the request go?',blocks:[{id:'native',type:'diagram',diagramType:'sequence',spec},{id:'step',type:'steps',items:[{id:'read-step',text:'Read cache',target:{diagram:'native',node:'api',edges:['api-to-redis-1']}}]}]});
  const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'source.json'),quality:'showcase'});
  const file=artifact('hosted',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
  const browser=new ChromeVisualBrowser(chrome);try {
@@ -221,6 +221,11 @@ test('a hosted Viewer keeps preset controls and blueprint decoration without sta
   assert.deepEqual(viewer.badges,['none','none'],'The header badge and the plate stay off in a hosted Viewer');
   const attached=await browser.cdp.send('Target.attachToTarget',{targetId:viewer.targetId,flatten:true});
   try {
+   const lens=await browser.cdp.send('Runtime.evaluate',{expression:`(()=>{document.querySelector('#btn-semantic-lens').click();return {title:document.querySelector('#semantic-lens-title').textContent,instruction:document.querySelector('.semantic-lens-instruction').textContent,backendKind:document.querySelector('.semantic-lens-kind[data-kind="backend"]')?.textContent||''};})()`,returnByValue:true},attached.sessionId);
+   assert.equal(lens.result.value.title,'比较分组');
+   assert.equal(lens.result.value.instruction,'选择一个分组以高亮对应元素。');
+   assert.match(lens.result.value.backendKind,/Cache engine/);
+   await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector('#semantic-lens-close').click()`,returnByValue:true},attached.sessionId);
    for(const preset of ['signal-flow','blueprint','editorial','classic']) {
     for(const selector of ['#btn-preset',`[data-preset-value="${preset}"]`]) {
      const focused=await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)}).focus();document.activeElement.matches(${JSON.stringify(selector)})`,returnByValue:true},attached.sessionId);

@@ -182,6 +182,7 @@ export function compileExplainerDiagram(diagramType, rows, { title, id, line = 1
       const role = safeId(entry.parts[0].slice(5).trim(), entry.context), label = entry.parts[1];
       if (!ROLES.has(role)) fail(entry.context, 'diagram-role', `Unknown node role "${role}".`, 'role frontend | Draft state');
       if (label.length > 80) fail(entry.context, 'diagram-role', 'Role label must be 80 characters or fewer.', 'role frontend | Draft state');
+      if (/[{}]/.test(label)) fail(entry.context, 'diagram-role', 'Role label cannot contain "{" or "}" interpolation braces.', 'role frontend | State (id)');
       if (roles.has(role)) fail(entry.context, 'diagram-role-duplicate', `Duplicate role "${role}".`, 'role frontend | Draft state');
       roles.set(role, label);
       (spec.meta.translations ||= {})[`viewer.kind.${role}`] = label;
@@ -575,13 +576,16 @@ export async function prepareExplainerDiagrams(document, { repoRoot, baseDir, qu
         // Inline diagrams belong to the explainer's reading context. Keep the
         // original author bytes frozen; apply inheritance only to native render
         // input. Referenced standalone specs retain their own locale defaults.
-        const inheritedLocale = block.spec !== undefined && candidate.meta?.locale === undefined && document.meta?.locale !== undefined
-          ? { locale: document.meta.locale } : {};
         const translations = candidate.meta?.translations || {};
+        const hasTranslations = Object.keys(translations).length > 0;
         const customKinds = Object.keys(translations).some(key => key.startsWith('viewer.kind.'));
-        const lensLocale = inheritedLocale.locale || candidate.meta?.locale || 'en';
+        const pageDefaultLocale = document.diagram_type === 'explainer' ? 'zh-CN' : 'en';
+        const effectiveLocale = candidate.meta?.locale ?? document.meta?.locale ?? (block.spec !== undefined && hasTranslations ? pageDefaultLocale : undefined);
+        const inheritedLocale = block.spec !== undefined && candidate.meta?.locale === undefined && effectiveLocale !== undefined
+          ? { locale: effectiveLocale } : {};
+        const lensKey = effectiveLocale ? Object.keys(GROUP_LENS).find(key => key.toLowerCase() === effectiveLocale.toLowerCase()) : undefined;
         const lensDefaults = block.spec !== undefined && customKinds
-          ? GROUP_LENS[lensLocale] || (lensLocale.startsWith('zh') ? GROUP_LENS['zh-CN'] : GROUP_LENS.en)
+          ? GROUP_LENS[lensKey] || (effectiveLocale?.toLowerCase().startsWith('zh') ? GROUP_LENS['zh-CN'] : GROUP_LENS.en)
           : null;
         const mergedTranslations = lensDefaults ? { ...lensDefaults, ...translations } : candidate.meta?.translations;
         const spec = { ...candidate, meta: { ...candidate.meta, ...inheritedLocale, ...(mergedTranslations ? { translations: mergedTranslations } : {}), output: 'diagram.html', quality_profile: quality } };

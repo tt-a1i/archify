@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { SaxesParser } from 'saxes';
 import { parse } from 'parse5';
 import { compileExplainerDiagram, prepareExplainerDiagrams, validateExplainerDiagramTarget } from '../archify/explainer/diagrams.mjs';
+import { parseExplainer } from '../archify/explainer/parse.mjs';
 import { renderExplainer } from '../archify/explainer/render.mjs';
 import { unpackPageBundle } from '../archify/explainer/page-bundle.mjs';
 
@@ -483,12 +484,59 @@ test('compact diagrams support domain role naming via role <type> | <label> and 
   assert.match(preparedCustom.diagrams.architecture.html, /Custom title/);
   assert.match(preparedCustom.diagrams.architecture.html, /选择一个分组以高亮对应元素。/);
 
+  const preparedZhTw = await prepareExplainerDiagrams({ ...doc, meta: { ...doc.meta, locale: 'zh-tw' }, panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', arch)] }] });
+  assert.match(preparedZhTw.diagrams.architecture.html, /比較分組/);
+  assert.match(preparedZhTw.diagrams.architecture.html, /選擇一個分組以反白對應元素。/);
+
+  const omittedLocaleMd = [
+    '# State model {#state-model}',
+    '',
+    'Draft state freezes into snapshots.',
+    '',
+    '## How do states transition? {#state-panel}',
+    '',
+    '@architecture id=omitted-locale-arch',
+    '| role frontend | Draft state |',
+    '| draft | Draft | frontend |',
+    '| store | Store | database |',
+    '| draft > store | snapshot |',
+  ].join('\n');
+  const parsedOmitted = parseExplainer(omittedLocaleMd);
+  assert.equal(parsedOmitted.document.meta.locale, undefined);
+  const preparedOmitted = await prepareExplainerDiagrams(parsedOmitted.document);
+  const omittedEntry = preparedOmitted.diagrams['omitted-locale-arch'];
+  assert.equal(omittedEntry.spec.meta.locale, undefined, 'frozen spec retains omitted locale');
+  assert.match(omittedEntry.svg, />Draft state<\/text>/, 'diagram legend displays custom role');
+  const omittedI18n = JSON.parse(omittedEntry.html.match(/<script id="archify-i18n-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  assert.equal(omittedI18n.messages['viewer.kind.frontend'], 'Draft state', 'omitted-locale Viewer registers custom role label');
+  assert.equal(omittedI18n.messages['viewer.lens.title'], '比较分组', 'omitted-locale explainer defaults Viewer lens to zh-CN');
+  assert.equal(omittedI18n.messages['viewer.lens.instruction'], '选择一个分组以高亮对应元素。');
+
+  const bracedMd = [
+    '# Braced role {#braced}',
+    '',
+    'Answer.',
+    '',
+    '@meta locale=en',
+    '',
+    '## Model {#model}',
+    '',
+    '@architecture id=braced-arch',
+    '| role frontend | State {id} |',
+    '| a | Example | frontend |',
+  ].join('\n');
+  const parsedBraced = parseExplainer(bracedMd);
+  assert.equal(parsedBraced.document, null);
+  assert.equal(parsedBraced.diagnostics[0].code, 'explainer/diagram-role');
+  assert.equal(parsedBraced.diagnostics[0].subject.line, 10);
+
   const literalRoleNode = compileExplainerDiagram('workflow', ['role | Assign role', 'next | Done', 'role > next'], { id: 'literal-role' });
   assert.equal(literalRoleNode.nodes[0].id, 'role');
 
   for (const [badRows, code] of [
     [['role bogus | Label', 'a | A'], 'explainer/diagram-role'],
     [[`role frontend | ${'x'.repeat(81)}`, 'a | A'], 'explainer/diagram-role'],
+    [['role frontend | State {id}', 'a | A'], 'explainer/diagram-role'],
     [['role frontend | One', 'role frontend | Two', 'a | A'], 'explainer/diagram-role-duplicate'],
     [['role frontend | Only role'], 'explainer/diagram-rows'],
   ]) {
