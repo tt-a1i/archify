@@ -1337,6 +1337,31 @@ test('preview: Explainer rebuilds for image dependencies and preserves the last 
   }
 });
 
+test('preview: Explainer rebuilds a diagram with DEL in its declared filename', { timeout: 60000 }, async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-explainer-diagram-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const input = path.join(tmp, 'draft.explainer.json');
+  const output = path.join(tmp, 'draft.html');
+  const source = 'diagram\u007f.sequence.json';
+  const diagram = path.join(tmp, source);
+  const document = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'delivery.explainer.json'), 'utf8'));
+  const spec = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'cache-miss-request.sequence.json'), 'utf8'));
+  document.panels[0].blocks.push({ id: 'preview-diagram', type: 'diagram', diagramType: 'sequence', source });
+  fs.writeFileSync(input, JSON.stringify(document));
+  fs.writeFileSync(diagram, JSON.stringify(spec));
+  const preview = await startPreview({ type: 'explainer', input, output, open: false, debounceMs: 10, pollMs: 80 });
+  try {
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 1, 'initial diagram did not verify');
+    const first = sha256(output);
+    spec.meta.title = 'Updated native diagram';
+    fs.writeFileSync(diagram, JSON.stringify(spec));
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 2, 'diagram source edit did not rebuild preview');
+    assert.notEqual(sha256(output), first);
+  } finally {
+    await preview.stop();
+  }
+});
+
 test('preview: Explainer rebuilds declared CSV data and preserves the last good artifact through invalid edits', { timeout: 60000 }, async (t) => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-explainer-data-'));
   t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
@@ -1368,6 +1393,13 @@ test('preview: Explainer rebuilds declared CSV data and preserves the last good 
     const first = sha256(output);
     const firstArtifact = await (await fetch(new URL('/artifact.html', preview.url))).text();
     assert.match(firstArtifact, /180/);
+    const firstState = await stateAt(preview.url);
+    fs.writeFileSync(data, 'day,p99\nMon,120\nTue,180\n');
+    fs.utimesSync(data, new Date(0), new Date(0));
+    await new Promise(resolve => setTimeout(resolve, 320));
+    const identical = await stateAt(preview.url);
+    assert.equal(identical.generation, firstState.generation, 'identical CSV bytes do not schedule delivery');
+    assert.equal(identical.status, 'verified');
 
     fs.writeFileSync(data, 'day,p99\nMon,120\nTue,260\n');
     await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 2, 'CSV edit did not rebuild the Explainer preview');

@@ -403,9 +403,13 @@ function rethrowNative(error, context, reason) {
   fail(context, reason, 'The native diagram toolchain could not complete this diagram.', `Use a valid native ${context.diagramType || 'diagram'} JSON specification.`, [], { message: String(error.message || error).slice(0, 1000) });
 }
 
+export function isLocalDiagramSource(relative) {
+  return !(typeof relative !== 'string' || !relative || path.isAbsolute(relative) || /[\\:\u0000-\u001f?#]/.test(relative)
+      || relative.split('/').some(part => !part || part === '.' || part === '..' || part.toLowerCase() === '.git') || !/\.json$/i.test(relative));
+}
+
 function readSpec(baseDir, relative, context) {
-  if (!baseDir || typeof relative !== 'string' || !relative || path.isAbsolute(relative) || /[\\:\u0000-\u001f?#]/.test(relative)
-      || relative.split('/').some(part => !part || part === '.' || part === '..' || part.toLowerCase() === '.git') || !/\.json$/i.test(relative)) {
+  if (!baseDir || !isLocalDiagramSource(relative)) {
     fail(context, 'diagram-source-path', 'Diagram source must be a relative JSON file inside the input directory.', 'diagrams/request.sequence.json');
   }
   let fd;

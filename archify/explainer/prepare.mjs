@@ -5,7 +5,7 @@ import { parseExplainer } from './parse.mjs';
 import { validateExplainer } from './validate.mjs';
 import { resolveExplainerSources } from './sources.mjs';
 import { parseInline } from './inline.mjs';
-import { prepareExplainerDiagrams, validateExplainerDiagramTarget } from './diagrams.mjs';
+import { isLocalDiagramSource, prepareExplainerDiagrams, validateExplainerDiagramTarget } from './diagrams.mjs';
 import { throwDiagnosticError } from '../renderers/shared/diagnostics.mjs';
 
 const MAX_BUNDLE_BYTES = 64 * 1024 * 1024;
@@ -41,7 +41,7 @@ export function declaredExplainerInputPaths(sourceText, inputPath, { localOnly =
           : block?.type === 'image' ? block.path
             : undefined;
       if (typeof reference !== 'string') continue;
-      if (localOnly && (/^[\/\\]|[\\:\u0000-\u001f\u007f?#]/.test(reference)
+      if (localOnly && (block.type === 'diagram' ? !isLocalDiagramSource(reference) : /^[\/\\]|[\\:\u0000-\u001f\u007f?#]/.test(reference)
           || reference.split('/').some(part => !part || part === '.' || part === '..' || part.toLowerCase() === '.git'))) continue;
       inputs.push(path.resolve(path.dirname(inputPath), reference));
     }

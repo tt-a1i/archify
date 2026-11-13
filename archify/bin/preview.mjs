@@ -33,22 +33,47 @@ function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
 }
 
-// The poller observes metadata only. Delivery owns reading and validating dependencies.
-function dependencyStamp(root, sourcePath) {
+// Metadata invalidates the cache; only dependency bytes identify the generation.
+const dependencyLimit = 8 * 1024 * 1024;
+const statKey = stat => [stat.dev, stat.ino, stat.mode, stat.size, stat.mtimeNs, stat.ctimeNs].join(':');
+function dependencyDigest(root, sourcePath, cache) {
+  let fd;
   try {
     let candidate = fs.realpathSync(root);
+    const ancestors = [];
     for (const part of path.relative(root, sourcePath).split(path.sep)) {
       candidate = path.join(candidate, part);
-      if (fs.lstatSync(candidate).isSymbolicLink()) return "linked";
+      const stat = fs.lstatSync(candidate, { bigint: true });
+      if (stat.isSymbolicLink()) return 'linked';
+      ancestors.push([candidate, stat, statKey(stat)]);
     }
-    const stat = fs.lstatSync(candidate, { bigint: true });
-    return [stat.dev, stat.ino, stat.mode, stat.size, stat.mtimeNs, stat.ctimeNs].join(":");
-  } catch (error) { return error.code || "unknown"; }
+    const [, stat, key] = ancestors.at(-1);
+    if (!stat.isFile()) return 'not-a-regular-file';
+    if (stat.size > dependencyLimit) return 'oversized:' + key;
+    const previous = cache.get(sourcePath);
+    if (previous?.key === key) return previous.digest;
+    fd = fs.openSync(candidate, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+    const stable = () => statKey(fs.fstatSync(fd, { bigint: true })) === key
+      && ancestors.every(([file, , expected]) => statKey(fs.lstatSync(file, { bigint: true })) === expected);
+    if (!stable()) return 'changing';
+    const bytes = Buffer.alloc(Number(stat.size));
+    let offset = 0;
+    while (offset < bytes.length) {
+      const count = fs.readSync(fd, bytes, offset, bytes.length - offset, offset);
+      if (!count) return 'changing';
+      offset += count;
+    }
+    if (!stable()) return 'changing';
+    const digest = sha256(bytes);
+    cache.set(sourcePath, { key, digest });
+    return digest;
+  } catch (error) { return error.code || 'unknown'; }
+  finally { if (fd !== undefined) fs.closeSync(fd); }
 }
 
-function sourceDigest(inputPath, dependencyPaths = [inputPath]) {
+function sourceDigest(inputPath, dependencyPaths = [inputPath], cache) {
   // Declared inputs start with the draft, which is hashed separately below.
-  const dependencies = dependencyPaths.slice(1).map(file => [file, dependencyStamp(path.dirname(inputPath), file)]);
+  const dependencies = dependencyPaths.slice(1).map(file => [file, dependencyDigest(path.dirname(inputPath), file, cache)]);
   try {
     const bytes = fs.readFileSync(inputPath);
     const sourceHash = sha256(bytes);
@@ -369,11 +394,14 @@ export async function startPreview(options) {
   }
   const inputPath = path.resolve(options.input);
   const declaredInputs = type === "explainer" ? (await import("../explainer/prepare.mjs")).declaredExplainerInputPaths : null;
+  const dependencyFingerprints = new Map();
   const currentSourceDigest = () => {
     if (!declaredInputs) return sourceDigest(inputPath);
     let dependencies;
     try { dependencies = declaredInputs(fs.readFileSync(inputPath, "utf8"), inputPath, { localOnly: true }); } catch { /* Delivery reports invalid drafts. */ }
-    return sourceDigest(inputPath, dependencies);
+    const active = new Set(dependencies);
+    for (const file of dependencyFingerprints.keys()) if (!active.has(file)) dependencyFingerprints.delete(file);
+    return sourceDigest(inputPath, dependencies, dependencyFingerprints);
   };
   const outputRequest = {
     requestedOutput: options.output,
