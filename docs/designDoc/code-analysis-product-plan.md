@@ -44,6 +44,7 @@
 - 规则级别改动需要提升规则版本（`ruleVersions`），否则前后对比会把级别变化误读为新增或修复问题。
 - 总览结论、优先项排序、组件着色（overlay 的 red / amber / blue）、图例文案和 AI 任务的影响说明随之调整；当前 red 的图例文案是“an error was reported”，需改为循环依赖的说明。
 - CI：`check` 默认 `--fail-on warning`，循环原本是 warning 的仓库不受影响，原本为 info 的模块循环和 Java 循环会开始导致失败。需要在变更说明中写明，并建议已有项目先用 `--update-baseline` 记录现状。
+- 调整（2026-11-13，`coupling/import-cycle` 规则版本 3）：Java 类之间的循环降为 warning。Java 类按需加载，不存在加载顺序风险，类之间互相引用（如 JPA 父子实体）也是常见写法，这与 Rust 文件循环为 info 的理由同类。Java 包之间的循环（`coupling/cycle`，模块按包划分）仍为 error。
 - 实测参考：LangChain `libs/core`（`2775506`）有一个 17 个模块的模块循环和两个文件循环（其中一个 41 个文件），目前全部是 info，改后为 error。
 
 ### 0.3 第二优先：维护负担标黄（warning）
