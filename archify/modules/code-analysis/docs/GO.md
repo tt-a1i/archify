@@ -135,5 +135,5 @@ captured metadata restrict comparison; old results are not rebound as v6 facts.
 These checks do not establish whole-tree atomicity or discover later file additions.
 `--fail-on never` changes the findings gate, not incomplete-coverage semantics.
 
-See the [implementation and validation record](../../../../docs/designDoc/code-analysis-go-official-implementation.md)
-and the earlier [cost comparison](../../../../docs/designDoc/code-analysis-go-official-vs-gopls.md).
+See [PR #1347](https://github.com/tt-a1i/archify/pull/1347) for the design decision,
+validation evidence and remaining compatibility limits.

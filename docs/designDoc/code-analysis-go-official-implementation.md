@@ -1,87 +1,98 @@
-# Go 官方库接入与缺陷修复
+# Go 官方库方案：决策与验证
 
-2026-11-12，基于 `197980b7` 和本地 gopls 对照实验。实现采用官方库路线，保留此前实验的结果和源码身份；本报告不表示已合入或发布。
+日期：2026-11-13。跟踪 [issue #1346](https://github.com/tt-a1i/archify/issues/1346) 和 [PR #1347](https://github.com/tt-a1i/archify/pull/1347)。本记录合并阶段性研究材料，说明最终方案、验收依据和未解决的边界；运行契约由 [GO.md](../../archify/modules/code-analysis/docs/GO.md) 维护。
 
-## 2026-11-13：PR 集成准备
+## 问题与选择
 
-跟踪 [#1346](https://github.com/tt-a1i/archify/issues/1346)，同步 `labs/code-analysis` 的 `9202eaf48bafb072ed847982201f95bfdca249b5`。新增基线只改文档和归档；本次同时更新语言参考中的旧 SDK 要求。版本拆分证据中的 9 个源码/测试 SHA-256 和 CI workflow SHA-256 仍与提交内容相同，故复用下述完整模块、版本矩阵和语义对照，不将它们重新标作最终提交上新跑的结果。
+本轮主要替换包加载实现并完善现有行为。函数调用、接口候选、复杂度、精确源码范围和变更查询已经存在；没有新增完整引用、持续诊断或重构功能。
 
-补充检查使用 macOS arm64、官方 Node 22.23.2 / bundled zlib `1.3.1-e00f703`：Go 调用、加载和版本测试 **32/32**，无跳过；顶层 CLI 路由 **1/1**。从已跟踪源码重建 `archify.zip`，再次独立构建逐字节一致，SHA-256 为 `4b1e4297b3d5d4e1fcca86534f6de6dadc2ef7dade3d9941223416f14a9eb78e`。解压到仓库外通过 `scripts/package-smoke.mjs`；worker、Go helper、go.mod 和 go.sum 均与源码逐字节一致。
+旧实现手工组织包、测试变体和 SDK 导出类型，模块指令使用正则解析。现改用公开的 `go/packages`、`typeutil.Callee` 和 `x/mod/modfile`；默认模式复用包加载的类型信息。Archify 继续负责 AST 指标、源码证据、声明准入和完整接口关系投影。`stdlib:false` 保留一次捕获内 `go/types` 检查，因为包加载没有禁止 SDK 类型的等价开关。
 
-随后仅在临时解压包中安装模块 npm 依赖，经公共 CLI 以 Go 1.25.9 项目 SDK / Go 1.26.2 helper 编译器分析 chi v5.0.12：54 文件、298 声明、2,706 调用、932 绑定、73 接口逐方法记录、0 类型错误。文件、声明、导入、调用及接口证据与已记录的 Go 1.25 对照事实逐项相同。该检查验证归档交付路径；没有安装 live Archify，也没有再次运行 gopls。
+**VS Code 官方 Go 扩展默认使用 gopls**（[`go.useLanguageServer: true`](https://github.com/golang/vscode-go/blob/master/docs/settings.md#go.uselanguageserver)）。本轮参考其包加载、定义查询、方法集和版本职责划分。最初的混合实验同时运行 gopls 和辅助类型检查；公开 LSP 没有直接提供全部指标和值/指针证据，混合方案增加了重复类型检查与服务生命周期成本，因此没有进入产品运行时。也没有导入 gopls internal 包。
 
-可执行回归入口为 `node --test --test-concurrency=2 test/go-calls.test.mjs test/go-loading.test.mjs test/go-versions.test.mjs`（模块目录），以及仓库根目录的 `node --test --test-name-pattern='Code Analysis exposes' test/code-analysis.test.mjs`。版本矩阵通过 `ARCHIFY_GO` / `ARCHIFY_GO_BUILD` 选择已安装 SDK；首次构建需准备锁定 helper 模块。历史研究 JSON 中的 `<research-archive>`、`<home>`、`<temporary>` 是脱敏路径，原始一次性脚本未随仓库发布。远端 CI 结果以 PR 的实际检查状态为准；本机检查不替代原生 Windows/Linux 覆盖。
-
-## 2026-11-13：按 gopls 的职责划分拆开 Go 版本
-
-当前源码为 revision 9，调用模型仍为 v6。以下 revision 8 的测试回执保留原日期和源码身份；本次验证另存于 [版本拆分证据](code-analysis-go-toolchain-evidence.json)。
-
-随后完成 [chi v5.0.12 的真实低版本对照](code-analysis-go-low-version-chi.md)：Go 1.25 下当前产品的 932 个项目内绑定与直接 gopls 查询一致；Go 1.18 下当前产品被版本检查拒绝，隔离副本仅放宽检查后 929 个绑定亦一致。后者是实验结果，尚未调整产品支持下限。
-
-参考 gopls 的 [三种 Go 版本说明](https://go.dev/gopls/#supported-go-versions)、固定 v0.21.1 的 [FetchGoEnv 与视图 SDK 记录](https://github.com/golang/tools/blob/gopls/v0.21.1/gopls/internal/cache/view.go)，以及 [Go 工具链选择机制](https://go.dev/doc/toolchain)。采用其职责划分，没有引入 gopls internal 包或另写工具链下载器。
-
-| 职责 | 当前实现 |
+| 变化 | 用户结果与维护责任 |
 | --- | --- |
-| 项目加载 SDK | `ARCHIFY_GO` 或 PATH 的 Go，最低 1.25；固定使用该安装自身的 SDK，项目阶段 `GOTOOLCHAIN=local` |
-| helper 编译器 | `ARCHIFY_GO_BUILD`，默认沿用项目 Go 命令作为启动入口；helper go.mod 要求 1.26，允许 Go 自动选择或下载工具链，也遵守显式进程 `GOTOOLCHAIN=local/path/...` |
-| 项目语言版本 | 原 go.mod 的 `go` 指令，省略时 1.16；文件 release constraints 由官方类型检查规则处理 |
+| 官方模块解析与语言版本约束 | 接受合法 block/转义；默认语言版本及文件约束生效，类型错误仍可见 |
+| 测试变体、混合包名与 SDK 分类 | 按实际类型包身份绑定方法；错误目录保留库存但不制造可靠目标 |
+| 分离项目 SDK 和 helper 编译器 | 以项目 SDK 的平台、release/tool tags 选文件，避免较新 helper 错选未来版本文件 |
+| worker 拥有临时目录和子进程 | 超时、崩溃、无效输出、缺失依赖明确失败，并清理进程与快照 |
+| v6 / revision 9 来源记录 | 保存工具模块校验和、两种工具链和语言版本；历史结果仍可读取 |
 
-helper 编译器的语言版本不得落后于项目 SDK，否则明确失败并提示调整 `ARCHIFY_GO_BUILD`。因此可以用 Go 1.25 SDK 分析 `go 1.18` 项目，同时用 1.26 编译 helper；这里没有恢复对 **Go 1.18 SDK** 的支持。gopls 官方支持最近两个 Go 主版本，本项目另外验证了 1.25 SDK 的兼容路径并加入 CI；不能从本次样本推断任意旧 SDK 都受支持。
+代价是新增 helper 构建、进程监督和版本证据，而非大幅减少总代码量。Go helper 从 1,181 行变为 1,216 行；运行代码与 schema 合计净增 193 行。工具模块锁定为 `x/tools v0.52.0`、`x/mod v0.43.0`、`x/sync v0.24.0`，首次使用可能下载模块和 helper 工具链；离线用户需预先准备。
 
-关键修正是从项目 SDK 的 `go list` context 取得目标平台、release tags 和 tool tags，再交给 `go/build.Context.MatchFile`。仅拆开两个可执行文件而保留 helper 的 `build.Default.ReleaseTags`，会把 SDK 1.25 本应排除的 `go1.26` 文件纳入库存。编译器记录在 `loader.toolchain`，项目 SDK 记录在 `loader.projectToolchain` 及 build/standardLibrary 的 toolchain，均进入比较和捕获指纹。revision 8 的 v6 结果仍可读取。
+兼容变化必须单独审阅：原实现声明 Go 1.18+ SDK，新方案支持 **Go 1.25+ 项目 SDK、Go 1.26+ helper 编译器**，后者不能落后于项目 SDK 的语言版本。较旧 go.mod 语言版本仍可分析。这不是任意旧 SDK 的支持承诺。
 
-接入成本仍包括首次 helper 工具链与锁定模块的准备；Go 自己负责查找、下载和缓存工具链，不修改全局 Go 或项目 go.mod。离线用户可分别指定已安装的项目 SDK 和构建 SDK，并预填模块缓存。项目 require、replace、workspace 和 toolchain 指令仍不扩展快照加载范围。具体命令见 [GO.md](../../archify/modules/code-analysis/docs/GO.md)。
+捕获范围仍为选定根模块；第三方依赖、replace、workspace、vendor、嵌套模块和 cgo 不加载。会在隔离快照执行包加载命令，不执行项目程序、测试或生成器。未知调用与接口候选的含义保持不变。
 
-本次真实 SDK 验证：1.25.9 / 1.26.2、1.25.9 / 自动选择 1.26.0、1.26.2 / 1.26.2、1.27.0 / 1.27.0（前者为项目 SDK）。每组覆盖两种类型加载模式、Linux/amd64 标签、旧 go.mod 与文件语言版本，以及项目语言过新时禁止自动升级。另验证 `GOTOOLCHAIN=local` 阻止 helper 升级、helper 比项目 SDK 旧时的失败，以及 Go 1.25 下的完整 Go 专项用例。
+## 验证身份与结果
 
-最终完整模块回归 **610/610，0 跳过**；Go 1.25 专项 **31/31**；四组版本组合及顶层 CLI 路由通过。三个真实项目重新捕获，与 revision 8、已存 gopls 实验及旧基线的调用、函数指标、导入、接口边一致：**4,354 个调用、1,583 个绑定目标**。首轮完整回归为 609/610：并行 SDK 验证期间，未修改的重复检测超时夹具在写入调用标记前已超时，后续读取标记报 ENOENT；该例独立通过，停止并行 SDK 工作并将测试并发限制为 4 后，完整回归通过。未修改该测试或放宽超时，失败与重跑日志均保留。
+语义对照基线为 `197980b7`，PR 基线为 `9202eaf48bafb072ed847982201f95bfdca249b5`。生产实现已固定于 `3a9124c40ade29378c95732c1ffd400d849e0b98`；其后这次整理只改说明、引用和对应 ZIP。下列本机实验在 macOS arm64 上运行，历史结果按原日期、源码哈希和工具链身份复用。
 
-自动选择通过 PATH 上已安装的官方 1.26.0 SDK 验证。当前机器的模块代理下载失败；测试 SDK 改从官方下载站取得并核对发布 SHA-256。不能将此记录表述为成功验证了在线自动下载。验证只覆盖本机 macOS arm64，Linux/amd64 是分析目标，未运行原生 Linux/Windows 或远端 CI。
-
-上述验证时的 `archify.zip` 仍是旧版本，不含 worker/go.mod；该历史状态保留在版本拆分 JSON 中。PR 准备阶段另行从已纳入版本管理的源码重建归档，并在 PR 验证部分记录包验收结果，不能把后续归档检查算入上述模块回归。
-
-消融保留了两处删减：移除未消费的 helper 顶层 version 字段，以及 worker 已规范化目标后重复的宿主平台兜底。隔离副本删除项目 SDK 标签传递后，回归确实错误纳入未来版本文件，故该传递保留。未新增 helper 常驻服务、二进制缓存格式或版本兼容分发层。
-
-## 2026-11-12：revision 8 落地记录
-
-- 默认使用 `go/packages` 提供包与类型信息，用官方 `typeutil.Callee` 取得调用对象；AST 指标、坐标、源码证据、完整接口方法集和值/指针区别继续保留。
-- `stdlib:false` 使用官方包元数据加一次捕获内 `go/types` 检查。默认模式没有第二遍自有类型检查，也没有 gopls 回退。
-- 删除 gopls 服务客户端、LSP 查询流程及 `vscode-jsonrpc` 依赖。原实验已保存到独立研究目录，可重跑对照。
-- 新结果为 `go-source-direct-v6` / `go-packages@0.52.0` / revision 8。loader 来源、工具模块版本与校验和、SDK 和语言版本进入事实及捕获指纹；旧 go-parser v1–v4 和 gopls v5 结果仍可读取。
-- 采用源码与锁定 go.mod/go.sum 交付，需要 Go 1.26+。首次构建可以下载固定 helper 模块；项目分析阶段关闭第三方模块与工具链下载。离线环境可预先准备模块缓存，缺失时明确失败。
-
-入口见 [Go adapter](../../archify/modules/code-analysis/extract/go/index.mjs)、[worker](../../archify/modules/code-analysis/extract/go/worker.mjs)、[Go helper](../../archify/modules/code-analysis/extract/go/extract.go)；使用说明见 [GO.md](../../archify/modules/code-analysis/docs/GO.md)。
-
-## 补齐的缺陷
-
-| 问题 | 修复与保护 |
+| 证据 | 结果与限度 |
 | --- | --- |
-| 正则不能完整解析 module block / Go 字符串转义 | 使用官方 `x/mod/modfile`；保留原 go.mod 内容并验证隔离范围 |
-| 声明语言版本只在部分模式生效 | 默认加载和捕获内 checker 都传递版本；省略 go 指令按官方默认 1.16，较新语法报告类型错误而不丢声明库存 |
-| 混合 package 名字的目录可能产生不可靠绑定 | 保留语法库存，发现包名不一致后禁止该目录的目标绑定 |
-| 测试变体与生产包同路径，但类型对象不同 | 按实际 `*types.Package` 身份找方法声明所属组；外部测试调用内部测试变体的方法不再误判为歧义 |
-| 按 `.test` 后缀跳过，会丢真实模块 | 区分有捕获源码的包与生成的 test-main；生成入口的拒绝不再计作项目类型错误或未知外部包 |
-| 用路径有无点号猜 SDK 包 | 根据 SDK 源目录分类，避免把 `module app` 的项目导出混进标准库证据 |
-| 空包加载或部分错误被误作成功 | 有有效捕获源码却加载不到包时明确失败；其他包错误保留为 partial typing |
-| LSP 替换后只测试 server 生命周期 | 改测实际 helper 的超时、子孙进程退出、崩溃、无效 JSON、离线缺依赖及临时目录清理 |
+| 完整模块，Node 20.20.2、真实 jscpd 5.4.3 | 610/610，0 跳过 |
+| Go 1.25 专项 | 31/31 |
+| 项目 SDK / helper 实测矩阵 | 1.25.9/1.26.2、1.25.9/自动选中已安装的 1.26.0、1.26.2/1.26.2、1.27.0/1.27.0；均覆盖两种 typing 模式、目标平台、release tags 和语言版本 |
+| chi v5.5.0、Cobra v1.10.2、x/mod v0.43.0 | 共 4,354 调用、1,583 绑定；库存、指标、导入、调用及接口证据与基线和已保存实验一致 |
+| Node 22.23.2，发布前专项 | Go 调用/加载/版本 32/32，无跳过；顶层 CLI 路由 1/1 |
+| 解压包公共 Go CLI | 项目 SDK 1.25.9 / helper 1.26.2；chi v5.0.12 得到 54 文件、298 声明、2,706 调用、932 绑定、73 接口逐方法记录、0 类型错误，与已保存事实逐项一致 |
+| 提交 3a9124c4 的远端 CI | [完整运行通过](https://github.com/tt-a1i/archify/actions/runs/43357194921)，包括 Linux 回归、版本组合、Node 兼容性、ZIP 和三平台包检查；部署任务按条件跳过 |
 
-加载来源契约明确变更：v6 的 `standardLibrary.projectCommands:true` 表示在隔离快照执行包加载命令，`loader.projectCodeExecuted:false` 表示没有执行项目程序、测试或生成器。旧模型保留旧字段含义；版本和 producer 不同的结果不能伪装为同口径对比。
+首轮完整模块测试为 609/610：并行 SDK 工作期间，原有重复检测超时夹具在写标记前超时，随后读取标记报 ENOENT。该例独立通过，停止并行 SDK 工作并限制测试并发为 4 后完整通过；没有修改测试或放宽超时。失败和重跑身份保留在历史证据中。
 
-## 参考与保留边界
+自动工具链选择通过 PATH 上已安装的 SDK 验证；本机在线自动下载未验证成功。CI 的 Windows 包/路径检查不能代替 Go worker 在 Windows 下的完整生命周期专项验证。当前 PR head 的远端状态应单独查看，不能把上述旧提交的绿色结果改称新提交实测。
 
-参考固定版本 gopls 的 [包加载](https://github.com/golang/tools/blob/gopls/v0.21.1/gopls/internal/cache/load.go)、[定义查询](https://github.com/golang/tools/blob/gopls/v0.21.1/gopls/internal/golang/definition.go)和[方法集查询](https://github.com/golang/tools/blob/gopls/v0.21.1/gopls/internal/golang/implementation.go)。**VS Code 官方 Go 扩展默认使用 gopls**（[`go.useLanguageServer` 默认 `true`](https://github.com/golang/vscode-go/blob/master/docs/settings.md#go.uselanguageserver)）；这不表示 Go SDK 或 VS Code 本体附带 gopls。Archify 运行时只依赖 Go 公开库，没有复制其 internal 包或引入编辑器 session/cache 体系。[Go 模块规范](https://go.dev/ref/mod#go-mod-file-go)定义了缺省语言版本及语言特性约束。
+### 真实低版本项目
 
-范围仍是选定根模块的源码快照：第三方依赖、replace、go.work、vendor、嵌套模块、cgo 不加载。未知调用不等于没有调用；接口实现候选不等于运行时目标；类型错误可见不等于提供完整编译诊断。未在本轮增加 roadmap 中的完整引用、持续诊断或重构功能。
+样本为 [chi v5.0.12](https://github.com/go-chi/chi/tree/1191921289e82fdc56f298a76ff254742f568ece)，声明 `go 1.14`，根模块无第三方依赖，源码未修改。分析包括生产和测试文件，darwin/arm64、cgo 关闭；gopls v0.21.1 由 Go 1.26.2 构建。
 
-## 验证和消融
+- Go 1.25.9：当前产品的 **932 个项目内目标**与直接 gopls definition 查询一致；8 个接口中相同的 **11 对完整实现关系**，22 个原生值/指针断言通过。73 条逐方法记录没有全部独立验证。
+- Go 1.18.10：当前产品被版本检查拒绝；仅放宽检查的隔离副本得到 **929 个匹配目标**。gopls 也警告 SDK 不受支持。此实验没有降低正式支持下限。
+- 两个 SDK 的项目自身测试均通过。`mux.go:456` 的 `setPathValue` 在 Go 1.18 选择 fallback，在 Go 1.25 选择新版实现，两边一致。
+- 独立标准库 AST 库存枚举文件、声明、调用和 UTF-16 范围；以完整起止范围对齐 gopls 名称锚点，避免连续调用共享起点被覆盖。更改目标、删除调用、删除接口关系的故障注入均被对照器发现。
+- 绑定数量不是准确率分母。函数值、类型转换、SDK/内建和无具名 callee 分开处理；零差异不证明运行时图完整，也不能从这个简单模块推断复杂依赖工程兼容。
 
-- 聚焦 Go、比较口径及 extractor revision：**46 / 46**，0 跳过。
-- 完整 Code Analysis 模块：**609 / 609**，0 跳过；配置真实 jscpd 5.4.3，包含此前需要外部检测器的用例。
-- 顶层 CLI `serve/check/task` 路由冒烟通过；不重复它包装的完整模块套件。
-- chi v5.5.0、Cobra v1.10.2、x/mod v0.43.0：共 **4,354 个调用、1,583 个绑定目标**；函数指标、导入、接口边和调用语义与 `197980b7` 及已保存的 gopls 实验分别一致。最终对照与源码哈希见 [验证数据](code-analysis-go-official-implementation-evidence.json)。
+### 可重复执行的产品检查
 
-删除了手工测试包组装、旧 SDK compiler-importer 装配和 LSP 生命周期后，保留上述契约。消融中没有删除 `stdlib:false` 兼容检查或声明歧义保护：先前删除实验分别触发 SDK 接收者和错误声明负例。实现完成后又在隔离副本移除了类型包身份查找，外部测试方法调用用例失败；生产源码保留该索引，未被消融副本修改。进程监督层保留，因为故障注入验证了它对退出和目录清理的作用。
+从模块目录运行，先准备 npm 依赖、锁定 Go 模块和所需 SDK。真实重复检测用例需要 jscpd 5.4.3。
 
-本机为 macOS arm64 / Go 1.26.2 / Node 20.20.2。CI 已固定 Go 1.26.2；未运行远端 CI、原生 Windows/Linux 或发布 ZIP 验收，不把本地通过表述为发布完成。源码 helper 首次构建的模块下载成本已明确写入使用说明。
+```sh
+node --test --test-concurrency=2 test/go-calls.test.mjs test/go-loading.test.mjs test/go-versions.test.mjs
+ARCHIFY_TEST_JSCPD=/path/to/jscpd node --test --test-concurrency=4 test/*.test.mjs
+ARCHIFY_GO=/path/to/go1.25/bin/go ARCHIFY_GO_BUILD=/path/to/go1.26/bin/go GOTOOLCHAIN=local ARCHIFY_TEST_GO_BUILD_VERSION=go1.26.2 node --test test/go-versions.test.mjs
+```
 
-原始回执保存在未随仓库分发的研究归档 `go-analysis-research-20261112/implementation/`。仓库 JSON 提供摘要和哈希，不能单凭它们重跑未分发的历史对照脚本；可重复执行的产品回归在模块 `test/` 中。前序成本研究见 [官方库与 gopls 对照](code-analysis-go-official-vs-gopls.md)，其中性能数字属于当时的实验，不作为本轮最终源码的性能保证。
+在仓库根目录，用 canonical Node 22 / bundled zlib `1.3.1-e00f703` 执行 `scripts/build-zip.sh /tmp/archify-review.zip`，与提交归档比较，并对仓库外解压目录运行 `node scripts/package-smoke.mjs /path/to/extracted/archify`。具体 CI 命令由 workflow 维护。
+
+专项测试保护可观察的绑定、范围、历史读取和退出清理。消融已删除未消费的 helper version 和重复目标兜底；移除类型包身份索引、SDK 标签传递、captured-only 检查或歧义保护会破坏各自回归，因此保留。此次文档合并以引用完整、原证据仍可获取、运行源码/测试/workflow 哈希不变验证，没有为说明文字增加测试。
+
+## 后续能力：本 PR 不实现
+
+若后续确定需要完整跨模块引用、持续诊断或交互重构，应重新评估直接使用 gopls 的收益；这些需求会改变目前的成本比较。C6 重复检测、C7 诊断导入框架、集中度及变更查询已有实现。
+
+| 能力 | 现有缺口与建议 |
+| --- | --- |
+| gopls 诊断来源 | 接到现有 C7 导入契约；先保证来源、完整性、范围、版本和去重 |
+| references | 补类型、字段、常量、函数取值等非调用使用，不能并入直接 caller 数 |
+| 修改后验证 | 诊断可补充回执；仍需项目测试、lint/typecheck |
+| call hierarchy | 阅读路径候选，后于 references；不承诺动态调用完整 |
+| hover、document/workspace symbol、typeDefinition | 按需增强阅读与定位，保留来源；无需先做完整编辑器 |
+| implementation 双向导航 | 可选扩展，保留完整接口及值/指针区别 |
+| rename、extract、inline、quick fixes | 后置到验证回执；先提供可审阅 diff，命令副作用需明确操作 |
+| organizeImports、formatting | 低优先级，与已有编辑器入口重叠 |
+| completion、signature help、semantic tokens、inlay hints | 当前不接入编辑器功能 |
+| 逃逸、内联等优化信息 | 以真实需求和可构建工程为前提，不能替代 profiling |
+| 重复、架构规则、图映射、多语言与用户试用 | 沿用现有 roadmap，gopls 不直接解决这些目标 |
+
+参考官方 [导航](https://go.dev/gopls/features/navigation)、[诊断](https://go.dev/gopls/features/diagnostics)、[阅读支持](https://go.dev/gopls/features/passive)、[变换](https://go.dev/gopls/features/transformation)说明。未选能力没有在本轮固定版本上逐项验收。
+
+## 历史证据归档
+
+为避免多份阶段性报告互相充当当前规范，原 9 份文件收拢为本文；原始内容保留在固定提交 `3a9124c4`，不重写其结果或身份：
+
+- [版本矩阵、生产源码/测试哈希、消融与失败记录](https://github.com/testikun/archify/blob/3a9124c40ade29378c95732c1ffd400d849e0b98/docs/designDoc/code-analysis-go-toolchain-evidence.json)
+- [低版本 chi 方法和限制](https://github.com/testikun/archify/blob/3a9124c40ade29378c95732c1ffd400d849e0b98/docs/designDoc/code-analysis-go-low-version-chi.md)及[机器可读摘要](https://github.com/testikun/archify/blob/3a9124c40ade29378c95732c1ffd400d849e0b98/docs/designDoc/code-analysis-go-low-version-chi-evidence.json)
+- [历史官方库/gopls 成本比较](https://github.com/testikun/archify/blob/3a9124c40ade29378c95732c1ffd400d849e0b98/docs/designDoc/code-analysis-go-official-vs-gopls.md)及其链接的采样数据
+- [revision 8 对照](https://github.com/testikun/archify/blob/3a9124c40ade29378c95732c1ffd400d849e0b98/docs/designDoc/code-analysis-go-official-implementation-evidence.json)和[早期混合实验](https://github.com/testikun/archify/blob/3a9124c40ade29378c95732c1ffd400d849e0b98/docs/designDoc/code-analysis-go-gopls.md)
+
+一次性研究脚本和原始日志未随仓库分发；上述摘要与哈希不构成一键复现材料。历史性能数字不是当前实现的性能保证。

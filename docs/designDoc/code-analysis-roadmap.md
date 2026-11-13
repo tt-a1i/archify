@@ -2,11 +2,7 @@
 
 日期：2026-11-04（初版 2026-10-20）
 
-2026-11-12 Go 专项更新：基于 `197980b7` 比较 gopls 混合实验与官方库原型后，用户确认官方库路线，已完成 [源码接入与缺陷修复](code-analysis-go-official-implementation.md)。默认使用 `go/packages`，保留 AST 指标与精确方法集证据，移除 gopls 运行依赖；尚未发布。成本和取舍见 [对照报告](code-analysis-go-official-vs-gopls.md)。
-
-2026-11-13 Go 版本接入更新：参考 gopls 分离项目 SDK、helper 编译器和项目语言版本；最低项目 SDK 为 Go 1.25，helper 编译需要 1.26+，可由 Go 自动选择或显式指定。详见上述接入记录及 [运行说明](../../archify/modules/code-analysis/docs/GO.md)。
-
-C6 重复检测、C7 诊断导入、集中度和变更查询在该基线上已有实现，下文早期“尚未实现”的盘点不能作为最新状态。诊断来源、非调用引用及可选阅读/重构能力，仍分列在 [Go 能力清单](code-analysis-go-gopls.md)；这些扩展尚未接入。本条不更新下文历史 PR 状态。
+2026-11-13 Go 专项更新：[PR #1347](https://github.com/tt-a1i/archify/pull/1347) 使用官方库完善既有分析，并分离项目 SDK、helper 编译器和语言版本。决策、验证及未实现的 Go 扩展能力统一见 [Go 方案记录](code-analysis-go-official-implementation.md)，运行契约见 [Go 使用说明](../../archify/modules/code-analysis/docs/GO.md)。C6 重复检测、C7 诊断导入框架、集中度及变更查询已有实现；下文早期盘点与 PR 状态保留历史日期，不作为当前状态。
 
 **结论：第一批（现有发现 → AI 任务）已完成，并在两个真实仓库上用 CLI 跑通了闭环；原计划总体可行，但要做八处调整后再进第二批。** 最大的风险在于 #998（`labs/code-analysis` → dev）能否通过作者审核：目前没有人工 review，描述里的测试证据对应旧 head，两条 Codex 机器人的 P2 意见尚未核对是否已处理；11/04 与 dev 出现 14 处冲突，#1208 解决了冲突内容但以 squash 合入，dev 的历史没有进入 labs，#998 仍显示冲突，需要再用 merge commit 同步一次。
 
