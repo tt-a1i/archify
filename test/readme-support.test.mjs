@@ -28,3 +28,24 @@ test('every README language places the maintainer support QR codes after contrib
     assert.equal((text.match(/docs\/assets\/support\/alipay\.png/g) || []).length, 1, `${file}: Alipay QR should appear once`);
   }
 });
+
+const supportBadges = [
+  { file: 'README.md', href: '#support-archify', style: 'for-the-badge' },
+  { file: 'README_EN.md', href: '#support-archify', style: 'for-the-badge' },
+  { file: 'README_ZH.md', href: '#支持-archify', style: 'for-the-badge' },
+  { file: 'README_JA.md', href: '#archify-を支援する', style: 'for-the-badge' },
+  { file: 'README_KO.md', href: '#archify-지원하기', style: 'flat-square' },
+];
+
+test('every README language has a top Support badge that jumps to its support section', () => {
+  const badge = style => `https://img.shields.io/badge/Support-E2500E?style=${style}`;
+  for (const { file, href, style } of supportBadges) {
+    const text = fs.readFileSync(path.join(repoRoot, file), 'utf8');
+    const firstHeading = text.search(/\n## /);
+    assert.ok(firstHeading > 0, `${file}: missing first heading`);
+    const prefix = text.slice(0, firstHeading);
+    const expected = `<a href="${href}"><img src="${badge(style)}" alt="Support Archify" /></a>`;
+    assert.ok(prefix.includes(expected), `${file}: expected Support badge linking to ${href} with ${style} style before the first heading`);
+    assert.equal((text.match(/img\.shields\.io\/badge\/Support-E2500E/g) || []).length, 1, `${file}: Support badge should appear once`);
+  }
+});

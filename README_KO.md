@@ -24,6 +24,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
+  <a href="#archify-지원하기"><img src="https://img.shields.io/badge/Support-E2500E?style=flat-square" alt="Support Archify" /></a>
 </p>
 
 ## Archify 살펴보기

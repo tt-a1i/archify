@@ -34,10 +34,25 @@ test('the homepage support section stays below the fold and reuses the README pa
     ], file);
     assert.ok(fs.existsSync(new URL('../dist/assets/support/wechat-pay.png', import.meta.url)), 'wechat QR was not staged');
     assert.ok(fs.existsSync(new URL('../dist/assets/support/alipay.png', import.meta.url)), 'alipay QR was not staged');
-    const nav = nodes(dom).find(node => node.tagName === 'nav');
-    assert.equal(nodes(nav).filter(node => node.tagName === 'a' && /#support$/.test(attr(node, 'href') || '')).length, 0, `${file}: support must not appear in the top nav`);
     const heading = text(nodes(support).find(node => node.tagName === 'h2')).trim();
     assert.equal(heading, lang === 'zh' ? '支持 Archify' : 'Support Archify', file);
+  }
+});
+
+test('every built page header links to the homepage support section with a visible tag', () => {
+  for (const lang of ['en', 'zh']) {
+    const supportUrl = lang === 'zh'
+      ? 'https://tt-a1i.github.io/archify/zh.html#support'
+      : 'https://tt-a1i.github.io/archify/#support';
+    for (const page of pages) {
+      const { file, dom, baseUri } = readPage(lang, page);
+      const nav = nodes(dom).find(node => node.tagName === 'nav');
+      assert.ok(nav, `${file}: missing nav`);
+      const link = nodes(nav).find(node => node.tagName === 'a' && href(node, baseUri) === supportUrl);
+      assert.ok(link, `${file}: nav must link to ${supportUrl}, got ${nodes(nav).filter(n => n.tagName === 'a').map(n => href(n, baseUri)).join(', ')}`);
+      assert.equal(text(link).trim(), lang === 'zh' ? '☕ 支持' : '☕ Support', file);
+      assert.equal((attr(link, 'class') || '').split(/\s+/).includes('nav-support'), true, `${file}: support tag should use nav-support`);
+    }
   }
 });
 

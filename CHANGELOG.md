@@ -7,6 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v3.2.1-dev.1`. Not a stable release.
 
 ### Added
+- **Visible support entry on the website and READMEs (#1340).** Every built page now has a ☕ Support / ☕ 支持 tag in the site header, in addition to the footer link, pointing at the homepage #support section with the existing WeChat Pay and Alipay QR codes. Each README language also has a top Support badge that jumps to that file's support section.
 - **Authored node explanations in the Semantic Passport.** Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text explanations up to1200 characters. Explain opens a viewport-bounded reading face with scrollable prose and a reachable Back action; Escape restores the Passport. Prose remains outside canonical SVG and visual exports, and existing diagram geometry is preserved.
 - **Cross-diagram navigation.** Nodes may list sibling `.html` targets via `drilldowns` or a one-entry `href` shorthand. One child uses a native SVG link and visible mark (click follows, Alt-click focuses). Several children keep click-to-focus, with Passport listing every target and Ctrl/double-click opening the first. Child pages can author `meta.parentHref` for header Back; the Viewer also accepts `?from=`.
 
