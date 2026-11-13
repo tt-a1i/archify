@@ -212,12 +212,12 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
         : facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Verify the intended source responsibility boundary; document an intentionally retained structural cycle without claiming a runtime import failure.'] : (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
       ...(hasExternalReports ? [
         'Refresh and reimport the external sources using the intended tool version, rule settings and scan scope; re-reading a previous report is not a new tool run or a new AI review; disappearance alone is not proof of a fix.',
-        'Re-analyze with the same language and configuration, assess any comparison limitations, and inspect findings in changed files against the fresh reports and source.',
+        'Re-analyze with the same language and configuration and verify that no new finding appears in the files changed. If the comparison is limited, check the previous findings, fresh reports and current source directly before treating this criterion as met.',
       ] : ['A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.']),
       'The project checks that cover the changed code pass (see verification).',
     ],
     verification: {
-      reanalyze: { ...reanalyzeCommand(findings), ...(hasExternalReports ? { purpose: 'First refresh the external reports using the intended producer version, rule settings and scan scope, then import them with the same analysis configuration and assess comparison limitations. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
+      reanalyze: { ...reanalyzeCommand(findings), ...(hasExternalReports ? { purpose: 'First refresh the external reports using the intended producer version, rule settings and scan scope, then import them with the same analysis configuration. Verify no new finding appears in changed files; if comparison is limited, check the previous findings, fresh reports and current source directly. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
       commands: verificationCommands,
     },
     toConfirm,

@@ -280,9 +280,11 @@ test('tasks with imported ESLint output require a fresh report without requiring
     const task = buildTask({ findings, facts, ids });
     assert.match(task.toConfirm.join(' '), /producer command and output path/);
     assert.match(task.acceptance.join(' '), /disappearance alone is not proof/i);
-    assert.match(task.acceptance.join(' '), /assess any comparison limitations/);
+    assert.match(task.acceptance.join(' '), /verify that no new finding appears in the files changed/);
+    assert.match(task.acceptance.join(' '), /If the comparison is limited, check the previous findings, fresh reports and current source directly before treating this criterion as met/);
     assert.doesNotMatch(task.acceptance.join(' '), /is marked comparable/);
     assert.match(task.verification.reanalyze.purpose, /does not run the external tools/);
+    assert.match(task.verification.reanalyze.purpose, /Verify no new finding appears in changed files/);
   }
   const rustFacts = { ...facts, repository: { ...facts.repository, language: 'rust' } };
   const rust = buildTask({ findings, facts: rustFacts, ids: [native.id] });
