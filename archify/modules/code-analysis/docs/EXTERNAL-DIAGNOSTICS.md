@@ -188,6 +188,8 @@ node bin/archify.mjs code-analysis check /path/to/repo --language ts --config /p
 
 External comparison checks the source set, tool/version, rule configuration, import settings and severity policy, scope/completeness, source binding, and adapter/identity versions. A changed report hash or report filename alone does not change comparability; legitimate fixes produce different report bytes. Source-qualified reasons explain missing sources or unknown/changed measurement conditions. A disappeared result means **no longer detected**, not automatically **fixed**.
 
+For comparable ESLint reports, Archify first pairs a unique finding at the same location with the same claim and captured line, even when its surrounding context changed the ID. This does not transfer approvals or task evidence. Both snapshots must record the line hash; older snapshots and reports without this evidence use ID matching. A move or edit that leaves no exact pair can still be reported as a possible rename.
+
 `--new-only` gates newly identified open findings. When comparing runs that include external sources, an incomparable or unknown comparison fails with `external/comparison-unverified` and exit code 2 instead of passing because an old source disappeared. Without any previous run, every open finding is treated as new. A normal full check remains available to inspect open and evidence-changed items even when external context is incomplete.
 
 Exit codes for `check` remain 0 for the configured gate passing, 1 for open findings reaching `--fail-on`, and 2 for usage/input/analysis errors. A passing gate is not a guarantee about unconfigured or unknown coverage.

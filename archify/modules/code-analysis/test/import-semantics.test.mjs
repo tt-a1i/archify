@@ -12,6 +12,7 @@ import { buildOverlay } from '../overlay/inject.mjs';
 import { schemaErrors } from '../extract/shared/schema.mjs';
 import { evaluateGraph, extractFacts } from '../lib/analysis.mjs';
 import { DiagnosticError } from '../extract/shared/diagnostics.mjs';
+import { runPythonFixture as python } from './helpers.mjs';
 
 const config = JSON.parse(fs.readFileSync(new URL('../config/defaults.json', import.meta.url)));
 
@@ -27,17 +28,6 @@ function analyze(t, files, language = 'py', options = {}) {
   const findings = evaluate(graph, {}, facts);
   for (const [name, doc] of [['raw-facts', facts], ['module-graph', graph], ['findings', findings]]) assert.deepEqual(schemaErrors(name, doc), []);
   return { root, facts, graph, findings, cycles: findings.diagnostics.filter((f) => f.code === 'coupling/import-cycle') };
-}
-
-// Only these small, test-authored fixtures are executed. The analyzer still
-// never imports or executes source from the repository under analysis.
-function python(root, code) {
-  const commands = process.env.BAUIFY_PYTHON ? [[process.env.BAUIFY_PYTHON]] : [['python3'], ['python'], ['py', '-3']];
-  for (const [command, ...args] of commands) {
-    const result = spawnSync(command, [...args, '-c', code], { cwd: root, encoding: 'utf8', timeout: 10000 });
-    if (!result.error) return result;
-  }
-  assert.fail('Python interpreter unavailable');
 }
 
 test('Python imports choose a regular package before its sibling module within one search root', (t) => {

@@ -13,6 +13,7 @@ import { RULES } from '../evaluate/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { startAnalysisView } from '../bin/serve.mjs';
 import { formatText } from '../bin/check.mjs';
+import { buildTask, renderTaskMarkdown } from '../lib/task.mjs';
 import { ARCHIFY_AVAILABLE } from './helpers.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -109,6 +110,82 @@ test('external workflow: evaluateGraph validates combined findings and records c
     (error) => error.diagnostics?.[0]?.code === 'external/config-invalid',
     'malformed external configuration must not silently disable the import',
   );
+});
+
+test('verified ESLint comparison keeps existing locations and gates a genuinely new repeated warning', (t) => {
+  const f = fixture(t);
+  const block = '{ const unused = 1; }\n';
+  const gap = `// ${'separator '.repeat(16)}\n`;
+  const original = block + gap + block;
+  const file = path.join(f.root, 'src/main.ts');
+  const report = path.join(f.root, 'reports/eslint.json');
+  const manifest = path.join(f.root, 'reports/eslint.manifest.json');
+  const writeEslint = (source, lines) => {
+    fs.writeFileSync(file, source);
+    write(report, [{ filePath: 'src/main.ts', messages: lines.map(line => ({
+      ruleId: 'no-unused-vars', severity: 1, message: "'unused' is assigned a value but never used.",
+      line, column: 9, endLine: line, endColumn: 15,
+    })) }]);
+    write(manifest, f.manifest('eslint'));
+  };
+  writeEslint(original, [1, 3]);
+  f.check(['--out', f.out, '--fail-on', 'never']);
+  const compare = ['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'warning'];
+
+  fs.writeFileSync(file, original + '\n');
+  assert.equal(f.check(compare, 2).diagnostics[0].code, 'external/comparison-unverified');
+  writeEslint(original + '\n', [1, 3]);
+  const blank = f.check(compare);
+  assert.equal(blank.review.comparison.new, 0);
+  assert.equal(blank.review.comparison.notDetected, 0);
+
+  writeEslint(original + gap + block, [1, 3, 5]);
+  const afterOut = path.join(f.dir, 'repeated');
+  const repeated = f.check([...compare, '--out', afterOut], 1);
+  assert.equal(repeated.review.comparison.new, 1);
+  assert.equal(repeated.review.comparison.notDetected, 0);
+  assert.deepEqual(repeated.gate.failing.map(item => item.where), ['src/main.ts:5']);
+
+  // Older ESLint snapshots have stable IDs but no line fingerprints. Retain
+  // ID matching even when the new report has enough data to pair by position.
+  const legacy = read(path.join(f.out, 'findings.json'));
+  for (const finding of legacy.diagnostics) if (finding.external) delete finding.external.comparisonLineSha256;
+  const legacyPath = path.join(f.dir, 'legacy-findings.json');
+  write(legacyPath, legacy);
+  const legacyOut = path.join(f.dir, 'legacy-comparison');
+  f.check(['--compare', legacyPath, '--out', legacyOut, '--fail-on', 'never']);
+  const legacyReview = read(path.join(legacyOut, 'review.json'));
+  const oldIds = new Set(legacy.diagnostics.map(finding => finding.id));
+  const current = read(path.join(legacyOut, 'findings.json')).diagnostics;
+  assert.equal(legacyReview.comparison.comparable, true);
+  assert.ok(current.some(finding => oldIds.has(finding.id)));
+  assert.ok(current.some(finding => !oldIds.has(finding.id)));
+  assert.deepEqual(current.filter(finding => legacyReview.findings[finding.id].since === 'new').map(finding => finding.id),
+    current.filter(finding => !oldIds.has(finding.id)).map(finding => finding.id));
+});
+
+test('verified ESLint comparison keeps a warning on an empty line after a nearby edit', (t) => {
+  const f = fixture(t);
+  const writeEslint = (source) => {
+    fs.writeFileSync(path.join(f.root, 'src/main.ts'), source);
+    write(path.join(f.root, 'reports/eslint.json'), [{ filePath: 'src/main.ts', messages: [{
+      ruleId: 'no-multiple-empty-lines', severity: 1, message: 'More than 1 blank line not allowed.', line: 3, column: 1,
+    }] }]);
+    write(path.join(f.root, 'reports/eslint.manifest.json'), f.manifest('eslint'));
+  };
+  writeEslint('export const first = 1;\n\n\nexport const last = 2;\n');
+  f.check(['--out', f.out, '--fail-on', 'never']);
+  writeEslint('export const first = 1;\n\n\n\nexport const last = 2;\n');
+  const out = path.join(f.dir, 'empty-line-comparison');
+  const previous = path.join(f.out, 'findings.json');
+  const result = f.check(['--compare', previous, '--new-only', '--fail-on', 'warning', '--out', out]);
+  const warning = data => data.diagnostics.find(finding => finding.external?.ruleId === 'no-multiple-empty-lines');
+  const before = warning(read(previous));
+  const after = warning(read(path.join(out, 'findings.json')));
+  assert.notEqual(after.id, before.id, 'exercise comparison after the context ID changes');
+  assert.equal(after.external.comparisonLineSha256, hash(''));
+  assert.equal(result.review.comparison.new, 0);
+  assert.equal(result.review.comparison.notDetected, 0);
 });
 
 test('external workflow: warning defaults preserve CLI gates and require re-review when the source policy changes', (t) => {
@@ -260,4 +337,54 @@ test('external workflow: serve keeps the last complete analysis and tasks after 
   assert.equal(read(findingsFile).diagnostics.some((d) => d.code === 'conventions/ruff'), false);
   const stale = await fetch(`${view.url}/task`, { method: 'POST', headers, body: JSON.stringify({ ids: [ruff.id] }) });
   assert.equal(stale.status, 422, 'a retired source result cannot be exported as a current task');
+});
+
+test('tasks with imported ESLint output require a fresh report without requiring a comparable comparison', (t) => {
+  const f = fixture(t);
+  fs.appendFileSync(path.join(f.root, 'src/main.ts'), 'import "./other";\n');
+  fs.writeFileSync(path.join(f.root, 'src/other.ts'), 'import "./main";\n');
+  write(path.join(f.root, 'reports/eslint.manifest.json'), f.manifest('eslint'));
+  f.config.ignore = f.config.ignore.filter(code => code !== 'coupling/import-cycle');
+  write(f.configFile, f.config);
+  const config = loadConfig(f.configFile);
+  const { facts } = extractFacts(f.root, { language: 'ts', config });
+  const findings = evaluateGraph(buildGraph(facts, config), config, facts, { root: f.root });
+  const native = findings.diagnostics.find(d => d.code === 'coupling/import-cycle');
+  const externalId = findings.diagnostics.find(d => d.code === 'conventions/eslint').id;
+  assert.ok(native, 'fixture produces a native import cycle');
+  for (const ids of [[externalId], [native.id, externalId], [native.id]]) {
+    const task = buildTask({ findings, facts, ids });
+    assert.match(task.toConfirm.join(' '), /producer command and output path/);
+    assert.match(task.acceptance.join(' '), /disappearance alone is not proof/i);
+    assert.match(task.acceptance.join(' '), /verify that no new finding appears in the files changed/);
+    assert.match(task.acceptance.join(' '), /If the comparison is limited, check the previous findings, fresh reports and current source directly before treating this criterion as met/);
+    assert.doesNotMatch(task.acceptance.join(' '), /is marked comparable/);
+    assert.match(task.verification.reanalyze.purpose, /does not run the external tools/);
+    assert.match(task.verification.reanalyze.purpose, /Verify no new finding appears in changed files/);
+  }
+  const nativeOnly = buildTask({ findings, facts, ids: [native.id] });
+  const mixed = buildTask({ findings, facts, ids: [native.id, externalId] });
+  assert.match(renderTaskMarkdown(nativeOnly), /project-eslint .* from reports\/eslint\.json/);
+  assert.match(renderTaskMarkdown(nativeOnly), /project-ruff .* from reports\/ruff\.json/);
+  assert.equal(nativeOnly.source.external, undefined, 'run-level sources are replay context, not evidence for the selected finding');
+  assert.deepEqual(nativeOnly.verification.commands, [], 'commands from unselected sources are not exported');
+  assert.match(renderTaskMarkdown(mixed), /project-ruff .* from reports\/ruff\.json/);
+  assert.deepEqual(mixed.source.external.map(s => s.id), ['project-eslint']);
+  assert.deepEqual(mixed.verification.commands.map(c => c.source), ['external source manifest: project-eslint']);
+  const imported = findings.analysis.external.map(source => ({ ...source,
+    tool: 'untrusted-tool-marker', toolVersion: 'untrusted-version-marker',
+    ...(source.format === 'ruff' ? { reportFile: 'reports/ruff.json\nuntrusted-path-marker' } : {}),
+  }));
+  const untrusted = buildTask({ findings: { ...findings, analysis: { ...findings.analysis, external: imported } }, facts, ids: [native.id] });
+  const exported = renderTaskMarkdown(untrusted);
+  assert.match(exported, /project-eslint .* from .*reports\/eslint\.json/);
+  assert.match(exported, /project-ruff/);
+  assert.doesNotMatch(exported, /untrusted-(?:tool|version|path)-marker/);
+  const rustFacts = { ...facts, repository: { ...facts.repository, language: 'rust' } };
+  const rust = buildTask({ findings, facts: rustFacts, ids: [native.id] });
+  assert.match(rust.acceptance.join(' '), /intentionally retained structural cycle/);
+  assert.match(rust.verification.reanalyze.purpose, /refresh the external reports/);
+  const plain = buildTask({ findings: { ...findings, analysis: { ...findings.analysis, external: [] } }, facts, ids: [native.id] });
+  assert.match(plain.acceptance.join(' '), /comparison is marked comparable/);
+  assert.doesNotMatch(plain.verification.reanalyze.purpose, /external reports/);
 });

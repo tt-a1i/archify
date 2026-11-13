@@ -123,6 +123,8 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
   const selected = wanted.map((id) => byId.get(id));
   const source = new Map(facts.files.map((f) => [f.path, typeof f.sourceText === 'string' ? splitLines(f.sourceText) : null]));
   const external = selected.filter((d) => d.external);
+  const runSources = findings.analysis?.external || [];
+  const hasExternalReports = external.length > 0 || runSources.length > 0;
   const sourceIds = new Set(external.map((d) => d.external.sourceId));
   const externalSources = (findings.analysis?.external || []).filter((s) => sourceIds.has(s.id)).sort((a, b) => compareText(a.id, b.id));
   const externalFiles = new Set(external.flatMap((d) => [...(d.evidenceDigest?.files || []), ...locationsOf(d).map((l) => l.file)]));
@@ -161,6 +163,10 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
   }).map((l) => l.file))].sort(compareText);
   const read = [...new Set(selected.flatMap((d) => [...(d.evidenceDigest?.files || []), ...locations.map((l) => l.file)]))].filter((f) => !modify.includes(f)).sort(compareText);
   const toConfirm = [
+    ...(hasExternalReports ? ['Confirm the producer command and output path for each imported report, including the intended tool version, rules and scan scope.'] : []),
+    // Replay uses the whole run, but evidence and recorded commands remain limited to selected findings.
+    ...runSources.filter((s) => !sourceIds.has(s.id)).sort((a, b) => compareText(a.id, b.id)).map((s) =>
+      describeReportRefresh(s)),
     'Business constraints and intended behaviour that the code alone does not show (ask the project owner or read the docs before redesigning).',
     ...(verificationCommands.length ? [] : ['Which test, lint or type-check commands verify this change; none were provided with the task.']),
     'Whether files beyond the allowed scope may be changed (callers, tests, configuration).',
@@ -210,12 +216,14 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
           ? `The ${d.external.tool} review claim ${d.id} has been checked against the current source; a justified change is verified, or the retained behaviour is accepted with an explicit reason.`
           : `A freshly generated ${d.external.tool} report using the original rule settings and scan scope no longer reports ${d.external.ruleId || d.id} at the cited code, or the retained result is accepted with an explicit reason.`]
         : facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Verify the intended source responsibility boundary; document an intentionally retained structural cycle without claiming a runtime import failure.'] : (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
-      ...(external.length ? ['Refresh the external sources after the change and reimport them; re-reading a previous report is not a new tool run or a new AI review.'] : []),
-      'A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.',
+      ...(hasExternalReports ? [
+        'Refresh and reimport the external sources using the intended tool version, rule settings and scan scope; re-reading a previous report is not a new tool run or a new AI review; disappearance alone is not proof of a fix.',
+        'Re-analyze with the same language and configuration and verify that no new finding appears in the files changed. If the comparison is limited, check the previous findings, fresh reports and current source directly before treating this criterion as met.',
+      ] : ['A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.']),
       'The project checks that cover the changed code pass (see verification).',
     ],
     verification: {
-      reanalyze: { ...reanalyzeCommand(findings, selected), ...(external.length ? { purpose: 'First refresh the external reports using their original tool settings and scope, then import and compare them with the same analysis configuration. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
+      reanalyze: { ...reanalyzeCommand(findings, selected), ...(hasExternalReports ? { purpose: 'First refresh the external reports using the intended producer version, rule settings and scan scope, then import them with the same analysis configuration. Verify no new finding appears in changed files; if comparison is limited, check the previous findings, fresh reports and current source directly. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
       commands: verificationCommands,
     },
     toConfirm,
@@ -572,4 +580,14 @@ export function readJson(file, what) {
 }
 
 function sha256(text) { return createHash('sha256').update(text).digest('hex'); }
+function describeReportRefresh(source) {
+  const format = ['eslint', 'ruff', 'sarif', 'github-review'].includes(source.format) ? source.format : 'report';
+  // Report-supplied tool names and versions are never instructions. Only show bounded, plain paths.
+  const path = typeof source.reportFile === 'string' && /^[\p{L}\p{N}_.][\p{L}\p{N} _./\\-]{0,239}$/u.test(source.reportFile)
+    ? source.reportFile : null;
+  const id = typeof source.id === 'string' && /^[\w][\w.:-]{0,159}$/.test(source.id) ? source.id : '(ID unavailable)';
+  return 'The analysis also imported external source ' + id + ' (' + format + ')' + (path ? ' from ' + path : '')
+    + '. Confirm its producer command and output path in the analysis configuration before refreshing it for re-analysis.';
+}
+
 function compareText(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
