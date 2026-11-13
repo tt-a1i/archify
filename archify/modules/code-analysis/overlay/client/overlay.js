@@ -52,6 +52,10 @@
   overview.id = 'bauify-overview'; overview.hidden = true; overview.setAttribute('aria-label', 'Code analysis overview');
   reader.appendChild(overview);
   var findingById = {}; (data.findings || []).forEach(function (f) { findingById[f.id] = f; });
+  var overviewMode = 'summary', listScroll = 0;
+  var filters = { source: 'all', category: 'all', severity: 'all', status: 'open', search: '', unverified: false, page: 0 };
+  var filterKey = 'archify-findings:' + (data.repository.root || '') + ':' + location.pathname;
+  try { var restored = JSON.parse(sessionStorage.getItem(filterKey)); if (restored) Object.keys(filters).forEach(function (key) { if (typeof restored[key] === typeof filters[key]) filters[key] = restored[key]; }); } catch (error) { /* Storage is optional for offline reports. */ }
   var entryById = {}; ((data.overview && data.overview.findings) || []).forEach(function (e) { entryById[e.id] = e; });
   var moduleInfo = {};
   data.components.forEach(function (c) { c.modules.forEach(function (m) { moduleInfo[m.id] = m; }); });
@@ -64,8 +68,8 @@
   reader.appendChild(codePane);
   // Danger levels behind the colours. Same wording everywhere: legend, badge, detail header.
   var LEVELS = {
-    red: { name: 'critical', text: 'circular dependency: the parts cannot be understood, tested or changed on their own. A structural problem to fix, not a proven runtime failure' },
-    amber: { name: 'warning', text: 'maintenance burden: cycle through deferred imports, hub or concentrated module, very large file, duplicated code, crossed architecture boundary, or very complex function' },
+    red: { name: 'error', text: 'an error reported by a rule or external tool. Inspect the original rule and evidence; severity alone does not establish a runtime failure' },
+    amber: { name: 'warning', text: 'a maintenance signal or an external convention/review claim to inspect; not a confirmed defect' },
     blue: { name: 'info', text: 'a signal to read; no change is required' },
     green: { name: 'clean', text: 'no rule fired' },
     grey: { name: 'unmapped', text: 'no source code maps to this component' },
@@ -157,11 +161,13 @@
     return camera.centerAt(x, y, { scale: camera.state ? camera.state().scale : 1, instant: true });
   }
   function showOverview() {
+    overviewMode = 'summary';
     readerPage('Overview');
     root.removeAttribute('data-bauify-source');
     panel.hidden = true; detail.hidden = true; codePane.hidden = true; setFocus([]);
     overview.querySelectorAll('.bauify-item.active').forEach(function (x) { x.classList.remove('active'); });
     overview.hidden = false;
+    renderOverview();
     var heading = overview.querySelector('h3'); if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
@@ -233,7 +239,7 @@
   }
   function allFindings(c) {
     var fl = (c.findings || []).concat((c.fileList || []).flatMap(function (f) { return f.findings; }));
-    var seen = {}; return fl.filter(function (f) { var k = f.id || f.code + JSON.stringify(f.subject); if (seen[k]) return false; seen[k] = true; return true; });
+    var seen = {}; return fl.filter(function (f) { var k = f.id || f.code + JSON.stringify(f.subject); if (seen[k]) return false; seen[k] = true; return true; }).map(function (f) { return findingById[f.id] || f; });
   }
   function ref(file, line, rest, why, tone, rangeStart, rangeEnd, match) {
     return '<button type="button" class="ref" data-file="' + esc(file) + '" data-line="' + line + '" data-range-start="' + (rangeStart || '') + '" data-range-end="' + (rangeEnd || '') + '" data-match="' + (match ? esc(JSON.stringify(match)) : '') + '" data-why="' + esc(why || '') + '" data-tone="' + (tone || '') + '"><b>' + esc(match ? file : short(file)) + '</b> <em>(' + (match ? 'lines ' + rangeStart + '–' + rangeEnd : 'line ' + line) + ')</em>' + (rest ? ' ' + rest : '') + '</button>';
@@ -319,10 +325,10 @@
       var start = full ? 0 : line ? Math.max(0, Math.min(line - 5, snip.lines.length - 9)) : 0;
       var end = full ? snip.lines.length : Math.min(snip.lines.length, start + (line ? 9 : 12));
       h += '<div class="why">Lines ' + (start + 1) + '–' + end + ' of ' + snip.lines.length + (line || full ? '' : ' · opening lines, not finding evidence') + '</div>';
-      if (match) h += '<div class="why duplicate-legend"><mark class="duplicate-match">Matched code</mark> · lines ' + rangeStart + '–' + rangeEnd + (full ? '' : ' · expand for the complete range') + '</div>';
+      if (match) h += '<div class="why duplicate-legend"><mark class="duplicate-match">' + (match.kind === 'external' ? 'Reported range' : 'Matched code') + '</mark> · lines ' + rangeStart + '–' + rangeEnd + (match.column ? ' · column ' + match.column + (match.endColumn ? '–' + match.endColumn + ' (end exclusive)' : '') : '') + (full ? '' : ' · expand for the complete range') + '</div>';
       else if (rangeStart && rangeEnd) h += '<div class="why">Highlighted function: lines ' + rangeStart + '–' + rangeEnd + (full ? '' : ' · excerpt only; expand for the complete function') + '</div>';
       if (snip.lines.length > (line ? 9 : 12)) h += '<button type="button" class="source-file source-toggle">' + (full ? 'Show excerpt' : 'Show full file') + '</button>';
-      h += '<pre class="' + (full ? '' : 'excerpt') + (match ? ' duplicate-source' : '') + '">';
+      h += '<pre class="' + (full ? '' : 'excerpt') + (match && match.kind !== 'external' ? ' duplicate-source' : '') + '">';
       if (!start) h += deletion(0);
       snip.lines.forEach(function (text, i) {
         if (i < start || i >= end) return;
@@ -354,11 +360,12 @@
     var lvl = LEVELS[ind.status] || LEVELS.neutral;
     var h = '<button class="close" aria-label="Close">×</button><button class="back" type="button">← Component</button>';
     h += '<div class="k">' + esc(c.label) + '</div><h3><i class="bauify-' + ind.status + '"></i>' + esc(ind.label) + '</h3>';
-    h += '<div class="level"><b>' + esc(lvl.name) + '</b> — ' + esc(ind.value) + (ind.status === 'neutral' ? '' : '<br>' + esc(lvl.text)) + '</div>';
-    h += '<details class="relationship"><summary>Relationships and metrics</summary>' + diagram(c, key, fl) + '</details>';
+    var externalGroup = fl.length && fl.every(function (f) { return f.external; });
+    h += '<div class="level"><b>' + esc(lvl.name) + '</b> — ' + esc(ind.value) + (ind.status === 'neutral' || externalGroup ? '' : '<br>' + esc(lvl.text)) + '</div>';
+    if (!externalGroup) h += '<details class="relationship"><summary>Relationships and metrics</summary>' + diagram(c, key, fl) + '</details>';
     h += '<div class="k">Findings · ' + fl.length + '</div>';
     if (!fl.length) h += '<div class="ev">' + (key === 'instability' ? 'Instability measures dependency direction: out / (in + out). 0 = no outgoing dependencies, 1 = no incoming dependents. It is not a failure probability or a quality verdict.' : 'No finding for this indicator; this is not a safety guarantee.') + '</div>';
-    fl.forEach(function (f) { h += quickHandoff(f) + evidencePreview(f) + findingCard(f) + taskHtml(f); });
+    fl.forEach(function (f) { h += f.external ? findingListRow(f) : quickHandoff(f) + evidencePreview(f) + findingCard(f) + taskHtml(f); });
     detail.innerHTML = h;
     detail.hidden = false;
     codePane.hidden = true;
@@ -367,6 +374,7 @@
     detail.querySelector('.back').addEventListener('click', backToComponent);
     wireRefs();
     wireTasks();
+    detail.querySelectorAll('[data-finding]').forEach(function (button) { button.addEventListener('click', function () { showFinding(button.getAttribute('data-finding')); }); });
   }
   function wireRefs() {
     detail.querySelectorAll('.ref').forEach(function (el) {
@@ -389,6 +397,7 @@
   function toneOf(severity) { return severity === 'error' ? 'red' : severity === 'warning' ? 'amber' : 'blue'; }
   function modLabel(id) { return moduleInfo[id] ? moduleInfo[id].label : id; }
   function findingTitle(f) {
+    if (f.external) { var title = f.message.split(/\r?\n/).find(function (line) { return line.trim(); }) || f.external.ruleId || f.code; return title.length > 160 ? title.slice(0, 157) + '…' : title; }
     var s = f.subject || {};
     if (f.code === 'redundancy/duplicate-block') return 'Duplicate code';
     if (f.code === 'coupling/import-cycle' && s.files) return 'Import cycle · ' + plural(s.files.length, 'file');
@@ -410,6 +419,7 @@
     return parts.join(' · ');
   }
   function findingWhat(f) {
+    if (f.external) return f.external.tool + ' · ' + (f.external.ruleId || 'review comment');
     var s = f.subject || {};
     if (f.code === 'redundancy/duplicate-block' && f.evidence) return plural(f.evidence.tokens, 'matching token') + ' · ' + plural(f.evidence.lines, 'line') + (f.evidence.kind === 'renamed' ? ' · renamed identifiers' : ' · exact tokens');
     if (f.code === 'coupling/concentration' && f.evidence) return concentrationWhat(f.evidence);
@@ -437,6 +447,76 @@
       (r.status === 'accepted' ? '<span class="badge-accepted">' + (f.severity === 'error' ? 'accepted · still to fix' : 'accepted') + '</span>' : r.status === 'accepted-changed' ? '<span class="badge-accepted">accepted · evidence changed</span>' : '');
     return '<button type="button" class="bauify-item ' + toneOf(f.severity) + (r.status === 'accepted' ? (f.severity === 'error' ? ' accepted-error' : ' accepted') : '') + '" data-finding="' + esc(id) + '"' + (r.reason ? ' title="Accepted: ' + esc(r.reason) + '"' : '') + '>' + (n ? '<span class="n">' + n + '</span>' : '') +
       '<b>' + esc(findingTitle(f)) + '</b> <em>' + esc(f.severity) + '</em>' + badges + '<span class="what">' + esc(findingWhat(f)) + '</span><span class="where">' + esc(findingWhere(f)) + '</span>' + (n && data.tasks && data.tasks[id] ? '<span class="what">' + esc(data.tasks[id].task.impact.map(function (v) { return v.statement; }).join(' ')) + '</span>' : '') + '</button>';
+  }
+  var CATEGORIES = { coupling: 'Dependencies', complexity: 'Complexity', redundancy: 'Duplicate code', architecture: 'Architecture', conventions: 'Coding conventions', 'external-review': 'AI review' };
+  function externalSources() { return (data.overview && data.overview.coverage && data.overview.coverage.external) || []; }
+  externalSources().forEach(function (source) { GROUPS[source.code] = source.tool + ' diagnostics'; });
+  function sourceLabel(source) { var version = source.toolVersion || ''; if (version.toLowerCase().startsWith(source.tool.toLowerCase() + ' ')) version = version.slice(source.tool.length + 1); return source.tool + (version ? ' ' + version : '') + ' · ' + source.id; }
+  function bindingLabel(binding) { return binding === 'verified' ? 'File content hashes match' : binding === 'changed' ? 'Source changed' : 'Not verified'; }
+  function findingListRow(f) {
+    var external = f.external, review = f.review || {};
+    return '<button type="button" class="finding-row ' + toneOf(f.severity) + '" data-finding="' + esc(f.id) + '"><span class="finding-row-meta"><span>' + esc(external ? external.tool : 'Archify') + '</span><code>' + esc(external ? external.ruleId || 'review comment' : f.code) + '</code><span class="finding-level">' + esc(f.severity) + '</span></span><b>' + esc(findingTitle(f)) + '</b><span class="finding-row-path">' + esc(findingWhere(f)) + '</span>' +
+      (review.status === 'accepted' ? '<span class="finding-row-state">Accepted' + (f.severity === 'error' ? ' · still present' : '') + '</span>' : review.status === 'accepted-changed' ? '<span class="finding-row-state attention">Accepted evidence changed · review again</span>' : external && external.binding !== 'verified' ? '<span class="finding-row-state attention">Report binding: ' + esc(bindingLabel(external.binding).toLowerCase()) + '</span>' : '') + '</button>';
+  }
+  function showFindings(source) {
+    if (typeof source === 'string') { filters.source = source; filters.category = 'all'; filters.severity = 'all'; filters.status = 'open'; filters.unverified = false; filters.search = ''; filters.page = 0; listScroll = 0; }
+    overviewMode = 'findings'; readerPage('Findings'); root.removeAttribute('data-bauify-source');
+    panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
+    renderFindingList(); overview.scrollTop = listScroll;
+  }
+  function renderFindingList() {
+    var sources = externalSources(), dimensions = [...new Set(data.findings.map(function (f) { return f.dimension; }))].sort();
+    var option = function (value, label) { return '<option value="' + esc(value) + '">' + esc(label) + '</option>'; };
+    overview.innerHTML = '<button type="button" class="back findings-back">← Overview</button><div class="findings-heading"><h3>Findings</h3>' + (sources.length ? '<button type="button" class="text-action view-sources">Sources · ' + sources.length + '</button>' : '') + '</div>' +
+      '<label class="sr-only" for="finding-search">Search findings</label><input id="finding-search" class="finding-search" type="search" placeholder="Search rule, message or file…" value="' + esc(filters.search) + '">' +
+      '<div class="finding-filters' + (dimensions.length < 2 ? ' compact' : '') + '"><select aria-label="Finding source">' + option('all', 'All sources') + option('internal', 'Archify') + (sources.length ? option('external', 'External tools') + sources.map(function (s) { return option('source:' + s.id, sourceLabel(s)); }).join('') : '') + '</select>' +
+      (dimensions.length > 1 ? '<select aria-label="Finding category">' + option('all', 'All categories') + dimensions.map(function (d) { return option(d, CATEGORIES[d] || d); }).join('') + '</select>' : '') +
+      '<select aria-label="Finding severity">' + option('all', 'All levels') + option('error', 'Error') + option('warning', 'Warning') + option('info', 'Info') + '</select>' +
+      '<select aria-label="Finding review status">' + option('open', 'Open') + option('accepted', 'Accepted') + option('changed', 'Needs re-review') + option('all', 'All statuses') + '</select></div>' +
+      '<div class="finding-list-count"><span role="status" aria-live="polite"></span>' + (sources.length ? '<label><input type="checkbox" class="unverified-filter"' + (filters.unverified ? ' checked' : '') + '> Unverified reports only</label>' : '') + '</div><div class="finding-list"></div><div class="finding-pagination"></div>';
+    overview.querySelector('.findings-back').addEventListener('click', showOverview);
+    var sourcesButton = overview.querySelector('.view-sources'); if (sourcesButton) sourcesButton.addEventListener('click', showSources);
+    var controls = [['Finding source', 'source'], ['Finding category', 'category'], ['Finding severity', 'severity'], ['Finding review status', 'status']];
+    controls.forEach(function (pair) { var control = overview.querySelector('[aria-label="' + pair[0] + '"]'); if (!control) { filters[pair[1]] = 'all'; return; } control.value = filters[pair[1]]; if (!control.value) filters[pair[1]] = control.value = pair[1] === 'status' ? 'open' : 'all'; control.addEventListener('change', function () { filters[pair[1]] = control.value; filters.page = 0; renderFindingRows(); }); });
+    overview.querySelector('#finding-search').addEventListener('input', function (event) { filters.search = event.target.value; filters.page = 0; renderFindingRows(); });
+    var checkbox = overview.querySelector('.unverified-filter'); if (checkbox) checkbox.addEventListener('change', function () { filters.unverified = checkbox.checked; filters.page = 0; renderFindingRows(); });
+    renderFindingRows();
+  }
+  function renderFindingRows() {
+    var query = filters.search.trim().toLowerCase();
+    var matches = ((data.overview && data.overview.findings) || data.findings).map(function (entry) { return findingById[entry.id]; }).filter(function (f) {
+      var accepted = f.review && f.review.status === 'accepted', changed = f.review && f.review.status === 'accepted-changed';
+      return (filters.source === 'all' || filters.source === 'internal' && !f.external || filters.source === 'external' && f.external || f.external && filters.source === 'source:' + f.external.sourceId) &&
+        (filters.category === 'all' || filters.category === f.dimension) && (filters.severity === 'all' || filters.severity === f.severity) &&
+        (filters.status === 'all' || filters.status === 'open' && !accepted || filters.status === 'accepted' && accepted || filters.status === 'changed' && changed) &&
+        (!filters.unverified || f.external && f.external.binding !== 'verified') &&
+        (!query || [f.code, f.message, findingWhere(f), f.external && f.external.ruleId, f.external && f.external.tool].join(' ').toLowerCase().includes(query));
+    });
+    filters.page = Math.max(0, Math.min(filters.page, Math.ceil(matches.length / 40) - 1));
+    var start = filters.page * 40, end = Math.min(start + 40, matches.length);
+    overview.querySelector('.finding-list-count > span').textContent = plural(matches.length, 'finding') + (matches.length > 40 ? ' · ' + (start + 1) + '–' + end : '');
+    var selectedSources = externalSources().filter(function (source) { return filters.source === 'external' || filters.source === 'source:' + source.id; });
+    var emptyReports = !query && selectedSources.length && selectedSources.every(function (source) { return !data.findings.some(function (f) { return f.external && f.external.sourceId === source.id; }); });
+    overview.querySelector('.finding-list').innerHTML = matches.length ? matches.slice(start, end).map(findingListRow).join('') : '<div class="finding-empty"><b>' + (emptyReports ? 'No diagnostics in this report' : data.findings.length ? 'No matching findings' : 'No diagnostics in this analysis') + '</b><p>' + (emptyReports || !data.findings.length ? 'See Sources and Coverage for what was checked.' : 'Change a filter or search term to see more.') + '</p><button type="button" class="text-action reset-filters">Reset filters</button></div>';
+    overview.querySelectorAll('[data-finding]').forEach(function (button) { button.addEventListener('click', function () { listScroll = overview.scrollTop; showFinding(button.getAttribute('data-finding'), 'findings'); }); });
+    var reset = overview.querySelector('.reset-filters'); if (reset) reset.addEventListener('click', function () { filters.source = filters.category = filters.severity = 'all'; filters.status = 'all'; filters.search = ''; filters.unverified = false; filters.page = 0; renderFindingList(); });
+    var pagination = overview.querySelector('.finding-pagination');
+    pagination.innerHTML = matches.length > 40 ? '<button type="button" data-page="-1"' + (!filters.page ? ' disabled' : '') + '>Previous</button><span>Page ' + (filters.page + 1) + ' of ' + Math.ceil(matches.length / 40) + '</span><button type="button" data-page="1"' + (end === matches.length ? ' disabled' : '') + '>Next</button>' : '';
+    pagination.querySelectorAll('button').forEach(function (button) { button.addEventListener('click', function () { filters.page += Number(button.getAttribute('data-page')); renderFindingRows(); overview.scrollTop = 0; }); });
+  }
+  function showSources() {
+    var parent = overviewMode; overviewMode = 'sources'; readerPage('Sources'); root.removeAttribute('data-bauify-source');
+    panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
+    overview.innerHTML = '<button type="button" class="back sources-back">← ' + (parent === 'findings' ? 'Findings' : 'Overview') + '</button><h3>Sources & coverage</h3><p class="ev">Report import, source binding and scan scope are separate facts.</p>' + externalSources().map(function (source) {
+      var count = data.findings.filter(function (f) { return f.external && f.external.sourceId === source.id; }).length;
+      var coverage = source.coverage || {}, complete = coverage.complete === true ? 'complete' : coverage.complete === false ? 'incomplete' : 'not declared';
+      return '<section class="external-source"><div class="findings-heading"><h4>' + esc(source.tool + ' · ' + source.id) + '</h4><span class="ev">' + esc(source.toolVersion || 'Version not supplied') + '</span></div><div class="ev">' + plural(count, 'diagnostic') + ' · ' + esc(source.format) + '</div><dl class="external-facts"><div><dt>Import</dt><dd>' + (source.status === 'partial' ? 'Partial · review import notices' : 'Imported') + '</dd></div><div><dt>Report binding</dt><dd>' + esc(bindingLabel(source.binding)) + '</dd></div><div><dt>Declared scope</dt><dd>' + (coverage.files && coverage.files.length ? plural(coverage.files.length, 'file') + ' · ' : '') + esc(complete) + '</dd></div></dl>' +
+        (count === 0 ? '<p class="ev">This report contains no diagnostics. Coverage is limited to its declared scope.</p>' : '') +
+        '<details><summary>Import details</summary><dl class="external-facts"><div><dt>Source ID</dt><dd>' + esc(source.id) + '</dd></div><div><dt>Report</dt><dd>' + esc(source.reportFile || 'Not recorded') + '</dd></div><div><dt>Suppressed</dt><dd>' + (source.suppressed || 0) + '</dd></div></dl>' + (source.notices || []).map(function (n) { return '<p class="ev">' + esc(n.message) + '</p>'; }).join('') + '</details><button type="button" class="text-action source-findings" data-source="' + esc(source.id) + '">View findings</button></section>';
+    }).join('') + '<p class="ev">Run the source tool to update its report, then re-analyze. Importing a report does not rerun its rules.</p>';
+    overview.querySelector('.sources-back').addEventListener('click', function () { if (parent === 'findings') showFindings(); else showOverview(); });
+    overview.querySelectorAll('.source-findings').forEach(function (button) { button.addEventListener('click', function () { showFindings('source:' + button.getAttribute('data-source')); }); });
+    overview.scrollTop = 0;
   }
   function coverageHtml(c) {
     if (!c) return '';
@@ -500,8 +580,8 @@
     var acceptedCount = o.counts.accepted || 0;
     var acceptedErrors = o.counts.acceptedErrors || 0;
     // An error stays red after it is accepted: the baseline unblocks CI, it does not fix the structure.
-    if (o.counts.error) v = { tone: 'red', text: 'Structural problems to fix' };
-    else if (acceptedErrors) v = { tone: 'red', text: 'Accepted structural problems still present' };
+    if (o.counts.error) v = { tone: 'red', text: data.findings.some(function (f) { return f.severity === 'error' && !f.external && (!f.review || f.review.status !== 'accepted'); }) ? 'Structural problems to fix' : 'Errors reported by external tools' };
+    else if (acceptedErrors) v = { tone: 'red', text: 'Accepted errors still present' };
     var verdictText = !o.counts.error && !acceptedErrors && o.verdict === 'none-found' && acceptedCount ? 'No open findings · ' + acceptedCount + ' accepted in the baseline' : v.text;
     var counts = [['total', plural(o.counts.findings, 'finding')]]
       .concat(['error', 'warning', 'info'].filter(function (k) { return o.counts[k]; }).map(function (k) { return [k, o.counts[k] + ' ' + k]; }))
@@ -511,6 +591,13 @@
     var h = typeof window.__archifyReanalyze === 'function' ? '<button type="button" class="bauify-reanalyze" title="Read the repository again and compare with this result">Re-analyze</button>' : '';
     h += '<h3><i class="bauify-' + v.tone + '"></i>' + esc(verdictText) + '</h3>';
     h += '<div class="ev counts">' + counts + '</div>';
+    h += '<button type="button" class="browse-findings">Browse findings</button>';
+    var sources = externalSources();
+    if (sources.length) {
+      var externalCount = data.findings.filter(function (f) { return f.external; }).length;
+      var uncertain = sources.filter(function (source) { return source.binding !== 'verified' || source.status === 'partial'; }).length;
+      h += '<div class="external-entry"><button type="button" class="external-findings"><b>External diagnostics · ' + externalCount + '</b><span>' + plural(sources.length, 'source') + (uncertain ? ' · ' + uncertain + ' need verification' : '') + '</span></button><button type="button" class="text-action overview-sources">Sources & coverage</button></div>';
+    }
     var checkedRules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
     var unchecked = [['redundancy/', 'duplicate code'], ['conventions/', 'project coding conventions']].filter(function (x) { return !checkedRules.some(function (r) { return r.indexOf(x[0]) === 0; }); }).map(function (x) { return x[1]; });
     if (unchecked.length) h += '<div class="coverage-notice">Not checked: ' + esc(unchecked.join(', ')) + '. See Coverage for the full scope.</div>';
@@ -524,7 +611,8 @@
       var anyCycle = picks.some(function (f) { return f.code === 'coupling/import-cycle' || f.code === 'coupling/cycle'; });
       // The lead follows the first priority; the cycle caveat only when a cycle is listed.
       var first = picks[0] || {};
-      var lead = first.code === 'coupling/hub' ? 'Start with responsibility boundaries in ' + hubs.map(function (f) { return esc(modLabel(f.subject.module)); }).join(' and ') + '. '
+      var lead = first.external ? 'Start with the reported diagnostics below. '
+        : first.code === 'coupling/hub' ? 'Start with responsibility boundaries in ' + hubs.map(function (f) { return esc(modLabel(f.subject.module)); }).join(' and ') + '. '
         : first.code === 'complexity/function' ? 'Start with the most complex functions below. '
         : first.code === 'redundancy/duplicate-block' ? 'Start with the repeated code below. '
         : first.code === 'coupling/concentration' ? 'Start with where the project is concentrated. '
@@ -535,7 +623,7 @@
     if (o.priorities.length) {
       h += '<div class="k">Look at first</div>';
       o.priorities.forEach(function (id, i) { h += findingRow(id, i + 1); });
-    } else if (acceptedCount) h += '<div class="ev" style="margin-top:8px">Every finding is accepted in the baseline' + (acceptedErrors ? ', including ' + plural(acceptedErrors, 'circular dependency finding') + ' that ' + (acceptedErrors === 1 ? 'is' : 'are') + ' still in the code and stay' + (acceptedErrors === 1 ? 's' : '') + ' red' : '') + '. New findings, and accepted ones whose code changes, will show up here.</div>';
+    } else if (acceptedCount) h += '<div class="ev" style="margin-top:8px">Every finding is accepted in the baseline' + (acceptedErrors ? ', including ' + plural(acceptedErrors, 'error-level finding') + ' that ' + (acceptedErrors === 1 ? 'is' : 'are') + ' still present and stay' + (acceptedErrors === 1 ? 's' : '') + ' red' : '') + '. New findings, and accepted ones whose code changes, will show up here.</div>';
     else h += '<div class="ev" style="margin-top:8px">No rule fired. This covers only the checks listed under Coverage; it is not a quality guarantee.</div>';
     if (o.groups.length) {
       h += '<div class="k">All findings</div><div class="ev hint">By rule. Click a component on the diagram for its own view.</div>';
@@ -546,6 +634,9 @@
     h += coverageHtml(o.coverage);
     h += '<details><summary>Colour key</summary>' + legend() + '<div class="ev">The number on a component counts its open findings at its highest level. A solid glow marks the components with the most; the rest get a thin outline.</div></details>';
     overview.innerHTML = h;
+    overview.querySelector('.browse-findings').addEventListener('click', function () { showFindings('all'); });
+    var externalButton = overview.querySelector('.external-findings'); if (externalButton) externalButton.addEventListener('click', function () { showFindings('external'); });
+    var sourceButton = overview.querySelector('.overview-sources'); if (sourceButton) sourceButton.addEventListener('click', showSources);
     var again = overview.querySelector('.bauify-reanalyze');
     if (again) again.addEventListener('click', function () {
       again.disabled = true; again.textContent = 'Analyzing…';
@@ -600,23 +691,8 @@
     });
     return h + '</section>';
   }
-  function organizationEvidence(f, tone) {
-    var ev = '';
-      var matches = [];
-      if (f.code === 'organization/mixed-roles') matches = (f.evidence.triggers || []).map(function (v) { return { file: f.subject.file, role: v.role, line: v.line, text: v.text }; });
-      if (f.code === 'organization/folder-roles') Object.keys(f.evidence.roles || {}).sort().forEach(function (role) {
-        (f.evidence.roles[role] || []).forEach(function (entry) { (entry.triggers || []).forEach(function (v) { matches.push({ file: entry.file, role: role, line: v.line, text: v.text }); }); });
-      });
-      ev += '<div class="ev">Lexical matches are review signals, not proof of responsibility.</div>';
-      matches.slice(0, 12).forEach(function (match) {
-        ev += ref(match.file, match.line, '<span>' + esc(match.role) + ': ' + esc(match.text) + '</span>', 'Matched text may be in a comment or string; read the surrounding source before acting.', tone);
-      });
-      if (matches.length > 12) ev += '<div class="ev">' + (matches.length - 12) + ' more matches are recorded in findings.json.</div>';
-      if (f.code === 'organization/generic-name' && f.subject.file) ev += ref(f.subject.file, null, '<span>Generic basename</span>', 'Review the project naming convention before changing it.', tone);
-    return ev;
-  }
   function evidencePreview(f) {
-    if (f.code.indexOf('organization/') === 0) return organizationEvidence(f, toneOf(f.severity));
+    if (f.external) return externalEvidence(f);
     if (f.code === 'redundancy/duplicate-block') return duplicateEvidence(f);
     var captured = (data.tasks || {})[f.id];
     var locations = captured ? captured.task.locations.filter(function (l) { return l.startLine; }).slice(0, 2) : [];
@@ -635,6 +711,62 @@
   }
   function taskHtml(f) {
     return '<details class="ai-task" data-task-id="' + esc(f.id) + '"><summary>Task preview and download</summary><p class="ev">Review the brief, then give it to your coding AI. Exporting does not modify code.</p><p class="task-status ev" role="status" aria-live="polite">Open to prepare the task.</p><div class="task-actions"><button type="button" class="task-copy" disabled>Copy AI task</button><button type="button" class="task-download" disabled>Download .md</button><button type="button" class="task-refresh">Check again</button></div><label class="ev">Task preview · select text to copy manually<textarea class="task-preview" readonly spellcheck="false" aria-label="AI task preview"></textarea></label></details>';
+  }
+  function externalEvidence(f) {
+    var locations = f.external.locations || [];
+    return (locations.length && locations.every(function (loc) { return loc.role === 'related'; }) ? '<p class="ev">The primary source location is unavailable. Related locations below are context.</p>' : '') + (locations.map(function (loc, index) {
+      var snip = (data.snippets || {})[loc.file];
+      var match = { kind: 'external', line: loc.line, endLine: loc.endLine || loc.line, column: loc.column, endColumn: loc.endColumn };
+      var position = loc.file + (loc.line ? ':' + loc.line + (loc.column ? ':' + loc.column : '') : ' · position not verified');
+      var h = '<div class="inline-evidence external-evidence">' + (loc.line ? ref(loc.file, loc.line, '', 'Location reported by ' + f.external.tool + '. Read the current code before editing.', toneOf(f.severity), loc.line, loc.endLine || loc.line, match) : fileLink(loc.file)) + '<div class="ev external-position">' + esc(position) + '</div>';
+      if (!snip) h += '<p class="ev">Source is unavailable in this report. Read this file in your editor.</p>';
+      else {
+        var start = loc.line ? Math.max(0, loc.line - 3) : 0, end = Math.min(snip.lines.length, start + 5);
+        h += '<pre aria-label="Code excerpt from ' + esc(loc.file) + '">';
+        snip.lines.slice(start, end).forEach(function (text, i) { var n = start + i + 1; h += '<span class="evidence-line' + (n === loc.line ? ' focus-line' : '') + '"><span class="line-number">' + n + '  </span>' + duplicateText(text, n, match) + '</span>'; });
+        h += '</pre><p class="ev">' + (!loc.line ? 'Opening lines only; this report has no verified location in the current source.' : 'Captured excerpt · open the path for full context.') + '</p>';
+      }
+      h += '</div>';
+      var related = loc.role ? loc.role === 'related' : index > 0;
+      return related ? '<details class="external-related"><summary>Related location · ' + esc(position) + '</summary>' + h + '</details>' : h;
+    }).join('') || '<p class="ev">No source location was supplied. Review the original claim before editing.</p>');
+  }
+  function externalProvenance(f) {
+    var e = f.external;
+    var link = function (url, label) { try { var parsed = new URL(url); if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return '<a href="' + esc(parsed.href) + '" target="_blank" rel="noopener noreferrer">' + label + '</a>'; } catch (error) { /* An invalid source URL is data, not a link. */ } return ''; };
+    return '<details class="external-provenance"><summary>Source, rule and import details</summary><dl class="external-facts"><div><dt>Source</dt><dd>' + esc(e.sourceId) + '</dd></div><div><dt>Original rule</dt><dd>' + esc(e.ruleId || 'Not supplied') + '</dd></div><div><dt>Original level</dt><dd>' + esc(e.originalSeverity == null ? 'Not supplied · defaulted to warning' : e.originalSeverity) + '</dd></div><div><dt>Report item</dt><dd>' + esc(e.reportPointer) + '</dd></div></dl><p>' + link(e.helpUri, 'Rule documentation') + '</p><p class="ev">This claim comes from the external source. Archify imported its result and has not rerun the rule.</p></details>';
+  }
+  function reviewHtmlForFinding(f) {
+    var accepted = f.review && f.review.status === 'accepted', changed = f.review && f.review.status === 'accepted-changed';
+    var available = typeof window.__archifySaveReview === 'function' && f.reviewTarget;
+    return '<section class="finding-review" aria-label="Review decision">' + (f.review && f.review.reason ? '<p class="review-reason"><b>' + (changed ? 'Accepted evidence changed · review again' : 'Accepted in baseline') + '</b><span>' + esc(f.review.reason) + '</span>' + (f.severity === 'error' ? '<span>This diagnostic is still present at error severity.</span>' : '') + '</p>' : '') +
+      '<div class="review-primary-actions">' + (f.external ? '<button type="button" class="preview-external-task">Preview AI task</button>' : '') + '<button type="button" class="review-action"' + (!available || !accepted && f.external && f.external.binding === 'changed' ? ' disabled' : '') + '>' + (accepted ? 'Revoke acceptance' : changed ? 'Accept updated finding…' : 'Accept…') + '</button>' + (changed ? '<button type="button" class="review-revoke"' + (typeof window.__archifySaveReview !== 'function' ? ' disabled' : '') + '>Revoke acceptance</button>' : '') + '</div>' +
+      (!available ? '<p class="ev">Open with the local analysis service to save baseline decisions.</p>' : '') +
+      '<form class="review-form" hidden><label>Reason for accepting <span>(required)</span><textarea name="reason" required rows="3" placeholder="Why is this acceptable in this project?">' + esc(changed && f.review.reason || '') + '</textarea></label><p class="ev">Records a baseline decision. The original diagnostic and severity stay visible.</p><div class="review-actions"><button type="submit" class="review-confirm" disabled>Confirm acceptance</button><button type="button" class="review-cancel">Cancel</button></div></form><p class="review-status ev" role="status" aria-live="polite"></p></section>';
+  }
+  function wireReview(f, parent) {
+    var box = detail.querySelector('.finding-review'); if (!box) return;
+    var action = box.querySelector('.review-action'), form = box.querySelector('form'), reason = box.querySelector('textarea'), confirm = box.querySelector('.review-confirm'), cancel = box.querySelector('.review-cancel'), status = box.querySelector('.review-status');
+    var accepted = f.review && f.review.status === 'accepted';
+    var revoke = box.querySelector('.review-revoke'), actionInitiallyDisabled = action.disabled;
+    var previewTask = box.querySelector('.preview-external-task'); if (previewTask) previewTask.addEventListener('click', function () { var task = detail.querySelector('.ai-task'); task.open = true; task.scrollIntoView({ block: 'nearest' }); });
+    var update = function () { confirm.disabled = !reason.value.trim(); };
+    reason.addEventListener('input', update);
+    var save = async function (kind) {
+      action.disabled = confirm.disabled = cancel.disabled = reason.readOnly = true; form.setAttribute('aria-busy', 'true'); status.textContent = 'Saving review decision…';
+      if (revoke) revoke.disabled = true;
+      try {
+        var response = await window.__archifySaveReview({ action: kind, id: f.id, reason: reason.value, expected: f.reviewTarget });
+        if (!response.saved) throw new Error('The service did not confirm a saved decision.');
+        try { sessionStorage.setItem(filterKey, JSON.stringify(filters)); if (response.artifactsSaved === false) sessionStorage.setItem(filterKey + ':notice', 'The baseline was saved. The downloadable report could not be updated; check the output directory before exporting.'); } catch (error) { /* Navigation still works without storage. */ }
+        location.replace(location.pathname + '?analysis=open&finding=' + encodeURIComponent(f.id) + '&from=' + parent);
+      } catch (error) { status.textContent = 'Could not confirm the review decision: ' + error.message + ' Your reason is kept. Refresh the analysis if its evidence changed, then retry.'; cancel.disabled = reason.readOnly = false; action.disabled = actionInitiallyDisabled; if (revoke) revoke.disabled = false; form.removeAttribute('aria-busy'); update(); }
+    };
+    action.addEventListener('click', function () { if (accepted) { save('revoke'); return; } form.hidden = false; action.hidden = true; detail.classList.add('reviewing'); update(); reason.focus({ preventScroll: true }); detail.scrollTop = 0; });
+    if (revoke) revoke.addEventListener('click', function () { save('revoke'); });
+    cancel.addEventListener('click', function () { form.hidden = true; action.hidden = false; detail.classList.remove('reviewing'); status.textContent = ''; action.focus(); });
+    form.addEventListener('submit', function (event) { event.preventDefault(); if (reason.value.trim()) save('accept'); });
+    try { var notice = sessionStorage.getItem(filterKey + ':notice'); if (notice) { status.textContent = notice; sessionStorage.removeItem(filterKey + ':notice'); } } catch (error) { /* No storage. */ }
   }
   function quickHandoff(f) {
     return '<div class="quick-handoff" data-handoff-id="' + esc(f.id) + '"><div class="task-actions"><button type="button" class="quick-copy">Copy task for AI</button></div><p class="ev handoff-status" role="status" aria-live="polite">Includes evidence, suggestions and allowed files. Paste it into your coding AI.</p></div>';
@@ -660,7 +792,7 @@
         try {
           var note = '';
           if (typeof window.__archifyBuildTask === 'function') {
-            try { payload = await window.__archifyBuildTask(id); }
+            try { payload = await window.__archifyBuildTask(id, findingById[id].reviewTarget); }
             catch (error) {
               if (error.status) throw error;
               payload = (data.tasks || {})[id];
@@ -699,16 +831,25 @@
       });
     });
   }
-  function showFinding(id) {
+  function showFinding(id, parent) {
     var f = findingById[id]; if (!f) return;
-    readerPage('Problem');
+    parent = parent || (!overview.hidden && overviewMode === 'findings' ? 'findings' : 'summary');
+    readerPage('Finding'); detail.classList.remove('reviewing');
     root.removeAttribute('data-bauify-source');
     overview.hidden = true; panel.hidden = true;
     var e = entryById[id];
     var tone = toneOf(f.severity), lvl = LEVELS[tone];
     var scope = findingScope(f);
     setFocus(f.componentIds || []);
-    var h = '<button class="close" aria-label="Close">×</button><button class="back" type="button">← Overview</button>';
+    var h = '<button class="close" aria-label="Close">×</button><button class="back" type="button">← ' + (parent === 'findings' ? 'Findings' : 'Overview') + '</button>';
+    if (f.external) {
+      h += '<div class="external-origin"><span>' + esc(f.external.tool) + '</span><code>' + esc(f.external.ruleId || 'review comment') + '</code><span class="finding-level ' + tone + '">' + esc(f.severity) + '</span></div><h3>' + esc(findingTitle(f)) + '</h3>';
+      if (f.message !== findingTitle(f)) h += '<div class="external-message">' + esc(f.message) + '</div>';
+      h += '<dl class="external-facts evidence-state"><div><dt>Source snapshot</dt><dd>Captured at analysis time</dd></div><div><dt>Report binding</dt><dd>' + esc(bindingLabel(f.external.binding)) + '</dd></div></dl>';
+      if (f.external.binding !== 'verified') h += '<p class="external-notice">' + (f.external.binding === 'changed' ? 'The report describes an older source version. Regenerate the source report before accepting this finding.' : 'The report is not bound to a verified source version. Check the claim against current code; this limitation is included in the task.') + '</p>';
+      h += evidencePreview(f) + reviewHtmlForFinding(f) + taskHtml(f) + externalProvenance(f);
+      if (!(f.componentIds || []).length) h += '<p class="ev">Not mapped to this diagram. The source location and task remain available.</p>';
+    } else {
     if (f.code !== 'redundancy/duplicate-block') h += '<div class="k">' + esc(GROUPS[f.code] || f.code) + ' · ' + esc(scope.label) + '</div>';
     h += '<h3><i class="bauify-' + tone + '"></i>' + esc(findingTitle(f)) + '</h3>';
     var explanation = f.code === 'coupling/hub' ? 'High incoming and outgoing coupling; inspect responsibilities before deciding to split.'
@@ -717,8 +858,7 @@
       : f.code === 'coupling/internal-leak' ? (f.evidence && f.evidence.entrySource === 'config' ? 'These imports bypass the entry files declared in the analysis config.' : 'Other modules depend on this module\'s internal files, so moving or renaming any of them breaks importers. Deep imports can be a deliberate convention; this is a signal, not a defect.')
       : f.code === 'complexity/function' ? 'Cyclomatic complexity counts independent paths through the function. A high count is a maintenance signal, not a defect.' : lvl.text;
     h += '<div class="level"><b>' + esc(lvl.name) + '</b> — ' + esc(findingWhat(f)) + (f.code === 'redundancy/duplicate-block' ? '' : '<br>' + esc(explanation)) + '</div>';
-    if (f.review && f.review.reason) h += '<p class="ev"><span class="badge-accepted">' + (f.review.status === 'accepted-changed' ? 'accepted · evidence changed' : f.severity === 'error' ? 'accepted · still to fix' : 'accepted') + '</span> ' + esc(f.review.reason) + (f.review.status === 'accepted-changed' ? ' — the code behind it changed since it was accepted; review it again.' : f.severity === 'error' ? ' — accepting it keeps CI from failing; the cycle is still there and stays red.' : '') + '</p>';
-    h += (f.code === 'redundancy/duplicate-block' ? '' : quickHandoff(f)) + '<div class="k">Code evidence</div>' + evidencePreview(f);
+    h += (f.code === 'redundancy/duplicate-block' ? '' : quickHandoff(f)) + '<div class="k evidence-label">Code evidence</div>' + evidencePreview(f) + reviewHtmlForFinding(f);
     if (f.code === 'redundancy/duplicate-block') h += quickHandoff(f);
     h += nextStepHtml(f) + taskHtml(f);
     if ((f.componentIds || []).length) h += '<button type="button" class="locate">Locate related components</button>';
@@ -727,17 +867,19 @@
     if (pic) h += '<details class="relationship"><summary>Relationships and metrics</summary>' + pic + '</details>';
     h += '<details class="more-evidence"><summary>All evidence and rule details</summary>' + findingCard(f, true) + '</details>';
     if (e && e.relatedIds.length) h += '<div class="k">Same structure, also reported as</div>' + e.relatedIds.map(function (r) { return findingRow(r); }).join('');
+    }
     detail.innerHTML = h;
     detail.hidden = false;
     codePane.hidden = true;
     detail.scrollTop = 0;
     detail.querySelector('.close').addEventListener('click', showOverview);
-    detail.querySelector('.back').addEventListener('click', showOverview);
+    detail.querySelector('.back').addEventListener('click', function () { if (parent === 'findings') showFindings(); else showOverview(); });
     var locate = detail.querySelector('.locate');
     if (locate) locate.addEventListener('click', function () { locateComponents(f.componentIds, true); });
     detail.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { showFinding(el.getAttribute('data-finding')); }); });
     wireRefs();
     wireTasks();
+    wireReview(f, parent);
     var heading = detail.querySelector('h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
   }
   // Source links: GitHub-style blob/tree URLs from the origin + revision the facts were taken at.
@@ -943,16 +1085,15 @@
     if (on) {
       data.components.forEach(function (c) { var g = svg.querySelector('g[data-node-id="' + c.id + '"]'); if (g) g.classList.toggle('bauify-mapped', c.modules.length > 0); });
       drawLayer();
-      renderOverview();
       showOverview();
     } else { setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.
-  window.__archifyShowFinding = function (id) {
+  window.__archifyShowFinding = function (id, parent) {
     if (!findingById[id]) return;
     if (root.getAttribute('data-bauify') !== 'on') setOn(true);
-    showFinding(id);
+    showFinding(id, parent);
   };
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'c' && e.key !== 'C') return;

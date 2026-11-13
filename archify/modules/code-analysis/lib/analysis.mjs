@@ -4,7 +4,7 @@
 // page-building stage that turns these into the analysis view lives in
 // overlay/page.mjs: this file must not import overlay/, which builds on it.
 import fs from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { otherLanguageFiles, selectAdapter } from '../extract/index.mjs';
@@ -13,6 +13,7 @@ import { schemaErrors } from '../schemas/index.mjs';
 import { buildModuleGraph } from '../graphs/module.mjs';
 import { evaluate } from '../evaluate/index.mjs';
 import { validateBaseline } from './review.mjs';
+import { importExternal } from './external.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -101,11 +102,29 @@ export function buildGraph(facts, config) {
 }
 
 // Stage 3: module graph (+ facts) → findings.
-export function evaluateGraph(graph, config, facts = null) {
+export function evaluateGraph(graph, config, facts = null, { root = null } = {}) {
   const graphErrors = schemaErrors('module-graph', graph);
   if (graphErrors.length) fail('evaluate/input-schema-invalid', 'Input does not conform to module-graph.schema.json.', { evidence: { errors: graphErrors.slice(0, 20) }, supportedFixes: ['regenerate the module graph'] });
   validateFacts(graph, facts);
   const findings = evaluate(graph, config, facts);
+  if (config?.external != null) {
+    if (!root) fail('external/root-required', 'External diagnostic imports need the analyzed repository root.', { supportedFixes: ['pass { root } to evaluateGraph, or use code-analysis check/serve'] });
+    const imported = importExternal({ root, config, facts });
+    if (imported.sources.length) {
+      findings.analysis.external = imported.sources;
+      findings.diagnostics.push(...imported.diagnostics.filter((d) => !(config.ignore || []).includes(d.code)));
+      findings.diagnostics.sort((a, b) => a.code.localeCompare(b.code, 'en') || a.id.localeCompare(b.id, 'en'));
+      findings.rules = [...new Set([...findings.rules, ...imported.sources.map((s) => s.code)])].sort();
+      for (const code of new Set(imported.sources.map((s) => s.code))) {
+        if ((config.ignore || []).includes(code)) { findings.summary.suppressed += 1; continue; }
+        findings.analysis.ruleVersions[code] = imported.sources.find((s) => s.code === code).adapterRevision;
+      }
+      for (const key of ['errors', 'warnings', 'info']) findings.summary[key] = 0;
+      const severityKey = { error: 'errors', warning: 'warnings', info: 'info' };
+      for (const d of findings.diagnostics) findings.summary[severityKey[d.severity]] += 1;
+    }
+    if (imported.evidenceFiles.length) findings.externalEvidence = imported.evidenceFiles;
+  }
   const errors = schemaErrors('findings', findings);
   if (errors.length) fail('evaluate/schema-invalid', 'Findings violate findings.schema.json.', { evidence: { errors: errors.slice(0, 20) }, supportedFixes: ['this is an analyzer bug; report it with the evidence'] });
   return findings;
@@ -155,6 +174,18 @@ export function validateFacts(graph, facts) {
 // Baseline file → validated document, or null when none was given.
 export function loadBaseline(file) {
   return file ? validateBaseline(readJsonInput(file, 'analysis --baseline'), file) : null;
+}
+
+// Publish a complete, validated baseline so a failed write preserves the old one.
+export function saveBaseline(file, document) {
+  validateBaseline(document, file);
+  const target = fs.existsSync(file) ? fs.realpathSync(file) : path.resolve(file);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  const temporary = `${target}.next-${randomBytes(8).toString('hex')}`;
+  try {
+    fs.writeFileSync(temporary, stableJson(document), { flag: 'wx' });
+    fs.renameSync(temporary, target);
+  } finally { fs.rmSync(temporary, { force: true }); }
 }
 
 // Previous findings.json → document, or null when there is none or it is not

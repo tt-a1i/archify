@@ -37,7 +37,7 @@ a raw-facts directory, infer renames or choose changed entries automatically.
 
 `lib/analysis.mjs` provides the three data stages and `overlay/page.mjs` runs them and adds the fourth for a delivered page:
 
-1. **Extract facts** (`extract/`): select the Python, JS/TS or Java adapter, read source files, and record files, imports, available symbol information, and unresolved dependencies. Python uses an AST extractor; JS/TS uses the TypeScript Compiler API; Java uses `java-parser` CSTs reduced to a declaration/reference index one file at a time. Each run selects one language.
+1. **Extract facts** (`extract/`): select the Python, JS/TS, Java, Go or Rust adapter, read source files, and record files, imports, available symbol information, and unresolved dependencies. Python uses an AST extractor; JS/TS uses the TypeScript Compiler API; Java uses `java-parser` CSTs reduced to a declaration/reference index one file at a time. Go and Rust use source-only profiles; see the [language reference](docs/LANGUAGE-REFERENCE.md). Each run selects one adapter.
 2. **Build the module graph** (`graphs/module.mjs`): group files by explicit configuration, package boundaries, or directory depth (Java: build modules, or packages in a single-module build); aggregate dependencies between modules; calculate file ownership and module metrics. Root-level files form individual modules. Test and generated roles are excluded by default and counted in the output.
 3. **Evaluate rules** (`evaluate/`): run the import-cycle, module coupling-cycle, hub and concentration rules; function complexity (Python, JS/TS and Java); and architecture-boundary rules when the config declares them. Java cycles describe structural dependencies, without inferring class initialization risk. Findings include severity, subjects, and supporting evidence. Configured rule suppression is counted in the summary.
 4. **Build the analysis view** (`overlay/inject.mjs`): map authored components to code modules using source references or an explicit mapping, then add findings and source navigation to a copy of the delivered page.
@@ -114,7 +114,6 @@ Source references with line numbers show a nine-line context window and highligh
 - `graphs/`: module grouping and dependency aggregation.
 - `evaluate/rules/index.mjs`: the rule registry; a new rule is its own file plus one line here.
 - `evaluate/rules/coupling/`: import-cycle, module-cycle, hub, concentration and internal-leak rules. Cycles are errors; see [Severity levels](docs/USAGE.md#severity-levels).
-- `evaluate/rules/organization/`: independently opt-in, lexical organization review signals with explicit trigger evidence.
 - `evaluate/rules/architecture/`: opt-in layer boundary rules declared in the config.
 - `evaluate/rules/complexity/`: shared function complexity and nesting thresholds; measurements come from each language extractor.
 - `lib/`: the data stages (extract → graph → evaluate), config merging, intermediate-data checks, review (`review.mjs`: baseline, run comparison and comparability), AI tasks (`task.mjs`: task model and Markdown rendering) and evidence checks (`evidence.mjs`: captured source against the working tree).

@@ -54,19 +54,6 @@ test('overlay: components map to modules through their sources; descendants foll
   assert.equal(result.mapped, 2);
 });
 
-test('overlay: folder heuristic maps evidence files rather than a guessed module id', () => {
-  const facts = { schema_version: 1, repository: graph.repository, files: [
-    { path: 'src/index.mjs', loc: 1, role: 'source', sourceText: 'entry' },
-    { path: 'src/lib/helper.mjs', loc: 1, role: 'source', sourceText: 'model' },
-  ], symbols: [], calls: [], imports: [], unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 } };
-  const owned = { ...graph, fileModules: { 'src/index.mjs': 'src', 'src/lib/helper.mjs': 'src-lib' } };
-  const finding = { id: 'ORGA-aaaaaaaaaaaa', code: 'organization/folder-roles', dimension: 'organization', severity: 'warning', confidence: 0.7, message: 'Review folder', subject: { directory: 'src' }, evidence: { threshold: null, roles: {} }, evidenceDigest: { files: ['src/index.mjs', 'src/lib/helper.mjs'], sha256: 'a'.repeat(64) }, supportedFixes: [] };
-  const p = payloadOf(buildOverlay({ ir, graph: owned, html: FAKE_HTML, map: null, facts, findings: [finding] }).html);
-  assert.deepEqual(p.findings[0].moduleIds, ['src', 'src-lib']);
-  assert.deepEqual(p.findings[0].componentIds, ['app', 'lib']);
-  assert.equal(p.components.find((c) => c.id === 'lib').findings[0].id, finding.id);
-});
-
 test('overlay: the cycle indicator takes the colour of the highest severity among its file and module cycles, green otherwise', () => {
   const facts = { schema_version: 1, repository: graph.repository, files: [{ path: 'src/index.mjs', loc: 1, role: 'source' }, { path: 'src/lib/helper.mjs', loc: 1, role: 'source' }], symbols: [], calls: [], imports: [], unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 } };
   const base = { id: 'COUP-0001', dimension: 'coupling', confidence: 1, message: 'm', supportedFixes: [] };

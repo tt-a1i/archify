@@ -6,12 +6,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
+import { taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
   archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
                               [--baseline baseline.json] [--compare findings.json] [--out dir]
                               [--fail-on error|warning|info|never] [--new-only]
-                              [--update-baseline] [--reason text] [--json]
+                              [--update-baseline | --accept finding-id | --revoke finding-id]
+                              [--reason text] [--json]
 
 Analyzes <repo-root> without a diagram and exits 1 when an open finding reaches
 --fail-on (default: warning). Findings accepted in --baseline do not fail the run
@@ -20,10 +22,12 @@ findings that are new since --compare (or since the previous run in --out);
 without a previous run to compare with, every open finding counts as new.
 --update-baseline writes every current finding to --baseline (keeping existing
 reasons; new entries get --reason) and exits 0.
+--accept accepts one current finding with a required --reason. --revoke removes
+one accepted id without re-running analysis. Both require --baseline.
 Exit codes: 0 passed, 1 gate failed, 2 analysis or usage error.
 Outputs with --out: raw-facts, module-graph, findings, review, overview (.json).`;
 
-const VALUE_OPTIONS = ['--language', '--config', '--baseline', '--compare', '--out', '--fail-on', '--reason'];
+const VALUE_OPTIONS = ['--language', '--config', '--baseline', '--compare', '--out', '--fail-on', '--reason', '--accept', '--revoke'];
 const FLAG_OPTIONS = ['--new-only', '--update-baseline', '--json'];
 const SEVERITY = { error: 0, warning: 1, info: 2 };
 
@@ -41,6 +45,9 @@ export function parseCheckArgs(argv) {
   }
   if (!['error', 'warning', 'info', 'never'].includes(options['--fail-on'])) usage(`--fail-on must be error, warning, info or never (got ${options['--fail-on']}).`);
   if (options['--update-baseline'] && !options['--baseline']) usage('--update-baseline needs --baseline <file> to write.');
+  if ((options['--accept'] || options['--revoke']) && !options['--baseline']) usage('--accept and --revoke require --baseline <file>.');
+  if (['--update-baseline', '--accept', '--revoke'].filter((key) => options[key]).length > 1) usage('Choose one baseline action: --update-baseline, --accept or --revoke.');
+  if (options['--accept'] && !options['--reason']?.trim()) usage('--accept requires a non-empty --reason.');
   return { repo, options };
 }
 
@@ -48,12 +55,18 @@ export async function runCheck(argv) {
   const { repo, options } = parseCheckArgs(argv);
   const { ensureDependencies } = await import('./serve.mjs');
   await ensureDependencies();
-  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, loadPrevious, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
-  const { reviewFindings, baselineFrom, isOpen } = await import('../lib/review.mjs');
-  const { buildOverview } = await import('../overlay/overview.mjs');
+  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, saveBaseline, loadPrevious, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
+  const { reviewFindings, baselineFrom, acceptFinding, revokeFinding, isOpen } = await import('../lib/review.mjs');
+  const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');
   const { findingModules } = await import('../overlay/inject.mjs');
 
   const root = path.resolve(repo);
+  const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : null;
+  const writeBaseline = (doc, action, id) => {
+    saveBaseline(baselineFile, doc);
+    return { exitCode: 0, receipt: receipt('ok', { command: 'check', action, baseline: baselineFile, id, entries: doc.accepted.length }) };
+  };
+  if (options['--revoke']) return writeBaseline(revokeFinding(options['--revoke'], { existing: loadBaseline(baselineFile) }), 'revoke-finding', options['--revoke']);
   const out = options['--out'] ? path.resolve(options['--out']) : null;
   const previousFile = options['--compare'] ? path.resolve(options['--compare']) : out ? path.join(out, 'findings.json') : null;
   if (options['--compare'] && !fs.existsSync(previousFile)) fail('cli/input-invalid', `Not a file: ${options['--compare']}`, { subject: { option: '--compare' }, supportedFixes: ['pass the findings.json of an earlier run'] });
@@ -62,22 +75,30 @@ export async function runCheck(argv) {
 
   const { facts, config, otherLanguages } = extractFacts(root, { language: options['--language'] || null, config: options['--config'] || null });
   const graph = buildGraph(facts, config);
-  const findings = evaluateGraph(graph, config, facts);
-  const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : null;
+  const findings = evaluateGraph(graph, config, facts, { root });
+  if (options['--accept']) {
+    const diagnostic = findings.diagnostics.find((d) => d.id === options['--accept']);
+    if (!diagnostic) fail('baseline/finding-unknown', 'The requested finding is not in the current analysis.', { subject: { id: options['--accept'] }, supportedFixes: ['use an id from the current findings.json'] });
+    const existing = fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null;
+    return writeBaseline(acceptFinding(diagnostic, { existing, reason: options['--reason'] }), 'accept-finding', diagnostic.id);
+  }
 
   if (options['--update-baseline']) {
+    if (findings.analysis?.external?.length && !options['--reason']?.trim()) fail('baseline/reason-required', 'Accepting external diagnostics requires an explicit reason.', { supportedFixes: ['provide --reason explaining the review decision'] });
     const existing = baselineFile && fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null;
     const doc = baselineFrom(findings.diagnostics, { existing, reason: options['--reason'] || 'Accepted as existing when the baseline was written; review before relying on it.' });
-    fs.mkdirSync(path.dirname(baselineFile), { recursive: true });
-    fs.writeFileSync(baselineFile, stableJson(doc));
+    saveBaseline(baselineFile, doc);
     const kept = existing ? doc.accepted.filter((e) => existing.accepted.some((x) => x.id === e.id)).length : 0;
     return { exitCode: 0, receipt: receipt('ok', { command: 'check', action: 'update-baseline', baseline: baselineFile, entries: doc.accepted.length, kept, added: doc.accepted.length - kept, dropped: existing ? existing.accepted.length - kept : 0 }) };
   }
 
-  const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baselineFile), previous, analysis: findings.analysis, files: facts.files.map((f) => f.path) });
+  const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baselineFile), previous, analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+  if (options['--new-only'] && review.comparison && (findings.analysis.external?.length || previous?.analysis?.external?.length) && review.comparison.comparable !== true) {
+    fail('external/comparison-unverified', 'New-only gating requires comparable external reports.', { evidence: { reasons: review.comparison.reasons }, supportedFixes: ['provide matching tool versions, rule configuration, complete scan scope and source-bound reports', 'run a full check without --new-only to inspect the available diagnostics'] });
+  }
   const fileModule = new Map(Object.entries(graph.fileModules || {}));
   const listed = findings.diagnostics.map((d) => ({ ...d, ...(review.findings[d.id] ? { review: review.findings[d.id] } : {}), moduleIds: findingModules(d, fileModule), componentIds: [] }));
-  const overview = buildOverview({ findings: listed, graph, facts, run: { rules: findings.rules, suppressed: config.ignore || [], exclude: config.exclude || [], otherLanguages, boundaries: config.boundaries || null, duplicates: findings.analysis?.duplicates || null, review } });
+  const overview = buildOverview({ findings: listed, graph, facts, run: { rules: findings.rules, suppressed: config.ignore || [], exclude: config.exclude || [], otherLanguages, boundaries: config.boundaries || null, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review } });
 
   if (out) {
     fs.mkdirSync(out, { recursive: true });
@@ -99,17 +120,32 @@ export async function runCheck(argv) {
       language: facts.repository.language, files: facts.files.length, rules: findings.rules,
       ...(findings.analysis?.duplicates ? { duplicates: findings.analysis.duplicates } : {}),
       verdict: overview.verdict, counts: overview.counts,
-      gate: { failOn, newOnly, ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: where(d), message: d.message })) },
+      gate: { failOn, newOnly, ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: findingWhere(d), message: d.message })) },
       review: reviewSummary(review),
       comparisonReasons: review.comparison ? review.comparison.reasons : [],
       staleBaseline: review.baseline ? review.baseline.stale : [],
       priorities: overview.priorities,
+      // How the open findings divide by rule. The overview groups keep every
+      // id, including accepted ones; the receipt needs only open sizes, so they
+      // agree with `counts` and a dominant rule is visible before choosing a lead.
+      ruleCounts: openRuleCounts(overview.findings),
+      // The same three leads as `priorities`, with message, location and a
+      // ready-to-run task command attached. The data already exists in the
+      // overview and the diagnostics; this only saves a manual join.
+      investigation: {
+        shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh',
+        leads: overview.investigation.leads.map((lead) => ({ ...lead, task: taskCommand(CLI, lead.id, root, out) })),
+        drillDown: out
+          ? taskCommand(CLI, '<id>', root, out)
+          : 'Re-run with --out <dir> to drill down with the task command.',
+      },
       // Already computed for the overview. Repeated here so a reader of the CLI
       // output sees a file that failed to parse, or files left out because a
       // language was selected, without opening the output directory. The gate
       // below does not read it.
       coverage: {
         parseErrors: overview.coverage.files.parseErrors,
+        ...(findings.analysis?.external?.length ? { external: findings.analysis.external } : {}),
         ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
         otherLanguages: overview.coverage.otherLanguages,
       },
@@ -117,25 +153,29 @@ export async function runCheck(argv) {
   };
 }
 
-// The most useful single location for a finding, as path:line when known.
-export function where(d) {
-  const s = d.subject || {};
-  if (d.code === 'redundancy/duplicate-block' && Array.isArray(s.locations)) return s.locations.map(l => `${l.file}:${l.line}`).join(' <-> ');
-  if (s.file) return s.line ? `${s.file}:${s.line}` : s.file;
-  const first = d.evidence?.imports?.[0];
-  if (first) return `${first.file}:${first.line}`;
-  if (Array.isArray(s.files) && s.files.length) return s.files[0];
-  if (s.module) return `module ${s.module}`;
-  if (Array.isArray(s.modules)) return `modules ${s.modules.join(', ')}`;
-  return d.code;
+export { findingWhere as where } from '../overlay/overview.mjs';
+
+function openRuleCounts(findings) {
+  const byCode = new Map();
+  for (const f of findings) {
+    if (f.status === 'accepted') continue;
+    const entry = byCode.get(f.code) || { code: f.code, severity: f.severity, count: 0 };
+    entry.count += 1;
+    if (SEVERITY[f.severity] < SEVERITY[entry.severity]) entry.severity = f.severity;
+    byCode.set(f.code, entry);
+  }
+  return [...byCode.values()].sort((a, b) => SEVERITY[a.severity] - SEVERITY[b.severity] || b.count - a.count || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
 }
 
+const CLI = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+
 export function formatText(r) {
+  if (r.action === 'accept-finding' || r.action === 'revoke-finding') return `${r.action === 'accept-finding' ? 'Accepted' : 'Revoked acceptance for'} ${r.id}\n  Baseline: ${r.baseline} (${r.entries} accepted entries)`;
   if (r.action === 'update-baseline') return `Baseline written: ${r.baseline}\n  ${r.entries} accepted findings (${r.kept} kept, ${r.added} added, ${r.dropped} no longer found and dropped)`;
   const lines = [];
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
-  if (c.acceptedErrors) lines.push(`  ${c.acceptedErrors} accepted error${c.acceptedErrors === 1 ? ' is' : 's are'} still present: the baseline keeps ${c.acceptedErrors === 1 ? 'it' : 'them'} from failing this run, the cycle${c.acceptedErrors === 1 ? '' : 's'} remain${c.acceptedErrors === 1 ? 's' : ''}.`);
+  if (c.acceptedErrors) lines.push(`  ${c.acceptedErrors} accepted error${c.acceptedErrors === 1 ? ' is' : 's are'} still present: the baseline keeps ${c.acceptedErrors === 1 ? 'it' : 'them'} from failing this run, the finding${c.acceptedErrors === 1 ? '' : 's'} remain${c.acceptedErrors === 1 ? 's' : ''}.`);
   lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
   if (r.coverage?.languageScope?.language === 'go') {
     const scope = r.coverage.languageScope;
@@ -153,10 +193,21 @@ export function formatText(r) {
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
   if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.map(formatTerminalText).join(', ')}`);
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);
+  for (const source of uncovered.external || []) {
+    const coverage = source.coverage.complete === true ? 'complete' : source.coverage.complete === false ? 'incomplete' : 'unknown';
+    const files = source.coverage.files.length;
+    lines.push(`  External ${formatTerminalText(source.id)}: ${formatTerminalText(source.tool)} ${source.toolVersion ? formatTerminalText(source.toolVersion) : '(version unknown)'} · coverage ${coverage} (${files} declared file${files === 1 ? '' : 's'}) · source binding ${source.binding}`);
+  }
+  if (uncovered.external?.some((source) => source.coverage.complete !== true || source.status !== 'imported' || source.binding !== 'verified')) lines.push('  Empty external reports with incomplete coverage or unverified/changed source binding do not establish a clean scan.');
   if (r.duplicates) {
     const { engine, coverage } = r.duplicates;
     lines.push(`  Duplicate detection: ${engine.name} ${engine.version} · ${coverage.analyzed.length}/${coverage.selected.length} selected files analyzed${coverage.complete ? '' : ' · incomplete coverage'}`);
     if (!coverage.complete) lines.push('  Duplicate detection did not cover every selected file. Empty findings do not mean the full scope was checked; see duplicates.coverage in --json.');
+  }
+  if (r.investigation?.leads?.length) {
+    lines.push(`Start here: ${r.investigation.leads.length} ranked lead${r.investigation.leads.length === 1 ? '' : 's'}. Each is static evidence, not a proven defect; read the cited source first.`);
+    r.investigation.leads.forEach((lead, i) => lines.push(`  ${i + 1}. ${lead.severity.padEnd(7)} ${lead.code}  ${lead.where ?? lead.id}  [${lead.id}]`));
+    if (r.investigation.drillDown) lines.push(`  Drill down (${r.investigation.shell}): ${r.investigation.drillDown}`);
   }
   if (r.review.comparison) {
     const c = r.review.comparison;

@@ -32,6 +32,7 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
   const entries = findings.map((f) => ({
     id: f.id,
     code: f.code,
+    ...(f.external ? { sourceId: f.external.sourceId, ruleId: f.external.ruleId } : {}),
     severity: f.severity,
     componentIds: f.componentIds || [],
     moduleIds: f.moduleIds || [],
@@ -68,9 +69,48 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
     review: reviewOf(run.review),
     groups: groupsOf(ranked),
     priorities,
+    investigation: investigationOf(findings, entries, priorities),
     findings: ranked,
     coverage: coverageOf({ graph, facts, unmapped, run }),
   };
+}
+
+// The priorities above are ids only. `investigation.leads` repeats the same
+// ranking with the message and source location already attached, so an agent
+// can start reading without joining the ids against another list. It adds no
+// new finding and no new judgment; `message` and `subject` are the diagnostic's
+// own fields.
+function investigationOf(findings, entries, priorities) {
+  const byId = new Map(findings.map((f) => [f.id, f]));
+  const entryById = new Map(entries.map((e) => [e.id, e]));
+  return {
+    leads: priorities.map((id) => {
+      const f = byId.get(id);
+      const e = entryById.get(id);
+      return {
+        id,
+        code: f?.code ?? e?.code ?? null,
+        severity: f?.severity ?? e?.severity ?? null,
+        message: f?.message ?? null,
+        where: f ? findingWhere(f) : null,
+        symbol: f?.subject?.function ?? f?.subject?.symbol ?? null,
+        impact: e?.impact ?? null,
+      };
+    }),
+  };
+}
+
+// The most useful single location for a finding, as path:line when known.
+export function findingWhere(f) {
+  const s = f?.subject || {};
+  if (f?.code === 'redundancy/duplicate-block' && Array.isArray(s.locations)) return s.locations.map(l => `${l.file}:${l.line}`).join(' <-> ');
+  if (s.file) return s.line ? `${s.file}:${s.line}` : s.file;
+  const first = f?.evidence?.imports?.[0];
+  if (first) return `${first.file}:${first.line}`;
+  if (Array.isArray(s.files) && s.files.length) return s.files[0];
+  if (s.module) return `module ${s.module}`;
+  if (Array.isArray(s.modules)) return `modules ${s.modules.join(', ')}`;
+  return f?.code ?? null;
 }
 
 function reviewOf(review) {
@@ -154,6 +194,7 @@ function coverageOf({ graph, facts, unmapped, run }) {
     boundaries: run.boundaries && facts ? layerCounts(run.boundaries, facts.files.filter((f) => !excludedRoles.has(f.role)).map((f) => f.path)) : null,
     // Files the duplicate detector analyzed out of those selected for it; null when it did not run.
     duplicates: duplicateCoverage(run.duplicates),
+    ...(run.external?.length ? { external: run.external } : {}),
   };
 }
 

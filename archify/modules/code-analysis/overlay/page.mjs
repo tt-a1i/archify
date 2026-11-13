@@ -4,6 +4,7 @@
 // lib/ stays free of presentation code.
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomBytes } from 'node:crypto';
 import { fail, receipt } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { buildGraph, evaluateGraph, extractFacts, loadBaseline, loadPrevious, readJsonInput, reviewSummary, stableJson, validateFacts } from '../lib/analysis.mjs';
@@ -17,6 +18,30 @@ export function overlayHtml({ html, ir, graph, facts = null, findings = [], find
   validateFacts(graph, facts);
   if (sourceRoot && !fs.existsSync(sourceRoot)) fail('cli/input-invalid', `Not a directory: ${sourceRoot}`, { subject: { dir: sourceRoot }, supportedFixes: ['pass the directory that was analyzed'] });
   return buildOverlay({ ir, graph, html, map, facts, findings, findingsDocument, sourceRoot, run });
+}
+
+// Review decisions change presentation, not the captured analysis. Reuse the
+// same view builder with the original mapping/scope; never reload live config
+// or re-import reports merely to display a new baseline decision.
+export function renderAnalysisSnapshot({ dir, html, root, review }) {
+  const read = (name) => readJsonInput(path.join(dir, name), 'review view');
+  const facts = read('raw-facts.json'), graph = read('module-graph.json'), findings = read('findings.json');
+  const context = read('view-context.json');
+  if (context?.schema_version !== 1 || !context.ir || !context.run) fail('overlay/context-invalid', 'The captured view context is missing or invalid.', { supportedFixes: ['re-analyze the repository to rebuild its captured view'] });
+  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
+  return overlayHtml({ html: fs.readFileSync(html, 'utf8'), ir: context.ir, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: context.map, sourceRoot: root, run });
+}
+
+// Each published view artifact is complete even if a later write fails. The
+// server also keeps the rendered HTML in memory after a baseline was saved.
+export function writeAnalysisView(dir, overlay, review) {
+  for (const [name, contents] of [['review.json', stableJson(review)], ['overview.json', stableJson(overlay.overview)], ['repo.analysis.html', overlay.html]]) {
+    const target = path.join(dir, name), temporary = `${target}.next-${randomBytes(8).toString('hex')}`;
+    try {
+      fs.writeFileSync(temporary, contents, { flag: 'wx' });
+      fs.renameSync(temporary, target);
+    } finally { fs.rmSync(temporary, { force: true }); }
+  }
 }
 
 // The whole analysis for one delivered page, as the button runs it:
@@ -37,17 +62,17 @@ export function analyzeRepository({ root, ir, html, out, language = null, config
   fs.writeFileSync(path.join(dir, 'raw-facts.json'), stableJson(facts));
   const graph = buildGraph(facts, cfg);
   fs.writeFileSync(path.join(dir, 'module-graph.json'), stableJson(graph));
-  const findings = evaluateGraph(graph, cfg, facts);
+  const findings = evaluateGraph(graph, cfg, facts, { root: absRoot });
   fs.writeFileSync(path.join(dir, 'findings.json'), stableJson(findings));
-  const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: facts.files.map((f) => f.path) });
-  fs.writeFileSync(path.join(dir, 'review.json'), stableJson(review));
+  const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   const irDoc = irSnapshot ?? readJsonInput(irPath, 'analysis --ir');
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
-  const run = { rules: findings.rules, suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null, duplicates: findings.analysis?.duplicates || null, review };
+  const context = { schema_version: 1, ir: irDoc, map: mapDoc, run: { suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
+  fs.writeFileSync(path.join(dir, 'view-context.json'), stableJson(context));
+  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
   const overlay = overlayHtml({ html: fs.readFileSync(htmlPath, 'utf8'), ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });
-  fs.writeFileSync(path.join(dir, 'overview.json'), stableJson(overlay.overview));
   const outHtml = path.join(dir, 'repo.analysis.html');
-  fs.writeFileSync(outHtml, overlay.html);
+  writeAnalysisView(dir, overlay, review);
   return receipt('ok', {
     command: 'analysis', out: dir,
     extract: { adapter, files: facts.files.length, imports: facts.imports.length, resolved: facts.imports.filter((i) => i.resolved).length, unresolved: facts.unresolved, revision: facts.repository.revision },
