@@ -124,7 +124,7 @@ Live examples: [First HTTPS visit](https://archify.si/cases/explainer/tls-first-
 </tr>
 <tr>
 <td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc" width="140" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc</a></strong></td>
-<td>Thank you to Infistar.cc for sponsoring Archify! One API key covers text, image, and video creation with GPT, Claude, Gemini, DeepSeek, Qwen, Kling, and other models, without switching groups. Model API pricing starts at 1% of official rates, and AI images start at ¥0.06 each.<br/><br/>Exclusive offer for Archify users: Sign up through our referral link for $5 in trial credits and a special offer on your first top-up.<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Try Infistar →</a></td>
+<td>Infistar provides access to Claude, GPT, Gemini and DeepSeek with one API key for text, image and video creation. Model API pricing starts at 1% of official rates.<br/><br/>Archify users receive CNY 5 in trial credit when signing up through this link.<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Try Infistar →</a></td>
 </tr>
 </table>
 
