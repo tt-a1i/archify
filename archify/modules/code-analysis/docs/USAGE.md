@@ -55,20 +55,22 @@ You can also run `node bin/archify.mjs start "/path/to/project" --ir architectur
 
 ## First look at an unfamiliar repository
 
-Run `check` without a diagram and write the artifacts to a directory:
+Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-map.json]` to verify diagram-to-code component mapping and undeclared component-level imports alongside the headless check) and write the artifacts to a directory:
 
 ```sh
 node bin/archify.mjs code-analysis check /path/to/repo --language ts --out out/first-look --json
 ```
 
-Choose `--language` when the repository contains more than one language; without it, `check` stops with `extract/adapter-ambiguous` and lists the detected adapters. Each run analyzes one language and reports the others under `coverage.otherLanguages`.
+Choose `--language` when the repository contains more than one language; without it, `check` stops with `extract/adapter-ambiguous` and lists per-adapter file counts (`evidence.counts`) so the dominant language is visible on first contact. Each run analyzes one language and reports the others under `coverage.otherLanguages`.
 
 Start from the JSON receipt, not the full finding list:
 
 - `investigation.leads` repeats the three ranked `priorities` with `message`, `where` (`path:line`), `symbol`, `impact`, and a runnable `task` command. The text output prints the same list under **Start here**.
+- `investigation.architecture` provides deterministic module-graph orientation (`modules`, `edges`, top connected module `hotspots`, `strongestEdges`) plus up to five open `structuralSignals` (`coupling/*` and `architecture/*`) that sit outside `leads`, each with its own runnable `task` command so function-complexity warnings never hide architectural signals.
 - `investigation.shell` identifies the command syntax: `cmd.exe` on Windows and `POSIX sh` elsewhere. Copy the command into that shell. Spaces and apostrophes are preserved; Windows paths with `%` or `!` use a Node argv launcher to avoid environment-variable expansion. The `drillDown` template quotes `<id>`; replace it with a finding ID.
+- `diagram` (when `--ir` is supplied) reports `mappedComponents`, `emptyComponents`, `unmappedModules`, `ambiguousModules`, `offDiagramFindings`, and `undeclaredEdges` (uniquely attributed cross-component code imports absent from `ir.connections`). Directory `sources` use captured file ownership, including Go package paths, Rust crates and configured groups; `.` selects the analyzed root. More specific directories take precedence for their files. A file anchor or explicit `--map` associates the whole folded module with a component. If several components claim the same module, their import attribution remains unresolved and `ambiguousModules` names them. Those imports retain their module-level evidence and are omitted from `undeclaredEdges`. Inspect both unmapped and ambiguous modules before judging alignment. Without `--ir`, `counts.offDiagram` is `null`.
 - `ruleCounts` shows how findings divide by rule, so a dominant rule is visible before reading every finding.
-- `coverage` lists parse failures and other languages left out. `overview.json` also lists files excluded by role.
+- `coverage` lists parse failures, role-excluded source counts (`analyzedFiles`, `excludedByRole`, `excludedRoleCounts`) when test or generated files were excluded from the module graph and rules, and other languages left out.
 
 For each lead you keep, run its `task` command (or `archify code-analysis task out/first-look --finding <id> --root /path/to/repo --format json`) to get source excerpts, facts, suggestions, acceptance and evidence digests. Then read the cited source before changing code. A finding is static evidence, not a proven defect: a complexity warning says the function is harder to read and test, not that it must be split, and a coupling signal may be an intentional design. If the branching or dependency is inherent, record that and leave the code as it is.
 

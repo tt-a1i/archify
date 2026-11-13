@@ -32,8 +32,10 @@ It has two entry points that share the same pipeline:
      analyzed before the click. From then on the same button shows or hides the
      layer; **Re-analyze** on the overview runs the analysis again after code or
      config changes, without a restart.
-- **In a terminal or CI** (`check`): the same analysis without a diagram, with a
-  baseline, a comparison with the previous run, and an exit code.
+- **In a terminal or CI** (`check`): the same analysis without a diagram (or with
+  optional `--ir` / `--map` to verify diagram-to-code component mapping and
+  undeclared component imports headlessly), with a baseline, a comparison with the
+  previous run, and an exit code.
 
 `archify code-analysis task` turns findings of a finished run into an AI
 optimization task (JSON or Markdown) and checks its evidence against the current
@@ -41,8 +43,10 @@ working tree; the page uses the same logic through the server.
 
 `check --json` also returns an `investigation` object for a first look: its
 `leads` repeat the ranked priorities with the message, `path:line`, symbol and a
-runnable `task` command, and `ruleCounts` shows how findings divide by rule. Run
-`check` with `--out` so each lead is drillable. See
+runnable `task` command, `architecture` summarizes module hotspots, strongest
+cross-module edges and structural signals outside `leads`, and `ruleCounts` shows
+how findings divide by rule. Run `check` with `--out` so each lead or structural
+signal is drillable. See
 [First look at an unfamiliar repository](docs/USAGE.md#first-look-at-an-unfamiliar-repository).
 
 `task --question` prepares source orientation without requiring a finding: source
