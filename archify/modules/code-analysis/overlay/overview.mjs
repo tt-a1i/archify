@@ -26,7 +26,7 @@ import { layerCounts } from '../evaluate/index.mjs';
 export const MAX_PRIORITIES = 3;
 const SEVERITY_RANK = { error: 0, warning: 1, info: 2 };
 
-export function buildOverview({ findings = [], graph, facts = null, unmapped = [], run = {}, diagram = true }) {
+export function buildOverview({ findings = [], graph, facts = null, unmapped = [], ambiguousModules = [], run = {}, diagram = true }) {
   const modules = new Map((graph?.modules || []).map((m) => [m.id, m]));
   const related = relate(findings);
   const entries = findings.map((f) => ({
@@ -72,7 +72,7 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
     priorities,
     investigation: investigationOf(findings, entries, priorities),
     findings: ranked,
-    coverage: coverageOf({ graph, facts, unmapped, run }),
+    coverage: coverageOf({ graph, facts, unmapped, ambiguousModules, run }),
   };
 }
 
@@ -173,7 +173,7 @@ function groupsOf(ranked) {
   return [...groups.values()].sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || b.count - a.count || compareText(a.code, b.code));
 }
 
-function coverageOf({ graph, facts, unmapped, run }) {
+function coverageOf({ graph, facts, unmapped, ambiguousModules, run }) {
   const excludedRoles = new Set(graph?.excluded?.roles || []);
   const rules = run.rules || [];
   return {
@@ -191,6 +191,7 @@ function coverageOf({ graph, facts, unmapped, run }) {
     unresolved: graph?.unresolved || null,
     rules: { run: rules.filter((r) => !(run.suppressed || []).includes(r)), suppressed: (run.suppressed || []).filter((r) => rules.includes(r)) },
     unmappedModules: unmapped.map((m) => m.id),
+    ...(ambiguousModules.length ? { ambiguousModules } : {}),
     // Declared layers and how many analyzed files each one matched; null when no boundaries are configured.
     boundaries: run.boundaries && facts ? layerCounts(run.boundaries, facts.files.filter((f) => !excludedRoles.has(f.role)).map((f) => f.path)) : null,
     // Files the duplicate detector analyzed out of those selected for it; null when it did not run.

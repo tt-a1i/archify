@@ -158,6 +158,7 @@ test('check: --ir aligns findings and modules with architecture components and r
     mappedComponents: 2,
     emptyComponents: ['external-idp'],
     unmappedModules: ['tools'],
+    ambiguousModules: [],
     offDiagramFindings: 1,
     undeclaredEdges: [{ from: 'app', to: 'auth', weight: 1, sample: 'src/app/main.py:1' }],
   });
@@ -166,6 +167,30 @@ test('check: --ir aligns findings and modules with architecture components and r
   assert.equal(text.status, 0, text.stdout + text.stderr);
   assert.match(text.stdout, /Diagram alignment: 2\/3 components mapped · 1 unmapped module · 1 finding off diagram/);
   assert.match(text.stdout, /undeclared component imports: app -> auth \(1\)/);
+});
+
+test('check: shared module sources report ambiguity without inventing a component import', (t) => {
+  const root = fixture(t, {
+    'src/client/index.mjs': 'import { a } from "../shared/a.mjs";\nexport const run = a;\n',
+    'src/shared/a.mjs': 'export const a = 1;\n',
+    'src/shared/b.mjs': 'export const b = 2;\n',
+  });
+  const ir = path.join(root, 'architecture.json');
+  const components = [
+    { id: 'client', sources: [{ path: 'src/client/index.mjs' }] },
+    { id: 'a', sources: [{ path: 'src/shared/a.mjs' }] },
+    { id: 'b', sources: [{ path: 'src/shared/b.mjs' }] },
+  ];
+  for (const order of [components, [components[0], components[2], components[1]]]) {
+    fs.writeFileSync(ir, JSON.stringify({ diagram_type: 'architecture', components: order, connections: [{ from: 'client', to: 'a' }] }));
+    const json = check(root, ['--language', 'ts', '--ir', ir, '--fail-on', 'never', '--json']);
+    assert.equal(json.status, 0, json.stdout + json.stderr);
+    const diagram = JSON.parse(json.stdout).diagram;
+    assert.deepEqual(diagram.undeclaredEdges, []);
+    assert.deepEqual(diagram.ambiguousModules, [{ id: 'src-shared', components: ['a', 'b'] }]);
+  }
+  const text = check(root, ['--language', 'ts', '--ir', ir, '--fail-on', 'never']);
+  assert.match(text.stdout, /ambiguous component mapping: src-shared \(a, b\)/);
 });
 
 test('check: role exclusions and ambiguous-language file counts are visible on first contact', (t) => {

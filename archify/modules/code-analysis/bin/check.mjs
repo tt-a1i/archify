@@ -126,7 +126,7 @@ export async function runCheck(argv) {
   const listed = alignment
     ? alignment.listed
     : findings.diagnostics.map((d) => ({ ...d, ...(review.findings[d.id] ? { review: review.findings[d.id] } : {}), moduleIds: findingModules(d, fileModule), componentIds: [] }));
-  const overview = buildOverview({ findings: listed, graph, facts, unmapped: alignment ? alignment.unmapped : [], run, diagram: Boolean(alignment) });
+  const overview = buildOverview({ findings: listed, graph, facts, unmapped: alignment ? alignment.unmapped : [], ambiguousModules: alignment ? alignment.ambiguousModules : [], run, diagram: Boolean(alignment) });
 
   if (out) {
     fs.mkdirSync(out, { recursive: true });
@@ -154,6 +154,7 @@ export async function runCheck(argv) {
           mappedComponents: alignment.mapped,
           emptyComponents: alignment.components.filter((c) => !c.modules.length).map((c) => c.id),
           unmappedModules: overview.coverage.unmappedModules,
+          ambiguousModules: alignment.ambiguousModules,
           offDiagramFindings: overview.counts.offDiagram,
           undeclaredEdges: alignment.undeclaredEdges.map((e) => ({
             from: e.from,
@@ -346,6 +347,7 @@ export function formatText(r) {
   if (r.diagram) {
     lines.push(`  Diagram alignment: ${r.diagram.mappedComponents}/${r.diagram.components} components mapped · ${r.diagram.unmappedModules.length} unmapped module${r.diagram.unmappedModules.length === 1 ? '' : 's'} · ${r.diagram.offDiagramFindings} finding${r.diagram.offDiagramFindings === 1 ? '' : 's'} off diagram`);
     if (r.diagram.unmappedModules.length) lines.push(`    unmapped modules: ${r.diagram.unmappedModules.slice(0, 12).map(formatTerminalText).join(', ')}${r.diagram.unmappedModules.length > 12 ? ` (+${r.diagram.unmappedModules.length - 12} more)` : ''}`);
+    if (r.diagram.ambiguousModules?.length) lines.push(`    ambiguous component mapping: ${r.diagram.ambiguousModules.map((m) => `${formatTerminalText(m.id)} (${m.components.map(formatTerminalText).join(', ')})`).join('; ')}. Imports involving these modules retain module-level evidence.`);
     if (r.diagram.undeclaredEdges.length) lines.push(`    undeclared component imports: ${r.diagram.undeclaredEdges.slice(0, 8).map((e) => `${formatTerminalText(e.from)} -> ${formatTerminalText(e.to)} (${e.weight})`).join(', ')}${r.diagram.undeclaredEdges.length > 8 ? ` (+${r.diagram.undeclaredEdges.length - 8} more)` : ''}`);
   }
   if (r.investigation?.leads?.length) {

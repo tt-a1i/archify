@@ -8,7 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { ARCHIFY_AVAILABLE, ARCHIFY_PACKAGE, BAUIFY_ROOT } from './helpers.mjs';
-import { buildOverlay, scriptSafeJson } from '../overlay/inject.mjs';
+import { alignDiagram, buildOverlay, resolveMapping, scriptSafeJson } from '../overlay/inject.mjs';
 import { analyzeRepository } from '../overlay/page.mjs';
 import { DiagnosticError } from '../extract/shared/diagnostics.mjs';
 
@@ -83,6 +83,67 @@ test('overlay: parent directory sources claim child modules from most specific p
   assert.deepEqual(p.components.find((c) => c.id === 'auth').modules.map((m) => m.id), ['services-auth-jwt', 'services-auth-oauth']);
   assert.deepEqual(p.components.find((c) => c.id === 'platform').modules.map((m) => m.id), ['services', 'services-billing-stripe']);
   assert.deepEqual(p.unmapped.map((m) => m.id), ['tools']);
+});
+
+test('overlay: directory sources use file ownership for Go, Rust and explicit groups', () => {
+  for (const modulePath of ['example.org/project/core', 'rust:Cargo.toml#lib:core', 'logical-core']) {
+    const grouped = {
+      ...graph,
+      repository: { ...graph.repository, root: 'project' },
+      modules: [{ ...graph.modules[0], id: 'core', path: modulePath, entry: ['src/core/main.mjs'] }],
+      fileModules: { 'src/core/main.mjs': 'core', 'src/core/helper.mjs': 'core' },
+      edges: [],
+    };
+    for (const source of ['./src/core/', 'project/src/core/', 'src\\core\\', '.', 'project/']) {
+      const mapping = resolveMapping({ components: [{ id: 'service', sources: [{ path: source }] }] }, grouped, null);
+      assert.deepEqual(mapping.get('service'), ['core'], `${modulePath}: ${source}`);
+    }
+  }
+});
+
+test('overlay: historical graphs retain directory fallback while new graphs use exact file ownership', () => {
+  const source = { components: [{ id: 'lib', sources: [{ path: 'src/lib/secondary.mjs' }] }] };
+  assert.deepEqual(resolveMapping(source, graph, null).get('lib'), ['src-lib']);
+  const captured = { ...graph, fileModules: { 'src/index.mjs': 'src', 'src/lib/helper.mjs': 'src-lib' } };
+  assert.deepEqual(resolveMapping(source, captured, null).get('lib'), []);
+});
+
+test('overlay: shared module ownership stays ambiguous across component order and edge direction', () => {
+  const shared = { id: 'other-lib', label: 'Other lib', sources: [{ path: 'src/lib/helper.mjs' }] };
+  for (const edges of [graph.edges, graph.edges.map((e) => ({ ...e, from: e.to, to: e.from }))]) {
+    for (const components of [[...ir.components, shared], [ir.components[0], shared, ir.components[1]]]) {
+      const alignment = alignDiagram({ ir: { ...ir, components }, graph: { ...graph, edges } });
+      assert.deepEqual(alignment.edges, [], 'neither end of a projected edge may have ambiguous ownership');
+      assert.deepEqual(alignment.undeclaredEdges, []);
+      assert.deepEqual(alignment.ambiguousModules, [{ id: 'src-lib', components: ['lib', 'other-lib'] }]);
+      const app = alignment.components.find((c) => c.id === 'app');
+      const imports = edges[0].from === 'src' ? app.outgoing : app.incoming;
+      assert.equal(imports[0].component, null);
+      assert.equal(imports[0].module, 'src-lib', 'the module evidence remains available');
+      assert.deepEqual(alignment.components.find((c) => c.id === 'lib').ambiguousModules, ['src-lib']);
+    }
+  }
+});
+
+test('overlay: directory claims preserve ties and splits within a folded module', () => {
+  const grouped = {
+    ...graph,
+    modules: [{ ...graph.modules[0], id: 'crate', path: 'rust:crate' }],
+    fileModules: { 'src/auth/login.rs': 'crate', 'src/billing.rs': 'crate' },
+    edges: [],
+  };
+  const components = [
+    { id: 'platform', sources: [{ path: 'src/' }] },
+    { id: 'auth', sources: [{ path: 'src/auth/' }] },
+  ];
+  for (const order of [components, [...components].reverse()]) {
+    const mapping = resolveMapping({ components: order }, grouped, null);
+    assert.deepEqual(mapping.get('platform'), ['crate']);
+    assert.deepEqual(mapping.get('auth'), ['crate']);
+  }
+  const mapping = resolveMapping({ components: components.map((c) => ({ ...c, sources: [{ path: 'src/' }] })) }, grouped, null);
+  assert.deepEqual(mapping.get('platform'), ['crate']);
+  assert.deepEqual(mapping.get('auth'), ['crate']);
 });
 
 test('overlay: the cycle indicator takes the colour of the highest severity among its file and module cycles, green otherwise', () => {
