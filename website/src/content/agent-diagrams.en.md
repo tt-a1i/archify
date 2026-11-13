@@ -171,7 +171,7 @@ No. A clear description can be enough. A repository becomes useful when the diag
 
 ### Is it free, and which Archify is this?
 
-This guide concerns the [tt-a1i/archify open-source project](https://github.com/tt-a1i/archify), whose official website is [archify.si](https://archify.si). Its code is MIT-licensed. Your agent or other services may have their own costs and terms. A similarly named paid service is not automatically affiliated with this project.
+This guide concerns the [tt-a1i/archify open-source project](https://github.com/tt-a1i/archify), whose official website is [archify.si](https://archify.si). Archify is distributed under the [Apache License 2.0](https://github.com/tt-a1i/archify/blob/main/LICENSE), except where a file, package manifest, or third-party notice specifies otherwise. Historical MIT grants remain valid, and previously published releases keep their existing licenses; see [NOTICE](https://github.com/tt-a1i/archify/blob/main/NOTICE). Your agent or other services may have their own costs and terms. A similarly named paid service is not automatically affiliated with this project.
 
 ### What should I do next?
 
