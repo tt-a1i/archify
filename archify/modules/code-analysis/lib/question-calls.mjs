@@ -101,9 +101,18 @@ const bindingCoverage = rustModel ? (facts.callModel === 'rust-source-direct-v4'
     return [{ factIndex, fact }];
   }).sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column
     || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn || a.factIndex - b.factIndex);
+  const navigate = questionCallNavigator({ facts, inspect, entry, capturedRangeModel });
+  const included = records.slice(0, LIMIT).map(navigate);
+  return { ...result, coverage: 'available', selection: { ...result.selection, range },
+    total: records.length, included: Math.min(records.length, LIMIT), omitted: Math.max(0, records.length - LIMIT), records: included };
+}
+
+// Shared by outgoing orientation and reverse lookup; it verifies source
+// evidence, not runtime execution or a fresh whole-project resolution.
+export function questionCallNavigator({ facts, inspect, entry, capturedRangeModel }) {
   const capturedFiles = new Set(facts.files.map((file) => file.path));
   const capturedTexts = capturedRangeModel ? new Map(facts.files.map(file => [file.path, file.sourceText])) : null;
-  const included = records.slice(0, LIMIT).map((record) => {
+  return record => {
     const target = record.fact.target;
     if (!target) return { ...record, targetNavigation: { status: 'unresolved', location: null, reason: record.fact.reason } };
     const file = target.file || entry.file;
@@ -133,7 +142,5 @@ const bindingCoverage = rustModel ? (facts.callModel === 'rust-source-direct-v4'
       ...support,
       ...(status === 'valid' ? {} : { reason: status === 'parse-error' ? 'captured-target-parse-errors' : `target-${status}` }), evidence,
     } };
-  });
-  return { ...result, coverage: 'available', selection: { ...result.selection, range },
-    total: records.length, included: Math.min(records.length, LIMIT), omitted: Math.max(0, records.length - LIMIT), records: included };
+  };
 }

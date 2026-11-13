@@ -45,6 +45,18 @@ Fresh paired orientation below also supports captured named Python/Java definiti
    text and parse errors leave totals unknown and records empty. An available
    zero means no collected call nodes in this source range, not no runtime
    calls (the JS/TS model excludes constructors and tagged templates).
+   For the reverse direction, `importers` lists captured resolved imports into
+   the entry file, and `callers` lists calls bound to the selected declaration's
+   file, name, line and column. Without `--function`, callers covers bound targets
+   anywhere in the entry file. Each list has its own 40-record limit and
+   `total/included/omitted`; limits apply after reverse selection. Inspect each
+   origin's freshness and use only a `navigation.location` with `status: valid`.
+   Stale origins and forwarding paths keep their captured records and counts but
+   do not provide valid navigation. Unknown historical call models keep caller
+   totals unknown. These lists are captured source references, not a complete
+   impact graph or proof of runtime dispatch. `directCaller` is supplied only
+   where the original adapter captured it; an outer source range is not inferred
+   to be the direct caller of nested calls.
    Older JS/TS facts without the marker remain readable, but require fresh
    extraction for call orientation even if their calls array is nonempty.
    Python `python-lexical-v1` inventories every `ast.Call` in parse-valid files.

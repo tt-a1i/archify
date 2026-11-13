@@ -37,6 +37,8 @@ their original tools/settings before importing and comparing updated results.
 Question mode prepares source orientation for the host Agent workflow, not a completed
 analysis. It needs no finding. Missing facts remain explicit; changed/unverifiable
 entry facts or entry parse errors exit 1. Read docs/FUNCTION-ANALYSIS.md and complete the analysis.
+importers/callers reverse the captured resolved edges with origin freshness and
+total/included/omitted counts. They are bounded source references, not complete runtime impact.
 Single-entry Python/Java/Go/Rust questions require a saved analysis directory with matching
 captured .py/.java/.go/.rs source and matching producer/call-model metadata; unsupported historical models keep unavailable coverage.
 With --base-root, question mode freshly captures both roots in the entry language (JS/TS, .py, .java, .go or .rs) with one analysis
