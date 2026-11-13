@@ -13,7 +13,7 @@ import { RULES } from '../evaluate/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { startAnalysisView } from '../bin/serve.mjs';
 import { formatText } from '../bin/check.mjs';
-import { buildTask } from '../lib/task.mjs';
+import { buildTask, renderTaskMarkdown } from '../lib/task.mjs';
 import { ARCHIFY_AVAILABLE } from './helpers.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -286,6 +286,15 @@ test('tasks with imported ESLint output require a fresh report without requiring
     assert.match(task.verification.reanalyze.purpose, /does not run the external tools/);
     assert.match(task.verification.reanalyze.purpose, /Verify no new finding appears in changed files/);
   }
+  const nativeOnly = buildTask({ findings, facts, ids: [native.id] });
+  const mixed = buildTask({ findings, facts, ids: [native.id, externalId] });
+  assert.match(renderTaskMarkdown(nativeOnly), /project-eslint .* from reports\/eslint\.json/);
+  assert.match(renderTaskMarkdown(nativeOnly), /project-ruff .* from reports\/ruff\.json/);
+  assert.equal(nativeOnly.source.external, undefined, 'run-level sources are replay context, not evidence for the selected finding');
+  assert.deepEqual(nativeOnly.verification.commands, [], 'commands from unselected sources are not exported');
+  assert.match(renderTaskMarkdown(mixed), /project-ruff .* from reports\/ruff\.json/);
+  assert.deepEqual(mixed.source.external.map(s => s.id), ['project-eslint']);
+  assert.deepEqual(mixed.verification.commands.map(c => c.source), ['external source manifest: project-eslint']);
   const rustFacts = { ...facts, repository: { ...facts.repository, language: 'rust' } };
   const rust = buildTask({ findings, facts: rustFacts, ids: [native.id] });
   assert.match(rust.acceptance.join(' '), /intentionally retained structural cycle/);

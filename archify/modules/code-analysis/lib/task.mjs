@@ -161,6 +161,9 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
   const read = [...new Set(selected.flatMap((d) => [...(d.evidenceDigest?.files || []), ...locations.map((l) => l.file)]))].filter((f) => !modify.includes(f)).sort(compareText);
   const toConfirm = [
     ...(hasExternalReports ? ['Confirm the producer command and output path for each imported report, including the intended tool version, rules and scan scope.'] : []),
+    // Replay uses the whole run, but evidence and recorded commands remain limited to selected findings.
+    ...runSources.filter((s) => !sourceIds.has(s.id)).sort((a, b) => compareText(a.id, b.id)).map((s) =>
+      `The analysis also imported external source ${s.id} (${s.tool}${s.toolVersion ? ' ' + s.toolVersion : ''})${s.reportFile ? ' from ' + s.reportFile : ''}. Confirm its producer command and output path before refreshing it for re-analysis.`),
     'Business constraints and intended behaviour that the code alone does not show (ask the project owner or read the docs before redesigning).',
     ...(verificationCommands.length ? [] : ['Which test, lint or type-check commands verify this change; none were provided with the task.']),
     'Whether files beyond the allowed scope may be changed (callers, tests, configuration).',
