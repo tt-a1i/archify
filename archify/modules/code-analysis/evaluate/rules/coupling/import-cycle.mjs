@@ -1,4 +1,5 @@
 import { cyclicComponents } from './scc.mjs';
+import { partitionEdges, indexPathEdges, shortestCycle } from './cycle-graph.mjs';
 // File-level dependency cycles, with conservative load-time risk estimates.
 // Type-only edges are structural facts, not runtime imports. Deferred and
 // conditional execution is not modeled as safe: callers may run at import
@@ -30,10 +31,10 @@ export function run({ graph, facts }) {
   const edges = facts.imports.filter((i) => i.resolved && !(facts.repository.language === 'rust' && i.from === i.to) && !i.typeOnly && !skip.has(i.from) && !skip.has(i.to)).map((e) => ({ ...e, ...(e.names ? { names: [...e.names].sort() } : {}) })).sort(compareImport);
   const files = [...new Set(edges.flatMap((e) => [e.from, e.to]))].sort();
   const all = cyclicComponents(files, edges, true);
+  const allParts = partitionEdges(all, edges);
   if (['java', 'rust'].includes(facts.repository.language)) return all.map(scc => {
-    const set = new Set(scc);
-    const internal = edges.filter(e => set.has(e.from) && set.has(e.to));
-    const path = shortestCycle(scc[0], internal, set);
+    const internal = allParts.get(scc[0]), pathEdges = indexPathEdges(internal);
+    const path = shortestCycle(scc[0], node => [...(pathEdges.get(node)?.keys() || [])].sort());
     return {
       code, dimension, confidence, severity: facts.repository.language === 'rust' ? 'info' : severity,
       message: `${scc.length} ${facts.repository.language === 'rust' ? 'Rust' : 'Java'} files form a structural dependency cycle: ${path.join(' → ')} → ${path[0]}. ${facts.repository.language === 'rust' ? 'Rust mod/use declarations are compile-time source relationships, not runtime imports or partial initialization.' : 'Imports and type references do not establish class initialization order or runtime failure.'}`,
@@ -47,7 +48,7 @@ export function run({ graph, facts }) {
         path,
         pathImports: path.map((from, i) => {
           const to = path[(i + 1) % path.length];
-          return { file: from, to, line: internal.find(e => e.from === from && e.to === to).line };
+          return { file: from, to, line: pathEdges.get(from).get(to).line };
         }),
         imports: internal.slice(0, 16).map(e => ({ file: e.from, to: e.to, line: e.line, kind: e.kind })),
         totalImports: internal.length, lazyImports: 0, threshold: null,
@@ -56,8 +57,10 @@ export function run({ graph, facts }) {
     };
   });
   const eagerEdges = edges.filter((e) => !e.lazy && !e.conditional && !(facts.repository.language === 'ts' && e.kind === 'dynamic'));
-  const eager = cyclicComponents(files, eagerEdges, true);
-  const eagerKeys = new Set(eager.map((s) => s.join('\n')));
+  const eager = eagerEdges.length === edges.length ? all : cyclicComponents(files, eagerEdges, true);
+  const eagerParts = eager === all ? allParts : partitionEdges(eager, eagerEdges);
+  const eagerKeys = new Set(eager.map(scc => scc.join('\n')));
+  const eagerSet = new Set(eagerEdges);
   const bindings = indexBindings(facts.symbols || []);
 
   const findings = [];
@@ -66,10 +69,10 @@ export function run({ graph, facts }) {
     const key = scc.join('\n');
     if (seen.has(key)) return;
     seen.add(key);
-    const set = new Set(scc);
-    const internal = (isEager ? eagerEdges : edges).filter((e) => set.has(e.from) && set.has(e.to));
-    const path = shortestCycle(scc[0], internal, set);
-    const candidate = isEager ? findPartialInitCandidate(set, internal, bindings) : null;
+    const internal = (isEager ? eagerParts : allParts).get(scc[0]);
+    const pathEdges = indexPathEdges(internal, eagerSet);
+    const path = shortestCycle(scc[0], node => [...(pathEdges.get(node)?.keys() || [])].sort());
+    const candidate = isEager ? findPartialInitCandidate(new Set(scc), internal, bindings) : null;
     const tier = isEager ? severity : 'warning';
     const cycleText = `${path.join(' → ')} → ${path[0]}`;
     findings.push({
@@ -95,9 +98,8 @@ export function run({ graph, facts }) {
         path,
         pathImports: path.map((from, i) => {
           const to = path[(i + 1) % path.length];
-          const options = internal.filter((e) => e.from === from && e.to === to);
-          const edge = options.find((e) => eagerEdges.includes(e)) || options[0];
-          return { file: from, to, line: edge.line, deferred: !eagerEdges.includes(edge) };
+          const edge = pathEdges.get(from).get(to);
+          return { file: from, to, line: edge.line, deferred: !eagerSet.has(edge) };
         }),
         imports: internal.map((e) => ({ file: e.from, line: e.line, to: e.to, ...(e.names && e.names.length ? { names: e.names } : {}), ...Object.fromEntries(['lazy', 'conditional', 'implicit'].filter((flag) => e[flag]).map((flag) => [flag, true])), kind: e.kind, ...(facts.repository.language === 'ts' && e.kind === 'dynamic' ? { deferred: true } : {}) })).sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : a.line - b.line || compareImport(a, b))).slice(0, 16),
         lazyImports: internal.filter((e) => e.lazy).length,
@@ -179,23 +181,4 @@ function reaches(start, target, out, set, beforeLine) {
     }
   }
   return null;
-}
-
-/** Return cyclic strongly connected components, including singleton self-imports. */
-
-function shortestCycle(start, edges, set) {
-  const out = new Map();
-  for (const e of edges) (out.get(e.from) || out.set(e.from, []).get(e.from)).push(e.to);
-  for (const list of out.values()) list.sort();
-  const prev = new Map([[start, null]]);
-  const queue = [start];
-  while (queue.length) {
-    const v = queue.shift();
-    for (const w of out.get(v) || []) {
-      if (!set.has(w)) continue;
-      if (w === start) { const path = [v]; let p = prev.get(v); while (p !== null) { path.unshift(p); p = prev.get(p); } return path; }
-      if (!prev.has(w)) { prev.set(w, v); queue.push(w); }
-    }
-  }
-  return [start];
 }

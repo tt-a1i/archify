@@ -40,6 +40,33 @@ test('cycle: two separate cycles are two findings; a self-contained 2-cycle quot
   assert.equal(out.summary.errors, 2);
 });
 
+test('import-cycle: overlapping all/eager partitions retain canonical eager path evidence', () => {
+  const graph = graphOf([['a', 'b'], ['b', 'a'], ['b', 'c'], ['c', 'a']]);
+  const facts = factsOf([
+    { from: 'a/x.py', to: 'b/y.py', line: 9, lazy: true },
+    { from: 'a/x.py', to: 'b/y.py', line: 4 },
+    { from: 'b/y.py', to: 'a/x.py', line: 3 },
+    { from: 'b/y.py', to: 'c/z.py', line: 2, lazy: true },
+    { from: 'c/z.py', to: 'a/x.py', line: 1 },
+  ]);
+  const run = () => evaluate(graph, {}, facts).diagnostics.filter(f => f.code === 'coupling/import-cycle');
+  const first = run();
+  assert.equal(first.length, 2);
+  const deferred = first.find(f => f.evidence.kind === 'deferred'), eager = first.find(f => f.evidence.kind === 'eager');
+  assert.deepEqual(deferred.subject.files, ['a/x.py', 'b/y.py', 'c/z.py']);
+  assert.deepEqual(eager.subject.files, ['a/x.py', 'b/y.py']);
+  const pathImports = [
+    { file: 'a/x.py', to: 'b/y.py', line: 4, deferred: false },
+    { file: 'b/y.py', to: 'a/x.py', line: 3, deferred: false },
+  ];
+  assert.deepEqual(deferred.evidence.pathImports, pathImports);
+  assert.deepEqual(eager.evidence.pathImports, pathImports);
+  assert.equal(deferred.evidence.totalImports, 5);
+  assert.equal(eager.evidence.totalImports, 2);
+  facts.imports.reverse();
+  assert.deepEqual(run(), first);
+});
+
 test('ids: a finding keeps its id when an unrelated finding sorting before it appears or disappears', () => {
   const alone = evaluate(graphOf([['x', 'y'], ['y', 'x']])).diagnostics;
   const withEarlier = evaluate(graphOf([['a', 'b'], ['b', 'a'], ['x', 'y'], ['y', 'x']])).diagnostics;

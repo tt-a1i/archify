@@ -1,0 +1,199 @@
+{
+  "kind": "constructed-native-viewer-fixed-input-replay",
+  "base": "10a608a743be58ede8069959cc6e502175677d7c",
+  "candidateBase": "bdd477bb7f76dedb7975bf9ecb1b86018b3ed44d",
+  "route": "Viewer presentation/export replay",
+  "analyzedFiles": 2,
+  "nativeOnly": true,
+  "inputSha256": "a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef",
+  "sourceFiles": [
+    {
+      "path": "app/index.mjs",
+      "sha256": "f1314de34414aee59d2d6e6f22038526bac7abcd0ceb6a9cb3cbb7f5bf53bbae"
+    },
+    {
+      "path": "lib/helper.mjs",
+      "sha256": "1db03a239709ac2d87419e9b60cf3652050fcf63bd5c02f0ae7c1b78aa660463"
+    }
+  ],
+  "selectedFinding": "COMP-e01cd9f51baf",
+  "samples": [
+    {
+      "name": "base",
+      "inputSha256": "a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef",
+      "htmlSha256": "f36748f4754aef1c27261c8e7fbc8b19daf33b4a9c9c4dbcb87d103b7d5dcf4d",
+      "counts": {
+        "warning": 1,
+        "error": 2
+      },
+      "findingIds": [
+        "COMP-e01cd9f51baf",
+        "COUP-42b6568f3520",
+        "COUP-6d4595c4cb90"
+      ],
+      "components": [
+        {
+          "id": "app",
+          "modules": [
+            "app"
+          ]
+        },
+        {
+          "id": "lib",
+          "modules": [
+            "lib"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "candidate",
+      "inputSha256": "a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef",
+      "htmlSha256": "587cf861c4338bfdaf7d5a31cbd252c4d6eb483094c9015ac9a060e0aa13e75d",
+      "counts": {
+        "warning": 1,
+        "error": 2
+      },
+      "findingIds": [
+        "COMP-e01cd9f51baf",
+        "COUP-42b6568f3520",
+        "COUP-6d4595c4cb90"
+      ],
+      "components": [
+        {
+          "id": "app",
+          "modules": [
+            "app"
+          ]
+        },
+        {
+          "id": "lib",
+          "modules": [
+            "lib"
+          ]
+        }
+      ]
+    }
+  ],
+  "conditions": {
+    "viewport": [
+      1280,
+      720
+    ],
+    "theme": "Light",
+    "style": "Classic",
+    "motion": "Still",
+    "zoom": "100%",
+    "readerWidth": 420
+  },
+  "geometry": {
+    "base": {
+      "height": 720,
+      "nodes": [
+        {
+          "height": 98.20501708984376,
+          "id": "app",
+          "width": 218.2333984375,
+          "x": 578.296630859375,
+          "y": 368.74407958984375
+        },
+        {
+          "height": 98.20501708984376,
+          "id": "lib",
+          "width": 218.2333984375,
+          "x": 971.11669921875,
+          "y": 368.74407958984375
+        }
+      ],
+      "readerWidth": 420,
+      "width": 1280
+    },
+    "candidate": {
+      "height": 720,
+      "nodes": [
+        {
+          "height": 98.20501708984376,
+          "id": "app",
+          "width": 218.2333984375,
+          "x": 578.296630859375,
+          "y": 368.74407958984375
+        },
+        {
+          "height": 98.20501708984376,
+          "id": "lib",
+          "width": 218.2333984375,
+          "x": 971.11669921875,
+          "y": 368.74407958984375
+        }
+      ],
+      "readerWidth": 420,
+      "width": 1280
+    }
+  },
+  "visualReview": {
+    "reviewer": "Codex agent",
+    "humanApprovalClaimed": false,
+    "preserved": [
+      "native finding ids and severity",
+      "component mapping and diagram geometry",
+      "finding title, code excerpt, highlighted source line and task action"
+    ],
+    "changes": [
+      "Browse findings adds an entry and about 48px of overview height",
+      "Problem navigation becomes Finding; offline Accept control is added below the code evidence"
+    ],
+    "tradeoff": "The second priority card needs slightly more scrolling at 1280x720; the source evidence remains in the same visible position."
+  },
+  "fixture": {
+    "ir": {
+      "schema_version": 1,
+      "diagram_type": "architecture",
+      "meta": {
+        "title": "C7 Viewer regression fixture",
+        "subtitle": "Fixed native findings · base and candidate comparison",
+        "output": "architecture.html"
+      },
+      "components": [
+        {
+          "id": "app",
+          "type": "backend",
+          "label": "Application",
+          "pos": [
+            80,
+            90
+          ],
+          "size": [
+            200,
+            90
+          ]
+        },
+        {
+          "id": "lib",
+          "type": "backend",
+          "label": "Library",
+          "pos": [
+            440,
+            90
+          ],
+          "size": [
+            200,
+            90
+          ]
+        }
+      ],
+      "connections": []
+    },
+    "map": {
+      "app": [
+        "app"
+      ],
+      "lib": [
+        "lib"
+      ]
+    },
+    "files": {
+      "app/index.mjs": "import { helper } from '../lib/helper.mjs';\nexport function measure(value) {\n  if (value === 0) return 0;\n  if (value === 1) return 1;\n  if (value === 2) return 2;\n  if (value === 3) return 3;\n  if (value === 4) return 4;\n  if (value === 5) return 5;\n  if (value === 6) return 6;\n  if (value === 7) return 7;\n  if (value === 8) return 8;\n  if (value === 9) return 9;\n  if (value === 10) return 10;\n  if (value === 11) return 11;\n  if (value === 12) return 12;\n  if (value === 13) return 13;\n  if (value === 14) return 14;\n  if (value === 15) return 15;\n  if (value === 16) return 16;\n  if (value === 17) return 17;\n  if (value === 18) return 18;\n  if (value === 19) return 19;\n  if (value === 20) return 20;\n  if (value === 21) return 21;\n  if (value === 22) return 22;\n  if (value === 23) return 23;\n  if (value === 24) return 24;\n  if (value === 25) return 25;\n  if (value === 26) return 26;\n  if (value === 27) return 27;\n  if (value === 28) return 28;\n  if (value === 29) return 29;\n  if (value === 30) return 30;\n  if (value === 31) return 31;\n  return helper(value);\n}\n",
+      "lib/helper.mjs": "import { measure } from '../app/index.mjs';\nexport const snapshot = () => measure(0);\nexport function helper(value) { return value; }\n"
+    }
+  }
+}
