@@ -81,6 +81,12 @@ export async function runCheck(argv) {
         supportedFixes: ['pass an architecture JSON file with diagram_type "architecture" and components'],
       });
     }
+    const { validateSchema } = await import('../../../renderers/shared/validator.mjs');
+    try { validateSchema('architecture', irDoc, { sourceReferencesOnly: true }); }
+    catch (error) {
+      if (error.archifyDiagnostics) throw new DiagnosticError(error.message, error.archifyDiagnostics);
+      throw error;
+    }
     if (options['--map']) {
       mapDoc = readJsonInput(path.resolve(options['--map']), 'check --map');
       if (!mapDoc || typeof mapDoc !== 'object' || Array.isArray(mapDoc)) {
@@ -236,9 +242,10 @@ const MAX_STRUCTURAL_SIGNALS = 5;
 
 function architectureBrief({ graph, findings, overview, root, out, findingWhere }) {
   const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  const readingWeight = m => m.loc * (1 + Math.log2(1 + m.fanIn));
   const hotspots = [...(graph.modules || [])]
     .filter((m) => (m.fanIn + m.fanOut) > 0)
-    .sort((a, b) => (b.fanIn + b.fanOut) - (a.fanIn + a.fanOut) || b.fanIn - a.fanIn || b.loc - a.loc || compareText(a.id, b.id))
+    .sort((a, b) => readingWeight(b) - readingWeight(a) || b.fanIn - a.fanIn || b.fanOut - a.fanOut || compareText(a.id, b.id))
     .slice(0, MAX_HOTSPOTS)
     .map((m) => ({
       id: m.id,
@@ -249,6 +256,7 @@ function architectureBrief({ graph, findings, overview, root, out, findingWhere 
       fanOut: m.fanOut,
       instability: m.instability,
       entry: m.entry,
+      readingWeight: Math.round(readingWeight(m) * 1000) / 1000,
     }));
   const strongestEdges = [...(graph.edges || [])]
     .sort((a, b) => b.weight - a.weight || compareText(a.from, b.from) || compareText(a.to, b.to))
@@ -292,6 +300,7 @@ function architectureBrief({ graph, findings, overview, root, out, findingWhere 
     modules: (graph.modules || []).length,
     edges: (graph.edges || []).length,
     hotspots,
+    hotspotRanking: 'Connected modules ordered by loc * (1 + log2(1 + fanIn)), then fanIn, fanOut and id. A bounded reading order, not inferred business importance, defect severity or refactoring advice.',
     strongestEdges,
     structuralSignals: picked.map((e) => {
       const d = byId.get(e.id);

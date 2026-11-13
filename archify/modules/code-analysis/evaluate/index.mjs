@@ -60,7 +60,7 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
     // Key order is kept, not sorted: boundary layers and module groups are first-match
     // maps, so reordering them can change which layer or group owns a file. Reordering
     // any key therefore reads as a config change, which errs toward "not comparable".
-    configDigest: sha256(JSON.stringify(settings)),
+    configDigest: sha256(JSON.stringify(graph?.grouping?.typescript ? { settings, moduleGrouping: graph.grouping.typescript } : settings)),
     ruleVersions: Object.fromEntries(active.filter((r) => !suppressed.has(r.code)).map((r) => [r.code, r.version ?? 1]).sort(([a], [b]) => compareText(a, b))),
     ...(duplicates ? { duplicates: duplicates.analysis } : {}),
     ...(goBuild ? { goBuildScope: {

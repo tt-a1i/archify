@@ -21,6 +21,7 @@ export { findRanges, rangeDigest, splitLines };
 import fs from 'node:fs';
 import { fail } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
+import { summarizeModule } from './module-summary.mjs';
 
 export const TASK_SCHEMA_VERSION = 1;
 export const KIND = 'archify-code-analysis-task';
@@ -128,6 +129,8 @@ function buildTaskWithContext({ findings, facts, ids, commands = [], review = nu
     subject: { ids: unknown }, supportedFixes: ['use ids from findings.json of the same run', 're-run the analysis if the ids come from an older page'],
   });
   const selected = wanted.map((id) => byId.get(id));
+  const moduleSummaries = selected.map(d => summarizeModule(d, facts, findings.analysis)).filter(Boolean);
+  const summarized = new Map(moduleSummaries.map(summary => [summary.findingId, summary]));
   const source = context.source ??= new Map(facts.files.map((f) => [f.path, typeof f.sourceText === 'string' ? splitLines(f.sourceText) : null]));
   const external = selected.filter((d) => d.external);
   const runSources = findings.analysis?.external || [];
@@ -158,6 +161,7 @@ function buildTaskWithContext({ findings, facts, ids, commands = [], review = nu
   const locations = [];
   const truncated = [];
   for (const d of selected) {
+    if (summarized.has(d.id)) continue;
     const all = locationsOf(d);
     const kept = all.slice(0, EXCERPT.maxLocations);
     if (all.length > kept.length) truncated.push({ findingId: d.id, shown: kept.length, total: all.length });
@@ -170,7 +174,9 @@ function buildTaskWithContext({ findings, facts, ids, commands = [], review = nu
     const imported = byId.get(loc.findingId).external;
     return loc.kind !== 'file' && loc.role !== 'related' && (!imported || (loc.sha256 && imported.binding !== 'changed'));
   }).map((l) => l.file))].sort(compareText);
-  const read = [...new Set(selected.flatMap((d) => [...(d.evidenceDigest?.files || []), ...locations.map((l) => l.file)]))].filter((f) => !modify.includes(f)).sort(compareText);
+  const read = [...new Set(selected.flatMap((d) => summarized.has(d.id)
+    ? [...summarized.get(d.id).largestFiles.items, ...summarized.get(d.id).entryFiles.items].map(file => file.file)
+    : [...(d.evidenceDigest?.files || []), ...locations.map((l) => l.file)]))].filter((f) => !modify.includes(f)).sort(compareText);
   const toConfirm = [
     ...(hasExternalReports ? ['Confirm the producer command and output path for each imported report, including the intended tool version, rules and scan scope.'] : []),
     // Replay uses the whole run, but evidence and recorded commands remain limited to selected findings.
@@ -200,6 +206,7 @@ function buildTaskWithContext({ findings, facts, ids, commands = [], review = nu
     })),
     source: { ...sourceOf(findings, facts), ...(external.length ? { external: externalSources } : {}) },
     locations,
+    ...(moduleSummaries.length ? { moduleSummaries } : {}),
     facts: selected.map((d) => ({ findingId: d.id, statement: d.message, evidence: keyEvidence(d) })),
     impact: selected.map((d) => ({ findingId: d.id, statement: d.external
       ? `This is a claim reported by ${d.external.tool}${d.external.ruleId ? ` (${d.external.ruleId})` : ''}; its runtime or maintenance impact has not been independently established. Review the current code and intended behaviour.`
@@ -212,7 +219,8 @@ function buildTaskWithContext({ findings, facts, ids, commands = [], review = nu
       read,
       note: modify.length
         ? 'Change the files under "modify"; "read" lists files the finding was computed from, for context. Before changing any other file, say which and why.'
-        : 'No line evidence: read the listed files and propose a scope before changing anything.',
+        : moduleSummaries.length ? 'Module-level evidence: read the representative files and full evidenceDigest membership before proposing a modification scope.'
+          : 'No line evidence: read the listed files and propose a scope before changing anything.',
     },
     preserve: [...new Set(selected.flatMap((d) => d.external
       ? ['Existing behaviour and business constraints of the cited code.', 'The external tool configuration and scan scope; do not disable a rule or narrow its coverage just to remove the reported result.']
@@ -490,6 +498,23 @@ export function renderTaskMarkdown(task) {
   line();
   line('## Where (snapshot at analysis time)');
   line();
+  for (const summary of task.moduleSummaries || []) {
+    line(`### Module \`${summary.module}\` · \`${summary.path || '(root)'}\``);
+    line();
+    line(`${summary.files} files · ${summary.loc} captured source lines${summary.share === null ? '' : ` · ${Math.round(summary.share * 100)}% of ${summary.totalLoc} analyzed lines`}. ${summary.capturedFiles} member files captured. Full membership is retained in the finding evidence digest.`);
+    line();
+    for (const [title, list, describe] of [
+      ['Largest files', summary.largestFiles, item => `\`${item.file}\` · ${item.loc} lines`],
+      ['Externally imported entry files', summary.entryFiles, item => `\`${item.file}\` · ${item.importers} importing files`],
+      ['Path/name groups', summary.clusters, item => `\`${item.pathGroup}\` · ${item.files} files · ${item.loc} lines`],
+    ]) {
+      line(`**${title}** (${list.shown}/${list.total}${list.truncated ? `; ${list.truncated} omitted` : ''}):`);
+      line();
+      for (const item of list.items) line(`- ${describe(item)}`);
+      line();
+    }
+    line(summary.basis); line();
+  }
   for (const loc of task.locations) {
     const range = Number.isInteger(loc.startLine) ? (loc.startLine === loc.endLine ? `:${loc.startLine}` : `:${loc.startLine}-${loc.endLine}`) : '';
     const status = loc.status ? ` — ${loc.status}${loc.currentStartLine && loc.currentStartLine !== loc.startLine ? ` (now at line ${loc.currentStartLine})` : ''}` : '';
