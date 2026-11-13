@@ -238,12 +238,19 @@ test('renderer: page titles render validated inline content in reading order wit
   const input=fixture();
   input.meta.title='Why `GET <key>` **now**? [Guide](source:external) [1 ms](typical:Illustrative only) [Details](block:panel-main) [API](node:native-diagram.api)';
   input.answer.summary='The [excerpt](source:code-source) follows the title.';
+  input.panels[0].title='How does `cache.get()` **work**?[](source:external) [2 ms](typical:Estimated)';
   const tree=parse(renderExplainer(input,resources())),heading=all(tree,node=>node.tagName==='h1')[0];
+  const masthead=all(tree,node=>node.tagName==='header'&&attr(node,'class')==='masthead')[0];
+  const panel=find(tree,'panel-main'),panelIdLink=all(panel,node=>attr(node,'class')==='panel-id')[0];
   const code=all(heading,node=>node.tagName==='code')[0];
   assert.ok(code,'the page heading must render its validated inline code');
   assert.equal(text(code),'GET <key>');
   assert.equal(text(all(heading,node=>node.tagName==='strong')[0]),'now');
   assert.equal(text(all(tree,node=>node.tagName==='title')[0]),'Why GET <key> now? Guide 1 ms Details API · Archify');
+  assert.equal(attr(masthead,'data-title'),'Why GET <key> now? Guide 1 ms Details API');
+  assert.equal(attr(panel,'data-title'),'How does cache.get() work? 2 ms');
+  assert.equal(attr(panelIdLink,'aria-label'),'How does cache.get() work? 2 ms');
+  assert.equal(text(all(panel,node=>node.tagName==='h2').flatMap(h=>all(h,n=>n.tagName==='code'))[0]),'cache.get()');
   assert.ok(all(heading,node=>attr(node,'href')==='#panel-main').length);
   assert.equal(attr(all(heading,node=>attr(node,'data-diagram-link')==='native-diagram')[0],'data-diagram-hash'),'focus=api');
   assert.equal(text(all(heading,node=>attr(node,'href')==='#source-external')[0]),'1');
@@ -251,6 +258,6 @@ test('renderer: page titles render validated inline content in reading order wit
   assert.equal(attr(find(tree,'source-code-source'),'value'),'2');
   assert.ok(all(heading,node=>attr(node,'href')==='#explainer-typical-1').length);
   assert.match(text(find(tree,'explainer-typical-1')),/Illustrative only/);
-  assert.match(text(find(tree,'explainer-typical-2')),/not measured here/);
+  assert.match(text(find(tree,'explainer-typical-3')),/not measured here/);
   assert.deepEqual(payload(tree,'archify-explainer-prepared').document,input,'rendering must not rewrite the canonical title');
 });

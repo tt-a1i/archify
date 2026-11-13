@@ -42,6 +42,7 @@
   <a href="#社区交流"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
   <a href="#社区交流"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
+  <a href="#支持-archify"><img src="https://img.shields.io/badge/Support-E2500E?style=for-the-badge" alt="Support Archify" /></a>
 </p>
 
 <p align="center"><a href="#sponsors"><strong>❤️ 合作与赞助伙伴：Kimi Work · Supercode · OpenLux</strong></a></p>
