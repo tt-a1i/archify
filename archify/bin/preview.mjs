@@ -47,7 +47,8 @@ function dependencyStamp(root, sourcePath) {
 }
 
 function sourceDigest(inputPath, dependencyPaths = [inputPath]) {
-  const dependencies = dependencyPaths.filter(file => file !== inputPath).map(file => [file, dependencyStamp(path.dirname(inputPath), file)]);
+  // Declared inputs start with the draft, which is hashed separately below.
+  const dependencies = dependencyPaths.slice(1).map(file => [file, dependencyStamp(path.dirname(inputPath), file)]);
   try {
     const bytes = fs.readFileSync(inputPath);
     const sourceHash = sha256(bytes);
