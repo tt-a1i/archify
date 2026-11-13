@@ -144,6 +144,23 @@ test('verified ESLint comparison keeps existing locations and gates a genuinely 
   assert.equal(repeated.review.comparison.new, 1);
   assert.equal(repeated.review.comparison.notDetected, 0);
   assert.deepEqual(repeated.gate.failing.map(item => item.where), ['src/main.ts:5']);
+
+  // Older ESLint snapshots have stable IDs but no line fingerprints. Retain
+  // ID matching even when the new report has enough data to pair by position.
+  const legacy = read(path.join(f.out, 'findings.json'));
+  for (const finding of legacy.diagnostics) if (finding.external) delete finding.external.comparisonLineSha256;
+  const legacyPath = path.join(f.dir, 'legacy-findings.json');
+  write(legacyPath, legacy);
+  const legacyOut = path.join(f.dir, 'legacy-comparison');
+  f.check(['--compare', legacyPath, '--out', legacyOut, '--fail-on', 'never']);
+  const legacyReview = read(path.join(legacyOut, 'review.json'));
+  const oldIds = new Set(legacy.diagnostics.map(finding => finding.id));
+  const current = read(path.join(legacyOut, 'findings.json')).diagnostics;
+  assert.equal(legacyReview.comparison.comparable, true);
+  assert.ok(current.some(finding => oldIds.has(finding.id)));
+  assert.ok(current.some(finding => !oldIds.has(finding.id)));
+  assert.deepEqual(current.filter(finding => legacyReview.findings[finding.id].since === 'new').map(finding => finding.id),
+    current.filter(finding => !oldIds.has(finding.id)).map(finding => finding.id));
 });
 
 test('external workflow: warning defaults preserve CLI gates and require re-review when the source policy changes', (t) => {
