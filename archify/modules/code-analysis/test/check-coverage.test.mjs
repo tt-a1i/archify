@@ -163,6 +163,14 @@ test('check: --ir aligns findings and modules with architecture components and r
     undeclaredEdges: [{ from: 'app', to: 'auth', weight: 1, sample: 'src/app/main.py:1' }],
   });
 
+  const failed = check(root, ['--language', 'py', '--config', config, '--ir', ir, '--json']);
+  assert.equal(failed.status, 1, failed.stdout + failed.stderr);
+  const failingReceipt = JSON.parse(failed.stdout);
+  assert.ok(failingReceipt.gate.adopt, 'baseline guidance also accompanies a diagram-aligned failed gate');
+  assert.deepEqual(failingReceipt.diagram, receipt.diagram);
+  assert.deepEqual(failingReceipt.investigation.architecture, receipt.investigation.architecture);
+  assert.deepEqual(failingReceipt.coverage, receipt.coverage);
+
   const text = check(root, ['--language', 'py', '--config', config, '--ir', ir, '--fail-on', 'never']);
   assert.equal(text.status, 0, text.stdout + text.stderr);
   assert.match(text.stdout, /Diagram alignment: 2\/3 components mapped · 1 unmapped module · 1 finding off diagram/);

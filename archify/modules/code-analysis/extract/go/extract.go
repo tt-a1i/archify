@@ -26,18 +26,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf16"
 )
 
 type record = map[string]interface{}
 type request struct {
-	Sources map[string][]byte `json:"sources"`
-	Module  string            `json:"module"`
-	Stdlib  bool              `json:"stdlib"`
-	GOOS    string            `json:"goos"`
-	GOARCH  string            `json:"goarch"`
-	Tags    []string          `json:"tags"`
-	Tests   bool              `json:"tests"`
+	Sources         map[string][]byte `json:"sources"`
+	Module          string            `json:"module"`
+	LanguageVersion string            `json:"languageVersion"`
+	Stdlib          bool              `json:"stdlib"`
+	GOOS            string            `json:"goos"`
+	GOARCH          string            `json:"goarch"`
+	Tags            []string          `json:"tags"`
+	Tests           bool              `json:"tests"`
 }
 type group struct {
 	id, pkgPath, name string
@@ -247,7 +247,7 @@ func (l *loader) check(g *group) *types.Package {
 	if goarch == "" {
 		goarch = build.Default.GOARCH
 	}
-	cfg := types.Config{Importer: l, Sizes: types.SizesFor("gc", goarch), Error: func(err error) {
+	cfg := types.Config{GoVersion: "go" + l.req.LanguageVersion, Importer: l, Sizes: types.SizesFor("gc", goarch), Error: func(err error) {
 		l.errors++
 		if len(l.diagnostics) < 20 {
 			l.diagnostics = append(l.diagnostics, err.Error())
@@ -265,7 +265,10 @@ func (l *loader) point(p token.Pos) record {
 	}
 	col := 1
 	for _, r := range string(b[start:pos.Offset]) {
-		col += utf16.RuneLen(r)
+		col++
+		if r > 0xffff {
+			col++
+		}
 	}
 	return record{"line": pos.Line, "column": col}
 }
@@ -1174,7 +1177,7 @@ func main() {
 	if interfaceEdges == nil {
 		interfaceEdges = []record{}
 	}
-	out := record{"version": runtime.Version(), "selected": l.selected, "excluded": l.excluded, "parse_errors": l.parseErrors, "functions": l.functions, "calls": calls, "imports": imports, "packages": packages, "standardLibrary": l.sdk, "interfaceImplementations": interfaceEdges, "interfaceEvidence": l.interfaceReport, "typing": record{"status": "partial-source-bindings", "errorCount": l.errors, "errors": l.diagnostics, "externalPackagesNotLoaded": external}, "build": record{"goos": goos, "goarch": goarch, "tags": req.Tags, "cgo": false, "tests": req.Tests, "goWork": "not-loaded", "replace": "not-loaded", "releaseTags": build.Default.ReleaseTags, "toolTags": build.Default.ToolTags, "toolchain": runtime.Version(), "goFlags": "not-loaded"}}
+	out := record{"version": runtime.Version(), "selected": l.selected, "excluded": l.excluded, "parse_errors": l.parseErrors, "functions": l.functions, "calls": calls, "imports": imports, "packages": packages, "standardLibrary": l.sdk, "interfaceImplementations": interfaceEdges, "interfaceEvidence": l.interfaceReport, "typing": record{"status": "partial-source-bindings", "errorCount": l.errors, "errors": l.diagnostics, "externalPackagesNotLoaded": external}, "build": record{"goos": goos, "goarch": goarch, "tags": req.Tags, "cgo": false, "tests": req.Tests, "goWork": "not-loaded", "replace": "not-loaded", "releaseTags": build.Default.ReleaseTags, "toolTags": build.Default.ToolTags, "toolchain": runtime.Version(), "goFlags": "not-loaded", "languageVersion": req.LanguageVersion, "moduleParser": "go-mod-edit-json"}}
 	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
 		panic(err)
 	}

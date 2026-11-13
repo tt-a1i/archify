@@ -5,3 +5,4 @@
 export { DiagnosticError, fail, receipt } from './diagnostics.mjs';
 export * from './glob.mjs';
 export * from './source-range.mjs';
+export { createRangeDigest, findRanges, rangeDigest, splitLines } from './line-ranges.mjs';

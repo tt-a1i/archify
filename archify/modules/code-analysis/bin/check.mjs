@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
-import { taskCommand } from '../lib/task-command.mjs';
+import { baselineCommand, taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
   archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
@@ -164,7 +164,10 @@ export async function runCheck(argv) {
           })),
         },
       } : {}),
-      gate: { failOn, newOnly, ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: findingWhere(d), message: d.message })) },
+      gate: { failOn, newOnly, ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}),
+        // A first run, or a run after a rule became stricter, fails on findings that
+        // already existed. Without a baseline, say how to record them once.
+        ...(failing.length && !baselineFile ? { adopt: baselineCommand(CLI, root, { language: options['--language'] || null, config: options['--config'] || null }) } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: findingWhere(d), message: d.message })) },
       review: reviewSummary(review),
       comparisonReasons: review.comparison ? review.comparison.reasons : [],
       staleBaseline: review.baseline ? review.baseline.stale : [],
@@ -374,6 +377,11 @@ export function formatText(r) {
     lines.push(`FAILED: ${r.gate.failing.length} open finding${r.gate.failing.length === 1 ? '' : 's'} at or above ${r.gate.failOn}${r.gate.newOnly ? ' (new only)' : ''}:`);
     for (const f of r.gate.failing.slice(0, 20)) lines.push(`  ${f.severity.padEnd(7)} ${f.code}  ${f.where}  [${f.id}]`);
     if (r.gate.failing.length > 20) lines.push(`  … ${r.gate.failing.length - 20} more (use --json for all)`);
+    if (r.gate.adopt) {
+      lines.push('  First run, or a rule became stricter? To record what exists now and fail only on new findings, run once and commit the file:');
+      lines.push(`    ${r.gate.adopt}`);
+      lines.push('  Then pass --baseline analysis-baseline.json on every run. Accepted errors stay listed as still to fix.');
+    }
   } else lines.push(`PASSED: no open finding at or above ${r.gate.failOn}${r.gate.newOnly ? ' among new findings' : ''}.`);
   return lines.join('\n');
 }
