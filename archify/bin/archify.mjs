@@ -2190,12 +2190,13 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
-  start: '<repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  start: '<repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
-    'serve <repo-root> --ir <architecture.json> --out <dir> [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
-    'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
+    'serve <repo-root> --ir <architecture.json> --out <dir> [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--ir <architecture.json> [--map file]] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
     'import-review <github-pr-url> --out report.json [--author login] [--json]',
     'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
+    'task [<analysis-dir>] --question <text> --entry <file> [--base-root <base>] --root <repo-root> [--function <name>] [--config file] [--format md|json] [--out file]',
     'task --verify <task.json> --root <repo-root> [--format md|json] [--out file] [--require-valid]',
   ],
   story: ['scan <native.html> [--json]', 'draft <native.html> <brief.json> [--json]', 'attach <native.html> <brief.json> <enhanced.html> [--json] [--repo-root path]'],
@@ -7280,7 +7281,7 @@ try {
       break;
     case 'start': {
       if (!args.length || args[0] === '--help' || args[0] === '-h') {
-        console.log('Usage: archify start <repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        console.log('Usage: archify start <repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
         break;
       }
       const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
