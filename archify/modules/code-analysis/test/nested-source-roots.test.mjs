@@ -61,3 +61,32 @@ test('nested source roots preserve feature boundaries, stable root anchors, and 
   assert.deepEqual(single.modules.map(m => m.path), ['src/cli', 'src/server', 'src/shared']);
   assert.equal(single.grouping.typescript, undefined);
 });
+
+test('applications below another src root retain distinct features and real cross-module edges', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-repeated-src-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const files = {
+    'src/core/value.ts': 'export const value = 1;\n',
+    'src/apps/web/src/pages/page.ts': "import {button} from '../components/button';\nexport const page = button;\n",
+    'src/apps/web/src/components/button.ts': 'export const button = 1;\n',
+    'packages/src/web/src/pages/page.ts': "import {button} from '../components/button';\nexport const page = button;\n",
+    'packages/src/web/src/components/button.ts': 'export const button = 1;\n',
+  };
+  for (const [file, text] of Object.entries(files)) { fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), text); }
+  const { facts, config } = extractFacts(root, { language: 'ts' });
+  const graph = buildGraph(facts, config);
+  assert.equal(graph.fileModules['src/core/value.ts'], 'src-core');
+  for (const prefix of ['src/apps/web/src', 'packages/src/web/src']) {
+    const page = graph.fileModules[`${prefix}/pages/page.ts`], button = graph.fileModules[`${prefix}/components/button.ts`];
+    assert.notEqual(page, button);
+    assert.equal(graph.modules.find(m => m.id === page).path, `${prefix}/pages`);
+    assert.equal(graph.modules.find(m => m.id === button).path, `${prefix}/components`);
+    assert.ok(graph.edges.some(e => e.from === page && e.to === button && e.weight === 1));
+  }
+  const legacy = buildGraph(facts, { ...config, modules: { depth: 2 } });
+  assert.equal(legacy.fileModules['src/apps/web/src/pages/page.ts'], 'src-apps');
+  assert.equal(legacy.fileModules['packages/src/web/src/pages/page.ts'], 'packages-src');
+  const grouped = buildGraph(facts, { ...config, modules: { groups: { frontend: ['src/apps/web/**'] } } });
+  assert.equal(grouped.fileModules['src/apps/web/src/pages/page.ts'], 'frontend');
+  assert.equal(grouped.fileModules['src/apps/web/src/components/button.ts'], 'frontend');
+});

@@ -228,8 +228,9 @@ Edges in raw-facts go from file to file. `graphs/module.mjs` maps every file to 
 
 For JS/TS, the default also recognizes nested source roots: `web/src/pages/x.ts`
 belongs to `web/src/pages`, while a file directly in `web/src` stays in that root.
-This applies at any package nesting depth, with or without a package marker.
-Root-level `src/*` keeps the established depth-two policy. Explicit
+This uses the innermost `src` at any package nesting depth, with or without a
+package marker, including `src/apps/web/src`. A single root-level `src/*` keeps
+the established depth-two policy. Explicit
 `modules.groups` wins; an explicit `modules.depth` or
 `modules.packageBoundaries: false` restores the original directory policy.
 Unchanged grouping paths retain their module/finding anchors. Newly split paths

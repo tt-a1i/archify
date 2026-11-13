@@ -20,7 +20,7 @@ export function buildModuleGraph(facts, config = {}) {
   const java = facts.repository.language === 'java' && options.packageBoundaries && config.modules?.depth === undefined
     ? javaModules(facts.files.filter((f) => !excluded.has(f.role) && !groupMatchers.some(([, match]) => match(f.path))).map((f) => f.path), facts.packageMarkers || []) : null;
 
-  // A nested JS/TS source root is a sub-application boundary, even without a
+  // The innermost JS/TS source root is a sub-application boundary, even without a
   // package.json in that directory. Split at its first child instead of folding
   // every feature into <app>/src or the enclosing package. Root src/* keeps the
   // established depth-two behavior. An explicit depth or disabled package
@@ -29,7 +29,7 @@ export function buildModuleGraph(facts, config = {}) {
   if (facts.repository.language === 'ts' && options.packageBoundaries && config.modules?.depth === undefined) {
     for (const file of facts.files) {
       if (excluded.has(file.role) || groupMatchers.some(([, match]) => match(file.path))) continue;
-      const parts = file.path.split('/').slice(0, -1), source = parts.indexOf('src');
+      const parts = file.path.split('/').slice(0, -1), source = parts.lastIndexOf('src');
       if (source > 0) tsKeys.set(file.path, parts.slice(0, source + 2).join('/'));
     }
   }
