@@ -629,14 +629,17 @@ test('wide answer panel without reasons spans cleanly while reasons sit side-by-
 });
 
 test('browser diagnostics include snippet context and specific repair guidance for readability and diagram-fit',()=>{
- const base={width:1440,height:900,theme:'light',resolvedTheme:'light',innerWidth:1440,innerHeight:900,scrollWidth:1440,overflowElements:[],keyboardIssues:[],keyboardTraversal:{ok:true,missing:[]},consoleErrors:[],references:[],duplicateIds:[],occluded:[],noJavaScript:[],print:{ok:true},smallText:[{component:'diag',text:'Compact edge label',fontSize:8.314}],interactionFailures:[{name:'diagram-fit',component:'diag',reason:'Insufficient fit',measurement:{requiredWidth:1200,clientWidth:800}}]};
+ const base={width:1440,height:900,theme:'light',resolvedTheme:'light',innerWidth:1440,innerHeight:900,scrollWidth:1440,overflowElements:[],keyboardIssues:[],keyboardTraversal:{ok:true,missing:[]},consoleErrors:[],references:[],duplicateIds:[],occluded:[],noJavaScript:[],print:{ok:true},smallText:[{component:'diag',text:'Compact edge label',fontSize:8.314},{component:'diag',text:'Boundary label',fontSize:9.999}],interactionFailures:[{name:'diagram-fit',component:'diag',reason:'Insufficient fit',measurement:{requiredWidth:1200,clientWidth:800}}]};
  const diags=explainerObservationDiagnostics({artifact:artifact('diag-dummy','<!doctype html><html></html>'),allObservations:[base]});
  const readDiag=diags.find(d=>d.code==='explainer/browser-readability');
+ const boundaryDiag=diags.find(d=>d.code==='explainer/browser-readability'&&d.message.includes('Boundary label'));
  const fitDiag=diags.find(d=>d.code==='explainer/browser-diagram-fit');
  assert.ok(readDiag);
  assert.match(readDiag.message,/"Compact edge label" is 8\.31px, below 10px\./);
  assert.notEqual(readDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
  assert.match(readDiag.supportedFixes[0],/@steps|10px/);
+ assert.ok(boundaryDiag);
+ assert.match(boundaryDiag.message,/"Boundary label" is 9\.999px, below 10px\./);
  assert.ok(fitDiag);
  assert.notEqual(fitDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
  assert.match(fitDiag.supportedFixes[0],/phase lanes|wider panel span/);
