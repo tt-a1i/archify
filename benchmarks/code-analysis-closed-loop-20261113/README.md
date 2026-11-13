@@ -113,7 +113,21 @@ corrected after hidden-script and multi-match waits failed.
 - [Regression failures before the fix](evidence/regression-before.txt).
 - [Focused tests](evidence/focused-tests.txt).
 - [Full module gate through the repository entrypoint](evidence/module-gate.txt).
+- [Final module suite](evidence/module-tests.txt).
+- [Core, Skill and package checks](evidence/contracts.txt).
+- [Source/ZIP parity summary](evidence/zip-summary.json) and [archive receipt](evidence/zip.json).
 
-The module wrapper reports two outer tests and preserves the child suite's
-failure output; its two passing tests are not a count of the module's individual
-cases. Final package and CI receipts are recorded with the submitted revision.
+The repository module wrapper passed its two outer tests. After the legacy-graph
+compatibility addition, the final direct module run used Node 22.23.3 and local
+`--test-concurrency=2`, with 595 passing and 16 skipped cases. Those skips require
+an explicitly configured native jscpd executable; the skipped duplication tests
+were outside this mapping change. The core/Skill/package selection passed 70
+cases and skipped two environment-specific archive checks (a noncanonical
+toolchain probe and a Windows-only path). Generated-output checks passed.
+
+The ZIP contains 455 files and was built with official Node 22.23.3 and bundled
+zlib 1.3.1-e00f703. A second build under Pacific/Honolulu produced identical bytes.
+Its SHA256 is `64caa4fa72a52ae4ec48360cbbfeacc246784482e50111e622e98086e982e094`.
+Unpacked normal CLI replay produced identical fixture and self-analysis summaries.
+That replay reused the source checkout's parser dependencies. Remote CI results
+belong to the final submitted head and are recorded on the PR.
