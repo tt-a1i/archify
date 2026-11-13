@@ -1425,6 +1425,52 @@ test('preview: Explainer rebuilds declared CSV data and preserves the last good 
   }
 });
 
+test('preview: Explainer refreshes a chart after a declared JSON data edit', { timeout: 60000 }, async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-explainer-json-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const input = path.join(tmp, 'latency.explainer.json');
+  const data = path.join(tmp, 'latency.json');
+  const output = path.join(tmp, 'latency.html');
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'explainer',
+    meta: { id: 'preview-json', title: 'Preview chart data' },
+    answer: { summary: 'The chart follows its declared JSON data.' },
+    panels: [{
+      id: 'latency',
+      title: 'Latency',
+      blocks: [{
+        id: 'latency-chart',
+        type: 'chart',
+        title: 'P99 latency',
+        data: { path: 'latency.json', kind: 'line', x: 'day', y: ['p99'], unit: 'ms' },
+      }],
+    }],
+    sources: [],
+  }));
+  const writeData = (day, p99) => fs.writeFileSync(data, JSON.stringify([{ day: 'Mon', p99: 120 }, { day, p99 }]));
+  writeData('Before edit', 180);
+  const preview = await startPreview({ type: 'explainer', input, output, open: false, debounceMs: 10, pollMs: 80 });
+  try {
+    const readChart = async () => {
+      const response = await fetch(new URL('/artifact.html', preview.url));
+      assert.equal(response.status, 200);
+      const chart = (await response.text()).match(/<figure class="chart"[^>]*>([\s\S]*?)<\/figure>/);
+      assert.ok(chart, 'the served artifact contains the chart');
+      return chart[1];
+    };
+    await waitForState(preview.url, state => state.status === 'verified' && state.revision === 1, 'Explainer did not publish the initial JSON chart');
+    assert.match(await readChart(), />Before edit<\/text>/);
+    writeData('After edit', 260);
+    await waitForState(preview.url, state => state.status === 'verified' && state.revision === 2, 'JSON edit did not refresh the Explainer chart');
+    const refreshed = await readChart();
+    assert.match(refreshed, />After edit<\/text>/);
+    assert.doesNotMatch(refreshed, />Before edit<\/text>/);
+  } finally {
+    await preview.stop();
+  }
+});
+
 test('preview: follows a regular-file input symlink when the platform permits it', { timeout: 30000 }, async (t) => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-input-symlink-'));
   t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
