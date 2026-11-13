@@ -13,7 +13,7 @@ export const indexCopy = {
       'seq-k':'Sequence',
       'flow-k':'Data flow',
       'life-k':'Lifecycle',
-      'nav-guide':'Guide','nav-gallery':'Proof Lab','nav-start':'Get started','nav-community':'Community','nav-install':'Install Skill',
+      'nav-guide':'Guide','nav-gallery':'Proof Lab','nav-start':'Get started','nav-community':'Community','nav-install':'Install Skill','nav-support':'Support',
       'hero-badge':"Development Agent Skill · see what's new",'hero-works':'Works with',
       'hero-h1':'<span class="l">Ask in plain words.</span><span class="l">Get answers <em>you can trust.</em></span>',
       'hero-sub':'A leave plan, a P99 spike, a first HTTPS visit, or a whole codebase — your AI agent answers with an explorable map, or a one-page answer that puts the conclusion first and cites its sources. Either way it is one HTML file, validated before it ships.',
@@ -71,7 +71,12 @@ export const indexCopy = {
       'cta-sub':'One command installs the checked skill for your agent — your next map or one-page answer is a chat message away.',
       'cta-install':'Install the skill','cta-gh':'Star on GitHub',
       'cta-prompt':'Use Archify to answer as one page: why did P99 jump while the mean stayed flat?',
-      'footer-changelog':'Changelog','footer-license':'License','footer-community':'Community'
+      'footer-changelog':'Changelog','footer-license':'License','footer-community':'Community','footer-support':'Support',
+      'support-h':'Support Archify',
+      'support-body':'If Archify has been useful to you, you can support its continued development. Thank you for helping keep the project going ❤️',
+      'support-wechat':'WeChat Pay',
+      'support-alipay':'Alipay',
+      'support-also':'Using Archify, sharing it, reporting bugs, and contributing improvements are also ways to help.'
     },
     zh: {
       'label-answers':'一页式解答',
@@ -87,7 +92,7 @@ export const indexCopy = {
       'seq-k':'时序图',
       'flow-k':'数据流',
       'life-k':'生命周期',
-      'nav-guide':'场景指南','nav-gallery':'验证作品集','nav-start':'开始使用','nav-community':'社区包','nav-install':'安装技能',
+      'nav-guide':'场景指南','nav-gallery':'验证作品集','nav-start':'开始使用','nav-community':'社区包','nav-install':'安装技能','nav-support':'支持',
       'hero-badge':'开发版 Agent 技能 · 查看更新','hero-works':'支持',
       'hero-h1':'<span class="l">用大白话问清楚，</span><span class="l">得到<em>可信的图和答案。</em></span>',
       'hero-sub':'年假怎么排、P99 为什么暴涨、第一次打开 HTTPS 网站发生了什么，或者一整个代码仓库——你的 AI Agent 会给你一张可以点开探索的图，或者一页结论在前、标注出处的解答。都是一个 HTML 文件，交付前已经校验过。',
@@ -145,7 +150,12 @@ export const indexCopy = {
       'cta-sub':'一条命令为你的 Agent 安装经过检查的技能——下一张图、下一页答案，只差一句对话。',
       'cta-install':'安装技能','cta-gh':'在 GitHub 上 Star',
       'cta-prompt':'用 Archify 一页回答：P99 暴涨、平均值几乎没变，为什么？',
-      'footer-changelog':'更新日志','footer-license':'许可证','footer-community':'社区包'
+      'footer-changelog':'更新日志','footer-license':'许可证','footer-community':'社区包','footer-support':'支持项目',
+      'support-h':'支持 Archify',
+      'support-body':'如果 Archify 对你有帮助，欢迎支持项目的持续开发。谢谢你让这个项目继续走下去 ❤️',
+      'support-wechat':'微信赞赏',
+      'support-alipay':'支付宝',
+      'support-also':'使用、分享、反馈问题和贡献改进，也都是对项目的支持。'
     }
   };
 export const guideCopy = {

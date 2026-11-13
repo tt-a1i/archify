@@ -145,6 +145,8 @@
     .method-link:hover { border-color: var(--text); color: var(--text); }
 
     footer { border-top: 1px solid var(--line); padding: 1.75rem 0 2.5rem; color: var(--dim); font-family:var(--font-mono); font-size: .625rem; letter-spacing:.04em; }
+    footer a { color: inherit; text-decoration: none; }
+    footer a:hover { color: var(--text, var(--ink)); }
     .footer-inner { display: flex; justify-content: space-between; gap: 1.5rem; }
 
     @media (max-width: 1100px) {
