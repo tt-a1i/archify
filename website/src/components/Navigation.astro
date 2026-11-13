@@ -28,6 +28,7 @@ const links = [
     {links.map(link => <a class="nav-link" href={`${link.page}.html`} aria-current={page === link.page ? 'page' : undefined} {...(home ? { 'data-i18n': `nav-${link.page}` } : page === 'guide' ? { 'data-i18n': guideKeys[link.page] } : { 'data-en': link.en, 'data-zh': link.zh })}>{link.en}</a>)}
     <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub<span class="nav-stars" data-gh-stars hidden></span></a>
     </div>
+    <a class="nav-support" href="index.html#support"><span aria-hidden="true">☕</span> <span class="nav-support-label" {...(home ? { 'data-i18n': 'nav-support' } : { 'data-en': 'Support', 'data-zh': '支持' })}>Support</span></a>
     <button class="btn-theme" type="button" data-theme-toggle aria-label="Switch to dark theme">
       <svg class="theme-moon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
       <svg class="theme-sun" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
