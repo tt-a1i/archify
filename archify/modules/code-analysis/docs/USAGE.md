@@ -39,7 +39,7 @@ Language extraction has its own prerequisites:
 | `ts` | Node.js and the module's installed TypeScript parser dependencies. |
 | `py` | Python 3; `BAUIFY_PYTHON` can select the interpreter. |
 | `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
-| `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
+| `go` | Go 1.25+ project SDK, Go 1.26+ helper compiler and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
 
 The Go and Rust adapters compile Archify's source helper, not the target
@@ -435,7 +435,7 @@ Relationships and metrics are folded below the code evidence. A source link open
 
 ### Go source investigation
 
-Use `--language go` at a root containing `go.mod`. An installed Go 1.18+ compiler is required. Saved and paired questions can follow captured direct function declarations and known callers; build scope, test inclusion, excluded files and incomplete typing remain explicit. See [Go support](GO.md) for commands, toolchain cost and limitations.
+Use `--language go` at a root containing `go.mod`. A Go 1.25+ project SDK and Go 1.26+ helper compiler are required; the helper compiler must be at least as new as the project SDK's language release. Saved and paired questions can follow captured direct function declarations and known callers; build scope, test inclusion, excluded files and incomplete typing remain explicit. See [Go support](GO.md) for commands, toolchain cost and limitations.
 
 ### Rust source investigation
 

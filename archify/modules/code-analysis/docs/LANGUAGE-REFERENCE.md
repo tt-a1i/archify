@@ -55,11 +55,13 @@ dependencies; they do not claim class-initialization failure. See
 node archify/bin/archify.mjs code-analysis check /path/to/go-module --language go --out out/go
 ```
 
-Go analysis requires a root `go.mod` and an installed Go 1.18+ compiler. It
+Go analysis requires a root `go.mod`, a Go 1.25+ project SDK and a Go 1.26+
+helper compiler (at least as new as the project SDK's language release). It
 captures root-module source scope, function definitions and conservative direct
 function bindings. Build selection, excluded files, parse failures and
-incomplete typing remain explicit; it does not download modules or establish a
-complete build or runtime call graph. See [Go support and limitations](GO.md)
+incomplete typing remain explicit. The helper build may download its locked
+official modules or compiler; project loading stays offline. Analysis does not
+establish a complete build or runtime call graph. See [Go support and limitations](GO.md)
 for toolchain selection, commands and source-question examples.
 
 ## Rust

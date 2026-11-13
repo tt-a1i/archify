@@ -92,6 +92,10 @@ jobs:
         if: matrix.shard == 1
         run: npm install --prefix "$RUNNER_TEMP/archify-jscpd" --ignore-scripts --no-audit --no-fund jscpd@5.4.3
       # The root runner enumerates only test/; the module suite lives with the module.
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.26.2'
+          cache: false
       - name: Code Analysis module suite
         if: matrix.shard == 1
         run: npm --prefix archify run test:code-analysis
@@ -99,6 +103,20 @@ jobs:
           ARCHIFY_TEST_JSCPD: ${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd
       - name: Run a complete regression shard
         run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2
+      - name: Remember helper build SDK
+        if: matrix.shard == 1
+        run: echo "ARCHIFY_GO_BUILD=$(command -v go)" >> "$GITHUB_ENV"
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        if: matrix.shard == 1
+        with:
+          go-version: '1.25.9'
+          cache: false
+      - name: Go project SDK and helper compiler compatibility
+        if: matrix.shard == 1
+        run: node --test archify/modules/code-analysis/test/go-versions.test.mjs
+        env:
+          GOTOOLCHAIN: local
+          ARCHIFY_TEST_GO_BUILD_VERSION: go1.26.2
 
   test:
     needs: scope

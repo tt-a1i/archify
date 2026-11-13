@@ -1,52 +1,139 @@
 # Go source analysis
 
-Go support is experimental source investigation, not a project build or a complete impact graph. Select it through the normal CLI:
+Go analysis uses **official Go libraries** for captured package and call facts:
+`go/packages`, `go/types`, `go/ast`, `typeutil.Callee` and the module parser.
+It preserves functions and metrics, package edges, direct callers, interface
+candidates and changed-definition queries. These facts do not prove a successful
+project build, a runtime call graph or complete impact coverage.
 
 ```sh
 node archify/bin/archify.mjs code-analysis check /path/to/module --language go --fail-on never --out /tmp/go-analysis --json
-node archify/bin/archify.mjs code-analysis task /tmp/go-analysis --root /path/to/module --entry doc/man_examples_test.go --function ExampleGenMan --question 'Where does GenMan resolve?' --format json --out /tmp/go-question.json --json
-node archify/bin/archify.mjs code-analysis task --root /path/to/after --base-root /path/to/before --entry doc/man_docs.go --question 'What known references reach this changed definition?' --format json --out /tmp/go-change.json --json
+node archify/bin/archify.mjs code-analysis task /tmp/go-analysis --root /path/to/module --entry main.go --function Entry --question 'Where does this call resolve?' --format json --out /tmp/go-question.json --json
+node archify/bin/archify.mjs code-analysis task --root /path/to/after --base-root /path/to/before --entry main.go --question 'What known references reach this changed definition?' --format json --out /tmp/go-change.json --json
 ```
 
-The root must have a captured `go.mod` with its module directive. One run analyzes that module; nested modules, `go.work`, `replace`, external dependencies and vendor directories are not loaded. A package import is matched by the declared module path plus its directory, not by basename or directory proximity. Missing dependencies remain external/outside and do not trigger network access.
+## Dependencies and lifecycle
 
-## Toolchain and cost
+The official VS Code Go extension uses gopls by default
+(`go.useLanguageServer: true`; [official settings](https://github.com/golang/vscode-go/blob/master/docs/settings.md#go.uselanguageserver)).
+Archify uses gopls as a design reference and validation oracle. Its bounded
+snapshot analyzer uses the public Go libraries directly, while retaining its
+own metrics and interface evidence projection.
 
-An installed Go **1.18+ compiler** is required alongside Node. The helper uses only Go standard-library `go/parser`, `go/ast`, `go/build` and `go/types`. `go run` compiles Archify's bundled helper, never the analyzed module, and uses the installed local toolchain/cache. It does not invoke `go list`, download modules, run project code or build cgo. `ARCHIFY_GO` can select the Go executable. A missing executable produces structured `extract/go-unavailable` with installation guidance and exit 2; a compilation/process error produces `extract/go-failed`.
+Three Go versions have separate responsibilities, as in gopls:
 
-No additional npm dependency or separate language server is added. Initial helper compilation needs Go's normal compiler cache and costs more than a warm run. An isolated tiny-input measurement took 2.46 seconds with a fresh empty Go compiler cache and 0.27 seconds reusing that cache (Go 1.27.2 on this machine). These are finite local measurements, not a cold-machine or real-repository performance benchmark. The existing Homebrew Go 1.27.2 installation occupied 270 MiB; a fresh installation/download size and first-run latency were not measured. Users without Go must install the toolchain; the parser is not embedded in the ZIP as a platform binary.
+| Version | Selection and requirement |
+| --- | --- |
+| Project SDK | `ARCHIFY_GO`, otherwise `go` on PATH. Minimum Go 1.25; tested SDK families: 1.25, 1.26 and 1.27. |
+| Helper compiler | `ARCHIFY_GO_BUILD`, otherwise the project Go command. Go 1.26+ and at least the project SDK's major language release. Go's toolchain selection defaults to `auto`; an explicit process `GOTOOLCHAIN` is honored for this build only. |
+| Project language | The captured go.mod `go` directive, default 1.16, with Go's per-file release constraints. An older language version does not require an old SDK. |
 
-## Build and source coverage
+Go 1.25 can therefore remain the project SDK while Go automatically finds or
+downloads a newer compiler for the helper. This does not replace the global Go
+installation or change the project's go.mod. To use two installed SDKs explicitly:
 
-`coverage.languageScope` in the CLI JSON receipt, `raw-facts.json.languageScope`, and question scope report:
+```sh
+ARCHIFY_GO=/path/to/go1.25/bin/go ARCHIFY_GO_BUILD=/path/to/go1.26/bin/go node archify/bin/archify.mjs code-analysis check /path/to/module --language go --json
+```
 
-- Root module and captured `go.mod`/`go.work` inputs, with source text and hashes.
-- Actual GOOS/GOARCH, explicit build tags, Go release tags/toolchain, tests and cgo scope.
-- Selected source filenames, packages and external-test variants; every excluded Go filename has a reason.
-- Parse failures separately from incomplete source typing, with typing error count, up to 20 diagnostic examples and the external packages not loaded.
+gopls and an LSP client are not runtime dependencies.
+The helper locks `x/tools v0.52.0`, `x/mod v0.43.0` and `x/sync v0.24.0`
+in its own go.mod/go.sum. These official tool modules are not part of the Go SDK.
 
-Optional config:
+Each analysis builds Archify's helper in a temporary directory, using Go's build
+and module caches. The first build may download a Go toolchain and these locked
+**helper** dependencies using Go's configured proxy. For offline use, prepare a
+Go 1.26+ build SDK and the modules beforehand, then set `ARCHIFY_GO_BUILD` to that
+SDK and `GOTOOLCHAIN=local`. For example, using the intended build SDK:
+
+```sh
+cd archify/modules/code-analysis/extract/go
+GOTOOLCHAIN=local GOWORK=off /path/to/go1.26/bin/go mod download
+```
+
+The subsequent **project capture** phase disables module proxy/checksum access,
+automatic toolchain downloads and external package drivers. `ARCHIFY_GO` selects
+the installed SDK itself (`GOTOOLCHAIN=local`, independent of the helper build).
+A project requiring a newer Go language version than that SDK fails visibly;
+select a suitable installed project SDK. It runs `go list`
+only on captured source in an isolated module. Project applications, tests and
+generators are never executed. SDK exports and Go caches may be prepared.
+
+A bounded Node worker supervises the build and analysis process groups and removes
+their temporary files. Missing tools/dependencies, invalid modules, tool crashes,
+invalid output and timeout produce structured `extract/go-*` diagnostics; the CLI
+exits 2. Tool failures identify the project-SDK, helper-build or analysis phase.
+Package/type errors remain partial evidence in `languageScope.typing`;
+an empty package load for selected valid source is an explicit failure.
+
+## Captured build scope
+
+The root requires go.mod. Official module parsing handles block directives and
+Go string escapes. The isolated module retains only its module path and language
+version; absent a go directive, Go's default is **1.16**. Both analysis modes
+enforce this version. Third-party require entries, replacements, toolchain
+selection, go.work, nested modules, vendor, cgo and excluded files are not loaded.
+Missing third-party types remain incomplete even when a module cache contains them.
 
 ```json
 {"go":{"goos":"linux","goarch":"amd64","tags":["custom"],"tests":true,"cgo":false}}
 ```
 
-Absent GOOS/GOARCH use those environment values when set, otherwise the host. Build tags default to empty; ambient GOFLAGS are deliberately not loaded. Test files default to included for investigation. Production packages, internal-test variants and external-test packages are checked separately; tests/generated files remain excluded from the module graph under its existing default role policy. Excluded roles affect the graph, not raw call capture or reverse-reference enumeration. Config include/exclude still applies.
+Absent GOOS/GOARCH use their environment values, otherwise the host. Ambient
+GOFLAGS are ignored. Official `go/build.Context.MatchFile` selects filenames and
+build constraints. Selected tests remain raw evidence, but the graph's default
+role policy excludes them. Production, internal-test and external-test inventories
+stay distinct; receiver identity follows the actual typed package variant.
+Parse failures, mixed package names, exclusions and captured metadata stay visible.
+Release and tool tags come from the selected SDK's `go list` build context for
+the requested target, including its CPU-feature and experiment tags; they do not
+come from the compiler that built the helper.
 
-`go/build.Context.MatchFile` evaluates platform filenames, `//go:build`/legacy constraints and release tags against captured bytes. Cgo source, Go-ignored directories (including examples under `_...`), vendor and nested modules are excluded explicitly. This is a source build selection, not confirmation that every selected package compiles.
+By default, `go/packages` provides syntax/type data and SDK export types.
+`go.stdlib:false` loads package metadata, then checks captured packages with
+`go/types` without SDK declarations. No default-mode recheck or gopls fallback
+runs. This preserves the existing partial-typing behavior; the disabled mode is
+not a promise that no SDK metadata is read by the Go command.
 
-## Definitions, dependencies and calls
+## Responsibilities and evidence
 
-Function/receiver declarations with bodies have exact UTF-16, end-exclusive ranges and source hashes; paired questions compare `FuncDecl` source regions and enumerate captured known direct callers across files/packages. Anonymous function bodies are included in syntactic call inventory but are not separate measured declarations. Struct/type/field navigation is not yet a separate definition capability.
+| Responsibility | Owner |
+| --- | --- |
+| Module syntax | Official `x/mod/modfile` |
+| Package discovery and test variants | Official `go/packages` |
+| Named call objects, receiver and method sets | Official `typeutil.Callee` / `go/types` |
+| UTF-16/end-exclusive ranges, hashes, complexity/nesting, direct callers | Go AST plus Archify evidence projection |
+| Whole-interface satisfaction, value/pointer distinction and promotion evidence | Official type relations plus Archify projection |
+| Scope, invalid/duplicate declaration guards, saved evidence and navigation | Archify adapter and consumers |
 
-`go-source-direct-v1` records Go `ast.CallExpr`, including conversions, nested literals and unresolved calls. It uses `go/types.Info.Uses` to identify captured free-function declarations. Ordinary imports, import aliases, generic instantiation syntax and same-package cross-file direct functions can bind. A native `go-direct-function` fact can target another file without an import statement when both belong to the same package.
+Current captures use **`go-source-direct-v6`**, producer
+`go-packages@<x/tools-version>`, adapter revision 9. `languageScope.loader`
+records the loading mode, tool-module versions/checksums, helper compiler
+(`toolchain`), project SDK (`projectToolchain`), language version and isolated scope.
+`build.toolchain` and `standardLibrary.toolchain` identify the project SDK.
+`standardLibrary` records the prepared SDK export evidence;
+its `projectCommands:true` acknowledges package-loading commands on the snapshot,
+while `loader.projectCodeExecuted:false` distinguishes executing project code.
+Loader identity participates in capture fingerprints and paired comparisons.
 
-External packages are represented by declaration-free placeholders. Consequently type information is **incomplete**: reported targets establish a source function binding, not successful compilation, argument applicability, execution or runtime dispatch. Only observed function objects whose declarations are captured can produce targets. Parse-invalid packages and duplicate function/value/type names do not select an arbitrary implementation.
+Bindings retain free functions, concrete methods, aliases, promotion, generic
+method instances and method expressions. Interface calls bind captured declarations,
+with runtime targets unknown; external embedded interface methods retain identities
+without invented locations. Function variables/fields, builtins, conversions,
+bodyless/external declarations and type-parameter dispatch remain unresolved.
+Anonymous literals contribute calls but are not separate measured functions.
 
-`go-source-direct-v4` additionally keeps interface evidence when a captured interface embeds a standard-library interface whose declaration is not in the captured source. The edge records the external method identity (`package`, `qualname`, `name`, `external: true`) without inventing a source location, and an unresolved call through that interface records `receiverInterface` plus `interfaceMethod`. A change query lists such callsites as `interfaceCandidates` with no target: go/types proves the captured type satisfies the interface, but the external declaration has no captured source location, so the runtime target is not determined.
+Interface implementation edges distinguish value and pointer satisfaction of the
+**whole interface**, not just matching method names. Generic/type-alias and incomplete
+interface coverage is explicitly reported. These candidates do not prove runtime
+dispatch, successful compilation or a complete caller set.
 
-Methods, interface dispatch, function variables, closures, builtins, conversions and unavailable external targets remain unresolved. No points-to/callgraph solver is implied. When the changed definition is an interface method declaration, calls that bind to that declaration are known references, and `interfaceCandidates` lists captured method-set implementations of that exact declaration with `runtimeTarget: not-determined`. That list proves captured types satisfy the interface; it does not prove which implementation a runtime call reached. Test doubles and external implementations remain alternatives or outside the capture. Package import edges refer to package source membership; they are not per-symbol definition claims. Go package grouping is used unless explicit grouping/depth changes it.
+Historical go-parser v1-v4, experimental gopls v5 and revision-8 v6 captures remain readable
+without installing or starting their former producer. Freshness checks for source
+and go.mod/go.work still apply. Different producers, loader/SDK/build options and
+captured metadata restrict comparison; old results are not rebound as v6 facts.
+These checks do not establish whole-tree atomicity or discover later file additions.
+`--fail-on never` changes the findings gate, not incomplete-coverage semantics.
 
-Saved questions verify captured metadata freshness as well as source; a changed `go.mod` prevents valid binding navigation. Paired questions record build options/metadata and limit attribution when they differ. These checks do not establish whole-tree atomicity, discover newly added files after capture or re-resolve the project at navigation time. Read the selected/excluded scope before interpreting a missing caller. `ready` means usable source orientation, not complete impact or successful compilation. `--fail-on never` preserves the existing finding-gate contract; consult coverage even when its exit code is 0.
-
-Findings comparisons also record effective source selection in `analysis.goBuildScope` (GOOS/GOARCH, explicit/release/tool tags, tests and cgo). Different build scopes are not directly comparable even if config digests and selected-file counts match. Historical Go findings without this field remain valid, but their comparability is unknown unless another recorded difference already establishes non-comparability. Source additions/deletions and the finding-based exit policy are unchanged.
+See the [implementation and validation record](../../../../docs/designDoc/code-analysis-go-official-implementation.md)
+and the earlier [cost comparison](../../../../docs/designDoc/code-analysis-go-official-vs-gopls.md).

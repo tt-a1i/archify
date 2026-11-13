@@ -1,0 +1,204 @@
+{
+  "base": "197980b7",
+  "go": "1.26.2",
+  "goplsBaseline": "0.21.1",
+  "tests": false,
+  "dependencies": "not-loaded",
+  "timing": "single warm-ish local run, not a performance benchmark",
+  "hashes": {
+    "extract/go/extract.go": "bfc8ba67420d662936f72c57da7e911636e31bee2b90ea94938919d826b41410",
+    "extract/go/index.mjs": "fa737a4608124c3e8735a9cd5999223cbfdc8d8c9fad41f3330e26bf0114aa1d",
+    "extract/go/worker.mjs": "20c84cb08f20aa85f201149fa25b5cabe06b5615943c382f08b69cb3d1e50ad1",
+    "extract/go/go.mod": "acb7b8968d8ac5c01f801108d7b3e62bf8dfb2b1e270fc3d5692006a27ca9da5",
+    "extract/go/go.sum": "29677063cae88c3ff5102fdd28d2986817ac632fec914da9061d2322696bd159",
+    "schemas/semantics.mjs": "3073a530cd3b2b132619aaeffef628aefed1849782441c6b222cf2ffa49de304",
+    "schemas/raw-facts.schema.json": "967553e5d7b26d0ea8cb319659660e0c8aab451f42483e397ba881827c65df4c"
+  },
+  "results": [
+    {
+      "source": "github.com/go-chi/chi/v5@v5.5.0",
+      "stats": {
+        "baseline": {
+          "elapsedMs": 3001,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "producer": "go-parser@1.26.2",
+          "model": "go-source-direct-v4"
+        },
+        "gopls": {
+          "elapsedMs": 2420,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "producer": "gopls@0.21.1",
+          "model": "go-source-direct-v5"
+        },
+        "official": {
+          "elapsedMs": 1551,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "producer": "go-packages@0.52.0",
+          "model": "go-source-direct-v6"
+        }
+      },
+      "equality": {
+        "baseline": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaceImplementations": true,
+          "calls": true
+        },
+        "gopls": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaceImplementations": true,
+          "calls": true
+        }
+      }
+    },
+    {
+      "source": "github.com/spf13/cobra@v1.10.2",
+      "stats": {
+        "baseline": {
+          "elapsedMs": 550,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "producer": "go-parser@1.26.2",
+          "model": "go-source-direct-v4"
+        },
+        "gopls": {
+          "elapsedMs": 1456,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "producer": "gopls@0.21.1",
+          "model": "go-source-direct-v5"
+        },
+        "official": {
+          "elapsedMs": 792,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "producer": "go-packages@0.52.0",
+          "model": "go-source-direct-v6"
+        }
+      },
+      "equality": {
+        "baseline": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaceImplementations": true,
+          "calls": true
+        },
+        "gopls": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaceImplementations": true,
+          "calls": true
+        }
+      }
+    },
+    {
+      "source": "golang.org/x/mod@v0.43.0",
+      "stats": {
+        "baseline": {
+          "elapsedMs": 655,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "producer": "go-parser@1.26.2",
+          "model": "go-source-direct-v4"
+        },
+        "gopls": {
+          "elapsedMs": 1415,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "producer": "gopls@0.21.1",
+          "model": "go-source-direct-v5"
+        },
+        "official": {
+          "elapsedMs": 1114,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "producer": "go-packages@0.52.0",
+          "model": "go-source-direct-v6"
+        }
+      },
+      "equality": {
+        "baseline": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaceImplementations": true,
+          "calls": true
+        },
+        "gopls": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaceImplementations": true,
+          "calls": true
+        }
+      }
+    }
+  ],
+  "date": "2026-11-12",
+  "platform": "darwin/arm64",
+  "node": "20.20.2",
+  "validation": {
+    "focused": {
+      "log": "validation/archify-go-official-focused.tap",
+      "sha256": "8444e06bf061d8ae0293d3120362048a5cb3e9d58f84e6108c340551d334adc0",
+      "tests": 46,
+      "pass": 46,
+      "fail": 0,
+      "skipped": 0
+    },
+    "module": {
+      "log": "validation/archify-go-official-module.tap",
+      "sha256": "f97a148193ad0d000d6042aa5a8e394323f7f433927d2e1964fc9b14e414cae3",
+      "tests": 609,
+      "pass": 609,
+      "fail": 0,
+      "skipped": 0
+    },
+    "cli": {
+      "log": "validation/archify-go-official-route.tap",
+      "sha256": "3c2f22ebd22da2d9a5959dba537c9cb11c31779ab8d46cb6aef424dba6838179",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "ablation": {
+    "removed": "type-package identity lookup",
+    "expectedFailure": "external test method loses target",
+    "log": "ablation-no-type-identity.tap",
+    "productionRestored": true
+  },
+  "limits": [
+    "Native Linux/Windows not run",
+    "Remote CI and release ZIP not run",
+    "Third-party project dependencies, workspaces, cgo and nested modules excluded"
+  ],
+  "researchRoot": "<research-archive>/go-analysis-research-20261112/implementation"
+}

@@ -151,7 +151,7 @@ test('Go missing compiler and invalid scope fail through the normal CLI with act
   });
   assert.equal(missing.status, 2); const error = JSON.parse(missing.stdout);
   assert.equal(error.diagnostics[0].code, 'extract/go-unavailable');
-  assert.ok(error.diagnostics[0].supportedFixes.some(fix => fix.includes('Go 1.18+')));
+  assert.ok(error.diagnostics[0].supportedFixes.some(fix => fix.includes('Go 1.26+')));
   assert.throws(() => capture(root, { go: { tags: 'wrong' } }), error => error.diagnostics?.[0].code === 'extract/go-config-invalid');
 });
 
@@ -229,14 +229,14 @@ func Entry(r *http.Request){c,_:=r.Context().Value("key").(*Context);c=pool.Get(
  const before=capture(root,{go:{stdlib:false}}),facts=capture(root);
  const reset=f=>callsIn(f,'entry.go').find(c=>c.target?.name==='Reset');
  assert.equal(reset(before),undefined);assert.deepEqual(reset(facts).target,{name:'Reset',line:4,column:1});
- assert.equal(facts.callModel,'go-source-direct-v4');assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.callModel,'go-source-direct-v6');assert.deepEqual(schemaErrors('raw-facts',facts),[]);
  assert.equal(facts.languageScope.typing.errorCount,0);assert.equal(facts.files.length,1);
  assert.equal(before.languageScope.standardLibrary.mode,'disabled');
  const disabledQuestion=buildQuestion({root,facts:before,entry:'entry.go',symbol:'Entry',question:'What remains unknown without SDK types?'});
  assert.equal(disabledQuestion.calls.bindingCoverage,'go-types-direct-functions-concrete-methods-and-interface-declarations-with-sdk-types-disabled');
  const sdk=facts.languageScope.standardLibrary;assert.equal(sdk.mode,'compiler-exports');
  assert.ok(sdk.packages.some(p=>p.path==='net/http'&&p.sha256.length===64&&p.bytes>0));
- assert.ok(sdk.packages.some(p=>p.path==='sync'));assert.equal(sdk.sourceFilesAnalyzed,false);assert.equal(sdk.projectCommands,false);
+ assert.ok(sdk.packages.some(p=>p.path==='sync'));assert.equal(sdk.sourceFilesAnalyzed,false);assert.equal(sdk.projectCommands,true);
  const calls=callsIn(facts,'entry.go');assert.equal(calls.at(-2).resolution,'unresolved');assert.equal(calls.at(-1).resolution,'unresolved');
  assert.ok(!facts.languageScope.typing.externalPackagesNotLoaded.includes('net/http'));
  const historical=structuredClone(facts);historical.callModel='go-source-direct-v2';delete historical.languageScope.standardLibrary;

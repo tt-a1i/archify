@@ -135,7 +135,7 @@ function inspectSide(capture, side) {
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2'].includes(facts.callModel))
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
-    || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(facts.callModel))
+    || (facts.repository.language === 'go' && /^(?:go-parser|gopls|go-packages)@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4', 'go-source-direct-v5', 'go-source-direct-v6'].includes(facts.callModel))
     || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12', 'rust-source-direct-v13', 'rust-source-direct-v14'].includes(facts.callModel));
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings,
     interfaceReferences, externalInterfaceReferences, interfaceEdges, interfaceMethods, externalInterfaceMethods, interfaceEvidence: evidence, hasInterfaceEvidence };
@@ -409,7 +409,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const expectedConfig = digest(JSON.stringify(config));
   for (const capture of [base, head]) {
     const repo = capture.facts.repository;
-    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^go-parser@/.test(repo.adapter) : language === 'rust' ? /^rust-syn@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
+    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^(?:go-parser|gopls|go-packages)@/.test(repo.adapter) : language === 'rust' ? /^rust-syn@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
     if (capture.language !== language || repo.language !== language || !producerMatches || capture.configDigest !== expectedConfig) fail('task/capture-mismatch', 'Both captures must use the entry language, matching producers and the same analysis configuration.');
   }
   if (base.facts.repository.adapter !== head.facts.repository.adapter || base.facts.repository.adapterRevision !== head.facts.repository.adapterRevision || base.facts.callModel !== head.facts.callModel) fail('task/capture-mismatch', 'Paired capture producers, revisions and call models must match.');

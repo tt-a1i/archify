@@ -1,0 +1,218 @@
+{
+  "date": "2026-11-13",
+  "project": {
+    "repository": "https://github.com/go-chi/chi",
+    "tag": "v5.0.12",
+    "commit": "1191921289e82fdc56f298a76ff254742f568ece",
+    "goDirective": "1.14",
+    "sourceArchiveSHA256": "289c6c9b6edee2da39d23c4bb806b2c2ab320d42985a46f9f5d9c7a4909a7d56",
+    "upstreamFilesUnmodified": true
+  },
+  "environment": {
+    "host": "macOS arm64",
+    "projectSDKs": [
+      "go1.18.10",
+      "go1.25.9"
+    ],
+    "helperCompiler": "go1.26.2",
+    "gopls": "v0.21.1",
+    "target": "darwin/arm64",
+    "analysisCGO": false,
+    "testsCaptured": true,
+    "projectDependencies": "standard-library-only",
+    "moduleDownloads": "disabled"
+  },
+  "production": {
+    "adapterRevision": 9,
+    "callModel": "go-source-direct-v6",
+    "hashes": {
+      "extract/go/extract.go": "e2b7b341b8bbfe84615f51c275cad450a17a2e718f5373686b00781053c7d899",
+      "extract/go/index.mjs": "66e78b2d53146c84970e88d24780f88cb25c1d9d94e45c5f69c03d144e39d05e",
+      "extract/go/worker.mjs": "3d01ee5068882be52468527a1f84de7bdfa55687d15d241817ecf06f35dd82c0",
+      "extract/go/go.mod": "acb7b8968d8ac5c01f801108d7b3e62bf8dfb2b1e270fc3d5692006a27ca9da5",
+      "extract/go/go.sum": "29677063cae88c3ff5102fdd28d2986817ac632fec914da9061d2322696bd159",
+      "schemas/semantics.mjs": "8ca557c9021d60fd230918b4c20380771822e40dfbd703f83e31787dc24ee2a4",
+      "schemas/raw-facts.schema.json": "ee2d4f7273efbf1c2b3be3b1e69e8fa6f4224f26ef038ef2dd1ec23844abcb49",
+      "test/go-loading.test.mjs": "854547fd0d5c8d1cfa655f7214d4e26f839c9260ff9bc954d70a4a6b0c1280d3",
+      "test/go-versions.test.mjs": "e88d9b6aec318b03f8183e0a410874c99f7a025e65ca51a3f0457a99783b4354"
+    },
+    "sourceUnchangedByThisExperiment": true,
+    "go18": {
+      "version": "18",
+      "ms": 64.50799999999992,
+      "message": "Project loading requires a Go 1.25+ SDK; older project language versions remain supported.",
+      "diagnostics": [
+        {
+          "code": "extract/go-unavailable",
+          "severity": "error",
+          "message": "Project loading requires a Go 1.25+ SDK; older project language versions remain supported.",
+          "subject": {},
+          "evidence": {
+            "version": "go1.18.10"
+          },
+          "supportedFixes": [
+            "install a Go 1.25+ project SDK on PATH or select it with ARCHIFY_GO",
+            "allow Go 1.26+ helper toolchain selection, or set ARCHIFY_GO_BUILD to an installed build Go executable",
+            "allow the locked helper modules to download, or prepopulate the Go toolchain and module cache before offline use; GOTOOLCHAIN=local disables build toolchain switching",
+            "inspect SDK target/tag errors; go.stdlib: false selects captured-only partial typing"
+          ]
+        }
+      ]
+    }
+  },
+  "go18Experiment": {
+    "isolated": true,
+    "onlyChange": "worker minimum SDK gate 1.25 -> 1.18",
+    "workerSHA256": "dcedcb0ba3dbbdbd314d3ccc6167af40d52d26c17387a917eb75d34cec2e8264",
+    "productionGateUnchanged": true
+  },
+  "comparisons": {
+    "18": {
+      "filesMatch": true,
+      "declarationDifferences": {
+        "missing": [],
+        "extra": []
+      },
+      "declarations": 297,
+      "functions": 297,
+      "calls": 2692,
+      "archifyCalls": 2692,
+      "bound": 929,
+      "categories": {
+        "non-function-declaration": 32,
+        "same-project-target": 929,
+        "external-or-builtin": 1575,
+        "expression-without-name": 156
+      },
+      "extraCalls": [],
+      "mismatches": [],
+      "interfacePairs": {
+        "gopls": 11,
+        "archify": 11,
+        "missing": [],
+        "extra": []
+      }
+    },
+    "25": {
+      "filesMatch": true,
+      "declarationDifferences": {
+        "missing": [],
+        "extra": []
+      },
+      "declarations": 298,
+      "functions": 298,
+      "calls": 2706,
+      "archifyCalls": 2706,
+      "bound": 932,
+      "categories": {
+        "non-function-declaration": 32,
+        "same-project-target": 932,
+        "external-or-builtin": 1585,
+        "expression-without-name": 157
+      },
+      "extraCalls": [],
+      "mismatches": [],
+      "interfacePairs": {
+        "gopls": 11,
+        "archify": 11,
+        "missing": [],
+        "extra": []
+      }
+    }
+  },
+  "gopls": {
+    "18": {
+      "serverVersion": "v0.21.1",
+      "buildGo": "go1.26.2",
+      "queryErrors": 0,
+      "messages": [
+        {
+          "type": 1,
+          "message": "Found Go version 1.18, which is not supported by this version of gopls. Please upgrade to Go 1.21 or later and reinstall gopls. If you can't upgrade and want this message to go away, please install gopls v0.14.2. See https://go.dev/s/gopls-support-policy for more details."
+        }
+      ]
+    },
+    "25": {
+      "serverVersion": "v0.21.1",
+      "buildGo": "go1.26.2",
+      "queryErrors": 0,
+      "messages": []
+    }
+  },
+  "compilerInterfaceAssertions": [
+    {
+      "sdk": "18",
+      "pairs": 11,
+      "valueAndPointerAssertions": 22,
+      "exit": 0,
+      "output": "ok  \tgithub.com/go-chi/chi/v5\t1.115s\nok  \tgithub.com/go-chi/chi/v5/middleware\t1.614s\n"
+    },
+    {
+      "sdk": "25",
+      "pairs": 11,
+      "valueAndPointerAssertions": 22,
+      "exit": 0,
+      "output": "ok  \tgithub.com/go-chi/chi/v5\t0.499s\nok  \tgithub.com/go-chi/chi/v5/middleware\t1.266s\n"
+    }
+  ],
+  "upstreamTests": {
+    "go18": "ok  \tgithub.com/go-chi/chi/v5\t1.853s\nok  \tgithub.com/go-chi/chi/v5/middleware\t25.692s\n",
+    "go25": "ok  \tgithub.com/go-chi/chi/v5\t1.643s\nok  \tgithub.com/go-chi/chi/v5/middleware\t26.400s\n",
+    "command": "go test -count=1 -timeout=90s ./...",
+    "go25CGO": "SDK default (1); analysis and interface assertions explicitly use 0"
+  },
+  "sensitivity": "Unmodified capture passes; changed target, missing call and missing interface pair are detected.",
+  "manualExamples": [
+    {
+      "call": "mux.go:456",
+      "go18Target": "path_value_fallback.go:18",
+      "go25Target": "path_value.go:15"
+    },
+    {
+      "interface": "Router / Routes",
+      "concrete": "Mux",
+      "valueSatisfies": false,
+      "pointerSatisfies": true
+    },
+    {
+      "call": "maintainDefaultRequestID()()",
+      "result": "inner call binds the factory; outer returned function value remains unresolved"
+    }
+  ],
+  "sdk18Download": {
+    "url": "https://dl.google.com/go/go1.18.10.darwin-arm64.tar.gz",
+    "sha256": "718b32cb2c1d203ba2c5e6d2fc3cf96a6952b38e389d94ff6cdb099eb959dade",
+    "officialSHA256": "718b32cb2c1d203ba2c5e6d2fc3cf96a6952b38e389d94ff6cdb099eb959dade"
+  },
+  "artifactHashes": {
+    "inventory18.json": "50411270f9bd6dd7cd5ec93921e03460b8218f695b4369ac4f20cb6e17060cc1",
+    "inventory25.json": "b4b079d3ecf362579fa1827d03b582fccf4018c1cb66494603c33f208786c4cc",
+    "archify25.json": "3cc9a5ddfb6466f689e2b744a953573bdaf693311828900e8b1b8c1a4b9be0ea",
+    "archify18-failure.json": "e22131a800c642c50d3de1126c5518237a1334d8eda33a1f8decfa95a64a8d58",
+    "archify18-probe.json": "7bec0da08efc3b633466640170d7d1459f6d1063c4f1e6a413e0e6aacfc3fbea",
+    "gopls18.json": "d5e4581e75f2b6236c91d2aa377d7fcdd5837eb06e5d74cecb9adbb1a895b599",
+    "gopls25.json": "75de41a40b728773db1c8cc008371646d74b5f42e06eaf488d21e283da70df51",
+    "comparison18.json": "102eecdbe6ec3ea89c0d21e6e421e4a4b5be4e355335943899eed230e4e1d225",
+    "comparison25.json": "ebfcee5573152f16ac3d23a2c37815e040eacf9037ac2c22754cc936ee5cad1d",
+    "compiler-interfaces.json": "b9893195d693a60b51a3c76ab7d539653a54a2852a2c77da595783088ac62d2d",
+    "go18-test.log": "1f9c5a8d660a0e93ca0a961abbcbe78c205a313514b5cf31c5dd0af85764feb8",
+    "go25-test.log": "e1ce7185572021690fc496e5db65a94483e6aec30373267e185f42ae9c843331",
+    "sensitivity.log": "de0dd95229a402f4106180668a7336c2055461ad96b5e08119c682174b0612fb",
+    "inventory.go": "f2dcbd974d7805c30db837e00bce93aa29e9122a7ea78aa9e06289882e98753d",
+    "capture.mjs": "c9ffa7ef0ece688113a3694f514192c865042115a4264f3445c1b4ca79ca3b1d",
+    "query-gopls.mjs": "8d5ac5fbe6a45424cb2d0c180adac806a1fe22bd2f4adf19752115b168e15ef5",
+    "gopls-transport.mjs": "08bed7c2c189418533824b7ef48d43b7defdc02e5bbd6cdcea852836663a7a29",
+    "compare.mjs": "06c140ec7c7029d8a173a592c4559305a84af02d7012171de904942692b10e21",
+    "probe-go18.mjs": "04e84d5ea21a9d17fdda302767e55e2a3577133bc7be04d64e018bd56ea423ea",
+    "verify-interface-values.py": "34421be0a1bd6c0d6339c352fe286be9aaf130d77813d275a47018197fec7a02",
+    "check-comparison-sensitivity.mjs": "436e20445a43a4c963859ff87b76c46710ddf72f42ab8744ad143c39bf706257"
+  },
+  "artifacts": "<research-archive>/go-analysis-research-20261112/low-version-chi",
+  "limits": [
+    "Single stdlib-only root module; not proof of general old-SDK support.",
+    "gopls v0.21.1 warns Go 1.18 is unsupported despite returning answers.",
+    "Go 1.18 Archify success is an isolated experiment, not product support.",
+    "73 per-method interface records are not all independently verified; 11 type pairs and 22 value/pointer assertions are.",
+    "No live installation, global Go replacement, remote CI or product runtime edits."
+  ]
+}

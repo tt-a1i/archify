@@ -1,0 +1,910 @@
+{
+  "date": "2026-11-12",
+  "base": "197980b7",
+  "prototype": "isolated research copy; production runtime unchanged",
+  "researchRoot": "<research-archive>/go-analysis-research-20261112/official-library-comparison",
+  "environment": {
+    "go": "go1.26.2",
+    "node": "v20.20.2",
+    "platform": "darwin",
+    "arch": "arm64",
+    "gopls": "v0.21.1",
+    "x/tools": "v0.52.0",
+    "x/mod": "v0.43.0",
+    "x/sync": "v0.24.0"
+  },
+  "sourceHashes": {
+    "prepare.py": "2d464fb6f78a2d5a1bd6dc47cc8b930a52e56b5dfd123b5fbe7569b18fc761ea",
+    "load.go.txt": "20f383d91fb6e8a736e840a5a2aa7d00e341a2d2c07001eb7ef848f4c6050382",
+    "go.mod": "9f5909d4a5225f530e1d60f1cd539360dabb9cff87eab587336759200c27de73",
+    "capture.mjs": "ab20f2a8c19cfaae5618c116fc8de7aeff2748e9c5a8696cb4cb93a7c88546dc",
+    "compare.py": "a44a0f8a1361cf43c814bdda67c9b8a49be22106961955cbf233f66a00c77a43",
+    "verify.py": "2da88f95ef507999ded78a80095ec2a63005012b12c46046efa2ed96e3a49c2c",
+    "cold.py": "94ff7e1b187bd2b1381b7dff76dce48919ca6e5043b7b2f7416072ac5078b27c",
+    "boundary-checks.mjs": "d269f08e1501ccadb4b34a2c36fe78b320bb72af3b518ed37e427141c5579a63",
+    "module/extract/go/extract.go": "53f47ef210458390c7c638111c79cb1c772ea48c67785f515db55f03db65c89b",
+    "module/extract/go/index.mjs": "314f5b553fc297ae8814c6cfaecbbe53a803603e1218f6a0c8c7149594ec5f95",
+    "module/extract/go/go.mod": "9f5909d4a5225f530e1d60f1cd539360dabb9cff87eab587336759200c27de73",
+    "module/extract/go/go.sum": "29677063cae88c3ff5102fdd28d2986817ac632fec914da9061d2322696bd159"
+  },
+  "lineCounts": {
+    "baseGo": 1181,
+    "officialGo": 1170,
+    "baseJs": 84,
+    "officialJs": 80
+  },
+  "binaryBytes": {
+    "base": 7230098,
+    "official": 7329378,
+    "gopls": 39755522
+  },
+  "tests": {
+    "pass": 26,
+    "fail": 0,
+    "skip": 0,
+    "log": "go-tests-final.tap",
+    "explicitHarnessContractDelta": "standardLibrary.projectCommands const/assert false -> true; isolated captured module is inspected with go list",
+    "productionCompatibility": "not finalized; experiment reuses baseline model/consumer"
+  },
+  "controls": [
+    {
+      "request": "results/bindings.request.json",
+      "sha256": "2dea80a0ca98afbd70e3e71548fbc3cf0434f57efa72c00de7b8dde3cc7f736f",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/build_scope.request.json",
+      "sha256": "7544bd39c4156bfae65c3ac2e94744a5ab30da1e6bb99050b1f99816a7013232",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/callgraph.request.json",
+      "sha256": "cf20dbbbe78c4b83bc19eb22d25707830c94b410b5d285d071f9ebf7d8027dcf",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/duplicates.request.json",
+      "sha256": "d1ad0b1d3031ef12d3d88810f435c2bc43fe26306ea28850f50303578bc7d1f7",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/embed.request.json",
+      "sha256": "bd2c811aef2a447e626f2a6566c401eccdb2cd653c547eb2ad3405032e394813",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/language_version.request.json",
+      "sha256": "44b7e263e207551d37b352a55178413661a25043a5e91586f8d06605b78ba1c4",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/library_roots.request.json",
+      "sha256": "f997d41e7b0c12b91f7210c6ff83c5e7e816ae3e4846843218833bb65f3b685c",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/metrics.request.json",
+      "sha256": "aaa9b7c5f0aa3b22bf779dbd3029508123da8473d42f8edcff00b73f1780c101",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/missing_dependency.request.json",
+      "sha256": "c5515b2236150ca375490079b3b0f0524da93b6db1736dc272cd7e759f9a57f1",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/module_block.request.json",
+      "sha256": "6a553b91bb19146194a1d1771ff71387668d7207085146c1c46bee2bcfa42d91",
+      "different": [
+        "selected",
+        "excluded",
+        "functions",
+        "calls",
+        "imports",
+        "interfaceImplementations",
+        "interfaceEvidence"
+      ],
+      "failure": "Go SDK type preparation failed: err: exit status 1: stderr: go: errors parsing go.mod:\ngo.mod:4: syntax error (unterminated block started at <temporary>/archify-official-probe-3316963470/go.mod:1:1)\n\n"
+    },
+    {
+      "request": "results/parse_error.request.json",
+      "sha256": "3bdd35c84efffcabfbe36124e9d3246cb28079f02fafe62d941c1f46ddacca95",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/replace.request.json",
+      "sha256": "4a907ac68d7b57038bcb85e358e5f00243b5110f54ed1a3db44a0f5d1560db30",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/test_variants.request.json",
+      "sha256": "db07555e6a5a3e0c0bf853120b01a5d52c14323f4f627e3c19ee89505c79b982",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/01.request.json",
+      "sha256": "95b647e7998e2c95b3498aa59e9de80b366d858384e870a7775c2017a31c86be",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/02.request.json",
+      "sha256": "35a8c94adb432ae71be636fb66349dee235690de62805cda630c5c0230bb1534",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/03.request.json",
+      "sha256": "c01e911aadcb23d37dcd8e8c22dbe0d570db9f4c23acef2f87b33eff95b8700a",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/04.request.json",
+      "sha256": "7cefec4821e6a072d9ac121049718216da3c334d25e78be13b8cf6a3c35ca09c",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/05.request.json",
+      "sha256": "bba462f723998d5c6c8ca5ca070a01882be9915f8fa045c423cfb58b7f60c167",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/06.request.json",
+      "sha256": "0885ea73e95d08c61e745e240b32e38ac80c03d945d817bb86553a32abb64771",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/07.request.json",
+      "sha256": "ab7db2ccd0f4098bfb05481330d1dc66734a80bcb64bb04a0b794a677382ee6a",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/09.request.json",
+      "sha256": "846c9627ec6e691e68f2040e81c2d466b7bb29b59db8538bc4df7fc6d668798f",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/10.request.json",
+      "sha256": "1bdffbadb88e4c8e067c240c98594d7800f502434d2a3a93efe5c6e1de5a225c",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/11.request.json",
+      "sha256": "f2755e1d93c2c6b177e5b5fbd2ef695367cb96a6a919110180fa1217cc34bb28",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/12.request.json",
+      "sha256": "75c67c4422d15f9f0b15a384a17bdeacb81951cffc5dcdb7c734e71f848573d2",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/13.request.json",
+      "sha256": "b61dad6efe9de12dd771ab89e4468e7c5ce023d898f44df70787038ce65c06ae",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/16.request.json",
+      "sha256": "3c6bae849cad83c633e6e2c1585c8cf227c1b9290e6c0a5bcee99ee623e0f8ce",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/17.request.json",
+      "sha256": "24bc2877c3bf322eb256b196c40210376c65221b4adb4d15c9bd2c0d0c13ebe6",
+      "different": [],
+      "failure": null
+    },
+    {
+      "request": "results/regression/18.request.json",
+      "sha256": "b6f9b7516dbbba3d0358c97ab5a6b96edd4fe082ff6c1bac61584694990c3c9b",
+      "different": [],
+      "failure": null
+    }
+  ],
+  "controlException": "Old module_block request contains incorrectly parsed module \"(\"; rejected. Valid original module syntax passes new boundary test.",
+  "ablation": {
+    "noCapturedOnlyChecker": "SDK types recover test fails",
+    "noAmbiguityGuards": "interface/variable calls and method targets tests fail"
+  },
+  "warmMethod": "1 warmup per variant; 3 samples alternating order; tests disabled; third-party deps absent; elapsedMs excludes Node module imports and output serialization",
+  "memoryMethod": "Process family summed RSS sampled about every 50ms; shared pages may double count; short peaks may be missed",
+  "warm": [
+    {
+      "source": "github.com/go-chi/chi/v5@v5.5.0",
+      "runs": [
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 564.8311669999999,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1201,
+          "sampledFamilyRssMiB": 223.5
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 679.352709,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1386,
+          "sampledFamilyRssMiB": 241.9
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 474.9379170000001,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1080,
+          "sampledFamilyRssMiB": 299.9
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 864.932,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1495,
+          "sampledFamilyRssMiB": 285.6
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1417.463625,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 2063,
+          "sampledFamilyRssMiB": 440.9
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1266.2561249999999,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1856,
+          "sampledFamilyRssMiB": 510.3
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 578.037417,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1205,
+          "sampledFamilyRssMiB": 272.3
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 464.945166,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1059,
+          "sampledFamilyRssMiB": 300.4
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 660.041292,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1256,
+          "sampledFamilyRssMiB": 254.2
+        },
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 559.5601250000001,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1198,
+          "sampledFamilyRssMiB": 221.5
+        },
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 570.3777080000001,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1224,
+          "sampledFamilyRssMiB": 217.3
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 704.607125,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1288,
+          "sampledFamilyRssMiB": 250.5
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 485.69891599999994,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1107,
+          "sampledFamilyRssMiB": 302.1
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 562.0178750000001,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 1151,
+          "sampledFamilyRssMiB": 342.1
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1405.572709,
+          "files": 36,
+          "functions": 225,
+          "calls": 827,
+          "bound": 234,
+          "wallMs": 2059,
+          "sampledFamilyRssMiB": 499.5
+        }
+      ],
+      "equal": {
+        "official": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaces": true,
+          "calls": true
+        },
+        "hybrid": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaces": true,
+          "calls": true
+        }
+      },
+      "medians": {
+        "base-binary": {
+          "elapsedMs": 564.8,
+          "sampledFamilyRssMiB": 221.5
+        },
+        "base-source": {
+          "elapsedMs": 679.4,
+          "sampledFamilyRssMiB": 250.5
+        },
+        "official-binary": {
+          "elapsedMs": 474.9,
+          "sampledFamilyRssMiB": 300.4
+        },
+        "official-source": {
+          "elapsedMs": 578,
+          "sampledFamilyRssMiB": 285.6
+        },
+        "hybrid-source": {
+          "elapsedMs": 1405.6,
+          "sampledFamilyRssMiB": 499.5
+        }
+      }
+    },
+    {
+      "source": "github.com/spf13/cobra@v1.10.2",
+      "runs": [
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 898.4987080000001,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1648,
+          "sampledFamilyRssMiB": 222.5
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 1015.948167,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1913,
+          "sampledFamilyRssMiB": 221
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 354.829708,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1249,
+          "sampledFamilyRssMiB": 245.6
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 545.2034170000001,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1260,
+          "sampledFamilyRssMiB": 265.4
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1470.524209,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 2148,
+          "sampledFamilyRssMiB": 508.9
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1331.6217500000002,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1937,
+          "sampledFamilyRssMiB": 494
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 312.85900000000004,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 964,
+          "sampledFamilyRssMiB": 262
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 237.42216600000006,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 904,
+          "sampledFamilyRssMiB": 243.5
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 725.0077500000001,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1356,
+          "sampledFamilyRssMiB": 259
+        },
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 765.257375,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1736,
+          "sampledFamilyRssMiB": 221.2
+        },
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 469.74225,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1119,
+          "sampledFamilyRssMiB": 226.4
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 645.2855,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1290,
+          "sampledFamilyRssMiB": 246
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 255.410208,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 983,
+          "sampledFamilyRssMiB": 224.4
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 337.994334,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1002,
+          "sampledFamilyRssMiB": 237.2
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1354.5142500000002,
+          "files": 18,
+          "functions": 269,
+          "calls": 1468,
+          "bound": 721,
+          "wallMs": 1969,
+          "sampledFamilyRssMiB": 500.4
+        }
+      ],
+      "equal": {
+        "official": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaces": true,
+          "calls": true
+        },
+        "hybrid": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaces": true,
+          "calls": true
+        }
+      },
+      "medians": {
+        "base-binary": {
+          "elapsedMs": 765.3,
+          "sampledFamilyRssMiB": 222.5
+        },
+        "base-source": {
+          "elapsedMs": 725,
+          "sampledFamilyRssMiB": 246
+        },
+        "official-binary": {
+          "elapsedMs": 255.4,
+          "sampledFamilyRssMiB": 243.5
+        },
+        "official-source": {
+          "elapsedMs": 338,
+          "sampledFamilyRssMiB": 262
+        },
+        "hybrid-source": {
+          "elapsedMs": 1354.5,
+          "sampledFamilyRssMiB": 500.4
+        }
+      }
+    },
+    {
+      "source": "golang.org/x/mod@v0.43.0",
+      "runs": [
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 669.4113750000001,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1306,
+          "sampledFamilyRssMiB": 219.8
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 771.5107079999999,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1412,
+          "sampledFamilyRssMiB": 253.4
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 653.8313330000001,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1449,
+          "sampledFamilyRssMiB": 298.9
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 625.703542,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1284,
+          "sampledFamilyRssMiB": 351.9
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1532.1602500000004,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 2150,
+          "sampledFamilyRssMiB": 570.3
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1770.598333,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 2370,
+          "sampledFamilyRssMiB": 571.9
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 667.103416,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1321,
+          "sampledFamilyRssMiB": 395.5
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 620.275834,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1239,
+          "sampledFamilyRssMiB": 333
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 684.6075420000001,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1332,
+          "sampledFamilyRssMiB": 246.8
+        },
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 571.529791,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1180,
+          "sampledFamilyRssMiB": 228.5
+        },
+        {
+          "backend": "base",
+          "mode": "binary",
+          "elapsedMs": 561.5740000000001,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1219,
+          "sampledFamilyRssMiB": 219
+        },
+        {
+          "backend": "base",
+          "mode": "source",
+          "elapsedMs": 667.9780829999999,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1250,
+          "sampledFamilyRssMiB": 249.1
+        },
+        {
+          "backend": "official",
+          "mode": "binary",
+          "elapsedMs": 562.9492079999999,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1224,
+          "sampledFamilyRssMiB": 321.8
+        },
+        {
+          "backend": "official",
+          "mode": "source",
+          "elapsedMs": 608.6800420000001,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 1193,
+          "sampledFamilyRssMiB": 356
+        },
+        {
+          "backend": "hybrid",
+          "mode": "source",
+          "elapsedMs": 1651.342333,
+          "files": 22,
+          "functions": 381,
+          "calls": 2059,
+          "bound": 628,
+          "wallMs": 2282,
+          "sampledFamilyRssMiB": 531.1
+        }
+      ],
+      "equal": {
+        "official": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaces": true,
+          "calls": true
+        },
+        "hybrid": {
+          "files": true,
+          "functions": true,
+          "imports": true,
+          "interfaces": true,
+          "calls": true
+        }
+      },
+      "medians": {
+        "base-binary": {
+          "elapsedMs": 571.5,
+          "sampledFamilyRssMiB": 219.8
+        },
+        "base-source": {
+          "elapsedMs": 684.6,
+          "sampledFamilyRssMiB": 249.1
+        },
+        "official-binary": {
+          "elapsedMs": 620.3,
+          "sampledFamilyRssMiB": 321.8
+        },
+        "official-source": {
+          "elapsedMs": 625.7,
+          "sampledFamilyRssMiB": 356
+        },
+        "hybrid-source": {
+          "elapsedMs": 1651.3,
+          "sampledFamilyRssMiB": 570.3
+        }
+      }
+    }
+  ],
+  "coldMethod": "one chi run each, source helper, separate empty GOCACHE, prepopulated module cache and installed gopls; not installation or OS cold cache",
+  "cold": [
+    {
+      "backend": "base",
+      "freshGoBuildCache": true,
+      "moduleDownloadCache": "prepopulated",
+      "processWallMs": 9168,
+      "exit": 0,
+      "mode": "source",
+      "elapsedMs": 8409.954625,
+      "files": 36,
+      "functions": 225,
+      "calls": 827,
+      "bound": 234
+    },
+    {
+      "backend": "official",
+      "freshGoBuildCache": true,
+      "moduleDownloadCache": "prepopulated",
+      "processWallMs": 10471,
+      "exit": 0,
+      "mode": "source",
+      "elapsedMs": 9824.570334,
+      "files": 36,
+      "functions": 225,
+      "calls": 827,
+      "bound": 234
+    },
+    {
+      "backend": "hybrid",
+      "freshGoBuildCache": true,
+      "moduleDownloadCache": "prepopulated",
+      "processWallMs": 13780,
+      "exit": 0,
+      "mode": "source",
+      "elapsedMs": 12820.442083,
+      "files": 36,
+      "functions": 225,
+      "calls": 827,
+      "bound": 234
+    }
+  ],
+  "limits": [
+    "hybrid is not pure-gopls performance",
+    "one local OS/SDK/server pair",
+    "no remote CI or release artifact verification",
+    "no full dependency/workspace coverage",
+    "stdlib:false checker still does not enforce declared language version",
+    "final post-measurement source differences are comments only; baseline moved to durable identical archive"
+  ]
+}

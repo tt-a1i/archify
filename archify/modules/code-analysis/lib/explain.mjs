@@ -78,7 +78,7 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
   const savedEntry = !jsEntry && Array.isArray(facts?.files) && facts.files.some(f => f.path === entry)
     && ((language === 'py' && /^python@\d/.test(adapter) && /\.py$/.test(entry || ''))
       || (language === 'java' && /^java-parser@\d/.test(adapter) && /\.java$/.test(entry || ''))
-      || (language === 'go' && /^go-parser@\d/.test(adapter) && /\.go$/.test(entry || ''))
+      || (language === 'go' && /^(?:go-parser|gopls|go-packages)@\d/.test(adapter) && /\.go$/.test(entry || ''))
       || (language === 'rust' && /^rust-syn@\d/.test(adapter) && /\.rs$/.test(entry || '')));
   if (!jsEntry && !savedEntry) fail('task/entry-invalid', 'Question mode needs a JS/TS implementation file, or a captured .py/.java/.go/.rs entry from matching Python/Java/Go/Rust raw facts; declaration files are not supported.', { subject: { entry }, supportedFixes: ['pass a repository-relative JS/TS implementation file, or a saved analysis directory containing the Python/Java/Go/Rust entry from its matching adapter'] });
   if (facts !== null && (!Array.isArray(facts.files) || !Array.isArray(facts.functions) || !Array.isArray(facts.imports))) fail('task/facts-invalid', 'Expected raw facts with files, functions and imports.', { supportedFixes: ['regenerate raw-facts.json with code-analysis check'] });

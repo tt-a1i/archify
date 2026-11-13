@@ -42,7 +42,7 @@ const isPoint = (point) => Number.isInteger(point.line) && point.line >= 1 && Nu
 const CALL_MODELS = {
   py: { prefix: 'python-lexical', latest: 2 },
   java: { prefix: 'java-static-lexical', latest: 5 },
-  go: { prefix: 'go-source-direct', latest: 4 },
+  go: { prefix: 'go-source-direct', latest: 6 },
   rust: { prefix: 'rust-source-direct', latest: 14 },
 };
 
@@ -82,6 +82,15 @@ function rawFactsErrors(data, report) {
 
   const model = callModelVersions(data);
   if (model.go >= 3 && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
+  if (model.go === 5 && (!data.languageScope?.gopls || !/^gopls@/.test(data.repository?.adapter || ''))) add('/languageScope/gopls', 'requires the Go v5 gopls producer and recorded server scope');
+  if (model.go >= 6) {
+    const scope = data.languageScope;
+    if (!scope?.loader || data.repository?.adapter !== `go-packages@${String(scope.loader.version || '').replace(/^v/, '')}`) add('/languageScope/loader', 'requires the Go v6 official-library producer and recorded loader scope');
+    if (scope?.standardLibrary?.projectCommands !== true) add('/languageScope/standardLibrary/projectCommands', 'Go v6 records package loading commands on the isolated capture');
+    if (scope?.loader && (scope.loader.mode === 'captured-go-types') !== (scope.standardLibrary?.mode === 'disabled')) add('/languageScope/loader/mode', 'loader mode must match the recorded SDK type scope');
+    if (data.repository?.adapterRevision >= 9 && !scope?.loader?.projectToolchain) add('/languageScope/loader/projectToolchain', 'Go adapter revision 9 requires the separate project SDK version');
+    if (scope?.loader?.projectToolchain && (scope.loader.projectToolchain !== scope.build?.toolchain || (scope.standardLibrary?.mode !== 'disabled' && scope.loader.projectToolchain !== scope.standardLibrary?.toolchain))) add('/languageScope/loader/projectToolchain', 'project SDK must match build selection and standard-library evidence');
+  } else if (model.go > 0 && data.languageScope?.standardLibrary?.projectCommands === true) add('/languageScope/standardLibrary/projectCommands', 'historical Go models did not record project commands in SDK scope');
   const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
   const metadata = javaProjectMetadata(data, files, model, report);
 

@@ -1202,6 +1202,54 @@
             "typing": {
               "type": "object"
             },
+            "loader": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["version", "toolModules", "mode", "scope", "languageVersion", "toolchain", "dependencies", "network", "projectCodeExecuted"],
+              "properties": {
+                "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+" },
+                "toolModules": {
+                  "type": "array", "minItems": 1,
+                  "items": {
+                    "type": "object", "additionalProperties": false,
+                    "required": ["path", "version", "sum"],
+                    "properties": { "path": { "type": "string" }, "version": { "type": "string" }, "sum": { "type": "string" } }
+                  }
+                },
+                "mode": { "enum": ["go-packages", "captured-go-types"] },
+                "scope": { "const": "captured-root-module" },
+                "languageVersion": { "type": "string" },
+                "toolchain": { "type": "string" },
+                "projectToolchain": { "type": "string", "minLength": 1 },
+                "dependencies": { "const": "not-loaded" },
+                "network": { "const": "disabled" },
+                "projectCodeExecuted": { "const": false }
+              }
+            },
+            "gopls": {
+              "type": "object",
+              "required": ["version", "toolchain", "queries", "scope", "languageVersion", "dependencies", "network", "projectCodeExecuted"],
+              "additionalProperties": false,
+              "properties": {
+                "version": { "type": "string", "minLength": 1 },
+                "toolchain": { "type": "string", "minLength": 1 },
+                "queries": {
+                  "type": "object",
+                  "required": ["requested", "failed", "errors"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "requested": { "type": "integer", "minimum": 0 },
+                    "failed": { "type": "integer", "minimum": 0 },
+                    "errors": { "type": "array", "items": { "type": "object" } }
+                  }
+                },
+                "scope": { "const": "captured-root-module" },
+                "languageVersion": { "type": "string" },
+                "dependencies": { "const": "not-loaded" },
+                "network": { "const": "disabled" },
+                "projectCodeExecuted": { "const": false }
+              }
+            },
             "standardLibrary": {
               "type": "object",
               "additionalProperties": false,
@@ -1225,7 +1273,7 @@
                   "type": "string"
                 },
                 "projectCommands": {
-                  "const": false
+                  "type": "boolean"
                 },
                 "sourceFilesAnalyzed": {
                   "const": false

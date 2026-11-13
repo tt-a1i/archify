@@ -1,6 +1,6 @@
-// Project source comes only from the captured stdin snapshot. Optional SDK
-// export preparation runs in an empty directory, only for known standard
-// packages; project modules, code, tests and generators are never invoked.
+// Project source comes only from the captured stdin snapshot. Package metadata
+// is loaded by go list in an isolated module; project programs, tests and
+// generators are never executed. The caller owns and removes the snapshot directory.
 package main
 
 import (
@@ -12,32 +12,44 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
-	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
+	"go/version"
 	"io"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf16"
+
+	"golang.org/x/mod/modfile"
+	"golang.org/x/tools/go/packages"
+	"golang.org/x/tools/go/types/typeutil"
 )
 
 type record = map[string]interface{}
 type request struct {
-	Sources map[string][]byte `json:"sources"`
-	Module  string            `json:"module"`
-	Stdlib  bool              `json:"stdlib"`
-	GOOS    string            `json:"goos"`
-	GOARCH  string            `json:"goarch"`
-	Tags    []string          `json:"tags"`
-	Tests   bool              `json:"tests"`
+	ModuleText      string            `json:"moduleText"`
+	LanguageVersion string            `json:"-"`
+	Root            string            `json:"root"`
+	Sources         map[string][]byte `json:"sources"`
+	Module          string            `json:"-"`
+	Stdlib          bool              `json:"stdlib"`
+	GOOS            string            `json:"goos"`
+	GOARCH          string            `json:"goarch"`
+	Tags            []string          `json:"tags"`
+	Tests           bool              `json:"tests"`
+	SDK             struct {
+		Version     string   `json:"version"`
+		ReleaseTags []string `json:"releaseTags"`
+		ToolTags    []string `json:"toolTags"`
+	} `json:"sdk"`
 }
 type group struct {
 	id, pkgPath, name string
@@ -63,14 +75,13 @@ type concreteType struct {
 	record record
 }
 type loader struct {
-	stdlib           types.Importer
-	sdkExports       map[string]string
 	sdkLoaded        map[string]record
 	sdk              record
 	req              request
 	fset             *token.FileSet
 	groups           map[string]*group
 	packages         map[string]*group
+	typeGroups       map[*types.Package]*group
 	external         map[string]*types.Package
 	diagnostics      []string
 	errors           int
@@ -94,12 +105,6 @@ func (l *loader) Import(p string) (*types.Package, error) {
 		}
 		return l.check(g), nil
 	}
-	if l.req.Stdlib && p == "unsafe" {
-		return types.Unsafe, nil
-	}
-	if _, ok := l.sdkExports[p]; ok {
-		return l.stdlib.Import(p)
-	}
 	if q := l.external[p]; q != nil {
 		return q, nil
 	}
@@ -111,143 +116,177 @@ func (l *loader) Import(p string) (*types.Package, error) {
 	return q, nil
 }
 
-// Metadata classification comes from the SDK, never a project module lookup.
-type sdkPackage struct {
-	ImportPath string
-	Export     string
-	Standard   bool
-}
-
-func (l *loader) prepareSDK() error {
-	l.sdk = record{"mode": "disabled", "packages": []record{}, "projectCommands": false, "sourceFilesAnalyzed": false}
+// loadPackages delegates package discovery, test variants and default typing to
+// public go/packages. The explicit captured-only mode uses metadata plus one
+// go/types checker, because go/packages has no option to suppress SDK typing.
+func (l *loader) loadPackages() error {
+	l.sdk = record{"mode": "disabled", "packages": []record{}, "projectCommands": true, "sourceFilesAnalyzed": false}
 	l.sdkLoaded = map[string]record{}
-	if !l.req.Stdlib {
-		return nil
-	}
-	l.sdk["mode"] = "compiler-exports"
-	l.sdk["toolchain"] = runtime.Version()
-	l.sdk["network"] = "module-proxy-and-checksum-disabled"
-	// Avoid SDK subprocesses for captures that cannot import a standard package.
-	potential := map[string]bool{}
-	for _, file := range l.asts {
-		for _, spec := range file.Imports {
-			p, err := strconv.Unquote(spec.Path.Value)
-			if err == nil && p == "unsafe" {
-				l.sdk["intrinsicPackages"] = []string{"unsafe"}
-			}
-			if err == nil && l.packages[p] == nil && !strings.Contains(strings.Split(p, "/")[0], ".") && p != "unsafe" {
-				potential[p] = true
-			}
+	root := l.req.Root
+	for _, name := range l.selected {
+		p := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(p, l.req.Sources[name], 0644); err != nil {
+			return err
 		}
 	}
-	if len(potential) == 0 {
-		return nil
-	}
-	temporary, err := os.MkdirTemp("", "archify-go-sdk-")
-	if err != nil {
+	// Preserve the captured scope, with no project requires, replaces, workspace,
+	// generated files or module downloads. Preserve the declared language version.
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module "+strconv.Quote(l.req.Module)+"\n\ngo "+l.req.LanguageVersion+"\n"), 0644); err != nil {
 		return err
 	}
-	defer os.RemoveAll(temporary)
-	goos, goarch := l.req.GOOS, l.req.GOARCH
-	if goos == "" {
-		goos = build.Default.GOOS
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+	env := append(os.Environ(), "GO111MODULE=on", "GOWORK=off", "GOFLAGS=", "GOTOOLCHAIN=local", "GOENV=off", "CGO_ENABLED=0", "GOPROXY=off", "GOSUMDB=off", "GOPACKAGESDRIVER=off")
+	if l.req.GOOS != "" {
+		env = append(env, "GOOS="+l.req.GOOS)
 	}
-	if goarch == "" {
-		goarch = build.Default.GOARCH
+	if l.req.GOARCH != "" {
+		env = append(env, "GOARCH="+l.req.GOARCH)
 	}
-	tool := filepath.Join(runtime.GOROOT(), "bin", "go")
-	if runtime.GOOS == "windows" {
-		tool += ".exe"
+	flags := []string{"-mod=readonly"}
+	if len(l.req.Tags) > 0 {
+		flags = append(flags, "-tags="+strings.Join(l.req.Tags, ","))
 	}
-	list := func(export bool, paths []string) ([]sdkPackage, error) {
-		args := []string{"list", "-json"}
-		if export {
-			args = append(args, "-export", "-deps")
-		}
-		if len(l.req.Tags) > 0 {
-			args = append(args, "-tags="+strings.Join(l.req.Tags, ","))
-		}
-		args = append(args, paths...)
-		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
-		defer cancel()
-		cmd := exec.CommandContext(ctx, tool, args...)
-		cmd.Dir = temporary
-		cmd.Env = append(os.Environ(), "GO111MODULE=off", "GOWORK=off", "GOFLAGS=", "GOTOOLCHAIN=local", "GOENV=off", "CGO_ENABLED=0", "GOPROXY=off", "GOSUMDB=off", "GOOS="+goos, "GOARCH="+goarch)
-		var errors bytes.Buffer
-		cmd.Stderr = &errors
-		data, err := cmd.Output()
-		if err != nil {
-			return nil, fmt.Errorf("SDK-only %v: %v: %s", args, err, strings.TrimSpace(errors.String()))
-		}
-		decoder := json.NewDecoder(bytes.NewReader(data))
-		var packages []sdkPackage
-		for {
-			var p sdkPackage
-			err := decoder.Decode(&p)
-			if err == io.EOF {
-				break
-			}
+	mode := packages.LoadSyntax | packages.NeedExportFile | packages.NeedModule | packages.NeedForTest
+	if !l.req.Stdlib {
+		mode = packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles | packages.NeedImports | packages.NeedForTest
+	}
+	cfg := &packages.Config{Context: ctx, Mode: mode, Dir: root, Env: env, BuildFlags: flags, Tests: l.req.Tests, Fset: l.fset,
+		ParseFile: func(fs *token.FileSet, filename string, src []byte) (*ast.File, error) {
+			rel, err := filepath.Rel(root, filename)
 			if err != nil {
 				return nil, err
 			}
-			packages = append(packages, p)
-		}
-		return packages, nil
-	}
-	standard, err := list(false, []string{"std"})
+			if f := l.asts[filepath.ToSlash(rel)]; f != nil {
+				return f, nil
+			}
+			return nil, fmt.Errorf("source not admitted: %s", filepath.ToSlash(rel))
+		}}
+	loaded, err := packages.Load(cfg, "./...")
 	if err != nil {
 		return err
 	}
-	wanted := []string{}
-	for _, p := range standard {
-		if p.Standard && potential[p.ImportPath] {
-			wanted = append(wanted, p.ImportPath)
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	if len(loaded) == 0 && len(l.asts) > 0 {
+		return fmt.Errorf("no packages loaded for captured source; check SDK target and build configuration")
+	}
+	// A package error is partial evidence, not a fatal Load error. Preserve the
+	// existing stricter per-directory parse-error binding guard independently.
+	for _, p := range loaded {
+		captured := false
+		for _, filename := range p.GoFiles {
+			rel, _ := filepath.Rel(root, filename)
+			if _, ok := l.req.Sources[filepath.ToSlash(rel)]; ok {
+				captured = true
+				break
+			}
+		}
+		// go list creates a test-main package outside the captured source. It is
+		// intentionally not parsed; its rejection is not a project type error.
+		if !captured && p.Name == "main" && strings.HasSuffix(p.PkgPath, ".test") {
+			continue
+		}
+		for _, e := range p.Errors {
+			l.errors++
+			if len(l.diagnostics) < 20 {
+				l.diagnostics = append(l.diagnostics, strings.ReplaceAll(e.Error(), root, "<capture>"))
+			}
+		}
+		g := &group{id: p.PkgPath, pkgPath: p.PkgPath, name: p.Name, info: p.TypesInfo, pkg: p.Types}
+		if p.ForTest != "" {
+			g.id = p.ForTest + "#test:" + p.Name
+		}
+		for _, filename := range p.CompiledGoFiles {
+			rel, _ := filepath.Rel(root, filename)
+			name := filepath.ToSlash(rel)
+			if f := l.asts[name]; f != nil {
+				if f.Name.Name != p.Name {
+					l.invalidDirs[path.Dir(name)] = true
+				}
+				g.files = append(g.files, f)
+				g.names = append(g.names, name)
+			}
+		}
+		if len(g.files) == 0 {
+			continue
+		}
+		if g.info == nil && l.req.Stdlib {
+			g.info = &types.Info{}
+		}
+		l.groups[g.id] = g
+		if g.pkg != nil {
+			l.typeGroups[g.pkg] = g
+		}
+		if p.ForTest == "" {
+			l.packages[p.PkgPath] = g
 		}
 	}
-	sort.Strings(wanted)
-	l.sdk["requestedPackages"] = wanted
-	if len(wanted) == 0 {
+	if l.req.Stdlib {
+		l.sdk["mode"] = "compiler-exports"
+		l.sdk["toolchain"] = l.req.SDK.Version
+		l.sdk["network"] = "module-proxy-and-checksum-disabled"
+	}
+	seen := map[string]bool{}
+	var visit func(*packages.Package) error
+	visit = func(p *packages.Package) error {
+		if seen[p.ID] {
+			return nil
+		}
+		seen[p.ID] = true
+		if p.PkgPath == "unsafe" && l.req.Stdlib {
+			l.sdk["intrinsicPackages"] = []string{"unsafe"}
+		}
+		standard := p.PkgPath == "unsafe"
+		for _, filename := range p.GoFiles {
+			rel, err := filepath.Rel(filepath.Join(runtime.GOROOT(), "src"), filename)
+			if err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator)) && !filepath.IsAbs(rel) {
+				standard = true
+				break
+			}
+		}
+		if p.ExportFile != "" && standard && l.req.Stdlib {
+			data, err := os.ReadFile(p.ExportFile)
+			if err != nil {
+				return err
+			}
+			digest := sha256.Sum256(data)
+			l.sdkLoaded[p.PkgPath] = record{"path": p.PkgPath, "bytes": len(data), "sha256": hex.EncodeToString(digest[:])}
+		}
+		if l.packages[p.PkgPath] == nil && !standard && p.ForTest == "" && p.ExportFile == "" && !(p.Name == "main" && strings.HasSuffix(p.PkgPath, ".test")) {
+			q := types.NewPackage(p.PkgPath, path.Base(p.PkgPath))
+			q.MarkComplete()
+			l.external[p.PkgPath] = q
+		}
+		for _, q := range p.Imports {
+			if err := visit(q); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
-	packages, err := list(true, wanted)
-	if err != nil {
-		return err
-	}
-	l.sdkExports = map[string]string{}
-	for _, p := range packages {
-		if p.Standard && p.Export != "" {
-			l.sdkExports[p.ImportPath] = p.Export
+	for _, p := range loaded {
+		if err := visit(p); err != nil {
+			return err
 		}
 	}
-	l.sdk["exportedDependencyCount"] = len(l.sdkExports)
-	l.stdlib = importer.ForCompiler(l.fset, "gc", func(p string) (io.ReadCloser, error) {
-		file, ok := l.sdkExports[p]
-		if !ok {
-			return nil, fmt.Errorf("SDK export unavailable for %s", p)
-		}
-		data, err := os.ReadFile(file)
-		if err != nil {
-			return nil, err
-		}
-		digest := sha256.Sum256(data)
-		l.sdkLoaded[p] = record{"path": p, "sha256": hex.EncodeToString(digest[:]), "bytes": len(data)}
-		return io.NopCloser(bytes.NewReader(data)), nil
-	})
 	return nil
 }
+
 func (l *loader) check(g *group) *types.Package {
 	if g.pkg != nil {
 		return g.pkg
 	}
 	g.checking = true
 	defer func() { g.checking = false }()
-	g.info = &types.Info{Uses: map[*ast.Ident]types.Object{}, Defs: map[*ast.Ident]types.Object{}, Selections: map[*ast.SelectorExpr]*types.Selection{}}
+	g.info = &types.Info{Types: map[ast.Expr]types.TypeAndValue{}, Uses: map[*ast.Ident]types.Object{}, Defs: map[*ast.Ident]types.Object{}, Selections: map[*ast.SelectorExpr]*types.Selection{}}
 	g.pkg = types.NewPackage(g.pkgPath, g.name)
-	goarch := l.req.GOARCH
-	if goarch == "" {
-		goarch = build.Default.GOARCH
-	}
-	cfg := types.Config{Importer: l, Sizes: types.SizesFor("gc", goarch), Error: func(err error) {
+	l.typeGroups[g.pkg] = g
+	cfg := types.Config{GoVersion: "go" + l.req.LanguageVersion, Importer: l, Sizes: types.SizesFor("gc", l.req.GOARCH), Error: func(err error) {
 		l.errors++
 		if len(l.diagnostics) < 20 {
 			l.diagnostics = append(l.diagnostics, err.Error())
@@ -398,13 +437,11 @@ func (l *loader) interfaceMethod(file, owner string, name *ast.Ident, field *ast
 }
 func (l *loader) prepare() {
 	ctx := build.Default
-	if l.req.GOOS != "" {
-		ctx.GOOS = l.req.GOOS
-	}
-	if l.req.GOARCH != "" {
-		ctx.GOARCH = l.req.GOARCH
-	}
+	ctx.GOOS = l.req.GOOS
+	ctx.GOARCH = l.req.GOARCH
 	ctx.BuildTags = l.req.Tags
+	ctx.ReleaseTags = l.req.SDK.ReleaseTags
+	ctx.ToolTags = l.req.SDK.ToolTags
 	ctx.CgoEnabled = false
 	ctx.OpenFile = func(file string) (io.ReadCloser, error) {
 		b, ok := l.req.Sources[path.Clean(filepath.ToSlash(file))]
@@ -461,28 +498,6 @@ func (l *loader) prepare() {
 		if f == nil {
 			continue
 		}
-		dir := path.Dir(file)
-		pkgPath := l.req.Module
-		if dir != "." {
-			pkgPath += "/" + dir
-		}
-		id := pkgPath
-		if strings.HasSuffix(file, "_test.go") {
-			id += "#test:" + f.Name.Name
-		}
-		g := l.groups[id]
-		if g == nil {
-			g = &group{id: id, pkgPath: pkgPath, name: f.Name.Name}
-			l.groups[id] = g
-		}
-		if g.name != f.Name.Name {
-			l.invalidDirs[dir] = true
-		}
-		g.files = append(g.files, f)
-		g.names = append(g.names, file)
-		if !strings.HasSuffix(file, "_test.go") {
-			l.packages[pkgPath] = g
-		}
 		for _, decl := range f.Decls {
 			if fn, ok := decl.(*ast.FuncDecl); ok && fn.Body != nil {
 				def := l.definition(file, fn)
@@ -521,18 +536,7 @@ func (l *loader) prepare() {
 			return true
 		})
 	}
-	for _, g := range l.groups {
-		if !strings.Contains(g.id, "#test:") {
-			continue
-		}
-		p := l.packages[g.pkgPath]
-		if p != nil && g.name == p.name {
-			g.files = append(append([]*ast.File{}, p.files...), g.files...)
-			g.names = append(append([]string{}, p.names...), g.names...)
-		} else {
-			g.pkgPath += "_test"
-		}
-	}
+
 }
 
 // A function/value/type collision is invalid Go, not an arbitrary first target.
@@ -969,10 +973,31 @@ func main() {
 	if err := json.NewDecoder(os.Stdin).Decode(&req); err != nil {
 		panic(err)
 	}
-	l := &loader{req: req, fset: token.NewFileSet(), groups: map[string]*group{}, packages: map[string]*group{}, external: map[string]*types.Package{}, asts: map[string]*ast.File{}, invalidDirs: map[string]bool{}, definitions: map[token.Pos]record{}, interfaceMethods: map[token.Pos]record{}, selected: []string{}, excluded: []record{}, parseErrors: []record{}, functions: []record{}}
+
+	req.LanguageVersion = "1.16"
+	if req.ModuleText != "" {
+		module, err := modfile.Parse("go.mod", []byte(req.ModuleText), nil)
+		if err != nil || module.Module == nil {
+			fmt.Fprintln(os.Stderr, "invalid root go.mod:", err)
+			os.Exit(2)
+		}
+		req.Module = module.Module.Mod.Path
+		if module.Go != nil {
+			req.LanguageVersion = module.Go.Version
+		}
+	}
+	if req.Module == "" || req.Root == "" {
+		fmt.Fprintln(os.Stderr, "captured root module and isolated directory required")
+		os.Exit(2)
+	}
+	if version.Compare(version.Lang(req.SDK.Version), version.Lang(runtime.Version())) > 0 {
+		fmt.Fprintf(os.Stderr, "project SDK %s is newer than helper compiler %s; omit ARCHIFY_GO_BUILD or select a matching or newer build SDK\n", req.SDK.Version, runtime.Version())
+		os.Exit(2)
+	}
+	l := &loader{req: req, fset: token.NewFileSet(), groups: map[string]*group{}, packages: map[string]*group{}, typeGroups: map[*types.Package]*group{}, external: map[string]*types.Package{}, asts: map[string]*ast.File{}, invalidDirs: map[string]bool{}, definitions: map[token.Pos]record{}, interfaceMethods: map[token.Pos]record{}, selected: []string{}, excluded: []record{}, parseErrors: []record{}, functions: []record{}}
 	l.prepare()
-	if err := l.prepareSDK(); err != nil {
-		fmt.Fprintln(os.Stderr, "Go SDK type preparation failed:", err)
+	if err := l.loadPackages(); err != nil {
+		fmt.Fprintln(os.Stderr, "Go package loading failed:", err)
 		os.Exit(2)
 	}
 	ids := []string{}
@@ -981,7 +1006,9 @@ func main() {
 	}
 	sort.Strings(ids)
 	for _, id := range ids {
-		l.check(l.groups[id])
+		if !req.Stdlib {
+			l.check(l.groups[id])
+		}
 	}
 	l.collectInterfaceEvidence()
 	calls, imports, packages := []record{}, []record{}, []record{}
@@ -1041,10 +1068,7 @@ func main() {
 				}
 				if ident != nil {
 					r["reason"] = "no-local-function-binding"
-					obj, ok := g.info.Uses[ident].(*types.Func)
-					if selection != nil {
-						obj, ok = selection.Obj().(*types.Func)
-					}
+					obj, ok := typeutil.Callee(g.info, call).(*types.Func)
 					if ok {
 						sig, _ := obj.Type().(*types.Signature)
 						if sig != nil && sig.Recv() != nil {
@@ -1083,7 +1107,10 @@ func main() {
 							valid = !l.invalidDirs[path.Dir(targetFile)]
 							targetGroup := g
 							if obj.Pkg() != g.pkg {
-								targetGroup = l.packages[obj.Pkg().Path()]
+								targetGroup = l.typeGroups[obj.Pkg()]
+								if targetGroup == nil {
+									targetGroup = l.packages[obj.Pkg().Path()]
+								}
 							}
 							if method {
 								valid = valid && targetGroup != nil && targetGroup.uniqueMethod(obj)
@@ -1163,18 +1190,26 @@ func main() {
 		external = append(external, p)
 	}
 	sort.Strings(external)
-	goos, goarch := req.GOOS, req.GOARCH
-	if goos == "" {
-		goos = build.Default.GOOS
-	}
-	if goarch == "" {
-		goarch = build.Default.GOARCH
-	}
 	interfaceEdges := l.interfaceEdges
 	if interfaceEdges == nil {
 		interfaceEdges = []record{}
 	}
-	out := record{"version": runtime.Version(), "selected": l.selected, "excluded": l.excluded, "parse_errors": l.parseErrors, "functions": l.functions, "calls": calls, "imports": imports, "packages": packages, "standardLibrary": l.sdk, "interfaceImplementations": interfaceEdges, "interfaceEvidence": l.interfaceReport, "typing": record{"status": "partial-source-bindings", "errorCount": l.errors, "errors": l.diagnostics, "externalPackagesNotLoaded": external}, "build": record{"goos": goos, "goarch": goarch, "tags": req.Tags, "cgo": false, "tests": req.Tests, "goWork": "not-loaded", "replace": "not-loaded", "releaseTags": build.Default.ReleaseTags, "toolTags": build.Default.ToolTags, "toolchain": runtime.Version(), "goFlags": "not-loaded"}}
+	toolModules, toolsVersion := []record{}, "unknown"
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, dep := range info.Deps {
+			toolModules = append(toolModules, record{"path": dep.Path, "version": dep.Version, "sum": dep.Sum})
+			if dep.Path == "golang.org/x/tools" {
+				toolsVersion = dep.Version
+			}
+		}
+	}
+	mode := "go-packages"
+	if !req.Stdlib {
+		mode = "captured-go-types"
+	}
+	loading := record{"version": toolsVersion, "toolModules": toolModules, "mode": mode, "scope": "captured-root-module", "languageVersion": req.LanguageVersion, "toolchain": runtime.Version(), "projectToolchain": req.SDK.Version, "dependencies": "not-loaded", "network": "disabled", "projectCodeExecuted": false}
+	out := record{"module": req.Module, "selected": l.selected, "excluded": l.excluded, "parse_errors": l.parseErrors, "functions": l.functions, "calls": calls, "imports": imports, "packages": packages, "standardLibrary": l.sdk, "interfaceImplementations": interfaceEdges, "interfaceEvidence": l.interfaceReport, "typing": record{"status": "partial-source-bindings", "errorCount": l.errors, "errors": l.diagnostics, "externalPackagesNotLoaded": external}, "build": record{"goos": req.GOOS, "goarch": req.GOARCH, "tags": req.Tags, "cgo": false, "tests": req.Tests, "goWork": "not-loaded", "replace": "not-loaded", "releaseTags": req.SDK.ReleaseTags, "toolTags": req.SDK.ToolTags, "toolchain": req.SDK.Version, "goFlags": "not-loaded"}}
+	out["loader"] = loading
 	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
 		panic(err)
 	}

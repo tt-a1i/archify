@@ -110,7 +110,7 @@ potential import-time risks without claiming that execution is safe or that a ru
 npm run test:code-analysis
 ```
 
-Go source investigation supports root-module packages, function definitions and conservative direct function bindings. It requires Go 1.18+; build conditions, exclusions and incomplete typing are explicit. See [Go source scope and limitations](docs/GO.md).
+Go source investigation uses official Go libraries for captured package/call bindings, metrics and interface method-set evidence. The project SDK requires Go 1.25+; the helper builds with Go 1.26+ and locked modules, using Go's automatic toolchain selection or an explicit build SDK. First-use downloads can be prepared for offline use. It does not require gopls. Build conditions, exclusions and incomplete typing are explicit. See [Go source scope and limitations](docs/GO.md).
 
 Rust source investigation uses Cargo/rustc 1.71+ and a bundled source helper with
 locked parser dependencies; its first run compiles that helper and may fetch
