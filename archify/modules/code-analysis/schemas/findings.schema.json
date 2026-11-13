@@ -168,6 +168,7 @@
         "identityRevision": { "type": "integer", "minimum": 1 }, "fingerprint": { "type": "string" },
         "binding": { "enum": ["verified", "unverified", "changed"] },
         "reviewDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "comparisonLineSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "locations": { "type": "array", "items": { "$ref": "#/$defs/externalLocation" } },
         "origin": { "type": "object" }, "suggestions": { "type": "array", "items": { "type": "string" } }
       }

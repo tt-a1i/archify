@@ -64,6 +64,8 @@ export function reviewFindings(diagnostics, { baseline = null, previous = null, 
   const current = new Map(diagnostics.map((d) => [d.id, d]));
   const before = previous ? new Map((previous.diagnostics || []).map((d) => [d.id, d])) : null;
 
+  const measurement = before ? comparability(previous.analysis || null, analysis) : null;
+  const pairs = before ? pairOccurrences(before, current, measurement.comparable === true) : null;
   const findings = {};
   for (const d of diagnostics) {
     const entry = accepted.get(d.id);
@@ -75,11 +77,11 @@ export function reviewFindings(diagnostics, { baseline = null, previous = null, 
       ? !externalAcceptable(d) || entry?.code !== d.code || entry?.sha256 !== digest || entry?.externalReviewDigest !== d.external.reviewDigest
       : entry?.sha256 && digest && entry.sha256 !== digest;
     const status = !entry ? 'open' : changed ? 'accepted-changed' : 'accepted';
-    const prior = before ? before.get(d.id) : undefined;
+    const prior = pairs?.previousByCurrent.get(d.id);
     const claimChanged = prior?.external?.sourceId !== d.external?.sourceId
       || prior?.external?.reviewDigest !== d.external?.reviewDigest
       || prior?.external?.binding !== d.external?.binding;
-    const since = !before ? null : !prior ? 'new' : (prior.evidenceDigest?.sha256 || null) !== digest || claimChanged ? 'evidence-changed' : 'unchanged';
+    const since = !before ? null : !prior ? 'new' : prior.id !== d.id || (prior.evidenceDigest?.sha256 || null) !== digest || claimChanged ? 'evidence-changed' : 'unchanged';
     findings[d.id] = { status, ...(entry ? { reason: entry.reason } : {}), ...(since ? { since } : {}) };
   }
 
@@ -92,7 +94,7 @@ export function reviewFindings(diagnostics, { baseline = null, previous = null, 
       changed: ids((d) => findings[d.id].status === 'accepted-changed'),
       stale: [...accepted.values()].filter((e) => !current.has(e.id)).map((e) => ({ id: e.id, code: e.code, reason: e.reason })).sort((a, b) => compareText(a.id, b.id)),
     } : null,
-    comparison: before ? comparisonOf({ previous, before, current, findings, ids, analysis, files }) : null,
+    comparison: before ? comparisonOf({ previous, before, current, findings, ids, analysis, files, measurement, matchedBefore: pairs.matchedBefore }) : null,
     findings,
   };
 }
@@ -103,8 +105,42 @@ export function reviewFindings(diagnostics, { baseline = null, previous = null, 
 const STABLE_ID = /^[A-Z]{2,4}-[0-9a-f]{12}$/;
 const LEGACY_ID = /^[A-Z]{2,4}-[0-9]{4,}$/;
 
-function comparisonOf({ previous, before, current, findings, ids, analysis, files }) {
-  const { comparable, reasons } = comparability(previous.analysis || null, analysis);
+// Prefer a unique exact ESLint occurrence before matching IDs: a repeated
+// diagnostic can inherit a former ID when a surrounding context moves.
+function pairOccurrences(before, current, comparable) {
+  const previousByCurrent = new Map(), matchedBefore = new Set();
+  const pair = (prior, next) => {
+    previousByCurrent.set(next.id, prior);
+    matchedBefore.add(prior.id);
+  };
+  if (comparable) {
+    const left = uniqueEslintLocations(before), right = uniqueEslintLocations(current);
+    for (const [key, next] of right) {
+      const prior = left.get(key);
+      if (prior && next) pair(prior, next);
+    }
+  }
+  for (const [id, next] of current) {
+    const prior = before.get(id);
+    if (prior && !matchedBefore.has(id) && !previousByCurrent.has(id)) pair(prior, next);
+  }
+  return { previousByCurrent, matchedBefore };
+}
+
+function uniqueEslintLocations(findings) {
+  const locations = new Map();
+  for (const d of findings.values()) {
+    const e = d.external, s = d.subject;
+    if (d.code !== 'conventions/eslint' || e?.binding !== 'verified' || !e.comparisonLineSha256 || !e.reviewDigest || !s?.file || !s.line || !s.column) continue;
+    const key = JSON.stringify([e.sourceId, e.reviewDigest, s.file, s.line, s.endLine ?? s.line,
+      s.column, s.endColumn ?? null, e.comparisonLineSha256]);
+    locations.set(key, locations.has(key) ? null : d);
+  }
+  return locations;
+}
+
+function comparisonOf({ previous, before, current, findings, ids, analysis, files, measurement, matchedBefore }) {
+  const { comparable, reasons } = measurement;
   // Position-numbered ids (before stable ids) never match a current id: every finding
   // would read as new and every old one as no longer detected.
   if ([...before.keys()].some((id) => !STABLE_ID.test(id) && LEGACY_ID.test(id))) reasons.push({ code: 'legacy-ids', message: 'The previous run used position-numbered finding ids, which cannot be matched to the current stable ids; new and no-longer-detected lists are not meaningful for this comparison.' });
@@ -112,7 +148,7 @@ function comparisonOf({ previous, before, current, findings, ids, analysis, file
   const known = files ? new Set(files) : null;
   const parseErrors = new Set(analysis?.coverage?.parseErrors || []);
   const added = [...current.values()].filter((d) => findings[d.id].since === 'new');
-  const notDetected = [...before.values()].filter((d) => !current.has(d.id)).map((d) => {
+  const notDetected = [...before.values()].filter((d) => !matchedBefore.has(d.id)).map((d) => {
     const involved = d.evidenceDigest?.files || [];
     const candidates = added.filter((n) => n.code === d.code
       && (!d.external || (n.external?.sourceId === d.external.sourceId && n.external.ruleId === d.external.ruleId))
