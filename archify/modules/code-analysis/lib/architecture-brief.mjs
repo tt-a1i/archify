@@ -78,4 +78,3 @@ export function architectureBrief({ graph, findings, overview, findingWhere }) {
     }),
   };
 }
-

@@ -102,6 +102,12 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.ok(narrow.readerWidth <= 390);
   assert.equal(narrow.separate, true, 'the narrow reader is in flow above the canvas');
   assert.equal(narrow.overflow, false);
+  await run("document.querySelector('.reader-toggle').click()");
+  await run("new Promise(resolve=>setTimeout(resolve,500))");
+  await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click',{bubbles:true}))");
+  const openedFromCanvas = await run("document.getElementById('bauify-reader').getBoundingClientRect().top");
+  assert.ok(openedFromCanvas >= 0 && openedFromCanvas < 500, 'component selection reveals the narrow reading column: top='+openedFromCanvas);
+
 
   // Non-comparable history stays visible without a success colour or fixed claim.
   const read = file => JSON.parse(fs.readFileSync(path.join(out, 'analysis', file)));
