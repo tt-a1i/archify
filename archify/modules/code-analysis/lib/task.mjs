@@ -86,6 +86,9 @@ const ACCEPTANCE = {
   'coupling/cycle': () => ['The modules no longer depend on each other in a cycle (re-analysis no longer reports this module cycle).'],
   'coupling/hub': (d) => [`Fan-in or fan-out of the module falls below the configured threshold (fan-in ${d.evidence.threshold.fanIn}, fan-out ${d.evidence.threshold.fanOut}), or the split is explained.`],
   'coupling/concentration': (d) => [concentrationAcceptance(d)],
+  'organization/generic-name': () => [
+    'Check the file and its callers. Verify a justified rename and its updated references, or record why to retain the name with source and caller evidence for the intentionally broad contract.',
+  ],
   'architecture/boundary': (d) => [`No import from layer "${d.subject.boundary.from}" to layer "${d.subject.boundary.to}" remains.`],
   'coupling/internal-leak': (d) => [d.evidence.entries.length
     ? `No module outside ${d.subject.module} imports its internal files; they import ${d.evidence.entries.join(', ')} instead.`
@@ -212,7 +215,7 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
       'The project checks that cover the changed code pass (see verification).',
     ],
     verification: {
-      reanalyze: { ...reanalyzeCommand(findings), ...(external.length ? { purpose: 'First refresh the external reports using their original tool settings and scope, then import and compare them with the same analysis configuration. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
+      reanalyze: { ...reanalyzeCommand(findings, selected), ...(external.length ? { purpose: 'First refresh the external reports using their original tool settings and scope, then import and compare them with the same analysis configuration. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
       commands: verificationCommands,
     },
     toConfirm,
@@ -372,11 +375,13 @@ function sourceOf(findings, facts) {
   };
 }
 
-function reanalyzeCommand(findings) {
+function reanalyzeCommand(findings, selected) {
   const language = findings.repository?.language;
   return {
     command: `archify code-analysis check <repo-root>${language ? ` --language ${language}` : ''} --config <same config> --compare <this run's findings.json>`,
-    purpose: 'Re-run the same analysis and compare: the finding should be no longer detected, with the comparison marked comparable.',
+    purpose: selected.some(d => d.code === 'organization/generic-name')
+      ? 'Re-run the same analysis and compare. Check any rename and its references; if you retain the name with evidence, the naming advisory may still be reported. Apply the individual acceptance criteria to all selected findings.'
+      : 'Re-run the same analysis and compare: the finding should be no longer detected, with the comparison marked comparable.',
   };
 }
 

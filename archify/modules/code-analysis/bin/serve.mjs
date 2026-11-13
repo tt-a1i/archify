@@ -77,7 +77,7 @@ export async function ensureDependencies(root = moduleRoot) {
 
 export const USAGE = `Usage:
   archify code-analysis serve <repo-root> --ir <architecture.json> --out <dir>
-                              [--language ts|py|java] [--map overlay-map.json] [--config file.json]
+                              [--language ts|py|java|go|rust] [--map overlay-map.json] [--config file.json]
                               [--baseline baseline.json] [--quality standard|showcase]
 
 Delivers the authored diagram with Archify, serves it on a local port, and runs the

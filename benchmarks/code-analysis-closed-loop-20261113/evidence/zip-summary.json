@@ -1,0 +1,155 @@
+{
+  "baseline": {},
+  "candidate": {
+    "go-directory": {
+      "components": 2,
+      "mappedComponents": 2,
+      "emptyComponents": [],
+      "unmappedModules": [],
+      "ambiguousModules": [],
+      "offDiagramFindings": 0,
+      "undeclaredEdges": [
+        {
+          "from": "component-0",
+          "to": "component-1",
+          "weight": 1,
+          "sample": "cmd/app/main.go:2"
+        }
+      ]
+    },
+    "rust-directory": {
+      "components": 1,
+      "mappedComponents": 1,
+      "emptyComponents": [],
+      "unmappedModules": [],
+      "ambiguousModules": [],
+      "offDiagramFindings": 0,
+      "undeclaredEdges": []
+    },
+    "root-directory": {
+      "components": 1,
+      "mappedComponents": 1,
+      "emptyComponents": [],
+      "unmappedModules": [],
+      "ambiguousModules": [],
+      "offDiagramFindings": 0,
+      "undeclaredEdges": []
+    },
+    "sharedModule": [
+      {
+        "components": 3,
+        "mappedComponents": 3,
+        "emptyComponents": [],
+        "unmappedModules": [],
+        "ambiguousModules": [
+          {
+            "id": "src-shared",
+            "components": [
+              "a",
+              "b"
+            ]
+          }
+        ],
+        "offDiagramFindings": 0,
+        "undeclaredEdges": []
+      },
+      {
+        "components": 3,
+        "mappedComponents": 3,
+        "emptyComponents": [],
+        "unmappedModules": [],
+        "ambiguousModules": [
+          {
+            "id": "src-shared",
+            "components": [
+              "a",
+              "b"
+            ]
+          }
+        ],
+        "offDiagramFindings": 0,
+        "undeclaredEdges": []
+      }
+    ]
+  },
+  "self": {
+    "files": 255,
+    "coverage": {
+      "parseErrors": [],
+      "analyzedFiles": 166,
+      "excludedByRole": 89,
+      "excludedRoleCounts": {
+        "generated": 24,
+        "test": 65
+      },
+      "otherLanguages": [
+        {
+          "adapter": "py",
+          "files": 22
+        },
+        {
+          "adapter": "java",
+          "files": 8
+        },
+        {
+          "adapter": "go",
+          "files": 1
+        },
+        {
+          "adapter": "rust",
+          "files": 1
+        }
+      ]
+    },
+    "modules": 20,
+    "edges": 27,
+    "evidence": "valid",
+    "reanalysis": {
+      "comparable": true,
+      "new": 0,
+      "notDetected": 0,
+      "fixed": 0,
+      "evidenceChanged": 0,
+      "unchanged": 405
+    },
+    "diagram": {
+      "components": 4,
+      "mappedComponents": 4,
+      "emptyComponents": [],
+      "unmappedModules": [
+        "delta",
+        "migrations",
+        "recipes",
+        "scripts"
+      ],
+      "ambiguousModules": [],
+      "offDiagramFindings": 27,
+      "undeclaredEdges": [
+        {
+          "from": "cli",
+          "to": "analysis",
+          "weight": 1,
+          "sample": "bin/archify.mjs:7287"
+        },
+        {
+          "from": "cli",
+          "to": "story",
+          "weight": 16,
+          "sample": "bin/archify.mjs:2427"
+        },
+        {
+          "from": "renderers",
+          "to": "story",
+          "weight": 2,
+          "sample": "renderers/explainer/render-explainer.mjs:7"
+        },
+        {
+          "from": "story",
+          "to": "renderers",
+          "weight": 16,
+          "sample": "explainer/diagrams.mjs:7"
+        }
+      ]
+    }
+  }
+}
