@@ -37,7 +37,7 @@ test('nested source roots preserve feature boundaries, stable root anchors, and 
   const graph = buildGraph(facts, config);
   assert.deepEqual(schemaErrors('module-graph', graph), []);
   assert.deepEqual(graph.modules.map(m => m.path), ['gateway/src', 'gateway/src/routes', 'scripts', 'src/cli', 'src/server', 'src/shared', 'web/src', 'web/src/components', 'web/src/pages']);
-  assert.equal(graph.grouping.typescript, 'nested-source-roots-v1');
+  assert.equal(graph.grouping.typescript, 'nested-source-roots-v2');
   assert.equal(graph.fileModules['src/server/main.ts'], 'src-server');
   assert.equal(graph.fileModules['web/src/pages/page.ts'], 'web-src-pages');
   assert.ok(!('vitest.config.ts' in graph.fileModules));
@@ -54,6 +54,9 @@ test('nested source roots preserve feature boundaries, stable root anchors, and 
   assert.equal(comparability(before.analysis, after.analysis).comparable, false, 'regrouping must not be described as a source fix');
   const historicalGraph = structuredClone(graph); delete historicalGraph.grouping.typescript;
   assert.deepEqual(schemaErrors('module-graph', historicalGraph), [], 'historical graph shape stays accepted');
+  historicalGraph.grouping.typescript = 'nested-source-roots-v1';
+  assert.deepEqual(schemaErrors('module-graph', historicalGraph), [], 'first-src captures remain readable');
+  assert.equal(comparability(evaluateGraph(historicalGraph, config, facts).analysis, after.analysis).comparable, false, 'the grouping correction is not misreported as a code fix');
   const override = extractFacts(root, { language: 'ts', config: { ...loadConfig(), roles: { test: [], generated: [] } } }).facts;
   assert.equal(override.files.find(f => f.path === 'vitest.config.ts').role, 'source');
   const rootFacts = { ...facts, files: facts.files.filter(f => f.path.startsWith('src/')), imports: [] };

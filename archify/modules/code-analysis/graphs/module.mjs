@@ -104,7 +104,7 @@ export function buildModuleGraph(facts, config = {}) {
   return {
     schema_version: 1,
     repository: facts.repository,
-    grouping: { depth: options.depth, packageBoundaries: options.packageBoundaries, groups: Object.keys(options.groups).sort(), ...(java ? { java: java.strategy } : {}), ...(tsKeys.size ? { typescript: 'nested-source-roots-v1' } : {}) },
+    grouping: { depth: options.depth, packageBoundaries: options.packageBoundaries, groups: Object.keys(options.groups).sort(), ...(java ? { java: java.strategy } : {}), ...(tsKeys.size ? { typescript: 'nested-source-roots-v2' } : {}) },
     excluded: { roles: [...excluded].sort(), files: excludedFiles },
     modules: moduleList,
     fileModules: Object.fromEntries([...fileModule].sort(([a], [b]) => compareText(a, b)).map(([file, key]) => [file, ids.get(key)])),

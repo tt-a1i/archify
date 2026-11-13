@@ -234,9 +234,11 @@ the established depth-two policy. Explicit
 `modules.groups` wins; an explicit `modules.depth` or
 `modules.packageBoundaries: false` restores the original directory policy.
 Unchanged grouping paths retain their module/finding anchors. Newly split paths
-get their own anchors; `grouping.typescript: nested-source-roots-v1` enters the
+get their own anchors; `grouping.typescript: nested-source-roots-v2` enters the
 analysis configuration digest so history comparison reports regrouping as
-non-comparable rather than calling disappeared findings fixed. Historical graph
+non-comparable rather than calling disappeared findings fixed. Historical v1
+graphs used the first `src`; they remain readable and compare as a grouping
+change against the innermost-root v2 strategy. Historical graph
 and finding documents remain accepted. Default roles mark Vitest, Jest,
 Playwright and Cypress configuration, Vitest workspace and Karma configuration
 as `test`; configured role arrays replace these defaults.
