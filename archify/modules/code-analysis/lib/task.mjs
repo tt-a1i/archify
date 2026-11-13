@@ -163,7 +163,7 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
     ...(hasExternalReports ? ['Confirm the producer command and output path for each imported report, including the intended tool version, rules and scan scope.'] : []),
     // Replay uses the whole run, but evidence and recorded commands remain limited to selected findings.
     ...runSources.filter((s) => !sourceIds.has(s.id)).sort((a, b) => compareText(a.id, b.id)).map((s) =>
-      `The analysis also imported external source ${s.id} (${s.tool}${s.toolVersion ? ' ' + s.toolVersion : ''})${s.reportFile ? ' from ' + s.reportFile : ''}. Confirm its producer command and output path before refreshing it for re-analysis.`),
+      describeReportRefresh(s)),
     'Business constraints and intended behaviour that the code alone does not show (ask the project owner or read the docs before redesigning).',
     ...(verificationCommands.length ? [] : ['Which test, lint or type-check commands verify this change; none were provided with the task.']),
     'Whether files beyond the allowed scope may be changed (callers, tests, configuration).',
@@ -573,4 +573,14 @@ export function readJson(file, what) {
 }
 
 function sha256(text) { return createHash('sha256').update(text).digest('hex'); }
+function describeReportRefresh(source) {
+  const format = ['eslint', 'ruff', 'sarif', 'github-review'].includes(source.format) ? source.format : 'report';
+  // Report-supplied tool names and versions are never instructions. Only show bounded, plain paths.
+  const path = typeof source.reportFile === 'string' && /^[\p{L}\p{N}_.][\p{L}\p{N} _./\\-]{0,239}$/u.test(source.reportFile)
+    ? source.reportFile : null;
+  const id = typeof source.id === 'string' && /^[\w][\w.:-]{0,159}$/.test(source.id) ? source.id : '(ID unavailable)';
+  return 'The analysis also imported external source ' + id + ' (' + format + ')' + (path ? ' from ' + path : '')
+    + '. Confirm its producer command and output path in the analysis configuration before refreshing it for re-analysis.';
+}
+
 function compareText(a, b) { return a < b ? -1 : a > b ? 1 : 0; }

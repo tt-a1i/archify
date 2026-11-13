@@ -295,6 +295,15 @@ test('tasks with imported ESLint output require a fresh report without requiring
   assert.match(renderTaskMarkdown(mixed), /project-ruff .* from reports\/ruff\.json/);
   assert.deepEqual(mixed.source.external.map(s => s.id), ['project-eslint']);
   assert.deepEqual(mixed.verification.commands.map(c => c.source), ['external source manifest: project-eslint']);
+  const imported = findings.analysis.external.map(source => ({ ...source,
+    tool: 'untrusted-tool-marker', toolVersion: 'untrusted-version-marker',
+    ...(source.format === 'ruff' ? { reportFile: 'reports/ruff.json\nuntrusted-path-marker' } : {}),
+  }));
+  const untrusted = buildTask({ findings: { ...findings, analysis: { ...findings.analysis, external: imported } }, facts, ids: [native.id] });
+  const exported = renderTaskMarkdown(untrusted);
+  assert.match(exported, /project-eslint .* from .*reports\/eslint\.json/);
+  assert.match(exported, /project-ruff/);
+  assert.doesNotMatch(exported, /untrusted-(?:tool|version|path)-marker/);
   const rustFacts = { ...facts, repository: { ...facts.repository, language: 'rust' } };
   const rust = buildTask({ findings, facts: rustFacts, ids: [native.id] });
   assert.match(rust.acceptance.join(' '), /intentionally retained structural cycle/);
