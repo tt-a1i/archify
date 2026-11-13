@@ -19,6 +19,15 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 const MAX_SPEC_BYTES = 4 * 1024 * 1024;
 const MAX_DIAGRAM_BYTES = 32 * 1024 * 1024;
 const ID = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+const ROLES = new Set(['frontend', 'backend', 'database', 'cloud', 'security', 'messagebus', 'external']);
+const GROUP_LENS = {
+  en: { 'viewer.lens.title': 'Compare groups', 'viewer.lens.instruction': 'Choose a group to highlight.' },
+  'zh-CN': { 'viewer.lens.title': '比较分组', 'viewer.lens.instruction': '选择一个分组以高亮对应元素。' },
+  'zh-TW': { 'viewer.lens.title': '比較分組', 'viewer.lens.instruction': '選擇一個分組以反白對應元素。' },
+  es: { 'viewer.lens.title': 'Comparar grupos', 'viewer.lens.instruction': 'Elige un grupo para resaltarlo.' },
+  ko: { 'viewer.lens.title': '그룹 비교', 'viewer.lens.instruction': '강조할 그룹을 선택하세요.' },
+  ar: { 'viewer.lens.title': 'مقارنة المجموعات', 'viewer.lens.instruction': 'اختر مجموعةً لتمييز عناصرها.' },
+};
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const freezeBytes = bytes => ({ sha256: hash(bytes), bytes: bytes.length, contentBase64: bytes.toString('base64') });
 
@@ -165,12 +174,29 @@ export function compileExplainerDiagram(diagramType, rows, { title, id, line = 1
     edgeCounts.set(base, count);
     return `${base}-${count}`;
   };
+  const collectRoles = (list, hasLegend) => {
+    const roles = new Map(), body = [];
+    for (const entry of list) {
+      if (!entry.parts[0].startsWith('role ') || entry.parts[0].includes('>')) { body.push(entry); continue; }
+      expect(entry, 2, 2, 'role frontend | Draft state');
+      const role = safeId(entry.parts[0].slice(5).trim(), entry.context), label = entry.parts[1];
+      if (!ROLES.has(role)) fail(entry.context, 'diagram-role', `Unknown node role "${role}".`, 'role frontend | Draft state');
+      if (label.length > 80) fail(entry.context, 'diagram-role', 'Role label must be 80 characters or fewer.', 'role frontend | Draft state');
+      if (/[{}]/.test(label)) fail(entry.context, 'diagram-role', 'Role label cannot contain "{" or "}" interpolation braces.', 'role frontend | State (id)');
+      if (roles.has(role)) fail(entry.context, 'diagram-role-duplicate', `Duplicate role "${role}".`, 'role frontend | Draft state');
+      roles.set(role, label);
+      (spec.meta.translations ||= {})[`viewer.kind.${role}`] = label;
+      if (hasLegend) ((spec.meta.legend ||= {}).entries ||= {})[role] = { label };
+    }
+    return { roles, body };
+  };
   if (diagramType === 'sequence') {
+    const { body } = collectRoles(entries, false);
     spec.participants = [];
     spec.messages = [];
     const aliases = new Map();
     const byId = new Map();
-    for (const entry of entries.filter(entry => entry.parts[0].startsWith('actor '))) {
+    for (const entry of body.filter(entry => entry.parts[0].startsWith('actor '))) {
       expect(entry, 2, 3, 'actor api | API | backend');
       const actor = { id: safeId(entry.parts[0].slice(6).trim(), entry.context), label: entry.parts[1], type: entry.parts[2] || 'backend' };
       context.rowMap[`/participants/${spec.participants.length}`] = entry.context.line;
@@ -185,7 +211,7 @@ export function compileExplainerDiagram(diagramType, rows, { title, id, line = 1
     };
     // "phase | label" rows open a labelled band over the messages that follow, up to the next phase.
     const phases = [];
-    for (const entry of entries.filter(entry => !entry.parts[0].startsWith('actor '))) {
+    for (const entry of body.filter(entry => !entry.parts[0].startsWith('actor '))) {
       if (entry.parts[0] === 'phase') { expect(entry, 2, 2, 'phase | TCP handshake'); phases.push({ label: entry.parts[1], first: spec.messages.length, context: entry.context }); continue; }
       expect(entry, 3, 4, 'Client | API | 请求记录 | return');
       const [fromLabel, toLabel, label, variant] = entry.parts;
@@ -201,8 +227,9 @@ export function compileExplainerDiagram(diagramType, rows, { title, id, line = 1
     duplicateCheck(spec.participants, context, 'actor');
     if (!spec.messages.length) fail(context, 'diagram-rows', 'Sequence shorthand needs a message.', 'client | api | 请求记录');
   } else if (diagramType === 'architecture' || diagramType === 'workflow') {
+    const { roles, body } = collectRoles(entries, true);
     const nodes = [], edges = [], lanes = new Map(), nodeLanes = new Map();
-    for (const entry of entries) {
+    for (const entry of body) {
       const route = entry.parts[0].match(/^([a-zA-Z][a-zA-Z0-9_-]*)\s*>\s*([a-zA-Z][a-zA-Z0-9_-]*)$/);
       if (diagramType === 'workflow' && entry.parts[0].startsWith('lane ')) {
         expect(entry, 2, 2, 'lane locate | Locate the cause');
@@ -224,11 +251,13 @@ export function compileExplainerDiagram(diagramType, rows, { title, id, line = 1
         if (diagramType === 'workflow' && labelWidth > 92) node.width = labelWidth;
         // A question is a decision point: the native decision mark tells it apart from a step.
         if (diagramType === 'workflow' && /[?？]$/u.test(node.label)) node.icon = 'decision';
+        else if (roles.has(node.type)) node.icon = 'none';
         if (entry.parts[3]) nodeLanes.set(node.id, { lane: safeId(entry.parts[3], entry.context), context: entry.context });
         nodes.push(node);
       }
     }
     duplicateCheck(nodes, context, 'node');
+    if (!nodes.length) fail(context, 'diagram-rows', 'Shorthand diagram needs at least one node.', 'api | API | backend');
     const fitWidth = node => Math.ceil(textUnits(node.label) * 6.6 + 16);
     const architectureLayout = diagramType === 'architecture'
       ? { mode: 'grid', cols: 12, cellW: Math.max(176, ...nodes.map(fitWidth)), cellH: 76, gapX: 100, gapY: 110 } : null;
@@ -547,9 +576,19 @@ export async function prepareExplainerDiagrams(document, { repoRoot, baseDir, qu
         // Inline diagrams belong to the explainer's reading context. Keep the
         // original author bytes frozen; apply inheritance only to native render
         // input. Referenced standalone specs retain their own locale defaults.
-        const inheritedLocale = block.spec !== undefined && candidate.meta?.locale === undefined && document.meta?.locale !== undefined
-          ? { locale: document.meta.locale } : {};
-        const spec = { ...candidate, meta: { ...candidate.meta, ...inheritedLocale, output: 'diagram.html', quality_profile: quality } };
+        const translations = candidate.meta?.translations || {};
+        const hasTranslations = Object.keys(translations).length > 0;
+        const customKinds = Object.keys(translations).some(key => key.startsWith('viewer.kind.'));
+        const pageDefaultLocale = document.diagram_type === 'explainer' ? 'zh-CN' : 'en';
+        const effectiveLocale = candidate.meta?.locale ?? document.meta?.locale ?? (block.spec !== undefined && hasTranslations ? pageDefaultLocale : undefined);
+        const inheritedLocale = block.spec !== undefined && candidate.meta?.locale === undefined && effectiveLocale !== undefined
+          ? { locale: effectiveLocale } : {};
+        const lensKey = effectiveLocale ? Object.keys(GROUP_LENS).find(key => key.toLowerCase() === effectiveLocale.toLowerCase()) : undefined;
+        const lensDefaults = block.spec !== undefined && customKinds
+          ? GROUP_LENS[lensKey] || (effectiveLocale?.toLowerCase().startsWith('zh') ? GROUP_LENS['zh-CN'] : GROUP_LENS.en)
+          : null;
+        const mergedTranslations = lensDefaults ? { ...lensDefaults, ...translations } : candidate.meta?.translations;
+        const spec = { ...candidate, meta: { ...candidate.meta, ...inheritedLocale, ...(mergedTranslations ? { translations: mergedTranslations } : {}), output: 'diagram.html', quality_profile: quality } };
         try { validateSchema(block.diagramType, spec); } catch (error) { rethrowNative(error, context, 'diagram-schema'); }
         fs.writeFileSync(input, JSON.stringify(spec), { flag: 'wx' });
         let stage = 'diagram-render';
