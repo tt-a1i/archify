@@ -35,16 +35,20 @@ import { reviewTargetDigest } from '../lib/review.mjs';
 import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
 import { clientAsset } from './client-assets.mjs';
 
-export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
-  if (!html.includes('data-node-id=') || !html.includes('class="toolbar"')) {
-    fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
-      evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
-      supportedFixes: ['pass the HTML written by `archify deliver architecture`'],
-    });
-  }
+export function alignDiagram({ ir, graph, map = null, facts = null, findings = [], run = {} }) {
   const modules = new Map(graph.modules.map((m) => [m.id, m]));
   const mapping = resolveMapping(ir, graph, map);
   const claimed = new Set([...mapping.values()].flat());
+  const owners = new Map();
+  for (const [cid, ids] of mapping) for (const id of ids) {
+    if (!owners.has(id)) owners.set(id, []);
+    owners.get(id).push(cid);
+  }
+  const ambiguousModules = [...owners]
+    .filter(([, ids]) => ids.length > 1)
+    .map(([id, ids]) => ({ id, components: ids.sort() }))
+    .sort((a, b) => a.id.localeCompare(b.id, 'en'));
+  const uniqueOwner = new Map([...owners].filter(([, ids]) => ids.length === 1).map(([id, ids]) => [id, ids[0]]));
   const fileIndex = indexFiles(graph, facts);
   const findingsByFile = new Map();
   for (const f of findings) {
@@ -61,12 +65,15 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     const ids = mapping.get(c.id) || [];
     const mods = ids.map((id) => modules.get(id)).filter(Boolean);
     const set = new Set(ids);
-    const outgoing = aggregate(graph.edges.filter((e) => set.has(e.from) && !set.has(e.to)), 'to', mapping);
-    const incoming = aggregate(graph.edges.filter((e) => set.has(e.to) && !set.has(e.from)), 'from', mapping);
-    const internal = graph.edges.filter((e) => set.has(e.from) && set.has(e.to)).reduce((n, e) => n + e.weight, 0);
+    const unique = new Set(ids.filter((id) => uniqueOwner.get(id) === c.id));
+    const filePaths = new Set(ids.flatMap((id) => (fileIndex.get(id) || []).map((f) => f.path)));
+    const outgoing = aggregate(graph.edges.filter((e) => unique.has(e.from) && !unique.has(e.to)), 'to', uniqueOwner, owners);
+    const incoming = aggregate(graph.edges.filter((e) => unique.has(e.to) && !unique.has(e.from)), 'from', uniqueOwner, owners);
+    const internal = graph.edges.filter((e) => unique.has(e.from) && unique.has(e.to)).reduce((n, e) => n + e.weight, 0);
     return {
       id: c.id,
       label: c.label,
+      ambiguousModules: ids.filter((id) => owners.get(id)?.length > 1).sort(),
       modules: mods.map((m) => ({ id: m.id, label: m.label, path: m.path, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, instability: m.instability, entry: m.entry })),
       files: mods.reduce((n, m) => n + m.files, 0),
       loc: mods.reduce((n, m) => n + m.loc, 0),
@@ -74,8 +81,8 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
       outgoing,
       incoming,
       fileList: ids.flatMap((id) => (fileIndex.get(id) || []).map((f) => ({ ...f, module: id }))).map((f) => ({ ...f, findings: findingsByFile.get(f.path) || [] })),
-      findings: findings.filter((f) => touches(f, set, c.id, new Set(ids.flatMap((id) => (fileIndex.get(id) || []).map((f) => f.path))))),
-      indicators: indicators(set, mods, openFindings, mapping, new Set(ids.flatMap((id) => (fileIndex.get(id) || []).map((f) => f.path)))),
+      findings: findings.filter((f) => touches(f, set, c.id, filePaths)),
+      indicators: indicators(set, mods, openFindings, uniqueOwner, filePaths),
     };
   });
 
@@ -86,8 +93,12 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     edgeMap.set(key, { from: c.id, to: o.component, weight: o.weight, evidence: o.evidence });
   }
   const edges = [...edgeMap.values()].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.to < b.to ? -1 : 1));
+  const declared = new Set((ir.connections || []).filter((c) => c && typeof c.from === 'string' && typeof c.to === 'string').map((c) => `${c.from}>${c.to}`));
+  const undeclaredEdges = edges.filter((e) => !declared.has(`${e.from}>${e.to}`));
   const unmapped = graph.modules.filter((m) => !claimed.has(m.id)).map((m) => ({ id: m.id, label: m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: (fileIndex.get(m.id) || []).map((f) => ({ ...f, module: m.id })) }));
-  const fileModule = new Map([...fileIndex].flatMap(([id, list]) => list.map((f) => [f.path, id])));
+  const fileModule = facts
+    ? new Map([...fileIndex].flatMap(([id, list]) => list.map((f) => [f.path, id])))
+    : new Map(Object.entries(graph.fileModules || {}));
   const reviewed = run.review ? run.review.findings : {};
   const listed = findings.map((f) => ({
     ...(reviewed[f.id] ? { review: reviewed[f.id] } : {}),
@@ -96,6 +107,18 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     moduleIds: findingModules(f, fileModule),
     componentIds: components.filter((c) => c.findings.includes(f)).map((c) => c.id),
   }));
+  const mapped = components.filter((c) => c.modules.length).length;
+  return { components, edges, undeclaredEdges, unmapped, listed, mapped, ambiguousModules };
+}
+
+export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
+  if (!html.includes('data-node-id=') || !html.includes('class="toolbar"')) {
+    fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
+      evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
+      supportedFixes: ['pass the HTML written by `archify deliver architecture`'],
+    });
+  }
+  const { components, edges, unmapped, listed, mapped, ambiguousModules } = alignDiagram({ ir, graph, map, facts, findings, run });
 
   const payload = {
     generator: 'bauify',
@@ -107,9 +130,10 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     components,
     edges,
     unmapped,
+    ambiguousModules,
     findings: listed,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
-    overview: buildOverview({ findings: listed, graph, facts, unmapped, run }),
+    overview: buildOverview({ findings: listed, graph, facts, unmapped, ambiguousModules, run }),
     snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts, findingsDocument?.externalEvidence) : {},
   };
 
@@ -121,7 +145,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
   const injection = `\n<!-- bauify overlay: authored diagram untouched; analysis layer below -->\n<script type="application/json" id="bauify-analysis">${scriptSafeJson(payload)}</script>\n${atlasData}<style id="bauify-style">${CSS}</style>\n<script id="bauify-script">${JS}</script>\n${atlasView}`;
   const idx = html.lastIndexOf('</body>');
   const out = idx === -1 ? html + injection : html.slice(0, idx) + injection + html.slice(idx);
-  return { html: out, overview: payload.overview, mapped: components.filter((c) => c.modules.length).length, components: components.length, edges: edges.length, unmapped: unmapped.length, snippets: Object.keys(payload.snippets).length };
+  return { html: out, overview: payload.overview, mapped, components: components.length, edges: edges.length, unmapped: unmapped.length, snippets: Object.keys(payload.snippets).length };
 }
 
 // Modules a finding is about: named directly, or owning one of its files.
@@ -175,10 +199,8 @@ function touches(f, set, componentId, filePaths) {
 
 // Key indicators shown on the diagram and at the top of the panel. Each one
 // states what was checked and the value found; status is red / amber / blue / green.
-function indicators(set, mods, findings, mapping, filePaths) {
+function indicators(set, mods, findings, owner, filePaths) {
   if (!mods.length) return { status: 'grey', items: [] };
-  const owner = new Map();
-  for (const [cid, ids] of mapping) for (const id of ids) owner.set(id, cid);
   // The colour follows the highest reported severity among the cycles here
   // (module-scope and Java cycles are errors, deferred ones warnings, Rust
   // ones info); the text follows the kind of cycle. Neither a deferred cycle
@@ -310,50 +332,89 @@ function indexFiles(graph, facts) {
   return index;
 }
 
-// componentId -> [moduleId]. Explicit `map` wins; otherwise derive from each
-// component's `sources` paths: a source under a module's path claims that
-// module and, when no other component claims them, its descendant modules.
-function resolveMapping(ir, graph, map) {
+// Sources are filesystem paths. Module paths may instead be Go import paths,
+// Rust crate identities or configured group names, so use captured file ownership.
+function normalizeRelPath(rawPath, repoRoot) {
+  if (typeof rawPath !== 'string' || !rawPath) return null;
+  const norm = rawPath.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '').replace(/\/+$/, '');
+  const rootPrefix = repoRoot && repoRoot !== '.' ? repoRoot.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '').replace(/\/+$/, '') : '';
+  if (!norm || norm === '.') return '';
+  if (rootPrefix && norm === rootPrefix) return '';
+  return rootPrefix && norm.startsWith(`${rootPrefix}/`) ? norm.slice(rootPrefix.length + 1) : norm;
+}
+
+export function resolveMapping(ir, graph, map) {
   const result = new Map();
-  const byPathDepth = [...graph.modules].sort((a, b) => b.path.split('/').length - a.path.split('/').length);
-  const moduleForFile = (file) => {
-    const rel = graph.repository.root && graph.repository.root !== '.' && file.startsWith(`${graph.repository.root}/`) ? file.slice(graph.repository.root.length + 1) : file;
-    if (graph.fileModules && graph.fileModules[rel]) return graph.fileModules[rel];
-    for (const m of byPathDepth) {
-      if (m.path === '' ) continue;
-      if (rel === m.path || rel.startsWith(`${m.path}/`)) return m.id;
-    }
-    return rel.includes('/') ? null : (graph.modules.find((m) => m.path === '' && m.entry.includes(rel)) || {}).id || null;
+  const files = new Map(graph.modules.map((m) => [m.id, []]));
+  const fileModules = new Map(Object.entries(graph.fileModules || {}));
+  for (const [file, id] of fileModules) files.get(id)?.push(file);
+  // Historical graph exports lack fileModules; retain their entry-file anchors
+  // and directory-path fallback when exact ownership is unavailable.
+  for (const m of graph.modules) if (!files.get(m.id).length) {
+    files.set(m.id, m.entry || []);
+    for (const file of m.entry || []) fileModules.set(file, m.id);
+  }
+  const prefixes = [];
+  const seenPrefix = new Set();
+  const addPrefix = (cid, prefix) => {
+    const key = `${cid}\0${prefix}`;
+    if (seenPrefix.has(key)) return;
+    seenPrefix.add(key);
+    prefixes.push({ cid, prefix, depth: prefix ? prefix.split('/').length : 0 });
   };
   for (const c of ir.components) {
     if (map && Array.isArray(map[c.id])) { result.set(c.id, [...new Set(map[c.id])]); continue; }
     const ids = new Set();
-    for (const s of c.sources || []) { const id = moduleForFile(s.path); if (id) ids.add(id); }
+    for (const s of c.sources || []) {
+      const rel = normalizeRelPath(s?.path, graph.repository?.root);
+      if (rel === null) continue;
+      let id = fileModules.get(rel);
+      if (!id && !graph.fileModules && rel) {
+        const byDepth = [...graph.modules].sort((a, b) => b.path.split('/').length - a.path.split('/').length);
+        const exact = byDepth.find((m) => m.path === rel);
+        const hasChildren = byDepth.some((m) => m.path.startsWith(`${rel}/`));
+        const enclosing = hasChildren ? null : byDepth.find((m) => m.path && rel.startsWith(`${m.path}/`));
+        id = (exact || enclosing)?.id;
+      }
+      if (id) ids.add(id);
+      else addPrefix(c.id, rel);
+    }
     // A component with no sources whose id is a module id (the bridge IR, or an IR that reuses
     // module ids on purpose) maps to that module.
     if (!ids.size && !(c.sources || []).length && graph.modules.some((m) => m.id === c.id)) ids.add(c.id);
+    for (const id of ids) {
+      const p = graph.modules.find((m) => m.id === id);
+      if (p?.path && files.get(id).some((file) => file.startsWith(`${p.path}/`))) addPrefix(c.id, p.path);
+    }
     result.set(c.id, [...ids]);
   }
-  // Descendants: a module whose path starts with a claimed module's path joins it when unclaimed.
+  // A file anchor or explicit map claims its whole module. Other modules follow
+  // the most specific directory for each captured file. A split module or tied
+  // prefixes retain every owner, so component order cannot decide the result.
   const claimed = new Set([...result.values()].flat());
-  for (const [cid, ids] of result) {
-    for (const parent of [...ids]) {
-      const p = graph.modules.find((m) => m.id === parent);
-      if (!p || p.path === '') continue;
-      for (const m of graph.modules) if (!claimed.has(m.id) && m.path.startsWith(`${p.path}/`)) { ids.push(m.id); claimed.add(m.id); }
+  prefixes.sort((a, b) => b.depth - a.depth);
+  for (const m of graph.modules) {
+    if (claimed.has(m.id)) continue;
+    const owners = new Set();
+    for (const file of files.get(m.id)) {
+      const matches = prefixes.filter(({ prefix }) => !prefix || file.startsWith(`${prefix}/`));
+      for (const match of matches) {
+        if (match.depth !== matches[0].depth) break;
+        owners.add(match.cid);
+      }
     }
+    for (const cid of owners) result.get(cid).push(m.id);
   }
+  for (const ids of result.values()) ids.sort();
   return result;
 }
 
-function aggregate(edges, side, mapping) {
-  const owner = new Map();
-  for (const [cid, ids] of mapping) for (const id of ids) owner.set(id, cid);
+function aggregate(edges, side, owner, owners) {
   const acc = new Map();
   for (const e of edges) {
     const other = e[side];
     const key = owner.get(other) || `module:${other}`;
-    if (!acc.has(key)) acc.set(key, { component: owner.get(other) || null, module: owner.get(other) ? null : other, weight: 0, evidence: [] });
+    if (!acc.has(key)) acc.set(key, { component: owner.get(other) || null, module: owner.get(other) ? null : other, ...(owners.get(other)?.length > 1 ? { ambiguous: true } : {}), weight: 0, evidence: [] });
     const a = acc.get(key);
     a.weight += e.weight;
     a.evidence = [...a.evidence, ...e.evidence].slice(0, 6);

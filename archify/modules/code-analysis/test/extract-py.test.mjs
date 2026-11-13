@@ -54,6 +54,11 @@ test('adapter selection: mixed trees must name a language; --language settles it
   assert.equal(ambiguous.status, 1);
   assert.equal(ambiguous.json.diagnostics[0].code, 'extract/adapter-ambiguous');
   assert.deepEqual(ambiguous.json.diagnostics[0].evidence.detected, ['ts', 'py']);
+  assert.deepEqual(ambiguous.json.diagnostics[0].evidence.counts, [
+    { adapter: 'py', files: 1 },
+    { adapter: 'ts', files: 1 },
+  ]);
+  assert.match(ambiguous.json.diagnostics[0].message, /py: 1 file, ts: 1 file/);
   const py = runExtract([MIXED, '--language', 'py', '--json']);
   assert.equal(py.status, 0);
   assert.equal(py.json.files, 1);

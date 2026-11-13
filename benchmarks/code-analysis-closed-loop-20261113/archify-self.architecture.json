@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": { "title": "Archify source investigation", "output": "archify-self.html" },
+  "components": [
+    { "id": "cli", "type": "backend", "label": "CLI", "sources": [{ "path": "archify/bin/" }], "pos": [40, 40], "size": [190, 70] },
+    { "id": "renderers", "type": "backend", "label": "Renderers", "sources": [{ "path": "archify/renderers/" }], "pos": [330, 40], "size": [190, 70] },
+    { "id": "analysis", "type": "backend", "label": "Code Analysis", "sources": [{ "path": "archify/modules/code-analysis/" }], "pos": [40, 200], "size": [190, 70] },
+    { "id": "story", "type": "backend", "label": "Explainer and story", "sources": [{ "path": "archify/explainer/" }, { "path": "archify/story/" }], "pos": [330, 200], "size": [190, 70] }
+  ],
+  "connections": [{ "from": "cli", "to": "renderers", "label": "delivers" }]
+}
