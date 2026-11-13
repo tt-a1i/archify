@@ -5,17 +5,15 @@
 // left out of `rules`, so "not checked" is never reported as "clean". Rules are independent —
 // none reads another's output — and every threshold they use is echoed in
 // the finding's evidence so a reader can re-check the call.
-import { RULES, duplicateBlock as duplicate } from './rules/index.mjs';
-import { analyzeDuplicates } from '../lib/duplicates.mjs';
-import { createRangeDigest } from '../lib/evidence.mjs';
-import { fail } from '../core/index.mjs';
+import { RULES, analyzeDuplicates, duplicateBlock as duplicate } from './rules/index.mjs';
+import { createRangeDigest, fail } from '../core/index.mjs';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
 const PACKAGE = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 export { RULES };
-export { layerCounts } from './rules/index.mjs';
+export { analyzeDuplicates, layerCounts, duplicateOptions, DUPLICATE_RULE, JSCPD_VERSION } from './rules/index.mjs';
 
 export function evaluate(graph, config = {}, facts = null) {
   const suppressed = new Set(config.ignore || []);

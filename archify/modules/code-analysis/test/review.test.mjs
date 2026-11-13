@@ -92,6 +92,39 @@ const check = (args, cwd) => {
   return { code: r.status, out: r.stdout, err: r.stderr, json: args.includes('--json') && r.stdout ? JSON.parse(r.stdout) : null };
 };
 
+test('check: a failing run without a baseline prints the command that records one, and that command works', () => {
+  const dir = pyTree();
+  try {
+    const config = path.join(dir, "analysis's config.json");
+    fs.writeFileSync(config, '{}\n');
+    const scoped = ['.', '--language', 'py', '--config', config];
+    const first = check([...scoped, '--json'], dir);
+    assert.equal(first.code, 1);
+    const adopt = first.json.gate.adopt;
+    assert.ok(adopt, 'a failing run without --baseline carries the adoption command');
+    assert.match(adopt, /code-analysis check .* --language py --config .* --baseline analysis-baseline\.json --update-baseline --reason /);
+    const text = check(scoped, dir).out;
+    assert.match(text, /First run, or a rule became stricter\?/);
+    assert.ok(text.includes(adopt), 'the text output shows the same command');
+
+    // Run the printed command as a shell would, then gate with the file it wrote.
+    const shell = process.platform === 'win32' ? spawnSync('cmd.exe', ['/d', '/s', '/c', adopt], { cwd: dir, encoding: 'utf8' }) : spawnSync('/bin/sh', ['-c', adopt], { cwd: dir, encoding: 'utf8' });
+    assert.equal(shell.status, 0, shell.stderr);
+    assert.ok(fs.existsSync(path.join(dir, 'analysis-baseline.json')));
+    const gated = check([...scoped, '--baseline', 'analysis-baseline.json', '--json'], dir);
+    assert.equal(gated.code, 0, 'existing findings no longer fail once recorded');
+    assert.equal(gated.json.gate.adopt, undefined, 'no hint once a baseline is in use');
+
+    fs.writeFileSync(path.join(dir, 'app/c.py'), 'from app import d\n');
+    fs.writeFileSync(path.join(dir, 'app/d.py'), 'from app import c\n');
+    const regressed = check([...scoped, '--baseline', 'analysis-baseline.json', '--json'], dir);
+    assert.equal(regressed.code, 1, 'a new cycle still fails');
+    assert.equal(regressed.json.gate.adopt, undefined, 'the hint is for adoption, not for hiding new findings');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('check: exit codes follow the gate, the baseline and the comparison', () => {
   const dir = pyTree();
   try {
