@@ -214,16 +214,16 @@ export const sponsorsList: SponsorItem[] = [
       zh: '全模态创作与大模型 API',
     },
     summary: {
-      en: 'One API key covers text, image, and video creation with GPT, Claude, Gemini, DeepSeek, Qwen, Kling, and other models without switching groups.',
-      zh: '一个 API Key 覆盖文案、图片与视频创作，支持 GPT、Claude、Gemini、DeepSeek、通义千问、可灵等主流模型，无需分组。',
+      en: 'Infistar provides access to Claude, GPT, Gemini and DeepSeek with one API key for text, image and video creation. Model API pricing starts at 1% of official rates.',
+      zh: 'Infistar 用一个 API Key 接入 Claude、GPT、Gemini 和 DeepSeek，支持文本、图像和视频创作。模型 API 价格低至官方的 1%。',
     },
     highlight: {
-      en: '$5 trial credits · first top-up offer',
-      zh: '注册送 $5 体验金 · 享首充特惠',
+      en: 'CNY 5 in trial credit when signing up through this link',
+      zh: '通过此链接注册可获得 5 元人民币试用额度',
     },
     cta: {
       en: 'Try Infistar',
-      zh: '立即体验 Infistar',
+      zh: '试用 Infistar',
     },
     href: 'https://www.infistar.cc/register?aff=9N89LEMV&ref_source=link',
   },
