@@ -2193,7 +2193,8 @@ const COMMAND_USAGE = {
   start: '<repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
     'serve <repo-root> --ir <architecture.json> --out <dir> [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
-    'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline] [--reason text] [--json]',
+    'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
+    'import-review <github-pr-url> --out report.json [--author login] [--json]',
     'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
     'task --verify <task.json> --root <repo-root> [--format md|json] [--out file] [--require-valid]',
   ],
@@ -7293,9 +7294,9 @@ try {
       // serve: deliver the authored diagram, serve it, analyze on click.
       // check: headless analysis with baseline, comparison and an exit code for CI.
       // task: an AI optimization task from a finished run, with an evidence check.
-      const commands = { serve: 'serve.mjs', check: 'check.mjs', task: 'task.mjs' };
+      const commands = { serve: 'serve.mjs', check: 'check.mjs', task: 'task.mjs', 'import-review': 'import-review.mjs' };
       if (!commands[args[0]]) {
-        console.error(`archify code-analysis commands: serve, check, task.\n${usage()}`);
+        console.error(`archify code-analysis commands: serve, check, task, import-review.\n${usage()}`);
         process.exitCode = 1;
         break;
       }

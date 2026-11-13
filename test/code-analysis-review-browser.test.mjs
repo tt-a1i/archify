@@ -70,12 +70,6 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.match(await run("document.querySelector('#bauify-overview .bauify-item.accepted-error').title"), /Accepted: legacy loader pair/);
   assert.match(await run("document.querySelector('#bauify-overview .bauify-item.accepted-error').textContent"), /accepted · still to fix/);
 
-  // Filtering should narrow the visible findings and leave the underlying review intact.
-  await run("const input = document.querySelector('#bauify-overview .finding-search'); input.value = 'no-such-finding'; input.dispatchEvent(new Event('input', { bubbles: true }))");
-  assert.match(await run("document.getElementById('bauify-overview').innerText"), /No findings match these filters/);
-  await run("document.querySelector('#bauify-overview .finding-clear').click()");
-  assert.ok(await run("document.querySelectorAll('#bauify-overview .bauify-item.accepted-error').length >= 1"), 'clearing filters restores accepted findings');
-
   if (process.env.ARCHIFY_ANALYSIS_REVIEW_SCREENSHOT) {
     await run("document.querySelectorAll('#bauify-overview details').forEach(d => { d.open = /Import cycles|Module cycles/.test(d.textContent); })");
     const shot = await send('Page.captureScreenshot', { format: 'png' });
@@ -87,10 +81,10 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   await run("document.querySelector('#bauify-overview .bauify-reanalyze').click()");
   await wait("location.search === '' && document.documentElement.getAttribute('data-bauify') === 'on' && /no longer detected/.test(document.getElementById('bauify-overview').innerText)");
   overview = await run("document.getElementById('bauify-overview').innerText");
-  assert.match(overview, /Accepted structural problems still present/, 'accepting a cycle unblocks CI; it does not turn the page green');
+  assert.equal(await run("Boolean(document.querySelector('#bauify-overview h3 .bauify-red'))"), true, 'accepting an error unblocks CI; the overview still shows its error severity');
   assert.match(overview, /Since the previous analysis: 0 new · \d+ no longer detected/);
   assert.match(overview, /2 findings · 2 accepted\n/, 'counts read cleanly when nothing is open');
-  assert.match(overview, /Every finding is accepted in the baseline, including 2 circular dependency findings that are still in the code and stay red/);
+  assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 0, 'accepted findings stay listed without taking open priority slots');
   assert.equal(await run("document.querySelector('#bauify-layer rect').getAttribute('class').split(' ')[0]"), 'red', 'an accepted cycle keeps its component red');
   assert.ok(fs.existsSync(path.join(out, 'analysis.previous', 'findings.json')), 'the replaced run is kept for comparison');
   assert.deepEqual(fs.readdirSync(out).filter(name => name.startsWith('analysis.next-')), [], 'no half-written run is left behind');
@@ -107,56 +101,4 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.match(await run("document.querySelector('#bauify-overview .reanalyze-error').textContent"), /Re-analysis failed: .*baseline.*last successful run/s);
   assert.equal(await run("document.querySelector('#bauify-overview .bauify-reanalyze').disabled"), false, 'the reader can retry');
   assert.equal(fs.readFileSync(path.join(out, 'analysis', 'findings.json'), 'utf8'), before);
-});
-test('imported findings can be filtered by rule, severity, source and status', {
-  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
-}, async t => {
-  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-external-filter-'));
-  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
-  const root = path.join(scratch, 'repo');
-  fs.mkdirSync(root);
-  fs.writeFileSync(path.join(root, 'a.mjs'), 'export const value = 1;\n');
-  const report = path.join(scratch, 'report.sarif');
-  const result = (ruleId, level, text) => ({ ruleId, level, message: { text }, locations: [{ physicalLocation: { artifactLocation: { uri: 'a.mjs' }, region: { startLine: 1 } } }] });
-  const run = (name, results) => ({ tool: { driver: { name, version: '1' } }, results });
-  fs.writeFileSync(report, JSON.stringify({ version: '2.1.0', runs: [run('eslint', [result('no-alert', 'error', 'Accepted external alert')])] }));
-  const baseline = path.join(scratch, 'baseline.json');
-  const accepted = await runCheck([root, '--language', 'ts', '--sarif', report, '--baseline', baseline, '--update-baseline', '--reason', 'known issue']);
-  assert.equal(accepted.exitCode, 0);
-  fs.writeFileSync(report, JSON.stringify({ version: '2.1.0', runs: [run('eslint', [result('no-alert', 'error', 'Accepted external alert')]), run('ruff', [result('F401', 'warning', 'Open external warning')])] }));
-  const ir = path.join(scratch, 'input.json');
-  fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'External filters', output: 'architecture.html' }, components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] }));
-  const view = await startAnalysisView([root, '--ir', ir, '--baseline', baseline, '--out', path.join(scratch, 'view'), '--language', 'ts', '--sarif', report]);
-  t.after(() => new Promise(resolve => { view.server.close(resolve); view.server.closeAllConnections?.(); }));
-  const browser = new ChromeVisualBrowser(chrome);
-  t.after(() => browser.close());
-  const session = await browser.sessionPromise;
-  const send = (method, params = {}) => browser.cdp.send(method, params, session);
-  const evaluate = async expression => {
-    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
-    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
-    return response.result?.value;
-  };
-  await send('Emulation.setDeviceMetricsOverride', { width: 1500, height: 950, deviceScaleFactor: 1, mobile: false });
-  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
-  await send('Page.navigate', { url: view.url });
-  await loaded;
-  await evaluate("document.getElementById('code-analysis-start').click()");
-  for (let i = 0; i < 600 && !(await evaluate("document.documentElement.getAttribute('data-bauify') === 'on'")); i++) await new Promise(resolve => setTimeout(resolve, 100));
-  assert.equal(await evaluate("document.documentElement.getAttribute('data-bauify')"), 'on');
-  const choose = async (filter, value) => {
-    await evaluate(`(() => { const el = document.querySelector('#bauify-overview .finding-${filter}'); el.value = ${JSON.stringify(value)}; el.dispatchEvent(new Event('change', { bubbles: true })); })()`);
-    return evaluate("document.querySelector('#bauify-overview .counts').innerText");
-  };
-  assert.match(await choose('rule', 'external/eslint'), /1 finding shown/);
-  assert.match(await choose('severity', 'info'), /0 findings shown/);
-  await choose('severity', 'warning');
-  await choose('rule', '');
-  assert.match(await choose('source', 'ruff'), /1 finding shown/);
-  assert.match(await choose('status', 'accepted'), /0 findings shown/);
-  await choose('source', 'eslint');
-  await choose('severity', 'warning');
-  assert.match(await choose('status', 'accepted'), /1 finding shown/);
-  await evaluate("document.querySelector('#bauify-overview .finding-clear').click()");
-  assert.match(await evaluate("document.querySelector('#bauify-overview .counts').innerText"), /2 findings/);
 });

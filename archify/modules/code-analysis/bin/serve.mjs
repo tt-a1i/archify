@@ -54,7 +54,7 @@ export function runWorker(options) {
 // installs them on demand instead of asking for a separate setup step.
 export async function ensureDependencies(root = moduleRoot) {
   root = fs.realpathSync(root);
-  const missingPackages = () => ['typescript', 'ajv', 'java-parser', '@xmldom/xmldom'].filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
+  const missingPackages = () => ['typescript', 'ajv', 'ajv-draft-04', 'ajv-formats', 'java-parser', '@xmldom/xmldom'].filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
   // Installed, read-only copies need no lock file. An active installer must
   // finish even if its package manifests have already appeared.
   if (!missingPackages().length && !fs.existsSync(path.join(root, '.code-analysis-install.lock'))) return false;
@@ -77,8 +77,8 @@ export async function ensureDependencies(root = moduleRoot) {
 
 export const USAGE = `Usage:
   archify code-analysis serve <repo-root> --ir <architecture.json> --out <dir>
-                              [--language ts|py|java|go|rust] [--map overlay-map.json] [--config file.json]
-                              [--baseline baseline.json] [--sarif file] [--eslint file] [--ruff file] [--quality standard|showcase]
+                              [--language ts|py|java] [--map overlay-map.json] [--config file.json]
+                              [--baseline baseline.json] [--quality standard|showcase]
 
 Delivers the authored diagram with Archify, serves it on a local port, and runs the
 code analysis for <repo-root> when "Code Analysis" is clicked on that page. Nothing
@@ -95,7 +95,7 @@ export function parseArgs(argv) {
   const options = {};
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i];
-    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--sarif', '--eslint', '--ruff'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw new Error(`Invalid option: ${key}\n${USAGE}`);
+    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw new Error(`Invalid option: ${key}\n${USAGE}`);
     options[key] = rest[i + 1];
   }
   if (!options['--ir'] || !options['--out']) throw new Error(`serve requires --ir and --out\n${USAGE}`);
@@ -145,8 +145,9 @@ export async function startAnalysisView(argv) {
   // 2. Serve it with the button. The token ties analysis requests to this page.
   const token = randomBytes(24).toString('hex');
   const page = fs.readFileSync(delivered, 'utf8').replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)})</script></body>`);
-  let pending = null, result = null, origin;
+  let pending = null, result = null, origin, reviewing = false;
   const analysisDir = path.join(out, 'analysis');
+  const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : path.join(out, 'baseline.json');
   // One run: fresh directory, then swap it in. The current result is the comparison.
   const runAnalysis = async () => {
     const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
@@ -154,10 +155,7 @@ export async function startAnalysisView(argv) {
       await runWorker({
         root, ir, irSnapshot: doc, html: delivered, out: next,
         language: options['--language'] || null, config: options['--config'] ? path.resolve(options['--config']) : null,
-        map: options['--map'] ? path.resolve(options['--map']) : null, baseline: options['--baseline'] ? path.resolve(options['--baseline']) : null,
-        external: ['--sarif', '--eslint', '--ruff']
-          .filter((key) => options[key])
-          .map((key) => ({ format: key.slice(2), file: path.resolve(options[key]) })),
+        map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
         previous: path.join(analysisDir, 'findings.json'),
       });
     } catch (error) {
@@ -174,9 +172,11 @@ export async function startAnalysisView(argv) {
     const send = (status, body, type = 'application/json') => { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(body); };
     if (req.headers.host !== new URL(origin).host) return send(403, '{}');
     if (req.method === 'GET' && new URL(req.url, origin).pathname === '/') return send(200, page, 'text/html; charset=utf-8');
-    if (req.method !== 'POST' || (req.url !== '/analyze' && req.url !== '/task')) return send(404, '{}');
+    if (req.method !== 'POST' || !['/analyze', '/task', '/review'].includes(req.url)) return send(404, '{}');
     if (req.headers.origin !== origin || req.headers['x-analysis-token'] !== token) return send(403, '{}');
     if (req.url === '/task') return handleTask(req, send);
+    if (req.url === '/review') return handleReview(req, send);
+    if (reviewing) return send(409, JSON.stringify({ error: 'A review decision is being saved; retry when it has finished.' }));
     // Check before cached results as well: this page belongs to the delivered IR.
     let unchanged = false;
     try { unchanged = fs.readFileSync(ir).equals(irBytes); } catch { /* Removed or unreadable input also requires redelivery. */ }
@@ -187,44 +187,98 @@ export async function startAnalysisView(argv) {
     // 3. The click returns the latest result; 4. a refresh request runs a new one.
     // Concurrent requests share the run in progress.
     try {
-      if (req.headers['x-analysis-refresh'] === '1' && !pending) result = null;
-      if (!result) {
-        pending ??= runAnalysis().then((html) => { result = html; return html; }).finally(() => { pending = null; });
-      }
-      send(200, result || await pending, 'text/html; charset=utf-8');
+      if (!pending && (!result || req.headers['x-analysis-refresh'] === '1')) pending = runAnalysis().then((html) => { result = html; return html; }).finally(() => { pending = null; });
+      send(200, pending ? await pending : result, 'text/html; charset=utf-8');
     } catch (error) {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
       send(500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
     }
   });
   // 5. A task for findings of the result on disk, checked against the working tree now.
-  // The request names finding ids only; files and directories are fixed by the server.
+  // Page requests bind the displayed claims; ids-only clients read the current
+  // result. Files and directories are fixed by the server in both cases.
   const handleTask = async (req, send) => {
     const fail409 = (code, message, fixes) => send(409, JSON.stringify({ error: message, diagnostics: [{ code, severity: 'error', message, subject: {}, evidence: {}, supportedFixes: fixes }] }));
     let body = '';
+    req.setEncoding('utf8');
     try {
-      for await (const chunk of req) { body += chunk; if (body.length > TASK_BODY_LIMIT) return send(413, JSON.stringify({ error: 'request too large' })); }
+      for await (const chunk of req) { body += chunk; if (Buffer.byteLength(body) > TASK_BODY_LIMIT) return send(413, JSON.stringify({ error: 'request too large' })); }
     } catch { return send(400, JSON.stringify({ error: 'request could not be read' })); }
-    let ids;
-    try { ({ ids } = JSON.parse(body || '{}')); } catch { return send(400, JSON.stringify({ error: 'request body must be JSON: {"ids": [...]}' })); }
+    let ids, expected;
+    try { ({ ids, expected } = JSON.parse(body || '{}')); } catch { return send(400, JSON.stringify({ error: 'request body must be JSON: {"ids": [...]}' })); }
     if (!Array.isArray(ids) || !ids.length || ids.length > 20 || !ids.every((id) => typeof id === 'string' && /^[A-Z]{2,4}-(?:[0-9a-f]{12}|[0-9]{4,})$/.test(id))) return send(400, JSON.stringify({ error: 'ids must list 1–20 finding ids' }));
-    if (pending) return fail409('task/analysis-running', 'An analysis is running; build the task when it has finished.', ['retry after the analysis completes']);
+    if (expected !== undefined && (!expected || typeof expected !== 'object' || Array.isArray(expected) || ids.some((id) => typeof expected[id] !== 'string' || !/^[0-9a-f]{64}$/.test(expected[id])))) return send(400, JSON.stringify({ error: 'expected must map every selected finding id to its displayed reviewTarget digest' }));
+    if (pending || reviewing) return fail409('task/analysis-running', 'An analysis or review update is running; build the task when it has finished.', ['retry after the analysis completes']);
     if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return fail409('task/no-analysis', 'Run the analysis before building a task.', ['click Code Analysis first']);
     try {
       const { buildTask, renderTaskMarkdown } = await import('../lib/task.mjs');
       const { verifyTask } = await import('../lib/evidence.mjs');
+      const { loadBaseline, loadPrevious } = await import('../lib/analysis.mjs');
+      const { reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
       const read = (name) => JSON.parse(fs.readFileSync(path.join(analysisDir, name), 'utf8'));
-      const review = fs.existsSync(path.join(analysisDir, 'review.json')) ? read('review.json') : null;
-      const task = verifyTask(buildTask({ findings: read('findings.json'), facts: read('raw-facts.json'), ids, review }), root);
+      const findings = read('findings.json'), facts = read('raw-facts.json');
+      if (expected && findings.diagnostics.some((finding) => ids.includes(finding.id) && reviewTargetDigest(finding) !== expected[finding.id])) return fail409('task/finding-changed', 'The finding changed since this page was loaded. Re-analyze to refresh the displayed claim before exporting its task.', ['refresh the analysis page and review the current finding']);
+      const review = reviewFindings(findings.diagnostics, { baseline: fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null, previous: loadPrevious(path.join(out, 'analysis.previous/findings.json')), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+      const task = verifyTask(buildTask({ findings, facts, ids, review }), root);
       send(200, JSON.stringify({ task, markdown: renderTaskMarkdown(task) }));
     } catch (error) {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
       send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
     }
   };
+  // A fixed baseline destination and one id per decision. Paths are never supplied
+  // by the request, and an acceptance is bound to evidence checked now.
+  const handleReview = async (req, send) => {
+    let body = '';
+    req.setEncoding('utf8');
+    try { for await (const chunk of req) { body += chunk; if (Buffer.byteLength(body) > TASK_BODY_LIMIT) return send(413, JSON.stringify({ error: 'request too large' })); } }
+    catch { return send(400, JSON.stringify({ error: 'request could not be read' })); }
+    let input;
+    try { input = JSON.parse(body); } catch { return send(400, JSON.stringify({ error: 'request body must be JSON' })); }
+    if (!input || !['accept', 'revoke'].includes(input.action) || typeof input.id !== 'string' || !/^[A-Z]{2,4}-[0-9a-f]{12}$/.test(input.id)) return send(400, JSON.stringify({ error: 'review requires action accept/revoke and a stable finding id' }));
+    if (input.action === 'accept' && (typeof input.expected !== 'string' || !/^[0-9a-f]{64}$/.test(input.expected))) return send(400, JSON.stringify({ error: 'accept requires the reviewTarget digest shown with the finding' }));
+    if (pending || reviewing) return send(409, JSON.stringify({ error: 'An analysis or review update is running; retry after it finishes.' }));
+    if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return send(409, JSON.stringify({ error: 'Run an analysis before reviewing a finding.' }));
+    reviewing = true;
+    let phase = 'prepare';
+    try {
+      const { loadBaseline, saveBaseline, loadPrevious } = await import('../lib/analysis.mjs');
+      const { acceptFinding, revokeFinding, reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
+      const { buildTask } = await import('../lib/task.mjs');
+      const { verifyTask } = await import('../lib/evidence.mjs');
+      const { renderAnalysisSnapshot, writeAnalysisView } = await import('../overlay/page.mjs');
+      const findings = JSON.parse(fs.readFileSync(path.join(analysisDir, 'findings.json'), 'utf8'));
+      const facts = JSON.parse(fs.readFileSync(path.join(analysisDir, 'raw-facts.json'), 'utf8'));
+      const existing = fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null;
+      let next;
+      if (input.action === 'accept') {
+        const diagnostic = findings.diagnostics.find((d) => d.id === input.id);
+        if (!diagnostic) return send(409, JSON.stringify({ error: 'This finding is not in the current analysis; refresh the result.' }));
+        if (reviewTargetDigest(diagnostic) !== input.expected) return send(409, JSON.stringify({ error: 'The finding changed since this page was loaded. Refresh the result before accepting.' }));
+        const checked = verifyTask(buildTask({ findings, facts, ids: [input.id] }), root).evidence.findings[input.id];
+        if ((checked.sourceStatus || checked.status) !== 'valid' || checked.reportBinding === 'changed') return send(409, JSON.stringify({ error: 'The captured evidence changed or cannot be checked. Re-analyze before accepting.', evidence: checked }));
+        next = acceptFinding(diagnostic, { existing, reason: input.reason });
+      } else next = revokeFinding(input.id, { existing });
+      const review = reviewFindings(findings.diagnostics, { baseline: next, previous: loadPrevious(path.join(out, 'analysis.previous/findings.json')), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+      const overlay = renderAnalysisSnapshot({ dir: analysisDir, html: delivered, root, review });
+      phase = 'save';
+      saveBaseline(baselineFile, next);
+      result = overlay.html;
+      const response = { saved: true, baseline: baselineFile, review, html: overlay.html, refreshRequired: false, artifactsSaved: true };
+      try { writeAnalysisView(analysisDir, overlay, review); }
+      catch (error) {
+        response.artifactsSaved = false;
+        response.warnings = [{ code: 'review/artifacts-not-updated', message: `The baseline was saved and this server has the updated view, but disk view artifacts could not all be updated (${error.message}). Re-analyze when the output directory is writable to refresh the saved files.` }];
+      }
+      send(200, JSON.stringify(response));
+    } catch (error) {
+      const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: phase === 'save' ? 'baseline/write-failed' : 'review/preparation-failed', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [phase === 'save' ? 'check that the configured baseline can be written, then retry' : 're-analyze the repository to rebuild its captured view, then retry'] }];
+      send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+    } finally { reviewing = false; }
+  };
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   origin = `http://127.0.0.1:${server.address().port}`;
-  return { server, url: origin, token, delivered };
+  return { server, url: origin, token, delivered, baseline: baselineFile };
 }
 
 // Runs in the page. One toolbar button: click → analysis runs → the analysis
@@ -272,11 +326,23 @@ function client(token) {
   var toolbarObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(reposition) : null;
   if (toolbarObserver) toolbarObserver.observe(toolbar);
   var say = function (text) { note.textContent = text; note.style.display = text ? 'block' : 'none'; reposition(); };
-  window.__archifyBuildTask = async function (id) {
-    var response = await fetch('/task', { method: 'POST', headers: { 'X-Analysis-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id] }) });
+  window.__archifyBuildTask = async function (id, expected) {
+    var input = { ids: [id] };
+    if (expected !== undefined) input.expected = { [id]: expected };
+    var response = await fetch('/task', { method: 'POST', headers: { 'X-Analysis-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
     var body = await response.json();
     if (!response.ok) {
       var error = new Error(body.error || (body.diagnostics || []).map(function (d) { return d.message; }).join(' ') || 'Task request failed');
+      error.status = response.status;
+      throw error;
+    }
+    return body;
+  };
+  window.__archifySaveReview = async function (decision) {
+    var response = await fetch('/review', { method: 'POST', headers: { 'X-Analysis-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(decision) });
+    var body = await response.json();
+    if (!response.ok) {
+      var error = new Error(body.error || 'Review decision could not be saved');
       error.status = response.status;
       throw error;
     }
@@ -325,6 +391,8 @@ function client(token) {
       }
       var toggle = document.getElementById('btn-bauify');
       if (toggle) toggle.click();
+      var params = new URLSearchParams(location.search), selectedFinding = params.get('finding');
+      if (selectedFinding && window.__archifyShowFinding) window.__archifyShowFinding(selectedFinding, params.get('from') === 'findings' ? 'findings' : 'summary');
       if (location.search) history.replaceState(null, '', location.pathname);
     } catch (error) {
       button.disabled = false; button.textContent = 'Code Analysis';

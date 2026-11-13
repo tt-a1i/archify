@@ -11,7 +11,7 @@
 //
 // Per finding the review status is
 //   open             not in the baseline
-//   accepted         in the baseline, evidence unchanged (or no digest recorded)
+//   accepted         in the baseline, evidence unchanged (legacy internal entries may omit a digest)
 //   accepted-changed in the baseline, but its evidence changed since: re-review
 // Baseline entries whose finding no longer occurs are reported as stale: the
 // problem was fixed or moved, and the entry can be removed.
@@ -37,6 +37,18 @@
 // existing consumers; new consumers should read `notDetected`.
 import { fail } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
+import { createHash } from 'node:crypto';
+
+// An acceptance must refer to the claim the page actually displayed, even
+// when another page has since re-analyzed a finding with the same stable id.
+// UI projections and prior review state do not change the reviewed claim.
+export function reviewTargetDigest(diagnostic) {
+  const { id, code, dimension, severity, confidence, message, subject, evidence, evidenceDigest, external, supportedFixes } = diagnostic;
+  const serialized = JSON.stringify({ id, code, dimension, severity, confidence, message, subject, evidence, evidenceDigest, external, supportedFixes }, (_key, value) =>
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => compareText(a, b))) : value);
+  return createHash('sha256').update(serialized).digest('hex');
+}
 
 export function validateBaseline(doc, file = null) {
   const errors = schemaErrors('baseline', doc);
@@ -56,9 +68,18 @@ export function reviewFindings(diagnostics, { baseline = null, previous = null, 
   for (const d of diagnostics) {
     const entry = accepted.get(d.id);
     const digest = d.evidenceDigest?.sha256 || null;
-    const status = !entry ? 'open' : entry.sha256 && digest && entry.sha256 !== digest ? 'accepted-changed' : 'accepted';
+    // External acceptance binds two independent facts: the captured code and
+    // the source's claim about it. A legacy entry with neither is not a review
+    // of a newly imported claim, even when its stable id happens to match.
+    const changed = d.external
+      ? !externalAcceptable(d) || entry?.code !== d.code || entry?.sha256 !== digest || entry?.externalReviewDigest !== d.external.reviewDigest
+      : entry?.sha256 && digest && entry.sha256 !== digest;
+    const status = !entry ? 'open' : changed ? 'accepted-changed' : 'accepted';
     const prior = before ? before.get(d.id) : undefined;
-    const since = !before ? null : !prior ? 'new' : (prior.evidenceDigest?.sha256 || null) !== digest ? 'evidence-changed' : 'unchanged';
+    const claimChanged = prior?.external?.sourceId !== d.external?.sourceId
+      || prior?.external?.reviewDigest !== d.external?.reviewDigest
+      || prior?.external?.binding !== d.external?.binding;
+    const since = !before ? null : !prior ? 'new' : (prior.evidenceDigest?.sha256 || null) !== digest || claimChanged ? 'evidence-changed' : 'unchanged';
     findings[d.id] = { status, ...(entry ? { reason: entry.reason } : {}), ...(since ? { since } : {}) };
   }
 
@@ -92,14 +113,19 @@ function comparisonOf({ previous, before, current, findings, ids, analysis, file
   const parseErrors = new Set(analysis?.coverage?.parseErrors || []);
   const added = [...current.values()].filter((d) => findings[d.id].since === 'new');
   const notDetected = [...before.values()].filter((d) => !current.has(d.id)).map((d) => {
-    const external = d.code.startsWith('external/');
     const involved = d.evidenceDigest?.files || [];
-    const candidates = external ? [] : added.filter((n) => n.code === d.code && (n.evidenceDigest?.files || []).some((f) => involved.includes(f))).map((n) => n.id).sort(compareText);
-    const likelyCause = external ? null : ran && !ran.has(d.code) ? 'rule-not-run'
+    const candidates = added.filter((n) => n.code === d.code
+      && (!d.external || (n.external?.sourceId === d.external.sourceId && n.external.ruleId === d.external.ruleId))
+      && (n.evidenceDigest?.files || []).some((f) => involved.includes(f))).map((n) => n.id).sort(compareText);
+    // An empty external report has no current citations to capture. Its
+    // declared scan scope, not the AST adapter's file inventory or the rules
+    // that happened to produce findings, explains whether an old item was checked.
+    const likelyCause = d.external ? externalAbsenceCause(d, analysis, reasons) || (candidates.length ? 'possibly-renamed' : null)
+      : ran && !ran.has(d.code) ? 'rule-not-run'
       : involved.some((f) => parseErrors.has(f)) ? 'parse-error'
         : known && involved.some((f) => !known.has(f)) ? 'files-missing'
           : candidates.length ? 'possibly-renamed' : null;
-    return { id: d.id, code: d.code, severity: d.severity, message: d.message, ...(likelyCause ? { likelyCause } : {}), ...(likelyCause === 'possibly-renamed' ? { candidates } : {}) };
+    return { id: d.id, code: d.code, severity: d.severity, message: d.message, ...(d.external ? { sourceId: d.external.sourceId } : {}), ...(likelyCause ? { likelyCause } : {}), ...(likelyCause === 'possibly-renamed' ? { candidates } : {}) };
   }).sort((a, b) => compareText(a.id, b.id));
   return {
     previousSnapshot: previous.repository?.snapshotId || null,
@@ -131,9 +157,6 @@ export function comparability(before, after) {
   if (revision(before) !== revision(after)) changes.push(`Extraction logic changed from revision ${revision(before) ?? 'unrecorded'} to ${revision(after) ?? 'unrecorded'}.`);
   if (changes.length) add('adapter-changed', changes.join(' '));
   if (before.configDigest !== after.configDigest) add('config-changed', 'The analysis configuration changed (thresholds, include/exclude, roles, boundaries or ignored rules).');
-  const externalContent = (context) => (context.externalDiagnostics || []).map(({ format, sha256, findings, rules }) => ({ format, sha256, findings, rules }));
-  if (JSON.stringify(externalContent(before)) !== JSON.stringify(externalContent(after))) add('external-diagnostics-changed', 'The imported diagnostic content, formats or rule inventory changed.');
-  if (JSON.stringify(before.concentrationContext || null) !== JSON.stringify(after.concentrationContext || null)) add('concentration-denominator-changed', 'The module count or analyzed LOC denominator used by concentration changed.');
   if (before.language === 'go' && after.language === 'go') {
     const left = before.goBuildScope, right = after.goBuildScope;
     if (!left || !right) add('go-build-scope-missing', 'At least one Go run recorded no effective build scope; platform and build-tag selection cannot be compared.');
@@ -163,7 +186,75 @@ export function comparability(before, after) {
   if (roles(before.coverage) !== roles(after.coverage)) add('scope-changed', 'Excluded file roles changed.');
   const newParseErrors = (after.coverage?.parseErrors || []).filter((f) => !(before.coverage?.parseErrors || []).includes(f));
   if (newParseErrors.length) add('parse-errors', `${newParseErrors.length} file${newParseErrors.length === 1 ? '' : 's'} failed to parse this time: ${newParseErrors.slice(0, 5).join(', ')}${newParseErrors.length > 5 ? ', …' : ''}.`);
+  reasons.push(...externalComparisonReasons(before.external, after.external));
   return { comparable: reasons.some((r) => r.code !== 'go-build-scope-missing') ? false : reasons.length ? null : true, reasons };
+}
+
+// Source contexts describe how an external report was produced. The changing
+// report bytes are deliberately not an equality key: fixing one warning should
+// produce a different report without making the two scans incomparable.
+function externalComparisonReasons(before = [], after = []) {
+  const previous = new Map(before.map((source) => [source.id, source]));
+  const current = new Map(after.map((source) => [source.id, source]));
+  const reasons = [];
+  for (const sourceId of [...new Set([...previous.keys(), ...current.keys()])].sort(compareText)) {
+    const left = previous.get(sourceId), right = current.get(sourceId);
+    const add = (code, message) => reasons.push({ code, sourceId, message: `${sourceId}: ${message}` });
+    if (!left) { add('external-source-added', 'this source was not recorded in the previous analysis.'); continue; }
+    if (!right) { add('external-source-missing', 'this source was not imported in the current analysis; its absent findings were not checked.'); continue; }
+    if (left.status !== 'imported' || right.status !== 'imported' || left.coverage?.complete === false || right.coverage?.complete === false) {
+      add('external-coverage-incomplete', 'at least one report has incomplete coverage; absence of a finding does not establish a fix.');
+    } else if (left.coverage?.complete !== true || right.coverage?.complete !== true) {
+      add('external-coverage-unknown', 'the reports do not both establish complete scan coverage.');
+    }
+    if (left.binding === 'changed' || right.binding === 'changed') add('external-binding-changed', 'at least one report does not match the captured source.');
+    else if (left.binding !== 'verified' || right.binding !== 'verified') add('external-binding-unverified', 'the reports were not both verified against the source they claim to check.');
+    if (!left.tool || !right.tool || !left.toolVersion || !right.toolVersion) add('external-tool-unknown', 'the tool and its version were not recorded in both reports.');
+    else if (left.tool !== right.tool || left.toolVersion !== right.toolVersion) add('external-tool-changed', 'the tool or its version changed.');
+    if (!left.configDigest || !right.configDigest) add('external-config-unknown', 'the effective external rule configuration was not recorded in both reports.');
+    else if (left.configDigest !== right.configDigest) add('external-config-changed', 'the effective external rule configuration changed.');
+    if (left.severityPolicy !== right.severityPolicy || left.importSettingsDigest !== right.importSettingsDigest) {
+      add('external-import-settings-changed', 'the severity mapping or source import settings changed.');
+    } else if (!left.severityPolicy || !left.importSettingsDigest) {
+      add('external-import-settings-unknown', 'the severity mapping or source import settings were not recorded.');
+    }
+    if (left.format !== right.format || left.adapterRevision !== right.adapterRevision || left.identityRevision !== right.identityRevision) {
+      add('external-adapter-changed', 'the report format, import logic or identity algorithm changed.');
+    } else if (!Number.isInteger(left.adapterRevision) || !Number.isInteger(left.identityRevision)) {
+      add('external-context-missing', 'the import logic or identity algorithm version was not recorded.');
+    }
+    const paths = (source) => [...new Set(source.coverage?.files || [])].sort(compareText);
+    if (JSON.stringify(paths(left)) !== JSON.stringify(paths(right))) add('external-scope-changed', 'the files selected for the external check changed.');
+  }
+  return reasons;
+}
+
+function externalAbsenceCause(diagnostic, analysis, reasons) {
+  if (!analysis) return 'external-context-missing';
+  const source = analysis.external?.find((entry) => entry.id === diagnostic.external.sourceId);
+  if (!source) return 'external-source-missing';
+  const reason = reasons.find((entry) => entry.sourceId === source.id);
+  return reason?.code || null;
+}
+
+const SHA256 = /^[0-9a-f]{64}$/;
+
+function externalAcceptable(diagnostic) {
+  return SHA256.test(diagnostic.evidenceDigest?.sha256 || '')
+    && SHA256.test(diagnostic.external?.reviewDigest || '')
+    && ['verified', 'unverified'].includes(diagnostic.external?.binding);
+}
+
+function baselineEntry(diagnostic, reason) {
+  if (diagnostic.external && !externalAcceptable(diagnostic)) fail('baseline/evidence-unverifiable', 'An external finding needs captured source evidence and a current source claim before it can be accepted.', {
+    subject: { id: diagnostic.id, sourceId: diagnostic.external.sourceId },
+    supportedFixes: ['regenerate the external report for the current source and import it again', 'capture the cited source before reviewing the finding'],
+  });
+  return {
+    id: diagnostic.id, code: diagnostic.code, reason,
+    ...(diagnostic.evidenceDigest?.sha256 ? { sha256: diagnostic.evidenceDigest.sha256 } : {}),
+    ...(diagnostic.external ? { externalReviewDigest: diagnostic.external.reviewDigest } : {}),
+  };
 }
 
 // A finding counts against a gate unless it is accepted with unchanged evidence.
@@ -177,12 +268,27 @@ export function baselineFrom(diagnostics, { existing = null, reason }) {
   const kept = new Map((existing?.accepted || []).map((e) => [e.id, e]));
   return {
     schema_version: 1,
-    accepted: [...diagnostics].sort((a, b) => compareText(a.id, b.id)).map((d) => ({
-      id: d.id, code: d.code,
-      reason: kept.get(d.id)?.reason || reason,
-      ...(d.evidenceDigest?.sha256 ? { sha256: d.evidenceDigest.sha256 } : {}),
-    })),
+    accepted: [...diagnostics].sort((a, b) => compareText(a.id, b.id)).map((d) => baselineEntry(d, kept.get(d.id)?.reason || reason)),
   };
+}
+
+// Single-item operations preserve unrelated and stale entries. The backend owns
+// the baseline path and publishes this returned document; these helpers perform
+// no filesystem writes and never change the finding's source binding.
+export function acceptFinding(diagnostic, { existing = null, reason } = {}) {
+  if (typeof reason !== 'string' || !reason.trim()) fail('baseline/reason-required', 'Explain why this finding is accepted.', {
+    subject: { id: diagnostic?.id }, supportedFixes: ['provide a non-empty reason after reviewing the evidence'],
+  });
+  if (!diagnostic?.id || !diagnostic.code) fail('baseline/finding-invalid', 'A finding with a stable id and rule code is required.', { supportedFixes: ['select a finding from the current analysis'] });
+  if (existing) validateBaseline(existing);
+  const entry = baselineEntry(diagnostic, reason.trim());
+  return validateBaseline({ schema_version: 1, accepted: [...(existing?.accepted || []).filter((item) => item.id !== diagnostic.id).map((item) => ({ ...item })), entry].sort((a, b) => compareText(a.id, b.id)) });
+}
+
+export function revokeFinding(id, { existing = null } = {}) {
+  if (typeof id !== 'string' || !STABLE_ID.test(id)) fail('baseline/finding-invalid', 'A stable finding id is required.', { supportedFixes: ['select a current or accepted finding'] });
+  if (existing) validateBaseline(existing);
+  return validateBaseline({ schema_version: 1, accepted: (existing?.accepted || []).filter((entry) => entry.id !== id).map((entry) => ({ ...entry })) });
 }
 
 function compareText(a, b) { return a < b ? -1 : a > b ? 1 : 0; }

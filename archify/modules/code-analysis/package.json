@@ -17,6 +17,8 @@
   "dependencies": {
     "@xmldom/xmldom": "0.9.12",
     "ajv": "^8.17.1",
+    "ajv-draft-04": "^1.0.0",
+    "ajv-formats": "^3.0.1",
     "java-parser": "3.0.1",
     "typescript": "^5.6.0"
   },
