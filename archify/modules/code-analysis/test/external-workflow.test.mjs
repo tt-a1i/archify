@@ -112,6 +112,82 @@ test('external workflow: evaluateGraph validates combined findings and records c
   );
 });
 
+test('verified ESLint comparison keeps existing locations and gates a genuinely new repeated warning', (t) => {
+  const f = fixture(t);
+  const block = '{ const unused = 1; }\n';
+  const gap = `// ${'separator '.repeat(16)}\n`;
+  const original = block + gap + block;
+  const file = path.join(f.root, 'src/main.ts');
+  const report = path.join(f.root, 'reports/eslint.json');
+  const manifest = path.join(f.root, 'reports/eslint.manifest.json');
+  const writeEslint = (source, lines) => {
+    fs.writeFileSync(file, source);
+    write(report, [{ filePath: 'src/main.ts', messages: lines.map(line => ({
+      ruleId: 'no-unused-vars', severity: 1, message: "'unused' is assigned a value but never used.",
+      line, column: 9, endLine: line, endColumn: 15,
+    })) }]);
+    write(manifest, f.manifest('eslint'));
+  };
+  writeEslint(original, [1, 3]);
+  f.check(['--out', f.out, '--fail-on', 'never']);
+  const compare = ['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'warning'];
+
+  fs.writeFileSync(file, original + '\n');
+  assert.equal(f.check(compare, 2).diagnostics[0].code, 'external/comparison-unverified');
+  writeEslint(original + '\n', [1, 3]);
+  const blank = f.check(compare);
+  assert.equal(blank.review.comparison.new, 0);
+  assert.equal(blank.review.comparison.notDetected, 0);
+
+  writeEslint(original + gap + block, [1, 3, 5]);
+  const afterOut = path.join(f.dir, 'repeated');
+  const repeated = f.check([...compare, '--out', afterOut], 1);
+  assert.equal(repeated.review.comparison.new, 1);
+  assert.equal(repeated.review.comparison.notDetected, 0);
+  assert.deepEqual(repeated.gate.failing.map(item => item.where), ['src/main.ts:5']);
+
+  // Older ESLint snapshots have stable IDs but no line fingerprints. Retain
+  // ID matching even when the new report has enough data to pair by position.
+  const legacy = read(path.join(f.out, 'findings.json'));
+  for (const finding of legacy.diagnostics) if (finding.external) delete finding.external.comparisonLineSha256;
+  const legacyPath = path.join(f.dir, 'legacy-findings.json');
+  write(legacyPath, legacy);
+  const legacyOut = path.join(f.dir, 'legacy-comparison');
+  f.check(['--compare', legacyPath, '--out', legacyOut, '--fail-on', 'never']);
+  const legacyReview = read(path.join(legacyOut, 'review.json'));
+  const oldIds = new Set(legacy.diagnostics.map(finding => finding.id));
+  const current = read(path.join(legacyOut, 'findings.json')).diagnostics;
+  assert.equal(legacyReview.comparison.comparable, true);
+  assert.ok(current.some(finding => oldIds.has(finding.id)));
+  assert.ok(current.some(finding => !oldIds.has(finding.id)));
+  assert.deepEqual(current.filter(finding => legacyReview.findings[finding.id].since === 'new').map(finding => finding.id),
+    current.filter(finding => !oldIds.has(finding.id)).map(finding => finding.id));
+});
+
+test('verified ESLint comparison keeps a warning on an empty line after a nearby edit', (t) => {
+  const f = fixture(t);
+  const writeEslint = (source) => {
+    fs.writeFileSync(path.join(f.root, 'src/main.ts'), source);
+    write(path.join(f.root, 'reports/eslint.json'), [{ filePath: 'src/main.ts', messages: [{
+      ruleId: 'no-multiple-empty-lines', severity: 1, message: 'More than 1 blank line not allowed.', line: 3, column: 1,
+    }] }]);
+    write(path.join(f.root, 'reports/eslint.manifest.json'), f.manifest('eslint'));
+  };
+  writeEslint('export const first = 1;\n\n\nexport const last = 2;\n');
+  f.check(['--out', f.out, '--fail-on', 'never']);
+  writeEslint('export const first = 1;\n\n\n\nexport const last = 2;\n');
+  const out = path.join(f.dir, 'empty-line-comparison');
+  const previous = path.join(f.out, 'findings.json');
+  const result = f.check(['--compare', previous, '--new-only', '--fail-on', 'warning', '--out', out]);
+  const warning = data => data.diagnostics.find(finding => finding.external?.ruleId === 'no-multiple-empty-lines');
+  const before = warning(read(previous));
+  const after = warning(read(path.join(out, 'findings.json')));
+  assert.notEqual(after.id, before.id, 'exercise comparison after the context ID changes');
+  assert.equal(after.external.comparisonLineSha256, hash(''));
+  assert.equal(result.review.comparison.new, 0);
+  assert.equal(result.review.comparison.notDetected, 0);
+});
+
 test('external workflow: warning defaults preserve CLI gates and require re-review when the source policy changes', (t) => {
   const f = fixture(t);
   write(path.join(f.root, 'reports/ruff.json'), []);
