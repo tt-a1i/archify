@@ -171,7 +171,8 @@ How cycles are graded:
 | --- | --- |
 | `coupling/import-cycle`: files that import each other at module scope | error |
 | `coupling/import-cycle`: a cycle that only closes through deferred or conditional imports | warning |
-| `coupling/import-cycle` and `coupling/cycle` in Java | error |
+| `coupling/cycle` in Java: packages that depend on each other | error |
+| `coupling/import-cycle` in Java: classes that refer to each other | warning: classes load on demand, so there is no load-order risk, and mutual references between classes are common |
 | `coupling/cycle`: modules that depend on each other through module-scope imports | error |
 | `coupling/cycle`: a component that only closes through deferred, conditional or type-only edges | warning |
 | Rust file and module cycles | info: files of one crate compile together, and mutual `use` is ordinary there |
@@ -183,6 +184,8 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 ```
 
 A comparison with a run made before the change is marked not comparable (the rule versions differ), so a changed level is not misread as a new or fixed problem.
+
+In rule version 3 of `coupling/import-cycle`, Java class cycles went from error back to warning. They still fail `check` at the default `--fail-on warning`, but they no longer stay red once accepted, and Java package cycles (`coupling/cycle`) remain errors.
 
 ## Concentration
 
