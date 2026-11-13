@@ -183,11 +183,16 @@ export async function runCheck(argv) {
           : 'Re-run with --out <dir> to drill down with the task command.',
       },
       // Already computed for the overview. Repeated here so a reader of the CLI
-      // output sees a file that failed to parse, or files left out because a
-      // language was selected, without opening the output directory. The gate
-      // below does not read it.
+      // output sees a file that failed to parse, files excluded by role from the
+      // module graph and rules, or files left out because a language was selected,
+      // without opening the output directory. The gate below does not read it.
       coverage: {
         parseErrors: overview.coverage.files.parseErrors,
+        ...(overview.coverage.files.excludedByRole ? {
+          analyzedFiles: overview.coverage.files.analyzed,
+          excludedByRole: overview.coverage.files.excludedByRole,
+          excludedRoleCounts: countExcludedRoles(facts.files, graph.excluded?.roles),
+        } : {}),
         ...(findings.analysis?.external?.length ? { external: findings.analysis.external } : {}),
         ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
         otherLanguages: overview.coverage.otherLanguages,
@@ -197,6 +202,15 @@ export async function runCheck(argv) {
 }
 
 export { findingWhere as where } from '../overlay/overview.mjs';
+
+function countExcludedRoles(files, excludedRoles = []) {
+  const excluded = new Set(excludedRoles);
+  const counts = {};
+  for (const f of files || []) {
+    if (excluded.has(f.role)) counts[f.role] = (counts[f.role] || 0) + 1;
+  }
+  return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+}
 
 function openRuleCounts(findings) {
   const byCode = new Map();
@@ -234,6 +248,10 @@ export function formatText(r) {
     lines.push('  Source profile only; inspect coverage.languageScope for cfg/features, omissions and unknown dispatch.');
   }
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
+  if (uncovered.excludedByRole) {
+    const breakdown = Object.entries(uncovered.excludedRoleCounts || {}).map(([role, count]) => `${count} ${formatTerminalText(role)}`).join(', ');
+    lines.push(`  Graph/rule scope: ${uncovered.analyzedFiles} source file${uncovered.analyzedFiles === 1 ? '' : 's'} analyzed, ${uncovered.excludedByRole} excluded by role${breakdown ? ` (${breakdown})` : ''}`);
+  }
   if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.map(formatTerminalText).join(', ')}`);
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);
   for (const source of uncovered.external || []) {

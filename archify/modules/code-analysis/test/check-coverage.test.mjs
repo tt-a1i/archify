@@ -168,6 +168,38 @@ test('check: --ir aligns findings and modules with architecture components and r
   assert.match(text.stdout, /undeclared component imports: app -> auth \(1\)/);
 });
 
+test('check: role exclusions and ambiguous-language file counts are visible on first contact', (t) => {
+  const root = fixture(t, {
+    'src/app.py': 'value = 1\n',
+    'src/extra.py': 'value = 2\n',
+    'tests/test_app.py': 'def test_ok():\n    assert True\n',
+    'vendor/bundled.py': 'bundled = True\n',
+    'scripts/helper.ts': 'export const helper = 1;\n',
+  });
+
+  const ambiguous = check(root, ['--json']);
+  assert.equal(ambiguous.status, 2);
+  const err = JSON.parse(ambiguous.stdout);
+  assert.equal(err.diagnostics[0].code, 'extract/adapter-ambiguous');
+  assert.deepEqual(err.diagnostics[0].evidence.counts, [
+    { adapter: 'py', files: 4 },
+    { adapter: 'ts', files: 1 },
+  ]);
+  assert.equal(err.diagnostics[0].supportedFixes[0], 'pass --language py (4 files)');
+
+  const pyJson = check(root, ['--language', 'py', '--json']);
+  assert.equal(pyJson.status, 0, pyJson.stdout + pyJson.stderr);
+  const receipt = JSON.parse(pyJson.stdout);
+  assert.equal(receipt.files, 4);
+  assert.equal(receipt.coverage.analyzedFiles, 2);
+  assert.equal(receipt.coverage.excludedByRole, 2);
+  assert.deepEqual(receipt.coverage.excludedRoleCounts, { generated: 1, test: 1 });
+
+  const pyText = check(root, ['--language', 'py']);
+  assert.equal(pyText.status, 0, pyText.stdout + pyText.stderr);
+  assert.match(pyText.stdout, /Graph\/rule scope: 2 source files analyzed, 2 excluded by role \(1 generated, 1 test\)/);
+});
+
 function textWithParseError(parseError) {
   return formatText({
     verdict: 'ok',
