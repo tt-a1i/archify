@@ -23,7 +23,7 @@ export function selectAdapter(root, config, requested) {
   const matched = ADAPTERS.filter((a) => a.detect(root, config));
   if (!matched.length) fail('extract/adapter-undetected', 'No language adapter matched the analyzed directory.', {
     subject: { root }, evidence: { supported },
-    supportedFixes: ['point at a directory containing JS/TS, Python or Java sources', 'pass --language explicitly'],
+    supportedFixes: ['point at a directory containing JS/TS, Python, Java, Go or Rust sources', 'pass --language explicitly'],
   });
   // A JS/TS or Python tree that also holds Java sources (an Android folder,
   // a build helper) keeps the language it was analyzed in before Java
@@ -33,10 +33,17 @@ export function selectAdapter(root, config, requested) {
   // analysis.
   const javaProject = [...JAVA_BUILD_MARKERS, 'settings.gradle', 'settings.gradle.kts'].some((name) => fs.existsSync(path.join(root, name)));
   const detected = matched.length > 1 && !javaProject ? matched.filter((a) => a !== javaAdapter) : matched;
-  if (detected.length > 1) fail('extract/adapter-ambiguous', 'More than one language adapter matches; choose one explicitly.', {
-    subject: { root }, evidence: { detected: detected.map((a) => a.id) },
-    supportedFixes: detected.map((a) => `pass --language ${a.id}`).concat(['exclude the other language in the config']),
-  });
+  if (detected.length > 1) {
+    const counts = detected
+      .map((a) => ({ adapter: a.id, files: a.countSources(root, config) }))
+      .sort((a, b) => b.files - a.files || (a.adapter < b.adapter ? -1 : 1));
+    const summary = counts.map((c) => `${c.adapter}: ${c.files} file${c.files === 1 ? '' : 's'}`).join(', ');
+    fail('extract/adapter-ambiguous', `More than one language adapter matches (${summary}); choose one explicitly.`, {
+      subject: { root },
+      evidence: { detected: detected.map((a) => a.id), counts },
+      supportedFixes: counts.map((c) => `pass --language ${c.adapter} (${c.files} file${c.files === 1 ? '' : 's'})`).concat(['exclude the other language in the config']),
+    });
+  }
   return detected[0];
 }
 

@@ -41,7 +41,7 @@
       "coupling/concentration": 1,
       "coupling/cycle": 2,
       "coupling/hub": 1,
-      "coupling/import-cycle": 2,
+      "coupling/import-cycle": 3,
       "coupling/internal-leak": 1
     },
     "coverage": {
