@@ -8,7 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import { buildTask, renderTaskMarkdown, validateTask } from '../lib/task.mjs';
+import { buildTask, buildTaskPayloads, renderTaskMarkdown, validateTask } from '../lib/task.mjs';
 import { createRangeDigest, verifyTask } from '../lib/evidence.mjs';
 import { importExternal } from '../lib/external.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
@@ -88,6 +88,17 @@ test('external task: exported JSON and Markdown keep rule, source, related posit
   assert.match(markdown, /re-reading a previous report is not a new tool run/);
 });
 
+test('external task batches reuse captured facts without sharing supplemental evidence between tasks', (t) => {
+  const run = capturedRun(t);
+  const second = { ...run.diagnostic, id: 'CONV-abcdef123456', message: 'A second imported claim.' };
+  run.findings.diagnostics.push(second);
+  const payloads = buildTaskPayloads({ findings: run.findings, facts: run.facts });
+  for (const id of [ID, second.id]) {
+    assert.deepEqual(payloads[id].task, buildTask({ findings: run.findings, facts: run.facts, ids: [id] }));
+    assert.ok(payloads[id].task.locations[0].excerpt.segments[0].lines.includes('import os'));
+  }
+});
+
 test('external task: commands come only from selected source manifests or explicit task arguments and are never run', (t) => {
   const run = capturedRun(t, { command: 'recorded-lint-command --json > lint.json' });
   const task = buildTask({ ...run, ids: [ID], commands: [{ command: 'recorded-project-tests' }] });
@@ -113,6 +124,33 @@ test('external task: corrupt or conflicting supplemental evidence fails instead 
   assert.throws(() => buildTask({ ...run, ids: [ID] }), (error) => error.diagnostics?.[0]?.code === 'task/evidence-invalid');
   run.findings.externalEvidence = [{ path: 'main.ts', sourceText: run.files['main.ts'], sha256: hash(run.files['main.ts']) }];
   assert.throws(() => buildTask({ ...run, ids: [ID] }), (error) => error.diagnostics?.[0]?.code === 'task/evidence-invalid');
+});
+
+test('external task: conflicting valid captures are rejected in either order by single and batch tasks', (t) => {
+  const run = capturedRun(t);
+  const original = run.findings.externalEvidence[0];
+  for (const sourceText of [original.sourceText.replace('ready', 'changed'), original.sourceText.replaceAll('\n', '\r\n')]) {
+    const different = { ...original, sourceText, sha256: hash(sourceText) };
+    for (const records of [[original, different], [different, original]]) {
+      run.findings.externalEvidence = records;
+      for (const build of [buildTask, buildTaskPayloads]) {
+        assert.throws(() => build({ ...run, ids: [ID] }), error =>
+          error.diagnostics?.[0]?.code === 'task/evidence-invalid'
+          && error.diagnostics[0].subject.file === 'worker.py');
+      }
+    }
+  }
+});
+
+test('external task: identical supplemental captures are idempotent in single and batch tasks', (t) => {
+  const run = capturedRun(t);
+  const original = run.findings.externalEvidence[0];
+  const expected = buildTask({ ...run, ids: [ID] });
+  for (const records of [[original, { ...original }], [{ ...original }, original]]) {
+    run.findings.externalEvidence = records;
+    assert.deepEqual(buildTask({ ...run, ids: [ID] }), expected);
+    assert.deepEqual(buildTaskPayloads({ ...run, ids: [ID] })[ID], { task: expected, markdown: renderTaskMarkdown(expected) });
+  }
 });
 
 test('external task: old diff and whole-file claims retain origin without granting a line-based modification scope', (t) => {
