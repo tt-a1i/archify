@@ -1,13 +1,13 @@
 # What happens when a browser opens an HTTPS site for the first time? {#first-visit}
 
-The browser resolves the hostname, opens TCP, then runs a **one-round-trip TLS 1.3 handshake**. It agrees fresh encryption keys and checks the server's identity before any request is sent.
+The browser looks up the IP address, opens a TCP connection, and runs a **one-round-trip TLS 1.3 handshake**. That handshake agrees on fresh encryption keys and verifies the server's identity before the browser sends its first HTTP request.
 
-- The browser sends its key share inside `ClientHello`, so one round trip is enough.[](source:rfc8446)
-- After `ServerHello` everything is encrypted, including the server's certificate.[](source:rfc8446)
-- `CertificateVerify` proves the server holds the certificate's private key.
-- Keys come from ephemeral shares, so a later leak of the private key cannot decrypt this session.
+- The browser sends its key share inside `ClientHello`, finishing key agreement in one round trip.[](source:rfc8446)
+- Everything after `ServerHello` travels encrypted, including the server's certificate.[](source:rfc8446)
+- `CertificateVerify` proves the server holds the private key matching its certificate.
+- Both sides discard their one-time key shares afterward, so a future private-key leak cannot decrypt this visit.
 
-@answer scope="TLS 1.3 over TCP · first visit to a host · no proxy, no resumption"
+@answer scope="TLS 1.3 over TCP · first visit to a host · no proxy, no session resumption"
 @meta locale=en
 @source rfc8446 title="RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3" url=https://www.rfc-editor.org/rfc/rfc8446
 
@@ -27,43 +27,43 @@ The browser resolves the hostname, opens TCP, then runs a **one-round-trip TLS 1
 | phase | TLS 1.3 handshake · 1 RTT |
 | browser | server | ClientHello: suites, SNI, key share |
 | server | browser | ServerHello: chosen suite, key share | return |
-| server | browser | Certificate + CertificateVerify + Finished, encrypted | return |
+| server | browser | Certificate + CertificateVerify + Finished (encrypted) | return |
 | browser | server | Finished | emphasis |
 | phase | Encrypted HTTP |
 | browser | server | GET / |
 | server | browser | 200 OK + page | return |
 
 @steps id=visit-steps
-| resolve | DNS resolver | Turns the hostname into an IP before the connection can start. | tls-visit | dns |
-| hello | Browser | Opens TCP and sends `ClientHello` with TLS 1.3, cipher suites, the hostname and an ephemeral key share. | tls-visit | browser |
-| prove | Web server | Sends its key share, then certificate and `Finished` under encryption; checks the client's `Finished`. | tls-visit | server |
+| resolve | DNS resolver | Turns the hostname into an IP address so the browser knows where to connect. | tls-visit | dns |
+| hello | Browser | Opens TCP and sends `ClientHello` with supported cipher suites, the hostname (SNI) and a one-time key share. | tls-visit | browser |
+| prove | Web server | Returns its key share in `ServerHello`, then sends its certificate, signature and `Finished` message under encryption. | tls-visit | server |
 
-@callout id=quic level=note title="What about HTTP/3?"
-| With QUIC, the TCP steps disappear: QUIC runs the same TLS 1.3 handshake inside the transport, still in one round trip.
+@callout id=quic level=note title="What changes with HTTP/3?"
+| HTTP/3 runs over QUIC instead of TCP. QUIC folds the TLS 1.3 handshake into transport setup, so connection setup and encryption finish together in one round trip.
 
 ## How does the browser know this is the real site? {#trust}
 
 | Check | What the browser verifies |
 | --- | --- |
-| Chain | The certificate chains to a root CA in the browser's trust store. |
-| Hostname | The site's name appears in the certificate's subject alternative name (SAN) list. |
-| Validity | Today sits inside the certificate's not-before and not-after dates. |
-| Ownership | `CertificateVerify` signs the handshake transcript; only the private-key holder could produce it. |
-| Revocation | Stapled OCSP or CRLs, checked best-effort; many browsers accept an unreachable check. {caution:Weak} |
+| Chain | The certificate chains back to a root CA in the browser's trust store. |
+| Hostname | The site's domain matches the certificate's Subject Alternative Name (SAN) list. |
+| Validity | Today's date falls between the certificate's `notBefore` and `notAfter` timestamps. |
+| Ownership | `CertificateVerify` signs the live handshake transcript; only the private-key holder can produce that signature. |
+| Revocation | Stapled OCSP or browser revocation lists check whether the certificate was revoked, often best-effort. {caution:Soft-fail} |
 
 ## Where do the session keys come from? {#keys}
 
 @facts id=key-facts
-| Key shares | Each side sends an ephemeral Diffie-Hellman share, usually X25519. |
-| Shared secret | Each side combines its private share with the peer's public share. |
-| Key schedule | HKDF expands the secret plus the transcript into handshake, then traffic keys. |
-| Forward secrecy | Shares are discarded after use, so later key theft cannot decrypt this session. |
-| Client `Finished` | Confirms both sides hold the same keys; the request can now ride on them. |
+| Key shares | Browser and server each generate a one-time Diffie-Hellman share, usually `X25519`. |
+| Shared secret | Each side combines its own private share with the other side's public share to reach the same secret. |
+| Key derivation | HKDF mixes that secret with the handshake transcript to derive handshake keys, then separate HTTP traffic keys. |
+| Forward secrecy | Both sides delete the ephemeral shares after handshake, keeping recorded traffic safe if a server key leaks later. |
+| Client `Finished` | MAC over the full transcript confirming neither side saw tampered messages; HTTP data can follow immediately. |
 
 ## What changes on the next visit? {#revisit}
 
 | Aspect | First visit | Resumed visit |
 | --- | --- | --- |
-| Server proof | Full certificate and signature check | Pre-shared key from a `NewSessionTicket` |
-| Round trips to first byte | DNS + TCP + 1 RTT of TLS | TCP, then data can ride with `ClientHello` {good:0-RTT} |
-| Early data risk | None; the request waits for `Finished` | 0-RTT data can be replayed, so servers limit what it may do {caution:Replayable} |
+| Server proof | Full certificate chain and live signature check | Pre-shared key from an earlier `NewSessionTicket` |
+| Round trips before HTTP | DNS + 1 RTT TCP + 1 RTT TLS | 1 RTT TCP, then request can ride inside `ClientHello` {good:0-RTT} |
+| Replay risk | None; request waits until `Finished` | 0-RTT early data can be replayed, so servers restrict it to safe reads {caution:Replayable} |

@@ -610,7 +610,8 @@
     dialog.innerHTML = `<form method="dialog"><header><div><h2 id="ask-title">${words.ask}</h2><p class="ask-where"></p></div><button type="button" class="ask-close" data-ask-cancel aria-label="${words.askCancel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></header><blockquote hidden></blockquote><div class="ask-chips" role="group" aria-label="${words.askQuestion}">${words.askChips.map(chip=>`<button type="button" data-chip>${chip}</button>`).join('')}</div><textarea rows="4" aria-labelledby="ask-title" placeholder="${words.askPlaceholder}"></textarea><footer><p class="ask-note" role="status">${words.askNote}</p><button type="button" data-ask-cancel>${words.askCancel}</button><button type="submit" class="primary">${words.askCopy}<kbd>${mac ? '⌘↵' : 'Ctrl ↵'}</kbd></button></footer></form>`;
     document.body.append(dialog);
     const area = dialog.querySelector('textarea'), quoteBox = dialog.querySelector('blockquote'), note = dialog.querySelector('.ask-note');
-    // The generated message left in the textarea after a failed copy; a retry copies it unchanged.
+    // The generated message left in the textarea after a failed copy; a retry copies it unchanged,
+    // while editing or clicking a chip strips its outer envelope instead of nesting a second copy.
     let context = null, manual = null;
     const open = (panel, quote = '') => {
       const number = panel.id === 'answer' ? words.answer : panel.querySelector('.panel-id')?.textContent.trim();
@@ -621,16 +622,23 @@
       quoteBox.hidden = !quote; quoteBox.textContent = quote;
       area.value = ''; note.textContent = words.askNote; dialog.showModal(); area.focus();
     };
+    function questionBody() {
+      const value = area.value;
+      if (!manual) return value;
+      const body = manual.prefix && value.startsWith(manual.prefix) ? value.slice(manual.prefix.length) : value;
+      return manual.suffix && body.endsWith(manual.suffix) ? body.slice(0, -manual.suffix.length) : body;
+    }
     // A suggested question is added once; choosing it again takes it back out.
     dialog.querySelectorAll('[data-chip]').forEach(chip=>chip.addEventListener('click',()=>{
-      const lines = area.value.split('\n').filter(line=>line.trim()), on = !lines.includes(chip.textContent);
+      const lines = questionBody().split('\n').filter(line=>line.trim()), on = !lines.includes(chip.textContent);
+      manual = null;
       area.value = (on ? [...lines,chip.textContent] : lines.filter(line=>line !== chip.textContent)).join('\n');
       chip.setAttribute('aria-pressed',String(on)); area.focus();
     }));
     area.addEventListener('keydown',event=>{ if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); dialog.querySelector('form').requestSubmit(); } });
     dialog.querySelectorAll('[data-ask-cancel]').forEach(button=>button.addEventListener('click',()=>dialog.close()));
-    function buildMessage() {
-      const {panel,quote,number,title} = context, page = document.querySelector('h1')?.textContent.trim();
+    function buildMessage(question) {
+      const {panel,quote,number,title} = context, page = document.querySelector('.masthead')?.dataset.title || document.querySelector('h1')?.textContent.trim();
       const file = location.protocol === 'file:' ? decodeURIComponent(location.pathname) : location.href.split('#')[0];
       const quoteMark = text => english ? `"${text}"` : `「${text}」`;
       const lines = [
@@ -638,15 +646,15 @@
         `${words.askFile}${say(': ','：')}${file}`,
         `${words.askWhere}${say(': ','：')}${panel.id === 'answer' ? title : say(`Panel ${number} ${quoteMark(title)}`,`面板 ${number}${quoteMark(title)}`)}${say(` (ID: ${panel.id})`,`（ID: ${panel.id}）`)}`,
         ...(quote ? [`${words.askQuoteLabel}${say(': ','：')}${quoteMark(quote)}`] : []),
-        `${words.askQuestion}${say(': ','：')}${area.value.trim() || words.askChips[0]}`,
-        ...(panel.id === 'answer' ? [] : [words.askPatch]),
       ];
-      return lines.join('\n');
+      const prefix = `${lines.join('\n')}\n${words.askQuestion}${say(': ','：')}`;
+      const suffix = panel.id === 'answer' ? '' : `\n${words.askPatch}`;
+      return { prefix, suffix, text: `${prefix}${question}${suffix}` };
     }
     dialog.querySelector('form').addEventListener('submit',event=>{
       event.preventDefault();
-      const text = manual !== null && area.value === manual ? manual : buildMessage();
-      copyText(text).then(()=>{ manual = null; dialog.close(); notify(words.askCopied); },()=>{ manual = text; area.value = text; area.focus(); area.select(); note.textContent = say('Copy failed. The text is selected; copy it manually.','复制失败，已选中文本，请手动复制。'); });
+      const payload = manual !== null && area.value === manual.text ? manual : buildMessage(questionBody().trim() || words.askChips[0]);
+      copyText(payload.text).then(()=>{ manual = null; dialog.close(); notify(words.askCopied); },()=>{ manual = payload; area.value = payload.text; area.focus(); area.select(); note.textContent = say('Copy failed. The text is selected; copy it manually.','复制失败，已选中文本，请手动复制。'); });
     });
     all('.panel').forEach(panel=>{
       const button = document.createElement('button'); button.type = 'button'; button.className = 'ask-button interactive'; button.textContent = words.ask;
