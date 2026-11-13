@@ -211,7 +211,7 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
           : `A freshly generated ${d.external.tool} report using the original rule settings and scan scope no longer reports ${d.external.ruleId || d.id} at the cited code, or the retained result is accepted with an explicit reason.`]
         : facts.repository?.language === 'rust' && d.code === 'coupling/import-cycle' ? ['Verify the intended source responsibility boundary; document an intentionally retained structural cycle without claiming a runtime import failure.'] : (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
       ...(hasExternalReports ? [
-        'Refresh and reimport the external sources using the intended tool version, rule settings and scan scope. Re-reading a previous report is not a new tool run or a new AI review; disappearance alone is not proof of a fix.',
+        'Refresh and reimport the external sources using the intended tool version, rule settings and scan scope; re-reading a previous report is not a new tool run or a new AI review; disappearance alone is not proof of a fix.',
         'Re-analyze with the same language and configuration, assess any comparison limitations, and inspect findings in changed files against the fresh reports and source.',
       ] : ['A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.']),
       'The project checks that cover the changed code pass (see verification).',
