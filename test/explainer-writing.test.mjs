@@ -126,3 +126,24 @@ test('writing: local uncertainty and examples survive strict mode without disabl
   assert.deepEqual(mixed.map(d => d.evidence.rule), ['vague-quantity', 'light-verb']);
   assert.ok(mixed.every(d => d.severity === 'error'));
 });
+
+test('writing: semicolon clauses keep short clauses readable without counting as extra paragraph sentences', () => {
+  const parallel = '浏览器先查本地缓存并校验过期时间窗口；接口再回源查询主库记录并写入更新；最后把结果同步返回调用方。';
+  assert.deepEqual(lintExplainerWriting([entry(parallel)], {mode: 'strict', sentenceLimits: {zh: 24}}), []);
+  const enParallel = 'Check the local cache entry first; fetch the database row only when missing; write the value back last.';
+  assert.deepEqual(lintExplainerWriting([entry(enParallel)], {mode: 'strict', sentenceLimits: {en: 10}}), []);
+  // Five semicolon clauses in a single sentence still count as 1 sentence (< 4 cap).
+  assert.deepEqual(lintExplainerWriting([entry('一；二；三；四；五。')], {mode: 'strict'}), []);
+  // Overlong individual clause still fails sentence-length; URL semicolons stay masked.
+  const longClause = lintExplainerWriting([entry('参见 https://example.com/a?x=1;y=2；然后缓存读取返回空值后接口等待数据库再写回缓存并更新索引。')], {mode: 'strict', sentenceLimits: {zh: 12}});
+  assert.deepEqual(longClause.map(d => d.evidence.rule), ['sentence-length']);
+});
+
+test('writing: Chinese plain-word patterns flag roundabout phrasing without false positives', () => {
+  for (const text of ['在缓存未命中的情况下直接回源。', '旨在通过缓存减少回源。', '令牌被用于校验签名。', '由于锁超时的原因导致失败。']) {
+    const result = lintExplainerWriting([entry(text)], {mode: 'strict'});
+    assert.deepEqual(result.map(d => d.evidence.rule), ['plain-word'], text);
+  }
+  const clean = ['缓存未命中时直接回源。', '用缓存减少回源。', '令牌用于校验签名。', '锁超时导致失败。', '当前情况下无需重试。'];
+  assert.deepEqual(lintExplainerWriting(clean.map(text => entry(text)), {mode: 'strict'}), []);
+});

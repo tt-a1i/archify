@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { parseInline, renderInline } from './inline.mjs';
 import { parseExplainerDiff } from './diff.mjs';
 import { computeExplainerRevision } from './revision.mjs';
-import { layoutExplainerPanels } from './layout.mjs';
+import { layoutExplainerPanels, isGuidedPanel } from './layout.mjs';
 import { compileExplainerChart } from './charts.mjs';
 import { packPageBundle } from './page-bundle.mjs';
 
@@ -106,7 +106,7 @@ export function renderExplainer(document, options = {}) {
     const panelHeading = inline(panel.title, panel.id);
     const blocks=panel.blocks.map(block=>blockHtml(block,panel.id)), figures=panel.blocks.filter(block=>block.type === 'diagram');
     // Steps that point into the panel's one diagram are read beside it: text left, diagram right.
-    const guided=figures.length === 1 && panel.blocks.some(block=>block.type === 'steps' && block.items.some(step=>step.target?.diagram === figures[0].id));
+    const guided=isGuidedPanel(panel);
     const body=guided ? `<div class="panel-body guided"><div class="guide-figure">${blocks[panel.blocks.indexOf(figures[0])]}</div><div class="guide-text">${blocks.filter((_,n)=>panel.blocks[n] !== figures[0]).join('')}</div></div>` : `<div class="panel-body">${blocks.join('')}</div>`;
     return `<section class="panel span${item.span}${figures.length ? ' diagram-panel' : ''}" id="${escape(panel.id)}" data-row="${rowIndex}" data-span-min="${item.min}"${item.explicit ? ` data-span-fixed="${item.span}"` : ''}${measure} data-title="${escape(panelTitle)}"><header class="panel-head"><a class="panel-id" href="#${escape(panel.id)}" aria-label="${escape(panelTitle)}">${index+1}</a><h2>${panelHeading}</h2></header>${body}</section>`;
   })).join('');

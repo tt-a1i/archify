@@ -609,3 +609,35 @@ test('image export retains long diff rows and original line numbers',{skip:!chro
   }
  }finally{await browser.close();}
 });
+
+test('wide answer panel without reasons spans cleanly while reasons sit side-by-side at 1440px',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const base=formalDocument();base.answer.span=12;
+ const withReasons=artifact('answer-with-reasons',renderExplainer(structuredClone(base),{sourceText:JSON.stringify(base)}));
+ const withoutReasonsDoc=structuredClone(base);delete withoutReasonsDoc.answer.reasons;
+ const withoutReasons=artifact('answer-without-reasons',renderExplainer(withoutReasonsDoc,{sourceText:JSON.stringify(withoutReasonsDoc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  await inspectPublicHtml(browser,{artifactPath:withReasons,width:1440,theme:'light',keyboard:false});
+  const sideBySide=await pageValue(browser,'(()=>{const b=document.querySelector(".answer-panel .panel-body").getBoundingClientRect(),v=document.querySelector(".answer-panel .verdict").getBoundingClientRect(),r=document.querySelector(".answer-panel .reasons").getBoundingClientRect();return {bodyWidth:b.width,verdictRight:v.right,reasonsLeft:r.left,reasonsTop:r.top,verdictBottom:v.bottom};})()');
+  assert.ok(sideBySide.reasonsLeft>=sideBySide.verdictRight-1 && sideBySide.reasonsTop<sideBySide.verdictBottom,'Answer with reasons splits into 2 columns');
+  await browser.resetPage();
+  await inspectPublicHtml(browser,{artifactPath:withoutReasons,width:1440,theme:'light',keyboard:false});
+  const singleCol=await pageValue(browser,'(()=>{const b=document.querySelector(".answer-panel .panel-body"),bs=getComputedStyle(b),inner=b.getBoundingClientRect().width-parseFloat(bs.paddingLeft)-parseFloat(bs.paddingRight),v=document.querySelector(".answer-panel .verdict").getBoundingClientRect().width;return {inner,verdictWidth:v};})()');
+  assert.ok(singleCol.verdictWidth>singleCol.inner*0.85,`Expected single-column verdict to fill panel body (${singleCol.verdictWidth}/${singleCol.inner})`);
+ }finally{await browser.close();}
+});
+
+test('browser diagnostics include snippet context and specific repair guidance for readability and diagram-fit',()=>{
+ const base={width:1440,height:900,theme:'light',resolvedTheme:'light',innerWidth:1440,innerHeight:900,scrollWidth:1440,overflowElements:[],keyboardIssues:[],keyboardTraversal:{ok:true,missing:[]},consoleErrors:[],references:[],duplicateIds:[],occluded:[],noJavaScript:[],print:{ok:true},smallText:[{component:'diag',text:'Compact edge label',fontSize:8.314}],interactionFailures:[{name:'diagram-fit',component:'diag',reason:'Insufficient fit',measurement:{requiredWidth:1200,clientWidth:800}}]};
+ const diags=explainerObservationDiagnostics({artifact:artifact('diag-dummy','<!doctype html><html></html>'),allObservations:[base]});
+ const readDiag=diags.find(d=>d.code==='explainer/browser-readability');
+ const fitDiag=diags.find(d=>d.code==='explainer/browser-diagram-fit');
+ assert.ok(readDiag);
+ assert.match(readDiag.message,/"Compact edge label" is 8\.31px, below 10px\./);
+ assert.notEqual(readDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
+ assert.match(readDiag.supportedFixes[0],/@steps|10px/);
+ assert.ok(fitDiag);
+ assert.notEqual(fitDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
+ assert.match(fitDiag.supportedFixes[0],/phase lanes|wider panel span/);
+});
