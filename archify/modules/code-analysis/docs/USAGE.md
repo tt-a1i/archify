@@ -389,6 +389,16 @@ With `--root`, the cited code is compared with the current working tree and the 
 
 A recorded digest that cannot be recomputed keeps the task **unverifiable**, even when every displayed citation is unchanged. For compatibility with extractors that retain or strip UTF-8 BOMs, whole-file/function digests try at most 64 text combinations without materializing the full product; a match passes, while an exhausted search budget is **unverifiable**. Historical tasks without digests can still verify their captured lines.
 
+Module-level `coupling/concentration` tasks without line evidence provide
+`moduleSummaries` instead of empty per-file citation blocks. Each summary reports
+complete membership counts and line share, then up to eight large files, eight
+externally imported entry files and eight path/name groups. These groups describe
+source paths, not inferred business responsibilities. `scope.read` lists bounded
+reading starting points; the finding's full `evidenceDigest.files` remains the
+membership to inspect before changing the module. Verification still checks every
+file in that digest, including files absent from the summary. Historical tasks
+without this optional field remain readable and verifiable.
+
 The contract is `schemas/ai-task.schema.json`; examples for each finding kind and evidence status are in `test/fixtures/tasks/`.
 
 ### Investigate a source question
