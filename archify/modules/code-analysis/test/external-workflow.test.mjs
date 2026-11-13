@@ -163,6 +163,30 @@ test('verified ESLint comparison keeps existing locations and gates a genuinely 
     current.filter(finding => !oldIds.has(finding.id)).map(finding => finding.id));
 });
 
+test('verified ESLint comparison keeps a warning on an empty line after a nearby edit', (t) => {
+  const f = fixture(t);
+  const writeEslint = (source) => {
+    fs.writeFileSync(path.join(f.root, 'src/main.ts'), source);
+    write(path.join(f.root, 'reports/eslint.json'), [{ filePath: 'src/main.ts', messages: [{
+      ruleId: 'no-multiple-empty-lines', severity: 1, message: 'More than 1 blank line not allowed.', line: 3, column: 1,
+    }] }]);
+    write(path.join(f.root, 'reports/eslint.manifest.json'), f.manifest('eslint'));
+  };
+  writeEslint('export const first = 1;\n\n\nexport const last = 2;\n');
+  f.check(['--out', f.out, '--fail-on', 'never']);
+  writeEslint('export const first = 1;\n\n\n\nexport const last = 2;\n');
+  const out = path.join(f.dir, 'empty-line-comparison');
+  const previous = path.join(f.out, 'findings.json');
+  const result = f.check(['--compare', previous, '--new-only', '--fail-on', 'warning', '--out', out]);
+  const warning = data => data.diagnostics.find(finding => finding.external?.ruleId === 'no-multiple-empty-lines');
+  const before = warning(read(previous));
+  const after = warning(read(path.join(out, 'findings.json')));
+  assert.notEqual(after.id, before.id, 'exercise comparison after the context ID changes');
+  assert.equal(after.external.comparisonLineSha256, hash(''));
+  assert.equal(result.review.comparison.new, 0);
+  assert.equal(result.review.comparison.notDetected, 0);
+});
+
 test('external workflow: warning defaults preserve CLI gates and require re-review when the source policy changes', (t) => {
   const f = fixture(t);
   write(path.join(f.root, 'reports/ruff.json'), []);

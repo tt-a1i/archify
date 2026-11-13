@@ -204,7 +204,7 @@ export function importExternal({ root, config = {}, facts = null }) {
           }
           const { lines, hashes } = comparisonLines.get(primary.file);
           const line = lines[primary.line - 1];
-          if (line && !hashes.has(primary.line)) hashes.set(primary.line, sha256(line));
+          if (line !== undefined && !hashes.has(primary.line)) hashes.set(primary.line, sha256(line));
           comparisonLineSha256 = hashes.get(primary.line);
         }
         const external = {
