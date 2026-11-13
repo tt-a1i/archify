@@ -421,3 +421,77 @@ test('automatic workflow branch labels follow locale without changing authored l
   assert.ok(wrapped.lanes.length>1);
   assert.deepEqual(compileExplainerDiagram('workflow',wrappedRows,{id:'wrapped',title:'Release bands',locale:'en'}),wrapped,'wrapped band titles stay authored');
 });
+
+test('compact diagrams support domain role naming via role <type> | <label> and localized group lenses', async () => {
+  const arch = compileExplainerDiagram('architecture', [
+    'role frontend | Draft state',
+    'role backend | Frozen state',
+    'draft | Draft | frontend',
+    'frozen | Frozen | backend',
+    'store | Store | database',
+    'draft > frozen | produce',
+    'frozen > store | snapshot',
+  ], { id: 'immer-arch', title: 'Immer state model', locale: 'zh-CN' });
+  assert.equal(arch.meta.translations['viewer.kind.frontend'], 'Draft state');
+  assert.equal(arch.meta.translations['viewer.kind.backend'], 'Frozen state');
+  assert.equal(arch.meta.legend.entries.frontend.label, 'Draft state');
+  assert.equal(arch.meta.legend.entries.backend.label, 'Frozen state');
+  assert.equal(arch.components.find(c => c.id === 'draft').icon, 'none');
+  assert.equal(arch.components.find(c => c.id === 'frozen').icon, 'none');
+  assert.equal(arch.components.find(c => c.id === 'store').icon, undefined, 'unrenamed kinds keep default icons');
+
+  const wf = compileExplainerDiagram('workflow', [
+    'role frontend | Draft state',
+    'edit | Mutate draft | frontend',
+    'guard | Valid? | frontend',
+    'commit | Commit | backend',
+    'edit > guard',
+    'guard > commit | yes',
+  ], { id: 'immer-flow', title: 'Draft validation' });
+  assert.equal(wf.nodes.find(n => n.id === 'edit').icon, 'none');
+  assert.equal(wf.nodes.find(n => n.id === 'guard').icon, 'decision', 'decision question mark icon overrides role suppression');
+  assert.equal(wf.meta.legend.entries.frontend.label, 'Draft state');
+
+  const seq = compileExplainerDiagram('sequence', [
+    'role frontend | Caller',
+    'actor caller | Caller | frontend',
+    'actor engine | Engine | backend',
+    'caller | engine | produce(base, fn)',
+  ], { id: 'immer-seq', title: 'Producer sequence' });
+  assert.equal(seq.meta.translations['viewer.kind.frontend'], 'Caller');
+  assert.equal(seq.meta.legend, undefined, 'sequence specs keep legend undefined');
+
+  const doc = {
+    schema_version: 1, diagram_type: 'explainer', meta: { id: 'role-test', title: 'Role test', locale: 'en' },
+    answer: { summary: 'Roles map kinds cleanly.' }, sources: [],
+    panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', arch), blockOf('workflow', wf), blockOf('sequence', seq)] }],
+  };
+  const archFrozen = JSON.stringify(arch);
+  const prepared = await prepareExplainerDiagrams(doc);
+  assert.equal(JSON.stringify(arch), archFrozen, 'native preparation preserves authored spec bytes');
+  assert.equal(prepared.diagrams.architecture.checks.check.ok, true);
+  assert.equal(prepared.diagrams.workflow.checks.check.ok, true);
+  assert.equal(prepared.diagrams.sequence.checks.check.ok, true);
+  assert.equal(prepared.diagrams.architecture.spec.meta.translations['viewer.lens.title'], undefined, 'frozen spec retains authored translations');
+  assert.match(prepared.diagrams.architecture.html, /Compare groups/);
+  assert.match(prepared.diagrams.workflow.html, /Compare groups/);
+  assert.match(prepared.diagrams.sequence.html, /Compare groups/);
+
+  const customLens = structuredClone(arch);
+  customLens.meta.translations['viewer.lens.title'] = 'Custom title';
+  const preparedCustom = await prepareExplainerDiagrams({ ...doc, meta: { ...doc.meta, locale: 'zh-CN' }, panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', customLens)] }] });
+  assert.match(preparedCustom.diagrams.architecture.html, /Custom title/);
+  assert.match(preparedCustom.diagrams.architecture.html, /选择一个分组以高亮对应元素。/);
+
+  const literalRoleNode = compileExplainerDiagram('workflow', ['role | Assign role', 'next | Done', 'role > next'], { id: 'literal-role' });
+  assert.equal(literalRoleNode.nodes[0].id, 'role');
+
+  for (const [badRows, code] of [
+    [['role bogus | Label', 'a | A'], 'explainer/diagram-role'],
+    [[`role frontend | ${'x'.repeat(81)}`, 'a | A'], 'explainer/diagram-role'],
+    [['role frontend | One', 'role frontend | Two', 'a | A'], 'explainer/diagram-role-duplicate'],
+    [['role frontend | Only role'], 'explainer/diagram-rows'],
+  ]) {
+    assert.throws(() => compileExplainerDiagram('architecture', badRows), error => error.archifyDiagnostics?.some(item => item.code === code), code);
+  }
+});

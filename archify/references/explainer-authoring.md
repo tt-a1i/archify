@@ -81,6 +81,8 @@ A diagram replaces the paragraph that would describe it. When the answer involve
 
 Steps that walk through a diagram belong in the diagram's panel: the page reads them beside it, each step lighting its part, and the reader can step through them. Title each step with the label of the node it points at, so the text and the diagram match at a glance; the detail column says what to do there.
 
+Keep tables to two or three columns so phones and narrow windows show each row without horizontal scrolling; split wider matrices into separate focused tables. For runnable behaviour, pair a complete copyable fenced snippet with its actual observed output rather than fragments.
+
 A small answer gets a small page: the conclusion plus one or two panels. A how-it-works, diagnosis or checklist question usually needs three to five.
 
 ## Writing
@@ -89,6 +91,8 @@ Write for a reader who will act on the page and may check it. Use the user's lan
 
 - The conclusion is read first; every panel after it supports, qualifies or applies it. Stop once nothing is left to support.
 - Cover what the reader needs to act on the answer: the mechanism behind the conclusion, how to check it, and the cases where it does not hold. The next question a careful reader would ask gets a panel, a table row or a line in scope; a fact the reader could get wrong without it is not optional.
+- Lead with the concrete mechanism rather than abstract labels, and separate distinct dimensions (such as input vs. output or default vs. opt-in) instead of folding them into one blurred rule.
+- Refer to panels, diagrams and examples by heading or visible label, not by layout position (`left`, `right`, `above`, `below`), because panels stack and reflow across screen widths.
 - Each panel takes one question and each sentence makes one claim. A claim a table or diagram already shows is not restated; the text adds its reason or exception.
 - Keep one term per thing across the title, panels, diagram labels and table headers, and prefer the reader's own term. The page links a name in the text to the node with that label, so a reader can point at it in the diagram.
 - Give results with their evidence: a number with its unit, a file position, a source. Keep page-wide conditions in scope. Put a local assumption, exception or uncertainty next to the claim, chart or example it qualifies; do not move it away just to shorten the prose. Label illustrative or unmeasured values where the reader encounters them.
@@ -110,6 +114,8 @@ Any node, actor or entity row may end with a `source:<id>` cell naming a declare
 To reuse an explanation already in the page, add `block:<id>` to the node row, for example `| api | API | backend | block:api-notes |`, and give its paragraph an ID with `@prose id=api-notes`. Prose, callout, list and facts blocks can be referenced. Hovering or focusing the node shows that block's current text; editing or patching the paragraph updates the explanation without changing the diagram. A row may end with both `block:<id>` and `source:<id>`.
 
 Node and participant types: `frontend`, `backend`, `database`, `cloud`, `security`, `messagebus`, `external` (default `backend`). Edge and message variants: `default`, `emphasis`, `security`, `dashed`; sequences also accept `return`. IDs start with a letter and use letters, digits, `-` and `_`.
+
+In `@architecture`, `@workflow` and `@sequence`, rename domain roles with `role <type> | <label>` rows (for example `role frontend | Draft state`). Declared roles rename the diagram legend and Viewer lens, and drop server or infrastructure corner icons from nodes of those types while keeping `?` decision marks in workflows.
 
 **`@sequence`**: declare actors, then messages in order.
 
@@ -136,7 +142,7 @@ Actor rows: `actor <id> | label | type`. Message rows: `from | to | label | vari
 | trace > fix | cause found | emphasis |
 ```
 
-Node rows: `id | label | type?`. Edge rows: `from > to | label? | variant?`. Nodes widen to fit their labels, so a node label names the step in a few words (up to about 10 Chinese characters or 4 English words) and `@steps` carries the detail. Keep edge labels to one or two words. A node label ending in `?` is drawn as a decision; label its outgoing edges with the answers (`yes`, `no`, `是`, `否`).
+Node rows: `id | label | type?`. Edge rows: `from > to | label? | variant?`. Nodes widen to fit their labels, so a node label names the step in a few words (up to about 10 Chinese characters or 4 English words) and `@steps` carries the detail. Omit edge labels when the step or transition is already clear from its node labels, or keep them to one or two words. A node label ending in `?` is drawn as a decision; label its outgoing edges with the answers (`yes`, `no`, `是`, `否`).
 
 Group the steps of a process into phases: declare `lane <id> | label` rows, then give each workflow node its phase as a fourth cell. Up to six nodes draw as one row with the phase labels above it; a longer process wraps into one row per phase.
 
@@ -205,7 +211,7 @@ xychart-beta
 ```
 ````
 
-Name each series (`bar "Before" [...]`) so the chart gets a legend. Bars show their values, and a pie legend shows each value with its share. Use `xychart-beta horizontal` for ranked items or long category names. When numbers carry the point, such as one value jumping while others stay flat, a before/after or a share, chart them so the contrast is seen at a glance; a table under the chart adds only the words each number needs. Put the contrast in one chart, such as mean, P50 and P99 before and after.
+Name each series (`bar "Before" [...]`) so the chart gets a legend. Bars show their values, and a pie legend shows each value with its share. Use `xychart-beta horizontal` for ranked items or long category names. Keep axis ticks, series counts and annotations readable at phone width (~390px) without wrapping into cramped rows or clipped legends; split overloaded multi-series comparisons when labels compete for space. When numbers carry the point, such as one value jumping while others stay flat, a before/after or a share, chart them so the contrast is seen at a glance; a table under the chart adds only the words each number needs. Put the contrast in one chart, such as mean, P50 and P99 before and after.
 
 数据来自草稿目录内的 CSV 或 JSON 文件时，直接使用 `@chart type=bar|line|pie data=latency.csv x=day y=p50,p99 unit=ms title="..."`。`x` 指定分类标签列，`y` 为每个系列指定数值列（饼图使用第一列）。CSV 需要表头；JSON 为对象数组。文件在交付时读取并冻结，柱状图和折线图最多 60 条记录，饼图最多 12 条。空数值仍是错误，不会变成零：补齐数值，或移除该记录并在图注中说明。
 
