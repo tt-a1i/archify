@@ -4525,18 +4525,41 @@ function automaticPortCandidates(edge, node, side, preferred, counterpart) {
       }
     }
   }
-  const clear = (point) => occupied.every(({ coordinate, clearance }) => Math.abs(coordinate - point[axis]) >= clearance - 0.0001);
-  if (clear(preferred)) return [preferred];
+  const blocking = (point) => occupied.filter(({ coordinate, clearance }) => !(Math.abs(coordinate - point[axis]) >= clearance - 0.0001));
+  if (!blocking(preferred).length) return [preferred];
   const candidates = [];
   const extent = verticalSide ? node.height : node.width;
   const direction = (verticalSide ? counterpart.cy : counterpart.cx) >= center[axis] ? 1 : -1;
-  for (let offset = 0; offset <= extent / 2 - 16; offset += 12) {
+  const limit = extent / 2 - 16;
+  const lastOffset = Math.floor(limit / 12) * 12;
+  for (let offset = 0; offset <= limit;) {
+    let nextClearOffset = Infinity;
     for (const sign of [direction, -direction]) {
       const point = [...center];
       point[axis] += sign * offset;
-      if (clear(point) && !candidates.some((candidate) => candidate[axis] === point[axis])) candidates.push(point);
+      const obstacles = blocking(point);
+      if (!obstacles.length && !candidates.some((candidate) => candidate[axis] === point[axis])) candidates.push(point);
+      let blockedUntil = offset;
+      for (const { coordinate, clearance } of obstacles) {
+        // Rounding can reach a clear coordinate before the exact interval end.
+        const rounding = 2 * Number.EPSILON * Math.abs(coordinate)
+          + 2 * Number.EPSILON * Math.abs(center[axis]) + 2 * Number.EPSILON * clearance;
+        blockedUntil = Math.max(blockedUntil, sign * (coordinate - center[axis]) + clearance - 0.0001 - rounding);
+      }
+      nextClearOffset = Math.min(nextClearOffset, blockedUntil);
     }
     if (candidates.length >= 2) return candidates.slice(0, 2);
+    let nextOffset = offset + Math.max(12, offset * Number.EPSILON);
+    const positive = center[axis] + offset, negative = center[axis] - offset;
+    if (center[axis] + nextOffset === positive && center[axis] - nextOffset === negative) {
+      // Skip repeated coordinates, not later usable ports. Keep the 12px grid.
+      const minimumStep = Math.min(Math.abs(positive), Math.abs(negative)) * Number.EPSILON / 2;
+      nextOffset = Math.max(nextOffset, Math.ceil((offset + minimumStep) / 12) * 12);
+    }
+    // Earlier offsets remain inside an occupied interval on both sides.
+    nextOffset = Math.min(Math.max(nextOffset, Math.ceil(nextClearOffset / 12) * 12), lastOffset);
+    if (!Number.isFinite(nextOffset) || nextOffset <= offset) break;
+    offset = nextOffset;
   }
   return candidates.length ? candidates : [preferred];
 }
