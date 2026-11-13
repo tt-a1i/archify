@@ -200,6 +200,41 @@ test('check: role exclusions and ambiguous-language file counts are visible on f
   assert.match(pyText.stdout, /Graph\/rule scope: 2 source files analyzed, 2 excluded by role \(1 generated, 1 test\)/);
 });
 
+test('check: investigation.architecture surfaces module topology and structural signals outside top complexity leads', (t) => {
+  const root = fixture(t, {
+    'src/app/a.py': 'from src.core import secret\n\ndef fa(x):\n    if x:\n        return secret.TOKEN\n    return ""\n',
+    'src/app/b.py': 'def fb(x):\n    if x:\n        return 1\n    return 0\n',
+    'src/app/c.py': 'def fc(x):\n    if x:\n        return 2\n    return 0\n',
+    'src/core/__init__.py': 'PUBLIC = True\n',
+    'src/core/secret.py': 'TOKEN = "internal"\n',
+  });
+  const out = path.join(root, 'out');
+  const config = path.join(root, 'analysis.json');
+  fs.writeFileSync(config, JSON.stringify({ rules: { complexity: { function: { warning: { complexity: 0 } } } } }));
+
+  const json = check(root, ['--language', 'py', '--config', config, '--out', out, '--fail-on', 'never', '--json']);
+  assert.equal(json.status, 0, json.stdout + json.stderr);
+  const receipt = JSON.parse(json.stdout);
+  assert.equal(receipt.investigation.leads.length, 3);
+  assert.ok(receipt.investigation.leads.every((lead) => lead.code === 'complexity/function'));
+
+  const arch = receipt.investigation.architecture;
+  assert.equal(arch.modules, 2);
+  assert.equal(arch.edges, 1);
+  assert.equal(arch.hotspots.length, 2);
+  assert.deepEqual(arch.strongestEdges, [{ from: 'src-app', to: 'src-core', weight: 2, sample: 'src/app/a.py:1' }]);
+  assert.equal(arch.structuralSignals.length, 1);
+  assert.equal(arch.structuralSignals[0].code, 'coupling/internal-leak');
+  assert.equal(arch.structuralSignals[0].severity, 'info');
+  assert.equal(arch.structuralSignals[0].where, 'src/app/a.py:1');
+  assert.match(arch.structuralSignals[0].task, /--finding [A-Z]+-[0-9a-f]{12}$/);
+
+  const text = check(root, ['--language', 'py', '--config', config, '--out', path.join(root, 'text-out'), '--fail-on', 'never']);
+  assert.equal(text.status, 0, text.stdout + text.stderr);
+  assert.match(text.stdout, /Architecture signals \(outside top leads\):/);
+  assert.match(text.stdout, /- info\s+coupling\/internal-leak\s+src\/app\/a\.py:1\s+\[[A-Z]+-[0-9a-f]{12}\]/);
+});
+
 function textWithParseError(parseError) {
   return formatText({
     verdict: 'ok',

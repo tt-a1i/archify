@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Headless code analysis for terminals and CI: extract → graphs → evaluate,
-// with the baseline and the comparison, and an exit code a pipeline can gate on.
-// No diagram is needed; component mapping is a page concern (see serve.mjs).
+// with the baseline, comparison, optional diagram alignment (--ir) and an exit
+// code a pipeline can gate on.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -178,6 +178,7 @@ export async function runCheck(argv) {
       investigation: {
         shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh',
         leads: overview.investigation.leads.map((lead) => ({ ...lead, task: taskCommand(CLI, lead.id, root, out) })),
+        architecture: architectureBrief({ graph, findings: listed, overview, root, out, findingWhere }),
         drillDown: out
           ? taskCommand(CLI, '<id>', root, out)
           : 'Re-run with --out <dir> to drill down with the task command.',
@@ -225,6 +226,83 @@ function openRuleCounts(findings) {
 }
 
 const CLI = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+const MAX_HOTSPOTS = 5;
+const MAX_STRONGEST_EDGES = 5;
+const MAX_STRUCTURAL_SIGNALS = 5;
+
+function architectureBrief({ graph, findings, overview, root, out, findingWhere }) {
+  const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  const hotspots = [...(graph.modules || [])]
+    .filter((m) => (m.fanIn + m.fanOut) > 0)
+    .sort((a, b) => (b.fanIn + b.fanOut) - (a.fanIn + a.fanOut) || b.fanIn - a.fanIn || b.loc - a.loc || compareText(a.id, b.id))
+    .slice(0, MAX_HOTSPOTS)
+    .map((m) => ({
+      id: m.id,
+      path: m.path || null,
+      files: m.files,
+      loc: m.loc,
+      fanIn: m.fanIn,
+      fanOut: m.fanOut,
+      instability: m.instability,
+      entry: m.entry,
+    }));
+  const strongestEdges = [...(graph.edges || [])]
+    .sort((a, b) => b.weight - a.weight || compareText(a.from, b.from) || compareText(a.to, b.to))
+    .slice(0, MAX_STRONGEST_EDGES)
+    .map((e) => ({
+      from: e.from,
+      to: e.to,
+      weight: e.weight,
+      sample: e.evidence?.[0] ? `${e.evidence[0].file}:${e.evidence[0].line}` : null,
+    }));
+  const byId = new Map(findings.map((f) => [f.id, f]));
+  const entryById = new Map(overview.findings.map((e) => [e.id, e]));
+  const covered = new Set();
+  for (const id of overview.priorities) {
+    covered.add(id);
+    for (const r of entryById.get(id)?.relatedIds || []) covered.add(r);
+  }
+  const candidates = overview.findings.filter((e) => {
+    if (e.status === 'accepted' || covered.has(e.id)) return false;
+    const d = byId.get(e.id);
+    return Boolean(d && !d.external && (d.dimension === 'coupling' || d.dimension === 'architecture'));
+  });
+  const picked = [];
+  const rulesTaken = new Set();
+  const take = (e) => {
+    picked.push(e);
+    covered.add(e.id);
+    for (const r of e.relatedIds || []) covered.add(r);
+  };
+  for (const e of candidates) {
+    if (picked.length >= MAX_STRUCTURAL_SIGNALS) break;
+    if (covered.has(e.id) || rulesTaken.has(e.code)) continue;
+    rulesTaken.add(e.code);
+    take(e);
+  }
+  for (const e of candidates) {
+    if (picked.length >= MAX_STRUCTURAL_SIGNALS) break;
+    if (!covered.has(e.id)) take(e);
+  }
+  return {
+    modules: (graph.modules || []).length,
+    edges: (graph.edges || []).length,
+    hotspots,
+    strongestEdges,
+    structuralSignals: picked.map((e) => {
+      const d = byId.get(e.id);
+      return {
+        id: e.id,
+        code: d.code,
+        severity: d.severity,
+        message: d.message,
+        where: findingWhere(d),
+        impact: e.impact,
+        task: taskCommand(CLI, e.id, root, out),
+      };
+    }),
+  };
+}
 
 export function formatText(r) {
   if (r.action === 'accept-finding' || r.action === 'revoke-finding') return `${r.action === 'accept-finding' ? 'Accepted' : 'Revoked acceptance for'} ${r.id}\n  Baseline: ${r.baseline} (${r.entries} accepted entries)`;
@@ -273,6 +351,12 @@ export function formatText(r) {
   if (r.investigation?.leads?.length) {
     lines.push(`Start here: ${r.investigation.leads.length} ranked lead${r.investigation.leads.length === 1 ? '' : 's'}. Each is static evidence, not a proven defect; read the cited source first.`);
     r.investigation.leads.forEach((lead, i) => lines.push(`  ${i + 1}. ${lead.severity.padEnd(7)} ${lead.code}  ${lead.where ?? lead.id}  [${lead.id}]`));
+    if (r.investigation.architecture?.structuralSignals?.length) {
+      lines.push('  Architecture signals (outside top leads):');
+      for (const sig of r.investigation.architecture.structuralSignals) {
+        lines.push(`    - ${sig.severity.padEnd(7)} ${sig.code}  ${formatTerminalText(sig.where ?? sig.id)}  [${sig.id}]`);
+      }
+    }
     if (r.investigation.drillDown) lines.push(`  Drill down (${r.investigation.shell}): ${r.investigation.drillDown}`);
   }
   if (r.review.comparison) {
