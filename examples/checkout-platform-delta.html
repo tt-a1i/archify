@@ -16364,7 +16364,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence &amp;&amp; Math.min(desiredWidth, maxWidth) &gt;=
+        // Browser geometry can round the final SVG and page by one CSS pixel.
+        // Include that vertical allowance (expressed as width) so rounding
+        // alone does not switch a compact Sequence to authored scrolling.
+        var sequenceFits = automaticSequence &amp;&amp; Math.min(desiredWidth + ratio, maxWidth) &gt;=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading &amp;&amp; !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;
@@ -32117,7 +32120,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence &amp;&amp; Math.min(desiredWidth, maxWidth) &gt;=
+        // Browser geometry can round the final SVG and page by one CSS pixel.
+        // Include that vertical allowance (expressed as width) so rounding
+        // alone does not switch a compact Sequence to authored scrolling.
+        var sequenceFits = automaticSequence &amp;&amp; Math.min(desiredWidth + ratio, maxWidth) &gt;=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading &amp;&amp; !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;
