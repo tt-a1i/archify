@@ -4,19 +4,23 @@
 
 ## 问题与选择
 
-本轮主要替换包加载实现并完善现有行为。函数调用、接口候选、复杂度、精确源码范围和变更查询已经存在；没有新增完整引用、持续诊断或重构功能。
+本轮主要学习 gopls 的包加载和工具链职责划分，用 Go 官方公开库完善已有分析器。函数调用、接口候选、复杂度、精确源码范围和变更查询已经存在；没有新增完整引用、持续诊断或重构功能。
 
 旧实现手工组织包、测试变体和 SDK 导出类型，模块指令使用正则解析。现改用公开的 `go/packages`、`typeutil.Callee` 和 `x/mod/modfile`；默认模式复用包加载的类型信息。Archify 继续负责 AST 指标、源码证据、声明准入和完整接口关系投影。`stdlib:false` 保留一次捕获内 `go/types` 检查，因为包加载没有禁止 SDK 类型的等价开关。
 
 **VS Code 官方 Go 扩展默认使用 gopls**（[`go.useLanguageServer: true`](https://github.com/golang/vscode-go/blob/master/docs/settings.md#go.uselanguageserver)）。本轮参考其包加载、定义查询、方法集和版本职责划分。最初的混合实验同时运行 gopls 和辅助类型检查；公开 LSP 没有直接提供全部指标和值/指针证据，混合方案增加了重复类型检查与服务生命周期成本，因此没有进入产品运行时。也没有导入 gopls internal 包。
 
-| 变化 | 用户结果与维护责任 |
-| --- | --- |
-| 官方模块解析与语言版本约束 | 接受合法 block/转义；默认语言版本及文件约束生效，类型错误仍可见 |
-| 测试变体、混合包名与 SDK 分类 | 按实际类型包身份绑定方法；错误目录保留库存但不制造可靠目标 |
-| 分离项目 SDK 和 helper 编译器 | 以项目 SDK 的平台、release/tool tags 选文件，避免较新 helper 错选未来版本文件 |
-| worker 拥有临时目录和子进程 | 超时、崩溃、无效输出、缺失依赖明确失败，并清理进程与快照 |
-| v6 / revision 9 来源记录 | 保存工具模块校验和、两种工具链和语言版本；历史结果仍可读取 |
+参考固定 gopls v0.21.1 的 [packages.Load 使用方式](https://github.com/golang/tools/blob/gopls/v0.21.1/gopls/internal/cache/load.go)、[定义查询](https://github.com/golang/tools/blob/gopls/v0.21.1/gopls/internal/golang/definition.go)、[方法集查询](https://github.com/golang/tools/blob/gopls/v0.21.1/gopls/internal/golang/implementation.go)及 [SDK 视图](https://github.com/golang/tools/blob/gopls/v0.21.1/gopls/internal/cache/view.go)。借鉴职责划分，不复制编辑器 session/cache 体系；gopls 同时用于独立查询对照。
+
+| 类别 | 自研代码具体变化 | 结果 |
+| --- | --- | --- |
+| 原有缺陷修复 | 用 `modfile.Parse` 替换正则和 JSON 字符串解析 | 正确读取合法 module block 和 Go 字符串转义 |
+| 原有缺口修复 | 读取 go.mod 语言版本；为 captured-only `types.Config` 设置 `GoVersion`，默认模式保留隔离 go.mod 的版本 | 例如 `go 1.17` 中的泛型会报告版本错误；未声明版本按 1.16 处理 |
+| 实现替换 | 删除手工测试包/SDK importer 装配；使用 `go/packages` 与 `typeutil.Callee` | 官方库负责包、类型信息和调用对象，Archify 继续投影源码证据 |
+| 接入适配修正 | 增加 `map[*types.Package]*group`；按实际类型对象找生产包和测试变体，处理生成 test-main、SDK 分类及空加载 | 防止新加载流程丢失合法方法目标或错误记录项目包；不统一宣称这些都是旧实现已有的缺陷 |
+| 工具链拆分配套 | 从项目 SDK 传入 release/tool/target tags，检查 helper 与项目 SDK 的版本关系 | 新 helper 不会选入项目 SDK 尚不支持的文件 |
+| 新增可靠性与证据 | worker 管理子进程/目录/期限；v6/revision 9 保存工具链与模块来源 | 明确失败阶段、清理资源，并保留历史读取 |
+| 既有保护与算法保留 | 混合包名和歧义保护迁移到新流程；AST 指标、UTF-16 范围、完整接口及值/指针判断沿用 | 混合包名保护旧版已经存在，不能列为本轮新修复的旧缺陷 |
 
 代价是新增 helper 构建、进程监督和版本证据，而非大幅减少总代码量。Go helper 从 1,181 行变为 1,216 行；运行代码与 schema 合计净增 193 行。工具模块锁定为 `x/tools v0.52.0`、`x/mod v0.43.0`、`x/sync v0.24.0`，首次使用可能下载模块和 helper 工具链；离线用户需预先准备。
 
