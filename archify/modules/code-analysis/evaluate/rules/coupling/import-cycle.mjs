@@ -7,17 +7,20 @@ import { partitionEdges, indexPathEdges, shortestCycle } from './cycle-graph.mjs
 // partial-initialization candidate, never an execution proof.
 // Test and generated files follow the module graph's exclusion policy.
 //
-// Severity (version 2, product plan section 0.2): a file cycle through
-// module-scope imports, and a Java structural cycle, are errors: structure
-// that should be fixed, not a proven runtime failure. A cycle that only closes
-// through deferred or conditional imports is a warning, since the coupling is
-// real but nothing shows it running at load time. Rust file cycles stay info:
-// files of one crate compile together and mutual `use` is ordinary there.
+// Severity (product plan section 0.2): a file cycle through module-scope
+// imports is an error: structure that should be fixed, not a proven runtime
+// failure. A cycle that only closes through deferred or conditional imports is
+// a warning, since the coupling is real but nothing shows it running at load
+// time. Java class cycles are warnings (version 3; errors in version 2): classes
+// load on demand, so there is no load-order risk, and classes that refer to
+// each other are a common Java pattern; Java package cycles stay errors in
+// coupling/cycle. Rust file cycles stay info: files of one crate compile
+// together and mutual `use` is ordinary there.
 export const code = 'coupling/import-cycle';
 export const dimension = 'coupling';
 export const severity = 'error';
 export const confidence = 0.7;
-export const version = 2;
+export const version = 3;
 
 /** Canonicalize ties before choosing candidates or truncating evidence. */
 const canonical = (v) => JSON.stringify(Array.isArray(v) ? v.map(canonical) : v && typeof v === 'object'
@@ -36,7 +39,7 @@ export function run({ graph, facts }) {
     const internal = allParts.get(scc[0]), pathEdges = indexPathEdges(internal);
     const path = shortestCycle(scc[0], node => [...(pathEdges.get(node)?.keys() || [])].sort());
     return {
-      code, dimension, confidence, severity: facts.repository.language === 'rust' ? 'info' : severity,
+      code, dimension, confidence, severity: facts.repository.language === 'rust' ? 'info' : 'warning',
       message: `${scc.length} ${facts.repository.language === 'rust' ? 'Rust' : 'Java'} files form a structural dependency cycle: ${path.join(' → ')} → ${path[0]}. ${facts.repository.language === 'rust' ? 'Rust mod/use declarations are compile-time source relationships, not runtime imports or partial initialization.' : 'Imports and type references do not establish class initialization order or runtime failure.'}`,
       subject: { files: scc },
       evidence: {
