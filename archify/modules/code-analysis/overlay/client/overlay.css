@@ -152,7 +152,7 @@ html[data-bauify-focus="on"] #bauify-layer rect:not(.focus) { opacity: .12; anim
 #bauify-code pre .gap { display: block; padding: 2px 10px; color: var(--text-muted, #94a3b8); font-size: 10px; }
 #bauify-detail .fixes { margin-top: 4px; } #bauify-detail .fixes div { white-space: normal; }
 /* Review: re-analysis, comparison with the previous run, baseline status. */
-#bauify-overview .bauify-reanalyze { float: right; margin: 0 0 6px 8px; padding: 3px 10px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; background: none; color: var(--backend-stroke, #34D399); font: inherit; font-size: 12px; cursor: pointer; }
+#bauify-overview .bauify-reanalyze { margin: 0; padding: 3px 10px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; background: none; color: var(--backend-stroke, #34D399); font: inherit; font-size: 12px; cursor: pointer; }
 #bauify-overview .bauify-reanalyze[disabled] { color: var(--text-muted, #94a3b8); cursor: progress; }
 #bauify-overview .review-line { margin-top: 4px; }
 .bauify-item.accepted { opacity: .62; }
@@ -186,7 +186,13 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
   html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .cards { margin-left: 444px; }
   html[data-bauify="on"] .guided-views { display: none; }
 }
-@media (max-width: 1000px) { #bauify-reader { width: calc(100vw - 32px); } }
+@media (max-width: 1000px) {
+  /* In normal flow, the reader and canvas remain separately reachable. */
+  #bauify-reader { position: relative; left: auto; top: auto; bottom: auto; width: auto; margin: 16px; height: min(52vh, 520px); min-height: 280px; }
+  #bauify-reader.collapsed { height: auto; min-height: 0; width: auto; max-width: none; }
+  #bauify-reader > .reader-nav { gap: 8px; padding: 10px 12px; }
+  #bauify-reader .reader-actions { display: flex; flex: none; gap: 5px; }
+}
 @media print { #bauify-reader { display: none; } }
 #bauify-reader button:focus-visible, #bauify-reader summary:focus-visible, #bauify-reader textarea:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 3px; }
 #bauify-reader h3, #bauify-reader .where, #bauify-reader .task-status { overflow-wrap: anywhere; }
@@ -297,6 +303,42 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { #bauify-reader { transition: none; } }
 /* The page's own reader rail sits beside the analysis column, not under it. */
 @media (min-width: 1001px) { html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: 444px; } }
+/* The overview is a compact read → handoff → recheck workbench. */
+#bauify-reader .workbench-steps { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 12px 0 16px; padding: 0; }
+#bauify-reader .workbench-steps li { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+#bauify-reader .workbench-steps b { display: inline-grid; place-items: center; width: 20px; height: 20px; flex: none; border: 1px solid var(--panel-border); border-radius: 50%; color: var(--text); font-size: 11px; }
+#bauify-reader .health-summary { padding: 11px 12px; background: color-mix(in srgb, var(--backend-stroke, #159f88) 6%, transparent); border: 1px solid var(--panel-border); border-radius: 9px; }
+#bauify-reader .health-signal { margin: 2px 0; font-size: 13px; }
+#bauify-reader .health-signal.positive::before { content: '✓ '; color: var(--backend-stroke, #159f88); }
+#bauify-reader .health-signal.attention { font-weight: 600; }
+#bauify-reader .scope-line { font-size: 12px; color: var(--text-muted); margin: 5px 0 0; }
+#bauify-reader .workbench-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 6px; }
+#bauify-reader .workbench-actions button, #bauify-reader .start-copy { padding: 8px 11px; border: 1px solid var(--panel-border); border-radius: 7px; background: none; color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+#bauify-reader .workbench-actions .brief-copy { background: var(--text); color: var(--panel); border-color: var(--text); }
+#bauify-reader .brief-status, #bauify-reader .handoff-status { margin: 4px 0; font-size: 12px; line-height: 1.55; white-space: normal; }
+#bauify-reader .brief-status:empty, #bauify-reader .handoff-status:empty { display: none; }
+#bauify-reader .section-heading { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 8px; }
+#bauify-reader .section-heading h4 { font-size: 14px; margin: 0; }
+#bauify-reader .section-heading > span { color: var(--text-muted); font-size: 12px; }
+#bauify-reader .priority-card { border: 1px solid var(--panel-border); border-radius: 9px; padding: 10px 12px; margin: 8px 0; }
+#bauify-reader .priority-card .bauify-item { border: 0; padding: 0; margin: 0; }
+#bauify-reader .priority-card .quick-handoff { margin: 7px 0 0; padding: 0; border: 0; }
+#bauify-reader .priority-card .task-actions { margin: 0; }
+#bauify-reader .priority-card .ai-task:not([open]) { display: none; }
+#bauify-reader .priority-card .task-actions button { min-height: 36px; }
+#bauify-reader .overview-secondary { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--panel-border); }
+#bauify-reader .overview-secondary .counts { font-size: 12px; margin: 8px 0 12px; }
+#bauify-reader .overview-secondary .count.total { font-size: inherit; }
+#bauify-reader .comparison-banner { padding: 11px 12px; margin: 10px 0 12px; border: 1px solid var(--panel-border); border-left: 3px solid var(--text-muted); border-radius: 8px; }
+#bauify-reader .comparison-banner.positive { border-left-color: var(--backend-stroke, #159f88); }
+#bauify-reader .comparison-banner > span { display: block; font-size: 11px; color: var(--text-muted); }
+#bauify-reader .comparison-banner > b { display: block; font-size: 14px; margin: 3px 0; }
+#bauify-reader .comparison-banner p { font-size: 12px; color: var(--text-muted); line-height: 1.55; margin: 5px 0 0; }
+#bauify-reader .offline-recheck { margin: 8px 0; font-size: 12px; }
+#bauify-reader .architecture-brief-preview textarea, #bauify-reader .start-command { display: block; box-sizing: border-box; width: 100%; min-height: 90px; max-height: 260px; resize: vertical; margin: 8px 0; padding: 8px; border: 1px solid var(--panel-border); border-radius: 6px; color: var(--text); background: var(--bg); font: 12px/1.55 ui-monospace, Menlo, Consolas, monospace; }
+#bauify-reader .architecture-brief-preview[hidden] { display: none; }
+#bauify-reader .scope-note { line-height: 1.6; }
+@media (max-width: 600px) { #bauify-reader .workbench-actions button, #bauify-reader .priority-card .task-actions button, #bauify-reader .start-copy { min-height: 44px; } }
 /* Findings share the existing reading column. Colour identifies severity;
    source, rule, location and review state remain separate readable facts. */
 #bauify-reader .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }

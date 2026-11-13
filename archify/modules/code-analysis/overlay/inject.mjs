@@ -26,6 +26,8 @@
 // and is still listed, so a project-level view never loses it.
 // Nothing in the authored IR is changed or inferred.
 import fs from 'node:fs';
+import { analysisLocale, messagesFor, createTranslator } from './i18n.mjs';
+import { architectureHandoff } from './architecture-handoff.mjs';
 import path from 'node:path';
 import { fail } from '../core/index.mjs';
 import { sourceChanges } from './source-changes.mjs';
@@ -122,6 +124,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
 
   const payload = {
     generator: 'bauify',
+    ui: { locale: analysisLocale(ir.meta?.locale), messages: messagesFor(ir.meta?.locale), resume: run.resume || null, openByDefault: run.openAnalysis === true },
     repository: graph.repository,
     unresolved: graph.unresolved,
     excluded: graph.excluded,
@@ -136,6 +139,8 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     overview: buildOverview({ findings: listed, graph, facts, unmapped, ambiguousModules, run }),
     snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts, findingsDocument?.externalEvidence) : {},
   };
+
+  payload.architectureBrief = architectureHandoff({ overview: payload.overview, repository: graph.repository, locale: ir.meta?.locale });
 
   // The Atlas view needs raw facts (files, dependencies, functions); without them only the Classic view exists.
   const atlas = buildAtlas({ graph, facts, findings, review: run.review });
@@ -463,4 +468,4 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
 
 const CSS = clientAsset('overlay.css');
 
-const JS = clientAsset('overlay.js');
+const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\n` + clientAsset('overlay.js');

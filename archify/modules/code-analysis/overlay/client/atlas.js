@@ -2,13 +2,18 @@
   var source = document.getElementById('bauify-atlas-data');
   if (!source) return;
   var atlas = JSON.parse(source.textContent);
+  var ui = JSON.parse(document.getElementById('bauify-analysis').textContent).ui || {};
+  var tr = window.__archifyMakeAnalysisTranslator(ui.messages || {});
   var root = document.documentElement;
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
-  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/concentration': 'Concentration', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'redundancy/duplicate-block': 'Duplicate code' };
+  var NAMES = { 'complexity/function': tr("Complex functions"), 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'redundancy/duplicate-block': tr("Duplicate code") };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
-  function plural(n, one, many) { return fmt(n) + ' ' + (n === 1 ? one : many || one + 's'); }
+  function plural(n, one, many) {
+    if (ui.locale === 'zh-CN') return fmt(n) + ({ file: ' 个文件', module: ' 个模块', function: ' 个函数', import: ' 条导入', 'file dependency': ' 条文件依赖', dependency: ' 条依赖', line: ' 行', 'internal file': ' 个内部文件', more: ' 项其他文件' }[one] || ' ' + tr(one));
+    return fmt(n) + ' ' + (n === 1 ? one : many || one + 's');
+  }
   var fnsByFile = F.map(function () { return []; }), fnSlot = [];
   FN.forEach(function (fn, i) { fnSlot[i] = fnsByFile[fn[0]].length; fnsByFile[fn[0]].push(i); });
   var edgesByModule = M.map(function () { return { out: 0, in: 0 }; });
@@ -23,13 +28,14 @@
   });
 
   var panel = document.createElement('section');
-  panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', 'Code analysis atlas');
-  panel.innerHTML = '<nav class="atlas-nav" aria-label="Atlas navigation"><div class="atlas-title">Atlas<span>' + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', 'file dependencies') + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
-    '<div><button type="button" class="atlas-clear">Clear selection</button> <button type="button" class="atlas-classic" title="Back to the diagram view with source evidence">Classic view</button></div></nav>' +
+  panel.lang = ui.locale || 'en';
+  panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', tr("Code analysis atlas"));
+  panel.innerHTML = ("<nav class=\"atlas-nav\" aria-label=\"" + tr("Atlas navigation") + "\">" + "<div class=\"atlas-title\">" + tr("Atlas") + "<span>") + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', tr("file dependencies")) + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
+    ("<div>" + "<button type=\"button\" class=\"atlas-clear\">" + tr("Clear selection") + "</button>" + " " + "<button type=\"button\" class=\"atlas-classic\" title=\"" + tr("Back to the diagram view with source evidence") + "\">" + tr("Classic view") + "</button>" + "</div>" + "</nav>") +
     '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div><aside class="atlas-side"></aside></div>';
   document.body.appendChild(panel);
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
-  canvas.setAttribute('aria-label', 'Dependency atlas: ' + plural(M.length, 'module') + ' around a circle, ' + plural(F.length, 'file') + ' grouped by module, ' + plural(E.length, 'file dependency', 'file dependencies') + ' drawn between them, and ' + plural(FN.length, 'function') + ' as spikes whose length is their complexity. The side panel lists the same findings and modules.');
+  canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 
   // ---- state ----
   var state = { focusModule: -1, finding: -1, hover: null };
@@ -104,7 +110,7 @@
       if (f.kind === 'cycle') { f.files.forEach(function (x) { sel.files[x] = true; }); sel.edges = f.path.map(function (x, i) { return [x, f.path[(i + 1) % f.path.length]]; }); }
       if (f.kind === 'module' || f.kind === 'area') sel.modules[f.module] = true;
       if (f.kind === 'file') { (f.files || [f.file]).forEach(function (file) { sel.files[file] = true; }); sel.anchor = f.file; }
-      if (f.kind === 'modules') f.modules.forEach(function (x) { sel.modules[x] = true; });
+      if (f.kind === tr("modules")) f.modules.forEach(function (x) { sel.modules[x] = true; });
       if (f.kind === 'edges') { sel.edges = f.edges; f.edges.forEach(function (e) { sel.files[e[0]] = true; sel.files[e[1]] = true; }); }
       if (f.kind === 'edges' && f.module != null) { sel.arcs[f.module] = true; (f.entries || []).forEach(function (x) { sel.entries[x] = true; }); }
     }
@@ -328,10 +334,10 @@
     return null;
   }
   function tipText(h) {
-    if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + ' · fan-in ' + m.fanIn + ' · fan-out ' + m.fanOut + (hubOf[h.index] != null ? ' · reported hub' : '') + '<br>Click to focus its dependencies.'; }
+    if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + (hubOf[h.index] != null ? tr(" · reported hub") : '') + ("<br>" + tr("Click to focus its dependencies.")); }
     if (h.type === 'file') { var f = F[h.index]; return '<b>' + esc(f[0]) + '</b>' + esc(M[f[1]].label) + ' · ' + plural(f[2], 'line') + ' · ' + plural(fnsByFile[h.index].length, 'function'); }
     var fn = FN[h.index], fd = fn[6] !== -1 ? FD[fn[6]] : null;
-    return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + '<br>complexity ' + fn[3] + ' · nesting ' + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? '<br>Reported (' + esc(fd.severity) + '). Click to select.' : '');
+    return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + ("<br>" + tr("complexity ")) + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? ("<br>" + tr("Reported (")) + esc(fd.severity) + tr("). Click to select.") : '');
   }
   canvas.addEventListener('mousemove', function (e) {
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
@@ -358,64 +364,65 @@
     root.setAttribute('data-bauify-atlas-finding', finding === -1 ? '' : FD[finding].id);
     renderSide(); draw('fade');
   }
+  function findingTitle(f) { return window.__archifyAnalysisFindingTitle ? window.__archifyAnalysisFindingTitle(f.id) : f.title; }
   function selectedCard() {
     var f = FD[state.finding];
     if (f) {
       var what = '';
-      if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + ' · complexity ' + fn[3] + ' · nesting ' + fn[4] + ' · ' + plural(fn[5], 'line') + '. Curves: dependencies of its file.'; }
-      if (f.kind === 'cycle') what = 'Path: ' + f.path.map(function (x) { return F[x][0].split('/').pop(); }).join(' → ') + ' → back';
-      if (f.kind === 'modules') what = f.modules.map(function (x) { return M[x].label; }).join(', ');
-      if (f.kind === 'module' || f.kind === 'area') what = 'fan-in ' + M[f.module].fanIn + ' · fan-out ' + M[f.module].fanOut;
+      if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + tr(" · complexity ") + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + tr(". Curves: dependencies of its file."); }
+      if (f.kind === 'cycle') what = tr("Path: ") + f.path.map(function (x) { return F[x][0].split('/').pop(); }).join(' → ') + tr(" → back");
+      if (f.kind === tr("modules")) what = f.modules.map(function (x) { return M[x].label; }).join(', ');
+      if (f.kind === 'module' || f.kind === 'area') what = tr("fan-in") + " " + M[f.module].fanIn + tr(" · fan-out ") + M[f.module].fanOut;
       if (f.kind === 'file') what = (f.files || [f.file]).map(function (file) { return F[file][0]; }).join(' · ');
-      if (f.kind === 'edges') what = plural(f.edges.length, 'import') + ' cross the rule.';
+      if (f.kind === 'edges') what = plural(f.edges.length, 'import') + tr(" cross the rule.");
       if (f.kind === 'edges' && f.module != null) {
         var reachedIn = {}; f.edges.forEach(function (e) { reachedIn[e[1]] = true; });
-        what = plural(f.edges.length, 'import') + ' from other modules reach ' + plural(Object.keys(reachedIn).length, 'internal file') + ' of ' + M[f.module].label + (f.entries && f.entries.length ? '; ringed: its entry point ' + f.entries.map(function (x) { return F[x][0].split('/').pop(); }).join(', ') : '; it has no entry file') + '.';
+        what = plural(f.edges.length, 'import') + tr(" from other modules reach ") + plural(Object.keys(reachedIn).length, 'internal file') + tr(" of ") + M[f.module].label + (f.entries && f.entries.length ? tr("; ringed: its entry point ") + f.entries.map(function (x) { return F[x][0].split('/').pop(); }).join(', ') : tr("; it has no entry file")) + '.';
       }
-      return '<div class="selected"><h4>' + esc(f.title) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(f.severity) + '</span>' + (f.accepted ? ' · accepted in baseline' : '') + ' · ' + esc(what) + '</p>' +
-        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">Open evidence in Classic view</button></div>';
+      return '<div class="selected"><h4>' + esc(findingTitle(f)) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(tr(f.severity)) + '</span>' + (f.accepted ? tr(" · accepted in baseline") : '') + ' · ' + esc(what) + '</p>' +
+        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + ("\">" + tr("Open evidence in Classic view") + "</button>" + "</div>");
     }
     if (state.focusModule !== -1) {
       var m = M[state.focusModule], files = F.filter(function (x) { return x[1] === state.focusModule; }).length;
       var fns = FN.filter(function (fn) { return F[fn[0]][1] === state.focusModule; });
       var sf = surface[state.focusModule], used = Object.keys(sf.files).sort(function (a, b) { return Object.keys(sf.files[b]).length - Object.keys(sf.files[a]).length || (F[a][0] < F[b][0] ? -1 : 1); });
       var surfaceText = used.length
-        ? 'Imported from outside through ' + fmt(used.length) + ' of its ' + plural(files, 'file') + ', by ' + plural(Object.keys(sf.consumers).length, 'module') + ' (marked inside the rim): ' + used.slice(0, 4).map(function (k) { return F[k][0].split('/').pop() + ' ' + Object.keys(sf.files[k]).length; }).join(', ') + (used.length > 4 ? ' and ' + plural(used.length - 4, 'more', 'more') : '') + '.'
-        : 'No other module imports it.';
-      return '<div class="selected"><h4>' + esc(m.label) + '</h4><p>' + plural(files, 'file') + ' · ' + plural(fns.length, 'function') + ' · fan-in ' + m.fanIn + ' · fan-out ' + m.fanOut + '<br>Coloured curves: dependencies inside it and its ' + plural(edgesByModule[state.focusModule].out, 'dependency', 'dependencies') + ' on other modules. Neutral curves: ' + plural(edgesByModule[state.focusModule].in, 'dependency', 'dependencies') + ' of other modules on it.<br>' + esc(surfaceText) + '</p></div>';
+        ? tr("Imported from outside through ") + fmt(used.length) + tr(" of its ") + plural(files, 'file') + tr(", by ") + plural(Object.keys(sf.consumers).length, 'module') + tr(" (marked inside the rim): ") + used.slice(0, 4).map(function (k) { return F[k][0].split('/').pop() + ' ' + Object.keys(sf.files[k]).length; }).join(', ') + (used.length > 4 ? tr(" and ") + plural(used.length - 4, 'more', 'more') : '') + '.'
+        : tr("No other module imports it.");
+      return '<div class="selected"><h4>' + esc(m.label) + '</h4><p>' + plural(files, 'file') + ' · ' + plural(fns.length, 'function') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + ("<br>" + tr("Coloured curves: dependencies inside it and its ")) + plural(edgesByModule[state.focusModule].out, 'dependency', 'dependencies') + tr(" on other modules. Neutral curves: ") + plural(edgesByModule[state.focusModule].in, 'dependency', 'dependencies') + (tr(" of other modules on it.") + "<br>") + esc(surfaceText) + '</p></div>';
     }
-    return '<div class="note">Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.</div>';
+    return ("<div class=\"note\">" + tr("Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.") + "</div>");
   }
   function renderSide() {
-    var h = '<div class="k">Selection</div>' + selectedCard();
-    h += '<div class="k">Totals</div><div class="stats">' +
-      [[F.length, 'files'], [E.length, 'file dependencies'], [FN.length, 'functions'], [M.length, 'modules']].map(function (s) { return '<div class="stat"><b>' + fmt(s[0]) + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div>';
+    var h = ("<div class=\"k\">" + tr("Selection") + "</div>") + selectedCard();
+    h += ("<div class=\"k\">" + tr("Totals") + "</div>" + "<div class=\"stats\">") +
+      [[F.length, tr("files")], [E.length, tr("file dependencies")], [FN.length, tr("functions")], [M.length, tr("modules")]].map(function (s) { return '<div class="stat"><b>' + fmt(s[0]) + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div>';
     var groups = {};
     FD.forEach(function (f, i) { (groups[f.code] = groups[f.code] || []).push(i); });
     var codes = Object.keys(groups).sort();
-    h += '<div class="k">Findings · ' + FD.length + '</div>';
-    if (!FD.length) h += '<div class="note">No rule fired within the checks that ran.</div>';
+    h += ("<div class=\"k\">" + tr("Findings · ")) + FD.length + '</div>';
+    if (!FD.length) h += ("<div class=\"note\">" + tr("No rule fired within the checks that ran.") + "</div>");
     codes.forEach(function (code) {
       var list = groups[code].slice().sort(function (a, b) { var r = { error: 0, warning: 1, info: 2 }; return (r[FD[a].severity] - r[FD[b].severity]) || (FD[a].title < FD[b].title ? -1 : 1); });
       h += '<details' + (list.indexOf(state.finding) !== -1 ? ' open' : '') + '><summary>' + esc(NAMES[code] || code) + ' · ' + list.length + '</summary>' + list.map(function (i) {
         var f = FD[i];
-        return '<button type="button" class="row' + (i === state.finding ? ' active' : '') + (f.accepted ? ' accepted' : '') + '" data-finding="' + i + '"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><span class="t" title="' + esc(f.title) + '">' + esc(f.title) + '</span><span class="n">' + esc(f.severity) + '</span></button>';
+        return '<button type="button" class="row' + (i === state.finding ? ' active' : '') + (f.accepted ? " " + tr("accepted") : '') + '" data-finding="' + i + '"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><span class="t" title="' + esc(findingTitle(f)) + '">' + esc(findingTitle(f)) + '</span><span class="n">' + esc(tr(f.severity)) + '</span></button>';
       }).join('') + '</details>';
     });
     if (atlas.measured && FN.length) {
       var counts = []; for (var c = 0; c < 20; c++) counts.push(0);
       FN.forEach(function (fn) { counts[Math.max(1, Math.min(fn[3], 20)) - 1]++; });
       var max = Math.max.apply(Math, counts);
-      h += '<div class="k">Cyclomatic complexity · √ scale</div><div class="hist" role="img" aria-label="Function counts by complexity 1 to 20 or more: ' + counts.join(', ') + '">' + counts.map(function (n, i) { return '<div class="' + (i >= 14 ? 'hot' : '') + '" title="' + (i === 19 ? '20+' : i + 1) + ': ' + plural(n, 'function') + '" style="height:' + (n ? Math.max(2, Math.round(100 * Math.sqrt(n / max))) : 0) + '%"></div>'; }).join('') + '</div><div class="axis"><span>1</span><span>15</span><span>20+</span></div>';
+      h += ("<div class=\"k\">" + tr("Cyclomatic complexity · √ scale") + "</div>" + ("<div class=\"hist\" role=\"img\" aria-label=\"" + tr("Function counts by complexity 1 to 20 or more: ") + "")) + counts.join(', ') + '">' + counts.map(function (n, i) { return '<div class="' + (i >= 14 ? 'hot' : '') + '" title="' + (i === 19 ? '20+' : i + 1) + ': ' + plural(n, 'function') + '" style="height:' + (n ? Math.max(2, Math.round(100 * Math.sqrt(n / max))) : 0) + '%"></div>'; }).join('') + '</div><div class="axis"><span>1</span><span>15</span><span>20+</span></div>';
     }
     var order = M.map(function (m, i) { return i; }).sort(function (a, b) { return (M[b].fanIn + M[b].fanOut) - (M[a].fanIn + M[a].fanOut) || (M[a].label < M[b].label ? -1 : 1); });
-    h += '<div class="k">Modules by coupling · fan-in / fan-out</div>' + order.map(function (i) {
-      return '<button type="button" class="row' + (i === state.focusModule ? ' active' : '') + '" data-module="' + i + '"><i style="background:' + hue(i, theme()) + '"></i><span class="t">' + esc(M[i].label) + (hubOf[i] != null ? ' · hub' : '') + '</span><span class="n">' + M[i].fanIn + ' / ' + M[i].fanOut + '</span></button>';
+    h += ("<div class=\"k\">" + tr("Modules by coupling · fan-in / fan-out") + "</div>") + order.map(function (i) {
+      return '<button type="button" class="row' + (i === state.focusModule ? ' active' : '') + '" data-module="' + i + '"><i style="background:' + hue(i, theme()) + '"></i><span class="t">' + esc(M[i].label) + (hubOf[i] != null ? tr(" · hub") : '') + '</span><span class="n">' + M[i].fanIn + ' / ' + M[i].fanOut + '</span></button>';
     }).join('');
     var cov = atlas.coverage, total = Math.max(cov.records, 1);
-    h += '<div class="k">Dependency records · ' + fmt(cov.records) + '</div><div class="bar" role="img" aria-label="' + fmt(cov.resolved) + ' resolved, ' + fmt(cov.external) + ' external, ' + fmt(cov.unknown) + ' unresolved"><span style="width:' + (100 * cov.resolved / total) + '%;background:#34D399"></span><span style="width:' + (100 * cov.external / total) + '%;background:#64748B"></span><span style="width:' + (100 * cov.unknown / total) + '%;background:#FBBF24"></span></div>' +
-      '<div class="note">' + fmt(cov.resolved) + ' resolved · ' + fmt(cov.external) + ' external · ' + fmt(cov.unknown) + ' could not be resolved' + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + ' failed to parse' : '') + '. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.</div>';
-    h += '<div class="k">Reading the atlas</div><div class="legend"><span><i style="background:' + hue(0, theme()) + '"></i>outer arc: module (thick: reported hub)</span><span><i style="background:' + theme().muted + '"></i>tick: file · spike: function, length = complexity</span><span><i style="background:#FBBF24;height:8px;width:8px;border-radius:50%"></i>dot: reported function, severity colour</span><span><i style="background:' + hue(3, theme(), 0.6) + '"></i>curve: file dependency, coloured by the importing module</span><span><i style="background:' + theme().text + '"></i>mark inside the rim: a focused module\'s file that other modules import</span></div>';
+    h += ("<div class=\"k\">" + tr("Dependency records · ")) + fmt(cov.records) + '</div><div class="bar" role="img" aria-label="' + fmt(cov.resolved) + tr(" resolved, ") + fmt(cov.external) + tr(" external, ") + fmt(cov.unknown) + ' unresolved"><span style="width:' + (100 * cov.resolved / total) + '%;background:#34D399"></span><span style="width:' + (100 * cov.external / total) + '%;background:#64748B"></span><span style="width:' + (100 * cov.unknown / total) + '%;background:#FBBF24"></span></div>' +
+      '<div class="note">' + fmt(cov.resolved) + tr(" resolved · ") + fmt(cov.external) + tr(" external · ") + fmt(cov.unknown) + tr(" could not be resolved") + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(" failed to parse") : '') + (tr(". Unresolved records draw no curve, so a missing curve does not prove there is no dependency.") + "</div>");
+    h += ("<div class=\"k\">" + tr("Reading the atlas") + "</div>" + "<div class=\"legend\">" + "<span>" + "<i style=\"background:") + hue(0, theme()) + ("\">" + "</i>" + tr("outer arc: module (thick: reported hub)") + "</span>" + "<span>" + "<i style=\"background:") + theme().muted + ("\">" + "</i>" + tr("tick: file · spike: function, length = complexity") + "</span>" + "<span>" + "<i style=\"background:#FBBF24;height:8px;width:8px;border-radius:50%\">" + "</i>" + tr("dot: reported function, severity colour") + "</span>" + "<span>" + "<i style=\"background:") + hue(3, theme(), 0.6) + ("\">" + "</i>" + tr("curve: file dependency, coloured by the importing module") + "</span>" + "<span>" + "<i style=\"background:") + theme().text + ("\">" + "</i>" + tr("mark inside the rim: a focused module's file that other modules import") + "</span>" + "</div>");
     side.innerHTML = h;
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); select(-1, state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });

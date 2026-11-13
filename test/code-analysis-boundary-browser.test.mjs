@@ -65,7 +65,9 @@ test('Code Analysis shows configured architecture boundaries in the overview, pr
   const overview = await run("document.getElementById('bauify-overview').innerText");
   assert.match(overview, /domain depends on ui/);
   assert.match(overview, /2 imports in 2 files · rule: domain logic stays UI-free/);
-  assert.match(overview, /Start with the layer rules broken below\. Each finding links to its evidence\./, 'no cycle wording when only boundaries are listed');
+  const lead = await run("document.querySelector('.priority-card [data-finding]').textContent");
+  assert.match(lead, /domain depends on ui/);
+  assert.doesNotMatch(lead, /cycle|initialization/i, 'a layer violation is not presented as a cycle');
   const coverage = await run("document.querySelector('#bauify-overview .cov') ? document.querySelector('#bauify-overview .cov').textContent : document.getElementById('bauify-overview').textContent");
   assert.match(coverage, /Boundaries: 4 layers, 1 rule/);
   assert.match(coverage, /Layer "legacy" matches no analyzed file/);

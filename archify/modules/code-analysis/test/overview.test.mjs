@@ -70,7 +70,9 @@ test('overview: investigation repeats priorities with message and source locatio
     symbol: 'f',
     impact: { modules: 1, size: 26, fanIn: 3, files: 2 },
   }]);
-  assert.deepEqual(buildOverview({ findings: [], graph }).investigation, { leads: [] });
+  assert.deepEqual(buildOverview({ findings: [], graph }).investigation.leads, []);
+  assert.equal(o.investigation.architecture.modules, graph.modules.length);
+  assert.ok(o.investigation.architecture.hotspots.every(m => m.readingWeight >= 0));
 });
 
 test('overview: the verdict never claims more than the checks did', () => {

@@ -53,6 +53,24 @@ Output defaults to a system temporary directory. Add `--out out/my-project` to c
 
 You can also run `node bin/archify.mjs start "/path/to/project" --ir architecture.json` directly. The legacy `code-analysis serve` command remains supported.
 
+## Agent entry and investigation
+
+A user can ask for a project architecture diagram, architecture health, layer/coupling investigation or refactoring orientation. For investigation without a diagram request, start with the headless [first-look path](#first-look-at-an-unfamiliar-repository) and verify the source. When a diagram is requested or useful, read repository evidence and use the normal architecture authoring/finalize path. After a valid local-repository diagram is available, prepare an immediately usable companion page:
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo --ir architecture.json --out out/project-analysis --language ts
+```
+
+`prepare` uses the same delivery, extraction, rules, task bundles and output rotation as `serve`, then exits. Its JSON receipt includes scoped counts, coverage and priority leads, and names `html` (`out/project-analysis/analysis/repo.analysis.html`) and the untouched delivered `diagram`. Open the HTML directly: the overview is already visible. The page includes source excerpts, first-screen task copy, an architecture brief and manual-copy fallbacks, without requiring a running server. A saved start command is explicitly copyable under **Recheck after edits**; run it on the generating machine, open the printed URL and choose **Code Analysis** to compare against the report; later edits use **Re-analyze**. Copied tasks are labeled captured snapshots until the current source is verified. The report never runs the command itself.
+
+For an interactive session use `start` / `code-analysis serve`; it preserves `/analyze`, `/task` and `/review`. With the service available, task copy verifies the displayed claim and current working tree. An HTTP rejection cannot silently fall back to an older bundled task. Prepared output preserves the previous run, so starting the service with the copied command compares against that captured analysis.
+
+Deliver both the original architecture diagram and the companion analysis page, with one or two scoped conclusions and an invitation to use a task or continue the investigation in the current AI conversation. Do not require users to supply a maintenance objective or learn command flags. If the language is ambiguous, select the relevant adapter from source counts; each run handles one adapter and discloses the other languages. Reuse the prerequisites above; an unavailable tool is a coverage gap, not a clean scan. Keep the valid diagram when analysis fails.
+
+The reader follows `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen separates error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran. Information-level signals remain available through finding filters. **Copy architecture brief** shares the bounded hotspot/structural orientation with the headless receipt; its order is not inferred business importance.
+
+After edits, the prominent comparison reports **no longer detected**, **new** and changed evidence. Missing findings do not prove fixes. Configuration, grouping, model or coverage changes make results non-comparable and show the reason. Verify source changes and project tests before claiming an improvement.
+
 ## First look at an unfamiliar repository
 
 Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-map.json]` to verify diagram-to-code component mapping and undeclared component-level imports alongside the headless check) and write the artifacts to a directory:
