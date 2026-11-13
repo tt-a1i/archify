@@ -97,7 +97,11 @@ function gitValue(repoRoot, args, failure) {
 }
 
 function verifiedSourcePath(value, where) {
-  const sourcePath = String(value || '');
+  const authoredPath = String(value || '');
+  if (authoredPath === '.' || authoredPath === './') return '.';
+  // Match code-analysis directory anchors while keeping internal dot/parent
+  // segments forbidden. These are syntax aliases, not filesystem traversal.
+  const sourcePath = authoredPath.replace(/^\.\//, '').replace(/\/$/, '');
   // path-contract-allow: git-path -- Git tree entries use repository-relative POSIX syntax.
   if (!sourcePath || sourcePath.startsWith('/') || sourcePath.includes('\\') || CONTROL_CHARACTER_RE.test(sourcePath)) {
     evidenceFailure('repository-evidence/path-invalid', `${where} must be a repo-relative POSIX path.`, {
@@ -116,6 +120,8 @@ function verifiedSourcePath(value, where) {
   }
   return segments.join('/');
 }
+
+const sourceObject = (revision, sourcePath) => `${revision}:${sourcePath === '.' ? '' : sourcePath}`;
 
 function sourceLineCount(content) {
   if (!content.length) return 0;
@@ -263,7 +269,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       } catch {
         continue;
       }
-      const object = `${revision}:${sourcePath}`;
+      const object = sourceObject(revision, sourcePath);
       citedObjects.set(object, citedObjects.get(object) || Boolean(authored.line));
     }
   }
@@ -303,34 +309,41 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
             supportedFixes: ['use an end_line greater than or equal to line'],
           });
         }
-        const object = `${revision}:${source.path}`;
+        const object = sourceObject(revision, source.path);
         const prefetched = prefetchedBlobs ? prefetchedBlobs.get(object) : undefined;
-        const objectIsBlob = prefetched
-          ? !prefetched.missing && prefetched.type === 'blob'
+        const objectType = prefetched
+          ? prefetched.missing ? null : prefetched.type
           : (() => {
             const type = runGit(realRoot, ['cat-file', '-t', object]);
-            return type.status === 0 && type.stdout.trim() === 'blob';
+            return type.status === 0 ? type.stdout.trim() : null;
           })();
-        if (!objectIsBlob) {
+        if (objectType === 'tree' && source.line) {
+          evidenceFailure('repository-evidence/directory-line', `${where} identifies a directory; only files have source lines.`, {
+            subject: { path: at, ...nodeSubject },
+            evidence: { sourcePath: source.path, revision },
+            supportedFixes: ['remove line and end_line for a directory reference, or cite a file inside the directory'],
+          });
+        }
+        if (objectType !== 'blob' && objectType !== 'tree') {
           // A promisor blob can exist in the pinned tree without being stored
           // locally. Do not tell the caller to change a correct source path.
           const tree = runGit(realRoot, ['ls-tree', '-z', revision, '--', source.path]);
-          const knownBlob = tree.status === 0 && tree.stdout.split('\0').some((entry) => {
+          const knownObject = tree.status === 0 && tree.stdout.split('\0').some((entry) => {
             const separator = entry.indexOf('\t');
             return entry.slice(separator + 1) === source.path
-              && /^\d+ blob [a-f0-9]+$/.test(entry.slice(0, separator));
+              && /^\d+ (?:blob|tree) [a-f0-9]+$/.test(entry.slice(0, separator));
           });
-          if (knownBlob) {
+          if (knownObject) {
             evidenceFailure('repository-evidence/object-unavailable', `${where} exists at revision ${revision}, but its content is unavailable in the local repository.`, {
               subject: { path: where, ...nodeSubject },
               evidence: { sourcePath: source.path, revision },
               supportedFixes: ['explicitly fetch the pinned source objects into the local checkout, then retry verification'],
             });
           }
-          evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
+          evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file or directory at revision ${revision}.`, {
             subject: { path: where, ...nodeSubject },
             evidence: { sourcePath: source.path, revision },
-            supportedFixes: ['use a file path that exists at the pinned revision'],
+            supportedFixes: ['use a file or directory path that exists at the pinned revision'],
           });
         }
         if (source.line) {
@@ -354,6 +367,9 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
             });
           }
         }
+        // A directory proves only the pinned tree path exists. Do not expand
+        // its descendants or imply that every file under it was inspected.
+        if (objectType === 'tree') source.kind = 'directory';
         verified.push({ ...source, ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}) });
         referenceCount += 1;
       } catch (error) {

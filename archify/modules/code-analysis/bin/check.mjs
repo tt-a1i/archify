@@ -81,6 +81,12 @@ export async function runCheck(argv) {
         supportedFixes: ['pass an architecture JSON file with diagram_type "architecture" and components'],
       });
     }
+    const { validateSchema } = await import('../../../renderers/shared/validator.mjs');
+    try { validateSchema('architecture', irDoc, { sourceReferencesOnly: true }); }
+    catch (error) {
+      if (error.archifyDiagnostics) throw new DiagnosticError(error.message, error.archifyDiagnostics);
+      throw error;
+    }
     if (options['--map']) {
       mapDoc = readJsonInput(path.resolve(options['--map']), 'check --map');
       if (!mapDoc || typeof mapDoc !== 'object' || Array.isArray(mapDoc)) {
