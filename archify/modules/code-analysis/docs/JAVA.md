@@ -137,8 +137,9 @@ in the shared contract; it does not specifically mean Java's `import static`
 keyword. Edge weights count dependency records, including recorded imports
 and type references, rather than import declarations alone.
 
-File cycles and module cycles are structural findings reported as errors (see
-[Severity levels](USAGE.md#severity-levels)). Their
+Module (package) cycles are structural findings reported as errors; class
+(file) cycles are warnings, since classes load on demand and refer to each other
+routinely (see [Severity levels](USAGE.md#severity-levels)). Their
 messages, task exports and UI do not infer Python-style partial initialization
 or claim a Java runtime failure.
 
