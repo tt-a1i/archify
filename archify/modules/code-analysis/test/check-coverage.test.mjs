@@ -123,6 +123,49 @@ test('check: investigation leads carry the message, location and a task command'
 
   const noOut = check(root, ['--language', 'py', '--config', config]);
   assert.match(noOut.stdout, /Re-run with --out <dir>/);
+  assert.equal(receipt.counts.offDiagram, null, 'without --ir no finding is claimed to be off a diagram');
+});
+
+test('check: --ir aligns findings and modules with architecture components and reports undeclared edges', (t) => {
+  const root = fixture(t, {
+    'src/app/main.py': 'from src.auth import token\n\ndef run(x):\n    if x:\n        return token.issue()\n    return None\n',
+    'src/auth/token.py': 'def issue():\n    return "ok"\n',
+    'tools/orphan.py': 'def helper(x):\n    if x:\n        return 1\n    return 0\n',
+  });
+  const ir = path.join(root, 'architecture.json');
+  fs.writeFileSync(ir, JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'demo', output: 'architecture.html' },
+    components: [
+      { id: 'app', type: 'backend', label: 'App', sources: [{ path: './src/app/' }] },
+      { id: 'auth', type: 'security', label: 'Auth', sources: [{ path: 'src/auth' }] },
+      { id: 'external-idp', type: 'external', label: 'IdP' },
+    ],
+    connections: [],
+  }));
+  const config = path.join(root, 'analysis.json');
+  fs.writeFileSync(config, JSON.stringify({ rules: { complexity: { function: { warning: { complexity: 0 } } } } }));
+
+  assert.equal(check(root, ['--language', 'py', '--map', ir]).status, 2, '--map without --ir is rejected');
+
+  const json = check(root, ['--language', 'py', '--config', config, '--ir', ir, '--fail-on', 'never', '--json']);
+  assert.equal(json.status, 0, json.stdout + json.stderr);
+  const receipt = JSON.parse(json.stdout);
+  assert.equal(receipt.counts.offDiagram, 1, 'only the unmapped tools/orphan.py finding is off the diagram');
+  assert.deepEqual(receipt.diagram, {
+    components: 3,
+    mappedComponents: 2,
+    emptyComponents: ['external-idp'],
+    unmappedModules: ['tools'],
+    offDiagramFindings: 1,
+    undeclaredEdges: [{ from: 'app', to: 'auth', weight: 1, sample: 'src/app/main.py:1' }],
+  });
+
+  const text = check(root, ['--language', 'py', '--config', config, '--ir', ir, '--fail-on', 'never']);
+  assert.equal(text.status, 0, text.stdout + text.stderr);
+  assert.match(text.stdout, /Diagram alignment: 2\/3 components mapped · 1 unmapped module · 1 finding off diagram/);
+  assert.match(text.stdout, /undeclared component imports: app -> auth \(1\)/);
 });
 
 function textWithParseError(parseError) {

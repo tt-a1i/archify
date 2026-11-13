@@ -54,6 +54,37 @@ test('overlay: components map to modules through their sources; descendants foll
   assert.equal(result.mapped, 2);
 });
 
+test('overlay: parent directory sources claim child modules from most specific prefix outward without being swallowed by enclosing modules', () => {
+  const nestedGraph = {
+    schema_version: 1,
+    repository: { root: '.', revision: null, url: null, language: 'ts', adapter: 't' },
+    grouping: { depth: 3, packageBoundaries: true, groups: [] },
+    excluded: { roles: [], files: 0 },
+    modules: [
+      { id: 'services', label: 'services', path: 'services', files: 1, loc: 8, fanIn: 0, fanOut: 1, instability: 1, entry: ['services/boot.mjs'] },
+      { id: 'services-auth-jwt', label: 'services/auth/jwt', path: 'services/auth/jwt', files: 2, loc: 20, fanIn: 1, fanOut: 0, instability: 0, entry: ['services/auth/jwt/index.mjs'] },
+      { id: 'services-auth-oauth', label: 'services/auth/oauth', path: 'services/auth/oauth', files: 1, loc: 15, fanIn: 0, fanOut: 0, instability: null, entry: ['services/auth/oauth/index.mjs'] },
+      { id: 'services-billing-stripe', label: 'services/billing/stripe', path: 'services/billing/stripe', files: 1, loc: 12, fanIn: 0, fanOut: 0, instability: null, entry: ['services/billing/stripe/index.mjs'] },
+      { id: 'tools', label: 'tools', path: 'tools', files: 1, loc: 5, fanIn: 0, fanOut: 0, instability: null, entry: ['tools/x.mjs'] },
+    ],
+    edges: [{ from: 'services', to: 'services-auth-jwt', weight: 2, kinds: { static: 2 }, evidence: [{ file: 'services/boot.mjs', line: 1, to: 'services/auth/jwt/index.mjs' }] }],
+    unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 },
+  };
+  const nestedHtml = '<html><body><div class="toolbar"></div><svg><g data-node-id="platform"></g><g data-node-id="auth"></g></svg></body></html>';
+  const nestedIr = {
+    schema_version: 1, diagram_type: 'architecture', meta: { title: 't', output: 'architecture.html' },
+    components: [
+      { id: 'platform', type: 'backend', label: 'Platform', sources: [{ path: './services/' }] },
+      { id: 'auth', type: 'security', label: 'Auth', sources: [{ path: 'services/auth/' }] },
+    ],
+    connections: [],
+  };
+  const p = payloadOf(buildOverlay({ ir: nestedIr, graph: nestedGraph, html: nestedHtml, map: null }).html);
+  assert.deepEqual(p.components.find((c) => c.id === 'auth').modules.map((m) => m.id), ['services-auth-jwt', 'services-auth-oauth']);
+  assert.deepEqual(p.components.find((c) => c.id === 'platform').modules.map((m) => m.id), ['services', 'services-billing-stripe']);
+  assert.deepEqual(p.unmapped.map((m) => m.id), ['tools']);
+});
+
 test('overlay: the cycle indicator takes the colour of the highest severity among its file and module cycles, green otherwise', () => {
   const facts = { schema_version: 1, repository: graph.repository, files: [{ path: 'src/index.mjs', loc: 1, role: 'source' }, { path: 'src/lib/helper.mjs', loc: 1, role: 'source' }], symbols: [], calls: [], imports: [], unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 } };
   const base = { id: 'COUP-0001', dimension: 'coupling', confidence: 1, message: 'm', supportedFixes: [] };

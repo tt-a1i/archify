@@ -10,14 +10,18 @@ import { taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
   archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
+                              [--ir architecture.json [--map overlay-map.json]]
                               [--baseline baseline.json] [--compare findings.json] [--out dir]
                               [--fail-on error|warning|info|never] [--new-only]
                               [--update-baseline | --accept finding-id | --revoke finding-id]
                               [--reason text] [--json]
 
-Analyzes <repo-root> without a diagram and exits 1 when an open finding reaches
---fail-on (default: warning). Findings accepted in --baseline do not fail the run
-unless their evidence changed since they were accepted. --new-only fails only on
+Analyzes <repo-root> headlessly and exits 1 when an open finding reaches
+--fail-on (default: warning). With --ir (and optional --map), also maps code
+modules and findings onto the architecture diagram components and reports
+unmapped modules and undeclared component-level imports without changing the gate.
+Findings accepted in --baseline do not fail the run unless their evidence changed
+since they were accepted. --new-only fails only on
 findings that are new since --compare (or since the previous run in --out);
 without a previous run to compare with, every open finding counts as new.
 --update-baseline writes every current finding to --baseline (keeping existing
@@ -27,7 +31,7 @@ one accepted id without re-running analysis. Both require --baseline.
 Exit codes: 0 passed, 1 gate failed, 2 analysis or usage error.
 Outputs with --out: raw-facts, module-graph, findings, review, overview (.json).`;
 
-const VALUE_OPTIONS = ['--language', '--config', '--baseline', '--compare', '--out', '--fail-on', '--reason', '--accept', '--revoke'];
+const VALUE_OPTIONS = ['--language', '--config', '--ir', '--map', '--baseline', '--compare', '--out', '--fail-on', '--reason', '--accept', '--revoke'];
 const FLAG_OPTIONS = ['--new-only', '--update-baseline', '--json'];
 const SEVERITY = { error: 0, warning: 1, info: 2 };
 
@@ -44,6 +48,7 @@ export function parseCheckArgs(argv) {
     i += 1;
   }
   if (!['error', 'warning', 'info', 'never'].includes(options['--fail-on'])) usage(`--fail-on must be error, warning, info or never (got ${options['--fail-on']}).`);
+  if (options['--map'] && !options['--ir']) usage('--map requires --ir <architecture.json>.');
   if (options['--update-baseline'] && !options['--baseline']) usage('--update-baseline needs --baseline <file> to write.');
   if ((options['--accept'] || options['--revoke']) && !options['--baseline']) usage('--accept and --revoke require --baseline <file>.');
   if (['--update-baseline', '--accept', '--revoke'].filter((key) => options[key]).length > 1) usage('Choose one baseline action: --update-baseline, --accept or --revoke.');
@@ -55,10 +60,10 @@ export async function runCheck(argv) {
   const { repo, options } = parseCheckArgs(argv);
   const { ensureDependencies } = await import('./serve.mjs');
   await ensureDependencies();
-  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, saveBaseline, loadPrevious, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
+  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, saveBaseline, loadPrevious, readJsonInput, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
   const { reviewFindings, baselineFrom, acceptFinding, revokeFinding, isOpen } = await import('../lib/review.mjs');
   const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');
-  const { findingModules } = await import('../overlay/inject.mjs');
+  const { alignDiagram, findingModules } = await import('../overlay/inject.mjs');
 
   const root = path.resolve(repo);
   const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : null;
@@ -67,6 +72,25 @@ export async function runCheck(argv) {
     return { exitCode: 0, receipt: receipt('ok', { command: 'check', action, baseline: baselineFile, id, entries: doc.accepted.length }) };
   };
   if (options['--revoke']) return writeBaseline(revokeFinding(options['--revoke'], { existing: loadBaseline(baselineFile) }), 'revoke-finding', options['--revoke']);
+  let irDoc = null, mapDoc = null;
+  if (options['--ir']) {
+    irDoc = readJsonInput(path.resolve(options['--ir']), 'check --ir');
+    if (!irDoc || typeof irDoc !== 'object' || irDoc.diagram_type !== 'architecture' || !Array.isArray(irDoc.components)) {
+      fail('cli/input-invalid', `Not an Archify architecture IR: ${options['--ir']}`, {
+        subject: { option: '--ir', file: options['--ir'] },
+        supportedFixes: ['pass an architecture JSON file with diagram_type "architecture" and components'],
+      });
+    }
+    if (options['--map']) {
+      mapDoc = readJsonInput(path.resolve(options['--map']), 'check --map');
+      if (!mapDoc || typeof mapDoc !== 'object' || Array.isArray(mapDoc)) {
+        fail('cli/input-invalid', `Overlay map must be a JSON object: ${options['--map']}`, {
+          subject: { option: '--map', file: options['--map'] },
+          supportedFixes: ['pass a JSON object mapping componentId to [moduleId, ...]'],
+        });
+      }
+    }
+  }
   const out = options['--out'] ? path.resolve(options['--out']) : null;
   const previousFile = options['--compare'] ? path.resolve(options['--compare']) : out ? path.join(out, 'findings.json') : null;
   if (options['--compare'] && !fs.existsSync(previousFile)) fail('cli/input-invalid', `Not a file: ${options['--compare']}`, { subject: { option: '--compare' }, supportedFixes: ['pass the findings.json of an earlier run'] });
@@ -96,9 +120,13 @@ export async function runCheck(argv) {
   if (options['--new-only'] && review.comparison && (findings.analysis.external?.length || previous?.analysis?.external?.length) && review.comparison.comparable !== true) {
     fail('external/comparison-unverified', 'New-only gating requires comparable external reports.', { evidence: { reasons: review.comparison.reasons }, supportedFixes: ['provide matching tool versions, rule configuration, complete scan scope and source-bound reports', 'run a full check without --new-only to inspect the available diagnostics'] });
   }
+  const run = { rules: findings.rules, suppressed: config.ignore || [], exclude: config.exclude || [], otherLanguages, boundaries: config.boundaries || null, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
+  const alignment = irDoc ? alignDiagram({ ir: irDoc, graph, map: mapDoc, facts, findings: findings.diagnostics, run }) : null;
   const fileModule = new Map(Object.entries(graph.fileModules || {}));
-  const listed = findings.diagnostics.map((d) => ({ ...d, ...(review.findings[d.id] ? { review: review.findings[d.id] } : {}), moduleIds: findingModules(d, fileModule), componentIds: [] }));
-  const overview = buildOverview({ findings: listed, graph, facts, run: { rules: findings.rules, suppressed: config.ignore || [], exclude: config.exclude || [], otherLanguages, boundaries: config.boundaries || null, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review } });
+  const listed = alignment
+    ? alignment.listed
+    : findings.diagnostics.map((d) => ({ ...d, ...(review.findings[d.id] ? { review: review.findings[d.id] } : {}), moduleIds: findingModules(d, fileModule), componentIds: [] }));
+  const overview = buildOverview({ findings: listed, graph, facts, unmapped: alignment ? alignment.unmapped : [], run, diagram: Boolean(alignment) });
 
   if (out) {
     fs.mkdirSync(out, { recursive: true });
@@ -120,6 +148,21 @@ export async function runCheck(argv) {
       language: facts.repository.language, files: facts.files.length, rules: findings.rules,
       ...(findings.analysis?.duplicates ? { duplicates: findings.analysis.duplicates } : {}),
       verdict: overview.verdict, counts: overview.counts,
+      ...(alignment ? {
+        diagram: {
+          components: alignment.components.length,
+          mappedComponents: alignment.mapped,
+          emptyComponents: alignment.components.filter((c) => !c.modules.length).map((c) => c.id),
+          unmappedModules: overview.coverage.unmappedModules,
+          offDiagramFindings: overview.counts.offDiagram,
+          undeclaredEdges: alignment.undeclaredEdges.map((e) => ({
+            from: e.from,
+            to: e.to,
+            weight: e.weight,
+            sample: e.evidence?.[0] ? `${e.evidence[0].file}:${e.evidence[0].line}` : null,
+          })),
+        },
+      } : {}),
       gate: { failOn, newOnly, ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: findingWhere(d), message: d.message })) },
       review: reviewSummary(review),
       comparisonReasons: review.comparison ? review.comparison.reasons : [],
@@ -203,6 +246,11 @@ export function formatText(r) {
     const { engine, coverage } = r.duplicates;
     lines.push(`  Duplicate detection: ${engine.name} ${engine.version} · ${coverage.analyzed.length}/${coverage.selected.length} selected files analyzed${coverage.complete ? '' : ' · incomplete coverage'}`);
     if (!coverage.complete) lines.push('  Duplicate detection did not cover every selected file. Empty findings do not mean the full scope was checked; see duplicates.coverage in --json.');
+  }
+  if (r.diagram) {
+    lines.push(`  Diagram alignment: ${r.diagram.mappedComponents}/${r.diagram.components} components mapped · ${r.diagram.unmappedModules.length} unmapped module${r.diagram.unmappedModules.length === 1 ? '' : 's'} · ${r.diagram.offDiagramFindings} finding${r.diagram.offDiagramFindings === 1 ? '' : 's'} off diagram`);
+    if (r.diagram.unmappedModules.length) lines.push(`    unmapped modules: ${r.diagram.unmappedModules.slice(0, 12).map(formatTerminalText).join(', ')}${r.diagram.unmappedModules.length > 12 ? ` (+${r.diagram.unmappedModules.length - 12} more)` : ''}`);
+    if (r.diagram.undeclaredEdges.length) lines.push(`    undeclared component imports: ${r.diagram.undeclaredEdges.slice(0, 8).map((e) => `${formatTerminalText(e.from)} -> ${formatTerminalText(e.to)} (${e.weight})`).join(', ')}${r.diagram.undeclaredEdges.length > 8 ? ` (+${r.diagram.undeclaredEdges.length - 8} more)` : ''}`);
   }
   if (r.investigation?.leads?.length) {
     lines.push(`Start here: ${r.investigation.leads.length} ranked lead${r.investigation.leads.length === 1 ? '' : 's'}. Each is static evidence, not a proven defect; read the cited source first.`);

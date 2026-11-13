@@ -26,7 +26,7 @@ import { layerCounts } from '../evaluate/index.mjs';
 export const MAX_PRIORITIES = 3;
 const SEVERITY_RANK = { error: 0, warning: 1, info: 2 };
 
-export function buildOverview({ findings = [], graph, facts = null, unmapped = [], run = {} }) {
+export function buildOverview({ findings = [], graph, facts = null, unmapped = [], run = {}, diagram = true }) {
   const modules = new Map((graph?.modules || []).map((m) => [m.id, m]));
   const related = relate(findings);
   const entries = findings.map((f) => ({
@@ -65,7 +65,8 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
   return {
     verdict: bySeverity.error + bySeverity.warning > 0 ? 'attention' : bySeverity.info > 0 ? 'signals-only' : 'none-found',
     // acceptedErrors: errors in the baseline. They do not fail a run, but a reader must still see them as unresolved.
-    counts: { findings: findings.length, ...bySeverity, accepted, acceptedErrors: entries.filter((e) => e.status === 'accepted' && e.severity === 'error').length, offDiagram: entries.filter((e) => !e.componentIds.length).length },
+    // Without a diagram (`check` without `--ir`), `offDiagram` is null rather than claiming every finding is off a diagram.
+    counts: { findings: findings.length, ...bySeverity, accepted, acceptedErrors: entries.filter((e) => e.status === 'accepted' && e.severity === 'error').length, offDiagram: diagram ? entries.filter((e) => !e.componentIds.length).length : null },
     review: reviewOf(run.review),
     groups: groupsOf(ranked),
     priorities,

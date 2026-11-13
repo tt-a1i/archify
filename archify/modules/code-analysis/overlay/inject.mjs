@@ -35,13 +35,7 @@ import { reviewTargetDigest } from '../lib/review.mjs';
 import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
 import { clientAsset } from './client-assets.mjs';
 
-export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
-  if (!html.includes('data-node-id=') || !html.includes('class="toolbar"')) {
-    fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
-      evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
-      supportedFixes: ['pass the HTML written by `archify deliver architecture`'],
-    });
-  }
+export function alignDiagram({ ir, graph, map = null, facts = null, findings = [], run = {} }) {
   const modules = new Map(graph.modules.map((m) => [m.id, m]));
   const mapping = resolveMapping(ir, graph, map);
   const claimed = new Set([...mapping.values()].flat());
@@ -61,6 +55,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     const ids = mapping.get(c.id) || [];
     const mods = ids.map((id) => modules.get(id)).filter(Boolean);
     const set = new Set(ids);
+    const filePaths = new Set(ids.flatMap((id) => (fileIndex.get(id) || []).map((f) => f.path)));
     const outgoing = aggregate(graph.edges.filter((e) => set.has(e.from) && !set.has(e.to)), 'to', mapping);
     const incoming = aggregate(graph.edges.filter((e) => set.has(e.to) && !set.has(e.from)), 'from', mapping);
     const internal = graph.edges.filter((e) => set.has(e.from) && set.has(e.to)).reduce((n, e) => n + e.weight, 0);
@@ -74,8 +69,8 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
       outgoing,
       incoming,
       fileList: ids.flatMap((id) => (fileIndex.get(id) || []).map((f) => ({ ...f, module: id }))).map((f) => ({ ...f, findings: findingsByFile.get(f.path) || [] })),
-      findings: findings.filter((f) => touches(f, set, c.id, new Set(ids.flatMap((id) => (fileIndex.get(id) || []).map((f) => f.path))))),
-      indicators: indicators(set, mods, openFindings, mapping, new Set(ids.flatMap((id) => (fileIndex.get(id) || []).map((f) => f.path)))),
+      findings: findings.filter((f) => touches(f, set, c.id, filePaths)),
+      indicators: indicators(set, mods, openFindings, mapping, filePaths),
     };
   });
 
@@ -86,8 +81,12 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     edgeMap.set(key, { from: c.id, to: o.component, weight: o.weight, evidence: o.evidence });
   }
   const edges = [...edgeMap.values()].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.to < b.to ? -1 : 1));
+  const declared = new Set((ir.connections || []).filter((c) => c && typeof c.from === 'string' && typeof c.to === 'string').map((c) => `${c.from}>${c.to}`));
+  const undeclaredEdges = edges.filter((e) => !declared.has(`${e.from}>${e.to}`));
   const unmapped = graph.modules.filter((m) => !claimed.has(m.id)).map((m) => ({ id: m.id, label: m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: (fileIndex.get(m.id) || []).map((f) => ({ ...f, module: m.id })) }));
-  const fileModule = new Map([...fileIndex].flatMap(([id, list]) => list.map((f) => [f.path, id])));
+  const fileModule = facts
+    ? new Map([...fileIndex].flatMap(([id, list]) => list.map((f) => [f.path, id])))
+    : new Map(Object.entries(graph.fileModules || {}));
   const reviewed = run.review ? run.review.findings : {};
   const listed = findings.map((f) => ({
     ...(reviewed[f.id] ? { review: reviewed[f.id] } : {}),
@@ -96,6 +95,18 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     moduleIds: findingModules(f, fileModule),
     componentIds: components.filter((c) => c.findings.includes(f)).map((c) => c.id),
   }));
+  const mapped = components.filter((c) => c.modules.length).length;
+  return { components, edges, undeclaredEdges, unmapped, listed, mapped };
+}
+
+export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
+  if (!html.includes('data-node-id=') || !html.includes('class="toolbar"')) {
+    fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
+      evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
+      supportedFixes: ['pass the HTML written by `archify deliver architecture`'],
+    });
+  }
+  const { components, edges, unmapped, listed, mapped } = alignDiagram({ ir, graph, map, facts, findings, run });
 
   const payload = {
     generator: 'bauify',
@@ -311,36 +322,72 @@ function indexFiles(graph, facts) {
 }
 
 // componentId -> [moduleId]. Explicit `map` wins; otherwise derive from each
-// component's `sources` paths: a source under a module's path claims that
-// module and, when no other component claims them, its descendant modules.
-function resolveMapping(ir, graph, map) {
+// component's `sources` paths: a source under or above module paths claims the
+// matching module and, from most specific directory prefix outward, unclaimed
+// descendant modules.
+function normalizeRelPath(rawPath, repoRoot) {
+  if (typeof rawPath !== 'string') return '';
+  const norm = rawPath.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '').replace(/\/+$/, '');
+  const rootPrefix = repoRoot && repoRoot !== '.' ? repoRoot.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '').replace(/\/+$/, '') : '';
+  if (!norm || norm === '.') return '';
+  if (rootPrefix && norm === rootPrefix) return '';
+  return rootPrefix && norm.startsWith(`${rootPrefix}/`) ? norm.slice(rootPrefix.length + 1) : norm;
+}
+
+export function resolveMapping(ir, graph, map) {
   const result = new Map();
   const byPathDepth = [...graph.modules].sort((a, b) => b.path.split('/').length - a.path.split('/').length);
-  const moduleForFile = (file) => {
-    const rel = graph.repository.root && graph.repository.root !== '.' && file.startsWith(`${graph.repository.root}/`) ? file.slice(graph.repository.root.length + 1) : file;
-    if (graph.fileModules && graph.fileModules[rel]) return graph.fileModules[rel];
-    for (const m of byPathDepth) {
-      if (m.path === '' ) continue;
-      if (rel === m.path || rel.startsWith(`${m.path}/`)) return m.id;
-    }
-    return rel.includes('/') ? null : (graph.modules.find((m) => m.path === '' && m.entry.includes(rel)) || {}).id || null;
+  const prefixes = [];
+  const seenPrefix = new Set();
+  const addPrefix = (cid, prefix, order) => {
+    const key = `${cid}\0${prefix}`;
+    if (!prefix || seenPrefix.has(key)) return;
+    seenPrefix.add(key);
+    prefixes.push({ cid, prefix, depth: prefix.split('/').length, order });
   };
-  for (const c of ir.components) {
-    if (map && Array.isArray(map[c.id])) { result.set(c.id, [...new Set(map[c.id])]); continue; }
+  const moduleForSource = (rel) => {
+    if (!rel) return null;
+    if (graph.fileModules && graph.fileModules[rel]) return graph.fileModules[rel];
+    const exact = graph.modules.find((m) => m.path !== '' && m.path === rel);
+    if (exact) return exact.id;
+    // A directory path sitting above child modules claims those child modules,
+    // not an enclosing parent module.
+    if (graph.modules.some((m) => m.path !== '' && m.path.startsWith(`${rel}/`))) return null;
+    for (const m of byPathDepth) {
+      if (m.path === '') continue;
+      if (rel.startsWith(`${m.path}/`)) return m.id;
+    }
+    return rel.includes('/') ? null : (graph.modules.find((m) => m.path === '' && (m.entry.includes(rel) || m.label === rel)) || {}).id || null;
+  };
+  ir.components.forEach((c, order) => {
+    if (map && Array.isArray(map[c.id])) { result.set(c.id, [...new Set(map[c.id])]); return; }
     const ids = new Set();
-    for (const s of c.sources || []) { const id = moduleForFile(s.path); if (id) ids.add(id); }
+    for (const s of c.sources || []) {
+      const rel = normalizeRelPath(s?.path, graph.repository?.root);
+      if (!rel) continue;
+      const id = moduleForSource(rel);
+      if (id) ids.add(id);
+      else if (graph.modules.some((m) => m.path !== '' && m.path.startsWith(`${rel}/`))) addPrefix(c.id, rel, order);
+    }
     // A component with no sources whose id is a module id (the bridge IR, or an IR that reuses
     // module ids on purpose) maps to that module.
     if (!ids.size && !(c.sources || []).length && graph.modules.some((m) => m.id === c.id)) ids.add(c.id);
+    for (const id of ids) {
+      const p = graph.modules.find((m) => m.id === id);
+      if (p && p.path !== '') addPrefix(c.id, p.path, order);
+    }
     result.set(c.id, [...ids]);
-  }
-  // Descendants: a module whose path starts with a claimed module's path joins it when unclaimed.
+  });
+  // Descendants: deeper directory prefixes claim unclaimed child modules before broader ancestors.
   const claimed = new Set([...result.values()].flat());
-  for (const [cid, ids] of result) {
-    for (const parent of [...ids]) {
-      const p = graph.modules.find((m) => m.id === parent);
-      if (!p || p.path === '') continue;
-      for (const m of graph.modules) if (!claimed.has(m.id) && m.path.startsWith(`${p.path}/`)) { ids.push(m.id); claimed.add(m.id); }
+  prefixes.sort((a, b) => b.depth - a.depth || a.order - b.order);
+  for (const { cid, prefix } of prefixes) {
+    const ids = result.get(cid);
+    for (const m of graph.modules) {
+      if (!claimed.has(m.id) && m.path !== '' && m.path.startsWith(`${prefix}/`)) {
+        ids.push(m.id);
+        claimed.add(m.id);
+      }
     }
   }
   return result;
