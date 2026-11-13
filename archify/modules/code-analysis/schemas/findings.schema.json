@@ -38,7 +38,7 @@
         "language": { "type": ["string", "null"] },
         "adapter": { "type": ["string", "null"] },
         "adapterRevision": { "type": ["integer", "null"], "minimum": 1, "description": "Revision of the adapter's extraction logic (raw facts repository.adapterRevision); null when the facts did not record one." },
-        "configDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of the effective (merged) configuration in its key order, schema_version excluded." },
+        "configDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of the effective (merged) configuration in its key order, schema_version excluded, plus the active built-in nested-source-root grouping strategy when used." },
         "ruleVersions": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 }, "description": "Rules that ran (suppressed rules excluded) and the version of their logic." },
         "external": { "type": "array", "items": { "$ref": "#/$defs/externalSource" } },
         "goBuildScope": {

@@ -192,7 +192,7 @@ export function comparability(before, after) {
   if (before.adapter !== after.adapter) changes.push(`Extractor changed from ${before.adapter} to ${after.adapter}.`);
   if (revision(before) !== revision(after)) changes.push(`Extraction logic changed from revision ${revision(before) ?? 'unrecorded'} to ${revision(after) ?? 'unrecorded'}.`);
   if (changes.length) add('adapter-changed', changes.join(' '));
-  if (before.configDigest !== after.configDigest) add('config-changed', 'The analysis configuration changed (thresholds, include/exclude, roles, boundaries or ignored rules).');
+  if (before.configDigest !== after.configDigest) add('config-changed', 'The analysis configuration or module grouping changed (thresholds, include/exclude, roles, boundaries or ignored rules).');
   if (before.language === 'go' && after.language === 'go') {
     const left = before.goBuildScope, right = after.goBuildScope;
     if (!left || !right) add('go-build-scope-missing', 'At least one Go run recorded no effective build scope; platform and build-tag selection cannot be compared.');

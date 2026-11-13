@@ -33,7 +33,10 @@
       "**/test_*.py",
       "**/*_test.py",
       "**/conftest.py",
-      "**/*_test.go"
+      "**/*_test.go",
+      "**/{vitest,jest,playwright,cypress}.config.*",
+      "**/vitest.workspace.*",
+      "**/karma.conf.*"
     ],
     "generated": [
       "**/generated-*",
