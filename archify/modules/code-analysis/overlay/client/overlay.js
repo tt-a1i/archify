@@ -200,6 +200,7 @@
       h += '<p class="warn">No source module is mapped to this component (external system, or no sources in the IR).</p>';
     } else {
       h += '<div>' + c.modules.map(function (m) { return esc(m.label); }).join(' · ') + '</div>';
+      if ((c.ambiguousModules || []).length) h += '<p class="warn">Shared module mapping: ' + c.ambiguousModules.map(esc).join(', ') + '. Component import attribution remains unresolved; inspect the module files below.</p>';
       h += '<span class="stat">' + c.files + ' files</span><span class="stat">' + c.loc + ' LOC</span>';
       var fi = c.incoming.reduce(function (n, e) { return n + e.weight; }, 0), fo = c.outgoing.reduce(function (n, e) { return n + e.weight; }, 0);
       h += '<span class="stat">in ' + fi + '</span><span class="stat">out ' + fo + '</span>';
@@ -208,7 +209,7 @@
         if (!list.length) return '';
         var s = '<details><summary>' + title + ' · ' + list.length + '</summary>';
         list.forEach(function (e) {
-          var target = e.component ? (byId[e.component] ? byId[e.component].label : e.component) : (e.module + ' (not on diagram)');
+          var target = e.component ? (byId[e.component] ? byId[e.component].label : e.component) : (e.module + (e.ambiguous ? ' (component mapping unresolved)' : ' (not on diagram)'));
           s += '<div class="edge"><b>' + arrow + '</b> ' + esc(target) + ' <span class="ev">' + e.weight + ' import' + (e.weight === 1 ? '' : 's') + '</span><div class="ev">' +
             e.evidence.map(function (v) { return '<div>' + fileLink(v.file, v.line) + ' → ' + esc(v.to) + '</div>'; }).join('') + '</div></div>';
         });
@@ -531,6 +532,7 @@
     // Java counts each unresolved type reference as well as imports.
     if (unresolved) lines.push(plural(unresolved, c.language === 'java' ? 'dependency record' : 'import') + ' could not be resolved');
     if ((c.unmappedModules || []).length) lines.push(plural(c.unmappedModules.length, 'module') + ' not on this diagram');
+    if ((c.ambiguousModules || []).length) lines.push(plural(c.ambiguousModules.length, 'module') + ' mapped to several components; related imports remain at module level');
     var run = (c.rules && c.rules.run) || [], off = (c.rules && c.rules.suppressed) || [];
     lines.push('Checked: ' + (run.length ? run.map(function (r) { return (GROUPS[r] || r).toLowerCase(); }).join(', ') : 'nothing') + (off.length ? ' · switched off: ' + off.join(', ') : ''));
     var dup = duplicateCoverageLine(c);
@@ -542,7 +544,7 @@
     }
     var missing = [['complexity/', 'complexity'], ['redundancy/', 'duplication'], ['architecture/', 'architecture boundaries (none configured)']].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push('Not checked: ' + missing.join(', '));
-    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (dup && !dup.complete);
+    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
     return '<details class="coverage"><summary>Coverage · ' + esc(LANGS[c.language] || c.language || 'Unknown') + ' · ' + (files.analyzed == null ? 'file count unavailable' : plural(files.analyzed, 'file')) + (incomplete ? ' · incomplete' : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
   }
   // Duplicate detection reports its own file coverage: files it skipped (vendored,

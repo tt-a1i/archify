@@ -1,0 +1,41 @@
+✔ check: the summary shows a parse failure and a language that was not analyzed (930.638583ms)
+✔ check: a clean run says nothing about coverage and the gate is unchanged (782.07725ms)
+✔ check: threshold errors stay errors and partial coverage does not change the finding gate (1192.870875ms)
+✔ check: investigation leads carry the message, location and a task command (1256.167375ms)
+✔ check: --ir aligns findings and modules with architecture components and reports undeclared edges (846.183792ms)
+✔ check: shared module sources report ambiguity without inventing a component import (1096.023084ms)
+✔ check: role exclusions and ambiguous-language file counts are visible on first contact (1137.618208ms)
+✔ check: investigation.architecture surfaces module topology and structural signals outside top complexity leads (803.431333ms)
+✔ check: the text summary escapes control characters in parse-failure paths (0.316542ms)
+✔ check: parse paths with literal escapes remain distinct from control characters (0.08675ms)
+✔ overlay: components map to modules through their sources; descendants follow the parent (4.948625ms)
+✔ overlay: parent directory sources claim child modules from most specific prefix outward without being swallowed by enclosing modules (0.432208ms)
+✔ overlay: directory sources use file ownership for Go, Rust and explicit groups (0.212417ms)
+✔ overlay: historical graphs retain directory fallback while new graphs use exact file ownership (0.093917ms)
+✔ overlay: shared module ownership stays ambiguous across component order and edge direction (0.381667ms)
+✔ overlay: directory claims preserve ties and splits within a folded module (0.140959ms)
+✔ overlay: the cycle indicator takes the colour of the highest severity among its file and module cycles, green otherwise (3.736917ms)
+✔ overlay: every finding is listed once at the top level with its modules and components, including unmapped ones (1.146542ms)
+✔ overlay: an explicit map wins and an unmapped component is reported, not invented (0.29325ms)
+✔ overlay: the delivered HTML is extended, never rewritten, and refuses non-Archify input (0.435ms)
+✔ overlay: --source embeds the full text of every file a finding cites, nothing more (1.13825ms)
+✔ analysis: the delivered page is read, never rewritten; the analysis page and every stage land in the output directory (459.720125ms)
+✔ overlay: embedded JSON stays inside its script element whatever the source text holds (0.064042ms)
+✔ overview: the same structure seen at several levels is related and takes one priority slot (1.783083ms)
+✔ overview: a cycle inside one module is not tied to a module-level cycle (0.141958ms)
+✔ overview: priorities rank by severity, then reach, and stop at the limit (0.155834ms)
+✔ overview: one rule with many instances does not take every priority slot (0.109042ms)
+✔ overview: investigation repeats priorities with message and source location (0.102209ms)
+✔ overview: the verdict never claims more than the checks did (0.110375ms)
+✔ overview: coverage names what was analyzed, left out, and switched off (0.105542ms)
+✔ overview: duplicate detection carries its own file coverage so an empty scan is not an all-clear (0.340958ms)
+✔ extract: files of the language not analyzed are counted (4.898875ms)
+✔ overview: an accepted error leaves the open counts but is still counted as present (0.13975ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8149.478
