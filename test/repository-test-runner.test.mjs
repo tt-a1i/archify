@@ -206,3 +206,35 @@ require('node:module').syncBuiltinESMExports();
   for (const file of expected) assert.ok(fs.existsSync(path.join(invocation.cwd, file)), file);
   assert.equal(fs.existsSync(path.join(repoRoot, 'archify/test')), false);
 });
+
+test('local full inventory retains the module bridge; external CI ownership alone suppresses nested dispatch', (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-module-dispatch-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const capture = path.join(directory, 'calls.json');
+  const preload = path.join(directory, 'capture.cjs');
+  fs.writeFileSync(preload, `
+const cp = require('node:child_process');
+cp.spawnSync = (command, args, options) => {
+  require('node:fs').writeFileSync(${JSON.stringify(capture)}, JSON.stringify({ args, env: options.env }));
+  return { status: Number(process.env.MODULE_TEST_STATUS), stdout: '', stderr: 'module failed' };
+};
+require('node:module').syncBuiltinESMExports();
+`);
+  for (const [external, status] of [['', 0], ['', 7], ['1', 7]]) {
+    fs.rmSync(capture, { force: true });
+    const env = { ...process.env, ARCHIFY_CODE_ANALYSIS_EXTERNAL: external, MODULE_TEST_STATUS: String(status) };
+    delete env.NODE_TEST_CONTEXT;
+    const result = spawnSync(process.execPath, ['--require', preload, '--test',
+      '--test-name-pattern=^Code Analysis regression suite$', 'test/code-analysis.test.mjs'], {
+      cwd: repoRoot, encoding: 'utf8', env,
+    });
+    assert.equal(result.status, external || status === 0 ? 0 : 1, result.stdout + result.stderr);
+    assert.equal(fs.existsSync(capture), !external);
+    if (!external) {
+      const call = JSON.parse(fs.readFileSync(capture, 'utf8'));
+      const tests = fs.readdirSync(path.join(repoRoot, 'archify/modules/code-analysis/test')).filter(file => file.endsWith('.test.mjs')).sort();
+      assert.deepEqual(call.args, ['--test', ...tests.map(file => path.join(repoRoot, 'archify/modules/code-analysis/test', file))]);
+      assert.equal(call.env.NODE_TEST_CONTEXT, undefined);
+    }
+  }
+});

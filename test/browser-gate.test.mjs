@@ -274,3 +274,46 @@ test('website CI uses the maintained browser script including community security
   assert.match(manifest.scripts['test:browser'], /site-language-continuity\.test\.mjs/);
   assert.match(manifest.scripts['test:browser'], /community-browser\.test\.mjs/);
 });
+
+test('reader-only browser selection retains generic suites and changed module tests', async () => {
+  const { browserTestFiles, selectBrowserTests } = await import('../scripts/browser-test-inventory.mjs');
+  for (const owner of ['code-analysis', 'explainer', 'story']) {
+    const files = selectBrowserTests('core', [owner], ['test/story-browser.test.mjs']);
+    assert.ok(files.includes(`${owner}-browser.test.mjs`));
+    assert.ok(files.includes('story-browser.test.mjs'), 'explicitly changed tests must survive');
+    assert.ok(files.includes('finalize-browser.test.mjs'));
+    assert.ok(files.includes('diagram-quality-e2e-browser.test.mjs'));
+    assert.ok(files.includes('sequence-header-clearance.test.mjs'), 'mixed suites cannot be dropped by name');
+  }
+  for (const [scope, owners] of [['full', ['story']], ['core', []], ['core', ['renderer']], ['core', ['story', 'viewer']]]) {
+    assert.deepEqual(selectBrowserTests(scope, owners, []), browserTestFiles);
+  }
+  assert.throws(() => selectBrowserTests('unknown', [], []));
+  assert.throws(() => selectBrowserTests('core', {}, []));
+  assert.throws(() => selectBrowserTests('core', ['unknown'], []));
+  assert.throws(() => selectBrowserTests('core', ['story'], ['../outside.test.mjs']));
+});
+
+test('CI browser runner applies ownership before sharding and rejects malformed selection', () => {
+  const run = (scope, owners, changed, shard) => spawnSync(process.execPath, [runner, '--list', ...(shard ? [`--shard=${shard}/2`] : [])], {
+    encoding: 'utf8', env: { ...process.env, CI_BROWSER_SCOPE: scope, CI_TEST_OWNERS: owners, CI_CHANGED_TESTS: changed },
+  });
+  const full = run('core', '["explainer"]', '[]');
+  assert.equal(full.status, 0, full.stderr);
+  const files = full.stdout.trim().split('\n');
+  assert.ok(files.includes('test/explainer-browser.test.mjs'));
+  assert.ok(!files.includes('test/code-analysis-browser.test.mjs'));
+  assert.ok(!files.includes('test/story-browser.test.mjs'));
+  const shards = [1, 2].flatMap(index => {
+    const result = run('core', '["explainer"]', '[]', index);
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim().split('\n');
+  });
+  assert.equal(new Set(shards).size, files.length);
+  assert.deepEqual(shards.sort(), files.sort());
+  for (const args of [['unknown', '[]', '[]'], ['core', 'broken', '[]'], ['core', '[]', '{}'], ['core', '["unknown"]', '[]'], ['core', '["story"]', '["../outside.test.mjs"]']]) {
+    const result = run(...args);
+    assert.notEqual(result.status, 0);
+    assert.equal(result.stdout, '');
+  }
+});
