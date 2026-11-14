@@ -2190,7 +2190,7 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
-  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
     'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
     'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
@@ -7282,7 +7282,7 @@ try {
       break;
     case 'start': {
       if (!args.length || args[0] === '--help' || args[0] === '-h') {
-        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
         break;
       }
       const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');

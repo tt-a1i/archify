@@ -379,7 +379,7 @@ function sourceOf(findings, facts) {
     configDigest: findings.analysis?.configDigest ?? null,
     analyzer: findings.analysis?.analyzer ?? null,
     // Context only: the analyzed text is the working tree, which may differ from HEAD.
-    gitHead: repo.baseRevision ?? repo.revision ?? null,
+    gitHead: repo.sourceKind === 'git-tree' ? repo.revision : repo.baseRevision ?? repo.revision ?? null,
   };
 }
 
@@ -576,7 +576,7 @@ export function renderTaskMarkdown(task) {
   const s = task.source;
   line(`- Language: ${s.language ?? 'unknown'} (${s.adapter ?? 'unknown adapter'}), analyzed root: \`${s.root ?? '?'}\`, source: ${s.sourceKind ?? '?'}`);
   line(`- Snapshot: \`${s.snapshotId ?? 'unknown'}\`${s.configDigest ? `, config \`${s.configDigest.slice(0, 12)}\`` : ''}${s.analyzer ? `, analyzer ${s.analyzer.name} ${s.analyzer.version}` : ''}`);
-  if (s.gitHead) line(`- Git HEAD at analysis (context only; the working tree was analyzed): \`${s.gitHead}\``);
+  if (s.gitHead) line(s.sourceKind === 'git-tree' ? `- Pinned source commit: \`${s.gitHead}\`. Verify this revision in the intended checkout before editing; existing findings are not automatically PR regressions.` : `- Git HEAD at analysis (context only; the working tree was analyzed): \`${s.gitHead}\``);
   return `${out.join('\n')}\n`;
 }
 

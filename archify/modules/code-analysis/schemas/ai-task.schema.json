@@ -108,7 +108,7 @@
         "snapshotId": { "type": ["string", "null"] },
         "configDigest": { "type": ["string", "null"] },
         "analyzer": { "type": ["object", "null"] },
-        "gitHead": { "type": ["string", "null"], "description": "Context only; the analyzed text is the working tree." },
+          "gitHead": { "type": ["string", "null"], "description": "Contextual HEAD for working-tree; pinned source commit for git-tree." },
         "external": {
           "type": "array", "description": "Only the external report contexts used by the selected findings; never a statement that the tools were rerun by this task.",
           "items": {

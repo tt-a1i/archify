@@ -115,7 +115,7 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
 }
 
 export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
-  if (!ir) html = standaloneShell({ locale: run.locale, title: path.basename(sourceRoot || graph.repository.root || 'Repository') });
+  if (!ir) html = standaloneShell({ locale: run.locale, title: run.pullRequest ? run.pullRequest.repository + ' · ' + (run.pullRequest.simulation ? createTranslator(messagesFor(run.locale))('PR analysis · local simulation') : '#' + run.pullRequest.number) : path.basename(sourceRoot || graph.repository.root || 'Repository') });
   if (ir && (!html.includes('data-node-id=') || !html.includes('class="toolbar"'))) {
     fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
       evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
@@ -128,6 +128,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     generator: 'bauify',
     ui: { mode: ir ? 'diagram' : 'standalone', locale: analysisLocale(run.locale || ir?.meta?.locale), messages: messagesFor(run.locale || ir?.meta?.locale), resume: run.resume || null, openByDefault: run.openAnalysis === true },
     repository: graph.repository,
+    pullRequest: run.pullRequest || null,
     unresolved: graph.unresolved,
     excluded: graph.excluded,
     totals: { modules: graph.modules.length, edges: graph.edges.length, files: facts ? facts.files.length : null, findings: findings.length },
@@ -139,7 +140,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     findings: listed,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
     overview: buildOverview({ findings: listed, graph, facts, unmapped: ir ? unmapped : [], ambiguousModules, run, diagram: Boolean(ir) }),
-    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts, findingsDocument?.externalEvidence) : {},
+    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id))), { fileList: [...(run.pullRequest?.changedFiles || []).map(file => ({ path: file.path })), ...(run.pullRequest?.impact?.records || []).flatMap(record => record.locations.map(item => ({ path: item.file })))] }), facts, findingsDocument?.externalEvidence, run.pullRequest?.sourceGitRoot) : {},
   };
 
   payload.architectureBrief = architectureHandoff({ overview: payload.overview, repository: graph.repository, locale: run.locale || ir?.meta?.locale, diagram: Boolean(ir) });
@@ -433,7 +434,7 @@ function aggregate(edges, side, owner, owners) {
 // partial-init proof), captured by the extractor, so the
 // page can show the cited line with the whole file around it to scroll
 // through. Include listed component files as well as cited evidence files.
-function collectSnippets(findings, sourceRoot, components, facts, externalEvidence = []) {
+function collectSnippets(findings, sourceRoot, components, facts, externalEvidence = [], gitRoot = null) {
   const captured = new Map([...externalEvidence, ...(facts?.files || [])].filter(f => typeof f.sourceText === 'string').map(f => [f.path, f.sourceText]));
   const wanted = new Set(components.flatMap((c) => (c.fileList || []).map((f) => f.path)));
   for (const f of findings) {
@@ -449,7 +450,7 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
   for (const file of [...wanted].sort()) {
     let text = captured.get(file);
     // New working-tree facts must never fall back to mutable source files.
-    if (text === undefined && facts?.repository?.sourceKind === 'working-tree') continue;
+    if (text === undefined && ['working-tree', 'git-tree'].includes(facts?.repository?.sourceKind)) continue;
     if (text === undefined) {
       try {
         const root = fs.realpathSync(sourceRoot);
@@ -463,7 +464,7 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
     if (lines.length && lines[lines.length - 1] === '') lines.pop();
     out[file] = { total: lines.length, lines };
   }
-  const changes = sourceChanges(sourceRoot, facts?.repository, new Map([...wanted].filter(file => captured.has(file)).map(file => [file, captured.get(file)])));
+  const changes = sourceChanges(gitRoot || sourceRoot, facts?.repository, new Map([...wanted].filter(file => captured.has(file)).map(file => [file, captured.get(file)])));
   for (const [file, change] of changes) if (out[file]) out[file].changes = change;
   return out;
 }

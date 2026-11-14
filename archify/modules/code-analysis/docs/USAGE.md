@@ -1,5 +1,24 @@
 # Code Analysis Quick Start
 
+An explicitly requested GitHub PR uses the same workbench:
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo --pr https://github.com/OWNER/REPO/pull/42 --out out/pr-42 --locale zh-CN
+node bin/archify.mjs start /path/to/repo --pr 42 --repository OWNER/REPO --out out/pr-42
+```
+
+`--scope` selects a repository-relative directory (default: the supplied local subdirectory). PR mode captures the merge-base and head as immutable Git blobs and runs the existing analyzer on both with one captured configuration and language adapter. `--language` and `--locale` retain their normal meanings. The local checkout and index are not changed; repository code, hooks and package scripts are not executed.
+
+The native workbench shows head findings, source evidence, review decisions and AI tasks. Its comparison stays against the PR merge-base; refreshing recaptures the requested PR. Failed runs preserve the last successful result. Atlas keeps before/after counts and the complexity distribution visible. Green `+` and amber `◇` mark added and changed captured objects; red dashed curves mark removed dependencies whose endpoints remain in head. Removed objects stay in the change list and open base source through the shared source pane. Source-side buttons switch between captured base and head text. Ambiguous function names are not paired. Source changes do not establish changed runtime behavior or a confirmed defect; an existing head finding is not automatically introduced by the PR. External reports retain the original binding, coverage and comparison limits; this workflow does not run an AI reviewer.
+
+Capture snapshots remain under the chosen output directory so live tasks and review decisions can verify the pinned head even if the local checkout changes. Review acceptance uses the configured baseline and existing service authorization. Offline tasks stay labeled as captured evidence; verify the intended checkout and source revision before editing.
+
+PR priorities use a bounded impact layer over the saved facts and graph, not the whole head's existing hotspots. It compares changed dependency edges and module fan-in/out, reads exact definition fingerprints only in changed source files, and reuses the existing incoming-reference reader to locate direct callers/importers, including unchanged source files. A same-metric body change remains a reading signal; position-only movement does not become an impact. Existing constraints appear only as context attached to a changed dependency or coupling witness. Rule-report evidence updates alone are not promoted to increased risk.
+
+This layer performs no new extraction or repository traversal. Reading is bounded to 32 changed files, 4 MiB of paired source, 80 changed definitions and 160 result records; each reference preview is bounded. Unsupported models, parse errors, excluded roles and exhausted budgets remain explicit unknowns. This is direct static orientation, not runtime tracing, behavior equivalence or complete transitive impact. Full head findings remain separately available as background. The PR brief copies change evidence and its coverage rather than unrelated whole-head recommendations.
+
+In PR mode, short file/function addition and removal counts follow the original module labels, with detailed counts available on hover. Change badges (+/−/◇) open the captured source; grey dashed spikes show merge-base complexity alongside the current spikes. Removed functions can be marked against a surviving file; deleted files/modules remain in the change list. These annotations do not appear in ordinary repository analysis. A same-metric source edit can have a change badge without implying increased complexity or changed behavior.
+
 From the `archify/` package directory inside the Archify repository:
 
 ```sh

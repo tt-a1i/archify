@@ -21,10 +21,11 @@ import { randomBytes } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { DiagnosticError } from '../core/index.mjs';
+import { DiagnosticError, fail } from '../core/index.mjs';
 import { analysisStartCommand } from '../lib/task-command.mjs';
 import { standaloneShell } from '../overlay/standalone.mjs';
 import { withInstallLock } from '../lib/install-lock.mjs';
+import { preparePullRequest } from '../lib/pull-request.mjs';
 
 const execute = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -81,7 +82,7 @@ export async function ensureDependencies(root = moduleRoot) {
 
 export const USAGE = `Usage:
   archify code-analysis serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN]
-                              [--language ts|py|java|go|rust] [--map overlay-map.json] [--config file.json]
+                              [--pr <GitHub-URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map overlay-map.json] [--config file.json]
                               [--baseline baseline.json] [--quality standard|showcase]
 
 Without --ir, opens a standalone workbench with Atlas and analyzes on page load.
@@ -101,12 +102,13 @@ export function parseArgs(argv) {
   const options = {};
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i];
-    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw usageError(`Invalid option: ${key}\n${USAGE}`);
+    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale', '--pr', '--repository', '--scope'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw usageError(`Invalid option: ${key}\n${USAGE}`);
     options[key] = rest[i + 1];
   }
   if (!options['--out']) throw usageError(`serve requires --out\n${USAGE}`);
   if (options['--map'] && !options['--ir']) throw usageError('--map requires --ir: mapping belongs to an authored architecture diagram.');
   if (options['--locale'] && !['en', 'zh-CN'].includes(options['--locale'])) throw usageError('--locale must be en or zh-CN.');
+  if (!options['--pr'] && (options['--repository'] || options['--scope'])) throw usageError('--repository and --scope require --pr.');
   return { repo, options };
 }
 
@@ -117,6 +119,7 @@ export async function prepareAnalysisSession(argv) {
   const input = irBytes ? JSON.parse(irBytes.toString('utf8')) : null;
   const locale = analysisLocale(options['--locale'] || input?.meta?.locale);
   const doc = input ? { ...input, meta: { ...input.meta, locale } } : null;
+  const pullRequest = options['--pr'] ? await (await import('../lib/pull-request.mjs')).resolvePullRequest(root, options['--pr'], options['--repository'], options['--scope']) : null;
   await ensureDependencies();
   fs.mkdirSync(out, { recursive: true });
 
@@ -159,23 +162,45 @@ export async function prepareAnalysisSession(argv) {
     ir, out, locale, language: options['--language'], quality,
     config: options['--config'] ? path.resolve(options['--config']) : null,
     map: options['--map'] ? path.resolve(options['--map']) : null,
-    baseline: baselineFile,
+    baseline: baselineFile, pr: options['--pr'], repository: options['--repository'], scope: options['--scope'],
   }), shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh' };
-  return { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile, resume };
+  return { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile, resume, pullRequest };
 }
 
-export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out, options, baselineFile, resume, openAnalysis = false }) {
+export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out, options, baselineFile, resume, pullRequest = null, openAnalysis = false }, { preparePRSources = preparePullRequest } = {}) {
   const analysisDir = path.join(out, 'analysis');
   const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
+  let capture = null;
   try {
+    let language = options['--language'] || null, config = options['--config'] ? path.resolve(options['--config']) : null;
+    if (pullRequest) {
+      const { loadConfig, stableJson } = await import('../lib/analysis.mjs');
+      const { selectAdapter } = await import('../extract/index.mjs');
+      capture = await preparePRSources({ ...pullRequest, out });
+      fs.mkdirSync(next, { recursive: true });
+      const cfg = loadConfig(config);
+      config = path.join(next, 'captured-config.json');
+      fs.writeFileSync(config, stableJson(cfg));
+      if (!language) {
+        try { language = selectAdapter(capture.roots.head, cfg).id; }
+        catch (error) {
+          if (!error.diagnostics?.some(d => d.code === 'extract/adapter-undetected')) throw error;
+          language = selectAdapter(capture.roots.base, cfg).id;
+        }
+      }
+      await runWorker({ root: capture.roots.base, out: path.join(next, 'base'), locale, language, config,
+        source: capture.source('base'), openAnalysis: true });
+    }
     await runWorker({
-      root, ir, irSnapshot: doc, html: delivered, locale, out: next, resume, openAnalysis: !ir || openAnalysis,
-      language: options['--language'] || null, config: options['--config'] ? path.resolve(options['--config']) : null,
+      root: capture?.roots.head || root, ir, irSnapshot: doc, html: delivered, locale, out: next, resume, openAnalysis: !ir || openAnalysis,
+      language, config, source: capture?.source('head') || null,
+      pullRequest: capture ? { pr: capture.pr, scope: capture.scope, changedFiles: capture.changedFiles, manifests: capture.manifests, sourceRoot: capture.roots.head, baseSourceRoot: capture.roots.base, sourceGitRoot: capture.sourceGitRoot } : null,
       map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
-      previous: path.join(analysisDir, 'findings.json'),
+      previous: capture ? path.join(next, 'base/findings.json') : path.join(analysisDir, 'findings.json'),
     });
   } catch (error) {
     fs.rmSync(next, { recursive: true, force: true });
+    if (capture) fs.rmSync(capture.directory, { recursive: true, force: true });
     throw error;
   }
   const previousDir = path.join(out, 'analysis.previous');
@@ -185,14 +210,23 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
   return fs.readFileSync(path.join(analysisDir, 'repo.analysis.html'), 'utf8');
 }
 
-export async function startAnalysisView(argv) {
+export async function startAnalysisView(argv, dependencies = {}) {
   const session = await prepareAnalysisSession(argv);
   const { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile } = session;
   const token = randomBytes(24).toString('hex');
   const page = (delivered ? fs.readFileSync(delivered, 'utf8') : standaloneShell({ locale, title: path.basename(root) })).replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)}, ${JSON.stringify(messagesFor(locale))}, ${createTranslator.toString()}, ${!ir})</script></body>`);
   let pending = null, result = null, origin, reviewing = false;
   const analysisDir = path.join(out, 'analysis');
-  const runAnalysis = () => runSessionAnalysis(session);
+  const runAnalysis = () => runSessionAnalysis(session, dependencies);
+  const currentRoot = () => {
+    if (!session.pullRequest) return root;
+    const file = path.join(analysisDir, 'view-context.json');
+    if (!fs.existsSync(file)) fail('overlay/context-invalid', 'The captured PR view context is missing. Re-analyze before building a task or saving a review.');
+    const sourceRoot = JSON.parse(fs.readFileSync(file, 'utf8')).run?.pullRequest?.sourceRoot;
+    if (!sourceRoot) fail('overlay/context-invalid', 'The captured PR source root is missing. Re-analyze the PR.');
+    return sourceRoot;
+  };
+  const comparisonFile = () => path.join(analysisDir, session.pullRequest ? 'base/findings.json' : '../analysis.previous/findings.json');
   const server = http.createServer(async (req, res) => {
     const send = (status, body, type = 'application/json') => { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(body); };
     if (req.headers.host !== new URL(origin).host) return send(403, '{}');
@@ -243,8 +277,8 @@ export async function startAnalysisView(argv) {
       const read = (name) => JSON.parse(fs.readFileSync(path.join(analysisDir, name), 'utf8'));
       const findings = read('findings.json'), facts = read('raw-facts.json');
       if (expected && findings.diagnostics.some((finding) => ids.includes(finding.id) && reviewTargetDigest(finding) !== expected[finding.id])) return fail409('task/finding-changed', 'The finding changed since this page was loaded. Re-analyze to refresh the displayed claim before exporting its task.', ['refresh the analysis page and review the current finding']);
-      const review = reviewFindings(findings.diagnostics, { baseline: fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null, previous: loadPrevious(path.join(out, 'analysis.previous/findings.json')), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
-      const task = verifyTask(buildTask({ findings, facts, ids, review }), root);
+      const review = reviewFindings(findings.diagnostics, { baseline: fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null, previous: loadPrevious(comparisonFile()), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+      const task = verifyTask(buildTask({ findings, facts, ids, review }), currentRoot());
       send(200, JSON.stringify({ task, markdown: renderTaskMarkdown(task) }));
     } catch (error) {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
@@ -280,12 +314,12 @@ export async function startAnalysisView(argv) {
         const diagnostic = findings.diagnostics.find((d) => d.id === input.id);
         if (!diagnostic) return send(409, JSON.stringify({ error: 'This finding is not in the current analysis; refresh the result.' }));
         if (reviewTargetDigest(diagnostic) !== input.expected) return send(409, JSON.stringify({ error: 'The finding changed since this page was loaded. Refresh the result before accepting.' }));
-        const checked = verifyTask(buildTask({ findings, facts, ids: [input.id] }), root).evidence.findings[input.id];
+        const checked = verifyTask(buildTask({ findings, facts, ids: [input.id] }), currentRoot()).evidence.findings[input.id];
         if ((checked.sourceStatus || checked.status) !== 'valid' || checked.reportBinding === 'changed') return send(409, JSON.stringify({ error: 'The captured evidence changed or cannot be checked. Re-analyze before accepting.', evidence: checked }));
         next = acceptFinding(diagnostic, { existing, reason: input.reason });
       } else next = revokeFinding(input.id, { existing });
-      const review = reviewFindings(findings.diagnostics, { baseline: next, previous: loadPrevious(path.join(out, 'analysis.previous/findings.json')), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
-      const overlay = renderAnalysisSnapshot({ dir: analysisDir, html: delivered, root, review });
+      const review = reviewFindings(findings.diagnostics, { baseline: next, previous: loadPrevious(comparisonFile()), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+      const overlay = renderAnalysisSnapshot({ dir: analysisDir, html: delivered, root: currentRoot(), review });
       phase = 'save';
       saveBaseline(baselineFile, next);
       result = overlay.html;
