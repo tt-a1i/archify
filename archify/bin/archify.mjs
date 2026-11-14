@@ -2430,7 +2430,11 @@ function rendererEnv(quality, repoRoot, diagnosticJson = false) {
   return {
     ...(quality ? { ARCHIFY_QUALITY_PROFILE: quality } : {}),
     ...(repoRoot ? { ARCHIFY_REPO_ROOT: repoRoot } : {}),
-    ...(diagnosticJson ? { ARCHIFY_DIAGNOSTIC_FORMAT: 'json' } : {}),
+    // The JSON diagnostic channel requires stderr to carry exactly one
+    // receipt. Node runtime warnings (e.g. experimental proxy-agent notes on
+    // newer runtimes) would otherwise precede the payload and make the
+    // parent's receipt parse fail closed as internal/unclassified.
+    ...(diagnosticJson ? { ARCHIFY_DIAGNOSTIC_FORMAT: 'json', NODE_NO_WARNINGS: '1' } : {}),
   };
 }
 
