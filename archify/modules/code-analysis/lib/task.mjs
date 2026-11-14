@@ -91,6 +91,9 @@ const ACCEPTANCE = {
   'coupling/cycle': () => ['The modules no longer depend on each other in a cycle (re-analysis no longer reports this module cycle).'],
   'coupling/hub': (d) => [`Fan-in or fan-out of the module falls below the configured threshold (fan-in ${d.evidence.threshold.fanIn}, fan-out ${d.evidence.threshold.fanOut}), or the split is explained.`],
   'coupling/concentration': (d) => [concentrationAcceptance(d)],
+  'organization/generic-name': () => [
+    'Check the file and its callers. Verify a justified rename and its updated references, or record why to retain the name with source and caller evidence for the intentionally broad contract.',
+  ],
   'architecture/boundary': (d) => [`No import from layer "${d.subject.boundary.from}" to layer "${d.subject.boundary.to}" remains.`],
   'coupling/internal-leak': (d) => [d.evidence.entries.length
     ? `No module outside ${d.subject.module} imports its internal files; they import ${d.evidence.entries.join(', ')} instead.`
@@ -240,7 +243,7 @@ function buildTaskWithContext({ findings, facts, ids, commands = [], review = nu
       'The project checks that cover the changed code pass (see verification).',
     ],
     verification: {
-      reanalyze: { ...reanalyzeCommand(findings), ...(hasExternalReports ? { purpose: 'First refresh the external reports using the intended producer version, rule settings and scan scope, then import them with the same analysis configuration. Verify no new finding appears in changed files; if comparison is limited, check the previous findings, fresh reports and current source directly. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
+      reanalyze: { ...reanalyzeCommand(findings, selected), ...(hasExternalReports ? { purpose: 'First refresh the external reports using the intended producer version, rule settings and scan scope, then import them with the same analysis configuration. Verify no new finding appears in changed files; if comparison is limited, check the previous findings, fresh reports and current source directly. This command reads reports; it does not run the external tools or an AI reviewer.' } : facts.repository?.language === 'rust' && selected.every(d => ['coupling/import-cycle', 'coupling/cycle'].includes(d.code)) ? { purpose: 'Re-run the same source profile and compare the structural cycle; retaining it can be intentional.' } : {}) },
       commands: verificationCommands,
     },
     toConfirm,
@@ -383,11 +386,13 @@ function sourceOf(findings, facts) {
   };
 }
 
-function reanalyzeCommand(findings) {
+function reanalyzeCommand(findings, selected) {
   const language = findings.repository?.language;
   return {
     command: `archify code-analysis check <repo-root>${language ? ` --language ${language}` : ''} --config <same config> --compare <this run's findings.json>`,
-    purpose: 'Re-run the same analysis and compare: the finding should be no longer detected, with the comparison marked comparable.',
+    purpose: selected.some(d => d.code === 'organization/generic-name')
+      ? 'Re-run the same analysis and compare. Check any rename and its references; if you retain the name with evidence, the naming advisory may still be reported. Apply the individual acceptance criteria to all selected findings.'
+      : 'Re-run the same analysis and compare: the finding should be no longer detected, with the comparison marked comparable.',
   };
 }
 
@@ -414,6 +419,7 @@ function keyEvidence(d) {
     case 'coupling/concentration': return pick(['reasons', 'reach', 'size', 'loc', 'module', 'threshold']);
     case 'architecture/boundary': return { ...pick(['rule', 'totalImports', 'files']), boundary: d.subject.boundary };
     case 'coupling/internal-leak': return pick(['entries', 'entrySource', 'internalFiles', 'consumers', 'totalImports', 'threshold']);
+    case 'organization/generic-name': return pick(['path', 'bytes']);
     case 'redundancy/duplicate-block': return pick(['engine', 'identifiers', 'kind', 'tokens', 'lines', 'threshold']);
     default: return pick(['threshold']);
   }
@@ -431,6 +437,7 @@ function titleOf(selected, language) {
     if (d.code === 'coupling/concentration') return s.file ? `Review the size of ${s.file}` : `Review how much of the project is concentrated in module ${s.module}`;
     if (d.code === 'coupling/internal-leak') return `Give module ${s.module} one entry point and import through it`;
     if (d.code === 'architecture/boundary') return `Remove the "${s.boundary.from}" → "${s.boundary.to}" boundary violation`;
+    if (d.code === 'organization/generic-name') return 'Review the generic basename of ' + s.file;
     if (d.code === 'redundancy/duplicate-block') return `Review duplicated code in ${(s.files || []).join(' and ')}`;
     return `Address ${d.code}`;
   };

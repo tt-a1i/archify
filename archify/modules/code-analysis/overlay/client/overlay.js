@@ -379,7 +379,7 @@
     h += '<div class="k">' + esc(c.label) + '</div><h3><i class="bauify-' + ind.status + '"></i>' + esc(tr(ind.label)) + '</h3>';
     var externalGroup = fl.length && fl.every(function (f) { return f.external; });
     h += '<div class="level"><b>' + esc(tr(lvl.name)) + '</b> — ' + esc(indicatorValue(c, ind)) + (ind.status === 'neutral' || externalGroup ? '' : '<br>' + esc(lvl.text)) + '</div>';
-    if (!externalGroup) h += ("<details class=\"relationship\">" + "<summary>" + tr("Relationships and metrics") + "</summary>") + diagram(c, key, fl) + '</details>';
+    if (!externalGroup && key !== 'generic-name') h += ("<details class=\"relationship\">" + "<summary>" + tr("Relationships and metrics") + "</summary>") + diagram(c, key, fl) + '</details>';
     h += ("<div class=\"k\">" + tr("Findings · ")) + fl.length + '</div>';
     if (!fl.length) h += '<div class="ev">' + (key === 'instability' ? tr("Instability measures dependency direction: out / (in + out). 0 = no outgoing dependencies, 1 = no incoming dependents. It is not a failure probability or a quality verdict.") : tr("No finding for this indicator; this is not a safety guarantee.")) + '</div>';
     fl.forEach(function (f) { h += f.external ? findingListRow(f) : quickHandoff(f) + evidencePreview(f) + findingCard(f) + taskHtml(f); });

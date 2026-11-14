@@ -107,7 +107,7 @@
         "properties": {
           "id": { "type": "string", "pattern": "^[A-Z]{2,4}-(?:[0-9a-f]{12}|[0-9]{4,})$", "description": "Stable id: dimension prefix + 12 hex digits of a hash of the rule and subject. Findings written before stable ids used a position number (COUP-0001); those stay valid schema-v1 documents but their ids cannot be matched across runs." },
           "code": { "type": "string", "pattern": "^[a-z-]+/[a-z-]+$" },
-          "dimension": { "enum": ["coupling", "architecture", "complexity", "redundancy", "error-handling", "impact", "ai-smell", "conventions", "external-review"] },
+          "dimension": { "enum": ["coupling", "architecture", "complexity", "redundancy", "organization", "error-handling", "impact", "ai-smell", "conventions", "external-review"] },
           "severity": { "enum": ["error", "warning", "info"] },
           "confidence": { "enum": [1, 0.7, 0.5, null] },
           "message": { "type": "string", "minLength": 1 },

@@ -489,3 +489,11 @@ the locked helper dependencies are required. Saved and paired questions retain
 the captured source profile, cfg/features, omitted regions and bounded call
 model; a source binding does not establish compilation or runtime dispatch.
 See [Rust support](RUST.md) for setup, profile settings and limitations.
+
+### Optional naming review signal
+
+Set `rules.organization.genericName.enabled` to `true` to list files named `util`, `utils`, `helper`, `helpers`, `misc` or `common` (with an optional extension). The warning records the file path; a match does not establish mixed responsibilities or a design problem. Inspect the file and its callers before changing its name. The rule is off by default.
+
+An open warning appears under **Generic file names** on its mapped component. The exported task asks you to verify a justified rename or document the source and caller evidence for keeping the name. A justified retention can still produce the advisory on re-analysis.
+
+An Archify scan of these two paths illustrates both outcomes. In `archify/modules/code-analysis/test/helpers.mjs`, the discovery of the extractor runner and subprocess wrapper suggests a useful name such as `extract-test-support.mjs`. `archify/renderers/shared/utils.mjs` is a counterexample: callers intentionally share rendering helpers for definitions, cards and template assembly. The warning alone is insufficient reason to split that module. This demonstration explicitly includes the test helper; the usual test exclusion remains in effect.

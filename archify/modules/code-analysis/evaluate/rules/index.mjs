@@ -12,7 +12,9 @@ import * as boundary from './architecture/boundary.mjs';
 import * as complexity from './complexity/function.mjs';
 import * as duplicate from './redundancy/duplicate-block.mjs';
 
-export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boundary, complexity, duplicate];
+import * as genericName from './organization/generic-name.mjs';
+
+export const RULES = [importCycle, cycle, hub, concentration, internalLeak, boundary, complexity, duplicate, genericName];
 
 // evaluate/index.mjs runs the duplicate scan once for this rule and pins its ranges.
 export { duplicate as duplicateBlock };

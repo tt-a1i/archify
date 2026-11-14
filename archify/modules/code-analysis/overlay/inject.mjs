@@ -243,6 +243,7 @@ function indicators(set, mods, findings, owner, filePaths) {
   // Only present when functions were measured and one here reaches a threshold.
   const complex = findings.filter((f) => f.code === 'complexity/function' && filePaths.has(f.subject.file))
     .sort((a, b) => b.evidence.complexity - a.evidence.complexity || b.evidence.nesting - a.evidence.nesting);
+  const genericNames = findings.filter(f => f.code === 'organization/generic-name' && filePaths.has(f.subject.file));
   const imported = findings.filter(f => f.external && findingFiles(f).some(file => filePaths.has(file)));
   const externalItems = [
     ['conventions', 'Project conventions', imported.filter(f => f.dimension !== 'external-review')],
@@ -300,6 +301,13 @@ function indicators(set, mods, findings, owner, filePaths) {
       value: `${complex.length} function${complex.length === 1 ? '' : 's'} over the threshold; highest ${complex[0].subject.function} (complexity ${complex[0].evidence.complexity}, nesting ${complex[0].evidence.nesting})`,
       detail: [],
       findings: complex.map((f) => f.id).filter(Boolean),
+    }] : []),
+    ...(genericNames.length ? [{
+      key: 'generic-name', label: 'Generic file names',
+      status: 'amber',
+      value: `${genericNames.length} file${genericNames.length === 1 ? '' : 's'} to review; naming advisory`,
+      detail: [],
+      findings: genericNames.map(f => f.id),
     }] : []),
     ...externalItems,
     {
