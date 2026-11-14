@@ -9,6 +9,10 @@ const cli = path.join(root, 'bin/archify.mjs');
 const moduleRoot = path.join(root, 'modules/code-analysis');
 const run = args => spawnSync(process.execPath, [cli, 'code-analysis', ...args], { encoding: 'utf8' });
 test('Code Analysis exposes prepare, serve, check and task through the Archify CLI', () => {
+  const publicHelp = spawnSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
+  assert.equal(publicHelp.status, 0);
+  assert.match(publicHelp.stdout.replace(/\s+/g, ' '), /start <repo-root> \[--ir <architecture.json>\] \[--locale/);
+  assert.match(publicHelp.stdout, /prepare <repo-root> --out <dir> \[--ir/);
   const prepareHelp = run(['prepare', '--help']);
   assert.equal(prepareHelp.status, 0, prepareHelp.stderr);
   assert.match(prepareHelp.stdout, /archify code-analysis prepare/);
@@ -26,8 +30,14 @@ test('Code Analysis exposes prepare, serve, check and task through the Archify C
   assert.notEqual(other.status, 0);
   assert.match(other.stderr, /commands: prepare, serve, check, task, import-review/);
   const missing = run(['serve', path.join(moduleRoot, 'test/fixtures/ts-basic')]);
-  assert.notEqual(missing.status, 0);
-  assert.match(missing.stderr, /--ir and --out/);
+  assert.equal(missing.status, 2);
+  assert.match(missing.stderr, /requires --out/);
+  for (const command of ['prepare', 'serve']) {
+    const invalid = run([command, moduleRoot, '--out', 'unused', '--map', 'missing.json']);
+    assert.equal(invalid.status, 2);
+    assert.match(invalid.stderr + invalid.stdout, /--map requires --ir/);
+  }
+
 });
 test('Code Analysis regression suite', () => {
   const tests = fs.readdirSync(path.join(moduleRoot, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join(moduleRoot, 'test', f));

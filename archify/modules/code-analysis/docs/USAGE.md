@@ -4,17 +4,14 @@ From the `archify/` package directory inside the Archify repository:
 
 ```sh
 npm ci
-npm start -- "/path/to/project" --ir architecture.json
+npm start -- "/path/to/project" --locale zh-CN
 ```
 
-Use the project's architecture JSON prepared with Archify as `architecture.json`. Your project can stay in its own directory.
+Open the printed URL. Without `--ir`, analysis starts on page load: the left workbench presents priorities and task-copy controls, alongside the interactive whole-repository Atlas. Select a finding to highlight its Atlas evidence; **Open source evidence** returns from Atlas to the left reader. Narrow screens stack the workbench above Atlas.
 
-1. Open the **Archify** URL printed in the terminal to view the architecture diagram.
-2. Click **Code Analysis** in the upper-right corner to start analysis.
-3. Read the project overview, then choose a finding or a component. The same reading column shows the selected page; Back returns to the previous page. View diagram folds the column, and Show analysis restores it.
-4. Click a source link for a short captured excerpt. Show full file expands it, and Show excerpt returns to the short view. References without a line show a file preview, not a finding location.
-5. Click **Atlas** at the top of the reading column for the whole-repository view, then **Classic view** to come back (see [Atlas view](#atlas-view)).
-6. Click **Code Analysis** again to return to the architecture view.
+To align an existing authored architecture diagram, add `--ir architecture.json`. That mode still delivers the original diagram first and analyzes only after **Code Analysis** is clicked. Use **Atlas** / **Classic view** to switch views; source mapping and IR validation are preserved. `--map` requires `--ir`.
+
+In either mode choose a priority or browse all findings, copy an AI task, and inspect captured source excerpts. **Show full file** expands a snippet. The task labels its evidence status; verify source before editing. `--locale en|zh-CN` overrides the diagram locale; without an override the IR locale is used, then English. Unrecognized IR locales fall back to English.
 
 Keep the terminal running. After changing source code or the `--config` file, click **Re-analyze** on the overview: the repository and the config are read again without restarting, the page reloads with the new result, and the overview shows what changed since the previous analysis (new, no longer detected, and findings whose code changed). A finding that is no longer detected is not necessarily fixed: if the config, the rules that ran, or the files that parsed changed between the two runs, the comparison is marked as not directly comparable and says why (see [Comparing runs](#comparing-runs)). If a re-analysis fails, the last good result stays in place and the reason is shown next to the button. Only a changed architecture JSON needs a restart.
 
@@ -51,23 +48,25 @@ For a Java analysis without a diagram, run `node bin/archify.mjs code-analysis c
 
 Output defaults to a system temporary directory. Add `--out out/my-project` to choose a persistent output directory. Use the printed URL: double-clicking a static HTML file cannot start local code analysis.
 
-You can also run `node bin/archify.mjs start "/path/to/project" --ir architecture.json` directly. The legacy `code-analysis serve` command remains supported.
+You can also run `node bin/archify.mjs start "/path/to/project" [--ir architecture.json] [--locale zh-CN]` directly. The legacy `code-analysis serve` command remains supported.
 
 ## Agent entry and investigation
 
-A user can ask for a project architecture diagram, architecture health, layer/coupling investigation or refactoring orientation. For investigation without a diagram request, start with the headless [first-look path](#first-look-at-an-unfamiliar-repository) and verify the source. When a diagram is requested or useful, read repository evidence and use the normal architecture authoring/finalize path. After a valid local-repository diagram is available, prepare an immediately usable companion page:
+Code Analysis is independent of native diagrams, explainers and stories. Ordinary diagram requests use `finalize` and deliver the diagram alone. For architecture health, coupling, cycles, configured layers, large files, complexity or refactoring orientation, prepare the standalone investigation directly:
 
 ```sh
-node bin/archify.mjs code-analysis prepare /path/to/repo --ir architecture.json --out out/project-analysis --language ts
+node bin/archify.mjs code-analysis prepare /path/to/repo --out out/project-analysis --language ts --locale zh-CN
 ```
 
-`prepare` uses the same delivery, extraction, rules, task bundles and output rotation as `serve`, then exits. Its JSON receipt includes scoped counts, coverage and priority leads, and names `html` (`out/project-analysis/analysis/repo.analysis.html`) and the untouched delivered `diagram`. Open the HTML directly: the overview is already visible. The page includes source excerpts, first-screen task copy, an architecture brief and manual-copy fallbacks, without requiring a running server. A saved start command is explicitly copyable under **Recheck after edits**; run it on the generating machine, open the printed URL and choose **Code Analysis** to compare against the report; later edits use **Re-analyze**. Copied tasks are labeled captured snapshots until the current source is verified. The report never runs the command itself.
+Use `--ir architecture.json` only for an existing relevant diagram or an explicit request to align authored architecture boundaries. Do not author JSON merely to unlock analysis. Each run handles one adapter and discloses other languages; select the adapter from source counts. Tool prerequisites and first-run installs affect preparation time, so report measured latency rather than a fixed speed promise.
 
-For an interactive session use `start` / `code-analysis serve`; it preserves `/analyze`, `/task` and `/review`. With the service available, task copy verifies the displayed claim and current working tree. An HTTP rejection cannot silently fall back to an older bundled task. Prepared output preserves the previous run, so starting the service with the copied command compares against that captured analysis.
+`prepare` shares extraction, rules, tasks and atomic output rotation with `serve`, then exits. The JSON receipt gives scoped counts, coverage, priority leads and `html` (`out/project-analysis/analysis/repo.analysis.html`); `diagram` is null without IR, otherwise names the untouched delivered diagram. Open the HTML directly: the workbench and Atlas are ready offline, with captured tasks, source excerpts, an architecture brief and manual-copy fallbacks.
 
-Deliver both the original architecture diagram and the companion analysis page, with one or two scoped conclusions and an invitation to use a task or continue the investigation in the current AI conversation. Do not require users to supply a maintenance objective or learn command flags. If the language is ambiguous, select the relevant adapter from source counts; each run handles one adapter and discloses the other languages. Reuse the prerequisites above; an unavailable tool is a coverage gap, not a clean scan. Keep the valid diagram when analysis fails.
+Under **Recheck after edits**, copy the saved start command and run it on the generating machine. It preserves language, locale, config, baseline and optional IR/map. Without IR, opening the printed URL starts analysis and compares with the captured result; with IR, click Code Analysis. Later edits use **Re-analyze**. The report never runs a command automatically. Tasks remain captured snapshots until current source is verified.
 
-The reader follows `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen separates error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran. Information-level signals remain available through finding filters. **Copy architecture brief** shares the bounded hotspot/structural orientation with the headless receipt; its order is not inferred business importance.
+Deliver the analysis HTML with one or two scoped conclusions; tasks may be given to a coding AI or investigated in the current conversation. Users need not learn command flags or supply a maintenance objective. Preserve a separately delivered diagram if analysis fails, and disclose the coverage/tool gap.
+
+The reader follows explicit `--locale`, then `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen separates error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran. Information-level signals remain available through finding filters. **Copy architecture brief** shares the bounded hotspot/structural orientation with the headless receipt; its order is not inferred business importance.
 
 After edits, the prominent comparison reports **no longer detected**, **new** and changed evidence. Missing findings do not prove fixes. Configuration, grouping, model or coverage changes make results non-comparable and show the reason. Verify source changes and project tests before claiming an improvement.
 

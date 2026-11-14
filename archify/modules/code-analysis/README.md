@@ -1,6 +1,6 @@
 # Code Analysis
 
-Start Archify with `npm start -- "/path/to/project" --ir architecture.json` from the Archify package directory. Open the printed URL and click **Code Analysis**. Use `--out` to choose an output directory; otherwise artifacts go to the system temporary directory. The legacy command below remains supported.
+Start Archify with `npm start -- "/path/to/project" [--locale zh-CN]` from the Archify package directory. Open the printed URL for the standalone workbench and Atlas. Add `--ir architecture.json` to keep the authored diagram plus the existing click-to-analyze dual view. Use `--out` to choose an output directory; otherwise artifacts go to the system temporary directory. The legacy command below remains supported.
 
 [Quick start guide](docs/USAGE.md) — installation, startup, and viewing analysis results.
 
@@ -17,12 +17,11 @@ are incomparable and cannot be used for `--new-only` gating.
 Code Analysis is Archify's integrated static code analysis module, imported from
 Bauify (commit 4bb811c) and maintained here. It reads source dependencies
 (JavaScript, TypeScript, Python, Java, Go and Rust), folds files into modules, checks import cycles, coupling,
-function complexity and configured architecture boundaries, and shows the result on the architecture diagram Archify delivered — as an
-extra layer the reader switches on, never as a change to the diagram itself.
+function complexity and configured architecture boundaries, and presents a standalone workbench with Atlas. An optional authored architecture diagram remains unchanged and can be aligned with the same analysis.
 
 It has three entry points that share the same pipeline:
 
-- **A prepared companion view** (`prepare`): `code-analysis prepare <repo-root> --ir architecture.json --out out/analysis` creates `analysis/repo.analysis.html` with captured AI tasks, opens on the overview and exits. The reader follows `meta.locale` (`zh-CN` or English fallback); no server stays running. See [Agent entry and investigation](docs/USAGE.md#agent-entry-and-investigation) for natural Skill delivery and restarting for comparison after edits.
+- **A prepared investigation** (`prepare`): `code-analysis prepare <repo-root> --out out/analysis [--locale zh-CN] [--ir architecture.json]` creates `analysis/repo.analysis.html` with captured AI tasks, opens on the overview and exits. The reader follows `--locale`, then optional `meta.locale` (`zh-CN` or English fallback); no server stays running. See [Agent entry and investigation](docs/USAGE.md#agent-entry-and-investigation) for natural Skill delivery and restarting for comparison after edits.
 
 - **On the diagram** (`serve`, also reached through `npm start`):
   1. **Archify delivers the authored diagram** (`archify deliver architecture …`),
