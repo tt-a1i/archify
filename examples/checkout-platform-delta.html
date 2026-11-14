@@ -18664,6 +18664,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function edges() {
         return Array.prototype.slice.call(svg.querySelectorAll(&#39;[data-edge-from][data-edge-to]&#39;));
       }
+      // One relationship renders as several fragments that share one
+      // data-edge-key: its path plus its label group (and any other element
+      // the renderer emits for the same relationship). Route state belongs to
+      // the relationship, so it must reach every fragment, not just the one
+      // fragment shortestDirectedPath happens to return first.
+      function edgeFragments(edge) {
+        var key = edge.getAttribute(&#39;data-edge-key&#39;);
+        if (!key) return [edge];
+        return edges().filter(function (fragment) {
+          return fragment.getAttribute(&#39;data-edge-key&#39;) === key;
+        });
+      }
       function nodesById() {
         var out = Object.create(null);
         nodes().forEach(function (node) { out[node.getAttribute(&#39;data-node-id&#39;)] = node; });
@@ -19130,9 +19142,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         activeEdges.forEach(function (edge, step) {
           var destination = step + 1;
           var state = destination &lt; journeyIndex ? &#39;past&#39; : (destination === journeyIndex ? &#39;current&#39; : &#39;future&#39;);
-          edge.setAttribute(&#39;data-route-journey-state&#39;, state);
-          if (destination === journeyIndex) edge.setAttribute(&#39;data-route-journey-current&#39;, &#39;&#39;);
-          else edge.removeAttribute(&#39;data-route-journey-current&#39;);
+          // Journey dimming keys off data-route-journey-state, so every
+          // fragment of the hop dims and glows with its path; otherwise a
+          // label would stay at full opacity while its path dims.
+          edgeFragments(edge).forEach(function (fragment) {
+            fragment.setAttribute(&#39;data-route-journey-state&#39;, state);
+            if (destination === journeyIndex) fragment.setAttribute(&#39;data-route-journey-current&#39;, &#39;&#39;);
+            else fragment.removeAttribute(&#39;data-route-journey-current&#39;);
+          });
         });
         var buttons = journeyButtons();
         buttons.forEach(function (button, step) {
@@ -19356,9 +19373,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           if (step === result.nodes.length - 1) node.setAttribute(&#39;data-route-end&#39;, &#39;&#39;);
         });
         result.edges.forEach(function (edge, step) {
-          edge.setAttribute(&#39;data-route-match&#39;, &#39;&#39;);
-          edge.setAttribute(&#39;data-route-step&#39;, String(step));
-          edge.style.setProperty(&#39;--route-step&#39;, String(step));
+          // Mark every fragment of the hop, not just the path element:
+          // a traced route&#39;s own label groups must stay at full opacity
+          // with their paths instead of being dimmed to 0.11 with the
+          // non-route elements.
+          edgeFragments(edge).forEach(function (fragment) {
+            fragment.setAttribute(&#39;data-route-match&#39;, &#39;&#39;);
+            fragment.setAttribute(&#39;data-route-step&#39;, String(step));
+            fragment.style.setProperty(&#39;--route-step&#39;, String(step));
+          });
         });
         svg.setAttribute(&#39;data-route-active&#39;, startId + &#39;~&#39; + endId);
         renderOverlay(result.edges);
@@ -34428,6 +34451,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function edges() {
         return Array.prototype.slice.call(svg.querySelectorAll(&#39;[data-edge-from][data-edge-to]&#39;));
       }
+      // One relationship renders as several fragments that share one
+      // data-edge-key: its path plus its label group (and any other element
+      // the renderer emits for the same relationship). Route state belongs to
+      // the relationship, so it must reach every fragment, not just the one
+      // fragment shortestDirectedPath happens to return first.
+      function edgeFragments(edge) {
+        var key = edge.getAttribute(&#39;data-edge-key&#39;);
+        if (!key) return [edge];
+        return edges().filter(function (fragment) {
+          return fragment.getAttribute(&#39;data-edge-key&#39;) === key;
+        });
+      }
       function nodesById() {
         var out = Object.create(null);
         nodes().forEach(function (node) { out[node.getAttribute(&#39;data-node-id&#39;)] = node; });
@@ -34894,9 +34929,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         activeEdges.forEach(function (edge, step) {
           var destination = step + 1;
           var state = destination &lt; journeyIndex ? &#39;past&#39; : (destination === journeyIndex ? &#39;current&#39; : &#39;future&#39;);
-          edge.setAttribute(&#39;data-route-journey-state&#39;, state);
-          if (destination === journeyIndex) edge.setAttribute(&#39;data-route-journey-current&#39;, &#39;&#39;);
-          else edge.removeAttribute(&#39;data-route-journey-current&#39;);
+          // Journey dimming keys off data-route-journey-state, so every
+          // fragment of the hop dims and glows with its path; otherwise a
+          // label would stay at full opacity while its path dims.
+          edgeFragments(edge).forEach(function (fragment) {
+            fragment.setAttribute(&#39;data-route-journey-state&#39;, state);
+            if (destination === journeyIndex) fragment.setAttribute(&#39;data-route-journey-current&#39;, &#39;&#39;);
+            else fragment.removeAttribute(&#39;data-route-journey-current&#39;);
+          });
         });
         var buttons = journeyButtons();
         buttons.forEach(function (button, step) {
@@ -35120,9 +35160,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           if (step === result.nodes.length - 1) node.setAttribute(&#39;data-route-end&#39;, &#39;&#39;);
         });
         result.edges.forEach(function (edge, step) {
-          edge.setAttribute(&#39;data-route-match&#39;, &#39;&#39;);
-          edge.setAttribute(&#39;data-route-step&#39;, String(step));
-          edge.style.setProperty(&#39;--route-step&#39;, String(step));
+          // Mark every fragment of the hop, not just the path element:
+          // a traced route&#39;s own label groups must stay at full opacity
+          // with their paths instead of being dimmed to 0.11 with the
+          // non-route elements.
+          edgeFragments(edge).forEach(function (fragment) {
+            fragment.setAttribute(&#39;data-route-match&#39;, &#39;&#39;);
+            fragment.setAttribute(&#39;data-route-step&#39;, String(step));
+            fragment.style.setProperty(&#39;--route-step&#39;, String(step));
+          });
         });
         svg.setAttribute(&#39;data-route-active&#39;, startId + &#39;~&#39; + endId);
         renderOverlay(result.edges);

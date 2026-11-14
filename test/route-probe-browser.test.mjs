@@ -123,7 +123,7 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     await run(`document.querySelector(${JSON.stringify(node('db'))}).focus()`); await key(' ', 'Space', 32);
     s = await snapshot('result'); assert.deepEqual(s.result.nodes, ['users', 'cdn', 'lb', 'api', 'db']); assert.equal(s.result.hops, 4);
     assert.equal(s.result.journey, -1); assert.equal(s.result.playing, false); assert.equal(s.focus, null);
-    assert.deepEqual(s.edges.map(e => [e.from, e.to]), [['users', 'cdn'], ['cdn', 'lb'], ['lb', 'api'], ['api', 'db']]);
+    assert.deepEqual(s.edges.map(e => [e.from, e.to]), [['users', 'cdn'], ['cdn', 'lb'], ['lb', 'api'], ['api', 'db'], ['users', 'cdn'], ['api', 'db']]);
     assert.equal(await run(`Archify.routeProbe.choose('cache')`), false);
     assert.equal(await run(`(()=>{const r=Archify.routeProbe.result();r.nodes.length=0;return Archify.routeProbe.result().nodes.length;})()`), 5);
     await load(); await run(`Archify.focus.set('api',{toggle:false});Archify.routeProbe.begin()`);
@@ -152,10 +152,14 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     // Isolate noncanonical graph inputs; original renderers remain unchanged.
     await run(`window.routeGraph=()=>{
       Archify.routeProbe.clear({preserveView:true});const svg=document.querySelector('.diagram-container > svg');
-      svg.innerHTML='<g data-edge-from="a" data-edge-to="b" data-edge-key="ab" data-edge-id="first" transform="translate(3 4)"><path id="author-path" d="M0 0 L10 10" class="author" style="opacity:.7" marker-end="url(#arrow)"/><line x1="0" y1="0" x2="5" y2="5"/></g><path data-edge-from="a" data-edge-to="b" data-edge-key="parallel" d="M2 2 L20 20"/><path data-edge-from="a" data-edge-to="c" data-edge-key="ac" d="M0 0 L10 10"/><polyline data-edge-from="b" data-edge-to="d" data-edge-key="bd" points="0,0 10,10"/><path data-edge-from="c" data-edge-to="d" data-edge-key="cd" d="M0 0 L10 10"/><path data-edge-from="b" data-edge-to="a" data-edge-key="cycle" d="M0 0 L10 10"/><path data-edge-from="a" data-edge-to="a" data-edge-key="loop" d="M0 0 L10 10"/><path data-edge-from="a" data-edge-to="missing" data-edge-key="dangling" d="M0 0 L10 10"/>'+['a','b','c','d','solo'].map((id,i)=>'<g data-node-id="'+id+'" data-node-label="'+id.toUpperCase()+'" data-node-kind="backend" transform="translate('+i*100+' 100)"><rect width="60" height="40"/></g>').join('');
+      svg.innerHTML='<g data-edge-from="a" data-edge-to="b" data-edge-key="ab" data-edge-id="first" transform="translate(3 4)"><path id="author-path" d="M0 0 L10 10" class="author" style="opacity:.7" marker-end="url(#arrow)"/><line x1="0" y1="0" x2="5" y2="5"/></g><g data-edge-from="a" data-edge-to="b" data-edge-key="ab" data-edge-id="first"><text x="5" y="5">ab label</text></g><path data-edge-from="a" data-edge-to="b" data-edge-key="parallel" d="M2 2 L20 20"/><path data-edge-from="a" data-edge-to="c" data-edge-key="ac" d="M0 0 L10 10"/><polyline data-edge-from="b" data-edge-to="d" data-edge-key="bd" points="0,0 10,10"/><path data-edge-from="c" data-edge-to="d" data-edge-key="cd" d="M0 0 L10 10"/><path data-edge-from="b" data-edge-to="a" data-edge-key="cycle" d="M0 0 L10 10"/><path data-edge-from="a" data-edge-to="a" data-edge-key="loop" d="M0 0 L10 10"/><path data-edge-from="a" data-edge-to="missing" data-edge-key="dangling" d="M0 0 L10 10"/>'+['a','b','c','d','solo'].map((id,i)=>'<g data-node-id="'+id+'" data-node-label="'+id.toUpperCase()+'" data-node-kind="backend" transform="translate('+i*100+' 100)"><rect width="60" height="40"/></g>').join('');
     }`);
     await run('routeGraph()'); await route('a', 'd');
-    let s = await snapshot('graph-order'); assert.deepEqual(s.result.nodes, ['a', 'b', 'd']); assert.deepEqual(s.edges.map(e => e.key), ['ab', 'bd']);
+    let s = await snapshot('graph-order'); assert.deepEqual(s.result.nodes, ['a', 'b', 'd']); assert.deepEqual(s.edges.map(e => e.key), ['ab', 'ab', 'bd']);
+    // A traced route's own label fragment shares its edge's key, so it must
+    // carry data-route-match and keep full opacity with its path.
+    const label = await run(`(()=>{const label=document.querySelector('svg [data-edge-key="ab"] text').closest('g');return {match:label.hasAttribute('data-route-match'),step:label.getAttribute('data-route-step'),opacity:getComputedStyle(label).opacity};})()`);
+    assert.deepEqual(label, { match: true, step: '0', opacity: '1' });
     const shape = await run(`(()=>{const overlay=document.querySelector('[data-route-probe-overlay]'),shapes=[...overlay.querySelectorAll('.route-probe-flow')];return {count:shapes.length,transform:overlay.firstElementChild.getAttribute('transform'),d:shapes[0].getAttribute('d'),points:shapes[2].getAttribute('points'),steps:shapes.map(n=>n.style.getPropertyValue('--route-step')),normalized:shapes.every(n=>n.getAttribute('pathLength')==='1'),stripped:!overlay.querySelector('[id],[marker-end],[data-edge-key]'),original:document.getElementById('author-path').getAttribute('d'),beforeNode:overlay.nextElementSibling.hasAttribute('data-node-id')};})()`);
     assert.deepEqual(shape, { count: 3, transform: 'translate(3 4)', d: 'M0 0 L10 10', points: '0,0 10,10', steps: ['0', '0', '1'], normalized: true, stripped: true, original: 'M0 0 L10 10', beforeNode: true });
     const valid = await run(`(()=>{const p=Archify.routeProbe,s=p.exportSnapshot();s.nodeIds.length=0;s.edges[0].key='mutated';s.source.label='mutated';return p.exportSnapshot();})()`);
@@ -191,7 +195,7 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     assert.deepEqual(await run(`(()=>{const before=document.activeElement.dataset.routeJourneyIndex,event=new KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true,metaKey:true});document.activeElement.dispatchEvent(event);return {prevented:event.defaultPrevented,focus:document.activeElement.dataset.routeJourneyIndex,before};})()`),{prevented:false,focus:'0',before:'0'});
     await key('End', 'End', 35); await key('ArrowRight', 'ArrowRight', 39); assert.equal(await run('document.activeElement.dataset.routeJourneyIndex'), '4');
     await key('Home', 'Home', 36); await key('ArrowRight', 'ArrowRight', 39); await key('Enter', 'Enter', 13);
-    let s = await snapshot('journey-position'); assert.equal(s.result.journey, 1); assert.deepEqual(s.currentEdges, [s.edges[0].key]);
+    let s = await snapshot('journey-position'); assert.equal(s.result.journey, 1); assert.deepEqual([...new Set(s.currentEdges)], [s.edges[0].key]);
     assert.deepEqual(s.journey.map(n=>n.state), ['past','current','future','future','future']); assert.equal(s.chips.filter(n=>n.tab===0).length, 1);
     await run(`routeWait(()=>!document.querySelector('.diagram-container').hasAttribute('data-camera-transaction'))`);
     await click('#route-journey-next'); assert.equal((await snapshot('journey-next')).result.journey, 2);
