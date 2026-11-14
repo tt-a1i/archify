@@ -318,6 +318,15 @@ test('mixed semantic and geometry component changes retain both exact forms', ()
   assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
 });
 
+test('an older Architecture Delta receipt can render without a relationship evidence counter', () => {
+  const receipt = compareArchitecture(read(baseFixture), read(headFixture));
+  const { components, connections, boundaries } = receipt.summary;
+  const changed = components.changed + connections.changed + boundaries.changed + components.evidenceChanged;
+  delete connections.evidenceChanged;
+  const html = renderDelta(receipt);
+  assert.ok(html.includes(`<div class="metric change"><strong>${changed}</strong><span>CHANGED</span></div>`));
+});
+
 test('a relationship whose only change is its sources is evidence-changed', () => {
   const { root, basePath, headPath } = provenanceFixture();
   const connection = {

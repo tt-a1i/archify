@@ -753,7 +753,7 @@ function provenanceDetail(provenance) {
 
 export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSvg, baseHtml = '', headHtml = '', artifactCss }) {
   const rows = architectureDeltaChangeRows(receipt);
-  const changed = total(receipt.summary, 'changed') + receipt.summary.components.evidenceChanged + receipt.summary.connections.evidenceChanged;
+  const changed = total(receipt.summary, 'changed') + (receipt.summary.components.evidenceChanged ?? 0) + (receipt.summary.connections.evidenceChanged ?? 0);
   const proof = receipt.proofLevel === 'revision-pinned' ? 'REVISION-PINNED INPUTS' : 'AUTHORED SNAPSHOTS';
   const provenanceChanged = receipt.summary.provenanceChanged === true;
   const provenanceFields = receipt.provenance?.changedFields?.join(', ') || 'repository metadata';
@@ -1107,7 +1107,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     ctx.font = '700 17px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.fillStyle = '#8aa0b5';
     const componentLine = 'COMPONENTS  +' + receipt.summary.components.added + '  ~' + receipt.summary.components.changed + '  −' + receipt.summary.components.removed;
-    const connectionLine = 'CONNECTIONS  +' + receipt.summary.connections.added + '  ~' + receipt.summary.connections.changed + '  E' + receipt.summary.connections.evidenceChanged + '  −' + receipt.summary.connections.removed;
+    const connectionLine = 'CONNECTIONS  +' + receipt.summary.connections.added + '  ~' + receipt.summary.connections.changed + '  E' + (receipt.summary.connections.evidenceChanged ?? 0) + '  −' + receipt.summary.connections.removed;
     const boundaryLine = 'BOUNDARY SCOPE  +' + receipt.summary.boundaries.added + '  ~' + receipt.summary.boundaries.changed + '  −' + receipt.summary.boundaries.removed;
     ctx.fillText(componentLine, 66, 151);
     ctx.fillText(connectionLine, 420, 151);
