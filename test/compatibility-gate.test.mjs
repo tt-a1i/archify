@@ -28,7 +28,7 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.equal(ci.jobs.test.needs, 'scope', 'short compatibility checks must not wait for complete regression');
   const canonical = ci.jobs['canonical-test'];
   assert.equal(canonical.name, 'test (22)');
-  assert.deepEqual(canonical.needs, ['scope', 'full-regression']);
+  assert.deepEqual(canonical.needs, ['scope', 'full-regression', 'code-analysis']);
   assert.ok(canonical.steps.some(step => step.with?.['node-version'] === 22));
   const full = ci.jobs['full-regression'];
   assert.equal(full.if, "needs.scope.outputs.scope == 'full'");
@@ -40,10 +40,14 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.equal(generated.if, 'matrix.shard == 2', 'complete generated checks run once inside a regression shard');
   const hermes = full.steps.find(step => step.run === 'node --test integrations/hermes-agent/test/plugin-contract.test.mjs');
   assert.equal(hermes.if, 'matrix.shard == 2');
-  const moduleSuite = full.steps.find(step => step.run === 'npm --prefix archify run test:code-analysis');
-  assert.equal(moduleSuite?.if, 'matrix.shard == 1', 'the Code Analysis module suite runs once, outside the root runner');
-  const duplicateTool = full.steps.find(step => step.name === 'Install Code Analysis duplicate detector');
-  assert.equal(duplicateTool?.if, moduleSuite.if, 'the real clone detector is installed in the shard that runs its integration tests');
+  const moduleJob = ci.jobs['code-analysis'];
+  assert.equal(moduleJob.needs, 'scope');
+  assert.equal(moduleJob.if, "needs.scope.outputs.codeAnalysis == 'true'");
+  assert.equal(full.steps.some(step => step.run === 'npm --prefix archify run test:code-analysis'), false);
+  const moduleSuite = moduleJob.steps.find(step => step.run === 'npm --prefix archify run test:code-analysis');
+  assert.ok(moduleSuite, 'the independent job owns complete module coverage');
+  const duplicateTool = moduleJob.steps.find(step => step.name === 'Install Code Analysis duplicate detector');
+  assert.ok(duplicateTool, 'the clone detector is installed alongside its integration tests');
   assert.ok(duplicateTool.run.includes(`jscpd@${JSCPD_VERSION}`), 'CI must use the detector version accepted by the adapter');
   assert.equal(moduleSuite.env.ARCHIFY_TEST_JSCPD, '${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd',
     'real duplicate and six-language integration tests must execute instead of silently skipping in CI');

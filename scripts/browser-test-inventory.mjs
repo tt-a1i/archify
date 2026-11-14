@@ -72,6 +72,7 @@ export function selectBrowserTests(scope, owners, changed) {
   if (changed.some(file => !/^test\/[^/]+\.test\.mjs$/.test(file))) throw new Error('Invalid changed browser test path');
   if (scope !== 'core' || !owners.length || owners.some(owner => !moduleOwners.includes(owner))) return browserTestFiles;
   return browserTestFiles.filter(file => {
+    // path-contract-allow: portable-logical-path -- Inventory basenames identify test owners, not native filesystem containment.
     const owner = moduleOwners.find(owner => file === `${owner}-browser.test.mjs` || file.startsWith(`${owner}-`));
     return !owner || owners.includes(owner) || changed.includes(`test/${file}`);
   });
