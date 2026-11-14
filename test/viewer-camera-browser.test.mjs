@@ -801,3 +801,346 @@ test('zooming out a tall diagram keeps its top inside the frame', {
   await stable();
   assert.deepEqual(await alignment(), authoredAlignment, 'reset restores authored inline alignment and priority');
 });
+
+test('touch drag pans the full distance once zoomed above 100% (issue #1253)', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser camera checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-camera-1253-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression, awaitPromise = false) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  const input = path.join(scratch, 'web-app.json');
+  const artifact = path.join(scratch, 'web-app-rendered.html');
+  fs.writeFileSync(input, fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json')));
+  execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, artifact]);
+  // The reporter's conditions: phone-sized mobile emulation, three + presses.
+  await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 760, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(artifact).href });
+  await loaded;
+  const stable = () => run(`(async () => { await document.fonts.ready; await Archify.layoutStability.whenStable(); })()`, true);
+  await stable();
+
+  // At scale 1 the container must leave touch-action alone so the page scrolls.
+  assert.equal(await run(`getComputedStyle(document.querySelector('.diagram-container')).touchAction`), 'auto');
+  for (let i = 0; i < 3; i++) await run(`Archify.view.zoomIn()`);
+  await stable();
+  assert.equal(await run(`Archify.view.state().scale`), 1.75);
+  // Once zoomed, the pannable container must claim the gesture.
+  assert.equal(await run(`getComputedStyle(document.querySelector('.diagram-container')).touchAction`), 'none');
+
+  const start = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    window.__touch1253 = { moves: 0, cancels: 0 };
+    c.addEventListener('pointermove', () => { window.__touch1253.moves += 1; });
+    c.addEventListener('pointercancel', () => { window.__touch1253.cancels += 1; });
+    // Start where a real drag can start: the camera's pointerdown handler
+    // ignores targets inside the nav chrome, a node, or a relationship
+    // hit-rail, but background shapes such as region rects do start a drag.
+    // Requiring the SVG element itself finds no point on dense diagrams,
+    // where every sampled point sits on a node or an edge rail.
+    const box = c.getBoundingClientRect();
+    for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
+      for (let x = box.left + 40; x < box.right - 40; x += 20) {
+        const el = document.elementFromPoint(x, y);
+        if (el && !el.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') && !el.closest('[data-node-id]') && !el.closest('[data-relationship-hit-key]')) return { x, y, state: Archify.view.state() };
+      }
+    }
+    return null;
+  })()`);
+  assert.ok(start, 'an empty canvas point is needed to start the drag');
+  const points = Array.from({ length: 16 }, (_, i) => ({ x: start.x + (150 * i) / 15, y: start.y + (90 * i) / 15, id: 1 }));
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[0]] });
+  for (const point of points.slice(1)) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
+    await new Promise((resolve) => setTimeout(resolve, 16));
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await stable();
+  const result = await run(`(() => ({ ...window.__touch1253, state: Archify.view.state() }))()`);
+  assert.equal(result.cancels, 0, `the browser must not cancel the zoomed drag: ${JSON.stringify(result)}`);
+  assert.ok(result.moves >= 10, `most touch moves must reach the camera: ${JSON.stringify(result)}`);
+  assert.ok(Math.abs((result.state.x - start.state.x) - 150) < 2, `camera must follow the finger 150px: ${JSON.stringify(result)}`);
+  assert.ok(Math.abs((result.state.y - start.state.y) - 90) < 2, `camera must follow the finger 90px: ${JSON.stringify(result)}`);
+});
+
+// One touch-drag helper for the three zoomed-wide-diagram browser tests
+// (reach, zoom-out, overview map): find a draggable point, then stroke
+// through it. Takes the test's run/send/stable closures so each test keeps
+// its own session; returns the camera state after the stroke settles.
+async function touchStroke(run, send, stable, dx, dy) {
+  const start = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const box = c.getBoundingClientRect();
+    for (let y = box.top + 40; y < box.bottom - 40; y += 20) {
+      for (let x = box.left + 40; x < box.right - 40; x += 20) {
+        const el = document.elementFromPoint(x, y);
+        if (el && !el.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') && !el.closest('[data-node-id]') && !el.closest('[data-relationship-hit-key]')) return { x, y };
+      }
+    }
+    return null;
+  })()`);
+  assert.ok(start, 'a drag start point is needed for every stroke');
+  const points = Array.from({ length: 16 }, (_, i) => ({ x: start.x + (dx * i) / 15, y: start.y + (dy * i) / 15, id: 1 }));
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[0]] });
+  for (const point of points.slice(1)) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
+    await new Promise((resolve) => setTimeout(resolve, 16));
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await stable();
+  return run(`Archify.view.state()`);
+}
+
+test('touch drag reaches both edges of a zoomed wide diagram (Devin review on #1254)', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser camera checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-camera-1254-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression, awaitPromise = false) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  const input = path.join(scratch, 'web-app.json');
+  const artifact = path.join(scratch, 'web-app-rendered.html');
+  fs.writeFileSync(input, fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json')));
+  execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, artifact]);
+  // The web-app example is a wide diagram (720px SVG in a ~328px container).
+  await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 760, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(artifact).href });
+  await loaded;
+  const stable = () => run(`(async () => { await document.fonts.ready; await Archify.layoutStability.whenStable(); })()`, true);
+  await stable();
+  for (let i = 0; i < 3; i++) await run(`Archify.view.zoomIn()`);
+  await stable();
+  assert.equal(await run(`Archify.view.state().scale`), 1.75);
+  await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    window.__touch1254 = { cancels: 0 };
+    c.addEventListener('pointercancel', () => { window.__touch1254.cancels += 1; });
+  })()`);
+  const geometry = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const svg = c.querySelector('svg');
+    return { svgWidth: svg.clientWidth, clientWidth: c.clientWidth, scrollLeft: c.scrollLeft, scale: Archify.view.state().scale };
+  })()`);
+  // With the old clamp the camera stopped at width - width * scale, leaving
+  // the rightmost (width * scale - clientWidth) of the diagram unreachable
+  // once touch-action: none froze native scrolling. The clamp now pins the
+  // combined scrollLeft - x offset to the SVG's scaled width.
+  const maxTravel = geometry.svgWidth * geometry.scale - geometry.clientWidth;
+  assert.ok(maxTravel > 0, `the fixture must be wider than the viewport: ${JSON.stringify(geometry)}`);
+  const stroke = (dx, dy) => touchStroke(run, send, stable, dx, dy);
+  // Drag left in strokes until the camera stops: the far edge must be reachable.
+  let left = await run(`Archify.view.state()`);
+  for (let i = 0; i < 12; i++) {
+    const next = await stroke(-150, 0);
+    if (next.x >= left.x - 0.5) break;
+    left = next;
+  }
+  const expectedLeft = geometry.scrollLeft - maxTravel;
+  assert.ok(Math.abs(left.x - expectedLeft) < 30,
+    `the camera must reach the far edge of the wide diagram: x=${left.x}, expected ${expectedLeft}, ${JSON.stringify(geometry)}`);
+  const rightEdge = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const svg = c.querySelector('svg');
+    const s = Archify.view.state();
+    return (c.scrollLeft - s.x + c.clientWidth) / s.scale;
+  })()`);
+  assert.ok(Math.abs(rightEdge - geometry.svgWidth) < 30,
+    `the visible window must cover the SVG's right edge: ${rightEdge} of ${geometry.svgWidth}`);
+  // Drag right in strokes until the camera stops: the left edge must come back.
+  let right = left;
+  for (let i = 0; i < 12; i++) {
+    const next = await stroke(150, 0);
+    if (next.x <= right.x + 0.5) break;
+    right = next;
+  }
+  assert.ok(Math.abs(right.x - geometry.scrollLeft) < 30,
+    `the camera must return to the left edge: x=${right.x}, scrollLeft=${geometry.scrollLeft}`);
+  const cancels = await run(`window.__touch1254.cancels`);
+  assert.equal(cancels, 0, 'the browser must not cancel the zoomed wide-diagram drags');
+});
+
+test('zooming a panned wide diagram out to 100% hands navigation back to native scrolling (Devin review on #1254)', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser camera checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-camera-1254-out-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression, awaitPromise = false) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  const input = path.join(scratch, 'web-app.json');
+  const artifact = path.join(scratch, 'web-app-rendered.html');
+  fs.writeFileSync(input, fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json')));
+  execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, artifact]);
+  // Same fixture as the reach test: the web-app example is a wide diagram
+  // (720px SVG in a ~328px container).
+  await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 760, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(artifact).href });
+  await loaded;
+  const stable = () => run(`(async () => { await document.fonts.ready; await Archify.layoutStability.whenStable(); })()`, true);
+  await stable();
+  for (let i = 0; i < 3; i++) await run(`Archify.view.zoomIn()`);
+  await stable();
+  assert.equal(await run(`Archify.view.state().scale`), 1.75);
+  const geometry = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const svg = c.querySelector('svg');
+    return { svgWidth: svg.clientWidth, clientWidth: c.clientWidth, scrollLeft: c.scrollLeft, scale: Archify.view.state().scale };
+  })()`);
+  const maxTravel = geometry.svgWidth * geometry.scale - geometry.clientWidth;
+  assert.ok(maxTravel > 0, `the fixture must be wider than the viewport: ${JSON.stringify(geometry)}`);
+  const stroke = (dx, dy) => touchStroke(run, send, stable, dx, dy);
+  // Pan right to the far edge first: without a retained negative x there is
+  // nothing for the zoom-out to clear.
+  let left = await run(`Archify.view.state()`);
+  for (let i = 0; i < 12; i++) {
+    const next = await stroke(-150, 0);
+    if (next.x >= left.x - 0.5) break;
+    left = next;
+  }
+  assert.ok(left.x < -300, `the camera must be panned right before zooming out: x=${left.x}`);
+  // Zoom back to exactly 100%: the camera translation must clear so native
+  // scrolling owns navigation again. With the old clamp the camera kept
+  // roughly x = -386 here and native scrolling could never show the left edge.
+  for (let i = 0; i < 3; i++) await run(`Archify.view.zoomOut()`);
+  await stable();
+  const zoomedOut = await run(`(() => ({ state: Archify.view.state(), scrollLeft: document.querySelector('.diagram-container').scrollLeft }))()`);
+  assert.equal(zoomedOut.state.scale, 1);
+  assert.ok(Math.abs(zoomedOut.state.x) < 2,
+    `the camera must clear at 100% zoom: x=${zoomedOut.state.x}`);
+  const leftEdge = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const s = Archify.view.state();
+    return (c.scrollLeft - s.x) / s.scale;
+  })()`);
+  assert.ok(Math.abs(leftEdge) < 2,
+    `the left edge must be visible at scrollLeft 0 after zooming out: ${leftEdge}`);
+  // The wide-diagram container scrolls smoothly (scroll-behavior: smooth),
+  // so a programmatic scrollLeft assignment animates: wait for the scroll
+  // to settle instead of a fixed delay, or the read below catches the
+  // animation mid-flight (CI read scrollLeft 7 on the way back to 0).
+  const waitForScroll = async (target) => {
+    const deadline = Date.now() + 3000;
+    for (;;) {
+      const left = await run(`document.querySelector('.diagram-container').scrollLeft`);
+      if (Math.abs(left - target) < 1) return left;
+      if (Date.now() > deadline) assert.fail(`the container must settle at scrollLeft ${target}: ${left}`);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  };
+  // Native scrolling must actually move the view now: scrolling to 100px must
+  // show the diagram 100px in, not stay pinned near the right edge.
+  await run(`(() => { document.querySelector('.diagram-container').scrollLeft = 100; return true; })()`);
+  await waitForScroll(100);
+  const scrolled = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const s = Archify.view.state();
+    return { offset: (c.scrollLeft - s.x) / s.scale, scrollLeft: c.scrollLeft };
+  })()`);
+  assert.ok(Math.abs(scrolled.offset - 100) < 30,
+    `native scrolling must move the view at 100% zoom: ${JSON.stringify(scrolled)}`);
+  await run(`(() => { const c = document.querySelector('.diagram-container'); c.scrollLeft = 0; return true; })()`);
+  await waitForScroll(0);
+  const back = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const s = Archify.view.state();
+    return (c.scrollLeft - s.x) / s.scale;
+  })()`);
+  assert.ok(Math.abs(back) < 2, `scrolling back must show the left edge again: ${back}`);
+});
+
+test('the overview map viewport follows camera panning on a zoomed wide diagram (CodeRabbit review on #1254)', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser camera checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-camera-1254-map-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression, awaitPromise = false) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  const input = path.join(scratch, 'web-app.json');
+  const artifact = path.join(scratch, 'web-app-rendered.html');
+  fs.writeFileSync(input, fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json')));
+  execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, artifact]);
+  // Same fixture as the reach test: the web-app example is a wide diagram
+  // (720px SVG in a ~328px container).
+  await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 760, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(artifact).href });
+  await loaded;
+  const stable = () => run(`(async () => { await document.fonts.ready; await Archify.layoutStability.whenStable(); })()`, true);
+  await stable();
+  for (let i = 0; i < 3; i++) await run(`Archify.view.zoomIn()`);
+  await stable();
+  assert.equal(await run(`Archify.view.state().scale`), 1.75);
+  const stroke = (dx, dy) => touchStroke(run, send, stable, dx, dy);
+  // Pan right to the far edge: the camera translation is now large while
+  // scrollLeft stays fixed, which is exactly the case the map viewport
+  // used to ignore (it reported the left edge while the reader saw the
+  // right edge).
+  let left = await run(`Archify.view.state()`);
+  for (let i = 0; i < 12; i++) {
+    const next = await stroke(-150, 0);
+    if (next.x >= left.x - 0.5) break;
+    left = next;
+  }
+  assert.ok(left.x < -300, `the camera must be panned right before checking the map: x=${left.x}`);
+  const seen = await run(`(() => {
+    const c = document.querySelector('.diagram-container');
+    const svg = c.querySelector('svg');
+    const vb = svg.getAttribute('viewBox').split(' ').map(Number);
+    return { viewport: Archify.view.logicalViewport(), state: Archify.view.state(),
+      viewBoxWidth: vb[2], viewBoxHeight: vb[3], svgWidth: svg.clientWidth,
+      svgHeight: svg.clientHeight, clientWidth: c.clientWidth, scrollLeft: c.scrollLeft };
+  })()`);
+  // The viewport's left edge must follow the camera, not the container's
+  // scroll offset alone: with the old formula it stayed at the viewBox's
+  // left edge (x = 0) while the reader saw the right edge.
+  assert.ok(seen.viewport.x > 300,
+    `the map viewport must leave the left edge once panned right: ${JSON.stringify(seen)}`);
+  assert.ok(Math.abs((seen.viewport.x + seen.viewport.width) - seen.viewBoxWidth) < 30,
+    `the map viewport must cover the diagram's right edge: ${JSON.stringify(seen)}`);
+  // The viewport width is in viewBox units, and the SVG is letterboxed
+  // (720 CSS px showing a 1080-unit viewBox): the visible window is the
+  // container width divided by both the camera zoom and the content scale,
+  // not by the zoom alone (that reads 187 here, the width in SVG pixels).
+  const contentScale = Math.min(seen.svgWidth / seen.viewBoxWidth, seen.svgHeight / seen.viewBoxHeight);
+  const expectedWidth = seen.clientWidth / seen.state.scale / contentScale;
+  assert.ok(Math.abs(seen.viewport.width - expectedWidth) < 30,
+    `the map viewport width must account for the zoom: ${JSON.stringify({ ...seen, expectedWidth })}`);
+});
