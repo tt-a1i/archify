@@ -9,7 +9,7 @@ metadata:
 
 # Archify
 
-Create checked standalone HTML as a native diagram or a one-page explainer that answers a question.
+Create checked HTML as a native diagram, explainer, story, or standalone Code Analysis workbench.
 
 Run commands from your working directory. Unless the user names another location, give each new artifact request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once): keep the candidate and `<slug>.html` in it and reuse it for repairs. Native diagrams use `candidate.json` with `meta.output` relative to the working directory; explainers may use `candidate.archify.md` and a portable output filename. A later request gets a new folder. Replace `bin/archify.mjs` in every command with the installed package's absolute path, or its path relative to your working directory; CLI input and output paths resolve from that directory.
 
@@ -17,7 +17,8 @@ For a native diagram of a real codebase, read [Repository authoring](references/
 
 ## Choose the artifact
 
-- When the user asks to draw or visualize a system, flow, schema or history, use a native diagram and the Type router. For local repository architecture health, layer violations, coupling or refactoring investigation, use the Code Analysis path below; the agent handles commands.
+- For drawing a system, flow, schema or history, use a native diagram and the Type router. Deliver the requested diagram through `finalize`; code analysis is a separate mode.
+- For local repository architecture health, module coupling, cycles, layer violations, large files, complexity hotspots or refactoring orientation, use Code Analysis below; the agent handles commands and no architecture JSON is required.
 - For a guided walkthrough or explanation video of a native HTML diagram, read [Story authoring](references/story-authoring.md). Use `story draft` and `story attach` to add playback and video export to its existing Viewer.
 - Use `explainer` when the user asks for the answer as a page: a page, one page, an explainer, something to share (“做成一页”, “用页面讲”, “answer with a page”). Without such a request, answer in text or draw the requested diagram. A page made on request ends its reply with the one-line mode offer under Output.
 - A rules line in context changes this. `[archify explainer: proactive]`: also make a page, unasked, for an explanation, comparison, trade-off, decision, diagnosis, review or plan that needs a table, steps or several sections. `[archify explainer: always-on]`: every reply that reaches a conclusion also gets a compact page of at most four panels, delivered without opening it, its link closing the reply. `[archify explainer: on-demand]`: only when asked, and never offer a mode.
@@ -105,11 +106,13 @@ When reporting verification details, distinguish artifact checks, browser eviden
 
 ## Code Analysis (local repository architecture)
 
-For a local real-codebase `architecture` diagram, after successful `finalize`, prepare its companion analysis view with `node bin/archify.mjs code-analysis prepare <repo-root> --ir <candidate.json> --out <analysis-dir> [--language ts|py|java|go|rust]`. Deliver the resulting `analysis/repo.analysis.html` alongside the original diagram, unless the user asked for the diagram alone. It opens on source-backed priorities with captured AI tasks; no server stays running. Read [Code Analysis entry and investigation](modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation) for choosing the language, prerequisites, interactive re-analysis, headless investigation and coverage limits.
+For a repository investigation, run `node bin/archify.mjs code-analysis prepare <repo-root> --out <analysis-dir> [--locale zh-CN|en] [--language ts|py|java|go|rust]`. Use `--locale zh-CN` for Chinese conversations. It creates `analysis/repo.analysis.html` with a source-backed workbench, interactive Atlas and captured AI tasks, then exits. No architecture JSON or diagram authoring is needed. Normal diagram requests end with their `finalize` delivery; analysis runs when the user requests investigation.
 
-For health, layering or refactoring investigation without a diagram request, start with headless `check` and source verification in that guide. When a diagram is useful or requested, reuse a relevant architecture JSON or author and finalize one from repository evidence, then follow the preparation path. In the reply, add one or two scoped observations, such as recorded cycles or configured layer violations, and point out that tasks can be copied to a coding AI or continued by the current AI. If analysis cannot run, deliver the valid diagram, state the specific coverage/tooling gap, and avoid an all-clear claim. Users need not learn or type the CLI.
+Add `--ir <architecture.json>` only when a relevant diagram already exists or the user also wants authored architecture boundaries aligned with code evidence. This keeps the existing architecture/Atlas views and checked source mapping. Read [Code Analysis entry and investigation](modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation) for adapter prerequisites, headless checks, interactive re-analysis and coverage limits.
 
-Analysis describes the working tree, including uncommitted source. Keep authored commit evidence separate; associate components through verified file/directory `sources` or `--map`. Verify cited source before editing, make a scoped improvement or explain why the current structure is appropriate, then rerun analysis and project tests. Static findings and missing findings do not establish runtime failure or a proven fix.
+Deliver the analysis HTML with one or two scoped observations and point to its task-copy controls or continue the investigation in the current conversation. Users need not supply a maintenance goal or learn the CLI. Report actual preparation time and tool gaps; first-run dependencies, language helpers and repository size affect latency. If analysis fails, keep any separately delivered diagram and state the gap rather than an all-clear claim.
+
+Analysis describes the working tree, including uncommitted source. Keep authored commit evidence separate. Verify cited source before editing, make a scoped improvement or explain why the current structure is appropriate, then rerun analysis and project tests. Static findings and missing findings do not establish runtime failure or a proven fix.
 
 ## Optional viewer capabilities
 

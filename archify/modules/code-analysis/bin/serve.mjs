@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Interactive Code Analysis entry:
-//   1. Archify delivers the authored architecture diagram, exactly as `archify deliver` does.
+//   Without IR, a standalone workbench starts analysis on page load.
+//   With IR, Archify delivers the authored diagram and waits for a click.
 //   2. The page is served locally with one extra toolbar button, "Code Analysis".
 //   3. Clicking it runs the analysis (extract → graphs → evaluate → overlay) for the
 //      repository and switches the page to the analysis view. Nothing runs before the click.
@@ -13,7 +14,7 @@
 // comparison for the next one. A failed run leaves the last good result in place.
 // The delivered HTML is never modified; the analysis page is written next to it.
 import http from 'node:http';
-import { messagesFor, createTranslator } from '../overlay/i18n.mjs';
+import { analysisLocale, messagesFor, createTranslator } from '../overlay/i18n.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -22,6 +23,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError } from '../core/index.mjs';
 import { analysisStartCommand } from '../lib/task-command.mjs';
+import { standaloneShell } from '../overlay/standalone.mjs';
 import { withInstallLock } from '../lib/install-lock.mjs';
 
 const execute = promisify(execFile);
@@ -78,16 +80,16 @@ export async function ensureDependencies(root = moduleRoot) {
 }
 
 export const USAGE = `Usage:
-  archify code-analysis serve <repo-root> --ir <architecture.json> --out <dir>
+  archify code-analysis serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN]
                               [--language ts|py|java|go|rust] [--map overlay-map.json] [--config file.json]
                               [--baseline baseline.json] [--quality standard|showcase]
 
-Delivers the authored diagram with Archify, serves it on a local port, and runs the
-code analysis for <repo-root> when "Code Analysis" is clicked on that page. Nothing
-runs before the click; "Re-analyze" on the overview runs it again after code changes.
+Without --ir, opens a standalone workbench with Atlas and analyzes on page load.
+With --ir, delivers the authored diagram and waits for a Code Analysis click.
+Re-analyze runs again after source changes; --locale overrides the IR locale.
 The page can request an AI optimization task for selected findings (POST /task),
 checked against the current working tree.
-Output: <dir>/architecture.html (Archify's artifact, untouched) and
+Output: with --ir, <dir>/architecture.html (Archify's artifact, untouched); always
 <dir>/analysis/{raw-facts,module-graph,findings,review,overview}.json + repo.analysis.html;
 the run before is kept in <dir>/analysis.previous and compared with.`;
 
@@ -97,69 +99,75 @@ export function parseArgs(argv) {
   const options = {};
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i];
-    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw new Error(`Invalid option: ${key}\n${USAGE}`);
+    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw new Error(`Invalid option: ${key}\n${USAGE}`);
     options[key] = rest[i + 1];
   }
-  if (!options['--ir'] || !options['--out']) throw new Error(`serve requires --ir and --out\n${USAGE}`);
+  if (!options['--out']) throw new Error(`serve requires --out\n${USAGE}`);
+  if (options['--map'] && !options['--ir']) throw new Error('--map requires --ir: mapping belongs to an authored architecture diagram.');
+  if (options['--locale'] && !['en', 'zh-CN'].includes(options['--locale'])) throw new Error('--locale must be en or zh-CN.');
   return { repo, options };
 }
 
 export async function prepareAnalysisSession(argv) {
   const { repo, options } = parseArgs(argv);
-  const root = path.resolve(repo), ir = path.resolve(options['--ir']), out = path.resolve(options['--out']);
-  const irBytes = fs.readFileSync(ir);
-  const doc = JSON.parse(irBytes.toString('utf8'));
+  const root = path.resolve(repo), ir = options['--ir'] ? path.resolve(options['--ir']) : null, out = path.resolve(options['--out']);
+  const irBytes = ir ? fs.readFileSync(ir) : null;
+  const input = irBytes ? JSON.parse(irBytes.toString('utf8')) : null;
+  const locale = analysisLocale(options['--locale'] || input?.meta?.locale);
+  const doc = input ? { ...input, meta: { ...input.meta, locale } } : null;
   await ensureDependencies();
   fs.mkdirSync(out, { recursive: true });
 
   // 1. Archify delivers the diagram. Repository evidence is checked when the IR pins a repository.
-  const delivered = path.join(out, 'architecture.html');
+  const delivered = ir ? path.join(out, 'architecture.html') : null;
   let evidenceArgs = [];
-  if (doc.meta?.repository) {
+  if (doc?.meta?.repository) {
     const top = await execute('git', ['-C', root, 'rev-parse', '--show-toplevel']);
     evidenceArgs = ['--repo-root', top.stdout.trim()];
   }
-  const quality = options['--quality'] || doc.meta?.quality_profile || 'standard';
-  // Deliver exactly the bytes captured for this session, without touching the original IR.
-  const deliveryInput = path.join(out, `.analysis-input-${randomBytes(12).toString('hex')}.json`);
-  fs.writeFileSync(deliveryInput, irBytes, { flag: 'wx' });
-  try {
-    await execute(process.execPath, [archify, 'deliver', 'architecture', deliveryInput, delivered, '--quality', quality, ...evidenceArgs, '--json'], { maxBuffer: 16 * 1024 * 1024 });
-  } catch (error) {
-    // Archify refused the diagram. Show its receipt, not a bare "command failed": the IR needs
-    // repair (validate → fix what the diagnostics point at → validate again) before it can be served.
-    let receipt = null;
-    try { receipt = JSON.parse(error.stdout); } catch { /* not JSON */ }
-    const lines = receipt?.diagnostics?.length
-      ? receipt.diagnostics.map((d) => `  - [${d.code}] ${d.message.replace(/^\[[^\]]+\]\s*/, '')}`)
-      : [`  ${(receipt?.error || error.stderr || error.message).split('\n').join('\n  ')}`];
-    throw new Error([
-      `Archify did not deliver ${path.basename(ir)} (${receipt?.stage || 'deliver'} failed, quality "${quality}"). The diagram must pass before it can be served:`,
-      ...lines.slice(0, 12),
-      lines.length > 12 ? `  … ${lines.length - 12} more` : null,
-      `Repair the IR, then check with:`,
-      `  node ${path.relative(process.cwd(), archify)} validate architecture ${path.relative(process.cwd(), ir)} --quality ${quality}${evidenceArgs.length ? ` --repo-root ${evidenceArgs[1]}` : ''} --json`,
-    ].filter(Boolean).join('\n'));
-  } finally {
-    fs.rmSync(deliveryInput, { force: true });
+  const quality = options['--quality'] || doc?.meta?.quality_profile || 'standard';
+  if (ir) {
+    // Deliver exactly the bytes captured for this session, without touching the original IR.
+    const deliveryInput = path.join(out, `.analysis-input-${randomBytes(12).toString('hex')}.json`);
+    fs.writeFileSync(deliveryInput, options['--locale'] ? JSON.stringify(doc) : irBytes, { flag: 'wx' });
+    try {
+      await execute(process.execPath, [archify, 'deliver', 'architecture', deliveryInput, delivered, '--quality', quality, ...evidenceArgs, '--json'], { maxBuffer: 16 * 1024 * 1024 });
+    } catch (error) {
+      // Archify refused the diagram. Show its receipt, not a bare "command failed": the IR needs
+      // repair (validate → fix what the diagnostics point at → validate again) before it can be served.
+      let receipt = null;
+      try { receipt = JSON.parse(error.stdout); } catch { /* not JSON */ }
+      const lines = receipt?.diagnostics?.length
+        ? receipt.diagnostics.map((d) => `  - [${d.code}] ${d.message.replace(/^\[[^\]]+\]\s*/, '')}`)
+        : [`  ${(receipt?.error || error.stderr || error.message).split('\n').join('\n  ')}`];
+      throw new Error([
+        `Archify did not deliver ${path.basename(ir)} (${receipt?.stage || 'deliver'} failed, quality "${quality}"). The diagram must pass before it can be served:`,
+        ...lines.slice(0, 12),
+        lines.length > 12 ? `  … ${lines.length - 12} more` : null,
+        `Repair the IR, then check with:`,
+        `  node ${path.relative(process.cwd(), archify)} validate architecture ${path.relative(process.cwd(), ir)} --quality ${quality}${evidenceArgs.length ? ` --repo-root ${evidenceArgs[1]}` : ''} --json`,
+      ].filter(Boolean).join('\n'));
+    } finally {
+      fs.rmSync(deliveryInput, { force: true });
+    }
   }
 
   const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : path.join(out, 'baseline.json');
   const resume = { command: analysisStartCommand(archify, root, {
-    ir, out, language: options['--language'], quality,
+    ir, out, locale, language: options['--language'], quality,
     config: options['--config'] ? path.resolve(options['--config']) : null,
     map: options['--map'] ? path.resolve(options['--map']) : null,
     baseline: baselineFile,
   }), shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh' };
-  return { root, ir, out, options, irBytes, doc, delivered, baselineFile, resume };
+  return { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile, resume };
 }
 
-export async function runSessionAnalysis({ root, ir, doc, delivered, out, options, baselineFile, resume, openAnalysis = false }) {
+export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out, options, baselineFile, resume, openAnalysis = false }) {
   const analysisDir = path.join(out, 'analysis');
   const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
   try {
     await runWorker({
-      root, ir, irSnapshot: doc, html: delivered, out: next, resume, openAnalysis,
+      root, ir, irSnapshot: doc, html: delivered, locale, out: next, resume, openAnalysis: !ir || openAnalysis,
       language: options['--language'] || null, config: options['--config'] ? path.resolve(options['--config']) : null,
       map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
       previous: path.join(analysisDir, 'findings.json'),
@@ -177,9 +185,9 @@ export async function runSessionAnalysis({ root, ir, doc, delivered, out, option
 
 export async function startAnalysisView(argv) {
   const session = await prepareAnalysisSession(argv);
-  const { root, ir, out, options, irBytes, doc, delivered, baselineFile } = session;
+  const { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile } = session;
   const token = randomBytes(24).toString('hex');
-  const page = fs.readFileSync(delivered, 'utf8').replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)}, ${JSON.stringify(messagesFor(doc.meta?.locale))}, ${createTranslator.toString()})</script></body>`);
+  const page = (delivered ? fs.readFileSync(delivered, 'utf8') : standaloneShell({ locale, title: path.basename(root) })).replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)}, ${JSON.stringify(messagesFor(locale))}, ${createTranslator.toString()}, ${!ir})</script></body>`);
   let pending = null, result = null, origin, reviewing = false;
   const analysisDir = path.join(out, 'analysis');
   const runAnalysis = () => runSessionAnalysis(session);
@@ -193,8 +201,8 @@ export async function startAnalysisView(argv) {
     if (req.url === '/review') return handleReview(req, send);
     if (reviewing) return send(409, JSON.stringify({ error: 'A review decision is being saved; retry when it has finished.' }));
     // Check before cached results as well: this page belongs to the delivered IR.
-    let unchanged = false;
-    try { unchanged = fs.readFileSync(ir).equals(irBytes); } catch { /* Removed or unreadable input also requires redelivery. */ }
+    let unchanged = !ir;
+    try { if (ir) unchanged = fs.readFileSync(ir).equals(irBytes); } catch { /* Removed or unreadable input also requires redelivery. */ }
     if (!unchanged) return send(409, JSON.stringify({
       error: 'Architecture has changed. Please regenerate the diagram.',
       diagnostics: [{ code: 'analysis/architecture-changed', severity: 'error', message: 'Architecture has changed. Please regenerate the diagram.', subject: { file: ir }, evidence: {}, supportedFixes: ['restart with the updated IR to regenerate the diagram'] }],
@@ -293,13 +301,13 @@ export async function startAnalysisView(argv) {
   };
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   origin = `http://127.0.0.1:${server.address().port}`;
-  return { server, url: origin, token, delivered, baseline: baselineFile };
+  return { server, url: origin, token, delivered, baseline: baselineFile, out };
 }
 
 // Runs in the page. One toolbar button: click → analysis runs → the analysis
 // layer is added to this page and switched on. From then on the layer's own
 // toggle (the same button, now owned by the layer) shows or hides it.
-function client(token, messages, makeTranslator) {
+function client(token, messages, makeTranslator, standalone) {
   var tr = makeTranslator(messages);
   var toolbar = document.querySelector('.toolbar');
   if (!toolbar) return;
@@ -406,7 +414,7 @@ function client(token, messages, makeTranslator) {
         element.textContent = original.textContent; document.body.appendChild(element);
       }
       var toggle = document.getElementById('btn-bauify');
-      if (toggle) toggle.click();
+      if (toggle && document.documentElement.getAttribute('data-bauify') !== 'on') toggle.click();
       var params = new URLSearchParams(location.search), selectedFinding = params.get('finding');
       if (selectedFinding && window.__archifyShowFinding) window.__archifyShowFinding(selectedFinding, params.get('from') === 'findings' ? 'findings' : 'summary');
       if (location.search) history.replaceState(null, '', location.pathname);
@@ -415,11 +423,11 @@ function client(token, messages, makeTranslator) {
       say(tr("Analysis failed: ") + error.message + tr(" — click Code Analysis to retry."));
     }
   });
-  if (new URLSearchParams(location.search).get('analysis') === 'open') button.click();
+  if (standalone || new URLSearchParams(location.search).get('analysis') === 'open') button.click();
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   if (!args.length || args[0] === '--help' || args[0] === '-h') { console.log(USAGE); }
-  else startAnalysisView(args).then(({ url, delivered }) => console.log(`Diagram delivered: ${delivered}\nCode Analysis: ${url}\nOpen the URL and click "Code Analysis". Press Ctrl+C to stop.`)).catch((error) => { console.error(error.message); process.exitCode = 1; });
+  else startAnalysisView(args).then(({ url, delivered }) => console.log(`${delivered ? `Diagram delivered: ${delivered}` : "Standalone analysis"}\nCode Analysis: ${url}\n${delivered ? 'Open the URL and click "Code Analysis".' : 'Open the URL to analyze the repository.'} Press Ctrl+C to stop.`)).catch((error) => { console.error(error.message); process.exitCode = 2; });
 }

@@ -9,6 +9,13 @@ export function createTranslator(messages = {}) {
   };
 }
 const ZH_CN = {
+  " and {count} more modules": "，另有 {count} 个模块",
+  "Run this command on the generating machine and open the printed URL to compare with this report. Later edits use Re-analyze. The command never runs automatically.": "在生成报告的机器上运行这条命令，打开输出的网址即可与本报告对比。之后改动可点「重新分析」。命令不会自动执行。",
+  "Theme": "主题",
+  "Toggle theme": "切换主题",
+  "View Atlas": "查看整仓星图",
+  "Open source evidence": "查看源码证据",
+  "Repository": "代码仓库",
   "Offline snapshot": "离线快照",
   "Built from the analysis snapshot; not yet compared with the current working tree.": "基于本次分析快照构建，尚未与当前工作树核对。",
   "Configured layer checks did not run": "已配置跨层规则，但本轮未运行该检查",

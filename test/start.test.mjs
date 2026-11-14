@@ -3,14 +3,14 @@ import { spawn, spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
-test('unified start documents optional output and rejects missing architecture input', () => {
+test('unified start documents standalone output and rejects a map without architecture input', () => {
   const help = spawnSync(process.execPath, [cli, 'start', '--help'], { encoding: 'utf8' });
   assert.equal(help.status, 0);
   assert.match(help.stdout, /archify start/);
   assert.match(help.stdout, /\[--out/);
-  const invalid = spawnSync(process.execPath, [cli, 'start', '.'], { encoding: 'utf8' });
+  const invalid = spawnSync(process.execPath, [cli, 'start', '.', '--map', 'map.json'], { encoding: 'utf8' });
   assert.notEqual(invalid.status, 0);
-  assert.match(invalid.stderr, /requires --ir/);
+  assert.match(invalid.stderr, /--map requires --ir/);
 });
 
 import fs from 'node:fs';
@@ -21,10 +21,10 @@ test('concurrent starts isolate default artifacts for the same project', { timeo
   t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
   const repo = path.join(scratch, 'repo'); fs.mkdirSync(repo);
   fs.writeFileSync(path.join(repo, 'main.py'), 'x = 1');
-  async function launch(title) {
+  async function launch(title, withDiagram = true) {
     const ir = path.join(scratch, title + '.json');
     fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title, output: 'architecture.html' }, components: [{ id: 'app', type: 'backend', label: title, pos: [40,40], size: [170,64] }], connections: [] }));
-    const child = spawn(process.execPath, [cli, 'start', repo, '--ir', ir, '--language', 'py'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [cli, 'start', repo, ...(withDiagram ? ['--ir', ir] : []), '--locale', 'zh-CN', '--language', 'py'], { stdio: ['ignore', 'pipe', 'pipe'] });
     t.after(() => new Promise(resolve => {
       if (child.exitCode !== null || child.signalCode !== null) return resolve();
       child.once('exit', resolve); child.kill();
@@ -37,21 +37,23 @@ test('concurrent starts isolate default artifacts for the same project', { timeo
       child.stdout.on('data', b => { text += b; if (text.includes('Press Ctrl+C')) resolve(text); });
     });
     const url = output.match(/Archify: (http:\/\/[^\s]+)/)[1];
-    const artifact = output.match(/Diagram: ([^\r\n]+)/)[1];
-    t.after(() => fs.rmSync(path.dirname(artifact), { recursive: true, force: true }));
-    return { url, artifact };
+    const artifact = output.match(withDiagram ? /Diagram: ([^\r\n]+)/ : /Analysis: ([^\r\n]+)/)[1];
+    t.after(() => fs.rmSync(withDiagram ? path.dirname(artifact) : path.dirname(path.dirname(artifact)), { recursive: true, force: true }));
+    return { url, artifact, withDiagram };
   }
   const first = await launch('First');
   const second = await launch('Second');
+  const standalone = await launch('Standalone', false);
+  assert.equal(fs.existsSync(standalone.artifact), false, 'no fake diagram is delivered for standalone start');
   assert.notEqual(first.artifact, second.artifact);
-  for (const [view, title] of [[first, 'First'], [second, 'Second']]) {
-    const before = fs.readFileSync(view.artifact, 'utf8');
+  for (const [view, title] of [[first, 'First'], [second, 'Second'], [standalone, null]]) {
+    const before = view.withDiagram ? fs.readFileSync(view.artifact, 'utf8') : null;
     const page = await (await fetch(view.url)).text();
     const token = page.match(/\}\)\("([a-f0-9]{48})"/)[1];
     const response = await fetch(view.url + '/analyze', { method: 'POST', headers: { Origin: view.url, 'X-Analysis-Token': token } });
     const html = await response.text();
     assert.equal(response.status, 200, html);
-    assert.ok(html.includes(title));
-    assert.equal(fs.readFileSync(view.artifact, 'utf8'), before);
+    if (view.withDiagram) { assert.ok(html.includes(title)); assert.equal(fs.readFileSync(view.artifact, 'utf8'), before); }
+    else { assert.match(html, /data-analysis-mode="standalone"/); assert.match(html, /lang="zh-CN"/); assert.ok(fs.existsSync(view.artifact)); }
   }
 });

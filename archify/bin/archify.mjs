@@ -7282,14 +7282,14 @@ try {
       break;
     case 'start': {
       if (!args.length || args[0] === '--help' || args[0] === '-h') {
-        console.log('Usage: archify start <repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
         break;
       }
       const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
       const launchArgs = [...args];
       if (!launchArgs.includes('--out')) launchArgs.push('--out', fs.mkdtempSync(path.join(os.tmpdir(), 'archify-' + createHash('sha256').update(path.resolve(args[0])).digest('hex').slice(0, 16) + '-')));
-      const { url, delivered } = await startAnalysisView(launchArgs);
-      console.log(`Archify: ${url}\nDiagram: ${delivered}\nOpen the URL, then click "Code Analysis" to analyze. Press Ctrl+C to stop.`);
+      const { url, delivered, out } = await startAnalysisView(launchArgs);
+      console.log(`Archify: ${url}\n${delivered ? `Diagram: ${delivered}\nOpen the URL, then click "Code Analysis" to analyze.` : `Analysis: ${path.join(out, 'analysis/repo.analysis.html')}\nOpen the URL to analyze the repository.`} Press Ctrl+C to stop.`);
       break;
     }
     case 'code-analysis': {

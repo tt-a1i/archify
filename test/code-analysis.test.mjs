@@ -27,7 +27,7 @@ test('Code Analysis exposes prepare, serve, check and task through the Archify C
   assert.match(other.stderr, /commands: prepare, serve, check, task, import-review/);
   const missing = run(['serve', path.join(moduleRoot, 'test/fixtures/ts-basic')]);
   assert.notEqual(missing.status, 0);
-  assert.match(missing.stderr, /--ir and --out/);
+  assert.match(missing.stderr, /requires --out/);
 });
 test('Code Analysis regression suite', () => {
   const tests = fs.readdirSync(path.join(moduleRoot, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join(moduleRoot, 'test', f));

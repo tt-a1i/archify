@@ -16,7 +16,7 @@ export async function prepareAnalysisView(argv) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
-  if (!args.length || args[0] === '--help' || args[0] === '-h') console.log('Usage: archify code-analysis prepare <repo-root> --ir <architecture.json> --out <dir> [--language ts|py|java|go|rust] [--config file] [--map file] [--baseline file] [--quality standard|showcase]\nDeliver the diagram, prepare an offline analysis view with captured tasks, and exit. Output: <dir>/analysis/repo.analysis.html. No local server is left running.');
+  if (!args.length || args[0] === '--help' || args[0] === '-h') console.log('Usage: archify code-analysis prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--config file] [--map file] [--baseline file] [--quality standard|showcase]\nPrepare an offline analysis view (optionally with an authored diagram) with captured tasks, and exit. Output: <dir>/analysis/repo.analysis.html. No local server is left running.');
   else prepareAnalysisView(args).then(result => console.log(JSON.stringify(result))).catch(error => {
     const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'analysis/prepare-failed', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: ['correct the reported input or environment, then rerun prepare'] }];
     console.log(JSON.stringify(receipt('error', { command: 'prepare', diagnostics }))); process.exitCode = 2;

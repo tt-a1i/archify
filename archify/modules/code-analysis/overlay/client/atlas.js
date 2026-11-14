@@ -5,6 +5,7 @@
   var ui = JSON.parse(document.getElementById('bauify-analysis').textContent).ui || {};
   var tr = window.__archifyMakeAnalysisTranslator(ui.messages || {});
   var root = document.documentElement;
+  var standalone = ui.mode === 'standalone';
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
   var NAMES = { 'complexity/function': tr("Complex functions"), 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'redundancy/duplicate-block': tr("Duplicate code") };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
@@ -33,7 +34,8 @@
   panel.innerHTML = ("<nav class=\"atlas-nav\" aria-label=\"" + tr("Atlas navigation") + "\">" + "<div class=\"atlas-title\">" + tr("Atlas") + "<span>") + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', tr("file dependencies")) + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
     ("<div>" + "<button type=\"button\" class=\"atlas-clear\">" + tr("Clear selection") + "</button>" + " " + "<button type=\"button\" class=\"atlas-classic\" title=\"" + tr("Back to the diagram view with source evidence") + "\">" + tr("Classic view") + "</button>" + "</div>" + "</nav>") +
     '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div><aside class="atlas-side"></aside></div>';
-  document.body.appendChild(panel);
+  (standalone ? document.querySelector('.analysis-stage') : document.body).appendChild(panel);
+  if (standalone) panel.querySelector('.atlas-classic').remove();
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
   canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 
@@ -380,7 +382,7 @@
         what = plural(f.edges.length, 'import') + tr(" from other modules reach ") + plural(Object.keys(reachedIn).length, 'internal file') + tr(" of ") + M[f.module].label + (f.entries && f.entries.length ? tr("; ringed: its entry point ") + f.entries.map(function (x) { return F[x][0].split('/').pop(); }).join(', ') : tr("; it has no entry file")) + '.';
       }
       return '<div class="selected"><h4>' + esc(findingTitle(f)) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(tr(f.severity)) + '</span>' + (f.accepted ? tr(" · accepted in baseline") : '') + ' · ' + esc(what) + '</p>' +
-        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + ("\">" + tr("Open evidence in Classic view") + "</button>" + "</div>");
+        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + ("\">" + tr(standalone ? "Open source evidence" : "Open evidence in Classic view") + "</button>" + "</div>");
     }
     if (state.focusModule !== -1) {
       var m = M[state.focusModule], files = F.filter(function (x) { return x[1] === state.focusModule; }).length;
@@ -427,7 +429,7 @@
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); select(-1, state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     var ev = side.querySelector('.atlas-evidence');
-    if (ev) ev.addEventListener('click', function () { var id = ev.getAttribute('data-id'); close(); if (window.__archifyShowFinding) window.__archifyShowFinding(id); });
+    if (ev) ev.addEventListener('click', function () { var id = ev.getAttribute('data-id'); if (!standalone) close(); if (window.__archifyShowFinding) window.__archifyShowFinding(id); });
   }
 
   // ---- open / close ----
@@ -435,17 +437,19 @@
     if (root.getAttribute('data-bauify') !== 'on') return;
     panel.hidden = false; root.setAttribute('data-bauify-view', 'atlas');
     renderSide(); draw('reveal');
-    panel.querySelector('.atlas-classic').focus({ preventScroll: true });
+    if (!standalone) panel.querySelector('.atlas-classic').focus({ preventScroll: true });
   }
   function close() {
+    if (standalone) return;
     panel.hidden = true; root.removeAttribute('data-bauify-view'); tip.hidden = true;
     if (anim.raf) { cancelAnimationFrame(anim.raf); clearTimeout(anim.timer); }
     anim.raf = 0; anim.timer = 0; anim.reveal = 0; anim.fade = 0; anim.flow = 0; anim.flowFor = -1;
     markMotion();
   }
-  panel.querySelector('.atlas-classic').addEventListener('click', close);
+  if (!standalone) panel.querySelector('.atlas-classic').addEventListener('click', close);
   panel.querySelector('.atlas-clear').addEventListener('click', function () { select(-1, -1); });
-  window.__archifyAtlas = { open: open, close: close };
+  window.__archifyAtlas = { open: open, close: close, focusFinding: function(id) { var i=FD.findIndex(function(f){return f.id===id;}); select(-1,i); return i!==-1; } };
+  if (standalone) open();
   new MutationObserver(function () { if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden) { renderSide(); draw(); } }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   var pending = 0;
   window.addEventListener('resize', function () { if (panel.hidden) return; cancelAnimationFrame(pending); pending = requestAnimationFrame(function () { draw(); }); });
