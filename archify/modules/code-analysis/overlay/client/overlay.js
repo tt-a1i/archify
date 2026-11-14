@@ -568,7 +568,7 @@
       lines.push(tr("Boundaries: ") + plural(b.layers.length, 'layer') + ', ' + plural(b.rules, 'rule') + tr(" from the analysis config"));
       b.layers.filter(function (l) { return !l.files; }).forEach(function (l) { lines.push(tr("Layer \"") + l.name + tr("\" matches no analyzed file; check its globs")); });
     }
-    var missing = [['complexity/', 'complexity'], ['redundancy/', 'duplication'], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
+    var missing = [['complexity/', tr("complexity")], ['redundancy/', tr("duplication")], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push(tr("Not checked: ") + missing.join(', '));
     var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
     return ("<details class=\"coverage\">" + "<summary>" + tr("Coverage · ")) + esc(LANGS[c.language] || c.language || tr("Unknown")) + ' · ' + (files.analyzed == null ? tr("file count unavailable") : plural(files.analyzed, 'file')) + (incomplete ? tr(" · incomplete") : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
