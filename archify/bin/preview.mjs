@@ -26,19 +26,60 @@ const defaultDebounceMs = 400;
 const defaultPollMs = 800;
 const defaultStopGraceMs = 3000;
 const defaultStopKillMs = 750;
-const diagramTypes = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall']);
+const diagramTypes = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall', 'explainer']);
 let previewCommitSequence = 0;
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
 }
 
-function sourceDigest(inputPath) {
+// Metadata invalidates the cache; only dependency bytes identify the generation.
+const dependencyLimit = 8 * 1024 * 1024;
+const statKey = stat => [stat.dev, stat.ino, stat.mode, stat.size, stat.mtimeNs, stat.ctimeNs].join(':');
+function dependencyDigest(root, sourcePath, cache) {
+  let fd;
+  try {
+    let candidate = fs.realpathSync(root);
+    const ancestors = [];
+    for (const part of path.relative(root, sourcePath).split(path.sep)) {
+      candidate = path.join(candidate, part);
+      const stat = fs.lstatSync(candidate, { bigint: true });
+      if (stat.isSymbolicLink()) return 'linked';
+      ancestors.push([candidate, stat, statKey(stat)]);
+    }
+    const [, stat, key] = ancestors.at(-1);
+    if (!stat.isFile()) return 'not-a-regular-file';
+    if (stat.size > dependencyLimit) return 'oversized:' + key;
+    const previous = cache.get(sourcePath);
+    if (previous?.key === key) return previous.digest;
+    fd = fs.openSync(candidate, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+    const stable = () => statKey(fs.fstatSync(fd, { bigint: true })) === key
+      && ancestors.every(([file, , expected]) => statKey(fs.lstatSync(file, { bigint: true })) === expected);
+    if (!stable()) return 'changing';
+    const bytes = Buffer.alloc(Number(stat.size));
+    let offset = 0;
+    while (offset < bytes.length) {
+      const count = fs.readSync(fd, bytes, offset, bytes.length - offset, offset);
+      if (!count) return 'changing';
+      offset += count;
+    }
+    if (!stable()) return 'changing';
+    const digest = sha256(bytes);
+    cache.set(sourcePath, { key, digest });
+    return digest;
+  } catch (error) { return error.code || 'unknown'; }
+  finally { if (fd !== undefined) fs.closeSync(fd); }
+}
+
+function sourceDigest(inputPath, dependencyPaths = [inputPath], cache) {
+  // Declared inputs start with the draft, which is hashed separately below.
+  const dependencies = dependencyPaths.slice(1).map(file => [file, dependencyDigest(path.dirname(inputPath), file, cache)]);
   try {
     const bytes = fs.readFileSync(inputPath);
-    return { hash: sha256(bytes), bytes, missing: false };
+    const sourceHash = sha256(bytes);
+    return { hash: dependencies.length ? sha256(JSON.stringify([sourceHash, dependencies])) : sourceHash, bytes, missing: false };
   } catch (error) {
-    return { hash: `unreadable:${error.code || 'unknown'}`, bytes: null, missing: true };
+    return { hash: `unreadable:${error.code || "unknown"}`, bytes: null, missing: true };
   }
 }
 
@@ -352,6 +393,16 @@ export async function startPreview(options) {
     throw new Error(`Unknown quality profile "${options.quality}".`);
   }
   const inputPath = path.resolve(options.input);
+  const declaredInputs = type === "explainer" ? (await import("../explainer/prepare.mjs")).declaredExplainerInputPaths : null;
+  const dependencyFingerprints = new Map();
+  const currentSourceDigest = () => {
+    if (!declaredInputs) return sourceDigest(inputPath);
+    let dependencies = [inputPath];
+    try { dependencies = declaredInputs(fs.readFileSync(inputPath, "utf8"), inputPath, { localOnly: true }); } catch { /* Delivery reports invalid drafts. */ }
+    const active = new Set(dependencies);
+    for (const file of dependencyFingerprints.keys()) if (!active.has(file)) dependencyFingerprints.delete(file);
+    return sourceDigest(inputPath, dependencies, dependencyFingerprints);
+  };
   const outputRequest = {
     requestedOutput: options.output,
     authoredOutput: initialAuthoredOutput(inputPath),
@@ -659,7 +710,7 @@ export async function startPreview(options) {
       if (releasedSource.status !== 'released') throw atomicOutputError(releasedSource);
       resolveOutputPath(outputRequest);
       const sameArtifact = state.lastVerified?.sha256 === digest;
-      const currentSource = sourceDigest(inputPath);
+      const currentSource = currentSourceDigest();
       if (currentSource.hash !== generationHash) {
         return {
           committed: false,
@@ -792,7 +843,13 @@ export async function startPreview(options) {
     let stderr = '';
     child = spawn(process.execPath, args, {
       cwd: options.cwd || process.cwd(),
-      env: process.env,
+      env: {
+        ...process.env,
+        ...(type === 'explainer' ? {
+          ARCHIFY_UPDATE_CHECK_DISABLED: '1',
+          ARCHIFY_EXPLAINER_RESOURCE_BASE: path.dirname(inputPath),
+        } : {}),
+      },
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: process.platform !== 'win32',
     });
@@ -851,7 +908,7 @@ export async function startPreview(options) {
       } else if (pendingBuild || stale || supersededBy) {
         pendingBuild = false;
         if (supersededBy && sourceEpoch === generationEpoch) sourceEpoch += 1;
-        const digest = supersededBy || sourceDigest(inputPath);
+        const digest = supersededBy || currentSourceDigest();
         queueStableBuild(digest.hash, true);
       }
     });
@@ -862,7 +919,7 @@ export async function startPreview(options) {
     clearTimeout(debounceTimer);
     const launch = () => {
       if (stopping) return;
-      const digest = sourceDigest(inputPath);
+      const digest = currentSourceDigest();
       if (digest.hash !== queuedHash) {
         queueStableBuild(digest.hash);
         return;
@@ -885,7 +942,7 @@ export async function startPreview(options) {
   }
 
   function observeSource({ immediate = false } = {}) {
-    const digest = sourceDigest(inputPath);
+    const digest = currentSourceDigest();
     if (!immediate && digest.hash === queuedHash) return;
     sourceEpoch += 1;
     queueStableBuild(digest.hash, immediate);

@@ -5,7 +5,7 @@ import { parseExplainer } from './parse.mjs';
 import { validateExplainer } from './validate.mjs';
 import { resolveExplainerSources } from './sources.mjs';
 import { parseInline } from './inline.mjs';
-import { prepareExplainerDiagrams, validateExplainerDiagramTarget } from './diagrams.mjs';
+import { isLocalDiagramSource, prepareExplainerDiagrams, validateExplainerDiagramTarget } from './diagrams.mjs';
 import { throwDiagnosticError } from '../renderers/shared/diagnostics.mjs';
 
 const MAX_BUNDLE_BYTES = 64 * 1024 * 1024;
@@ -29,15 +29,21 @@ export function parseValidatedExplainer(sourceText, options = {}) {
 
 // Discover declared inputs before reading their contents: failed preparation
 // must not overwrite the very JSON resource that made preparation fail.
-export function declaredExplainerInputPaths(sourceText, inputPath) {
+export function declaredExplainerInputPaths(sourceText, inputPath, { localOnly = false } = {}) {
   if (Buffer.byteLength(sourceText) > MAX_SOURCE_BYTES) fail('source-limit', 'Explainer draft exceeds the 16 MiB source budget.', inputPath, 'source-byte-limit');
   const parsed = parseExplainer(sourceText, { inputPath });
   if (!parsed.document || parsed.diagnostics.some(entry => entry.severity !== 'warning')) throwDiagnosticError('Explainer inputs could not be inspected.', parsed.diagnostics);
   const inputs = [path.resolve(inputPath)];
   for (const panel of Array.isArray(parsed.document.panels) ? parsed.document.panels : []) {
     for (const block of Array.isArray(panel?.blocks) ? panel.blocks : []) {
-      const reference = block?.type === 'chart' ? block.data?.path : block?.type === 'diagram' ? block.source : undefined;
-      if (typeof reference === 'string') inputs.push(path.resolve(path.dirname(inputPath), reference));
+      const reference = block?.type === 'chart' ? block.data?.path
+        : block?.type === 'diagram' ? block.source
+          : block?.type === 'image' ? block.path
+            : undefined;
+      if (typeof reference !== 'string') continue;
+      if (localOnly && (block.type === 'diagram' ? !isLocalDiagramSource(reference) : /^[\/\\]|[\\:\u0000-\u001f\u007f?#]/.test(reference)
+          || reference.split('/').some(part => !part || part === '.' || part === '..' || part.toLowerCase() === '.git'))) continue;
+      inputs.push(path.resolve(path.dirname(inputPath), reference));
     }
   }
   return [...new Set(inputs)];

@@ -2423,7 +2423,11 @@ async function prepareExplainerInput(specification, inputPath, options = {}) {
   }
   return process.env.ARCHIFY_EXPLAINER_PREPARED
     ? runtime.readPreparedBundle(process.env.ARCHIFY_EXPLAINER_PREPARED, text, inputPath, { quality: options.quality, writingMode: options.writingMode || 'warn' })
-    : runtime.prepareExplainer(text, { ...options, inputPath });
+    : runtime.prepareExplainer(text, {
+      ...options,
+      inputPath,
+      ...(process.env.ARCHIFY_EXPLAINER_RESOURCE_BASE ? { baseDir: process.env.ARCHIFY_EXPLAINER_RESOURCE_BASE } : {}),
+    });
 }
 
 function rendererEnv(quality, repoRoot, diagnosticJson = false) {
