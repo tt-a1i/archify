@@ -17,7 +17,7 @@ const revised = { ...translations, 'legend.architecture.backend': 'Revised backe
 const reordered = Object.fromEntries(Object.entries(translations).reverse());
 const unchangedEntities = {
   components: { added: 0, changed: 0, evidenceChanged: 0, removed: 0, moved: 0 },
-  connections: { added: 0, changed: 0, removed: 0, rerouted: 0 },
+  connections: { added: 0, changed: 0, evidenceChanged: 0, removed: 0, rerouted: 0 },
   boundaries: { added: 0, changed: 0, removed: 0, geometryChanged: 0 },
 };
 
