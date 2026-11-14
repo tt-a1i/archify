@@ -348,6 +348,7 @@ test('a relationship whose only change is its sources is evidence-changed', () =
   assert.deepEqual(serviceCall.changedFields, ['/sources']);
   assert.equal(receipt.summary.connections.evidenceChanged, 1);
   const html = fs.readFileSync(output, 'utf8');
+  assert.match(html, /class="metric change"><strong>1<\/strong><span>CHANGED<\/span>/);
   assert.match(html, /data-edge-id="service-call"[^>]*data-delta-state="evidence-changed"[^>]*data-delta-classifications="evidence"/);
   const validation = validateArchitectureDeltaHtml(html, receipt);
   assert.deepEqual(validation, { ok: true, checksPassed: 10, checkCount: 10 }, JSON.stringify(validation));

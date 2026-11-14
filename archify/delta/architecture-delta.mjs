@@ -753,7 +753,7 @@ function provenanceDetail(provenance) {
 
 export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSvg, baseHtml = '', headHtml = '', artifactCss }) {
   const rows = architectureDeltaChangeRows(receipt);
-  const changed = total(receipt.summary, 'changed');
+  const changed = total(receipt.summary, 'changed') + receipt.summary.components.evidenceChanged + receipt.summary.connections.evidenceChanged;
   const proof = receipt.proofLevel === 'revision-pinned' ? 'REVISION-PINNED INPUTS' : 'AUTHORED SNAPSHOTS';
   const provenanceChanged = receipt.summary.provenanceChanged === true;
   const provenanceFields = receipt.provenance?.changedFields?.join(', ') || 'repository metadata';

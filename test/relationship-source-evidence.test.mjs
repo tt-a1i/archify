@@ -61,3 +61,16 @@ test('Architecture connection evidence rejects missing relationship identity and
     ['repository-evidence/path-escape', '/connections/0/sources/0/path'],
   ]);
 });
+
+
+test('Architecture rejects an ambiguous sourced relationship ID even if the other connection has no sources', (t) => {
+  const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  const first = data.diagram.connections[0];
+  const second = { ...first, from: first.to, to: first.from, sources: [{ path: 'src/router.js', line: 1 }] };
+  data.diagram.connections = [first, second];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.deepEqual(JSON.parse(result.stdout).diagnostics.map(({ code }) => code), ['relationship/duplicate-id']);
+});
