@@ -1471,6 +1471,43 @@ test('preview: Explainer refreshes a chart after a declared JSON data edit', { t
   }
 });
 
+test('preview: Explainer reports and recovers from an invalid draft at startup and after delivery', { timeout: 90000 }, async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-explainer-invalid-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const input = path.join(tmp, 'draft.explainer.json');
+  const output = path.join(tmp, 'draft.html');
+  const valid = summary => JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'explainer',
+    meta: { id: 'repairable-preview', title: 'Repairable preview' },
+    answer: { summary },
+    panels: [{ id: 'proof', title: 'Proof', blocks: [{ id: 'detail', type: 'prose', text: 'A valid detail.' }] }],
+    sources: [],
+  });
+  const read = async preview => (await fetch(new URL('/artifact.html', preview.url))).text();
+  fs.writeFileSync(input, '{');
+  const preview = await startPreview({ type: 'explainer', input, output, open: false, debounceMs: 10, pollMs: 80 });
+  try {
+    const initialFailure = await waitForState(preview.url, state => state.status === 'needs-fix', 'invalid Explainer did not report a startup failure');
+    assert.equal(initialFailure.revision, 0);
+    assert.ok(initialFailure.failure);
+    fs.writeFileSync(input, valid('First valid draft'));
+    await waitForState(preview.url, state => state.status === 'verified' && state.revision === 1, 'repair did not publish the first Explainer');
+    const first = await read(preview);
+    assert.match(first, /First valid draft/);
+    fs.writeFileSync(input, '{');
+    const failure = await waitForState(preview.url, state => state.status === 'needs-fix', 'invalid edit did not report an Explainer failure');
+    assert.equal(failure.revision, 1);
+    assert.ok(failure.failure);
+    assert.equal(await read(preview), first);
+    fs.writeFileSync(input, valid('Repaired draft'));
+    await waitForState(preview.url, state => state.status === 'verified' && state.revision === 2, 'second repair did not refresh the Explainer');
+    assert.match(await read(preview), /Repaired draft/);
+  } finally {
+    await preview.stop();
+  }
+});
+
 test('preview: follows a regular-file input symlink when the platform permits it', { timeout: 30000 }, async (t) => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-input-symlink-'));
   t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));

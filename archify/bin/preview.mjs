@@ -397,7 +397,7 @@ export async function startPreview(options) {
   const dependencyFingerprints = new Map();
   const currentSourceDigest = () => {
     if (!declaredInputs) return sourceDigest(inputPath);
-    let dependencies;
+    let dependencies = [inputPath];
     try { dependencies = declaredInputs(fs.readFileSync(inputPath, "utf8"), inputPath, { localOnly: true }); } catch { /* Delivery reports invalid drafts. */ }
     const active = new Set(dependencies);
     for (const file of dependencyFingerprints.keys()) if (!active.has(file)) dependencyFingerprints.delete(file);
