@@ -53,9 +53,6 @@
         "repository": {
           "$ref": "common.schema.json#/$defs/repository"
         },
-        "views": {
-          "$ref": "common.schema.json#/$defs/guidedViews"
-        },
         "evidence": {
           "enum": [
             "measured",

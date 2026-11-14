@@ -137,6 +137,15 @@
       "minLength": 1,
       "maxLength": 20000
     },
+    "checklistItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "checked"],
+      "properties": {
+        "text": { "$ref": "#/$defs/text" },
+        "checked": { "type": "boolean" }
+      }
+    },
     "short": {
       "type": "string",
       "minLength": 1,
@@ -186,7 +195,10 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/text"
+            "anyOf": [
+              { "$ref": "#/$defs/text" },
+              { "$ref": "#/$defs/checklistItem" }
+            ]
           },
           "minItems": 1,
           "maxItems": 500
@@ -489,6 +501,9 @@
         },
         "source": {
           "$ref": "#/$defs/short"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
         },
         "nodeSources": {
           "type": "object",
