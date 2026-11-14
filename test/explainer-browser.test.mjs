@@ -69,6 +69,23 @@ test('source cards keep their evidence and return link reachable in short viewpo
  }finally{await browser.close();}
 });
 
+test('claim attribution links reach authored blocks and sources in Chrome',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();
+ doc.answer.span=12;
+ doc.answer.evidence=['claim','example'];
+ const file=artifact('claim-attribution',renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme:'light',keyboard:false});
+  assert.equal(await pageValue(browser,"document.querySelector('#answer').dataset.spanFixed"),'12');
+  for(const [id,hash] of [['claim','#claim'],['example','#source-example']]){
+   await keyboardActivate(browser,'[data-claim-evidence="'+id+'"]');
+   assert.equal(await pageValue(browser,'location.hash'),hash);
+   assert.equal(await pageValue(browser,'Boolean(document.querySelector(location.hash))'),true);
+  }
+ }finally{await browser.close();}
+});
 test('authored answer and panel spans remain exact through measured layout and reader relayout',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');
  const doc=formalDocument();doc.meta.locale='zh-CN';doc.answer.span=12;

@@ -128,6 +128,13 @@ test('answer reasons, scope, numbered source syntax and explicit spans normalize
  for(const list of ['1. Ordered','- First\n  - Nested'])assert.equal(parseExplainer('# Title\n\nAnswer.\n\n'+list).document,null);
 });
 
+test('answer evidence does not hide the conclusion source location',()=>{
+ const result=parseExplainer('# Title\n\n@answer evidence=panel\n\nA direct answer.\n\n## Why?\n\n@prose id=panel text="Evidence"\n');
+ assert.equal(result.sourceMap['/answer/evidence'].line,3);
+ assert.equal(result.sourceMap['/answer/summary'].line,5);
+ assert.equal(result.sourceMap['/answer'].line,5);
+});
+
 test('answer width accepts exact authored columns and locates invalid widths',()=>{
  for(const span of [1,6,12]){
   const result=parse(`# Title\n\nAnswer.\n\n@answer span=${span} scope="Example"\n\n## Why?\n\nText.`);

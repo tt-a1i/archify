@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "explainer",
+  "meta": {
+    "id": "claim-attribution-example",
+    "title": "Claim attribution example",
+    "locale": "en-US",
+    "output": "explainer-claim-attribution.html"
+  },
+  "answer": {
+    "summary": "The observed P99 increase is associated with the recorded database query interval.",
+    "scope": "This is author-supplied attribution to the displayed evidence, not automatic verification of the conclusion.",
+    "evidence": [
+      "p99-observation",
+      "trace-runbook"
+    ]
+  },
+  "panels": [
+    {
+      "id": "observation",
+      "title": "Observed request path",
+      "blocks": [
+        {
+          "id": "p99-observation",
+          "type": "metric",
+          "label": "P99 request latency",
+          "value": 420,
+          "unit": "ms",
+          "note": "Recorded during the investigated request window."
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "trace-runbook",
+      "title": "Trace investigation runbook",
+      "url": "https://example.com/runbooks/trace-investigation"
+    }
+  ]
+}

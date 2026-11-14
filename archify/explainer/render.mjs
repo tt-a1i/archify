@@ -95,7 +95,12 @@ export function renderExplainer(document, options = {}) {
   const plainText = value => plain(parseInline(value).tokens);
   const titleHtml = inline(document.meta.title);
   const titleText = plainText(document.meta.title);
-  const answerHtml = `<header class="panel-head"><span class="panel-id answer-id" aria-hidden="true">${words.answerMark}</span><h2>${words.answer}</h2></header><div class="panel-body"><p class="verdict">${inline(document.answer.summary)}</p>${document.answer.reasons?.length ? `<ol class="reasons">${document.answer.reasons.map(reason=>`<li>${inline(reason)}</li>`).join('')}</ol>` : ''}</div>${document.answer.scope ? `<p class="answer-scope"><span class="scope-label">${words.scope}</span>${scopeHtml(document.answer.scope)}</p>` : ''}`;
+  const evidenceLinks = document.answer.evidence?.length
+    ? `<nav class="claim-evidence" aria-label="${english ? 'Claim evidence' : '结论依据'}"><span>${english ? 'Based on' : '依据'}</span>${document.answer.evidence.map(id => { const source = document.sources.find(entry => entry.id === id); return `<a href="#${source ? `source-${escape(id)}` : escape(id)}" data-claim-evidence="${escape(id)}">${escape(source?.title || id)}</a>`; }).join('<span aria-hidden="true"> · </span>')}</nav>`
+    : '';
+  const verdict = `<p class="verdict">${inline(document.answer.summary)}</p>`;
+  const answerVerdict = evidenceLinks ? `<div class="answer-verdict">${verdict}${evidenceLinks}</div>` : verdict;
+  const answerHtml = `<header class="panel-head"><span class="panel-id answer-id" aria-hidden="true">${words.answerMark}</span><h2>${words.answer}</h2></header><div class="panel-body">${answerVerdict}${document.answer.reasons?.length ? `<ol class="reasons">${document.answer.reasons.map(reason=>`<li>${inline(reason)}</li>`).join('')}</ol>` : ''}</div>${document.answer.scope ? `<p class="answer-scope"><span class="scope-label">${words.scope}</span>${scopeHtml(document.answer.scope)}</p>` : ''}`;
   const rows=layoutExplainerPanels(document,diagrams);
   const panels=rows.flatMap((row,rowIndex)=>row.map(item=>{
     if(item.spacer)return `<div class="board-spacer span${item.span}" data-row="${rowIndex}" aria-hidden="true"></div>`;
