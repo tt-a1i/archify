@@ -427,6 +427,42 @@ test('text names light their diagram nodes and walk-throughs step through steps 
  }finally{await browser.close();}
 });
 
+test('structural change marks outline their nodes and edges in the change colour, and dash and fade removed ones',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const spec=compileExplainerDiagram('architecture',['web | Web app | frontend','checkout | Checkout | backend','cache | Order cache | database','queue | Legacy queue | messagebus','web > checkout | Places order','checkout > cache | Reads first','checkout > queue | Old hand-off'],{title:'Checkout path',id:'release'});
+ const doc=formalDocument();doc.meta.id='change-marks-browser';doc.panels.push({id:'changed',title:'What changed?',blocks:[{id:'release',type:'diagram',diagramType:'architecture',spec,changes:[{target:'checkout',change:'modified'},{target:'cache',change:'added'},{target:'queue',change:'removed'},{target:'checkout-to-cache-1',change:'added'},{target:'checkout-to-queue-1',change:'removed'}]}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'change-marks.json')});
+ const file=artifact('change-marks',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
+ const browser=new ChromeVisualBrowser(chrome);const seen={};try {
+  for(const theme of ['light','dark']) {
+   if(browser.resetPage)await browser.resetPage();
+   await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme,keyboard:false});
+   const marks=await pageValue(browser,`(function(){
+    const preview=document.querySelector('#release .diagram-preview'),probe=document.createElement('span');preview.append(probe);
+    const colour=name=>{probe.style.color='var(--'+name+')';return getComputedStyle(probe).color;},colours={added:colour('good'),modified:colour('caution'),removed:colour('bad')};probe.remove();
+    const shapes='rect,path,circle,ellipse,polygon,polyline,line';
+    const look=selector=>{const target=preview.querySelector(selector),shape=target.matches(shapes)?target:target.querySelector(':scope>:is('+shapes+'):not(.c-mask)'),mask=target.querySelector(':scope>.c-mask'),style=getComputedStyle(shape);
+     return {stroke:style.stroke,width:style.strokeWidth,dash:style.strokeDasharray,opacity:getComputedStyle(target).opacity,mask:mask?getComputedStyle(mask).strokeWidth:null};};
+    return {colours,checkout:look('g[data-node-id="checkout"]'),cache:look('g[data-node-id="cache"]'),queue:look('g[data-node-id="queue"]'),web:look('g[data-node-id="web"]'),
+     read:look('path[data-edge-id="checkout-to-cache-1"]'),handoff:look('path[data-edge-id="checkout-to-queue-1"]'),order:look('path[data-edge-id="web-to-checkout-1"]')};
+   })()`);
+   const {colours}=marks;seen[theme]=colours;
+   for(const [target,change,native] of [['checkout','modified','web'],['cache','added','web'],['queue','removed','web'],['read','added','order'],['handoff','removed','order']]) {
+    assert.equal(marks[target].stroke,colours[change],`${theme}: ${target} is outlined in the ${change} colour`);
+    assert.ok(parseFloat(marks[target].width)>parseFloat(marks[native].width),`${theme}: ${target} is outlined more heavily than unmarked ${native}`);
+    assert.equal(marks[target].dash!=='none',change==='removed',`${theme}: only a removed ${target} is dashed`);
+    assert.equal(Number(marks[target].opacity)<1,change==='removed',`${theme}: only a removed ${target} fades`);
+   }
+   for(const target of ['checkout','cache','queue'])assert.equal(marks[target].mask,marks.web.mask,`${theme}: the ${target} mask keeps its native stroke`);
+   for(const target of ['web','order']) {
+    assert.equal(marks[target].opacity,'1',`${theme}: unmarked ${target} stays opaque`);
+    assert.ok(!Object.values(colours).includes(marks[target].stroke),`${theme}: unmarked ${target} keeps its native colour`);
+   }
+  }
+  assert.notDeepEqual(seen.light,seen.dark,'each theme supplies its own change colours');
+ }finally{await browser.close();}
+});
+
 test('phone native previews keep readable text with local keyboard scrolling and reset for desktop and print',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');
  const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
