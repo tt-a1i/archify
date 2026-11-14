@@ -56,7 +56,62 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.equal(await run("document.querySelector('#bauify-overview h3').textContent"), 'Architecture check');
   assert.match(await run("document.querySelector('.health-summary').textContent"), /error-level diagnostics still present/);
   assert.equal(await run("document.querySelectorAll('.priority-card button button').length"), 0);
-  assert.ok(await run("document.querySelector('.priority-card .quick-copy').getBoundingClientRect().bottom < innerHeight"), 'first task copy is visible without opening details');
+  const assertFirstCopyVisible = async locale => {
+    const visibility = await run(`(() => {
+      const button=document.querySelector('.priority-card .quick-copy').getBoundingClientRect();
+      const reader=document.getElementById('bauify-reader').getBoundingClientRect();
+      const diagram=document.querySelector('.diagram-container').getBoundingClientRect();
+      return { visible:button.width>0 && button.height>0 && button.left>=Math.max(0,reader.left) && button.right<=Math.min(innerWidth,reader.right) && button.top>=Math.max(0,reader.top) && button.bottom<=Math.min(innerHeight,reader.bottom), separate:innerWidth>1000 || diagram.top>=reader.bottom, overflow:document.documentElement.scrollWidth>innerWidth };
+    })()`);
+    assert.equal(visibility.visible, true, locale + ': first task copy must be inside both reader and window without scrolling');
+    assert.equal(visibility.separate, true, locale + ': narrow reader must not cover the canvas');
+    assert.equal(visibility.overflow, false, locale + ': no horizontal page overflow');
+  };
+  const assertPrimaryContrast = async label => {
+    const styles = await run(`['.brief-copy','.priority-card .quick-copy'].map(selector=>{
+      const s=getComputedStyle(document.querySelector(selector));return {selector,color:s.color,background:s.backgroundColor,opacity:s.opacity};
+    })`);
+    const parse = value => value.match(/[\d.]+/g).map(Number);
+    const luminance = rgb => rgb.map(v=>v/255).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[0.2126,0.7152,0.0722][i],0);
+    for (const style of styles) {
+      const foreground=parse(style.color), background=parse(style.background);
+      assert.equal(background[3] ?? 1, 1, label + ': primary background must be opaque');
+      assert.equal(Number(style.opacity), 1, label + ': enabled action must not look disabled');
+      const alpha=foreground[3] ?? 1;
+      const text=foreground.slice(0,3).map((v,i)=>v*alpha+background[i]*(1-alpha));
+      const [light,dark]=[luminance(text),luminance(background.slice(0,3))].sort((a,b)=>b-a);
+      assert.ok((light+0.05)/(dark+0.05)>=4.5,label+' '+style.selector+': readable primary action contrast');
+    }
+  };
+  await assertFirstCopyVisible('en desktop');
+  // Reuse the exact captured facts to check both first-screen languages without
+  // adding history banners or performing another analysis.
+  const initialRead = file => JSON.parse(fs.readFileSync(path.join(out,'analysis',file)));
+  const initialFindings=initialRead('findings.json');
+  const initialZh=path.join(dir,'initial-zh.html');
+  fs.writeFileSync(initialZh,buildOverlay({ir:{...ir,meta:{...ir.meta,locale:'zh-CN'}},graph:initialRead('module-graph.json'),facts:initialRead('raw-facts.json'),findings:initialFindings.diagnostics,findingsDocument:initialFindings,sourceRoot:root,html:fs.readFileSync(first.diagram,'utf8'),run:{openAnalysis:true,rules:initialFindings.rules}}).html);
+  for (const [locale,file] of [['en',first.html],['zh-CN',initialZh]]) {
+    await open(file);
+    await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+    await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+    await assertFirstCopyVisible(locale+' narrow');
+    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+    for (const theme of ['light','dark']) {
+      await run(`if(document.documentElement.getAttribute('data-theme')!==${JSON.stringify(theme)})document.getElementById('btn-theme').click()`);
+      await run('new Promise(resolve=>setTimeout(resolve,400))');
+      assert.equal(await run("document.documentElement.getAttribute('data-theme')"),theme);
+      await assertPrimaryContrast(locale+' '+theme);
+    }
+    if (locale==='zh-CN') {
+      await run("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__copied=value;}}});document.querySelector('.priority-card .quick-copy').click()");
+      await run("new Promise((resolve,reject)=>{const deadline=Date.now()+3000;const poll=()=>window.__copied?resolve():Date.now()>deadline?reject(new Error('Chinese copy did not finish')):setTimeout(poll,20);poll();})");
+      const status=await run("document.querySelector('.priority-card .handoff-status').textContent");
+      assert.match(status,/基于本次分析快照构建/);
+      assert.doesNotMatch(status,/Built from the analysis snapshot/);
+      assert.equal(await run("(()=>{const d=JSON.parse(document.getElementById('bauify-analysis').textContent);return d.tasks[d.overview.priorities[0]].task.evidence.reason;})()"),'Built from the analysis snapshot; not yet compared with the current working tree.','UI localization preserves the canonical exported evidence');
+    }
+  }
+  await open(first.html);
   // Observe the clipboard adapter independently of browser-owned permissions.
   await run("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async value => { window.__copied = value; } } })");
   await run("document.querySelector('.priority-card .quick-copy').click()");

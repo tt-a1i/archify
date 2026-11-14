@@ -9,6 +9,8 @@ export function createTranslator(messages = {}) {
   };
 }
 const ZH_CN = {
+  "Offline snapshot": "离线快照",
+  "Built from the analysis snapshot; not yet compared with the current working tree.": "基于本次分析快照构建，尚未与当前工作树核对。",
   "Configured layer checks did not run": "已配置跨层规则，但本轮未运行该检查",
   "test": "测试",
   "generated": "生成或第三方代码",

@@ -188,7 +188,7 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 }
 @media (max-width: 1000px) {
   /* In normal flow, the reader and canvas remain separately reachable. */
-  #bauify-reader { position: relative; left: auto; top: auto; bottom: auto; width: auto; margin: 16px; height: min(52vh, 520px); min-height: 280px; }
+  #bauify-reader { position: relative; left: auto; top: auto; bottom: auto; width: auto; margin: 16px 0; height: min(66vh, 600px); min-height: 280px; }
   #bauify-reader.collapsed { height: auto; min-height: 0; width: auto; max-width: none; }
   #bauify-reader > .reader-nav { gap: 8px; padding: 10px 12px; }
   #bauify-reader .reader-actions { display: flex; flex: none; gap: 5px; }
@@ -216,7 +216,8 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-reader .ai-task > summary { color: var(--text, #f8fafc); font-weight: 600; }
 #bauify-reader .task-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
 #bauify-reader .task-actions button { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--panel-border, #1e293b); color: var(--text, #f8fafc); background: none; cursor: pointer; }
-#bauify-reader .task-actions button:first-child { background: var(--text, #f8fafc); color: var(--panel, #0f172a); }
+/* The panel token can be translucent; inverse action text needs an opaque surface token. */
+#bauify-reader .task-actions button:first-child { background: var(--text, #f8fafc); color: var(--bg, #0b1220); }
 #bauify-reader .task-actions button:disabled { opacity: .5; cursor: wait; }
 #bauify-reader .task-preview { display: block; box-sizing: border-box; width: 100%; min-height: 180px; max-height: 360px; resize: vertical; padding: 10px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; color: var(--text, #f8fafc); background: var(--bg, #0b1220); font: 12px/1.6 ui-monospace, monospace; }
 #bauify-reader .coverage-notice { padding: 8px 0; color: var(--text-muted, #94a3b8); font-size: 12px; }
@@ -312,14 +313,15 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .health-signal.positive::before { content: '✓ '; color: var(--backend-stroke, #159f88); }
 #bauify-reader .health-signal.attention { font-weight: 600; }
 #bauify-reader .scope-line { font-size: 12px; color: var(--text-muted); margin: 5px 0 0; }
-#bauify-reader .workbench-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 6px; }
-#bauify-reader .workbench-actions button, #bauify-reader .start-copy { padding: 8px 11px; border: 1px solid var(--panel-border); border-radius: 7px; background: none; color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
-#bauify-reader .workbench-actions .brief-copy { background: var(--text); color: var(--panel); border-color: var(--text); }
+#bauify-reader .workbench-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#bauify-reader .workbench-header h3 { margin: 0; }
+#bauify-reader .snapshot-label { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+#bauify-reader .section-heading .brief-copy, #bauify-reader .start-copy { padding: 8px 11px; border: 1px solid var(--panel-border); border-radius: 7px; background: none; color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+#bauify-reader .section-heading .brief-copy { background: var(--text); color: var(--bg, #0b1220); border-color: var(--text); }
 #bauify-reader .brief-status, #bauify-reader .handoff-status { margin: 4px 0; font-size: 12px; line-height: 1.55; white-space: normal; }
 #bauify-reader .brief-status:empty, #bauify-reader .handoff-status:empty { display: none; }
-#bauify-reader .section-heading { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 8px; }
+#bauify-reader .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 18px 0 8px; }
 #bauify-reader .section-heading h4 { font-size: 14px; margin: 0; }
-#bauify-reader .section-heading > span { color: var(--text-muted); font-size: 12px; }
 #bauify-reader .priority-card { border: 1px solid var(--panel-border); border-radius: 9px; padding: 10px 12px; margin: 8px 0; }
 #bauify-reader .priority-card .bauify-item { border: 0; padding: 0; margin: 0; }
 #bauify-reader .priority-card .quick-handoff { margin: 7px 0 0; padding: 0; border: 0; }
@@ -338,7 +340,8 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .architecture-brief-preview textarea, #bauify-reader .start-command { display: block; box-sizing: border-box; width: 100%; min-height: 90px; max-height: 260px; resize: vertical; margin: 8px 0; padding: 8px; border: 1px solid var(--panel-border); border-radius: 6px; color: var(--text); background: var(--bg); font: 12px/1.55 ui-monospace, Menlo, Consolas, monospace; }
 #bauify-reader .architecture-brief-preview[hidden] { display: none; }
 #bauify-reader .scope-note { line-height: 1.6; }
-@media (max-width: 600px) { #bauify-reader .workbench-actions button, #bauify-reader .priority-card .task-actions button, #bauify-reader .start-copy { min-height: 44px; } }
+@media (max-width: 600px) { #bauify-reader .section-heading .brief-copy, #bauify-reader .workbench-header .bauify-reanalyze, #bauify-reader .priority-card .task-actions button, #bauify-reader .start-copy { min-height: 44px; }
+  #bauify-reader > #bauify-overview { padding: 12px; } }
 /* Findings share the existing reading column. Colour identifies severity;
    source, rule, location and review state remain separate readable facts. */
 #bauify-reader .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
@@ -397,7 +400,7 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .external-provenance { padding-top: 12px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .finding-review { margin: 14px 0; }
 #bauify-reader .review-primary-actions, #bauify-reader .review-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-#bauify-reader .review-primary-actions .preview-external-task, #bauify-reader .review-actions .review-confirm { background: var(--text); color: var(--panel); border-color: var(--text); }
+#bauify-reader .review-primary-actions .preview-external-task, #bauify-reader .review-actions .review-confirm { background: var(--text); color: var(--bg, #0b1220); border-color: var(--text); }
 #bauify-reader .review-reason { padding-block: 10px; border-block: 1px solid var(--panel-border); font-size: 13px; }
 #bauify-reader .review-reason > * { display: block; margin-top: 4px; }
 #bauify-reader .review-form { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--panel-border); }

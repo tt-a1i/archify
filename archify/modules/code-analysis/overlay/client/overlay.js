@@ -597,7 +597,9 @@
     var o = data.overview;
     if (!o) { overview.innerHTML = '<h3>' + esc(tr('Architecture check')) + '</h3>' + legend(); return; }
     var errors = o.counts.error + (o.counts.acceptedErrors || 0);
-    var h = '<h3>' + (errors ? '<i class="bauify-red"></i>' : '') + esc(tr('Architecture check')) + '</h3>';
+    var live = typeof window.__archifyReanalyze === 'function';
+    var h = '<div class="workbench-header"><h3>' + (errors ? '<i class="bauify-red"></i>' : '') + esc(tr('Architecture check')) + '</h3>' +
+      (live ? '<button type="button" class="bauify-reanalyze" title="' + esc(tr('Read the repository again and compare with this result')) + '">' + esc(tr('Re-analyze')) + '</button>' : '<span class="snapshot-label">' + esc(tr('Offline snapshot')) + '</span>') + '</div>';
     h += '<ol class="workbench-steps" aria-label="' + esc(tr('Read the diagram and source evidence, copy a task to your coding AI, then re-analyze after edits.')) + '">' +
       [tr("Read the signals"), tr("Copy a task for AI"), tr("Re-analyze after edits")].map(function (label, i) { return '<li><b>' + (i + 1) + '</b><span>' + esc(tr(label)) + '</span></li>'; }).join('') + '</ol>';
     h += reviewHtml(o.review);
@@ -610,19 +612,20 @@
     h += '<p class="health-signal">' + esc(rules.indexOf('coupling/import-cycle') !== -1 ? fileCycles ? tr('File import cycles: {count}', { count: fileCycles }) : tr('No file import cycles detected') : tr('Cycle checks did not run')) + '</p>';
     if (moduleCycles) h += '<p class="health-signal">' + esc(tr('Module dependency loops: {count}', { count: moduleCycles })) + '</p>';
     h += '<p class="scope-line">' + esc(o.coverage.boundaries && o.coverage.boundaries.rules > 0 ? rules.indexOf('architecture/boundary') === -1 ? tr('Configured layer checks did not run') : boundaryViolations ? tr('Configured layer violations: {count}', { count: boundaryViolations }) : tr('No configured layer violations detected') : tr('Layer rules not configured')) + '</p><p class="scope-line">' + esc((LANGS[o.coverage.language] || o.coverage.language || tr('Unknown language')) + ' · ' + (o.coverage.files.analyzed == null ? tr('file count unavailable') : plural(o.coverage.files.analyzed, 'file')) + ' · ' + plural(data.totals.modules, 'module')) + '</p></section>';
-    h += '<div class="workbench-actions"><button type="button" class="brief-copy">' + esc(tr('Copy architecture brief')) + '</button>' +
-      (typeof window.__archifyReanalyze === 'function' ? '<button type="button" class="bauify-reanalyze" title="' + esc(tr('Read the repository again and compare with this result')) + '">' + esc(tr('Re-analyze')) + '</button>' : '') + '</div><p class="brief-status ev" role="status" aria-live="polite"></p>';
+    h += '<p class="brief-status ev" role="status" aria-live="polite"></p>';
     h += '<details class="architecture-brief-preview" hidden><summary>' + esc(tr('Copy manually')) + '</summary><textarea readonly spellcheck="false" aria-label="' + esc(tr('Architecture brief')) + '"></textarea></details>';
-    if (typeof window.__archifyReanalyze !== 'function') {
-      h += '<details class="offline-recheck"><summary>' + esc(tr('Recheck after edits')) + '</summary><p class="ev">' + esc(tr('Offline report: captured tasks can be copied now. Current source has not been rechecked.')) + '</p>';
-      if (data.ui && data.ui.resume && data.ui.resume.command) h += '<p class="ev">' + esc(tr('Run this command on the generating machine, open the printed URL and choose Code Analysis to compare with this report. Later edits use Re-analyze. The command never runs automatically.')) + '</p><textarea readonly class="start-command" aria-label="' + esc(tr('Recheck after edits')) + '">' + esc(data.ui.resume.command) + '</textarea><button type="button" class="start-copy">' + esc(tr('Copy start command')) + '</button><p class="start-status ev" role="status" aria-live="polite"></p>';
-      else h += '<p class="ev">' + esc(tr('This report has no saved start command. Ask your AI to prepare a fresh analysis from the original repository and architecture JSON.')) + '</p>';
-      h += '</details>';
+    var offline = '';
+    if (!live) {
+      offline += '<details class="offline-recheck"><summary>' + esc(tr('Recheck after edits')) + '</summary><p class="ev">' + esc(tr('Offline report: captured tasks can be copied now. Current source has not been rechecked.')) + '</p>';
+      if (data.ui && data.ui.resume && data.ui.resume.command) offline += '<p class="ev">' + esc(tr('Run this command on the generating machine, open the printed URL and choose Code Analysis to compare with this report. Later edits use Re-analyze. The command never runs automatically.')) + '</p><textarea readonly class="start-command" aria-label="' + esc(tr('Recheck after edits')) + '">' + esc(data.ui.resume.command) + '</textarea><button type="button" class="start-copy">' + esc(tr('Copy start command')) + '</button><p class="start-status ev" role="status" aria-live="polite"></p>';
+      else offline += '<p class="ev">' + esc(tr('This report has no saved start command. Ask your AI to prepare a fresh analysis from the original repository and architecture JSON.')) + '</p>';
+      offline += '</details>';
     }
+    h += '<div class="section-heading"><h4>' + esc(tr(o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4><button type="button" class="brief-copy">' + esc(tr('Copy architecture brief')) + '</button></div>';
     if (o.priorities.length) {
-      h += '<div class="section-heading"><h4>' + esc(tr('Look at first')) + '</h4><span>' + o.priorities.length + '</span></div>';
       o.priorities.forEach(function (id, i) { var f = findingById[id]; if (f) h += '<article class="priority-card">' + findingRow(id, i + 1) + quickHandoff(f, true) + taskHtml(f) + '</article>'; });
     } else h += '<p class="ev">' + esc(tr('No open findings within the checks that ran. Accepted findings and coverage remain below.')) + '</p>';
+    h += offline;
     var architecture = o.investigation && o.investigation.architecture;
     if (architecture && architecture.structuralSignals.length) {
       h += '<details class="structural-signals"><summary>' + esc(tr('Additional structural signals')) + ' · ' + architecture.structuralSignals.length + '</summary>';
@@ -802,7 +805,7 @@
       var describe = function (p) {
         var e = p.task.evidence;
         var labels = { valid: tr("Evidence matches the current working tree."), captured: tr("Snapshot only; current source has not been checked. Ask your coding AI to verify it before editing."), changed: tr("Evidence changed. Re-analyze and review the current code before editing."), missing: tr("A cited file is missing. Re-analyze before editing."), unverifiable: tr("Evidence could not be verified. Read the cited files before editing.") };
-        return (labels[e.status] || tr("Evidence status unknown.")) + (e.reason ? ' ' + e.reason : '') + (e.checkedAt ? tr(" Checked ") + e.checkedAt + '.' : '');
+        return (labels[e.status] || tr("Evidence status unknown.")) + (e.reason ? ' ' + tr(e.reason) : '') + (e.checkedAt ? tr(" Checked ") + e.checkedAt + '.' : '');
       };
       var prepare = async function () {
         if (busy) return null;
