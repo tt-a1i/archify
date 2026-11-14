@@ -25,6 +25,7 @@ export const browserTestFiles = [
   'semantic-lens-browser.test.mjs',
   'reading-address-browser.test.mjs',
   'route-probe-browser.test.mjs',
+  'node-index-route-browser.test.mjs',
   'focus-browser.test.mjs',
   'passport-explanation-browser.test.mjs',
   'drilldown-context-browser.test.mjs',

@@ -13245,7 +13245,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function select(id) {
         var item = items.find(function (candidate) { return candidate.id === id; });
         if (!item) return false;
-        var routeSelection = context.kind === 'route-source' || context.kind === 'route-target';
+        // The stored context is fixed when the panel opens, so it goes stale
+        // when route picking starts afterwards. Resolve the live route state
+        // here, or a programmatic selection (Node index) focuses the node
+        // and cancels the pick instead of choosing the endpoint.
+        var kind = context.kind;
+        if (kind !== 'route-source' && kind !== 'route-target') kind = resolveContext({}).kind;
+        var routeSelection = kind === 'route-source' || kind === 'route-target';
         if (routeSelection) {
           if (!Archify.routeProbe || typeof Archify.routeProbe.choose !== 'function' || !Archify.routeProbe.choose(id)) return false;
           if (Archify.routeProbe.active() === 'target' && Archify.view && typeof Archify.view.reveal === 'function') {
