@@ -2,13 +2,15 @@
   var source = document.getElementById('bauify-atlas-data');
   if (!source) return;
   var atlas = JSON.parse(source.textContent);
-  var ui = JSON.parse(document.getElementById('bauify-analysis').textContent).ui || {};
+  var analysis = JSON.parse(document.getElementById('bauify-analysis').textContent), ui = analysis.ui || {}, pr = analysis.pullRequest;
   var tr = window.__archifyMakeAnalysisTranslator(ui.messages || {});
   var root = document.documentElement;
   var standalone = ui.mode === 'standalone';
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
   var NAMES = { 'complexity/function': tr("Complex functions"), 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'redundancy/duplicate-block': tr("Duplicate code") };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
+  var prFiles = pr ? new Map(F.map(function(f,i){return[f[0],i];})) : null, prFunctions = pr ? new Map() : null;
+  if (pr) FN.forEach(function(fn,i){prFunctions.set(JSON.stringify([F[fn[0]][0],fn[1]]),i);});
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function plural(n, one, many) {
@@ -293,6 +295,7 @@
       ctx.textAlign = flip ? 'right' : 'left'; ctx.fillStyle = hue(mi, t, on ? 1 : 0.35);
       ctx.fillText(shortLabel(m.label), 0, 0); ctx.restore();
     });
+    if (pr) drawPRMarks(ctx, sel);
     ctx.lineCap = 'round';
   }
   function drawHover(ctx, t) {
@@ -395,9 +398,50 @@
     }
     return ("<div class=\"note\">" + tr("Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.") + "</div>");
   }
+  function prSummary() {
+    var h = '<section class="pr-summary"><div class="k">' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', {number:pr.number})) + '</div>';
+    h += '<p class="note"><code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code> · ' + esc(pr.scope) + '</p><dl class="pr-totals">';
+    [['files','files'],['dependencies','file dependencies'],['functions','functions'],['modules','modules']].forEach(function(item) {
+      h += '<div><dt>' + esc(tr(item[1])) + '</dt><dd>' + fmt(pr.before[item[0]]) + ' → <b>' + fmt(pr.after[item[0]]) + '</b></dd></div>';
+    });
+    h += '</dl><div class="k">' + esc(tr('Complexity distribution · function counts')) + '</div><p class="note">' + esc(tr('Grey: merge-base · green: PR head')) + '</p><div class="pr-distribution" role="img" aria-label="' + esc(tr('Complexity distribution · function counts')) + '">';
+    var d=pr.distribution, max=Math.max.apply(Math,d.before.concat(d.after,1));
+    d.labels.forEach(function(label,i) { h += '<div class="pr-band"><span>' + esc(label) + '</span><span class="pr-tracks"><i style="width:' + 100*d.before[i]/max + '%"></i><b style="width:' + 100*d.after[i]/max + '%"></b></span><span>' + d.before[i] + ' → ' + d.after[i] + '</span></div>'; });
+    h += '</div><p class="note">' + esc(tr('Green +: added · amber ◇: changed · red dashed curve: removed dependency. Removed objects remain in the change list.')) + '</p>';
+    h += '<details class="pr-changes"><summary>' + esc(tr('PR changes · {count}',{count:pr.changes.length})) + '</summary>';
+    pr.changes.forEach(function(change,i) {
+      var label=change.kind==='edge'?change.from+' → '+change.to:change.kind==='function'?change.name+'() · '+change.path:change.path;
+      var metrics=change.kind==='function'&&change.before&&change.after?' · '+tr('complexity ')+change.before.complexity+' → '+change.after.complexity:'';
+      h += '<button type="button" class="row" data-pr-change="' + i + '"><i class="pr-mark-' + change.status + '"></i><span class="t" title="' + esc(label) + '">' + esc(label) + '</span><span class="n">' + esc(tr(change.status)) + '</span></button>' + (metrics?'<p class="note">'+esc(metrics)+'</p>':'');
+    });
+    h += '</details>';
+    if(pr.ambiguousFunctions) h += '<p class="note">' + esc(tr('{count} function names are ambiguous; no before/after identity is inferred.',{count:pr.ambiguousFunctions})) + '</p>';
+    if(pr.omitted.base.length||pr.omitted.head.length) h += '<p class="note">' + esc(tr('Source capture omitted {base} base and {head} head entries (symlinks or submodules).',{base:pr.omitted.base.length,head:pr.omitted.head.length})) + '</p>';
+    return h + '</section>';
+  }
+  function drawPRMarks(ctx, sel) {
+    ctx.save();ctx.font='bold 10px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    pr.changes.forEach(function(change) {
+      var fi=prFiles.get(change.path), tone=change.status==='added'?'#34d399':change.status==='removed'?'#fb7185':'#fbbf24';
+      ctx.strokeStyle=tone;ctx.fillStyle=tone;ctx.globalAlpha=!sel.any||fi!=null&&inSel(sel,fi)?1:.35;
+      if(change.kind==='edge') {
+        var a=prFiles.get(change.from),b=prFiles.get(change.to);if(a==null||b==null)return;
+        ctx.setLineDash(change.status==='removed'?[4,4]:[]);ctx.lineWidth=1.5;ctx.beginPath();curve(ctx,a,b);ctx.stroke();ctx.setLineDash([]);return;
+      }
+      if(fi==null||change.status==='removed')return;
+      var angle=geo.ang[fi],radius=geo.R-7;
+      if(change.kind==='function') {
+        var fn=prFunctions.get(JSON.stringify([change.path,change.name]));if(fn==null)return;
+        angle=fnAngle(fn);radius=geo.spike0+spikeLen(FN[fn][3])+7;
+      }
+      var p=pt(angle,radius);ctx.fillText(change.status==='added'?'+':'◇',p[0],p[1]);
+    });
+    ctx.restore();
+  }
   function renderSide() {
-    var h = ("<div class=\"k\">" + tr("Selection") + "</div>") + selectedCard();
-    h += ("<div class=\"k\">" + tr("Totals") + "</div>" + "<div class=\"stats\">") +
+    var h = pr ? prSummary() : '';
+    h += ("<div class=\"k\">" + tr("Selection") + "</div>") + selectedCard();
+    if (!pr) h += ("<div class=\"k\">" + tr("Totals") + "</div>" + "<div class=\"stats\">") +
       [[F.length, tr("files")], [E.length, tr("file dependencies")], [FN.length, tr("functions")], [M.length, tr("modules")]].map(function (s) { return '<div class="stat"><b>' + fmt(s[0]) + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div>';
     var groups = {};
     FD.forEach(function (f, i) { (groups[f.code] = groups[f.code] || []).push(i); });
@@ -411,7 +455,7 @@
         return '<button type="button" class="row' + (i === state.finding ? ' active' : '') + (f.accepted ? ' accepted' : '') + '" data-finding="' + i + '"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><span class="t" title="' + esc(findingTitle(f)) + '">' + esc(findingTitle(f)) + '</span><span class="n">' + esc(tr(f.severity)) + '</span></button>';
       }).join('') + '</details>';
     });
-    if (atlas.measured && FN.length) {
+    if (!pr && atlas.measured && FN.length) {
       var counts = []; for (var c = 0; c < 20; c++) counts.push(0);
       FN.forEach(function (fn) { counts[Math.max(1, Math.min(fn[3], 20)) - 1]++; });
       var max = Math.max.apply(Math, counts);
@@ -426,6 +470,15 @@
       '<div class="note">' + fmt(cov.resolved) + tr(" resolved · ") + fmt(cov.external) + tr(" external · ") + fmt(cov.unknown) + tr(" could not be resolved") + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(" failed to parse") : '') + (tr(". Unresolved records draw no curve, so a missing curve does not prove there is no dependency.") + "</div>");
     h += ("<div class=\"k\">" + tr("Reading the atlas") + "</div>" + "<div class=\"legend\">" + "<span>" + "<i style=\"background:") + hue(0, theme()) + ("\">" + "</i>" + tr("outer arc: module (thick: reported hub)") + "</span>" + "<span>" + "<i style=\"background:") + theme().muted + ("\">" + "</i>" + tr("tick: file · spike: function, length = complexity") + "</span>" + "<span>" + "<i style=\"background:#FBBF24;height:8px;width:8px;border-radius:50%\">" + "</i>" + tr("dot: reported function, severity colour") + "</span>" + "<span>" + "<i style=\"background:") + hue(3, theme(), 0.6) + ("\">" + "</i>" + tr("curve: file dependency, coloured by the importing module") + "</span>" + "<span>" + "<i style=\"background:") + theme().text + ("\">" + "</i>" + tr("mark inside the rim: a focused module's file that other modules import") + "</span>" + "</div>");
     side.innerHTML = h;
+    side.querySelectorAll('[data-pr-change]').forEach(function(button) { button.addEventListener('click', function() {
+      var change = pr.changes[Number(button.getAttribute('data-pr-change'))], path = change.path || change.from;
+      var file = F.findIndex(function(f){return f[0] === path;});
+      if (file >= 0) select(F[file][1], -1);
+      var loc = change.after && typeof change.after === 'object' ? change.after : change.before && typeof change.before === 'object' ? change.before : null;
+      var diff=analysis.snippets[path]&&analysis.snippets[path].changes;
+      var line=loc&&loc.line||diff&&(diff.modified[0]||diff.added[0])||null;
+      if (window.__archifyShowSource) window.__archifyShowSource(path, line, change.status === 'removed' ? 'base' : 'head');
+    }); });
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); select(-1, state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     var ev = side.querySelector('.atlas-evidence');

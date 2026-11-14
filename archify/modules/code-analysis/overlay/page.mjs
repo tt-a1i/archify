@@ -4,12 +4,13 @@
 // lib/ stays free of presentation code.
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { fail, receipt } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { buildGraph, evaluateGraph, extractFacts, loadBaseline, loadPrevious, readJsonInput, reviewSummary, stableJson, validateFacts } from '../lib/analysis.mjs';
 import { reviewFindings } from '../lib/review.mjs';
 import { buildOverlay } from './inject.mjs';
+import { buildPullRequestView } from './pull-request.mjs';
 
 // Stage 4: delivered HTML + authored IR + graph → a new HTML with the analysis layer.
 export function overlayHtml({ html, ir, graph, facts = null, findings = [], findingsDocument = null, map = null, sourceRoot = null, run = {} }) {
@@ -49,7 +50,7 @@ export function writeAnalysisView(dir, overlay, review) {
 // `html` is the page Archify delivered for `ir`; it is read, never modified.
 // `baseline` (file) marks accepted findings; `previous` (a findings.json from
 // an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false }) {
+export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false, source = null, pullRequest = null }) {
   const absRoot = path.resolve(root);
   const irPath = ir ? path.resolve(ir) : null;
   const htmlPath = html ? path.resolve(html) : null;
@@ -60,6 +61,11 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   if (map && !irPath) fail('cli/input-invalid', '--map requires --ir.', { supportedFixes: ['provide the authored architecture IR or omit --map'] });
   fs.mkdirSync(dir, { recursive: true });
   const { adapter, facts, config: cfg, otherLanguages } = extractFacts(absRoot, { language, config });
+  if (source) {
+    facts.repository = { ...facts.repository, ...source };
+    delete facts.repository.snapshotId;
+    facts.repository.snapshotId = createHash('sha256').update(stableJson(facts)).digest('hex');
+  }
   fs.writeFileSync(path.join(dir, 'raw-facts.json'), stableJson(facts));
   const graph = buildGraph(facts, cfg);
   fs.writeFileSync(path.join(dir, 'module-graph.json'), stableJson(graph));
@@ -68,7 +74,8 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   const irDoc = irSnapshot ?? (irPath ? readJsonInput(irPath, 'analysis --ir') : null);
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
-  const context = { schema_version: 1, mode: irPath ? 'diagram' : 'standalone', ir: irDoc, map: mapDoc, run: { locale: locale || irDoc?.meta?.locale || 'en', openAnalysis: !irPath || openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
+  if (pullRequest) pullRequest = buildPullRequestView({ ...pullRequest, facts, graph, findings, review, base: path.join(dir, 'base') });
+  const context = { schema_version: 1, mode: irPath ? 'diagram' : 'standalone', ir: irDoc, map: mapDoc, run: { ...(pullRequest ? { pullRequest } : {}), locale: locale || irDoc?.meta?.locale || 'en', openAnalysis: !irPath || openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
   fs.writeFileSync(path.join(dir, 'view-context.json'), stableJson(context));
   const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
   const overlay = overlayHtml({ html: htmlPath ? fs.readFileSync(htmlPath, 'utf8') : null, ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });

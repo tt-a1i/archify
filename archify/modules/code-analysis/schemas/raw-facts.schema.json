@@ -52,11 +52,12 @@
             "null"
           ],
           "pattern": "^[a-f0-9]{40}$",
-          "description": "Contextual HEAD only, not the revision of the analyzed working-tree contents."
+          "description": "For working-tree, contextual HEAD rather than the analyzed contents. For git-tree, the exact merge-base used for captured source comparison."
         },
         "sourceKind": {
           "enum": [
-            "working-tree"
+            "working-tree",
+            "git-tree"
           ]
         },
         "snapshotId": {

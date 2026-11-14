@@ -17,6 +17,18 @@ html[data-bauify-view="atlas"]:not([data-analysis-mode="standalone"]) #bauify-re
 #bauify-atlas .k { color: var(--text-muted, #94a3b8); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin: 16px 0 6px; }
 #bauify-atlas .k:first-child { margin-top: 2px; }
 #bauify-atlas .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+#bauify-atlas .pr-summary { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--panel-border,#1e293b); }
+#bauify-atlas .pr-totals { margin: 10px 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+#bauify-atlas .pr-totals dt { font-size: 11px; color: var(--text-muted,#94a3b8); }
+#bauify-atlas .pr-totals dd { margin: 0; font: 13px/1.8 ui-monospace,monospace; }
+#bauify-atlas .pr-band { display: grid; grid-template-columns: 36px minmax(30px,1fr) 77px; gap: 8px; align-items: center; margin: 9px 0; font: 10px ui-monospace,monospace; }
+#bauify-atlas .pr-band>span:last-child { text-align: right; color: var(--text-muted,#94a3b8); }
+#bauify-atlas .pr-tracks { display: grid; gap: 3px; }
+#bauify-atlas .pr-tracks i,#bauify-atlas .pr-tracks b { display: block; height: 4px; border-radius: 2px; background: #94a3b8; }
+#bauify-atlas .pr-tracks b { background: #10b981; }
+#bauify-atlas .pr-mark-added { background:#34d399; }
+#bauify-atlas .pr-mark-modified { background:#fbbf24; }
+#bauify-atlas .pr-mark-removed { background:#fb7185; }
 #bauify-atlas .stat { border: 1px solid var(--panel-border, #1e293b); border-radius: 8px; padding: 6px 8px; }
 #bauify-atlas .stat b { display: block; font: 600 16px ui-monospace, Menlo, Consolas, monospace; }
 #bauify-atlas .stat span { color: var(--text-muted, #94a3b8); font-size: 11px; }
