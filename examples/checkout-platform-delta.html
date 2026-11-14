@@ -15648,9 +15648,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var target = event.target;
         if (chip.hidden || !target || typeof target.closest !== &#39;function&#39; || chip.contains(target)) return;
         if (container.getAttribute(&#39;data-just-panned&#39;) === &#39;true&#39;) return;
-        // Export consumes the active semantic snapshot; its controls are not
-        // an outside selection. Genuine outside activation still clears it.
-        if (target.closest(&#39;[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu&#39;)) return;
+        // Export consumes the active semantic snapshot and the diagram nav
+        // operates on it; neither is an outside selection. Genuine outside
+        // activation still clears it.
+        if (target.closest(&#39;[data-node-id], [data-relationship-hit-key], .overview-map, .diagram-nav, #btn-export, #export-menu&#39;)) return;
         clear();
       }, true);
       window.addEventListener(&#39;scroll&#39;, requestLensPlacement, { passive: true });
@@ -31412,9 +31413,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var target = event.target;
         if (chip.hidden || !target || typeof target.closest !== &#39;function&#39; || chip.contains(target)) return;
         if (container.getAttribute(&#39;data-just-panned&#39;) === &#39;true&#39;) return;
-        // Export consumes the active semantic snapshot; its controls are not
-        // an outside selection. Genuine outside activation still clears it.
-        if (target.closest(&#39;[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu&#39;)) return;
+        // Export consumes the active semantic snapshot and the diagram nav
+        // operates on it; neither is an outside selection. Genuine outside
+        // activation still clears it.
+        if (target.closest(&#39;[data-node-id], [data-relationship-hit-key], .overview-map, .diagram-nav, #btn-export, #export-menu&#39;)) return;
         clear();
       }, true);
       window.addEventListener(&#39;scroll&#39;, requestLensPlacement, { passive: true });

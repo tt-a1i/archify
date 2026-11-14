@@ -125,6 +125,17 @@ test('Focus preserves semantic selection, relationships, reachability and shared
     await run(`Archify.routeProbe.clear();Archify.focus.set('api',{toggle:false});Archify.focus.clear({restoreFocus:true,updateUrl:false,preserveView:true})`);assert.equal(await run('document.activeElement.dataset.nodeId'),'api');assert.equal(await run('Archify.focus.active()'),null);
     await run('Archify.focus.clear();Archify.focus.clear()');assert.equal((await snapshot('repeated-clear')).hash,'');
   });
+  await t.test('diagram nav keeps the selection while zooming and starting a route',async()=>{
+    await load();await click(node('api'));assert.equal((await snapshot('nav-selected')).active,'api');
+    await click('[data-view="reset"]');assert.equal(await run(`document.querySelector('[data-view-percent]').textContent`),'100%');assert.equal(await run('Archify.focus.active()'),'api');
+    await click('[data-view="in"]');assert.equal(await run(`document.querySelector('[data-view-percent]').textContent`),'125%');assert.equal(await run('Archify.focus.active()'),'api');
+    await click('[data-view="out"]');assert.equal(await run(`document.querySelector('[data-view-percent]').textContent`),'100%');assert.equal(await run('Archify.focus.active()'),'api');
+    await click('.header-row');assert.equal(await run('Archify.focus.active()'),null);
+    await click(node('api'));assert.equal(await run('Archify.focus.active()'),'api');
+    await click('#btn-route-probe');assert.equal(await run('Archify.routeProbe.active()'),'target');
+    await click(node('db'));const route=await run('Archify.routeProbe.result()');assert.equal(route.source,'api');assert.equal(route.target,'db');
+    await snapshot('nav-route-result');
+  });
   await t.test('Passport rows preserve keyboard navigation, missing metadata and no-neighbor state',async()=>{
     await load();await select('cdn');await focus('#btn-focus-relations');await key('Enter','Enter',13);
     assert.equal(await run(`document.querySelectorAll('#relationship-lens-list [data-relationship-target]').length`),5);

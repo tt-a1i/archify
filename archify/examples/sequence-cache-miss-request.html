@@ -10573,9 +10573,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var target = event.target;
         if (chip.hidden || !target || typeof target.closest !== 'function' || chip.contains(target)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
-        // Export consumes the active semantic snapshot; its controls are not
-        // an outside selection. Genuine outside activation still clears it.
-        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu')) return;
+        // Export consumes the active semantic snapshot and the diagram nav
+        // operates on it; neither is an outside selection. Genuine outside
+        // activation still clears it.
+        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, .diagram-nav, #btn-export, #export-menu')) return;
         clear();
       }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });
