@@ -70,6 +70,24 @@ The reader follows explicit `--locale`, then `meta.locale`: `zh-CN` uses Chinese
 
 After edits, the prominent comparison reports **no longer detected**, **new** and changed evidence. Missing findings do not prove fixes. Configuration, grouping, model or coverage changes make results non-comparable and show the reason. Verify source changes and project tests before claiming an improvement.
 
+## Verify a previous task after edits
+
+1. Open a finding's **Task preview and download**, then click **Download task JSON** before editing. Use the Markdown or copy action to hand the task to a developer or coding agent.
+2. Make the change, run the project's checks separately, and **Re-analyze** in the live workbench, or run `prepare` again with the same output directory. Keep the immediately previous capture; running analysis again rotates the pair.
+3. Under **Verify a previous task**, select the task JSON and preview the analysis observations. To record your project checks, download the checks template, enter short check names and their statuses (`passed`, `failed`, `skipped`, or `not-run`), then load it and preview again. **Download verification JSON** exports the combined receipt. The prepared HTML works offline; these files are read in the browser and never sent to the local service.
+
+The receipt distinguishes observed finding changes from checks reported by the user. It does not run tests, verify their execution, or prove a fix. New findings are counted for the captured scope, not attributed to the task. Limited comparisons, missing evidence and unchanged imported reports are marked inconclusive where applicable. Refresh external reports with their original tools and settings before re-analysis; different bytes alone still do not prove the tool ran against the captured source. Do not put commands, logs or secrets into check names.
+
+For the same flow headlessly, point `verify-change` at the `analysis/` directory from `prepare` or `serve`. It reads the adjacent `analysis.previous/` capture. Example from the package directory:
+
+```sh
+node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks-template > checks.json
+# Edit checks.json to record the checks and results you actually ran.
+node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks checks.json > verification.json
+```
+
+Omit `--checks` to record only analysis observations. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 means the input or its binding was rejected. `task --verify` remains a separate current-source evidence check.
+
 ## First look at an unfamiliar repository
 
 Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-map.json]` to verify diagram-to-code component mapping and undeclared component-level imports alongside the headless check) and write the artifacts to a directory:

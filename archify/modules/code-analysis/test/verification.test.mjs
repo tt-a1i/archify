@@ -29,6 +29,7 @@ test('receipt distinguishes an unchanged external report from a detected source 
   assert.deepEqual(evaluateVerification(ctx, task, checks).receipt.projectChecks, {
     status: 'reported-not-independently-verified', checks: checks.checks,
   });
+  assert.equal(evaluateVerification(ctx, { ...task, findings: [diagnostics[1]] }, checks).error, 'wrong-checks-snapshot', 'a reused task label cannot move results to different findings');
   const refreshed = verificationContext(previous, fixture('2', [diagnostics[1]], sha('b')), review);
   assert.equal(evaluateVerification(refreshed, task, checks).error, 'wrong-checks-snapshot', 'report bytes can change even when source snapshot does not');
   assert.equal(evaluateVerification(ctx, { ...task, source: { ...task.source, snapshotId: sha('0') } }, checks).error, 'wrong-task-snapshot');

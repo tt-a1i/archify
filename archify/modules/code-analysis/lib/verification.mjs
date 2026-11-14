@@ -26,7 +26,7 @@ export function evaluateVerification(context, task, reported) {
     });
   }
 
-  const identity = { taskId: task.taskId, before: context.before, after: context.after };
+  const identity = { taskId: task.taskId, findingIds: [...ids].sort(), before: context.before, after: context.after };
   const checksTemplate = {
     schema_version: 1, kind: 'archify-code-analysis-project-checks', ...identity,
     checks: [{ name: 'Project check', status: 'not-run' }],
@@ -37,7 +37,9 @@ export function evaluateVerification(context, task, reported) {
       || !Array.isArray(reported.checks) || !reported.checks.length || reported.checks.length > 40) return bad('invalid-checks');
     const same = (key) => reported[key]?.snapshotId === identity[key].snapshotId
       && reported[key]?.analysisSha256 === identity[key].analysisSha256;
-    if (reported.taskId !== identity.taskId || !same('before') || !same('after')) return bad('wrong-checks-snapshot');
+    if (reported.taskId !== identity.taskId || !same('before') || !same('after')
+      || !Array.isArray(reported.findingIds) || reported.findingIds.length !== identity.findingIds.length
+      || !identity.findingIds.every((id, i) => id === reported.findingIds[i])) return bad('wrong-checks-snapshot');
     const names = new Set();
     for (const check of reported.checks) {
       const name = typeof check?.name === 'string' ? check.name.trim() : '';

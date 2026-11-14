@@ -10,7 +10,8 @@ const usage = 'Usage: archify code-analysis verify-change <analysis-dir> --task 
 const INPUT_BYTES = 2 * 1024 * 1024;
 
 function readInput(file) {
-  const fd = fs.openSync(file, 'r');
+  if (!fs.statSync(file).isFile()) throw new Error('Expected a JSON file.');
+  const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
   try {
     const size = fs.fstatSync(fd);
     if (!size.isFile() || size.size > INPUT_BYTES) throw new Error('Expected a JSON file up to 2 MiB.');

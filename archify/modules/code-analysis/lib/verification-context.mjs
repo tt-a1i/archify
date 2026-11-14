@@ -20,6 +20,7 @@ export function verificationContext(previous, current, review) {
   const currentIds = new Set(current.diagnostics.map(({ id }) => id));
   const absent = new Map(comparison.notDetected.map((row) => [row.id, row.likelyCause || null]));
   const changed = new Set(comparison.evidenceChanged);
+  const added = new Set(comparison.new);
   return {
     before: snapshot(previous),
     after: snapshot(current),
@@ -36,7 +37,7 @@ export function verificationContext(previous, current, review) {
       return [d.id, {
         code: d.code, evidence: d.evidenceDigest?.sha256 ?? null,
         claim: d.external?.reviewDigest ?? null, sourceId: sourceId ?? null,
-        outcome: absent.has(d.id) ? 'not-detected' : changed.has(d.id) || !currentIds.has(d.id) ? 'evidence-changed' : 'still-detected',
+        outcome: absent.has(d.id) ? 'not-detected' : changed.has(d.id) || added.has(d.id) || !currentIds.has(d.id) ? 'evidence-changed' : 'still-detected',
         limitation: absent.get(d.id) ?? null, report,
       }];
     })),

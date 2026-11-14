@@ -606,6 +606,18 @@
     }
     return h;
   }
+  function verificationHtml() {
+    var title = '<details class="verify-change"><summary>' + esc(tr('Verify a previous task')) + '</summary>';
+    if (!data.verification) return title + '<p class="ev">' + esc(tr('Download the task JSON before editing, then re-analyze using the same output directory.')) + '</p></details>';
+    return title + '<p class="ev">' + esc(tr('Run project checks separately. This receipt compares captured analyses and records your reported check results.')) + '</p>'
+      + '<form><label>' + esc(tr('Task JSON from the previous run')) + '<input type="file" accept=".json,application/json" class="verify-task" required></label>'
+      + '<label>' + esc(tr('Project check results JSON (optional)')) + '<input type="file" accept=".json,application/json" class="verify-checks"></label>'
+      + '<div class="task-actions"><button type="submit">' + esc(tr('Preview verification')) + '</button></div></form>'
+      + '<p class="verify-status ev" role="status"></p><div class="verify-preview" aria-live="polite"></div><div class="task-actions">'
+      + '<button type="button" class="verify-template" disabled>' + esc(tr('Download checks template')) + '</button>'
+      + '<button type="button" class="verify-download" disabled>' + esc(tr('Download verification JSON')) + '</button></div></details>';
+  }
+
   function renderOverview() {
     var o = data.overview;
     if (!o) { overview.innerHTML = '<h3>' + esc(tr('Architecture check')) + '</h3>' + legend(); return; }
@@ -638,7 +650,7 @@
     if (o.priorities.length) {
       o.priorities.forEach(function (id, i) { var f = findingById[id]; if (f) h += '<article class="priority-card">' + findingRow(id, i + 1) + quickHandoff(f, true) + taskHtml(f) + '</article>'; });
     } else h += '<p class="ev">' + esc(tr('No open findings within the checks that ran. Accepted findings and coverage remain below.')) + '</p>';
-    h += offline;
+    h += verificationHtml() + offline;
     var architecture = o.investigation && o.investigation.architecture;
     if (architecture && architecture.structuralSignals.length) {
       h += '<details class="structural-signals"><summary>' + esc(tr('Additional structural signals')) + ' · ' + architecture.structuralSignals.length + '</summary>';
@@ -664,6 +676,7 @@
     if (!standalone) h += '<details><summary>' + esc(tr('Colour key')) + '</summary>' + legend() + '</details>';
     h += '</div>';
     overview.innerHTML = h;
+    window.__archifyWireVerification(overview, data.verification, tr);
     overview.querySelector('.browse-findings').addEventListener('click', function () { showFindings('all'); });
     var externalButton = overview.querySelector('.external-findings'); if (externalButton) externalButton.addEventListener('click', function () { showFindings('external'); });
     var sourceButton = overview.querySelector('.overview-sources'); if (sourceButton) sourceButton.addEventListener('click', showSources);
@@ -746,7 +759,7 @@
     }).join('');
   }
   function taskHtml(f) {
-    return '<details class="ai-task" data-task-id="' + esc(f.id) + ("\">" + "<summary>" + tr("Task preview and download") + "</summary>" + "<p class=\"ev\">" + tr("Review the brief, then give it to your coding AI. Exporting does not modify code.") + "</p>" + "<p class=\"task-status ev\" role=\"status\" aria-live=\"polite\">" + tr("Open to prepare the task.") + "</p>" + "<div class=\"task-actions\">" + "<button type=\"button\" class=\"task-copy\" disabled>" + tr("Copy AI task") + "</button>" + "<button type=\"button\" class=\"task-download\" disabled>" + tr("Download .md") + "</button>" + "<button type=\"button\" class=\"task-refresh\">" + tr("Check again") + "</button>" + "</div>" + "<label class=\"ev\">" + tr("Task preview · select text to copy manually") + "<textarea class=\"task-preview\" readonly spellcheck=\"false\" aria-label=\"" + tr("AI task preview") + "\">" + "</textarea>" + "</label>" + "</details>");
+    return '<details class="ai-task" data-task-id="' + esc(f.id) + ("\">" + "<summary>" + tr("Task preview and download") + "</summary>" + "<p class=\"ev\">" + tr("Review the brief, then give it to your coding AI. Exporting does not modify code.") + "</p>" + "<p class=\"task-status ev\" role=\"status\" aria-live=\"polite\">" + tr("Open to prepare the task.") + "</p>" + "<div class=\"task-actions\">" + "<button type=\"button\" class=\"task-copy\" disabled>" + tr("Copy AI task") + "</button>" + "<button type=\"button\" class=\"task-download\" disabled>" + tr("Download .md") + "</button>" + "<button type=\"button\" class=\"task-json\" disabled>" + esc(tr("Download task JSON")) + "</button>" + "<button type=\"button\" class=\"task-refresh\">" + tr("Check again") + "</button>" + "</div>" + "<label class=\"ev\">" + tr("Task preview · select text to copy manually") + "<textarea class=\"task-preview\" readonly spellcheck=\"false\" aria-label=\"" + tr("AI task preview") + "\">" + "</textarea>" + "</label>" + "</details>");
   }
   function externalEvidence(f) {
     var locations = f.external.locations || [];
@@ -813,6 +826,7 @@
       var id = box.getAttribute('data-task-id'), payload = null, busy = false;
       var status = box.querySelector('.task-status'), preview = box.querySelector('.task-preview');
       var copy = box.querySelector('.task-copy'), download = box.querySelector('.task-download'), refresh = box.querySelector('.task-refresh');
+      var downloadJson = box.querySelector('.task-json');
       var quick = container.querySelector('[data-handoff-id="' + id + '"]');
       var quickCopy = quick && quick.querySelector('.quick-copy');
       var say = function (text) { status.textContent = text; if (quick) quick.querySelector('.handoff-status').textContent = text; };
@@ -823,7 +837,7 @@
       };
       var prepare = async function () {
         if (busy) return null;
-        busy = true; copy.disabled = download.disabled = refresh.disabled = true;
+        busy = true; copy.disabled = download.disabled = downloadJson.disabled = refresh.disabled = true;
         if (quickCopy) quickCopy.disabled = true;
         say(tr("Preparing task and checking available evidence…"));
         try {
@@ -845,7 +859,7 @@
           payload = null; preview.value = '';
           say(tr("Could not prepare task: ") + error.message + tr(" Re-analyze if this page shows an older result, then retry."));
           return null;
-        } finally { busy = false; copy.disabled = download.disabled = !payload; refresh.disabled = false; if (quickCopy) quickCopy.disabled = false; }
+        } finally { busy = false; copy.disabled = download.disabled = downloadJson.disabled = !payload; refresh.disabled = false; if (quickCopy) quickCopy.disabled = false; }
       };
       box.addEventListener('toggle', function () { if (box.open && !payload && !busy) prepare(); });
       refresh.addEventListener('click', prepare);
@@ -859,6 +873,9 @@
       };
       copy.addEventListener('click', copyTask);
       if (quickCopy) quickCopy.addEventListener('click', copyTask);
+      downloadJson.addEventListener('click', function () {
+        if (payload) window.__archifyDownloadJson(payload.task, payload.task.taskId + '.json');
+      });
       download.addEventListener('click', async function () {
         var p = await prepare(); if (!p || !box.isConnected) return;
         var url = URL.createObjectURL(new Blob([p.markdown], { type: 'text/markdown;charset=utf-8' }));
