@@ -148,6 +148,36 @@ test('explainer diagrams: structural changes decorate only explicit preview targ
     { changes: [{ target: 'nonexistent', change: 'removed' }] })])), error => error.archifyDiagnostics[0].code === 'explainer/diagram-change-target');
 });
 
+test('explainer diagrams: structural changes name their targets as the preview shows them', async () => {
+  const spec = compileExplainerDiagram('sequence', rows.sequence, { id: 'request' });
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'changed-request', title: 'Changed request', locale: 'en' },
+    answer: { summary: 'The API now reads Redis.' }, sources: [], panels: [{ id: 'request', title: 'What changed?',
+      blocks: [blockOf('sequence', spec, { id: 'request', changes: [{ target: 'api', change: 'modified' }, { target: 'api-to-redis-1', change: 'added' }] })] }] };
+  const html = renderExplainer(document, { preparedDiagrams: await prepareExplainerDiagrams(document) });
+  const changes = html.match(/<dl class="changes">[\s\S]*?<\/dl>/)[0];
+  assert.match(changes, /<dd data-change-target="api"><span class="chip modified">[^<]+<\/span> API<\/dd>/);
+  assert.match(changes, /<dd data-change-target="api-to-redis-1"><span class="chip added">[^<]+<\/span> API → Redis · Read<\/dd>/);
+  assert.doesNotMatch(changes, /<code>/, 'readers see names, not authoring IDs');
+});
+
+test('explainer diagrams: a change target whose name another node or edge shares keeps its ID beside the name', async () => {
+  const sequence = compileExplainerDiagram('sequence', [...rows.sequence, 'api | redis | Read'], { id: 'repeat' });
+  const repeated = (await prepareExplainerDiagrams(documentOf([blockOf('sequence', sequence)]))).diagrams.sequence.semantic.edges
+    .filter(edge => edge.from === 'api' && edge.to === 'redis').map(edge => edge.id);
+  assert.equal(repeated.length, 2, 'the fixture repeats one message');
+  const architecture = compileExplainerDiagram('architecture', ['web | Web app | frontend', 'eu | Cache | database', 'us | Cache | database', 'web > eu | Reads', 'web > us | Reads'], { id: 'caches' });
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'repeated-names', title: 'Repeated names', locale: 'en' },
+    answer: { summary: 'One read and one cache changed.' }, sources: [], panels: [{ id: 'request', title: 'What changed?', blocks: [
+      blockOf('sequence', sequence, { id: 'repeat', changes: [{ target: repeated[1], change: 'modified' }, { target: 'client-to-api-1', change: 'added' }] }),
+      blockOf('architecture', architecture, { id: 'caches', changes: [{ target: 'us', change: 'removed' }, { target: 'web', change: 'modified' }] })] }] };
+  const html = renderExplainer(document, { preparedDiagrams: await prepareExplainerDiagrams(document) });
+  const [messages, nodes] = html.match(/<dl class="changes">[\s\S]*?<\/dl>/g);
+  assert.match(messages, new RegExp(`<dd data-change-target="${repeated[1]}"><span class="chip modified">[^<]+</span> API → Redis · Read <code>${repeated[1]}</code></dd>`));
+  assert.match(messages, /<dd data-change-target="client-to-api-1"><span class="chip added">[^<]+<\/span> Client → API · Request<\/dd>/, 'a unique message keeps its name alone');
+  assert.match(nodes, /<dd data-change-target="us"><span class="chip removed">[^<]+<\/span> Cache <code>us<\/code><\/dd>/);
+  assert.match(nodes, /<dd data-change-target="web"><span class="chip modified">[^<]+<\/span> Web app<\/dd>/, 'a unique node keeps its name alone');
+});
+
 test('explainer diagrams: rejected native causes retain author line, component and repair example', async () => {
   assert.throws(() => compileExplainerDiagram('sequence', [
     { text: 'Client | API | Request', line: 18 }, { text: 'API | Client | Reply | strange', line: 23 },
