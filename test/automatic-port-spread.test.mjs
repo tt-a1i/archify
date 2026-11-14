@@ -169,6 +169,44 @@ test('architecture: automatic fan-out uses distinct ports with corner clearance 
   }
 });
 
+test('architecture: a five-way fan-in into a tall target renders every tooth straight', () => {
+  const html = render('architecture', {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'fan-in repro', quality_profile: 'showcase' },
+    components: [
+      { id: 's1', type: 'external', label: 'source 1', pos: [30, 60], size: [150, 56] },
+      { id: 's2', type: 'external', label: 'source 2', pos: [30, 150], size: [150, 56] },
+      { id: 's3', type: 'external', label: 'source 3', pos: [30, 240], size: [150, 56] },
+      { id: 's4', type: 'external', label: 'source 4', pos: [30, 330], size: [150, 56] },
+      { id: 's5', type: 'external', label: 'source 5', pos: [30, 420], size: [150, 56] },
+      { id: 'target', type: 'messagebus', label: 'bus', pos: [400, 60], size: [160, 420] },
+    ],
+    connections: [
+      { id: 'ins1', from: 's1', to: 'target', label: 'edge 1', fromSide: 'right', toSide: 'left' },
+      { id: 'ins2', from: 's2', to: 'target', label: 'edge 2', fromSide: 'right', toSide: 'left' },
+      { id: 'ins3', from: 's3', to: 'target', label: 'edge 3', fromSide: 'right', toSide: 'left' },
+      { id: 'ins4', from: 's4', to: 'target', label: 'edge 4', fromSide: 'right', toSide: 'left' },
+      { id: 'ins5', from: 's5', to: 'target', label: 'edge 5', fromSide: 'right', toSide: 'left' },
+    ],
+  });
+
+  // Every tooth comes out straight, with no bends. The outer teeth
+  // straighten first and clear the lanes the inner teeth need, so the
+  // straightening sweep must keep going until a full pass changes nothing.
+  // Four teeth enter at their source centre; ins3 rides its shared spread
+  // slot (270) rather than its source centre (268), because spread slots
+  // stay fixed and the unshared endpoint aligns to them, so allow 2px there.
+  for (const [id, laneY] of [['ins1', 88], ['ins2', 178], ['ins4', 358], ['ins5', 448]]) {
+    assert.deepEqual(connectionPoints(html, id), [[180, laneY], [400, laneY]], `${id} must be straight at its source centre`);
+  }
+  const middle = connectionPoints(html, 'ins3');
+  assert.equal(middle.length, 2, 'ins3 must be straight');
+  assert.equal(middle[0][0], 180);
+  assert.equal(middle[1][0], 400);
+  assert.ok(Math.abs(middle[0][1] - 268) <= 2 && middle[0][1] === middle[1][1], 'ins3 must run straight near its source centre');
+});
+
 test('architecture: automatic port assignment is stable when relationship input order changes', () => {
   const connections = [
     { id: 'to-upper', from: 'hub', to: 'upper' },

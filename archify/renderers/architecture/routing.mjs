@@ -1313,53 +1313,63 @@ export function createRouter(components, connections = [], {
         // them can run straight through facing sides inside that overlap.
         // Authored sides must already face; every other route, slot and label
         // stays fixed, and the straight lane must pass the same checks.
-        for (const entry of resolvedRoutes) {
-          const { conn } = entry;
-          if (entry.points.length < 4 || jointlyImproved.has(conn) || typeOwned.has(conn)
-              || hasAuthoredRouteGeometry(conn) || hasAuthoredLabelPlacement(conn)) continue;
-          const from = components.get(conn.from);
-          const to = components.get(conn.to);
-          const facing = from.x + from.width <= to.x ? { fromSide: 'right', toSide: 'left' }
-            : to.x + to.width <= from.x ? { fromSide: 'left', toSide: 'right' }
-              : from.y + from.height <= to.y ? { fromSide: 'bottom', toSide: 'top' }
-                : to.y + to.height <= from.y ? { fromSide: 'top', toSide: 'bottom' } : null;
-          if (!facing) continue;
-          const axis = facing.fromSide === 'right' || facing.fromSide === 'left' ? 1 : 0;
-          const [origin, size] = axis === 1 ? ['y', 'height'] : ['x', 'width'];
-          const low = Math.max(from[origin], to[origin]) + AUTOMATIC_PORT_CORNER_GUTTER;
-          const high = Math.min(from[origin] + from[size], to[origin] + to[size]) - AUTOMATIC_PORT_CORNER_GUTTER;
-          if (high < low
-              || (conn.fromSide && conn.fromSide !== 'auto' && conn.fromSide !== facing.fromSide)
-              || (conn.toSide && conn.toSide !== 'auto' && conn.toSide !== facing.toSide)) continue;
-          const sides = facing;
-          const geometry = connectionGeometry(conn, sides);
-          const start = geometry.start;
-          const end = geometry.end;
-          const clamp = (value) => Math.min(high, Math.max(low, value));
-          const others = resolvedRoutes.filter((other) => other !== entry);
-          const otherLabels = reservedLabels.filter((label) => label.conn !== conn);
-          const crossingsBefore = crossingCount(conn, entry.points, others);
-          const sidesOf = (candidate) => (candidate === conn ? sides : selectedSides.get(candidate));
-          for (const lane of new Set([start[axis], end[axis], (start[axis] + end[axis]) / 2, (low + high) / 2].map(clamp))) {
-            const points = [[...start], [...end]];
-            points[0][axis] = lane;
-            points[1][axis] = lane;
-            const routed = { conn, points, d: roundedPath(points, 8) };
-            if (!points.every(withinScene)
-                || !endpointSlotsClear([routed], others, sidesOf)
-                || !routeIsClear(conn, routed, geometry, others)
-                || crossingCount(conn, points, others) > crossingsBefore) continue;
-            const rect = labelRectFor?.(conn, points, {
-              routes: [...others.map((other) => other.points), points],
-              labels: otherLabels.map((label) => label.rect),
-            });
-            if (!labelClears(rect, conn, others, otherLabels)) continue;
-            cachePath(conn, { points, d: routed.d }, sides);
-            entry.points = points;
-            planningMetrics.readabilityImprovedCount += 1;
-            reservedLabels = [...otherLabels, ...(rect ? [{ conn, rect }] : [])];
-            break;
+        // Repeat until a full pass straightens nothing: an outer edge
+        // straightened late in one pass clears the lane an inner edge needs,
+        // so a single pass leaves inner edges bent when they were evaluated
+        // first. Each pass straightens at least one route or stops, and a
+        // straight route is never revisited, so the loop always terminates.
+        for (let pass = 0; pass < resolvedRoutes.length; pass += 1) {
+          let straightened = false;
+          for (const entry of resolvedRoutes) {
+            const { conn } = entry;
+            if (entry.points.length < 4 || jointlyImproved.has(conn) || typeOwned.has(conn)
+                || hasAuthoredRouteGeometry(conn) || hasAuthoredLabelPlacement(conn)) continue;
+            const from = components.get(conn.from);
+            const to = components.get(conn.to);
+            const facing = from.x + from.width <= to.x ? { fromSide: 'right', toSide: 'left' }
+              : to.x + to.width <= from.x ? { fromSide: 'left', toSide: 'right' }
+                : from.y + from.height <= to.y ? { fromSide: 'bottom', toSide: 'top' }
+                  : to.y + to.height <= from.y ? { fromSide: 'top', toSide: 'bottom' } : null;
+            if (!facing) continue;
+            const axis = facing.fromSide === 'right' || facing.fromSide === 'left' ? 1 : 0;
+            const [origin, size] = axis === 1 ? ['y', 'height'] : ['x', 'width'];
+            const low = Math.max(from[origin], to[origin]) + AUTOMATIC_PORT_CORNER_GUTTER;
+            const high = Math.min(from[origin] + from[size], to[origin] + to[size]) - AUTOMATIC_PORT_CORNER_GUTTER;
+            if (high < low
+                || (conn.fromSide && conn.fromSide !== 'auto' && conn.fromSide !== facing.fromSide)
+                || (conn.toSide && conn.toSide !== 'auto' && conn.toSide !== facing.toSide)) continue;
+            const sides = facing;
+            const geometry = connectionGeometry(conn, sides);
+            const start = geometry.start;
+            const end = geometry.end;
+            const clamp = (value) => Math.min(high, Math.max(low, value));
+            const others = resolvedRoutes.filter((other) => other !== entry);
+            const otherLabels = reservedLabels.filter((label) => label.conn !== conn);
+            const crossingsBefore = crossingCount(conn, entry.points, others);
+            const sidesOf = (candidate) => (candidate === conn ? sides : selectedSides.get(candidate));
+            for (const lane of new Set([start[axis], end[axis], (start[axis] + end[axis]) / 2, (low + high) / 2].map(clamp))) {
+              const points = [[...start], [...end]];
+              points[0][axis] = lane;
+              points[1][axis] = lane;
+              const routed = { conn, points, d: roundedPath(points, 8) };
+              if (!points.every(withinScene)
+                  || !endpointSlotsClear([routed], others, sidesOf)
+                  || !routeIsClear(conn, routed, geometry, others)
+                  || crossingCount(conn, points, others) > crossingsBefore) continue;
+              const rect = labelRectFor?.(conn, points, {
+                routes: [...others.map((other) => other.points), points],
+                labels: otherLabels.map((label) => label.rect),
+              });
+              if (!labelClears(rect, conn, others, otherLabels)) continue;
+              cachePath(conn, { points, d: routed.d }, sides);
+              entry.points = points;
+              planningMetrics.readabilityImprovedCount += 1;
+              reservedLabels = [...otherLabels, ...(rect ? [{ conn, rect }] : [])];
+              straightened = true;
+              break;
+            }
           }
+          if (!straightened) break;
         }
         // Finish the established route/straightening plan first. Moving a
         // label earlier could prevent a later edge from taking its straight
