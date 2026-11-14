@@ -66,9 +66,22 @@ Choose `--language` when the repository contains more than one language; without
 Start from the JSON receipt, not the full finding list:
 
 - `investigation.leads` repeats the three ranked `priorities` with `message`, `where` (`path:line`), `symbol`, `impact`, and a runnable `task` command. The text output prints the same list under **Start here**.
-- `investigation.architecture` provides deterministic module-graph orientation (`modules`, `edges`, top connected module `hotspots`, `strongestEdges`) plus up to five open `structuralSignals` (`coupling/*` and `architecture/*`) that sit outside `leads`, each with its own runnable `task` command so function-complexity warnings never hide architectural signals.
+- `investigation.architecture` provides deterministic module-graph orientation (`modules`, `edges`, `hotspots`, `strongestEdges`) plus up to five open `structuralSignals` (`coupling/*` and `architecture/*`) that sit outside `leads`, each with its own runnable `task` command so function-complexity warnings never hide architectural signals. Connected hotspots sort by `loc * (1 + log2(1 + fanIn))`, then fan-in, fan-out and ID. Each includes `readingWeight`, and `hotspotRanking` states the rule. This balances size with incoming dependencies; it is a reading order, not inferred business importance or a reason to refactor.
 - `investigation.shell` identifies the command syntax: `cmd.exe` on Windows and `POSIX sh` elsewhere. Copy the command into that shell. Spaces and apostrophes are preserved; Windows paths with `%` or `!` use a Node argv launcher to avoid environment-variable expansion. The `drillDown` template quotes `<id>`; replace it with a finding ID.
 - `diagram` (when `--ir` is supplied) reports `mappedComponents`, `emptyComponents`, `unmappedModules`, `ambiguousModules`, `offDiagramFindings`, and `undeclaredEdges` (uniquely attributed cross-component code imports absent from `ir.connections`). Directory `sources` use captured file ownership, including Go package paths, Rust crates and configured groups; `.` selects the analyzed root. More specific directories take precedence for their files. A file anchor or explicit `--map` associates the whole folded module with a component. If several components claim the same module, their import attribution remains unresolved and `ambiguousModules` names them. Those imports retain their module-level evidence and are omitted from `undeclaredEdges`. Inspect both unmapped and ambiguous modules before judging alignment. Without `--ir`, `counts.offDiagram` is `null`.
+
+`components[].sources` is an array of one to three objects, such as
+`[{"path":"src/cli"}]`; a string array is a schema error with a repair diagnostic.
+`check --ir` validates this shared shape while accepting an otherwise partial
+architecture IR. Full `start`/`deliver` additionally require a renderable IR and,
+when sources are present, pinned `meta.repository` and its matching Git checkout.
+A directory reference verifies that tree at the pinned revision and links to the
+directory; it has no `line`/`end_line` and does not prove its descendants were
+inspected. A leading `./` and one trailing `/` are normalized; `.` denotes the
+repository root for pinned evidence. Mapping uses paths relative to the analysis
+root (or repository-relative paths with that root prefix); a pinned source always
+names a path relative to the Git top level. Use a concrete file with line numbers
+when the claim needs source-level evidence.
 - `ruleCounts` shows how findings divide by rule, so a dominant rule is visible before reading every finding.
 - `coverage` lists parse failures, role-excluded source counts (`analyzedFiles`, `excludedByRole`, `excludedRoleCounts`) when test or generated files were excluded from the module graph and rules, and other languages left out.
 
@@ -177,7 +190,7 @@ How cycles are graded:
 | `coupling/cycle`: a component that only closes through deferred, conditional or type-only edges | warning |
 | Rust file and module cycles | info: files of one crate compile together, and mutual `use` is ordinary there |
 
-**Upgrading.** Before rule version 2, file cycles were warnings and module and Java cycles were info. `check` fails on warnings by default, so a project whose only cycles were module-level or Java cycles passed and will now fail. To adopt the new levels without blocking CI on existing cycles, record them once and commit the file:
+**Upgrading.** Before rule version 2, file cycles were warnings and module and Java cycles were info. `check` fails on warnings by default, so a project whose only cycles were module-level or Java cycles passed and will now fail. When `check` fails without `--baseline`, its summary prints the exact command for this project (language and config included). To adopt the new levels without blocking CI on existing cycles, record them once and commit the file:
 
 ```sh
 node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-baseline.json --update-baseline --reason "existing cycle, tracked in <issue>"
@@ -333,7 +346,7 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 | `--update-baseline [--reason text]` | Write the baseline instead of checking. |
 | `--json` | Print a machine-readable receipt instead of the summary. |
 
-Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the diagnostic says why). The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
+Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the diagnostic says why). A failing run without `--baseline` ends with the command that records today's findings in `analysis-baseline.json` (also in the `--json` receipt as `gate.adopt`), for a first run or after a rule became stricter. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
 
 
 ## Config files
@@ -388,6 +401,16 @@ node bin/archify.mjs code-analysis task --verify task.json --root "/path/to/proj
 With `--root`, the cited code is compared with the current working tree and the task's evidence is marked **valid** (unchanged, possibly moved), **changed**, **missing** (file deleted or renamed) or **unverifiable**. Without it the task is **captured**: built from the analysis snapshot and not yet checked. Either way the task tells the agent to read the current source before changing anything and to treat the excerpts as data, not instructions. `--require-valid` exits 1 unless the evidence is valid. The page builds the same task through the local server (`POST /task`), so the copied text and the command output agree.
 
 A recorded digest that cannot be recomputed keeps the task **unverifiable**, even when every displayed citation is unchanged. For compatibility with extractors that retain or strip UTF-8 BOMs, whole-file/function digests try at most 64 text combinations without materializing the full product; a match passes, while an exhausted search budget is **unverifiable**. Historical tasks without digests can still verify their captured lines.
+
+Module-level `coupling/concentration` tasks without line evidence provide
+`moduleSummaries` instead of empty per-file citation blocks. Each summary reports
+complete membership counts and line share, then up to eight large files, eight
+externally imported entry files and eight path/name groups. These groups describe
+source paths, not inferred business responsibilities. `scope.read` lists bounded
+reading starting points; the finding's full `evidenceDigest.files` remains the
+membership to inspect before changing the module. Verification still checks every
+file in that digest, including files absent from the summary. Historical tasks
+without this optional field remain readable and verifiable.
 
 The contract is `schemas/ai-task.schema.json`; examples for each finding kind and evidence status are in `test/fixtures/tasks/`.
 

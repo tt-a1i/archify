@@ -166,6 +166,210 @@
         }
       }
     },
+    "moduleSummaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "findingId",
+          "module",
+          "path",
+          "files",
+          "capturedFiles",
+          "loc",
+          "totalLoc",
+          "share",
+          "largestFiles",
+          "entryFiles",
+          "clusters",
+          "basis"
+        ],
+        "properties": {
+          "findingId": {
+            "$ref": "#/$defs/findingId"
+          },
+          "module": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "files": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "capturedFiles": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "loc": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalLoc": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "share": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "largestFiles": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "total",
+              "shown",
+              "truncated",
+              "items"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "shown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8
+              },
+              "truncated": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "file",
+                    "loc"
+                  ],
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "loc": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "entryFiles": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "total",
+              "shown",
+              "truncated",
+              "items"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "shown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8
+              },
+              "truncated": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "file",
+                    "importers"
+                  ],
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "importers": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "clusters": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "total",
+              "shown",
+              "truncated",
+              "items"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "shown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8
+              },
+              "truncated": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "pathGroup",
+                    "files",
+                    "loc"
+                  ],
+                  "properties": {
+                    "pathGroup": {
+                      "type": "string"
+                    },
+                    "files": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "loc": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "basis": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "facts": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["findingId", "statement", "evidence"], "properties": { "findingId": { "$ref": "#/$defs/findingId" }, "statement": { "type": "string" }, "evidence": { "type": "object" } } } },
     "impact": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["findingId", "statement"], "properties": { "findingId": { "$ref": "#/$defs/findingId" }, "statement": { "type": "string" } } } },
     "suggestions": { "type": "array", "description": "Directions to evaluate, from the rule's supportedFixes; not confirmed defects.", "items": { "type": "object", "additionalProperties": false, "required": ["findingId", "text"], "properties": { "findingId": { "$ref": "#/$defs/findingId" }, "text": { "type": "string" } } } },

@@ -163,6 +163,14 @@ test('check: --ir aligns findings and modules with architecture components and r
     undeclaredEdges: [{ from: 'app', to: 'auth', weight: 1, sample: 'src/app/main.py:1' }],
   });
 
+  const failed = check(root, ['--language', 'py', '--config', config, '--ir', ir, '--json']);
+  assert.equal(failed.status, 1, failed.stdout + failed.stderr);
+  const failingReceipt = JSON.parse(failed.stdout);
+  assert.ok(failingReceipt.gate.adopt, 'baseline guidance also accompanies a diagram-aligned failed gate');
+  assert.deepEqual(failingReceipt.diagram, receipt.diagram);
+  assert.deepEqual(failingReceipt.investigation.architecture, receipt.investigation.architecture);
+  assert.deepEqual(failingReceipt.coverage, receipt.coverage);
+
   const text = check(root, ['--language', 'py', '--config', config, '--ir', ir, '--fail-on', 'never']);
   assert.equal(text.status, 0, text.stdout + text.stderr);
   assert.match(text.stdout, /Diagram alignment: 2\/3 components mapped · 1 unmapped module · 1 finding off diagram/);
@@ -191,6 +199,29 @@ test('check: shared module sources report ambiguity without inventing a componen
   }
   const text = check(root, ['--language', 'ts', '--ir', ir, '--fail-on', 'never']);
   assert.match(text.stdout, /ambiguous component mapping: src-shared \(a, b\)/);
+});
+
+test('check --ir rejects malformed source references with actionable schema diagnostics', t => {
+  const root = fixture(t, { 'src/cli/main.mjs': 'export const main = 1;\n' });
+  const ir = path.join(root, 'architecture.json');
+  for (const [sources, code, pointer] of [
+    [['src/cli'], 'schema/type', '/components/0/sources/0'],
+    [[{}], 'schema/required', '/components/0/sources/0'],
+    [[{ path: 'src/cli', line: '1' }], 'schema/type', '/components/0/sources/0/line'],
+    [[], 'schema/minItems', '/components/0/sources'],
+    [[{ path: 'src/cli', endLine: 3 }], 'schema/additionalProperties', '/components/0/sources/0'],
+  ]) {
+    fs.writeFileSync(ir, JSON.stringify({ diagram_type: 'architecture', components: [{ id: 'cli', sources }] }));
+    const result = check(root, ['--language', 'ts', '--ir', ir, '--fail-on', 'never', '--json']);
+    assert.equal(result.status, 2, result.stdout + result.stderr);
+    const diagnostic = JSON.parse(result.stdout).diagnostics.find(d => d.code === code);
+    assert.equal(diagnostic?.subject.path, pointer);
+    assert.ok(diagnostic.supportedFixes.length);
+  }
+  fs.writeFileSync(ir, JSON.stringify({ diagram_type: 'architecture', components: [{ id: 'cli', sources: [{ path: 'src/cli' }] }] }));
+  const repaired = check(root, ['--language', 'ts', '--ir', ir, '--fail-on', 'never', '--json']);
+  assert.equal(repaired.status, 0, repaired.stdout + repaired.stderr);
+  assert.equal(JSON.parse(repaired.stdout).diagram.mappedComponents, 1);
 });
 
 test('check: role exclusions and ambiguous-language file counts are visible on first contact', (t) => {
@@ -258,6 +289,23 @@ test('check: investigation.architecture surfaces module topology and structural 
   assert.equal(text.status, 0, text.stdout + text.stderr);
   assert.match(text.stdout, /Architecture signals \(outside top leads\):/);
   assert.match(text.stdout, /- info\s+coupling\/internal-leak\s+src\/app\/a\.py:1\s+\[[A-Z]+-[0-9a-f]{12}\]/);
+});
+
+test('architecture reading order puts substantial imported source ahead of a highly connected small script', t => {
+  const root = fixture(t, {
+    'src/server/main.mjs': 'export const server = 1;\n' + '// source context\n'.repeat(100),
+    'src/shared/value.mjs': 'export const value = 1;\n' + '// shared context\n'.repeat(60),
+    'scripts/build.mjs': "import '../src/server/main.mjs';\nimport '../src/shared/value.mjs';\nimport '../client/page/main.mjs';\n",
+    'client/page/main.mjs': "import '../../src/server/main.mjs';\nimport '../../src/shared/value.mjs';\n",
+  });
+  const result = check(root, ['--language', 'ts', '--fail-on', 'never', '--json']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const architecture = JSON.parse(result.stdout).investigation.architecture;
+  assert.equal(architecture.hotspots[0].id, 'src-server');
+  assert.equal(architecture.hotspots[1].id, 'src-shared');
+  assert.ok(architecture.hotspots.findIndex(m => m.id === 'scripts') > 1);
+  assert.ok(architecture.hotspots.every(m => Number.isFinite(m.readingWeight)));
+  assert.match(architecture.hotspotRanking, /not inferred business importance/);
 });
 
 function textWithParseError(parseError) {

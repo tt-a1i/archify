@@ -20,6 +20,20 @@ export function buildModuleGraph(facts, config = {}) {
   const java = facts.repository.language === 'java' && options.packageBoundaries && config.modules?.depth === undefined
     ? javaModules(facts.files.filter((f) => !excluded.has(f.role) && !groupMatchers.some(([, match]) => match(f.path))).map((f) => f.path), facts.packageMarkers || []) : null;
 
+  // The innermost JS/TS source root is a sub-application boundary, even without a
+  // package.json in that directory. Split at its first child instead of folding
+  // every feature into <app>/src or the enclosing package. Root src/* keeps the
+  // established depth-two behavior. An explicit depth or disabled package
+  // boundaries opts into the original directory policy; explicit groups win.
+  const tsKeys = new Map();
+  if (facts.repository.language === 'ts' && options.packageBoundaries && config.modules?.depth === undefined) {
+    for (const file of facts.files) {
+      if (excluded.has(file.role) || groupMatchers.some(([, match]) => match(file.path))) continue;
+      const parts = file.path.split('/').slice(0, -1), source = parts.lastIndexOf('src');
+      if (source > 0) tsKeys.set(file.path, parts.slice(0, source + 2).join('/'));
+    }
+  }
+
   let goKeys = facts.repository.language === 'go' && options.packageBoundaries && config.modules?.depth === undefined
     ? new Map((facts.languageScope?.packages || []).flatMap(pkg => pkg.files.map(file => [file, pkg.path]))) : null;
   if (facts.repository.language === 'rust' && options.packageBoundaries && config.modules?.depth === undefined) {
@@ -34,7 +48,7 @@ export function buildModuleGraph(facts, config = {}) {
   let excludedFiles = 0;
   for (const file of facts.files) {
     if (excluded.has(file.role)) { excludedFiles += 1; continue; }
-    const key = moduleKey(file.path, groupMatchers, packageDirs, options.depth, goKeys || java?.keys);
+    const key = moduleKey(file.path, groupMatchers, packageDirs, options.depth, goKeys || java?.keys || tsKeys);
     fileModule.set(file.path, key);
     // A root-level file is its own module (main.py, config.py): such files
     // are entry points or shared constants with opposite roles, and folding
@@ -90,7 +104,7 @@ export function buildModuleGraph(facts, config = {}) {
   return {
     schema_version: 1,
     repository: facts.repository,
-    grouping: { depth: options.depth, packageBoundaries: options.packageBoundaries, groups: Object.keys(options.groups).sort(), ...(java ? { java: java.strategy } : {}) },
+    grouping: { depth: options.depth, packageBoundaries: options.packageBoundaries, groups: Object.keys(options.groups).sort(), ...(java ? { java: java.strategy } : {}), ...(tsKeys.size ? { typescript: 'nested-source-roots-v2' } : {}) },
     excluded: { roles: [...excluded].sort(), files: excludedFiles },
     modules: moduleList,
     fileModules: Object.fromEntries([...fileModule].sort(([a], [b]) => compareText(a, b)).map(([file, key]) => [file, ids.get(key)])),

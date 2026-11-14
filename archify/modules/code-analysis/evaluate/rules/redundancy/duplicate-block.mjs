@@ -1,4 +1,4 @@
-import { duplicateOptions, DUPLICATE_RULE } from '../../../lib/duplicates.mjs';
+import { duplicateOptions, DUPLICATE_RULE } from './jscpd.mjs';
 
 export const code = DUPLICATE_RULE;
 export const dimension = 'redundancy';

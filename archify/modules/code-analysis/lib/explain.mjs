@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readInside } from './evidence.mjs';
 import { questionCalls } from './question-calls.mjs';
+import { questionIncoming } from './question-incoming.mjs';
 import { fail } from '../core/index.mjs';
 
 const hash = (text) => createHash('sha256').update(text).digest('hex');
@@ -127,20 +128,23 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
     ...i, originStatus: selected.factsStatus,
     ...(i.to ? { target: inspect(i.to) } : {}),
   }));
+  const selectedFunction = matches.length === 1 ? matches[0] : null;
+  const calls = questionCalls({ facts, factsPath, inspect, entry: selected, location, symbol, text: sources.get(entry), selectedFunction });
   return {
     kind: 'archify-function-question', question: question.trim(),
     stage: 'orientation-only', root: path.resolve(root),
     entry: { ...selected, ...(symbol ? { requestedFunction: symbol } : {}), location },
     snapshotId: facts?.repository?.snapshotId || null,
     factsAvailable: facts !== null, imports,
-    calls: questionCalls({ facts, factsPath, inspect, entry: selected, location, symbol, text: sources.get(entry), selectedFunction: matches.length === 1 ? matches[0] : null }),
+    calls,
+    ...questionIncoming({ facts, inspect, entry: selected, symbol, selectedFunction, calls }),
     scope: { ...questionScope(root, facts), ...(facts?.languageScope ? { languageScope: facts.languageScope, languageInputs } : {}) },
     limitations: [
       'Locations and imports are captured static facts, usable only where factsStatus/originStatus is valid; dependency targets have separate freshness checks.',
       'Missing facts or changed source require current-source reading and fresh extraction before reusing captured function ranges.',
       'Empty calls and unresolved/computed imports do not mean no calls or dependencies. Follow current source, subprocesses and configuration as the question requires.',
       'Valid factsStatus means source freshness, not parse completeness; inspect parseErrors before trusting recovered syntax. Import lists cover the entry file, not only the selected function.',
-      'Only the entry and its captured direct import targets were checked. This is not whole-repository freshness or a semantic analysis.',
+      'Freshness checks cover the entry, its direct import/call targets, displayed incoming sources and binding support. Omitted records and unrelated files were not checked; this is not whole-repository freshness or a semantic analysis.',
       'Python import edges identify files, not imported object identity. Java type/import dependencies do not identify runtime providers or dispatch.',
     ],
     workflow: WORKFLOW,

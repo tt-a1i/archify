@@ -16,7 +16,8 @@
         "depth": { "type": "integer", "minimum": 1 },
         "packageBoundaries": { "type": "boolean" },
         "groups": { "type": "array", "items": { "type": "string" } },
-        "java": { "enum": ["build-modules", "packages"], "description": "Java default grouping: Maven/Gradle modules, or the first package level of a single-module build. Absent when modules.depth is configured, modules.packageBoundaries is false, or no analyzed file below the root is left to it after modules.groups." }
+        "java": { "enum": ["build-modules", "packages"], "description": "Java default grouping: Maven/Gradle modules, or the first package level of a single-module build. Absent when modules.depth is configured, modules.packageBoundaries is false, or no analyzed file below the root is left to it after modules.groups." },
+        "typescript": { "enum": ["nested-source-roots-v1", "nested-source-roots-v2"], "description": "Default JS/TS grouping splits <app>/src at its first child. v2 chooses the innermost src when roots repeat; v1 used the first. A single root src/* and explicit groups/depth retain their previous policy. Optional for historical graphs." }
       }
     },
     "excluded": {

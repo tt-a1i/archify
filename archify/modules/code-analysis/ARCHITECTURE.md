@@ -109,13 +109,14 @@ Source references with line numbers show a nine-line context window and highligh
 - `extract/py/`: Python extraction and adapter integration.
 - `extract/ts/`: JavaScript and TypeScript extraction.
 - `extract/java/`: Java parsing, conservative source dependency resolution, and method/constructor metrics. See [Java support](docs/JAVA.md).
-- `core/`: dependency-free helpers every stage shares (structured diagnostics, glob matching, exact source ranges), imported through `core/index.mjs`. It imports no stage and no third-party package.
+- `core/`: dependency-free helpers every stage shares (structured diagnostics, glob matching, exact source ranges and line-range digests), imported through `core/index.mjs`. It imports no stage and no third-party package.
 - `extract/shared/`: file walking, file roles and Git metadata for the adapters. Its `diagnostics`, `glob`, `source-range`, `schema` and `semantics` files only re-export `core/` and `schemas/` so adapters keep one local import path.
 - `graphs/`: module grouping and dependency aggregation.
 - `evaluate/rules/index.mjs`: the rule registry; a new rule is its own file plus one line here.
 - `evaluate/rules/coupling/`: import-cycle, module-cycle, hub, concentration and internal-leak rules. Cycles are errors; see [Severity levels](docs/USAGE.md#severity-levels).
 - `evaluate/rules/architecture/`: opt-in layer boundary rules declared in the config.
 - `evaluate/rules/complexity/`: shared function complexity and nesting thresholds; measurements come from each language extractor.
+- `evaluate/rules/redundancy/`: the duplicate rule and its optional jscpd runner. `evaluate/` does not import `lib/`; the previous `lib/duplicates.mjs` entrypoint remains a compatibility re-export.
 - `lib/`: the data stages (extract → graph → evaluate), config merging, intermediate-data checks, review (`review.mjs`: baseline, run comparison and comparability), AI tasks (`task.mjs`: task model and Markdown rendering) and evidence checks (`evidence.mjs`: captured source against the working tree).
 - `bin/check.mjs`: headless analysis for terminals and CI; `bin/task.mjs`: AI task export and evidence check; `bin/analyze-run.mjs`: one analysis run in a child process for the server.
 - `overlay/`: mapping and browser presentation; `overlay/page.mjs` is the whole analysis for one delivered page; `overlay/client/` holds the browser scripts and styles as plain files, inlined at build time by `overlay/client-assets.mjs`. `overlay/` builds on `lib/`, never the reverse.

@@ -5,17 +5,15 @@
 // left out of `rules`, so "not checked" is never reported as "clean". Rules are independent —
 // none reads another's output — and every threshold they use is echoed in
 // the finding's evidence so a reader can re-check the call.
-import { RULES, duplicateBlock as duplicate } from './rules/index.mjs';
-import { analyzeDuplicates } from '../lib/duplicates.mjs';
-import { createRangeDigest } from '../lib/evidence.mjs';
-import { fail } from '../core/index.mjs';
+import { RULES, analyzeDuplicates, duplicateBlock as duplicate } from './rules/index.mjs';
+import { createRangeDigest, fail } from '../core/index.mjs';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
 const PACKAGE = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 export { RULES };
-export { layerCounts } from './rules/index.mjs';
+export { analyzeDuplicates, layerCounts, duplicateOptions, DUPLICATE_RULE, JSCPD_VERSION } from './rules/index.mjs';
 
 export function evaluate(graph, config = {}, facts = null) {
   const suppressed = new Set(config.ignore || []);
@@ -62,7 +60,7 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
     // Key order is kept, not sorted: boundary layers and module groups are first-match
     // maps, so reordering them can change which layer or group owns a file. Reordering
     // any key therefore reads as a config change, which errs toward "not comparable".
-    configDigest: sha256(JSON.stringify(settings)),
+    configDigest: sha256(JSON.stringify(graph?.grouping?.typescript ? { settings, moduleGrouping: graph.grouping.typescript } : settings)),
     ruleVersions: Object.fromEntries(active.filter((r) => !suppressed.has(r.code)).map((r) => [r.code, r.version ?? 1]).sort(([a], [b]) => compareText(a, b))),
     ...(duplicates ? { duplicates: duplicates.analysis } : {}),
     ...(goBuild ? { goBuildScope: {

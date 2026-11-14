@@ -226,6 +226,23 @@ Every file is tagged `source` / `test` / `generated`. The rules are globs, with 
 
 Edges in raw-facts go from file to file. `graphs/module.mjs` maps every file to a module (by configured groups, package boundary, or directory depth; root-level files become modules of their own). Package boundaries come from marker files — `package.json`, `pyproject.toml`, `__init__.py` — which the extractors record in `packageMarkers` because they are not parsed sources and so never appear in `files`. Java records `pom.xml` and `build.gradle(.kts)` as well, and groups by build module or, in a single-module build, by package unless `modules.depth` or `modules.packageBoundaries: false` is set (see [Java source analysis](JAVA.md)). The graph then **merges** file edges into module edges: several file edges between the same pair of modules become one, `weight` is the count, `kinds` counts static versus dynamic, and `evidence` keeps up to five file:line entries.
 
+For JS/TS, the default also recognizes nested source roots: `web/src/pages/x.ts`
+belongs to `web/src/pages`, while a file directly in `web/src` stays in that root.
+This uses the innermost `src` at any package nesting depth, with or without a
+package marker, including `src/apps/web/src`. A single root-level `src/*` keeps
+the established depth-two policy. Explicit
+`modules.groups` wins; an explicit `modules.depth` or
+`modules.packageBoundaries: false` restores the original directory policy.
+Unchanged grouping paths retain their module/finding anchors. Newly split paths
+get their own anchors; `grouping.typescript: nested-source-roots-v2` enters the
+analysis configuration digest so history comparison reports regrouping as
+non-comparable rather than calling disappeared findings fixed. Historical v1
+graphs used the first `src`; they remain readable and compare as a grouping
+change against the innermost-root v2 strategy. Historical graph
+and finding documents remain accepted. Default roles mark Vitest, Jest,
+Playwright and Cypress configuration, Vitest workspace and Karma configuration
+as `test`; configured role arrays replace these defaults.
+
 Deduplicating with a `Map` is the idiomatic JS pattern:
 
 ```js

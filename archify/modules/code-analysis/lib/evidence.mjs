@@ -22,7 +22,10 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { findRanges, rangeDigest, splitLines } from './task.mjs';
+import { createRangeDigest, findRanges, rangeDigest, splitLines } from '../core/index.mjs';
+
+// Kept as an export of this module for existing callers; it lives in core/.
+export { createRangeDigest };
 
 const RANK = { valid: 0, unverifiable: 1, changed: 2, missing: 3 };
 const MAX_DIGEST_CANDIDATES = 64;
@@ -99,35 +102,6 @@ function variants(text) {
   return text.charCodeAt(0) === 0xfeff ? [text, text.slice(1)] : [text];
 }
 
-// Capture each side separately, including two ranges in the same file. Line
-// envelopes deliberately include text beside a partial-line clone. Positions
-// do not enter the aggregate hash, but the number of identical envelopes does:
-// deleting one twin must not let another twin stand in for the removed code.
-export function createRangeDigest(locations, sourceMap) {
-  if (!Array.isArray(locations) || !locations.length) return null;
-  const ranges = [];
-  for (const loc of locations) {
-    const text = sourceMap.get(loc.file);
-    if (typeof text !== 'string' || !Number.isInteger(loc.line) || !Number.isInteger(loc.endLine) || loc.line < 1 || loc.endLine < loc.line) return null;
-    const lines = splitLines(text);
-    if (loc.endLine > lines.length) return null;
-    const sha256 = rangeDigest(lines, loc.line, loc.endLine);
-    const cited = lines.slice(loc.line - 1, loc.endLine);
-    let capturedOccurrences = 0;
-    // UTF-8 hashing folds lone surrogates to U+FFFD. Keep its matching semantics
-    // for such JSON source strings; valid Unicode needs no per-window hashing.
-    if (/[\uD800-\uDFFF]/u.test(text)) capturedOccurrences = findRanges(lines, cited.length, sha256).length;
-    else for (let start = 0; start + cited.length <= lines.length; start++) {
-      if (cited.every((line, offset) => line === lines[start + offset])) capturedOccurrences++;
-    }
-    ranges.push({ file: loc.file, startLine: loc.line, endLine: loc.endLine, sha256, capturedOccurrences });
-  }
-  return {
-    files: [...new Set(ranges.map((r) => r.file))].sort(),
-    ranges,
-    sha256: sha256(JSON.stringify(ranges.map((r) => [r.file, r.sha256, r.capturedOccurrences]))),
-  };
-}
 
 // Check one location against the current lines of its file.
 export function checkLocation(loc, current, { strictOccurrences = false } = {}) {
