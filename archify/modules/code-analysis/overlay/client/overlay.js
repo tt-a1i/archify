@@ -311,7 +311,7 @@
       if (f.evidence.imports.length > 8) ev += '<div class="ev">… ' + (f.evidence.imports.length - 8) + (tr(" more in findings.json") + "</div>");
     }
     var fixes = (f.supportedFixes || []).length ? '<div class="ev fixes">' + f.supportedFixes.map(function (x) { return '<div>· ' + esc(x) + '</div>'; }).join('') + '</div>' : '';
-    return (compact ? '' : nextStepHtml(f)) + '<div class="finding ' + esc(tr(f.severity)) + '">' + ev + ("<details class=\"technical\">" + "<summary>" + tr("Rule details and alternatives") + "</summary>" + "<b>") + esc(f.code) + '</b> · ' + esc(tr(f.severity)) + (f.id ? ' · ' + esc(f.id) : '') + '<p>' + esc(f.message) + '</p>' + fixes + '</details></div>';
+    return (compact ? '' : nextStepHtml(f)) + '<div class="finding ' + esc(f.severity) + '">' + ev + ("<details class=\"technical\">" + "<summary>" + tr("Rule details and alternatives") + "</summary>" + "<b>") + esc(f.code) + '</b> · ' + esc(tr(f.severity)) + (f.id ? ' · ' + esc(f.id) : '') + '<p>' + esc(f.message) + '</p>' + fixes + '</details></div>';
   }
   // Source excerpt for one file:line, from the windows embedded at overlay time.
   function showCode(file, line, why, tone, full, rangeStart, rangeEnd, match) {
@@ -459,7 +459,7 @@
     var r = f.review || {};
     var badges = (r.since === 'new' ? ("<span class=\"badge-new\">" + tr("new") + "</span>") : '') +
       (r.status === 'accepted' ? '<span class="badge-accepted">' + (f.severity === 'error' ? tr("accepted · still to fix") : tr('accepted')) + '</span>' : r.status === 'accepted-changed' ? ("<span class=\"badge-accepted\">" + tr("accepted · evidence changed") + "</span>") : '');
-    return '<button type="button" class="bauify-item ' + toneOf(f.severity) + (r.status === 'accepted' ? (f.severity === 'error' ? ' accepted-error' : " " + tr("accepted")) : '') + '" data-finding="' + esc(id) + '"' + (r.reason ? ' title="' + tr('Accepted: ') + esc(r.reason) + '"' : '') + '>' + (n ? '<span class="n">' + n + '</span>' : '') +
+    return '<button type="button" class="bauify-item ' + toneOf(f.severity) + (r.status === 'accepted' ? (f.severity === 'error' ? ' accepted-error' : ' accepted') : '') + '" data-finding="' + esc(id) + '"' + (r.reason ? ' title="' + tr('Accepted: ') + esc(r.reason) + '"' : '') + '>' + (n ? '<span class="n">' + n + '</span>' : '') +
       '<b>' + esc(findingTitle(f)) + '</b> <em>' + esc(tr(f.severity)) + '</em>' + badges + '<span class="what">' + esc(findingWhat(f)) + '</span><span class="where">' + esc(findingWhere(f)) + '</span>' + '</button>';
   }
   var CATEGORIES = { coupling: tr("Dependencies"), complexity: tr("Complexity"), redundancy: tr("Duplicate code"), architecture: tr("Architecture"), conventions: tr("Coding conventions"), 'external-review': tr("AI review") };

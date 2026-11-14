@@ -16,9 +16,11 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
 }, async t => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workbench-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const root = path.join(dir, 'repo'); fs.mkdirSync(root);
-  fs.writeFileSync(path.join(root, 'a.ts'), "import { b } from './b'; export function a(x: boolean) { return x ? b() : 1; }\n");
-  fs.writeFileSync(path.join(root, 'b.ts'), "import { a } from './a'; export function b() { return a(false); }\n");
+  const root = path.join(dir, 'repo');
+  fs.mkdirSync(path.join(root, 'src/alpha'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'src/beta'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src/alpha/a.ts'), "import { b } from '../beta/b'; export function a(x: boolean) { return x ? b() : 1; }\n");
+  fs.writeFileSync(path.join(root, 'src/beta/b.ts'), "import { a } from '../alpha/a'; export function b() { return a(false); }\n");
   const config = path.join(dir, 'config.json');
   fs.writeFileSync(config, JSON.stringify({ rules: { complexity: { function: { warning: { complexity: 0 } } } } }));
   const irPath = path.join(dir, 'architecture.json');
@@ -109,6 +111,15 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       assert.match(status,/基于本次分析快照构建/);
       assert.doesNotMatch(status,/Built from the analysis snapshot/);
       assert.equal(await run("(()=>{const d=JSON.parse(document.getElementById('bauify-analysis').textContent);return d.tasks[d.overview.priorities[0]].task.evidence.reason;})()"),'Built from the analysis snapshot; not yet compared with the current working tree.','UI localization preserves the canonical exported evidence');
+      await run("document.querySelector('.reader-atlas').click()");
+      const selectedCycleText = await run(`(() => {
+        const idx = JSON.parse(document.getElementById('bauify-atlas-data').textContent).findings.findIndex(f => f.code === 'coupling/cycle');
+        document.querySelector('#bauify-atlas [data-finding="' + idx + '"]').click();
+        return document.querySelector('#bauify-atlas .selected').textContent;
+      })()`);
+      assert.match(selectedCycleText, /alpha/, 'zh-CN Atlas selects module-cycle findings and lists affected modules');
+      assert.match(selectedCycleText, /beta/, 'zh-CN Atlas lists both cycle modules');
+      await run("document.querySelector('.atlas-classic').click()");
     }
   }
   await open(first.html);
@@ -129,7 +140,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.match(await run("document.querySelector('.priority-card .handoff-status').textContent"), /claim changed/);
 
   // Prepare a real source improvement and compare through the same saved-run path.
-  fs.writeFileSync(path.join(root, 'b.ts'), 'export function b() { return 1; }\n');
+  fs.writeFileSync(path.join(root, 'src/beta/b.ts'), 'export function b() { return 1; }\n');
   const second = prepare('zh-CN');
   await open(second.html);
   assert.equal(await run("document.getElementById('btn-bauify').textContent"), '架构诊断');
@@ -145,6 +156,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await run("document.querySelector('.findings-back').click()");
   await run("document.querySelector('.priority-card [data-finding]').click()");
   assert.equal(await run("document.querySelector('#bauify-detail .quick-copy').textContent"), '复制任务给 AI');
+  assert.equal(await run("Boolean(document.querySelector('#bauify-detail .finding.warning'))"), true, 'zh-CN detail keeps canonical severity CSS class');
   assert.match(await run("document.querySelector('#bauify-detail').textContent"), /源码证据/);
   await run("document.querySelector('#bauify-detail .back').click();document.querySelector('.reader-atlas').click()");
   assert.equal(await run("document.querySelector('.atlas-classic').textContent"), '架构图视图');
@@ -164,17 +176,24 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.ok(openedFromCanvas >= 0 && openedFromCanvas < 500, 'component selection reveals the narrow reading column: top='+openedFromCanvas);
 
 
-  // Non-comparable history stays visible without a success colour or fixed claim.
+  // Non-comparable history stays visible without a success colour or fixed claim,
+  // and zh-CN preserves canonical CSS classes for accepted rows in both views.
   const read = file => JSON.parse(fs.readFileSync(path.join(out, 'analysis', file)));
-  const findings = read('findings.json'), review = read('review.json');
+  const graph = read('module-graph.json'), findings = read('findings.json'), review = read('review.json');
   review.comparison.comparable = false;
   review.comparison.reasons = ['Analysis configuration changed.'];
-  const overlay = buildOverlay({ ir, graph: read('module-graph.json'), facts: read('raw-facts.json'), findings: findings.diagnostics, findingsDocument: findings,
+  const acceptedId = findings.diagnostics.find(item => item.severity === 'warning')?.id;
+  if (acceptedId) review.findings = { ...(review.findings || {}), [acceptedId]: { status: 'accepted', reason: 'baseline check' } };
+  const overlay = buildOverlay({ ir, graph, facts: read('raw-facts.json'), findings: findings.diagnostics, findingsDocument: findings,
     html: fs.readFileSync(second.diagram, 'utf8'), sourceRoot: root, run: { openAnalysis: true, rules: findings.rules, review } });
   const different = path.join(dir, 'different.html'); fs.writeFileSync(different, overlay.html);
   await open(different);
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
   assert.match(await run("document.querySelector('.comparison-banner').textContent"), /不能直接比较/);
   assert.equal(await run("document.querySelector('.comparison-banner').classList.contains('positive')"), false);
+  assert.equal(await run("Boolean(document.querySelector('#bauify-overview .bauify-item.accepted'))"), true, 'zh-CN overview keeps canonical accepted CSS class');
+  await run("document.querySelector('.reader-atlas').click()");
+  assert.equal(await run("Boolean(document.querySelector('#bauify-atlas .row.accepted'))"), true, 'zh-CN Atlas keeps canonical accepted CSS class');
   const fallback = prepare('fr');
   await open(fallback.html);
   assert.equal(await run("document.getElementById('btn-bauify').textContent"), 'Code Analysis');
