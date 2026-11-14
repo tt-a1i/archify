@@ -427,6 +427,42 @@ test('text names light their diagram nodes and walk-throughs step through steps 
  }finally{await browser.close();}
 });
 
+test('structural change marks outline their nodes and edges in the change colour, and dash and fade removed ones',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const spec=compileExplainerDiagram('architecture',['web | Web app | frontend','checkout | Checkout | backend','cache | Order cache | database','queue | Legacy queue | messagebus','web > checkout | Places order','checkout > cache | Reads first','checkout > queue | Old hand-off'],{title:'Checkout path',id:'release'});
+ const doc=formalDocument();doc.meta.id='change-marks-browser';doc.panels.push({id:'changed',title:'What changed?',blocks:[{id:'release',type:'diagram',diagramType:'architecture',spec,changes:[{target:'checkout',change:'modified'},{target:'cache',change:'added'},{target:'queue',change:'removed'},{target:'checkout-to-cache-1',change:'added'},{target:'checkout-to-queue-1',change:'removed'}]}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'change-marks.json')});
+ const file=artifact('change-marks',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
+ const browser=new ChromeVisualBrowser(chrome);const seen={};try {
+  for(const theme of ['light','dark']) {
+   if(browser.resetPage)await browser.resetPage();
+   await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme,keyboard:false});
+   const marks=await pageValue(browser,`(function(){
+    const preview=document.querySelector('#release .diagram-preview'),probe=document.createElement('span');preview.append(probe);
+    const colour=name=>{probe.style.color='var(--'+name+')';return getComputedStyle(probe).color;},colours={added:colour('good'),modified:colour('caution'),removed:colour('bad')};probe.remove();
+    const shapes='rect,path,circle,ellipse,polygon,polyline,line';
+    const look=selector=>{const target=preview.querySelector(selector),shape=target.matches(shapes)?target:target.querySelector(':scope>:is('+shapes+'):not(.c-mask)'),mask=target.querySelector(':scope>.c-mask'),style=getComputedStyle(shape);
+     return {stroke:style.stroke,width:style.strokeWidth,dash:style.strokeDasharray,opacity:getComputedStyle(target).opacity,mask:mask?getComputedStyle(mask).strokeWidth:null};};
+    return {colours,checkout:look('g[data-node-id="checkout"]'),cache:look('g[data-node-id="cache"]'),queue:look('g[data-node-id="queue"]'),web:look('g[data-node-id="web"]'),
+     read:look('path[data-edge-id="checkout-to-cache-1"]'),handoff:look('path[data-edge-id="checkout-to-queue-1"]'),order:look('path[data-edge-id="web-to-checkout-1"]')};
+   })()`);
+   const {colours}=marks;seen[theme]=colours;
+   for(const [target,change,native] of [['checkout','modified','web'],['cache','added','web'],['queue','removed','web'],['read','added','order'],['handoff','removed','order']]) {
+    assert.equal(marks[target].stroke,colours[change],`${theme}: ${target} is outlined in the ${change} colour`);
+    assert.ok(parseFloat(marks[target].width)>parseFloat(marks[native].width),`${theme}: ${target} is outlined more heavily than unmarked ${native}`);
+    assert.equal(marks[target].dash!=='none',change==='removed',`${theme}: only a removed ${target} is dashed`);
+    assert.equal(Number(marks[target].opacity)<1,change==='removed',`${theme}: only a removed ${target} fades`);
+   }
+   for(const target of ['checkout','cache','queue'])assert.equal(marks[target].mask,marks.web.mask,`${theme}: the ${target} mask keeps its native stroke`);
+   for(const target of ['web','order']) {
+    assert.equal(marks[target].opacity,'1',`${theme}: unmarked ${target} stays opaque`);
+    assert.ok(!Object.values(colours).includes(marks[target].stroke),`${theme}: unmarked ${target} keeps its native colour`);
+   }
+  }
+  assert.notDeepEqual(seen.light,seen.dark,'each theme supplies its own change colours');
+ }finally{await browser.close();}
+});
+
 test('phone native previews keep readable text with local keyboard scrolling and reset for desktop and print',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');
  const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
@@ -608,4 +644,39 @@ test('image export retains long diff rows and original line numbers',{skip:!chro
    assert.deepEqual(rows.map(row=>[row.old,row.new]),[[null,null],['1','1'],['2',null],[null,'2'],['3','3']]);
   }
  }finally{await browser.close();}
+});
+
+test('wide answer panel without reasons spans cleanly while reasons sit side-by-side at 1440px',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const base=formalDocument();base.answer.span=12;
+ const withReasons=artifact('answer-with-reasons',renderExplainer(structuredClone(base),{sourceText:JSON.stringify(base)}));
+ const withoutReasonsDoc=structuredClone(base);delete withoutReasonsDoc.answer.reasons;
+ const withoutReasons=artifact('answer-without-reasons',renderExplainer(withoutReasonsDoc,{sourceText:JSON.stringify(withoutReasonsDoc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  await inspectPublicHtml(browser,{artifactPath:withReasons,width:1440,theme:'light',keyboard:false});
+  const sideBySide=await pageValue(browser,'(()=>{const b=document.querySelector(".answer-panel .panel-body").getBoundingClientRect(),v=document.querySelector(".answer-panel .verdict").getBoundingClientRect(),r=document.querySelector(".answer-panel .reasons").getBoundingClientRect();return {bodyWidth:b.width,verdictRight:v.right,reasonsLeft:r.left,reasonsTop:r.top,verdictBottom:v.bottom};})()');
+  assert.ok(sideBySide.reasonsLeft>=sideBySide.verdictRight-1 && sideBySide.reasonsTop<sideBySide.verdictBottom,'Answer with reasons splits into 2 columns');
+  await browser.resetPage();
+  await inspectPublicHtml(browser,{artifactPath:withoutReasons,width:1440,theme:'light',keyboard:false});
+  const singleCol=await pageValue(browser,'(()=>{const b=document.querySelector(".answer-panel .panel-body"),bs=getComputedStyle(b),inner=b.getBoundingClientRect().width-parseFloat(bs.paddingLeft)-parseFloat(bs.paddingRight),v=document.querySelector(".answer-panel .verdict").getBoundingClientRect().width;return {inner,verdictWidth:v};})()');
+  assert.ok(singleCol.verdictWidth>singleCol.inner*0.85,`Expected single-column verdict to fill panel body (${singleCol.verdictWidth}/${singleCol.inner})`);
+ }finally{await browser.close();}
+});
+
+test('browser diagnostics include snippet context and specific repair guidance for readability and diagram-fit',()=>{
+ const base={width:1440,height:900,theme:'light',resolvedTheme:'light',innerWidth:1440,innerHeight:900,scrollWidth:1440,overflowElements:[],keyboardIssues:[],keyboardTraversal:{ok:true,missing:[]},consoleErrors:[],references:[],duplicateIds:[],occluded:[],noJavaScript:[],print:{ok:true},smallText:[{component:'diag',text:'Compact edge label',fontSize:8.314},{component:'diag',text:'Boundary label',fontSize:9.999}],interactionFailures:[{name:'diagram-fit',component:'diag',reason:'Insufficient fit',measurement:{requiredWidth:1200,clientWidth:800}}]};
+ const diags=explainerObservationDiagnostics({artifact:artifact('diag-dummy','<!doctype html><html></html>'),allObservations:[base]});
+ const readDiag=diags.find(d=>d.code==='explainer/browser-readability');
+ const boundaryDiag=diags.find(d=>d.code==='explainer/browser-readability'&&d.message.includes('Boundary label'));
+ const fitDiag=diags.find(d=>d.code==='explainer/browser-diagram-fit');
+ assert.ok(readDiag);
+ assert.match(readDiag.message,/"Compact edge label" is 8\.31px, below 10px\./);
+ assert.notEqual(readDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
+ assert.match(readDiag.supportedFixes[0],/@steps|10px/);
+ assert.ok(boundaryDiag);
+ assert.match(boundaryDiag.message,/"Boundary label" is 9\.999px, below 10px\./);
+ assert.ok(fitDiag);
+ assert.notEqual(fitDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
+ assert.match(fitDiag.supportedFixes[0],/phase lanes|wider panel span/);
 });
