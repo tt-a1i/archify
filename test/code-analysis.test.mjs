@@ -9,6 +9,10 @@ const cli = path.join(root, 'bin/archify.mjs');
 const moduleRoot = path.join(root, 'modules/code-analysis');
 const run = args => spawnSync(process.execPath, [cli, 'code-analysis', ...args], { encoding: 'utf8' });
 test('Code Analysis exposes prepare, serve, check and task through the Archify CLI', () => {
+  const publicHelp = spawnSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
+  assert.equal(publicHelp.status, 0);
+  assert.match(publicHelp.stdout.replace(/\s+/g, ' '), /start <repo-root> \[--ir <architecture.json>\] \[--locale/);
+  assert.match(publicHelp.stdout, /prepare <repo-root> --out <dir> \[--ir/);
   const prepareHelp = run(['prepare', '--help']);
   assert.equal(prepareHelp.status, 0, prepareHelp.stderr);
   assert.match(prepareHelp.stdout, /archify code-analysis prepare/);

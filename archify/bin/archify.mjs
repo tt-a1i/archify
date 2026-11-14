@@ -2190,10 +2190,10 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
-  start: '<repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
-    'prepare <repo-root> --ir <architecture.json> --out <dir> [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
-    'serve <repo-root> --ir <architecture.json> --out <dir> [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
     'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--ir <architecture.json> [--map file]] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
     'import-review <github-pr-url> --out report.json [--author login] [--json]',
     'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
