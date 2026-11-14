@@ -62,7 +62,8 @@ test('Code Analysis shows complex Python functions in the overview, problem page
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
 
   const overview = await run("document.getElementById('bauify-overview').innerText");
-  assert.match(overview, /Start with the most complex functions below\./);
+  assert.match(await run("document.querySelector('.priority-card [data-finding]').textContent"), /dispatch\(\) is complex/);
+  assert.equal(await run("document.querySelector('.priority-card .quick-copy').disabled"), false);
   assert.match(overview, /dispatch\(\) is complex/);
   assert.match(overview, /complexity 27 · nesting 4 · \d+ lines · engine\/router\.py/);
   assert.doesNotMatch(await run("document.getElementById('bauify-overview').textContent"), /Not checked: complexity/, 'Python functions were measured');

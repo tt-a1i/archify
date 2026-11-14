@@ -61,7 +61,8 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
 
   let overview = await run("document.getElementById('bauify-overview').innerText");
-  assert.match(overview, /Structural problems to fix/, 'the new cycle is open');
+  assert.match(overview, /4 error-level diagnostics still present/, 'both open and accepted cycles remain visible');
+  assert.match(overview, /2 open · 2 accepted error-level findings/);
   assert.match(overview, /Baseline: 2 accepted/);
   assert.match(overview, /2 accepted/);
   const priorities = await run("[...document.querySelectorAll('#bauify-overview .bauify-item')].filter(b => b.querySelector('.n')).map(b => b.textContent)");
@@ -82,8 +83,10 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   await wait("location.search === '' && document.documentElement.getAttribute('data-bauify') === 'on' && /no longer detected/.test(document.getElementById('bauify-overview').innerText)");
   overview = await run("document.getElementById('bauify-overview').innerText");
   assert.equal(await run("Boolean(document.querySelector('#bauify-overview h3 .bauify-red'))"), true, 'accepting an error unblocks CI; the overview still shows its error severity');
-  assert.match(overview, /Since the previous analysis: 0 new · \d+ no longer detected/);
-  assert.match(overview, /2 findings · 2 accepted\n/, 'counts read cleanly when nothing is open');
+  assert.match(overview, /\d+ no longer detected · 0 new/);
+  assert.match(overview, /does not prove a fix/);
+  assert.match(overview, /2 error-level diagnostics still present/);
+  assert.match(overview, /0 open · 2 accepted error-level findings/, 'accepted errors are not hidden by a clean open count');
   assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 0, 'accepted findings stay listed without taking open priority slots');
   assert.equal(await run("document.querySelector('#bauify-layer rect').getAttribute('class').split(' ')[0]"), 'red', 'an accepted cycle keeps its component red');
   assert.ok(fs.existsSync(path.join(out, 'analysis.previous', 'findings.json')), 'the replaced run is kept for comparison');

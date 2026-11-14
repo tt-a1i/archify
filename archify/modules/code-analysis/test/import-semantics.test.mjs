@@ -8,6 +8,7 @@ import ts from 'typescript';
 import { extract as extractTs } from '../extract/ts/index.mjs';
 import { buildModuleGraph } from '../graphs/module.mjs';
 import { evaluate } from '../evaluate/index.mjs';
+import { createTranslator } from '../overlay/i18n.mjs';
 import { buildOverlay } from '../overlay/inject.mjs';
 import { schemaErrors } from '../extract/shared/schema.mjs';
 import { evaluateGraph, extractFacts } from '../lib/analysis.mjs';
@@ -566,7 +567,7 @@ test('review regressions: overlay renders candidate references without safety cl
   const cardStart = script.indexOf('  function findingCard');
   const cardEnd = script.indexOf('\n  }', cardStart) + 4;
   const functions = script.slice(script.indexOf('  function ref('), cardEnd);
-  const render = new Function('function esc(v){return String(v)}; function short(v){return v};' + functions + '; return findingCard;')();
+  const render = new Function('tr', 'function esc(v){return String(v)}; function short(v){return v};' + functions + '; return findingCard;')(createTranslator());
   const finding = evaluate(graph, {}, facts).diagnostics.find((d) => d.code === 'coupling/import-cycle');
   finding.evidence.imports.push({ file: 'a.py', line: 1, to: 'b.py', conditional: true });
   const card = render(finding);
@@ -602,7 +603,7 @@ test('overlay draws a recorded singleton self-import instead of missing-path tex
   const script = result.html.match(/id="bauify-script">([\s\S]*?)<\/script>/)[1];
   const start = script.indexOf('  function cycleDiagram(');
   const end = script.indexOf('\n  }', start) + 4;
-  const draw = new Function('function svgOpen(){return "<svg>"};function short(v){return v};function nodeRect(){return "<rect/>"};function arrow(){throw Error("self-loop must use curved path")};' + script.slice(start, end) + ';return cycleDiagram;')();
+  const draw = new Function('tr', 'function svgOpen(){return "<svg>"};function short(v){return v};function nodeRect(){return "<rect/>"};function arrow(){throw Error("self-loop must use curved path")};' + script.slice(start, end) + ';return cycleDiagram;')(createTranslator());
   const output = draw({ fileList: [{ path: 'a.py' }], modules: [] }, cycles);
   assert.match(output, /<path/);
   assert.match(output, /<rect/);
