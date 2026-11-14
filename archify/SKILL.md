@@ -110,9 +110,7 @@ For a repository investigation, run `node bin/archify.mjs code-analysis prepare 
 
 Add `--ir <architecture.json>` only when a relevant diagram already exists or the user also wants authored architecture boundaries aligned with code evidence. This keeps the existing architecture/Atlas views and checked source mapping. Read [Code Analysis entry and investigation](modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation) for adapter prerequisites, headless checks, interactive re-analysis and coverage limits.
 
-Deliver the analysis HTML with one or two scoped observations and point to its task-copy controls or continue the investigation in the current conversation. Users need not supply a maintenance goal or learn the CLI. Report actual preparation time and tool gaps; first-run dependencies, language helpers and repository size affect latency. If analysis fails, keep any separately delivered diagram and state the gap rather than an all-clear claim.
-
-Analysis describes the working tree, including uncommitted source. Keep authored commit evidence separate. Verify cited source before editing, make a scoped improvement or explain why the current structure is appropriate, then rerun analysis and project tests. Static findings and missing findings do not establish runtime failure or a proven fix.
+Deliver the analysis HTML with one or two scoped observations and its task-copy controls, or continue investigating in this conversation. Users need no maintenance objective or CLI knowledge. Analysis describes the working tree, including uncommitted source; keep authored commit evidence separate. Verify source before editing, make a scoped improvement or explain why to retain the structure, then rerun analysis and project tests. Report measured preparation time and tool gaps, preserve any separately delivered diagram on failure, and avoid claims that static or missing findings prove runtime failure or a fix.
 
 ## Optional viewer capabilities
 
