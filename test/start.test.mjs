@@ -9,7 +9,8 @@ test('unified start documents standalone output and rejects a map without archit
   assert.match(help.stdout, /archify start/);
   assert.match(help.stdout, /\[--out/);
   const invalid = spawnSync(process.execPath, [cli, 'start', '.', '--map', 'map.json'], { encoding: 'utf8' });
-  assert.notEqual(invalid.status, 0);
+  assert.equal(invalid.status, 2);
+  assert.doesNotMatch(invalid.stderr, /at parseArgs|at startAnalysisView/);
   assert.match(invalid.stderr, /--map requires --ir/);
 });
 

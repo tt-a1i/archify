@@ -93,18 +93,20 @@ Output: with --ir, <dir>/architecture.html (Archify's artifact, untouched); alwa
 <dir>/analysis/{raw-facts,module-graph,findings,review,overview}.json + repo.analysis.html;
 the run before is kept in <dir>/analysis.previous and compared with.`;
 
+const usageError = message => Object.assign(new Error(message), { exitCode: 2 });
+
 export function parseArgs(argv) {
   const [repo, ...rest] = argv;
-  if (!repo || repo.startsWith('-')) throw new Error(USAGE);
+  if (!repo || repo.startsWith('-')) throw usageError(USAGE);
   const options = {};
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i];
-    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw new Error(`Invalid option: ${key}\n${USAGE}`);
+    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw usageError(`Invalid option: ${key}\n${USAGE}`);
     options[key] = rest[i + 1];
   }
-  if (!options['--out']) throw new Error(`serve requires --out\n${USAGE}`);
-  if (options['--map'] && !options['--ir']) throw new Error('--map requires --ir: mapping belongs to an authored architecture diagram.');
-  if (options['--locale'] && !['en', 'zh-CN'].includes(options['--locale'])) throw new Error('--locale must be en or zh-CN.');
+  if (!options['--out']) throw usageError(`serve requires --out\n${USAGE}`);
+  if (options['--map'] && !options['--ir']) throw usageError('--map requires --ir: mapping belongs to an authored architecture diagram.');
+  if (options['--locale'] && !['en', 'zh-CN'].includes(options['--locale'])) throw usageError('--locale must be en or zh-CN.');
   return { repo, options };
 }
 
@@ -429,5 +431,5 @@ function client(token, messages, makeTranslator, standalone) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   if (!args.length || args[0] === '--help' || args[0] === '-h') { console.log(USAGE); }
-  else startAnalysisView(args).then(({ url, delivered }) => console.log(`${delivered ? `Diagram delivered: ${delivered}` : "Standalone analysis"}\nCode Analysis: ${url}\n${delivered ? 'Open the URL and click "Code Analysis".' : 'Open the URL to analyze the repository.'} Press Ctrl+C to stop.`)).catch((error) => { console.error(error.message); process.exitCode = 2; });
+  else startAnalysisView(args).then(({ url, delivered }) => console.log(`${delivered ? `Diagram delivered: ${delivered}` : "Standalone analysis"}\nCode Analysis: ${url}\n${delivered ? 'Open the URL and click "Code Analysis".' : 'Open the URL to analyze the repository.'} Press Ctrl+C to stop.`)).catch((error) => { console.error(error.message); process.exitCode = error.exitCode === 2 ? 2 : 1; });
 }

@@ -7288,7 +7288,10 @@ try {
       const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
       const launchArgs = [...args];
       if (!launchArgs.includes('--out')) launchArgs.push('--out', fs.mkdtempSync(path.join(os.tmpdir(), 'archify-' + createHash('sha256').update(path.resolve(args[0])).digest('hex').slice(0, 16) + '-')));
-      const { url, delivered, out } = await startAnalysisView(launchArgs);
+      let view;
+      try { view = await startAnalysisView(launchArgs); }
+      catch (error) { console.error(error.message); process.exitCode = error.exitCode === 2 ? 2 : 1; break; }
+      const { url, delivered, out } = view;
       console.log(`Archify: ${url}\n${delivered ? `Diagram: ${delivered}\nOpen the URL, then click "Code Analysis" to analyze.` : `Analysis: ${path.join(out, 'analysis/repo.analysis.html')}\nOpen the URL to analyze the repository.`} Press Ctrl+C to stop.`);
       break;
     }
