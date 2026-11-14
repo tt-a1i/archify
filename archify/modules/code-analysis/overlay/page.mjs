@@ -27,9 +27,9 @@ export function renderAnalysisSnapshot({ dir, html, root, review }) {
   const read = (name) => readJsonInput(path.join(dir, name), 'review view');
   const facts = read('raw-facts.json'), graph = read('module-graph.json'), findings = read('findings.json');
   const context = read('view-context.json');
-  if (context?.schema_version !== 1 || !context.ir || !context.run) fail('overlay/context-invalid', 'The captured view context is missing or invalid.', { supportedFixes: ['re-analyze the repository to rebuild its captured view'] });
+  if (context?.schema_version !== 1 || (!context.ir && context.mode !== 'standalone') || !context.run) fail('overlay/context-invalid', 'The captured view context is missing or invalid.', { supportedFixes: ['re-analyze the repository to rebuild its captured view'] });
   const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
-  return overlayHtml({ html: fs.readFileSync(html, 'utf8'), ir: context.ir, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: context.map, sourceRoot: root, run });
+  return overlayHtml({ html: html ? fs.readFileSync(html, 'utf8') : null, ir: context.ir, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: context.map, sourceRoot: root, run });
 }
 
 // Each published view artifact is complete even if a later write fails. The
@@ -49,14 +49,15 @@ export function writeAnalysisView(dir, overlay, review) {
 // `html` is the page Archify delivered for `ir`; it is read, never modified.
 // `baseline` (file) marks accepted findings; `previous` (a findings.json from
 // an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir, html, out, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false }) {
+export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false }) {
   const absRoot = path.resolve(root);
-  const irPath = path.resolve(ir);
-  const htmlPath = path.resolve(html);
+  const irPath = ir ? path.resolve(ir) : null;
+  const htmlPath = html ? path.resolve(html) : null;
   const dir = path.resolve(out);
-  if (!fs.existsSync(irPath)) fail('cli/input-invalid', `Not a file: ${ir}`, { subject: { file: ir }, supportedFixes: ['pass the authored architecture IR'] });
-  if (!fs.existsSync(htmlPath)) fail('cli/input-invalid', `Not a file: ${html}`, { subject: { file: html }, supportedFixes: ['deliver the diagram with `archify deliver` first'] });
+  if (irPath && !fs.existsSync(irPath)) fail('cli/input-invalid', `Not a file: ${ir}`, { subject: { file: ir }, supportedFixes: ['pass the authored architecture IR'] });
+  if (irPath && (!htmlPath || !fs.existsSync(htmlPath))) fail('cli/input-invalid', `Not a file: ${html}`, { subject: { file: html }, supportedFixes: ['deliver the diagram with `archify deliver` first'] });
   if (path.resolve(dir, 'repo.analysis.html') === htmlPath) fail('cli/out-invalid', 'The analysis output must not overwrite the delivered HTML.', { supportedFixes: ['use a different --out directory'] });
+  if (map && !irPath) fail('cli/input-invalid', '--map requires --ir.', { supportedFixes: ['provide the authored architecture IR or omit --map'] });
   fs.mkdirSync(dir, { recursive: true });
   const { adapter, facts, config: cfg, otherLanguages } = extractFacts(absRoot, { language, config });
   fs.writeFileSync(path.join(dir, 'raw-facts.json'), stableJson(facts));
@@ -65,12 +66,12 @@ export function analyzeRepository({ root, ir, html, out, language = null, config
   const findings = evaluateGraph(graph, cfg, facts, { root: absRoot });
   fs.writeFileSync(path.join(dir, 'findings.json'), stableJson(findings));
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
-  const irDoc = irSnapshot ?? readJsonInput(irPath, 'analysis --ir');
+  const irDoc = irSnapshot ?? (irPath ? readJsonInput(irPath, 'analysis --ir') : null);
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
-  const context = { schema_version: 1, ir: irDoc, map: mapDoc, run: { openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
+  const context = { schema_version: 1, mode: irPath ? 'diagram' : 'standalone', ir: irDoc, map: mapDoc, run: { locale: locale || irDoc?.meta?.locale || 'en', openAnalysis: !irPath || openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
   fs.writeFileSync(path.join(dir, 'view-context.json'), stableJson(context));
   const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
-  const overlay = overlayHtml({ html: fs.readFileSync(htmlPath, 'utf8'), ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });
+  const overlay = overlayHtml({ html: htmlPath ? fs.readFileSync(htmlPath, 'utf8') : null, ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });
   const outHtml = path.join(dir, 'repo.analysis.html');
   writeAnalysisView(dir, overlay, review);
   return receipt('ok', {

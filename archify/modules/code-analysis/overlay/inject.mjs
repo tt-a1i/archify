@@ -26,6 +26,7 @@
 // and is still listed, so a project-level view never loses it.
 // Nothing in the authored IR is changed or inferred.
 import fs from 'node:fs';
+import { standaloneShell } from './standalone.mjs';
 import { analysisLocale, messagesFor, createTranslator } from './i18n.mjs';
 import { architectureHandoff } from './architecture-handoff.mjs';
 import path from 'node:path';
@@ -39,7 +40,7 @@ import { clientAsset } from './client-assets.mjs';
 
 export function alignDiagram({ ir, graph, map = null, facts = null, findings = [], run = {} }) {
   const modules = new Map(graph.modules.map((m) => [m.id, m]));
-  const mapping = resolveMapping(ir, graph, map);
+  const mapping = ir ? resolveMapping(ir, graph, map) : new Map();
   const claimed = new Set([...mapping.values()].flat());
   const owners = new Map();
   for (const [cid, ids] of mapping) for (const id of ids) {
@@ -63,7 +64,7 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
   // it from failing CI, it does not make the structure sound.
   const accepted = new Set(Object.entries(run.review ? run.review.findings : {}).filter(([, r]) => r.status === 'accepted').map(([id]) => id));
   const openFindings = findings.filter((f) => !accepted.has(f.id) || f.severity === 'error');
-  const components = ir.components.map((c) => {
+  const components = (ir?.components || []).map((c) => {
     const ids = mapping.get(c.id) || [];
     const mods = ids.map((id) => modules.get(id)).filter(Boolean);
     const set = new Set(ids);
@@ -95,7 +96,7 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
     edgeMap.set(key, { from: c.id, to: o.component, weight: o.weight, evidence: o.evidence });
   }
   const edges = [...edgeMap.values()].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.to < b.to ? -1 : 1));
-  const declared = new Set((ir.connections || []).filter((c) => c && typeof c.from === 'string' && typeof c.to === 'string').map((c) => `${c.from}>${c.to}`));
+  const declared = new Set((ir?.connections || []).filter((c) => c && typeof c.from === 'string' && typeof c.to === 'string').map((c) => `${c.from}>${c.to}`));
   const undeclaredEdges = edges.filter((e) => !declared.has(`${e.from}>${e.to}`));
   const unmapped = graph.modules.filter((m) => !claimed.has(m.id)).map((m) => ({ id: m.id, label: m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: (fileIndex.get(m.id) || []).map((f) => ({ ...f, module: m.id })) }));
   const fileModule = facts
@@ -114,7 +115,8 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
 }
 
 export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
-  if (!html.includes('data-node-id=') || !html.includes('class="toolbar"')) {
+  if (!ir) html = standaloneShell({ locale: run.locale, title: path.basename(sourceRoot || graph.repository.root || 'Repository') });
+  if (ir && (!html.includes('data-node-id=') || !html.includes('class="toolbar"'))) {
     fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
       evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
       supportedFixes: ['pass the HTML written by `archify deliver architecture`'],
@@ -124,7 +126,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
 
   const payload = {
     generator: 'bauify',
-    ui: { locale: analysisLocale(ir.meta?.locale), messages: messagesFor(ir.meta?.locale), resume: run.resume || null, openByDefault: run.openAnalysis === true },
+    ui: { mode: ir ? 'diagram' : 'standalone', locale: analysisLocale(run.locale || ir?.meta?.locale), messages: messagesFor(run.locale || ir?.meta?.locale), resume: run.resume || null, openByDefault: run.openAnalysis === true },
     repository: graph.repository,
     unresolved: graph.unresolved,
     excluded: graph.excluded,
@@ -136,11 +138,11 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     ambiguousModules,
     findings: listed,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
-    overview: buildOverview({ findings: listed, graph, facts, unmapped, ambiguousModules, run }),
+    overview: buildOverview({ findings: listed, graph, facts, unmapped: ir ? unmapped : [], ambiguousModules, run, diagram: Boolean(ir) }),
     snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts, findingsDocument?.externalEvidence) : {},
   };
 
-  payload.architectureBrief = architectureHandoff({ overview: payload.overview, repository: graph.repository, locale: ir.meta?.locale });
+  payload.architectureBrief = architectureHandoff({ overview: payload.overview, repository: graph.repository, locale: run.locale || ir?.meta?.locale, diagram: Boolean(ir) });
 
   // The Atlas view needs raw facts (files, dependencies, functions); without them only the Classic view exists.
   const atlas = buildAtlas({ graph, facts, findings, review: run.review });

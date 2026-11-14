@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { test } from 'node:test';
+import { startAnalysisView, parseArgs } from '../bin/serve.mjs';
+import { prepareAnalysisView } from '../bin/prepare.mjs';
+const payload = html => JSON.parse(html.match(/id="bauify-analysis">([\s\S]*?)<\/script>/)[1]);
+function fixture(t) {
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-standalone-'));
+  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const root=path.join(dir,'repo');fs.mkdirSync(root);
+  fs.writeFileSync(path.join(root,'a.ts'),"import { b } from './b'; export function a(){return b();}\n");
+  fs.writeFileSync(path.join(root,'b.ts'),"import { a } from './a'; export function b(){return a();}\n");
+  return {dir,root};
+}
+test('standalone arguments reject mapping without a diagram and invalid explicit locales',()=>{
+  assert.deepEqual(parseArgs(['repo','--out','out','--locale','zh-CN']).options,{'--out':'out','--locale':'zh-CN'});
+  assert.throws(()=>parseArgs(['repo','--out','out','--map','map.json']),/--map requires --ir/);
+  assert.throws(()=>parseArgs(['repo','--out','out','--locale','fr']),/--locale/);
+});
+test('prepare without IR is portable; explicit locale overrides an untouched authored IR without changing analysis',async t=>{
+  const {dir,root}=fixture(t);
+  const standalone=await prepareAnalysisView([root,'--out',path.join(dir,'standalone'),'--locale','zh-CN']);
+  assert.equal(standalone.diagram,null);
+  assert.equal(fs.existsSync(path.join(dir,'standalone/architecture.html')),false);
+  const a=payload(fs.readFileSync(standalone.html,'utf8'));
+  assert.equal(a.ui.mode,'standalone');assert.equal(a.ui.locale,'zh-CN');
+  assert.equal(a.overview.counts.offDiagram,null);assert.deepEqual(a.overview.coverage.unmappedModules,[]);
+  assert.ok(a.overview.priorities.length>0);assert.ok(Object.keys(a.tasks).length>0);
+  assert.doesNotMatch(standalone.resume.command,/--ir/);assert.match(standalone.resume.command,/--locale zh-CN/);
+  const ir=path.join(dir,'input.json');
+  const bytes=JSON.stringify({schema_version:1,diagram_type:'architecture',meta:{title:'Diagram',output:'architecture.html',locale:'en'},components:[{id:'app',type:'backend',label:'App',pos:[40,40],size:[170,64]}],connections:[]});
+  fs.writeFileSync(ir,bytes);
+  const diagram=await prepareAnalysisView([root,'--ir',ir,'--out',path.join(dir,'diagram'),'--locale','zh-CN']);
+  const b=payload(fs.readFileSync(diagram.html,'utf8'));
+  assert.equal(b.ui.locale,'zh-CN');assert.equal(b.ui.mode,'diagram');assert.ok(fs.existsSync(diagram.diagram));
+  assert.equal(fs.readFileSync(ir,'utf8'),bytes);
+  for(const file of ['raw-facts.json','module-graph.json','findings.json']) assert.equal(fs.readFileSync(path.join(dir,'standalone/analysis',file),'utf8'),fs.readFileSync(path.join(dir,'diagram/analysis',file),'utf8'),file);
+});
+test('standalone service keeps authorization, current-source tasks, review rendering and real re-analysis',async t=>{
+  const {dir,root}=fixture(t);
+  const view=await startAnalysisView([root,'--out',path.join(dir,'view'),'--locale','zh-CN']);
+  t.after(()=>{view.server.closeAllConnections();view.server.close();});
+  assert.equal(view.delivered,null);
+  const page=await(await fetch(view.url)).text();assert.match(page,/data-analysis-mode="standalone"/);
+  assert.equal((await fetch(view.url+'/analyze',{method:'POST'})).status,403);
+  const headers={Origin:view.url,'X-Analysis-Token':view.token,'Content-Type':'application/json'};
+  const post=(route,input,extra={})=>fetch(view.url+route,{method:'POST',headers:{...headers,...extra},...(input?{body:JSON.stringify(input)}:{})});
+  const response=await post('/analyze');assert.equal(response.status,200);
+  const data=payload(await response.text());const finding=data.findings[0];assert.ok(finding);
+  const task=await post('/task',{ids:[finding.id],expected:{[finding.id]:finding.reviewTarget}});
+  assert.equal(task.status,200);assert.equal((await task.json()).task.evidence.status,'valid');
+  const review=await post('/review',{action:'accept',id:finding.id,expected:finding.reviewTarget,reason:'existing scope'});
+  assert.equal(review.status,200,await review.text());
+  assert.equal(payload(fs.readFileSync(path.join(view.out,'analysis/repo.analysis.html'),'utf8')).ui.mode,'standalone');
+  fs.writeFileSync(path.join(root,'b.ts'),'export function b(){return 1;}\n');
+  const refreshed=await post('/analyze',null,{'X-Analysis-Refresh':'1'});assert.equal(refreshed.status,200);
+  const after=payload(await refreshed.text());assert.equal(after.overview.review.comparison.comparable,true);
+  assert.ok(after.overview.review.comparison.notDetected.length>0);
+  assert.ok(fs.existsSync(path.join(view.out,'analysis.previous/findings.json')));
+});
