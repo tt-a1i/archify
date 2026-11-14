@@ -17,6 +17,8 @@ PR priorities use a bounded impact layer over the saved facts and graph, not the
 
 This layer performs no new extraction or repository traversal. Reading is bounded to 32 changed files, 4 MiB of paired source, 80 changed definitions and 160 result records; each reference preview is bounded. Unsupported models, parse errors, excluded roles and exhausted budgets remain explicit unknowns. This is direct static orientation, not runtime tracing, behavior equivalence or complete transitive impact. Full head findings remain separately available as background. The PR brief copies change evidence and its coverage rather than unrelated whole-head recommendations.
 
+In PR mode, short file/function addition and removal counts follow the original module labels, with detailed counts available on hover. Change badges (+/−/◇) open the captured source; grey dashed spikes show merge-base complexity alongside the current spikes. Removed functions can be marked against a surviving file; deleted files/modules remain in the change list. These annotations do not appear in ordinary repository analysis. A same-metric source edit can have a change badge without implying increased complexity or changed behavior.
+
 From the `archify/` package directory inside the Archify repository:
 
 ```sh

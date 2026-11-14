@@ -6,6 +6,8 @@ import {test} from 'node:test';
 import {extractFacts,buildGraph,evaluateGraph,loadConfig,mergeConfig} from '../lib/analysis.mjs';
 import {buildPullRequestImpact} from '../lib/pull-request-impact.mjs';
 import {buildOverview} from '../overlay/overview.mjs';
+import {buildAtlas} from '../overlay/atlas.mjs';
+import {buildMarkerModel} from '../overlay/pull-request.mjs';
 
 function pair(t,baseFiles,headFiles,custom={},language='ts') {
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-impact-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
@@ -28,7 +30,7 @@ const stable={
 };
 
 test('PR impact follows a same-metric source change into an unchanged caller and leaves old hotspots out',t=>{
-  const {impact}=pair(t,stable,{...stable,'lib/target.ts':'export function target(x:boolean){return 2;}\n'});
+  const {impact,sides}=pair(t,stable,{...stable,'lib/target.ts':'export function target(x:boolean){return 2;}\n'});
   assert.ok(impact.records.some(r=>r.kind==='definition-text'&&r.path==='lib/target.ts'));
   const users=impact.records.find(r=>r.kind==='known-users'&&r.path==='lib/target.ts');
   assert.ok(users);assert.equal(users.callers.coverage,'available');assert.equal(users.callers.total,1);assert.equal(users.unchangedCallers,1);
@@ -36,6 +38,11 @@ test('PR impact follows a same-metric source change into an unchanged caller and
   assert.equal(impact.records.some(r=>r.path==='unrelated/hot.ts'),false);
   assert.equal(impact.records.some(r=>r.kind==='function-metrics'),false);
   assert.equal(impact.coverage.work.parsedFiles,1);assert.equal(impact.coverage.work.repositoryScans,0);
+  const atlases=['base','head'].map(side=>buildAtlas({facts:sides[side].facts,graph:sides[side].graph,findings:sides[side].findings.diagnostics}));
+  const markers=buildMarkerModel(...atlases,['lib/target.ts'],impact.records);
+  const changed=markers.records.find(record=>record.kind==='function'&&record.path==='lib/target.ts');
+  assert.equal(changed.status,'modified');assert.equal(changed.before.complexity,changed.after.complexity);
+  assert.equal(markers.modules.find(module=>module.id==='lib').functions.modified,1);
 });
 
 test('line-only movement does not turn an existing warning or a shifted reference into PR impact',t=>{

@@ -12,13 +12,14 @@ test('native PR view keeps comparison chart visible and shares localized source/
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-pr-browser-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
   const roots={base:path.join(dir,'before'),head:path.join(dir,'after')};
   for(const root of Object.values(roots))fs.mkdirSync(root);
-  fs.writeFileSync(path.join(roots.base,'main.mjs'),'export function run(x){return 1;}\n');
-  fs.writeFileSync(path.join(roots.head,'main.mjs'),'export function run(x){'+'if(x)return 2;'.repeat(25)+'return 0;}\n');
+  fs.writeFileSync(path.join(roots.base,'main.mjs'),'export function run(x){return 1;}\nexport function gone(){return 1;}\n');
+  fs.writeFileSync(path.join(roots.head,'main.mjs'),"import './old.mjs';\nexport function run(x){"+'if(x)return 2;'.repeat(25)+'return 0;}\nexport function fresh(){return 2;}\n');
   fs.writeFileSync(path.join(roots.base,'removed.mjs'),'export const removed = 1;\n');
   for(const root of Object.values(roots))fs.writeFileSync(path.join(root,'old.mjs'),'export function oldHotspot(x){'+'if(x)return 1;'.repeat(35)+'return 0;}\n');
   const baseSHA='a'.repeat(40),headSHA='b'.repeat(40);
   const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());
   const session=await browser.sessionPromise,send=(m,p={})=>browser.cdp.send(m,p,session);
+  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__atlasTexts=[];window.__atlasGlyphs={};const original=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(value,x,y){const text=String(value);window.__atlasTexts.push(text);if(['+','−','◇'].includes(text)){const p=this.getTransform().transformPoint({x,y});window.__atlasGlyphs[text]={x:p.x,y:p.y};}return original.apply(this,arguments);};`});
   const run=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});assert.equal(r.exceptionDetails,undefined,r.exceptionDetails?.exception?.description);return r.result?.value;};
   for(const locale of ['en','zh-CN']){
     const out=path.join(dir,locale),source={root:'.',sourceKind:'git-tree',baseRevision:baseSHA,revision:baseSHA};
@@ -26,15 +27,26 @@ test('native PR view keeps comparison chart visible and shares localized source/
     const result=analyzeRepository({root:roots.head,out,locale,language:'ts',source:{...source,revision:headSHA},previous:path.join(out,'base/findings.json'),
       pullRequest:{pr:{number:null,simulation:true,title:'</script><script>window.prInjected=1</script>',repository:'example/project',mergeBaseSHA:baseSHA,headSHA,baseSHA,capturedAt:'2026-11-14T05:02:16Z'},scope:'.',changedFiles:[{path:'main.mjs',status:'modified'},{path:'removed.mjs',status:'removed'}],manifests:{base:{skipped:[]},head:{skipped:[]}},sourceRoot:roots.head}});
     const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(result.overlay.html).href});await loaded;
+    await run("document.fonts.ready.then(()=>new Promise(r=>setTimeout(r,200)))");
+    const marks=await run(`(()=>{const d=JSON.parse(document.getElementById('bauify-analysis').textContent),change=d.pullRequest.changes.find(c=>c.path==='main.mjs'&&c.kind==='file');return {module:d.pullRequest.moduleChanges.find(m=>m.id===change.module),texts:window.__atlasTexts,glyphs:Object.keys(window.__atlasGlyphs)};})()`);
+    assert.deepEqual(marks.module.functions,{added:1,removed:1,modified:1});
+    assert.ok(marks.texts.includes(locale==='zh-CN'?'+1/−1 函数':'+1/−1 fn'));
+    for(const glyph of ['+','−','◇'])assert.ok(marks.glyphs.includes(glyph),'the canvas paints '+glyph);
+    await run("let p=window.__atlasGlyphs['−'],c=document.querySelector('#bauify-atlas canvas'),r=c.getBoundingClientRect();c.dispatchEvent(new MouseEvent('click',{clientX:r.left+p.x,clientY:r.top+p.y,bubbles:true}))");
+    assert.equal(await run("document.getElementById('bauify-code').hidden"),false);
+    assert.match(await run("document.getElementById('bauify-code').textContent"),/gone/);
+    assert.doesNotMatch(await run("document.getElementById('bauify-code').textContent"),/fresh/);
+    await run("document.querySelector('#bauify-code .close').click();document.querySelector('.atlas-clear').click()");
     const assessments=await run(`(()=>{const a=document.querySelector('[data-assessment=architecture]'),c=document.querySelector('[data-assessment=complexity]');return {count:document.querySelectorAll('.pr-assessment').length,architecture:a.querySelector('.pr-origin').textContent,complexity:c.querySelector('.pr-origin').textContent,architecturePriorities:a.querySelectorAll('.priority-card').length,complexityPriorities:c.querySelectorAll('.priority-card').length,ai:!!document.querySelector('.pr-ai-status'),body:c.textContent};})()`);
     assert.equal(assessments.count,2);assert.equal(assessments.architecture,locale==='zh-CN'?'自动检测':'Automatic detection');assert.equal(assessments.complexity,assessments.architecture);
-    assert.equal(assessments.architecturePriorities,0);assert.ok(assessments.complexityPriorities>=1);assert.equal(assessments.ai,false);assert.match(assessments.body,/1 → 26/);
+    assert.ok(assessments.architecturePriorities>=1);assert.ok(assessments.complexityPriorities>=1);assert.equal(assessments.ai,false);assert.match(assessments.body,/1 → 26/);
     assert.equal(await run("document.querySelector('.pr-review').textContent.includes('oldHotspot')"),false);
     for(const theme of ['light','dark'])for(const [width,height] of [[1440,900],[390,844]]){
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
       await run(`if(document.documentElement.getAttribute('data-theme')!==${JSON.stringify(theme)})document.getElementById('btn-theme').click();document.fonts.ready.then(()=>new Promise(r=>setTimeout(r,250)))`);
       const state=await run(`(()=>{let chart=document.querySelector('.pr-distribution'),r=chart.getBoundingClientRect(),panel=document.getElementById('bauify-atlas'),s=panel.querySelector('.atlas-side').getBoundingClientRect();return {locale:panel.lang,bands:chart.querySelectorAll('.pr-band').length,visible:getComputedStyle(chart).display!=='none',inView:innerWidth<1000||r.top>=s.top&&r.bottom<=Math.min(s.bottom,innerHeight),overflow:document.documentElement.scrollWidth>innerWidth,injected:window.prInjected};})()`);
       assert.equal(state.locale,locale);assert.equal(state.bands,6);assert.equal(state.visible,true);assert.equal(state.inView,true,JSON.stringify(state));assert.equal(state.overflow,false);assert.equal(state.injected,undefined);
+
     }
     await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
     await run("document.querySelector('.pr-changes').open=true;const d=JSON.parse(document.getElementById('bauify-analysis').textContent),i=d.pullRequest.changes.findIndex(c=>c.path==='main.mjs'&&c.kind==='function');document.querySelector('[data-pr-change=\"'+i+'\"]').click()");
@@ -60,4 +72,10 @@ test('native PR view keeps comparison chart visible and shares localized source/
   const importedLoaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(imported.overlay.html).href});await importedLoaded;
   const attribution=await run(`(()=>{let d=JSON.parse(document.getElementById('bauify-analysis').textContent);return {comparable:d.overview.review.comparison.comparable,origins:[...document.querySelectorAll('[data-assessment] .pr-origin')].map(e=>e.textContent),review:document.querySelector('.pr-review').textContent,external:!!document.querySelector('.external-entry'),ai:!!document.querySelector('.pr-ai-status')};})()`);
   assert.equal(attribution.comparable,false);assert.deepEqual(attribution.origins,['Automatic detection','Automatic detection']);assert.doesNotMatch(attribution.review,/ESLint|Review this source/);assert.equal(attribution.external,true);assert.equal(attribution.ai,false);
+  const ordinary=analyzeRepository({root:roots.head,out:path.join(dir,'ordinary'),locale:'en',language:'ts'});
+  const ordinaryLoaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(ordinary.overlay.html).href});await ordinaryLoaded;
+  await run("document.fonts.ready.then(()=>new Promise(r=>setTimeout(r,100)))");
+  assert.equal(await run("!!JSON.parse(document.getElementById('bauify-analysis').textContent).pullRequest"),false);
+  assert.deepEqual(await run('Object.keys(window.__atlasGlyphs)'),[]);
+  assert.equal(await run("window.__atlasTexts.some(t=>/^[+−][0-9]/.test(t))"),false);
 });

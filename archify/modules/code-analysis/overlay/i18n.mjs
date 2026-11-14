@@ -9,6 +9,13 @@ export function createTranslator(messages = {}) {
   };
 }
 const ZH_CN = {
+  "Files: {counts}": "文件：{counts}",
+  "Functions: {counts}": "函数：{counts}",
+  "{changes} file": "{changes} 文件",
+  "{changes} files": "{changes} 文件",
+  "{changes} fn": "{changes} 函数",
+  "{changes} fns": "{changes} 函数",
+  "Grey dashed spikes: merge-base complexity · red −: removed function. Click a marker for source; hover a module for counts.": "灰虚线柱：基点复杂度；红 −：删除函数。点标记看源码，悬停模块看统计。",
   "Changed dependencies and existing users reached from the changed code.": "从本次变更出发，查看依赖变化与已知使用方。",
   "Before/after function measurements and changed source; text changes alone do not prove behavior changes.": "对照函数指标与源码变化；文本变化本身不证明行为改变。",
   "Change-attributed impact is unavailable in this saved report": "这份报告尚未生成按变更归因的影响分析",

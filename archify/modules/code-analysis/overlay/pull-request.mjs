@@ -18,9 +18,10 @@ export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourc
   const baseGraph = read('module-graph');
   const before = buildAtlas({ facts: baseFacts, graph: baseGraph, findings: baseFindings.diagnostics });
   const after = buildAtlas({ facts, graph, findings: findings.diagnostics });
-  const markers = buildMarkerModel(before, after, changedFiles.filter(file => file.status !== 'removed').map(file => file.path));
   const impact = buildPullRequestImpact({ baseFacts, headFacts: facts, baseGraph, headGraph: graph,
     baseFindings, headFindings: findings, baseRoot: baseSourceRoot, headRoot: sourceRoot, changedFiles });
+  const markers = buildMarkerModel(before, after, changedFiles.filter(file => file.status !== 'removed').map(file => file.path),
+    impact.records.filter(record => ['function-metrics','definition-text'].includes(record.kind)));
   const wanted = new Set([...changedFiles.flatMap(file => [file.path, file.previousPath].filter(Boolean)), ...impact.records.flatMap(record => record.locations.map(item => item.file))]);
   const beforeSources = Object.fromEntries(baseFacts.files.filter(file => wanted.has(file.path)).map(file => {
     const lines = file.sourceText.split(/\r?\n/); if (lines.at(-1) === '') lines.pop();
@@ -32,17 +33,18 @@ export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourc
     capturedAt: pr.capturedAt, sourceRoot, baseSourceRoot, sourceGitRoot, changedFiles, impact,
     before: count(before), after: count(after),
     distribution: { labels: ['1', '2–4', '5–9', '10–14', '15–24', '25+'], before: histogram(before), after: histogram(after) },
-    changes: markers.records, ambiguousFunctions: markers.ambiguousFunctions, beforeSources,
+    changes: markers.records, moduleChanges: markers.modules, ambiguousFunctions: markers.ambiguousFunctions, beforeSources,
     omitted: Object.fromEntries(Object.entries(manifests).map(([side, manifest]) => [side, manifest.skipped])),
   };
 }
-export function buildMarkerModel(before,after,changedPaths=[]){
+export function buildMarkerModel(before,after,changedPaths=[],changedDefinitions=[]){
   const out=[],bf=new Map(before.files.map(f=>[f[0],f])),af=new Map(after.files.map(f=>[f[0],f]));
   const changed=new Set(changedPaths);
+  const changedBodies=new Set(changedDefinitions.map(record=>JSON.stringify([record.path,record.name])));
   const entity=(kind,status,key,extra)=>({id:kind+':'+status+':'+JSON.stringify(key),kind,status,...extra});
   for(const p of new Set([...bf.keys(),...af.keys()])){
     const b=bf.get(p),a=af.get(p),status=!b?'added':!a?'removed':changed.has(p)?'modified':null;
-    if(status)out.push(entity('file',status,p,{path:p,before:b?{loc:b[2],module:before.modules[b[1]].id}:null,after:a?{loc:a[2],module:after.modules[a[1]].id}:null}));
+    if(status)out.push(entity('file',status,p,{path:p,module:a?after.modules[a[1]].id:before.modules[b[1]].id,before:b?{loc:b[2],module:before.modules[b[1]].id}:null,after:a?{loc:a[2],module:after.modules[a[1]].id}:null}));
   }
   const edgeMap=m=>new Map(m.edges.map(e=>{const paths=[m.files[e[0]][0],m.files[e[1]][0]];return[JSON.stringify(paths),paths];}));
   const be=edgeMap(before),ae=edgeMap(after);
@@ -55,7 +57,7 @@ export function buildMarkerModel(before,after,changedPaths=[]){
     const map=new Map();
     for(const f of m.functions){
       const path=m.files[f[0]][0],name=f[1],key=JSON.stringify([path,name]);
-      const record={path,name,line:f[2],complexity:f[3],nesting:f[4],length:f[5],severity:f[6]>=0?m.findings[f[6]]?.severity:null};
+      const record={path,name,module:m.modules[m.files[f[0]][1]].id,line:f[2],complexity:f[3],nesting:f[4],length:f[5],severity:f[6]>=0?m.findings[f[6]]?.severity:null};
       map.set(key,(map.get(key)||[]).concat([record]));
     }return map;
   };
@@ -64,9 +66,15 @@ export function buildMarkerModel(before,after,changedPaths=[]){
     const bs=bfn.get(key)||[],as=afn.get(key)||[];
     if(bs.length>1||as.length>1){ambiguous++;continue;}
     const b=bs[0]||null,a=as[0]||null,r=a||b;
-    const status=!b?'added':!a?'removed':b.complexity!==a.complexity||b.nesting!==a.nesting?'modified':null;
-    if(status)out.push(entity('function',status,[r.path,r.name],{path:r.path,name:r.name,before:b,after:a}));
+    const status=!b?'added':!a?'removed':b.complexity!==a.complexity||b.nesting!==a.nesting||changedBodies.has(key)?'modified':null;
+    if(status)out.push(entity('function',status,[r.path,r.name],{path:r.path,name:r.name,module:r.module,before:b,after:a}));
   }
   out.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
-  return {records:out,ambiguousFunctions:ambiguous};
+  const modules=new Map();
+  for(const record of out) {
+    if(!record.module) continue;
+    if(!modules.has(record.module)) modules.set(record.module,{id:record.module,files:{added:0,removed:0,modified:0},functions:{added:0,removed:0,modified:0}});
+    modules.get(record.module)[record.kind==='file'?'files':'functions'][record.status]++;
+  }
+  return {records:out,modules:[...modules.values()],ambiguousFunctions:ambiguous};
 }
