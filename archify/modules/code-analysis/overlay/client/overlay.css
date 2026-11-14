@@ -331,6 +331,13 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .overview-secondary { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .overview-secondary .counts { font-size: 12px; margin: 8px 0 12px; }
 #bauify-reader .overview-secondary .count.total { font-size: inherit; }
+#bauify-reader .verify-change { margin: 12px 0; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; overflow-wrap: anywhere; }
+#bauify-reader .verify-change > summary { font-weight: 600; cursor: pointer; }
+#bauify-reader .verify-change label { display: block; margin: 10px 0; }
+#bauify-reader .verify-change input { display: block; width: 100%; margin: 4px 0; font: inherit; }
+#bauify-reader .verify-change button { min-height: 36px; }
+#bauify-reader .verify-preview ul { padding-inline-start: 20px; }
+#bauify-reader .verify-status:empty { display: none; }
 #bauify-reader .comparison-banner { padding: 11px 12px; margin: 10px 0 12px; border: 1px solid var(--panel-border); border-left: 3px solid var(--text-muted); border-radius: 8px; }
 #bauify-reader .comparison-banner.positive { border-left-color: var(--backend-stroke, #159f88); }
 #bauify-reader .comparison-banner > span { display: block; font-size: 11px; color: var(--text-muted); }

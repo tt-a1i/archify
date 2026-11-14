@@ -9,6 +9,7 @@ import { fail, receipt } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { buildGraph, evaluateGraph, extractFacts, loadBaseline, loadPrevious, readJsonInput, reviewSummary, stableJson, validateFacts } from '../lib/analysis.mjs';
 import { reviewFindings } from '../lib/review.mjs';
+import { verificationContext } from '../lib/verification-context.mjs';
 import { buildOverlay } from './inject.mjs';
 
 // Stage 4: delivered HTML + authored IR + graph → a new HTML with the analysis layer.
@@ -28,7 +29,8 @@ export function renderAnalysisSnapshot({ dir, html, root, review }) {
   const facts = read('raw-facts.json'), graph = read('module-graph.json'), findings = read('findings.json');
   const context = read('view-context.json');
   if (context?.schema_version !== 1 || (!context.ir && context.mode !== 'standalone') || !context.run) fail('overlay/context-invalid', 'The captured view context is missing or invalid.', { supportedFixes: ['re-analyze the repository to rebuild its captured view'] });
-  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
+  const previous = loadPrevious(path.join(dir, '..', 'analysis.previous', 'findings.json'));
+  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review, verification: verificationContext(previous, findings, review) };
   return overlayHtml({ html: html ? fs.readFileSync(html, 'utf8') : null, ir: context.ir, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: context.map, sourceRoot: root, run });
 }
 
@@ -65,12 +67,13 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   fs.writeFileSync(path.join(dir, 'module-graph.json'), stableJson(graph));
   const findings = evaluateGraph(graph, cfg, facts, { root: absRoot });
   fs.writeFileSync(path.join(dir, 'findings.json'), stableJson(findings));
-  const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+  const prior = loadPrevious(previous);
+  const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: prior, analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   const irDoc = irSnapshot ?? (irPath ? readJsonInput(irPath, 'analysis --ir') : null);
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
   const context = { schema_version: 1, mode: irPath ? 'diagram' : 'standalone', ir: irDoc, map: mapDoc, run: { locale: locale || irDoc?.meta?.locale || 'en', openAnalysis: !irPath || openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
   fs.writeFileSync(path.join(dir, 'view-context.json'), stableJson(context));
-  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
+  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review, verification: verificationContext(prior, findings, review) };
   const overlay = overlayHtml({ html: htmlPath ? fs.readFileSync(htmlPath, 'utf8') : null, ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });
   const outHtml = path.join(dir, 'repo.analysis.html');
   writeAnalysisView(dir, overlay, review);
