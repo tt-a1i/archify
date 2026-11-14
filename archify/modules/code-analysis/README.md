@@ -20,7 +20,9 @@ Bauify (commit 4bb811c) and maintained here. It reads source dependencies
 function complexity and configured architecture boundaries, and shows the result on the architecture diagram Archify delivered — as an
 extra layer the reader switches on, never as a change to the diagram itself.
 
-It has two entry points that share the same pipeline:
+It has three entry points that share the same pipeline:
+
+- **A prepared companion view** (`prepare`): `code-analysis prepare <repo-root> --ir architecture.json --out out/analysis` creates `analysis/repo.analysis.html` with captured AI tasks, opens on the overview and exits. The reader follows `meta.locale` (`zh-CN` or English fallback); no server stays running. See [Agent entry and investigation](docs/USAGE.md#agent-entry-and-investigation) for natural Skill delivery and restarting for comparison after edits.
 
 - **On the diagram** (`serve`, also reached through `npm start`):
   1. **Archify delivers the authored diagram** (`archify deliver architecture …`),

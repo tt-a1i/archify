@@ -49,7 +49,7 @@ export function writeAnalysisView(dir, overlay, review) {
 // `html` is the page Archify delivered for `ir`; it is read, never modified.
 // `baseline` (file) marks accepted findings; `previous` (a findings.json from
 // an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir, html, out, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null }) {
+export function analyzeRepository({ root, ir, html, out, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false }) {
   const absRoot = path.resolve(root);
   const irPath = path.resolve(ir);
   const htmlPath = path.resolve(html);
@@ -67,7 +67,7 @@ export function analyzeRepository({ root, ir, html, out, language = null, config
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   const irDoc = irSnapshot ?? readJsonInput(irPath, 'analysis --ir');
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
-  const context = { schema_version: 1, ir: irDoc, map: mapDoc, run: { suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
+  const context = { schema_version: 1, ir: irDoc, map: mapDoc, run: { openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
   fs.writeFileSync(path.join(dir, 'view-context.json'), stableJson(context));
   const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
   const overlay = overlayHtml({ html: fs.readFileSync(htmlPath, 'utf8'), ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });

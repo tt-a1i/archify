@@ -47,7 +47,7 @@ test('concurrent starts isolate default artifacts for the same project', { timeo
   for (const [view, title] of [[first, 'First'], [second, 'Second']]) {
     const before = fs.readFileSync(view.artifact, 'utf8');
     const page = await (await fetch(view.url)).text();
-    const token = page.match(/\}\)\("([a-f0-9]{48})"\)/)[1];
+    const token = page.match(/\}\)\("([a-f0-9]{48})"/)[1];
     const response = await fetch(view.url + '/analyze', { method: 'POST', headers: { Origin: view.url, 'X-Analysis-Token': token } });
     const html = await response.text();
     assert.equal(response.status, 200, html);

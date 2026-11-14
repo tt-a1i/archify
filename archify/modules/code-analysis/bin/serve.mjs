@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Code Analysis, the only way in:
+// Interactive Code Analysis entry:
 //   1. Archify delivers the authored architecture diagram, exactly as `archify deliver` does.
 //   2. The page is served locally with one extra toolbar button, "Code Analysis".
 //   3. Clicking it runs the analysis (extract → graphs → evaluate → overlay) for the
@@ -13,6 +13,7 @@
 // comparison for the next one. A failed run leaves the last good result in place.
 // The delivered HTML is never modified; the analysis page is written next to it.
 import http from 'node:http';
+import { messagesFor, createTranslator } from '../overlay/i18n.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -20,6 +21,7 @@ import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError } from '../core/index.mjs';
+import { analysisStartCommand } from '../lib/task-command.mjs';
 import { withInstallLock } from '../lib/install-lock.mjs';
 
 const execute = promisify(execFile);
@@ -102,7 +104,7 @@ export function parseArgs(argv) {
   return { repo, options };
 }
 
-export async function startAnalysisView(argv) {
+export async function prepareAnalysisSession(argv) {
   const { repo, options } = parseArgs(argv);
   const root = path.resolve(repo), ir = path.resolve(options['--ir']), out = path.resolve(options['--out']);
   const irBytes = fs.readFileSync(ir);
@@ -142,32 +144,45 @@ export async function startAnalysisView(argv) {
     fs.rmSync(deliveryInput, { force: true });
   }
 
-  // 2. Serve it with the button. The token ties analysis requests to this page.
+  const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : path.join(out, 'baseline.json');
+  const resume = { command: analysisStartCommand(archify, root, {
+    ir, out, language: options['--language'], quality,
+    config: options['--config'] ? path.resolve(options['--config']) : null,
+    map: options['--map'] ? path.resolve(options['--map']) : null,
+    baseline: baselineFile,
+  }), shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh' };
+  return { root, ir, out, options, irBytes, doc, delivered, baselineFile, resume };
+}
+
+export async function runSessionAnalysis({ root, ir, doc, delivered, out, options, baselineFile, resume, openAnalysis = false }) {
+  const analysisDir = path.join(out, 'analysis');
+  const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
+  try {
+    await runWorker({
+      root, ir, irSnapshot: doc, html: delivered, out: next, resume, openAnalysis,
+      language: options['--language'] || null, config: options['--config'] ? path.resolve(options['--config']) : null,
+      map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
+      previous: path.join(analysisDir, 'findings.json'),
+    });
+  } catch (error) {
+    fs.rmSync(next, { recursive: true, force: true });
+    throw error;
+  }
+  const previousDir = path.join(out, 'analysis.previous');
+  fs.rmSync(previousDir, { recursive: true, force: true });
+  if (fs.existsSync(analysisDir)) fs.renameSync(analysisDir, previousDir);
+  fs.renameSync(next, analysisDir);
+  return fs.readFileSync(path.join(analysisDir, 'repo.analysis.html'), 'utf8');
+}
+
+export async function startAnalysisView(argv) {
+  const session = await prepareAnalysisSession(argv);
+  const { root, ir, out, options, irBytes, doc, delivered, baselineFile } = session;
   const token = randomBytes(24).toString('hex');
-  const page = fs.readFileSync(delivered, 'utf8').replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)})</script></body>`);
+  const page = fs.readFileSync(delivered, 'utf8').replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)}, ${JSON.stringify(messagesFor(doc.meta?.locale))}, ${createTranslator.toString()})</script></body>`);
   let pending = null, result = null, origin, reviewing = false;
   const analysisDir = path.join(out, 'analysis');
-  const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : path.join(out, 'baseline.json');
-  // One run: fresh directory, then swap it in. The current result is the comparison.
-  const runAnalysis = async () => {
-    const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
-    try {
-      await runWorker({
-        root, ir, irSnapshot: doc, html: delivered, out: next,
-        language: options['--language'] || null, config: options['--config'] ? path.resolve(options['--config']) : null,
-        map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
-        previous: path.join(analysisDir, 'findings.json'),
-      });
-    } catch (error) {
-      fs.rmSync(next, { recursive: true, force: true });
-      throw error;
-    }
-    const previousDir = path.join(out, 'analysis.previous');
-    fs.rmSync(previousDir, { recursive: true, force: true });
-    if (fs.existsSync(analysisDir)) fs.renameSync(analysisDir, previousDir);
-    fs.renameSync(next, analysisDir);
-    return fs.readFileSync(path.join(analysisDir, 'repo.analysis.html'), 'utf8');
-  };
+  const runAnalysis = () => runSessionAnalysis(session);
   const server = http.createServer(async (req, res) => {
     const send = (status, body, type = 'application/json') => { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(body); };
     if (req.headers.host !== new URL(origin).host) return send(403, '{}');
@@ -284,12 +299,13 @@ export async function startAnalysisView(argv) {
 // Runs in the page. One toolbar button: click → analysis runs → the analysis
 // layer is added to this page and switched on. From then on the layer's own
 // toggle (the same button, now owned by the layer) shows or hides it.
-function client(token) {
+function client(token, messages, makeTranslator) {
+  var tr = makeTranslator(messages);
   var toolbar = document.querySelector('.toolbar');
   if (!toolbar) return;
   var button = document.createElement('button');
-  button.id = 'code-analysis-start'; button.type = 'button'; button.textContent = 'Code Analysis';
-  button.title = 'Analyze the repository and show the result on this diagram';
+  button.id = 'code-analysis-start'; button.type = 'button'; button.textContent = tr("Code Analysis");
+  button.title = tr("Analyze the repository and show the result on this diagram");
   toolbar.appendChild(button);
   var note = document.createElement('div');
   note.id = 'code-analysis-note'; note.setAttribute('role', 'status');
@@ -332,7 +348,7 @@ function client(token) {
     var response = await fetch('/task', { method: 'POST', headers: { 'X-Analysis-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
     var body = await response.json();
     if (!response.ok) {
-      var error = new Error(body.error || (body.diagnostics || []).map(function (d) { return d.message; }).join(' ') || 'Task request failed');
+      var error = new Error(body.error || (body.diagnostics || []).map(function (d) { return d.message; }).join(' ') || tr("Task request failed"));
       error.status = response.status;
       throw error;
     }
@@ -342,7 +358,7 @@ function client(token) {
     var response = await fetch('/review', { method: 'POST', headers: { 'X-Analysis-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(decision) });
     var body = await response.json();
     if (!response.ok) {
-      var error = new Error(body.error || 'Review decision could not be saved');
+      var error = new Error(body.error || tr("Review decision could not be saved"));
       error.status = response.status;
       throw error;
     }
@@ -355,26 +371,26 @@ function client(token) {
     if (!response.ok) {
       var body = {};
       try { body = await response.json(); } catch (e) { /* not JSON */ }
-      throw new Error(body.error || 'analysis failed');
+      throw new Error(body.error || tr("analysis failed"));
     }
     location.replace(location.pathname + '?analysis=open');
   };
   button.addEventListener('click', async function () {
-    button.disabled = true; button.textContent = 'Analyzing…'; say('Reading the repository — imports, modules, rules.');
+    button.disabled = true; button.textContent = tr("Analyzing…"); say(tr("Reading the repository — imports, modules, rules."));
     try {
       var response = await fetch('/analyze', { method: 'POST', headers: { 'X-Analysis-Token': token } });
       if (!response.ok) {
         var body = await response.json();
         if (response.status === 409 && body.diagnostics?.[0]?.code === 'analysis/architecture-changed') {
-          button.disabled = true; button.textContent = 'Code Analysis';
-          say('Architecture has changed. Please regenerate the diagram.');
+          button.disabled = true; button.textContent = tr("Code Analysis");
+          say(tr("Architecture has changed. Please regenerate the diagram."));
           return;
         }
-        throw new Error(body.error || 'analysis failed');
+        throw new Error(body.error || tr("analysis failed"));
       }
       var parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
       var required = ['bauify-analysis', 'bauify-style', 'bauify-script'];
-      for (var i = 0; i < required.length; i++) if (!parsed.getElementById(required[i])) throw new Error('analysis result is incomplete');
+      for (var i = 0; i < required.length; i++) if (!parsed.getElementById(required[i])) throw new Error(tr("analysis result is incomplete"));
       // In document order; the Atlas parts are present only when raw facts were available.
       var ids = ['bauify-analysis', 'bauify-atlas-data', 'bauify-style', 'bauify-script', 'bauify-atlas-style', 'bauify-atlas-script'].filter(function (id) { return parsed.getElementById(id); });
       // Hand over to the layer: it adds its own toggle to the toolbar, so this button retires.
@@ -395,8 +411,8 @@ function client(token) {
       if (selectedFinding && window.__archifyShowFinding) window.__archifyShowFinding(selectedFinding, params.get('from') === 'findings' ? 'findings' : 'summary');
       if (location.search) history.replaceState(null, '', location.pathname);
     } catch (error) {
-      button.disabled = false; button.textContent = 'Code Analysis';
-      say('Analysis failed: ' + error.message + ' — click Code Analysis to retry.');
+      button.disabled = false; button.textContent = tr("Code Analysis");
+      say(tr("Analysis failed: ") + error.message + tr(" — click Code Analysis to retry."));
     }
   });
   if (new URLSearchParams(location.search).get('analysis') === 'open') button.click();

@@ -7,7 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { baselineCommand, taskCommand } from '../lib/task-command.mjs';
+import { baselineCommand, taskCommand, analysisStartCommand } from '../lib/task-command.mjs';
 
 const CHECK = fileURLToPath(new URL('../bin/check.mjs', import.meta.url));
 const windows = process.platform === 'win32';
@@ -57,6 +57,12 @@ for (const name of ["tool's home & (space)", 'tool %ARCHIFY_COMMAND_EXPANSION% !
     assert.equal(adopted.status, 0, adopted.stdout + adopted.stderr);
     assert.deepEqual(JSON.parse(adopted.stdout), ['code-analysis', 'check', root, '--language', 'ts', '--config', config,
       '--baseline', baseline, '--update-baseline', '--reason', 'existing findings recorded when adopting Code Analysis']);
+
+    const startOptions = { ir: path.join(dir, "source's architecture.json"), out, language: 'ts', config, baseline };
+    const reopened = execute(analysisStartCommand(cli, root, startOptions));
+    assert.equal(reopened.status, 0, reopened.stdout + reopened.stderr);
+    assert.deepEqual(JSON.parse(reopened.stdout), ['start', root, '--ir', startOptions.ir, '--out', out,
+      '--language', 'ts', '--config', config, '--baseline', baseline]);
 
     fs.writeFileSync(cli, 'process.exitCode = 2;');
     assert.equal(execute(command).status, 2, 'the copied command preserves a task failure exit code');

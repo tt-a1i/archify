@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
+import { createTranslator } from '../overlay/i18n.mjs';
 import { buildOverlay } from '../overlay/inject.mjs';
 const graph = {repository:{}, unresolved:{}, excluded:{roles:[]}, modules:[{id:'asr',label:'asr',path:'asr',files:1,loc:3,fanIn:5,fanOut:5,instability:0.5,entry:['asr/worker.py']}], edges:[], fileModules:{'asr/worker.py':'asr'}};
 const ir = {components:[{id:'asr',label:'ASR',sources:[{path:'asr/worker.py'}]}]};
@@ -31,7 +32,7 @@ test('hub arrows and all Bezier controls stay outside the node columns', () => {
   const script=result.html.match(/id="bauify-script">([\s\S]*?)<\/script>/)[1];
   assert.doesNotThrow(()=>new Function(script));
   const start=script.indexOf('  function hubDiagram('), end=script.indexOf('  // Two bars:',start);
-  const draw=new Function('function svgOpen(){return "<svg>"} function short(s){return s} function nodeRect(){return ""} function hubSources(){return ""} '+script.slice(start,end)+';return hubDiagram;')();
+  const draw=new Function('tr','function svgOpen(){return "<svg>"} function short(s){return s} function nodeRect(){return ""} function hubSources(){return ""} '+script.slice(start,end)+';return hubDiagram;')(createTranslator());
   for(const count of [1,5,12]) {
     const nodes=Array.from({length:count},(_,i)=>'m'+i);
     const svg=draw({},[{subject:{module:'asr'},evidence:{dependents:nodes,dependencies:nodes,threshold:{fanIn:5,fanOut:5}}}]);
@@ -59,7 +60,7 @@ test('source links preserve distinct finding lines and never invent line one', (
   assert.match(render({incoming:[],outgoing:[{evidence:[{file:'hub.py',line:28}]}]},'hub.py'),/data-line="28"/);
   const start=script.indexOf('  function showCode('),end=script.indexOf('  function showDetail(',start);
   let pane={hidden:true,innerHTML:'',querySelector:()=>({addEventListener(){},scrollIntoView(){}})};
-  const show=new Function('codePane','data','detail','function readerPage(){} const document={documentElement:{setAttribute(){},removeAttribute(){}}}; function esc(x){return x} '+script.slice(start,end)+';return showCode;')(pane,{snippets:{'worker.py':{lines:Array.from({length:100},(_,i)=>'code '+(i+1))}}},{});
+  const show=new Function('tr','codePane','data','detail','function readerPage(){} const document={documentElement:{setAttribute(){},removeAttribute(){}}}; function esc(x){return x} '+script.slice(start,end)+';return showCode;')(createTranslator(),pane,{snippets:{'worker.py':{lines:Array.from({length:100},(_,i)=>'code '+(i+1))}}},{});
   show('worker.py',47,'','amber');
   assert.match(pane.innerHTML,/Source · line 47/);
   assert.match(pane.innerHTML,/<span class="ln hit amber"><i>47<\/i>code 47/);

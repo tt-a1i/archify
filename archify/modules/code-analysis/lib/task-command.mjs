@@ -17,6 +17,14 @@ export function baselineCommand(cli, root, { language = null, config = null, bas
     '--baseline', baseline, '--update-baseline', '--reason', 'existing findings recorded when adopting Code Analysis'], platform);
 }
 
+// Resume an offline report using the same captured IR and analysis settings.
+// Opening a report never executes this command; the user can copy it explicitly.
+export function analysisStartCommand(cli, root, { ir, out, language, config, map, baseline, quality } = {}, platform = process.platform) {
+  return nodeCommand([cli, 'start', root, '--ir', ir, '--out', out,
+    ...Object.entries({ language, config, map, baseline, quality }).flatMap(([key, value]) => value ? [`--${key}`, value] : []),
+  ], platform);
+}
+
 function nodeCommand(args, platform) {
   const windows = platform === 'win32';
   if (windows && args.some((arg) => /[%!"\r\n]/.test(arg))) {

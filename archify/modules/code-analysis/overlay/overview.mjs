@@ -21,6 +21,7 @@
 // Everything here is derived from data already in the payload; no wording is
 // produced, so the page and an agent read the same facts.
 
+import { architectureBrief } from '../lib/architecture-brief.mjs';
 import { layerCounts } from '../evaluate/index.mjs';
 
 export const MAX_PRIORITIES = 3;
@@ -62,7 +63,7 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
   const bySeverity = { error: 0, warning: 0, info: 0 };
   for (const e of open) bySeverity[e.severity] += 1;
   const accepted = entries.length - open.length;
-  return {
+  const overview = {
     verdict: bySeverity.error + bySeverity.warning > 0 ? 'attention' : bySeverity.info > 0 ? 'signals-only' : 'none-found',
     // acceptedErrors: errors in the baseline. They do not fail a run, but a reader must still see them as unresolved.
     // Without a diagram (`check` without `--ir`), `offDiagram` is null rather than claiming every finding is off a diagram.
@@ -74,6 +75,8 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
     findings: ranked,
     coverage: coverageOf({ graph, facts, unmapped, ambiguousModules, run }),
   };
+  overview.investigation.architecture = architectureBrief({ graph, findings, overview, findingWhere });
+  return overview;
 }
 
 // The priorities above are ids only. `investigation.leads` repeats the same
