@@ -556,14 +556,28 @@
   }
 
   // ---- open / close ----
+  // The Atlas reads best on a dark ground. Opening it from a light diagram page
+  // switches the page to dark for the visit and back on leaving, without
+  // replacing the reader's saved theme. A theme the reader picks while in the
+  // Atlas is theirs: leaving then keeps it.
+  var atlasDarkened = false, ownThemeChanges = 0;
+  function toggleTheme() {
+    var stored = null;
+    try { stored = localStorage.getItem('archify-theme'); } catch (_) {}
+    ownThemeChanges++; Archify.theme.toggle();
+    try { if (stored === null) localStorage.removeItem('archify-theme'); else localStorage.setItem('archify-theme', stored); } catch (_) {}
+  }
   function open() {
     if (root.getAttribute('data-bauify') !== 'on') return;
+    if (!standalone && panel.hidden && root.getAttribute('data-theme') === 'light' && window.Archify && Archify.theme && Archify.theme.toggle) { toggleTheme(); atlasDarkened = true; }
     panel.hidden = false; root.setAttribute('data-bauify-view', 'atlas');
     renderSide(); draw(state.finding !== -1 || state.focusModule !== -1 ? 'fade' : 'reveal');
     if (!standalone) panel.querySelector('.atlas-classic').focus({ preventScroll: true });
   }
   function close() {
     if (standalone) return;
+    if (atlasDarkened && root.getAttribute('data-theme') === 'dark') toggleTheme();
+    atlasDarkened = false;
     panel.hidden = true; root.removeAttribute('data-bauify-view'); tip.hidden = true;
     if (anim.raf) { cancelAnimationFrame(anim.raf); clearTimeout(anim.timer); }
     geometryPending = false; updateGeometry(performance.now(), true);
@@ -599,7 +613,17 @@
     restoreSelection: function (saved) { select(saved.module, saved.finding, saved); }
   };
   if (standalone) open();
-  new MutationObserver(function () { if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden) { renderSide(); draw(); } }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
+  new MutationObserver(function (records) {
+    // open() already draws in the theme it switched to, so that switch must not
+    // redraw again: it would cut the opening reveal short.
+    var changed = false;
+    records.forEach(function (record) {
+      if (record.attributeName !== 'data-theme') { changed = true; return; }
+      if (ownThemeChanges) { ownThemeChanges--; return; }
+      atlasDarkened = false; changed = true;
+    });
+    if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden && changed) { renderSide(); draw(); }
+  }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   function redrawIfResized() {
     if (panel.hidden) return;
     var bounds = stage.getBoundingClientRect();

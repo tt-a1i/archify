@@ -500,7 +500,10 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await run("document.getElementById('code-analysis-start').click()");
   await until("document.documentElement.getAttribute('data-bauify') === 'on'", 'analysis did not open');
 
+  // From a light page the Atlas opens on a dark ground without saving that as the reader's theme.
+  await run("if (document.documentElement.getAttribute('data-theme') !== 'light') Archify.theme.toggle(); localStorage.removeItem('archify-theme')");
   await run("document.querySelector('#bauify-reader .reader-atlas').click()");
+  assert.deepEqual(await run("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('archify-theme')]"), ['dark', null], 'the Atlas switches a light page to dark for the visit only');
   const atlas = JSON.parse(await run("document.getElementById('bauify-atlas-data').textContent"));
   await until(`document.documentElement.getAttribute('data-bauify-atlas-drawn') === '${atlas.edges.length}'`, 'atlas did not draw');
   assert.ok(atlas.edges.length > 0 && atlas.functions.length > 0, 'the fixture has dependencies and functions to draw');
@@ -635,11 +638,15 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.match(await run("document.querySelector('#bauify-detail h3').textContent"), /is complex/);
   assert.ok(await run("!!document.querySelector('#bauify-detail pre')"), 'the Classic view shows the source excerpt');
   assert.equal(await run("document.documentElement.getAttribute('data-bauify-view')"), null);
+  // The theme button was pressed inside the Atlas above: that choice is the reader's and survives leaving.
+  assert.deepEqual(await run("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('archify-theme')]"), ['light', 'light'], 'a theme picked inside the Atlas is kept on leaving');
 
-  // Turning Code Analysis off also closes the Atlas.
+  // Turning Code Analysis off also closes the Atlas, and an untouched temporary dark theme is undone.
   await run("document.querySelector('#bauify-reader .reader-atlas').click()");
   assert.equal(await run("document.getElementById('bauify-atlas').hidden"), false);
+  assert.deepEqual(await run("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('archify-theme')]"), ['dark', 'light'], 'the visit is dark but the saved choice stays light');
   await run("document.getElementById('btn-bauify').click()");
   await until("document.getElementById('bauify-atlas').hidden", 'atlas stayed open after Code Analysis was turned off');
   assert.equal(await run("document.documentElement.getAttribute('data-bauify-view')"), null);
+  assert.deepEqual(await run("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('archify-theme')]"), ['light', 'light'], 'leaving the Atlas restores the page theme');
 });
