@@ -28,18 +28,33 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     const result=spawnSync(process.execPath,[cli,'code-analysis','prepare',root,'--out',path.join(dir,locale),'--locale',locale],{encoding:'utf8'});
     assert.equal(result.status,0,result.stdout+result.stderr);const prepared=JSON.parse(result.stdout);assert.equal(prepared.diagram,null);
     const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(prepared.html).href});await loaded;
+    assert.equal(await run("!document.getElementById('bauify-map-views').hidden"),true,'standalone defaults to the full-bleed Graph view');
+    assert.equal(await run("getComputedStyle(document.getElementById('bauify-reader')).display"),'none','left diagnostics drawer is collapsed by default in standalone mode');
+    await run("window.__archifyMapViews.open('atlas')");await settle();
+    assert.equal(await run("getComputedStyle(document.querySelector('#bauify-atlas .atlas-side')).display"),'none','Atlas right drawer is collapsed by default');
     assert.equal(await run("document.querySelector('.atlas-expand').textContent"),locale==='zh-CN'?'关闭扇区缩放':'Disable sector zoom');
     await run("document.querySelector('.atlas-expand').click()");
     assert.equal(await run("document.querySelector('.atlas-expand').textContent"),locale==='zh-CN'?'开启扇区缩放':'Enable sector zoom');
     assert.equal(await run("document.querySelector('.atlas-expand').getAttribute('aria-pressed')"),'false');
     await run("document.querySelector('.atlas-expand').click()");
+    await run("document.querySelector('.atlas-side-toggle').click()");
+    assert.notEqual(await run("getComputedStyle(document.querySelector('#bauify-atlas .atlas-side')).display"),'none','Atlas right drawer expands on toggle');
+    await run("document.querySelector('.atlas-side-toggle').click()");
+    assert.equal(await run("getComputedStyle(document.querySelector('#bauify-atlas .atlas-side')).display"),'none');
     for(const theme of ['light','dark'])for(const [width,height] of [[1440,900],[390,844]]){
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
       await run(`if(document.documentElement.getAttribute('data-theme')!==${JSON.stringify(theme)})document.getElementById('btn-theme').click()`);await settle();
-      const state=await run(`(()=>{const reader=document.getElementById('bauify-reader'),atlas=document.getElementById('bauify-atlas'),copy=document.querySelector('.priority-card .quick-copy'),r=reader.getBoundingClientRect(),a=atlas.getBoundingClientRect(),c=copy.getBoundingClientRect();return {lang:reader.lang,reader:getComputedStyle(reader).display,atlas:getComputedStyle(atlas).display,shape:innerWidth>1000?a.left>=r.right:a.top>=r.bottom,visible:c.top>=Math.max(0,r.top)&&c.bottom<=Math.min(innerHeight,r.bottom)&&c.left>=r.left&&c.right<=r.right,overflow:document.documentElement.scrollWidth>innerWidth,emptySwitch:!!document.querySelector('.atlas-classic,.reader-atlas'),noise:document.getElementById('bauify-overview').textContent.includes('not on this diagram')||document.getElementById('bauify-overview').textContent.includes('未映射到架构图')};})()`);
-      assert.equal(state.lang,locale);assert.notEqual(state.reader,'none');assert.notEqual(state.atlas,'none');assert.equal(state.shape,true,JSON.stringify(state));assert.equal(state.visible,true,locale+theme+width+JSON.stringify(state));assert.equal(state.overflow,false);assert.equal(state.emptySwitch,false);assert.equal(state.noise,false);
+      await run("window.__archifyMapViews.open('graph')");
+      const canvasState=await run(`(()=>{const reader=document.getElementById('bauify-reader'),stage=document.querySelector('.analysis-stage'),r=stage.getBoundingClientRect();return {reader:getComputedStyle(reader).display,fullWidth:r.width>=innerWidth-1,overflow:document.documentElement.scrollWidth>innerWidth,emptySwitch:!!document.querySelector('.atlas-classic,.reader-atlas')};})()`);
+      assert.equal(canvasState.reader,'none');assert.equal(canvasState.fullWidth,true,locale+theme+width+JSON.stringify(canvasState));assert.equal(canvasState.overflow,false);assert.equal(canvasState.emptySwitch,false);
+      await run("document.getElementById('btn-reader-drawer').click()");await run('new Promise(requestAnimationFrame)');
+      const state=await run(`(()=>{const reader=document.getElementById('bauify-reader'),copy=document.querySelector('.priority-card .quick-copy'),r=reader.getBoundingClientRect(),c=copy.getBoundingClientRect();return {lang:reader.lang,reader:getComputedStyle(reader).display,visible:c.top>=Math.max(0,r.top)&&c.bottom<=Math.min(innerHeight,r.bottom)&&c.left>=r.left&&c.right<=r.right,overflow:document.documentElement.scrollWidth>innerWidth,noise:document.getElementById('bauify-overview').textContent.includes('not on this diagram')||document.getElementById('bauify-overview').textContent.includes('未映射到架构图')};})()`);
+      assert.equal(state.lang,locale);assert.notEqual(state.reader,'none');assert.equal(state.visible,true,locale+theme+width+JSON.stringify(state));assert.equal(state.overflow,false);assert.equal(state.noise,false);
+      await run("document.getElementById('btn-reader-drawer').click()");
     }
     await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});await settle();
+    await run("if(document.documentElement.getAttribute('data-standalone-reader')!=='open')document.getElementById('btn-reader-drawer').click()");
+    await run("window.__archifyMapViews.open('atlas')");await settle();
     await run("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>window.__copied=text}});document.querySelector('.priority-card .quick-copy').click()");
     await run("new Promise((r,j)=>{let end=Date.now()+3000;function p(){window.__copied?r():Date.now()>end?j(Error('copy timeout')):setTimeout(p,20)}p()})");
     assert.equal(await run("window.__copied===(()=>{let d=JSON.parse(document.getElementById('bauify-analysis').textContent);return d.tasks[d.overview.priorities[0]].markdown})()"),true);
@@ -47,8 +62,10 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     await run("document.querySelector('.priority-card [data-finding]').click()");
     assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"),id);
     assert.equal(await run("document.getElementById('bauify-detail').hidden"),false);
+    await run("document.getElementById('btn-reader-drawer').click()");
+    assert.equal(await run("getComputedStyle(document.getElementById('bauify-reader')).display"),'none');
     await run("document.querySelector('.atlas-evidence').click()");
-    assert.equal(await run("document.getElementById('bauify-reader').hidden"),false);
+    assert.notEqual(await run("getComputedStyle(document.getElementById('bauify-reader')).display"),'none');
     assert.equal(await run("document.getElementById('bauify-atlas').hidden"),false);
     const selected=await run("JSON.parse(document.getElementById('bauify-atlas-data').textContent).findings.find(f=>f.id==="+JSON.stringify(id)+")");
     assert.equal(selected.kind, {'coupling/cycle':'modules','coupling/import-cycle':'cycle'}[selected.code], 'kind is a canonical machine value even in Chinese');

@@ -670,5 +670,21 @@ const ZH_CN = {
   "{value} · fan-in {incoming} / fan-out {outgoing}": "{value} · 被依赖数 {incoming} / 向外依赖数 {outgoing}",
   "Unresolved dependency records: {count}": "未解析到目标的依赖记录：{count}",
   "Checks switched off: {rules}": "已关闭的检查：{rules}",
-  "Analysis configuration changed.": "分析配置已变化。"
+  "Analysis configuration changed.": "分析配置已变化。",
+  "Diagnostics & AI tasks": "诊断与 AI 任务",
+  "Diagnostics": "诊断抽屉",
+  "Details & stats": "统计与详情",
+  "Hide details": "收起详情",
+  "Entry module · no upstream callers": "顶层入口 · 无上游调用",
+  "Foundation module · no outbound dependencies": "底座模块 · 零外部依赖",
+  "Hover or click a module to trace upstream & downstream curves · Double-click for Butterfly": "悬停或点击模块高亮上下游曲线 · 双击进入上下游透视",
+  "Click any upstream or downstream module to re-center the flow": "点击左/右翼任意模块即可切换透视中心",
+  "Inspecting {module} internal files · Click All modules to return": "正在查看 {module} 内部文件依赖 · 点击「全部模块」返回",
+  "{modules} modules · {edges} edges": "{modules} 个模块 · {edges} 条依赖",
+  "+{count} more": "另有 {count} 个",
+  "Collapse card": "收起卡片",
+  "Butterfly": "上下游透视",
+  "fan-in {in} / fan-out {out}": "入 {in} / 出 {out}",
+  "hotspot": "高耦合",
+  "cycle": "循环"
 };

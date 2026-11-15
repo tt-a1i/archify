@@ -1,12 +1,13 @@
 # Archify Map implementation and local validation
 
 Base: `fb9ed13755444ff7188b4e65c39a7c96bc04a892` (`labs/code-analysis`).
-Implementation branch: `codex/archify-map-product-loop`.
+Implementation branch: `feat/archify-map-canvas`.
 This is local implementation evidence, not a release, remote CI result or human acceptance.
 
 ## Delivered behavior
 
 - `archify map <root>` reuses the existing session/server; `--once` and `--no-serve` reuse preparation and exit with the report receipt. `start` and all existing Code Analysis subcommands remain supported.
+- Standalone `archify map` adopts a full-bleed Canvas-First layout: opens directly in Graph with compact domain-cluster halos, collapsible `#bauify-reader` and `.atlas-side` drawers on demand, SVG swimlane `Layers` (up to 7 condensed bands), horizontal/vertical Sankey-ribbon `Butterfly`, and a floating pill HUD.
 - Clean staging excludes the nested Code Analysis tests and fixtures, while keeping its runtime and lazy dependency bootstrap. No installation hooks, frontend dependencies or Skill metadata growth were introduced.
 - Only architecture delivery explicitly bound through repository metadata and a local repository root receives a small static launch guide. It uses `archify map .` as a portable repository-root template. The service and prepared reports suppress that guide in favor of their existing controls. Other diagrams and unbound architecture remain clean.
 - One projection of existing graph/facts/findings feeds Graph, Layers and Butterfly. Graph keeps module and file levels separate, supports dragging/zoom/hover and reciprocal/cyclic edges, and uses collision-aware screen-space labels. Layers use SCC-condensed dependency depth. Butterfly retains captured evidence and reference counts. Atlas and optional Classic participate in the same switcher and selection events.
@@ -29,10 +30,11 @@ Canonical ZIP build: official Node 22.23.3 with bundled zlib `1.3.1-e00f703`.
 | Static entry browser | Bound/unbound cases, English/Chinese, light/dark, copying, Escape/focus restoration, and actual live startup with exactly one control before/after analysis pass. |
 | Real repository use | `archify map archify/modules/code-analysis --once --language ts --locale zh-CN --out <outside-repo-dir>` succeeded. A desktop browser exercised native double-click drilldown, breadcrumb return, Layers, Butterfly and theme switching. Screenshots and the standalone HTML remain in the local session artifacts. |
 | Size probe | Synthetic 400-module/4,000-file graph; server projection approximately 20 ms. Settled headless Chrome: Graph opening 63.5 ms; 60 zoom frames median approximately 16.7 ms, maximum 18.7 ms. Foreground desktop automation also had an approximately 957 ms startup outlier. These are local probes, not a general frame-rate guarantee. |
-| ZIP | Two canonical builds were byte-identical. The 358-file archive excludes `modules/code-analysis/test/**` and contains the new view/static-guide assets. Isolated unpacked ZIP `map --once --ir ... --locale zh-CN` succeeded, reusing checkout dependencies via temporary symlinks. This does not test first-run network dependency installation. |
+| ZIP | Two canonical builds were byte-identical. The 358-file archive excludes `modules/code-analysis/test/**` and contains the new view/static-guide assets. After the Canvas-First UI refactor and module doc alignment, `bash scripts/build-zip.sh` rebuilt the 358-file archive (`9e945d793...`) and `node --test test/release-package-gates.test.mjs` verifies clean staging and archive freshness on the final tree. |
+| Canvas-First UI verification | Following the full-bleed canvas refactor and visual polish on `overlay/client/{map-views.js,map-views.css,overlay.js,atlas.js,atlas.css}`, `overlay/{standalone.mjs,i18n.mjs}`: `npm --prefix archify/modules/code-analysis test` (`627` passed, `16` skipped, `0` failed); Chrome real-browser run (`ARCHIFY_CHROME`) across the 6 Code Analysis browser suites (`18` passed, `0` failed, `0` skipped); `npm run test:generated` (`all checks passed`); and `node --test test/release-package-gates.test.mjs test/cli.test.mjs` (`187` passed, `2` skipped, `0` failed). Desktop (`1440x900` dark/light) and mobile (`390x844` dark) real-repo screenshots (`archify/modules/code-analysis --once --locale zh-CN`) were inspected in headless Chrome with `scrollWidth === innerWidth`. |
 
-ZIP SHA-256: `0ee3d9545762e60ac082be663dfc7d0a7fe11e0ae6ce0ed7dd93c8e447954536`.
-ZIP size: 7,620,286 bytes, compared with 7,941,831 bytes on the base.
+ZIP SHA-256: `9e945d793a7f8940160645c58813dc2a0adbf46dde94fcf4359b516ec33bf0b0`.
+ZIP size: 7,634,415 bytes, compared with 7,941,831 bytes on the base.
 
 ## Review and limits
 

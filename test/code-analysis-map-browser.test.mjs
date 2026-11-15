@@ -113,9 +113,18 @@ test('Map shares module selection and copies checked multi-finding tasks with an
       }
     }
     await run(`window.__archifyMapViews.select({moduleId:${JSON.stringify(moduleId)}});window.__archifyMapViews.open('graph');document.querySelector('.map-expand').click()`);
+    assert.equal(await run("document.querySelector('.map-side')"), null);
     assert.equal(await run("!!document.querySelector('.map-back')"), true);
     await run("document.querySelector('.map-back').click()");
     assert.equal(await run("!!document.querySelector('.map-back')"), false);
+    await run("window.__archifyMapViews.open('layers')");
+    assert.ok(await run("document.querySelectorAll('.map-layers-svg [data-module]').length") >= 3);
+    assert.ok(await run("document.querySelectorAll('.map-layers-svg .svg-edge').length") >= 2);
+    await run("window.__archifyMapViews.open('butterfly')");
+    assert.ok(await run("document.querySelectorAll('.map-butterfly-svg .ribbon-path').length") >= 1);
+    const nextModule = await run("document.querySelector('.map-butterfly-svg .ribbon-path').getAttribute('data-module')");
+    await run("document.querySelector('.map-butterfly-svg .ribbon-path').dispatchEvent(new MouseEvent('click',{bubbles:true}))");
+    assert.equal(await run('window.__archifyMapViews.selection().moduleId'), nextModule);
     assert.deepEqual(await run('window.__errors'), []);
   }
   const noFacts = path.join(dir, 'graph-only.html');

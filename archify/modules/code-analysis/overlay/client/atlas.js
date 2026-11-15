@@ -32,10 +32,19 @@
   panel.lang = ui.locale || 'en';
   panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', tr("Code analysis atlas"));
   panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '<span>' + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', tr('file dependencies')) + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
-    '<div><button type="button" class="atlas-expand" aria-pressed="true">' + esc(tr('Disable sector zoom')) + '</button> <button type="button" class="atlas-clear">' + esc(tr('Clear selection')) + '</button> <button type="button" class="atlas-classic" title="' + esc(tr('Back to the diagram view with source evidence')) + '">' + esc(tr('Classic view')) + '</button></div></nav>' +
+    '<div><button type="button" class="atlas-expand" aria-pressed="true">' + esc(tr('Disable sector zoom')) + '</button> <button type="button" class="atlas-clear">' + esc(tr('Clear selection')) + '</button> <button type="button" class="atlas-side-toggle" aria-expanded="false">' + esc(tr('Details & stats')) + '</button> <button type="button" class="atlas-classic" title="' + esc(tr('Back to the diagram view with source evidence')) + '">' + esc(tr('Classic view')) + '</button></div></nav>' +
     '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div><div class="atlas-help"></div></div><aside class="atlas-side"></aside></div>';
   (standalone ? document.querySelector('.analysis-stage') : document.body).appendChild(panel);
   if (standalone) panel.querySelector('.atlas-classic').remove();
+  var sideOpen = false;
+  var sideToggle = panel.querySelector('.atlas-side-toggle');
+  function setSideOpen(open) {
+    sideOpen = Boolean(open);
+    panel.classList.toggle('side-open', sideOpen);
+    sideToggle.setAttribute('aria-expanded', String(sideOpen));
+    sideToggle.textContent = tr(sideOpen ? 'Hide details' : 'Details & stats');
+  }
+  sideToggle.addEventListener('click', function () { setSideOpen(!sideOpen); });
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
   canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 

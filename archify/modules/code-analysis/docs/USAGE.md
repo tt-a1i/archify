@@ -7,7 +7,7 @@ npm ci
 npm start -- "/path/to/project" --locale zh-CN
 ```
 
-Open the printed URL. Without `--ir`, analysis starts on page load: the left workbench presents priorities and task-copy controls, alongside the interactive whole-repository Atlas. Select a finding to highlight its Atlas evidence; **Open source evidence** returns from Atlas to the left reader. Narrow screens stack the workbench above Atlas.
+Open the printed URL. Without `--ir`, analysis starts on page load in the full-bleed dependency **Graph**; use **Diagnostics & AI tasks** (or a module card's finding action / Atlas **Open source evidence**) to open the floating findings and task-copy drawer over any view on desktop or narrow screens.
 
 To align an existing authored architecture diagram, add `--ir architecture.json`. That mode still delivers the original diagram first and analyzes only after **Code Analysis** is clicked. Use **Atlas** / **Classic view** to switch views; source mapping and IR validation are preserved. `--map` requires `--ir`.
 
@@ -507,8 +507,8 @@ Use the common view bar to choose Graph, Layers, Butterfly or Atlas. Classic is
 available when an authored architecture IR was supplied. Graph shows modules;
 double-click one (or choose **Explore module files**) to inspect its captured
 file/import/call relationships. **All modules** returns to the overview. Drag
-nodes or blank space to arrange the graph; scroll to zoom. The module list also
-supports keyboard navigation. Layers are inferred dependency depths, not a
+nodes or blank space to arrange the graph; scroll to zoom. Arrow keys navigate
+across modules on the active view. Layers are inferred dependency depths, not a
 claim about business responsibilities. Butterfly centers a module between its
 recorded dependents and dependencies. Missing or unresolved source relationships
 remain unknown.

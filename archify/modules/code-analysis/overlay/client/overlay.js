@@ -20,20 +20,43 @@
   reader.id = 'bauify-reader'; reader.hidden = true; reader.setAttribute('aria-label', tr("Code analysis reader"));
   reader.innerHTML = ("<nav class=\"reader-nav\" aria-label=\"" + tr("Analysis navigation") + "\">" + "<span class=\"reader-path\">" + tr("Analysis / Overview") + "</span>" + "<span class=\"reader-actions\">") +
     (!standalone && document.getElementById('bauify-atlas-data') ? ("<button type=\"button\" class=\"reader-atlas\" title=\"" + tr("Whole-repository view of files, dependencies and functions") + "\">" + tr("Atlas") + "</button>" + " ") : '') +
-    ("<button type=\"button\" class=\"reader-toggle\" aria-expanded=\"true\">" + (standalone ? tr("View Atlas") : tr("View diagram")) + "</button>" + "</span>" + "</nav>");
+    ("<button type=\"button\" class=\"reader-toggle\" aria-expanded=\"true\">" + (standalone ? tr("Close") : tr("View diagram")) + "</button>" + "</span>" + "</nav>");
   var diagramContainer = document.querySelector(standalone ? '.analysis-stage' : '.diagram-container');
   if (diagramContainer) diagramContainer.before(reader); else document.body.appendChild(reader);
+  var drawerBtn = standalone ? document.getElementById('btn-reader-drawer') : null;
+  if (drawerBtn) {
+    var openCount = (data.findings || []).filter(function (f) { return !(f.review && f.review.status === 'accepted') || f.severity === 'error'; }).length;
+    drawerBtn.textContent = tr("Diagnostics & AI tasks") + (openCount ? ' · ' + openCount : '');
+  }
+  function setStandaloneReaderOpen(open) {
+    if (!standalone) return;
+    if (open) {
+      reader.hidden = false;
+      setReaderCollapsed(false);
+      root.setAttribute('data-standalone-reader', 'open');
+    } else {
+      root.removeAttribute('data-standalone-reader');
+    }
+    if (drawerBtn) drawerBtn.setAttribute('aria-expanded', String(Boolean(open)));
+  }
+  if (drawerBtn) drawerBtn.addEventListener('click', function () {
+    setStandaloneReaderOpen(root.getAttribute('data-standalone-reader') !== 'open');
+  });
   var readerCollapsed = false;
   function setReaderCollapsed(collapsed) {
     var changed = readerCollapsed !== collapsed;
     readerCollapsed = collapsed;
     reader.classList.toggle('collapsed', collapsed);
     if (collapsed) root.setAttribute('data-bauify-reader-collapsed', 'true'); else root.removeAttribute('data-bauify-reader-collapsed');
-    reader.querySelector('.reader-toggle').textContent = collapsed ? tr("Show analysis") : standalone ? tr("View Atlas") : tr("View diagram");
+    reader.querySelector('.reader-toggle').textContent = collapsed ? tr("Show analysis") : standalone ? tr("Close") : tr("View diagram");
     reader.querySelector('.reader-toggle').setAttribute('aria-expanded', String(!collapsed));
     if (changed) requestAnimationFrame(function () { if (window.Archify && Archify.view && Archify.view.centerAt && focused.length) locateComponents(focused); });
   }
-  reader.querySelector('.reader-toggle').addEventListener('click', function () { setReaderCollapsed(!readerCollapsed); if (readerCollapsed && window.innerWidth <= 1000 && diagramContainer) diagramContainer.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
+  reader.querySelector('.reader-toggle').addEventListener('click', function () {
+    if (standalone) { setStandaloneReaderOpen(false); return; }
+    setReaderCollapsed(!readerCollapsed);
+    if (readerCollapsed && window.innerWidth <= 1000 && diagramContainer) diagramContainer.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
   var atlasButton = reader.querySelector('.reader-atlas');
   if (atlasButton) atlasButton.addEventListener('click', function () { if (window.__archifyMapViews) window.__archifyMapViews.open('atlas'); else if (window.__archifyAtlas) window.__archifyAtlas.open(); });
   function readerPage(name) {
@@ -1200,7 +1223,8 @@
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   window.__archifySelectModuleFindings = function (moduleId) {
-    if (!standalone && window.__archifyMapViews) window.__archifyMapViews.open('classic');
+    if (standalone) setStandaloneReaderOpen(true);
+    else if (window.__archifyMapViews) window.__archifyMapViews.open('classic');
     if (root.getAttribute('data-bauify') !== 'on') setOn(true);
     selectedModule = moduleId;
     selectedFindings = new Set(data.findings.filter(function (f) { return (f.moduleIds || []).includes(moduleId); }).slice(0, 20).map(function (f) { return f.id; }));
@@ -1210,12 +1234,19 @@
   // The Atlas view hands a finding back here to show its source evidence.
   window.__archifyShowFinding = function (id, parent) {
     if (!findingById[id]) return;
-    if (!standalone && window.__archifyMapViews) window.__archifyMapViews.open('classic');
+    if (standalone) setStandaloneReaderOpen(true);
+    else if (window.__archifyMapViews) window.__archifyMapViews.open('classic');
     if (root.getAttribute('data-bauify') !== 'on') setOn(true);
     showFinding(id, parent);
   };
   document.addEventListener('keydown', function (e) {
-    if (standalone) return;
+    if (standalone) {
+      if (e.key === 'Escape' && root.getAttribute('data-standalone-reader') === 'open') {
+        e.preventDefault();
+        setStandaloneReaderOpen(false);
+      }
+      return;
+    }
     if (e.key !== 'c' && e.key !== 'C') return;
     if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || e.isComposing || e.defaultPrevented) return;
     var t = e.target;

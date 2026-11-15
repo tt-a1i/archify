@@ -106,8 +106,10 @@ Source references with line numbers show a nine-line context window and highligh
 
 `archify map <root>` uses the same local session as `start`; `--once` (or
 `--no-serve`) uses `prepare` and exits with a portable report. Existing commands
-remain supported. Without an IR, Atlas remains the initial view. With an IR,
-Classic retains the authored component mapping and status rings.
+remain supported. Without an IR, Graph opens on a full-bleed canvas while the
+findings reader and Atlas details remain collapsed into on-demand floating
+drawers. With an IR, Classic retains the authored component mapping and status
+rings.
 
 `overlay/map-views.mjs` projects the existing graph, facts and findings once.
 The inlined `client/map-views.js` owns the common view switcher and renders
@@ -115,8 +117,9 @@ Graph, Layers and Butterfly. Layers collapse strongly connected components
 before assigning dependency depths; they describe captured dependency structure,
 not declared business responsibilities or configured layer rules. Graph starts
 with modules only; file drilldown includes captured imports and resolved lexical
-call candidates, not runtime dispatch. File nodes, painted edges and detailed
-relationship lists have explicit displayed/total limits. No view reruns extraction.
+call candidates, not runtime dispatch. File nodes, painted edges and
+swimlane/ribbon projections keep explicit displayed/total limits. No view
+reruns extraction.
 Classic, Atlas and the new views exchange module/finding selection through one
 `archify:map-selection` event. Opening evidence from a map returns to a visible
 reader in diagram mode.
