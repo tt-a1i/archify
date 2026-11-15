@@ -8,6 +8,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   assertCamoSafeSvg,
+  bakeEmbeddedStylesheet,
   bakeSvg,
   collectSvgRules,
   compileColorMix,
@@ -77,8 +78,8 @@ test('every standalone diagram type bakes into strict XML, Camo-safe SVG in both
       assert.equal(attributes.height, height);
       const css = styleText(svg);
       assert.match(css, /@font-face/, 'fonts are inlined');
-      assert.doesNotMatch(css, /color-mix\(/, 'color-mix is compiled away');
-      assert.doesNotMatch(css, /\bvar\(--[\w-]+\)(?!\s*;?\s*\}?\s*$)/m, 'no fallback-less var() survives outside the root block');
+      assert.doesNotMatch(svg, /color-mix\(/, 'color-mix is compiled away, including renderer styles and attributes');
+      assert.doesNotMatch(svg, /var\(--/, 'no var() survives anywhere in the standalone SVG');
       assert.doesNotMatch(css, /\n\s*(animation|transition)\s*:/, 'no viewer animation/transition properties');
       assert.doesNotMatch(css, /:hover/, 'hover rules are stripped');
       assert.doesNotMatch(css, /\.diagram-container/, 'viewer canvas selectors are rescoped');
@@ -89,6 +90,24 @@ test('every standalone diagram type bakes into strict XML, Camo-safe SVG in both
       for (const verdict of RISK_VERDICTS) assert.ok(!svg.includes(verdict), `${verdict} must not appear`);
     }
   }
+});
+
+test('renderer-embedded stylesheets expand scoped custom properties per scope and drop unresolved declarations', () => {
+  const variables = new Map([['--database-stroke', '#7c3aed'], ['--text-muted', '#64748b']]);
+  const css = `
+    svg .er-hue-database { --er-hue: var(--database-stroke); }
+    svg .er-band { fill: color-mix(in srgb, var(--er-hue) 4%, transparent); stroke-dasharray: none; }
+    svg .er-legend { stroke: var(--text-muted); opacity: var(--never-defined); }
+  `;
+  const baked = bakeEmbeddedStylesheet(css, variables);
+  assert.doesNotMatch(baked, /var\(|color-mix\(/);
+  assert.match(baked, /^svg \.er-band \{ stroke-dasharray: none; \}$/m, 'globally resolvable declarations stay on the original selector');
+  assert.match(baked, /svg \.er-hue-database:is\(svg \.er-band\), svg \.er-hue-database :is\(svg \.er-band\) \{ fill: rgba\(124, 58, 237, 0\.04\); \}/);
+  assert.match(baked, /^svg \.er-legend \{ stroke: #64748b; \}$/m, 'declarations no scope can resolve are dropped');
+
+  const erd = bakeSvg(extractCanonicalSvg(renderHtml('erd')), { theme: 'light', diagramType: 'erd', styles });
+  assert.match(erd, /\.er-hue-[a-z]+:is\([^)]*\.er-band\)/, 'ERD hue scopes are expanded in the baked output');
+  assert.doesNotMatch(erd, /style="[^"]*var\(/, 'inline style attributes are resolved');
 });
 
 test('baked SVGs use the same stylesheet variables the Viewer resolves per theme and preset', () => {

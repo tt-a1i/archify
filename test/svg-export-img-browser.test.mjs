@@ -72,15 +72,23 @@ function viewBoxOf(svgFile) {
   return { width, height };
 }
 
-test('baked SVGs render inside a sandboxed <img> with their authored size in both themes', {
+const PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
+
+for (const preset of PRESETS) test(`baked ${preset} SVGs render inside a sandboxed <img> with their authored size in both themes`, {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser SVG export checks.',
 }, async (t) => {
-  const scratch = createScratchDirectory(path.join(os.tmpdir(), 'archify-svg-export-img-'));
+  const scratch = createScratchDirectory(path.join(os.tmpdir(), `archify-svg-export-img-${preset}-`));
   const input = path.join(scratch, 'change.sequence.json');
   fs.writeFileSync(input, JSON.stringify(changeSequence()));
-  const receipt = await exportSvgArtifacts({ type: 'sequence', input, output: path.join(scratch, 'change') });
+  const receipt = await exportSvgArtifacts({ type: 'sequence', input, output: path.join(scratch, `change-${preset}`), preset });
+  assert.equal(receipt.preset, preset);
   const light = receipt.outputs.find((entry) => entry.theme === 'light').path;
   const dark = receipt.outputs.find((entry) => entry.theme === 'dark').path;
+  for (const file of [light, dark]) {
+    const svg = fs.readFileSync(file, 'utf8');
+    assert.doesNotMatch(svg, /color-mix\(/, `${preset} ${path.basename(file)} expands color-mix statically`);
+    assert.doesNotMatch(svg, /var\(--/, `${preset} ${path.basename(file)} resolves every custom property`);
+  }
   const hostFile = path.join(scratch, 'host.html');
   fs.writeFileSync(hostFile, hostPage(light, dark));
   const expected = viewBoxOf(light);

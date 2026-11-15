@@ -454,11 +454,104 @@ export function flowPulseMarkup(body, variables) {
   return `<g data-archify-flow-pulse="finite" aria-hidden="true" pointer-events="none">${paths.join('')}</g>`;
 }
 
+// ---------------------------------------------------------------------------
+// Renderer-embedded <style> blocks and presentation attributes
+
+function scopedSelector(scope, selector) {
+  const parts = splitTopLevel(selector, ',').map((part) => part.trim()).filter(Boolean);
+  const target = parts.length === 1 ? parts[0] : `:is(${parts.join(', ')})`;
+  return `${scope}:is(${target}), ${scope} :is(${target})`;
+}
+
+// A renderer stylesheet may set custom properties on a scope (for example an
+// ERD hue class) and read them from descendant rules. Static output has no
+// cascade, so each such rule is re-emitted once per scope that defines the
+// missing variables; unresolved declarations are dropped like a browser does.
+export function bakeEmbeddedStylesheet(cssText, variables) {
+  const rules = parseStylesheet(cssText).filter((rule) => !rule.media);
+  const globalLookup = (name) => variables.get(name) ?? null;
+  const scopes = [];
+  for (const rule of rules) {
+    const custom = rule.declarations.filter((d) => d.property.startsWith('--'));
+    if (!custom.length) continue;
+    const values = new Map();
+    for (const declaration of custom) {
+      const value = substituteVariables(declaration.value, globalLookup);
+      if (value !== null) values.set(declaration.property, compileColorMix(value));
+    }
+    for (const part of splitTopLevel(rule.selector, ',')) scopes.push({ selector: part.trim(), values });
+  }
+  const output = [];
+  const emit = (selector, declarations) => {
+    if (declarations.length) output.push(`${selector} { ${declarations.join('; ')}; }`);
+  };
+  for (const rule of rules) {
+    const local = new Map(rule.declarations.filter((d) => d.property.startsWith('--')).map((d) => [d.property, d.value]));
+    const resolveWith = (extra) => (name) => (local.has(name)
+      ? substituteVariables(local.get(name), resolveWith(extra))
+      : (extra?.get(name) ?? variables.get(name) ?? null));
+    const base = [];
+    const pending = [];
+    for (const declaration of rule.declarations) {
+      if (declaration.property.startsWith('--')) continue;
+      const value = substituteVariables(declaration.value, resolveWith(null));
+      if (value === null) pending.push(declaration);
+      else base.push(`${declaration.property}: ${compileColorMix(value)}${declaration.important ? ' !important' : ''}`);
+    }
+    emit(rule.selector, base);
+    if (!pending.length) continue;
+    for (const scope of scopes) {
+      const resolved = [];
+      for (const declaration of pending) {
+        const value = substituteVariables(declaration.value, resolveWith(scope.values));
+        if (value !== null) resolved.push(`${declaration.property}: ${compileColorMix(value)}${declaration.important ? ' !important' : ''}`);
+      }
+      emit(scopedSelector(scope.selector, rule.selector), resolved);
+    }
+  }
+  return output.join('\n');
+}
+
+const PRESENTATION_VAR_RE = /\b(fill|stroke|stop-color|flood-color|color)="(var\([^"]*\))"/g;
+const INLINE_STYLE_RE = /\bstyle="([^"]*(?:var\(|color-mix\()[^"]*)"/g;
+
+function bakeInlineStyle(style, lookup) {
+  const declarations = [];
+  for (const entry of splitTopLevel(style, ';')) {
+    const colon = entry.indexOf(':');
+    if (colon === -1) continue;
+    const property = entry.slice(0, colon).trim();
+    const value = substituteVariables(entry.slice(colon + 1).trim(), lookup);
+    if (value === null) continue;
+    declarations.push(`${property}: ${compileColorMix(value)}`);
+  }
+  return declarations.join('; ');
+}
+
+function bakeBodyStyles(body, variables) {
+  const lookup = (name) => variables.get(name) ?? null;
+  return body
+    .replace(/<style\b([^>]*)>([\s\S]*?)<\/style>/g, (match, attrs, css) => {
+      const baked = bakeEmbeddedStylesheet(css, variables);
+      if (/[<&]/.test(baked)) throw new Error('svg-bake: embedded stylesheet contains markup characters');
+      return baked ? `<style${attrs}>${baked}</style>` : '';
+    })
+    .replace(PRESENTATION_VAR_RE, (match, attribute, value) => {
+      const resolved = substituteVariables(value, lookup);
+      return resolved === null ? match : `${attribute}="${escapeAttribute(compileColorMix(resolved))}"`;
+    })
+    .replace(INLINE_STYLE_RE, (match, style) => {
+      const baked = bakeInlineStyle(style, lookup);
+      return baked ? `style="${escapeAttribute(baked)}"` : '';
+    });
+}
+
 export function bakeSvg(svg, { theme, preset = 'classic', diagramType = null, animateFlow = false, styles = loadViewerStyles() }) {
   if (!BAKE_THEMES.includes(theme)) throw new Error(`svg-bake: unsupported theme ${JSON.stringify(theme)}`);
-  const { attributes, body } = splitRootTag(svg);
+  const { attributes, body: rawBody } = splitRootTag(svg);
   const resolvedPreset = preset || attributes.get('data-preset') || 'classic';
   const variables = resolveThemeVariables(styles.rules, { theme, preset: resolvedPreset });
+  const body = bakeBodyStyles(rawBody, variables);
   const viewBox = parseViewBox(attributes.get('viewBox'));
   attributes.set('xmlns', 'http://www.w3.org/2000/svg');
   attributes.set('width', String(viewBox.width));
