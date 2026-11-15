@@ -367,6 +367,8 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .priority-card .quick-handoff.compact { display: contents; }
 #bauify-reader .priority-card .quick-copy { grid-area: 1 / 3; border-color: var(--panel-border); }
 #bauify-reader .priority-card .quick-copy .ui-icon { width: 14px; height: 14px; }
+#bauify-reader .quick-copy.copy-confirmed { color: var(--backend-stroke, #159f88); border-color: color-mix(in srgb, var(--backend-stroke, #159f88) 55%, var(--panel-border)); }
+#bauify-reader .copy-confirmed .ui-icon { stroke-width: 2; }
 #bauify-reader .priority-card .handoff-status, #bauify-reader .priority-card .ai-task { grid-column: 1 / -1; }
 #bauify-reader .priority-card .handoff-status:not(:empty) { margin: 8px 0 0; }
 #bauify-reader .priority-card .ai-task:not([open]) { display: none; }

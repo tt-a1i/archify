@@ -111,8 +111,13 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       await run("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__copied=value;}}});document.querySelector('.priority-card .quick-copy').click()");
       await run("new Promise((resolve,reject)=>{const deadline=Date.now()+3000;const poll=()=>window.__copied?resolve():Date.now()>deadline?reject(new Error('Chinese copy did not finish')):setTimeout(poll,20);poll();})");
       const status=await run("document.querySelector('.priority-card .handoff-status').textContent");
-      assert.match(status,/基于本次分析快照构建/);
-      assert.doesNotMatch(status,/Built from the analysis snapshot/);
+      assert.equal(status,'');
+      assert.equal(await run("document.querySelector('.priority-card .quick-copy').getAttribute('aria-label')"),'已复制');
+      assert.equal(await run("document.querySelector('.priority-card .quick-copy svg path').getAttribute('d')"),'m5 12 4 4L19 6');
+      assert.equal(await run("document.querySelector('.priority-card .handoff-status').getBoundingClientRect().height"),0);
+      await run("new Promise(resolve=>setTimeout(resolve,1700))");
+      assert.equal(await run("document.querySelector('.priority-card .quick-copy').getAttribute('aria-label')"),'复制任务给 AI');
+      assert.equal(await run("document.querySelector('.priority-card .quick-copy svg rect').getAttribute('width')),'11');
       assert.equal(await run("(()=>{const d=JSON.parse(document.getElementById('bauify-analysis').textContent);return d.tasks[d.overview.priorities[0]].task.evidence.reason;})()"),'Built from the analysis snapshot; not yet compared with the current working tree.','UI localization preserves the canonical exported evidence');
       await run("document.querySelector('.reader-atlas').click()");
       const selectedCycleText = await run(`(() => {
@@ -131,9 +136,13 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await run("document.querySelector('.priority-card .quick-copy').click()");
   const copied = await run(`new Promise((resolve,reject) => { const deadline=Date.now()+3000; const poll=()=>window.__copied?resolve(window.__copied):Date.now()>deadline?reject(new Error('first-card copy did not finish')):setTimeout(poll,20);poll();})`);
   assert.equal(copied, await run("(() => { const data=JSON.parse(document.getElementById('bauify-analysis').textContent);return data.tasks[data.overview.priorities[0]].markdown;})()"));
-  assert.match(await run("document.querySelector('.priority-card .handoff-status').textContent"), /Snapshot only/);
+  assert.equal(await run("document.querySelector('.priority-card .handoff-status').textContent"), '');
   await run("window.__copied='';document.querySelector('.brief-copy').click()");
   assert.equal(await run('window.__copied'), await run("JSON.parse(document.getElementById('bauify-analysis').textContent).architectureBrief"));
+  assert.equal(await run("document.querySelector('.brief-status').textContent"), '');
+  assert.equal(await run("document.querySelector('.brief-copy svg path').getAttribute('d')"), 'm5 12 4 4L19 6');
+  await run("new Promise(resolve=>setTimeout(resolve,1700))");
+  assert.equal(await run("document.querySelector('.brief-copy').getAttribute('aria-label')"), 'Copy architecture brief');
   assert.match(await run('window.__copied'), /does not determine runtime dispatch/);
 
   // An HTTP refusal is not a reason to silently hand out an older offline task.

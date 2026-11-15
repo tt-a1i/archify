@@ -444,6 +444,7 @@ const ZH_CN = {
   "The service has a newer analysis snapshot than this page. Re-analyze to refresh the displayed evidence.": "服务中的分析快照比当前页面更新。请重新分析以刷新显示的证据。",
   "Could not prepare task: ": "无法准备任务：",
   " Re-analyze if this page shows an older result, then retry.": " 若页面显示的是旧结果，请重新分析后再试。",
+  "Copied": "已复制",
   "Copied AI task. Paste it into your coding AI. ": "已复制任务，可粘贴给编码 AI。",
   "Automatic copy unavailable. The task text is selected; press Ctrl+C or copy it manually. ": "自动复制不可用，已选中任务文本。请按 Ctrl+C / ⌘C，或手动复制。",
   "Download requested. ": "已请求下载。",
