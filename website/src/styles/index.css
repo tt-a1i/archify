@@ -448,7 +448,9 @@
       .hero-sub { font-size:.9375rem; margin-top:1.25rem; }
       .hero-actions { flex-direction:column; align-items:stretch; width:100%; margin-top:2rem; }
       .hero-actions .btn { width:100%; }
-      .cmd-chip { justify-content:space-between; font-size:.75rem; }
+      .hero-copy { width:100%; min-width:0; }
+      .hero-eyebrow { white-space:normal; flex-wrap:wrap; justify-content:center; max-width:100%; }
+      .cmd-chip { justify-content:center; flex-wrap:wrap; padding:.5rem .4rem; font-size:.75rem; }
       .stage { height:320svh; margin-top:0; }
       .stage-pin { padding:calc(var(--nav-h) + .5rem) .75rem .75rem; align-items:flex-start; }
       .stage-window { height:auto; max-height:100%; border-radius:14px; }

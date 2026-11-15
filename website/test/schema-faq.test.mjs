@@ -25,7 +25,7 @@ test('every page graph binds the software entity, public source, and license wit
     const source = nodeOf(schema, 'SoftwareSourceCode');
     assert.equal(source.targetProduct['@id'], app['@id']);
     const article = nodeOf(schema, 'TechArticle');
-    assert.equal(Boolean(article), ['agent-diagrams', 'cases/mco-runtime'].includes(page), `${page}: TechArticle scope`);
+    assert.equal(Boolean(article), ['agent-diagrams', 'compare', 'cases/mco-runtime'].includes(page), `${page}: TechArticle scope`);
     if (article) assert.equal(article.about['@id'], app['@id']);
     assert.doesNotMatch(serialized, /aggregateRating|ratingValue|reviewCount|interactionStatistic/);
   }

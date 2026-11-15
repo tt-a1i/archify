@@ -191,6 +191,7 @@ using the name are separate products.
 - https://archify.si/gallery — validated interactive artifacts with sources.
 - https://archify.si/community — independent packages built on Archify.
 - https://archify.si/agent-diagrams — how coding agents author, review, and share diagrams.
+- https://archify.si/compare — Archify vs Mermaid, Excalidraw, PlantUML, and D2.
 - https://archify.si/cases/mco-runtime — pinned-commit architecture case.
 - https://archify.si/cases/explainer/tls-first-visit.html — one-page answer about a first TLS visit.
 - https://archify.si/cases/explainer/p99-tail-latency.html — one-page answer about tail latency.
