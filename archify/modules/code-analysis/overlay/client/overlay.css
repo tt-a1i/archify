@@ -160,7 +160,7 @@ html[data-bauify-focus="on"] #bauify-layer rect:not(.focus) { opacity: .12; anim
 .bauify-item .badge-new { background: #FB7185; color: #0b1220; }
 .bauify-item .badge-accepted, #bauify-detail .badge-accepted { border: 1px solid var(--panel-border, #1e293b); color: var(--text-muted, #94a3b8); }
 /* One reading column owns the layout; the four pages retain their scroll state. */
-#bauify-reader { position: fixed; left: 16px; top: var(--bauify-reader-top, 76px); bottom: 16px; width: 420px; z-index: 62; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--panel-border, #1e293b); border-radius: 12px; background: linear-gradient(var(--panel, #0f172a), var(--panel, #0f172a)), var(--bg, #0b1220); color: var(--text, #f8fafc); font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+#bauify-reader { position: fixed; right: 16px; top: var(--bauify-reader-top, 76px); bottom: 16px; width: 420px; z-index: 62; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--panel-border, #1e293b); border-radius: 12px; background: linear-gradient(var(--panel, #0f172a), var(--panel, #0f172a)), var(--bg, #0b1220); color: var(--text, #f8fafc); font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
 #bauify-reader[hidden] { display: none; }
 #bauify-reader > .reader-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--panel-border, #1e293b); }
 #bauify-reader .reader-path { font-size: 12px; color: var(--text-muted, #94a3b8); }
@@ -183,12 +183,12 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
   html[data-bauify="on"] .container { width: 100%; max-width: none; }
   html[data-bauify="on"] .diagram-container { margin-top: 24px; }
   html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
-  html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .cards { margin-left: 444px; }
+  html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .cards { margin-right: 444px; }
   html[data-bauify="on"] .guided-views { display: none; }
 }
 @media (max-width: 1000px) {
   /* In normal flow, the reader and canvas remain separately reachable. */
-  #bauify-reader { position: relative; left: auto; top: auto; bottom: auto; width: auto; margin: 16px 0; height: min(66vh, 600px); min-height: 280px; }
+  #bauify-reader { position: relative; left: auto; right: auto; top: auto; bottom: auto; width: auto; margin: 16px 0; height: min(66vh, 600px); min-height: 280px; }
   #bauify-reader.collapsed { height: auto; min-height: 0; width: auto; max-width: none; }
   #bauify-reader > .reader-nav { gap: 8px; padding: 10px 12px; }
   #bauify-reader .reader-actions { display: flex; flex: none; gap: 5px; }
@@ -298,12 +298,12 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 @media (min-width: 1181px) {
   html[data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
   html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
-  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: calc(min(760px, 54vw) + 24px); }
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-right: calc(min(760px, 54vw) + 24px); }
   #bauify-reader { transition: width .16s ease; }
 }
 @media (prefers-reduced-motion: reduce) { #bauify-reader { transition: none; } }
-/* The page's own reader rail sits beside the analysis column, not under it. */
-@media (min-width: 1001px) { html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: 444px; } }
+/* The page's own reader rail sits beside the analysis column (on its left), not under it. */
+@media (min-width: 1001px) { html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-right: 444px; } }
 /* The overview is a compact read → handoff → recheck workbench. */
 #bauify-reader .health-summary { padding: 11px 12px; background: color-mix(in srgb, var(--backend-stroke, #159f88) 6%, transparent); border: 1px solid var(--panel-border); border-radius: 9px; }
 #bauify-reader .scope-line { font-size: 12px; color: var(--text-muted); margin: 5px 0 0; }

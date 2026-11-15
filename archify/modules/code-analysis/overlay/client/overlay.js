@@ -40,8 +40,8 @@
       filter: '<path d="M4 5h16l-6 7v5l-4 2v-7z"></path>',
       refresh: '<path d="M20 6v5h-5M4 18v-5h5M6.1 9a7 7 0 0 1 11.5-2.6L20 9M4 15l2.4 2.6A7 7 0 0 0 17.9 15"></path>',
       atlas: '<circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>',
-      panel: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16"></path>',
-      collapse: '<path d="M6 5v14M15 8l-4 4 4 4"></path>',
+      panel: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path>',
+      collapse: '<path d="M18 5v14M9 8l4 4-4 4"></path>',
       snapshot: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h4"></path>'
     };
     return '<svg class="ui-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[name] + '</svg>';

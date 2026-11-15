@@ -95,7 +95,7 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
         const r = reader.getBoundingClientRect(), a = document.getElementById('bauify-atlas').getBoundingClientRect();
         const c = card.querySelector('.quick-copy').getBoundingClientRect(), l = card.querySelector('.priority-level').getBoundingClientRect();
         const icon = card.querySelector('.quick-copy svg').getBoundingClientRect(), label = card.querySelector('.bauify-item b').getBoundingClientRect();
-        return { lang: reader.lang, separate: innerWidth > 1000 ? a.left >= r.right : a.top >= r.bottom,
+        return { lang: reader.lang, separate: innerWidth > 1000 ? a.right <= r.left : a.top >= r.bottom,
           copy: [c.width, c.height], tag: [l.width, l.height], aligned: c.top === l.top && l.right < c.left && label.right <= l.left,
           centered: c.left + c.width / 2 === icon.left + icon.width / 2 && c.top + c.height / 2 === icon.top + icon.height / 2,
           visible: c.top >= Math.max(0, r.top) && c.bottom <= Math.min(innerHeight, r.bottom) && c.right <= r.right,

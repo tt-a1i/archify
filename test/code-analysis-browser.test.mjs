@@ -374,7 +374,7 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   assert.equal(await run("document.getElementById('bauify-panel').hidden"), true);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length"), 4);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length === [...document.querySelectorAll('#bauify-overview,#bauify-panel,#bauify-detail,#bauify-code')].filter(e => e.parentElement.id === 'bauify-reader').length"), true);
-  assert.equal(await run("document.querySelector('.diagram-container').getBoundingClientRect().left > document.getElementById('bauify-reader').getBoundingClientRect().right"), true, 'desktop canvas reserves the reading column');
+  assert.equal(await run("document.querySelector('.diagram-container').getBoundingClientRect().right < document.getElementById('bauify-reader').getBoundingClientRect().left"), true, 'desktop canvas reserves the reading column on the right');
   assert.match(await run("document.querySelector('#bauify-overview .health-summary .attention').textContent"), /errors/);
   assert.match(await run("document.getElementById('bauify-overview').textContent"), /Checked: import cycles, module cycles, hub modules/);
   // a.mjs <-> b.mjs is both a file cycle and a module cycle: one structure, one priority slot.
