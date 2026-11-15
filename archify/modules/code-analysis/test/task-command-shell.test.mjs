@@ -7,7 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { baselineCommand, taskCommand, analysisStartCommand } from '../lib/task-command.mjs';
+import { baselineCommand, taskCommand, taskSelectionCommand, analysisCheckCommand, analysisStartCommand } from '../lib/task-command.mjs';
 
 const CHECK = fileURLToPath(new URL('../bin/check.mjs', import.meta.url));
 const windows = process.platform === 'win32';
@@ -44,6 +44,14 @@ for (const name of ["tool's home & (space)", 'tool %ARCHIFY_COMMAND_EXPANSION% !
     const result = execute(command);
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), ['code-analysis', 'task', out, '--root', root, '--format', 'json', '--finding', id]);
+
+    const multi = execute(taskSelectionCommand(cli, [id, 'CYC-000000abcdef'], root, out));
+    assert.equal(multi.status, 0, multi.stdout + multi.stderr);
+    assert.deepEqual(JSON.parse(multi.stdout), ['code-analysis', 'task', out, '--root', root, '--format', 'json', '--finding', id, '--finding', 'CYC-000000abcdef', '--require-valid']);
+
+    const recheck = execute(analysisCheckCommand(cli, root, { out, language: 'ts', compare: out + '/findings.json' }));
+    assert.equal(recheck.status, 0, recheck.stdout + recheck.stderr);
+    assert.deepEqual(JSON.parse(recheck.stdout), ['code-analysis', 'check', root, '--out', out, '--compare', out + '/findings.json', '--language', 'ts']);
 
     // The text-template placeholder is an argument, never shell redirection.
     const template = execute(taskCommand(cli, '<id>', root, out));

@@ -414,3 +414,5 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-detail.reviewing .review-primary-actions { display: none; }
 @media (max-width: 600px) { #bauify-reader .finding-filters select, #bauify-reader .review-primary-actions button, #bauify-reader .review-actions button, #bauify-reader .finding-pagination button { min-height: 44px; } }
 @media (max-width: 400px) { #bauify-reader .finding-filters.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.selectable-finding{display:flex;gap:8px;align-items:flex-start}.selectable-finding .finding-row{flex:1;min-width:0}.finding-select{padding-top:14px}.finding-select input{accent-color:var(--backend-stroke);width:16px;height:16px}.batch-tasks{padding:10px 0;border-block:1px solid var(--panel-border);margin:10px 0}.batch-tasks .task-actions{flex-wrap:wrap}.batch-tasks .batch-status{margin:4px 0}.batch-preview textarea{width:100%;min-height:180px;background:var(--bg);color:var(--text);border:1px solid var(--panel-border)}

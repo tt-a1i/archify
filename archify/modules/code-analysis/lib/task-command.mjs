@@ -8,6 +8,13 @@ export function taskCommand(cli, id, root, out, platform = process.platform) {
   return nodeCommand([cli, 'code-analysis', 'task', out, '--root', root, '--format', 'json'], platform) + ` --finding ${quote(id)}`;
 }
 
+// Multi-selection uses the same shell escaping and CLI as single finding tasks.
+export function taskSelectionCommand(cli, ids, root, out, platform = process.platform) {
+  if (!out) return null;
+  return nodeCommand([cli, 'code-analysis', 'task', out, '--root', root, '--format', 'json',
+    ...ids.flatMap(id => ['--finding', id]), '--require-valid'], platform);
+}
+
 // The command that records today's findings as a baseline, so a project can
 // adopt the rules (or a stricter rule version) without failing CI on what
 // already exists.
@@ -15,6 +22,14 @@ export function baselineCommand(cli, root, { language = null, config = null, bas
   return nodeCommand([cli, 'code-analysis', 'check', root,
     ...(language ? ['--language', language] : []), ...(config ? ['--config', config] : []),
     '--baseline', baseline, '--update-baseline', '--reason', 'existing findings recorded when adopting Code Analysis'], platform);
+}
+
+// Re-run the captured configuration into a separate directory, preserving the
+// report that supplies the comparison evidence.
+export function analysisCheckCommand(cli, root, { out, compare, language, config, baseline } = {}, platform = process.platform) {
+  return nodeCommand([cli, 'code-analysis', 'check', root,
+    ...Object.entries({ out, compare, language, config, baseline }).flatMap(([key, value]) => value ? [`--${key}`, value] : []),
+  ], platform);
 }
 
 // Resume an offline report using the same captured IR and analysis settings.

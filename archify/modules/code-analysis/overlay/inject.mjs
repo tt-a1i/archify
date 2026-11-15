@@ -33,9 +33,11 @@ import path from 'node:path';
 import { fail } from '../core/index.mjs';
 import { sourceChanges } from './source-changes.mjs';
 import { buildOverview } from './overview.mjs';
+import { taskSelectionCommand } from '../lib/task-command.mjs';
 import { buildTaskPayloads } from '../lib/task.mjs';
 import { reviewTargetDigest } from '../lib/review.mjs';
 import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
+import { buildMapViews, MAP_VIEWS_CSS, MAP_VIEWS_JS } from './map-views.mjs';
 import { clientAsset } from './client-assets.mjs';
 
 export function alignDiagram({ ir, graph, map = null, facts = null, findings = [], run = {} }) {
@@ -126,7 +128,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
 
   const payload = {
     generator: 'bauify',
-    ui: { mode: ir ? 'diagram' : 'standalone', locale: analysisLocale(run.locale || ir?.meta?.locale), messages: messagesFor(run.locale || ir?.meta?.locale), resume: run.resume || null, openByDefault: run.openAnalysis === true },
+    ui: { mode: ir ? 'diagram' : 'standalone', locale: analysisLocale(run.locale || ir?.meta?.locale), messages: messagesFor(run.locale || ir?.meta?.locale), resume: run.resume || null, recheckCommand: run.recheckCommand || null, openByDefault: run.openAnalysis === true },
     repository: graph.repository,
     unresolved: graph.unresolved,
     excluded: graph.excluded,
@@ -137,6 +139,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     unmapped,
     ambiguousModules,
     findings: listed,
+    taskValidationCommand: run.taskExport ? taskSelectionCommand(run.taskExport.cli, [], run.taskExport.root, run.taskExport.out) : null,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
     overview: buildOverview({ findings: listed, graph, facts, unmapped: ir ? unmapped : [], ambiguousModules, run, diagram: Boolean(ir) }),
     snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts, findingsDocument?.externalEvidence) : {},
@@ -149,7 +152,10 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
   // Its data precedes the Classic script, which offers the Atlas button only when the data is present.
   const atlasData = atlas ? `<script type="application/json" id="bauify-atlas-data">${scriptSafeJson(atlas)}</script>\n` : '';
   const atlasView = atlas ? `<style id="bauify-atlas-style">${ATLAS_CSS}</style>\n<script id="bauify-atlas-script">${ATLAS_JS}</script>\n` : '';
-  const injection = `\n<!-- bauify overlay: authored diagram untouched; analysis layer below -->\n<script type="application/json" id="bauify-analysis">${scriptSafeJson(payload)}</script>\n${atlasData}<style id="bauify-style">${CSS}</style>\n<script id="bauify-script">${JS}</script>\n${atlasView}`;
+  const mapViews = buildMapViews({ graph, facts, findings: listed, review: run.review });
+  const mapData = `<script type="application/json" id="bauify-map-data">${scriptSafeJson(mapViews)}</script>\n`;
+  const mapAssets = `<style id="bauify-map-style">${MAP_VIEWS_CSS}</style>\n<script id="bauify-map-script">${MAP_VIEWS_JS}</script>\n`;
+  const injection = `\n<!-- bauify overlay: authored diagram untouched; analysis layer below -->\n<script type="application/json" id="bauify-analysis">${scriptSafeJson(payload)}</script>\n${atlasData}${mapData}<style id="bauify-style">${CSS}</style>\n<script id="bauify-script">${JS}</script>\n${atlasView}${mapAssets}`;
   const idx = html.lastIndexOf('</body>');
   const out = idx === -1 ? html + injection : html.slice(0, idx) + injection + html.slice(idx);
   return { html: out, overview: payload.overview, mapped, components: components.length, edges: edges.length, unmapped: unmapped.length, snippets: Object.keys(payload.snippets).length };

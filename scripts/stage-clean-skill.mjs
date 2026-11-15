@@ -99,7 +99,8 @@ function requireTrackedFile(repoRoot, relative) {
 function excluded(relative) {
   if (EXCLUDED_FILES.has(relative)) return true;
   const insideSkill = relative.slice('archify/'.length);
-  if (insideSkill === 'test' || insideSkill.startsWith('test/')) return true;
+  if (insideSkill === 'test' || insideSkill.startsWith('test/')
+    || insideSkill === 'modules/code-analysis/test' || insideSkill.startsWith('modules/code-analysis/test/')) return true;
   return insideSkill.split('/').some((segment) => (
     EXCLUDED_SEGMENTS.has(segment) || segment.startsWith('.validator-check-')
   ));

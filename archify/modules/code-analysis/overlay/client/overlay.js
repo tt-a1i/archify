@@ -35,7 +35,7 @@
   }
   reader.querySelector('.reader-toggle').addEventListener('click', function () { setReaderCollapsed(!readerCollapsed); if (readerCollapsed && window.innerWidth <= 1000 && diagramContainer) diagramContainer.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
   var atlasButton = reader.querySelector('.reader-atlas');
-  if (atlasButton) atlasButton.addEventListener('click', function () { if (window.__archifyAtlas) window.__archifyAtlas.open(); });
+  if (atlasButton) atlasButton.addEventListener('click', function () { if (window.__archifyMapViews) window.__archifyMapViews.open('atlas'); else if (window.__archifyAtlas) window.__archifyAtlas.open(); });
   function readerPage(name) {
     reader.hidden = false;
     reader.querySelector('.reader-path').textContent = tr("Analysis / ") + name;
@@ -58,6 +58,7 @@
   reader.appendChild(overview);
   var findingById = {}; (data.findings || []).forEach(function (f) { findingById[f.id] = f; });
   var overviewMode = 'summary', listScroll = 0;
+  var selectedFindings = new Set(), selectedModule = null;
   var filters = { source: 'all', category: 'all', severity: 'all', status: 'open', search: '', unverified: false, page: 0 };
   var filterKey = 'archify-findings:' + (data.repository.root || '') + ':' + location.pathname;
   try { var restored = JSON.parse(sessionStorage.getItem(filterKey)); if (restored) Object.keys(filters).forEach(function (key) { if (typeof restored[key] === typeof filters[key]) filters[key] = restored[key]; }); } catch (error) { /* Storage is optional for offline reports. */ }
@@ -200,6 +201,7 @@
     readerPage(tr("Component"));
     root.removeAttribute('data-bauify-source');
     var c = byId[id]; if (!c) return;
+    publishSelection(c.modules.length ? c.modules[0].id : null, null);
     overview.hidden = true; setFocus([]);
     var h = ("<button class=\"close\" aria-label=\"" + tr("Close") + "\">" + "×" + "</button>" + "<button type=\"button\" class=\"back\">" + tr("← Overview") + "</button>");
     h += ("<div class=\"k\">" + tr("Bauify · code analysis") + "</div>" + "<h3>") + esc(c.label) + '<span class="badge ' + c.indicators.status + '">' + tr(LEVELS[c.indicators.status].name) + '</span></h3>';
@@ -482,8 +484,73 @@
   function bindingLabel(binding) { return binding === 'verified' ? tr("File content hashes match") : binding === 'changed' ? tr("Source changed") : tr("Not verified"); }
   function findingListRow(f) {
     var external = f.external, review = f.review || {};
-    return '<button type="button" class="finding-row ' + toneOf(f.severity) + '" data-finding="' + esc(f.id) + '"><span class="finding-row-meta"><span>' + esc(external ? external.tool : 'Archify') + '</span><code>' + esc(external ? external.ruleId || tr("review comment") : f.code) + '</code><span class="finding-level">' + esc(tr(f.severity)) + '</span></span><b>' + esc(findingTitle(f)) + '</b><span class="finding-row-path">' + esc(findingWhere(f)) + '</span>' +
-      (review.status === 'accepted' ? ("<span class=\"finding-row-state\">" + tr("Accepted")) + (f.severity === 'error' ? tr(" · still present") : '') + '</span>' : review.status === 'accepted-changed' ? ("<span class=\"finding-row-state attention\">" + tr("Accepted evidence changed · review again") + "</span>") : external && external.binding !== 'verified' ? ("<span class=\"finding-row-state attention\">" + tr("Report binding: ")) + esc(bindingLabel(external.binding).toLowerCase()) + '</span>' : '') + '</button>';
+    return '<div class="selectable-finding"><label class="finding-select"><input type="checkbox" data-select-finding="' + esc(f.id) + '" aria-label="' + esc(tr('Select finding: {title}', { title: findingTitle(f) })) + '"' + (selectedFindings.has(f.id) ? ' checked' : '') + '></label><button type="button" class="finding-row ' + toneOf(f.severity) + '" data-finding="' + esc(f.id) + '"><span class="finding-row-meta"><span>' + esc(external ? external.tool : 'Archify') + '</span><code>' + esc(external ? external.ruleId || tr("review comment") : f.code) + '</code><span class="finding-level">' + esc(tr(f.severity)) + '</span></span><b>' + esc(findingTitle(f)) + '</b><span class="finding-row-path">' + esc(findingWhere(f)) + '</span>' +
+      (review.status === 'accepted' ? ("<span class=\"finding-row-state\">" + tr("Accepted")) + (f.severity === 'error' ? tr(" · still present") : '') + '</span>' : review.status === 'accepted-changed' ? ("<span class=\"finding-row-state attention\">" + tr("Accepted evidence changed · review again") + "</span>") : external && external.binding !== 'verified' ? ("<span class=\"finding-row-state attention\">" + tr("Report binding: ")) + esc(bindingLabel(external.binding).toLowerCase()) + '</span>' : '') + '</button></div>';
+  }
+  function publishSelection(moduleId, findingId) {
+    document.dispatchEvent(new CustomEvent('archify:map-selection', { detail: { moduleId: moduleId, findingId: findingId, source: 'classic' } }));
+  }
+  document.addEventListener('archify:map-selection', function (event) {
+    selectedModule = event.detail.moduleId || null;
+    updateBatchControls(overview);
+  });
+  function batchTaskHtml() {
+    return '<section class="batch-tasks" aria-label="' + esc(tr('Selected AI task')) + '"><div class="task-actions"><button type="button" class="batch-copy">' + esc(tr('Copy AI Refactor Task')) + '</button><button type="button" class="batch-module">' + esc(tr('Select module findings')) + '</button><button type="button" class="batch-clear">' + esc(tr('Clear selection')) + '</button></div><p class="batch-status ev" role="status" aria-live="polite"></p><details class="batch-preview" hidden><summary>' + esc(tr('Copy manually')) + '</summary><textarea readonly spellcheck="false" aria-label="' + esc(tr('Selected AI task')) + '"></textarea></details></section>';
+  }
+  function updateBatchControls(container) {
+    var copy = container.querySelector('.batch-copy'); if (!copy) return;
+    copy.disabled = selectedFindings.size === 0;
+    copy.textContent = tr('Copy AI Refactor Task') + ' · ' + selectedFindings.size;
+    container.querySelector('.batch-clear').disabled = selectedFindings.size === 0;
+    container.querySelector('.batch-module').disabled = !selectedModule || !data.findings.some(function (f) { return (f.moduleIds || []).includes(selectedModule); });
+  }
+  function impactContext(ids) {
+    var element = document.getElementById('bauify-map-data');
+    if (!element) return '';
+    var map = JSON.parse(element.textContent), modules = new Set();
+    ids.forEach(function (id) { (findingById[id].moduleIds || []).forEach(function (mid) { modules.add(mid); }); });
+    var edges = (map.edges || []).filter(function (e) { return modules.has(e.from) || modules.has(e.to); });
+    return '\n\n## ' + tr('Static dependency boundary') + '\n' + tr('Recorded imports describe source dependencies, not complete runtime impact. Verify callers and project checks before editing.') + '\n' +
+      edges.slice(0, 40).map(function (e) { return '- ' + e.from + ' → ' + e.to + ' (' + e.weight + ')'; }).join('\n') +
+      (edges.length > 40 ? '\n' + tr('{count} additional dependency edges omitted.', { count: edges.length - 40 }) : '');
+  }
+  function wireBatchTasks(container) {
+    updateBatchControls(container);
+    container.querySelector('.batch-clear').addEventListener('click', function () { selectedFindings.clear(); renderFindingRows(); updateBatchControls(container); });
+    container.querySelector('.batch-module').addEventListener('click', function () {
+      data.findings.filter(function (f) { return (f.moduleIds || []).includes(selectedModule); }).slice(0, 20).forEach(function (f) { selectedFindings.add(f.id); });
+      // Keep the server's bounded task contract even when a previous selection exists.
+      selectedFindings = new Set(Array.from(selectedFindings).slice(0, 20));
+      renderFindingRows(); updateBatchControls(container);
+      container.querySelector('.batch-status').textContent = tr('Select up to 20 findings per task.');
+    });
+    container.querySelector('.batch-copy').addEventListener('click', async function () {
+      var ids = Array.from(selectedFindings).sort(), button = this;
+      var status = container.querySelector('.batch-status'), box = container.querySelector('.batch-preview'), preview = box.querySelector('textarea');
+      button.disabled = true; status.textContent = tr('Preparing task and checking available evidence…');
+      try {
+        var payload = null, offline = typeof window.__archifyBuildTask !== 'function';
+        if (!offline) {
+          var expected = {}; ids.forEach(function (id) { expected[id] = findingById[id].reviewTarget; });
+          try { payload = await window.__archifyBuildTask(ids, expected); }
+          catch (error) { if (error.status) throw error; offline = true; }
+        }
+        var markdown;
+        if (offline) {
+          var tasks = ids.map(function (id) { var p = (data.tasks || {})[id]; if (!p) throw new Error(tr('Task source is unavailable. Re-analyze with the local service to create this task.')); return p; });
+          markdown = tr('Offline report: captured tasks can be copied now. Current source has not been rechecked.') + '\n\n' + tasks.map(function (p) { return p.markdown; }).join('\n\n---\n\n');
+          if (data.taskValidationCommand) markdown += '\n\n## ' + tr('Validate captured evidence locally') + '\n```sh\n' + data.taskValidationCommand + ids.map(function (id) { return ' --finding ' + id; }).join('') + '\n```';
+          else if (data.ui && data.ui.resume) markdown += '\n\n' + tr('Recheck after edits') + ':\n' + data.ui.resume.command;
+        } else {
+          if (data.repository.snapshotId && payload.task.source.snapshotId && data.repository.snapshotId !== payload.task.source.snapshotId) throw new Error(tr('The service has a newer analysis snapshot than this page. Re-analyze to refresh the displayed evidence.'));
+          markdown = payload.markdown;
+        }
+        markdown += impactContext(ids);
+        if (data.ui.recheckCommand) markdown += '\n\n## ' + tr('Recheck after edits') + '\n```sh\n' + data.ui.recheckCommand + '\n```';
+        await copyText(markdown, status, preview, tr(offline ? 'Copied captured tasks. Verify current source before editing.' : 'Copied checked task. Review its evidence status before editing.'), box);
+      } catch (error) { status.textContent = tr('Could not prepare task: ') + error.message; }
+      finally { updateBatchControls(container); }
+    });
   }
   function showFindings(source) {
     if (typeof source === 'string') { filters.source = source; filters.category = 'all'; filters.severity = 'all'; filters.status = 'open'; filters.unverified = false; filters.search = ''; filters.page = 0; listScroll = 0; }
@@ -507,6 +574,8 @@
     controls.forEach(function (pair) { var control = overview.querySelector('[aria-label="' + pair[0] + '"]'); if (!control) { filters[pair[1]] = 'all'; return; } control.value = filters[pair[1]]; if (!control.value) filters[pair[1]] = control.value = pair[1] === 'status' ? 'open' : 'all'; control.addEventListener('change', function () { filters[pair[1]] = control.value; filters.page = 0; renderFindingRows(); }); });
     overview.querySelector('#finding-search').addEventListener('input', function (event) { filters.search = event.target.value; filters.page = 0; renderFindingRows(); });
     var checkbox = overview.querySelector('.unverified-filter'); if (checkbox) checkbox.addEventListener('change', function () { filters.unverified = checkbox.checked; filters.page = 0; renderFindingRows(); });
+    overview.querySelector('.finding-list-count').insertAdjacentHTML('beforebegin', batchTaskHtml());
+    wireBatchTasks(overview);
     renderFindingRows();
   }
   function renderFindingRows() {
@@ -526,6 +595,7 @@
     var emptyReports = !query && selectedSources.length && selectedSources.every(function (source) { return !data.findings.some(function (f) { return f.external && f.external.sourceId === source.id; }); });
     overview.querySelector('.finding-list').innerHTML = matches.length ? matches.slice(start, end).map(findingListRow).join('') : '<div class="finding-empty"><b>' + (emptyReports ? tr("No diagnostics in this report") : data.findings.length ? tr("No matching findings") : tr("No diagnostics in this analysis")) + '</b><p>' + (emptyReports || !data.findings.length ? tr("See Sources and Coverage for what was checked.") : tr("Change a filter or search term to see more.")) + ("</p>" + "<button type=\"button\" class=\"text-action reset-filters\">" + tr("Reset filters") + "</button>" + "</div>");
     overview.querySelectorAll('[data-finding]').forEach(function (button) { button.addEventListener('click', function () { listScroll = overview.scrollTop; showFinding(button.getAttribute('data-finding'), 'findings'); }); });
+    overview.querySelectorAll('[data-select-finding]').forEach(function (input) { input.addEventListener('change', function () { if (input.checked && selectedFindings.size >= 20) { input.checked = false; overview.querySelector('.batch-status').textContent = tr('Select up to 20 findings per task.'); return; } if (input.checked) selectedFindings.add(input.getAttribute('data-select-finding')); else selectedFindings.delete(input.getAttribute('data-select-finding')); updateBatchControls(overview); }); });
     var reset = overview.querySelector('.reset-filters'); if (reset) reset.addEventListener('click', function () { filters.source = filters.category = filters.severity = 'all'; filters.status = 'all'; filters.search = ''; filters.unverified = false; filters.page = 0; renderFindingList(); });
     var pagination = overview.querySelector('.finding-pagination');
     pagination.innerHTML = matches.length > 40 ? '<button type="button" data-page="-1"' + (!filters.page ? ' disabled' : '') + (">" + tr("Previous") + "</button>" + "<span>" + tr("Page ")) + (filters.page + 1) + tr(" of ") + Math.ceil(matches.length / 40) + '</span><button type="button" data-page="1"' + (end === matches.length ? ' disabled' : '') + (">" + tr("Next") + "</button>") : '';
@@ -871,6 +941,7 @@
   function showFinding(id, parent) {
     var f = findingById[id]; if (!f) return;
     parent = parent || (!overview.hidden && overviewMode === 'findings' ? 'findings' : 'summary');
+    publishSelection((findingById[id].moduleIds || [])[0] || null, id);
     readerPage(tr("Finding")); detail.classList.remove('reviewing');
     root.removeAttribute('data-bauify-source');
     overview.hidden = true; panel.hidden = true;
@@ -1128,9 +1199,18 @@
     } else { setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
+  window.__archifySelectModuleFindings = function (moduleId) {
+    if (!standalone && window.__archifyMapViews) window.__archifyMapViews.open('classic');
+    if (root.getAttribute('data-bauify') !== 'on') setOn(true);
+    selectedModule = moduleId;
+    selectedFindings = new Set(data.findings.filter(function (f) { return (f.moduleIds || []).includes(moduleId); }).slice(0, 20).map(function (f) { return f.id; }));
+    showFindings('all');
+    updateBatchControls(overview);
+  };
   // The Atlas view hands a finding back here to show its source evidence.
   window.__archifyShowFinding = function (id, parent) {
     if (!findingById[id]) return;
+    if (!standalone && window.__archifyMapViews) window.__archifyMapViews.open('classic');
     if (root.getAttribute('data-bauify') !== 'on') setOn(true);
     showFinding(id, parent);
   };

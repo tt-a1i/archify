@@ -169,7 +169,7 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
   const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
   try {
     await runWorker({
-      root, ir, irSnapshot: doc, html: delivered, locale, out: next, resume, openAnalysis: !ir || openAnalysis,
+      root, ir, irSnapshot: doc, html: delivered, locale, out: next, publishedOut: path.join(out, 'analysis'), resume, openAnalysis: !ir || openAnalysis,
       language: options['--language'] || null, config: options['--config'] ? path.resolve(options['--config']) : null,
       map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
       previous: path.join(analysisDir, 'findings.json'),
@@ -353,8 +353,9 @@ function client(token, messages, makeTranslator, standalone) {
   if (toolbarObserver) toolbarObserver.observe(toolbar);
   var say = function (text) { note.textContent = text; note.style.display = text ? 'block' : 'none'; reposition(); };
   window.__archifyBuildTask = async function (id, expected) {
-    var input = { ids: [id] };
-    if (expected !== undefined) input.expected = { [id]: expected };
+    var multiple = Array.isArray(id);
+    var input = { ids: multiple ? id : [id] };
+    if (expected !== undefined) input.expected = multiple ? expected : { [id]: expected };
     var response = await fetch('/task', { method: 'POST', headers: { 'X-Analysis-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
     var body = await response.json();
     if (!response.ok) {
@@ -402,7 +403,7 @@ function client(token, messages, makeTranslator, standalone) {
       var required = ['bauify-analysis', 'bauify-style', 'bauify-script'];
       for (var i = 0; i < required.length; i++) if (!parsed.getElementById(required[i])) throw new Error(tr("analysis result is incomplete"));
       // In document order; the Atlas parts are present only when raw facts were available.
-      var ids = ['bauify-analysis', 'bauify-atlas-data', 'bauify-style', 'bauify-script', 'bauify-atlas-style', 'bauify-atlas-script'].filter(function (id) { return parsed.getElementById(id); });
+      var ids = ['bauify-analysis', 'bauify-atlas-data', 'bauify-map-data', 'bauify-style', 'bauify-script', 'bauify-atlas-style', 'bauify-atlas-script', 'bauify-map-style', 'bauify-map-script'].filter(function (id) { return parsed.getElementById(id); });
       // Hand over to the layer: it adds its own toggle to the toolbar, so this button retires.
       button.remove(); say('');
       window.removeEventListener('resize', reposition);

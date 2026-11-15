@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { staticAnalysisEntry } from './static-analysis-entry.mjs';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { NODE_CARD_ATTR, nodeCardStyle } from '../shared/node-card-style.mjs';
@@ -1181,7 +1182,9 @@ if (layoutJsonMode) {
   validateArchitecture();
   writeDiagram({
     outPath,
-    template,
+    template: process.env.ARCHIFY_REPO_ROOT && arch.meta?.repository
+      ? template.replace('</body>', `${staticAnalysisEntry(arch.meta.locale)}\n</body>`)
+      : template,
     diagramType: 'architecture',
     meta: arch.meta,
     svg: renderSvg(),

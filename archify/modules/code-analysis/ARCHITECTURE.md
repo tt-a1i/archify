@@ -102,6 +102,41 @@ The AI task preview uses the shared task generator's Markdown. Live pages reques
 
 Source references with line numbers show a nine-line context window and highlight the cited line. References without a line number show a twelve-line file preview, explicitly labeled as opening lines rather than finding evidence. Readers can switch to the full captured file and back; excerpt lines wrap, while full-file mode retains original formatting. Unmapped modules retain their file evidence even without a component on the architecture diagram. Related components are highlighted and can be located using the Viewer camera while preserving the desktop zoom. The Code Analysis button toggles the layer after analysis succeeds.
 
+## Map views and task handoff
+
+`archify map <root>` uses the same local session as `start`; `--once` (or
+`--no-serve`) uses `prepare` and exits with a portable report. Existing commands
+remain supported. Without an IR, Atlas remains the initial view. With an IR,
+Classic retains the authored component mapping and status rings.
+
+`overlay/map-views.mjs` projects the existing graph, facts and findings once.
+The inlined `client/map-views.js` owns the common view switcher and renders
+Graph, Layers and Butterfly. Layers collapse strongly connected components
+before assigning dependency depths; they describe captured dependency structure,
+not declared business responsibilities or configured layer rules. Graph starts
+with modules only; file drilldown includes captured imports and resolved lexical
+call candidates, not runtime dispatch. File nodes, painted edges and detailed
+relationship lists have explicit displayed/total limits. No view reruns extraction.
+Classic, Atlas and the new views exchange module/finding selection through one
+`archify:map-selection` event. Opening evidence from a map returns to a visible
+reader in diagram mode.
+
+The finding reader keeps a bounded selection of up to 20 findings, matching the
+existing `/task` request limit. Online export submits all selected IDs and their
+displayed evidence digests to the authenticated endpoint. A rejected HTTP request
+stays an error; a transport failure can use explicitly labeled captured tasks.
+Offline export combines the existing task Markdown, captured dependency boundaries
+and an executable current-source validation command. That command refers to the
+published analysis directory, never the temporary directory used during atomic
+publication. Clipboard failure reveals selectable text.
+
+Only architecture delivery with both `meta.repository` and an explicit local
+`--repo-root` includes the small offline launch guide. Repository metadata alone
+is a remote identity, not a local filesystem binding. The guide offers the portable
+repository-root template `archify map .`, supports English/Chinese and both themes,
+and is suppressed when the local service or an analysis report supplies controls.
+Unbound and other diagram deliveries receive no analysis markup.
+
 ## Files and responsibilities
 
 - `bin/`: delivery, local server, and click-triggered analysis requests.

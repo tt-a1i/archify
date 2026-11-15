@@ -2190,6 +2190,7 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
+  map: '<repo-root> [--once|--no-serve] [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
     'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
@@ -7280,14 +7281,22 @@ try {
     case 'help':
       console.log(usage());
       break;
+    case 'map':
     case 'start': {
       if (!args.length || args[0] === '--help' || args[0] === '-h') {
-        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        console.log(`Usage: archify ${command} ${COMMAND_USAGE[command]}`);
+        break;
+      }
+      const once = command === 'map' && args.some(arg => arg === '--once' || arg === '--no-serve');
+      const launchArgs = once ? args.filter(arg => arg !== '--once' && arg !== '--no-serve') : [...args];
+      if (!launchArgs.includes('--out')) launchArgs.push('--out', fs.mkdtempSync(path.join(os.tmpdir(), 'archify-' + createHash('sha256').update(path.resolve(args[0])).digest('hex').slice(0, 16) + '-')));
+      if (once) {
+        const result = runNode([path.join(skillRoot, 'modules', 'code-analysis', 'bin', 'prepare.mjs'), ...launchArgs]);
+        if (result.error) throw result.error;
+        process.exitCode = result.status ?? 1;
         break;
       }
       const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
-      const launchArgs = [...args];
-      if (!launchArgs.includes('--out')) launchArgs.push('--out', fs.mkdtempSync(path.join(os.tmpdir(), 'archify-' + createHash('sha256').update(path.resolve(args[0])).digest('hex').slice(0, 16) + '-')));
       let view;
       try { view = await startAnalysisView(launchArgs); }
       catch (error) { console.error(error.message); process.exitCode = error.exitCode === 2 ? 2 : 1; break; }

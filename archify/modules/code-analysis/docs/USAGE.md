@@ -48,6 +48,8 @@ For a Java analysis without a diagram, run `node bin/archify.mjs code-analysis c
 
 Output defaults to a system temporary directory. Add `--out out/my-project` to choose a persistent output directory. Use the printed URL: double-clicking a static HTML file cannot start local code analysis.
 
+Run `node bin/archify.mjs map /path/to/project --once --out out/project-analysis` (or use `--no-serve`) to generate the offline report and exit. Without `--out`, a temporary directory is created and the JSON receipt reports the HTML path. `map` without either flag starts the local server. All analysis options supported by `start` also apply.
+
 You can also run `node bin/archify.mjs start "/path/to/project" [--ir architecture.json] [--locale zh-CN]` directly. The legacy `code-analysis serve` command remains supported.
 
 ## Agent entry and investigation
@@ -498,3 +500,24 @@ the locked helper dependencies are required. Saved and paired questions retain
 the captured source profile, cfg/features, omitted regions and bounded call
 model; a source binding does not establish compilation or runtime dispatch.
 See [Rust support](RUST.md) for setup, profile settings and limitations.
+
+### Read the same snapshot from different views
+
+Use the common view bar to choose Graph, Layers, Butterfly or Atlas. Classic is
+available when an authored architecture IR was supplied. Graph shows modules;
+double-click one (or choose **Explore module files**) to inspect its captured
+file/import/call relationships. **All modules** returns to the overview. Drag
+nodes or blank space to arrange the graph; scroll to zoom. The module list also
+supports keyboard navigation. Layers are inferred dependency depths, not a
+claim about business responsibilities. Butterfly centers a module between its
+recorded dependents and dependencies. Missing or unresolved source relationships
+remain unknown.
+
+In **Browse findings**, select up to 20 findings and choose **Copy AI Refactor
+Task**. **Select module findings** selects a bounded set for the focused module.
+Online tasks check current source before copying. Offline tasks identify their
+captured evidence and include a local validation command for the generating
+machine. An HTTP rejection requires refreshing the analysis; it does not silently
+copy stale findings. If automatic copying is unavailable, the report reveals
+selectable task text. **Copy architecture brief** remains available in the
+overview for everyday source orientation.

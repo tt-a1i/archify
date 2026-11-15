@@ -4834,3 +4834,24 @@ test('render rejects an extra positional argument', () => {
   assert.notEqual(result.status, 0);
   assert.deepEqual(fs.readdirSync(dir), ['spec.json']);
 });
+
+test('cli: map generates an offline report and exits for both static flags', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-map-repo-'));
+  try {
+    fs.writeFileSync(path.join(root, 'index.ts'), 'export function hello() { return 1; }\n');
+    for (const flag of ['--once', '--no-serve']) {
+      const out = path.join(root, flag.slice(2));
+      const result = run(['map', root, flag, '--out', out, '--language', 'ts', '--locale', 'zh-CN']);
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      const receipt = JSON.parse(result.stdout);
+      assert.equal(receipt.status, 'ok');
+      assert.equal(receipt.html, path.join(out, 'analysis', 'repo.analysis.html'));
+      assert.match(fs.readFileSync(receipt.html, 'utf8'), /<html/i);
+    }
+    const help = run(['map', '--help']);
+    assert.equal(help.status, 0);
+    assert.match(help.stdout, /archify map .*--once\|--no-serve/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

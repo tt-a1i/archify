@@ -54,6 +54,8 @@ export const browserTestFiles = [
   'code-analysis-task-browser.test.mjs',
   'code-analysis-workbench-browser.test.mjs',
   'code-analysis-standalone-browser.test.mjs',
+  'code-analysis-static-entry-browser.test.mjs',
+  'code-analysis-map-browser.test.mjs',
   'story-browser.test.mjs',
   // Benchmark observers and real export integration require this explicit Chrome lane.
   'diagram-quality-e2e-browser.test.mjs',

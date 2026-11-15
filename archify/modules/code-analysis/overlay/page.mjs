@@ -4,12 +4,14 @@
 // lib/ stays free of presentation code.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import { fail, receipt } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { buildGraph, evaluateGraph, extractFacts, loadBaseline, loadPrevious, readJsonInput, reviewSummary, stableJson, validateFacts } from '../lib/analysis.mjs';
 import { reviewFindings } from '../lib/review.mjs';
 import { buildOverlay } from './inject.mjs';
+import { analysisCheckCommand } from '../lib/task-command.mjs';
 
 // Stage 4: delivered HTML + authored IR + graph → a new HTML with the analysis layer.
 export function overlayHtml({ html, ir, graph, facts = null, findings = [], findingsDocument = null, map = null, sourceRoot = null, run = {} }) {
@@ -49,7 +51,7 @@ export function writeAnalysisView(dir, overlay, review) {
 // `html` is the page Archify delivered for `ir`; it is read, never modified.
 // `baseline` (file) marks accepted findings; `previous` (a findings.json from
 // an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false }) {
+export function analyzeRepository({ root, ir = null, html = null, out, publishedOut = out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false }) {
   const absRoot = path.resolve(root);
   const irPath = ir ? path.resolve(ir) : null;
   const htmlPath = html ? path.resolve(html) : null;
@@ -68,7 +70,22 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: loadPrevious(previous), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   const irDoc = irSnapshot ?? (irPath ? readJsonInput(irPath, 'analysis --ir') : null);
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
-  const context = { schema_version: 1, mode: irPath ? 'diagram' : 'standalone', ir: irDoc, map: mapDoc, run: { locale: locale || irDoc?.meta?.locale || 'en', openAnalysis: !irPath || openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
+  const taskCli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+  const published = path.resolve(publishedOut);
+  const recheckCommand = analysisCheckCommand(taskCli, absRoot, {
+    out: published + '.recheck', compare: path.join(published, 'findings.json'),
+    language: facts.repository.language, config: config ? path.resolve(config) : null,
+    baseline: baseline ? path.resolve(baseline) : null,
+  });
+  const context = {
+    schema_version: 1, mode: irPath ? 'diagram' : 'standalone', ir: irDoc, map: mapDoc,
+    run: {
+      locale: locale || irDoc?.meta?.locale || 'en', openAnalysis: !irPath || openAnalysis,
+      recheckCommand, taskExport: { cli: taskCli, root: absRoot, out: published },
+      ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [],
+      otherLanguages, boundaries: cfg.boundaries || null,
+    },
+  };
   fs.writeFileSync(path.join(dir, 'view-context.json'), stableJson(context));
   const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };
   const overlay = overlayHtml({ html: htmlPath ? fs.readFileSync(htmlPath, 'utf8') : null, ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });

@@ -165,6 +165,8 @@ test('clean staging preserves index modes and strips repository-only package met
   try {
     write(root, 'archify/bin/executable.mjs', '#!/usr/bin/env node\n', 0o644);
     write(root, 'archify/runtime/test/required.dat', 'runtime fixture\n', 0o755);
+    write(root, 'archify/modules/code-analysis/test/fixture.dat', 'test fixture\n');
+    write(root, 'archify/modules/code-analysis/lib/runtime.mjs', 'runtime module\n');
     git(root, ['add', 'archify']);
     // Index modes must win over working-tree permissions, including on Windows.
     git(root, ['update-index', '--chmod=+x', 'archify/bin/executable.mjs']);
@@ -181,10 +183,12 @@ test('clean staging preserves index modes and strips repository-only package met
       assert.equal(fs.statSync(runtimeFixture).mode & 0o777, 0o644);
     }
     assert.equal(fs.existsSync(path.join(destination, 'test')), false);
+    assert.equal(fs.existsSync(path.join(destination, 'modules/code-analysis/test')), false);
+    assert.equal(fs.readFileSync(path.join(destination, 'modules/code-analysis/lib/runtime.mjs'), 'utf8'), 'runtime module\n');
     assert.equal(
       fs.readFileSync(path.join(destination, 'runtime', 'test', 'required.dat'), 'utf8'),
       'runtime fixture\n',
-      'only the repository-root test tree is excluded',
+      'unrelated runtime test directories remain available',
     );
     assert.equal(fs.existsSync(path.join(destination, 'package-lock.json')), false);
     const packageJson = JSON.parse(fs.readFileSync(path.join(destination, 'package.json'), 'utf8'));

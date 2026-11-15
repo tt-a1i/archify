@@ -431,6 +431,7 @@
     root.setAttribute('data-bauify-atlas-focus', module === -1 ? '' : M[module].id);
     root.setAttribute('data-bauify-atlas-finding', finding === -1 ? '' : FD[finding].id);
     renderSide(); draw('fade');
+    if (!syncingSelection) document.dispatchEvent(new CustomEvent('archify:map-selection', { detail: { moduleId: module === -1 ? null : M[module].id, findingId: finding === -1 ? null : FD[finding].id, source: 'atlas' } }));
   }
   function findingTitle(f) { return window.__archifyAnalysisFindingTitle ? window.__archifyAnalysisFindingTitle(f.id) : f.title; }
   function selectedCard() {
@@ -513,7 +514,7 @@
     anim.raf = 0; anim.timer = 0; anim.reveal = 0; anim.fade = 0; anim.flow = 0; anim.flowFor = -1;
     markMotion();
   }
-  if (!standalone) panel.querySelector('.atlas-classic').addEventListener('click', close);
+  if (!standalone) panel.querySelector('.atlas-classic').addEventListener('click', function () { if (window.__archifyMapViews) window.__archifyMapViews.open('classic'); else close(); });
   panel.querySelector('.atlas-clear').addEventListener('click', function () { select(-1, -1); });
   document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { e.preventDefault(); select(-1, -1); } });
   function updateExpansionControl() {
@@ -531,6 +532,16 @@
     updateExpansionControl(); draw('focus');
   });
   updateExpansionControl();
+  var syncingSelection = false;
+  document.addEventListener('archify:map-selection', function (event) {
+    if (event.detail.source === 'atlas') return;
+    syncingSelection = true;
+    try {
+      var mi = M.findIndex(function (m) { return m.id === event.detail.moduleId; });
+      var fi = FD.findIndex(function (f) { return f.id === event.detail.findingId; });
+      select(mi, fi);
+    } finally { syncingSelection = false; }
+  });
   window.__archifyAtlas = { open: open, close: close, focusFinding: function(id) { var i=FD.findIndex(function(f){return f.id===id;}); selectFinding(i); return i!==-1; } };
   if (standalone) open();
   new MutationObserver(function () { if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden) { renderSide(); draw(); } }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
