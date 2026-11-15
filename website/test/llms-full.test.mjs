@@ -6,17 +6,24 @@ import { fileURLToPath } from 'node:url';
 
 const websiteRoot = fileURLToPath(new URL('../', import.meta.url));
 const repoRoot = path.resolve(websiteRoot, '..');
-const source = path.join(repoRoot, 'website/public/llms-full.txt');
+const templatePath = path.join(websiteRoot, 'src/data/llms-full.txt');
 const output = path.resolve(websiteRoot, process.env.ARCHIFY_SITE_ROOT
   || (process.env.ARCHIFY_SITE_TARGET === 'cloudflare' ? 'dist-cloudflare' : 'dist'));
 const read = relative => fs.readFileSync(path.join(repoRoot, relative), 'utf8');
 const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-test('llms-full.txt is version-synced and covers capabilities, boundaries, and disambiguation', () => {
+test('llms-full.txt derives release identity from package metadata and covers capabilities, boundaries, and disambiguation', () => {
   const release = JSON.parse(read('archify/skill-release.json'));
   const packageJson = JSON.parse(read('archify/package.json'));
   assert.equal(packageJson.version, release.version, 'release metadata must agree on one version');
-  const text = fs.readFileSync(source, 'utf8');
+  const template = fs.readFileSync(templatePath, 'utf8');
+  assert.match(template, /^> Version: \[\[ARCHIFY_VERSION\]\]$/m);
+  assert.match(template, /^> Release channel: \[\[ARCHIFY_CHANNEL\]\]$/m);
+
+  const built = path.join(output, 'llms-full.txt');
+  assert.ok(fs.existsSync(built), 'the build must publish /llms-full.txt');
+  const text = fs.readFileSync(built, 'utf8');
+  assert.doesNotMatch(text, /\[\[ARCHIFY_/, 'all template placeholders must be resolved');
   assert.match(text, new RegExp(`^> Version: ${escape(release.version)}$`, 'm'));
   assert.match(text, new RegExp(`^> Release channel: ${escape(release.channel)}$`, 'm'));
   assert.match(text, /https:\/\/archify\.si\/llms\.txt/);
@@ -32,20 +39,17 @@ test('llms-full.txt is version-synced and covers capabilities, boundaries, and d
   assert.doesNotMatch(text, /aggregateRating|reviewCount|ratingValue/, 'no invented rating signals');
 });
 
-test('built llms-full.txt is the published source and every canonical site link resolves in the output', () => {
-  const sourceText = fs.readFileSync(source, 'utf8');
-  const built = path.join(output, 'llms-full.txt');
-  assert.ok(fs.existsSync(built), 'the build must publish /llms-full.txt');
-  assert.equal(fs.readFileSync(built, 'utf8'), sourceText);
-  const links = [...new Set([...sourceText.matchAll(/https:\/\/archify\.si\/[^\s)`<>]*/g)].map(match => match[0]))];
+test('every canonical site link in built llms-full.txt is extensionless HTML or a real static endpoint', () => {
+  const text = fs.readFileSync(path.join(output, 'llms-full.txt'), 'utf8');
+  const links = [...new Set([...text.matchAll(/https:\/\/archify\.si[^\s)`<>]*/g)].map(match => match[0]))];
   assert.ok(links.length >= 10, `expected a canonical link index, got ${links.length}`);
   for (const link of links) {
     const url = new URL(link);
-    let relative = decodeURIComponent(url.pathname);
-    if (!relative || relative.endsWith('/')) relative += 'index.html';
-    else if (!path.extname(relative)) relative += '.html';
-    const file = path.resolve(output, relative.replace(/^\//, ''));
-    assert.ok(file.startsWith(`${output}${path.sep}`), `link escapes output: ${link}`);
-    assert.ok(fs.existsSync(file) && fs.statSync(file).isFile(), `canonical link has no built artifact: ${link}`);
+    assert.doesNotMatch(url.pathname, /\.html$/, `canonical link must omit .html: ${link}`);
+    const relative = decodeURIComponent(url.pathname).replace(/^\//, '') || 'index.html';
+    const target = path.resolve(output, relative);
+    assert.ok(target.startsWith(`${output}${path.sep}`), `link escapes output: ${link}`);
+    const candidates = [target, `${target}.html`, path.join(target, 'index.html')];
+    assert.ok(candidates.some(candidate => fs.existsSync(candidate) && fs.statSync(candidate).isFile()), `canonical link has no built artifact: ${link}`);
   }
 });

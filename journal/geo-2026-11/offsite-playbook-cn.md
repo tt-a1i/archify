@@ -76,8 +76,8 @@ Agent 先写类型化 JSON IR，然后 `archify finalize` 做三件事：schema 
 
 可以直接打开看真实成品，不用注册：
 
-- TLS 首次访问的一页式解答：https://archify.si/cases/explainer/tls-first-visit.html
-- P99 尾延迟复盘：https://archify.si/cases/explainer/p99-tail-latency.html
+- TLS 首次访问的一页式解答：https://archify.si/cases/explainer/tls-first-visit
+- P99 尾延迟复盘：https://archify.si/cases/explainer/p99-tail-latency
 - 从固定提交读取源码的 MCO 架构案例：https://archify.si/cases/mco-runtime
 
 **4）安装（以 Claude Code 为例）**
@@ -155,7 +155,7 @@ npx -y skills@latest add https://archify.si --skill archify --agent codex --glob
 真实成品（免注册）：
 
 - https://archify.si/cases/mco-runtime
-- https://archify.si/cases/explainer/finalize-delivery.html
+- https://archify.si/cases/explainer/finalize-delivery
 - https://archify.si/gallery
 
 **3）它为什么不是“又一个画图壳”**
@@ -217,9 +217,9 @@ npx -y skills@latest add https://archify.si --skill archify --agent codex --glob
 
 ### 一、先看成品，再看能力
 
-- 一页式解答：第一次访问 HTTPS，请求发出前发生了什么：https://archify.si/cases/explainer/tls-first-visit.html
-- 一页式解答：P99 暴涨、平均值不动：https://archify.si/cases/explainer/p99-tail-latency.html
-- 一页式解答：finalize 失败时怎么保住旧产物：https://archify.si/cases/explainer/finalize-delivery.html
+- 一页式解答：第一次访问 HTTPS，请求发出前发生了什么：https://archify.si/cases/explainer/tls-first-visit
+- 一页式解答：P99 暴涨、平均值不动：https://archify.si/cases/explainer/p99-tail-latency
+- 一页式解答：finalize 失败时怎么保住旧产物：https://archify.si/cases/explainer/finalize-delivery
 - 读固定提交的架构案例：MCO 运行时：https://archify.si/cases/mco-runtime
 - 成品画廊（含生活类示例）：https://archify.si/gallery
 

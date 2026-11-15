@@ -56,8 +56,8 @@ I built it because the hard part was not drawing boxes. It was getting a readabl
 What it does not do: it is not a WYSIWYG editor, not a hosted collaboration service, and not a universal automatic extractor for arbitrary repositories. Validation checks the authored artifact, not the truth of every business claim or the runtime behavior of the system drawn.
 
 No signup needed to inspect the output:
-- TLS first visit, one-page answer: https://archify.si/cases/explainer/tls-first-visit.html
-- P99 tail latency, one-page answer: https://archify.si/cases/explainer/p99-tail-latency.html
+- TLS first visit, one-page answer: https://archify.si/cases/explainer/tls-first-visit
+- P99 tail latency, one-page answer: https://archify.si/cases/explainer/p99-tail-latency
 - Source-backed architecture case: https://archify.si/cases/mco-runtime
 - Gallery: https://archify.si/gallery
 
@@ -126,7 +126,7 @@ Try it on something real, for example:
 
 Examples without signup:
 https://archify.si/cases/mco-runtime
-https://archify.si/cases/explainer/tls-first-visit.html
+https://archify.si/cases/explainer/tls-first-visit
 
 What it is not: a WYSIWYG editor, a hosted collaboration tool, or a guarantee that the described system behaves as drawn. Validation checks the artifact, not business truth.
 
@@ -262,7 +262,7 @@ First, this is the open-source agent skill at archify.si and github.com/tt-a1i/a
 Second, what the validation does and does not do. The finalize step checks schema, geometry/routing, and the rendered result in a real browser. It does not prove that the architecture description is true or that the running system matches the drawing. I would rather state that plainly than imply a guarantee.
 
 If you want to inspect output without creating an account:
-- https://archify.si/cases/explainer/tls-first-visit.html
+- https://archify.si/cases/explainer/tls-first-visit
 - https://archify.si/cases/mco-runtime
 - https://archify.si/gallery
 
@@ -338,7 +338,7 @@ The list covers agent skills/workflows. Archify is installed as a skill for Clau
   `npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes`
 - Public artifacts (no account required):
   https://archify.si/cases/mco-runtime
-  https://archify.si/cases/explainer/tls-first-visit.html
+  https://archify.si/cases/explainer/tls-first-visit
 - Boundaries documented here:
   https://archify.si/llms-full.txt
 

@@ -1,7 +1,7 @@
 # Archify — full reference for AI assistants and retrieval systems
 
-> Version: 3.2.1-dev.1
-> Release channel: development
+> Version: [[ARCHIFY_VERSION]]
+> Release channel: [[ARCHIFY_CHANNEL]]
 > Website: https://archify.si
 > Source: https://github.com/tt-a1i/archify
 > License: Apache-2.0 (https://www.apache.org/licenses/LICENSE-2.0)
@@ -193,12 +193,12 @@ using the name are separate products.
 - https://archify.si/agent-diagrams — how coding agents author, review, and share diagrams.
 - https://archify.si/compare — Archify vs Mermaid, Excalidraw, PlantUML, and D2.
 - https://archify.si/cases/mco-runtime — pinned-commit architecture case.
-- https://archify.si/cases/explainer/tls-first-visit.html — one-page answer about a first TLS visit.
-- https://archify.si/cases/explainer/p99-tail-latency.html — one-page answer about tail latency.
-- https://archify.si/cases/explainer/finalize-delivery.html — one-page answer about finalize delivery.
-- https://archify.si/cases/mco-runtime.architecture.html — the MCO architecture artifact.
+- https://archify.si/cases/explainer/tls-first-visit — one-page answer about a first TLS visit.
+- https://archify.si/cases/explainer/p99-tail-latency — one-page answer about tail latency.
+- https://archify.si/cases/explainer/finalize-delivery — one-page answer about finalize delivery.
+- https://archify.si/cases/mco-runtime.architecture — the MCO architecture artifact.
 - https://github.com/tt-a1i/archify/releases — published releases.
 - https://github.com/tt-a1i/archify/blob/main/LICENSE — Apache-2.0 license text.
 
 中文摘要：权威页面索引包括 llms.txt（仅安装）、llms-full.txt（完整事实）、guide、start、
-gallery、community、agent-diagrams、cases/mco-runtime 与三个 Explainer 成品。
+gallery、community、agent-diagrams、compare、cases/mco-runtime 与三个 Explainer 成品。
