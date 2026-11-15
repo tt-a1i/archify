@@ -94,3 +94,38 @@ test('live PR analysis verifies tasks against captured head, retains merge-base 
   f.fail();const failed=await post('/analyze',null,true);assert.equal(failed.status,500);
   assert.equal(fs.readFileSync(path.join(view.out,'analysis/repo.analysis.html'),'utf8'),last);
 });
+
+test('a rename crossing the PR analysis scope keeps the captured side and the scope boundary', async t => {
+  const f = fixture(t);
+  const add = (file, line) => {
+    fs.mkdirSync(path.dirname(path.join(f.root, file)), { recursive: true });
+    fs.writeFileSync(path.join(f.root, file), line);
+  };
+  const commit = () => {
+    git(f.root, ['add', '.']);
+    git(f.root, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'scope fixture']);
+    return git(f.root, ['rev-parse', 'HEAD']);
+  };
+  add('outside/enter.ts', 'export const enters = true;\n');
+  add('scope/leave.ts', 'export const leaves = true;\n');
+  const base = commit();
+  git(f.root, ['mv', 'outside/enter.ts', 'scope/enter.ts']);
+  git(f.root, ['mv', 'scope/leave.ts', 'outside/leave.ts']);
+  const head = commit();
+  const files = [
+    { filename: 'scope/enter.ts', previous_filename: 'outside/enter.ts', status: 'renamed' },
+    { filename: 'outside/leave.ts', previous_filename: 'scope/leave.ts', status: 'renamed' },
+  ];
+  const capture = await preparePullRequest({
+    root: f.root, out: path.join(f.dir, 'capture'), input: { number: 42, repository: 'example/project' }, scope: 'scope',
+  }, { fetchJSON: async route => route.includes('/files?') ? files
+    : route.includes('/compare/') ? { merge_base_commit: { sha: base } }
+      : { number: 42, title: 'Move source', state: 'open', changed_files: files.length, base: { sha: base }, head: { sha: head } } });
+  assert.deepEqual(capture.changedFiles.map(({ path, status, previousPath, scopeBoundary }) => [path, status, previousPath, scopeBoundary]), [
+    ['enter.ts', 'added', null, 'entered'], ['leave.ts', 'removed', null, 'left'],
+  ]);
+  assert.equal(fs.existsSync(path.join(capture.roots.base, 'enter.ts')), false);
+  assert.equal(fs.existsSync(path.join(capture.roots.head, 'leave.ts')), false);
+  assert.match(fs.readFileSync(path.join(capture.roots.base, 'leave.ts'), 'utf8'), /leaves/);
+  assert.match(fs.readFileSync(path.join(capture.roots.head, 'enter.ts'), 'utf8'), /enters/);
+});

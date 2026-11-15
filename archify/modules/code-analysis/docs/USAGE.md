@@ -32,6 +32,34 @@ To align an existing authored architecture diagram, add `--ir architecture.json`
 
 In either mode choose a priority or browse all findings, copy an AI task, and inspect captured source excerpts. **Show full file** expands a snippet. The task labels its evidence status; verify source before editing. `--locale en|zh-CN` overrides the diagram locale; without an override the IR locale is used, then English. Unrecognized IR locales fall back to English.
 
+Use **Map workspace** to browse the captured file tree, including files with
+no finding. Search by name or path, filter by module, or pick a file on Atlas.
+File selection highlights its Atlas position when one exists. A file that
+failed to parse, was excluded by role, or has no captured source may still be
+listed; it does not gain a node or an invented import target. Open the import
+location to inspect captured source. From an existing architecture analysis,
+a component with one unambiguous mapped module also offers **Browse module
+files**. Opening the original architecture drawing still does not start an
+analysis.
+
+On a pinned PR, **Map workspace → Changes** lists captured changed paths, even
+when the analyzer could not measure the file. Search can match the old name,
+and the status filter separates added, modified, removed and renamed files.
+Source links identify the merge-base or head, and switched sides use the
+matching path after a rename. Moves across the analysis scope are labeled
+as such. The reader separates new, existing and no-longer-detected cycles
+when the snapshots are comparable, shows known direct references and measured
+complexity changes from the comparison, and notes omissions. Switch to
+**Repository** to see the captured head without PR markers.
+
+Under a selected file or module, **Agent context** previews a bounded
+Markdown handoff. Copy it or use **Download .md**. It states the capture,
+scope, directly observed relationships or change records, source anchors
+and omissions. It does not run commands, give a file a modification
+permission, or include its full source. A prepared HTML can browse and export
+captured context offline; the live service can **Re-analyze** and restore the
+selection if it still exists.
+
 Keep the terminal running. After changing source code or the `--config` file, click **Re-analyze** on the overview: the repository and the config are read again without restarting, the page reloads with the new result, and the overview shows what changed since the previous analysis (new, no longer detected, and findings whose code changed). A finding that is no longer detected is not necessarily fixed: if the config, the rules that ran, or the files that parsed changed between the two runs, the comparison is marked as not directly comparable and says why (see [Comparing runs](#comparing-runs)). If a re-analysis fails, the last good result stays in place and the reason is shown next to the button. Only a changed architecture JSON needs a restart.
 
 Analysis reads the working tree, including uncommitted and untracked source files. Results are labeled **Working tree**; any base commit is context only. Source panels use the text captured during extraction, and working-tree results do not provide commit-based source links. The raw facts retain that source text and a snapshot digest so findings, graphs, and source panels refer to the same extraction. Non-Git directories are supported.
