@@ -6,7 +6,7 @@
 
 ## The division of labor
 
-Archify is an open-source Agent Skill (Apache-2.0) at [archify.si](https://archify.si), maintained at [github.com/tt-a1i/archify](https://github.com/tt-a1i/archify). Your agent writes typed JSON for a diagram, or an `.archify.md` draft for a one-page answer. Archify then checks the schema, lays out and routes the geometry, runs a real-browser inspection, and writes one HTML file that needs no build step or network connection.
+Archify is an open-source Agent Skill (Apache-2.0) at [archify.si](https://archify.si), maintained at [github.com/tt-a1i/archify](https://github.com/tt-a1i/archify). Your agent writes typed JSON for a diagram, or an `.archify.md` draft for a one-page answer. Archify then checks the schema, lays out and routes diagram geometry (running a real-browser inspection for diagrams; one-page explainers validate structure and leave browser checks opt-in), and writes one HTML file that needs no build step or network connection.
 
 That makes Archify a different category from a diagram renderer. The hard part it targets is not typing diagram syntax; it is reading evidence, choosing a readable structure, avoiding overlapping connectors, and giving readers a way to inspect the result. If your problem is “render this text to an image in a README”, Archify is more machinery than you need.
 
@@ -66,6 +66,6 @@ For an incident review or a protocol walkthrough, a single picture often hides t
 - Do readers need interaction, source links, or a conclusion-first written answer?
 - Can you accept an authored HTML artifact instead of a Markdown-renderable code block?
 
-If the answer to the first three is no, start with Mermaid. If the last one is a hard requirement, Mermaid is the correct tool. Archify's advantage appears when the diagram must be generated, checked, explained, and inspected as a deliverable.
+If the answer to the first three is no, start with Mermaid. If you cannot accept a standalone HTML file and require a Markdown-renderable code block, Mermaid is the correct tool. Archify's advantage appears when the diagram must be generated, checked, explained, and inspected as a deliverable.
 
 Continue with the [scenario guide](guide.html) to pick a diagram type, the [agent diagramming guide](agent-diagrams.html) to learn the review workflow, or [Start](start.html) to install the Skill for your agent.

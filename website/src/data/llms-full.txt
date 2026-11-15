@@ -104,7 +104,7 @@ repository is optional. Reading the generated HTML only requires a browser.
 | Diagram-as-code in a classic text/CI pipeline | PlantUML or D2 | Mature text formats, deterministic source diffs, and broad existing adoption. |
 | An agent-generated, layout-checked, interactive HTML diagram from a description or a real codebase | Archify | Typed IR, geometry and browser checks, focus and reach tracing, source-backed panels, and one standalone file. |
 | A conclusion-first technical answer, not just a picture | Archify explainer | Panels combine prose, tables, charts, code excerpts, and diagrams with cited sources. |
-| Live collaborative editing or a hosted workspace | None of these | Archify is not a hosted collaboration service. |
+| A hosted team workspace with permissions and cloud storage | Not Archify (use a hosted workspace such as Excalidraw+ or Eraser) | Archify outputs local standalone HTML files, not a hosted multi-user workspace. |
 
 Choose Mermaid first when the diagram must live inside a Markdown code block and
 stay tiny. Choose Excalidraw when the value is the shared sketching session.

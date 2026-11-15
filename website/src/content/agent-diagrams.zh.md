@@ -165,7 +165,7 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 - [首次 TLS 访问发生了什么](cases/explainer/tls-first-visit.html)按面板走完一次协议流程。
 - [P99 尾延迟为什么会飙升](cases/explainer/p99-tail-latency.html)把常见的性能问题变成结论先行的排查。
 
-一页式解答默认按需生成。如果你想先让 Agent 提议画图、只在明确要求时再生成整页，可以在指令里保留 `[archify explainer: on-demand]` 规则。成品仍是单个 HTML 文件；读者可以在四种排版样式间切换，并在环境支持时导出长图或 PDF。
+一页式解答默认处于 `proactive`（主动）模式：除了你明确要求做成一页之外，遇到复杂流程、排障诊断、方案对比或评审报告时，Skill 也可以主动交付页面。如果你希望只在明确提出时才生成整页，可以在 Agent 规则文件中写入 `[archify explainer: on-demand]` 覆盖默认行为。成品仍是单个 HTML 文件；读者可以在四种排版样式间切换，并在环境支持时导出长图或 PDF。
 
 <span id="review-and-share" class="section-anchor" aria-hidden="true"></span>
 

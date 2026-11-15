@@ -42,7 +42,7 @@ test('real Chrome: gallery evidence limits and life-card entry points stay reada
     checkoutSha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: website, encoding: 'utf8' }).trim(),
     pullRequestHead: event?.pull_request?.head?.sha || null,
     runId: process.env.GITHUB_RUN_ID || null,
-    screenshots: [], navigation: [], entryPoints: [],
+    screenshots: [], navigation: [],
   };
   const saveManifest = () => fs.writeFileSync(path.join(output, 'gallery-manifest.json'), JSON.stringify(manifest, null, 2));
   try {
@@ -96,7 +96,7 @@ test('real Chrome: gallery evidence limits and life-card entry points stay reada
           assert.equal(receipt.lang, lang === 'zh' ? 'zh-Hans' : 'en');
           assert.equal(receipt.theme, theme);
           assert.ok(receipt.pageWidth <= width + 1, `${name}: no page overflow`);
-          assert.equal(receipt.nodes.length, region === 'limit' ? 1 : 3);
+          assert.equal(receipt.nodes.length, region === 'limit' ? 1 : 4);
           for (const node of receipt.nodes) {
             assert.ok(node.visible && node.fits && node.reachable, `${name}: readable and reachable ${node.text}`);
             if (node.href) assert.ok(node.height >= 44, `${name}: touch target`);
@@ -104,21 +104,23 @@ test('real Chrome: gallery evidence limits and life-card entry points stay reada
         }
       }
       for (const [index, type] of ['workflow', 'lifecycle', 'dataflow', 'sequence'].entries()) {
-        const card = await evaluate(`(() => {
-          const card = document.querySelectorAll('.life-section:not(#pages) .life-card')[${index}];
-          return {
-            primary: card.querySelector('.life-links a.primary')?.getAttribute('href') || null,
-            links: [...card.querySelectorAll('.life-links a')].map(link => ({ href: link.getAttribute('href'), target: link.target })),
-          };
+        await navigate(urlFor(lang));
+        const point = await evaluate(`(() => {
+          const link = document.querySelectorAll('.life-card .create-link')[${index}];
+          link.scrollIntoView({block:'center',behavior:'instant'});
+          const r = link.getBoundingClientRect(); return { x:r.x+r.width/2, y:r.y+r.height/2 };
         })()`);
-        manifest.entryPoints.push({ width, lang, type, card }); saveManifest();
-        assert.ok(card.primary, `${lang} ${width} ${type}: life card offers a primary artifact link`);
-        assert.equal(card.links.length, 2, `${lang} ${width} ${type}: artifact and source stay reachable`);
-        for (const link of card.links) {
-          assert.equal(link.target, '_blank', `${lang} ${width} ${type}: artifact opens without leaving the gallery`);
-          const file = path.join(root, link.href.split('?')[0]);
-          assert.ok(file.startsWith(`${root}${path.sep}`) && fs.existsSync(file), `${link.href} is a built artifact`);
-        }
+        await settled();
+        await loadedAction(async () => {
+          for (const eventType of ['mousePressed', 'mouseReleased']) await browser.cdp.send('Input.dispatchMouseEvent', { type:eventType, ...point, button:'left', clickCount:1 }, session);
+        });
+        const receipt = await evaluate(`(() => ({ lang:document.documentElement.lang, path:location.pathname, query:Object.fromEntries(new URL(location.href).searchParams), type:document.querySelector('[data-type][aria-selected="true"]').dataset.type, input:document.querySelector('[data-input][aria-selected="true"]').dataset.input, prompt:document.getElementById('recipe-prompt').innerText, expected:JSON.parse(document.getElementById('start-data').textContent)[${JSON.stringify(type)}][${JSON.stringify(lang)}].descriptionPrompt }))()`);
+        manifest.navigation.push({ width, lang, type, receipt }); saveManifest();
+        assert.equal(receipt.lang, lang === 'zh' ? 'zh-Hans' : 'en');
+        assert.equal(receipt.path, `${mount}/${lang === 'zh' ? 'zh/' : ''}start${mount ? '.html' : ''}`);
+        assert.equal(receipt.query.type, type); assert.equal(receipt.query.input, 'description'); assert.equal(receipt.query.source, 'gallery');
+        assert.equal(receipt.type, type); assert.equal(receipt.input, 'description');
+        assert.equal(receipt.prompt, receipt.expected, 'destination uses the existing generic type prompt, not a recreated life template');
       }
     }
   } finally {

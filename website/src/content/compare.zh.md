@@ -6,7 +6,7 @@
 
 ## 分工其实很清楚
 
-Archify 是 [archify.si](https://archify.si) 上的开源 Agent Skill（Apache-2.0），源码在 [github.com/tt-a1i/archify](https://github.com/tt-a1i/archify)。Agent 为图表编写类型化 JSON，为一页式解答编写 `.archify.md` 草稿；Archify 再校验 schema、计算布局与连线、执行真实浏览器检查，最后写出一个不需要构建步骤、不需要联网就能打开的 HTML 文件。
+Archify 是 [archify.si](https://archify.si) 上的开源 Agent Skill（Apache-2.0），源码在 [github.com/tt-a1i/archify](https://github.com/tt-a1i/archify)。Agent 为图表编写类型化 JSON，为一页式解答编写 `.archify.md` 草稿；Archify 再校验 schema、计算图表布局与连线（对图表执行真实浏览器检查；一页式解答默认执行结构与交付校验，浏览器检查按需开启），最后写出一个不需要构建步骤、不需要联网就能打开的 HTML 文件。
 
 所以 Archify 不是“画图渲染器”的同类替代。它要解决的是更难的部分：读证据、选结构、让复杂图不出现连线穿模，并给读者留下检查成品的入口。如果你的需求只是“把这段文本渲染成 README 里的一张图”，那 Archify 确实过重了。
 
@@ -66,6 +66,6 @@ Archify 是 [archify.si](https://archify.si) 上的开源 Agent Skill（Apache-2
 - 读者是否需要交互、源码出处，或结论先行的文字解答？
 - 你是否能接受交付独立 HTML 成品，而不是 Markdown 可直接渲染的代码块？
 
-如果前三个问题的答案都是“否”，先用 Mermaid。如果最后一个条件是硬性要求，Mermaid 就是正确选择。Archify 的优势出现在图表需要被生成、检查、解释，并作为可检查的交付物阅读时。
+如果前三个问题的答案都是“否”，先用 Mermaid。如果你不能接受独立 HTML 成品、必须使用 Markdown 可直接渲染的代码块，Mermaid 就是正确选择。Archify 的优势出现在图表需要被生成、检查、解释，并作为可检查的交付物阅读时。
 
 继续看[场景指南](guide.html)选择图表类型，阅读[Agent 画图指南](agent-diagrams.html)了解检查流程，或者直接[开始安装](start.html)到你的 Agent。
