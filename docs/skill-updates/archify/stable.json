@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "skillId": "archify",
   "channel": "stable",
-  "version": "3.0.1",
-  "publishedAt": "2026-09-28T15:16:27Z",
+  "version": "3.2.0",
+  "publishedAt": "2026-10-19T00:20:11Z",
   "source": {
     "repository": "https://github.com/tt-a1i/archify",
-    "ref": "v3.0.1",
-    "treeSha": "7dcd73a73672d5da4f85d4c612017b478547303b"
+    "ref": "v3.2.0",
+    "treeSha": "39069dd190f574064fe410aa3af1b6dfd98a522c"
   },
   "artifact": {
-    "sha256": "b0b23bd28db314f04ca8ab9620fe20f8c1ac6474a3546bd8fe4679508aa1b7f5"
+    "sha256": "70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
   },
-  "summary": "Makes verified stable update reminders part of normal diagram delivery, with repeat notices and explicit snooze or ignore controls.",
-  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.0.1",
+  "summary": "Adds one-page answers with cited sources, interactive diagrams and image/PDF export, plus clearer node indexes, update notices and portability fixes.",
+  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.0",
   "severity": "normal"
 }

@@ -188,6 +188,7 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     await load('trace'); await run(`Archify.motionGovernor.resume()`); await route();
     await run(`document.querySelector('[data-route-journey-index="0"]').focus()`); await key('ArrowLeft', 'ArrowLeft', 37);
     assert.equal(await run('document.activeElement.dataset.routeJourneyIndex'), '0');
+    assert.deepEqual(await run(`(()=>{const before=document.activeElement.dataset.routeJourneyIndex,event=new KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true,metaKey:true});document.activeElement.dispatchEvent(event);return {prevented:event.defaultPrevented,focus:document.activeElement.dataset.routeJourneyIndex,before};})()`),{prevented:false,focus:'0',before:'0'});
     await key('End', 'End', 35); await key('ArrowRight', 'ArrowRight', 39); assert.equal(await run('document.activeElement.dataset.routeJourneyIndex'), '4');
     await key('Home', 'Home', 36); await key('ArrowRight', 'ArrowRight', 39); await key('Enter', 'Enter', 13);
     let s = await snapshot('journey-position'); assert.equal(s.result.journey, 1); assert.deepEqual(s.currentEdges, [s.edges[0].key]);

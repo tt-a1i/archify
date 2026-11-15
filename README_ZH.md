@@ -31,9 +31,9 @@
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="#安装方式"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.0.2--dev.1-0891b2?style=flat-square" alt="Development version 3.0.2-dev.1" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.2.1--dev.1-0891b2?style=flat-square" alt="Development version 3.2.1-dev.1" /></a>
 </p>
 
 <p align="center">
@@ -42,6 +42,7 @@
   <a href="#社区交流"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
   <a href="#社区交流"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
+  <a href="#支持-archify"><img src="https://img.shields.io/badge/Support-E2500E?style=for-the-badge" alt="Support Archify" /></a>
 </p>
 
 <p align="center"><a href="#sponsors"><strong>❤️ 合作与赞助伙伴：Kimi Work · Supercode · OpenLux</strong></a></p>
@@ -60,8 +61,10 @@ https://github.com/user-attachments/assets/88cff7dd-bdf3-4b97-950c-37cc079898b1
 
 支持 Cursor、Claude Code、Codex CLI 和 OpenCode；更多接入方式见下方安装选项。
 
-```bash
-npx skills add tt-a1i/archify -g
+**让 AI Agent 安装。** 把下面这句原样发给 Agent：
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
 
 把这句话发给你的 Agent：
@@ -75,7 +78,27 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 
 **不需要绑定代码库：**从描述开始即可。也可以让 Agent 阅读仓库，生成有源码依据的架构图。
 
-[按 Agent 选择安装方式](https://archify.si/zh/start?agent=cursor&type=architecture) · [安装细节与更新检查](#快速开始)
+[按 Agent 选择安装方式](https://archify.si/zh/start?agent=cursor&type=architecture) · [安装细节与更新检查](#快速开始) · [用 Agent 画图并检查结果](https://archify.si/zh/agent-diagrams)
+
+## 问一个问题，得到一页讲清楚的答案
+
+不是每个答案都是一张图。让 agent 用一页来回答，Archify 会生成一份 **explainer**：先给结论，再按问题分成几个面板，用表格、步骤、图表、代码和经过校验的图把理由讲清楚。
+
+[![一页式解答：结论在前，步骤和它讲解的流程图左右并排](docs/assets/explainer-p99-zh.png)](https://archify.si/cases/explainer/p99-tail-latency.html)
+
+- **结论先行。** 先写答案和理由，每个面板只回答一个问题。
+- **图和文字一起讲。** 步骤放在它讲解的图旁边，读到哪一步，图上就亮起哪一部分；点任意节点进入完整的交互图。
+- **能核对。** 结论标注编号来源；仓库代码固定到具体提交，悬停即可看到原文。
+- **好分享。** 一个 HTML 文件，四种样式，浅色深色都有；可导出 PNG、WebP、JPG 长图或打印成 PDF。对任何面板都能追问，生成的追问让 agent 只改这一块。
+
+```text
+用 Archify 一页回答：接口 P99 从 80 ms 涨到 600 ms，平均值几乎没变，
+可能是什么原因，应该怎么排查？
+```
+
+默认情况下，遇到复杂流程、排查结果、方案对比或测试报告这类回答，agent 也会主动做一页。回复里照样先给能直接读懂的简短结论，最后一行是页面链接，比如“查看测试报告”。简短问答、只要文字的请求和生成失败的页面，都不会出现页面或链接。只想在要求时才做页面，直接告诉 agent，或者在它的全局规则文件（如 `~/.codex/AGENTS.md`、`~/.claude/CLAUDE.md`）里加一行 `[archify explainer: on-demand]`。`[archify explainer: always-on]` 会给每个得出结论的回答附一页精简页面；删掉这一行就回到默认行为。
+
+在线示例：[P99 延迟排查](https://archify.si/cases/explainer/p99-tail-latency.html) · [读 Archify 仓库：finalize 怎么保住旧产物](https://archify.si/cases/explainer/finalize-delivery.html) · [第一次租房要确认什么](https://archify.si/cases/explainer/first-rental.html) · [第一次打开 HTTPS 网站（英文）](https://archify.si/cases/explainer/tls-first-visit.html)
 
 <a id="sponsors"></a>
 
@@ -97,18 +120,21 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 <td>感谢 OpenLux 对本项目的赞助！OpenLux 是一个面向企业的一站式 AI 聚合平台，汇集全球各大厂商主流大模型，平台提供高效、稳定的服务与及时的技术支持。Claude、OpenAI、Gemini 系列模型基准折扣分别低至官方的 0.882 折、0.4 折和 0.8 折。<br/><br/>Archify 用户还可享受专属福利：通过专属链接注册，充值最高可享 7.5% 优惠！<br/><br/><a href="https://www.openlux.ai/register?channel=c_qdvanbpc">立即体验 →</a></td>
 </tr>
 <tr>
-<td align="center" width="240"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="200" /></a><br/><strong><a href="https://zturbo.top">ZTURBO</a></strong></td>
-<td>为开发者和 AI 用户提供高速、稳定的连接体验。<br/>新用户注册即可免费体验，首次充值还有专属加赠；支持 Windows、macOS、iOS 和 Android 多端使用，长期套餐折算每天不到 ¥1。<br/><br/>免费体验 · 首充加赠 · 多端畅连<br/><br/><a href="https://zturbo.top">立即体验 ZTURBO →</a></td>
-</tr>
-<tr>
 <td align="center" width="240"><a href="https://www.packyapi.ai/register?aff=bN97"><img src="docs/assets/sponsors/packycode-logo.png" alt="PackyCode" width="200" /></a><br/><strong><a href="https://www.packyapi.ai/register?aff=bN97">PackyCode</a></strong></td>
 <td>PackyCode 提供统一域名、统一密钥和智能容灾切换，一句话接入主流大模型，提供专属 Codex / Claude Code 高速通道。<br/><br/>新用户可获 $1 免费体验额度，首充享折扣，多分组折扣低至 2 折起。支持人民币 1:1 充值，无汇率加价或额外充值手续费。<br/><br/><a href="https://www.packyapi.ai/register?aff=bN97">立即体验 PackyCode →</a></td>
 </tr>
 <tr>
-<td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc 无限星河" width="140" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc 无限星河</a></strong></td>
-<td>感谢 Infistar.cc 无限星河赞助 Archify！一个 API Key 覆盖文案、图片与视频创作，支持 GPT、Claude、Gemini、DeepSeek、通义千问、可灵等主流模型，无需分组。大模型低至官方 0.1 折，AI 生图低至 ¥0.06/张。<br/><br/>Archify 专属福利：通过专属链接注册即送 $5 体验额度，并享首充特惠。<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">立即体验 Infistar →</a></td>
+<td align="center" width="240"><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL"><img src="docs/assets/sponsors/aicodemirror-logo.jpg" alt="AICodeMirror" width="200" /></a><br/><strong><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL">AICodeMirror</a></strong></td>
+<td>感谢 AICodeMirror 赞助 Archify！AICodeMirror 提供 Claude / Codex / Gemini API 中转服务，支持企业级高并发、开票和 7×24 技术支持。Codex 通道低至基准价格 0.7 折，充值还有额外优惠。<br/><br/>Archify 专属福利：通过专属链接注册，可享首充 8 折。<br/><br/><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL">立即体验 AICodeMirror →</a></td>
 </tr>
-<tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>感谢 EverMind 赞助 Archify。EverMind 专注 Agent 记忆基础设施，旗下 <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> 已支持 Archify Skill，让 Raven 工作流可以直接生成经过验证的交互式系统地图。</td></tr>
+<tr>
+<td align="center" width="240"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="200" /></a><br/><strong><a href="https://zturbo.top">ZTURBO</a></strong></td>
+<td>为开发者和 AI 用户提供高速、稳定的连接体验。<br/>新用户注册即可免费体验，首次充值还有专属加赠；支持 Windows、macOS、iOS 和 Android 多端使用，长期套餐折算每天不到 ¥1。<br/><br/>免费体验 · 首充加赠 · 多端畅连<br/><br/><a href="https://zturbo.top">立即体验 ZTURBO →</a></td>
+</tr>
+<tr>
+<td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc 无限星河" width="140" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc 无限星河</a></strong></td>
+<td>Infistar 用一个 API Key 接入 Claude、GPT、Gemini 和 DeepSeek，支持文本、图像和视频创作。模型 API 价格低至官方的 1%。<br/><br/>Archify 用户通过此链接注册可获得 5 元人民币试用额度。<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">试用 Infistar →</a></td>
+</tr>
 </table>
 
 > 想赞助 Archify？[欢迎通过邮件联系我们。](mailto:2801884530@qq.com)
@@ -193,22 +219,34 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ## 快速开始
 
-**当前开发版本：** `v3.0.2-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
+**当前开发版本：** `v3.2.1-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
 
 ### 1. 安装
 
+**让 AI Agent 安装**
+
+把下面这句原样发给 Agent：
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
+```
+
+也可以直接非交互安装。`--agent` 写一个，或为每个切换器目标各写一次（`cursor`、`codex`、`claude-code`、`opencode`、`github-copilot`）。`--copy` 会复制 Skill，而不是创建符号链接：
+
+只安装到 Cursor：
+
 ```bash
-npx skills add tt-a1i/archify -g
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+```
+
+或者，仅在需要全部五个 Agent 时运行：
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
 <details>
 <summary>更多安装方式与更新检查说明</summary>
-
-显式、非交互地安装到 Cursor：
-
-```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
-```
 
 如果只想临时体验：
 
@@ -216,7 +254,7 @@ npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy 
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)只为 `cursor`、`codex`、`claude-code` 和 `opencode` 生成命令。
+DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
 
 安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。
 
@@ -251,7 +289,7 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 ## 选择合适的图表
 
 <details>
-<summary>五种图表、架构差异对比与示例</summary>
+<summary>十种图表、架构差异对比与示例</summary>
 
 
 | 类型 | 最适合 | Prompt 中应包含 |
@@ -261,6 +299,11 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 | **Sequence** | API 调用、缓存回源、鉴权、异步链路 | 调用方、被调用方、返回、时序 |
 | **Data Flow** | 数据管线、血缘、PII、下游消费者 | 来源、转换、存储、边界 |
 | **Lifecycle** | 状态、重试、等待、终态 | 状态、事件、重试与取消路径 |
+| **ERD** | 数据库结构：表、字段、键、基数关系 | 表、每个字段及类型、主键/外键/唯一键、关系基数 |
+| **Class** | 类、接口、关键成员与类型关系 | 类型、关键成员、继承与接口实现、组合与依赖 |
+| **Tree** | 单一父级的层级结构：仓库、模块、能力拆解 | 根节点、层级、各分支包含的内容 |
+| **Timeline** | 何时发生了什么：故障复盘、发布历史 | 带时区的时间点、事件、来源泳道，以及时间是真实观测还是示意 |
+| **Waterfall** | 一次请求或 Agent 运行的耗时分布 | Span、开始时间与时长、嵌套关系，以及耗时是实测还是示意 |
 
 做生产部署评审时，Architecture 可以按需启用 `deployment-ownership`
 工程画像：负责人、单一区域归属、数据库私有边界或边界穿越机制缺失时会直接阻断。
@@ -295,6 +338,30 @@ Data Flow 突出数据移动和敏感边界：
 Lifecycle 区分正常进展、等待、重试和终态：
 
 ![Lifecycle 示例](docs/assets/archify-lifecycle.png)
+
+3.1 新增 ERD、Class、Tree、Timeline 和 Waterfall。
+
+ERD 把表、每个字段与键，以及关系基数放在一起：
+
+![ERD 示例：订单管理库，customer、order、payment、inventory、product 和 order_item 表按业务域分组](docs/assets/archify-erd.png)
+
+Class 展示接口契约、关键成员，以及哪些类型依赖或实现它们：
+
+![Class 示例：OrderService 依赖 PaymentGateway 接口，由银行卡和钱包网关实现](docs/assets/archify-class.png)
+
+Tree 展示单一父级的包含关系，例如能力拆解：
+
+![Tree 示例：支付平台拆解为订单、支付和运营能力](docs/assets/archify-tree.png)
+
+Timeline 把事件放在同一条按比例的时间轴上，每个来源一条泳道：
+
+![Timeline 示例：一次示意性的支付故障，发布、监控和响应事件位于同一时间轴](docs/assets/archify-timeline.png)
+
+Waterfall 展示嵌套、重叠的 Span 中时间花在了哪里：
+
+![Waterfall 示例：一次结账请求的示意耗时，库存查询与折扣计算并发执行](docs/assets/archify-waterfall.png)
+
+打开这些示例：[`ERD`](https://archify.si/gallery/artifacts/orders.erd.html) · [`Class`](examples/class-payments-rendered.html) · [`Tree`](examples/tree-payment-platform-rendered.html) · [`Timeline`](examples/timeline-payment-incident-rendered.html) · [`Waterfall`](examples/waterfall-checkout-request-rendered.html)。其中 Timeline 和 Waterfall 示例使用示意数据；只有来自日志或链路追踪的时间和耗时，才能当作真实数据。
 
 Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`](examples/archify-repo.html) · [`Grid 布局`](examples/archify-repo-grid.html) · [`桌面 Agent`](examples/maka-architecture.html)
 
@@ -368,7 +435,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 }
 ```
 
-不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为任意合法语言标签，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。`en`、`zh-CN`、`zh-TW`、`es` 与 `ko` 已内置，只需设置 `meta.locale`；`meta.translations`（规范消息键到译文字符串的映射）可逐键覆盖，其余文案保持所选语言。其他语言需在该字段中提供完整目录（参见 `archify/examples/locales/`），否则渲染器回退为英文并在 stderr 中说明。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于既未内置也未提供 `meta.translations` 的创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
+不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为任意合法语言标签，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。`en`、`zh-CN`、`zh-TW`、`es`、`ko` 与 `ar` 已内置，只需设置 `meta.locale`；`meta.translations`（规范消息键到译文字符串的映射）可逐键覆盖，其余文案保持所选语言。其他语言需在该字段中提供完整目录（参见 `archify/examples/locales/`），否则渲染器回退为英文并在 stderr 中说明。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于既未内置也未提供 `meta.translations` 的创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
 
 </details>
 
@@ -400,7 +467,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | **Claude.ai** | Settings → Capabilities → Skills 中上传 `archify.zip` | 取决于沙箱是否提供 Node.js |
 | **Project Knowledge** | 把 `archify.zip` 上传到项目 | Prompt 驱动的 Architecture Fallback |
 | **Hermes Agent** | 显式启用：`hermes skills install skills-sh/tt-a1i/archify/archify -y` | 社区 Skill-only；Node `>=18`；不是 Nous 官方产品。没有遥测。非切换器目标。[详情](integrations/hermes-agent/README.md)。 |
-| **DeepSeek Harness** | 显式启用：`dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`；调用：`Use the archify skill to map this repository's runtime architecture.`；卸载：`dsh plugin --profile web remove @tt-a1i/archify-dsh`。 | 面向开发者预览版 `@deepseek-ai/dsh@0.1.2-rc.1` 的社区集成；Node `^22.19.0 \|\| >=24.0.0`；不是 DeepSeek 官方产品。没有遥测；shell 文件不会自动进入 Web Produced Files，请返回精确工作区路径。[详情](integrations/deepseek-harness/README.md)。 |
+| **DeepSeek Harness** | 显式启用：`dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`；调用：`Use the archify skill to map this repository's runtime architecture.`；卸载：`dsh plugin --profile web remove @tt-a1i/archify-dsh`。 | 面向开发者预览版 `@deepseek-ai/dsh@0.2.1-rc.2` 的社区集成；Node `^22.19.0 \|\| >=24.0.0`；不是 DeepSeek 官方产品。没有遥测；shell 文件不会自动进入 Web Produced Files，请返回精确工作区路径。[详情](integrations/deepseek-harness/README.md)。 |
 
 ## 参考与边界
 
@@ -435,13 +502,15 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 ## 官方入口与第三方服务
 
-- **开源项目：** 源码和安装包可按 [MIT 协议](LICENSE)免费使用。
+- **开源项目：** 当前源码及由其构建的安装包可按 [Apache-2.0 协议](LICENSE)使用；历史发行版保留原有许可。
 - **官方网站：** [archify.si](https://archify.si) 目前提供项目介绍、示例和安装指引。
 - **第三方服务：** 是否收费、如何处理数据、提供什么支持，由第三方运营方决定。名称或域名相似不代表官方合作。
 
 ## License
 
-[MIT](LICENSE) —— 可以自由使用、修改和分发。
+[Apache-2.0](LICENSE) —— 可以自由使用、修改和分发。
+
+历史 MIT 授权继续有效，见 [NOTICE](NOTICE) 和 [LICENSE-MIT](LICENSE-MIT)。第三方组件保留各自许可；软件许可不改变用户原创内容的权属，也不授予一般性的 Archify 商标使用权。
 
 ## 参与贡献
 
@@ -474,6 +543,12 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 </details>
 
 使用、分享、反馈问题和贡献改进，也都是对项目的支持。
+
+## 贡献者
+
+感谢每一位参与构建 Archify 的人。[欢迎关注他们。](https://github.com/tt-a1i/archify/graphs/contributors) ❤️
+
+<p align="center"><a href="https://github.com/tt-a1i/archify/graphs/contributors"><img alt="Archify 贡献者" src="https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg" width="1000" /></a></p>
 
 ## Star History
 

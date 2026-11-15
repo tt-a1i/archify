@@ -64,17 +64,24 @@ export function generateViewer({ root = defaultRoot, check = false } = {}) {
     // including characters with String.replace semantics.
     generated = parts[0] + reindent(source, indent) + tail;
   }
-  if (check) {
-    if (!fs.existsSync(output) || fs.readFileSync(output, 'utf8') !== generated) {
-      throw new Error('Viewer template is stale — run npm run generate:viewer from archify/.');
-    }
-  } else {
-    const temporary = `${output}.${process.pid}.tmp`;
-    try {
-      fs.writeFileSync(temporary, generated);
-      fs.renameSync(temporary, output);
-    } finally {
-      fs.rmSync(temporary, { force: true });
+  const artifacts = [
+    [output, generated],
+    [path.join(root, 'archify/story/native-motion.js'), fs.readFileSync(path.join(root, 'viewer/motion-governor.js'), 'utf8')],
+  ];
+  for (const [target, content] of artifacts) {
+    if (check) {
+      if (!fs.existsSync(target) || fs.readFileSync(target, 'utf8') !== content) {
+        throw new Error('Viewer artifact is stale — run npm run generate:viewer from archify/.');
+      }
+    } else {
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      const temporary = `${target}.${process.pid}.tmp`;
+      try {
+        fs.writeFileSync(temporary, content);
+        fs.renameSync(temporary, target);
+      } finally {
+        fs.rmSync(temporary, { force: true });
+      }
     }
   }
 }

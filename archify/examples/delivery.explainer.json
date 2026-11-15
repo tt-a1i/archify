@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "diagram_type": "explainer",
+  "meta": {
+    "title": "缓存未命中时，请求为什么变慢？",
+    "id": "mechanism",
+    "locale": "zh-CN"
+  },
+  "answer": {
+    "summary": "缓存未命中后，请求要多等**数据库查询和同步写回缓存**两段。",
+    "reasons": [
+      "命中时，接口读到缓存值就能返回。",
+      "未命中时，接口必须先拿到数据库结果。",
+      "同步写回位于响应之前，写完缓存才能结束请求。"
+    ],
+    "scope": "示例采用旁路缓存：GET返回空值后查询PostgreSQL，查询成功后同步SET再响应；无并行、重试或其他缓存层。未实测耗时，具体慢多少由链路测量决定。"
+  },
+  "panels": [
+    {
+      "id": "timeline",
+      "title": "一次未命中，时间花在哪？",
+      "blocks": [
+        {
+          "type": "steps",
+          "id": "cache-path-steps",
+          "items": [
+            {
+              "id": "get-step",
+              "text": "读取缓存",
+              "detail": "GET返回空值，接口继续向数据库查询。[](source:get-doc)"
+            },
+            {
+              "id": "query-step",
+              "text": "查询PostgreSQL",
+              "detail": "等待数据库执行SQL并返回结果。"
+            },
+            {
+              "id": "set-step",
+              "text": "同步写回Redis",
+              "detail": "SET完成后，接口返回响应。[](source:set-doc)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diff",
+      "title": "命中和未命中，差在哪几步？",
+      "blocks": [
+        {
+          "type": "comparison",
+          "id": "cache-comparison",
+          "columns": [
+            "命中",
+            "未命中"
+          ],
+          "rows": [
+            {
+              "label": "读Redis",
+              "cells": [
+                {
+                  "text": "取得值",
+                  "assessment": "good",
+                  "verdict": "直接返回"
+                },
+                {
+                  "text": "取得空值",
+                  "assessment": "caution",
+                  "verdict": "继续查询"
+                }
+              ],
+              "id": "row-67fe9814e476"
+            },
+            {
+              "label": "查PostgreSQL",
+              "cells": [
+                {
+                  "text": "跳过",
+                  "assessment": "good",
+                  "verdict": "省去查询"
+                },
+                {
+                  "text": "等待结果",
+                  "assessment": "caution",
+                  "verdict": "增加等待"
+                }
+              ],
+              "id": "row-bb530b3792c8"
+            },
+            {
+              "label": "写回Redis",
+              "cells": [
+                {
+                  "text": "跳过",
+                  "assessment": "good",
+                  "verdict": "省去写回"
+                },
+                {
+                  "text": "同步SET",
+                  "assessment": "caution",
+                  "verdict": "增加等待"
+                }
+              ],
+              "id": "row-cbc9f8528502"
+            },
+            {
+              "label": "响应路径",
+              "cells": [
+                {
+                  "text": "一段读取",
+                  "assessment": "good",
+                  "verdict": "路径短"
+                },
+                {
+                  "text": "三段顺序等待",
+                  "assessment": "caution",
+                  "verdict": "路径长"
+                }
+              ],
+              "id": "row-d108c6645625"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "checks",
+      "title": "想缩短等待，先查什么？",
+      "blocks": [
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "记录`cache=hit`或`cache=miss`，区分请求路径。",
+            "分别观察GET、SQL和SET耗时，先处理最慢的一段。",
+            "检查SQL索引与执行计划；改为异步写回前，设计写入失败的恢复流程。"
+          ],
+          "id": "list-7e8599e477aa"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "get-doc",
+      "title": "Redis GET：不存在的键返回空值",
+      "url": "https://redis.io/docs/latest/commands/get/"
+    },
+    {
+      "id": "set-doc",
+      "title": "Redis SET：设置键值",
+      "url": "https://redis.io/docs/latest/commands/set/"
+    }
+  ]
+}

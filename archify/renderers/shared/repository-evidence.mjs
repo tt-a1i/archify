@@ -92,7 +92,8 @@ function gitValue(repoRoot, args, failure) {
     evidence: { gitArgs: args, exitCode: result.status },
     supportedFixes: ['use the intended local Git repository and verify its origin and revision'],
   });
-  return result.stdout.trim();
+  // Remove Git's record terminator without changing whitespace in a path.
+  return result.stdout.replace(/\n$/, '');
 }
 
 function verifiedSourcePath(value, where) {
@@ -228,7 +229,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       supportedFixes: [`pass --repo-root ${gitRoot}`],
     });
   }
-  const origin = gitValue(realRoot, ['remote', 'get-url', 'origin'], 'Evidence repository must have an origin remote.');
+  const origin = gitValue(realRoot, ['remote', 'get-url', 'origin'], 'Evidence repository must have an origin remote.').trim();
   if (parseRepositoryRemote(origin, { provider: repository.provider })?.identity !== location.identity) {
     const safeOrigin = redactRepositoryRemote(origin);
     evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(safeOrigin)} does not match ${JSON.stringify(repository.url)}.`, {
@@ -346,8 +347,10 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
           if (requestedLine > lineCount) {
             evidenceFailure('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
               subject: { path: at, ...nodeSubject },
-              evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
-              supportedFixes: ['use a line range that exists at the pinned revision'],
+              evidence: { sourcePath: source.path, line: source.line, ...(source.endLine ? { endLine: source.endLine } : {}), requestedLine, lineCount, revision },
+              supportedFixes: [source.endLine && source.line <= lineCount
+                ? `set end_line to ${lineCount}, the last line of ${source.path}`
+                : `reread ${source.path} (${lineCount} lines) and cite the lines that show the fact`],
             });
           }
         }

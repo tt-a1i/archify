@@ -176,6 +176,41 @@
           }
         }
       }
+    },
+    "relativeHtmlHref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Same-directory HTML file only (no scheme, no '/'). Optional ?query or #fragment such as #focus=id.",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.html(?:\\?[A-Za-z0-9._~/=&%+!?$-]*)?(?:#[A-Za-z0-9._~/=&%+!?$-]*)?$"
+    },
+    "nodeHrefSugar": {
+      "$ref": "#/$defs/relativeHtmlHref",
+      "description": "Shorthand for a one-entry drilldowns list. Label defaults to the node label. If drilldowns is also present, drilldowns wins."
+    },
+    "diagramTypeName": {
+      "enum": ["architecture", "workflow", "sequence", "dataflow", "lifecycle"]
+    },
+    "drilldownTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["href", "label"],
+      "properties": {
+        "href": { "$ref": "#/$defs/relativeHtmlHref" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "diagram_type": { "$ref": "#/$defs/diagramTypeName" }
+      }
+    },
+    "drilldowns": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "description": "Ordered child diagrams. Passport lists all; Ctrl+click / double-click opens the first entry.",
+      "items": { "$ref": "#/$defs/drilldownTarget" }
+    },
+    "parentHref": {
+      "$ref": "#/$defs/relativeHtmlHref",
+      "description": "Authored parent diagram for the Back control. Runtime may also use ?from=."
     }
   }
 }

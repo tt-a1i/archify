@@ -1,0 +1,835 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/explainer.schema.json",
+  "title": "Archify Explainer v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diagram_type",
+    "meta",
+    "answer",
+    "panels",
+    "sources"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "explainer"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/short"
+        },
+        "output": {
+          "$ref": "common.schema.json#/$defs/portableOutputPath"
+        },
+        "locale": {
+          "$ref": "common.schema.json#/$defs/locale"
+        },
+        "quality_profile": {
+          "$ref": "common.schema.json#/$defs/qualityProfile"
+        },
+        "repository": {
+          "$ref": "common.schema.json#/$defs/repository"
+        }
+      }
+    },
+    "answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary"
+      ],
+      "properties": {
+        "summary": {
+          "$ref": "#/$defs/text"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "maxItems": 4
+        },
+        "scope": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "panels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "blocks"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "title": {
+            "$ref": "#/$defs/short"
+          },
+          "span": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/block"
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        }
+      },
+      "minItems": 1,
+      "maxItems": 500
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      },
+      "minItems": 0,
+      "maxItems": 500
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "maxLength": 100
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000
+    },
+    "short": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "refs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "prose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "prose"
+        },
+        "text": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "list": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "items"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "list"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "minItems": 1,
+          "maxItems": 500
+        },
+        "ordered": {
+          "type": "boolean"
+        }
+      }
+    },
+    "callout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "level",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "callout"
+        },
+        "level": {
+          "enum": [
+            "note",
+            "warning",
+            "open-question"
+          ]
+        },
+        "title": {
+          "$ref": "#/$defs/short"
+        },
+        "text": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "columns",
+        "rows"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "comparison"
+        },
+        "labelColumn": {
+          "$ref": "#/$defs/short"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/short"
+          },
+          "minItems": 1,
+          "maxItems": 500
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "cells"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "label": {
+                "$ref": "#/$defs/short"
+              },
+              "cells": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "text"
+                  ],
+                  "properties": {
+                    "text": {
+                      "$ref": "#/$defs/text"
+                    },
+                    "assessment": {
+                      "enum": [
+                        "good",
+                        "caution",
+                        "bad"
+                      ]
+                    },
+                    "verdict": {
+                      "$ref": "#/$defs/short"
+                    }
+                  }
+                },
+                "minItems": 1,
+                "maxItems": 500
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 500
+        }
+      }
+    },
+    "facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "entries"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "facts"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "value"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/short"
+              },
+              "value": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 500
+        }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "metric"
+        },
+        "label": {
+          "$ref": "#/$defs/short"
+        },
+        "value": {
+          "type": "number"
+        },
+        "limit": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "$ref": "#/$defs/short"
+        },
+        "note": {
+          "$ref": "#/$defs/text"
+        },
+        "typical": {
+          "type": "boolean"
+        }
+      }
+    },
+    "steps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "items"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "steps"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "text"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "text": {
+                "$ref": "#/$defs/text"
+              },
+              "detail": {
+                "$ref": "#/$defs/text"
+              },
+              "target": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "diagram"
+                ],
+                "properties": {
+                  "diagram": {
+                    "$ref": "#/$defs/id"
+                  },
+                  "node": {
+                    "$ref": "#/$defs/id"
+                  },
+                  "route": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "$ref": "#/$defs/id"
+                      },
+                      {
+                        "$ref": "#/$defs/id"
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "edges": {
+                    "$ref": "#/$defs/refs"
+                  }
+                }
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 500
+        }
+      }
+    },
+    "diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "diagramType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "diagram"
+        },
+        "diagramType": {
+          "enum": [
+            "architecture",
+            "workflow",
+            "sequence",
+            "dataflow",
+            "lifecycle",
+            "erd",
+            "class",
+            "tree",
+            "timeline",
+            "waterfall"
+          ]
+        },
+        "spec": {
+          "type": "object"
+        },
+        "source": {
+          "$ref": "#/$defs/short"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "target",
+              "change"
+            ],
+            "properties": {
+              "target": {
+                "$ref": "#/$defs/id"
+              },
+              "change": {
+                "enum": [
+                  "added",
+                  "removed",
+                  "modified"
+                ]
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 500
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "spec": {}
+          },
+          "required": [
+            "spec"
+          ]
+        },
+        {
+          "properties": {
+            "source": {}
+          },
+          "required": [
+            "source"
+          ]
+        }
+      ]
+    },
+    "code": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "code"
+        },
+        "source": {
+          "$ref": "#/$defs/id"
+        },
+        "language": {
+          "$ref": "#/$defs/short"
+        }
+      }
+    },
+    "snippet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "snippet"
+        },
+        "language": {
+          "$ref": "#/$defs/short"
+        },
+        "title": {
+          "$ref": "#/$defs/short"
+        },
+        "text": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "diff"
+        },
+        "text": {
+          "$ref": "#/$defs/text"
+        },
+        "caption": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "path",
+        "alt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "image"
+        },
+        "path": {
+          "$ref": "#/$defs/short"
+        },
+        "alt": {
+          "$ref": "#/$defs/text"
+        },
+        "caption": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "block": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "prose",
+            "list",
+            "callout",
+            "comparison",
+            "facts",
+            "metric",
+            "steps",
+            "diagram",
+            "code",
+            "snippet",
+            "diff",
+            "image"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "prose"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/prose"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "list"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/list"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "callout"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/callout"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "comparison"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/comparison"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "facts"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/facts"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "metric"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/metric"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "steps"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/steps"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "diagram"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/diagram"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "code"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/code"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "snippet"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/snippet"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "diff"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/diff"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "image"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/image"
+          }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "$ref": "#/$defs/short"
+        },
+        "lines": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "integer",
+              "minimum": 1
+            }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{40}$"
+        }
+      }
+    }
+  }
+}

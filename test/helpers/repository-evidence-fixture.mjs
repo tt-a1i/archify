@@ -3,6 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { after } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 export const skillRoot = fileURLToPath(new URL('../../archify/', import.meta.url));
@@ -14,6 +15,9 @@ export function git(repo, ...args) {
 
 export function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-evidence-repo-'));
+  // Own teardown at creation, including initialization failures and callers
+  // that only need a short-lived in-process verification fixture.
+  after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, 'src'), { recursive: true });
   fs.writeFileSync(path.join(root, 'src', 'router.js'), 'export function route(input) {\n  return input.kind;\n}\n');
   fs.writeFileSync(path.join(root, 'src', 'store.js'), 'export const store = new Map();\n');

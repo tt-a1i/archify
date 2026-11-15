@@ -52,6 +52,7 @@
         "quality_profile": {
           "$ref": "common.schema.json#/$defs/qualityProfile"
         },
+        "parentHref": { "$ref": "common.schema.json#/$defs/parentHref" },
         "repository": {
           "$ref": "common.schema.json#/$defs/repository"
         },
@@ -136,6 +137,7 @@
             "type": "string",
             "minLength": 1
           },
+          "explanation": { "type": "string", "minLength": 1, "maxLength": 1200 },
           "sublabel": {
             "type": "string"
           },
@@ -146,6 +148,8 @@
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
           },
+          "drilldowns": { "$ref": "common.schema.json#/$defs/drilldowns" },
+          "href": { "$ref": "common.schema.json#/$defs/nodeHrefSugar" },
           "sources": {
             "$ref": "common.schema.json#/$defs/sourceReferences"
           },

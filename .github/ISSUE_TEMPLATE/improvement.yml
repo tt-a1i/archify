@@ -1,0 +1,43 @@
+name: Propose an improvement
+description: Discuss a feature or substantial change before implementation.
+title: "[Proposal]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing an improvement. Describe the problem and intended benefit before investing in implementation. Maintainers will discuss scope and compatibility; agreement on direction is not a promise to merge. Purely mechanical documentation corrections may go directly to a PR under CONTRIBUTING.md.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What practical problem are you trying to solve?
+      description: Who encounters it? Include a concrete example when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: current_limit
+    attributes:
+      label: Why are the current capabilities insufficient?
+      description: Mention the version and any existing controls or alternatives you considered.
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: What outcome would improve this?
+      description: Describe the desired result, likely scope, and known tradeoffs. A detailed design or implementation is not required.
+    validations:
+      required: true
+  - type: textarea
+    id: related
+    attributes:
+      label: Related issues or PRs
+      description: Search existing discussions and contributions; link related work or state that none was found.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Safe to share
+      options:
+        - label: I removed secrets, private source, and personal or customer data.
+          required: true

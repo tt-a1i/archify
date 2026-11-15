@@ -1,3 +1,4 @@
+import { softwareNoticesHtml } from '../renderers/shared/software-notices.mjs';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -58,7 +59,7 @@ function previewPage() {
   return `<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8">${softwareNoticesHtml}
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Archify Live Preview</title>
   <style>
@@ -121,7 +122,7 @@ function previewPage() {
             body.dataset.hasArtifact = 'true';
           }
         } else if (state.status === 'needs-fix') {
-          status.textContent = 'Needs fix · ' + (state.revision ? 'showing rev ' + state.revision : 'no verified revision');
+          status.textContent = 'Needs fix · ' + (lastRevision ? 'showing rev ' + lastRevision : 'no verified revision');
           diagnostic.textContent = 'Generation ' + state.generation + ' · ' + state.failure.stage + '\\n\\n' + state.failure.message;
           failure.hidden = false;
         } else {

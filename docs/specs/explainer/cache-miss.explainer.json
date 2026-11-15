@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "explainer",
+  "meta": {
+    "title": "缓存未命中时，请求经过哪些调用？",
+    "id": "diagram",
+    "locale": "zh-CN"
+  },
+  "answer": {
+    "summary": "缓存未命中后，**订单接口先查数据库，再写回Redis，最后返回响应**。",
+    "reasons": [
+      "数据库负责返回订单数据，接口负责写缓存。",
+      "查询和写回依次执行，都在响应的等待路径上。",
+      "缓存命中会直接返回，跳过这两段等待。"
+    ],
+    "scope": "机制示例：查询成功后同步SET再响应，没有并发、失败或重试分支。图表示先后顺序，不表示耗时比例；未实测性能。"
+  },
+  "panels": [
+    {
+      "id": "waits",
+      "title": "为什么会多等两段？",
+      "blocks": [
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "GET返回空值，接口转而向数据库取数据。[](source:redis-get)",
+            "接口拿到结果后，再调用SET填充缓存。[](source:redis-set)",
+            "两次调用都完成后，浏览器才能收到响应。"
+          ],
+          "id": "list-7cd190eeedaa"
+        }
+      ]
+    },
+    {
+      "id": "figure",
+      "title": "一次未命中经过哪些调用？",
+      "blocks": [
+        {
+          "type": "diagram",
+          "id": "cache-sequence",
+          "diagramType": "sequence",
+          "spec": {
+            "schema_version": 1,
+            "diagram_type": "sequence",
+            "meta": {
+              "title": "一次缓存未命中的订单请求",
+              "output": "cache-sequence.html",
+              "quality_profile": "showcase"
+            },
+            "participants": [
+              {
+                "id": "browser",
+                "label": "浏览器",
+                "type": "frontend"
+              },
+              {
+                "id": "api",
+                "label": "订单接口",
+                "type": "backend"
+              },
+              {
+                "id": "redis",
+                "label": "Redis",
+                "type": "database"
+              },
+              {
+                "id": "postgres",
+                "label": "PostgreSQL",
+                "type": "database"
+              }
+            ],
+            "messages": [
+              {
+                "id": "browser-to-api-1",
+                "from": "browser",
+                "to": "api",
+                "label": "GET /orders/42",
+                "y": 160
+              },
+              {
+                "id": "api-to-redis-1",
+                "from": "api",
+                "to": "redis",
+                "label": "GET order:42",
+                "y": 208
+              },
+              {
+                "id": "redis-to-api-1",
+                "from": "redis",
+                "to": "api",
+                "label": "nil：未命中",
+                "y": 256,
+                "variant": "return"
+              },
+              {
+                "id": "api-to-postgres-1",
+                "from": "api",
+                "to": "postgres",
+                "label": "SELECT订单",
+                "y": 304,
+                "variant": "emphasis"
+              },
+              {
+                "id": "postgres-to-api-1",
+                "from": "postgres",
+                "to": "api",
+                "label": "结果行",
+                "y": 352,
+                "variant": "return"
+              },
+              {
+                "id": "api-to-redis-2",
+                "from": "api",
+                "to": "redis",
+                "label": "SET order:42 value EX 300：写回",
+                "y": 400,
+                "variant": "emphasis"
+              },
+              {
+                "id": "api-to-browser-1",
+                "from": "api",
+                "to": "browser",
+                "label": "200 OK",
+                "y": 448,
+                "variant": "return"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "steps",
+      "title": "每一步发生了什么？",
+      "blocks": [
+        {
+          "type": "steps",
+          "id": "request-steps",
+          "items": [
+            {
+              "id": "request-step",
+              "text": "浏览器请求订单",
+              "detail": "请求到达接口，浏览器等待响应。",
+              "target": {
+                "diagram": "cache-sequence",
+                "node": "api",
+                "edges": [
+                  "browser-to-api-1"
+                ]
+              }
+            },
+            {
+              "id": "read-step",
+              "text": "先查缓存",
+              "detail": "GET返回空值，进入回源路径。",
+              "target": {
+                "diagram": "cache-sequence",
+                "node": "redis",
+                "edges": [
+                  "api-to-redis-1",
+                  "redis-to-api-1"
+                ]
+              }
+            },
+            {
+              "id": "database-step",
+              "text": "回源查数据库",
+              "detail": "接口等待PostgreSQL返回订单数据。",
+              "target": {
+                "diagram": "cache-sequence",
+                "node": "postgres",
+                "edges": [
+                  "api-to-postgres-1",
+                  "postgres-to-api-1"
+                ]
+              }
+            },
+            {
+              "id": "write-step",
+              "text": "接口同步写回缓存",
+              "detail": "写入由API发起，方向是API→Redis。",
+              "target": {
+                "diagram": "cache-sequence",
+                "node": "redis",
+                "edges": [
+                  "api-to-redis-2"
+                ]
+              }
+            },
+            {
+              "id": "response-step",
+              "text": "接口返回响应",
+              "detail": "查询和同步写回完成后，返回200 OK。",
+              "target": {
+                "diagram": "cache-sequence",
+                "node": "browser",
+                "edges": [
+                  "api-to-browser-1"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "redis-get",
+      "title": "Redis GET命令语义",
+      "url": "https://redis.io/docs/latest/commands/get/"
+    },
+    {
+      "id": "redis-set",
+      "title": "Redis SET命令语义",
+      "url": "https://redis.io/docs/latest/commands/set/"
+    }
+  ]
+}

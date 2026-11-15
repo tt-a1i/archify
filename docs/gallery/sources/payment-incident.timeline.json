@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "diagram_type": "timeline",
+  "meta": {
+    "title": "Payment failure incident",
+    "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+    "output": "payment-incident-timeline.html",
+    "evidence": "illustrative",
+    "timezone": "Asia/Shanghai",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "release", "label": "Release" },
+    { "id": "monitoring", "label": "Monitoring" },
+    { "id": "response", "label": "Response" }
+  ],
+  "events": [
+    { "id": "deploy", "at": "2026-10-01T10:00:00+08:00", "title": "Deploy v2.4", "detail": "New version starts serving payment requests.", "lane": "release", "kind": "change" },
+    { "id": "alert", "at": "2026-10-01T10:05:00+08:00", "title": "Payment failure alert", "detail": "Error rate on /pay rises above the paging threshold.", "lane": "monitoring", "kind": "alert" },
+    { "id": "rollback", "at": "2026-10-01T10:10:00+08:00", "title": "Start rollback", "detail": "On-call decides to return to v2.3.", "lane": "response", "kind": "action" },
+    { "id": "recovered", "at": "2026-10-01T10:15:00+08:00", "title": "Metrics recovered", "detail": "Payment success rate back to baseline.", "lane": "monitoring", "kind": "recovery" },
+    { "id": "closed", "at": "2026-10-01T10:20:00+08:00", "title": "Incident closed", "detail": "Stability confirmed; response ends.", "lane": "response", "kind": "action" }
+  ]
+}

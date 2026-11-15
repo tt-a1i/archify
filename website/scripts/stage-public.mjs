@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stageSkillDistribution } from './stage-skill-distribution.mjs';
 
 const pages = new Set(['index.html', 'gallery.html', 'guide.html', 'start.html']);
 
@@ -32,5 +33,6 @@ export function stagePublic(repo, target) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const root = fileURLToPath(new URL('../', import.meta.url));
   stagePublic(path.resolve(root, '..'), path.join(root, '.public'));
+  stageSkillDistribution(path.resolve(root, '..'), path.join(root, '.public'));
   console.log('Staged tracked public URLs; four pages are rendered by Astro.');
 }

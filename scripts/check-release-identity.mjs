@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parse } from 'parse5';
 
 import {
   compareSemver,
@@ -112,7 +113,24 @@ function checkNoRavenSwitcher(relativePath, source) {
 }
 
 function checkIdentityTemplate(relativePath, source, isDevelopment) {
-  const hasHardcodedVersion = /\b\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\b/.test(source);
+  // SVG path coordinates can resemble SemVer (for example, `4.3.6-3.1`).
+  // Remove only real SVG d attributes, not path-like text inside other
+  // attributes or scripts. Keep the original bytes everywhere else.
+  const pathDataRanges = [];
+  function collectPathData(node) {
+    const location = node.sourceCodeLocation?.attrs?.d;
+    if (node.namespaceURI === 'http://www.w3.org/2000/svg' && node.tagName === 'path' && location) {
+      pathDataRanges.push(location);
+    }
+    for (const child of node.childNodes || []) collectPathData(child);
+    if (node.content) collectPathData(node.content);
+  }
+  collectPathData(parse(source, { sourceCodeLocationInfo: true }));
+  let sourceWithoutPathData = source;
+  for (const { startOffset, endOffset } of pathDataRanges.sort((a, b) => b.startOffset - a.startOffset)) {
+    sourceWithoutPathData = sourceWithoutPathData.slice(0, startOffset) + sourceWithoutPathData.slice(endOffset);
+  }
+  const hasHardcodedVersion = /\b\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\b/.test(sourceWithoutPathData);
   const identity = isDevelopment ? 'development and 开发版' : 'stable and 稳定版';
   const hasIdentity = isDevelopment
     ? /development/i.test(source) && /开发版/.test(source)

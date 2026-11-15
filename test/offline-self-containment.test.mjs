@@ -9,6 +9,8 @@ import { assertFontCss, assertOfflineArtifact, inspectDocuments } from './helper
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
 const repoRoot = path.resolve(skillRoot, '..');
+import { softwareNotices, softwareNoticesHtml } from '../archify/renderers/shared/software-notices.mjs';
+
 const cli = path.join(skillRoot, 'bin/archify.mjs');
 const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
 const DIAGRAMS = [
@@ -56,7 +58,10 @@ test('a freshly delivered artifact of every type reaches no external origin', ()
       const output = path.join(dir, `${type}.html`);
       const result = spawnSync(process.execPath, [cli, 'deliver', type, path.join(skillRoot, 'examples', input), output, '--quality', 'showcase', '--json'], { encoding: 'utf8' });
       assert.equal(result.status, 0, `${type}: ${result.stderr}`);
-      assertOfflineArtifact(fs.readFileSync(output, 'utf8'), type);
+      const html = fs.readFileSync(output, 'utf8');
+      assertOfflineArtifact(html, type);
+      assert.ok(Buffer.byteLength(html.slice(0, html.indexOf('<meta charset='))) < 1024, 'charset must remain near the document start');
+      assert.equal(JSON.parse(html.match(/id="archify-software-notices">([\s\S]*?)<\/script>/)[1]), softwareNotices);
     }
     const output = path.join(dir, 'compare.html');
     const result = spawnSync(process.execPath, [cli, 'compare', 'architecture', path.join(skillRoot, 'examples/checkout-platform.base.architecture.json'), path.join(skillRoot, 'examples/checkout-platform.head.architecture.json'), output, '--json'], { encoding: 'utf8' });
@@ -77,4 +82,20 @@ test('every checked-in viewer artifact carries its font and reaches no external 
     assert.ok(artifacts.includes(required), `missing delivery-chain artifact: ${required}`);
   }
   for (const relative of artifacts) assertOfflineArtifact(fs.readFileSync(path.join(repoRoot, relative), 'utf8'), relative);
+});
+
+test('standalone software notices preserve both licenses as non-executable text', () => {
+  const payload = softwareNoticesHtml.match(/<script type="application\/json" id="archify-software-notices">([\s\S]*)<\/script>/)[1];
+  assert.equal(JSON.parse(payload), softwareNotices);
+  for (const name of ['NOTICE', 'LICENSE', 'LICENSE-MIT', 'THIRD_PARTY_NOTICES.md']) {
+    const canonical = fs.readFileSync(path.join(repoRoot, name), 'utf8').trimEnd();
+    assert.ok(softwareNotices.includes(`${name}\n${canonical}`), `${name} must retain its complete text`);
+  }
+  assert.match(softwareNotices, /Copyright \(c\) 2025 Cocoon AI/);
+  for (const name of ['archify-repo-grid', 'archify-repo', 'maka-architecture', 'rag-pipeline', 'web-app']) {
+    const html = fs.readFileSync(path.join(repoRoot, 'examples', `${name}.html`), 'utf8');
+    const embedded = html.match(/id="archify-software-notices">([\s\S]*?)<\/script>/)?.[1];
+    assert.ok(embedded, `${name} must carry software notices`);
+    assert.equal(JSON.parse(embedded), softwareNotices, `${name} must carry current license text`);
+  }
 });

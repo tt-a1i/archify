@@ -31,9 +31,9 @@
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.0.2--dev.1-0891b2?style=flat-square" alt="Development version 3.0.2-dev.1" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.2.1--dev.1-0891b2?style=flat-square" alt="Development version 3.2.1-dev.1" /></a>
 </p>
 
 <p align="center">
@@ -42,6 +42,7 @@
   <a href="#community"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
   <a href="#community"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
+  <a href="#support-archify"><img src="https://img.shields.io/badge/Support-E2500E?style=for-the-badge" alt="Support Archify" /></a>
 </p>
 
 <p align="center"><a href="#sponsors"><strong>❤️ Partners & sponsors: Kimi Work · Supercode · OpenLux</strong></a></p>
@@ -60,8 +61,10 @@ https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 
 Works with Cursor, Claude Code, Codex CLI, and OpenCode. See installation options below for additional integrations.
 
-```bash
-npx skills add tt-a1i/archify -g
+**With an AI agent.** Paste this:
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
 
 Send this to your agent:
@@ -75,7 +78,27 @@ Then continue: “Add authentication”, “Highlight the cache-miss path”, or
 
 **No repository is required:** start with a description, or ask your agent to read a repository for a source-backed architecture diagram.
 
-[Choose your agent](https://archify.si/start.html?agent=cursor&type=architecture) · [Installation details and update checks](#quick-start)
+[Choose your agent](https://archify.si/start.html?agent=cursor&type=architecture) · [Installation details and update checks](#quick-start) · [Create and check diagrams with your agent](https://archify.si/agent-diagrams)
+
+## Ask a question, get a one-page answer
+
+Not every answer is one diagram. Ask your agent to answer as a page and Archify builds an **explainer**: the conclusion first, then one panel per question, with tables, steps, charts, code and validated diagrams.
+
+[![An explainer page: the answer first, then steps beside the sequence diagram they walk through](docs/assets/explainer-tls-en.png)](https://archify.si/cases/explainer/tls-first-visit.html)
+
+- **Conclusion first.** The answer and its reasons lead; every panel takes one question.
+- **Diagrams that explain.** Steps sit beside the diagram they walk through and light its parts as you read. Click any node to open the full interactive view.
+- **Easy to check.** Claims cite numbered sources; repository excerpts are pinned to a commit and open in a source card.
+- **Easy to share.** One HTML file with four styles and light or dark themes. Export a PNG, WebP or JPG long image, or print to PDF. Ask about any panel to get a follow-up your agent can use to revise just that panel.
+
+```text
+Use Archify to answer as one page: our API's P99 went from 80 ms to 600 ms
+while the mean barely moved. What is the likely cause, and how should we investigate?
+```
+
+By default your agent also makes a page unasked when an answer is a complex flow, a diagnosis, a comparison or a test report. The reply still gives a short conclusion you can read in chat, and its last line links to the page, such as “Open the test report”. Short answers, text-only requests and failed pages get no page or link. To get pages only when you ask, tell your agent so, or add `[archify explainer: on-demand]` to its global rules file (such as `~/.codex/AGENTS.md` or `~/.claude/CLAUDE.md`). `[archify explainer: always-on]` adds a compact page to every answer that reaches a conclusion; deleting the line restores the default.
+
+Live examples: [First HTTPS visit](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 latency (Chinese)](https://archify.si/cases/explainer/p99-tail-latency.html) · [How Archify finalize keeps the last good file, read from this repository (Chinese)](https://archify.si/cases/explainer/finalize-delivery.html) · [First rental checklist (Chinese)](https://archify.si/cases/explainer/first-rental.html)
 
 <a id="sponsors"></a>
 
@@ -97,18 +120,21 @@ Then continue: “Add authentication”, “Highlight the cache-miss path”, or
 <td>Thank you to OpenLux for sponsoring this project! OpenLux is an all-in-one AI platform for businesses, bringing together leading AI models from major providers worldwide. With fast, reliable service and responsive technical support, OpenLux offers base pricing for Claude, OpenAI, and Gemini models as low as 8.82%, 4%, and 8% of official rates, respectively.<br/><br/>Exclusive offer for Archify users: Sign up through our referral link and enjoy up to 7.5% off credit top-ups!<br/><br/><a href="https://www.openlux.ai/register?channel=c_qdvanbpc">Get started with OpenLux →</a></td>
 </tr>
 <tr>
-<td align="center" width="240"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="200" /></a><br/><strong><a href="https://zturbo.top">ZTURBO</a></strong></td>
-<td>Fast, stable connectivity for developers and AI users.<br/>New users can try the service for free and receive an exclusive bonus on their first top-up. Supports Windows, macOS, iOS, and Android; long-term plans work out to less than ¥1 per day.<br/><br/>Free trial · First top-up bonus · Multi-device connectivity<br/><br/><a href="https://zturbo.top">Try ZTURBO →</a></td>
-</tr>
-<tr>
 <td align="center" width="240"><a href="https://www.packyapi.ai/register?aff=bN97"><img src="docs/assets/sponsors/packycode-logo.png" alt="PackyCode" width="200" /></a><br/><strong><a href="https://www.packyapi.ai/register?aff=bN97">PackyCode</a></strong></td>
 <td>Access leading AI models through PackyCode with one API endpoint and one API key. Enjoy automatic failover and dedicated high-speed routes for Codex and Claude Code.<br/><br/>Get started with $1 in free credits, a discount on your first top-up, and savings of up to 80% on eligible routes. Pay in RMB with no currency conversion markups or extra top-up fees.<br/><br/><a href="https://www.packyapi.ai/register?aff=bN97">Get started with PackyCode →</a></td>
 </tr>
 <tr>
-<td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc" width="140" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc</a></strong></td>
-<td>Thank you to Infistar.cc for sponsoring Archify! One API key covers text, image, and video creation with GPT, Claude, Gemini, DeepSeek, Qwen, Kling, and other models, without switching groups. Model API pricing starts at 1% of official rates, and AI images start at ¥0.06 each.<br/><br/>Exclusive offer for Archify users: Sign up through our referral link for $5 in trial credits and a special offer on your first top-up.<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Try Infistar →</a></td>
+<td align="center" width="240"><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL"><img src="docs/assets/sponsors/aicodemirror-logo.jpg" alt="AICodeMirror" width="200" /></a><br/><strong><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL">AICodeMirror</a></strong></td>
+<td>Thank you to AICodeMirror for sponsoring Archify! AICodeMirror provides API relay services for Claude, Codex, and Gemini, with enterprise-grade concurrency, invoice issuance, and 24/7 technical support. Codex pricing starts at 7% of standard rates, with additional top-up discounts.<br/><br/>Exclusive offer for Archify users: Register through our referral link to receive 20% off your first top-up.<br/><br/><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL">Try AICodeMirror →</a></td>
 </tr>
-<tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind sponsors Archify and builds memory infrastructure for agents. Its <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> harness supports Archify as a Skill for verified, interactive system maps.</td></tr>
+<tr>
+<td align="center" width="240"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="200" /></a><br/><strong><a href="https://zturbo.top">ZTURBO</a></strong></td>
+<td>Fast, stable connectivity for developers and AI users.<br/>New users can try the service for free and receive an exclusive bonus on their first top-up. Supports Windows, macOS, iOS, and Android; long-term plans work out to less than ¥1 per day.<br/><br/>Free trial · First top-up bonus · Multi-device connectivity<br/><br/><a href="https://zturbo.top">Try ZTURBO →</a></td>
+</tr>
+<tr>
+<td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc" width="140" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc</a></strong></td>
+<td>Infistar provides access to Claude, GPT, Gemini and DeepSeek with one API key for text, image and video creation. Model API pricing starts at 1% of official rates.<br/><br/>Archify users receive CNY 5 in trial credit when signing up through this link.<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Try Infistar →</a></td>
+</tr>
 </table>
 
 > Want to sponsor Archify? [Contact us by email.](mailto:2801884530@qq.com)
@@ -193,22 +219,34 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 
 ## Quick start
 
-**Current development version:** `v3.0.2-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
+**Current development version:** `v3.2.1-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
 
 ### 1. Install
 
+**With an AI agent**
+
+Paste this to your agent:
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
+```
+
+Or install without prompts. Pass one agent, or repeat `--agent` for every switcher target (`cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`). `--copy` copies the skill instead of symlinking:
+
+Cursor only:
+
 ```bash
-npx skills add tt-a1i/archify -g
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+```
+
+Or, only if you want all five agents:
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
 <details>
 <summary>More installation options and update-check details</summary>
-
-For an explicit, non-interactive Cursor install:
-
-```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
-```
 
 To try without installing:
 
@@ -216,9 +254,9 @@ To try without installing:
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-[DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`
+[DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`
 
-The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`.
+The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, `opencode`, and `github-copilot`.
 
 Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 24 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes.
 
@@ -253,7 +291,7 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 ## Choose the right diagram
 
 <details>
-<summary>Five diagram types, architecture comparisons, and examples</summary>
+<summary>Ten diagram types, architecture comparisons, and examples</summary>
 
 
 | Type | Best for | Include in your prompt |
@@ -263,6 +301,11 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 | **Sequence** | API calls, cache fallback, auth, async traces | Callers, callees, returns, timing |
 | **Data Flow** | Pipelines, lineage, PII, consumers | Sources, transforms, stores, boundaries |
 | **Lifecycle** | States, retries, waits, terminal outcomes | States, events, retry and cancellation paths |
+| **ERD** | Database schemas: tables, columns, keys, cardinality | Tables, every column with its type, primary/foreign/unique keys, relationship cardinality |
+| **Class** | Classes, interfaces, selected members, type relationships | Types, key members, inheritance and implementations, composition, dependencies |
+| **Tree** | Single-parent hierarchies: repositories, modules, capability breakdowns | Root, levels, what each branch contains |
+| **Timeline** | When things happened: incident reviews, release histories | Timestamps with time zone, events, source lanes, whether times are observed or illustrative |
+| **Waterfall** | Where the time went in one request or agent run | Spans, start times and durations, nesting, whether timings are measured or illustrative |
 
 Architecture's optional `deployment-ownership` profile fails closed when authored owners, region placement, private database scope, or named crossings are missing; it is never implicit and does not inspect live infrastructure. See the [checked deployment proof](https://archify.si/gallery.html#proof-deployment-ownership).
 
@@ -294,6 +337,30 @@ Data Flow makes movement and sensitivity boundaries explicit:
 Lifecycle separates progress, waits, retries, and terminal outcomes:
 
 ![Lifecycle example](docs/assets/archify-lifecycle.png)
+
+New in 3.1: ERD, Class, Tree, Timeline and Waterfall.
+
+ERD keeps tables, every column and key, and relationship cardinality together:
+
+![ERD example: an order management schema with customer, order, payment, inventory, product and order item tables grouped by domain](docs/assets/archify-erd.png)
+
+Class shows contracts, selected members, and which types depend on or implement them:
+
+![Class example: OrderService depends on the PaymentGateway interface, implemented by card and wallet gateways](docs/assets/archify-class.png)
+
+Tree shows single-parent containment, such as a capability breakdown:
+
+![Tree example: a payment platform broken down into orders, payments and operations capabilities](docs/assets/archify-tree.png)
+
+Timeline places events on one proportional clock, with a lane per source:
+
+![Timeline example: an illustrative payment incident with release, monitoring and response events on one clock](docs/assets/archify-timeline.png)
+
+Waterfall shows where the time went across nested and overlapping spans:
+
+![Waterfall example: illustrative timing of a checkout request where inventory lookup and discount calculation run concurrently](docs/assets/archify-waterfall.png)
+
+Explore these examples: [`ERD`](https://archify.si/gallery/artifacts/orders.erd.html) · [`Class`](examples/class-payments-rendered.html) · [`Tree`](examples/tree-payment-platform-rendered.html) · [`Timeline`](examples/timeline-payment-incident-rendered.html) · [`Waterfall`](examples/waterfall-checkout-request-rendered.html). The Timeline and Waterfall examples use illustrative data; treat timestamps or durations as real only when they come from logs or traces.
 
 Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`](examples/archify-repo.html) · [`grid placement`](examples/archify-repo-grid.html) · [`desktop agent`](examples/maka-architecture.html)
 
@@ -367,7 +434,7 @@ Settings:
 }
 ```
 
-`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`, `zh-CN`, `zh-TW`, `es`, and `ko` are bundled and need only `meta.locale`; `meta.translations` (canonical message key → translated string) overrides individual keys and keeps the rest of the language. Other languages supply their catalog there (see `archify/examples/locales/`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
+`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`, `zh-CN`, `zh-TW`, `es`, `ko`, and `ar` are bundled and need only `meta.locale`; `meta.translations` (canonical message key → translated string) overrides individual keys and keeps the rest of the language. Other languages supply their catalog there (see `archify/examples/locales/`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
 
 </details>
 
@@ -399,7 +466,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 | **Claude.ai** | Upload `archify.zip` under Settings → Capabilities → Skills | Depends on Node.js access in the sandbox |
 | **Project Knowledge** | Upload `archify.zip` to the project | Prompt-driven architecture fallback |
 | **Hermes Agent** | Opt-in: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | Community Skill-only integration; Node `>=18`; not a Nous official product. No telemetry. It is not a switcher target. [Details](integrations/hermes-agent/README.md). |
-| **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.1.2-rc.1`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
+| **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.2.1-rc.2`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
 
 ## Reference and scope
 
@@ -431,13 +498,15 @@ Connect with other users and developers, share ideas, request features, report b
 
 ## Official channels and third-party services
 
-- **Open-source project:** The source code and installation packages are free to use under the [MIT License](LICENSE).
+- **Open-source project:** Current source and packages built from it are available under the [Apache License 2.0](LICENSE); previously published releases retain their original licenses.
 - **Official website:** [archify.si](https://archify.si) currently provides project information, examples, and installation guidance.
 - **Third-party services:** Pricing, data handling, and support are determined by the respective provider. A similar name or domain does not establish an official affiliation.
 
 ## License
 
-[MIT](LICENSE) — free to use, modify, and distribute.
+[Apache-2.0](LICENSE) — free to use, modify, and distribute.
+
+Historical MIT grants remain in effect; see [NOTICE](NOTICE) and [LICENSE-MIT](LICENSE-MIT). Third-party components retain their own licenses. The software license does not change ownership of your authored content or grant general permission to use Archify trademarks.
 
 ## Contributing
 
@@ -468,6 +537,12 @@ Scan the QR code below with Alipay, or save it and open it in Alipay to scan.
 </details>
 
 Using Archify, sharing it, reporting bugs, and contributing improvements are also ways to help.
+
+## Contributors
+
+Thanks to everyone who helped build Archify. [Go follow them.](https://github.com/tt-a1i/archify/graphs/contributors) ❤️
+
+<p align="center"><a href="https://github.com/tt-a1i/archify/graphs/contributors"><img alt="Archify contributors" src="https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg" width="1000" /></a></p>
 
 ## Star History
 

@@ -167,20 +167,45 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     const reset = await snapshot('default-restored'); assert.equal(reset.context, 'focus'); assert.equal(reset.results.length, reset.count);
   });
 
+  await t.test('composing global shortcuts preserve Viewer state and default input behavior', async () => {
+    await load();
+    await run('Archify.preset.open()');
+    for (const signal of [{isComposing:true}, {isComposing:false,keyCode:229}]) {
+      for (const shortcut of ['/', '?', 't', 's', 'e', 'f', 'm', 'l', 'r', '+', '=', '-', '0', 'Escape']) {
+        const result = await run(`(async () => {
+          const state = () => ({finder:Archify.finder.isOpen(),guide:Archify.guide.isOpen(),presetOpen:Archify.preset.isOpen(),
+            preset:Archify.preset.current(),theme:document.documentElement.getAttribute('data-theme'),
+            exporting:Archify.exportMenu.isOpen(),presentation:Archify.presentation.active(),radar:Archify.radar.isOpen(),
+            lens:Archify.semanticLens.isOpen(),route:Archify.routeProbe.active(),camera:Archify.view.state(),
+            focus:document.activeElement.id,hash:location.hash});
+          const before = state(), event = new KeyboardEvent('keydown', ${JSON.stringify({key:shortcut,bubbles:true,cancelable:true,...signal})});
+          document.dispatchEvent(event);
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          return {before,after:state(),prevented:event.defaultPrevented};
+        })()`);
+        assert.equal(result.prevented, false, `${shortcut} ${JSON.stringify(signal)} remains owned by the input method`);
+        assert.deepEqual(result.after, result.before, `${shortcut} ${JSON.stringify(signal)} preserves Viewer state`);
+      }
+    }
+  });
+
   await t.test('trusted keyboard navigation, selection and Escape preserve focus boundaries', async () => {
     await load();
     await key('/', 'Slash', 191); await opened();
+    assert.deepEqual(await run(`(()=>{const input=document.getElementById('node-finder-input'),event=new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true,shiftKey:true});input.dispatchEvent(event);return {prevented:event.defaultPrevented,focus:document.activeElement.id};})()`),{prevented:false,focus:'node-finder-input'});
     await key('ArrowDown', 'ArrowDown', 40);
     const first = await snapshot('keyboard-first'); assert.equal(first.activeNode, first.results[0].id);
     await key('ArrowUp', 'ArrowUp', 38);
     assert.equal((await snapshot('keyboard-wrap')).activeNode, first.results.at(-1).id);
     await key('Home', 'Home', 36); assert.equal((await snapshot('keyboard-home')).activeNode, first.results[0].id);
+    assert.deepEqual(await run(`(()=>{const before=document.activeElement.getAttribute('data-node-id'),event=new KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true,altKey:true});document.activeElement.dispatchEvent(event);return {prevented:event.defaultPrevented,focus:document.activeElement.getAttribute('data-node-id'),before};})()`),{prevented:false,focus:first.results[0].id,before:first.results[0].id});
     await key('End', 'End', 35); assert.equal((await snapshot('keyboard-end')).activeNode, first.results.at(-1).id);
     await key('Escape', 'Escape', 27);
     assert.equal((await snapshot('keyboard-escape')).activeId, 'btn-node-finder');
     await key('/', 'Slash', 191); await opened(); await search('API Server');
     // Slash in an input must not reopen the panel and erase the query.
     await key('/', 'Slash', 191); assert.equal(await run(`document.getElementById('node-finder-input').value`), 'API Server');
+    assert.deepEqual(await run(`(()=>{const input=document.getElementById('node-finder-input'),event=new KeyboardEvent('keydown',{key:'Enter',keyCode:229,bubbles:true,cancelable:true});input.dispatchEvent(event);return {prevented:event.defaultPrevented,open:Archify.finder.isOpen(),focus:document.activeElement.id};})()`),{prevented:false,open:true,focus:'node-finder-input'});
     await key('Enter', 'Enter', 13);
     await run(`finderWait(() => !document.querySelector('.diagram-container').hasAttribute('data-camera-transaction'))`);
     const selected = await snapshot('normal-selection');

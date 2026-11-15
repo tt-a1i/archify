@@ -4,6 +4,27 @@
 
 `finalize` stops at the first non-passing gate. Use compact stdout or `evidence.summaryReceipt`; read its full sidecar only when the summary lacks evidence needed for a coherent repair. A receipt with four artifact checks is basic validation, not showcase acceptance: require all nine checks, zero composition errors, and zero warnings. Fix `meta.quality_profile` and schema errors before geometry. A dense full-schema ERD may keep `standard` for its first complete-field pass: require zero structural errors, no edge-through-node failures, complete field rows, and a readable grouped grid, and record composition warnings instead of spending unbounded time on them.
 
+When every diagnostic from the first embedded validation is
+`repository-evidence/line-out-of-range`, `finalize` may narrow an existing
+citation's `end_line` to the last line of its pinned file and retry the complete
+gates once. The start line must already exist in that nonempty file; the source
+path, revision, start, and all other authored content stay unchanged. Automatic
+repair requires the original bytes to match `JSON.stringify(parsed, null, 2)`
+plus one LF exactly. Other formatting, a BOM, CRLF, or number spellings that
+would change on parsing and serialization require author repair, so reserialization
+cannot change unrelated bytes or numeric precision. Missing files, invalid starts,
+and mixed failures also require author repair. This only bounds
+the cited range; it does not establish or correct the cited fact. `autoRepair`
+records the changed ranges and original/repaired hashes in both receipts. A
+passing retry keeps the repaired candidate. Any later failure or exception
+attempts a byte-for-byte restore, guarded by the repaired candidate's identity
+and bytes, and invalidates only that retry's current-delivery sidecar. External
+edits are preserved and a returned receipt reports `restore-failed` if recovery
+cannot safely complete. Failure diagnostics and `specification` describe the
+checked retry; `autoRepair.outcome` states whether the original was restored.
+Thrown exceptions remain command failures and may leave the last persisted
+receipt at an earlier stage; only a completed passing command is a handoff.
+
 For a validation failure, edit the existing JSON in the connected neighborhood named by diagnostics before rerunning a command. Preserve requested semantics, meaningful labels, source evidence, and fixed or agreed topology. Several routes sharing nodes call for one placement repair; read [Architecture layout repair](architecture-layout-repair.md) for that case. Reflow a blocked main path rather than nudging unrelated labels. Keep unrelated geometry when its composition already reads clearly. Use `--layout-json` before editing only when compact evidence lacks needed measurements. Workflow v2 uses its stable compiler receipt, not solver internals, as authoring evidence.
 
 Keep the best candidate that cleared route checks before a viewport repair. If that repair introduces new route collisions, restore the measured layout and address its remaining canvas or text constraint.
@@ -22,6 +43,8 @@ their existing rule codes. Use the advertised `validate --json` or
 `deliver --json` interface for a machine receipt; `render` has no `--json` flag.
 Unexpected implementation failures retain debugging information in human
 mode and remain `internal/unclassified` in machine receipts.
+
+Declared local Explainer chart data and native-diagram specification files are protected inputs, including physical aliases. Delivery and finalize refuse sidecars that would overwrite those inputs, including when resource preparation fails; an uninspectable draft cannot publish failure evidence.
 
 Each delivered output has two artifact-specific metadata paths. When an output
 stem is too long for those derived filenames, Archify shortens it and appends a
@@ -268,7 +291,7 @@ object with gate statuses, bounded actionable diagnostics, artifact identity,
 and evidence paths. The same compact object is written atomically to
 `<output-stem>.finalize-summary.json`; use that file for normal failure repair. When diagnostics are truncated, `diagnosticSummary.omittedByCode` counts the unshown entries by diagnostic code without replacing their full subject and repair evidence in the full receipt.
 Complete stage receipts and timings remain available for auditing in
-`<output-stem>.finalize.json`. With `--out-dir`, both files are written there;
+`<output-stem>.finalize.json`. With `--out-dir`, both files are written there (unless an explicit `--receipt` overrides the finalize receipt path; the artifact HTML stays at the requested output path);
 `--receipt <path.json>` overrides the full receipt path and derives a distinct
 `<path>-summary.json`. Read the full receipt only when the compact summary is
 truncated and its shown subjects and evidence cannot identify a coherent local
@@ -395,6 +418,10 @@ The delivery interface exposes four separate claims:
 
 Passing one claim never implies the others. Never claim that the deterministic receipt includes browser or perceptual review evidence.
 
+## Comparison presentation changes
+
+Architecture comparisons include authored `meta.translations` in presentation changes. Adding, removing or editing translations changes `summary.presentationChanged`; reordering translation keys does not. An empty translation object is equivalent to an omitted catalog for presentation classification; the canonical source digest still records the authored representation. Component, relationship, boundary and repository-provenance classifications remain independent.
+
 ## Recovering a failed comparison
 
 `compare` commits an HTML artifact and its JSON receipt as a pair. If that commit
@@ -423,7 +450,14 @@ command is:
 node bin/archify.mjs browser-check <output.html> --json --require-provenance
 ```
 
-The zero-dependency command uses Chrome/Chromium through the DevTools pipe. It
+The zero-dependency command uses Chrome/Chromium (or Microsoft Edge)
+through the DevTools pipe. `ARCHIFY_CHROME` is authoritative when set, including
+an invalid path: Archify does not silently fall back to another browser. Automatic
+Windows discovery checks every Chrome/Chromium install location and PATH command
+first, then Edge under `%ProgramFiles(x86)%`, `%ProgramFiles%`, and `%LocalAppData%`,
+followed by `msedge` on PATH. On macOS and Linux, discovery also checks
+Chrome/Chromium first, then the Edge application bundle (macOS) and
+`microsoft-edge`/`microsoft-edge-stable` on PATH. It
 measures light-theme containment at 1440×900, 1600×1000, 1920×1080, and
 2048×1320, and verifies the requested light theme at all four viewports, the dark
 theme at both endpoints, and READ/Still runtime states. A requested theme that
@@ -455,13 +489,25 @@ command:
 
 - `passed` maps from exit 0 and receipt `status: "pass"` after every required measurement completes and passes.
 - `failed` maps from exit 1 and receipt `status: "fail"` when the inspection finds a defect, the command fails, or a runtime error leaves the evidence incomplete.
-- `skipped` maps only from exit 2 and receipt `status: "skipped"` when Chrome/Chromium is unavailable and the inspection does not run.
+- `skipped` maps only from exit 2 and receipt `status: "skipped"` when no supported browser is available and the inspection does not run.
 
 Runtime failures leave incomplete evidence and must not be normalized to
 `skipped`. They do not invalidate an already successful deterministic delivery.
 Retry an environmental failure in a browser-capable execution context when
 practical. Keep the packaged transport unchanged unless the failure reproduces
 through that seam in a capable environment.
+
+On Windows, Chrome/Edge startup relaunches can lose the inherited DevTools
+pipe before any response arrives. Archify removes a standalone
+`__COMPAT_LAYER=DetectorsAppHealth` from the browser child's environment only
+(case-insensitive name and value); the parent environment, unknown layers,
+combined layers, and privilege-related compatibility settings are unchanged.
+This targets the reported non-elevated Git Bash app-health case, not every
+AppCompat mode. Elevated-shell relaunches remain unsupported: rerun from a
+non-elevated PowerShell opened normally, outside an elevated or compatibility-mode
+parent. Archify does not suppress browser de-elevation or disable the sandbox
+as a relaunch workaround. A zero-response startup diagnostic suggests this
+remedy without claiming that elevation or AppCompat caused every pipe failure.
 
 A provenance failure exits before browser inspection and persists a failed
 browser-check receipt bound to the attempted artifact. If the failure receipt
@@ -543,12 +589,14 @@ a capable environment.
 
 ## A new candidate at an existing output path
 
-Browser evidence belongs to exact artifact bytes. After editing a candidate whose previous HTML already has browser evidence, choose a fresh evidence directory before running the next `finalize`; this preserves the old receipts and captures without an avoidable ownership-conflict retry:
+Browser evidence belongs to exact artifact bytes. After editing a candidate whose previous HTML already has browser evidence, choose a fresh evidence directory before running the next `finalize`; this preserves the old receipts and captures without an avoidable ownership-conflict retry. `--out-dir` relocates the new browser-check receipt and, by default, the finalize receipt and summary. An explicit `--receipt` overrides the finalize receipt path; its summary follows that path. Successful delivery still rewrites the requested HTML and its sibling `*.delivery.json`. Earlier browser or visual evidence remains bound to its original artifact bytes and must not be treated as evidence for changed HTML:
 
 ```bash
 node bin/archify.mjs finalize architecture candidate.json diagram.html --quality showcase --repo-root <root> --out-dir diagram.review-2 --json
 node bin/archify.mjs visual-check diagram.html --out-dir diagram.review-2 --summary --require-provenance
 ```
+
+The evidence directory is not an archive of the HTML. Copying the HTML there alone does not rebind receipt paths or provenance. If a historical snapshot is needed, preserve the candidate and artifact separately before overwriting them; do not assume copied receipts validate a relocated artifact.
 
 Keep the requested HTML path stable. Use a new revision directory for each changed candidate, and retain the same directory for retries of unchanged bytes. For a diagram without repository evidence, omit `--repo-root`. Let the commands create their output directory. A prior validation failure that produced no HTML or browser evidence needs no new directory. Never remove unknown evidence to make a retry pass.
 

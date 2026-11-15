@@ -565,13 +565,13 @@ test('a newer immutable candidate is repeated from cache on every check', async 
   assert.equal(first.source, 'network');
   assert.equal(first.noticeRequired, true);
   assert.equal(Object.hasOwn(first, 'updateCommand'), false);
-  assert.equal(first.summary, 'Archify 2.16.0 is available; see the official release notes for details.');
+  assert.equal(first.summary, remoteRelease().summary);
   const persisted = JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8'));
   assert.deepEqual(Object.keys(persisted).sort(), [
     'candidate', 'check', 'installedVersion', 'preferences', 'schemaVersion', 'skillId',
   ]);
   assert.deepEqual(Object.keys(persisted.candidate).sort(), [
-    'checkedAt', 'releaseNotes', 'severity', 'targetDigest', 'version',
+    'checkedAt', 'releaseNotes', 'severity', 'summary', 'targetDigest', 'version',
   ]);
 
   for (let index = 0; index < 2; index += 1) {
@@ -579,6 +579,7 @@ test('a newer immutable candidate is repeated from cache on every check', async 
     assert.equal(repeated.eventKey, first.eventKey);
     assert.equal(repeated.source, 'cache');
     assert.equal(repeated.checkedAt, first.checkedAt);
+    assert.equal(repeated.summary, first.summary);
     assert.equal(repeated.noticeRequired, true);
   }
   assert.equal(requests, 1, 'fresh cached candidates must not make another request');
@@ -3156,4 +3157,20 @@ test('an offline delivery still offers the last validated candidate when backoff
   } finally {
     fsPromises.rename = originalRename;
   }
+});
+
+test('legacy cached candidates keep the version notice without inventing a summary', async (t) => {
+  const testFixture = fixture();
+  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
+  await checkForUpdate(options(testFixture, async () => response(remoteRelease())));
+  const state = JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8'));
+  delete state.candidate.summary;
+  fs.writeFileSync(statePath(testFixture), JSON.stringify(state));
+  const result = await checkForUpdate(options(testFixture, async () => {
+    assert.fail('a valid legacy cache must not require a summary fetch');
+  }));
+  assert.equal(result.status, 'update_available');
+  assert.equal(result.source, 'cache');
+  assert.equal(result.summary, null);
+  assert.equal(result.releaseNotes, remoteRelease().releaseNotes);
 });

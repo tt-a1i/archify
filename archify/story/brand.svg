@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="360" viewBox="0 0 400 360" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Archify symbol</title>
+  <path d="M151 94 81 164C67 178 60 191 60 212V248H97V212C97 204 100 199 106 193L179 120Z" fill="#0856F5"/>
+  <path d="M238 135C252 132 261 126 270 116L321 167C334 180 339 194 339 213V248H303V213C303 204 300 199 294 193Z" fill="#1DBBB7"/>
+  <rect x="146" y="16" width="110" height="104" rx="30" fill="#0856F5"/>
+  <rect x="18" y="238" width="110" height="104" rx="28" fill="#0856F5"/>
+  <rect x="274" y="238" width="108" height="104" rx="28" fill="#1DBBB7"/>
+</svg>

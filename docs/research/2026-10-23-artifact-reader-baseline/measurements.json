@@ -1,0 +1,90 @@
+{
+  "input": "archify/examples/delivery.explainer.json",
+  "evidenceSource": {
+    "pullRequest": "https://github.com/tt-a1i/archify/pull/1069",
+    "head": "1bc160740efde6f74ec8518c207db049f682325f"
+  },
+  "revisions": [
+    {
+      "id": "dev-b71d1b3",
+      "sha": "b71d1b3e38f71d0f7fe91207b750cc307357c91a",
+      "versionControl": false
+    },
+    {
+      "id": "bd524438",
+      "sha": "bd5244388fedd4e74462fb04c588bbbea5c18956",
+      "versionControl": true
+    }
+  ],
+  "measurements": [
+    {
+      "revision": "dev-b71d1b3",
+      "viewport": "1440x900",
+      "state": "initial",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "overflow": false,
+      "lastControl": "导出",
+      "rightEdge": 1360,
+      "fullyVisible": true
+    },
+    {
+      "revision": "dev-b71d1b3",
+      "viewport": "390x844",
+      "state": "initial",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "overflow": false,
+      "lastControl": "导出",
+      "rightEdge": 352,
+      "fullyVisible": true,
+      "screenshot": "screenshots/dev-b71d1b3-390x844-initial.png"
+    },
+    {
+      "revision": "bd524438",
+      "viewport": "1440x900",
+      "state": "initial",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "overflow": false,
+      "lastControl": "版本 3.2.1",
+      "rightEdge": 1360,
+      "fullyVisible": true
+    },
+    {
+      "revision": "bd524438",
+      "viewport": "1440x900",
+      "state": "update-available",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "overflow": false,
+      "lastControl": "新版本 3.2.2",
+      "rightEdge": 1360,
+      "fullyVisible": true
+    },
+    {
+      "revision": "bd524438",
+      "viewport": "390x844",
+      "state": "initial",
+      "scrollWidth": 438,
+      "innerWidth": 390,
+      "overflow": true,
+      "lastControl": "版本 3.2.1",
+      "rightEdge": 438,
+      "fullyVisible": false,
+      "screenshot": "screenshots/bd524438-390x844-initial.png"
+    },
+    {
+      "revision": "bd524438",
+      "viewport": "390x844",
+      "state": "update-available",
+      "scrollWidth": 451,
+      "innerWidth": 390,
+      "overflow": true,
+      "lastControl": "新版本 3.2.2",
+      "rightEdge": 451,
+      "fullyVisible": false,
+      "screenshot": "screenshots/bd524438-390x844-update-available.png"
+    }
+  ]
+}

@@ -4,18 +4,113 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
-> Development identity: `v3.0.2-dev.1`. Not a stable release.
+> Development identity: `v3.2.1-dev.1`. Not a stable release.
 
 ### Added
-- **Traditional Chinese (Taiwan) Viewer catalog.** `meta.locale: "zh-TW"` now selects a bundled catalog covering all 487 Viewer keys with Taiwan terminology (for example 循序圖, 資料流, 匯出, 檢視), instead of falling back to English. Enrollment is data only: `locales/zh-TW.json` plus one manifest entry. `zh-Hant` and `zh-HK` remain distinct, unbundled tags.
+- **Visible support entry on the website and READMEs (#1340).** Every built page now has a ☕ Support / ☕ 支持 tag in the site header, in addition to the footer link, pointing at the homepage #support section with the existing WeChat Pay and Alipay QR codes. Each README language also has a top Support badge that jumps to that file's support section.
+- **Authored node explanations in the Semantic Passport.** Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text explanations up to1200 characters. Explain opens a viewport-bounded reading face with scrollable prose and a reachable Back action; Escape restores the Passport. Prose remains outside canonical SVG and visual exports, and existing diagram geometry is preserved.
+- **Cross-diagram navigation.** Nodes may list sibling `.html` targets via `drilldowns` or a one-entry `href` shorthand. One child uses a native SVG link and visible mark (click follows, Alt-click focuses). Several children keep click-to-focus, with Passport listing every target and Ctrl/double-click opening the first. Child pages can author `meta.parentHref` for header Back; the Viewer also accepts `?from=`.
+- **Explainer diagram domain role naming (`role <type> | <label>`).** `@architecture`, `@workflow` and `@sequence` shorthands accept plain-text `role <type> | <label>` rows to rename node roles in Viewer filter lenses and legends (`architecture`/`workflow`), drop infrastructure corner icons from nodes of those roles (keeping workflow `?` decision marks), and default Viewer lens prompts to case-insensitive localized group comparison labels (inheriting the page's default locale when `@meta locale` is omitted).
+
+### Changed
+- **Explainer pages are proactive by default (#1299).** Like Answer me with HTML, the agent now also makes a one-page explainer unasked when an answer is a complex flow, a diagnosis, a comparison, a test or review report or a plan that needs structure. The reply keeps a short, directly readable conclusion and ends with a descriptive link to the page. Short answers, routine status updates, text-only or no-page requests and failed pages get no page or link. `[archify explainer: on-demand]` in the agent's global rules file restores request-only pages; `always-on` stays opt-in. The one-line offer to enable proactive mode after a requested page is removed.
+- **Explainer authoring guidance and public cases refined for reader clarity.** Updated `explainer-authoring.md` (plain-language mechanism-first openings, complementary diagram/step/table layers, consistent English chart-data guidance, `role <type> | <label>` usage, narrow-screen 2–3 column table bounds, redundant edge-label omission) and refreshed all four showcase explainers in `docs/cases/explainer/`.
+- **Guided diagram panels default to full-width side-by-side rows and Explainer lints/diagnostics refined.** Shared `isGuidedPanel` layout detection gives panels combining a native diagram with targeting `@steps` a full-width 12-column row (with `:has(.reasons)` guarding the two-column wide `.answer-panel` grid when reasons are omitted); `writing.mjs` splits `sentence-length` checks on semicolons (`;` / `；`) without inflating sentence counts and adds bilingual Chinese patterns to `plain-word`; and `browser-check.mjs` includes rendered text snippets and actionable repair hints for `readability` and `diagram-fit` failures.
+- **Explainer authored widths (#1302).** `@answer` accepts an optional `span=1..12`, and authored `span` values on the conclusion and panels are used exactly in the measured desktop layout instead of being widened or narrowed; phones still stack panels at full width. Omit spans for automatic placement.
+- **Explainer writing checks relaxed (#1302).** The `qualification` rule (“示例”, “未实测”, “illustrative”, “not measured” outside scope) and the chained-「的」 rule are removed. A local assumption, exception or uncertainty may now sit next to the claim it qualifies in the body; page-wide conditions still belong in scope. Drafts that previously failed `--writing strict` only for these rules now pass.
+
+### Upgrade notes
+- **Default explainer behavior changed: pages are now proactive (#1299).** After upgrading, the agent may make an explainer page you did not ask for when an answer needs structure, and the reply ends with a link to it. To keep the previous request-only behavior, add `[archify explainer: on-demand]` to your agent's global rules file (for example `~/.codex/AGENTS.md` or `~/.claude/CLAUDE.md`), or tell the agent "only make pages when I ask". Remove the line to return to the default. `always-on` is never enabled automatically.
+- **默认行为变化：解释页面改为主动生成（#1299）。** 升级后，遇到需要结构化说明的回答，agent 可能会主动生成解释页面，并在回复最后附上链接。如果想保持以前「只在要求时生成」的行为，请在 agent 的全局规则文件（例如 `~/.codex/AGENTS.md`、`~/.claude/CLAUDE.md`）里加一行 `[archify explainer: on-demand]`，或直接对 agent 说「只在我要求时做页面」。删掉这一行即恢复默认。`always-on` 永远不会被自动开启。
+
+### Fixed
+
+- **WebP brand container bounds (#602).** Reject missing or out-of-bounds image chunks, including incomplete animation frames, before reporting capture or pinned validation success. Preserve valid lossy, lossless, extended and animated containers and original-byte digests.
+
+- **Architecture Delta translation changes (#600).** Compare reports additions, removals and edits to `meta.translations` as presentation changes; translation-key order and empty-versus-omitted catalogs do not affect presentation classification or entity-change counts.
+
+- **Explainer chart data (#1008, #1011).** Preserve quotes and backslashes in labels, parse quoted multiline CSV records, and normalize ordinary display whitespace without rewriting source data. Malformed records, missing values and unsupported control characters still fail before replacing an existing delivery.
+
+- Viewer toolbar arrow-key and Home/End navigation includes visible Style and Export triggers (#899).
+- Finder and Semantic Lens preserve input-method composition before handling navigation shortcuts (#928).
+- **Explainer narrow-screen tools (#1302).** On narrow screens the reader toolbar wraps so every control stays reachable; on a phone, a diagram too wide for readable text scrolls locally (swipe, or focus it and use the arrow keys) instead of shrinking. Desktop keeps the complete-fit warning.
+- **Explainer long images keep complete content (#1302).** PNG, WebP and JPG exports widen for wide tables and wrap overflowing code and diffs, so no rows or lines are clipped, and floating source cards are left out of the image.
+- **Explainer pie legends keep configured values (#1302).** A pie chart with configuration lines or `showData` still shows each slice's value and share in the legend.
+- **Explainer comparison rows with repeated labels (#1302).** Rows that share a label keep separate IDs, so none is dropped; the first row keeps its existing ID and links.
+- **Explainer copy failures are reported (#1302).** When the clipboard is unavailable or refuses, the reader shows an error instead of claiming success and keeps the follow-up question selected in the open dialog so it can be copied by hand.
+- **Explainer follow-up retries keep a clean message envelope.** Editing the follow-up question or toggling a suggested-question chip after a clipboard failure strips the outer `Page / File / Where / patch explainer` envelope before rebuilding, instead of nesting a second copy inside the question body.
+- **Explainer page and panel titles extract plain text cleanly.** Rendered `.masthead` (`data-title`) and panel `data-title` / `aria-label` attributes strip inline Markdown delimiters, citation superscripts and typical-value markers while preserving rich formatted HTML in visible headings.
+- **Compact automatic Sequence recovers first-screen fit after header reflow (#1151).** When a compact automatic Sequence header settles, the optional 12px bottom gap may yield to the original text-size floor, so the reader no longer chooses an enlarged scrolling diagram that still fits the first screen. Long sequences still scroll, and source text is not shrunk. Thanks to [@BlueboxC](https://github.com/BlueboxC).
+- **README motion proof refreshed after Sequence header centering (#1293).** The README animation and its receipt are rebuilt from the current gallery artifacts, so the freshness check passes again. Thanks to [@BlueboxC](https://github.com/BlueboxC), who first identified the stale proof and recaptured it in [#1174](https://github.com/tt-a1i/archify/pull/1174); #1293 follows the same approach.
+- **Explainer-hosted Viewer hides standalone preset badges (#1196, #1195).** The Viewer an explainer opens keeps the page-selected preset and its tools, and hides the standalone title badges and the editorial plate. Standalone presentation is unchanged. Thanks to [@HengYangDS](https://github.com/HengYangDS).
+- **Export filenames use the diagram's own title (#1024).** Viewer downloads are named from the page heading, so locale decorations of the browser tab title (Diagram, Diagrama, 다이어그램, مخطّط) no longer enter the filename. Words such as Architecture or Diagram are no longer stripped: a diagram titled “Payments Architecture” downloads as `payments-architecture`, not `payments`, and a page without a heading falls back to its complete title, so “Checkout Diagram” stays `checkout-diagram`. Thanks to [@BlueboxC](https://github.com/BlueboxC), who proposed and verified this policy with real browser downloads.
+
+## [3.2.0] — 2026-10-18
+
+### Added
+
+- **One-page answers (explainer) (#993).** Ask your agent to answer as a page and Archify builds a conclusion-first explainer from a Markdown draft. Each panel answers one question, using prose, tables, steps, checklists, charts, code and validated native diagrams.
+  - **Authoring and delivery:** `finalize explainer` validates, delivers atomically and checks the page. Charts come from a Mermaid fence or a CSV/JSON file next to the draft. Repository excerpts are read from the pinned commit. `patch explainer` replaces one panel by ID.
+  - **Reading:**
+    - Steps sit beside the diagram they walk through, and you can step through them.
+    - Text and diagram nodes highlight each other.
+    - Clicking a node opens the full Viewer focused on it.
+    - Citations and source-linked nodes open source cards.
+    - Each panel or selected passage produces a follow-up question that targets that panel.
+  - **Sharing:** the page ships in four styles (clean, editorial, product, Swiss) with light and dark themes, and exports a PNG, WebP or JPG long image or prints to PDF.
+  - **Examples:** four live pages in `docs/cases/explainer/`.
+  - **Credit:** the one-page document direction of #942 by @goatliamia shaped this work.
+  - **Acknowledgment:** thanks to @QingYunA for the early one-page diagram-and-explanation proposal and demo prototype.
+
+### Fixed
+
+- **Explainer pages no longer carry local paths.** The draft embedded in a page names its source and data files relative to the page, so a shared page does not reveal the author's directories. `patch explainer` resolves them against the page again.
+
+- **Explainer long images keep the page's style and theme.** A PNG, WebP or JPG export of a dark page, or of the editorial, product or Swiss style, came out in the light clean style, because the page is drawn inside an SVG where its `<html>` is not `:root`. The export now selects the page root by its own attribute.
+
+- **Blank chart data is an error, not zero.** An empty CSV cell, a JSON `null` or a missing field in a charted column no longer becomes a zero bar. Finalize names the column and row instead.
+
+
+- **Workflow migration semantic contracts (#497).** Layout planning no longer checks full-topology requirements against a temporary graph with routed edges removed. Migrated documents retain their authored contracts and must pass complete validation before publication.
+
+- **Timeline time-zone ticks (#926).** Ticks align with the display time zone’s UTC offset at each actual instant, fixing daily ticks drifting to 01:00/23:00 across daylight-saving transitions and hourly ticks drifting after half-hour offset changes. Repeated times during clock rollbacks remain distinct, and skipped hours or dates do not produce fictitious ticks. Event times, label precision, timeline scaling, and axis-break rules remain unchanged.
+
+### Changed
+- **Reader controls and node index.** Compact bottom index rows keep descriptions below titles; menu and roving keyboard navigation respect modifier keys.
+- **Update notices.** Available updates include a release summary and an offer to help update. Network failures remain non-blocking.
+- **Website and portability.** The bilingual homepage and gallery introduce one-page answers while retaining guides and source-backed cases. Browser discovery, Windows command paths, source-directory whitespace and temporary-worktree cleanup receive focused fixes.
+
+### Release follow-up
+- The stable update manifest remains on v3.1.0 until the v3.2.0 GitHub Release is published and its ZIP digest is verified.
+- The separately versioned DSH plugin is not republished with this release; maintainers must select a pinned source and complete its host/package acceptance in a separate follow-up.
+
+## [3.1.0] — 2026-10-14
+
+### Release highlights
+- **Ten diagram types.** ERD, Class/interface, Tree, Timeline and Waterfall join Architecture, Workflow, Sequence, Dataflow and Lifecycle, with typed JSON, source evidence and standalone Viewer exports.
+- **Live by default.** Each diagram type uses a matching motion choreography; readers can switch to Still. Motion remains separate from authored topology and export geometry.
+- **Readable authoring and recovery.** Bounded route/label coordination, clearer node cards, wrapped Sequence notes, main-path Lifecycle layouts, long-page radar navigation and executable geometry diagnostics reduce avoidable repair work.
+- **Verified delivery and portability.** Finalize reports input, artifact and browser gates separately; repository evidence, atomic delivery, clipboard/export continuity and Windows path handling fail closed with actionable diagnostics.
+- **Guide and handoff.** Concise artifact-first delivery and a localized optional GitHub link inside the reader-opened Guide.
+
+### Known limitations
+- Large Sequence diagrams may require readable page scrolling; floating controls can overlap content at some initial viewport positions.
+- Some complex Dataflow inputs share visual corridors; long Class generic types can wrap awkwardly. Automatic validation does not establish perceptual quality.
+- Waterfall durations need recorded trace evidence to be called measured; author-supplied illustrative values remain labelled.
+- The independently published DSH plugin remains pinned to Archify 3.0.1. Synchronization requires a separate plugin release and host acceptance; the 3.1.0 Skill release does not update it.
+
+### Added
+- **Traditional Chinese (Taiwan) Viewer catalog.** `meta.locale: "zh-TW"` now selects a bundled catalog covering all 487 Viewer keys with Taiwan terminology for concepts such as sequence diagrams, data flow, export, and view, instead of falling back to English. Enrollment is data only: `locales/zh-TW.json` plus one manifest entry. `zh-Hant` and `zh-HK` remain distinct, unbundled tags.
 - **GitLab source links.** Repository evidence on gitlab.com, or on a self-managed host declared with `provider: "gitlab"`, now generates revision-pinned web links (`/-/blob/<revision>/<path>#L<a>-<b>`, `/-/tree/<revision>`) instead of requiring `link_mode: "local-only"`. Nested groups are accepted, SSH and HTTPS origins on the same host match, paths compare case-insensitively, and cited Markdown line ranges open the plain view. Verification is unchanged and `local-only` remains available.
 
 ### Fixed
 
-- **WebM 录制失败清理 (#622)。** 画布、捕获流、编码器启动、逐帧绘制或停止失败时，录制 Promise 现在会拒绝并释放已创建的流、临时 URL、动画帧和定时器；晚到的编码事件不能再将失败录制报告为成功。正常编码与最佳努力的最终片段 flush 行为保持不变。
+- **ER diagram trunk bridge isolation (#896).** Automatic buses no longer cross, touch, or cover unrelated relationships or other generated bridges. Checks account for the actual stroke widths on both sides, including explicit `width` values. When a conflict exists, trunk segments remain separate so a validated diagram does not appear to contain extra relationships. Entity positions, explicit waypoints, relationship cardinalities, and normal shared trunks remain unchanged.
 
-- **类图混合关系的主干冲突（#791）。** 自动继承／实现主干会检查组外路线的端口、走廊和交叉；冲突组回退到独立路由，避免依赖箭头被继承三角覆盖或实线覆盖实现虚线。无冲突主干、显式几何及关系语义保持不变；空 `via: []` 与省略路径点统一处理，避免合法输入在回退后产生非法斜线。
-- **SVG 路径检查（#641）。** 统一解析关系线和结构边界的 `M/L/H/V/Q/Z` 路径，正确保留子路径与闭合语义；截断参数、非法数值和不支持的命令现在有限失败并给出定位诊断，避免检查挂起、漏检或虚构跨子路径线段。非共线 `Q` 前后的直线保留真实连续性，避免虚假交叉、标签遮挡和漏检；曲线采样点不会增加微线段预算。普通有效产物的 9 项检查保持不变。
+- **WebM recording failure cleanup (#622).** If canvas setup, capture-stream creation, encoder startup, frame drawing, or stopping fails, the recording Promise now rejects and releases any streams, temporary URLs, animation frames, and timers already created. Late encoder events can no longer report a failed recording as successful. Normal encoding and best-effort flushing of the final chunk remain unchanged.
+
+- **Class diagram trunk conflicts between mixed relationships (#791).** Automatic inheritance/implementation trunks now check ports, corridors, and crossings of routes outside their group. Conflicting groups fall back to independent routing, preventing inheritance triangles from covering dependency arrows or solid lines from covering dashed implementation lines. Conflict-free trunks, explicit geometry, and relationship semantics remain unchanged. Empty `via: []` arrays are handled like omitted waypoints, preventing valid inputs from producing invalid diagonal lines after fallback.
+- **SVG path checks (#641).** Relationship lines and structural boundaries use a common parser for `M/L/H/V/Q/Z` paths that preserves subpath and closure semantics. Incomplete parameters, invalid numbers, and unsupported commands now fail within bounded work and produce diagnostics identifying the location, preventing checks from hanging, missing defects, or inventing segments between subpaths. Straight segments before and after non-collinear `Q` curves retain their actual continuity, avoiding false crossings, false label-occlusion reports, and missed defects. Curve sample points do not increase the micro-segment budget. The 9 checks for ordinary valid artifacts remain unchanged.
 - **Inactive brand icon declarations.** Capture ignores icon markup in comments, raw text (including `noscript` for `text/html`), quoted attributes and templates, so inactive page edits cannot replace the selected image or break its pinned digest. Complete link attributes keep quoted delimiters and distinguish `href` from `data-href`; XHTML `noscript` discovery and links after empty elements are preserved. Old pins to inactive markup may require inspecting and explicitly recapturing the intended icon; digest checking remains enforced.
 - **Brand ICO data bounds (#585).** Capture and pinned re-fetches reject empty, directory-overlapping or out-of-bounds image ranges in ICO directory entries, while preserving valid PNG/DIB payloads and normal icon fallback.
 
@@ -45,7 +140,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Lifecycle schema v2.** New lifecycle diagrams render one row per lane on a shared `col` 0–4 grid, so a state placed under the state it leaves gets a straight transition. The renderer sizes the canvas, widens column gaps for same-row labels, opens row gaps for the tracks their routes need, and routes automatic transitions with a dedicated orthogonal grid router (parallel reciprocal pairs, crossing-minimized tracks, corridor and outer-loop detours). Row titles move to a vertical left gutter, the implied phase rail is replaced by authored transitions, and state text is one step larger. Schema v1 files keep their exact state geometry.
 - **Lifecycle marks and legend.** Start states get a UML initial marker and states without outgoing transitions a double border, both explained in the legend; decision no longer shares failure's red, and success is green. The lifecycle type sigil moves to the top-left like every other mode.
 - **Whole diagram on the first screen.** With notes below the diagram, the adaptive reader now fits the complete diagram and its controls into the viewport down to the renderer's readable text floor, instead of holding primary labels at 12px and scrolling tall diagrams off a laptop screen; zoom restores detail.
-- **Sequence legend matches the drawing.** The legend sits 12px below all timeline content and may wrap into that room (an auto-sized canvas grows for it; a too-short authored showcase canvas fails with the exact height), lifelines stop above the legend instead of running through it, message labels take their line's legend color (gray lines keep readable muted text), and the legend names the emphasis variant "main request" / "主路径请求" and the default variant "message" / "普通消息".
+- **Sequence legend matches the drawing.** The legend sits 12px below all timeline content and may wrap into that room (an auto-sized canvas grows for it; a too-short authored showcase canvas fails with the exact height), lifelines stop above the legend instead of running through it, message labels take their line's legend color (gray lines keep readable muted text), and the legend names the emphasis variant "main request" and the default variant "message", with corresponding Simplified Chinese labels.
 - **Readable source badges.** The Viewer's source badge is larger, fully opaque, sized to its text, and placed left of the brand mark; lifecycle, workflow, and data-flow label layout now reserve its width, so it no longer covers sigils or labels.
 - Showcase sequence message names use larger primary type and matching label plates; real browser readability checks now include message labels.
 - **Clearer Architecture layouts.** Authoring defaults now classify each relationship (main path, branch or store, return, second entrance, fan-out) before placement, with a measured side length for fan-out ports. A passing `finalize` receipt with crossings adds node-move `hints`, backed by new `routeReview` evidence (`sharedNode` on crossings, `crowdedSides` when a side faces more neighbours than it has ports); the Skill allows one bounded, position-only repair for crossings. Automatic routing steps fan-out siblings into free parallel channels and reaches a blocked row of neighbours through one vertical side instead of wrapping around it.
@@ -75,10 +170,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 ### Fixed
 - **Architecture Delta baseline arrowheads (#433).** Removed and rerouted baseline relationships retain their marker definitions in the composed Delta SVG, preserving their authored direction alongside current relationships.
 - **Compare rollback recovery (#438).** If restoring a previous output fails, compare preserves its recovery directory and reports backup-to-target paths instead of deleting the remaining backups during cleanup.
-- **固定提交的来源校验 (#420)。** 校验忽略本地 Git replacement refs，始终读取指定提交的原始对象，避免替换后的文件或行范围造成误接受或误拒绝；保留原有来源链接、诊断与用户 Git 配置。
-- **导出的独立 SVG 声明 UTF-8 编码。** 架构图「下载 SVG」和架构对比（compare）导出的 SVG 文档现在以 `<?xml version="1.0" encoding="UTF-8"?>` 声明开头；缺少声明时，部分消费方不按 XML 规范默认 UTF-8 而猜测编码，导致中文等非 ASCII 文本乱码。
+- **Pinned-commit source verification (#420).** Verification ignores local Git replacement refs and always reads the specified commit’s original objects, preventing replaced files or line ranges from causing false acceptance or rejection. Existing source links, diagnostics, and the user’s Git configuration are preserved.
+- **Exported standalone SVGs declare UTF-8 encoding.** SVG documents exported through Architecture’s "Download SVG" action or architecture comparison (compare) now begin with `<?xml version="1.0" encoding="UTF-8"?>`. Without this declaration, some consumers guess the encoding instead of defaulting to UTF-8 as required by XML, garbling Chinese and other non-ASCII text.
 - **Architecture Delta provenance visibility.** Repository revision, provider, link-mode, and location-representation changes now produce a separate redacted provenance receipt and visible Delta notice instead of an empty authored-change claim. Provenance-only comparisons keep graph counts at zero, leave Review disabled, avoid false SVG change states, and carry the same truthful distinction into Share Cards.
-- **Compare 输入快照一致性 (#400)。** 原始输入校验使用首次读取的字节快照，使其与回执哈希和差异计算保持一致；读取后原文件发生变化不会影响本次比较，非法原始字段仍会被拒绝。
+- **Compare input snapshot consistency (#400).** Raw-input validation uses the byte snapshot from the first read, keeping it consistent with receipt hashes and difference calculations. Changes to the original file after that read do not affect the current comparison, and invalid raw fields are still rejected.
 - **DSH plugin refresh.** Adapter 0.2.0 pins the current Archify development snapshot, includes the newer runtime and CLI fixes, and targets DSH 0.1.2-rc.1. Release metadata replaces the frozen 0.1.0 packaging source; the tarball uses the canonical clean-Skill stager and documents independent plugin upgrades.
 - **Machine-readable CLI argument failures (#330).** `validate --json` and `deliver --json` now keep invalid or missing option values, unknown options and diagram types, unsupported option combinations, and usage errors inside one versioned failure receipt on stdout. These failures use the `arguments` stage, stable diagnostic codes, and exit status 2, while human-mode stderr behavior remains unchanged.
 - **Complete artifact-check receipts (#311).** The checker now lets stdout drain before exiting, so large JSON receipts remain complete through pipes. Validation, delivery, and architecture comparison retain their original success/failure status without truncated-JSON errors.

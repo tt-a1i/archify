@@ -29,7 +29,7 @@ if (options.list) {
 
 const chrome = findChrome();
 if (!chrome) {
-  console.error('Browser tests require an executable Chrome/Chromium. Set ARCHIFY_CHROME to its path; this gate cannot skip browser coverage.');
+  console.error('Browser tests require an executable Chrome/Chromium (or Microsoft Edge). Set ARCHIFY_CHROME to its path; this gate cannot skip browser coverage.');
   process.exit(1);
 }
 

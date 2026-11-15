@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 
-const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall']);
+const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall', 'explainer']);
 const DELIVERY_SIDECAR_SUFFIXES = Object.freeze([
   '.delivery.json',
   '.delivery-pending.json',
@@ -1897,6 +1897,7 @@ function deliverySuccessProvenance(receipt) {
     output: receipt.output,
     specification: receipt.specification,
     artifact: receipt.artifact,
+    ...(receipt.explainer ? { explainer: receipt.explainer } : {}),
   };
 }
 
@@ -2174,7 +2175,7 @@ function inspectDeliveryProvenance(artifactPath, artifact, {
       })],
     };
   }
-  return { ok: true, status: 'current', receiptId: receipt.receiptId, artifact: receipt.artifact };
+  return { ok: true, status: 'current', receiptId: receipt.receiptId, artifact: receipt.artifact, type: receipt.type };
 }
 
 function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
@@ -2190,10 +2191,12 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 
 const COMMAND_USAGE = {
   import: 'flowchart <input.mmd> [output.json] [--json]',
+  story: ['scan <native.html> [--json]', 'draft <native.html> <brief.json> [--json]', 'attach <native.html> <brief.json> <enhanced.html> [--json] [--repo-root path]'],
   render: '<type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]',
   compare: 'architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]',
   deliver: '<type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]',
-  finalize: '<type> <input.json> <output.html> [--json] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
+  patch: 'explainer <artifact.html> <panel-id> <replacement-file> <output.html> [--json] [--quality standard|showcase] [--repo-root path]',
+  finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
   preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
   validate: '<type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]',
   migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
@@ -2213,9 +2216,13 @@ function usage() {
     (Array.isArray(forms) ? forms : [forms]).map(form => `  archify ${command}${form ? ` ${form}` : ''}`));
   return `Usage:
 ${commands.join('\n')}
+  (finalize --out-dir relocates browser-check and default finalize receipts; HTML and its delivery receipt stay at the requested output path)
 
 Types:
-  architecture, workflow, sequence, dataflow, lifecycle, erd, tree, class, timeline, waterfall
+  architecture, workflow, sequence, dataflow, lifecycle, erd, tree, class, timeline, waterfall, explainer
+
+Explainer writing checks (validate, deliver, finalize, patch):
+  --writing warn|strict|off (default: warn)
 `;
 }
 
@@ -2387,6 +2394,37 @@ function extractOutDirArgs(args) {
     rest.push(arg);
   }
   return { rest, outDir };
+}
+
+function extractExplainerWritingArgs(args) {
+  const rest=[];
+  let writingMode;
+  for(let index=0;index<args.length;index++) {
+    const argument=args[index];
+    if(argument==='--writing' || argument.startsWith('--writing=')) {
+      const value=argument==='--writing' ? args[++index] : argument.slice('--writing='.length);
+      if(writingMode!==undefined || !['warn','strict','off'].includes(value)) rejectCliArgument('--writing requires one of warn, strict or off.', {
+        code:'cli/invalid-arguments',subject:{option:'--writing'},supportedFixes:['Use --writing warn, --writing strict or --writing off once.'],
+      });
+      writingMode=value;
+    } else rest.push(argument);
+  }
+  if(writingMode!==undefined && rest.find(argument=>!argument.startsWith('--'))!=='explainer') rejectCliArgument('--writing is supported for explainer documents only.', {
+    code:'cli/unsupported-option',subject:{option:'--writing'},supportedFixes:['Remove --writing or use an explainer document.'],
+  });
+  return {rest,writingMode};
+}
+
+async function prepareExplainerInput(specification, inputPath, options = {}) {
+  const runtime = await import('../explainer/prepare.mjs');
+  const text = specification.toString('utf8');
+  if (!Buffer.from(text).equals(specification)) {
+    const message='Explainer draft must contain valid UTF-8 bytes.';
+    throw Object.assign(new Error(message),{archifyDiagnostics:[diagnostic({code:'explainer/source-encoding',message,subject:{input:inputPath,line:1,component:'document'},evidence:{reason:'invalid-utf8',example:'Save the original draft as UTF-8 text.'},supportedFixes:['Save the original draft as UTF-8 text.']})]});
+  }
+  return process.env.ARCHIFY_EXPLAINER_PREPARED
+    ? runtime.readPreparedBundle(process.env.ARCHIFY_EXPLAINER_PREPARED, text, inputPath, { quality: options.quality, writingMode: options.writingMode || 'warn' })
+    : runtime.prepareExplainer(text, { ...options, inputPath });
 }
 
 function rendererEnv(quality, repoRoot, diagnosticJson = false) {
@@ -2684,6 +2722,7 @@ const COMPOSITION_FIXES = {
 };
 
 function checkerDiagnostics(checker) {
+  if (checker?.family === 'explainer' && checker.diagnostics?.some(entry => entry.severity === 'error')) return checker.diagnostics.filter(entry => entry.severity === 'error').map(entry => diagnostic(entry));
   const diagnostics = [];
   for (const issue of checker?.composition?.issues || []) {
     if (issue.severity !== 'error') continue;
@@ -2727,6 +2766,7 @@ function checkerDiagnostics(checker) {
 
 function compositionFixes(issue) {
   if (issue.code === 'composition/viewport-height') return [String(issue.detail || '').replace(/^\[[^\]]+\]\s*/, '')];
+  if (issue.code === 'composition/crossing-analysis-budget') return issue.supportedFixes || [];
   if (issue.code !== 'composition/desktop-readability') return COMPOSITION_FIXES[issue.code] || [];
   const sourceFontPx = Number(issue.sourceFontPx);
   const actualBudgetPx = Number(issue.availableDiagramWidth);
@@ -4364,6 +4404,8 @@ async function commandDeliver(args) {
   await loadSidecarPathRuntime();
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const writingArgs = extractExplainerWritingArgs(repoArgs.rest);
+  repoArgs.rest = writingArgs.rest;
   const json = repoArgs.rest.includes('--json');
   const open = repoArgs.rest.includes('--open');
   const knownOptions = new Set(['--json', '--open']);
@@ -4411,7 +4453,29 @@ async function commandDeliver(args) {
   let stagingDirectory;
   let stagingIdentity;
   let deliveryAliasOutput;
+  let protectedInputs = type === 'explainer' ? null : [path.resolve(input)];
+  const assertDeliveryInputPaths = output => {
+    if (type !== 'explainer' || !output || !/\.html?$/i.test(output)) return;
+    if (!protectedInputs) throw new Error('Explainer inputs could not be inspected; failure evidence was not written.');
+    for (const target of [deliveryProvenancePath(output), deliveryPendingPath(output), deliverySidecarPath(output, '.delivery-lock.json'), path.join(path.dirname(output), DELIVERY_DIRECTORY_LOCK)]) {
+      resolveOutputPath({requestedOutput:target,inputPaths:protectedInputs,requiredExtension:'.json',inputDescription:'an Explainer input'});
+    }
+  };
   const reportDeliveryFailure = async (options) => {
+    try {
+      assertDeliveryInputPaths(options.output);
+    } catch (error) {
+      await reportPreparedArtifactFailure({
+        ...options,
+        error: error.message,
+        diagnostics: [...(options.diagnostics || []), ...(error.archifyDiagnostics || [diagnostic({
+          code: 'explainer/input-publication', message: error.message,
+          subject: { input: path.resolve(input), output: options.output },
+          supportedFixes: ['repair the original draft and choose evidence paths distinct from its local inputs'],
+        })])],
+      });
+      return { ok: false, status: 'unrecorded' };
+    }
     const ownership = deliveryOwnership;
     deliveryOwnership = undefined;
     const recorded = writeDeliveryFailureReceipt({
@@ -4438,10 +4502,24 @@ async function commandDeliver(args) {
   const inputPath = path.resolve(input);
   let specification;
   let diagram;
+  let explainerBundle;
   try {
     specification = fs.readFileSync(inputPath);
-    diagram = JSON.parse(specification.toString('utf8'));
+    if (type === 'explainer') {
+      const { declaredExplainerInputPaths } = await import('../explainer/prepare.mjs');
+      protectedInputs = declaredExplainerInputPaths(specification.toString('utf8'), inputPath);
+      explainerBundle = await prepareExplainerInput(specification, inputPath, { repoRoot: repoArgs.repoRoot, quality: qualityArgs.quality, writingMode: writingArgs.writingMode });
+      // Prepared patch/finalize inputs may retain resources relative to their
+      // original draft rather than the execution-only temporary input.
+      protectedInputs = [...new Set([...protectedInputs, explainerBundle.sourcePath,
+        ...(explainerBundle.dependencies || []).filter(entry => entry.kind !== 'repository' && !entry.inline && typeof entry.path === 'string').map(entry => entry.path),
+      ].filter(Boolean))];
+      diagram = explainerBundle.document;
+    } else diagram = JSON.parse(specification.toString('utf8'));
   } catch (error) {
+    // A rejected prepared bundle may name original resources outside this
+    // execution-only draft. Do not trust its paths or publish failure evidence.
+    if (type === 'explainer' && process.env.ARCHIFY_EXPLAINER_PREPARED) protectedInputs = null;
     const repair = inputDiagnostic(error, inputPath);
     await reportDeliveryFailure({
       json,
@@ -4450,7 +4528,7 @@ async function commandDeliver(args) {
       input: inputPath,
       output: path.resolve(requestedOutput || `${type}.html`),
       error: `Could not read delivery input "${inputPath}": ${error.message}`,
-      diagnostics: [repair],
+      diagnostics: error.archifyDiagnostics || [repair],
     });
     return;
   }
@@ -4460,12 +4538,12 @@ async function commandDeliver(args) {
   let provenancePath;
   let preparedDeliveryTargets;
   try {
-    validateAuthoredOutputPath(authoredOutput);
+    if (type !== 'explainer' || authoredOutput !== undefined) validateAuthoredOutputPath(authoredOutput);
     ({ outputPath } = resolveOutputPath({
       requestedOutput,
       authoredOutput,
       defaultOutput: `${type}.html`,
-      inputPaths: [inputPath],
+      inputPaths: protectedInputs,
     }));
     deliveryAliasOutput = outputPath;
     // Redelivery through a case, normalization, 8.3, or file-symlink alias
@@ -4531,12 +4609,13 @@ async function commandDeliver(args) {
   // directory. A later target snapshot still rejects any authored alias that
   // was retargeted across this boundary.
   try {
+    assertDeliveryInputPaths(outputPath);
     const defaultProvenancePath = deliveryProvenancePath(outputPath);
     ({ outputPath: provenancePath } = resolveOutputPath({
       requestedOutput: defaultProvenancePath,
       defaultOutput: defaultProvenancePath,
       requiredExtension: '.json',
-      inputPaths: [inputPath],
+      inputPaths: protectedInputs,
       inputDescription: 'the delivery input',
       otherOutputPaths: [outputPath],
     }));
@@ -4657,6 +4736,7 @@ async function commandDeliver(args) {
 
   try {
     try {
+      assertDeliveryInputPaths(outputPath);
       deliveryOwnership = acquireDeliveryLock(
         outputPath,
         receiptId,
@@ -4812,9 +4892,22 @@ async function commandDeliver(args) {
       return;
     }
 
+    let preparedBundlePath;
+    if (explainerBundle) {
+      try {
+        const { writePreparedBundle } = await import('../explainer/prepare.mjs');
+        preparedBundlePath = writePreparedBundle(stagingDirectory, explainerBundle);
+        captureDeliveryStagingFile(preparedBundlePath, artifactIdentity(fs.readFileSync(preparedBundlePath)));
+      } catch (error) {
+        await reportDeliveryFailure({json,stage:'prepare',type,input:inputPath,output:outputPath,error:error.message,
+          diagnostics:error.archifyDiagnostics || [diagnostic({code:'explainer/freeze-resource-bundle',message:error.message,subject:{input:inputPath,line:1,component:'document'},evidence:{reason:error.code || 'bundle-write-failed',example:'Use a writable delivery directory and a document within the resource budget.'},supportedFixes:['Use a writable delivery directory and a document within the resource budget.']})]});
+        return;
+      }
+    }
     const render = runNode([renderer, specificationSnapshotPath, candidatePath], {
       stdio: 'pipe',
-      env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot, true),
+      // The page is rendered in staging; paths inside it are written relative to where it is delivered.
+      env: { ...rendererEnv(qualityArgs.quality, repoArgs.repoRoot, true), ...(preparedBundlePath ? { ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath, ARCHIFY_EXPLAINER_SNAPSHOT_INPUT: inputPath, ARCHIFY_EXPLAINER_PAGE_DIR: path.dirname(outputPath) } : {}) },
     });
     if (render.status !== 0) {
       const failure = rendererFailure(render);
@@ -4831,7 +4924,7 @@ async function commandDeliver(args) {
       return;
     }
     if (render.stderr) process.stderr.write(render.stderr);
-    const localeWarnings = await specificationLocaleDiagnostics(type, specification);
+    const localeWarnings = [...await specificationLocaleDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
     for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
     try {
       const renderedCandidate = fs.readFileSync(candidatePath);
@@ -4958,6 +5051,7 @@ async function commandDeliver(args) {
       type,
       input: inputPath,
       output: outputPath,
+      ...(explainerBundle ? { explainer: { preparedSha256: explainerBundle.digest, dependencies: explainerBundle.dependencies.map(({contentBase64, ...entry}) => entry) } } : {}),
       specification: {
         sha256: createHash('sha256').update(specification).digest('hex'),
         bytes: specification.byteLength,
@@ -5025,18 +5119,19 @@ async function commandDeliver(args) {
     }
 
     try {
+      assertDeliveryInputPaths(outputPath);
       const currentOutputPath = canonicalFuturePath(resolveOutputPath({
         requestedOutput,
         authoredOutput,
         defaultOutput: `${type}.html`,
-        inputPaths: [inputPath],
+        inputPaths: protectedInputs,
         otherOutputPaths: [provenancePath],
       }).outputPath);
       resolveOutputPath({
         requestedOutput: deliveryProvenancePath(currentOutputPath),
         defaultOutput: deliveryProvenancePath(currentOutputPath),
         requiredExtension: '.json',
-        inputPaths: [inputPath],
+        inputPaths: protectedInputs,
         inputDescription: 'the delivery input',
         otherOutputPaths: [currentOutputPath],
       });
@@ -5060,6 +5155,10 @@ async function commandDeliver(args) {
     }
 
     try {
+      if (explainerBundle) {
+        const { assertPreparedDependencies } = await import('../explainer/prepare.mjs');
+        assertPreparedDependencies(explainerBundle);
+      }
       const committed = commitDeliveryPair({
         htmlCandidate: candidatePath,
         htmlContent: receipt.artifact,
@@ -5238,6 +5337,54 @@ async function commandDeliver(args) {
       }
     }
   }
+}
+
+async function commandPatch(rawArgs) {
+  const qualityArgs = extractQualityArgs(rawArgs);
+  const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const writingArgs = extractExplainerWritingArgs(repoArgs.rest);
+  repoArgs.rest = writingArgs.rest;
+  const json = repoArgs.rest.includes('--json');
+  const positional = repoArgs.rest.filter(arg => arg !== '--json');
+  const [type, artifact, panelId, replacement, output] = positional;
+  if (type !== 'explainer' || !artifact || !panelId || !replacement || !output || positional.length !== 5 || positional.some(arg => arg.startsWith('--'))) {
+    rejectCliArgument('Use: archify patch explainer <artifact.html> <panel-id> <replacement-file> <output.html> [--json]', {
+      code:'cli/usage',supportedFixes:['Provide an explainer artifact, stable panel id, replacement file and output HTML path.'],
+    });
+  }
+  let temporary;
+  try {
+    const checked = runNode([path.join(skillRoot,'scripts/check-render-output.mjs'),path.resolve(artifact)], {stdio:'pipe',maxBuffer:artifactCheckMaxBuffer()});
+    if(checked.status !== 0) {
+      let receipt; try { receipt=JSON.parse(checked.stdout); } catch {}
+      throw Object.assign(new Error('The original explainer artifact failed validation.'), {archifyDiagnostics:receipt?.diagnostics || [{code:'explainer/patch-artifact',severity:'error',message:'The original explainer artifact failed validation.',subject:{input:path.resolve(artifact),line:1,component:'document'},evidence:{reason:'invalid-original-artifact',example:'Use an unchanged formal explainer artifact.'},supportedFixes:['Rebuild the original artifact.']}]});
+    }
+    const originalCheck=JSON.parse(checked.stdout);
+    const { preparePanelPatch } = await import('../explainer/patch.mjs');
+    const prepared = await preparePanelPatch({artifactPath:path.resolve(artifact),panelId,replacementPath:path.resolve(replacement),repoRoot:repoArgs.repoRoot,quality:qualityArgs.quality,writingMode:writingArgs.writingMode,expectedArtifact:originalCheck.artifact});
+    const { resolveOutputPath } = await import('../renderers/shared/output-path.mjs');
+    resolveOutputPath({requestedOutput:output,inputPaths:[path.resolve(replacement),prepared.sourcePath]});
+    const { createOwnedTempDirectory } = await import('../renderers/shared/owned-temp-directory.mjs');
+    const { writePreparedBundle } = await import('../explainer/prepare.mjs');
+    temporary=createOwnedTempDirectory('archify-explainer-patch-');
+    const input=path.join(temporary.path,'patched-draft.json');
+    fs.writeFileSync(input,prepared.sourceText,{flag:'wx'});
+    const { rebindPreparedBundle } = await import('../explainer/prepare.mjs');
+    prepared.bundle=rebindPreparedBundle({...prepared.bundle,inputPath:input},{sourceText:prepared.bundle.sourceText,document:prepared.bundle.document,sourceMap:prepared.bundle.sourceMap,format:prepared.bundle.format,diagnostics:prepared.bundle.diagnostics});
+    const preparedFile=writePreparedBundle(temporary.path,prepared.bundle);
+    const delivery=runNode([fileURLToPath(import.meta.url),'deliver','explainer',input,output,'--quality',qualityArgs.quality || prepared.bundle.quality || 'standard','--writing',prepared.bundle.writingMode || 'warn',...(repoArgs.repoRoot?['--repo-root',repoArgs.repoRoot]:[]),'--json'],{stdio:'pipe',env:{ARCHIFY_EXPLAINER_PREPARED:preparedFile},maxBuffer:artifactCheckMaxBuffer()});
+    let receipt;
+    try {receipt=JSON.parse(delivery.stdout);} catch {throw new Error('Patch delivery did not return a structured receipt.');}
+    const { computeExplainerRevision } = await import('../explainer/revision.mjs');
+    const result={...receipt,command:'patch',panelId,original:{path:path.resolve(artifact),revision:prepared.previousRevision,sourceSha256:prepared.previousSourceSha256},replacement:{path:path.resolve(replacement)},revision:computeExplainerRevision(prepared.bundle),sourceSha256:prepared.bundle.source.sha256};
+    if(json)console.log(JSON.stringify(result,null,2));
+    else if(result.ok)console.log(`patched ${panelId} ${result.output}`);
+    else console.error(formatDiagnostics(result.error,result.diagnostics));
+    if(delivery.stderr)process.stderr.write(delivery.stderr);
+    process.exitCode=delivery.status ?? 1;
+  } catch(error) {
+    reportArtifactFailure({command:'patch',json,stage:'prepare',type:'explainer',input:path.resolve(artifact),output:path.resolve(output),error:error.message,diagnostics:error.archifyDiagnostics || [diagnostic({code:'explainer/patch-runtime',message:error.message,subject:{input:path.resolve(artifact),line:1,component:'panel',panelId},evidence:{reason:error.code || 'patch-failure',example:'Use a complete replacement panel with the same stable id.'},supportedFixes:['Repair the replacement panel and retry.']})]});
+  } finally {if(temporary)await temporary.cleanup();}
 }
 
 async function commandPreview(args) {
@@ -5419,6 +5566,18 @@ function inspectArtifactDeliveryProvenance(
       },
     });
     return result;
+  } catch (error) {
+    if (error?.code !== 'ARCHIFY_SIDECAR_NAMESPACE_INDETERMINATE') throw error;
+    return {
+      ok: false, status: 'unknown',
+      diagnostics: [diagnostic({
+        code: 'delivery/provenance-unknown',
+        message: error.message,
+        subject: { artifact: artifactPath },
+        evidence: { namespaceReason: error.sidecarNamespaceReason, systemCode: error.code },
+        supportedFixes: ['restore access to probe the artifact directory, then rerun the checker'],
+      })],
+    };
   } finally {
     releaseRegularFileBinding(artifactCapture.binding);
   }
@@ -5523,6 +5682,11 @@ async function commandCheck(args) {
       process.stdout.write(result.stdout);
     }
     if (receipt) {
+      if (provenance?.status === 'current' && ((provenance.type === 'explainer') !== (receipt.family === 'explainer'))) {
+        receipt.ok = false;
+        receipt.diagnostics = [...(receipt.diagnostics || []), diagnostic({code:'delivery/artifact-family-mismatch',message:'The checked artifact family differs from its delivery provenance.',subject:{artifact:artifactPath},evidence:{expectedType:provenance.type,actualFamily:receipt.family},supportedFixes:['Rebuild the artifact from its original specification.']})];
+        process.exitCode = 1;
+      }
       if (provenance) {
         const verified = verifyDeliveryUnchanged(
           artifactPath,
@@ -5776,8 +5940,10 @@ async function commandFinalize(rawArgs) {
   const outDirArgs = extractOutDirArgs(repoArgs.rest);
   const receiptArgs = extractFinalizeReceiptArgs(outDirArgs.rest);
   const candidateArgs = extractCandidateSha256Args(receiptArgs.rest);
+  const writingArgs = extractExplainerWritingArgs(candidateArgs.rest);
+  candidateArgs.rest = writingArgs.rest;
   const json = candidateArgs.rest.includes('--json');
-  const knownOptions = new Set(['--json']);
+  const knownOptions = new Set(['--json','--browser-check']);
   const unknown = candidateArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) rejectCliArgument(`Unknown finalize option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
@@ -5800,15 +5966,28 @@ async function commandFinalize(rawArgs) {
   }
 
   let result;
+  let explainerTemporary;
   try {
+    let preparedExplainer;
+    let preparedBundlePath;
+    if (type === 'explainer') {
+      preparedExplainer = await prepareExplainerInput(fs.readFileSync(path.resolve(input)), path.resolve(input), { repoRoot: repoArgs.repoRoot, quality: qualityArgs.quality || 'showcase', writingMode: writingArgs.writingMode });
+      const { createOwnedTempDirectory } = await import('../renderers/shared/owned-temp-directory.mjs');
+      const { writePreparedBundle } = await import('../explainer/prepare.mjs');
+      explainerTemporary = createOwnedTempDirectory('archify-explainer-finalize-');
+      preparedBundlePath = writePreparedBundle(explainerTemporary.path, preparedExplainer);
+    }
     const pathIdentityRuntime = await loadPathIdentityRuntime();
     result = await runFinalize({
+      ...(preparedExplainer ? { preparedExplainer, env: { ...process.env, ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath } } : {}),
       cliPath: fileURLToPath(import.meta.url),
       type,
       input,
       output,
       quality: qualityArgs.quality || 'showcase',
       repoRoot: repoArgs.repoRoot,
+      writingMode: writingArgs.writingMode,
+      browserCheck: candidateArgs.rest.includes('--browser-check'),
       candidateSha256: candidateArgs.candidateSha256,
       outDir: outDirArgs.outDir,
       receiptPath: receiptArgs.receiptPath,
@@ -5834,6 +6013,7 @@ async function commandFinalize(rawArgs) {
       specification: { path: path.resolve(input) },
       artifact: { path: path.resolve(output) },
       gates: Object.fromEntries(['validate', 'deliver', 'check', 'browser-check'].map((stage) => [stage, 'not-run'])),
+      browserCheck: {requested:type !== 'explainer' || candidateArgs.rest.includes('--browser-check'),ran:false},
       diagnostics: error.archifyDiagnostics || [{
         code: error.finalizeCode || 'finalize/runtime',
         severity: 'error',
@@ -5846,6 +6026,8 @@ async function commandFinalize(rawArgs) {
     else console.error(formatDiagnostics('finalize could not start', failure.diagnostics));
     process.exitCode = 1;
     return;
+  } finally {
+    if (explainerTemporary) await explainerTemporary.cleanup();
   }
 
   if (json) {
@@ -6015,6 +6197,7 @@ async function commandDoctor(args) {
     class: 'payments.class.json',
     timeline: 'payment-incident.timeline.json',
     waterfall: 'checkout-request.waterfall.json',
+    explainer: 'delivery.explainer.json',
   };
 
   for (const type of TYPES) {
@@ -6030,6 +6213,14 @@ async function commandDoctor(args) {
       missing,
     });
   }
+
+  const explainerRuntime = ['parse.mjs', 'validate.mjs', 'inline.mjs', 'sources.mjs', 'writing.mjs', 'diagrams.mjs', 'prepare.mjs', 'patch.mjs', 'diff.mjs', 'revision.mjs', 'layout.mjs', 'render.mjs', 'check.mjs', 'browser-check.mjs', 'charts.mjs', 'page-bundle.mjs', 'vendor/pele/core.js', 'reader.css', 'reader.js'];
+  const missingExplainerRuntime = explainerRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'explainer', file))).length;
+  checks.push({label:'Explainer runtime and reader assets',ok:missingExplainerRuntime===0,missing:missingExplainerRuntime});
+
+  const storyRuntime = ['cli.mjs','tool.mjs','output.mjs','story-plan.mjs','story.js','story.css','story-audio.js','story-webm.js','story-export.js','story-attachment.mjs','story-attachment.js','story-attachment.css','messages.json','scope-field.js','brand.svg','native-motion.js','vendor/html-parser.mjs'];
+  const missingStoryRuntime = storyRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'story', file))).length;
+  checks.push({label:'Story runtime and playback assets',ok:missingStoryRuntime===0,missing:missingStoryRuntime});
 
   console.log('Archify doctor\n');
   for (const check of checks) {
@@ -6827,6 +7018,8 @@ async function commandValidate(args, invocation = {}) {
   const reportFailure = (options) => reportArtifactFailure({ ...options, command: invokingCommand });
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const writingArgs = extractExplainerWritingArgs(repoArgs.rest);
+  repoArgs.rest = writingArgs.rest;
   args = repoArgs.rest;
   const quality = qualityArgs.quality;
   const repoRoot = repoArgs.repoRoot;
@@ -6857,15 +7050,17 @@ async function commandValidate(args, invocation = {}) {
 
   const inputPath = path.resolve(input);
   let specification;
+  let explainerBundle;
   try {
     specification = fs.readFileSync(inputPath);
-    const document = JSON.parse(specification.toString('utf8'));
+    if (type === 'explainer') explainerBundle = await prepareExplainerInput(specification, inputPath, { repoRoot, quality, writingMode: writingArgs.writingMode });
+    const document = explainerBundle?.document || JSON.parse(specification.toString('utf8'));
     const [{ validateAuthoredOutputPath }, { validateSchema }] = await Promise.all([
       import('../renderers/shared/output-path.mjs'),
       import('../renderers/shared/validator.mjs'),
     ]);
-    if (document?.meta?.output === undefined) validateSchema(type, document);
-    else validateAuthoredOutputPath(document.meta.output);
+    if (document?.meta?.output !== undefined) validateAuthoredOutputPath(document.meta.output);
+    else if (type !== 'explainer') validateSchema(type, document);
   } catch (error) {
     const diagnostics = error.archifyDiagnostics || [inputDiagnostic(error, inputPath)];
     reportFailure({
@@ -6927,9 +7122,14 @@ async function commandValidate(args, invocation = {}) {
   try {
     const snapshot = path.join(tmp, 'specification.snapshot.json');
     fs.writeFileSync(snapshot, specification, { flag: 'wx' });
+    let preparedBundlePath;
+    if (explainerBundle) {
+      const { writePreparedBundle } = await import('../explainer/prepare.mjs');
+      preparedBundlePath = writePreparedBundle(tmp, explainerBundle);
+    }
     const render = runNode([renderer, snapshot, out], {
       stdio: 'pipe',
-      env: rendererEnv(quality, repoRoot, true),
+      env: { ...rendererEnv(quality, repoRoot, true), ...(preparedBundlePath ? { ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath, ARCHIFY_EXPLAINER_SNAPSHOT_INPUT: inputPath } : {}) },
     });
     if (render.status !== 0) {
       const failure = rendererFailure(render);
@@ -6945,7 +7145,7 @@ async function commandValidate(args, invocation = {}) {
       exitCode = render.status ?? 1;
     } else {
       if (render.stderr) process.stderr.write(render.stderr);
-      const localeWarnings = await specificationLocaleDiagnostics(type, specification);
+      const localeWarnings = [...await specificationLocaleDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
       for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
       const checkMaxBuffer = artifactCheckMaxBuffer();
       const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), out], {
@@ -7330,11 +7530,17 @@ try {
     case 'render':
       commandRender(args);
       break;
+    case 'story':
+      (await import('../story/cli.mjs')).commandStory(args);
+      break;
     case 'compare':
       await commandCompare(args);
       break;
     case 'deliver':
       await commandDeliver(args);
+      break;
+    case 'patch':
+      await commandPatch(args);
       break;
     case 'finalize':
       await commandFinalize(args);
@@ -7387,7 +7593,7 @@ try {
   }
 } catch (error) {
   if (!error.archifyArgument) throw error;
-  if (['validate', 'deliver', 'finalize', 'inspect'].includes(command) && args.includes('--json')) {
+  if (['validate', 'deliver', 'finalize', 'inspect', 'patch'].includes(command) && args.includes('--json')) {
     reportArtifactArgumentFailure(command, error);
   } else {
     fail(error.message);

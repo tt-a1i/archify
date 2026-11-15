@@ -16,6 +16,50 @@ const packagedHtmlExamples = fs.readdirSync(path.join(skillRoot, 'examples'))
   .filter((name) => name.endsWith('.html') && !name.endsWith('.visual-check.html'))
   .sort();
 
+test('waterfall axis labels stay distinct and inside the SVG at nonzero origins', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-axis-labels-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    for (const [timing, layout] of [
+      [{ start: 0.0091, duration: 0.000004 }],
+      [{ start: 1e16, end: 1e16 + 2 }],
+      [{ start: 100000000000, end: 100000000000.00005 }, { width: 360 }],
+    ]) {
+      const input = path.join(directory, 'input.json');
+      const artifactPath = path.join(directory, 'output.html');
+      fs.writeFileSync(input, JSON.stringify({ schema_version: 1, diagram_type: 'waterfall',
+        meta: { title: 'Recorded range', evidence: 'illustrative', unit: 'ms' }, layout,
+        spans: [{ id: 'request', name: 'Request', ...timing }] }));
+      execFileSync(process.execPath, [path.join(skillRoot, 'renderers/waterfall/render-waterfall.mjs'), input, artifactPath]);
+      for (const theme of ['light', 'dark']) {
+        await browser.inspect({ artifactPath, width: 1280, height: 900, theme });
+        const session = await browser.sessionPromise;
+        const response = await browser.cdp.send('Runtime.evaluate', { returnByValue: true, expression: `(() => {
+          const svg = document.querySelector('svg[data-waterfall-ui]');
+          const bounds = svg.getBoundingClientRect();
+          return { left: bounds.left, right: bounds.right,
+            labels: [...svg.querySelectorAll('text.wf-num[text-anchor="middle"]')].map(text => {
+              const rect = text.getBoundingClientRect();
+              return { text: text.textContent, left: rect.left, right: rect.right };
+            }) };
+        })()` }, session);
+        const { left, right, labels } = response.result.value;
+        assert.ok(labels.length >= 2);
+        assert.equal(new Set(labels.map(label => label.text)).size, labels.length);
+        for (const [index, label] of labels.entries()) {
+          assert.ok(label.left >= left - 0.5 && label.right <= right + 0.5, JSON.stringify(label));
+          if (index) assert.ok(label.left >= labels[index - 1].right, JSON.stringify(labels));
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 test('all packaged HTML examples pass the real visual-check desktop gate', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {

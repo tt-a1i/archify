@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { canonicalOrigin, canonicalUrl, sitePages } from '../src/data/site-urls.mjs';
 import { CASES } from '../src/data/gallery-presentation.mjs';
+import { PUBLISHED_CASES } from '../src/data/published-cases.mjs';
 
 export const key = '0e4ac4a253b420619eb3de08ba664736';
 export const keyLocation = `${canonicalOrigin}/${key}.txt`;
@@ -10,6 +11,7 @@ export const endpoint = 'https://api.indexnow.org/indexnow';
 const allowedUrls = new Set([
   ...sitePages.flatMap(page => ['en', 'zh'].map(lang => canonicalUrl(page, lang))),
   ...CASES.map(entry => `${canonicalOrigin}/gallery/artifacts/${entry.output.replace(/\.html$/, '')}`),
+  ...PUBLISHED_CASES.map(entry => `${canonicalOrigin}/${entry.artifact.replace(/\.html$/, '')}`),
 ]);
 const requireValue = (ok, message) => { if (!ok) throw new Error(message); };
 
@@ -33,7 +35,7 @@ export function parseSitemap(xml) {
     entries.push(value);
     body = body.slice(item[0].length);
   }
-  requireValue(entries.length === allowedUrls.size, 'Sitemap must contain all ten main pages and selected gallery artifacts');
+  requireValue(entries.length === allowedUrls.size, 'Sitemap must contain all main pages, selected gallery artifacts and published cases');
   return entries;
 }
 

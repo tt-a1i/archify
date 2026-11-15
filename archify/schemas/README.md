@@ -30,7 +30,7 @@ It also accepts `locale`, any well-formed language tag (schema pattern
 `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`). The field selects the fixed Viewer UI,
 renderer-owned default legend and accessibility copy, document-title suffix,
 and `<html lang>` value; it does not translate authored strings. The bundled
-catalogs enrolled in `locales/manifest.json` (`en`, `zh-CN`, `zh-TW`, `es`, `ko`) are
+catalogs enrolled in `locales/manifest.json` (`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`) are
 selected by tag, case-insensitively; region and script variants are distinct
 tags. Any other tag needs a matching `translations` object (see below) or the
 renderer falls back to English and discloses it.
@@ -184,6 +184,13 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
   override shapes used by each renderer-owned key map
 - `guidedViews` — the retired `meta.views` shape, still accepted and ignored
 - `cards` — the summary-card blocks rendered below the SVG
+- `drilldowns` / `href` / `parentHref` — cross-HTML navigation. Targets are
+  same-directory `*.html` files (optional `?` / `#`). `href` on a node is sugar
+  for a one-entry `drilldowns` list (label defaults to the node label);
+  `drilldowns` wins if both are present. Passport lists all targets. One child:
+  native SVG `<a>` + visible mark, click follows the link, Alt-click focuses.
+  Several children: click focuses; Ctrl/double-click opens the first. Child
+  diagrams may set `meta.parentHref` for Back (runtime also accepts `?from=`).
 
 Lifecycle state `type` is mode-specific (`start`/`active`/`waiting`/...) and
 stays in `lifecycle.schema.json`.

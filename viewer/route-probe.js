@@ -962,6 +962,7 @@
         if (journeyPlaying && event.target.closest('[data-route-journey-index]')) pauseJourney({ preserveElapsed: true });
       });
       path.addEventListener('keydown', function (event) {
+        if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
         var button = event.target.closest('[data-route-journey-index]');
         if (!button) return;
         var index = Number(button.getAttribute('data-route-journey-index'));

@@ -355,22 +355,21 @@ test('package smoke rejects a missing or modified distribution license', () => {
     assert.notEqual(result.status, 0, 'missing LICENSE must fail package smoke');
     assert.match(`${result.stdout}\n${result.stderr}`, /packaged skill is missing LICENSE/);
 
-    const repositoryLicense = fs.readFileSync(path.join(repoRoot, 'LICENSE'), 'utf8');
-    fs.writeFileSync(
-      licensePath,
-      repositoryLicense.replace(
-        'Copyright (c) 2025 Cocoon AI',
-        'Copyright (c) 2025 Cocoon AI (original "architecture-diagram-generator")',
-      ),
-    );
-    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
-    assert.notEqual(result.status, 0, 'modified upstream notice must fail package smoke');
-    assert.match(`${result.stdout}\n${result.stderr}`, /missing the exact Cocoon AI copyright line/);
+    fs.copyFileSync(path.join(repoRoot, 'LICENSE'), licensePath);
+    for (const name of ['LICENSE', 'LICENSE-MIT', 'NOTICE']) {
+      const target = path.join(staged, name);
+      const original = fs.readFileSync(target);
+      fs.rmSync(target);
+      result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+      assert.notEqual(result.status, 0, `missing ${name} must fail package smoke`);
+      assert.ok(`${result.stdout}\n${result.stderr}`.includes(`packaged skill is missing ${name}`));
+      fs.writeFileSync(target, 'truncated notice');
+      result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+      assert.notEqual(result.status, 0, `modified ${name} must fail package smoke`);
+      assert.ok(`${result.stdout}\n${result.stderr}`.includes(`must byte-match the repository ${name}`));
+      fs.writeFileSync(target, original);
+    }
 
-    fs.writeFileSync(licensePath, 'Copyright (c) 2025 Cocoon AI\n');
-    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
-    assert.notEqual(result.status, 0, 'truncated LICENSE must fail package smoke');
-    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository LICENSE/);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
@@ -1540,6 +1539,7 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     'test/sidecar-path-length.test.mjs',
     'test/open-artifact.test.mjs',
     'test/repository-evidence.test.mjs',
+    'test/repository-evidence-replacement.test.mjs',
     'test/renderer-atomic-write.test.mjs',
     'test/atomic-output-recovery.test.mjs',
   ];

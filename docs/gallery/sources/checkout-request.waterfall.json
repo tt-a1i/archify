@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "diagram_type": "waterfall",
+  "meta": {
+    "title": "Checkout request execution",
+    "subtitle": "Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+    "output": "checkout-request-waterfall.html",
+    "evidence": "illustrative",
+    "unit": "ms",
+    "quality_profile": "showcase"
+  },
+  "spans": [
+    { "id": "request", "name": "POST /checkout", "service": "checkout-api", "start": 0, "end": 1200, "detail": "Parent of every step below; its duration is not added to theirs." },
+    { "id": "auth", "name": "Authenticate caller", "service": "identity", "start": 0, "duration": 100, "parent": "request" },
+    { "id": "inventory", "name": "Look up inventory", "service": "inventory", "start": 100, "duration": 300, "parent": "request" },
+    { "id": "discount", "name": "Calculate discount", "service": "checkout-api", "start": 100, "duration": 200, "parent": "request" },
+    { "id": "payment", "name": "Charge payment", "service": "payments", "start": 400, "duration": 650, "parent": "request" },
+    { "id": "save", "name": "Write order", "service": "checkout-api", "start": 1050, "duration": 150, "parent": "request" }
+  ]
+}

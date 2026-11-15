@@ -552,12 +552,14 @@ const fullSuites = [
   'test/sidecar-path-length.test.mjs',
   'test/open-artifact.test.mjs',
   'test/repository-evidence.test.mjs',
+  'test/repository-evidence-replacement.test.mjs',
   'test/renderer-atomic-write.test.mjs',
   'test/atomic-output-recovery.test.mjs',
 ];
 
 const portabilitySuites = [
   'test/checkout-line-endings.test.mjs',
+  'test/readme-showcase.test.mjs',
   'test/clean-skill-staging.test.mjs',
   'test/workflow-migration.test.mjs',
   'test/cli.test.mjs',
@@ -568,6 +570,8 @@ const portabilitySuites = [
 
 const portabilityPattern = [
   'Git checkout preserves',
+  'Windows Git Bash discovery ignores GIT_EXEC_PATH',
+  'Star History publishing advances',
   'clean staging preserves index modes',
   'entry detection',
   'workflow migration cleanup failure',

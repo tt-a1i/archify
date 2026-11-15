@@ -27,7 +27,7 @@ const FORBIDDEN = [
 
 function packTarball() {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-tarball-'));
-  const out = path.join(scratch, 'tt-a1i-archify-dsh-1.0.0.tgz');
+  const out = path.join(scratch, 'tt-a1i-archify-dsh-1.1.0.tgz');
   const result = spawnSync(process.execPath, [packScript, '--out', out, '--json'], {
     cwd: repoRoot,
     encoding: 'utf8',
@@ -41,7 +41,7 @@ test('pack command emits a real npm tarball with the expected identity and file 
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const receipt = JSON.parse(result.stdout);
     assert.equal(receipt.name, '@tt-a1i/archify-dsh');
-    assert.equal(receipt.version, '1.0.0');
+    assert.equal(receipt.version, '1.1.0');
     assert.equal(fs.existsSync(out), true);
     const files = receipt.files.map((file) => file.path.replace(/^package\//, ''));
     for (const required of [
@@ -54,6 +54,8 @@ test('pack command emits a real npm tarball with the expected identity and file 
       'skills/archify/SKILL.md',
       'skills/archify/bin/archify.mjs',
       'skills/archify/LICENSE',
+      'skills/archify/LICENSE-MIT',
+      'skills/archify/NOTICE',
       'skills/archify/THIRD_PARTY_NOTICES.md',
       'release.json',
     ]) {
@@ -66,7 +68,7 @@ test('pack command emits a real npm tarball with the expected identity and file 
       'skills/archify/scripts/check-update.mjs',
       'skills/archify/scripts/update-contract.mjs',
     ]) {
-      assert.equal(files.includes(notifierFile), true, `DSH 1.0.0 must contain ${notifierFile}`);
+      assert.equal(files.includes(notifierFile), true, `DSH 1.1.0 must contain ${notifierFile}`);
     }
     for (const file of files) {
       for (const forbidden of FORBIDDEN) {

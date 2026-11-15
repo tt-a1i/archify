@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Integrations Map",
+    "locale": "en",
+    "subtitle": "Sibling architecture HTML; header Back returns to the platform map",
+    "output": "examples/drilldown-integrations.html",
+    "parentHref": "drilldown-platform.html",
+    "quality_profile": "standard",
+    "viewBox": [920, 420]
+  },
+  "components": [
+    {
+      "id": "slack",
+      "type": "external",
+      "label": "Slack",
+      "sublabel": "notify",
+      "pos": [40, 160],
+      "size": [140, 70]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Integration Gateway",
+      "sublabel": "retry / auth",
+      "pos": [340, 160],
+      "size": [200, 70],
+      "tag": "href back",
+      "href": "drilldown-platform.html"
+    },
+    {
+      "id": "hooks",
+      "type": "messagebus",
+      "label": "Webhooks",
+      "sublabel": "outbound",
+      "pos": [680, 80],
+      "size": [160, 70]
+    },
+    {
+      "id": "billing",
+      "type": "external",
+      "label": "Billing",
+      "sublabel": "Stripe",
+      "pos": [680, 240],
+      "size": [160, 70]
+    }
+  ],
+  "connections": [
+    { "from": "slack", "to": "gateway", "label": "events", "variant": "default" },
+    { "from": "gateway", "to": "hooks", "label": "dispatch", "labelAt": [696, 164], "variant": "emphasis" },
+    { "from": "gateway", "to": "billing", "label": "settle", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Sibling pair",
+      "items": [
+        "meta.parentHref shows header Back to the platform HTML",
+        "Gateway href sugar also jumps back to that sibling",
+        "Both HTML files must stay in the same directory"
+      ]
+    }
+  ]
+}

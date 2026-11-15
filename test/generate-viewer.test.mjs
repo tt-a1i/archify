@@ -135,6 +135,15 @@ test('a missing generated template is stale and can be regenerated', (t) => {
   assert.equal(f.run('--check').status, 0);
 });
 
+test('the story motion runtime is generated from the same authoritative Viewer source',t=>{
+  const f=fixture(t),motion=path.join(f.root,'archify/story/native-motion.js');
+  generateViewer({root:f.root});
+  assert.deepEqual(fs.readFileSync(motion),fs.readFileSync(f.motion));
+  fs.appendFileSync(motion,'\n/* stale */');
+  assert.throws(()=>generateViewer({root:f.root,check:true}),/stale/);
+  generateViewer({root:f.root});assert.deepEqual(fs.readFileSync(motion),fs.readFileSync(f.motion));
+});
+
 test('assembly failure matrix preserves a valid artifact', { concurrency: false }, async (t) => {
   const f = fixture(t);
   // Marker rejection depends on source structure, not production bundle size.

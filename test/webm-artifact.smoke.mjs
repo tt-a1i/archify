@@ -43,9 +43,11 @@ const chrome = executable([
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ]);
 const ffmpeg = executable([process.env.ARCHIFY_FFMPEG, 'ffmpeg']);
+const ffprobe = executable([process.env.ARCHIFY_FFPROBE, 'ffprobe']);
 
 assert.ok(chrome, 'Chrome/Chromium is required for the WebM artifact smoke test (or set ARCHIFY_CHROME)');
 assert.ok(ffmpeg, 'ffmpeg is required for the WebM artifact smoke test (or set ARCHIFY_FFMPEG)');
+assert.ok(ffprobe, 'ffprobe is required for the Story audio gate (or set ARCHIFY_FFPROBE)');
 
 const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
 source.meta.animation = 'trace';
@@ -1705,6 +1707,12 @@ try {
   assert.ok(hashes.length >= 4, `decoded only ${hashes.length} WebM frames`);
   assert.ok(uniqueFrames.size >= 2, 'decoded WebM frames are static');
   console.log(`ok WebM artifact: ${payload.size} bytes, ${hashes.length} sampled frames, ${uniqueFrames.size} unique`);
+  // Story uses a separate offline encoder and muxer from the live motion export.
+  execFileSync(process.execPath, ['--test', path.join(__dirname, 'story-browser.test.mjs')], {
+    env: { ...process.env, ARCHIFY_CHROME: chrome, ARCHIFY_FFMPEG: ffmpeg, ARCHIFY_FFPROBE: ffprobe },
+    stdio: 'inherit',
+    timeout: 60_000,
+  });
 } finally {
   if (cdp && targetId) await withTimeout(cdp.send('Target.closeTarget', { targetId }), 500, 'target close').catch(() => {});
   if (cdp) cdp.socket.close();

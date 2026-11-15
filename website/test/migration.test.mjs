@@ -5,7 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse, parseFragment } from 'parse5';
 import { CASES } from '../src/data/gallery-presentation.mjs';
-import { artifactMetadata, SEO_BLOCK_START, SEO_BLOCK_END, stripPublishedArtifactMetadata } from '../scripts/publish-seo.mjs';
+import { PUBLISHED_CASES } from '../src/data/published-cases.mjs';
+import { artifactMetadata, caseMetadata, SEO_BLOCK_START, SEO_BLOCK_END, stripPublishedArtifactMetadata } from '../scripts/publish-seo.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const docs = path.resolve(root, '../docs');
@@ -89,16 +90,19 @@ test('homepage version labels and translations match the release identity baseli
   const generated = parse(read(dist, 'index.html'));
   // The redesigned eyebrow separates the version chip from its channel label.
   const version = JSON.parse(read(path.resolve(root, '../archify'), 'package.json')).version;
+  const { channel } = JSON.parse(read(path.resolve(root, '../archify'), 'skill-release.json'));
+  const englishBadge = `${channel === 'development' ? 'Development' : 'Stable'} Agent Skill · see what's new`;
+  const chineseBadge = `${channel === 'development' ? '开发版' : '稳定版'} Agent 技能 · 查看更新`;
   const spans = elements(generated, 'span');
   const badge = spans.find(node => attr(node, 'data-i18n') === 'hero-badge');
-  assert.equal(semantic(badge).children.join(' '), "Development Agent Skill · see what's new");
+  assert.equal(semantic(badge).children.join(' '), englishBadge);
   const versionChip = spans.find(node => (attr(node, 'class') || '').split(/\s+/).includes('eyebrow-tag'));
   assert.equal(semantic(versionChip).children.join(' '), `v${version}`);
   const copyNode = byId(generated, 'site-copy');
   assert.ok(copyNode, 'built page must carry its shared translation dictionary');
   const copy = JSON.parse(copyNode.childNodes.map(child => child.value || '').join(''));
-  assert.equal(copy.en['hero-badge'], "Development Agent Skill · see what's new");
-  assert.equal(copy.zh['hero-badge'], '开发版 Agent 技能 · 查看更新');
+  assert.equal(copy.en['hero-badge'], englishBadge);
+  assert.equal(copy.zh['hero-badge'], chineseBadge);
   for (const key of ['footer-meta']) {
     const labels = (tree) => [...elements(tree, 'span'), ...elements(tree, 'p')]
       .filter(node => attr(node, 'data-i18n') === key).map(semantic);
@@ -119,8 +123,9 @@ test('all existing non-page public URLs retain exact bytes outside the declared 
   const selected = new Map(CASES.map(presentation => {
     const entry = manifest.entries.find(item => item.id === presentation.id);
     assert.ok(entry, presentation.id);
-    return [entry.artifact, { entry, presentation }];
+    return [entry.artifact, { entry, metadata: artifactMetadata(entry, presentation), isCase: false }];
   }));
+  for (const entry of PUBLISHED_CASES) selected.set(entry.artifact, { entry, metadata: caseMetadata(entry), isCase: true });
   function publishedBytes(file) {
     const bytes = fs.readFileSync(path.join(dist, file));
     const proof = selected.get(file.replaceAll(path.sep, '/'));
@@ -131,9 +136,9 @@ test('all existing non-page public URLs retain exact bytes outside the declared 
     const start = html.indexOf(SEO_BLOCK_START), end = html.indexOf(SEO_BLOCK_END) + SEO_BLOCK_END.length;
     assert.ok(start > html.indexOf('<head>') && end < html.indexOf('</head>'), `${file}: metadata belongs only in head`);
     const block = html.slice(start, end) + '\n';
-    assert.equal(block, artifactMetadata(proof.entry, proof.presentation), `${file}: exact publication metadata`);
+    assert.equal(block, proof.metadata, `${file}: exact publication metadata`);
     const metadataNodes = (parseFragment(block).childNodes || []).filter(node => node.tagName);
-    assert.deepEqual(metadataNodes.map(node => node.tagName), ['link', 'meta', 'meta', 'meta', 'meta', 'meta', 'script']);
+    assert.deepEqual(metadataNodes.map(node => node.tagName), ['link', 'meta', 'meta', 'meta', 'meta', ...(proof.entry.documentDescription ? [] : ['meta']), ...(proof.isCase ? ['meta', 'meta', 'meta'] : []), 'script']);
     const structured = metadataNodes.at(-1);
     assert.equal(attr(structured, 'type'), 'application/ld+json', `${file}: no executable script permitted`);
     assert.equal(structured.attrs.length, 1);

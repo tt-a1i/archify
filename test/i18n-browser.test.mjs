@@ -157,6 +157,21 @@ const BROWSER_LOCALES = {
     },
     shareCardFailure: '공유 카드에 2D 캔버스 컨텍스트를 만들 수 없습니다',
   },
+  ar: {
+    title: (type) => `API Gateway · مخطّط-${type}`,
+    toolbarLabel: 'أدواتُ عرض المخطّط',
+    finder: { hidden: false, title: 'ابحث عن عقدة', searchLabel: 'ابحث في عُقد المخطّط' },
+    route: { hidden: false, title: 'انقر حيث يبدأ المسار', label: 'امسح المسار المتتبَّع' },
+    exportLabel: 'تصدير المخطّط',
+    exportMenuLabel: 'تصدير',
+    exportMenuText: /انسخ المخطّط/,
+    presetBadges: {
+      'signal-flow': { header: 'تدفّق الإشارة', plate: 'none' },
+      blueprint: { header: 'مخطّط هندسي / إصدار ٠١', plate: '' },
+      editorial: { header: 'تحريري / ملاحظة ميدانية', plate: 'ARCHIFY / لوحة ٠٤' },
+    },
+    shareCardFailure: 'سياقُ لوحة الرسم ثنائيِّ الأبعاد غير متاح لـبطاقة مشاركة',
+  },
 
 };
 
@@ -298,6 +313,17 @@ test('real Chrome keeps ko Finder, Route, Export, and accessibility UI localized
   const browser = new ChromeVisualBrowser(chromePath);
   try {
     await assertLocalizedViewer(browser, 'ko', BROWSER_LOCALES.ko);
+  } finally {
+    await browser.close();
+  }
+});
+
+test('real Chrome keeps Arabic UI localized with mixed-script authored titles in all five modes', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    await assertLocalizedViewer(browser, 'ar', BROWSER_LOCALES.ar);
   } finally {
     await browser.close();
   }

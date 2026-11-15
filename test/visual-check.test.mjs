@@ -243,6 +243,136 @@ test('findChrome checks Chromium command names on a Windows PATH', () => {
   ]);
 });
 
+test('findChrome discovers Edge in each standard Windows installation root', () => {
+  for (const [name, root] of [
+    ['ProgramFiles(x86)', String.raw`C:\Program Files (x86)`],
+    ['ProgramFiles', String.raw`D:\Program Files`],
+    ['LocalAppData', String.raw`C:\Users\tester\AppData\Local`],
+  ]) {
+    const expected = path.win32.join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe');
+    assert.equal(findChrome({
+      platform: 'win32', env: { [name]: root },
+      resolveExecutable: (candidate) => candidate === expected ? candidate : null,
+    }), expected, name);
+  }
+});
+
+test('findChrome finds a real Windows filesystem Edge entry with mixed-case environment names', {
+  skip: process.platform !== 'win32',
+}, () => {
+  const root = fs.mkdtempSync(path.join(tmp, 'Edge Install '));
+  const installed = path.join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe');
+  fs.mkdirSync(path.dirname(installed), { recursive: true });
+  fs.writeFileSync(installed, 'discovery fixture only; not a browser');
+  try {
+    assert.equal(findChrome({ env: { 'ProgramFiles(x86)': root } }), installed);
+    assert.equal(findChrome({ env: { Path: path.dirname(installed), PathExt: '.EXE' } }).toLowerCase(), installed.toLowerCase());
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('findChrome keeps explicit browser overrides authoritative even when invalid', () => {
+  const edge = String.raw`D:\Portable Edge\msedge.exe`;
+  for (const override of [edge, '', String.raw`D:\missing.exe`]) {
+    const checked = [];
+    const resolved = findChrome({
+      platform: 'win32',
+      env: { ARCHIFY_CHROME: override, PROGRAMFILES: String.raw`C:\Program Files` },
+      resolveExecutable(candidate) {
+        checked.push(candidate);
+        return candidate === edge ? candidate : null;
+      },
+    });
+    assert.equal(resolved, override === edge ? edge : null);
+    assert.deepEqual(checked, [override], 'an invalid explicit path must not silently use another browser');
+  }
+});
+
+test('findChrome prefers every Chrome/Chromium PATH candidate over installed Edge', () => {
+  const edge = String.raw`C:\Program Files\Microsoft\Edge\Application\msedge.exe`;
+  for (const command of ['chrome', 'google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
+    const preferred = String.raw`D:\Browser Bin` + `\\${command}.EXE`;
+    assert.equal(findChrome({
+      platform: 'win32',
+      env: { PROGRAMFILES: String.raw`C:\Program Files`, PATH: String.raw`D:\Browser Bin`, PATHEXT: '.EXE' },
+      resolveExecutable: (candidate) => [preferred, edge].includes(candidate) ? candidate : null,
+    }), preferred, command);
+  }
+});
+
+test('findChrome checks installed Edge before its Windows PATH fallback', () => {
+  const installed = String.raw`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`;
+  const portable = String.raw`D:\Browser Bin\msedge.EXE`;
+  const env = {
+    'ProgramFiles(x86)': String.raw`C:\Program Files (x86)`,
+    Path: String.raw`C:\Tools;D:\Browser Bin`,
+    PathExt: '.EXE;.CMD',
+  };
+  for (const found of [[installed, portable], [portable]]) {
+    const checked = [];
+    const resolved = findChrome({
+      platform: 'win32', env,
+      resolveExecutable(candidate) {
+        checked.push(candidate);
+        return found.includes(candidate) ? candidate : null;
+      },
+    });
+    assert.equal(resolved, found[0]);
+    assert.ok(checked.includes(installed));
+    if (found.length === 1) assert.ok(checked.indexOf(installed) < checked.indexOf(portable));
+    else assert.equal(checked.includes(portable), false);
+  }
+});
+
+test('findChrome discovers Edge from the macOS application bundle', () => {
+  const expected = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
+  assert.equal(findChrome({
+    platform: 'darwin', env: { PATH: '/usr/bin' },
+    resolveExecutable: (candidate) => candidate === expected ? candidate : null,
+  }), expected);
+});
+
+test('findChrome finds microsoft-edge command names on a macOS or Linux PATH', () => {
+  for (const platform of ['darwin', 'linux']) {
+    for (const command of ['microsoft-edge', 'microsoft-edge-stable']) {
+      const expected = `/usr/bin/${command}`;
+      assert.equal(findChrome({
+        platform, env: { PATH: '/usr/bin' },
+        resolveExecutable: (candidate) => candidate === expected ? candidate : null,
+      }), expected, `${platform}:${command}`);
+    }
+  }
+});
+
+test('findChrome keeps Chrome/Chromium ahead of Edge on macOS and Linux', () => {
+  for (const platform of ['darwin', 'linux']) {
+    const chrome = platform === 'darwin'
+      ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+      : '/usr/bin/google-chrome';
+    const edge = platform === 'darwin'
+      ? '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+      : '/usr/bin/microsoft-edge';
+    assert.equal(findChrome({
+      platform, env: { PATH: '/usr/bin' },
+      resolveExecutable: (candidate) => [chrome, edge].includes(candidate) ? candidate : null,
+    }), chrome, platform);
+  }
+});
+
+test('findChrome returns null when no browser is found and probes Edge on non-Windows', () => {
+  for (const platform of ['win32', 'darwin', 'linux']) {
+    const checked = [];
+    assert.equal(findChrome({
+      platform, env: { PATH: '/usr/bin', PROGRAMFILES: String.raw`C:\Program Files` },
+      resolveExecutable(candidate) { checked.push(candidate); return null; },
+    }), null, platform);
+    if (platform !== 'win32') {
+      assert.ok(checked.some((candidate) => /edge/i.test(candidate)), `${platform} probes Edge candidates`);
+    }
+  }
+});
+
 test('visual-check disables the Chrome sandbox only for root or an explicit environment opt-in', () => {
   const profileRoot = path.join(tmp, 'chrome-profile');
   const ordinary = chromeVisualBrowserArgs(profileRoot, { env: {}, getuid: () => 1001 });
@@ -255,6 +385,143 @@ test('visual-check disables the Chrome sandbox only for root or an explicit envi
   assert.equal(ordinary.includes('--no-sandbox'), false);
   assert.equal(optedIn.includes('--no-sandbox'), true);
   assert.equal(root.includes('--no-sandbox'), true);
+});
+
+test('Windows browser launch removes only the standalone inherited app-health layer', async () => {
+  for (const [key, layer] of [
+    ['__COMPAT_LAYER', 'DetectorsAppHealth'],
+    ['__compat_layer', 'detectorsapphealth'],
+    ['__Compat_Layer', '  DetectorsAppHealth  '],
+  ]) {
+    const env = Object.freeze({
+      [key]: layer,
+      Path: String.raw`C:\Windows\System32`,
+      SystemRoot: String.raw`C:\Windows`,
+      TEMP: String.raw`C:\Temp`,
+      ARCHIFY_CHROME_NO_SANDBOX: '0',
+      UNRELATED_SETTING: 'preserved',
+    });
+    const child = fakeChromeChild();
+    let launched;
+    const browser = new ChromeVisualBrowser('/fake/msedge.exe', {
+      platform: 'win32', env, getuid: null,
+      spawnImpl: (executable, args, options) => {
+        launched = { executable, args, options };
+        return child;
+      },
+    });
+    const attached = browser.sessionPromise.catch(() => {});
+    try {
+      assert.equal(launched.executable, '/fake/msedge.exe');
+      assert.equal(Object.hasOwn(launched.options.env, key), false);
+      assert.deepEqual(launched.options.env, Object.fromEntries(
+        Object.entries(env).filter(([name]) => name !== key),
+      ));
+      assert.equal(env[key], layer, 'the parent environment is untouched');
+      assert.deepEqual(launched.args, chromeVisualBrowserArgs(browser.profileRoot, { env, getuid: null }));
+      assert.ok(launched.args.includes('--remote-debugging-pipe'));
+      assert.ok(launched.args.includes(`--user-data-dir=${browser.profileRoot}`));
+      assert.equal(launched.args.includes('--no-sandbox'), false);
+      assert.equal(launched.args.includes('--do-not-de-elevate'), false);
+      assert.equal(launched.args.includes('--edge-skip-compat-layer-relaunch'), false);
+      assert.deepEqual(launched.options.stdio, ['ignore', 'ignore', 'pipe', 'pipe', 'pipe']);
+    } finally {
+      await browser.close();
+      await attached;
+    }
+    assert.equal(fs.existsSync(browser.profileRoot), false);
+  }
+});
+
+test('browser launch preserves unknown, combined and non-Windows compatibility layers', async () => {
+  for (const [platform, layer] of [
+    ['win32', 'Installer'],
+    ['win32', 'RunAsInvoker'],
+    ['win32', 'DetectorsAppHealth RunAsInvoker'],
+    ['win32', 'UnknownLayer'],
+    ['darwin', 'DetectorsAppHealth'],
+    ['linux', 'DetectorsAppHealth'],
+  ]) {
+    const env = Object.freeze({ __COMPAT_LAYER: layer, UNRELATED_SETTING: 'preserved' });
+    const child = fakeChromeChild();
+    let spawnOptions;
+    const browser = new ChromeVisualBrowser('/fake/chrome', {
+      platform, env, getuid: () => 1001,
+      spawnImpl: (_executable, _args, options) => {
+        spawnOptions = options;
+        return child;
+      },
+    });
+    const attached = browser.sessionPromise.catch(() => {});
+    try {
+      assert.deepEqual(spawnOptions.env, env, `${platform}: ${layer}`);
+    } finally {
+      await browser.close();
+      await attached;
+    }
+    assert.equal(fs.existsSync(browser.profileRoot), false);
+  }
+});
+
+test('browser environment defaults to the actual host platform', async () => {
+  const env = Object.freeze({ __COMPAT_LAYER: 'DetectorsAppHealth' });
+  const child = fakeChromeChild();
+  let spawnOptions;
+  const browser = new ChromeVisualBrowser('/fake/chrome', {
+    env, getuid: () => 1001,
+    spawnImpl: (_executable, _args, options) => {
+      spawnOptions = options;
+      return child;
+    },
+  });
+  const attached = browser.sessionPromise.catch(() => {});
+  try {
+    assert.deepEqual(spawnOptions.env, process.platform === 'win32' ? {} : env);
+  } finally {
+    await browser.close();
+    await attached;
+  }
+});
+
+test('browser relaunch hint is absent after a response or on non-Windows hosts', async () => {
+  for (const [platform, response] of [['win32', true], ['linux', false], ['darwin', false]]) {
+    const child = fakeChromeChild();
+    const browser = new ChromeVisualBrowser('/fake/chrome', {
+      platform, env: {}, getuid: () => 1001, spawnImpl: () => child,
+    });
+    try {
+      const failed = assert.rejects(browser.sessionPromise, (error) => {
+        assert.doesNotMatch(error.message, /Windows browser startup/);
+        return true;
+      });
+      if (response) child.stdio[4].write('{"method":"Target.targetCreated","params":{}}\0');
+      child.stdio[4].end();
+      await failed;
+    } finally {
+      await browser.close();
+    }
+  }
+});
+
+test('Windows pipe startup failure provides a non-elevated remedy without claiming its cause', async () => {
+  const child = fakeChromeChild();
+  const browser = new ChromeVisualBrowser('/fake/msedge.exe', {
+    platform: 'win32', env: {}, getuid: null, spawnImpl: () => child,
+  });
+  try {
+    const failed = assert.rejects(browser.sessionPromise, (error) => {
+      assert.match(error.message, /receivedBytes=0/);
+      assert.match(error.message, /Windows browser startup may have relaunched/);
+      assert.match(error.message, /non-elevated PowerShell/);
+      assert.match(error.message, /does not disable browser de-elevation or the sandbox/);
+      return true;
+    });
+    child.stdio[4].end();
+    await failed;
+  } finally {
+    await browser.close();
+  }
+  assert.equal(fs.existsSync(browser.profileRoot), false);
 });
 
 test('visual-check converts a Chrome DevTools pipe reset and captured stderr into a structured failure', async () => {
@@ -3003,7 +3270,8 @@ test('visual-check returns 2 with a truthful skipped receipt when Chrome is unav
   assert.equal(result.receipt.captures.status, 'skipped');
   assert.equal(result.receipt.visualReview, 'pending');
   assert.equal(result.receipt.diagnostics[0]?.code, 'viewer/chrome-unavailable');
-  assert.ok(result.receipt.diagnostics[0]?.supportedFixes.some((fix) => fix.includes('ARCHIFY_CHROME')));
+  assert.match(result.receipt.error, /Microsoft Edge/);
+  assert.ok(result.receipt.diagnostics[0]?.supportedFixes.some((fix) => fix.includes('ARCHIFY_CHROME') && fix.includes('Microsoft Edge')));
   assert.equal(fs.existsSync(sidecarPaths(input).receipt), true);
 });
 

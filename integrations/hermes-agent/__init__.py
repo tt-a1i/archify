@@ -13,9 +13,11 @@ from pathlib import Path
 _PLUGIN_DIR = Path(__file__).resolve().parent
 _SKILL_DESCRIPTION = (
     "Create polished, validated architecture, workflow, sequence, data-flow, "
-    "and lifecycle diagrams as standalone HTML. Use when the user asks to "
+    "lifecycle, ERD, class, tree, timeline, and waterfall diagrams as standalone HTML. "
+    "Use when the user asks to "
     "visualize system architecture, infrastructure, workflows, API sequences, "
-    "data pipelines, or state machines."
+    "data pipelines, state machines, database schemas, class relationships, "
+    "hierarchies, schedules, or timing breakdowns."
 )
 
 

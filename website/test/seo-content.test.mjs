@@ -14,7 +14,7 @@ const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value
 const find = (node, id) => attr(node, 'id') === id ? node : (node.childNodes || []).map(child => find(child, id)).find(Boolean);
 const text = node => node?.nodeName === '#text' ? node.value : ['script', 'style'].includes(node?.tagName) ? '' : (node?.childNodes || []).map(text).join(' ');
 const clean = value => value.replace(/\s+/g, ' ').trim();
-const read = (page, lang) => parse(fs.readFileSync(path.join(root, lang === 'zh' ? 'zh' : '', `${page}.html`), 'utf8'));
+const read = (page, lang) => parse(fs.readFileSync(path.join(root, lang === 'zh' && page !== 'index' ? 'zh' : '', `${lang === 'zh' && page === 'index' ? 'zh' : page}.html`), 'utf8'));
 const byClass = (node, name) => [...((attr(node, 'class') || '').split(/\s+/).includes(name) ? [node] : []), ...(node.childNodes || []).flatMap(child => byClass(child, name))];
 const byTag = (node, tag) => node.tagName === tag ? node : (node.childNodes || []).map(child => byTag(child, tag)).find(Boolean);
 function assertProofLink(page, link, lang, proof) {
@@ -31,6 +31,14 @@ function assertProofLink(page, link, lang, proof) {
 const links = node => [...(node.tagName === 'a' ? [node] : []), ...(node.childNodes || []).flatMap(links)];
 
 for (const lang of ['en', 'zh']) {
+  test(`initial ${lang} start HTML exposes every canonical diagram type as a selectable tab`, () => {
+    const page = read('start', lang);
+    const types = byClass(page, 'type-tab').map(node => attr(node, 'data-type'));
+    const expected = new Set(SCENARIO_RECIPES.map(recipe => recipe.type));
+    assert.equal(types.length, expected.size);
+    assert.deepEqual(new Set(types), expected);
+  });
+
   test(`initial ${lang} guide HTML contains every canonical recipe and its evidence without JavaScript`, () => {
     const page = read('guide', lang);
     const reference = find(page, 'recipe-reference');
@@ -63,11 +71,11 @@ for (const lang of ['en', 'zh']) {
     const recipe = SCENARIO_RECIPES.find(item => item.id === 'system-overview');
     const data = JSON.parse(find(page, 'start-data').childNodes.map(node => node.value || '').join(''));
     const count = Object.keys(data).length;
-    assert.equal(clean(text(byTag(find(page, 'type-label'), 'strong'))), lang === 'zh' ? `${count} 种类型化渲染器` : `${count} typed renderers`);
+    assert.equal(clean(text(byTag(find(page, 'type-label'), 'strong'))), lang === 'zh' ? `${count} 个入门配方` : `${count} starting recipes`);
     assert.equal(clean(text(find(page, 'recipe-question'))), clean(recipe[lang].question));
     assert.equal(clean(text(find(page, 'recipe-prompt'))), clean(startPromptsFor(recipe, lang).descriptionPrompt));
     for (const evidence of recipe[lang].include) assert.ok(clean(text(find(page, 'include-list'))).includes(clean(evidence)));
-    assert.match(text(find(page, 'install-command')), /npx -y skills add tt-a1i\/archify --skill archify --agent codex --global --copy --yes/);
+    assert.match(text(find(page, 'install-command')), /npx -y skills@latest add https:\/\/archify\.si --skill archify --agent codex --global --copy --yes/);
     assertProofLink(page, find(page, 'proof-link'), lang, recipe.proof);
   });
 }
@@ -75,8 +83,23 @@ test('initial homepage product facts explain identity, inputs, delivery, license
   const page = read('index', 'en');
   const section = find(page, 'about-archify');
   const content = clean(text(section));
-  for (const fact of ['open-source Agent Skill', 'typed JSON', 'interactive HTML', 'Mermaid', 'MIT', 'Codex', 'PNG', 'runtime system behavior', 'stable main']) assert.ok(content.includes(fact), fact);
+  for (const fact of ['open-source Agent Skill', 'typed JSON', 'interactive HTML', 'Mermaid', 'Apache-2.0', 'Codex', 'PNG', 'runtime system behavior', 'stable main']) assert.ok(content.includes(fact), fact);
   const hrefs = links(section).map(link => attr(link, 'href'));
   assert.ok(hrefs.includes('https://github.com/tt-a1i/archify/releases'));
   assert.ok(hrefs.includes('https://github.com/tt-a1i/archify/blob/main/LICENSE'));
 });
+
+for (const lang of ['en', 'zh']) {
+  test(`initial ${lang} pages distinguish supported types from selected recipes and use the release channel`, () => {
+    const release = JSON.parse(fs.readFileSync(new URL('../../archify/skill-release.json', import.meta.url)));
+    for (const name of ['index', 'guide', 'start']) {
+      const inventory = clean(text(byClass(read(name, lang), 'supported-diagrams')[0]));
+      for (const label of lang === 'zh' ? ['类图', '树图', '时间线', '瀑布图', '精选入门示例'] : ['Class', 'Tree', 'Timeline', 'Waterfall', 'selected starting points']) assert.ok(inventory.includes(label), `${name}: ${label}`);
+    }
+    for (const name of ['start', 'gallery']) {
+      const footer = clean(text(byTag(read(name, lang), 'footer')));
+      const channel = lang === 'zh' ? (release.channel === 'development' ? '开发版' : '稳定版') : release.channel;
+      assert.ok(footer.includes(`v${release.version} · ${channel}`), `${name}: release identity`);
+    }
+  });
+}

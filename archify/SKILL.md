@@ -1,19 +1,32 @@
 ---
 name: archify
-description: "Create validated architecture, workflow, sequence, data-flow, lifecycle/state, entity-relationship, class/interface, tree, timeline, and execution waterfall diagrams as explorable standalone HTML with inline SVG, dark/light themes, optional motion, and image/SVG/WebM export. Accept plain-language requirements or Mermaid; inspect repository evidence for code-backed diagrams. Use when visualizing infrastructure, cloud/security networks, API calls, data pipelines, ETL/ELT, state machines, database schemas, class contracts, module hierarchies, incident/release histories, or request and agent-run timings. Also use for everyday subjects with steps, parts, relationships, or states: leave and travel plans, applications and approvals, renting conversations, money or document flows, and order progress. Not for numeric charts or dashboards."
-license: MIT
+description: "Create validated architecture, workflow, sequence, data-flow, lifecycle/state, ERD, class, tree, timeline, and waterfall diagrams as explorable standalone HTML with dark/light themes, motion and image/SVG/WebM export. Accept requirements or Mermaid; inspect repository evidence for code-backed diagrams. Use when visualizing systems, API calls, pipelines, schemas, histories, timings, or everyday steps, parts, relationships and states. Also turn an answer into a one-page explainer, with the conclusion first, structured panels, native diagrams and charts, when the user asks for a page, an explainer or an answer to share (做成一页, 用页面讲), and by default unasked for a complex flow, diagnosis, comparison or test report; an [archify explainer: on-demand] rules line limits pages to requests. Optionally add a guided story and video export to an existing native diagram. Not for dashboards."
+license: Apache-2.0
 metadata:
-  version: "3.0"
+  version: "3.2"
   author: tt-a1i
 ---
 
 # Archify
 
-Create an interactive HTML diagram from typed JSON.
+Create checked standalone HTML as a native diagram or a one-page explainer that answers a question.
 
-Run commands from your working directory. Unless the user names another location, give each new diagram request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once when the request starts): keep `candidate.json` and `<slug>.html` in it, set `meta.output` to that HTML path relative to the working directory, and reuse the folder for every repair rerun. A later request gets a new folder, so earlier versions stay intact. Replace `bin/archify.mjs` in the commands below with the installed package's absolute path, or its path relative to your working directory; input and output paths resolve from that working directory.
+Run commands from your working directory. Unless the user names another location, give each new artifact request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once): keep the candidate and `<slug>.html` in it and reuse it for repairs. Native diagrams use `candidate.json` with `meta.output` relative to the working directory; explainers may use `candidate.archify.md` and a portable output filename. A later request gets a new folder. Replace `bin/archify.mjs` in every command with the installed package's absolute path, or its path relative to your working directory; CLI input and output paths resolve from that directory.
 
-For a real codebase, read [Repository authoring](references/repository-authoring.md) while tracing the requested behavior. A system description uses the steps below; an existing JSON uses the handoff path.
+For a native diagram of a real codebase, read [Repository authoring](references/repository-authoring.md) while tracing the requested behavior. A system description uses the native steps below; a frozen candidate uses the handoff path.
+
+## Choose the artifact
+
+- When the user asks to draw or visualize a system, flow, schema or history, use a native diagram and the Type router.
+- For a guided walkthrough or explanation video of a native HTML diagram, read [Story authoring](references/story-authoring.md). Use `story draft` and `story attach` to add playback and video export to its existing Viewer.
+- Use `explainer` when the user asks for the answer as a page: a page, one page, an explainer, something to share (“做成一页”, “用页面讲”, “answer with a page”).
+- Explainer mode is `proactive` by default. A rules line `[archify explainer: <mode>]` in context selects another; an instruction in the conversation overrides it for that conversation.
+  - `proactive` (default, no line needed): also make a page, unasked, when the answer is a complex flow or process, a diagnosis or troubleshooting result, an option comparison, trade-off or decision, a test or review report, or a plan, and needs a table, steps or several sections to be read well.
+  - `on-demand`: make a page only when asked; otherwise answer in text or draw the requested diagram.
+  - `always-on` (opt-in only): every reply that reaches a conclusion also gets a compact page of at most four panels.
+- In every mode a page needs a conclusion with some structure behind it. Chat, short or one-line answers, routine status updates (“done, tests pass”), raw command output, a requested native diagram and any reply where the user asks for text only or no page (“只要文字”, “不用做页面”) get none. Make at most one page per reply, and none when the user names another page tool or another skill already made a page for that reply.
+- To change the mode, only when the user asks (“只在我要求时做页面”, “always make a page”), write or replace one `[archify explainer: <mode>]` line in the current agent's global rules file (such as `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md` or `~/.config/devin/AGENTS.md`) and name the file, for example `[archify explainer: on-demand] Make Archify explainer pages only when I ask for one.`; deleting the line restores `proactive`. Never switch to `always-on` unasked.
+- For `explainer`, read [Explainer authoring](references/explainer-authoring.md) for its conclusion, reasons, scope, board layout and optional native diagrams. Write the complete draft, then run `finalize explainer` for validation, atomic delivery and artifact checks. Use panel patch for local content revisions.
 
 ## Existing candidate handoff
 
@@ -21,7 +34,7 @@ When the user supplies a frozen candidate, run `finalize` first as one CLI invoc
 
 `finalize` includes a bounded update check in its delivery receipt; see Update awareness.
 
-## Fast authoring path
+## Native diagram authoring
 
 Use this path for ordinary generation. Read branch references only when their stated trigger applies.
 
@@ -42,7 +55,7 @@ Use this path for ordinary generation. Read branch references only when their st
 
 ## Update awareness
 
-`finalize` and standalone `deliver` include `update` in their receipts. Do not run a separate check for the same delivery. If `update.noticeRequired` is true, read `references/update-awareness.md` and keep one update line in your final response to the user, even after a quality gate fails. For a task with several diagrams, mention the update once in the final response. Snooze or ignore a reminder only when the user explicitly asks; never install or update on your own initiative.
+`finalize` and standalone `deliver` include `update` in their receipts. Do not run a separate check for the same delivery. If `update.noticeRequired` is true, read `references/update-awareness.md` and keep one compact update notice in your final response to the user, even after a quality gate fails. For a task with several diagrams, mention the update once in the final response. Snooze or ignore a reminder only when the user explicitly asks; never install or update on your own initiative.
 
 Before the first candidate, use the authoring references and relevant repository source, not Archify implementation or tests. Inspect Archify implementation if diagnostics remain unactionable after focused repairs.
 
@@ -62,7 +75,7 @@ Before the first candidate, use the authoring references and relevant repository
 | `timeline` | When things happened: incident reviews, release histories, timestamped events on a proportional clock with source lanes | `schemas/timeline.schema.json` | `examples/payment-incident.timeline.json` |
 | `waterfall` | Where the time went: span durations, overlap, and nesting of one request or agent run on a common time axis | `schemas/waterfall.schema.json` | `examples/checkout-request.waterfall.json` |
 
-When ambiguous, run `node bin/archify.mjs guide "<scenario>" --json`. Scenario proof examples are structural references, not facts to copy.
+When choosing among native diagram types is ambiguous, run `node bin/archify.mjs guide "<scenario>" --json`. Scenario proof examples are structural references, not facts to copy.
 
 For an everyday subject, keep the same diagram modes and semantic types, then name them for the reader: use everyday `icon` values and `meta.legend` labels as in [Node icons](references/authoring-contract.md#node-icons). Ask for missing personal facts instead of inventing dates, amounts, or rules.
 
@@ -82,13 +95,13 @@ Use the `finalize` command above for the first candidate and after a repair.
 
 `finalize` stops at the first non-passing gate. Its compact stdout and `<output-stem>.finalize-summary.json` are ordinary evidence. A passing run creates no screenshots and reports `visualReview: "not-requested"`.
 
-When a passing Architecture receipt reports `visualReviewRecommendation.signals.resolvedCrossovers`, copy the candidate aside and apply the hints in one edit that changes only node positions and sizes: every node, relationship (including its `from` and `to`), label, and source stays as it was. Rerun the complete `finalize` once with `--out-dir <folder>/review-2`, because the previous HTML already owns its browser evidence. If that run fails, reports more crossings, or reports the same crossings with more `signals.routesOverSuggestedBends`, restore the copy and finalize it with `--out-dir <folder>/review-3`. Do not start a second placement round. Hints about extra bends alone are optional.
+When a passing Architecture receipt reports `visualReviewRecommendation.signals.resolvedCrossovers`, copy the candidate aside and apply the hints in one edit that changes only node positions and sizes: every node, relationship (including its `from` and `to`), label, and source stays as it was. Rerun the complete `finalize` once with `--out-dir <folder>/review-2`, because the previous HTML already owns its browser evidence. `--out-dir` relocates the new browser-check and default finalize receipts, not the HTML or its delivery receipt. Successful delivery rewrites that pair at the requested output path; earlier review evidence remains bound to its original artifact bytes. See [review evidence paths](references/delivery-contract.md#a-new-candidate-at-an-existing-output-path). If that run fails, reports more crossings, or reports the same crossings with more `signals.routesOverSuggestedBends`, restore the copy and finalize it with `--out-dir <folder>/review-3`. Do not start a second placement round. Hints about extra bends alone are optional.
 
 When `layoutReviewRecommendation.action` is `inspect-sequence-width`, follow [Sequence width review](references/delivery-contract.md#sequence-width-review) before handing off a newly authored Sequence.
 
 Perceptual review is optional for ordinary generation, including a newly positioned Architecture. Use [Optional capture evidence](references/delivery-contract.md#optional-capture-evidence), with `--out-dir <folder>/visual-check`, when the user requests visual review, during development audits, or for a concrete route/browser concern. `visualReviewRecommendation` is advisory. Inspect captures before claiming visual quality; qualify any check claim as automated when perceptual review has not occurred.
 
-Read [Delivery contract](references/delivery-contract.md) for failed gates, standalone commands, provenance/recovery, repeated delivery, exports, or opening. Recovery follows `deliver` → strict provenance `check` → `browser-check`; captures require strict provenance.
+Read [Delivery contract](references/delivery-contract.md) for failed gates, standalone commands, provenance/recovery, repeated delivery, exports, or opening. Native diagram recovery follows `deliver` → strict provenance `check` → `browser-check`; captures require strict provenance. Explainer delivery uses validate, deliver and check as described in its authoring guide.
 
 For workflow viewport overflow, read [Workflow viewport repair](references/authoring-contract.md#workflow-viewport-repair) before the next layout edit.
 
@@ -96,7 +109,20 @@ When reporting verification details, distinguish artifact checks, browser eviden
 
 ## Optional viewer capabilities
 
+Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text `explanation` (1–1200 characters). The focused Semantic Passport offers Explain; prose stays outside canonical SVG and visual exports. Omit the field when the existing label, sublabel and sources are sufficient.
+
 Live motion is enabled by default for every rendered diagram; omit `meta.animation`. The Viewer’s Live/Still button controls playback.
+
+### Cross-diagram navigation
+
+When the user wants overview → module → detail navigation across multiple HTML artifacts:
+
+- Targets are same-directory `filename.html` only (optional `?` / `#`). No `../`, `/`, or schemes.
+- Node `href` is sugar for a one-entry list (label defaults to the node label). `drilldowns` wins if both are present.
+- One child: native SVG `<a>` + corner mark; click follows the link; Alt-click focuses Passport.
+- Several children: Passport lists every target; click focuses; Ctrl+click / double-click opens the first entry.
+- Child diagrams may set `meta.parentHref`. The header Back control appears when `parentHref` or URL `?from=` is present.
+- Examples: sibling pair `examples/drilldown-platform.architecture.json` ↔ `examples/drilldown-integrations.architecture.json`; multi-child `examples/drilldown-overview.architecture.json`.
 
 Read `references/viewer-runtime.md` only when the user explicitly asks for Share Cards, Route/Reach cards, motion, deep links, presentation, search/focus, or another Viewer Runtime feature.
 
@@ -109,17 +135,19 @@ node bin/archify.mjs doctor
 node bin/archify.mjs demo <output-directory>
 ```
 
-When shell access is unavailable, hand-place architecture SVG into `assets/template.html`, use CSS semantic classes rather than inline colors, and follow the visual review contract in `references/delivery-contract.md`.
+For native diagrams, when shell access is unavailable, hand-place architecture SVG into `assets/template.html`, use CSS semantic classes rather than inline colors, and follow the visual review contract in `references/delivery-contract.md`. Explainers require their renderer and real delivery gates; if those are unavailable, report the limitation and give a text answer when useful, without claiming HTML delivery.
 
 ## Output
 
 Reply in the user's language, as briefly as the result allows; the diagram carries the content, so a single diagram usually needs one line.
 
-- Lead with a clickable Markdown link to the HTML: a descriptive title, not the file name, and its absolute path, wrapped in `<...>` when it contains spaces.
+- For a native diagram, lead with a clickable Markdown link to the HTML: a descriptive title, not the file name, and its absolute path, wrapped in `<...>` when it contains spaces.
 - When the user wants to understand a system or codebase rather than draw a described subject, add one or two sentences with the key takeaway. Skip sentences that only restate what the diagram obviously shows.
 - State anything that changes how the diagram should be read: the abstraction level or deliberately omitted parts when a reader might expect them, illustrative rather than measured values, missing source evidence, or requested content dropped or merged during repair.
 - For several diagrams, report completion once with a link to an existing overview or compact per-diagram links, not a directory path.
 
-Do not recap commands, repair rounds, hashes, quality profiles, or check lists; they stay in the receipts. If asked whether the diagram was verified, answer in one line, such as “Automated checks passed; not visually reviewed.” Give receipt links and details only for reproducibility or troubleshooting. Disclose requested visual review that could not run, and claim visual inspection only when performed. Keep the required update line under Update awareness.
+Do not recap commands, repair rounds, hashes, quality profiles, or check lists; they stay in the receipts. If asked whether the diagram was verified, answer in one line, such as “Automated checks passed; not visually reviewed.” Give receipt links and details only for reproducibility or troubleshooting. Disclose requested visual review that could not run, and claim visual inspection only when performed. Keep the required update notice under Update awareness.
 
 Example: `Created [Checkout request timing](/abs/path/checkout-timing.html). Durations are illustrative, not measured.`
+
+For an explainer, the reply must read well without opening the page: the conclusion in one to three lines with the key cause, numbers or recommendation, then, as the very last line, a Markdown link with a descriptive title in the user's language, such as `[查看测试报告](/abs/path/test-report.html)` or `[Open the test report](...)`. Use the absolute path, wrapped in `<...>` when it contains spaces, not `file://`; put any update notice before it. Never offer a directory, terminal log or auto-open (`--open`) instead of the link. When `finalize explainer` fails or the renderer is unavailable, answer in text, say in one line that the page was not produced, and give no page link. Mention gates only when one failed or writing warnings remain; do not paste the draft.

@@ -19,6 +19,8 @@
       var autoScrollUntil = 0;
       var originalFlowHeight = container.style.getPropertyValue('height');
       var originalFlowHeightPriority = container.style.getPropertyPriority('height');
+      var originalFlowAlignment = container.style.getPropertyValue('align-items');
+      var originalFlowAlignmentPriority = container.style.getPropertyPriority('align-items');
       var compactPageFlow = false;
 
       var viewBox = svg.viewBox && svg.viewBox.baseVal;
@@ -167,10 +169,16 @@
             .reduce(function (total, key) { return total + (parseFloat(style[key]) || 0); }, 0);
           var flowHeight = Math.ceil(height * camera.scale + Math.max(0, camera.y) + chrome) + 'px';
           if (container.style.getPropertyValue('height') !== flowHeight) container.style.setProperty('height', flowHeight);
+          // The SVG keeps its unscaled layout box while the container is
+          // compacted. Centering that box would push the drawing above the
+          // frame, so pin its top until the ordinary flow is restored.
+          if (container.style.getPropertyValue('align-items') !== 'flex-start') container.style.setProperty('align-items', 'flex-start');
           compactPageFlow = true;
         } else if (compactPageFlow) {
           if (originalFlowHeight) container.style.setProperty('height', originalFlowHeight, originalFlowHeightPriority);
           else container.style.removeProperty('height');
+          if (originalFlowAlignment) container.style.setProperty('align-items', originalFlowAlignment, originalFlowAlignmentPriority);
+          else container.style.removeProperty('align-items');
           compactPageFlow = false;
         }
       }

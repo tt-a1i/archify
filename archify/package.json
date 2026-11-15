@@ -1,10 +1,10 @@
 {
   "name": "archify",
-  "version": "3.0.2-dev.1",
+  "version": "3.2.1-dev.1",
   "private": true,
   "type": "module",
   "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle / erd / class / tree / timeline / waterfall).",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bin": {
     "archify": "./bin/archify.mjs"
   },

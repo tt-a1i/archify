@@ -132,6 +132,7 @@ const CARDS_SLOT_RE = /    <!-- ARCHIFY:CARDS_SLOT_START -->[\s\S]*?    <!-- ARC
 const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<\/p>[ \t]*(\r?\n)?/m;
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
 const I18N_PLACEHOLDER = '    <!-- ARCHIFY:I18N_DATA -->';
+const EXPLANATIONS_PLACEHOLDER = '    <!-- ARCHIFY:EXPLANATIONS_DATA -->';
 
 function serializeScriptJson(value) {
   return JSON.stringify(value)
@@ -155,6 +156,7 @@ export function applyTemplate(template, {
   locale,
   visualPreset = 'classic',
   sourceEvidence = null,
+  explanations = null,
 }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
@@ -176,9 +178,18 @@ export function applyTemplate(template, {
   if (sourceEvidence && !template.includes(SOURCE_EVIDENCE_PLACEHOLDER)) {
     throw new Error(`applyTemplate: repository evidence requires placeholder ${JSON.stringify(SOURCE_EVIDENCE_PLACEHOLDER)}`);
   }
+  // Authored explanations are prose for the Semantic Passport only. They ride
+  // in a JSON block outside the SVG so canonical exports never carry them, and
+  // silently dropping authored prose would mislead, so the slot is mandatory
+  // only when a document actually authors one.
+  const hasExplanations = explanations && Object.keys(explanations).length > 0;
+  if (hasExplanations && !template.includes(EXPLANATIONS_PLACEHOLDER)) {
+    throw new Error(`applyTemplate: node explanations require placeholder ${JSON.stringify(EXPLANATIONS_PLACEHOLDER)}`);
+  }
   // Function replacers: a literal `$&`, `$'`, `$\`` or `$$` in titles, labels,
   // or rendered SVG must not be interpreted as a replacement pattern.
   const sourceEvidenceJson = serializeScriptJson(sourceEvidence);
+  const explanationsJson = serializeScriptJson(hasExplanations ? explanations : null);
   const resolvedLocale = resolveLocale(locale);
   const i18nJson = serializeScriptJson({ locale: resolvedLocale, messages: viewerCatalog(resolvedLocale) });
   const renderedSubtitle = typeof subtitle === 'string' && subtitle.trim()
@@ -197,6 +208,9 @@ export function applyTemplate(template, {
     .replace(CARDS_SLOT_RE, () => cards)
     .replace(SOURCE_EVIDENCE_PLACEHOLDER, () => sourceEvidence
       ? `    <script id="archify-source-evidence-data" type="application/json">${sourceEvidenceJson}</script>`
+      : '')
+    .replace(EXPLANATIONS_PLACEHOLDER, () => hasExplanations
+      ? `    <script id="archify-explanations-data" type="application/json">${explanationsJson}</script>`
       : '');
 }
 

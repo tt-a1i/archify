@@ -7,11 +7,24 @@ Archify is Agent-first: people describe systems, and the Skill, typed JSON, rend
 - Renderer, validator, package, or Viewer defect: use the [bug report form](.github/ISSUE_TEMPLATE/bug-report.yml).
 - Standalone community package: follow the [submission guide](community/README.md#submitting-a-package) and submit one metadata file to `dev`.
 - Reproducible real-world diagram: use the [showcase form](.github/ISSUE_TEMPLATE/showcase.yml).
-- New schema fields, defaults, acceptance rules, installation/export contracts, or broad product behavior: agree on value, compatibility, and non-goals before substantial implementation. Link the issue or recorded maintainer decision; reuse an existing agreed scope.
-- Narrow fixes and small documentation or test corrections can proceed with a concrete reproduction or rationale; a separate planning issue is unnecessary.
+- Changes to generation, layout/routing, validation, interaction, performance, dependencies, tests, or other behavior require a related issue and explicit maintainer agreement on the problem, value, and intended scope before substantial implementation or a formal PR. Use the bug form for defects and the [improvement proposal](.github/ISSUE_TEMPLATE/improvement.yml) for changes. Link an existing issue or recorded maintainer decision when available; a second approval thread is unnecessary.
+- Purely mechanical documentation corrections, such as typos or repairing a broken link to its intended destination, may go directly to a PR. Describe why the change is mechanical. Authoring instructions, new policy, behavioral documentation, and test changes are not exempt just because they are small or text-only.
 - Security vulnerabilities: follow [SECURITY.md](SECURITY.md).
 
+Agreement on direction allows implementation to proceed; final acceptance still depends on the implementation, user-visible results, and maintenance cost. Draft PRs may support early discussion but do not replace scope agreement.
+
 Do not include secrets, access tokens, credentials, private repository content, personal data, or customer data in fixtures, logs, screenshots, artifacts, or package tests.
+
+## Coordinate related work
+
+These steps apply to contributors, maintainers, and Agents:
+
+- Before implementing, search existing issues and open PRs for the same problem, including related fixes under review.
+- On the relevant issue, state your intended scope. Link the agreed discussion in the PR; use a draft only when an implementation sketch helps that discussion. Apply the mechanical-correction exception above without a separate planning issue.
+- If work is already in progress, discuss the remaining gap on that issue or PR and agree on collaboration, a distinct scope, or consolidation before starting an overlapping implementation.
+- When consolidating, link both PRs, explain which contributions are retained, and preserve attribution through original commits or appropriate co-author credit. Close the superseded PR once the retained contribution and attribution are present in the continuing PR.
+
+A scope comment signals active work, not permanent ownership. If work pauses or changes direction, leave an update; others can propose taking it forward in the same thread.
 
 ## Prepare a reviewable change
 
@@ -26,6 +39,22 @@ Before requesting final review, explain:
 - The applicable checks, actual results, and reproducible evidence links.
 
 Use [the PR template](.github/PULL_REQUEST_TEMPLATE.md); link existing receipts or CI output instead of transcribing long logs. Classify impact by behavior and callers, not file extension or diff size.
+
+## AI assistance and contributor responsibility
+
+AI-assisted contributions are welcome. The same scope, evidence, and accountability requirements apply to contributors and maintainers, whether work is manual or delegated to an Agent.
+
+Every PR must disclose whether AI was used. If used, name the tool(s), model when known, and the work they performed: investigation, design, code, tests, review, or writing/translation. Identify affected areas rather than estimating a percentage of generated lines. If model identity is unavailable, say so. Translation-only use can be disclosed in one sentence.
+
+A human contributor must review the submitted changes and explanation, understand the approach and its impact, and be able to explain the choices and answer review questions. Name that accountable person by GitHub handle when an Agent or bot submits on their behalf. Agents may prepare changes, run checks, and draft replies under that person's direction; they must not claim human review or check a personal confirmation without that person's explicit confirmation. Project-approved automated review comments remain advisory evidence, not human acceptance.
+
+Describe the problem's origin honestly: observed usage, a reproducible defect found during inspection, a synthetic probe, or a proposed improvement. Code inspection can reveal valid bugs; do not present a constructed case as a naturally occurring Agent failure. AI-generated descriptions and replies must be checked for factual accuracy, kept concise, and reflect the contributor's understanding. Translation and editing assistance are allowed.
+
+Link actual validation results in the existing Tests run / Visual evidence sections. Distinguish checks run by an Agent, CI, and human inspection; preserve failures and disclose untested areas. An AI review, a green test run, or a disclosure checkbox alone does not establish useful or correct behavior. Full sessions are required only where the agreed benchmark/evidence scope calls for them; do not upload unrelated private conversations or hidden model reasoning.
+
+Maintainers may request missing disclosure or evidence, defer review, or close a PR that lacks agreed scope, cannot be explained by its contributor, or contains unverified claims. Give a specific reason and a route back through the relevant issue. Repeated submissions that ignore this feedback may be restricted. Evaluate observable conduct and evidence rather than guessing AI use from writing style or an automated detector. Do not bulk-close older PRs solely because they predate this disclosure field.
+
+Policy references consulted on 2026-10-16: [Ghostty](https://github.com/ghostty-org/ghostty/blob/main/AI_POLICY.md), [LLVM](https://llvm.org/docs/AIToolPolicy.html), and [Astral](https://github.com/astral-sh/.github/blob/main/AI_POLICY.md). Archify's requirements are defined here; other projects' restrictions do not apply automatically.
 
 ## PR improvement check
 
@@ -76,6 +105,10 @@ test merely because it differs from the old implementation. Delete redundant
 source assertions when a behavior test owns that protection. Keep explicit
 geometry, compatibility, accessibility, failure cleanup, and protection against
 lost or corrupted output as observable contracts.
+
+### Real generation comparisons
+
+For PRs that change diagram generation, select and link before/after evidence using the [real repository benchmark](benchmarks/real-repo-generation/README.md). Its initial rollout is an agreed three-PR pilot; record the selected scope or a justified exemption before running. Contributors supply the comparison and session records; maintainers review outcomes and sample evidence. Synthetic error injection alone does not establish real Agent benefit. Reuse unaffected evidence at its recorded revision.
 
 ### CI by affected responsibility
 
@@ -175,11 +208,23 @@ For geometry and layout changes, use the smallest redacted JSON reproduction, re
 
 A visual PR must provide enough evidence to evaluate whether the intended user value was achieved, using screenshots, recordings, or reproducible steps. Keep viewport, theme, preset, diagram mode, zoom, and page state comparable. Report automated or browser evidence separately from perceptual review. Non-visual changes may omit the Visual evidence section.
 
-Static SVG/XML checks cannot establish browser layout, font settling, or interaction behavior. When the adaptive reader or Viewer layout changes, run the real browser test with Chrome available:
+Static SVG/XML checks cannot establish browser layout, font settling, or interaction behavior. When the adaptive reader or Viewer layout changes, run the real browser test from the repository root with Chrome available:
+
+In a POSIX shell:
 
 ```sh
 ARCHIFY_CHROME="/path/to/chrome" npm run test:browser -- test/desktop-reader-browser.test.mjs
 ```
+
+In Windows PowerShell:
+
+```powershell
+$env:ARCHIFY_CHROME = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+npm run test:browser -- test/desktop-reader-browser.test.mjs
+```
+
+Replace the example Chrome path with your installed executable's path. In
+PowerShell, the environment variable remains set for the current session.
 
 A browser test skipped because Chrome was unavailable is **skipped**, not passed. Follow [the delivery contract](archify/references/delivery-contract.md) for visual evidence, receipts, and failure stages. Successful validation, atomic delivery, browser checks, and perceptual review establish different claims.
 
@@ -278,4 +323,4 @@ For retriggering or pausing reviews, use the official [review commands](https://
 
 ## License
 
-By contributing, you agree to the repository's [MIT License](LICENSE). Submit only work you created or have the right to contribute.
+New contributions are submitted under the [Apache License 2.0](LICENSE), unless explicitly stated otherwise and accepted by the maintainers. Submit only work you created or have the right to contribute. Historical MIT contributions and third-party licenses remain in effect; see [NOTICE](NOTICE) and [LICENSE-MIT](LICENSE-MIT). Contributors retain copyright ownership; no copyright assignment is required.

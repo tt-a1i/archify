@@ -100,6 +100,11 @@ renderer:
   back to the ordinary families and stays unbundled, and anything authored
   (`route`, `via`, `labelAt`) keeps its own line. Logical routes still traverse
   the trunk, so every gate, label, and the layout report see the full geometry.
+  自动补出的主干桥接还会检查无关关系及已接受的其他桥接；出现交叉、接触或
+  重叠时保留分离的主干段，避免把独立关系画成同一条总线。检查按双方描边的
+  半宽之和留出间隔，并计入无关关系的显式 `width`；中心线未相交但描边接触
+  也会阻止桥接。这个回退不移动
+  实体、显式途经点或端口，也不改变关系基数；无障碍的同簇分支仍可共享主干。
 - Entity boxes are opaque obstacles. When a third entity sits between two
   aligned anchors, the shared obstacle grid routes around it, and a route that
   still cannot clear an unrelated entity fails with

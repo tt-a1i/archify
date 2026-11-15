@@ -34,7 +34,7 @@ const browserSection = delivery.match(/## Automated browser evidence[\s\S]*?## O
 const perceptualReviewSection = delivery.match(/## Perceptual review[\s\S]*?## Handoff receipt/)?.[0] ?? '';
 
 test('ordinary handoff uses one deterministic finalizer without image capability', () => {
-  assert.ok(skill.indexOf('## Existing candidate handoff') < skill.indexOf('## Fast authoring path'));
+  assert.ok(skill.indexOf('## Existing candidate handoff') < skill.indexOf('## Native diagram authoring'));
   assert.match(skill, /run `finalize` first as one CLI invocation/);
   assert.match(skill, /passing receipt completes the automated gates; follow any visual review recommendation/i);
   assert.match(skill, /archify\.mjs finalize <type> <candidate\.json> <output\.html> --quality showcase --json/);
@@ -76,7 +76,7 @@ test('delivery, browser evidence, capture evidence, and perceptual review remain
 test('strict provenance succeeds before either browser command', () => {
   const ordering = delivery.match(/Run strict `check` after `deliver` exits zero\.[\s\S]*?collecting new browser evidence\./)?.[0] ?? '';
   assert.match(ordering, /Run `browser-check` or optional\s+`visual-check` only after that strict check exits zero/i);
-  assert.match(skill, /Recovery follows `deliver` → strict provenance `check` → `browser-check`/);
+  assert.match(skill, /Native diagram recovery follows `deliver` → strict provenance `check` → `browser-check`/);
   assert.match(skill, /captures require strict provenance/);
 });
 

@@ -1,0 +1,71 @@
+{
+  "template": true,
+  "suite_id": "real-repo-generation-v1",
+  "suite_commit": null,
+  "run_id": null,
+  "project_id": null,
+  "project_commit": null,
+  "diagram_type": null,
+  "arm": null,
+  "repetition": 1,
+  "archify": {
+    "commit": null,
+    "package_or_tree_sha256": null,
+    "preparation_log": null
+  },
+  "agent": {
+    "client": null,
+    "version": null,
+    "model": null,
+    "reasoning": null,
+    "tools": [],
+    "memory_policy": null
+  },
+  "environment": {
+    "os": null,
+    "runtime": null,
+    "browser": null,
+    "concurrency": 1,
+    "time_limit_seconds": 1200
+  },
+  "prompt": {
+    "path": null,
+    "sha256": null
+  },
+  "session": {
+    "id": null,
+    "export": null,
+    "capture_method": null,
+    "child_exports": [],
+    "redactions": [],
+    "completeness": null
+  },
+  "artifacts": {
+    "first_json": null,
+    "attempted_json_versions": [],
+    "final_json": null,
+    "html": null,
+    "receipts": [],
+    "screenshots": []
+  },
+  "observations": {
+    "delivery": null,
+    "semantics": null,
+    "readability": null,
+    "reviewer": null,
+    "review_origin": null,
+    "findings": [],
+    "first_draft_check": null,
+    "repair_rounds": null,
+    "tool_calls": null
+  },
+  "timing": {
+    "dispatched_at": null,
+    "first_json_at": null,
+    "finished_at": null,
+    "wall_seconds": null,
+    "cli_work_seconds": null,
+    "queue_wait_seconds": null
+  },
+  "unavailable": []
+}

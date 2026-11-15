@@ -72,9 +72,30 @@ test('ERD accepts partial translations through validate, render and deliver', t 
   }
 });
 
+test('ERD renders the bundled Arabic cardinality legend and preserves authored names', t => {
+  const directory = workspace(t);
+  const document = fixture(undefined, 'ar');
+  document.entities.push({
+    id: 'accounts', label: 'Authored accounts', pos: [440, 80],
+    attributes: [{ name: 'account_id', type: 'int', key: 'pk' }],
+  });
+  document.relationships = [{
+    id: 'users_accounts', from: 'users', to: 'accounts',
+    fromCardinality: 'many', toCardinality: 'one',
+  }];
+  const result = run(directory, document);
+  assert.equal(result.status, 0, result.stderr);
+  const artifact = html(directory);
+  assert.equal(messages(artifact).locale, 'ar');
+  assert.match(artifact, />واحد<\/text>/);
+  assert.match(artifact, />متعدّد<\/text>/);
+  assert.match(artifact, />Authored users<\/text>/);
+  assert.match(artifact, />Authored accounts<\/text>/);
+});
+
 test('ERD empty translations preserve locale-only artifacts byte for byte', t => {
   const directory = workspace(t);
-  for (const locale of ['en', 'zh-CN', 'zh-TW', 'es', 'ko']) {
+  for (const locale of ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar']) {
     const baseline = run(directory, fixture(undefined, locale));
     assert.equal(baseline.status, 0, baseline.stderr);
     const before = html(directory);

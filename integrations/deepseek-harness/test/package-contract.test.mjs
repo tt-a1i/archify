@@ -43,10 +43,10 @@ test('adapter source lives only under integrations/deepseek-harness with no root
   assert.equal(fs.existsSync(path.join(repoRoot, 'integrations/deepseek-harness/package.json')), true);
 });
 
-test('publishable manifest is @tt-a1i/archify-dsh@1.0.0 with a DSH bundle patch and no install surface', () => {
+test('publishable manifest is @tt-a1i/archify-dsh@1.1.0 with a DSH bundle patch and no install surface', () => {
   const pkg = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(pkg.name, '@tt-a1i/archify-dsh');
-  assert.equal(pkg.version, '1.0.0');
+  assert.equal(pkg.version, '1.1.0');
   assert.equal(pkg.license, 'MIT');
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.main, './lib/index.js');
@@ -70,7 +70,7 @@ test('bundle patch inserts one uniquely named filesystem Skill provider resolved
   assert.match(patch, /id:\s*archify-skill-filesystem/);
   assert.match(patch, /name:\s*'@deepseek-ai\/dsh-skill-filesystem'/);
   assert.match(patch, /providerName:\s*archify-plugin/);
-  assert.match(patch, /includeDefaultRoots:\s*false/);
+  assert.match(patch, /includeDefaultRoots:\s*true/);
   assert.match(patch, /bundledSkillDir:\s*!!js/);
   assert.doesNotMatch(patch, /customSkillDirs/);
   assert.match(

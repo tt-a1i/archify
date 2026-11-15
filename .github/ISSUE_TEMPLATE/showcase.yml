@@ -19,6 +19,11 @@ body:
         - Sequence
         - Data flow
         - Lifecycle
+        - ERD
+        - Class
+        - Tree
+        - Timeline
+        - Waterfall
     validations:
       required: true
 

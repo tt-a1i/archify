@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "diagram_type": "tree",
+  "meta": {
+    "title": "Payment platform capabilities",
+    "subtitle": "Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+    "output": "payment-platform-tree.html",
+    "quality_profile": "showcase"
+  },
+  "nodes": [
+    { "id": "platform", "label": "Payment platform", "sublabel": "Decomposed by capability" },
+    { "id": "orders", "label": "Orders", "parent": "platform", "sublabel": "Order lifecycle" },
+    { "id": "payments", "label": "Payments", "parent": "platform", "sublabel": "Money movement" },
+    { "id": "operations", "label": "Operations", "parent": "platform", "sublabel": "Back-office work" },
+    { "id": "create_order", "label": "Create order", "parent": "orders" },
+    { "id": "cancel_order", "label": "Cancel order", "parent": "orders" },
+    { "id": "card_payment", "label": "Card payment", "parent": "payments" },
+    { "id": "wallet_payment", "label": "Wallet payment", "parent": "payments" },
+    { "id": "refunds", "label": "Refund handling", "parent": "operations" },
+    { "id": "reconciliation", "label": "Transaction reconciliation", "parent": "operations" }
+  ]
+}

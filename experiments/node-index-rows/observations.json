@@ -1,0 +1,3586 @@
+[
+  {
+    "label": "sample-web-app-1440-light-columns",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 338.6875,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-1440-light-rows",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 289.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-1440-light-compact",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 228.9375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-1440-light-continuation",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 291.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-1440-dark-columns",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 338.6875,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-1440-dark-rows",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 289.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-1440-dark-compact",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 228.9375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-1440-dark-continuation",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 291.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-390-light-columns",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 435.25,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-390-light-rows",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 667.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-390-light-compact",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 663.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-390-light-continuation",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 659.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-390-dark-columns",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 435.25,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-390-dark-rows",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 667.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-390-dark-compact",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 663.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "sample-web-app-390-dark-continuation",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 659.375,
+    "items": [
+      {
+        "id": "users",
+        "text": "UsersBrowser / Mobile",
+        "tone": "var(--external-stroke)"
+      },
+      {
+        "id": "auth",
+        "text": "Auth ProviderOAuth 2.0",
+        "tone": "var(--security-stroke)"
+      },
+      {
+        "id": "cdn",
+        "text": "CloudFrontCDN",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "lb",
+        "text": "Load BalancerHTTPS :443",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "api",
+        "text": "API ServerFastAPI :8000",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "cache",
+        "text": "Rediscache :6379",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "db",
+        "text": "PostgreSQLprimary :5432",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "s3",
+        "text": "S3static assets",
+        "tone": "var(--cloud-stroke)"
+      },
+      {
+        "id": "queue",
+        "text": "SQSjob queue",
+        "tone": "var(--messagebus-stroke)"
+      },
+      {
+        "id": "worker",
+        "text": "Workerasync jobs",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "users",
+      "id": "users",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-1440-light-columns",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 852.6875,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [
+      "跨区域订单处理与权限校验服务节点 0",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 1",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 2",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 3",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 4",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 5",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 6",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 7",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 8",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 9",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 10",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 11",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 12",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 13",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 14",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 15",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 16",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 17",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 18",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 19",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 20",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 21",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 22",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 23",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 24",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 25",
+      "Tenant-aware policy decisions with durable audit records"
+    ],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-1440-light-rows",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 610.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-1440-light-compact",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 773.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-1440-light-continuation",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 559.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-1440-dark-columns",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 852.6875,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [
+      "跨区域订单处理与权限校验服务节点 0",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 1",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 2",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 3",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 4",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 5",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 6",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 7",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 8",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 9",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 10",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 11",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 12",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 13",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 14",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 15",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 16",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 17",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 18",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 19",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 20",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 21",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 22",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 23",
+      "Tenant-aware policy decisions with durable audit records",
+      "跨区域订单处理与权限校验服务节点 24",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Authorization policy and audit service 25",
+      "Tenant-aware policy decisions with durable audit records"
+    ],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-1440-dark-rows",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 610.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-1440-dark-compact",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 773.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-1440-dark-continuation",
+    "rail": "bottom",
+    "narrowPanelExperiment": false,
+    "scrollWidth": 1440,
+    "panelHeight": 559.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-390-light-columns",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 934.25,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records"
+    ],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-390-light-rows",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 1726.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-390-light-compact",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 1527.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-390-light-continuation",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 1686.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-390-dark-columns",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 934.25,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records",
+      "用于跨区域处理、审计追踪与长期持久化的内部服务",
+      "Tenant-aware policy decisions with durable audit records"
+    ],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-390-dark-rows",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 1726.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-390-dark-compact",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 1527.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  },
+  {
+    "label": "stress-390-dark-continuation",
+    "rail": null,
+    "narrowPanelExperiment": true,
+    "scrollWidth": 390,
+    "panelHeight": 1686.375,
+    "items": [
+      {
+        "id": "node-0",
+        "text": "跨区域订单处理与权限校验服务节点 0用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-1",
+        "text": "Authorization policy and audit service 1Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-2",
+        "text": "跨区域订单处理与权限校验服务节点 2用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-3",
+        "text": "Authorization policy and audit service 3Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-4",
+        "text": "跨区域订单处理与权限校验服务节点 4用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-5",
+        "text": "Authorization policy and audit service 5Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-6",
+        "text": "跨区域订单处理与权限校验服务节点 6用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-7",
+        "text": "Authorization policy and audit service 7Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-8",
+        "text": "跨区域订单处理与权限校验服务节点 8用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-9",
+        "text": "Authorization policy and audit service 9Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-10",
+        "text": "跨区域订单处理与权限校验服务节点 10用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-11",
+        "text": "Authorization policy and audit service 11Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-12",
+        "text": "跨区域订单处理与权限校验服务节点 12用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-13",
+        "text": "Authorization policy and audit service 13Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-14",
+        "text": "跨区域订单处理与权限校验服务节点 14用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-15",
+        "text": "Authorization policy and audit service 15Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-16",
+        "text": "跨区域订单处理与权限校验服务节点 16用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-17",
+        "text": "Authorization policy and audit service 17Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-18",
+        "text": "跨区域订单处理与权限校验服务节点 18用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-19",
+        "text": "Authorization policy and audit service 19Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-20",
+        "text": "跨区域订单处理与权限校验服务节点 20用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-21",
+        "text": "Authorization policy and audit service 21Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-22",
+        "text": "跨区域订单处理与权限校验服务节点 22用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-23",
+        "text": "Authorization policy and audit service 23Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      },
+      {
+        "id": "node-24",
+        "text": "跨区域订单处理与权限校验服务节点 24用于跨区域处理、审计追踪与长期持久化的内部服务",
+        "tone": "var(--database-stroke)"
+      },
+      {
+        "id": "node-25",
+        "text": "Authorization policy and audit service 25Tenant-aware policy decisions with durable audit records",
+        "tone": "var(--backend-stroke)"
+      }
+    ],
+    "clipped": [],
+    "interaction": {
+      "focused": true,
+      "focusPreview": null,
+      "hoverPreview": "node-0",
+      "id": "node-0",
+      "selected": "true"
+    }
+  }
+]

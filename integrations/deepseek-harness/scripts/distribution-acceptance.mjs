@@ -19,12 +19,17 @@ const DSH_RELEASE_REF = release.sourceCommit;
 const DSH_PACKAGE_NAME = '@deepseek-ai/dsh';
 const DSH_SPEC = `${DSH_PACKAGE_NAME}@${release.dshVersion}`;
 const PROFILE = 'archify-dsh-acceptance';
-const UPGRADE_PROFILE = 'archify-dsh-upgrade';
-const PREVIOUS_RELEASE = Object.freeze({
+const PREVIOUS_RELEASES = Object.freeze([{
   version: '0.1.0',
   skillVersion: '2.14.0',
+  includeDefaultRoots: false,
   integrity: 'sha512-D8fDqV6DV/vo80Gj/3rgidd+hwBbhTVncaVoD5Uhh+DbgYlEoQQOmBVbhU5HW33wE5OqJP/2HkTRPJ0hf7W0tA==',
-});
+}, {
+  version: '1.0.0',
+  skillVersion: '3.0.1',
+  includeDefaultRoots: false,
+  integrity: 'sha512-ae5L+SyZngy3EzYnWHHfccAYJCZh5e9MTkEBh7mrwTMfpwpFtkIhiOg2vI5xnluCS8CSb+Ne1hi1kOWRQQtGBQ==',
+}]);
 const DSH_RUNTIME_INSTALL_TIMEOUT = process.platform === 'win32' ? 600_000 : 300_000;
 const PLUGIN_MUTATION_TIMEOUT = 180_000;
 
@@ -151,6 +156,25 @@ fs.mkdirSync(dshHome);
 fs.mkdirSync(agentsHome);
 fs.mkdirSync(dshRuntime);
 fs.mkdirSync(workspace);
+// Anchor host project-root discovery even if the temporary directory has a Git ancestor.
+fs.mkdirSync(path.join(workspace, '.git'));
+
+// Distinct names and bodies make discovery-only and wrong-root successes fail.
+// All homes and the project are disposable; never use the caller's live Skills.
+const defaultSkills = [
+  ['personal-dsh-probe', path.join(dshHome, 'skills')],
+  ['personal-agents-probe', path.join(agentsHome, 'skills')],
+  ['project-dsh-probe', path.join(workspace, '.dsh', 'skills')],
+  ['project-agents-probe', path.join(workspace, '.agents', 'skills')],
+].map(([name, root]) => {
+  const directory = path.join(root, name);
+  const content = `Acceptance fixture body for ${name}.`;
+  fs.mkdirSync(directory, { recursive: true });
+  const file = path.join(directory, 'SKILL.md');
+  fs.writeFileSync(file, `---\nname: ${name}\ndescription: Disposable default-root fixture\n---\n\n${content}\n`);
+  return { name, file, contentSha256: createHash('sha256').update(content).digest('hex') };
+});
+const candidateSkills = ['archify', ...defaultSkills.map(({ name }) => name)];
 
 function cleanup() {
   fs.rmSync(scratch, { recursive: true, force: true });
@@ -176,7 +200,13 @@ if (packReceipt.name !== PACKAGE_NAME || packReceipt.version !== PACKAGE_VERSION
   || !fs.existsSync(tarball)) {
   fail('pack', 'pack receipt identity mismatch', { packReceipt, tarball });
 }
-pass('pack', { filename: packReceipt.filename, fileCount: packReceipt.files?.length });
+pass('pack', {
+  filename: packReceipt.filename,
+  fileCount: packReceipt.files?.length,
+  sha256: createHash('sha256').update(fs.readFileSync(tarball)).digest('hex'),
+  sourceCommit: release.sourceCommit,
+  skillVersion: release.skillVersion,
+});
 
 const inspectRoot = path.join(scratch, 'tarball');
 fs.mkdirSync(inspectRoot);
@@ -311,12 +341,13 @@ if (!archifyProvider || extraProviders.length !== 1 || archifyLayer.rows.length 
     layerRows: archifyLayer.rows.map((row) => row.id),
   });
 }
-if (archifyProvider.config.includeDefaultRoots !== false || archifyProvider.config.providerName !== 'archify-plugin') {
-  fail('compose', 'Archify provider config is not isolated', { archifyProvider });
+if (archifyProvider.config.includeDefaultRoots !== true || archifyProvider.config.providerName !== 'archify-plugin') {
+  fail('compose', 'Archify provider does not preserve default Skill roots', { archifyProvider });
 }
 pass('compose', {
   extraIds: archifyLayer.rows.map((row) => row.id),
   providerName: 'archify-plugin',
+  includeDefaultRoots: true,
 });
 
 const probePatch = path.join(scratch, 'probe.patch.yml');
@@ -326,11 +357,22 @@ fs.writeFileSync(probePatch, `- insert:
       name: ${JSON.stringify(pathToFileURL(probeModule).href)}
       inject: [skills]
 `);
-async function probeProfile(profile, stage) {
+const isolatedProbePatch = path.join(scratch, 'isolated-probe.patch.yml');
+// Reproduce #906 without relying on why Desktop made its base provider inactive.
+fs.writeFileSync(isolatedProbePatch, `- id: skill-filesystem
+  disabled: true
+${fs.readFileSync(probePatch, 'utf8')}`);
+async function probeProfile(profile, stage, { isolated = false, expectedNames = candidateSkills } = {}) {
   const probeOut = path.join(scratch, `${stage}-probe.json`);
-  const child = spawnCli(process.execPath, [dshBin, '--profile', profile, '--patch', probePatch], {
+  const child = spawnCli(process.execPath, [dshBin, '--profile', profile, '--patch', isolated ? isolatedProbePatch : probePatch], {
     cwd: workspace,
-    env: { ...dshEnv, ARCHIFY_DSH_PROBE_OUT: probeOut },
+    env: {
+      ...dshEnv,
+      ARCHIFY_DSH_PROBE_OUT: probeOut,
+      // Query the fixture project explicitly, independently of the host process cwd.
+      ARCHIFY_DSH_PROBE_CWD: workspace,
+      ARCHIFY_DSH_PROBE_SKILLS: JSON.stringify(expectedNames),
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let stdout = '';
@@ -348,7 +390,42 @@ async function probeProfile(profile, stage) {
   return { probe: JSON.parse(fs.readFileSync(probeOut, 'utf8')), stdout, stderr };
 }
 
+function verifyDefaultSkills(stage, probe, { isolated = false } = {}) {
+  for (const fixture of defaultSkills) {
+    const hits = probe.skills.filter((skill) => skill.name === fixture.name);
+    const definition = probe.definitions[fixture.name];
+    if (hits.length !== 1 || !definition || definition.contentSha256 !== fixture.contentSha256
+      || !definition.path || sameEntry(fixture.file, definition.path).status !== 'match'
+      || (isolated && (hits[0].provider !== 'archify-plugin' || definition.provider !== 'archify-plugin'))) {
+      fail(stage, 'personal/project Skill was not uniquely discovered and loaded from its original root', {
+        skill: fixture.name, hits, definition, isolated,
+      });
+    }
+  }
+  pass(stage, { skills: defaultSkills.map(({ name }) => name), baseProviderDisabled: isolated });
+}
+
+async function verifyIsolatedRoots(profile, stage, includeDefaultRoots) {
+  const { probe } = await probeProfile(profile, stage, {
+    isolated: true,
+    expectedNames: includeDefaultRoots ? candidateSkills : ['archify'],
+  });
+  if (!probe.definitions.archify?.contentLength || probe.definitions.archify.provider !== 'archify-plugin') {
+    fail(stage, 'isolated provider did not load Archify', { probe });
+  }
+  if (includeDefaultRoots) {
+    verifyDefaultSkills(stage, probe, { isolated: true });
+  } else {
+    if (defaultSkills.some(({ name }) => probe.skills.some((skill) => skill.name === name))) {
+      fail(stage, 'published isolated baseline unexpectedly exposed default roots', { probe });
+    }
+    pass(stage, { baseProviderDisabled: true, defaultRootsVisible: false });
+  }
+}
+
 const { probe: probeReceipt, stdout: probeStdout, stderr: probeStderr } = await probeProfile(PROFILE, 'skill-discovery');
+verifyDefaultSkills('default-skill-roots', probeReceipt);
+await verifyIsolatedRoots(PROFILE, 'isolated-default-skill-roots', true);
 const archifyHits = (probeReceipt.skills || []).filter((skill) => skill.name === 'archify');
 if (archifyHits.length !== 1 || archifyHits[0].provider !== 'archify-plugin') {
   fail('skill-discovery', 'public Skill registry did not discover archify only from archify-plugin', {
@@ -359,12 +436,12 @@ if (archifyHits.length !== 1 || archifyHits[0].provider !== 'archify-plugin') {
 }
 pass('skill-discovery', { provider: 'archify-plugin' });
 
-if (!probeReceipt.definition?.contentLength || probeReceipt.definition.provider !== 'archify-plugin') {
-  fail('skill-load', 'full Skill definition was not loaded', { definition: probeReceipt.definition });
+if (!probeReceipt.definitions.archify?.contentLength || probeReceipt.definitions.archify.provider !== 'archify-plugin') {
+  fail('skill-load', 'full Skill definition was not loaded', { definition: probeReceipt.definitions.archify });
 }
-pass('skill-load', { contentLength: probeReceipt.definition.contentLength });
+pass('skill-load', { contentLength: probeReceipt.definitions.archify.contentLength });
 
-const resourcePath = probeReceipt.definition.resourceBase?.path || probeReceipt.definition.path;
+const resourcePath = probeReceipt.definitions.archify.resourceBase?.path || probeReceipt.definitions.archify.path;
 const installedPackage = path.join(profileDir, 'node_modules', '@tt-a1i', 'archify-dsh');
 let resourceReal;
 let packageReal;
@@ -426,6 +503,46 @@ pass('package-smoke', {
   output: smoke.stdout.trim(),
 });
 
+
+// A new bundle must not be mistaken for the effective Skill when an older
+// personal/project copy has precedence. Use a real historical Skill body,
+// only in disposable roots, and restart the host for each observation.
+const oldSkillSource = run('git', ['show', '7158026e852f3aa6578c741e673b46d7878c92c1:archify/SKILL.md'], { cwd: repoRoot });
+requireStatus('shadowing-source', oldSkillSource);
+// The pinned CLI host loads the frontmatter-free, trimmed Markdown body.
+// Hash that expected historical body independently of the host probe; hashing
+// raw SKILL.md bytes would test frontmatter/outer whitespace instead of loading.
+// A host parser change requires reviewing this exact-host contract, not weakening
+// the loaded-body/path checks or copying the observed hash into the expectation.
+const oldBody = oldSkillSource.stdout.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trim();
+const personalShadow = path.join(agentsHome, 'skills', 'archify');
+const projectShadow = path.join(workspace, '.agents', 'skills', 'archify');
+async function verifyShadow(stage, expectedFile, expectedHash) {
+  const { probe } = await probeProfile(PROFILE, stage);
+  const definition = probe.definitions.archify;
+  if (!definition?.path || sameEntry(expectedFile, definition.path).status !== 'match'
+    || definition.contentSha256 !== expectedHash) {
+    fail(stage, 'effective Archify body/path does not match the expected precedence', { definition, expectedFile });
+  }
+  pass(stage, { effectivePath: definition.path, contentSha256: definition.contentSha256 });
+}
+const oldBodyHash = createHash('sha256').update(oldBody).digest('hex');
+for (const [label, root] of [['personal', personalShadow], ['project', projectShadow]]) {
+  fs.mkdirSync(root, { recursive: true });
+  fs.writeFileSync(path.join(root, 'SKILL.md'), oldSkillSource.stdout);
+  await verifyShadow(`shadowing-${label}`, path.join(root, 'SKILL.md'), oldBodyHash);
+  fs.rmSync(root, { recursive: true });
+}
+fs.mkdirSync(personalShadow, { recursive: true });
+fs.mkdirSync(projectShadow, { recursive: true });
+fs.writeFileSync(path.join(personalShadow, 'SKILL.md'), oldSkillSource.stdout);
+fs.writeFileSync(path.join(projectShadow, 'SKILL.md'), oldSkillSource.stdout);
+await verifyShadow('shadowing-project-over-personal', path.join(projectShadow, 'SKILL.md'), oldBodyHash);
+fs.rmSync(projectShadow, { recursive: true });
+fs.rmSync(personalShadow, { recursive: true });
+await verifyShadow('shadowing-removal-restores-bundle', probeReceipt.definitions.archify.path,
+  probeReceipt.definitions.archify.contentSha256);
+
 const remove = dsh(['plugin', '--profile', PROFILE, 'remove', PACKAGE_NAME], { timeout: PLUGIN_MUTATION_TIMEOUT });
 requireStatus('uninstall', remove, { command: `dsh plugin --profile ${PROFILE} remove ${PACKAGE_NAME}` });
 const removedManifest = JSON.parse(fs.readFileSync(path.join(profileDir, 'package.json'), 'utf8'));
@@ -447,87 +564,94 @@ pass('base-profile', { bundles: removedManifest.dsh?.profile?.bundles || [] });
 
 // Exercise an existing published installation independently of the clean
 // installation above. Pin its registry bytes, not just an npm dist-tag.
-const previousSpec = `${PACKAGE_NAME}@${PREVIOUS_RELEASE.version}`;
-const previousPack = runWithTransientNetworkRetry(() => run('npm', [
-  'pack', previousSpec, '--ignore-scripts', '--json',
-  '--registry=https://registry.npmjs.org', '--pack-destination', scratch,
-], { cwd: scratch, env: dshEnv, timeout: 120_000 }));
-requireStatus('upgrade-baseline-download', previousPack.result, { command: `npm pack ${previousSpec}` });
-const previousTarball = path.join(scratch, `tt-a1i-archify-dsh-${PREVIOUS_RELEASE.version}.tgz`);
-const previousIntegrity = `sha512-${createHash('sha512').update(fs.readFileSync(previousTarball)).digest('base64')}`;
-if (previousIntegrity !== PREVIOUS_RELEASE.integrity) {
-  fail('upgrade-baseline-download', 'published baseline tarball integrity mismatch', { previousIntegrity });
-}
-const previousRoot = path.join(scratch, 'previous-package');
-fs.mkdirSync(previousRoot);
-requireStatus('upgrade-baseline-download', run('tar', ['-xzf', previousTarball, '-C', previousRoot]));
-pass('upgrade-baseline-download', { spec: previousSpec, integrity: previousIntegrity });
+for (const PREVIOUS_RELEASE of PREVIOUS_RELEASES) {
+  const UPGRADE_PROFILE = `archify-dsh-upgrade-${PREVIOUS_RELEASE.version}`;
+  const previousSpec = `${PACKAGE_NAME}@${PREVIOUS_RELEASE.version}`;
+  const previousPack = runWithTransientNetworkRetry(() => run('npm', [
+    'pack', previousSpec, '--ignore-scripts', '--json',
+    '--registry=https://registry.npmjs.org', '--pack-destination', scratch,
+  ], { cwd: scratch, env: dshEnv, timeout: 120_000 }));
+  requireStatus(`upgrade-baseline-download-${PREVIOUS_RELEASE.version}`, previousPack.result, { command: `npm pack ${previousSpec}` });
+  const previousTarball = path.join(scratch, `tt-a1i-archify-dsh-${PREVIOUS_RELEASE.version}.tgz`);
+  const previousIntegrity = `sha512-${createHash('sha512').update(fs.readFileSync(previousTarball)).digest('base64')}`;
+  if (previousIntegrity !== PREVIOUS_RELEASE.integrity) {
+    fail(`upgrade-baseline-download-${PREVIOUS_RELEASE.version}`, 'published baseline tarball integrity mismatch', { previousIntegrity });
+  }
+  const previousRoot = path.join(scratch, `previous-package-${PREVIOUS_RELEASE.version}`);
+  fs.mkdirSync(previousRoot);
+  requireStatus(`upgrade-baseline-download-${PREVIOUS_RELEASE.version}`, run('tar', ['-xzf', previousTarball, '-C', previousRoot]));
+  pass(`upgrade-baseline-download-${PREVIOUS_RELEASE.version}`, { spec: previousSpec, integrity: previousIntegrity });
 
-async function verifyUpgradeProfile(stage, version, skillVersion, expectedRoot) {
-  const root = path.join(dshHome, 'profiles', UPGRADE_PROFILE);
-  const installed = path.join(root, 'node_modules', '@tt-a1i', 'archify-dsh');
-  const pkg = JSON.parse(fs.readFileSync(path.join(installed, 'package.json'), 'utf8'));
-  const skill = path.join(installed, 'skills', 'archify');
-  const skillPkg = JSON.parse(fs.readFileSync(path.join(skill, 'package.json'), 'utf8'));
-  if (pkg.name !== PACKAGE_NAME || pkg.version !== version || skillPkg.version !== skillVersion) {
-    fail(stage, 'installed upgrade identity mismatch', { version: pkg.version, skillVersion: skillPkg.version });
+  async function verifyUpgradeProfile(stage, version, skillVersion, expectedRoot, includeDefaultRoots) {
+    const root = path.join(dshHome, 'profiles', UPGRADE_PROFILE);
+    const installed = path.join(root, 'node_modules', '@tt-a1i', 'archify-dsh');
+    const pkg = JSON.parse(fs.readFileSync(path.join(installed, 'package.json'), 'utf8'));
+    const skill = path.join(installed, 'skills', 'archify');
+    const skillPkg = JSON.parse(fs.readFileSync(path.join(skill, 'package.json'), 'utf8'));
+    if (pkg.name !== PACKAGE_NAME || pkg.version !== version || skillPkg.version !== skillVersion) {
+      fail(stage, 'installed upgrade identity mismatch', { version: pkg.version, skillVersion: skillPkg.version });
+    }
+    const expectedFiles = listRelativeFiles(expectedRoot);
+    if (JSON.stringify(listRelativeFiles(installed)) !== JSON.stringify(expectedFiles)
+      || expectedFiles.some((file) => !fs.readFileSync(path.join(installed, file)).equals(fs.readFileSync(path.join(expectedRoot, file))))) {
+      fail(stage, 'installed upgrade payload differs from the verified tarball');
+    }
+    const config = dsh(['--profile', UPGRADE_PROFILE, '--dump-config']);
+    requireStatus(stage, config);
+    const rows = parseDump(config.stdout).rows;
+    const providers = rows.filter((row) => row.config.providerName === 'archify-plugin');
+    if (providers.length !== 1 || providers[0].config.includeDefaultRoots !== includeDefaultRoots
+      || !rows.some((row) => row.id === 'skill-filesystem' && row.config.providerName !== 'archify-plugin')) {
+      fail(stage, 'upgrade duplicated the provider, replaced the base Skill provider, or has the wrong default-root policy');
+    }
+    const { probe } = await probeProfile(UPGRADE_PROFILE, stage, {
+      expectedNames: includeDefaultRoots ? candidateSkills : ['archify'],
+    });
+    const hits = (probe.skills || []).filter((entry) => entry.name === 'archify');
+    const resource = probe.definitions.archify?.resourceBase?.path || probe.definitions.archify?.path;
+    const expectedRoots = [path.join(installed, 'skills'), skill];
+    if (hits.length !== 1 || hits[0].provider !== 'archify-plugin'
+      || !probe.definitions.archify?.contentLength || probe.definitions.archify.provider !== 'archify-plugin'
+      || !resource || !expectedRoots.some((entry) => sameEntry(entry, resource).status === 'match')) {
+      fail(stage, 'upgrade did not discover and load exactly one installed Archify Skill', { probe });
+    }
+    pass(stage, { version, skillVersion, provider: 'archify-plugin', includeDefaultRoots, fileCount: expectedFiles.length });
+    if (includeDefaultRoots) verifyDefaultSkills(`${stage}-default-roots`, probe);
+    await verifyIsolatedRoots(UPGRADE_PROFILE, `${stage}-isolated-roots`, includeDefaultRoots);
+    return skill;
   }
-  const expectedFiles = listRelativeFiles(expectedRoot);
-  if (JSON.stringify(listRelativeFiles(installed)) !== JSON.stringify(expectedFiles)
-    || expectedFiles.some((file) => !fs.readFileSync(path.join(installed, file)).equals(fs.readFileSync(path.join(expectedRoot, file))))) {
-    fail(stage, 'installed upgrade payload differs from the verified tarball');
-  }
-  const config = dsh(['--profile', UPGRADE_PROFILE, '--dump-config']);
-  requireStatus(stage, config);
-  const rows = parseDump(config.stdout).rows;
-  const providers = rows.filter((row) => row.config.providerName === 'archify-plugin');
-  if (providers.length !== 1 || providers[0].config.includeDefaultRoots !== false
-    || !rows.some((row) => row.id === 'skill-filesystem' && row.config.providerName !== 'archify-plugin')) {
-    fail(stage, 'upgrade duplicated the provider or replaced the base Skill provider');
-  }
-  const { probe } = await probeProfile(UPGRADE_PROFILE, stage);
-  const hits = (probe.skills || []).filter((entry) => entry.name === 'archify');
-  const resource = probe.definition?.resourceBase?.path || probe.definition?.path;
-  const expectedRoots = [path.join(installed, 'skills'), skill];
-  if (hits.length !== 1 || hits[0].provider !== 'archify-plugin'
-    || !probe.definition?.contentLength || probe.definition.provider !== 'archify-plugin'
-    || !resource || !expectedRoots.some((entry) => sameEntry(entry, resource).status === 'match')) {
-    fail(stage, 'upgrade did not discover and load exactly one installed Archify Skill', { probe });
-  }
-  pass(stage, { version, skillVersion, provider: 'archify-plugin', fileCount: expectedFiles.length });
-  return skill;
-}
 
-requireStatus('upgrade-baseline-install', dsh(['plugin', '--profile', UPGRADE_PROFILE, 'add', previousTarball], {
-  timeout: PLUGIN_MUTATION_TIMEOUT,
-}));
-await verifyUpgradeProfile('upgrade-baseline-load', PREVIOUS_RELEASE.version, PREVIOUS_RELEASE.skillVersion,
-  path.join(previousRoot, 'package'));
-requireStatus('plugin-upgrade', dsh(['plugin', '--profile', UPGRADE_PROFILE, 'add', tarball], {
-  timeout: PLUGIN_MUTATION_TIMEOUT,
-}));
-const upgradedSkill = await verifyUpgradeProfile('plugin-upgrade-load', PACKAGE_VERSION, release.skillVersion,
-  path.join(inspectRoot, 'package'));
-for (const args of [['doctor'], ['demo', path.join(workspace, 'upgraded-smoke')]]) {
-  requireStatus('upgraded-skill-smoke', run(process.execPath, [path.join(upgradedSkill, 'bin', 'archify.mjs'), ...args], {
-    cwd: workspace,
-    timeout: 120_000,
+  requireStatus(`upgrade-baseline-install-${PREVIOUS_RELEASE.version}`, dsh(['plugin', '--profile', UPGRADE_PROFILE, 'add', previousTarball], {
+    timeout: PLUGIN_MUTATION_TIMEOUT,
   }));
+  await verifyUpgradeProfile(`upgrade-baseline-load-${PREVIOUS_RELEASE.version}`, PREVIOUS_RELEASE.version, PREVIOUS_RELEASE.skillVersion,
+    path.join(previousRoot, 'package'), PREVIOUS_RELEASE.includeDefaultRoots);
+  requireStatus(`plugin-upgrade-${PREVIOUS_RELEASE.version}`, dsh(['plugin', '--profile', UPGRADE_PROFILE, 'add', tarball], {
+    timeout: PLUGIN_MUTATION_TIMEOUT,
+  }));
+  const upgradedSkill = await verifyUpgradeProfile(`plugin-upgrade-load-${PREVIOUS_RELEASE.version}`, PACKAGE_VERSION, release.skillVersion,
+    path.join(inspectRoot, 'package'), true);
+  for (const args of [['doctor'], ['demo', path.join(workspace, 'upgraded-smoke')]]) {
+    requireStatus(`upgraded-skill-smoke-${PREVIOUS_RELEASE.version}`, run(process.execPath, [path.join(upgradedSkill, 'bin', 'archify.mjs'), ...args], {
+      cwd: workspace,
+      timeout: 120_000,
+    }));
+  }
+  pass(`upgraded-skill-smoke-${PREVIOUS_RELEASE.version}`, { from: PREVIOUS_RELEASE.version, to: PACKAGE_VERSION, commands: ['doctor', 'demo'] });
+  requireStatus(`upgrade-uninstall-${PREVIOUS_RELEASE.version}`, dsh(['plugin', '--profile', UPGRADE_PROFILE, 'remove', PACKAGE_NAME], {
+    timeout: PLUGIN_MUTATION_TIMEOUT,
+  }));
+  const afterUpgrade = JSON.parse(fs.readFileSync(path.join(dshHome, 'profiles', UPGRADE_PROFILE, 'package.json'), 'utf8'));
+  const afterUpgradeDump = dsh(['--profile', UPGRADE_PROFILE, '--dump-config']);
+  requireStatus(`upgrade-uninstall-${PREVIOUS_RELEASE.version}`, afterUpgradeDump);
+  const afterRows = parseDump(afterUpgradeDump.stdout).rows;
+  if (afterUpgrade.dependencies?.[PACKAGE_NAME] || (afterUpgrade.dsh?.profile?.bundles || []).includes(PACKAGE_NAME)
+    || afterRows.some((row) => row.id === 'archify-skill-filesystem' || row.config.providerName === 'archify-plugin')
+    || !afterRows.some((row) => row.id === 'skill-filesystem')) {
+    fail(`upgrade-uninstall-${PREVIOUS_RELEASE.version}`, 'upgraded plugin did not uninstall cleanly while preserving the base profile');
+  }
+  pass(`upgrade-uninstall-${PREVIOUS_RELEASE.version}`, { profile: UPGRADE_PROFILE, bundles: afterUpgrade.dsh?.profile?.bundles || [] });
 }
-pass('upgraded-skill-smoke', { from: PREVIOUS_RELEASE.version, to: PACKAGE_VERSION, commands: ['doctor', 'demo'] });
-requireStatus('upgrade-uninstall', dsh(['plugin', '--profile', UPGRADE_PROFILE, 'remove', PACKAGE_NAME], {
-  timeout: PLUGIN_MUTATION_TIMEOUT,
-}));
-const afterUpgrade = JSON.parse(fs.readFileSync(path.join(dshHome, 'profiles', UPGRADE_PROFILE, 'package.json'), 'utf8'));
-const afterUpgradeDump = dsh(['--profile', UPGRADE_PROFILE, '--dump-config']);
-requireStatus('upgrade-uninstall', afterUpgradeDump);
-const afterRows = parseDump(afterUpgradeDump.stdout).rows;
-if (afterUpgrade.dependencies?.[PACKAGE_NAME] || (afterUpgrade.dsh?.profile?.bundles || []).includes(PACKAGE_NAME)
-  || afterRows.some((row) => row.id === 'archify-skill-filesystem' || row.config.providerName === 'archify-plugin')
-  || !afterRows.some((row) => row.id === 'skill-filesystem')) {
-  fail('upgrade-uninstall', 'upgraded plugin did not uninstall cleanly while preserving the base profile');
-}
-pass('upgrade-uninstall', { profile: UPGRADE_PROFILE, bundles: afterUpgrade.dsh?.profile?.bundles || [] });
 
 const zipBlob = run('git', ['hash-object', 'archify.zip'], { cwd: repoRoot });
 const pkgBlob = run('git', ['hash-object', 'archify/package.json'], { cwd: repoRoot });

@@ -55,7 +55,76 @@ function runExpectFailure(args, options = {}) {
   return result.stdout;
 }
 
-try {
+async function verifyPackagedExplainer() {
+  // Exercise the installed parser, preparation, native diagram runtime, reader
+  // assets, document checker and patcher through public CLI calls outside cwd.
+  const explainerInput = path.join(scratch, 'package-explainer.md');
+  const explainerOutput = path.join(scratch, 'package-explainer.html');
+  const explainerText = '# How does the request move? {#package-explainer}\n\nThe API sends the request to Redis.\n\n'
+    + '## What is the route? {#route}\n\nRead the [API](node:request.api) before following the request.\n\n'
+    + '@sequence id=request\n| actor api | API | backend |\n| actor redis | Redis | database |\n| api | redis | GET key |\n\n'
+    + '## What can change? {#notes}\n\nThis panel can be revised independently.\n';
+  fs.writeFileSync(explainerInput, explainerText);
+  const explainerOptions = { cwd: scratch, env: { ...process.env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' } };
+  const validateExplainer = JSON.parse(run(['validate', 'explainer', explainerInput, '--json'], explainerOptions));
+  if (!validateExplainer.ok || validateExplainer.type !== 'explainer' || !validateExplainer.candidate?.sha256) {
+    throw new Error('packaged explainer did not validate the authored parser input');
+  }
+  const deliveredExplainer = JSON.parse(run(['deliver', 'explainer', explainerInput, explainerOutput, '--json'], explainerOptions));
+  const checkedExplainer = JSON.parse(run(['check', explainerOutput, '--require-provenance', '--json'], explainerOptions));
+  if (!deliveredExplainer.ok || !checkedExplainer.ok || checkedExplainer.deliveryReceiptId !== deliveredExplainer.receiptId) {
+    throw new Error('packaged explainer delivery did not bind its strict checker receipt');
+  }
+  const { scanHtml } = await import(pathToFileURL(path.join(skillRoot, 'explainer/check.mjs')).href);
+  const preparedExplainer = file => {
+    const payload = scanHtml(fs.readFileSync(file, 'utf8')).scripts.find(script => script.attrs.id === 'archify-explainer-prepared');
+    return JSON.parse(payload?.text || 'null');
+  };
+  const originalExplainer = preparedExplainer(explainerOutput);
+  const requestDiagram = originalExplainer?.preparedDiagrams?.diagrams?.request;
+  if (originalExplainer?.sourceText !== explainerText || requestDiagram?.checks?.check?.ok !== true
+      || !requestDiagram.semantic.nodes.some(node => node.id === 'api')
+      || !requestDiagram.semantic.nodes.some(node => node.id === 'redis')
+      || !requestDiagram.semantic.edges.some(edge => edge.from === 'api' && edge.to === 'redis')) {
+    throw new Error('packaged explainer lost authored text or native semantic graph evidence');
+  }
+  const replacementPanel = path.join(scratch, 'package-replacement.md');
+  const patchedExplainerOutput = path.join(scratch, 'package-explainer-patched.html');
+  fs.writeFileSync(replacementPanel, '## What can change? {#notes}\n\nThe selected panel has updated content.\n');
+  const patchedExplainer = JSON.parse(run(['patch', 'explainer', explainerOutput, 'notes', replacementPanel, patchedExplainerOutput, '--json'], explainerOptions));
+  const patchedPrepared = preparedExplainer(patchedExplainerOutput);
+  if (!patchedExplainer.ok || patchedExplainer.command !== 'patch'
+      || patchedPrepared.document.panels[1].blocks[0].text !== 'The selected panel has updated content.'
+      || JSON.stringify(patchedPrepared.document.panels[0]) !== JSON.stringify(originalExplainer.document.panels[0])
+      || patchedPrepared.preparedDiagrams.diagrams.request.sha256 !== requestDiagram.sha256) {
+    throw new Error('packaged explainer patch changed an untouched native diagram or failed to replace its panel');
+  }
+  run(['check', patchedExplainerOutput, '--require-provenance', '--json'], explainerOptions);
+  const browserUnavailable = JSON.parse(runExpectFailure(['browser-check', explainerOutput, '--require-provenance', '--json'], {
+    ...explainerOptions, env: { ...explainerOptions.env, ARCHIFY_CHROME: path.join(scratch, 'missing-explainer-chrome') },
+  }));
+  if (browserUnavailable.status !== 'skipped' || browserUnavailable.chrome?.status !== 'unavailable') {
+    throw new Error('packaged explainer browser runtime did not report the explicit unavailable browser');
+  }
+  process.stdout.write('packaged explainer parser, native graph, delivery, strict check and panel patch passed without dependencies\n');
+
+}
+
+function verifyPackagedStory(){
+  const input=path.join(skillRoot,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(scratch,'story-brief.json'),output=path.join(scratch,'story-enhanced.html');
+  const options={cwd:scratch,env:{...process.env,NODE_PATH:'',ARCHIFY_UPDATE_CHECK_DISABLED:'1'}};
+  const draft=JSON.parse(run(['story','draft',input,brief,'--json'],options));
+  if(!draft.ok)throw Error('packaged story draft failed');
+  const facts=JSON.parse(fs.readFileSync(draft.sourceMap,'utf8')),edge=facts.edges[0];
+  fs.writeFileSync(brief,JSON.stringify({version:2,title:'Read the tool handoff',intro:'Establish its context.',outro:'Return to the original graph.',scenes:[{title:'Read the relationship',points:[{anchor:edge.to,via:edge.id,title:'Follow this handoff',text:'Explain the selected connection with its source endpoints.'}]}]}));
+  const receipt=JSON.parse(run(['story','attach',input,brief,output,'--json'],options));
+  if(!receipt.ok)throw Error('packaged story attachment failed');
+  const html=fs.readFileSync(output,'utf8'),start=html.indexOf('<style id="archify-story-attachment-style">');
+  if(start<0||html.slice(0,start)+html.slice(html.lastIndexOf('</body>'))!==fs.readFileSync(input,'utf8'))throw Error('packaged story changed the native HTML');
+  process.stdout.write('packaged story scan, draft and attachment passed without dependencies\n');
+}
+
+async function verifyPackage() {
   if (!fs.existsSync(cli)) throw new Error(`packaged CLI not found at ${cli}`);
   requireAbsent('node_modules');
   requireAbsent('package-lock.json');
@@ -65,21 +134,31 @@ try {
   requireAbsent('.hive');
   requireAbsent('.workbuddy');
 
+  if (process.argv.includes('--explainer-only')) {
+    await verifyPackagedExplainer();
+    process.stdout.write(`explainer package smoke passed on ${process.platform} (${skillRoot})\n`);
+    return;
+  }
   const packageLicensePath = path.join(skillRoot, 'LICENSE');
   if (!fs.existsSync(packageLicensePath)) {
     throw new Error('packaged skill is missing LICENSE');
   }
   const packageLicense = fs.readFileSync(packageLicensePath, 'utf8');
-  const packageLicenseLines = packageLicense.split(/\r?\n/);
-  if (!packageLicenseLines.includes('Copyright (c) 2025 Cocoon AI')) {
-    throw new Error('packaged LICENSE is missing the exact Cocoon AI copyright line');
-  }
   const repositoryLicense = fs.readFileSync(path.join(repoRoot, 'LICENSE'), 'utf8');
   if (packageLicense !== repositoryLicense) {
     throw new Error('packaged LICENSE must byte-match the repository LICENSE');
   }
-  if (!packageLicense.includes('The above copyright notice and this permission notice shall be included in all')) {
-    throw new Error('packaged LICENSE is missing the MIT notice-preservation terms');
+  for (const name of ['LICENSE-MIT', 'NOTICE']) {
+    const target = path.join(skillRoot, name);
+    if (!fs.existsSync(target)) throw new Error(`packaged skill is missing ${name}`);
+    if (!fs.readFileSync(target).equals(fs.readFileSync(path.join(repoRoot, name)))) {
+      throw new Error(`packaged ${name} must byte-match the repository ${name}`);
+    }
+  }
+  const legacyLicense = fs.readFileSync(path.join(skillRoot, 'LICENSE-MIT'), 'utf8');
+  if (!legacyLicense.split(/\r?\n/).includes('Copyright (c) 2025 Cocoon AI') ||
+      !legacyLicense.includes('The above copyright notice and this permission notice shall be included in all')) {
+    throw new Error('packaged LICENSE-MIT is missing the original MIT copyright and permission notice');
   }
 
   const packageNoticesPath = path.join(skillRoot, 'THIRD_PARTY_NOTICES.md');
@@ -137,7 +216,7 @@ try {
 
   const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
   const skillReferences = [...skill.matchAll(
-    /`((?:assets|bin|examples|recipes|references|renderers|schemas|scripts)\/[^`\s]+)`/g,
+    /`((?:assets|bin|examples|explainer|recipes|references|renderers|schemas|scripts)\/[^`\s]+)`/g,
   )]
     .map((match) => match[1])
     .filter((reference) => !/[<>{}*\[\]]/.test(reference));
@@ -181,6 +260,10 @@ try {
       throw new Error('deployment package validation omitted the engineering profile receipt');
     }
   }
+
+  await verifyPackagedExplainer();
+
+  verifyPackagedStory();
 
   const workflowLayout = JSON.parse(run([
     'validate', 'workflow', path.join(skillRoot, 'examples', fixtures[1][1]),
@@ -372,6 +455,10 @@ try {
   }
 
   process.stdout.write(`package smoke passed on ${process.platform} (${skillRoot})\n`);
+}
+
+try {
+  await verifyPackage();
 } finally {
   fs.rmSync(scratch, { recursive: true, force: true });
 }

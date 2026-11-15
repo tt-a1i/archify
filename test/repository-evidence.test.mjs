@@ -454,6 +454,10 @@ test('portable origin failures redact HTTP credentials and query tokens', () => 
     'http://user:SYNTHETIC_TOKEN@git.internal/Team/other',
     'http://git.internal/Team/repo?token=SYNTHETIC_TOKEN',
     'https://user:SYNTHETIC_TOKEN@git.internal/Team/repo',
+    ' http://user:SYNTHETIC_TOKEN@git.internal/Team/other',
+    '\thttp://user:SYNTHETIC_TOKEN@git.internal/Team/other',
+    ' https://user:SYNTHETIC_TOKEN@git.internal/Team/other',
+    '\thttps://user:SYNTHETIC_TOKEN@git.internal/Team/other',
   ]) {
     git(data.root, 'remote', 'set-url', 'origin', origin);
     const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
@@ -763,4 +767,38 @@ test('live preview forwards repo-root and publishes only verified evidence', { t
   } finally {
     await preview.stop();
   }
+});
+
+test('every unresolved source reference is reported in one run, with the exact end_line to use', (t) => {
+  const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  data.diagram.components[0].sources = [
+    { path: 'src/router.js', line: 2, end_line: 9 },
+    { path: 'src/store.js', line: 5 },
+    { path: 'src/missing.js' },
+  ];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  const report = JSON.parse(result.stdout);
+  assert.deepEqual(report.diagnostics.map(({ code, subject }) => [code, subject.path]), [
+    ['repository-evidence/line-out-of-range', '/components/0/sources/0'],
+    ['repository-evidence/line-out-of-range', '/components/0/sources/1'],
+    ['repository-evidence/file-missing', '/components/0/sources/2/path'],
+  ]);
+  assert.match(report.diagnostics[0].supportedFixes[0], /set end_line to 3/);
+  assert.match(report.diagnostics[1].supportedFixes[0], /reread src\/store\.js \(1 lines\)/);
+});
+
+// POSIX permits trailing whitespace in a directory component; it belongs to
+// the repository identity rather than Git's newline-delimited output framing.
+test('repository evidence preserves trailing whitespace in the Git top-level path', { skip: process.platform === 'win32' }, (t) => {
+  const data = fixture();
+  const renamedRoot = `${data.root} `;
+  fs.renameSync(data.root, renamedRoot);
+  t.after(() => fs.rmSync(renamedRoot, { recursive: true, force: true }));
+  const evidence = verifyRepositoryEvidence('architecture', data.diagram, renamedRoot);
+  assert.equal(evidence.verified, true);
+  assert.equal(evidence.repository.revision, data.revision);
+  assert.equal(evidence.referenceCount, 2);
 });

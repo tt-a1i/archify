@@ -18,3 +18,6 @@
 # Normalize line endings so working-tree bytes match the index on Windows (core.autocrlf=true).
 # See issue #144: tracked files materialized as CRLF on Windows, breaking byte-exact checks.
 * text=auto eol=lf
+
+# Release archives contain binary bytes and must not be line-normalized.
+archify.zip binary

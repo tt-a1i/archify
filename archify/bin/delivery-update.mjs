@@ -27,7 +27,7 @@ function normalize(result) {
   const noticeText = noticeRequired
     ? `Archify ${result.severity === 'security' ? 'security update' : 'update'}: ${result.installedVersion} → ${result.latestVersion}. ${cached
       ? `A previous check at ${result.checkedAt} found a newer release.`
-      : 'A newer release is available.'} Release notes: ${result.releaseNotes}. The installed Skill has not changed; ask to snooze or ignore this reminder.`
+      : 'A newer release is available.'} Release notes: ${result.releaseNotes}. Would you like me to update Archify?`
     : null;
   return {
     status: 'update_available',
@@ -35,6 +35,7 @@ function normalize(result) {
     availableVersion: result.latestVersion,
     releaseNotes: result.releaseNotes,
     severity: result.severity,
+    summary: result.summary ?? null,
     checkedAt: result.checkedAt,
     source: result.source,
     noticeRequired,

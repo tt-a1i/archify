@@ -137,6 +137,14 @@ export function validateReleaseNotesUrl(value, version) {
   return value;
 }
 
+export function validateReleaseSummary(value) {
+  if (typeof value !== 'string' || value.length < 1 || value.length > 160
+    || CONTROL_OR_BIDI.test(value)) {
+    throw new UpdateContractError('invalid release summary');
+  }
+  return value;
+}
+
 export function validateStableUpdateManifest(value) {
   if (!hasExactKeys(value, [
     'schemaVersion', 'skillId', 'channel', 'version', 'publishedAt', 'source',
@@ -155,10 +163,7 @@ export function validateStableUpdateManifest(value) {
     throw new UpdateContractError('invalid immutable stable release identity');
   }
   validateCanonicalUtcTimestamp(value.publishedAt);
-  if (typeof value.summary !== 'string' || value.summary.length < 1 || value.summary.length > 160
-    || CONTROL_OR_BIDI.test(value.summary)) {
-    throw new UpdateContractError('invalid release summary');
-  }
+  validateReleaseSummary(value.summary);
   validateReleaseNotesUrl(value.releaseNotes, value.version);
   if (!['normal', 'security'].includes(value.severity)) {
     throw new UpdateContractError('invalid update severity');

@@ -1,5 +1,7 @@
 # Ordinary-Model Floor v1
 
+**Metric scope:** historical `firstPassUsable` means usability after one complete Agent invocation, which may include repairs. It is not first-draft success. For PR comparisons with draft history and full sessions, use [real repository generation comparisons](../real-repo-generation/README.md).
+
 This benchmark measures a narrow product question: can an ordinary coding agent produce an Archify diagram that is usable on attempt 1, without a human repairing the JSON?
 
 It is a delivery gate, not a model leaderboard. A run is `firstPassUsable` only when all three gates pass:

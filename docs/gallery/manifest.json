@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "generator": "scripts/build-gallery.mjs",
-  "archifyVersion": "3.0.2-dev.1",
-  "entryCount": 12,
-  "checkCount": 108,
+  "archifyVersion": "3.2.1-dev.1",
+  "entryCount": 16,
+  "checkCount": 144,
   "entries": [
     {
       "id": "agent-tool-call",
@@ -19,8 +19,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 11,
-      "artifactBytes": 826137,
-      "artifactSha256": "0079a1e3bb13dfbfacefe0db80982ed04cfb052237341e5d132e0e62a27320e4",
+      "artifactBytes": 882061,
+      "artifactSha256": "77187c109a9460f918a45b778f6ddae7ed13eb77730353e0a4d15d79e42c35c0",
       "sourceBytes": 4939,
       "sourceSha256": "d67965d50872c97e4ff3476271e645bf19fab6b3ab44e111bdb44b063e3aa36f",
       "checks": [
@@ -141,8 +141,8 @@
       "engineeringProfile": "deployment-ownership",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 828515,
-      "artifactSha256": "ba9fe5b95b0317c3c63f50025ce119f12c376a3623dd5734a354a0b712240fbb",
+      "artifactBytes": 884439,
+      "artifactSha256": "9be9100931a129ab53a1f8e55ca590c477b6aa4e9671d6eccabfc73d15c9a653",
       "sourceBytes": 4734,
       "sourceSha256": "610a5614667e8f108bdcf1769c9d7af5c3ce0fb62be3ea50550b10eb752e4bda",
       "checks": [
@@ -274,8 +274,8 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 12,
-      "artifactBytes": 816425,
-      "artifactSha256": "e0119b860958a3cd8e5bcaf7cf14861a72e40f30754390ddc2fc2f2ac3e77b0a",
+      "artifactBytes": 872349,
+      "artifactSha256": "4442097c2c35a82c2311760b8f3bf85afdbc0bb2774071635cfe400ab0d142f8",
       "sourceBytes": 3805,
       "sourceSha256": "f8486daa803fff6c295cecca4604c561fbbf9acb2e83326022b5a87639e8afe6",
       "checks": [
@@ -408,8 +408,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 821697,
-      "artifactSha256": "0639a6953be6955e1093c83ea6b8cbf0ed74f851931b933fbd039efde7f3ab47",
+      "artifactBytes": 877621,
+      "artifactSha256": "c6dd8d5ddc7a998aba6ad64c12f70dab18ca3a1317acff9bac8ea27df16797d0",
       "sourceBytes": 4510,
       "sourceSha256": "dbd5c174af66296caec372e7214cf4df7158b50a563508e16826b95ab8d1cd6c",
       "checks": [
@@ -548,8 +548,8 @@
       "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 10,
-      "artifactBytes": 819097,
-      "artifactSha256": "91ba6623d64c672ea893b5ebe90b8cd63ba0aaf4f5e2f98e6c7ff40837171524",
+      "artifactBytes": 875021,
+      "artifactSha256": "8801b53d6dbe84fbe155ccd4ee0d26ebff32b58dea18b5129408595a5873bd62",
       "sourceBytes": 4723,
       "sourceSha256": "630be98449925d2716ecb8439f404b2bff5fe65ba905b0ad0baea6d96890c526",
       "checks": [
@@ -734,8 +734,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 818712,
-      "artifactSha256": "e598a9c9ea5378a89ea18109c5a3e29a862c14e3051cc7b5236ad4c12cd2490f",
+      "artifactBytes": 874636,
+      "artifactSha256": "c714ce01f44001f9c5bdfa7f2c16fdd52d893a3b538fa2ec50a3f8ed52ed5ae1",
       "sourceBytes": 5035,
       "sourceSha256": "8a635db9e51a5b1a8d2955b9d66f5b9a450e0a298432ce8f2e2f0be11f372e05",
       "checks": [
@@ -869,8 +869,8 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 14,
-      "artifactBytes": 816771,
-      "artifactSha256": "052f71a0d3a0eaa27f83f5b34d3d8b84fd9e9f4ce800158f15f4feb9d0cbf939",
+      "artifactBytes": 872695,
+      "artifactSha256": "a628c89632bbc408324df6eb245d77811c97e7b5bde657dff25b04264b374fd5",
       "sourceBytes": 3766,
       "sourceSha256": "b8c6c52f1763ede2933c77deb8da59b3e06917bc41d27e66df896136456b859a",
       "checks": [
@@ -1021,8 +1021,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 822632,
-      "artifactSha256": "39218965949dd275a8586d40c1046ecaf20c9debac4cd37f3699730e5ac5a7de",
+      "artifactBytes": 878556,
+      "artifactSha256": "5f0223e5f2a2d128603a64378c350d4052727c89d3090eaf61e80601e52d0568",
       "sourceBytes": 4769,
       "sourceSha256": "3bdd77674282009c7c68d588cf8a3c495bc98a3be1b9c45327fd1801a6f83a23",
       "checks": [
@@ -1173,8 +1173,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 12,
-      "artifactBytes": 822520,
-      "artifactSha256": "b0664216ad55b618e325867f6ae77c9ed0dc260b2b7ba9c8ea07f9ac446c9db2",
+      "artifactBytes": 878444,
+      "artifactSha256": "7048172056b4adebb2622e03cc251385c9f3d6bb64853380bcf440affbdcadb2",
       "sourceBytes": 3260,
       "sourceSha256": "5ba36f5ce91ed428cb48b599e275424916d82b619b9a3231cbd1bbc3966fc54b",
       "checks": [
@@ -1295,8 +1295,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 15,
-      "artifactBytes": 829545,
-      "artifactSha256": "eb343809362af6a8425c3c9adcf13417791c908fa2a423605e91a56b27c54d91",
+      "artifactBytes": 885469,
+      "artifactSha256": "6c6f5ed3d957714dc9127e06111bfc93a37c327758d89eabb6a14208cbed7c41",
       "sourceBytes": 4155,
       "sourceSha256": "e3dc105d03c1c9881160006cdace23cb5d8533803e337caf0ec287c64e775275",
       "checks": [
@@ -1417,8 +1417,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
-      "artifactBytes": 821054,
-      "artifactSha256": "d9d6279574e08cefb261e825d20a3dfb40e21c3a53ccc147e6eacab877bdbf25",
+      "artifactBytes": 876978,
+      "artifactSha256": "e96c729a720152528b6cb9d7c180f5669e47a61c8ecfafab545860c5dccce684",
       "sourceBytes": 3197,
       "sourceSha256": "95e051b27a9e4a3307e194c0f666fca4af51470be7e2228d400ff48aea5b353b",
       "checks": [
@@ -1563,8 +1563,8 @@
       "engineeringProfile": null,
       "nodeCount": 6,
       "edgeCount": 5,
-      "artifactBytes": 836116,
-      "artifactSha256": "fd02323534578bd61eb2f90ae32a583a936a970861f261f6608aaf1998487e82",
+      "artifactBytes": 892040,
+      "artifactSha256": "d1863a53049ab67edf4725d167a932404f47c01461b72eeb7de66480c76baf22",
       "sourceBytes": 7321,
       "sourceSha256": "1777a374647084466f4d7ce3a968004be6ab70ac9cf82459b96bed7c556cdfdd",
       "checks": [
@@ -1670,6 +1670,508 @@
           "minimumSourceTextPx": 9,
           "minimumProjectedTextPx": 8.378378378378379,
           "semanticTextCount": 92
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "payments",
+      "type": "class",
+      "title": "Payment module types",
+      "subtitle": "OrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+      "input": "gallery/sources/payments.class.json",
+      "artifact": "gallery/artifacts/payments.class.html",
+      "focus": "payment_gateway",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "trace",
+      "engineeringProfile": null,
+      "nodeCount": 5,
+      "edgeCount": 4,
+      "artifactBytes": 871556,
+      "artifactSha256": "e71e849f5a45d3ad6d95e49e285b150f05517bbdcafaf5b412d14f4210688509",
+      "sourceBytes": 2828,
+      "sourceSha256": "afba837f97a041e14687cbe8893523232c4afad7afd922d9b128606d1b3f12c8",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": 114.8,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 8.897280966767372,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": 1,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": 84,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "edge",
+            "id": "uses_gateway",
+            "from": "order_service",
+            "to": "payment_gateway"
+          },
+          "minimumSourceTextPx": 9.5,
+          "minimumProjectedTextPx": 8.897280966767372,
+          "semanticTextCount": 37
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "payment-platform",
+      "type": "tree",
+      "title": "Payment platform capabilities",
+      "subtitle": "Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+      "input": "gallery/sources/payment-platform.tree.json",
+      "artifact": "gallery/artifacts/payment-platform.tree.html",
+      "focus": "payments",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "trace",
+      "engineeringProfile": null,
+      "nodeCount": 10,
+      "edgeCount": 9,
+      "artifactBytes": 870500,
+      "artifactSha256": "27ffa3ce35b171abc38c877e8380b1a4066c2b85ea7281f74880f74749056f6a",
+      "sourceBytes": 1214,
+      "sourceSha256": "1e99f37b3845d67fa97c9a2ff33109981c23bfdb0d03ba05b7d92944dcdfc61f",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": null,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 9.569691300280637,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": null,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": null,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "platform"
+          },
+          "minimumSourceTextPx": 11,
+          "minimumProjectedTextPx": 9.569691300280637,
+          "semanticTextCount": 14
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "payment-incident",
+      "type": "timeline",
+      "title": "Payment failure incident",
+      "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+      "input": "gallery/sources/payment-incident.timeline.json",
+      "artifact": "gallery/artifacts/payment-incident.timeline.html",
+      "focus": "rollback",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "trace",
+      "engineeringProfile": null,
+      "nodeCount": 5,
+      "edgeCount": 0,
+      "artifactBytes": 864878,
+      "artifactSha256": "90a4fe34565715d47ac07e2b6fd37be4644eddd3b2bb809aa9137ea2f282d582",
+      "sourceBytes": 1445,
+      "sourceSha256": "c1f535b3cc915ddd47ecd7df4e3ef02c441c8c3191daced5cf4422cff8dec95f",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": null,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 10.35173642030276,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": null,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": null,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "deploy"
+          },
+          "minimumSourceTextPx": 12.5,
+          "minimumProjectedTextPx": 10.35173642030276,
+          "semanticTextCount": 5
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "checkout-request",
+      "type": "waterfall",
+      "title": "Checkout request execution",
+      "subtitle": "Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+      "input": "gallery/sources/checkout-request.waterfall.json",
+      "artifact": "gallery/artifacts/checkout-request.waterfall.html",
+      "focus": "payment",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "trace",
+      "engineeringProfile": null,
+      "nodeCount": 6,
+      "edgeCount": 5,
+      "artifactBytes": 864167,
+      "artifactSha256": "daf3d54e9b81d7c577c0210b36dbe08066d135df0c048cfa8c059527be55405a",
+      "sourceBytes": 1209,
+      "sourceSha256": "55a5f74699a0f0e44018a4a000556d43c90430b95f39accac6141af8318b5133",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": null,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 10.674931129476583,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": null,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": null,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "request"
+          },
+          "minimumSourceTextPx": 12.5,
+          "minimumProjectedTextPx": 10.674931129476583,
+          "semanticTextCount": 6
         },
         "issues": []
       }

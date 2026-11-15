@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Stability comes first. A small typed JSON reproduction and the machine-readable validation receipt are the fastest path to a safe fix.
+        Stability comes first. For diagram defects, include a small typed JSON reproduction and validation receipt when available. For installation or Viewer problems, provide the relevant steps and error; explain when a command, JSON, or receipt does not apply.
 
   - type: input
     id: archify_version
@@ -40,6 +40,11 @@ body:
         - Sequence
         - Data flow
         - Lifecycle
+        - ERD
+        - Class
+        - Tree
+        - Timeline
+        - Waterfall
         - Installation or packaging
         - Generated viewer
     validations:
@@ -49,7 +54,7 @@ body:
     id: command
     attributes:
       label: Exact command
-      description: Include flags and paths, replacing private path segments with neutral placeholders.
+      description: Include flags and paths, replacing private path segments with neutral placeholders. For a UI-only problem, describe the actions instead.
       render: shell
     validations:
       required: true
@@ -58,7 +63,7 @@ body:
     id: minimal_json
     attributes:
       label: Minimal redacted JSON reproduction
-      description: Remove unrelated nodes and facts while preserving the failure.
+      description: Remove unrelated nodes and facts while preserving the failure. If JSON does not apply or cannot be produced, explain why and provide reproduction steps.
       render: json
     validations:
       required: true
@@ -67,7 +72,7 @@ body:
     id: validation_receipt
     attributes:
       label: Validation receipt or exact error
-      description: Prefer the complete JSON produced by `validate --json` or `deliver --json`.
+      description: Prefer the complete JSON produced by `validate --json` or `deliver --json`. If no receipt or error exists, say so and describe the observed failure.
       render: json
     validations:
       required: true

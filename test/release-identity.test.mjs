@@ -510,3 +510,44 @@ test('stable public-page templates reject development labels on version-bearing 
     fs.rmSync(fixture, { recursive: true, force: true });
   }
 });
+
+test('public-page identity ignores compact SVG coordinates without hiding real version literals', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  const templatePath = 'scripts/start-template.html';
+  const identity = 'development · 开发版 · [[ARCHIFY_VERSION]]';
+  const coordinates = 'M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4z';
+  try {
+    for (const pathElement of [
+      `<path d="${coordinates}"/>`,
+      `<path d='${coordinates}'/>`,
+      `<path aria-label="x > y" d = "${coordinates}"/>`,
+    ]) {
+      writeValidDevelopmentFixture(fixture, {
+        [templatePath]: `${identity}<svg>${pathElement}</svg>`,
+      });
+      const valid = runCheck(fixture);
+      assert.equal(valid.status, 0, valid.stderr);
+    }
+
+    // A nearby path attribute, another element's d attribute, and visible text
+    // still belong to the release-identity contract, not SVG coordinate data.
+    for (const content of [
+      `<svg><path data-version="2.12.0" d="${coordinates}"/></svg>`,
+      `<svg><path d="${coordinates}" data-version="2.12.0"/></svg>`,
+      `<div d="2.12.0"></div>`,
+      `<path-data d="2.12.0"></path-data>`,
+      `<svg><path aria-label="release d='2.12.0'" d="M0 0"/></svg>`,
+      `<div title="<path d='2.12.0'>"></div>`,
+      `<script>const markup = "<path d='2.12.0'>";</script>`,
+      `<path d="2.12.0"></path>`,
+      `<svg><path d="${coordinates}"/></svg><span>2.12.0</span>`,
+    ]) {
+      writeFile(fixture, templatePath, `${identity}${content}`);
+      const stale = runCheck(fixture);
+      assert.notEqual(stale.status, 0, content);
+      assert.match(stale.stderr, /scripts\/start-template\.html must use \[\[ARCHIFY_VERSION\]\]/);
+    }
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});

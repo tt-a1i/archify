@@ -1,0 +1,7 @@
+The three pages use the public explainer renderer and the drafts in ../examples/.
+
+Fast build:
+  node docs/specs/explainer/prototypes/build.mjs /tmp/explainer-board
+
+The build receipt records gate status, elapsed time, bytes and the artifact digest.
+Page IDs remain comparison, mechanism and diagram. The build performs no installation.

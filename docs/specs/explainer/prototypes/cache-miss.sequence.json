@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "一次缓存未命中的订单请求",
+    "subtitle": "GET /orders/42：先查 Redis，未命中再查 PostgreSQL，并由接口写回缓存",
+    "output": "cache-miss.html",
+    "locale": "zh-CN",
+    "animation": "none",
+    "visual_preset": "editorial",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "浏览器",
+      "sublabel": "客户端"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "订单接口",
+      "sublabel": "API"
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "缓存"
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "订单库"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req",
+      "from": "browser",
+      "to": "api",
+      "y": 160,
+      "label": "GET /orders/42"
+    },
+    {
+      "id": "cache-get",
+      "from": "api",
+      "to": "redis",
+      "y": 225,
+      "label": "GET order:42"
+    },
+    {
+      "id": "cache-miss",
+      "from": "redis",
+      "to": "api",
+      "y": 290,
+      "label": "nil · 未命中",
+      "variant": "return"
+    },
+    {
+      "id": "db-select",
+      "from": "api",
+      "to": "postgres",
+      "y": 360,
+      "label": "SELECT … WHERE id = 42",
+      "variant": "emphasis"
+    },
+    {
+      "id": "db-rows",
+      "from": "postgres",
+      "to": "api",
+      "y": 430,
+      "label": "结果行",
+      "variant": "return"
+    },
+    {
+      "id": "cache-set",
+      "from": "api",
+      "to": "redis",
+      "y": 495,
+      "label": "SET order:42 EX 300 · 写回",
+      "variant": "emphasis"
+    },
+    {
+      "id": "resp",
+      "from": "api",
+      "to": "browser",
+      "y": 565,
+      "label": "200 OK",
+      "variant": "return"
+    }
+  ]
+}

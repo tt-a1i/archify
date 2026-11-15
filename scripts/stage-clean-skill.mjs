@@ -439,6 +439,22 @@ function cleanupOwnedStaging(ownership) {
   }
 }
 
+function validateLicenseInputs(repoRoot, packageEntries) {
+  const manifest = packageEntries.find(entry => entry.relative === 'archify/package.json');
+  // Historical MIT snapshots remain packable by the separately pinned adapter.
+  if (JSON.parse(manifest.content.toString('utf8')).license !== 'Apache-2.0') return;
+  for (const name of ['LICENSE', 'LICENSE-MIT', 'NOTICE']) {
+    const relative = `archify/${name}`;
+    // path-contract-allow: portable-logical-path -- Both values are tracked package entry names, not native paths.
+    const entry = packageEntries.find(candidate => candidate.relative === relative);
+    if (!entry) throw new Error(`required package input is missing: ${relative}`);
+    requireTrackedFile(repoRoot, name);
+    if (!entry.content.equals(fs.readFileSync(path.join(repoRoot, name)))) {
+      throw new Error(`${relative} must byte-match the repository ${name}`);
+    }
+  }
+}
+
 function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
   const packagedEntry = packageEntries.find((entry) => (
     entry.relative === 'archify/THIRD_PARTY_NOTICES.md'
@@ -544,6 +560,7 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManife
   // Current packages must contain every imported runtime, while historical
   // snapshots that predate a runtime remain reproducible by the DSH adapter.
   validateRuntimeDependencies(packageEntries);
+  validateLicenseInputs(resolvedRoot, packageEntries);
   validateThirdPartyNoticeInputs(resolvedRoot, packageEntries);
   cleanPackageManifestEntry(packageEntries);
 

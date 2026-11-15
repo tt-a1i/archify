@@ -37,9 +37,10 @@ test('plugin is skill-only and does not declare native tools', () => {
   assert.match(init, /HERMES_HOME/);
 });
 
-test('register() registers the in-repo Skill without a packed copy', () => {
+test('register() advertises all ten modes and registers the in-repo Skill without a packed copy', () => {
   const result = spawnSync(python, [...pythonArgs, '-c', `
 import importlib.util
+import re
 from pathlib import Path
 plugin = Path(${JSON.stringify(path.join(integrationRoot, '__init__.py'))})
 spec = importlib.util.spec_from_file_location('archify_hermes_plugin', plugin)
@@ -54,7 +55,10 @@ calls = []
 mod.register(SimpleNamespace(register_skill=lambda *args, **kw: calls.append((args, kw))))
 assert len(calls) == 1
 assert calls[0][0] == ('archify', resolved)
-assert calls[0][1]['description']
+description = calls[0][1]['description']
+for mode in ('architecture', 'workflow', 'sequence', 'data-flow', 'lifecycle',
+             'ERD', 'class', 'tree', 'timeline', 'waterfall'):
+    assert re.search(r'\\b' + re.escape(mode) + r'\\b', description, re.IGNORECASE), mode
 `], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(path.resolve(result.stdout.trim()), path.join(repoRoot, 'archify', 'SKILL.md'));

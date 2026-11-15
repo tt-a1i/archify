@@ -1,5 +1,7 @@
 # Repair Rounds v1
 
+**Evidence scope:** synthetic diagnostic regression checks. The injected inputs and rules repairer are not real Agent behavior. Use [real repository generation comparisons](../real-repo-generation/README.md) for claims about authoring quality, rework or end-to-end speed.
+
 This benchmark measures a narrow product question: **how efficiently do Archify receipts let a caller converge to a passing artifact?** It complements `ordinary-model-floor` (first-pass usability) and the `authoring-cost` studies (real agent time and token spend) by isolating the part of authoring cost that lives inside the feedback loop — how many validation rounds a defect costs, how early each defect is surfaced, and how much text each round forces the caller to read.
 
 It is a measurement harness, not a model leaderboard, and it contains no human or model judgment. Everything is driven by deterministic defect injection against the checked-in example fixtures and the real Archify CLI.
@@ -15,7 +17,7 @@ It is a measurement harness, not a model leaderboard, and it contains no human o
 | Actionability | repairs a rules-only repairer could derive from diagnostics alone; `unactionable` receipts are counted honestly |
 | Observable token cost | a deterministic lexical estimate over the required-reading set, each round's receipt, and each round's candidate |
 
-A defect reported only after earlier gates passed means at least one extra authoring round in the real loop; `viewer/viewport-overflow` is the canonical example. Diagnostics that name no subject, carry no evidence, and suggest no fix produce `unactionable` repairs rather than silent passes.
+A late defect such as `viewer/viewport-overflow` can add another check in this scripted loop. The benchmark does not establish its cost to a real Agent. Diagnostics that name no subject, carry no evidence, and suggest no fix produce `unactionable` repairs rather than silent passes.
 
 ## Defect classes
 
@@ -50,7 +52,7 @@ Reports require one command and repair mode per input file; mixed configurations
 
 ## Repair modes
 
-- `rules` (default): the repairer sees only the receipt — `subject` paths, `evidence`, `supportedFixes`, and pixel figures inside `layout/constraint` messages. It models the weakest honest agent: repairs derived purely from what the tool reports.
+- `rules` (default): the repairer sees only the receipt — `subject` paths, `evidence`, `supportedFixes`, and pixel figures inside `layout/constraint` messages. It is a mechanical consumer of repairs derivable from what the tool reports; it does not model Agent reasoning.
 - `oracle`: each attributed defect is restored exactly. This upper bound isolates staging (how early defects surface) from actionability (whether the receipt suffices to fix them).
 
 ## Metrics provenance

@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -19,7 +20,7 @@ const large = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'payme
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 function render(diagram) {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-class-'));
+  const directory = createScratchDirectory(path.join(os.tmpdir(), 'archify-class-'));
   const input = path.join(directory, 'candidate.class.json');
   const output = path.join(directory, 'candidate.html');
   fs.writeFileSync(input, JSON.stringify(diagram));

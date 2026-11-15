@@ -17,6 +17,7 @@ import {
   parseSemver,
   validateLocalRelease,
   validateReleaseNotesUrl,
+  validateReleaseSummary,
   validateStableUpdateManifest,
 } from './update-contract.mjs';
 import { sameEntry } from '../renderers/shared/path-semantics.mjs';
@@ -68,6 +69,7 @@ function validateManifest(value) {
     version: manifest.version,
     targetDigest: `sha256:${manifest.artifact.sha256}`,
     severity: manifest.severity,
+    summary: manifest.summary,
     releaseNotes: manifest.releaseNotes,
   };
 }
@@ -75,13 +77,14 @@ function validateManifest(value) {
 function validateCachedCandidate(value) {
   if (!isPlainObject(value)
     || !hasOnlyKeys(value, new Set([
-      'version', 'targetDigest', 'severity', 'releaseNotes', 'checkedAt',
+      'version', 'targetDigest', 'severity', 'releaseNotes', 'checkedAt', 'summary',
     ]))) return null;
   try {
     if (!isStableCoreVersion(value.version)) return null;
     if (!DIGEST_PATTERN.test(value.targetDigest)
       || !['normal', 'security'].includes(value.severity)) return null;
     validateReleaseNotesUrl(value.releaseNotes, value.version);
+    if (Object.hasOwn(value, 'summary')) validateReleaseSummary(value.summary);
     if (typeof value.checkedAt !== 'string' || !Number.isFinite(Date.parse(value.checkedAt))) return null;
     return { ...value };
   } catch {
@@ -1302,7 +1305,7 @@ function notification(localRelease, candidate, source) {
     latestVersion: candidate.version,
     targetDigest: candidate.targetDigest,
     severity: candidate.severity,
-    summary: `Archify ${candidate.version} is available; see the official release notes for details.`,
+    summary: candidate.summary ?? null,
     releaseNotes: candidate.releaseNotes,
     source,
     checkedAt: candidate.checkedAt,

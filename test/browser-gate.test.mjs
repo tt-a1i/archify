@@ -176,7 +176,7 @@ test('browser shards are deterministic, nonempty, disjoint and cover the full ma
   assert.equal(new Set(shards.flat()).size, full.length);
   assert.equal(shards.flat().length, full.length);
   assert.deepEqual(shards.flat().sort(), [...full].sort());
-  const owner = file => shards.findIndex(files => files.includes(`test/${file}`));
+  const owner = file => shards.findIndex(files => files.some(entry => path.basename(entry) === file));
   assert.notEqual(owner('desktop-reader-browser.test.mjs'), owner('i18n-browser.test.mjs'));
   assert.notEqual(owner('viewer-chrome-layout.test.mjs'), owner('reader-layout-browser.test.mjs'));
 });

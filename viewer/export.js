@@ -32,13 +32,21 @@
       }
 
       function diagramFilename() {
-        var title = (document.title || 'diagram')
-          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
-          .replace(/\s+Diagram$/i, '')
-          .trim();
-        return title.replace(/[^a-z0-9_\-]+/gi, '-')
-                    .toLowerCase()
-                    .replace(/^-+|-+$/g, '') || 'diagram';
+        // Prefer the authored heading: the document title may carry a
+        // locale-specific page decoration ("Diagram", "Diagrama", ...).
+        // Without a heading, keep the complete document title; suffix-like
+        // words in either source are authored text and are not stripped.
+        var heading = document.querySelector('.header h1');
+        var title = (heading && heading.textContent || '').trim() ||
+          (document.title || '').trim();
+        // A mark is kept only while attached to a letter or number base;
+        // a detached mark (the variation selector after an emoji, say)
+        // would otherwise survive as an invisible filename.
+        var name = title.replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, '$1$2')
+                        .replace(/[^\p{L}\p{M}\p{N}_\-]+/gu, '-')
+                        .toLowerCase()
+                        .replace(/^-+|-+$/g, '');
+        return name || 'diagram';
       }
 
       function currentBg() {
@@ -237,6 +245,13 @@
         var autoTheme = requestedTheme === 'auto';
         var svg = document.querySelector('.diagram-container svg');
         var clone = svg.cloneNode(true);
+        var softwareNotices = document.getElementById('archify-software-notices');
+        if (softwareNotices) {
+          var softwareMetadata = document.createElementNS('http://www.w3.org/2000/svg', 'metadata');
+          softwareMetadata.setAttribute('id', 'archify-software-notices');
+          softwareMetadata.textContent = JSON.parse(softwareNotices.textContent);
+          clone.insertBefore(softwareMetadata, clone.firstChild);
+        }
 
         var canonicalStateClean = cleanExportClone(clone);
 
@@ -1158,6 +1173,7 @@
       });
       // APG menu-button pattern: ArrowDown/ArrowUp on the trigger opens the menu.
       btn.addEventListener('keydown', function (e) {
+        if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault();
           if (!isOpen()) open(e.key === 'ArrowUp');
@@ -1173,6 +1189,7 @@
       menu.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
         if (e.key === 'Tab')    { close(false); return; }
+        if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
 
         var available = items().filter(function (i) { return !i.hidden && !i.disabled; });
         var current = available.indexOf(document.activeElement);

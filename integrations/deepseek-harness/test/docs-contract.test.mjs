@@ -14,9 +14,9 @@ function read(relativePath) {
 const manifest = JSON.parse(read('integrations/deepseek-harness/package.json'));
 const release = JSON.parse(read('integrations/deepseek-harness/release.json'));
 const published = Object.freeze({
-  adapterVersion: '1.0.0',
-  skillVersion: '3.0.1',
-  dshVersion: '0.1.2-rc.1',
+  adapterVersion: '1.1.0',
+  skillVersion: '3.2.0',
+  dshVersion: '0.2.1-rc.2',
 });
 const bundled = Object.freeze({
   adapterVersion: manifest.version,
@@ -34,17 +34,15 @@ test('DSH documentation identifies the published release and its pinned snapshot
   assert.ok(integration.includes(`currently published npm package is **v${published.adapterVersion}**`));
   assert.ok(integration.includes(`@deepseek-ai/dsh@${published.dshVersion}`));
   assert.ok(integration.includes(`Archify Skill **${published.skillVersion}**`));
-  assert.equal(bundled.adapterVersion, published.adapterVersion);
-  assert.equal(bundled.skillVersion, published.skillVersion);
-  assert.equal(bundled.dshVersion, published.dshVersion);
   assert.ok(integration.includes(`Archify ${bundled.skillVersion}`));
   assert.ok(integration.includes(bundled.sourceCommit));
   assert.ok(integration.includes(`@deepseek-ai/dsh@${bundled.dshVersion}`));
   assert.doesNotMatch(integration, /not published or available as an npm install yet|pending \*\*v1\.0\.0/);
   assert.ok(integration.includes(`releases/tag/archify-dsh-v${published.adapterVersion}`));
   assert.match(integration, /pinned to stable `main` commit/);
-  assert.match(integration, /landed after the `v3\.0\.1` tag/);
+  assert.match(integration, /after the `v3\.2\.0` tag/);
   assert.match(integration, /not a byte-for-byte copy of that tag/);
+  assert.match(integration, /Version 1\.0\.0 \(2026-10-04\) bundled \*\*Archify 3\.0\.1\*\*/);
   assert.match(integration, /notification-only/);
   assert.match(integration, /does not update an already installed plugin/);
   assert.match(integration, /repository root is not a DSH package/);
@@ -57,6 +55,28 @@ test('DSH documentation identifies the published release and its pinned snapshot
   assert.match(integration, /`!!js` expression that DSH evaluates during host activation/);
   assert.match(integration, /locating its packaged `skills` directory/);
   assert.match(integration, /rather than entirely declarative data/);
+});
+
+test('effective-Skill shadowing and bundled licenses stay documented', () => {
+  const integration = read('integrations/deepseek-harness/README.md');
+  const section = integration.split('## Which Archify actually loads?')[1]?.split('\n## ')[0];
+  assert.ok(section, 'keep the effective-Skill caveat separate from the install instructions');
+  assert.match(section, /personal and project Skill sources outrank the bundled snapshot/);
+  assert.match(section, /does \*\*not\*\* necessarily upgrade the effective Skill/);
+  assert.match(section, /actual loaded body and source path/);
+  assert.match(section, /do not delete live Skills automatically/);
+  assert.match(integration, /LICENSE-MIT.*NOTICE.*THIRD_PARTY_NOTICES/);
+  assert.match(integration, /adapter remains MIT-licensed/);
+});
+
+test('default-root behavior is documented for both published releases', () => {
+  const integration = read('integrations/deepseek-harness/README.md');
+  const section = integration.split('## Default Skill roots')[1]?.split('\n## ')[0];
+  assert.ok(section, 'document the provider root behavior for the published releases');
+  assert.match(section, /Published \*\*1\.1\.0\*\* sets `includeDefaultRoots: true`/);
+  assert.match(section, /Published \*\*1\.0\.0\*\* set `includeDefaultRoots: false`/);
+  assert.match(section, /macOS Desktop `0\.2\.0-rc\.2`/);
+  assert.match(section, /verification remains pending/);
 });
 
 test('English, Chinese, and Japanese docs cover install, invoke, uninstall, community wording, and Produced Files', () => {
@@ -107,9 +127,10 @@ test('Skills CLI, Cursor, Codex, Claude Code, OpenCode, and Raven remain the def
   const english = read('README.md');
   const chinese = read('README_ZH.md');
   const japanese = read('README_JA.md');
-  assert.match(english, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
-  assert.match(chinese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
-  assert.match(japanese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
+  const quickStartInstall = /^```bash\nnpx -y skills@latest add https:\/\/archify\.si --skill archify --agent cursor --global --copy --yes\n```$/m;
+  assert.match(english, quickStartInstall);
+  assert.match(chinese, quickStartInstall);
+  assert.match(japanese, quickStartInstall);
   assert.match(english, /## Quick start/);
   assert.match(chinese, /## 快速开始/);
   assert.match(japanese, /## クイックスタート/);
@@ -125,7 +146,7 @@ test('npm README describes the packaged version independently of publication sta
   assert.ok(packaged.includes(`@deepseek-ai/dsh@${bundled.dshVersion}`));
   assert.ok(packaged.includes(bundled.sourceCommit));
   assert.ok(packaged.includes(manifest.engines.node));
-  assert.doesNotMatch(packaged, /currently published npm package|not published or available as an npm install yet/);
-  assert.match(packaged, /After this version is available in the npm registry/);
+  assert.doesNotMatch(packaged, /currently published npm package|not published or available as an npm install yet|After this version is available in the npm registry/);
+  assert.match(packaged, /^Install the exact version in each profile that uses Archify:$/m);
   assert.match(packaged, /outside the agent sandbox/);
 });

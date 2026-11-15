@@ -1,0 +1,162 @@
+---
+import { featuredPartner, sponsorsList } from '../data/sponsors';
+---
+
+<section class="sponsors-strip" aria-label="Partners and sponsors">
+  <div class="container">
+    <div class="strip-inner">
+      <div class="strip-head">
+        <span class="strip-label" data-en="Partners & sponsors" data-zh="合作伙伴与赞助">Partners & sponsors</span>
+        <a class="strip-more" href="community.html#sponsors">
+          <span data-en="View partners & perks" data-zh="查看合作详情与专属福利">View partners & perks</span>
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+
+      <ul class="strip-brands">
+        <!-- Featured: Kimi Work (prominent pill) -->
+        <li>
+          <a class="strip-item strip-featured" href="community.html#sponsors">
+            <svg class="strip-kimi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect width="24" height="24" rx="6" fill="#0b0d12" stroke="rgba(255,255,255,0.18)" />
+              <path d="M8.5 7.5V16.5M8.5 12.2L15 7.5M11.2 10.2L15.5 16.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="17.5" cy="7.5" r="2" fill="#2563eb" />
+            </svg>
+            <strong data-en={featuredPartner.name.en} data-zh={featuredPartner.name.zh}>{featuredPartner.name.en}</strong>
+            <span class="strip-tag" data-en="Official Plugin" data-zh="官方插件">Official Plugin</span>
+          </a>
+        </li>
+
+        <!-- Unified 6 sponsors in README order -->
+        {sponsorsList.map((sponsor) => (
+          <li>
+            <a class="strip-item" href="community.html#sponsors">
+              <span data-en={sponsor.name.en} data-zh={sponsor.name.zh}>{sponsor.name.en}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sponsors-strip {
+    padding: 3.5rem 0 0;
+  }
+  .strip-inner {
+    padding: 1.35rem 0 1.5rem;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .strip-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+  }
+  .strip-label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .strip-brands {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+  }
+  .strip-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 40px;
+    padding: 0.35rem 0.25rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    color: var(--text-3);
+    font-family: var(--font-grot);
+    font-size: 1.0625rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background 0.2s var(--ease-out);
+  }
+  .strip-item:hover {
+    color: var(--text);
+  }
+  .strip-featured {
+    padding: 0.35rem 0.8rem 0.35rem 0.45rem;
+    border-color: var(--line-hi);
+    background: var(--surface);
+    color: var(--text);
+  }
+  .strip-featured:hover {
+    border-color: rgba(var(--accent-rgb), 0.5);
+  }
+  .strip-featured strong {
+    font-weight: 600;
+  }
+  .strip-kimi-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .strip-tag {
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  :root[data-theme="dark"] .strip-tag {
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.15);
+  }
+  .strip-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--accent-text);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.18s var(--ease-out);
+  }
+  .strip-more:hover {
+    transform: translateX(2px);
+  }
+  @media (max-width: 900px) {
+    .strip-brands {
+      justify-content: flex-start;
+      gap: 0.5rem 1.25rem;
+    }
+    .strip-item {
+      font-size: 0.9375rem;
+    }
+  }
+  @media (max-width: 560px) {
+    .strip-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .strip-more:hover {
+      transform: none;
+    }
+  }
+</style>

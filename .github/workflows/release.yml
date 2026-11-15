@@ -66,6 +66,7 @@ jobs:
         run: npm run test:webm
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Run shared browser regression gate
         run: npm run test:browser
         env:

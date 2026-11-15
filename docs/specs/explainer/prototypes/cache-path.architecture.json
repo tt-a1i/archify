@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "缓存未命中的调用关系",
+    "subtitle": "机制示意：API 负责查缓存、回源和回填；这张图不表示耗时或执行先后。",
+    "output": "work/explainer-visual-reference/cache-path.html",
+    "locale": "zh-CN",
+    "visual_preset": "editorial",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {"id":"client","type":"external","label":"客户端","sublabel":"发起读取请求","pos":[40,200],"size":[140,64]},
+    {"id":"api","type":"backend","label":"API","sublabel":"读取与回填的发起方","pos":[300,200],"size":[160,64]},
+    {"id":"redis","type":"database","label":"Redis","sublabel":"缓存副本","pos":[300,40],"size":[160,64]},
+    {"id":"db","type":"database","label":"PostgreSQL","sublabel":"原始数据","pos":[620,200],"size":[160,64]}
+  ],
+  "connections": [
+    {"id":"request","from":"client","to":"api","label":"请求","variant":"emphasis"},
+    {"id":"cache","from":"api","to":"redis","label":"GET / SET"},
+    {"id":"query","from":"api","to":"db","label":"未命中时查询","variant":"emphasis"}
+  ]
+}

@@ -28,7 +28,7 @@ const templatePath = path.join(skillRoot, 'assets/template.html');
 const { tmp, run, deliverKoreanFixture, deliverJapaneseFixture, cliJson } = createLocaleFixture();
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
@@ -257,7 +257,7 @@ function embeddedMessages(html) {
   return JSON.parse(embedded[1]);
 }
 
-test('bundled es and ko render from meta.locale alone in all five modes, identical to supplying the full catalog', () => {
+test('bundled es, ko, and ar render from meta.locale alone in all five modes, identical to supplying the full catalog', () => {
   const cases = {
     es: {
       catalog: ES_TRANSLATIONS, legend: 'Leyenda', focus: 'Enfocar', exportLabel: 'Exportar diagrama',
@@ -266,6 +266,11 @@ test('bundled es and ko render from meta.locale alone in all five modes, identic
     ko: {
       catalog: KO_TRANSLATIONS, legend: '범례', focus: '포커스', exportLabel: '다이어그램 내보내기',
       titleSuffix: ' 다이어그램', description: /<desc id="archify-diagram-description">Archify로 생성한/,
+    },
+    ar: {
+      catalog: JSON.parse(fs.readFileSync(path.join(skillRoot, 'locales/ar.json'), 'utf8')),
+      legend: 'المفتاح', focus: 'إبراز', exportLabel: 'تصدير المخطّط',
+      titleSuffix: ' — مخطّط', description: /<desc id="archify-diagram-description">مخطّط/,
     },
   };
   for (const [locale, expected] of Object.entries(cases)) {
@@ -515,6 +520,9 @@ test('enrolling a catalog is a data-only change and works from an unrelated work
     filter: (source) => !['node_modules', 'test'].includes(path.basename(source)) || path.dirname(source) !== skillRoot,
   });
   const french = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/locales/fr.json'), 'utf8'));
+  // Drop a known key so this fixture exercises partial-coverage disclosure
+  // independently of future changes to the example catalog.
+  delete french['viewer.rail.show'];
   fs.writeFileSync(path.join(packageRoot, 'locales/fr.json'), JSON.stringify(french));
   const manifestPath = path.join(packageRoot, 'locales/manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -692,5 +700,37 @@ test('Share Card and export failures use catalog messages instead of fixed Engli
     "'WebM motion export requires a trace animation and browser MediaRecorder support'",
   ]) {
     assert.ok(!template.includes(hardcoded), hardcoded);
+  }
+});
+
+test('Arabic route and reach summaries use count-neutral labels and preserve direction and maximum depth', () => {
+  // The existing one/other API cannot select Arabic dual/few/many forms.
+  // Label/value wording keeps these summaries correct without changing it.
+  for (const count of [0, 1, 2, 3, 10, 11, 100]) {
+    const nodes = translateCount('ar', 'viewer.export.card.node', count);
+    const links = translateCount('ar', 'viewer.export.card.link', count);
+    const hops = translateCount('ar', 'viewer.export.card.hop', count);
+    assert.equal(nodes, `عدد العُقد: ${count}`);
+    assert.equal(links, `عدد الروابط: ${count}`);
+    assert.equal(hops, `عدد القفزات: ${count}`);
+    assert.equal(
+      translateCount('ar', 'viewer.export.card.routeSummary', count, { source: 'API Gateway', target: 'قاعدة البيانات' }),
+      `المسار: من API Gateway إلى قاعدة البيانات · عدد الخطوات: ${count}`,
+    );
+    for (const direction of ['upstream', 'downstream']) {
+      const label = translateMessage('ar', `viewer.export.direction.${direction}`);
+      assert.equal(
+        translateCount('ar', `viewer.passport.reach.${direction}`, count),
+        `تتبّع العُقد المُؤَلَّفة نحو ${label} (العدد: ${count})`,
+      );
+      assert.equal(
+        translateMessage('ar', 'viewer.export.card.reachSummary', { direction: label, origin: 'API Gateway', nodes, links, hops }),
+        `الامتداد المُؤَلَّف نحو ${label} من API Gateway · ${nodes} · ${links} · ${hops} كحد أقصى`,
+      );
+      assert.equal(
+        translateMessage('ar', 'viewer.passport.reach.status', { direction: label, nodes: count, links: count, hops: count }),
+        `${label} · عدد العُقد: ${count} · عدد الروابط: ${count} · أقصى عدد للقفزات: ${count}`,
+      );
+    }
   }
 });

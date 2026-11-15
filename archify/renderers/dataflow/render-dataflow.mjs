@@ -20,4 +20,4 @@ try {
   throw error;
 }
 writeDiagram({ outPath, template, diagramType: 'dataflow', meta: dataflow.meta,
-  svg, cards: dataflow.cards, sourceEvidence });
+  svg, cards: dataflow.cards, sourceEvidence, diagram: dataflow });

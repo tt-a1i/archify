@@ -22,8 +22,9 @@
 
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
+  <a href="#archify-지원하기"><img src="https://img.shields.io/badge/Support-E2500E?style=flat-square" alt="Support Archify" /></a>
 </p>
 
 ## Archify 살펴보기
@@ -40,8 +41,10 @@ https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 
 Cursor, Claude Code, Codex CLI, OpenCode에서 사용할 수 있습니다.
 
-```bash
-npx skills add tt-a1i/archify -g
+**AI 에이전트에게 맡기기.** 다음 문장을 그대로 붙여 넣으세요.
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
 
 에이전트에게 다음과 같이 요청하세요.
@@ -61,6 +64,26 @@ API는 Redis를 확인해. 캐시 미스면 PostgreSQL을 조회하고 캐시를
 
 [에이전트 선택하기](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) · [설치와 업데이트 확인 상세](#빠른-시작)
 
+## 질문하면 한 페이지로 답합니다
+
+모든 답이 다이어그램 한 장은 아닙니다. 에이전트에게 한 페이지로 답해 달라고 하면 Archify가 **explainer**를 만듭니다. 결론을 먼저 보여 주고, 질문마다 패널을 나누어 표, 단계, 차트, 코드, 검증된 다이어그램으로 이유를 설명합니다.
+
+[![explainer 예시: 결론이 먼저 나오고, 단계가 설명하는 시퀀스 다이어그램 옆에 나란히 놓입니다](docs/assets/explainer-tls-en.png)](https://archify.si/cases/explainer/tls-first-visit.html)
+
+- **결론 먼저.** 답과 이유가 앞에 오고, 패널마다 질문 하나에 답합니다.
+- **글과 그림이 함께 설명합니다.** 단계는 설명하는 다이어그램 옆에 놓이고, 읽는 단계에 맞춰 해당 부분이 강조됩니다. 노드를 클릭하면 전체 인터랙티브 뷰가 열립니다.
+- **확인할 수 있습니다.** 주장에는 번호가 붙은 출처가 있고, 저장소 발췌는 특정 커밋에 고정되어 소스 카드로 열립니다.
+- **공유하기 쉽습니다.** HTML 파일 하나에 네 가지 스타일과 라이트·다크 테마가 들어 있습니다. PNG, WebP, JPG 긴 이미지나 PDF로 내보낼 수 있고, 어느 패널이든 후속 질문을 만들어 에이전트가 그 패널만 고치게 할 수 있습니다.
+
+```text
+Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐는데
+평균은 거의 그대로야. 원인은 무엇이고 어떻게 조사해야 해?
+```
+
+기본적으로 복잡한 흐름, 문제 진단 결과, 선택지 비교, 테스트 보고서 같은 답에서는 요청하지 않아도 에이전트가 페이지를 만듭니다. 답장에는 채팅에서 바로 읽을 수 있는 짧은 결론이 남고, 마지막 줄은 "테스트 보고서 열기" 같은 페이지 링크입니다. 짧은 답, 텍스트만 원하는 요청, 생성에 실패한 페이지에는 페이지도 링크도 붙지 않습니다. 요청할 때만 페이지를 만들게 하려면 에이전트에게 그렇게 말하거나 전역 규칙 파일(`~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md` 등)에 `[archify explainer: on-demand]`를 추가하세요. `[archify explainer: always-on]`은 결론이 있는 모든 답에 간결한 페이지를 붙이며, 이 줄을 지우면 기본 동작으로 돌아갑니다.
+
+라이브 예시: [처음 HTTPS 접속(영어)](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 지연(중국어)](https://archify.si/cases/explainer/p99-tail-latency.html) · [저장소에서 읽은 Archify finalize(중국어)](https://archify.si/cases/explainer/finalize-delivery.html) · [첫 임대 체크리스트(중국어)](https://archify.si/cases/explainer/first-rental.html)
+
 ## 무엇을 보여줄 수 있나요?
 
 | 에이전트 워크플로 설명 | 캐시 미스 추적 | 서비스 관계 탐색 |
@@ -72,22 +95,34 @@ API는 Redis를 확인해. 캐시 미스면 PostgreSQL을 조회하고 캐시를
 
 ## 빠른 시작
 
-**현재 안정 버전:** [변경 이력](CHANGELOG.md)을 확인하세요.
+**현재 개발 버전:** `v3.2.1-dev.1` (안정 릴리스가 아닙니다). [변경 이력](CHANGELOG.md#unreleased)을 확인하세요.
 
 ### 1. 설치
 
+**AI 에이전트에게 맡기기**
+
+다음 문장을 그대로 붙여 넣으세요.
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
+```
+
+확인 없이 설치할 수도 있습니다. `--agent`는 하나, 또는 전환 대상마다 반복합니다 (`cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`). `--copy`는 심볼릭 링크 대신 파일을 복사합니다.
+
+Cursor에만 설치:
+
 ```bash
-npx skills add tt-a1i/archify -g
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+```
+
+또는 다섯 에이전트가 모두 필요한 경우에만:
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
 <details>
 <summary>다른 설치 방법과 업데이트 확인 동작</summary>
-
-비대화형 Cursor 설치:
-
-```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
-```
 
 설치하지 않고 사용해 보기:
 
@@ -201,11 +236,43 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 
 ## 라이선스
 
-[MIT](LICENSE) — 자유롭게 사용, 수정, 배포할 수 있습니다.
+[Apache-2.0](LICENSE) — 자유롭게 사용, 수정, 배포할 수 있습니다.
+
+기존 MIT 허가는 계속 유효합니다. [NOTICE](NOTICE)와 [LICENSE-MIT](LICENSE-MIT)를 참조하세요. 타사 구성 요소는 각자의 라이선스를 유지합니다. 소프트웨어 라이선스는 사용자가 작성한 콘텐츠의 소유권을 변경하거나 Archify 상표의 일반적인 사용 권한을 부여하지 않습니다.
 
 ## 기여하기
 
 Issue, Pull Request, 실제 사용 사례 다이어그램을 환영합니다. [기여 가이드](CONTRIBUTING.md)에서 시작하세요. 실패는 재현 가능한 버그 양식으로 제보하고, 검증된 다이어그램은 [커뮤니티 Showcase 양식](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)으로 제출할 수 있습니다.
+
+## Archify 지원하기
+
+Archify가 도움이 되었다면, 지속적인 개발을 지원해 주실 수 있습니다. 프로젝트가 계속 이어지도록 응원해 주셔서 감사합니다 ❤️
+
+<details>
+<summary>WeChat Pay로 지원하기</summary>
+
+아래 QR 코드를 WeChat으로 스캔하거나, 이미지를 저장한 뒤 WeChat에서 인식하세요.
+
+<p align="center"><img src="docs/assets/support/wechat-pay.png" alt="Archify 유지 관리자를 지원하는 WeChat Pay QR 코드" width="240" /></p>
+
+</details>
+
+<details>
+<summary>Alipay로 지원하기</summary>
+
+아래 QR 코드를 Alipay로 스캔하거나, 이미지를 저장한 뒤 Alipay에서 인식하세요.
+
+<p align="center"><img src="docs/assets/support/alipay.png" alt="Archify 유지 관리자를 지원하는 Alipay QR 코드(이름은 가려져 있습니다)" width="240" /></p>
+
+</details>
+
+Archify를 사용하고, 공유하고, 버그를 제보하고, 개선에 기여하는 것도 프로젝트에 도움이 됩니다.
+
+## 기여자
+
+Archify를 함께 만들어 준 모든 분께 감사합니다. [팔로우해 보세요.](https://github.com/tt-a1i/archify/graphs/contributors) ❤️
+
+<p align="center"><a href="https://github.com/tt-a1i/archify/graphs/contributors"><img alt="Archify 기여자" src="https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg" width="1000" /></a></p>
 
 ## Star History
 

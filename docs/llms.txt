@@ -1,0 +1,53 @@
+# Archify
+
+> Turn a description, a question, or a repository into an interactive diagram or a one-page explainer. Ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, and waterfall. The result is one standalone HTML file. Free and open source (Apache-2.0).
+
+Version: 3.2.1-dev.1
+Repository: https://github.com/tt-a1i/archify
+Website: https://archify.si
+
+## Install for the user
+
+If you are an agent asked to install Archify, do only the steps below. Tell the user what each command will run, then wait for them to confirm the scope before you install. Do not generate a diagram, scan a repository, or update anything else as part of installation.
+
+Confirm this scope first:
+
+- Global (`--global`) or the current project only.
+- Target agent: the agent you are running in, unless the user names others. Switcher ids: `cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`.
+
+1. Discover the skill. This only lists the package; it does not install it.
+
+   `npx -y skills@latest add https://archify.si --list --full-depth`
+
+   Stop unless the listing contains exactly one skill named `archify`.
+
+2. Before either install command, inspect every selected agent destination. If an existing `archify` destination contains unmanaged files, stop and report the conflict before running the installer; preserve those files.
+
+   Install that skill for the confirmed agent. `--copy` copies files instead of symlinking. Leave unmanaged files in place. If the installer reports a conflict with existing unmanaged files, stop and tell the user; do not delete them. `--yes` only skips prompts for the scope they already confirmed.
+
+   One agent:
+
+   `npx -y skills@latest add https://archify.si --skill archify --agent <agent> --global --copy --yes`
+
+   Several agents, by repeating `--agent`:
+
+   `npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes`
+
+   Omit `--global` for a project-only install. Do not add other skills, agents, sources, or force flags.
+
+3. Verify with the installed package. `<installed-path>` is the directory the installer reported (a global copy is often under a `skills/archify` directory the agent already scans; a project copy is often `.agents/skills/archify`).
+
+   `node <installed-path>/bin/archify.mjs doctor`
+
+   Report each selected target and its verification result. Say Archify is ready only for targets whose installation and doctor check succeeded; report skipped or failed targets separately. They can ask for any of the ten diagram types, or a one-page explainer.
+
+If you were only asked to install Archify, stop here and do not fetch the reference links below.
+
+## Documentation and verified examples
+
+- [Archify full reference](https://archify.si/llms-full.txt): Complete product facts, ten diagram types, one-page explainer boundaries, tool comparisons, and frequently asked questions.
+- [Scenario guide](https://archify.si/guide): Choose a diagram recipe from the question you need to answer, with evidence checklists and prompts.
+- [Proof gallery](https://archify.si/gallery): Validated interactive artifacts with their JSON or Markdown sources and recorded checks.
+- [Agent diagramming guide](https://archify.si/agent-diagrams): How coding agents author, review, and share diagrams from prompts or repositories.
+- [Tool comparison](https://archify.si/compare): When to use Archify rather than Mermaid, Excalidraw, PlantUML, or D2.
+- [Source-backed case](https://archify.si/cases/mco-runtime): A pinned-commit architecture walkthrough with explicit evidence limits.

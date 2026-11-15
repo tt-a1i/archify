@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -15,7 +16,7 @@ const large = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'examp
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 function run(diagram, extra = []) {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-waterfall-'));
+  const directory = createScratchDirectory(path.join(os.tmpdir(), 'archify-waterfall-'));
   const input = path.join(directory, 'candidate.waterfall.json');
   const output = path.join(directory, 'candidate.html');
   fs.writeFileSync(input, JSON.stringify(diagram));
@@ -26,6 +27,20 @@ function layoutOf(diagram) {
   assert.equal(result.status, 0, result.stderr);
   return JSON.parse(result.stdout);
 }
+
+test('waterfall: nonzero origins preserve distinct ticks and accessible timing', () => {
+  const diagram = clone(small);
+  diagram.spans = [{ id: 'request', name: 'Request', start: 0.0091, duration: 0.000004 }];
+  const result = run(diagram);
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(result.output, 'utf8');
+  const labels = [...html.matchAll(/class="t-muted wf-num"[^>]*text-anchor="middle">([^<]+)<\/text>/g)].map(match => match[1]);
+  assert.ok(labels.length >= 2);
+  assert.equal(new Set(labels).size, labels.length);
+  const values = labels.map(label => Number(label.replace(/ ms$/, '').replaceAll(',', '')));
+  assert.ok(values.every((value, index) => value >= 0.0091 && value <= 0.009104000000000001 && (!index || value > values[index - 1])));
+  assert.match(html, /aria-label="[^"]*0\.0091–0\.009104 ms/);
+});
 
 test('waterfall: both examples render and pass the showcase artifact checks', () => {
   for (const diagram of [small, large]) {
@@ -92,12 +107,14 @@ test('waterfall: unrepresentable derived timing is rejected without writing inva
 });
 
 test('waterfall: finite very large timing labels do not overflow while formatting', () => {
-  const diagram = clone(small);
-  diagram.spans = [{ id: 'request', name: 'Request', start: 1e307, end: 1.1e307 }];
-  const result = run(diagram);
-  assert.equal(result.status, 0, result.stderr || result.error?.message);
-  const html = fs.readFileSync(result.output, 'utf8');
-  assert.doesNotMatch(html, /(?:NaN|Infinity|∞)/);
+  for (const timing of [{ start: 1e307, end: 1.1e307 }, { start: 0, end: Number.MAX_VALUE }]) {
+    const diagram = clone(small);
+    diagram.spans = [{ id: 'request', name: 'Request', ...timing }];
+    const result = run(diagram);
+    assert.equal(result.status, 0, result.stderr || result.error?.message);
+    const html = fs.readFileSync(result.output, 'utf8');
+    assert.doesNotMatch(html, /(?:NaN|Infinity|∞)/);
+  }
 });
 
 test('waterfall: percentages name their denominator and are never summed into the parent', () => {

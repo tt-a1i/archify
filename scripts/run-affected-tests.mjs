@@ -8,7 +8,7 @@ import { sameEntry } from '../archify/renderers/shared/path-semantics.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const mode = /^(architecture|workflow|sequence|dataflow|lifecycle|erd|class|tree|timeline|waterfall)-/;
 // A few broad ownership families, not a source-to-test dependency graph.
-const shared = /^(geometry|spatial-grid|svg-path-analysis|layout-rules|engineering-profile|legend-contract|render-|renderer-(?:diagnostic|import)|route-|authored-|spread-|text-|base-input-|v1-|brand-|semantic-legend|automatic-port-spread|edge-label-color|label-clearance|vertical-edge|node-icons)/;
+const shared = /^(geometry|spatial-grid|svg-path-(?:analysis|checker)|layout-rules|engineering-profile|legend-contract|render-|renderer-(?:diagnostic|import)|route-|authored-|spread-|text-|base-input-|v1-|brand-|semantic-legend|automatic-port-spread|edge-label-color|label-clearance|vertical-edge|node-icons)/;
 const viewer = /^(viewer-|reader-|desktop-|semantic-|finder|focus|intent-|crossover-|animation|export-|motion-|offline-|i18n|relationship-|share-|reach-|presentation)/;
 export function selectAffectedTests(owners, changed, available) {
   if (!Array.isArray(owners) || !Array.isArray(changed)) throw new Error('CI test selection must contain arrays');

@@ -1,0 +1,73 @@
+{
+  "suite_id": "real-repo-generation-v1",
+  "status": "pilot-unrun",
+  "frozen_on": "2026-10-16",
+  "primary_diagram_types": [
+    "architecture",
+    "workflow"
+  ],
+  "projects": [
+    {
+      "id": "openpi",
+      "name": "OpenPI",
+      "repository": "https://github.com/openpi-dev/openpi",
+      "commit": "677b4959108976b99fb63fb5029198b04aa51cb5",
+      "task": "Use Archify to explain how OpenPI accepts a task, delegates work to an independent subagent, and makes its status and result available to the caller. Read the checked-out source and focus on that path.",
+      "workflow_scenario": "A user delegates one bounded task to a subagent and receives its result. Include the actual failure or cancellation path where supported by the source.",
+      "reviewer_source_entrypoints": [
+        "extensions/",
+        "docs/architecture/"
+      ]
+    },
+    {
+      "id": "hive",
+      "name": "Hive",
+      "repository": "https://github.com/tt-a1i/hive",
+      "commit": "f8f1343da6595a232f0baba7f0ea5b5a58fe0e9c",
+      "task": "Use Archify to explain how a task in the Hive browser workbench reaches a worker running as a CLI process, and how progress and the result return to the team. Read the checked-out source and focus on that path.",
+      "workflow_scenario": "A team dispatches a task to a worker and observes its progress and completion. Include the actual failure or stop path where supported by the source.",
+      "reviewer_source_entrypoints": [
+        "src/cli/",
+        "src/server/"
+      ]
+    },
+    {
+      "id": "mco",
+      "name": "MCO",
+      "repository": "https://github.com/mco-org/mco",
+      "commit": "3cfce130362dbcc2aedda6170d1a31e39cf67d3e",
+      "task": "Use Archify to explain how MCO accepts one review request, runs the selected providers, and returns their individual results. Read the checked-out source and focus on that path.",
+      "workflow_scenario": "A user requests a read-only review with selected providers and inspects their results. Include how an unavailable or failed provider is handled in the implementation.",
+      "reviewer_source_entrypoints": [
+        "bin/",
+        "docs/contracts/"
+      ]
+    },
+    {
+      "id": "squad",
+      "name": "Squad",
+      "repository": "https://github.com/mco-org/squad",
+      "commit": "8146bcc1c38c439aedaf3ff44548c830654c8621",
+      "task": "Use Archify to explain how Squad coordinates a manager and worker through its CLI and persisted task/message state. Read the checked-out source and focus on that path.",
+      "workflow_scenario": "A manager assigns work, a worker finds it and reports completion, and the manager checks the outcome. Include any actual ownership or invalid-state check relevant to that path.",
+      "reviewer_source_entrypoints": [
+        "src/main.rs",
+        "src/store.rs",
+        "src/tasks.rs"
+      ]
+    },
+    {
+      "id": "skillroster",
+      "name": "SkillRoster",
+      "repository": "https://github.com/tt-a1i/skillroster",
+      "commit": "21d14c7cff25c66a016562e238e62d0538eb696f",
+      "task": "Use Archify to explain how SkillRoster goes from discovering installed Skills to planning, applying, and undoing a change. Read the checked-out source and focus on the boundaries between inspection and filesystem changes.",
+      "workflow_scenario": "A user inspects installed Skills, reviews a change plan, applies it, and later requests undo. Include the actual confirmation and conflict checks that protect existing files.",
+      "reviewer_source_entrypoints": [
+        "src/scan.rs",
+        "src/change.rs",
+        "src/roster_plan.rs"
+      ]
+    }
+  ]
+}

@@ -310,6 +310,9 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
           const svgText = await run('exportDownloads[0].blob.text()');
           const svgFile = path.join(evidence || scratch, `${mode}-${theme}.svg`);
           fs.writeFileSync(svgFile, svgText);
+          assert.match(svgText, /<metadata id="archify-software-notices">/);
+          assert.match(svgText, /Copyright \(c\) 2025 Cocoon AI/);
+          assert.match(svgText, /Apache License/);
           const figure = await run(`(()=>{const v=document.querySelector('.diagram-container svg').viewBox.baseVal;const sub=(document.querySelector('.header .subtitle')||{}).textContent;const header=document.querySelector('.header h1')?32+(sub&&sub.trim()?24:0)+18:0;return [(v.width+104)*4,(v.height+104+header)*4];})()`);
           const rasterSizes = [];
           // All modes exercise real raster sizing. Shared MIME/quality encoding
@@ -367,6 +370,71 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
       assert.ok(download.text.startsWith('<?xml version="1.0" encoding="UTF-8"?>'), 'standalone SVG must declare its UTF-8 encoding');
       assert.ok(download.text.includes('用户入口'), 'CJK label must survive serialization');
       await record('svg-utf8');
+    } finally {
+      fs.writeFileSync(input, originalInput);
+      execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, file]);
+    }
+  });
+
+  await t.test('classic preset hides background grid in viewer and exported standalone SVGs without affecting PNG', async () => {
+    const originalInput = fs.readFileSync(input, 'utf8');
+    try {
+      const classicSource = JSON.parse(originalInput);
+      classicSource.meta.visual_preset = 'classic';
+      fs.writeFileSync(input, JSON.stringify(classicSource));
+      execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, file]);
+
+      for (const theme of ['light', 'dark']) {
+        await load({ theme });
+        const viewerGridStroke = await run(`getComputedStyle(document.querySelector('.diagram-container svg .c-grid')).stroke`);
+        assert.equal(viewerGridStroke, 'rgba(0, 0, 0, 0)', `viewer hides classic grid in ${theme} theme`);
+
+        for (const format of ['svg', `svg-${theme}`]) {
+          await load({ theme });
+          const countBefore = await run('exportDownloads.length');
+          await run(`Archify.exportMenu.run('${format}')`);
+          await run(`exportWait(() => exportDownloads.length === ${countBefore + 1})`);
+          const svgText = await run('exportDownloads.at(-1).blob.text()');
+          const exportPath = path.join(scratch, `classic-${format}-${theme}.svg`);
+          fs.writeFileSync(exportPath, svgText);
+
+          const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+          await send('Page.navigate', { url: pathToFileURL(exportPath).href });
+          await loaded;
+          const rootPreset = await run(`document.documentElement.getAttribute('data-preset')`);
+          const stroke = await run(`getComputedStyle(document.querySelector('.c-grid')).stroke`);
+          assert.equal(rootPreset, 'classic', `exported ${format} root retains data-preset="classic"`);
+          assert.equal(stroke, 'rgba(0, 0, 0, 0)', `classic ${format} SVG export hides 40px grid`);
+          fs.rmSync(exportPath, { force: true });
+        }
+
+        await load({ theme });
+        const pngCountBefore = await run('exportDownloads.length');
+        await run(`Archify.exportMenu.run('png')`);
+        await run(`exportWait(() => exportDownloads.length === ${pngCountBefore + 1})`);
+        const lastReceipt = await run(`document.documentElement.getAttribute('data-last-export-format')`);
+        assert.equal(lastReceipt, 'png', `png export succeeds in ${theme} theme`);
+      }
+
+      const blueprintSource = JSON.parse(originalInput);
+      blueprintSource.meta.visual_preset = 'blueprint';
+      fs.writeFileSync(input, JSON.stringify(blueprintSource));
+      execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, file]);
+      await load({ theme: 'dark' });
+      const bpCountBefore = await run('exportDownloads.length');
+      await run(`Archify.exportMenu.run('svg')`);
+      await run(`exportWait(() => exportDownloads.length === ${bpCountBefore + 1})`);
+      const bpSvgText = await run('exportDownloads.at(-1).blob.text()');
+      const bpExportPath = path.join(scratch, 'blueprint-svg.svg');
+      fs.writeFileSync(bpExportPath, bpSvgText);
+      const bpLoaded = browser.cdp.waitFor('Page.loadEventFired', session);
+      await send('Page.navigate', { url: pathToFileURL(bpExportPath).href });
+      await bpLoaded;
+      const bpStroke = await run(`getComputedStyle(document.querySelector('.c-grid')).stroke`);
+      const bpOpacity = await run(`getComputedStyle(document.querySelector('.c-grid')).opacity`);
+      assert.notEqual(bpStroke, 'rgba(0, 0, 0, 0)', 'blueprint SVG export preserves visible grid stroke');
+      assert.equal(bpOpacity, '0.78', 'blueprint SVG export preserves styled grid opacity');
+      fs.rmSync(bpExportPath, { force: true });
     } finally {
       fs.writeFileSync(input, originalInput);
       execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, file]);

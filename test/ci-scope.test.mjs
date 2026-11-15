@@ -34,6 +34,15 @@ test('owned changes add their real gates without requiring every unrelated lane'
   assert.ok(classifyPaths(['docs/skill-updates/archify/stable.json']).manifest);
 });
 
+test('Windows evidence replacement fixtures retain their native host gate', () => {
+  const plan = classifyPaths(['test/repository-evidence-replacement.test.mjs']);
+  assert.equal(plan.scope, 'core');
+  assert.equal(plan.windows, true);
+  assert.deepEqual(plan.changedTests, ['test/repository-evidence-replacement.test.mjs']);
+  assert.equal(plan.browser, false);
+  assert.equal(plan.package, false);
+});
+
 test('recipe, schema and shared renderer owners include their real source consumers', () => {
   const available = ['test/guide.test.mjs', 'test/guide-page.test.mjs', 'test/gallery.test.mjs', 'test/start-page.test.mjs', 'test/engineering-profile.test.mjs', 'test/legend-contract.test.mjs', 'test/generate-validators.test.mjs'];
   const recipe = classifyPaths(['archify/recipes/scenarios.mjs']);
@@ -47,6 +56,19 @@ test('recipe, schema and shared renderer owners include their real source consum
   const schema = classifyPaths(['archify/schemas/workflow.schema.json']);
   assert.equal(schema.scope, 'core');
   assert.ok(selectAffectedTests(schema.owners, [], available).includes('test/generate-validators.test.mjs'));
+});
+
+test('shared SVG parser changes retain the public checker suite without selecting unrelated tests', () => {
+  const available = ['test/svg-path-analysis.test.mjs', 'test/svg-path-checker.test.mjs',
+    'test/cli.test.mjs', 'test/readme-showcase.test.mjs'];
+  const plan = classifyPaths(['archify/renderers/shared/svg-path-analysis.mjs', 'archify.zip']);
+  assert.equal(plan.scope, 'core');
+  assert.deepEqual(plan.changedTests, []);
+  assert.ok(plan.generated && plan.browser && plan.package);
+  assert.deepEqual(selectAffectedTests(plan.owners, plan.changedTests, available), available.slice(0, 2));
+
+  const prose = classifyPaths(['README.md']);
+  assert.deepEqual(selectAffectedTests(prose.owners, prose.changedTests, available), ['test/readme-showcase.test.mjs']);
 });
 
 test('Architecture grid changes retain explicit placement regression coverage', () => {

@@ -21,6 +21,7 @@ const examples = [
   ['class', 'payments.class.json', 'types'],
   ['timeline', 'payment-incident.timeline.json', 'events'],
   ['waterfall', 'checkout-request.waterfall.json', 'spans'],
+  ['explainer', 'delivery.explainer.json', 'panels'],
 ];
 
 function identity(file) {
@@ -38,6 +39,21 @@ function attribute(node, name) {
 
 function assertDiagram(output, document, collection) {
   const elements = descendants(parse(fs.readFileSync(output, 'utf8')));
+  if (document.diagram_type === 'explainer') {
+    const answer = elements.find((node) => attribute(node, 'id') === 'answer');
+    assert.ok(answer, 'the explainer must contain its initial answer without JavaScript');
+    const text = descendants(answer).filter((node) => node.nodeName === '#text').map((node) => node.value).join('');
+    assert.ok(text.includes(document.answer.summary.replaceAll('**', '')), 'the authored answer must remain readable in the HTML');
+    for (const panel of document.panels) {
+      assert.ok(elements.some((node) => attribute(node, 'id') === panel.id), `missing authored explainer panel ${panel.id}`);
+    }
+    const payload = elements.find((node) => attribute(node, 'id') === 'archify-explainer-prepared');
+    assert.ok(payload, 'the explainer must retain its original draft for patching');
+    const bundle = JSON.parse(payload.childNodes.map((node) => node.value || '').join(''));
+    assert.equal(JSON.parse(bundle.sourceText).meta.id, document.meta.id);
+    assert.equal(bundle.source.sha256, createHash('sha256').update(bundle.sourceText).digest('hex'));
+    return;
+  }
   const svg = elements.find((node) => node.tagName === 'svg' && attribute(node, 'role') === 'img');
   assert.ok(svg, 'the HTML must contain an accessible diagram SVG');
   const viewBox = attribute(svg, 'viewBox')?.trim().split(/\s+/).map(Number);

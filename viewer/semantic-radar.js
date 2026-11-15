@@ -559,6 +559,7 @@
         if (node) focusNode(node.getAttribute('data-radar-node-id'));
       });
       surface.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
         if (event.key === 'Escape') {
           event.preventDefault();
           event.stopPropagation();
@@ -587,6 +588,7 @@
         sync();
       });
       document.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
         if (!panelDrag || event.key !== 'Escape') return;
         finishPanelDrag({
           pointerId: panelDrag.pointerId,
