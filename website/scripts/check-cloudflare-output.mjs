@@ -67,7 +67,7 @@ export function checkCloudflareOutput(root) {
     assert.ok(!/<meta[^>]+(?:name="robots"[^>]+content="[^"]*noindex|content="[^"]*noindex[^>]+name="robots")/i.test(html), `Noindex sitemap page: ${location}`);
   }
   assert.equal(fs.readFileSync(path.join(root, 'robots.txt'), 'utf8').includes('Sitemap: https://archify.si/sitemap.xml'), true);
-  assert.match(fs.readFileSync(path.join(root, '_headers'), 'utf8'), /\/\*\.json\n  X-Robots-Tag: noindex/);
+  assert.match(fs.readFileSync(path.join(root, '_headers'), 'utf8'), /\/\*\.json\n  X-Robots-Tag: noindex[\s\S]*\/\*\.archify\.md\n  X-Robots-Tag: noindex/);
   const builtManifest = fs.readFileSync(path.join(root, 'skill-updates/archify/stable.json'));
   const canonicalManifest = fs.readFileSync(new URL('../../docs/skill-updates/archify/stable.json', import.meta.url));
   assert.ok(builtManifest.equals(canonicalManifest), 'The static site must retain the exact stable update manifest');

@@ -493,13 +493,16 @@
   document.querySelectorAll('.cmd-copy').forEach(button => {
     let attempt = 0;
     const status = $(button.getAttribute('aria-describedby'));
+    const fallbackText = button.dataset.copyText ? $('hero-copy-fallback') : null;
     const sourceText = () => button.dataset.copyText || $(button.dataset.copyFrom).textContent;
     button.addEventListener('click', async () => {
       const current = ++attempt, text = sourceText(), revision = agentRevision;
       status.textContent = '';
+      if (fallbackText) fallbackText.hidden = true;
       const isCurrent = () => current === attempt && (!button.dataset.copyFrom || revision === agentRevision) && text === sourceText();
       const ok = await ArchifyClipboard.copy(text, isCurrent);
       if (!isCurrent()) return;
+      if (fallbackText) fallbackText.hidden = ok;
       status.textContent = LANGS[lang][ok ? 'copySuccess' : 'copyFailure'];
     });
   });

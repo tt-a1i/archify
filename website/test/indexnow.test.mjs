@@ -56,7 +56,7 @@ test('public preflight requires HTTP 200 and matching deployed key before POST',
 
 test('sitemap XML parser rejects foreign, query, source, duplicate, incomplete and malformed inventories', () => {
   assert.deepEqual(parseSitemap(xml), urls);
-  assert.equal(urls.length, 31);
+  assert.equal(urls.length, sitePages.length * 2 + CASES.length + PUBLISHED_CASES.length);
   for (const sitemap of [xml.replace('https://archify.si/', 'http://archify.si/'), xml.replace('https://archify.si/', 'https://other.example/'), xml.replace(urls[0], `${urls[0]}?preview=1`), xml.replace(urls[0], `${canonicalOrigin}/gallery/manifest.json`), xml.replace(urls[0], urls[1]), xml.replace(/<url>[\s\S]*?<\/url>/, ''), xml.replace('<loc>', '<wrong>'), '<!DOCTYPE foo>' + xml]) {
     assert.throws(() => parseSitemap(sitemap));
   }

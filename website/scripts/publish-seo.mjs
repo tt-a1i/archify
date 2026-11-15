@@ -18,7 +18,11 @@ export function stripPublishedArtifactMetadata(html) {
   return html.replace(/<!-- archify:published-artifact-metadata:start -->\n[\s\S]*?<!-- archify:published-artifact-metadata:end -->\n/g, '');
 }
 
-function publicationMetadata(entry, { title, description, language, twitter = false }) {
+export function artifactMetadata(entry, presentation) {
+  return publicationMetadata(entry, { title: presentation.titleEn, description: presentation.descriptionEn, language: 'en' });
+}
+
+function publicationMetadata(entry, { title, description, language, twitter = false, documentDescription = false }) {
   const url = `${CANONICAL_ORIGIN}/${entry.artifact.replace(/\.html$/, '')}`;
   const source = `${CANONICAL_ORIGIN}/${entry.input}`;
   const data = {
@@ -27,15 +31,14 @@ function publicationMetadata(entry, { title, description, language, twitter = fa
     url, isBasedOn: source, inLanguage: language,
   };
   const twitterMetadata = twitter ? `<meta name="twitter:card" content="summary">\n<meta name="twitter:title" content="${escape(title)}">\n<meta name="twitter:description" content="${escape(description)}">\n` : '';
-  return `${SEO_BLOCK_START}\n<link rel="canonical" href="${escape(url)}">\n<meta name="description" content="${escape(description)}">\n<meta property="og:type" content="article">\n<meta property="og:title" content="${escape(title)}">\n<meta property="og:description" content="${escape(description)}">\n<meta property="og:url" content="${escape(url)}">\n${twitterMetadata}<script type="application/ld+json">${JSON.stringify(data).replaceAll('<', '\\u003c')}</script>\n${SEO_BLOCK_END}\n`;
-}
-
-export function artifactMetadata(entry, presentation) {
-  return publicationMetadata(entry, { title: presentation.titleEn, description: presentation.descriptionEn, language: 'en' });
+  // Some artifacts, such as Explainers, already ship a document <meta name="description">.
+  // The publication block must not create a second one.
+  const descriptionMetadata = documentDescription ? '' : `<meta name="description" content="${escape(description)}">\n`;
+  return `${SEO_BLOCK_START}\n<link rel="canonical" href="${escape(url)}">\n${descriptionMetadata}<meta property="og:type" content="article">\n<meta property="og:title" content="${escape(title)}">\n<meta property="og:description" content="${escape(description)}">\n<meta property="og:url" content="${escape(url)}">\n${twitterMetadata}<script type="application/ld+json">${JSON.stringify(data).replaceAll('<', '\\u003c')}</script>\n${SEO_BLOCK_END}\n`;
 }
 
 export function caseMetadata(entry) {
-  return publicationMetadata(entry, { ...entry, twitter: true });
+  return publicationMetadata(entry, { ...entry, twitter: true, documentDescription: entry.documentDescription === true });
 }
 
 // Only gallery entries with passing artifact checks and unchanged proof hashes
@@ -68,6 +71,10 @@ export function publishSeo(root, target) {
     for (const file of [entry.artifact, entry.input]) {
       assert.ok(fs.existsSync(path.join(root, file)), `Missing published case: ${file}`);
     }
+    const original = stripPublishedArtifactMetadata(fs.readFileSync(path.join(root, entry.artifact), 'utf8'));
+    assert.match(original, /<\/head>/i, `Artifact missing head: ${entry.artifact}`);
+    const hasDescription = /<meta\b[^>]*name=["']description["']/i.test(original);
+    assert.equal(hasDescription, entry.documentDescription === true, `${entry.artifact}: documentDescription must match the artifact <head>`);
   }
   const publications = [
     ...selected.map(({ entry, presentation }) => ({ entry, metadata: artifactMetadata(entry, presentation) })),
@@ -90,7 +97,7 @@ export function publishSeo(root, target) {
   fs.writeFileSync(path.join(root, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${CANONICAL_ORIGIN}/sitemap.xml\n`);
   // Static Pages supports these response headers; GitHub Pages does not.
   if (target.name === 'cloudflare') {
-    fs.writeFileSync(path.join(root, '_headers'), `/*.json\n  X-Robots-Tag: noindex\n`);
+    fs.writeFileSync(path.join(root, '_headers'), `/*.json\n  X-Robots-Tag: noindex\n/*.archify.md\n  X-Robots-Tag: noindex\n`);
   }
   return urls;
 }

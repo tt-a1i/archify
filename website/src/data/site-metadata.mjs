@@ -1,4 +1,5 @@
 import { canonicalUrl, canonicalOrigin } from './site-urls.mjs';
+import { faqFacts } from './faq-facts.mjs';
 const descriptions = {
   'cases/mco-runtime': {
     en: ['Archify MCO Runtime Case — Source-backed Architecture', 'Follow pinned MCO source to distinguish provider-output decoding, streamed answer writes and retained artifacts. Read the existing Archify diagram with explicit evidence limits.'],
@@ -7,6 +8,10 @@ const descriptions = {
   'agent-diagrams': {
     en: ['Archify Agent Diagramming Guide — Author, Review, Share', 'Create diagrams with Claude Code, Codex, Cursor and other coding agents. Learn bounded prompts, repository evidence, review checks and safe HTML sharing with Archify.'],
     zh: ['Archify Agent 画图指南 — 编写、检查与分享', '用 Claude Code、Codex、Cursor 等 Coding Agent 画图：从范围明确的提示词和仓库证据开始，检查事实、修改图表，再安全分享 Archify HTML 成品。'],
+  },
+  compare: {
+    en: ['Archify vs Mermaid, Excalidraw and PlantUML — How to Choose', 'Compare Archify with Mermaid, Excalidraw, PlantUML and D2 for AI coding agent diagramming: inputs, output, complex-graph readability, interaction, one-page answers and honest boundaries.'],
+    zh: ['Archify、Mermaid、Excalidraw、PlantUML 怎么选？', '对比 Archify、Mermaid、Excalidraw、PlantUML 与 D2 在 Agent 画图场景下的输入、产物、复杂图可读性、交互能力、一页式解答与适用边界。'],
   },
   index: {
     en: ['Archify — AI Agent Skill for Interactive Diagrams and One-Page Answers', 'Archify is an Apache-2.0-licensed AI agent skill for validated HTML diagrams and conclusion-first one-page answers from descriptions or code, with interactive exploration, cited sources and browser export.'],
@@ -29,14 +34,37 @@ const descriptions = {
     zh: ['Archify 社区 — 基于 Archify 的独立包', '浏览基于 Archify 的独立社区包，包括技能、配方、主题、语言包与 CLI 封装，并查看源码、许可证、兼容性和验证证据。'],
   },
 };
+const websiteId = `${canonicalOrigin}/#website`;
+const softwareId = `${canonicalOrigin}/#software`;
+const sourceId = `${canonicalOrigin}/#source`;
+const articlePages = ['agent-diagrams', 'cases/mco-runtime', 'compare'];
+const language = lang => (lang === 'zh' ? 'zh-Hans' : 'en');
+function answerFact(fact, lang) {
+  const index = lang === 'zh' ? 1 : 0;
+  return { question: fact.question[index], answer: fact.answer[index] };
+}
 export function pageMetadata(page, lang, version) {
   const [title, description] = descriptions[page][lang];
   const canonical = canonicalUrl(page, lang);
+  const faq = page === 'index' ? [{
+    '@type': 'FAQPage',
+    '@id': `${canonicalOrigin}/#faq-${language(lang)}`,
+    url: canonical,
+    inLanguage: language(lang),
+    isPartOf: { '@id': websiteId },
+    about: { '@id': softwareId },
+    mainEntity: faqFacts.map(fact => {
+      const { question, answer } = answerFact(fact, lang);
+      return { '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: answer } };
+    }),
+  }] : [];
   return { title, description, canonical, image: `${canonicalOrigin}/assets/archify-social-preview.png`,
     schema: { '@context': 'https://schema.org', '@graph': [
-      { '@type': 'WebSite', '@id': `${canonicalOrigin}/#website`, url: `${canonicalOrigin}/`, name: 'Archify', inLanguage: ['en', 'zh-Hans'] },
-      { '@type': 'SoftwareSourceCode', '@id': `${canonicalOrigin}/#source`, name: 'Archify', codeRepository: 'https://github.com/tt-a1i/archify', url: 'https://github.com/tt-a1i/archify', license: 'https://github.com/tt-a1i/archify/blob/main/LICENSE', version, programmingLanguage: 'JavaScript', description: descriptions.index[lang][1] },
-      ...(['agent-diagrams', 'cases/mco-runtime'].includes(page) ? [{ '@type': 'TechArticle', '@id': `${canonical}#article`, url: canonical, headline: title, description, inLanguage: lang === 'zh' ? 'zh-Hans' : 'en', isPartOf: { '@id': `${canonicalOrigin}/#website` }, about: { '@id': `${canonicalOrigin}/#source` } }] : []),
+      { '@type': 'WebSite', '@id': websiteId, url: `${canonicalOrigin}/`, name: 'Archify', inLanguage: ['en', 'zh-Hans'] },
+      { '@type': 'SoftwareSourceCode', '@id': sourceId, name: 'Archify', codeRepository: 'https://github.com/tt-a1i/archify', url: 'https://github.com/tt-a1i/archify', license: 'https://github.com/tt-a1i/archify/blob/main/LICENSE', version, programmingLanguage: 'JavaScript', description: descriptions.index[lang][1], targetProduct: { '@id': softwareId } },
+      { '@type': 'SoftwareApplication', '@id': softwareId, name: 'Archify', url: `${canonicalOrigin}/`, applicationCategory: 'DeveloperApplication', operatingSystem: 'macOS, Linux, Windows', isAccessibleForFree: true, license: 'https://www.apache.org/licenses/LICENSE-2.0', softwareVersion: version, description: descriptions.index[lang][1], offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, sameAs: ['https://github.com/tt-a1i/archify', 'https://skills.sh/tt-a1i/archify/archify'] },
+      ...(articlePages.includes(page) ? [{ '@type': 'TechArticle', '@id': `${canonical}#article`, url: canonical, headline: title, description, inLanguage: language(lang), isPartOf: { '@id': websiteId }, about: { '@id': softwareId } }] : []),
+      ...faq,
     ] },
   };
 }

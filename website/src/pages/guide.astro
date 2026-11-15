@@ -58,6 +58,10 @@ const { lang = 'en' } = Astro.props;
       <a href="agent-diagrams.html" data-en="From prompt to a diagram you can trust →" data-zh="从提示词到可检查的图 →">From prompt to a diagram you can trust →</a>
       <p data-en="Learn how to author, review and share diagrams with your coding agent." data-zh="了解如何用 Coding Agent 编写、检查和分享图表。">Learn how to author, review and share diagrams with your coding agent.</p>
     </aside>
+    <aside class="agent-guide-link" aria-label={lang === 'zh' ? '工具对比' : 'Tool comparison'}>
+      <a href="compare.html" data-en="Compare Mermaid, Excalidraw and PlantUML →" data-zh="对比 Mermaid、Excalidraw 与 PlantUML →">Compare Mermaid, Excalidraw and PlantUML →</a>
+      <p data-en="See when another diagramming tool is the better fit." data-zh="看看什么时候其他画图工具更合适。">See when another diagramming tool is the better fit.</p>
+    </aside>
   </main>
 
   <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / development / v{version}</span></div></footer>

@@ -16,6 +16,25 @@ Archify turns that source into an HTML artifact and applies its rendering and va
 
 That distinction matters: Archify is not an independent source-code discovery service, a live system monitor, or a hosted team editor. A convincing picture is not evidence for a relationship that was never established.
 
+<span id="diagram-types" class="section-anchor" aria-hidden="true"></span>
+
+## Ten diagram types, one boundary
+
+Archify supports ten native diagram types. The agent picks the type that fits the question, then writes its typed JSON:
+
+- **architecture** — components, responsibilities, and allowed dependencies.
+- **workflow** — ordered steps, branches, and hand-offs.
+- **sequence** — messages between participants over time.
+- **dataflow** — sources, transforms, stores, and sinks.
+- **lifecycle** — states, transitions, and guards.
+- **erd** — entities, keys, and relationship cardinality.
+- **class** — types, fields, methods, inheritance and composition.
+- **tree** — file, organizational, or decision hierarchies.
+- **timeline** — dated or ordered events and their relationships.
+- **waterfall** — staged totals, contributions, and deltas.
+
+Choose the type for the question, not the other way around. A “system overview” is often an architecture diagram; “what happens on a cache miss” is usually a sequence. The [scenario guide](guide.html) shows selected starting recipes and does not claim that every type supports every interaction or notation.
+
 <span id="setup" class="section-anchor" aria-hidden="true"></span>
 
 ## Set up your agent
@@ -34,7 +53,7 @@ The [installation reference](https://github.com/tt-a1i/archify/blob/main/README.
 
 For a global copied installation, run this in the terminal of the environment where you use Claude Code:
 
-<pre><code>npx -y skills add tt-a1i/archify --skill archify --agent claude-code --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes</code></pre>
 
 Claude Code uses `~/.claude/skills/` for global skills or `.claude/skills/` in the project. For a project-scoped installation instead, choose [Claude Code in Start](start.html?agent=claude-code#install) and use “This repository only” from the intended project directory.
 
@@ -44,11 +63,13 @@ Claude Code uses `~/.claude/skills/` for global skills or `.claude/skills/` in t
 
 For a global copied installation, run this in the terminal of the environment where you use Codex CLI:
 
-<pre><code>npx -y skills add tt-a1i/archify --skill archify --agent codex --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent codex --global --copy --yes</code></pre>
 
 Codex CLI uses `~/.agents/skills/` for global skills or `.agents/skills/` in the project. For a project-scoped installation instead, choose [Codex in Start](start.html?agent=codex#install) and use “This repository only” from the intended project directory.
 
 After installation, use the description or repository prompt in Start. Installation instructions are not a guarantee that every agent/version combination has been tested. If setup fails, record the agent, its version, your operating system, and the exact error before changing the diagram itself.
+
+You can also paste a single instruction into a configured agent: “Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt”. The brief at [llms.txt](https://archify.si/llms.txt) asks the agent to confirm scope, inspect destinations, and run `doctor`; it should not scan a repository or draw a diagram during installation.
 
 <span id="description-workflow" class="section-anchor" aria-hidden="true"></span>
 
@@ -95,11 +116,11 @@ Keep the original Mermaid alongside the new JSON so you can compare them. Mermai
 
 ## Try two bounded requests: cache hit and cache miss
 
-A sequence diagram answers “who calls whom, and in what order?” For the stable 3.1.0 workflow described here, make two separate diagrams for these mutually exclusive scenarios rather than putting them on one request timeline. Try this description in your configured agent:
+A sequence diagram answers “who calls whom, and in what order?” For the workflow described here, make two separate diagrams for these mutually exclusive scenarios rather than putting them on one request timeline. Try this description in your configured agent:
 
 > Use Archify to create two separate sequence diagrams: one for a cache hit and one for a cache miss. Both begin with Browser calling API and API checking Redis. On a hit, API returns the cached result to Browser. On a miss, API queries PostgreSQL, writes the result to Redis, and returns it to Browser. Clearly label the scenario each diagram represents. Do not arrange mutually exclusive paths as the chronological steps of one request. Do not add authentication, queues, retries, or measured timings that were not specified. If missing information would materially affect the order, ask me first.
 
-This is illustrative input, not a claim about your application. The existing [cache-miss example](https://archify.si/gallery/artifacts/cache-miss.sequence.html) illustrates a different, miss-only request with additional authentication and trace details. It is not the output of this prompt; do not copy those extra facts into your own system without evidence.
+This is illustrative input, not a claim about your application. The existing [cache-miss example](https://archify.si/gallery/artifacts/cache-miss.sequence) illustrates a different, miss-only request with additional authentication and trace details. It is not the output of this prompt; do not copy those extra facts into your own system without evidence.
 
 When reviewing your result, check:
 
@@ -129,9 +150,22 @@ Before accepting a repository-backed diagram, check:
 
 Where an artifact includes verified source links, inspect them. A source link shows where the diagram's evidence comes from; it does not by itself establish production behavior. Logs, traces, configuration, and human review may still be needed.
 
-For an existing source-backed example, see the [MCO runtime architecture](https://archify.si/cases/mco-runtime.architecture.html) and its [typed source](https://github.com/tt-a1i/archify/blob/main/docs/cases/mco-runtime.architecture.json). The example describes its pinned revision, not the repository's future state.
+For an existing source-backed example, see the [MCO runtime architecture](https://archify.si/cases/mco-runtime.architecture) and its [typed source](https://github.com/tt-a1i/archify/blob/main/docs/cases/mco-runtime.architecture.json). The example describes its pinned revision, not the repository's future state.
 
 [Follow the MCO source case: who decodes output and who writes files →](cases/mco-runtime.html)
+
+<span id="explainer" class="section-anchor" aria-hidden="true"></span>
+
+## One diagram, or a one-page explainer?
+
+Use a diagram when the reader needs to see structure. Use a one-page explainer when the reader needs an argument: a conclusion, its reasons, and the evidence for each part. An explainer leads with the conclusion, then answers one sub-question per panel using prose, tables, steps, charts, code excerpts from a pinned commit, and validated diagrams. Claims cite numbered sources, and blank chart data is rejected rather than drawn as zero.
+
+Two recorded examples show the format without implying that they were generated for you:
+
+- [What happens on a first TLS visit](cases/explainer/tls-first-visit.html) walks through a protocol sequence panel by panel.
+- [Why P99 latency spikes](cases/explainer/p99-tail-latency.html) turns a routine performance question into a conclusion-first investigation.
+
+Explainer mode defaults to `proactive`: in addition to explicit page requests, the Skill can create a page unasked for a complex flow, diagnosis, trade-off comparison, or review report. Add `[archify explainer: on-demand]` to your agent rules file when you want pages created only on explicit request. The artifact is still a single HTML file; readers can switch among four presentation styles and export a long image or PDF where the environment supports it.
 
 <span id="review-and-share" class="section-anchor" aria-hidden="true"></span>
 
@@ -155,7 +189,7 @@ It produces structured diagrams through an agent-authored JSON and rendering wor
 
 ### Which diagram types are available?
 
-The current stable documentation lists architecture, workflow, sequence, dataflow, lifecycle, entity-relationship, class, tree, timeline, and waterfall diagrams. The [scenario guide](guide.html) explains selected starting recipes; it is not a promise that every mode supports every interaction or notation.
+Archify supports architecture, workflow, sequence, dataflow, lifecycle, entity-relationship, class, tree, timeline, and waterfall diagrams. See [ten diagram types](#diagram-types) for what each one is for. The [scenario guide](guide.html) explains selected starting recipes; it is not a promise that every mode supports every interaction or notation.
 
 ### Can I use it for flowcharts or UML?
 
@@ -171,8 +205,8 @@ No. A clear description can be enough. A repository becomes useful when the diag
 
 ### Is it free, and which Archify is this?
 
-This guide concerns the [tt-a1i/archify open-source project](https://github.com/tt-a1i/archify), whose official website is [archify.si](https://archify.si). Its code is MIT-licensed. Your agent or other services may have their own costs and terms. A similarly named paid service is not automatically affiliated with this project.
+This guide concerns the [tt-a1i/archify open-source project](https://github.com/tt-a1i/archify), whose official website is [archify.si](https://archify.si). Its code is Apache-2.0 licensed. Your agent or other services may have their own costs and terms. A similarly named browser extension or paid service is not affiliated with this project. See the [tool comparison](compare.html) for when another diagramming tool fits better.
 
 ### What should I do next?
 
-Use [Start](start.html) for installation, the [Scenario Guide](guide.html) to choose a recipe, and the [Proof Lab](gallery.html) to inspect existing artifacts and their evidence.
+Use [Start](start.html) for installation, the [Scenario Guide](guide.html) to choose a recipe, the [Proof Lab](gallery.html) to inspect existing artifacts and their evidence, and the [comparison page](compare.html) to decide whether Mermaid, Excalidraw, PlantUML, or Archify fits the task.

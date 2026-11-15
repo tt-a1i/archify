@@ -138,7 +138,7 @@ test('all existing non-page public URLs retain exact bytes outside the declared 
     const block = html.slice(start, end) + '\n';
     assert.equal(block, proof.metadata, `${file}: exact publication metadata`);
     const metadataNodes = (parseFragment(block).childNodes || []).filter(node => node.tagName);
-    assert.deepEqual(metadataNodes.map(node => node.tagName), ['link', 'meta', 'meta', 'meta', 'meta', 'meta', ...(proof.isCase ? ['meta', 'meta', 'meta'] : []), 'script']);
+    assert.deepEqual(metadataNodes.map(node => node.tagName), ['link', 'meta', 'meta', 'meta', 'meta', ...(proof.entry.documentDescription ? [] : ['meta']), ...(proof.isCase ? ['meta', 'meta', 'meta'] : []), 'script']);
     const structured = metadataNodes.at(-1);
     assert.equal(attr(structured, 'type'), 'application/ld+json', `${file}: no executable script permitted`);
     assert.equal(structured.attrs.length, 1);

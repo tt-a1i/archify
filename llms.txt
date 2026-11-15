@@ -40,3 +40,14 @@ Confirm this scope first:
    `node <installed-path>/bin/archify.mjs doctor`
 
    Report each selected target and its verification result. Say Archify is ready only for targets whose installation and doctor check succeeded; report skipped or failed targets separately. They can ask for any of the ten diagram types, or a one-page explainer.
+
+If you were only asked to install Archify, stop here and do not fetch the reference links below.
+
+## Documentation and verified examples
+
+- [Archify full reference](https://archify.si/llms-full.txt): Complete product facts, ten diagram types, one-page explainer boundaries, tool comparisons, and frequently asked questions.
+- [Scenario guide](https://archify.si/guide): Choose a diagram recipe from the question you need to answer, with evidence checklists and prompts.
+- [Proof gallery](https://archify.si/gallery): Validated interactive artifacts with their JSON or Markdown sources and recorded checks.
+- [Agent diagramming guide](https://archify.si/agent-diagrams): How coding agents author, review, and share diagrams from prompts or repositories.
+- [Tool comparison](https://archify.si/compare): When to use Archify rather than Mermaid, Excalidraw, PlantUML, or D2.
+- [Source-backed case](https://archify.si/cases/mco-runtime): A pinned-commit architecture walkthrough with explicit evidence limits.

@@ -92,6 +92,9 @@
     .cmd-copy:hover { color:var(--text); background:rgba(var(--fg-rgb),.12); }
     .copy-status { color:var(--text-2); font-size:.85rem; overflow-wrap:anywhere; }
     .copy-status:empty { display:block; margin:0; }
+    .cmd-copy.is-copied { color:var(--signal); }
+    .copy-fallback { display:inline-block; margin-top:.45rem; max-width:min(100%,44rem); padding:.45rem .65rem; border:1px solid var(--line-hi); border-radius:8px; background:rgba(var(--bg-rgb),.9); font-family:var(--font-mono); font-size:.75rem; line-height:1.5; color:var(--text); overflow-wrap:anywhere; word-break:break-word; user-select:all; overflow-anchor:none; }
+    .copy-fallback[hidden] { display:none; }
     .demo-trigger .play-ring { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--accent); color:var(--on-accent); padding-left:1px; }
 
     .hero-meta { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.5rem 1.5rem; margin-top:1.75rem; font-size:.8125rem; color:var(--text-3); }
@@ -517,7 +520,9 @@
       .hero-sub { font-size:.9375rem; margin-top:1.25rem; }
       .hero-actions { flex-direction:column; align-items:stretch; width:100%; margin-top:2rem; }
       .hero-actions .btn { width:100%; }
-      .cmd-chip { justify-content:space-between; font-size:.75rem; }
+      .hero-copy { width:100%; min-width:0; }
+      .hero-eyebrow { white-space:normal; flex-wrap:wrap; justify-content:center; max-width:100%; }
+      .cmd-chip { justify-content:center; flex-wrap:wrap; padding:.5rem .4rem; font-size:.75rem; }
       .cmd-chip code { min-width:0; white-space:normal; overflow-wrap:anywhere; }
       .cmd-copy { flex-shrink:0; }
       .stage { height:320svh; margin-top:0; }

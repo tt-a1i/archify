@@ -21,6 +21,9 @@
 .article-body pre code { font:inherit; }
 .article-body blockquote { margin:1.5rem 0; padding:.6rem 1.4rem; border-left:3px solid var(--accent); background:var(--surface); border-radius:0 12px 12px 0; }
 .article-body blockquote p { color:var(--text); }
+.article-body table { display:block; width:100%; max-width:100%; overflow-x:auto; border-collapse:collapse; margin:1.5rem 0; font-size:.86rem; }
+.article-body th, .article-body td { min-width:8rem; padding:.55rem .7rem; border:1px solid var(--line-hi); text-align:left; vertical-align:top; }
+.article-body th { background:var(--surface); font-weight:600; }
 .article-footer { position:relative; max-width:1180px; margin:auto; padding:2rem 24px 4rem; border-top:1px solid var(--line-hi); display:flex; flex-wrap:wrap; gap:2rem; }
 @media(max-width:960px) { .agent-guide { padding-top:145px; } .article-grid { grid-template-columns:1fr; gap:2rem; } .article-toc { position:static; padding:1.2rem; border:1px solid var(--line-hi); border-radius:12px; } .article-toc ol { columns:2; column-gap:2rem; } .article-body { max-width:none; } }
 @media(max-width:520px) { .agent-guide { padding-left:20px; padding-right:20px; } .article-toc ol { columns:1; } .article-body { font-size:1rem; } }

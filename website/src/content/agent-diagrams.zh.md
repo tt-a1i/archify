@@ -16,6 +16,25 @@ Archify 根据源文件生成 HTML，并执行对应的渲染与校验。你可�
 
 因此，不要把它理解为独立的代码发现服务、生产监控系统或在线团队编辑器。一张好看的图，不能替一条没有依据的连线作证。
 
+<span id="diagram-types" class="section-anchor" aria-hidden="true"></span>
+
+## 十种原生图型，一条边界
+
+Archify 支持十种原生图型。Agent 先按问题选型，再编写对应的类型化 JSON：
+
+- **architecture（架构图）**：组件、职责与允许的依赖。
+- **workflow（工作流）**：有顺序的步骤、分支与交接。
+- **sequence（时序图）**：参与者之间按时间发生的消息。
+- **dataflow（数据流）**：数据源、转换、存储与去向。
+- **lifecycle（生命周期）**：状态、迁移与守卫条件。
+- **erd（实体关系图）**：实体、键与关系基数。
+- **class（类图）**：类型、字段、方法，以及继承与组合。
+- **tree（树图）**：文件、组织或决策层级。
+- **timeline（时间线）**：带日期或顺序的事件及其关系。
+- **waterfall（瀑布图）**：分阶段的总量、构成与增减。
+
+先按问题选图型，不要反过来为了用某种图去凑问题。“系统概览”通常是架构图，“缓存未命中时发生了什么”通常是时序图。[场景指南](guide.html)提供精选入门配方，但不表示每种图型都拥有完全相同的交互和表示能力。
+
 <span id="setup" class="section-anchor" aria-hidden="true"></span>
 
 ## 先配置你实际使用的 Agent
@@ -34,7 +53,7 @@ Archify 根据源文件生成 HTML，并执行对应的渲染与校验。你可�
 
 如果选择全局复制安装，在运行 Claude Code 的环境终端中执行：
 
-<pre><code>npx -y skills add tt-a1i/archify --skill archify --agent claude-code --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes</code></pre>
 
 Claude Code 的全局 Skill 目录是 `~/.claude/skills/`，项目目录是 `.claude/skills/`。如果只想在当前项目使用，打开 [Start 的 Claude Code 选项](start.html?agent=claude-code#install)，在目标项目目录中使用“仅安装到当前仓库”的命令。
 
@@ -44,11 +63,13 @@ Claude Code 的全局 Skill 目录是 `~/.claude/skills/`，项目目录是 `.cl
 
 如果选择全局复制安装，在运行 Codex CLI 的环境终端中执行：
 
-<pre><code>npx -y skills add tt-a1i/archify --skill archify --agent codex --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent codex --global --copy --yes</code></pre>
 
 Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agents/skills/`。如果只想在当前项目使用，打开 [Start 的 Codex 选项](start.html?agent=codex#install)，在目标项目目录中使用“仅安装到当前仓库”的命令。
 
 安装完成后，使用 Start 中的文字描述或代码库提示词。安装说明不表示所有 Agent 版本组合都已验证。如果失败，先记录 Agent 及版本、操作系统和完整错误，再判断问题出在配置还是图表本身。
+
+也可以把一句话直接粘贴给已配置好的 Agent：“Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt”。[llms.txt](https://archify.si/llms.txt) 会要求 Agent 先确认安装范围、检查目标目录并运行 `doctor`；安装过程中不应扫描仓库或画图。
 
 <span id="description-workflow" class="section-anchor" aria-hidden="true"></span>
 
@@ -95,11 +116,11 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 ## 第一个例子：分别画缓存命中与未命中
 
-时序图适合回答“谁调用谁，先后顺序怎样”。对于这里介绍的稳定版 3.1.0 工作流，应把这两种互斥场景分别画成两张图，不要放在同一次请求的时间线上。在完成配置的 Agent 中，可以这样描述：
+时序图适合回答“谁调用谁，先后顺序怎样”。对于这里介绍的工作流，应把这两种互斥场景分别画成两张图，不要放在同一次请求的时间线上。在完成配置的 Agent 中，可以这样描述：
 
 > 用 Archify 分别画两张时序图：缓存命中场景和缓存未命中场景。两者都从 Browser 调用 API、API 查询 Redis 开始。命中时，API 将缓存结果返回 Browser；未命中时，API 查询 PostgreSQL，把结果写入 Redis，再返回 Browser。明确标注每张图对应的场景，不要把互斥路径串成同一次请求的时间顺序。不要添加未说明的鉴权、队列、重试或实测耗时。缺失信息会实质影响顺序时，先问我。
 
-这是演示输入，不是对你应用行为的断言。现有的[缓存未命中示例](https://archify.si/gallery/artifacts/cache-miss.sequence.html)描述的是另一条包含鉴权与追踪细节的未命中路径，不是上述提示词的生成结果。不要把它额外的设定当成自己系统的事实。
+这是演示输入，不是对你应用行为的断言。现有的[缓存未命中示例](https://archify.si/gallery/artifacts/cache-miss.sequence)描述的是另一条包含鉴权与追踪细节的未命中路径，不是上述提示词的生成结果。不要把它额外的设定当成自己系统的事实。
 
 检查成品时，重点看：
 
@@ -129,9 +150,22 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 如果成品附有已验证的源码链接，应点开检查。源码链接说明证据来自哪里，不会自动证明生产环境的运行行为；必要时仍需日志、链路追踪、配置及人工确认。
 
-可参考现有的 [MCO 运行时架构示例](https://archify.si/cases/mco-runtime.architecture.html)及其[结构化源文件](https://github.com/tt-a1i/archify/blob/main/docs/cases/mco-runtime.architecture.json)。它解释的是所标明的提交版本，不代表仓库之后永远保持相同结构。
+可参考现有的 [MCO 运行时架构示例](https://archify.si/cases/mco-runtime.architecture)及其[结构化源文件](https://github.com/tt-a1i/archify/blob/main/docs/cases/mco-runtime.architecture.json)。它解释的是所标明的提交版本，不代表仓库之后永远保持相同结构。
 
 [对照 MCO 源码：谁解码输出，谁写入文件 →](cases/mco-runtime.html)
+
+<span id="explainer" class="section-anchor" aria-hidden="true"></span>
+
+## 画一张图，还是生成一页式解答？
+
+读者需要看结构时，用图。读者需要看论证时，用一页式解答：先给结论和理由，再为每个部分提供证据。一页式解答先给结论，再按面板回答一个子问题，可以混合文字、表格、步骤、图表、固定提交里的代码摘录和经过校验的图。结论标注编号来源，图表数据留空会报错，而不是画成零。
+
+两个已经记录的示例可以说明这种格式，但它们不是为你即时生成的：
+
+- [首次 TLS 访问发生了什么](cases/explainer/tls-first-visit.html)按面板走完一次协议流程。
+- [P99 尾延迟为什么会飙升](cases/explainer/p99-tail-latency.html)把常见的性能问题变成结论先行的排查。
+
+一页式解答默认处于 `proactive`（主动）模式：除了你明确要求做成一页之外，遇到复杂流程、排障诊断、方案对比或评审报告时，Skill 也可以主动交付页面。如果你希望只在明确提出时才生成整页，可以在 Agent 规则文件中写入 `[archify explainer: on-demand]` 覆盖默认行为。成品仍是单个 HTML 文件；读者可以在四种排版样式间切换，并在环境支持时导出长图或 PDF。
 
 <span id="review-and-share" class="section-anchor" aria-hidden="true"></span>
 
@@ -155,7 +189,7 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 ### 支持哪些图？
 
-当前稳定版文档列出架构图、工作流、时序图、数据流、生命周期、实体关系图、类图、树图、时间线和瀑布图。[场景指南](guide.html)提供精选配方，但不同图型不一定拥有完全相同的交互和表示能力。
+Archify 支持架构图、工作流、时序图、数据流、生命周期、实体关系图、类图、树图、时间线和瀑布图。每种图型的用途见[十种原生图型](#diagram-types)。[场景指南](guide.html)提供精选配方，但不同图型不一定拥有完全相同的交互和表示能力。
 
 ### 能画流程图或 UML 吗？
 
@@ -171,8 +205,8 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 ### 免费吗？这里说的是哪个 Archify？
 
-这里指 [tt-a1i/archify 开源项目](https://github.com/tt-a1i/archify)，官方网站是 [archify.si](https://archify.si)。项目代码采用 MIT 许可证。你使用的 Agent 或其他服务可能另有费用与条款；名称相似的收费服务不自动构成官方关联。
+这里指 [tt-a1i/archify 开源项目](https://github.com/tt-a1i/archify)，官方网站是 [archify.si](https://archify.si)。项目代码采用 Apache-2.0 许可证。你使用的 Agent 或其他服务可能另有费用与条款；同名浏览器插件或收费服务与该项目无关。何时选择其他画图工具，可看[工具对比](compare.html)。
 
 ### 接下来做什么？
 
-去[快速开始](start.html)完成安装，用[场景指南](guide.html)选择配方，再到[验证作品集](gallery.html)查看成品与对应证据。
+去[快速开始](start.html)完成安装，用[场景指南](guide.html)选择配方，到[验证作品集](gallery.html)查看成品与对应证据，再用[工具对比](compare.html)判断 Mermaid、Excalidraw、PlantUML 与 Archify 哪个更适合当前任务。
