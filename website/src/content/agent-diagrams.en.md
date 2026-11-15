@@ -165,7 +165,7 @@ Two recorded examples show the format without implying that they were generated 
 - [What happens on a first TLS visit](cases/explainer/tls-first-visit.html) walks through a protocol sequence panel by panel.
 - [Why P99 latency spikes](cases/explainer/p99-tail-latency.html) turns a routine performance question into a conclusion-first investigation.
 
-Explainers are opt-in. Keep the `[archify explainer: on-demand]` rule in your instructions when you want the agent to propose a diagram first and generate a page only when asked. The artifact is still a single HTML file; readers can switch among four presentation styles and export a long image or PDF where the environment supports it.
+Explainer mode defaults to `proactive`: in addition to explicit page requests, the Skill can create a page unasked for a complex flow, diagnosis, trade-off comparison, or review report. Add `[archify explainer: on-demand]` to your agent rules file when you want pages created only on explicit request. The artifact is still a single HTML file; readers can switch among four presentation styles and export a long image or PDF where the environment supports it.
 
 <span id="review-and-share" class="section-anchor" aria-hidden="true"></span>
 

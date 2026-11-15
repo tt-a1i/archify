@@ -1,11 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { parse } from 'parse5';
 import { pageMetadata } from '../src/data/site-metadata.mjs';
 import { faqFacts } from '../src/data/faq-facts.mjs';
 import { sitePages } from '../src/data/site-urls.mjs';
 
 const nodeOf = (schema, type) => schema['@graph'].find(node => node['@type'] === type);
+function textWithoutScripts(node) {
+  if (!node || node.tagName === 'script' || node.tagName === 'style' || node.nodeName === '#comment') return '';
+  if (node.nodeName === '#text') return node.value || '';
+  return (node.childNodes || []).map(textWithoutScripts).join(' ');
+}
 
 test('every page graph binds the software entity, public source, and license without rating claims', () => {
   for (const page of sitePages) for (const lang of ['en', 'zh']) {
@@ -58,11 +64,12 @@ test('built homepages carry the same FAQ text in visible markup and default-open
     const faq = graphs[0]['@graph'].find(node => node['@type'] === 'FAQPage');
     assert.ok(faq, `${file}: FAQPage`);
     const index = lang === 'zh' ? 1 : 0;
+    const visibleText = textWithoutScripts(parse(html)).replace(/\s+/g, ' ');
     faq.mainEntity.forEach((entry, position) => {
       assert.equal(entry.name, faqFacts[position].question[index]);
       assert.equal(entry.acceptedAnswer.text, faqFacts[position].answer[index]);
-      assert.ok(html.includes(entry.name), `${file}: visible question ${position}`);
-      assert.ok(html.includes(entry.acceptedAnswer.text), `${file}: visible answer ${position}`);
+      assert.ok(visibleText.includes(entry.name), `${file}: visible question ${position}`);
+      assert.ok(visibleText.includes(entry.acceptedAnswer.text), `${file}: visible answer ${position}`);
     });
     assert.match(html, /<details class="facts-drawer" open(?:="")?[\s>]/, `${file}: answers must be readable without a click`);
   }

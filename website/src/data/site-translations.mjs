@@ -125,6 +125,7 @@ export const indexCopy = {
       'timeline-k':'时间线','timeline-h':'什么时候发生了什么？',
       'waterfall-k':'瀑布图','waterfall-h':'时间都花在哪了？',
       'types-more':'浏览完整作品集','types-more-sub':'实时成品 · 全部预设 · 全部图型',
+      'types-more-case':'阅读有源码依据的 MCO 案例',
       'arch-h':'它由什么组成？',
       'wf-h':'下一步做什么？',
       'seq-h':'谁先谁后，怎么来回？',

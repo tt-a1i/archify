@@ -87,6 +87,8 @@ test('real Chrome: website copy controls report real outcomes and preserve selec
           // Settle the previous receipt/recommendation layout before measuring
           // this attempt; clearing old feedback is not a clipboard scroll jump.
           status.textContent = '';
+          const heroFallback = document.getElementById('hero-copy-fallback');
+          if (heroFallback) heroFallback.hidden = true;
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           button.scrollIntoView({ block: 'center', behavior: 'instant' }); button.focus({ preventScroll: true });
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -97,12 +99,13 @@ test('real Chrome: website copy controls report real outcomes and preserve selec
           for (let i = 0; !status.textContent && i < 30; i++) await new Promise(resolve => setTimeout(resolve, 10));
           window.removeEventListener('archify:start-funnel', onCopy);
           const box = status.getBoundingClientRect();
-          return { expected, writes, legacy, visible: box.width > 0 && box.height > 0 && box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth, status: status.textContent, role: status.getAttribute('role'), live: status.getAttribute('aria-live'), focus: document.activeElement === button, areas: document.querySelectorAll('textarea').length - before.areas, scrollDelta: scrollY - before.scroll, events };
+          return { expected, writes, legacy, visible: box.width > 0 && box.height > 0 && box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth, fallbackVisible: heroFallback ? !heroFallback.hidden && heroFallback.textContent === expected : null, status: status.textContent, role: status.getAttribute('role'), live: status.getAttribute('aria-live'), focus: document.activeElement === button, areas: document.querySelectorAll('textarea').length - before.areas, scrollDelta: scrollY - before.scroll, events };
         })()`);
         manifest.receipts.push({ lang, page, selector, api, fallback, ...receipt });
         fs.writeFileSync(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
         const ok = api === 'success' || fallback === 'true';
         assert.equal(receipt.status, lang === 'zh' ? (ok ? '已复制到剪贴板。' : '复制失败，请手动选择文本。') : (ok ? 'Copied to clipboard.' : 'Copy failed. Select the text manually.'), `${page} ${selector} ${api}/${fallback}`);
+        if (selector === '[data-copy-text]') assert.equal(receipt.fallbackVisible, !ok, 'hero prompt fallback must become visible on copy failure');
         assert.deepEqual(receipt.writes, api === 'missing' ? [] : [receipt.expected]);
         assert.deepEqual(receipt.legacy, api === 'success' ? [] : [{ command: 'copy', text: receipt.expected }]);
         assert.equal(receipt.visible, true, 'feedback is visible near the clicked control at 320px');
