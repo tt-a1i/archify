@@ -189,13 +189,16 @@
       ring.appendChild(title);
       layer.appendChild(ring);
     });
-    // Count badges sit above every ring, at the top-right corner of the node.
+    // Count badges sit above every ring, anchored at the top-right corner of the node.
+    // Every red badge and the highest amber count are filled, so the busiest component reads first.
+    // Reference-level (blue) counts stay outlined however few components carry them.
     data.components.forEach(function (c) {
       var b = nodeBox(c.id), n = counts[c.id]; if (!b || !n) return;
+      var status = c.indicators.status, top = status === 'red' || (status === 'amber' && n === most.amber);
       var label = String(n), w = 14 + label.length * 6.5, h = 16;
       var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      g.setAttribute('class', 'count ' + c.indicators.status + (focused.indexOf(c.id) !== -1 ? ' focus' : ''));
-      g.setAttribute('transform', 'translate(' + (b.x + b.w - w + 6) + ' ' + (b.y - h / 2 - 2) + ')');
+      g.setAttribute('class', 'count ' + status + (top ? ' top' : '') + (focused.indexOf(c.id) !== -1 ? ' focus' : ''));
+      g.setAttribute('data-anchor', (b.x + b.w + 6) + ' ' + (b.y - 2) + ' ' + w + ' ' + h);
       var pill = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       pill.setAttribute('width', w); pill.setAttribute('height', h); pill.setAttribute('rx', h / 2); pill.setAttribute('ry', h / 2);
       var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -204,6 +207,28 @@
       layer.appendChild(g);
     });
     svg.appendChild(layer);
+    scaleBadges();
+  }
+  // Badges are drawn in diagram units, so a wide diagram fitted to a narrow column
+  // shrinks them below legibility. Counter-scale them against the fit and camera
+  // zoom so they stay about 16px tall on screen (never smaller than authored, at most 4x).
+  function screenScale() {
+    var box = svg.viewBox && svg.viewBox.baseVal, camera = window.Archify && Archify.view;
+    if (!box || !box.width || !svg.clientWidth) return 1;
+    return svg.clientWidth / box.width * (camera && camera.state ? camera.state().scale || 1 : 1);
+  }
+  function scaleBadges() {
+    if (!layer) return;
+    var k = Math.min(4, Math.max(1, 1 / screenScale()));
+    layer.querySelectorAll('g.count[data-anchor]').forEach(function (g) {
+      var a = g.getAttribute('data-anchor').split(' ').map(Number);
+      g.setAttribute('transform', 'translate(' + (a[0] - a[2] * k) + ' ' + (a[1] - a[3] * k / 2) + ') scale(' + k + ')');
+    });
+  }
+  if (svg) {
+    var badgeFrame = 0, rescale = function () { cancelAnimationFrame(badgeFrame); badgeFrame = requestAnimationFrame(scaleBadges); };
+    new MutationObserver(rescale).observe(svg, { attributes: true, attributeFilter: ['style', 'viewBox'] });
+    if (window.ResizeObserver) new ResizeObserver(rescale).observe(svg);
   }
   var focused = [];
   function setFocus(ids) {
@@ -722,6 +747,8 @@
     h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><div class="health-primary ' + (errors ? 'attention' : 'positive') + '"><b>' + fmt(o.counts.findings) + '</b><span>' + esc(tr('findings')) + '</span><i>' + esc(!rules.length ? tr('No checks ran') : errors ? tr('{count} errors', { count: errors }) : tr('No errors')) + '</i></div>';
     h += '<div class="health-facts"><span>' + esc(tr('Import cycles')) + '<b>' + (rules.indexOf('coupling/import-cycle') !== -1 ? fmt(fileCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Module cycles')) + '<b>' + (rules.indexOf('coupling/cycle') !== -1 ? fmt(moduleCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Boundary violations')) + '<b>' + (!o.coverage.boundaries || !o.coverage.boundaries.rules ? tr('Not configured') : rules.indexOf('architecture/boundary') !== -1 ? fmt(boundaryViolations) : tr('Not checked')) + '</b></span></div>';
     if (o.counts.acceptedErrors) h += '<p class="scope-line">' + esc(tr('{open} open · {accepted} accepted error-level findings', { open: o.counts.error, accepted: o.counts.acceptedErrors })) + '</p>';
+    // A thin ring is still a finding, not an all-clear: say what each ring weight means.
+    if (svg) h += '<p class="halo-legend" aria-label="' + esc(tr('Diagram rings')) + '"><span><i class="heavy"></i>' + esc(tr('Concentrated')) + '</span><span><i class="thin"></i>' + esc(tr('Has findings')) + '</span><span><i class="dashed"></i>' + esc(tr('Not analyzed')) + '</span></p>';
     h += '</section>';
     h += '<p class="brief-status ev" role="status" aria-live="polite"></p>';
     h += '<details class="architecture-brief-preview" hidden><summary>' + esc(tr('Copy manually')) + '</summary><textarea readonly spellcheck="false" aria-label="' + esc(tr('Architecture brief')) + '"></textarea></details>';

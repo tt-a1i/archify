@@ -3,18 +3,21 @@ html[data-bauify="on"] g[data-node-id] { opacity: .35; transition: opacity .15s;
 html[data-bauify="on"] g[data-node-id].bauify-mapped { opacity: 1; }
 html[data-bauify="on"] .guided-views, html[data-bauify="on"] [class*="story"], html[data-bauify="on"] [class*="chapter"] { opacity: .25; pointer-events: none; }
 #bauify-layer { pointer-events: none; }
-#bauify-layer rect { fill: none; stroke-linejoin: round; }
-/* The ring sits well outside Archify's own coloured border and is blurred into a halo, so the two never read as one outline. */
-#bauify-layer rect.red { stroke: #FB7185; stroke-width: 6; filter: blur(4px); animation: bauify-glow-red 1.3s ease-in-out infinite; }
-#bauify-layer rect.amber { stroke: #FBBF24; stroke-width: 5; opacity: .7; filter: blur(3.5px); }
-#bauify-layer rect.blue { stroke: #60A5FA; stroke-width: 4; opacity: .55; filter: blur(3px); }
-#bauify-layer rect.green { stroke: #34D399; stroke-width: 3; opacity: .45; filter: blur(2.5px); }
-#bauify-layer rect.grey { stroke: #64748B; stroke-width: 1; opacity: .35; stroke-dasharray: 4 3; }
-@keyframes bauify-glow-red {
-  0%, 100% { opacity: .25; filter: blur(3px); }
-  50% { opacity: 1; filter: blur(6px) drop-shadow(0 0 14px #FB7185); }
-}
-@media (prefers-reduced-motion: reduce) { #bauify-layer rect.red { animation: none; opacity: .9; filter: blur(4px) drop-shadow(0 0 10px #FB7185); } }
+#bauify-layer { --halo-red: #F43F5E; --halo-amber: #F59E0B; --halo-blue: #3B82F6; --halo-green: #10B981; --halo-grey: #94A3B8; }
+/* Rings sit outside Archify's own coloured border. Their widths are screen pixels
+   (non-scaling-stroke), so a wide diagram fitted to a narrow column still shows
+   them; a blur would vanish first at that scale, so the tiers are crisp strokes. */
+#bauify-layer rect { fill: none; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+#bauify-layer > rect.red { stroke: var(--halo-red); stroke-width: 3px; fill: color-mix(in srgb, var(--halo-red) 12%, transparent); animation: bauify-glow-red 1.3s ease-in-out infinite; }
+#bauify-layer > rect.amber { stroke: var(--halo-amber); stroke-width: 3px; fill: color-mix(in srgb, var(--halo-amber) 10%, transparent); }
+/* Reference-level signals never take the heavy ring: one info note must not read like a cluster of warnings. */
+#bauify-layer > rect.blue { stroke: var(--halo-blue); stroke-width: 1.5px; }
+#bauify-layer > rect.green { stroke: var(--halo-green); stroke-width: 1.5px; opacity: .7; }
+#bauify-layer > rect.grey { stroke: var(--halo-grey); stroke-width: 1px; opacity: .7; stroke-dasharray: 3 3; }
+/* Fewer than half the highest count: present, but not where findings concentrate. */
+#bauify-layer > rect.amber.quiet { stroke-width: 1.5px; fill: none; }
+@keyframes bauify-glow-red { 0%, 100% { stroke-opacity: .45; } 50% { stroke-opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #bauify-layer > rect.red { animation: none; } }
 #bauify-legend { display: grid; gap: 3px; margin-top: 4px; font-size: 11px; }
 #bauify-legend span { white-space: normal; }
 #bauify-legend i, #bauify-detail h3 i, #bauify-overview h3 i, #bauify-overview summary i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
@@ -271,8 +274,6 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-code pre .ln i { text-indent: 0; }
 #bauify-reader .ref, #bauify-reader .reader-nav button, #bauify-reader .locate, #bauify-reader .task-actions button { transition: border-color .16s ease, background-color .16s ease; }
 #bauify-reader .reader-nav button:hover, #bauify-reader .locate:hover { border-color: color-mix(in srgb, var(--backend-stroke, #34D399) 60%, var(--panel-border, #1e293b)); }
-/* The halo marks a component without drowning its own border when most components carry one. */
-#bauify-layer rect.amber { stroke-width: 4; opacity: .6; filter: blur(3px); }
 @media (prefers-reduced-motion: reduce) { .bauify-item, #bauify-reader .ref, #bauify-reader .reader-nav button, #bauify-reader .locate, #bauify-reader .task-actions button, #bauify-panel .ind, #bauify-overview summary { transition: none; } }
 /* Title row: number, title and severity capsule stay on one row however long the title is. */
 .bauify-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; }
@@ -284,13 +285,18 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-overview .counts .count { white-space: nowrap; }
 /* Headings receive focus from script so assistive technology announces the new page; they are not in the tab order and take no focus ring. */
 #bauify-reader h3[tabindex="-1"]:focus { outline: none; }
-/* Diagram signal: a glow only where the findings concentrate, and a count on every component that has any. */
-#bauify-layer rect.amber.quiet, #bauify-layer rect.blue.quiet { stroke-width: 1.5; opacity: .8; filter: none; }
-#bauify-layer g.count rect { fill: var(--panel, #0f172a); stroke: #94a3b8; stroke-width: 1.25; opacity: 1; filter: none; animation: none; }
-#bauify-layer g.count.red rect { stroke: #FB7185; fill: color-mix(in srgb, #FB7185 14%, var(--panel, #0f172a)); }
-#bauify-layer g.count.amber rect { stroke: #FBBF24; }
-#bauify-layer g.count.blue rect { stroke: #60A5FA; }
-#bauify-layer g.count text { fill: var(--text, #f8fafc); font: 600 10px system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; text-anchor: middle; dominant-baseline: central; }
+/* Diagram signal: a heavy ring only where the findings concentrate, and a count on every component that has any.
+   overlay.js scales each badge against the diagram zoom so it stays about 16px tall on screen. */
+#bauify-layer g.count rect { fill: var(--panel, #0f172a); stroke: var(--halo-grey); stroke-width: 1px; opacity: 1; animation: none; }
+#bauify-layer g.count.red rect { stroke: var(--halo-red); }
+#bauify-layer g.count.amber rect { stroke: var(--halo-amber); }
+#bauify-layer g.count.blue rect { stroke: var(--halo-blue); }
+#bauify-layer g.count.top rect { stroke: none; }
+#bauify-layer g.count.top.red rect { fill: var(--halo-red); }
+#bauify-layer g.count.top.amber rect { fill: var(--halo-amber); }
+#bauify-layer g.count text { fill: var(--text, #f8fafc); font: 700 10px system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; text-anchor: middle; dominant-baseline: central; }
+#bauify-layer g.count.top text { fill: #111827; }
+#bauify-layer g.count.top.red text { fill: #fff; }
 html[data-bauify-focus="on"] #bauify-layer g.count:not(.focus) { opacity: .15; }
 html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-overview .counts .nw { white-space: nowrap; }
@@ -353,6 +359,11 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .health-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .health-facts span { color: var(--text-muted); font-size: 12px; }
 #bauify-reader .health-facts b { display: block; margin-top: 5px; color: var(--text); font-size: 16px; font-variant-numeric: tabular-nums; }
+#bauify-reader .halo-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0 0; color: var(--text-muted); font-size: 12px; }
+#bauify-reader .halo-legend span { display: inline-flex; align-items: center; gap: 6px; }
+#bauify-reader .halo-legend i { box-sizing: border-box; width: 16px; height: 10px; border-radius: 3px; border: 1.5px solid #F59E0B; }
+#bauify-reader .halo-legend i.heavy { border-width: 3px; background: color-mix(in srgb, #F59E0B 10%, transparent); }
+#bauify-reader .halo-legend i.dashed { border: 1px dashed #94A3B8; }
 #bauify-reader .priority-card { --priority-action-size: 24px; display: grid; grid-template-columns: minmax(0, 1fr) repeat(2, var(--priority-action-size)); grid-template-rows: var(--priority-action-size) auto; align-items: start; column-gap: 8px; padding: 10px 12px; margin: 10px 0; border: 1px solid var(--panel-border); border-radius: 9px; }
 #bauify-reader .priority-card .bauify-item { grid-area: 1 / 1 / 3 / 2; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: var(--priority-action-size) auto; align-items: center; gap: 0 8px; padding: 0; margin: 0; border: 0; background: none; }
 #bauify-reader .priority-card:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }

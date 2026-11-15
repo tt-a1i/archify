@@ -369,8 +369,17 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   await load();
   await run("document.getElementById('code-analysis-start').click()");
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
-  // The left column opens on the project overview, not on a component.
+  // The reading column opens on the project overview, not on a component.
   assert.equal(await run("document.getElementById('bauify-overview').hidden"), false);
+  // Diagram rings and counts are sized in screen pixels, so a diagram fitted to a narrow column still shows them.
+  const halo = await run(`(() => { const rings = [...document.querySelectorAll('#bauify-layer > rect')];
+    const badges = [...document.querySelectorAll('#bauify-layer g.count')];
+    return { stroke: rings.every(r => getComputedStyle(r).vectorEffect === 'non-scaling-stroke'),
+      blur: rings.some(r => getComputedStyle(r).filter !== 'none'),
+      badges: badges.length, legible: badges.every(g => g.getBoundingClientRect().height >= 14),
+      filled: badges.filter(g => g.classList.contains('top')).every(g => !g.classList.contains('blue')),
+      legend: document.querySelectorAll('#bauify-overview .halo-legend i').length }; })()`);
+  assert.deepEqual({ ...halo, badges: halo.badges > 0 }, { stroke: true, blur: false, badges: true, legible: true, filled: true, legend: 3 }, 'rings are crisp screen-pixel strokes, counts stay legible and the overview explains ring weights');
   assert.equal(await run("document.getElementById('bauify-panel').hidden"), true);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length"), 4);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length === [...document.querySelectorAll('#bauify-overview,#bauify-panel,#bauify-detail,#bauify-code')].filter(e => e.parentElement.id === 'bauify-reader').length"), true);
