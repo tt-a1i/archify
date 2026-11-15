@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { MAX_ATTACHMENTS, attachPrPack, extractAssetUrls, parseGhVersion, parsePullRequest, supportsAttach } from '../archify/pr/attach.mjs';
+import { MAX_ATTACHMENTS, attachPrPack, extractAssetUrls, markdownDestination, parseGhVersion, parsePullRequest, portableAttachmentPath, supportsAttach } from '../archify/pr/attach.mjs';
 import { PACK_END, PACK_START, locatePackBlock, sha256 } from '../archify/pr/markdown.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 
@@ -14,8 +14,8 @@ function svg(label) {
 }
 
 // Writes a build receipt the way `archify pr build` lays it out.
-function receiptFixture({ views = ['topology', 'flow'], bytes } = {}) {
-  const dir = createScratchDirectory(path.join(os.tmpdir(), 'archify-pr-attach-'));
+function receiptFixture({ views = ['topology', 'flow'], bytes, prefix = 'archify-pr-attach-' } = {}) {
+  const dir = createScratchDirectory(path.join(os.tmpdir(), prefix));
   const viewsDir = path.join(dir, 'views');
   fs.mkdirSync(viewsDir);
   const assets = [];
@@ -42,7 +42,8 @@ function receiptFixture({ views = ['topology', 'flow'], bytes } = {}) {
 // Markdown image references to user-attachments URLs and nothing else.
 function fakeGh({ body = '', comments = [], version = '2.99.0', auth = true, rewrite = (token) => `https://github.com/user-attachments/assets/${token.replace(/[^a-z0-9]/gi, '')}`, fail = {} } = {}) {
   const state = { body, comments: comments.map((comment) => ({ ...comment })), calls: [], nextComment: 900 };
-  const rewriteMarkdown = (text) => text.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, (match, token, file) => {
+  const rewriteMarkdown = (text) => text.replace(/!\[([^\]]+)\]\((<[^>]*>|[^)]+)\)/g, (match, token, raw) => {
+    const file = raw.startsWith('<') ? raw.slice(1, -1) : raw;
     if (!fs.existsSync(file)) return match;
     const url = rewrite(token, file);
     return url ? `![${token}](${url})` : match;
@@ -91,6 +92,26 @@ function fakeGh({ body = '', comments = [], version = '2.99.0', auth = true, rew
 }
 
 const HAND_WRITTEN = '## Why\n\nHand-written motivation.\n\n- [ ] migrate\n- [x] tests\n';
+
+test('attachment paths become CommonMark-safe destinations without losing their Windows spelling', () => {
+  assert.equal(markdownDestination('out/flow-dark.svg'), 'out/flow-dark.svg');
+  assert.equal(markdownDestination('C:\\repo\\out\\flow-dark.svg'), 'C:/repo/out/flow-dark.svg');
+  assert.equal(markdownDestination('out/my pack/flow (dark).svg'), '<out/my pack/flow (dark).svg>');
+  assert.equal(markdownDestination('C:\\repo\\my pack\\flow.svg'), '<C:/repo/my pack/flow.svg>');
+  assert.equal(portableAttachmentPath('\\\\server\\share\\flow.svg'), '//server/share/flow.svg');
+});
+
+test('attach keeps a spaced attachment path as one reference from upload through mapping', async () => {
+  const { receiptPath, assets } = receiptFixture({ prefix: 'archify pr attach space-' });
+  assert.ok(assets.every((asset) => asset.path.includes(' ')), 'fixture paths contain a space');
+  const { gh, state } = fakeGh({ body: HAND_WRITTEN });
+  const result = await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, gh });
+  assert.equal(result.ok, true);
+  const upload = state.calls.find((call) => call.args.includes('--attach'));
+  assert.match(upload.input, /!\[archify-asset-0:[a-f0-9]{16}\]\(<[^>]*topology-light\.svg>\)/);
+  assert.ok(upload.args.filter((arg, index) => upload.args[index - 1] === '--attach').every((arg) => !arg.startsWith('<')), '--attach receives the bare path');
+  for (const asset of assets) assert.match(result.assets[asset.path], /^https:\/\/github\.com\/user-attachments\/assets\//);
+});
 
 test('attach --dry-run runs the preflight only and previews the final layout without writing', async () => {
   const { receiptPath, assets } = receiptFixture();

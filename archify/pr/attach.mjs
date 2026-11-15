@@ -116,8 +116,23 @@ function checkAttachments(assets) {
   });
 }
 
+// GitHub reads attachment references with a CommonMark parser, where a
+// backslash escapes the next character and whitespace ends an unquoted
+// destination. Windows receipts get forward slashes, and any path that still
+// contains whitespace, parentheses, or angle brackets is wrapped in <...>.
+// The same spelling is used for --attach so the reference and the upload agree.
+export function portableAttachmentPath(filePath) {
+  const windows = path.sep === '\\' || /^[A-Za-z]:[\\/]/.test(filePath) || filePath.startsWith('\\\\');
+  return windows ? filePath.replace(/\\/g, '/') : filePath;
+}
+
+export function markdownDestination(filePath) {
+  const portable = portableAttachmentPath(filePath);
+  return /[\s()<>]/.test(portable) ? `<${portable.replace(/</g, '%3C').replace(/>/g, '%3E')}>` : portable;
+}
+
 function tokenBlock(attachments) {
-  return [PACK_START, ...attachments.map((asset) => `![${asset.token}](${asset.path})`), PACK_END].join('\n');
+  return [PACK_START, ...attachments.map((asset) => `![${asset.token}](${markdownDestination(asset.path)})`), PACK_END].join('\n');
 }
 
 export function extractAssetUrls(body, attachments) {
@@ -199,7 +214,7 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
     };
   }
 
-  const attachArgs = attachments.flatMap((asset) => ['--attach', asset.path]);
+  const attachArgs = attachments.flatMap((asset) => ['--attach', portableAttachmentPath(asset.path)]);
   const ghApi = (method, route, body) => runGh(gh, ['api', '-X', method, route, ...(body === undefined ? [] : ['--input', '-'])], { input: body === undefined ? undefined : JSON.stringify(body), stage: 'write', label: `gh api ${method} ${route}` });
 
   if (target === 'body') {

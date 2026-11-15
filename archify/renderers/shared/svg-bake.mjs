@@ -546,7 +546,11 @@ function bakeBodyStyles(body, variables) {
     });
 }
 
-export function bakeSvg(svg, { theme, preset = 'classic', diagramType = null, animateFlow = false, styles = loadViewerStyles() }) {
+export function authoredPreset(svg) {
+  return splitRootTag(svg).attributes.get('data-preset') || null;
+}
+
+export function bakeSvg(svg, { theme, preset, diagramType = null, animateFlow = false, styles = loadViewerStyles() }) {
   if (!BAKE_THEMES.includes(theme)) throw new Error(`svg-bake: unsupported theme ${JSON.stringify(theme)}`);
   const { attributes, body: rawBody } = splitRootTag(svg);
   const resolvedPreset = preset || attributes.get('data-preset') || 'classic';

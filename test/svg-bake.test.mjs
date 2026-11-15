@@ -129,6 +129,26 @@ test('baked SVGs use the same stylesheet variables the Viewer resolves per theme
   }
 });
 
+test('an authored meta.visual_preset survives the bake unless an explicit preset is passed', async () => {
+  const input = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'cache-miss-request.sequence.json'), 'utf8'));
+  input.meta.visual_preset = 'blueprint';
+  const inputPath = path.join(scratch, 'authored-preset.sequence.json');
+  fs.writeFileSync(inputPath, JSON.stringify(input));
+  const blueprint = resolveThemeVariables(styles.rules, { theme: 'dark', preset: 'blueprint' });
+  const classic = resolveThemeVariables(styles.rules, { theme: 'dark', preset: 'classic' });
+  assert.notEqual(blueprint.get('--bg'), classic.get('--bg'));
+
+  const authored = await exportSvgArtifacts({ type: 'sequence', input: inputPath, output: path.join(scratch, 'authored-preset'), theme: 'dark' });
+  assert.equal(authored.preset, 'blueprint', 'the receipt reports the preset that was baked');
+  const svg = fs.readFileSync(authored.outputs[0].path, 'utf8');
+  assert.equal(rootAttributes(svg)['data-preset'], 'blueprint');
+  assert.equal(svg.match(/<rect class="archify-bake-background"[^>]*fill="([^"]+)"/)[1], blueprint.get('--bg'));
+
+  const overridden = await exportSvgArtifacts({ type: 'sequence', input: inputPath, output: path.join(scratch, 'authored-preset-override'), theme: 'dark', preset: 'editorial' });
+  assert.equal(overridden.preset, 'editorial');
+  assert.equal(rootAttributes(fs.readFileSync(overridden.outputs[0].path, 'utf8'))['data-preset'], 'editorial');
+});
+
 test('variable substitution honours nested fallbacks and color-mix compiles to flat colours', () => {
   const table = new Map([['--a', '#102030'], ['--b', 'rgb(0, 0, 0)']]);
   const lookup = (name) => table.get(name) ?? null;

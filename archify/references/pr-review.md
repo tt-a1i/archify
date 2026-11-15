@@ -104,7 +104,9 @@ lists `title`, `summary`,
 `baseRef`/`headRef` (or `baseSha`/`headSha`), `views[]` with `id`, `title`,
 `type`, `input` (path relative to the manifest), optional `caption`,
 `collapsed`, `theme`, and an optional `changes[]` table plus objective
-`stats`. `build` writes `views/<id>.json` snapshots pinned to the verified
+`stats`. A view without `preset` bakes with the diagram's own
+`meta.visual_preset` (classic when unset); set `preset` to override it.
+`build` writes `views/<id>.json` snapshots pinned to the verified
 revisions, offline `views/<id>.html` (source links and payload diffs live
 here), `views/<id>-light.svg` / `-dark.svg` that pass strict XML and GitHub's
 Camo limits, `pr-pack.md` with asset placeholders, and `pr-pack.receipt.json`.

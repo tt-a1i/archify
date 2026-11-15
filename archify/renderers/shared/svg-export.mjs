@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createOwnedTempDirectory } from './owned-temp-directory.mjs';
 import { publishOutputAtomically } from './cli.mjs';
-import { BAKE_PRESETS, BAKE_THEMES, assertCamoSafeSvg, bakeSvg, extractCanonicalSvg, loadViewerStyles } from './svg-bake.mjs';
+import { BAKE_PRESETS, BAKE_THEMES, assertCamoSafeSvg, authoredPreset, bakeSvg, extractCanonicalSvg, loadViewerStyles } from './svg-bake.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const EXPORT_TYPES = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall'];
@@ -114,10 +114,11 @@ export async function exportSvgArtifacts({ type, input, output, theme = 'both', 
     });
   }
   const canonical = extractCanonicalSvg(html ?? await renderToHtml({ type, input: inputPath, env }));
+  const resolvedPreset = preset || authoredPreset(canonical) || 'classic';
   const paths = exportOutputPaths(output, themes);
   const outputs = [];
   for (const currentTheme of themes) {
-    const svg = bakeSvg(canonical, { theme: currentTheme, preset, diagramType: type, animateFlow, styles });
+    const svg = bakeSvg(canonical, { theme: currentTheme, preset: resolvedPreset, diagramType: type, animateFlow, styles });
     const camo = assertCamoSafeSvg(svg, { assert: false });
     if (!camo.ok) {
       throw new SvgExportError(`Baked ${currentTheme} SVG is not Camo-safe: ${camo.problems.map((problem) => `[${problem.code}] ${problem.message}`).join(' ')}`, {
@@ -145,7 +146,7 @@ export async function exportSvgArtifacts({ type, input, output, theme = 'both', 
     type,
     input: inputPath,
     theme,
-    preset: preset || 'classic',
+    preset: resolvedPreset,
     animateFlow: Boolean(animateFlow),
     outputs,
   };
