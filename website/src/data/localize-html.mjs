@@ -31,7 +31,7 @@ export function localizeHtml(html, { lang, page, cloudflare, copy = {} }) {
       node.childNodes = [{ nodeName: '#text', value: lang === 'zh' ? 'EN' : '中文', parentNode: node }];
     } else if (node.tagName === 'a') {
       const href = get('href');
-      const match = href?.match(/^(?:(index|guide|start|gallery|community)\.html|(\.\/))([?#].*)?$/);
+      const match = href?.match(/^(?:(index|guide|start|gallery|community|agent-diagrams|cases\/mco-runtime)\.html|(\.\/))([?#].*)?$/);
       if (match) set('href', localPagePath(match[1] || 'index', lang, cloudflare) + (match[3] || ''));
       else if (href?.startsWith('#')) set('href', localPagePath(page, lang, cloudflare) + href);
     }

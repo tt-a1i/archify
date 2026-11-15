@@ -9,8 +9,10 @@ import { productChannel } from '../data/product-facts';
 import { canonicalUrl } from '../data/site-urls.mjs';
 import { pageMetadata } from '../data/site-metadata.mjs';
 import { localizeHtml } from '../data/localize-html.mjs';
-interface Props { head: string; css: string; page: 'index' | 'guide' | 'start' | 'gallery' | 'community'; lang?: 'en' | 'zh' }
+interface Props { head: string; css: string; page: 'index' | 'guide' | 'start' | 'gallery' | 'community' | 'agent-diagrams' | 'cases/mco-runtime'; lang?: 'en' | 'zh' }
 const { head, css, page, lang = 'en' } = Astro.props;
+const pageDepth = page.split('/').length - 1 + (lang === 'zh' && page !== 'index' ? 1 : 0);
+const rootBase = pageDepth ? '../'.repeat(pageDepth) : './';
 const cloudflare = Astro.site?.origin === 'https://archify.si';
 const metadata = pageMetadata(page, lang, version);
 const copy = page === 'index' ? indexCopyFor(productChannel) : page === 'guide' ? guideCopyFor(guide, productChannel) : {};
@@ -23,7 +25,7 @@ const resourceHead = head.replace(/<meta\b[^>]*>/gi, '').replace(/<title>[\s\S]*
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <base href={lang === 'zh' && page !== 'index' ? '../' : './'} />
+  <base href={rootBase} />
   <title>{metadata.title}</title>
   <meta name="description" content={metadata.description} />
   <meta name="theme-color" content="#07080a" />

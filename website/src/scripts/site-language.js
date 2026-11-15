@@ -29,7 +29,7 @@
   function localizeLinks() {
     document.querySelectorAll('a[href]').forEach(function (link) {
       if (link.hasAttribute('data-language-switch')) return;
-      var match = link.getAttribute('href').match(/^(index|guide|start|gallery|community)\.html([?#].*)?$/);
+      var match = link.getAttribute('href').match(/^(index|guide|start|gallery|community|agent-diagrams|cases\/mco-runtime)\.html([?#].*)?$/);
       if (match) link.setAttribute('href', pagePath(match[1], language) + (match[2] || ''));
     });
   }

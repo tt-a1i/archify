@@ -1,9 +1,11 @@
 ---
 import Brand from './Brand';
-interface Props { page: 'index' | 'gallery' | 'guide' | 'start' | 'community' }
+interface Props { page: 'index' | 'gallery' | 'guide' | 'start' | 'community' | 'agent-diagrams' | 'cases/mco-runtime' }
 const { page } = Astro.props;
 const home = page === 'index';
 const identities = {
+  'cases/mco-runtime': { en: '/ MCO case', zh: '/ MCO 案例', label: 'Archify home' },
+  'agent-diagrams': { en: '/ agent diagrams', zh: '/ Agent 画图', label: 'Archify home' },
   gallery: { en: '/ proof lab', zh: '/ 验证作品集', label: 'Back to Archify home' },
   guide: { en: '/ guide', zh: '/ 场景指南', label: 'Archify home' },
   start: { en: '/ start', zh: '/ 快速上手', label: 'Archify project page' },

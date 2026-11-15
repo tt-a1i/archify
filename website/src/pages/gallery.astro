@@ -31,6 +31,10 @@ const { lang = 'en' } = Astro.props;
       </div>
     </section>
 
+    <aside class="agent-guide-link shell" aria-label={lang === 'zh' ? '源码案例' : 'Source-backed case'}>
+      <a href="cases/mco-runtime.html" data-en="Read a source-backed case: decoding and file ownership in MCO →" data-zh="阅读源码案例：MCO 的解码与文件写入职责 →">Read a source-backed case: decoding and file ownership in MCO →</a>
+    </aside>
+
     <section class="controls" aria-label="Gallery controls">
       <div class="shell controls-inner">
         <div class="filter-group" role="group" aria-label="Filter diagrams by type">
