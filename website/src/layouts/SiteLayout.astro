@@ -9,7 +9,7 @@ import { productChannel } from '../data/product-facts';
 import { canonicalUrl } from '../data/site-urls.mjs';
 import { pageMetadata } from '../data/site-metadata.mjs';
 import { localizeHtml } from '../data/localize-html.mjs';
-interface Props { head: string; css: string; page: 'index' | 'guide' | 'start' | 'gallery' | 'community' | 'agent-diagrams' | 'cases/mco-runtime'; lang?: 'en' | 'zh' }
+interface Props { head: string; css: string; page: 'index' | 'guide' | 'start' | 'gallery' | 'community' | 'agent-diagrams' | 'compare' | 'cases/mco-runtime'; lang?: 'en' | 'zh' }
 const { head, css, page, lang = 'en' } = Astro.props;
 const pageDepth = page.split('/').length - 1 + (lang === 'zh' && page !== 'index' ? 1 : 0);
 const rootBase = pageDepth ? '../'.repeat(pageDepth) : './';

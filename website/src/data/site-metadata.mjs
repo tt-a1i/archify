@@ -9,6 +9,10 @@ const descriptions = {
     en: ['Archify Agent Diagramming Guide — Author, Review, Share', 'Create diagrams with Claude Code, Codex, Cursor and other coding agents. Learn bounded prompts, repository evidence, review checks and safe HTML sharing with Archify.'],
     zh: ['Archify Agent 画图指南 — 编写、检查与分享', '用 Claude Code、Codex、Cursor 等 Coding Agent 画图：从范围明确的提示词和仓库证据开始，检查事实、修改图表，再安全分享 Archify HTML 成品。'],
   },
+  compare: {
+    en: ['Archify vs Mermaid, Excalidraw and PlantUML — How to Choose', 'Compare Archify with Mermaid, Excalidraw, PlantUML and D2 for AI coding agent diagramming: inputs, output, complex-graph readability, interaction, one-page answers and honest boundaries.'],
+    zh: ['Archify、Mermaid、Excalidraw、PlantUML 怎么选？', '对比 Archify、Mermaid、Excalidraw、PlantUML 与 D2 在 Agent 画图场景下的输入、产物、复杂图可读性、交互能力、一页式解答与适用边界。'],
+  },
   index: {
     en: ['Archify — AI Agent Skill for Interactive Diagrams and One-Page Answers', 'Archify is an Apache-2.0-licensed AI agent skill for validated HTML diagrams and conclusion-first one-page answers from descriptions or code, with interactive exploration, cited sources and browser export.'],
     zh: ['Archify — 用自然语言生成交互式图表和一页式解答', 'Archify 是采用 Apache-2.0 许可证的 AI Agent 技能，可从自然语言或源码生成经过验证的独立 HTML 图表和结论在前、标注出处的一页式解答，支持交互探索与浏览器导出。'],

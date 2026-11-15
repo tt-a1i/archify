@@ -25,12 +25,15 @@ test('agent guide is readable without JavaScript, honest about examples, and lin
     assert.match(visible, lang === 'en' ? /not the output of this prompt/ : /不是上述提示词的生成结果/);
     assert.match(text(all.find(node => node.tagName === 'main')), lang === 'en' ? /not recorded agent runs/ : /并非 Agent 实测记录/);
     for (const name of ['Claude Code', 'Codex', 'Cursor', 'OpenCode', 'GitHub Copilot']) assert.ok(visible.includes(name));
+    for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']) assert.ok(visible.includes(type), `${lang}: diagram type ${type}`);
+    assert.match(visible, lang === 'en' ? /one-page explainer/i : /一页式解答/);
+    assert.doesNotMatch(visible, /MIT-licensed|采用 MIT 许可证/);
     const schema = JSON.parse(text(all.find(node => node.tagName === 'script' && attr(node, 'type') === 'application/ld+json')));
     const structuredArticle = schema['@graph'].find(item => item['@type'] === 'TechArticle');
     assert.equal(structuredArticle.url, `https://archify.si/${prefix}agent-diagrams`);
     assert.equal(structuredArticle.inLanguage, lang === 'zh' ? 'zh-Hans' : 'en');
     const ids = new Set(all.map(node => attr(node, 'id')).filter(Boolean));
-    for (const id of ['responsibilities', 'setup', 'description-workflow', 'mermaid-input', 'cache-scenarios', 'repository-evidence', 'review-and-share', 'questions']) assert.ok(ids.has(id), `${lang}: stable cross-language section ${id}`);
+    for (const id of ['responsibilities', 'diagram-types', 'setup', 'description-workflow', 'mermaid-input', 'cache-scenarios', 'repository-evidence', 'explainer', 'review-and-share', 'questions']) assert.ok(ids.has(id), `${lang}: stable cross-language section ${id}`);
     const toc = all.find(node => attr(node, 'class') === 'article-toc');
     for (const link of nodes(toc).filter(node => node.tagName === 'a')) {
       const destination = new URL(attr(link, 'href'), baseUri);
@@ -179,7 +182,7 @@ test('setup answers are readable without scripts and distinguish prerequisites f
     const base = new URL(attr(page.find(node => node.tagName === 'base'), 'href'), origin + `${prefix}agent-diagrams.html`);
     for (const [agent, directory] of [['claude-code', '.claude'], ['codex', '.agents']]) {
       assert.equal(page.filter(node => attr(node, 'id') === `setup-${agent}`).length, 1);
-      const command = `npx -y skills add tt-a1i/archify --skill archify --agent ${agent} --global --copy --yes`;
+      const command = `npx -y skills@latest add https://archify.si --skill archify --agent ${agent} --global --copy --yes`;
       assert.ok(nodes(article).some(node => node.tagName === 'pre' && text(node).trim() === command), `${agent}: exact existing Start command is visible in SSR`);
       for (const location of [`~/${directory}/skills/`, `${directory}/skills/`]) assert.ok(visible.includes(location));
       const link = nodes(article).find(node => node.tagName === 'a' && attr(node, 'href')?.includes(`agent=${agent}#install`));

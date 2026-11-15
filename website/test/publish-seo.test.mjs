@@ -29,7 +29,7 @@ for (const name of ['cloudflare', 'github']) test(`${name}: published discovery 
   try {
     const urls = publishSeo(root, { name });
     assert.equal(urls.length, sitePages.length * 2 + CASES.length + PUBLISHED_CASES.length);
-    assert.equal(urls.length, 40, '14 localized pages, 16 gallery artifacts and 10 standalone cases');
+    assert.equal(urls.length, 42, '16 localized pages, 16 gallery artifacts and 10 standalone cases');
     assert.equal(new Set(urls).size, urls.length);
     for (const page of sitePages) for (const lang of ['en', 'zh']) assert.ok(urls.includes(canonicalUrl(page, lang)));
     const sitemap = fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8');

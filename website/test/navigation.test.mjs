@@ -30,7 +30,7 @@ test('all built pages expose one shared top navigation and the correct current p
       ...['guide', 'gallery', 'start', 'community'].map(hrefFor), 'https://github.com/tt-a1i/archify',
     ], page);
     assert.deepEqual(links.filter(node => attr(node, 'aria-current') === 'page').map(resolvedHref),
-      ['index', 'agent-diagrams', 'cases/mco-runtime'].includes(page) ? [] : [hrefFor(page)], page);
+      ['index', 'agent-diagrams', 'compare', 'cases/mco-runtime'].includes(page) ? [] : [hrefFor(page)], page);
     const community = links.find(node => resolvedHref(node) === hrefFor('community'));
     if (page === 'index' || page === 'guide') {
       assert.equal(attr(community, 'data-i18n'), page === 'index' ? 'nav-community' : 'navCommunity', page);
