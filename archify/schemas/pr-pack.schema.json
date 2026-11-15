@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/pr-pack.schema.json",
+  "title": "Archify PR Diagram Pack Manifest",
+  "description": "Declares which change-marked diagrams a pull request review pack renders, the exact revisions they describe, and the objective statistics the Markdown may repeat. It never carries a risk verdict.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "title", "views"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "pr-pack" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "summary": { "type": "string", "maxLength": 2000 },
+    "repository": {
+      "description": "Repository URL or owner/name used for source links.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400
+    },
+    "baseRef": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "headRef": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "baseSha": { "$ref": "#/$defs/sha" },
+    "headSha": { "$ref": "#/$defs/sha" },
+    "platform": { "enum": ["github", "gitlab", "generic"] },
+    "theme": { "enum": ["both", "light", "dark"] },
+    "preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
+    "stats": {
+      "description": "Objective counts only (for example filesChanged, additions, deletions, nodesAdded). Values are non-negative integers.",
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-zA-Z0-9]*$" },
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "maxProperties": 24
+    },
+    "views": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "type", "input"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "caption": { "type": "string", "maxLength": 600 },
+          "type": {
+            "enum": ["architecture", "workflow", "sequence", "dataflow", "lifecycle", "erd", "class", "tree", "timeline", "waterfall"]
+          },
+          "input": {
+            "description": "Diagram JSON path relative to the manifest file.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.json$"
+          },
+          "collapsed": { "type": "boolean" },
+          "theme": { "enum": ["both", "light", "dark"] },
+          "preset": { "$ref": "common.schema.json#/$defs/visualPreset" }
+        }
+      }
+    },
+    "changes": {
+      "description": "Optional change table rows. Long tables fold into <details> past changeTableLimit.",
+      "type": "array",
+      "maxItems": 400,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["subject", "change"],
+        "properties": {
+          "subject": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "kind": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "detail": { "type": "string", "maxLength": 400 },
+          "view": { "$ref": "common.schema.json#/$defs/id" }
+        }
+      }
+    },
+    "changeTableLimit": { "type": "integer", "minimum": 1, "maximum": 100 }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+  }
+}

@@ -71,6 +71,27 @@ test('shared SVG parser changes retain the public checker suite without selectin
   assert.deepEqual(selectAffectedTests(prose.owners, prose.changedTests, available), ['test/readme-showcase.test.mjs']);
 });
 
+test('review export and PR pack changes retain their offline, export and sandbox suites', () => {
+  const available = ['test/pr-pack.test.mjs', 'test/pr-attach.test.mjs', 'test/svg-bake.test.mjs',
+    'test/svg-export-img-browser.test.mjs', 'test/change-marks.test.mjs', 'test/cli.test.mjs', 'test/workflow-compiler.test.mjs'];
+  for (const source of ['archify/renderers/shared/svg-bake.mjs', 'archify/renderers/shared/svg-export.mjs', 'archify/pr/attach.mjs']) {
+    const plan = classifyPaths([source, 'archify.zip']);
+    assert.equal(plan.scope, 'core', source);
+    assert.deepEqual(plan.owners, ['pr']);
+    assert.ok(plan.browser && plan.package, source);
+    assert.equal(plan.generated, false);
+    assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice(0, 5).sort());
+  }
+  const marks = classifyPaths(['archify/renderers/shared/change-marks.mjs']);
+  assert.deepEqual(marks.owners, ['renderer']);
+  assert.ok(marks.generated && marks.browser && marks.package);
+  assert.ok(selectAffectedTests(marks.owners, [], available).includes('test/change-marks.test.mjs'));
+  const guide = classifyPaths(['archify/references/pr-review.md']);
+  assert.deepEqual(guide.owners, ['authoring']);
+  assert.ok(guide.generated && guide.package);
+  assert.equal(guide.website, false);
+});
+
 test('Architecture grid changes retain explicit placement regression coverage', () => {
   const available = ['test/grid.test.mjs', 'test/architecture-first-draft.test.mjs', 'test/cli.test.mjs'];
   const plan = classifyPaths(['archify/renderers/architecture/grid.mjs']);

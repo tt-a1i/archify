@@ -820,6 +820,7 @@ function validateClassDiagram() {
 
 function buildLayoutReport() {
   return {
+    ok: true,
     diagram_type: 'class',
     viewBox,
     types: [...types.values()].map((type) => ({

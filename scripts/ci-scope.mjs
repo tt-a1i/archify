@@ -6,7 +6,9 @@ import { browserTestFiles } from './browser-test-inventory.mjs';
 
 const modes = 'architecture|workflow|sequence|dataflow|lifecycle|erd|class|tree|timeline|waterfall';
 const rendererPath = new RegExp(`^archify/(?:renderers/(${modes})/|schemas/(${modes})\\.schema\\.json$)`);
-const renderShared = /^(geometry|utils|i18n|route-quality|diagnostics|brand-marks|generated-validators|legend|layout-report|engineering-profiles|validator|generated-brand-marks|desktop-readability|text-fit|svg-path-analysis|automatic-labels|spatial-grid)\.mjs$/;
+const renderShared = /^(geometry|utils|i18n|route-quality|diagnostics|brand-marks|generated-validators|legend|layout-report|engineering-profiles|validator|generated-brand-marks|desktop-readability|text-fit|svg-path-analysis|automatic-labels|spatial-grid|change-marks)\.mjs$/;
+// Review export and PR pack code renders through the Viewer styles and ships in the package.
+const reviewExport = /^(archify\/renderers\/shared\/svg-(?:bake|export)\.mjs|archify\/pr\/[^/]+\.mjs)$/;
 const gates = ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website'];
 export function classifyPaths(paths) {
   const plan = { scope: 'core', owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
@@ -52,6 +54,9 @@ export function classifyPaths(paths) {
     if (name.startsWith('archify/renderers/shared/') && renderShared.test(name.slice('archify/renderers/shared/'.length))) {
       own('renderer'); plan.generated = plan.browser = plan.package = true; continue;
     }
+    if (reviewExport.test(name)) {
+      own('pr'); plan.browser = plan.package = true; continue;
+    }
     if (/^(viewer\/|archify\/assets\/)/.test(name)) {
       own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;
     }
@@ -66,7 +71,7 @@ export function classifyPaths(paths) {
     requireFull = true;
   }
   if (requireFull) return full();
-  if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', ...modes.split('|')].includes(owner))) return full();
+  if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', 'pr', ...modes.split('|')].includes(owner))) return full();
   if (plan.owners.every(owner => owner === 'readme') && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
   return plan;
 }

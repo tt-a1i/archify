@@ -459,5 +459,22 @@
   "legend.waterfall.ok": "完了",
   "legend.waterfall.error": "エラー",
   "legend.waterfall.cancelled": "キャンセル済み",
-  "legend.waterfall.incomplete": "未完了（終了記録なし）"
+  "legend.waterfall.incomplete": "未完了（終了記録なし）",
+  "viewer.passport.payload": "ペイロード",
+  "viewer.passport.payload.role.request": "リクエスト",
+  "viewer.passport.payload.role.response": "レスポンス",
+  "viewer.passport.payload.role.flow": "フロー",
+  "viewer.passport.payload.diff": "追加 {added} · 削除 {removed} · 変更 {modified} · 変更なし {unchanged}",
+  "viewer.passport.payload.unchanged": "変更なしのフィールド {count} 件",
+  "viewer.passport.payload.sample": "サンプルペイロード（読み取り専用）",
+  "viewer.passport.payload.after": "この変更後のペイロード（読み取り専用）",
+  "viewer.passport.payload.before": "この変更前のペイロード（読み取り専用）",
+  "viewer.passport.payload.field.added": "追加 {path}: {after}",
+  "viewer.passport.payload.field.removed": "削除 {path}: {before}",
+  "viewer.passport.payload.field.modified": "変更 {path}: {before} → {after}",
+  "viewer.passport.payload.field.unchanged": "{path}: {after}",
+  "legend.change.added": "+ 追加",
+  "legend.change.modified": "~ 変更",
+  "legend.change.removed": "− 削除",
+  "legend.change.unchanged": "変更なし"
 }

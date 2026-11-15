@@ -391,6 +391,7 @@ function descendantCount(id) {
 
 function buildLayoutReport() {
   return {
+    ok: true,
     diagram_type: 'tree',
     direction,
     viewBox,

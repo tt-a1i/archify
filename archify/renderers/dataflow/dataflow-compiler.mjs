@@ -5,6 +5,7 @@ import { resolveLegend, renderLegend as renderResolvedLegend, legendFootprint } 
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { changeEdgeAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DECLARED_WIDE_READER_RATIO, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
@@ -1453,12 +1454,14 @@ export function compileDataflow({ dataflow, sourceEvidence, qualityProfile: requ
       const drilldowns = resolveNodeDrilldowns(node);
       const passport = { drilldowns, href: node.href, kind: node.type, sublabel: node.sublabel, tag: node.tag, context, ...brandMetadataFor(node) };
       const mark = drilldowns.length ? `\n          ${renderDrilldownMark(node)}` : '';
-      return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(node.id, node.label, passport, dataflow.meta.locale)}>
+      const changeBadge = renderChangeBadge(node, { x: node.x + node.width - 2, y: node.y + 2 });
+      const badge = changeBadge ? `\n          ${changeBadge}` : '';
+      return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(node.id, node.label, passport, dataflow.meta.locale)}${changeNodeAttrs(changeReview, node)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(dataflow.meta, 'node', nodeSteps.get(node.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(node.type, { icon: node.icon, x: node.x + 6, y: node.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${node.x + labelLayout.x}" y="${node.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}${mark}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${node.x + labelLayout.x}" y="${node.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}${mark}${badge}
         </g>`, drilldowns);
     }
 
@@ -1471,7 +1474,7 @@ export function compileDataflow({ dataflow, sourceEvidence, qualityProfile: requ
       const routed = pathFor(flow);
       const strokeWidth = flowStrokeWidth(flow);
       const automatic = resolvedCrossoverFlows.has(flow);
-      const edge = `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)} data-composition-points="${routePointsValue(routed.points)}"${automatic ? ' data-composition-crossover="halo"' : ''}${authoredStraightRouteAttrs(flow, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+      const edge = `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}${changeEdgeAttrs(changeReview, flow)} data-composition-points="${routePointsValue(routed.points)}"${automatic ? ' data-composition-crossover="halo"' : ''}${authoredStraightRouteAttrs(flow, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(flow, marker)})"/>`;
       if (!automatic) return edge;
       return `        <g data-graph-role="automatic-crossover" style="--step:${index}">
           <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
@@ -1489,9 +1492,10 @@ ${edge}
       const classification = flow.classification
         ? `\n        <text data-detail="fine" x="${lx}" y="${ly + 11 * (lines?.length || 1)}" class="t-dim" font-size="7" text-anchor="middle">${esc(flow.classification)}</text>`
         : '';
-      return `        <g data-detail="context" ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}>
+      const badge = renderChangeBadge(flow, { x: lx + labelW / 2 + 9, y: ly - 11 + labelH / 2, fontSize: 8 });
+      return `        <g data-detail="context" ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}${changeEdgeAttrs(changeReview, flow)}>
           <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(flow.variant)}" font-size="8" text-anchor="middle">${text}</text>${classification}
+          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(flow.variant)}" font-size="8" text-anchor="middle">${text}</text>${classification}${badge ? `\n          ${badge}` : ''}
         </g>`;
     }
 
@@ -1506,10 +1510,19 @@ ${edge}
       label: i18nText(dataflow.meta.locale, `legend.dataflow.${entry.kind}`),
     }));
 
-    function renderLegend() {
+    const changeReview = changeReviewFor({ nodes: asArray(dataflow.nodes), edges: asArray(dataflow.flows) });
+
+    function legendEntries() {
       const presentKinds = new Set(asArray(dataflow.flows).map((flow) => flow.variant || 'default'));
       if ([...nodes.values()].some((node) => node.type === 'database')) presentKinds.add('database');
-      const entries = resolveLegend(dataflow.meta?.legend, LEGEND_CATALOG, presentKinds);
+      return [
+        ...resolveLegend(dataflow.meta?.legend, LEGEND_CATALOG, presentKinds),
+        ...changeLegendEntries(changeReview, dataflow.meta?.legend, dataflow.meta.locale),
+      ];
+    }
+
+    function renderLegend() {
+      const entries = legendEntries();
       return renderResolvedLegend({
         entries,
         locale: dataflow.meta.locale,
@@ -1521,9 +1534,9 @@ ${edge}
           unfit: dataflow.meta?.legend === undefined ? 'hide' : 'error',
           diagramType: 'dataflow',
         },
-        renderSwatch: (entry) => entry.kind === 'database'
+        renderSwatch: (entry) => renderChangeLegendSwatch(entry) || (entry.kind === 'database'
           ? `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>`
-          : `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}" marker-end="url(#${entry.marker})"/>`,
+          : `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}" marker-end="url(#${entry.marker})"/>`),
       });
     }
 
@@ -1532,9 +1545,7 @@ ${edge}
       // fill the canvas height, so growing height alone does not free a legend
       // band — widen just enough for a one-row pack instead.
       if (dataflow.meta?.viewBox) return;
-      const presentKinds = new Set(asArray(dataflow.flows).map((flow) => flow.variant || 'default'));
-      if ([...nodes.values()].some((node) => node.type === 'database')) presentKinds.add('database');
-      const entries = resolveLegend(dataflow.meta?.legend, LEGEND_CATALOG, presentKinds);
+      const entries = legendEntries();
       if (!entries.length) return;
       if (legendFootprint(entries, { width: Math.max(1, viewBox[0] - 80) }).extraHeight <= 0) return;
       let width = viewBox[0];
@@ -1553,7 +1564,7 @@ ${edge}
       const readerFit = dataflow.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height"';
       return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(dataflow.meta)} data-motion-choreography="stream">
 ${svgAccessibleText(dataflow.meta, 'dataflow')}
-${renderDefinitions()}
+${renderDefinitions(changeMarkerDefinitions(changeReview))}
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />

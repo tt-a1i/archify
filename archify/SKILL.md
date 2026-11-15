@@ -19,6 +19,7 @@ For a native diagram of a real codebase, read [Repository authoring](references/
 
 - When the user asks to draw or visualize a system, flow, schema or history, use a native diagram and the Type router.
 - For a guided walkthrough or explanation video of a native HTML diagram, read [Story authoring](references/story-authoring.md). Use `story draft` and `story attach` to add playback and video export to its existing Viewer.
+- When the user asks to explain or visualize a pull request, a branch change or a `git diff`, or to attach change diagrams to a PR, read [PR review authoring](references/pr-review.md) first: it covers the three-dot diff, change-marked merged-superset views and the `pr validate` / `pr build` / `pr attach` loop.
 - Use `explainer` when the user asks for the answer as a page: a page, one page, an explainer, something to share (“做成一页”, “用页面讲”, “answer with a page”).
 - Explainer mode is `proactive` by default. A rules line `[archify explainer: <mode>]` in context selects another; an instruction in the conversation overrides it for that conversation.
   - `proactive` (default, no line needed): also make a page, unasked, when the answer is a complex flow or process, a diagnosis or troubleshooting result, an option comparison, trade-off or decision, a test or review report, or a plan, and needs a table, steps or several sections to be read well.

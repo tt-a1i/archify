@@ -31,6 +31,7 @@ import {
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { changeEdgeAttrs, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import {
   createMappedWorkflowCandidate,
@@ -860,7 +861,29 @@ function semanticContractDiagnostics(workflow) {
 
 // Legend footprint and canvas width: one phase of the workflow compile, lifted
 // out of compileWorkflowInternal so the caller reads as a sequence of steps.
-function resolveWorkflowLegendFootprint(workflow, layout) {
+const laneFrame = (workflow, lane) => ({
+  ...lane,
+  members: asArray(workflow.nodes).filter((node) => node.lane === lane.id).map((node) => node.id),
+});
+const groupFrame = (workflow, group) => ({
+  ...group,
+  members: asArray(workflow.nodes)
+    .filter((node) => node.lane === group.lane && node.col >= group.fromCol && node.col <= group.toCol)
+    .map((node) => node.id),
+});
+
+function workflowChangeReview(workflow) {
+  return changeReviewFor({
+    nodes: asArray(workflow.nodes),
+    edges: asArray(workflow.edges),
+    frames: [
+      ...asArray(workflow.lanes).map((lane) => laneFrame(workflow, lane)),
+      ...asArray(workflow.groups).map((group) => groupFrame(workflow, group)),
+    ],
+  });
+}
+
+function resolveWorkflowLegendFootprint(workflow, layout, changeReview) {
   const LEGEND_CATALOG = [
     'frontend',
     'backend',
@@ -871,11 +894,10 @@ function resolveWorkflowLegendFootprint(workflow, layout) {
     'external',
   ].map((kind) => ({ kind, label: i18nText(workflow.meta.locale, `legend.workflow.${kind}`) }));
   const presentLegendKinds = new Set(asArray(workflow.nodes).map((node) => node.type));
-  const workflowLegendEntries = resolveLegend(
-    workflow.meta?.legend,
-    LEGEND_CATALOG,
-    presentLegendKinds,
-  );
+  const workflowLegendEntries = [
+    ...resolveLegend(workflow.meta?.legend, LEGEND_CATALOG, presentLegendKinds),
+    ...changeLegendEntries(changeReview, workflow.meta?.legend, workflow.meta.locale),
+  ];
   const legendFootprintOptions = { fontSize: 7, itemGap: 7 };
   const oneRowLegendFootprint = legendFootprint(workflowLegendEntries, {
     ...legendFootprintOptions,
@@ -1428,6 +1450,7 @@ function compileWorkflowInternal({
     ? createReadableLayout(workflow, layoutFeedback)
     : createLegacyLayout();
 
+const changeReview = workflowChangeReview(workflow);
 const {
   workflowLegendEntries,
   presentLegendKinds,
@@ -1435,7 +1458,7 @@ const {
   packedLegendFootprint,
   legendExtraHeight,
   minimumCanvasWidth,
-} = resolveWorkflowLegendFootprint(workflow, layout);
+} = resolveWorkflowLegendFootprint(workflow, layout, changeReview);
 
 const laneGeometry = createWorkflowLaneGeometry(workflow, layout, legendExtraHeight, minimumCanvasWidth);
 const {
@@ -5364,8 +5387,10 @@ function renderLane(lane, index) {
     : '';
   const labelClass = lane.variant === 'exception' ? 't-security' : 't-muted';
   const prefix = lane.variant === 'exception' ? 'EX' : String(index + 1).padStart(2, '0');
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}" x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
-        <text x="${layout.laneX + 14}" y="${y + 22}" class="${labelClass}" font-size="10" font-weight="600">${prefix} / ${esc(lane.label)}</text>`;
+  const changeAttrs = changeFrameAttrs(changeReview, laneFrame(workflow, lane));
+  const badge = renderChangeBadge(lane, { x: layout.laneX + layout.laneW - 12, y: y + 10 });
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}"${changeAttrs} x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
+        <text${changeAttrs} x="${layout.laneX + 14}" y="${y + 22}" class="${labelClass}" font-size="10" font-weight="600">${prefix} / ${esc(lane.label)}</text>${badge ? `\n        ${badge}` : ''}`;
 }
 
 function renderPhase(phase) {
@@ -5392,8 +5417,10 @@ function renderGroup(group, index) {
   const cls = group.variant === 'security' ? 'c-security-group' : 'c-lane';
   const textClass = variantAccent(group.variant);
   const labelY = workflow.schema_version === 2 ? y + GROUP_LABEL_BASELINE_OFFSET : y + 14;
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}" x="${span.x}" y="${y}" width="${span.width}" height="${height}" rx="9" class="${cls}" stroke-width="1"/>
-        <text x="${span.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>`;
+  const changeAttrs = changeFrameAttrs(changeReview, groupFrame(workflow, group));
+  const badge = renderChangeBadge(group, { x: span.x + span.width - 10, y: y + 8 });
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}"${changeAttrs} x="${span.x}" y="${y}" width="${span.width}" height="${height}" rx="9" class="${cls}" stroke-width="1"/>
+        <text${changeAttrs} x="${span.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>${badge ? `\n        ${badge}` : ''}`;
 }
 
 // Automatic showcase canvases stop sublabel shrinking at the desktop floor.
@@ -5468,12 +5495,14 @@ function renderNode(node) {
   const drilldowns = resolveNodeDrilldowns(node);
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node), drilldowns, href: node.href, ...brandMetadataFor(node) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(node)}` : '';
-  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(node.id, node.label, passport, workflow.meta.locale)}>
+  const changeBadge = renderChangeBadge(node, { x: node.x + node.width - 2, y: node.y + 2 });
+  const badge = changeBadge ? `\n          ${changeBadge}` : '';
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(node.id, node.label, passport, workflow.meta.locale)}${changeNodeAttrs(changeReview, node)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="8" class="c-mask"/>
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="8" class="${fill}"${animateAttr(workflow.meta, 'node', nodeStep(node))} stroke-width="1.5"/>
           ${renderSemanticSigil(node.type, { icon: node.icon, x: node.x + 6, y: node.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${node.x + labelLayout.x}" y="${node.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}${mark}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${node.x + labelLayout.x}" y="${node.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}${mark}${badge}
         </g>`, drilldowns);
 }
 
@@ -5495,7 +5524,7 @@ function renderEdgePath(edge, index) {
   const strokeWidth = edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4);
   const routing = independentAutomaticRoute(edge) ? ' data-composition-routing="workflow-v2-auto"' : '';
   const role = workflow.schema_version === 2 ? ` data-edge-role="${esc(edge.role || '')}"` : '';
-  return `        <path ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}${routing}${role} data-composition-points="${routePointsValue(routed.points)}" d="${roundedWorkflowPath(routed.points)}" class="${cls}"${animateAttr(workflow.meta, 'edge', edgeSteps.get(edge))} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}${changeEdgeAttrs(changeReview, edge)}${routing}${role} data-composition-points="${routePointsValue(routed.points)}" d="${roundedWorkflowPath(routed.points)}" class="${cls}"${animateAttr(workflow.meta, 'edge', edgeSteps.get(edge))} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(edge, marker)})"/>`;
 }
 
 function renderEdgeLabel(edge, index) {
@@ -5503,9 +5532,10 @@ function renderEdgeLabel(edge, index) {
   const routed = pathFor(edge);
   const [lx, ly] = workflowEdgeLabelPoint(edge, routed.points);
   const labelW = workflowLabelWidth(edge.label);
-  return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}>
+  const badge = renderChangeBadge(edge, { x: lx + labelW / 2 + 9, y: ly - 3, fontSize: 8 });
+  return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}${changeEdgeAttrs(changeReview, edge)}>
           <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${!edge.variant || edge.variant === 'default' ? 't-muted' : edgeLabelAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>
+          <text x="${lx}" y="${ly}" class="${!edge.variant || edge.variant === 'default' ? 't-muted' : edgeLabelAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>${badge ? `\n          ${badge}` : ''}
         </g>`;
 }
 
@@ -5520,7 +5550,8 @@ function renderLegend() {
     entries: workflowLegendEntries,
     locale: workflow.meta.locale,
     layout: workflowLegendLayout(obstacles),
-    renderSwatch: (entry) => `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
+    renderSwatch: (entry) => renderChangeLegendSwatch(entry)
+      || `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
   });
 }
 
@@ -5536,7 +5567,7 @@ function renderSvg() {
   const contract = workflow.schema_version === 2 ? ' data-layout-contract="readable-v2"' : '';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit}${contract} ${svgRootAttrs(workflow.meta, resolvedQualityProfile)} ${NODE_CARD_ATTR}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
-${renderDefinitions()}
+${renderDefinitions(changeMarkerDefinitions(changeReview))}
 ${nodeCardStyle()}
 
         <!-- Background Grid -->

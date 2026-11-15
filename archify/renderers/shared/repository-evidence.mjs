@@ -5,7 +5,7 @@ import { throwDiagnosticError, withDiagnosticRecordingSuppressed } from './diagn
 import { sameEntry } from './path-semantics.mjs';
 import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref, repositoryTreeHref } from './repository-location.mjs';
 
-const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
+export const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
 
@@ -20,7 +20,7 @@ function evidenceFailure(code, message, { subject = {}, evidence = {}, supported
   }]);
 }
 
-function runGit(repoRoot, args) {
+export function runGit(repoRoot, args) {
   // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
   const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
     encoding: 'utf8',
@@ -248,6 +248,28 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       supportedFixes: ['fetch the pinned commit or pin an available full commit SHA'],
     });
   }
+  // Removed nodes describe code that no longer exists at `revision`; their
+  // citations are checked against the declared merge-base instead.
+  let baseRevision = null;
+  if (repository.base_revision !== undefined) {
+    if (!FULL_SHA_RE.test(repository.base_revision || '')) {
+      evidenceFailure('repository-evidence/base-revision-invalid', '/meta/repository/base_revision must be a full 40-character commit SHA.', {
+        subject: { path: '/meta/repository/base_revision' },
+        evidence: { baseRevision: repository.base_revision },
+        supportedFixes: ['pin the merge-base as one full 40-character commit SHA'],
+      });
+    }
+    baseRevision = repository.base_revision.toLowerCase();
+    const baseCommit = runGit(realRoot, ['cat-file', '-e', `${baseRevision}^{commit}`]);
+    if (baseCommit.status !== 0) {
+      evidenceFailure('repository-evidence/base-revision-unavailable', `Evidence base revision ${baseRevision} is not available in the local repository.`, {
+        subject: { repoRoot: realRoot },
+        evidence: { baseRevision },
+        supportedFixes: ['fetch the merge-base commit or pin an available full commit SHA'],
+      });
+    }
+  }
+  const nodeRevision = (node) => (node?.change === 'removed' && baseRevision ? baseRevision : revision);
 
   // The batch is an optimization only: every path, line-range, file and line
   // check still runs in source order in the verification loop below, so a
@@ -263,7 +285,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       } catch {
         continue;
       }
-      const object = `${revision}:${sourcePath}`;
+      const object = `${nodeRevision(node)}:${sourcePath}`;
       citedObjects.set(object, citedObjects.get(object) || Boolean(authored.line));
     }
   }
@@ -280,6 +302,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       ? { diagramType, collection, nodeId: node.id, componentId: node.id }
       : { diagramType, collection, nodeId: node.id };
     const verified = [];
+    const revision = nodeRevision(node);
     for (const [sourceIndex, authored] of node.sources.entries()) {
       const at = `/${collection}/${nodeIndex}/sources/${sourceIndex}`;
       const where = `${at}/path`;
@@ -354,7 +377,11 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
             });
           }
         }
-        verified.push({ ...source, ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}) });
+        verified.push({
+          ...source,
+          ...(revision !== repository.revision.toLowerCase() ? { revision } : {}),
+          ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}),
+        });
         referenceCount += 1;
       } catch (error) {
         // Independent citations can be repaired together. Keep the first
@@ -387,6 +414,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       url: location.url,
       revision,
       shortRevision: revision.slice(0, 7),
+      ...(baseRevision ? { baseRevision, shortBaseRevision: baseRevision.slice(0, 7) } : {}),
       label: location.provider === 'github' ? location.path : location.url.replace(/^(?:https?:\/\/|ssh:\/\/git@|git@)/, ''),
       ...(linkMode === 'web' ? { href: repositoryTreeHref(location.provider, location.url, revision) } : { linkMode }),
     },

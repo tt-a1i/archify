@@ -10,6 +10,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { changeEdgeAttrs, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
@@ -151,11 +152,20 @@ function boundaryLabelWidth(label, fontSize) {
   return Math.max(30, textUnits(label) * fontSize * 0.6 + 10);
 }
 
-const architectureLegendEntries = resolveLegend(
-  arch.meta?.legend,
-  LEGEND_CATALOG,
-  new Set([...components.values()].map((component) => component.type)),
-);
+const changeReview = changeReviewFor({
+  nodes: asArray(arch.components),
+  edges: asArray(arch.connections),
+  frames: asArray(arch.boundaries),
+});
+
+const architectureLegendEntries = [
+  ...resolveLegend(
+    arch.meta?.legend,
+    LEGEND_CATALOG,
+    new Set([...components.values()].map((component) => component.type)),
+  ),
+  ...changeLegendEntries(changeReview, arch.meta?.legend, arch.meta.locale),
+];
 
 // One source for connection label geometry: the rect the containment rule
 // measures is the rect the SVG mask draws, the auto canvas covers, the legend
@@ -1026,14 +1036,15 @@ function buildLayoutReport() {
 function renderBoundaryFrame(b, index) {
   const cls = b.kind === 'security-group' ? 'c-security-group' : 'c-region';
   const rx = b.kind === 'security-group' ? 8 : 12;
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-id="${index}" data-composition-frame-label="${esc(b.label)}" x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${rx}" class="${cls}" stroke-width="1"/>`;
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-id="${index}" data-composition-frame-label="${esc(b.label)}"${changeFrameAttrs(changeReview, b)} x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${rx}" class="${cls}" stroke-width="1"/>`;
 }
 
 function renderBoundaryLabel(b, index) {
   const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
-  return `        <g data-graph-role="structural-frame-label" data-composition-frame-id="${index}" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-label="${esc(b.label)}">
+  const badge = renderChangeBadge(b, { x: b.x + b.width - 10, y: b.y + 8 });
+  return `        <g data-graph-role="structural-frame-label" data-composition-frame-id="${index}" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-label="${esc(b.label)}"${changeFrameAttrs(changeReview, b)}>
           <rect data-graph-role="structural-frame-label-mask" x="${b.title.x}" y="${b.title.y}" width="${b.title.width}" height="${b.title.height}" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="${b.title.x + 4}" y="${b.title.y + b.title.baselineOffset}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>
+          <text data-boundary-label="" x="${b.title.x + 4}" y="${b.title.y + b.title.baselineOffset}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>${badge ? `\n          ${badge}` : ''}
         </g>`;
 }
 
@@ -1047,7 +1058,7 @@ function renderConnectionPath(conn, index) {
     : '';
   const crossover = automaticRoute
     ? ` data-composition-crossover="halo"${conn.labelAt ? '' : ' data-composition-independent="true"'}` : '';
-  const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}${changeEdgeAttrs(changeReview, conn)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(conn, marker)})"/>`;
   if (!automaticRoute) return edge;
   // The wrapper is presentation-only: viewer state remains on the one semantic
   // edge, while CSS can keep its preceding mask underlay at the same opacity.
@@ -1057,9 +1068,10 @@ function renderConnectionPath(conn, index) {
 function renderConnectionLabel(conn, index) {
   const box = connectionLabelBox(conn);
   if (!box) return '';
-  return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
+  const badge = renderChangeBadge(conn, { x: box.x + box.width + 9, y: box.y + box.height / 2, fontSize: 8 });
+  return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}${changeEdgeAttrs(changeReview, conn)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>${badge ? `\n          ${badge}` : ''}
         </g>`;
 }
 
@@ -1082,12 +1094,14 @@ function renderComponent(c) {
   const drilldowns = resolveNodeDrilldowns(c);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
-  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
+  const changeBadge = renderChangeBadge(c, { x: c.x + c.width - 2, y: c.y + 2 });
+  const badge = changeBadge ? `\n          ${changeBadge}` : '';
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}${changeNodeAttrs(changeReview, c)}>
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}${badge}
         </g>`, drilldowns);
 }
 
@@ -1116,7 +1130,8 @@ function renderLegend() {
       unfit: arch.meta?.legend === undefined ? 'hide' : 'error',
       diagramType: 'architecture',
     },
-    renderSwatch: (entry) => `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
+    renderSwatch: (entry) => renderChangeLegendSwatch(entry)
+      || `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
   });
 }
 
@@ -1136,7 +1151,7 @@ function renderSvg() {
   const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)} ${NODE_CARD_ATTR}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}
-${renderDefinitions()}
+${renderDefinitions(changeMarkerDefinitions(changeReview))}
 ${nodeCardStyle()}
 
         <!-- Background Grid -->

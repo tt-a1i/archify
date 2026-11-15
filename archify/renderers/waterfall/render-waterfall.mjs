@@ -386,6 +386,7 @@ ${legendEntries.length ? renderResolvedLegend({ entries: legendEntries, locale, 
 
 function buildLayoutReport() {
   return {
+    ok: true,
     diagram_type: 'waterfall',
     unit,
     viewBox,

@@ -8,11 +8,11 @@ import { sameEntry } from '../archify/renderers/shared/path-semantics.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const mode = /^(architecture|workflow|sequence|dataflow|lifecycle|erd|class|tree|timeline|waterfall)-/;
 // A few broad ownership families, not a source-to-test dependency graph.
-const shared = /^(geometry|spatial-grid|svg-path-(?:analysis|checker)|layout-rules|engineering-profile|legend-contract|render-|renderer-(?:diagnostic|import)|route-|authored-|spread-|text-|base-input-|v1-|brand-|semantic-legend|automatic-port-spread|edge-label-color|label-clearance|vertical-edge|node-icons)/;
+const shared = /^(geometry|spatial-grid|svg-path-(?:analysis|checker)|layout-rules|engineering-profile|legend-contract|render-|renderer-(?:diagnostic|import)|route-|authored-|spread-|text-|base-input-|v1-|brand-|semantic-legend|automatic-port-spread|edge-label-color|label-clearance|vertical-edge|node-icons|change-marks)/;
 const viewer = /^(viewer-|reader-|desktop-|semantic-|finder|focus|intent-|crossover-|animation|export-|motion-|offline-|i18n|relationship-|share-|reach-|presentation)/;
 export function selectAffectedTests(owners, changed, available) {
   if (!Array.isArray(owners) || !Array.isArray(changed)) throw new Error('CI test selection must contain arrays');
-  const allowed = new Set(['renderer', 'viewer', 'authoring', 'schema', 'site', 'artifact', 'delta', 'readme', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']);
+  const allowed = new Set(['renderer', 'viewer', 'authoring', 'schema', 'pr', 'site', 'artifact', 'delta', 'readme', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']);
   if (owners.some(owner => !allowed.has(owner))) throw new Error('Unknown CI test owner');
   if (changed.some(name => !/^test\/[^/]+\.test\.mjs$/.test(name))) throw new Error('Invalid changed test path');
   return available.filter(file => {
@@ -24,6 +24,7 @@ export function selectAffectedTests(owners, changed, available) {
             : owner === 'site' ? /^(gallery|guide-page|start-page|generated-artifact-xml)\.test\.mjs$/.test(name)
             : owner === 'artifact' ? name === 'generated-artifact-xml.test.mjs'
             : owner === 'delta' ? name === 'architecture-delta.test.mjs'
+            : owner === 'pr' ? /^(pr-|svg-bake|svg-export-|change-marks|export-svg)/.test(name)
             : owner === 'schema' ? /^(generate-validators|base-input-|v1-|workflow-migration)/.test(name)
             : owner === 'readme' ? name === 'readme-showcase.test.mjs'
               : name.startsWith(`${owner}-`) || shared.test(name)

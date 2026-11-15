@@ -7,6 +7,8 @@ import { legendFootprint, resolveLegend, renderLegend as renderResolvedLegend } 
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout, nodeTextFit } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { layoutReportFromSvg } from '../shared/layout-report.mjs';
+import { changeEdgeAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX } from '../shared/desktop-readability.mjs';
 import { asArray, rectsOverlap, segmentRectClearance, roundedPath, routePointsValue, arrowClassMap, edgeLabelAccent } from '../shared/geometry.mjs';
 
@@ -964,12 +966,16 @@ const LEGEND_CATALOG = ['start', 'active', 'waiting', 'decision', 'success', 'fa
   swatchWidth: kind === 'start' ? 26 : undefined,
 }));
 
+const changeReview = changeReviewFor({ nodes: asArray(lifecycle.states), edges: transitions });
+
 function legendCatalog() {
   const presentKinds = new Set([...states.values()].map((state) => state.type));
   presentKinds.add('start');
   const entries = resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds);
-  if (!entries.length || ![...states.values()].some(isFinal)) return entries;
-  return [...entries, { kind: 'final', label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'), interactive: false, present: true, swatchWidth: 16 }];
+  if (entries.length && [...states.values()].some(isFinal)) {
+    entries.push({ kind: 'final', label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'), interactive: false, present: true, swatchWidth: 16 });
+  }
+  return [...entries, ...changeLegendEntries(changeReview, lifecycle.meta?.legend, lifecycle.meta.locale)];
 }
 const legendEntries = legendCatalog();
 const canvasWidth = Math.max(640, Math.ceil(geometry.contentRight + MARGIN_X));
@@ -1028,12 +1034,14 @@ function renderState(state) {
     ...brandMetadataFor(state),
   };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(state)}` : '';
-  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}>
+  const changeBadge = renderChangeBadge(state, { x: state.x + state.width - 2, y: state.y + 2 });
+  const badge = changeBadge ? `\n          ${changeBadge}` : '';
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}${changeNodeAttrs(changeReview, state)}>
           ${focusNodeTitle(state.label, passport)}
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="8" class="c-mask"/>
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="8" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>${finalBorder}${initial}
           ${renderSemanticSigil(state.type, { icon, x: state.x + 6, y: state.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}${step}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.x + labelLayout.x}" y="${state.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFont}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}${mark}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.x + labelLayout.x}" y="${state.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFont}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}${mark}${badge}
         </g>`, drilldowns);
 }
 
@@ -1049,7 +1057,7 @@ function renderTransition(transition, index) {
   const strokeWidth = variant === 'emphasis' ? 1.8 : 1.2;
   const d = roundedPath(route.points, CORNER);
   const junction = route.bracket ? ` data-composition-junction="${esc(route.bracket.key.replaceAll('\u0000', '+'))}"` : '';
-  const edge = `          <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)} data-composition-points="${routePointsValue(route.points)}" data-composition-crossover="halo" data-composition-independent="true"${junction} d="${d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  const edge = `          <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)} data-composition-points="${routePointsValue(route.points)}" data-composition-crossover="halo" data-composition-independent="true"${junction} d="${d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(transition, marker)})"/>`;
   const underlay = `          <path data-graph-role="automatic-crossover-underlay" d="${d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`;
   return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}\n${edge}\n        </g>`;
 }
@@ -1066,8 +1074,9 @@ function renderLabel(transition, index) {
   const note = transition.note
     ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-muted" font-size="${NOTE_FONT}" text-anchor="middle">${esc(transition.note)}</text>`
     : '';
-  return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}>
-          <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}
+  const badge = renderChangeBadge(transition, { x: rect.x + rect.width + 9, y: rect.y + rect.height / 2, fontSize: 8 });
+  return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)}>
+          <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}${badge ? `\n          ${badge}` : ''}
         </g>`;
 }
 
@@ -1076,6 +1085,8 @@ function initialMarkerShape(dotX, tipX, y) {
 }
 
 function renderSwatch(entry) {
+  const changeSwatch = renderChangeLegendSwatch(entry);
+  if (changeSwatch) return changeSwatch;
   if (entry.kind === 'start') return initialMarkerShape(entry.x + 4.5, entry.x + 24, entry.baseline - 3.5);
   if (entry.kind === 'final') {
     return `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="c-external" stroke-width="1"/><rect x="${entry.x + 2.5}" y="${entry.baseline - 5.5}" width="9" height="4" rx="1" class="c-external" style="fill: none" stroke-width="0.8"/>`;
@@ -1104,7 +1115,7 @@ function renderSvg() {
   const frames = geometry.frames.map((rect) => `        <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="14" data-lifecycle-frame="" fill="none" stroke="var(--arrow)" stroke-opacity="0.55" stroke-width="1" stroke-dasharray="1.5 3.5" stroke-linecap="round" aria-hidden="true"/>`).join('\n');
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-reader-fit="intrinsic-height" data-lifecycle-layout="main-path-v3" ${svgRootAttrs(lifecycle.meta)} data-motion-choreography="walk">
 ${svgAccessibleText(lifecycle.meta, 'lifecycle')}
-${renderDefinitions()}
+${renderDefinitions(changeMarkerDefinitions(changeReview))}
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -1127,13 +1138,17 @@ ${renderLegend()}
       </svg>`;
 }
 
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'lifecycle',
-  meta: lifecycle.meta,
-  svg: renderSvg(),
-  cards: lifecycle.cards,
-  sourceEvidence,
+if (process.argv.includes('--layout-json')) {
+  console.log(JSON.stringify(layoutReportFromSvg(renderSvg(), 'lifecycle'), null, 2));
+} else {
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'lifecycle',
+    meta: lifecycle.meta,
+    svg: renderSvg(),
+    cards: lifecycle.cards,
+    sourceEvidence,
     diagram: lifecycle,
-});
+  });
+}
