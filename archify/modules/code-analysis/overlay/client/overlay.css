@@ -4,19 +4,25 @@ html[data-bauify="on"] g[data-node-id].bauify-mapped { opacity: 1; }
 html[data-bauify="on"] .guided-views, html[data-bauify="on"] [class*="story"], html[data-bauify="on"] [class*="chapter"] { opacity: .25; pointer-events: none; }
 #bauify-layer { pointer-events: none; }
 #bauify-layer { --halo-red: #F43F5E; --halo-amber: #F59E0B; --halo-blue: #3B82F6; --halo-green: #10B981; --halo-grey: #94A3B8; }
-/* Rings sit outside Archify's own coloured border. Their widths are screen pixels
-   (non-scaling-stroke), so a wide diagram fitted to a narrow column still shows
-   them; a blur would vanish first at that scale, so the tiers are crisp strokes. */
+/* Rings sit outside Archify's own coloured border: a crisp core line plus a glow.
+   Both are sized in screen pixels, so a wide diagram fitted to a narrow column
+   keeps them: the core with non-scaling-stroke, the glow radius through
+   --halo-k (1 / on-screen scale), which overlay.js updates on fit and zoom. */
 #bauify-layer rect { fill: none; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-#bauify-layer > rect.red { stroke: var(--halo-red); stroke-width: 3px; fill: color-mix(in srgb, var(--halo-red) 12%, transparent); animation: bauify-glow-red 1.3s ease-in-out infinite; }
-#bauify-layer > rect.amber { stroke: var(--halo-amber); stroke-width: 3px; fill: color-mix(in srgb, var(--halo-amber) 10%, transparent); }
-/* Reference-level signals never take the heavy ring: one info note must not read like a cluster of warnings. */
-#bauify-layer > rect.blue { stroke: var(--halo-blue); stroke-width: 1.5px; }
-#bauify-layer > rect.green { stroke: var(--halo-green); stroke-width: 1.5px; opacity: .7; }
-#bauify-layer > rect.grey { stroke: var(--halo-grey); stroke-width: 1px; opacity: .7; stroke-dasharray: 3 3; }
+#bauify-layer > rect.red { stroke: var(--halo-red); stroke-width: 2.5px; animation: bauify-glow-red 1.3s ease-in-out infinite;
+  filter: drop-shadow(0 0 calc(2px * var(--halo-k, 1)) var(--halo-red)) drop-shadow(0 0 calc(14px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-red) 85%, transparent)); }
+#bauify-layer > rect.amber { stroke: var(--halo-amber); stroke-width: 2.5px;
+  filter: drop-shadow(0 0 calc(2px * var(--halo-k, 1)) var(--halo-amber)) drop-shadow(0 0 calc(12px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-amber) 80%, transparent)); }
 /* Fewer than half the highest count: present, but not where findings concentrate. */
-#bauify-layer > rect.amber.quiet { stroke-width: 1.5px; fill: none; }
-@keyframes bauify-glow-red { 0%, 100% { stroke-opacity: .45; } 50% { stroke-opacity: 1; } }
+#bauify-layer > rect.amber.quiet { stroke-width: 1.5px; stroke-opacity: .85;
+  filter: drop-shadow(0 0 calc(4px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-amber) 45%, transparent)); }
+/* Reference-level signals never take the heavy ring: one info note must not read like a cluster of warnings. */
+#bauify-layer > rect.blue { stroke: var(--halo-blue); stroke-width: 1.5px; stroke-opacity: .85;
+  filter: drop-shadow(0 0 calc(4px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-blue) 45%, transparent)); }
+#bauify-layer > rect.green { stroke: var(--halo-green); stroke-width: 1.5px; opacity: .7;
+  filter: drop-shadow(0 0 calc(3px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-green) 40%, transparent)); }
+#bauify-layer > rect.grey { stroke: var(--halo-grey); stroke-width: 1px; opacity: .7; stroke-dasharray: 3 3; }
+@keyframes bauify-glow-red { 0%, 100% { stroke-opacity: .55; opacity: .7; } 50% { stroke-opacity: 1; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { #bauify-layer > rect.red { animation: none; } }
 #bauify-legend { display: grid; gap: 3px; margin-top: 4px; font-size: 11px; }
 #bauify-legend span { white-space: normal; }
@@ -361,9 +367,9 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .health-facts b { display: block; margin-top: 5px; color: var(--text); font-size: 16px; font-variant-numeric: tabular-nums; }
 #bauify-reader .halo-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0 0; color: var(--text-muted); font-size: 12px; }
 #bauify-reader .halo-legend span { display: inline-flex; align-items: center; gap: 6px; }
-#bauify-reader .halo-legend i { box-sizing: border-box; width: 16px; height: 10px; border-radius: 3px; border: 1.5px solid #F59E0B; }
-#bauify-reader .halo-legend i.heavy { border-width: 3px; background: color-mix(in srgb, #F59E0B 10%, transparent); }
-#bauify-reader .halo-legend i.dashed { border: 1px dashed #94A3B8; }
+#bauify-reader .halo-legend i { box-sizing: border-box; width: 16px; height: 10px; border-radius: 3px; border: 1.5px solid #F59E0B; box-shadow: 0 0 3px color-mix(in srgb, #F59E0B 45%, transparent); }
+#bauify-reader .halo-legend i.heavy { border-width: 2px; box-shadow: 0 0 1px #F59E0B, 0 0 7px color-mix(in srgb, #F59E0B 80%, transparent); }
+#bauify-reader .halo-legend i.dashed { border: 1px dashed #94A3B8; box-shadow: none; }
 #bauify-reader .priority-card { --priority-action-size: 24px; display: grid; grid-template-columns: minmax(0, 1fr) repeat(2, var(--priority-action-size)); grid-template-rows: var(--priority-action-size) auto; align-items: start; column-gap: 8px; padding: 10px 12px; margin: 10px 0; border: 1px solid var(--panel-border); border-radius: 9px; }
 #bauify-reader .priority-card .bauify-item { grid-area: 1 / 1 / 3 / 2; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: var(--priority-action-size) auto; align-items: center; gap: 0 8px; padding: 0; margin: 0; border: 0; background: none; }
 #bauify-reader .priority-card:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }

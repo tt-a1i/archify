@@ -372,14 +372,16 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   // The reading column opens on the project overview, not on a component.
   assert.equal(await run("document.getElementById('bauify-overview').hidden"), false);
   // Diagram rings and counts are sized in screen pixels, so a diagram fitted to a narrow column still shows them.
-  const halo = await run(`(() => { const rings = [...document.querySelectorAll('#bauify-layer > rect')];
-    const badges = [...document.querySelectorAll('#bauify-layer g.count')];
+  const halo = await run(`(() => { const svg = document.querySelector('.diagram-container svg'), layer = document.getElementById('bauify-layer');
+    const rings = [...layer.querySelectorAll(':scope > rect')], badges = [...layer.querySelectorAll('g.count')];
+    const onScreen = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width, k = Number(getComputedStyle(layer).getPropertyValue('--halo-k'));
     return { stroke: rings.every(r => getComputedStyle(r).vectorEffect === 'non-scaling-stroke'),
-      blur: rings.some(r => getComputedStyle(r).filter !== 'none'),
+      glow: rings.filter(r => !r.classList.contains('grey')).every(r => getComputedStyle(r).filter.includes('drop-shadow')),
+      glowScale: Math.abs(k * onScreen - 1) < 0.02,
       badges: badges.length, legible: badges.every(g => g.getBoundingClientRect().height >= 14),
       filled: badges.filter(g => g.classList.contains('top')).every(g => !g.classList.contains('blue')),
       legend: document.querySelectorAll('#bauify-overview .halo-legend i').length }; })()`);
-  assert.deepEqual({ ...halo, badges: halo.badges > 0 }, { stroke: true, blur: false, badges: true, legible: true, filled: true, legend: 3 }, 'rings are crisp screen-pixel strokes, counts stay legible and the overview explains ring weights');
+  assert.deepEqual({ ...halo, badges: halo.badges > 0 }, { stroke: true, glow: true, glowScale: true, badges: true, legible: true, filled: true, legend: 3 }, 'rings keep a screen-pixel core and glow, counts stay legible and the overview explains ring weights');
   assert.equal(await run("document.getElementById('bauify-panel').hidden"), true);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length"), 4);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length === [...document.querySelectorAll('#bauify-overview,#bauify-panel,#bauify-detail,#bauify-code')].filter(e => e.parentElement.id === 'bauify-reader').length"), true);

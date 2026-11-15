@@ -219,7 +219,9 @@
   }
   function scaleBadges() {
     if (!layer) return;
-    var k = Math.min(4, Math.max(1, 1 / screenScale()));
+    var inverse = 1 / screenScale(), k = Math.min(4, Math.max(1, inverse));
+    // Ring glows read --halo-k so their radius is screen pixels at any fit or zoom.
+    layer.style.setProperty('--halo-k', Math.min(8, inverse).toFixed(3));
     layer.querySelectorAll('g.count[data-anchor]').forEach(function (g) {
       var a = g.getAttribute('data-anchor').split(' ').map(Number);
       g.setAttribute('transform', 'translate(' + (a[0] - a[2] * k) + ' ' + (a[1] - a[3] * k / 2) + ') scale(' + k + ')');
