@@ -117,7 +117,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       assert.equal(await run("document.querySelector('.priority-card .handoff-status').getBoundingClientRect().height"),0);
       await run("new Promise(resolve=>setTimeout(resolve,1700))");
       assert.equal(await run("document.querySelector('.priority-card .quick-copy').getAttribute('aria-label')"),'复制任务给 AI');
-      assert.equal(await run("document.querySelector('.priority-card .quick-copy svg rect').getAttribute('width')),'11');
+      assert.equal(await run("document.querySelector('.priority-card .quick-copy svg rect').getAttribute('width')"),'11');
       assert.equal(await run("(()=>{const d=JSON.parse(document.getElementById('bauify-analysis').textContent);return d.tasks[d.overview.priorities[0]].task.evidence.reason;})()"),'Built from the analysis snapshot; not yet compared with the current working tree.','UI localization preserves the canonical exported evidence');
       await run("document.querySelector('.reader-atlas').click()");
       const selectedCycleText = await run(`(() => {

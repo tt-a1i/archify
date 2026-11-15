@@ -922,7 +922,7 @@
       var copy = box.querySelector('.task-copy'), download = box.querySelector('.task-download'), refresh = box.querySelector('.task-refresh');
       var quick = container.querySelector('[data-handoff-id="' + id + '"]');
       var quickCopy = quick && quick.querySelector('.quick-copy');
-      var say = function (text) { status.textContent = text; if (quick) quick.querySelector('.handoff-status').textContent = text; };
+      var say = function (text, previewOnly) { status.textContent = text; if (quick) quick.querySelector('.handoff-status').textContent = previewOnly ? '' : text; };
       var describe = function (p) {
         var e = p.task.evidence;
         var labels = { valid: tr("Evidence matches the current working tree."), captured: tr("Snapshot only; current source has not been checked. Ask your coding AI to verify it before editing."), changed: tr("Evidence changed. Re-analyze and review the current code before editing."), missing: tr("A cited file is missing. Re-analyze before editing."), unverifiable: tr("Evidence could not be verified. Read the cited files before editing.") };
@@ -932,7 +932,7 @@
         if (busy) return null;
         busy = true; copy.disabled = download.disabled = refresh.disabled = true;
         if (quickCopy) quickCopy.disabled = true;
-        say(tr("Preparing task and checking available evidence…"));
+        say(tr("Preparing task and checking available evidence…"), true);
         try {
           var note = '';
           if (typeof window.__archifyBuildTask === 'function') {
@@ -946,7 +946,7 @@
           if (!payload) throw new Error(tr("Task source is unavailable. Re-analyze with the local service to create this task."));
           if (data.repository.snapshotId && payload.task.source.snapshotId && data.repository.snapshotId !== payload.task.source.snapshotId) throw new Error(tr("The service has a newer analysis snapshot than this page. Re-analyze to refresh the displayed evidence."));
           preview.value = payload.markdown;
-          say(note + describe(payload));
+          say(note + describe(payload), true);
           return payload;
         } catch (error) {
           payload = null; preview.value = '';
@@ -961,8 +961,8 @@
         try {
           if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error(tr("Clipboard unavailable"));
           await navigator.clipboard.writeText(p.markdown);
-          say('');
           if (quickCopy) confirmCopy(quickCopy);
+          else say(tr('Copied AI task. Paste it into your coding AI. ') + describe(p));
         } catch (error) { box.open = true; preview.focus(); preview.select(); say(tr("Automatic copy unavailable. The task text is selected; press Ctrl+C or copy it manually. ") + describe(p)); }
       };
       copy.addEventListener('click', copyTask);
