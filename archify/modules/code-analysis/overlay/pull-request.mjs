@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { buildAtlas } from './atlas.mjs';
 import { buildPullRequestImpact } from '../lib/pull-request-impact.mjs';
+import { locationsOf } from '../lib/task.mjs';
 
 const count = atlas => ({ files: atlas.files.length, dependencies: atlas.edges.length, functions: atlas.functions.length, modules: atlas.modules.length });
 const histogram = atlas => {
@@ -22,21 +23,46 @@ export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourc
     baseFindings, headFindings: findings, baseRoot: baseSourceRoot, headRoot: sourceRoot, changedFiles });
   const markers = buildMarkerModel(before, after, changedFiles.filter(file => file.status !== 'removed').map(file => file.path),
     impact.records.filter(record => ['function-metrics','definition-text'].includes(record.kind)));
-  const wanted = new Set([...changedFiles.flatMap(file => [file.path, file.previousPath].filter(Boolean)), ...impact.records.flatMap(record => record.locations.map(item => item.file))]);
-  const beforeSources = Object.fromEntries(baseFacts.files.filter(file => wanted.has(file.path)).map(file => {
+  const cycles = observedCycles(baseFindings.diagnostics, findings.diagnostics, impact.comparison);
+  const evidencePaths = [...impact.records, ...cycles.records].flatMap(record => record.locations.map(item => item.file));
+  const wanted = new Set([...changedFiles.flatMap(file => [file.path, file.previousPath].filter(Boolean)), ...evidencePaths]);
+  const baseOwners = Object.fromEntries(before.files.filter(([file]) => wanted.has(file))
+    .map(([file, module]) => [file, before.modules[module].id]));
+  const oldIds = new Set(Object.values(baseOwners));
+  const oldModules = before.modules.filter(module => oldIds.has(module.id)).map(({ id, label }) => [id, label]);
+  const beforeSources = Object.fromEntries(baseFacts.files.filter(file => wanted.has(file.path) && typeof file.sourceText === 'string').map(file => {
     const lines = file.sourceText.split(/\r?\n/); if (lines.at(-1) === '') lines.pop();
     return [file.path, { total: lines.length, lines }];
   }));
   return {
     number: pr.number, title: pr.title, url: pr.url, repository: pr.repository, scope,
     simulation: pr.simulation === true, baseSHA: pr.mergeBaseSHA, headSHA: pr.headSHA, targetBaseSHA: pr.baseSHA,
-    capturedAt: pr.capturedAt, sourceRoot, baseSourceRoot, sourceGitRoot, changedFiles, impact,
+    capturedAt: pr.capturedAt, sourceRoot, baseSourceRoot, sourceGitRoot, changedFiles, impact, cycles, baseOwners, oldModules,
     before: count(before), after: count(after),
     distribution: { labels: ['1', '2–4', '5–9', '10–14', '15–24', '25+'], before: histogram(before), after: histogram(after) },
     changes: markers.records, moduleChanges: markers.modules, ambiguousFunctions: markers.ambiguousFunctions, beforeSources,
     omitted: Object.fromEntries(Object.entries(manifests).map(([side, manifest]) => [side, manifest.skipped])),
   };
 }
+// Use native finding identity and its own evidence, with the same comparison
+// gate as the upstream PR impact report. A disappearance is not a repair.
+export function observedCycles(base, head, comparison) {
+  if (comparison?.comparable !== true) return { records: [], omitted: 0 };
+  const cycles = f => !f.external && (f.code === 'coupling/cycle' || f.code === 'coupling/import-cycle');
+  const before = new Map(base.filter(cycles).map(f => [f.id, f]));
+  const after = new Map(head.filter(cycles).map(f => [f.id, f]));
+  const records = [];
+  for (const id of new Set([...before.keys(), ...after.keys()])) {
+    const a = before.get(id), b = after.get(id), f = b || a;
+    const status = a && b ? 'existing' : b ? 'detected' : 'not-detected';
+    const locations = locationsOf(f).slice(0, 5).map(loc => ({ file: loc.file, line: loc.startLine ?? null, side: b ? 'head' : 'base' }));
+    records.push({ id, status, code: f.code, modules: f.subject?.modules || [],
+      paths: [...new Set([...(f.subject?.files || []), ...locations.map(loc => loc.file)])], locations });
+  }
+  records.sort((a, b) => Number(a.status === 'existing') - Number(b.status === 'existing') || a.id.localeCompare(b.id));
+  return { records: records.slice(0, 40), omitted: Math.max(0, records.length - 40) };
+}
+
 export function buildMarkerModel(before,after,changedPaths=[],changedDefinitions=[]){
   const out=[],bf=new Map(before.files.map(f=>[f[0],f])),af=new Map(after.files.map(f=>[f[0],f]));
   const changed=new Set(changedPaths);

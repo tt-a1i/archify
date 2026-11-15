@@ -127,7 +127,8 @@ export async function preparePullRequest({ root, out, input, scope }, { fetchJSO
     const changedFiles = pr.changedFiles.flatMap(file => {
       const current = relative(file.path), previous = relative(file.previousPath);
       return current || previous ? [{ ...file, path: current || previous, previousPath: current ? previous : null,
-        status: !current ? 'removed' : file.status === 'renamed' && !previous ? 'added' : file.status }] : [];
+        status: !current ? 'removed' : file.status === 'renamed' && !previous ? 'added' : file.status,
+        ...(file.status === 'renamed' && Boolean(current) !== Boolean(previous) ? { scopeBoundary: current ? 'entered' : 'left' } : {}) }] : [];
     });
     return { pr, scope, directory, roots, manifests, changedFiles, sourceGitRoot: cache,
       source: side => ({ root: scope, revision: side === 'base' ? pr.mergeBaseSHA : pr.headSHA,

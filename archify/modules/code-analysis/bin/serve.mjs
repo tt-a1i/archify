@@ -453,6 +453,7 @@ function client(token, messages, makeTranslator, standalone) {
       if (toggle && document.documentElement.getAttribute('data-bauify') !== 'on') toggle.click();
       var params = new URLSearchParams(location.search), selectedFinding = params.get('finding');
       if (selectedFinding && window.__archifyShowFinding) window.__archifyShowFinding(selectedFinding, params.get('from') === 'findings' ? 'findings' : 'summary');
+      if (!selectedFinding && params.get('analysis') === 'open') window.__archifyRestoreWorkspace?.();
       if (location.search) history.replaceState(null, '', location.pathname);
     } catch (error) {
       button.disabled = false; button.textContent = tr("Code Analysis");

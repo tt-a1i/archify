@@ -37,6 +37,7 @@ import { buildTaskPayloads } from '../lib/task.mjs';
 import { reviewTargetDigest } from '../lib/review.mjs';
 import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
 import { clientAsset } from './client-assets.mjs';
+import { buildWorkspace, formatWorkspaceContext } from './workspace.mjs';
 
 export function alignDiagram({ ir, graph, map = null, facts = null, findings = [], run = {} }) {
   const modules = new Map(graph.modules.map((m) => [m.id, m]));
@@ -140,13 +141,15 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     findings: listed,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
     overview: buildOverview({ findings: listed, graph, facts, unmapped: ir ? unmapped : [], ambiguousModules, run, diagram: Boolean(ir) }),
-    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id))), { fileList: [...(run.pullRequest?.changedFiles || []).map(file => ({ path: file.path })), ...(run.pullRequest?.impact?.records || []).flatMap(record => record.locations.map(item => ({ path: item.file })))] }), facts, findingsDocument?.externalEvidence, run.pullRequest?.sourceGitRoot) : {},
+    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id))), { fileList: [...(run.pullRequest?.changedFiles || []).map(file => ({ path: file.path })), ...[...(run.pullRequest?.impact?.records || []), ...(run.pullRequest?.cycles?.records || [])]
+      .flatMap(record => record.locations.filter(item => item.side === 'head').map(item => ({ path: item.file })))] }), facts, findingsDocument?.externalEvidence, run.pullRequest?.sourceGitRoot) : {},
   };
 
   payload.architectureBrief = architectureHandoff({ overview: payload.overview, repository: graph.repository, locale: run.locale || ir?.meta?.locale, diagram: Boolean(ir) });
 
   // The Atlas view needs raw facts (files, dependencies, functions); without them only the Classic view exists.
   const atlas = buildAtlas({ graph, facts, findings, review: run.review });
+  payload.workspace = buildWorkspace({ facts, graph, atlas, snippets: payload.snippets });
   // Its data precedes the Classic script, which offers the Atlas button only when the data is present.
   const atlasData = atlas ? `<script type="application/json" id="bauify-atlas-data">${scriptSafeJson(atlas)}</script>\n` : '';
   const atlasView = atlas ? `<style id="bauify-atlas-style">${ATLAS_CSS}</style>\n<script id="bauify-atlas-script">${ATLAS_JS}</script>\n` : '';
@@ -469,6 +472,6 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
   return out;
 }
 
-const CSS = clientAsset('overlay.css');
+const CSS = clientAsset('overlay.css') + clientAsset('workspace.css');
 
-const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\n` + clientAsset('overlay.js');
+const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\n` + '\nwindow.__archifyFormatWorkspaceContext = ' + formatWorkspaceContext.toString() + ';\n' + clientAsset('workspace.js') + clientAsset('overlay.js');

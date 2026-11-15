@@ -2,14 +2,15 @@
   var source = document.getElementById('bauify-atlas-data');
   if (!source) return;
   var atlas = JSON.parse(source.textContent);
-  var analysis = JSON.parse(document.getElementById('bauify-analysis').textContent), ui = analysis.ui || {}, pr = analysis.pullRequest;
+  var analysis = JSON.parse(document.getElementById('bauify-analysis').textContent), ui = analysis.ui || {}, capturedPr = analysis.pullRequest, pr = capturedPr;
   var tr = window.__archifyMakeAnalysisTranslator(ui.messages || {});
   var root = document.documentElement;
   var standalone = ui.mode === 'standalone';
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
   var NAMES = { 'complexity/function': tr("Complex functions"), 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'redundancy/duplicate-block': tr("Duplicate code") };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
-  var prFiles = pr ? new Map(F.map(function(f,i){return[f[0],i];})) : null, prFunctions = pr ? new Map() : null;
+  var fileIndex = new Map(F.map(function (f, i) { return [f[0], i]; }));
+  var prFiles = pr ? fileIndex : null, prFunctions = pr ? new Map() : null;
   var prMarkerHits = [], prModuleChanges = pr ? new Map((pr.moduleChanges || []).map(function(m){return[m.id,m];})) : null;
   if (pr) FN.forEach(function(fn,i){prFunctions.set(JSON.stringify([F[fn[0]][0],fn[1]]),i);});
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
@@ -43,7 +44,7 @@
   canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 
   // ---- state ----
-  var state = { focusModule: -1, finding: -1, hover: null };
+  var state = { focusModule: -1, focusFile: -1, finding: -1, hover: null };
   var expansionEnabled = true, focusZoom = 1;
   var geometryKey = '', geometryTarget = null, geometryFrom = null, geometryPending = false;
   var LABEL_FONT = (pr ? '600 12px ' : '11px ') + 'ui-monospace, Menlo, Consolas, monospace';
@@ -158,6 +159,10 @@
     if (finding == null) finding = state.finding;
     var sel = { modules: {}, files: {}, edges: null, fns: {}, tone: null, any: false, arcs: {}, entries: {} };
     if (state.focusModule !== -1 && finding === -1) { sel.modules[state.focusModule] = true; sel.any = true; }
+    if (finding === -1 && state.focusFile !== -1) {
+      sel.anchor = state.focusFile; sel.files[state.focusFile] = true;
+      sel.tone = theme().text; sel.any = true;
+    }
     var f = FD[finding];
     if (f) {
       sel.any = true; sel.tone = TONE[f.severity] || TONE.info;
@@ -271,7 +276,7 @@
     ctx.lineWidth = 1; ctx.strokeStyle = t.grid;
     [0.42, 0.8, 1.0, 1.42].forEach(function (f) { ctx.beginPath(); ctx.arc(geo.cx, geo.cy, geo.R * f, 0, 2 * Math.PI); ctx.stroke(); });
     // dependencies, one path per source module
-    var focusM = state.finding === -1 ? state.focusModule : -1;
+    var focusM = state.finding === -1 && state.focusFile === -1 ? state.focusModule : -1;
     var byModule = M.map(function () { return []; });
     E.forEach(function (e) { byModule[F[e[0]][1]].push(e); });
     ctx.lineCap = 'round';
@@ -429,11 +434,11 @@
   canvas.addEventListener('mouseleave', function () { tip.hidden = true; if (state.hover) { state.hover = null; schedule(); } });
   canvas.addEventListener('click', function (e) {
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
-    if (!h) { select(-1, -1); return; }
+    if (!h) { pickModule(-1); return; }
     if (h.type === 'pr-change') showPRChange(h.index);
-    else if (h.type === 'module') select(state.focusModule === h.index ? -1 : h.index, -1);
+    else if (h.type === 'module') pickModule(state.focusModule === h.index && state.focusFile === -1 ? -1 : h.index);
     else if (h.type === 'function' && FN[h.index][6] !== -1) selectFinding(FN[h.index][6]);
-    else select(F[h.type === 'function' ? FN[h.index][0] : h.index][1], -1);
+    else pickFile(h.type === 'function' ? FN[h.index][0] : h.index);
   });
   canvas.addEventListener('wheel', function (e) {
     if (panel.hidden || !expansionEnabled || state.focusModule === -1 || e.ctrlKey || !e.deltaY) return;
@@ -459,10 +464,19 @@
     var owner = modules.length && modules.every(function (mi) { return mi === modules[0]; }) ? modules[0] : -1;
     select(owner, index);
   }
-  function select(module, finding) {
+  function pickModule(index) {
+    select(index, -1);
+    window.__archifyWorkspaceSelection?.('module', M[index]?.id);
+  }
+  function pickFile(index) {
+    select(F[index][1], -1, index);
+    window.__archifyWorkspaceSelection?.('file', F[index][0]);
+  }
+  function select(module, finding, file = -1) {
     updateGeometry(performance.now(), motion.matches);
     if (module !== state.focusModule) focusZoom = 1;
-    state.focusModule = module; state.finding = finding;
+    state.focusModule = module; state.finding = finding; state.focusFile = file;
+    root.setAttribute('data-bauify-atlas-file', file === -1 ? '' : F[file][0]);
     state.hover = null; tip.hidden = true;
     root.setAttribute('data-bauify-atlas-focus', module === -1 ? '' : M[module].id);
     root.setAttribute('data-bauify-atlas-finding', finding === -1 ? '' : FD[finding].id);
@@ -554,14 +568,20 @@
   }
   function showPRChange(index) {
     var change=pr.changes[index],path=change.path||change.from,file=prFiles.get(path);
-    if(file!=null)select(F[file][1],-1);
+    if(file!=null)select(F[file][1],-1,file);
     var loc=change.after&&typeof change.after==='object'?change.after:change.before&&typeof change.before==='object'?change.before:null;
     var diff=analysis.snippets[path]&&analysis.snippets[path].changes,line=loc&&loc.line||(change.status==='removed'?null:diff&&(diff.modified[0]||diff.added[0]))||null;
-    if(window.__archifyShowSource)window.__archifyShowSource(path,line,change.status==='removed'?'base':'head');
+    var snapshot = change.status === 'removed' ? 'base' : 'head';
+    if (window.__archifyWorkspaceSource?.(path, line, snapshot)) return;
+    if(window.__archifyShowSource)window.__archifyShowSource(path,line,snapshot);
   }
   function renderSide() {
     var h = pr ? prSummary() : '';
     h += ("<div class=\"k\">" + tr("Selection") + "</div>") + selectedCard();
+    if (analysis.workspace && state.focusModule !== -1 && state.finding === -1) {
+      h += '<button type="button" class="atlas-browse-module">' + esc(tr('Browse module files')) + '</button>';
+      if (state.focusFile !== -1) h += '<p class="note">' + esc(F[state.focusFile][0]) + '</p>';
+    }
     if (!pr) h += ("<div class=\"k\">" + tr("Totals") + "</div>" + "<div class=\"stats\">") +
       [[F.length, tr("files")], [E.length, tr("file dependencies")], [FN.length, tr("functions")], [M.length, tr("modules")]].map(function (s) { return '<div class="stat"><b>' + fmt(s[0]) + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div>';
     var groups = {};
@@ -595,7 +615,11 @@
       showPRChange(Number(button.getAttribute('data-pr-change')));
     }); });
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
-    side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
+    side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); pickModule(state.focusModule === i && state.focusFile === -1 ? -1 : i); }); });
+    var browse = side.querySelector('.atlas-browse-module');
+    if (browse) browse.addEventListener('click', function () {
+      window.__archifyWorkspaceSelection?.('module', M[state.focusModule].id, true);
+    });
     var ev = side.querySelector('.atlas-evidence');
     if (ev) ev.addEventListener('click', function () { var id = ev.getAttribute('data-id'); if (!standalone) close(); if (window.__archifyShowFinding) window.__archifyShowFinding(id); });
   }
@@ -616,8 +640,8 @@
     markMotion();
   }
   if (!standalone) panel.querySelector('.atlas-classic').addEventListener('click', close);
-  panel.querySelector('.atlas-clear').addEventListener('click', function () { select(-1, -1); });
-  document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { e.preventDefault(); select(-1, -1); } });
+  panel.querySelector('.atlas-clear').addEventListener('click', function () { pickModule(-1); });
+  document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { if (e.target.matches?.('input, select, textarea')) return; e.preventDefault(); pickModule(-1); } });
   function updateExpansionControl() {
     var button = panel.querySelector('.atlas-expand');
     button.textContent = tr(expansionEnabled ? 'Disable sector zoom' : 'Enable sector zoom');
@@ -633,7 +657,20 @@
     updateExpansionControl(); draw('focus');
   });
   updateExpansionControl();
-  window.__archifyAtlas = { open: open, close: close, focusFinding: function(id) { var i=FD.findIndex(function(f){return f.id===id;}); selectFinding(i); return i!==-1; } };
+  window.__archifyAtlas = {
+    open: open, close: close,
+    focusFinding: function(id) { var i=FD.findIndex(function(f){return f.id===id;}); selectFinding(i); return i!==-1; },
+    showReviewMarkers: function () {
+      if (pr === capturedPr) return;
+      pr = capturedPr; renderSide(); if (!panel.hidden) draw();
+    },
+    focusWorkspace: function (mode, file, module) {
+      pr = mode === 'changes' ? capturedPr : null;
+      var i = fileIndex.get(file) ?? -1;
+      var m = i === -1 ? M.findIndex(function (entry) { return entry.id === module; }) : F[i][1];
+      select(m, -1, i);
+    }
+  };
   if (standalone) open();
   new MutationObserver(function () { if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden) { renderSide(); draw(); } }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   var pending = 0;
