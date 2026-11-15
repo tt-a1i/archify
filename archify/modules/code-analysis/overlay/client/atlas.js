@@ -31,9 +31,9 @@
   var panel = document.createElement('section');
   panel.lang = ui.locale || 'en';
   panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', tr("Code analysis atlas"));
-  panel.innerHTML = ("<nav class=\"atlas-nav\" aria-label=\"" + tr("Atlas navigation") + "\">" + "<div class=\"atlas-title\">" + tr("Atlas") + "<span>") + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', tr("file dependencies")) + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
-    ("<div>" + "<button type=\"button\" class=\"atlas-clear\">" + tr("Clear selection") + "</button>" + " " + "<button type=\"button\" class=\"atlas-classic\" title=\"" + tr("Back to the diagram view with source evidence") + "\">" + tr("Classic view") + "</button>" + "</div>" + "</nav>") +
-    '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div><aside class="atlas-side"></aside></div>';
+  panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '<span>' + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', tr('file dependencies')) + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
+    '<div><button type="button" class="atlas-expand" aria-pressed="true">' + esc(tr('Disable sector zoom')) + '</button> <button type="button" class="atlas-clear">' + esc(tr('Clear selection')) + '</button> <button type="button" class="atlas-classic" title="' + esc(tr('Back to the diagram view with source evidence')) + '">' + esc(tr('Classic view')) + '</button></div></nav>' +
+    '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div><div class="atlas-help"></div></div><aside class="atlas-side"></aside></div>';
   (standalone ? document.querySelector('.analysis-stage') : document.body).appendChild(panel);
   if (standalone) panel.querySelector('.atlas-classic').remove();
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
@@ -41,12 +41,14 @@
 
   // ---- state ----
   var state = { focusModule: -1, finding: -1, hover: null };
+  var expansionEnabled = true, focusZoom = 1;
+  var geometryKey = '', geometryTarget = null, geometryFrom = null, geometryPending = false;
   var LABEL_FONT = '11px ui-monospace, Menlo, Consolas, monospace';
   // Long module names are cut on the circle (the tooltip and side panel keep them whole).
   function shortLabel(label) { return label.length > 20 ? '…' + label.slice(-19) : label; }
   // Many curves add up: fainter strokes for denser graphs keep strands readable.
   function density(n, most) { return Math.max(0.05, Math.min(most, 8 / Math.sqrt(Math.max(n, 1)))); }
-  var geo = null, base = null;
+  var geo = null, marks = [];
 
   // ---- colours: module hues spaced around the wheel, lightness by theme ----
   function cssVar(name, fallback) { var v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fallback; }
@@ -62,27 +64,53 @@
   // ---- geometry: angles for files, module spans, radii ----
   function layout() {
     var w = stage.clientWidth, h = stage.clientHeight, dpr = window.devicePixelRatio || 1;
-    var size = Math.max(200, Math.min(w, h));
-    // Leave room outside the arcs for the longest module label.
+    var selected = expansionEnabled ? state.focusModule : -1;
+    var key = w + ':' + h + ':' + dpr + ':' + selected + ':' + focusZoom;
+    if (key === geometryKey && geometryTarget) { if (!anim.focus) geo = geometryTarget; return; }
+    var old = geo, size = Math.max(200, Math.min(w, h));
     var measure = canvas.getContext('2d'); measure.font = LABEL_FONT;
     var longest = M.reduce(function (n, m) { return Math.max(n, measure.measureText(shortLabel(m.label)).width); }, 0);
-    var R = Math.max(40, Math.min(size * 0.34, (size / 2 - Math.min(longest, size * 0.22) - 12) / 1.53)), gap = 2.2, slots = F.length + gap * M.length;
-    var ang = new Float64Array(F.length), span = [], k = 0, fi = 0;
+    var R = Math.max(40, Math.min(size * 0.34, (size / 2 - Math.min(longest, size * 0.22) - 12) / 1.53));
+    // Reuse the PR prototype's partition: selected files gain angular space;
+    // all other sectors compress within the same circle, without overlap.
+    var weights = F.map(function (f, i) { return selected < 0 ? 1 : f[1] === selected ? (2 + Math.min(fnsByFile[i].length, 45) / 12) * focusZoom : 0.55; });
+    var gap = 2.2, slots = Math.max(1, weights.reduce(function (n, value) { return n + value; }, 0) + gap * M.length);
+    var ang = new Float64Array(F.length), span = [], fileSpan = [], k = 0, fi = 0;
     M.forEach(function (m, mi) {
       var start = k;
-      while (fi < F.length && F[fi][1] === mi) { ang[fi] = -Math.PI / 2 + 2 * Math.PI * (k + 0.5) / slots; k += 1; fi += 1; }
+      while (fi < F.length && F[fi][1] === mi) {
+        ang[fi] = -Math.PI / 2 + 2 * Math.PI * (k + weights[fi] / 2) / slots;
+        fileSpan[fi] = 2 * Math.PI * weights[fi] / slots;
+        k += weights[fi]; fi += 1;
+      }
       span.push([-Math.PI / 2 + 2 * Math.PI * start / slots, -Math.PI / 2 + 2 * Math.PI * k / slots]);
       k += gap;
     });
-    geo = { w: w, h: h, dpr: dpr, cx: w / 2, cy: h / 2, R: R, slot: 2 * Math.PI / slots, ang: ang, span: span,
+    geometryTarget = { w: w, h: h, dpr: dpr, cx: w / 2, cy: h / 2, R: R, slot: 2 * Math.PI / slots, ang: ang, span: span, fileSpan: fileSpan,
       tick: R * 0.04, spike0: R * 1.06, spikeMax: R * 0.36, arc: R * 1.48, label: R * 1.53 };
+    geometryKey = key;
+    if (old && old.w === w && old.h === h && old.dpr === dpr && !motion.matches) {
+      geometryFrom = old; anim.focus = performance.now();
+    } else { geometryFrom = null; geo = geometryTarget; anim.focus = 0; }
+  }
+  function updateGeometry(now, snap) {
+    if (!geometryTarget) return;
+    if (!anim.focus || !geometryFrom || snap) { geo = geometryTarget; anim.focus = 0; return; }
+    var p = Math.min(1, Math.max(0, (now - anim.focus) / FADE_MS)), ease = p * p * (3 - 2 * p), from = geometryFrom, to = geometryTarget;
+    geo = Object.assign({}, to, {
+      ang: Float64Array.from(to.ang, function (value, i) { return from.ang[i] + (value - from.ang[i]) * ease; }),
+      span: to.span.map(function (value, i) { return value.map(function (angle, j) { return from.span[i][j] + (angle - from.span[i][j]) * ease; }); }),
+      fileSpan: to.fileSpan.map(function (value, i) { return from.fileSpan[i] + (value - from.fileSpan[i]) * ease; })
+    });
+    if (p === 1) { geo = to; geometryFrom = null; anim.focus = 0; }
   }
   function pt(a, r) { return [geo.cx + r * Math.cos(a), geo.cy + r * Math.sin(a)]; }
+
   function mid(mi) { return (geo.span[mi][0] + geo.span[mi][1]) / 2; }
   function spikeLen(cx) { return geo.spikeMax * (0.06 + 0.94 * Math.min(cx, 26) / 26); }
   function fnAngle(i) {
     var fn = FN[i], n = fnsByFile[fn[0]].length;
-    return geo.ang[fn[0]] + (n > 1 ? (fnSlot[i] / (n - 1) - 0.5) * geo.slot * 0.8 : 0);
+    return geo.ang[fn[0]] + (n > 1 ? (fnSlot[i] / (n - 1) - 0.5) * geo.fileSpan[fn[0]] * 0.8 : 0);
   }
   // A dependency is a cubic curve bundled through both modules' mid-angles near the
   // centre; one inside a module stays near the rim.
@@ -102,10 +130,11 @@
   }
 
   // ---- what the current selection lights up ----
-  function selection() {
+  function selection(finding) {
+    if (finding == null) finding = state.finding;
     var sel = { modules: {}, files: {}, edges: null, fns: {}, tone: null, any: false, arcs: {}, entries: {} };
-    if (state.focusModule !== -1) { sel.modules[state.focusModule] = true; sel.any = true; }
-    var f = FD[state.finding];
+    if (state.focusModule !== -1 && finding === -1) { sel.modules[state.focusModule] = true; sel.any = true; }
+    var f = FD[finding];
     if (f) {
       sel.any = true; sel.tone = TONE[f.severity] || TONE.info;
       if (f.kind === 'function' && f.fn != null) { sel.fns[f.fn] = true; sel.files[FN[f.fn][0]] = true; sel.anchor = FN[f.fn][0]; }
@@ -128,14 +157,14 @@
   // when the reader asks for reduced motion.
   var frame = document.createElement('canvas'), previous = document.createElement('canvas');
   var REVEAL_MS = 700, FADE_MS = 300, HOP_MS = 900;
-  var anim = { reveal: 0, fade: 0, flow: 0, flowFor: -1, raf: 0, timer: 0 };
+  var anim = { focus: 0, reveal: 0, fade: 0, flow: 0, flowFor: -1, raf: 0, timer: 0 };
   var motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   function draw(how) {
     if (panel.hidden) return;
     var still = motion.matches;
-    var fade = how === 'fade' && !still && frame.width > 0;
+    layout(); geometryPending = false; updateGeometry(performance.now(), still);
+    var fade = how === 'fade' && !anim.focus && !still && frame.width > 0;
     if (fade) { previous.width = frame.width; previous.height = frame.height; previous.getContext('2d').drawImage(frame, 0, 0); }
-    layout();
     var W = Math.round(geo.w * geo.dpr), H = Math.round(geo.h * geo.dpr);
     if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
     frame.width = W; frame.height = H;
@@ -151,7 +180,7 @@
   }
   // Motion state on <html>, set as soon as it changes, for tests and styling.
   function markMotion() {
-    if (anim.reveal || anim.fade) root.setAttribute('data-bauify-atlas-animating', 'true'); else root.removeAttribute('data-bauify-atlas-animating');
+    if (anim.reveal || anim.fade || anim.focus || geometryPending) root.setAttribute('data-bauify-atlas-animating', 'true'); else root.removeAttribute('data-bauify-atlas-animating');
     root.setAttribute('data-bauify-atlas-flow', anim.flow ? 'on' : 'off');
   }
   // Frames come from requestAnimationFrame; a timer backs it up where frames are
@@ -173,6 +202,10 @@
   }
   function present(now) {
     var ctx = canvas.getContext('2d'), busy = false;
+    var repaint = geometryPending;
+    if (geometryPending) { geometryPending = false; layout(); }
+    if (anim.focus) { updateGeometry(now, motion.matches); repaint = true; busy = !!anim.focus; }
+    if (repaint) paint(frame.getContext('2d'));
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (anim.reveal) {
       // Opening: the picture grows out from the centre, curves first, then rim and labels.
@@ -205,6 +238,7 @@
     ctx.restore();
   }
   function paint(ctx) {
+    marks = [];
     var t = theme(), dpr = geo.dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, geo.w, geo.h);
@@ -213,7 +247,7 @@
     ctx.lineWidth = 1; ctx.strokeStyle = t.grid;
     [0.42, 0.8, 1.0, 1.42].forEach(function (f) { ctx.beginPath(); ctx.arc(geo.cx, geo.cy, geo.R * f, 0, 2 * Math.PI); ctx.stroke(); });
     // dependencies, one path per source module
-    var focusM = state.focusModule;
+    var focusM = state.finding === -1 ? state.focusModule : -1;
     var byModule = M.map(function () { return []; });
     E.forEach(function (e) { byModule[F[e[0]][1]].push(e); });
     ctx.lineCap = 'round';
@@ -246,6 +280,7 @@
     // files
     F.forEach(function (f, i) {
       var a = geo.ang[i], p0 = pt(a, geo.R), p1 = pt(a, geo.R + geo.tick), on = !dimmed || inSel(sel, i);
+      marks.push({ type: 'file', index: i, p0: p0, p1: p1 });
       ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
       ctx.strokeStyle = sel.files[i] ? sel.tone : hue(f[1], t, on ? 0.95 : 0.2); ctx.lineWidth = sel.files[i] ? 2.4 : 1.3; ctx.stroke();
     });
@@ -267,6 +302,7 @@
       var a = fnAngle(i), len = spikeLen(fn[3]), hit = fn[6] !== -1 ? FD[fn[6]] : null;
       var on = !dimmed || inSel(sel, fn[0]) || sel.fns[i];
       var p0 = pt(a, geo.spike0), p1 = pt(a, geo.spike0 + len);
+      marks.push({ type: 'function', index: i, p0: p0, p1: p1 });
       ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
       ctx.strokeStyle = hit ? TONE[hit.severity] || TONE.info : t.muted;
       ctx.globalAlpha = (hit ? 1 : fn[3] >= 8 ? 0.85 : 0.45) * (on ? 1 : 0.15);
@@ -287,7 +323,7 @@
       ctx.strokeStyle = hue(mi, t, on ? 1 : 0.25); ctx.lineWidth = hub ? 5 : 2; ctx.lineCap = 'butt'; ctx.stroke();
       var a = mid(mi), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label);
       // A module too narrow for its own label is named only when selected or hovered.
-      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || sel.modules[mi];
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || sel.modules[mi] || state.focusModule === mi;
       if (!named) return;
       ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(flip ? a + Math.PI : a);
       ctx.textAlign = flip ? 'right' : 'left'; ctx.fillStyle = hue(mi, t, on ? 1 : 0.35);
@@ -310,29 +346,34 @@
     ctx.restore();
   }
 
-  // ---- hit testing in polar coordinates ----
-  function nearestFile(a, tol) {
-    var best = -1, bestD = tol;
-    for (var i = 0; i < F.length; i++) { var d = Math.abs(Math.atan2(Math.sin(a - geo.ang[i]), Math.cos(a - geo.ang[i]))); if (d < bestD) { bestD = d; best = i; } }
-    return best;
-  }
+  // Hit the rendered segments first. This covers tips and bodies (including
+  // unreported functions), and stays aligned during animation and resizing.
   function hit(x, y) {
     if (!geo) return null;
-    var dx = x - geo.cx, dy = y - geo.cy, r = Math.sqrt(dx * dx + dy * dy), a = Math.atan2(dy, dx);
-    if (r > geo.arc - 8 && r < geo.label + 140) {
-      for (var mi = 0; mi < M.length; mi++) {
-        var s = geo.span[mi], d0 = ((a - s[0]) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-        if (d0 <= s[1] - s[0] + 0.01 || d0 >= 2 * Math.PI - 0.01) return { type: 'module', index: mi };
-      }
-      return null;
+    var best = null, bestDistance = 4;
+    marks.forEach(function (mark) {
+      var dx = mark.p1[0] - mark.p0[0], dy = mark.p1[1] - mark.p0[1];
+      var length2 = dx * dx + dy * dy;
+      var t = length2 ? Math.max(0, Math.min(1, ((x - mark.p0[0]) * dx + (y - mark.p0[1]) * dy) / length2)) : 0;
+      var distance = Math.hypot(x - mark.p0[0] - t * dx, y - mark.p0[1] - t * dy);
+      if (distance < bestDistance) { best = mark; bestDistance = distance; }
+    });
+    if (best) return { type: best.type, index: best.index };
+    var dx = x - geo.cx, dy = y - geo.cy, a = Math.atan2(dy, dx), r = Math.hypot(dx, dy);
+    var measure = canvas.getContext('2d'); measure.font = LABEL_FONT;
+    var selected = selection();
+    for (var mi = 0; mi < M.length; mi++) {
+      var delta = Math.atan2(Math.sin(a - mid(mi)), Math.cos(a - mid(mi)));
+      var half = (geo.span[mi][1] - geo.span[mi][0]) / 2;
+      if (Math.abs(r - geo.arc) <= 5 && Math.abs(delta) <= half + 0.01) return { type: 'module', index: mi };
+      // Labels extend radially outwards on both halves of the circle. Do not
+      // treat the empty area outside an entire sector as a clickable label.
+      var along = dx * Math.cos(mid(mi)) + dy * Math.sin(mid(mi));
+      var across = -dx * Math.sin(mid(mi)) + dy * Math.cos(mid(mi));
+      var labelStart = geo.label;
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || state.focusModule === mi || selected.modules[mi];
+      if (named && Math.abs(across) <= 7 && along >= labelStart - 4 && along <= labelStart + measure.measureText(shortLabel(M[mi].label)).width + 4) return { type: 'module', index: mi };
     }
-    if (r >= geo.spike0 - 2 && r <= geo.spike0 + geo.spikeMax + 6) {
-      var file = nearestFile(a, geo.slot * 0.75); if (file === -1) return null;
-      var best = -1, bestD = geo.slot;
-      fnsByFile[file].forEach(function (i) { var d = Math.abs(Math.atan2(Math.sin(a - fnAngle(i)), Math.cos(a - fnAngle(i)))); if (d <= bestD && r <= geo.spike0 + spikeLen(FN[i][3]) + 6) { bestD = d; best = i; } });
-      return best === -1 ? { type: 'file', index: file } : { type: 'function', index: best };
-    }
-    if (r >= geo.R - 4 && r <= geo.spike0) { var f2 = nearestFile(a, geo.slot * 0.75); return f2 === -1 ? null : { type: 'file', index: f2 }; }
     return null;
   }
   function tipText(h) {
@@ -355,13 +396,38 @@
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
     if (!h) { select(-1, -1); return; }
     if (h.type === 'module') select(state.focusModule === h.index ? -1 : h.index, -1);
-    else if (h.type === 'function' && FN[h.index][6] !== -1) select(-1, FN[h.index][6]);
+    else if (h.type === 'function' && FN[h.index][6] !== -1) selectFinding(FN[h.index][6]);
     else select(F[h.type === 'function' ? FN[h.index][0] : h.index][1], -1);
   });
+  canvas.addEventListener('wheel', function (e) {
+    if (panel.hidden || !expansionEnabled || state.focusModule === -1 || e.ctrlKey || !e.deltaY) return;
+    var delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? stage.clientHeight : 1);
+    var zoom = Math.max(0.65, Math.min(3.8, focusZoom * Math.exp(-Math.max(-180, Math.min(180, delta)) * 0.002)));
+    e.preventDefault();
+    if (zoom === focusZoom) return;
+    var now = performance.now(); updateGeometry(now, motion.matches); focusZoom = zoom;
+    state.hover = null; tip.hidden = true;
+    geometryPending = true;
+    // Reuse the focus clock and paint once per frame, including a burst of wheel events.
+    if (motion.matches) draw('focus'); else { markMotion(); schedule(); }
+  }, { passive: false });
 
   // ---- side panel ----
+  function selectFinding(index) {
+    if (index === -1) { select(state.focusModule, -1); return; }
+    // Reuse the current finding projection, including C7 locations and
+    // boundary/internal-import edges; do not maintain another kind registry.
+    var selected = selection(index);
+    var modules = Object.keys(selected.modules).concat(Object.keys(selected.arcs)).map(Number);
+    Object.keys(selected.files).forEach(function (file) { modules.push(F[file][1]); });
+    var owner = modules.length && modules.every(function (mi) { return mi === modules[0]; }) ? modules[0] : -1;
+    select(owner, index);
+  }
   function select(module, finding) {
+    updateGeometry(performance.now(), motion.matches);
+    if (module !== state.focusModule) focusZoom = 1;
     state.focusModule = module; state.finding = finding;
+    state.hover = null; tip.hidden = true;
     root.setAttribute('data-bauify-atlas-focus', module === -1 ? '' : M[module].id);
     root.setAttribute('data-bauify-atlas-finding', finding === -1 ? '' : FD[finding].id);
     renderSide(); draw('fade');
@@ -426,7 +492,7 @@
       '<div class="note">' + fmt(cov.resolved) + tr(" resolved · ") + fmt(cov.external) + tr(" external · ") + fmt(cov.unknown) + tr(" could not be resolved") + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(" failed to parse") : '') + (tr(". Unresolved records draw no curve, so a missing curve does not prove there is no dependency.") + "</div>");
     h += ("<div class=\"k\">" + tr("Reading the atlas") + "</div>" + "<div class=\"legend\">" + "<span>" + "<i style=\"background:") + hue(0, theme()) + ("\">" + "</i>" + tr("outer arc: module (thick: reported hub)") + "</span>" + "<span>" + "<i style=\"background:") + theme().muted + ("\">" + "</i>" + tr("tick: file · spike: function, length = complexity") + "</span>" + "<span>" + "<i style=\"background:#FBBF24;height:8px;width:8px;border-radius:50%\">" + "</i>" + tr("dot: reported function, severity colour") + "</span>" + "<span>" + "<i style=\"background:") + hue(3, theme(), 0.6) + ("\">" + "</i>" + tr("curve: file dependency, coloured by the importing module") + "</span>" + "<span>" + "<i style=\"background:") + theme().text + ("\">" + "</i>" + tr("mark inside the rim: a focused module's file that other modules import") + "</span>" + "</div>");
     side.innerHTML = h;
-    side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); select(-1, state.finding === i ? -1 : i); }); });
+    side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     var ev = side.querySelector('.atlas-evidence');
     if (ev) ev.addEventListener('click', function () { var id = ev.getAttribute('data-id'); if (!standalone) close(); if (window.__archifyShowFinding) window.__archifyShowFinding(id); });
@@ -443,12 +509,29 @@
     if (standalone) return;
     panel.hidden = true; root.removeAttribute('data-bauify-view'); tip.hidden = true;
     if (anim.raf) { cancelAnimationFrame(anim.raf); clearTimeout(anim.timer); }
+    geometryPending = false; updateGeometry(performance.now(), true);
     anim.raf = 0; anim.timer = 0; anim.reveal = 0; anim.fade = 0; anim.flow = 0; anim.flowFor = -1;
     markMotion();
   }
   if (!standalone) panel.querySelector('.atlas-classic').addEventListener('click', close);
   panel.querySelector('.atlas-clear').addEventListener('click', function () { select(-1, -1); });
-  window.__archifyAtlas = { open: open, close: close, focusFinding: function(id) { var i=FD.findIndex(function(f){return f.id===id;}); select(-1,i); return i!==-1; } };
+  document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { e.preventDefault(); select(-1, -1); } });
+  function updateExpansionControl() {
+    var button = panel.querySelector('.atlas-expand');
+    button.textContent = tr(expansionEnabled ? 'Disable sector zoom' : 'Enable sector zoom');
+    button.setAttribute('aria-pressed', String(expansionEnabled));
+    button.title = tr(expansionEnabled ? 'Highlight without zooming; keep the current selection.' : 'Zoom the selected module with the mouse wheel.');
+    panel.querySelector('.atlas-help').textContent = tr(expansionEnabled ? 'Select a module, then scroll to adjust zoom.' : 'Click a module to highlight its dependencies.') + ' · ' + tr('Blank space / Esc clears selection.');
+    root.setAttribute('data-bauify-atlas-expansion', expansionEnabled ? 'on' : 'off');
+  }
+  panel.querySelector('.atlas-expand').addEventListener('click', function () {
+    updateGeometry(performance.now(), motion.matches);
+    expansionEnabled = !expansionEnabled; state.hover = null; tip.hidden = true;
+    geometryPending = true;
+    updateExpansionControl(); draw('focus');
+  });
+  updateExpansionControl();
+  window.__archifyAtlas = { open: open, close: close, focusFinding: function(id) { var i=FD.findIndex(function(f){return f.id===id;}); selectFinding(i); return i!==-1; } };
   if (standalone) open();
   new MutationObserver(function () { if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden) { renderSide(); draw(); } }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   var pending = 0;

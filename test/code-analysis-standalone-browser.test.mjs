@@ -28,6 +28,11 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     const result=spawnSync(process.execPath,[cli,'code-analysis','prepare',root,'--out',path.join(dir,locale),'--locale',locale],{encoding:'utf8'});
     assert.equal(result.status,0,result.stdout+result.stderr);const prepared=JSON.parse(result.stdout);assert.equal(prepared.diagram,null);
     const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(prepared.html).href});await loaded;
+    assert.equal(await run("document.querySelector('.atlas-expand').textContent"),locale==='zh-CN'?'关闭扇区缩放':'Disable sector zoom');
+    await run("document.querySelector('.atlas-expand').click()");
+    assert.equal(await run("document.querySelector('.atlas-expand').textContent"),locale==='zh-CN'?'开启扇区缩放':'Enable sector zoom');
+    assert.equal(await run("document.querySelector('.atlas-expand').getAttribute('aria-pressed')"),'false');
+    await run("document.querySelector('.atlas-expand').click()");
     for(const theme of ['light','dark'])for(const [width,height] of [[1440,900],[390,844]]){
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
       await run(`if(document.documentElement.getAttribute('data-theme')!==${JSON.stringify(theme)})document.getElementById('btn-theme').click()`);await settle();

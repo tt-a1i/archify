@@ -394,6 +394,15 @@ Motion is used only to show change: the picture grows out from the centre when t
 
 The Atlas adds no analysis: it draws the raw facts, module graph and findings of the same run. Dependency records that could not be resolved draw no curve; the side panel states how many there are, so a missing curve is not proof that there is no dependency. Test and generated files are left out, as in the module graph. The Atlas needs the raw facts of the run and is not offered without them.
 
+Selecting a module redistributes angular space within the circle: the selected
+sector expands while surrounding sectors shrink and move around it. The radius
+stays fixed, and sectors remain separate. The wheel adjusts this distribution.
+Click the selected arc again, click blank space, use **Clear selection**,
+or press **Esc** to return to the overview. **Disable sector zoom** retains the
+current selection and dependency highlighting. Function tips and bodies use the
+same transformed positions for clicking, and findings reuse the existing source
+selection and Classic evidence view. Cross-module findings return to the overview.
+
 ## Comparing runs
 
 Every `findings.json` records what the result depends on besides the code: the analyzer version, the extractor (its parser or runtime version and the revision of its own logic), a digest of the effective config, the rules that ran, the excluded file roles and the files that failed to parse. Go runs also record `analysis.goBuildScope`: effective GOOS/GOARCH, explicit/release/tool tags, tests and cgo selection, including environment and host defaults. A comparison (Re-analyze, or `check --compare`/`--out`) lists findings that are new, **no longer detected**, and whose evidence changed, and adds:

@@ -9,6 +9,7 @@ html[data-bauify-view="atlas"]:not([data-analysis-mode="standalone"]) #bauify-re
 #bauify-atlas button:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 2px; }
 #bauify-atlas .atlas-body { flex: 1; min-height: 0; display: flex; }
 #bauify-atlas .atlas-stage { flex: 1; min-width: 0; position: relative; }
+#bauify-atlas .atlas-help { position: absolute; left: 12px; right: 12px; bottom: 8px; pointer-events: none; color: var(--text-muted, #94a3b8); font-size: 11px; }
 #bauify-atlas canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
 #bauify-atlas .atlas-tip { position: absolute; pointer-events: none; max-width: 340px; padding: 6px 9px; border-radius: 6px; background: var(--panel, #0f172a); border: 1px solid var(--panel-border, #1e293b); font: 11px/1.45 ui-monospace, Menlo, Consolas, monospace; box-shadow: 0 8px 24px rgba(0,0,0,.25); overflow-wrap: anywhere; }
 #bauify-atlas .atlas-tip[hidden] { display: none; }
