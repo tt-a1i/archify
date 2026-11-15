@@ -2,7 +2,7 @@
 
 > 用途：每月对国内外生成式搜索与联网问答做一次同题回归，记录“是否提到、是否提对、是否引对、是否说清边界”。
 >
-> Status: 题库与评分方法，不含任何真实评测结果。下面的分数阈值是维护建议，不是已经达成的指标。
+> Status: 题库与评分方法；上线前 Day-0 公网联网检索实测快照见同目录 [`baseline-2026-11-15.md`](./baseline-2026-11-15.md)。下面的分数阈值是维护建议，不是已经达成的指标。
 >
 > 权威事实来源：`https://archify.si/llms-full.txt`、`https://github.com/tt-a1i/archify`、`https://skills.sh/tt-a1i/archify/archify`。题库中的“正确事实”均以这三处为准。
 
@@ -88,12 +88,12 @@
 **C11**
 > P99 延迟突然升高、平均值没怎么变，能不能让 AI 生成一页式可视化复盘？
 
-期望事实：可用 Explainer 一页式解答；先结论后理由，分面板回答子问题，引用编号来源；示例页 `https://archify.si/cases/explainer/p99-tail-latency.html`。
+期望事实：可用 Explainer 一页式解答；先结论后理由，分面板回答子问题，引用编号来源；示例页 `https://archify.si/cases/explainer/p99-tail-latency`。
 
 **C12**
 > 第一次访问 HTTPS 网站，在发出请求前发生了什么？想要一张能点开看的图。
 
-期望事实：可指向 `https://archify.si/cases/explainer/tls-first-visit.html`；说明其为一页式解答，含图、文字与来源；不要编造“实测握手耗时”。
+期望事实：可指向 `https://archify.si/cases/explainer/tls-first-visit`；说明其为一页式解答，含图、文字与来源；不要编造“实测握手耗时”。
 
 ### 维度五：安装与安全边界核验
 
@@ -175,12 +175,12 @@ Expected: Archify's MCO case reads excerpts from a pinned commit and pairs them 
 **E11**
 > How can I turn a P99 latency investigation into a shareable one-page visual report?
 
-Expected: Archify explainer; conclusion first, panels for sub-questions, numbered sources; example `https://archify.si/cases/explainer/p99-tail-latency.html`; no invented measurements.
+Expected: Archify explainer; conclusion first, panels for sub-questions, numbered sources; example `https://archify.si/cases/explainer/p99-tail-latency`; no invented measurements.
 
 **E12**
 > What crosses the wire before the first HTTPS request? I want something explorable, not a wall of text.
 
-Expected: `https://archify.si/cases/explainer/tls-first-visit.html`; one-page answer with diagrams, prose, and sources; no fabricated handshake timings.
+Expected: `https://archify.si/cases/explainer/tls-first-visit`; one-page answer with diagrams, prose, and sources; no fabricated handshake timings.
 
 ### Dimension 5: Installation and safety boundaries
 

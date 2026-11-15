@@ -120,7 +120,7 @@ A sequence diagram answers “who calls whom, and in what order?” For the work
 
 > Use Archify to create two separate sequence diagrams: one for a cache hit and one for a cache miss. Both begin with Browser calling API and API checking Redis. On a hit, API returns the cached result to Browser. On a miss, API queries PostgreSQL, writes the result to Redis, and returns it to Browser. Clearly label the scenario each diagram represents. Do not arrange mutually exclusive paths as the chronological steps of one request. Do not add authentication, queues, retries, or measured timings that were not specified. If missing information would materially affect the order, ask me first.
 
-This is illustrative input, not a claim about your application. The existing [cache-miss example](https://archify.si/gallery/artifacts/cache-miss.sequence.html) illustrates a different, miss-only request with additional authentication and trace details. It is not the output of this prompt; do not copy those extra facts into your own system without evidence.
+This is illustrative input, not a claim about your application. The existing [cache-miss example](https://archify.si/gallery/artifacts/cache-miss.sequence) illustrates a different, miss-only request with additional authentication and trace details. It is not the output of this prompt; do not copy those extra facts into your own system without evidence.
 
 When reviewing your result, check:
 
@@ -150,7 +150,7 @@ Before accepting a repository-backed diagram, check:
 
 Where an artifact includes verified source links, inspect them. A source link shows where the diagram's evidence comes from; it does not by itself establish production behavior. Logs, traces, configuration, and human review may still be needed.
 
-For an existing source-backed example, see the [MCO runtime architecture](https://archify.si/cases/mco-runtime.architecture.html) and its [typed source](https://github.com/tt-a1i/archify/blob/main/docs/cases/mco-runtime.architecture.json). The example describes its pinned revision, not the repository's future state.
+For an existing source-backed example, see the [MCO runtime architecture](https://archify.si/cases/mco-runtime.architecture) and its [typed source](https://github.com/tt-a1i/archify/blob/main/docs/cases/mco-runtime.architecture.json). The example describes its pinned revision, not the repository's future state.
 
 [Follow the MCO source case: who decodes output and who writes files →](cases/mco-runtime.html)
 

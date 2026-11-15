@@ -120,7 +120,7 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 > 用 Archify 分别画两张时序图：缓存命中场景和缓存未命中场景。两者都从 Browser 调用 API、API 查询 Redis 开始。命中时，API 将缓存结果返回 Browser；未命中时，API 查询 PostgreSQL，把结果写入 Redis，再返回 Browser。明确标注每张图对应的场景，不要把互斥路径串成同一次请求的时间顺序。不要添加未说明的鉴权、队列、重试或实测耗时。缺失信息会实质影响顺序时，先问我。
 
-这是演示输入，不是对你应用行为的断言。现有的[缓存未命中示例](https://archify.si/gallery/artifacts/cache-miss.sequence.html)描述的是另一条包含鉴权与追踪细节的未命中路径，不是上述提示词的生成结果。不要把它额外的设定当成自己系统的事实。
+这是演示输入，不是对你应用行为的断言。现有的[缓存未命中示例](https://archify.si/gallery/artifacts/cache-miss.sequence)描述的是另一条包含鉴权与追踪细节的未命中路径，不是上述提示词的生成结果。不要把它额外的设定当成自己系统的事实。
 
 检查成品时，重点看：
 
@@ -150,7 +150,7 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 如果成品附有已验证的源码链接，应点开检查。源码链接说明证据来自哪里，不会自动证明生产环境的运行行为；必要时仍需日志、链路追踪、配置及人工确认。
 
-可参考现有的 [MCO 运行时架构示例](https://archify.si/cases/mco-runtime.architecture.html)及其[结构化源文件](https://github.com/tt-a1i/archify/blob/main/docs/cases/mco-runtime.architecture.json)。它解释的是所标明的提交版本，不代表仓库之后永远保持相同结构。
+可参考现有的 [MCO 运行时架构示例](https://archify.si/cases/mco-runtime.architecture)及其[结构化源文件](https://github.com/tt-a1i/archify/blob/main/docs/cases/mco-runtime.architecture.json)。它解释的是所标明的提交版本，不代表仓库之后永远保持相同结构。
 
 [对照 MCO 源码：谁解码输出，谁写入文件 →](cases/mco-runtime.html)
 
