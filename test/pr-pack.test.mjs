@@ -35,11 +35,11 @@ function architecture(extra = {}) {
   };
 }
 
-function sequence() {
+function sequence(extra = {}) {
   return {
     schema_version: 1,
     diagram_type: 'sequence',
-    meta: { title: 'Checkout flow', output: 'out/flow.html' },
+    meta: { title: 'Checkout flow', output: 'out/flow.html', ...extra.meta },
     participants: [
       { id: 'web', label: 'Web', type: 'frontend' },
       { id: 'api', label: 'API', type: 'backend', change: 'modified' },
@@ -152,6 +152,9 @@ test('the bundled checkout-ledger example validates at showcase and builds a ver
   assert.equal(build.status, 0, build.stderr);
   const receipt = JSON.parse(build.stdout);
   assert.deepEqual(receipt.views.map((view) => [view.id, view.type, view.collapsed]), [['schema', 'erd', false], ['topology', 'architecture', false], ['flow', 'sequence', true]]);
+  assert.equal(receipt.views.every((view) => view.preset === 'classic'), true, 'pack views unify to classic preset by default');
+  const topologySnapshot = JSON.parse(fs.readFileSync(receipt.views.find((view) => view.id === 'topology').snapshot, 'utf8'));
+  assert.equal(topologySnapshot.meta.visual_preset, 'classic');
   assert.equal(receipt.assets.length, 6);
   for (const asset of receipt.assets) {
     const svg = fs.readFileSync(asset.path, 'utf8');
@@ -390,4 +393,31 @@ test('markdown helpers keep the picture on one line, replace only the anchored b
   assert.equal(findRiskVerdict('failsafe retry and unsafe-inline are words'), null);
   const pack = { manifest: { title: 'T', changes: [] }, platform: 'github', views: [{ id: 'v', title: 'V', type: 'erd', theme: 'both', collapsed: false, caption: 'all MERGEABLE' }], changeTableLimit: 20 };
   assert.throws(() => renderPackMarkdown(pack, {}), /MERGEABLE/);
+});
+
+test('pr build unifies pack views under manifest.preset unless an individual view overrides it', () => {
+  const dir = scratch();
+  const outDir = path.join(dir, 'out');
+  const file = writePack(dir, {
+    manifest: manifest({
+      preset: 'editorial',
+      views: [
+        { id: 'topology', title: 'Service topology', type: 'architecture', input: 'topology.json' },
+        { id: 'flow', title: 'Checkout sequence', type: 'sequence', input: 'flow.json', preset: 'blueprint' },
+      ],
+    }),
+    topology: architecture({ meta: { visual_preset: 'signal-flow' } }),
+    flow: sequence({ meta: { visual_preset: 'classic' } }),
+  });
+  const build = run(['pr', 'build', file, '--out-dir', outDir, '--json']);
+  assert.equal(build.status, 0, build.stdout + build.stderr);
+  const receipt = JSON.parse(build.stdout);
+  const topologyView = receipt.views.find((view) => view.id === 'topology');
+  const flowView = receipt.views.find((view) => view.id === 'flow');
+  assert.equal(topologyView.preset, 'editorial');
+  assert.equal(flowView.preset, 'blueprint');
+  assert.equal(JSON.parse(fs.readFileSync(topologyView.snapshot, 'utf8')).meta.visual_preset, 'editorial');
+  assert.equal(JSON.parse(fs.readFileSync(flowView.snapshot, 'utf8')).meta.visual_preset, 'blueprint');
+  assert.match(fs.readFileSync(topologyView.svgs.light, 'utf8'), /data-preset="editorial"/);
+  assert.match(fs.readFileSync(flowView.svgs.light, 'utf8'), /data-preset="blueprint"/);
 });

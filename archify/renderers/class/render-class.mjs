@@ -21,6 +21,7 @@ import {
 } from '../shared/legend.mjs';
 import { nodeTextFit } from '../shared/text-fit.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeItemAttrs, changeLegendEntries, changeNodeAttrs, changeReviewFor, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { bandedLayout, resolveEntityPos } from '../erd/grid.mjs';
 import {
   asArray,
@@ -106,8 +107,14 @@ function visibilityPrefix(member) {
   return member.visibility ? `${VISIBILITY_GLYPH[member.visibility]} ` : '';
 }
 
+function attributeTypeText(attribute) {
+  if (!attribute.type) return '';
+  return attribute.previousType ? `${attribute.previousType} \u2192 ${attribute.type}` : attribute.type;
+}
+
 function attributeText(attribute) {
-  return `${visibilityPrefix(attribute)}${attribute.name}${attribute.type ? `: ${attribute.type}` : ''}`;
+  const typeText = attributeTypeText(attribute);
+  return `${visibilityPrefix(attribute)}${attribute.name}${typeText ? `: ${typeText}` : ''}`;
 }
 
 function methodText(method) {
@@ -202,6 +209,8 @@ function headerWidth(type) {
   ));
 }
 
+const typeDiffGutter = (type) => ([...asArray(type.attributes), ...asArray(type.methods)].some(isChangeMarked) ? 18 : 0);
+
 // An authored width is authoritative. An omitted one grows to the widest
 // member up to `layout.typeMaxW`; past that, members wrap. The title never
 // wraps, so a box is always at least as wide as its header needs.
@@ -209,12 +218,12 @@ function resolvedWidth(type) {
   if (Number.isFinite(type.width)) return type.width;
   const members = memberRows(type).flatMap((compartment) => compartment.rows)
     .reduce((max, row) => Math.max(max, textUnits(row.text) * MEMBER_ADVANCE), 0);
-  const wanted = Math.ceil(members + layout.padX * 2 + VIS_EXTRA);
+  const wanted = Math.ceil(members + layout.padX * 2 + VIS_EXTRA + typeDiffGutter(type));
   return Math.max(headerWidth(type), Math.min(grid.typeMaxW, Math.max(grid.typeW, wanted)));
 }
 
 function compartments(type) {
-  const available = type.width - layout.padX * 2 - VIS_EXTRA;
+  const available = type.width - layout.padX * 2 - VIS_EXTRA - typeDiffGutter(type);
   return memberRows(type).map((compartment) => ({
     ...compartment,
     rows: compartment.rows.map((row) => ({ ...row, lines: wrapMember(row.text, available) })),
@@ -310,14 +319,25 @@ function renderMarkerDefs() {
   const used = new Set();
   for (const relationship of relationships) {
     const notation = NOTATION[relationship.kind];
-    if (notation?.end) used.add(notation.end);
-    if (notation?.start) used.add(notation.start);
+    const suffix = isChangeMarked(relationship) ? `-${relationship.change}` : '';
+    if (notation?.end) used.add(`${notation.end}${suffix}`);
+    if (notation?.start) used.add(`${notation.start}${suffix}`);
   }
-  if (busPaths.size) used.add('triangle-start');
-  const markup = Object.entries(GLYPH).filter(([id]) => used.has(id)).map(([id, glyph]) => (
-    `          <marker id="cl-${id}" markerWidth="${glyph.width}" markerHeight="${glyph.height}" refX="${glyph.refX}" refY="${glyph.refY}" orient="${glyph.orient || 'auto'}" markerUnits="userSpaceOnUse" class="cl-marker" stroke-width="1.5" stroke-linejoin="round">
+  for (const relationship of busPaths) {
+    const suffix = isChangeMarked(relationship) ? `-${relationship.change}` : '';
+    used.add(`triangle-start${suffix}`);
+  }
+  const ordered = Object.entries(GLYPH).flatMap(([id, glyph]) =>
+    ['', '-added', '-modified', '-removed']
+      .filter((suffix) => used.has(`${id}${suffix}`))
+      .map((suffix) => [id, glyph, suffix]),
+  );
+  const markup = ordered.map(([id, glyph, suffix]) => {
+    const cls = suffix ? `cl-marker cl-marker${suffix}` : 'cl-marker';
+    return `          <marker id="cl-${id}${suffix}" markerWidth="${glyph.width}" markerHeight="${glyph.height}" refX="${glyph.refX}" refY="${glyph.refY}" orient="${glyph.orient || 'auto'}" markerUnits="userSpaceOnUse" class="${cls}" stroke-width="1.5" stroke-linejoin="round">
             ${glyph.body}
-          </marker>`));
+          </marker>`;
+  });
   return markup.length ? `\n          <!-- UML relationship markers -->\n${markup.join('\n')}` : '';
 }
 
@@ -326,14 +346,36 @@ function placedByGrid(type) {
   return !(Array.isArray(type.pos) && type.pos.length === 2);
 }
 
+const typesWithChangedMembers = new Set(
+  [...types.values()]
+    .filter((type) => [...asArray(type.attributes), ...asArray(type.methods)].some(isChangeMarked))
+    .map((type) => type.id),
+);
+const changeReview = changeReviewFor({
+  nodes: [...types.values()].map((type) => (
+    type.change || !typesWithChangedMembers.has(type.id) ? type : { ...type, change: 'modified' }
+  )),
+  edges: relationships,
+});
+
+function typeChangeAttrs(type) {
+  if (!type.change && typesWithChangedMembers.has(type.id)) {
+    return `${type.emphasis === true ? ' data-emphasis=""' : ''} data-change-context="neighbour"`;
+  }
+  return changeNodeAttrs(changeReview, type);
+}
+
 const LEGEND_CATALOG = RELATIONSHIP_KINDS
   .map((kind) => ({ kind, label: i18nText(locale, `legend.class.${kind}`), interactive: false }));
 const presentKinds = new Set(relationships.map((relationship) => relationship.kind));
 const LEGEND_SWATCH = 34;
 const LEGEND_BASELINE_GAP = 16;
 const LEGEND_FONT_SIZE = 10;
-const legendEntries = resolveLegend(cd.meta?.legend, LEGEND_CATALOG, presentKinds)
-  .map((entry) => ({ ...entry, swatchWidth: LEGEND_SWATCH }));
+const legendEntries = [
+  ...resolveLegend(cd.meta?.legend, LEGEND_CATALOG, presentKinds)
+    .map((entry) => ({ ...entry, swatchWidth: LEGEND_SWATCH })),
+  ...changeLegendEntries(changeReview, cd.meta?.legend, locale),
+];
 
 function contentBounds() {
   const placed = [...types.values()].filter((type) => Number.isFinite(type.x) && Number.isFinite(type.y));
@@ -536,7 +578,7 @@ function inferredSides(relationship) {
 const RELATIONSHIP_LABEL_FONT = 9.5;
 const RELATIONSHIP_LABEL_ADVANCE = 0.62;
 function relationshipLabelWidth(relationship) {
-  return Math.max(30, textUnits(relationship.label) * RELATIONSHIP_LABEL_FONT * RELATIONSHIP_LABEL_ADVANCE + 10);
+  return Math.max(30, textUnits(relationship.label) * RELATIONSHIP_LABEL_FONT * RELATIONSHIP_LABEL_ADVANCE + 10) + changeEdgeLabelExtraWidth(relationship);
 }
 // A label sits on the segment with the most room unless the author picks one:
 // above a horizontal run, beside a vertical one, so it never covers its own
@@ -880,7 +922,7 @@ function visibilityChip(glyph, x, baseline) {
 }
 
 function memberColumns(member, kind) {
-  if (kind === 'attributes') return { left: punctuated(member.name), right: member.type };
+  if (kind === 'attributes') return { left: punctuated(member.name), right: attributeTypeText(member) };
   const parameters = member.parameters
     ? String(member.parameters).split(/(,\s*)/).map((part) => {
       if (/^,\s*$/.test(part)) return `<tspan class="t-muted cl-punct">,</tspan> `;
@@ -899,6 +941,7 @@ function memberColumns(member, kind) {
 function renderMembers(type) {
   let top = type.y + headerHeight(type);
   let stripe = 0;
+  const diffGutter = typeDiffGutter(type);
   return compartments(type).map((compartment) => {
     const rule = `<line x1="${type.x}" y1="${top}" x2="${type.x + type.width}" y2="${top}" class="cl-rule" stroke-width="1"/>`;
     let line = 0;
@@ -913,24 +956,28 @@ function renderMembers(type) {
         ? `<rect x="${type.x + 4}" y="${rowTop + 1}" width="${type.width - 8}" height="${lines.length * layout.rowH - 2}" rx="4" class="cl-zebra"/>`
         : '';
       const glyph = member.visibility ? VISIBILITY_GLYPH[member.visibility] : '';
-      const x0 = type.x + layout.padX;
+      const x0 = type.x + layout.padX + diffGutter;
       const chip = glyph ? visibilityChip(glyph, x0, rowTop + layout.rowH - 5) : '';
       const textX = glyph ? x0 + VIS_CHIP + VIS_GAP : x0;
+      const itemAttrs = changeItemAttrs(member);
+      const rowBadge = renderChangeBadge(member, { x: type.x + layout.padX + 7, y: rowTop + layout.rowH - 9, size: 'row' });
+      const wrapRow = (content) => (itemAttrs ? `<g data-class-row=""${itemAttrs}>${content}${rowBadge}</g>` : content);
       if (lines.length === 1) {
         const baseline = top + layout.compartmentPad + (line += 1) * layout.rowH - 5;
         const { left, right } = memberColumns(member, compartment.kind);
         const typeText = right
           ? `<text data-detail="context" x="${type.x + type.width - layout.padX}" y="${baseline}" class="t-muted cl-member cl-type-ref" font-size="${layout.memberFont}" text-anchor="end"${styleAttr}>${esc(right)}</text>`
           : '';
-        return [`${zebra}${chip}<text data-detail="context" data-class-member="${compartment.kind}" x="${textX}" y="${baseline}" class="t-primary cl-member" font-size="${layout.memberFont}"${styleAttr}>${left}</text>${typeText}`];
+        return [wrapRow(`${zebra}${chip}<text data-detail="context" data-class-member="${compartment.kind}" x="${textX}" y="${baseline}" class="t-primary cl-member" font-size="${layout.memberFont}"${styleAttr}>${left}</text>${typeText}`)];
       }
-      return lines.map((entry, index) => {
+      const rendered = lines.map((entry, index) => {
         const baseline = top + layout.compartmentPad + (line += 1) * layout.rowH - 5;
         const text = index || !glyph ? entry.text : entry.text.slice(2);
         const x = index || !glyph ? x0 + (glyph ? VIS_CHIP + VIS_GAP - 2 * MEMBER_ADVANCE : 0) + entry.indent * MEMBER_ADVANCE : textX;
         const continued = index ? ' data-class-continuation=""' : '';
         return `${index ? '' : `${zebra}${chip}`}<text data-detail="context" data-class-member="${compartment.kind}"${continued} x="${x}" y="${baseline}" class="t-primary cl-member" font-size="${layout.memberFont}"${styleAttr}>${memberSpans(text, !index)}</text>`;
       });
+      return itemAttrs ? [wrapRow(rendered.join(''))] : rendered;
     });
     top += line * layout.rowH + layout.compartmentPad * 2;
     return `          <g data-detail="context" data-class-compartment="${compartment.kind}">
@@ -952,7 +999,11 @@ function renderType(type) {
   const badgeY = type.y + (stereotype ? 14 : 9);
   const italic = type.kind === 'abstract' ? ' font-style="italic"' : '';
   const r = 8;
-  return `        <g ${focusNodeAttrs(type.id, type.label, passport, locale)} data-class-kind="${esc(type.kind)}" class="cl-hue-${tone}">
+  const changeBadge = renderChangeBadge(type, nodeChangeBadgePos(type, {
+    rx: r,
+    rightInset: sourceEvidence?.nodes?.[type.id]?.length ? 28 : 0,
+  }));
+  return `        <g ${focusNodeAttrs(type.id, type.label, passport, locale)}${typeChangeAttrs(type)} data-class-kind="${esc(type.kind)}" class="cl-hue-${tone}">
           ${focusNodeTitle(type.label, passport)}
           <rect x="${type.x}" y="${type.y}" width="${type.width}" height="${type.height}" rx="${r}" class="c-mask"/>
           <rect x="${type.x}" y="${type.y}" width="${type.width}" height="${type.height}" rx="${r}" class="c-${tone} cl-type"${animateAttr(cd.meta, 'node', typeSteps.get(type.id))} stroke-width="1.2"/>
@@ -964,14 +1015,16 @@ function renderType(type) {
           </g>
           ${stereotype ? `<text x="${cx}" y="${type.y + 16}" class="t-muted cl-stereotype" font-size="${layout.stereotypeFont}" text-anchor="middle">${esc(stereotype)}</text>` : ''}
           <text data-node-label="" x="${cx}" y="${nameY}" class="t-primary" font-size="${layout.nameFont}" font-weight="700" text-anchor="middle"${italic}>${esc(type.label)}</text>
-${renderMembers(type)}
+${renderMembers(type)}${changeBadge ? `\n          ${changeBadge}` : ''}
         </g>`;
 }
 
-function markerAttrs(kind, { reversed = false } = {}) {
+function markerAttrs(kindOrRel, { reversed = false } = {}) {
+  const kind = typeof kindOrRel === 'string' ? kindOrRel : kindOrRel.kind;
+  const suffix = typeof kindOrRel === 'string' || !isChangeMarked(kindOrRel) ? '' : `-${kindOrRel.change}`;
   const notation = NOTATION[kind];
-  if (reversed) return ` marker-start="url(#cl-${notation.end}-start)"`;
-  return `${notation.start ? ` marker-start="url(#cl-${notation.start})"` : ''}${notation.end ? ` marker-end="url(#cl-${notation.end})"` : ''}`;
+  if (reversed) return ` marker-start="url(#cl-${notation.end}-start${suffix})"`;
+  return `${notation.start ? ` marker-start="url(#cl-${notation.start}${suffix})"` : ''}${notation.end ? ` marker-end="url(#cl-${notation.end}${suffix})"` : ''}`;
 }
 
 function relationshipClass(kind) {
@@ -986,22 +1039,24 @@ function renderRelationshipPath(relationship, index) {
   const reversed = busPaths.has(relationship);
   const d = reversed ? roundedPath([...routed.points].reverse(), 8) : routed.d;
   const bus = reversed ? ` data-class-bus="${esc(relationship.to)}" data-motion-path="${esc(routed.d)}"` : '';
-  return `        <path ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)} data-class-relationship="${relationship.kind}"${bus} data-composition-points="${routePointsValue(routed.points)}" d="${d}" class="${relationshipClass(relationship.kind)}"${animateAttr(cd.meta, 'edge', index)} stroke-width="1.5"${markerAttrs(relationship.kind, { reversed })}/>`;
+  return `        <path ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)}${changeEdgeAttrs(changeReview, relationship)} data-class-relationship="${relationship.kind}"${bus} data-composition-points="${routePointsValue(routed.points)}" d="${d}" class="${relationshipClass(relationship.kind)}"${animateAttr(cd.meta, 'edge', index)} stroke-width="1.5"${markerAttrs(relationship, { reversed })}/>`;
 }
 
 function renderRelationshipLabel(relationship, index) {
   if (!relationship.label) return '';
   const [lx, ly] = relationshipLabelPoint(relationship);
   const box = relationshipLabelBox(relationship);
-  return `        <g data-detail="context" ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)} data-class-relationship="${relationship.kind}">
+  return `        <g data-detail="context" ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)}${changeEdgeAttrs(changeReview, relationship)} data-class-relationship="${relationship.kind}">
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="${box.height / 2}" class="c-mask cl-label-box"/>
-          <text x="${lx}" y="${ly}" class="t-muted" font-size="${RELATIONSHIP_LABEL_FONT}" text-anchor="middle">${esc(relationship.label)}</text>
+          <text x="${lx}" y="${ly}" class="t-muted" font-size="${RELATIONSHIP_LABEL_FONT}" text-anchor="middle">${renderChangeEdgePrefix(relationship)}${esc(relationship.label)}</text>
         </g>`;
 }
 
 // A swatch is a short relationship drawn in the same notation: dash, line, and
 // the marker at the end it belongs to.
 function legendSwatch(entry) {
+  const changeSwatch = renderChangeLegendSwatch(entry);
+  if (changeSwatch) return changeSwatch;
   const notation = NOTATION[entry.kind];
   const y = entry.baseline - 4;
   const x0 = entry.x + 2;
@@ -1059,7 +1114,18 @@ ${[...new Set(Object.values(KIND_TONE))].map((tone) => `          svg[data-class
           svg[data-class-ui] .cl-legend-hit:focus-visible { stroke: var(--arrow); stroke-width: 1.5; }
           svg[data-class-ui] [data-legend-semantic-kind]:is(:hover, :focus-within) .cl-legend-hit { fill: var(--lane-fill); }
           svg[data-class-ui] [data-class-relationship] { transition: opacity .15s; }
-${LEGEND_HOVER_RULES}
+${LEGEND_HOVER_RULES}${changeReview.active ? `
+          svg[data-class-ui] [data-node-id][data-class-kind][data-change="added"] > .cl-type { stroke: var(--backend-stroke); stroke-width: 2.4; }
+          svg[data-class-ui] [data-node-id][data-class-kind][data-change="modified"] > .cl-type { stroke: var(--cloud-stroke); stroke-width: 2.4; }
+          svg[data-class-ui] [data-node-id][data-class-kind][data-change="removed"] > .cl-type { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
+          svg[data-class-ui] path[data-edge-from][data-change="removed"] { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
+          svg[data-class-ui] .cl-marker-added { stroke: var(--backend-stroke); }
+          svg[data-class-ui] .cl-marker-added .cl-marker-filled { fill: var(--backend-stroke); }
+          svg[data-class-ui] .cl-marker-modified { stroke: var(--cloud-stroke); }
+          svg[data-class-ui] .cl-marker-modified .cl-marker-filled { fill: var(--cloud-stroke); }
+          svg[data-class-ui] .cl-marker-removed { stroke: var(--security-stroke); }
+          svg[data-class-ui] .cl-marker-removed .cl-marker-filled { fill: var(--security-stroke); }` : ''}
+          svg[data-class-ui] [data-node-id][data-class-kind][data-emphasis] > .cl-type { stroke-width: 3.2; }
           @media (prefers-reduced-motion: reduce) { svg[data-class-ui] * { transition: none !important; } }
         </style>
 

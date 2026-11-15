@@ -21,7 +21,7 @@ import {
 } from '../shared/legend.mjs';
 import { nodeTextFit, fittedNodeFontSize } from '../shared/text-fit.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeItemAttrs, changeLegendEntries, changeNodeAttrs, changeReviewFor, changeStrokeVar, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeItemAttrs, changeLegendEntries, changeNodeAttrs, changeReviewFor, changeStrokeVar, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import {
   DEFAULT_ER_GRID,
   bandedLayout,
@@ -158,7 +158,7 @@ const RELATIONSHIP_LABEL_FONT = 9;
 // legend measures must be the same rectangle, or a label can sit on a table edge
 // with no diagnostic (the checks would be measuring a narrower box than the ink).
 const RELATIONSHIP_LABEL_ADVANCE = 0.62;
-const relationshipLabelWidth = (label) => Math.max(30, textUnits(label) * RELATIONSHIP_LABEL_FONT * RELATIONSHIP_LABEL_ADVANCE + 10);
+const relationshipLabelWidth = (label, relationship = null) => Math.max(30, textUnits(label) * RELATIONSHIP_LABEL_FONT * RELATIONSHIP_LABEL_ADVANCE + 10) + changeEdgeLabelExtraWidth(relationship);
 
 // A label between two neighbouring columns is drawn in the gap between them:
 // on the straight line of a same-row relationship, or across the channel of a
@@ -185,7 +185,7 @@ function labelColumnGaps() {
     const to = byId.get(relationship.to);
     if (![from?.col, to?.col].every(Number.isInteger) || Math.abs(from.col - to.col) !== 1) continue;
     const gap = Math.min(from.col, to.col);
-    const demand = Math.ceil(relationshipLabelWidth(relationship.label) + LABEL_GLYPH_CLEARANCE * 2);
+    const demand = Math.ceil(relationshipLabelWidth(relationship.label, relationship) + LABEL_GLYPH_CLEARANCE * 2);
     gaps.set(gap, Math.max(gaps.get(gap) || 0, demand));
   }
   return gaps.size ? gaps : null;
@@ -500,6 +500,8 @@ const changeReview = changeReviewFor({
   edges: relationships,
 });
 
+const entityDiffGutter = (entity) => (asArray(entity?.attributes).some(isChangeMarked) ? 18 : 0);
+
 function entityChangeAttrs(entity) {
   if (!entity.change && entitiesWithChangedColumns.has(entity.id)) {
     return `${entity.emphasis === true ? ' data-emphasis=""' : ''} data-change-context="neighbour"`;
@@ -576,7 +578,7 @@ const LANE_STEP = 12;
 
 function relationshipLabelBox(relationship) {
   const [lx, ly] = erLabelPoint(relationship);
-  const width = relationshipLabelWidth(relationship.label);
+  const width = relationshipLabelWidth(relationship.label, relationship);
   return { x: lx - width / 2, y: ly - 10, width, height: 14 };
 }
 
@@ -1011,7 +1013,7 @@ function cardinalityGlyphBox(point, side) {
   const placeable = relationships.filter(renderableRelationship);
   const labels = placeable.filter((relationship) => relationship.label).map((relationship) => {
     const [lx, ly] = defaultErLabelPoint(relationship);
-    const width = relationshipLabelWidth(relationship.label);
+    const width = relationshipLabelWidth(relationship.label, relationship);
     return {
       relation: relationship, relationIndex: relationships.indexOf(relationship), label: relationship.label,
       x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly,
@@ -1089,8 +1091,9 @@ function renderableRelationship(relationship) {
 }
 
 function rowTextWidths(attribute) {
+  const typeText = attributeTypeText(attribute);
   const name = textUnits(attribute.name) * nodeTextFit.widthFactor;
-  const type = attribute.type ? textUnits(attribute.type) * nodeTextFit.widthFactor : 0;
+  const type = typeText ? textUnits(typeText) * nodeTextFit.widthFactor : 0;
   return { name, type };
 }
 
@@ -1210,10 +1213,11 @@ function validateEr() {
       // entity.width is optional; validateEr sees the authored object, so the
       // overflow check must use the resolved width or an omitted width turns the
       // available space into NaN and silently skips the diagnostic.
-      const available = entityWidth(entity) - layout.padX * 2 - keyColumnWidth(entity);
+      const diffGutter = entityDiffGutter(entity);
+      const available = entityWidth(entity) - layout.padX * 2 - diffGutter - keyColumnWidth(entity);
       const needed = nameUnits * layout.rowFont + (typeUnits ? typeUnits * layout.typeFont + 8 : 0);
       if (needed > available) {
-        const requiredEntityWidth = Math.ceil(needed + layout.padX * 2 + keyColumnWidth(entity));
+        const requiredEntityWidth = Math.ceil(needed + layout.padX * 2 + diffGutter + keyColumnWidth(entity));
         const fix = `For this attribute row's text capacity, set entities[${entityIndex}].width to at least ${requiredEntityWidth}px, preserving the attribute name, type and key roles.`;
         const message = `Entity "${entity.id}" attribute ${attributeIndex} "${attribute.name}" needs ${Math.ceil(needed)}px of text but only ${Math.floor(available)}px is available — ${fix}`;
         problems.push(message);
@@ -1424,6 +1428,7 @@ function attributeTypeText(attribute) {
 
 function renderEntityColumnRows(entity) {
   const keyColumn = keyColumnWidth(entity);
+  const diffGutter = entityDiffGutter(entity);
   return entity.attributes.map((attribute, index) => {
     const rowTop = entity.y + metrics.headerH + index * metrics.rowH;
     const baseline = rowTop + metrics.rowH - 5;
@@ -1431,14 +1436,15 @@ function renderEntityColumnRows(entity) {
     // it: the Viewer's reader sizes the diagram from the texts that declare the
     // level themselves, so a field that is only context inside a group would be
     // shrunk past the readable floor on a tall schema.
-    const keyGlyph = renderKeyGlyphs(attribute, entity.x + layout.padX, baseline);
-    const nameX = entity.x + layout.padX + keyColumn;
+    const keyGlyph = renderKeyGlyphs(attribute, entity.x + layout.padX + diffGutter, baseline);
+    const nameX = entity.x + layout.padX + diffGutter + keyColumn;
     const typeText = attributeTypeText(attribute);
-    const typeSpace = typeText ? Math.min(96, textUnits(typeText) * layout.typeFont * nodeTextFit.widthFactor) : 0;
-    const changeBadge = renderChangeBadge(attribute, { x: entity.x + entity.width - layout.padX - typeSpace - 12, y: baseline - 4, fontSize: 7 });
+    const typeSpace = typeText ? textUnits(typeText) * layout.typeFont * nodeTextFit.widthFactor : 0;
+    const changeBadge = renderChangeBadge(attribute, { x: entity.x + layout.padX + 7, y: baseline - 4, size: 'row' });
+    const nameAvailable = Math.max(40, entity.x + entity.width - layout.padX - typeSpace - (typeSpace ? 8 : 0) - nameX);
     const nameFontSize = fittedNodeFontSize(
       attribute.name,
-      Math.max(40, entity.x + entity.width - layout.padX - typeSpace - nameX - (changeBadge ? 22 : 0)),
+      nameAvailable + nodeTextFit.horizontalPadding,
       layout.rowFont,
       layout.rowFontMinimum,
     );
@@ -1470,7 +1476,7 @@ function renderEntity(entity) {
   };
   const rows = renderEntityColumnRows(entity);
   const r = 8;
-  const changeBadge = renderChangeBadge(entity, { x: entity.x + entity.width - 2, y: entity.y + 2 });
+  const changeBadge = renderChangeBadge(entity, nodeChangeBadgePos(entity, { rx: 8 }));
   return `        <g ${focusNodeAttrs(entity.id, entity.label, passport, er.meta.locale)}${entityChangeAttrs(entity)} class="${hueClassOf(entity.tag)}">
           ${focusNodeTitle(entity.label, passport)}
           <rect x="${entity.x}" y="${entity.y}" width="${entity.width}" height="${entity.height}" rx="${r}" class="c-mask"/>
@@ -1496,10 +1502,9 @@ function renderRelationshipLabel(relationship, index) {
   if (!relationship.label) return '';
   const [lx, ly] = erLabelPoint(relationship);
   const box = relationshipLabelBox(relationship);
-  const changeBadge = renderChangeBadge(relationship, { x: box.x + box.width + 9, y: box.y + box.height / 2, fontSize: 8 });
   return `        <g data-detail="context" ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)}${changeEdgeAttrs(changeReview, relationship)} data-er-ends="${relationshipEnds(relationship).join(' ')}">
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(relationship.variant)}" font-size="${RELATIONSHIP_LABEL_FONT}" text-anchor="middle">${esc(relationship.label)}</text>${changeBadge ? `\n          ${changeBadge}` : ''}
+          <text x="${lx}" y="${ly}" class="${variantAccent(relationship.variant)}" font-size="${RELATIONSHIP_LABEL_FONT}" text-anchor="middle">${renderChangeEdgePrefix(relationship)}${esc(relationship.label)}</text>
         </g>`;
 }
 

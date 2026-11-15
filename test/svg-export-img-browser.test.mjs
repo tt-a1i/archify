@@ -75,21 +75,36 @@ async function measureSvg(t, svgFile, colorScheme) {
     const rootBox = root.getBoundingClientRect();
     const box = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
     const inside = (r) => r.left >= rootBox.left - 0.5 && r.top >= rootBox.top - 0.5 && r.right <= rootBox.right + 0.5 && r.bottom <= rootBox.bottom + 0.5;
-    const texts = [...document.querySelectorAll('text')].filter((el) => el.textContent.trim() && !el.closest('defs'))
+    const visible = (el) => {
+      for (let cur = el; cur && cur.nodeType === 1; cur = cur.parentElement) {
+        if (getComputedStyle(cur).display === 'none') return false;
+      }
+      return true;
+    };
+    const texts = [...document.querySelectorAll('text')].filter((el) => el.textContent.trim() && !el.closest('defs') && visible(el))
       .map((el) => ({ text: el.textContent.trim(), ...box(el), inside: inside(el.getBoundingClientRect()), decoration: getComputedStyle(el).textDecorationLine }));
     const badges = [...document.querySelectorAll('[data-change-badge]')].map((el) => {
-      const rect = el.querySelector('rect'), glyph = el.querySelector('text');
+      const mask = el.querySelector('rect.c-mask');
+      const rect = el.querySelector('rect:not(.c-mask)') || el.querySelector('rect');
+      const glyph = el.querySelector('text');
       const r = box(rect), g = box(glyph);
-      return { change: el.getAttribute('data-change-badge'), rect: r, glyph: g, inside: inside(rect.getBoundingClientRect()),
+      return { change: el.getAttribute('data-change-badge'), hasMask: Boolean(mask), rect: r, glyph: g, inside: inside(rect.getBoundingClientRect()),
         glyphInside: g.left >= r.left - 0.5 && g.right <= r.right + 0.5 && g.top >= r.top - 0.5 && g.bottom <= r.bottom + 0.5 };
     });
+    const edgePrefixes = [...document.querySelectorAll('tspan[class*="t-change-badge-"]')].map((el) => {
+      const r = box(el);
+      return { text: el.textContent.trim(), ...r, inside: inside(el.getBoundingClientRect()) };
+    });
+    const nodeLabels = [...document.querySelectorAll('text[data-node-label]')].map((el) => ({
+      text: el.textContent.trim(), ...box(el),
+    }));
     const removed = [...document.querySelectorAll('[data-change="removed"]')].map((el) => {
       const shapes = [...el.querySelectorAll('rect, path, circle, polygon')].concat(el.matches('rect, path') ? [el] : []);
       return { dashed: shapes.some((shape) => getComputedStyle(shape).strokeDasharray !== 'none'),
         struck: [...el.querySelectorAll('text')].some((text) => getComputedStyle(text).textDecorationLine.includes('line-through')),
         opacity: Number(getComputedStyle(el).opacity) };
     });
-    return { root: { width: rootBox.width, height: rootBox.height }, texts, badges, removed, errors: pageErrors };
+    return { root: { width: rootBox.width, height: rootBox.height }, texts, badges, edgePrefixes, nodeLabels, removed, errors: pageErrors };
   })()`);
 }
 
@@ -173,14 +188,23 @@ for (const preset of PRESETS) test(`baked ${preset} SVGs render inside a sandbox
       assert.ok(text.width > 0 && text.height > 0, `${where}: "${text.text}" is laid out`);
       assert.ok(text.inside, `${where}: "${text.text}" stays inside the viewBox`);
     }
-    assert.equal(geometry.badges.map((badge) => badge.change).sort().join(','), 'added,added,modified,modified,removed,removed', `${where}: one badge per marked participant and message`);
+    assert.equal(geometry.badges.map((badge) => badge.change).sort().join(','), 'added,modified,removed', `${where}: one badge per marked participant`);
     for (const [index, badge] of geometry.badges.entries()) {
+      assert.equal(badge.hasMask, true, `${where}: ${badge.change} badge includes opaque .c-mask`);
       assert.ok(badge.inside, `${where}: ${badge.change} badge stays inside the viewBox`);
       assert.ok(badge.glyphInside, `${where}: ${badge.change} badge glyph sits inside its pill ${JSON.stringify(badge)}`);
       for (const other of geometry.badges.slice(index + 1)) {
         const separated = badge.rect.right <= other.rect.left || other.rect.right <= badge.rect.left || badge.rect.bottom <= other.rect.top || other.rect.bottom <= badge.rect.top;
         assert.ok(separated, `${where}: badges overlap ${JSON.stringify([badge.rect, other.rect])}`);
       }
+      for (const label of geometry.nodeLabels) {
+        const clearOfLabel = badge.rect.right <= label.left || label.right <= badge.rect.left || badge.rect.bottom <= label.top || label.bottom <= badge.rect.top;
+        assert.ok(clearOfLabel, `${where}: ${badge.change} badge overlaps node label "${label.text}"`);
+      }
+    }
+    assert.equal(geometry.edgePrefixes.map((prefix) => prefix.text).sort().join(','), '+,~,\u2212', `${where}: marked messages carry inline change prefixes`);
+    for (const prefix of geometry.edgePrefixes) {
+      assert.ok(prefix.width > 0 && prefix.height > 0 && prefix.inside, `${where}: inline prefix "${prefix.text}" laid out inside viewBox`);
     }
     assert.equal(geometry.removed.length, 2, `${where}: removed participant and message keep their ghosts`);
     for (const ghost of geometry.removed) {
@@ -190,3 +214,92 @@ for (const preset of PRESETS) test(`baked ${preset} SVGs render inside a sandbox
     }
   }
 });
+
+function v2BrowserFixtures() {
+  const erd = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'orders.erd.json'), 'utf8'));
+  erd.entities[0].change = 'modified';
+  erd.entities[0].attributes[1].change = 'modified';
+  erd.entities[0].attributes[1].previousType = 'int';
+  erd.entities[0].attributes[1].type = 'bigint';
+  erd.entities[0].attributes.push({ name: 'legacy_token', type: 'varchar(64)', change: 'removed' });
+  delete erd.entities[0].width;
+
+  const cls = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'payments.class.json'), 'utf8'));
+  cls.types[0].change = 'modified';
+  cls.types[0].attributes.push(
+    { name: 'amount', type: 'bigint', previousType: 'int', visibility: 'private', change: 'modified' },
+    { name: 'legacyKey', type: 'string', visibility: 'private', change: 'removed' },
+  );
+  cls.types[3].change = 'added';
+  cls.types[4].change = 'removed';
+  cls.relationships[0].change = 'added';
+
+  const tree = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'payment-platform.tree.json'), 'utf8'));
+  tree.nodes[1].change = 'added';
+  tree.nodes[2].change = 'modified';
+  tree.nodes.at(-1).change = 'removed';
+
+  const timeline = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'payment-incident.timeline.json'), 'utf8'));
+  timeline.lanes[0].change = 'modified';
+  timeline.events[0].change = 'added';
+  timeline.events[1].change = 'modified';
+  timeline.events[3].change = 'removed';
+
+  const waterfall = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'checkout-request.waterfall.json'), 'utf8'));
+  waterfall.spans[1].change = 'added';
+  waterfall.spans[2].change = 'modified';
+  waterfall.spans[3].change = 'removed';
+
+  const arch = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json'), 'utf8'));
+  const api = arch.components.find((component) => component.id === 'api');
+  const cache = arch.components.find((component) => component.id === 'cache');
+  const worker = arch.components.find((component) => component.id === 'worker');
+  const db = arch.components.find((component) => component.id === 'db');
+  db.brand = 'postgresql';
+  db.change = 'modified';
+  api.change = 'modified';
+  cache.change = 'added';
+  worker.change = 'removed';
+  arch.boundaries[0].change = 'modified';
+  arch.connections[0].change = 'added';
+
+  return { architecture: arch, erd, class: cls, tree, timeline, waterfall };
+}
+
+for (const [type, document] of Object.entries(v2BrowserFixtures())) {
+  test(`V2 baked ${type} change marks keep non-overlapping Chrome geometry in light and dark themes`, {
+    skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser SVG export checks.',
+  }, async (t) => {
+    const scratch = createScratchDirectory(path.join(os.tmpdir(), `archify-v2-${type}-`));
+    const input = path.join(scratch, `${type}.json`);
+    fs.writeFileSync(input, JSON.stringify(document));
+    const receipt = await exportSvgArtifacts({ type, input, output: path.join(scratch, type), preset: 'classic' });
+    for (const output of receipt.outputs) {
+      const svg = fs.readFileSync(output.path, 'utf8');
+      assert.doesNotMatch(svg, /color-mix\(/, `${type}/${output.theme} expands color-mix statically`);
+      assert.doesNotMatch(svg, /var\(--/, `${type}/${output.theme} resolves every CSS variable`);
+      const geometry = await measureSvg(t, output.path, output.theme);
+      const where = `${type}/${output.theme}`;
+      assert.deepEqual(geometry.errors, [], `${where}: zero page errors`);
+      assert.ok(geometry.badges.length >= 2, `${where}: renders change badges`);
+      for (const text of geometry.texts) {
+        assert.ok(text.width > 0 && text.height > 0 && text.inside, `${where}: text "${text.text}" fits inside viewBox`);
+      }
+      if (type === 'erd' || type === 'class') {
+        assert.ok(geometry.texts.some((text) => text.text.includes('int → bigint')), `${where}: renders type migration`);
+      }
+      for (const [index, badge] of geometry.badges.entries()) {
+        assert.equal(badge.hasMask, true, `${where}: ${badge.change} badge uses .c-mask`);
+        assert.ok(badge.inside && badge.glyphInside, `${where}: badge geometry valid ${JSON.stringify(badge)}`);
+        for (const other of geometry.badges.slice(index + 1)) {
+          const separated = badge.rect.right <= other.rect.left || other.rect.right <= badge.rect.left || badge.rect.bottom <= other.rect.top || other.rect.bottom <= badge.rect.top;
+          assert.ok(separated, `${where}: badges must not overlap ${JSON.stringify([badge.rect, other.rect])}`);
+        }
+        for (const label of geometry.nodeLabels) {
+          const clearOfLabel = badge.rect.right <= label.left || label.right <= badge.rect.left || badge.rect.bottom <= label.top || label.bottom <= badge.rect.top;
+          assert.ok(clearOfLabel, `${where}: badge overlaps node label "${label.text}"`);
+        }
+      }
+    }
+  });
+}

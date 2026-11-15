@@ -5,7 +5,7 @@ import { resolveLegend, renderLegend as renderResolvedLegend, legendFootprint } 
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DECLARED_WIDE_READER_RATIO, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
@@ -1454,7 +1454,7 @@ export function compileDataflow({ dataflow, sourceEvidence, qualityProfile: requ
       const drilldowns = resolveNodeDrilldowns(node);
       const passport = { drilldowns, href: node.href, kind: node.type, sublabel: node.sublabel, tag: node.tag, context, ...brandMetadataFor(node) };
       const mark = drilldowns.length ? `\n          ${renderDrilldownMark(node)}` : '';
-      const changeBadge = renderChangeBadge(node, { x: node.x + node.width - 2, y: node.y + 2 });
+      const changeBadge = renderChangeBadge(node, nodeChangeBadgePos(node, { rx: 6, rightInset: brand ? 26 : 0 }));
       const badge = changeBadge ? `\n          ${changeBadge}` : '';
       return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(node.id, node.label, passport, dataflow.meta.locale)}${changeNodeAttrs(changeReview, node)}>
           ${focusNodeTitle(node.label, passport)}
@@ -1488,14 +1488,16 @@ ${edge}
       const rect = resolvedLabelRects.find(rect => rect.relation === flow);
       const { width: labelW, height: labelH } = rect || flowLabelSize(flow);
       const lines = rect?.lines;
-      const text = lines ? lines.map((line, i) => `<tspan x="${lx}" dy="${i ? 11 : 0}">${esc(line)}</tspan>`).join('') : esc(flow.label);
+      const prefix = renderChangeEdgePrefix(flow);
+      const text = lines
+        ? lines.map((line, i) => `<tspan x="${lx}" dy="${i ? 11 : 0}">${i === 0 ? prefix : ''}${esc(line)}</tspan>`).join('')
+        : `${prefix}${esc(flow.label)}`;
       const classification = flow.classification
         ? `\n        <text data-detail="fine" x="${lx}" y="${ly + 11 * (lines?.length || 1)}" class="t-dim" font-size="7" text-anchor="middle">${esc(flow.classification)}</text>`
         : '';
-      const badge = renderChangeBadge(flow, { x: lx + labelW / 2 + 9, y: ly - 11 + labelH / 2, fontSize: 8 });
       return `        <g data-detail="context" ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}${changeEdgeAttrs(changeReview, flow)}>
           <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(flow.variant)}" font-size="8" text-anchor="middle">${text}</text>${classification}${badge ? `\n          ${badge}` : ''}
+          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(flow.variant)}" font-size="8" text-anchor="middle">${text}</text>${classification}
         </g>`;
     }
 

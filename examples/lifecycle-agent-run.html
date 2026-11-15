@@ -4587,9 +4587,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        ghost. Every value is a theme/preset variable, so the eight theme ×
        preset surfaces and the baked SVG export share one rule set.
        ========================================================== */
-    .c-change-swatch-added, .c-change-badge-added       { fill: var(--backend-fill);  stroke: var(--backend-stroke); }
-    .c-change-swatch-modified, .c-change-badge-modified { fill: var(--cloud-fill);    stroke: var(--cloud-stroke); }
-    .c-change-swatch-removed, .c-change-badge-removed   { fill: var(--security-fill); stroke: var(--security-stroke); }
+    .c-change-swatch-added    { fill: var(--backend-fill);  stroke: var(--backend-stroke); }
+    .c-change-swatch-modified { fill: var(--cloud-fill);    stroke: var(--cloud-stroke); }
+    .c-change-swatch-removed  { fill: var(--security-fill); stroke: var(--security-stroke); }
+    .c-change-badge-added     { fill: color-mix(in srgb, var(--backend-stroke) 18%, var(--mask));  stroke: var(--backend-stroke); }
+    .c-change-badge-modified  { fill: color-mix(in srgb, var(--cloud-stroke) 18%, var(--mask));    stroke: var(--cloud-stroke); }
+    .c-change-badge-removed   { fill: color-mix(in srgb, var(--security-stroke) 18%, var(--mask)); stroke: var(--security-stroke); }
     .c-change-swatch-removed { stroke-dasharray: 3,2; }
     .c-change-swatch-unchanged { fill: var(--mask); stroke: var(--text-dim); }
     .t-change-added, .t-change-badge-added       { fill: var(--backend-stroke); }
@@ -4633,7 +4636,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     svg [data-change="removed"][data-graph-role] > text,
     svg [data-change="removed"][data-edge-from] text,
     svg text[data-change="removed"],
-    svg [data-er-row][data-change="removed"] > text { text-decoration: line-through; }
+    svg [data-er-row][data-change="removed"] > text,
+    svg [data-class-row][data-change="removed"] > text { text-decoration: line-through; }
     svg [data-emphasis] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask),
     svg path[data-emphasis][data-edge-from],
     svg [data-emphasis][data-edge-from] > path { stroke-width: 3.2; }

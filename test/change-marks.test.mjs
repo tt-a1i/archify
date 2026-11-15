@@ -21,6 +21,10 @@ const EXAMPLES = {
   dataflow: 'drilldown-api.dataflow.json',
   lifecycle: 'agent-run.lifecycle.json',
   erd: 'orders.erd.json',
+  class: 'payments.class.json',
+  tree: 'payment-platform.tree.json',
+  timeline: 'payment-incident.timeline.json',
+  waterfall: 'checkout-request.waterfall.json',
 };
 
 function example(type) {
@@ -43,12 +47,64 @@ function count(text, pattern) {
   return [...text.matchAll(pattern)].length;
 }
 
-const nodeCollection = { architecture: 'components', workflow: 'nodes', sequence: 'participants', dataflow: 'nodes', lifecycle: 'states', erd: 'entities' };
-const edgeCollection = { architecture: 'connections', workflow: 'edges', sequence: 'messages', dataflow: 'flows', lifecycle: 'transitions', erd: 'relationships' };
+const nodeCollection = {
+  architecture: 'components',
+  workflow: 'nodes',
+  sequence: 'participants',
+  dataflow: 'nodes',
+  lifecycle: 'states',
+  erd: 'entities',
+  class: 'types',
+  tree: 'nodes',
+  timeline: 'events',
+  waterfall: 'spans',
+};
+const edgeCollection = {
+  architecture: 'connections',
+  workflow: 'edges',
+  sequence: 'messages',
+  dataflow: 'flows',
+  lifecycle: 'transitions',
+  erd: 'relationships',
+  class: 'relationships',
+};
+const LABELLED_EDGE_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class']);
 
 function markedExample(type) {
   const document = example(type);
   const nodes = document[nodeCollection[type]];
+  if (type === 'class') {
+    nodes[3].change = 'added';
+    nodes[1].change = 'modified';
+    nodes[1].emphasis = true;
+    nodes[4].change = 'removed';
+    document.relationships[0].change = 'added';
+    document.relationships[3].change = 'removed';
+    document.relationships[3].label = 'legacy impl';
+    return document;
+  }
+  if (type === 'tree') {
+    nodes[1].change = 'added';
+    nodes[2].change = 'modified';
+    nodes[2].emphasis = true;
+    nodes.at(-1).change = 'removed';
+    return document;
+  }
+  if (type === 'timeline') {
+    document.lanes[0].change = 'modified';
+    nodes[0].change = 'added';
+    nodes[1].change = 'modified';
+    nodes[1].emphasis = true;
+    nodes[3].change = 'removed';
+    return document;
+  }
+  if (type === 'waterfall') {
+    nodes[1].change = 'added';
+    nodes[2].change = 'modified';
+    nodes[2].emphasis = true;
+    nodes[3].change = 'removed';
+    return document;
+  }
   const edges = document[edgeCollection[type]];
   const stableNode = type === 'lifecycle' ? 1 : 0;
   nodes[stableNode].change = 'added';
@@ -101,17 +157,48 @@ for (const type of Object.keys(EXAMPLES)) {
       assert.match(svg, new RegExp(`data-change-badge="${state}"`), `${type} badges ${state}`);
       assert.match(svg, new RegExp(`data-legend-semantic-kind="change-${state}"`), `${type} legend lists ${state}`);
     }
+    const badges = [...svg.matchAll(/<g data-change-badge="(added|modified|removed)"[^>]*>[\s\S]*?<\/g>/g)];
+    assert.ok(badges.length >= 3, `${type} renders badge elements`);
+    for (const [badgeXml, state] of badges) {
+      assert.match(badgeXml, /<rect [^>]*class="c-mask"\/>/, `${type} badge includes opaque .c-mask underlay`);
+      assert.match(badgeXml, new RegExp(`class="c-change-badge-${state}"`), `${type} badge uses .c-change-badge-${state}`);
+    }
     assert.match(svg, /data-legend-semantic-kind="change-unchanged"/);
     assert.match(svg, /data-emphasis=""/);
     assert.ok(count(svg, /data-change-context="(?:neighbour|subdued)"/g) >= 1, `${type} subdues untouched context`);
-    assert.match(svg, /marker-(?:end|start)="url\(#[a-z-]*change-added[a-z-]*\)"/, `${type} added edges use change markers`);
-    assert.match(svg, /marker-(?:end|start)="url\(#[a-z-]*change-removed[a-z-]*\)"/);
+    if (type === 'class') {
+      assert.match(svg, /marker-(?:end|start)="url\(#cl-[a-z-]+-added\)"/, `${type} added edges use change markers`);
+      assert.match(svg, /marker-(?:end|start)="url\(#cl-[a-z-]+-removed\)"/, `${type} removed edges use change markers`);
+    } else if (edgeCollection[type]) {
+      assert.match(svg, /marker-(?:end|start)="url\(#[a-z-]*change-added[a-z-]*\)"/, `${type} added edges use change markers`);
+      assert.match(svg, /marker-(?:end|start)="url\(#[a-z-]*change-removed[a-z-]*\)"/);
+    }
+    if (LABELLED_EDGE_TYPES.has(type)) {
+      assert.match(svg, /<tspan class="t-change-badge-(?:added|modified|removed)"[^>]*>[+~\u2212] <\/tspan>/, `${type} renders inline edge prefixes`);
+    }
     assert.doesNotMatch(svg, /style="[^"]*#[0-9a-fA-F]{3,8}/, 'change marks use theme variables, not inline colours');
     assert.doesNotMatch(html, /\b(SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/);
     const removedNodes = [...svg.matchAll(/<g [^>]*data-node-id="([^"]+)"[^>]*data-change="removed"/g)];
     assert.ok(removedNodes.length >= 1, `${type} keeps removed nodes as ghosts at their position`);
   });
 }
+
+test('class: member marks render previousType transitions, left diff gutter, and strike removed rows', () => {
+  const document = example('class');
+  const [first] = document.types;
+  first.attributes.push(
+    { name: 'version', type: 'bigint', previousType: 'int', visibility: 'private', change: 'modified' },
+    { name: 'legacyToken', type: 'string', visibility: 'private', change: 'removed' },
+  );
+  first.methods.push({ name: 'refundLegacy', parameters: 'id: string', returns: 'void', visibility: 'public', change: 'removed' });
+  const { svg } = render('class', document, 'class-members');
+  assert.match(svg, /int → bigint<\/text>/);
+  assert.match(svg, /<g data-class-row="" data-change="modified">[\s\S]*?data-change-badge="modified"/);
+  assert.match(svg, /<g data-class-row="" data-change="removed">[\s\S]*?>legacyToken<[\s\S]*?data-change-badge="removed"/);
+  assert.match(svg, /<g data-class-row="" data-change="removed">[\s\S]*?>refundLegacy<[\s\S]*?data-change-badge="removed"/);
+  assert.match(svg, new RegExp(`data-node-id="${first.id}"[^>]*data-change-context="neighbour"`), 'a class with changed members stays readable as review context');
+  assert.match(svg, /data-legend-semantic-kind="change-modified"/);
+});
 
 test('erd: column marks render the type change in the type slot and strike removed columns', () => {
   const document = example('erd');

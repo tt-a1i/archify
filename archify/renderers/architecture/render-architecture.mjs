@@ -10,7 +10,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
@@ -1041,7 +1041,8 @@ function renderBoundaryFrame(b, index) {
 
 function renderBoundaryLabel(b, index) {
   const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
-  const badge = renderChangeBadge(b, { x: b.x + b.width - 10, y: b.y + 8 });
+  const rx = b.kind === 'security-group' ? 8 : 12;
+  const badge = renderChangeBadge(b, nodeChangeBadgePos(b, { rx }));
   return `        <g data-graph-role="structural-frame-label" data-composition-frame-id="${index}" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-label="${esc(b.label)}"${changeFrameAttrs(changeReview, b)}>
           <rect data-graph-role="structural-frame-label-mask" x="${b.title.x}" y="${b.title.y}" width="${b.title.width}" height="${b.title.height}" rx="3" class="c-mask"/>
           <text data-boundary-label="" x="${b.title.x + 4}" y="${b.title.y + b.title.baselineOffset}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>${badge ? `\n          ${badge}` : ''}
@@ -1068,10 +1069,9 @@ function renderConnectionPath(conn, index) {
 function renderConnectionLabel(conn, index) {
   const box = connectionLabelBox(conn);
   if (!box) return '';
-  const badge = renderChangeBadge(conn, { x: box.x + box.width + 9, y: box.y + box.height / 2, fontSize: 8 });
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}${changeEdgeAttrs(changeReview, conn)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>${badge ? `\n          ${badge}` : ''}
+          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${renderChangeEdgePrefix(conn)}${esc(conn.label)}</text>
         </g>`;
 }
 
@@ -1094,7 +1094,7 @@ function renderComponent(c) {
   const drilldowns = resolveNodeDrilldowns(c);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
-  const changeBadge = renderChangeBadge(c, { x: c.x + c.width - 2, y: c.y + 2 });
+  const changeBadge = renderChangeBadge(c, nodeChangeBadgePos(c, { rx: 8, rightInset: brand ? 26 : 0 }));
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}${changeNodeAttrs(changeReview, c)}>
           ${focusNodeTitle(c.label, passport)}

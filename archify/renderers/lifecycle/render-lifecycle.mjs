@@ -8,7 +8,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeL
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { layoutReportFromSvg } from '../shared/layout-report.mjs';
-import { changeEdgeAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX } from '../shared/desktop-readability.mjs';
 import { asArray, rectsOverlap, segmentRectClearance, roundedPath, routePointsValue, arrowClassMap, edgeLabelAccent } from '../shared/geometry.mjs';
 
@@ -101,7 +101,7 @@ function labelBox(transition) {
   const width = Math.ceil(Math.max(
     text ? textUnits(text) * LABEL_FONT * 0.6 : 0,
     note ? textUnits(note) * NOTE_FONT * 0.6 : 0,
-  ) + 12);
+  ) + 12 + changeEdgeLabelExtraWidth(transition));
   return { width, height: text && note ? 28 : 16 };
 }
 const hasLabel = (transition) => Boolean(transition.label || transition.note);
@@ -1034,7 +1034,7 @@ function renderState(state) {
     ...brandMetadataFor(state),
   };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(state)}` : '';
-  const changeBadge = renderChangeBadge(state, { x: state.x + state.width - 2, y: state.y + 2 });
+  const changeBadge = renderChangeBadge(state, nodeChangeBadgePos(state, { rx: 8, rightInset: brand ? 26 : 0 }));
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}${changeNodeAttrs(changeReview, state)}>
           ${focusNodeTitle(state.label, passport)}
@@ -1068,15 +1068,15 @@ function renderLabel(transition, index) {
   const variant = variantOf(transition);
   const accent = variant === 'default' ? 't-muted' : edgeLabelAccent(variant);
   const baseline = rect.y + (transition.label ? 11.5 : 11);
+  const prefix = renderChangeEdgePrefix(transition);
   const label = transition.label
-    ? `\n          <text x="${rect.cx}" y="${baseline}" class="${accent}" font-size="${LABEL_FONT}" text-anchor="middle">${esc(transition.label)}</text>`
+    ? `\n          <text x="${rect.cx}" y="${baseline}" class="${accent}" font-size="${LABEL_FONT}" text-anchor="middle">${prefix}${esc(transition.label)}</text>`
     : '';
   const note = transition.note
-    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-muted" font-size="${NOTE_FONT}" text-anchor="middle">${esc(transition.note)}</text>`
+    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-muted" font-size="${NOTE_FONT}" text-anchor="middle">${!transition.label ? prefix : ''}${esc(transition.note)}</text>`
     : '';
-  const badge = renderChangeBadge(transition, { x: rect.x + rect.width + 9, y: rect.y + rect.height / 2, fontSize: 8 });
   return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)}>
-          <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}${badge ? `\n          ${badge}` : ''}
+          <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}
         </g>`;
 }
 

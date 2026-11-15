@@ -25,9 +25,10 @@ import {
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
 import { textUnits } from '../shared/utils.mjs';
 import { reservedLabelRect } from '../shared/automatic-labels.mjs';
+import { changeEdgeLabelExtraWidth } from '../shared/change-marks.mjs';
 
 export function connectionLabelBoxAt(conn, [lx, ly]) {
-  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10) + changeEdgeLabelExtraWidth(conn);
   return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
 }
 

@@ -70,19 +70,55 @@ export function changeFrameAttrs(review, frame) {
   return attrs(frame, review.frameContext(frame));
 }
 
-const CHANGE_BADGE_SIZE = Object.freeze({ width: 16, height: 12 });
+const CHANGE_BADGE_SIZES = Object.freeze({
+  node: Object.freeze({ width: 18, height: 13, fontSize: 9.5 }),
+  row: Object.freeze({ width: 14, height: 12, fontSize: 9 }),
+});
 
-// A compact [+] [~] [−] pill anchored at (x, y) as its centre. Renderers place
-// it on a corner of the element so the badge never competes with the label,
-// sigil, or brand mark budgets inside the node.
-export function renderChangeBadge(item, { x, y, fontSize = 9 } = {}) {
+export const CHANGE_EDGE_PREFIX_PX = 12;
+
+export function isChangeMarked(item) {
+  return isMarked(item);
+}
+
+export function changeEdgeLabelExtraWidth(item) {
+  return isMarked(item) ? CHANGE_EDGE_PREFIX_PX : 0;
+}
+
+export function renderChangeEdgePrefix(item) {
   if (!isMarked(item)) return '';
-  const { width, height } = CHANGE_BADGE_SIZE;
-  const left = Math.round((x - width / 2) * 10) / 10;
-  const top = Math.round((y - height / 2) * 10) / 10;
+  return `<tspan class="t-change-badge-${item.change}" font-weight="700">${BADGE_GLYPH[item.change]} </tspan>`;
+}
+
+// Compute a top-edge center position for a node/container badge, clearing
+// rounded corners, right-side adornments (e.g. brand marks or toggles), and
+// the top edge of the viewport.
+export function nodeChangeBadgePos(rect, { rx = 8, rightInset = 0, minTop = 2 } = {}) {
+  const { width, height } = CHANGE_BADGE_SIZES.node;
+  const halfW = width / 2;
+  const halfH = height / 2;
+  const minCenterX = rect.x + Math.min(rect.width / 2, rx + 4 + halfW);
+  const maxCenterX = rect.x + rect.width - Math.max(rx + 4, rightInset) - halfW;
+  const x = Math.round(Math.max(minCenterX, maxCenterX) * 10) / 10;
+  const rawY = Number.isFinite(minTop) ? Math.max(rect.y, minTop + halfH) : rect.y;
+  const y = Math.round(rawY * 10) / 10;
+  return { x, y };
+}
+
+// A compact [+] [~] [−] pill anchored at (x, y) as its centre, backed by an
+// opaque .c-mask rect so borders behind the pill never bleed through.
+export function renderChangeBadge(item, { x, y, size = 'node', fontSize } = {}) {
+  if (!isMarked(item)) return '';
+  const spec = CHANGE_BADGE_SIZES[size] || CHANGE_BADGE_SIZES.node;
+  const { width, height } = spec;
+  const fs = fontSize ?? spec.fontSize;
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const left = round1(x - width / 2);
+  const top = round1(y - height / 2);
   return `<g data-change-badge="${item.change}" pointer-events="none">`
+    + `<rect x="${left}" y="${top}" width="${width}" height="${height}" rx="3" class="c-mask"/>`
     + `<rect x="${left}" y="${top}" width="${width}" height="${height}" rx="3" class="c-change-badge-${item.change}" stroke-width="1"/>`
-    + `<text x="${x}" y="${Math.round((y + fontSize * 0.36) * 10) / 10}" class="t-change-badge-${item.change}" font-size="${fontSize}" font-weight="700" text-anchor="middle">${BADGE_GLYPH[item.change]}</text>`
+    + `<text x="${round1(x)}" y="${round1(y + fs * 0.36)}" class="t-change-badge-${item.change}" font-size="${fs}" font-weight="700" text-anchor="middle">${BADGE_GLYPH[item.change]}</text>`
     + '</g>';
 }
 

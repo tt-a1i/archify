@@ -13,6 +13,14 @@ import {
 } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
+import {
+  changeEdgeAttrs,
+  changeLegendEntries,
+  changeNodeAttrs,
+  changeReviewFor,
+  renderChangeBadge,
+  renderChangeLegendSwatch,
+} from '../shared/change-marks.mjs';
 import { nodeTextFit } from '../shared/text-fit.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { asArray } from '../shared/geometry.mjs';
@@ -157,9 +165,24 @@ const STATUS_TONE = { error: 'security', cancelled: 'external' };
 const toneOf = (row) => STATUS_TONE[row.status] ?? serviceTone(serviceOf.get(row.id));
 
 // ---- Geometry ------------------------------------------------------------------
-// Name column: tree indent, then a service dot, then the name.
+// Name column: optional change gutter, tree indent, then a service dot, then the name.
+const byRowId = new Map(rows.map((row) => [row.id, row]));
+const guideEdges = rows
+  .filter((row) => row.parent !== undefined)
+  .map((row) => {
+    const parent = byRowId.get(row.parent);
+    const change = row.change === 'removed' || parent?.change === 'removed'
+      ? 'removed'
+      : row.change === 'added'
+        ? 'added'
+        : undefined;
+    return { from: row.parent, to: row.id, ...(change ? { change } : {}) };
+  });
+const guideEdgeByChild = new Map(guideEdges.map((edge) => [edge.to, edge]));
+const changeReview = changeReviewFor({ nodes: rows, edges: guideEdges });
+const diffGutter = changeReview.active ? 20 : 0;
 const NAME_DOT = 14;
-const nameWidth = (row) => row.depth * layout.indent + NAME_DOT + textUnits(row.name) * layout.nameFont * ADVANCE * 1.04;
+const nameWidth = (row) => diffGutter + row.depth * layout.indent + NAME_DOT + textUnits(row.name) * layout.nameFont * ADVANCE * 1.04;
 const labelW = Math.ceil(Math.max(140, ...rows.map(nameWidth)));
 const axisX0 = layout.margin + labelW + layout.columnGap;
 const axisX1 = axisX0 + layout.axisWidth;
@@ -231,8 +254,9 @@ const serviceLegendEntries = [...services.reduce((byTone, service) => {
   return byTone;
 }, new Map())].map(([tone, owners]) => ({ kind: `service:${owners[0]}`, label: owners.join(' · '), tone, interactive: false }));
 const legendEntries = [
-  ...(services.length > 1 ? serviceLegendEntries : []),
-  ...resolveLegend(undefined, ['error', 'cancelled', 'incomplete'].map((kind) => ({ kind, label: i18nText(locale, `legend.waterfall.${kind}`), tone: STATUS_TONE[kind] ?? 'external', interactive: false })), presentStatuses),
+  ...(wf.meta?.legend?.mode !== 'hidden' && services.length > 1 ? serviceLegendEntries : []),
+  ...resolveLegend(wf.meta?.legend, ['error', 'cancelled', 'incomplete'].map((kind) => ({ kind, label: i18nText(locale, `legend.waterfall.${kind}`), tone: STATUS_TONE[kind] ?? 'external', interactive: false })), presentStatuses),
+  ...changeLegendEntries(changeReview, wf.meta?.legend, locale),
 ];
 const contentBottom = rowsTop + placed.length * layout.rowH + 8;
 const labelRoom = Math.ceil(Math.max(...placed.map((row) => row.x1 + LABEL_GAP + row.labelWidth)) - axisX1);
@@ -298,7 +322,7 @@ function renderAxis() {
 
 // Tree guides in the name column state the parent/child structure; the bars
 // themselves only ever state time.
-const dotX = (row) => layout.margin + row.depth * layout.indent + 4;
+const dotX = (row) => layout.margin + diffGutter + row.depth * layout.indent + 4;
 
 function renderGuides() {
   const rowIndex = new Map(placed.map((row, index) => [row.id, index]));
@@ -307,7 +331,8 @@ function renderGuides() {
     const parentY = parent.y + layout.rowH / 2 + 6;
     const y = row.y + layout.rowH / 2;
     const x = dotX(parent);
-    return `        <path ${focusEdgeAttrs(row.parent, row.id, undefined, row.index)} d="M ${x} ${parentY} V ${y - 4} Q ${x} ${y} ${x + 4} ${y} H ${dotX(row) - 7}" class="wf-guide" stroke-width="1" fill="none"/>`;
+    const guide = guideEdgeByChild.get(row.id);
+    return `        <path ${focusEdgeAttrs(row.parent, row.id, undefined, row.index)}${changeEdgeAttrs(changeReview, guide)} d="M ${x} ${parentY} V ${y - 4} Q ${x} ${y} ${x + 4} ${y} H ${dotX(row) - 7}" class="wf-guide" stroke-width="1" fill="none"/>`;
   }).join('\n');
 }
 
@@ -324,18 +349,21 @@ function renderRow(row, order) {
   const nameX = dotX(row) + 10;
   const paint = row.open ? 'wf-open' : row.parentBar ? 'wf-span' : 'wf-solid';
   const openTail = row.open ? `<path d="M ${row.x1 - 8} ${barY + 2} L ${row.x1 - 2} ${midY} L ${row.x1 - 8} ${barY + layout.barH - 2}" class="wf-open-edge t-${row.tone}" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` : '';
-  return `        <g ${focusNodeAttrs(row.id, row.name, passport, locale)} data-waterfall-start="${row.start}" data-waterfall-end="${row.open ? '' : row.end}" data-waterfall-duration="${row.duration}" data-waterfall-depth="${row.depth}" data-waterfall-status="${row.status}"${service ? ` data-waterfall-service="${esc(service)}"` : ''}>
+  const badge = row.change ? `\n          ${renderChangeBadge(row, { x: layout.margin + 7, y: midY, size: 'row' })}` : '';
+  return `        <g ${focusNodeAttrs(row.id, row.name, passport, locale)}${changeNodeAttrs(changeReview, row)} data-waterfall-start="${row.start}" data-waterfall-end="${row.open ? '' : row.end}" data-waterfall-duration="${row.duration}" data-waterfall-depth="${row.depth}" data-waterfall-status="${row.status}"${service ? ` data-waterfall-service="${esc(service)}"` : ''}>
           ${focusNodeTitle(row.name, passport)}
           <rect x="${layout.margin - 8}" y="${row.y + 1}" width="${width - layout.margin * 2 + 16}" height="${layout.rowH - 2}" rx="6" class="c-mask wf-row${order % 2 ? ' wf-row-alt' : ''}"/>
           <rect x="${row.x0}" y="${barY}" width="${row.width}" height="${layout.barH}" rx="${Math.min(4, row.width / 2)}" class="c-${row.tone} ${paint}"${animateAttr(wf.meta, 'node', order)} stroke-width="1.2"/>
           ${openTail}
           <circle cx="${dotX(row)}" cy="${midY}" r="${row.depth ? 3.5 : 4.5}" class="t-${row.tone} wf-dot"/>
           <text data-node-label="" x="${nameX}" y="${midY + 4.3}" class="t-primary" font-size="${layout.nameFont}" font-weight="${row.depth ? (row.parentBar ? 650 : 500) : 750}">${esc(row.name)}</text>
-          <text x="${row.x1 + LABEL_GAP}" y="${midY + 3.8}" class="${row.parentBar ? 't-primary' : 't-muted'} wf-num" font-size="${layout.durationFont}" font-weight="${row.parentBar ? 700 : 600}">${esc(row.label)}</text>
+          <text x="${row.x1 + LABEL_GAP}" y="${midY + 3.8}" class="${row.parentBar ? 't-primary' : 't-muted'} wf-num" font-size="${layout.durationFont}" font-weight="${row.parentBar ? 700 : 600}">${esc(row.label)}</text>${badge}
         </g>`;
 }
 
 function legendSwatch(entry) {
+  const changeSwatch = renderChangeLegendSwatch(entry);
+  if (changeSwatch) return changeSwatch;
   const paint = entry.kind === 'incomplete' ? 'wf-open' : 'wf-solid';
   return `<rect x="${entry.x}" y="${entry.baseline - 10}" width="14" height="10" rx="2.5" class="c-${entry.tone} ${paint}" stroke-width="1.2"/>`;
 }
@@ -362,7 +390,17 @@ ${renderDefinitions()}
           /* Thin bars stay crisp: the classic preset's card shadow blurs their edges. */
           svg[data-waterfall-ui] [data-node-id] > rect { filter: none !important; }
 ${SOLID_TONES.map((tone) => `          svg[data-waterfall-ui] .wf-solid.c-${tone} { fill: var(--${tone}-stroke); }
-          svg[data-waterfall-ui] .wf-open-edge.t-${tone} { stroke: var(--${tone}-stroke); }`).join('\n')}
+          svg[data-waterfall-ui] .wf-open-edge.t-${tone} { stroke: var(--${tone}-stroke); }`).join('\n')}${changeReview.active ? `
+          svg[data-waterfall-ui] [data-node-id][data-change="added"] > .wf-row { fill: color-mix(in srgb, var(--backend-fill) 32%, transparent); opacity: 1; }
+          svg[data-waterfall-ui] [data-node-id][data-change="modified"] > .wf-row { fill: color-mix(in srgb, var(--cloud-fill) 32%, transparent); opacity: 1; }
+          svg[data-waterfall-ui] [data-node-id][data-change="removed"] > .wf-row { fill: color-mix(in srgb, var(--security-fill) 32%, transparent); opacity: 1; }
+          svg[data-waterfall-ui] [data-node-id][data-change="added"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--backend-stroke); stroke-width: 2; }
+          svg[data-waterfall-ui] [data-node-id][data-change="modified"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--cloud-stroke); stroke-width: 2; }
+          svg[data-waterfall-ui] [data-node-id][data-change="removed"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
+          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="added"] { stroke: var(--backend-stroke); stroke-width: 2.2; }
+          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="modified"] { stroke: var(--cloud-stroke); stroke-width: 2.2; }
+          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="removed"] { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }` : ''}
+          svg[data-waterfall-ui] [data-node-id][data-emphasis] > :is(.wf-solid, .wf-span, .wf-open) { stroke-width: 2.8; }
         </style>
 
         <!-- Background Grid -->

@@ -4587,9 +4587,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        ghost. Every value is a theme/preset variable, so the eight theme ×
        preset surfaces and the baked SVG export share one rule set.
        ========================================================== */
-    .c-change-swatch-added, .c-change-badge-added       { fill: var(--backend-fill);  stroke: var(--backend-stroke); }
-    .c-change-swatch-modified, .c-change-badge-modified { fill: var(--cloud-fill);    stroke: var(--cloud-stroke); }
-    .c-change-swatch-removed, .c-change-badge-removed   { fill: var(--security-fill); stroke: var(--security-stroke); }
+    .c-change-swatch-added    { fill: var(--backend-fill);  stroke: var(--backend-stroke); }
+    .c-change-swatch-modified { fill: var(--cloud-fill);    stroke: var(--cloud-stroke); }
+    .c-change-swatch-removed  { fill: var(--security-fill); stroke: var(--security-stroke); }
+    .c-change-badge-added     { fill: color-mix(in srgb, var(--backend-stroke) 18%, var(--mask));  stroke: var(--backend-stroke); }
+    .c-change-badge-modified  { fill: color-mix(in srgb, var(--cloud-stroke) 18%, var(--mask));    stroke: var(--cloud-stroke); }
+    .c-change-badge-removed   { fill: color-mix(in srgb, var(--security-stroke) 18%, var(--mask)); stroke: var(--security-stroke); }
     .c-change-swatch-removed { stroke-dasharray: 3,2; }
     .c-change-swatch-unchanged { fill: var(--mask); stroke: var(--text-dim); }
     .t-change-added, .t-change-badge-added       { fill: var(--backend-stroke); }
@@ -4633,7 +4636,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     svg [data-change="removed"][data-graph-role] > text,
     svg [data-change="removed"][data-edge-from] text,
     svg text[data-change="removed"],
-    svg [data-er-row][data-change="removed"] > text { text-decoration: line-through; }
+    svg [data-er-row][data-change="removed"] > text,
+    svg [data-class-row][data-change="removed"] > text { text-decoration: line-through; }
     svg [data-emphasis] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask),
     svg path[data-emphasis][data-edge-from],
     svg [data-emphasis][data-edge-from] > path { stroke-width: 3.2; }
@@ -5672,6 +5676,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-timeline-ui] .tl-stem-backend { stroke: color-mix(in srgb, var(--backend-stroke) 45%, var(--lane-stroke)); }
           svg[data-timeline-ui] .tl-pin-backend { fill: var(--backend-fill); stroke: color-mix(in srgb, var(--backend-stroke) 35%, transparent); stroke-width: 1; }
           svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }
+          svg[data-timeline-ui] [data-node-id][data-emphasis] > .tl-card { stroke-opacity: 1; stroke-width: 3.2; }
         </style>
 
         <!-- Background Grid -->
@@ -5686,17 +5691,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         <!-- Lanes -->
         <g data-timeline-lane="release">
-          <rect x="20" y="112" width="1075" height="97" rx="10" class="tl-lane"/>
+          <rect x="20" y="112" width="1075" height="97" rx="10" class="tl-lane" data-graph-role="structural-frame"/>
           <line x1="143" y1="136" x2="1087" y2="136" class="tl-lane-line" stroke-width="1.5" stroke-linecap="round"/>
           <text x="28" y="140.5" class="t-primary" font-size="13" font-weight="700">Release</text>
         </g>
         <g data-timeline-lane="monitoring">
-          <rect x="20" y="219" width="1075" height="97" rx="10" class="tl-lane tl-lane-alt"/>
+          <rect x="20" y="219" width="1075" height="97" rx="10" class="tl-lane tl-lane-alt" data-graph-role="structural-frame"/>
           <line x1="143" y1="243" x2="1087" y2="243" class="tl-lane-line" stroke-width="1.5" stroke-linecap="round"/>
           <text x="28" y="247.5" class="t-primary" font-size="13" font-weight="700">Monitoring</text>
         </g>
         <g data-timeline-lane="response">
-          <rect x="20" y="326" width="1075" height="97" rx="10" class="tl-lane"/>
+          <rect x="20" y="326" width="1075" height="97" rx="10" class="tl-lane" data-graph-role="structural-frame"/>
           <line x1="143" y1="350" x2="1087" y2="350" class="tl-lane-line" stroke-width="1.5" stroke-linecap="round"/>
           <text x="28" y="354.5" class="t-primary" font-size="13" font-weight="700">Response</text>
         </g>

@@ -77,7 +77,7 @@ export function loadPrPack(manifestInput) {
       diagram,
       collapsed: Boolean(view.collapsed),
       theme: view.theme || manifest.theme || 'both',
-      preset: view.preset || manifest.preset,
+      preset: view.preset || manifest.preset || 'classic',
       evidence: hasRepositoryEvidence(view.type, diagram),
     };
   });

@@ -27,7 +27,7 @@ export function validatePrPack(manifestInput, { repoRoot } = {}) {
   const revisions = repoRoot ? verifyPackRevisions(pack, repoRoot) : { baseSha: pack.manifest.baseSha ?? null, headSha: pack.manifest.headSha ?? null, mergeBase: null, verified: false };
   const views = pack.views.map((view) => {
     alignDiagramRevisions(view, revisions);
-    return { id: view.id, title: view.title, type: view.type, input: view.inputPath, theme: view.theme, collapsed: view.collapsed, evidence: view.evidence };
+    return { id: view.id, title: view.title, type: view.type, input: view.inputPath, theme: view.theme, preset: view.preset, collapsed: view.collapsed, evidence: view.evidence };
   });
   return {
     schemaVersion: 1,
@@ -64,7 +64,11 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
   const views = [];
   const assets = [];
   for (const view of pack.views) {
-    const snapshot = alignDiagramRevisions(view, revisions);
+    const aligned = alignDiagramRevisions(view, revisions);
+    const snapshot = {
+      ...aligned,
+      meta: { ...(aligned.meta || {}), visual_preset: view.preset },
+    };
     const snapshotPath = path.join(viewsDir, `${view.id}.json`);
     publishOutputAtomically(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`);
     const htmlPath = path.join(viewsDir, `${view.id}.html`);

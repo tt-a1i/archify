@@ -9,7 +9,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { layoutReportFromSvg } from '../shared/layout-report.mjs';
-import { changeEdgeAttrs, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 
 const participantTextFit = {
@@ -394,7 +394,7 @@ function messageGeometry(message) {
 function messageLabelBox(message, relationIndex = null) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
-  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12) + changeEdgeLabelExtraWidth(message);
   return {
     relation: message,
     relationIndex,
@@ -972,7 +972,12 @@ function renderParticipant(participant) {
   const mark = drilldowns.length
     ? `\n          ${renderDrilldownMark({ x: participant.x, y: layout.topY, width: layout.participantW, height: layout.participantH })}`
     : '';
-  const changeBadge = renderChangeBadge(participant, { x: participant.x + layout.participantW - 2, y: layout.topY + 2 });
+  const changeBadge = renderChangeBadge(participant, nodeChangeBadgePos({
+    x: participant.x,
+    y: layout.topY,
+    width: layout.participantW,
+    height: layout.participantH,
+  }, { rx: 6, rightInset: brand ? 26 : 0 }));
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}${changeNodeAttrs(changeReview, participant)}>
           ${focusNodeTitle(participant.label, passport)}
@@ -1000,7 +1005,12 @@ function renderSegment(segment, index) {
 
 function renderSegmentLabel(segment, index) {
   const label = segmentLabelBox(segment);
-  const badge = renderChangeBadge(segment, { x: viewBox[0] - 48 - 10, y: segment.from + 8 });
+  const badge = renderChangeBadge(segment, nodeChangeBadgePos({
+    x: 48,
+    y: segment.from,
+    width: viewBox[0] - 96,
+    height: segment.to - segment.from,
+  }, { rx: 10 }));
   return `        <g data-graph-role="segment-label" data-segment-id="${index}"${changeFrameAttrs(changeReview, segmentFrame(segment))}>
           <rect x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="3" class="c-mask"/>
           <text x="${label.x + 6}" y="${label.y + 13}" class="t-muted" font-size="9" font-weight="600">${esc(segment.label)}</text>${badge ? `\n          ${badge}` : ''}
@@ -1020,14 +1030,13 @@ function messageLabel(message, x1, x2) {
   const box = messageLabelBox(message);
   const center = box ? box.x + box.width / 2 : (x1 + x2) / 2;
   const y = message.y - 10;
-  const labelW = box?.width || Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const labelW = box?.width || (Math.max(34, textUnits(message.label) * messageUnitWidth + 12) + changeEdgeLabelExtraWidth(message));
   // A colored line gets a label in the same color, as in the legend swatches.
   // Gray lines (default and return) keep the readable muted text color.
   const accent = ['emphasis', 'security', 'dashed'].includes(message.variant) ? edgeLabelAccent(message.variant) : 't-muted';
-  const badge = renderChangeBadge(message, { x: center + labelW / 2 + 9, y: y - 3, fontSize: 8 });
   return `        <g data-detail="context">
           <rect x="${center - labelW / 2}" y="${y - 10}" width="${labelW}" height="${layout.labelH}" rx="3" class="c-mask"/>
-          <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${esc(message.label)}</text>${badge ? `\n          ${badge}` : ''}
+          <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${renderChangeEdgePrefix(message)}${esc(message.label)}</text>
         </g>`;
 }
 

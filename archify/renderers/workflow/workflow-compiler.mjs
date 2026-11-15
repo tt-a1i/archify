@@ -31,7 +31,7 @@ import {
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import {
   createMappedWorkflowCandidate,
@@ -194,8 +194,8 @@ function authoredNodeHeight(node) {
   return node?.tag ? 68 : 52;
 }
 
-function workflowLabelWidth(label) {
-  return Math.max(30, textUnits(label) * 4.8 + 10);
+function workflowLabelWidth(label, edge = null) {
+  return Math.max(30, textUnits(label) * 4.8 + 10) + changeEdgeLabelExtraWidth(edge);
 }
 
 function readableGroupBounds(workflow, group, colXs) {
@@ -296,7 +296,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     const earlier = fromNode.col < toNode.col ? fromNode : toNode;
     const later = earlier === fromNode ? toNode : fromNode;
     const labeledDirectClearance = edge.label && !edge.labelAt
-      ? Math.max(28, workflowLabelWidth(edge.label) + 8)
+      ? Math.max(28, workflowLabelWidth(edge.label, edge) + 8)
       : 28;
     const directLabelExpansionCost = Math.max(0, labeledDirectClearance - 28);
     const canUseAutomaticLabelChannel = edge.label
@@ -475,7 +475,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     const toNode = nodesById.get(edge.to);
     if (!fromNode || !toNode) return maximum;
     const labelCenter = (colXs[fromNode.col] + colXs[toNode.col]) / 2;
-    const labelLeft = labelCenter - workflowLabelWidth(edge.label) / 2;
+    const labelLeft = labelCenter - workflowLabelWidth(edge.label, edge) / 2;
     return Math.max(maximum, 16 - labelLeft);
   }, 0);
   for (const phase of asArray(workflow.phases)) {
@@ -3473,7 +3473,7 @@ function routeMeetsHardRhythm(points) {
 function routeLabelClearsNodes(edge, points) {
   if (!edge.label || edge.labelAt) return true;
   const [lx, ly] = workflowEdgeLabelPoint(edge, points);
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(edge.label, edge);
   const rect = { x: lx - width / 2, y: ly - 10, width, height: 14 };
   // The comparison shrinks the rect by two pixels, so only nodes inside the
   // shrunk box can fail it.
@@ -3491,7 +3491,7 @@ function routeLabelClearsNodes(edge, points) {
 function candidateLabelRect(edge, points) {
   if (!edge.label) return null;
   const [lx, ly] = workflowEdgeLabelPoint(edge, points);
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(edge.label, edge);
   return { x: lx - width / 2, y: ly - 10, width, height: 14 };
 }
 
@@ -4425,7 +4425,7 @@ function workflowEdgeLabelPoint(edge, points) {
       if (incoming.length && incoming.every(value => value < x)) labelSide = 1;
       else if (incoming.length && incoming.every(value => value > x)) labelSide = -1;
     }
-    return [x + labelSide * (workflowLabelWidth(edge.label) / 2 + 8),
+    return [x + labelSide * (workflowLabelWidth(edge.label, edge) / 2 + 8),
       (points[0][1] + points[1][1]) / 2];
   }
   if (edge.labelAt || Number.isInteger(edge.labelSegment) || points.length <= 2) {
@@ -4453,7 +4453,7 @@ function workflowEdgeLabelPoint(edge, points) {
   // whole edge to manufacture a longer run. When the preferred run is that
   // short, use the next run that keeps the label clear of every node and
   // inside one lane, off the lane dividers, before giving up on it.
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(edge.label, edge);
   const clearOfNodes = ([lx, ly]) => {
     const rect = { x: lx - width / 2, y: ly - 10, width, height: 14 };
     return ![...nodes.values()].some((node) => rectsOverlap(rect, node, -2));
@@ -4515,7 +4515,7 @@ function allocatedPortSides(edge) {
 const automaticPorts = new Map([...automaticPortSpread(portRelations, nodes, {
   spacingFor: (left, right) => portOriginals.has(left) || portOriginals.has(right)
     ? Math.max(HARD_ROUTE_RHYTHM.interior,
-      (workflowLabelWidth(left.label) + workflowLabelWidth(right.label)) / 2 + 8) : 14,
+      (workflowLabelWidth(left.label, left) + workflowLabelWidth(right.label, right)) / 2 + 8) : 14,
   sideFor: (edge, endpoint) => allocatedPortSides(portOriginals.get(edge) || edge)[endpoint === 'source' ? 'fromSide' : 'toSide'],
 })].map(([edge, ports]) => [portOriginals.get(edge) || edge, ports]));
 
@@ -5204,7 +5204,7 @@ function labelRectFor(edge, relationIndex) {
   const cached = LABEL_RECT_CACHE.get(routed);
   if (cached) return cached;
   const [lx, ly] = workflowEdgeLabelPoint(edge, routed.points);
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(edge.label, edge);
   const rect = {
     relation: edge,
     relationIndex,
@@ -5388,7 +5388,7 @@ function renderLane(lane, index) {
   const labelClass = lane.variant === 'exception' ? 't-security' : 't-muted';
   const prefix = lane.variant === 'exception' ? 'EX' : String(index + 1).padStart(2, '0');
   const changeAttrs = changeFrameAttrs(changeReview, laneFrame(workflow, lane));
-  const badge = renderChangeBadge(lane, { x: layout.laneX + layout.laneW - 12, y: y + 10 });
+  const badge = renderChangeBadge(lane, nodeChangeBadgePos({ x: layout.laneX, y, width: layout.laneW, height }, { rx: 10 }));
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}"${changeAttrs} x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
         <text${changeAttrs} x="${layout.laneX + 14}" y="${y + 22}" class="${labelClass}" font-size="10" font-weight="600">${prefix} / ${esc(lane.label)}</text>${badge ? `\n        ${badge}` : ''}`;
 }
@@ -5418,7 +5418,7 @@ function renderGroup(group, index) {
   const textClass = variantAccent(group.variant);
   const labelY = workflow.schema_version === 2 ? y + GROUP_LABEL_BASELINE_OFFSET : y + 14;
   const changeAttrs = changeFrameAttrs(changeReview, groupFrame(workflow, group));
-  const badge = renderChangeBadge(group, { x: span.x + span.width - 10, y: y + 8 });
+  const badge = renderChangeBadge(group, nodeChangeBadgePos({ x: span.x, y, width: span.width, height }, { rx: 9 }));
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}"${changeAttrs} x="${span.x}" y="${y}" width="${span.width}" height="${height}" rx="9" class="${cls}" stroke-width="1"/>
         <text${changeAttrs} x="${span.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>${badge ? `\n        ${badge}` : ''}`;
 }
@@ -5495,7 +5495,7 @@ function renderNode(node) {
   const drilldowns = resolveNodeDrilldowns(node);
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node), drilldowns, href: node.href, ...brandMetadataFor(node) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(node)}` : '';
-  const changeBadge = renderChangeBadge(node, { x: node.x + node.width - 2, y: node.y + 2 });
+  const changeBadge = renderChangeBadge(node, nodeChangeBadgePos(node, { rx: 8, rightInset: brand ? 26 : 0 }));
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(node.id, node.label, passport, workflow.meta.locale)}${changeNodeAttrs(changeReview, node)}>
           ${focusNodeTitle(node.label, passport)}
@@ -5531,11 +5531,10 @@ function renderEdgeLabel(edge, index) {
   if (!edge.label) return '';
   const routed = pathFor(edge);
   const [lx, ly] = workflowEdgeLabelPoint(edge, routed.points);
-  const labelW = workflowLabelWidth(edge.label);
-  const badge = renderChangeBadge(edge, { x: lx + labelW / 2 + 9, y: ly - 3, fontSize: 8 });
+  const labelW = workflowLabelWidth(edge.label, edge);
   return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}${changeEdgeAttrs(changeReview, edge)}>
           <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${!edge.variant || edge.variant === 'default' ? 't-muted' : edgeLabelAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>${badge ? `\n          ${badge}` : ''}
+          <text x="${lx}" y="${ly}" class="${!edge.variant || edge.variant === 'default' ? 't-muted' : edgeLabelAccent(edge.variant)}" font-size="8" text-anchor="middle">${renderChangeEdgePrefix(edge)}${esc(edge.label)}</text>
         </g>`;
 }
 
@@ -5642,7 +5641,7 @@ function measuredPlanReceipt(diagnostics, requiredFrame) {
     labels: workflow.edges.flatMap((edge) => {
       if (!edge.label || !nodes.has(edge.from) || !nodes.has(edge.to)) return [];
       const { lx: x, ly: y } = LABEL_RECT_CACHE.get(pathCache.get(edge));
-      return [{ edge: edge.id ?? null, label: edge.label, x, y, width: workflowLabelWidth(edge.label), height: 14 }];
+      return [{ edge: edge.id ?? null, label: edge.label, x, y, width: workflowLabelWidth(edge.label, edge), height: 14 }];
     }),
     diagnostics,
   };

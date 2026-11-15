@@ -12,6 +12,15 @@ import {
 } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, measureLegend, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
+import {
+  changeFrameAttrs,
+  changeLegendEntries,
+  changeNodeAttrs,
+  changeReviewFor,
+  nodeChangeBadgePos,
+  renderChangeBadge,
+  renderChangeLegendSwatch,
+} from '../shared/change-marks.mjs';
 import { nodeTextFit } from '../shared/text-fit.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { asArray } from '../shared/geometry.mjs';
@@ -334,6 +343,17 @@ const cards = events.map((event) => {
 // events stack instead of overprinting, and a burst spreads both ways rather
 // than growing one tall column. Ties go below the line. The dot always stays
 // on the line, at the event's exact instant.
+const laneFrames = asArray(tl.lanes).map((lane) => ({
+  id: lane.id,
+  change: lane.change,
+  emphasis: lane.emphasis,
+  members: events.filter((event) => laneOf(event) === lane.id).map((event) => event.id),
+}));
+const laneFrameById = new Map(laneFrames.map((frame) => [frame.id, frame]));
+const changeReview = changeReviewFor({ nodes: events, frames: laneFrames });
+const laneRowGap = changeReview.active ? 12 : layout.rowGap;
+const laneStemGap = changeReview.active ? 18 : layout.stemGap;
+
 const laneLayout = [];
 {
   let y = layout.top + layout.axisH;
@@ -353,12 +373,12 @@ const laneLayout = [];
       side.ends[card.row] = card.left + card.width;
       side.heights[card.row] = Math.max(side.heights[card.row] || 0, card.height);
     }
-    const extent = (side) => side.heights.reduce((sum, height) => sum + height + layout.rowGap, 0) - (side.heights.length ? layout.rowGap : 0);
+    const extent = (side) => side.heights.reduce((sum, height) => sum + height + laneRowGap, 0) - (side.heights.length ? laneRowGap : 0);
     const aboveExtent = extent(sides.above);
-    const lineY = y + layout.lanePad + (aboveExtent ? aboveExtent + layout.stemGap : 10);
+    const lineY = y + layout.lanePad + (aboveExtent ? aboveExtent + laneStemGap : 10);
     const offsets = (side) => {
       const out = [];
-      side.heights.reduce((offset, height, row) => { out[row] = offset; return offset + height + layout.rowGap; }, layout.stemGap);
+      side.heights.reduce((offset, height, row) => { out[row] = offset; return offset + height + laneRowGap; }, laneStemGap);
       return out;
     };
     const aboveOffset = offsets(sides.above);
@@ -379,10 +399,14 @@ const laneLayout = [];
 // ---- Legend ---------------------------------------------------------------------
 const KIND_TONE = { default: 'external', change: 'frontend', alert: 'security', action: 'messagebus', recovery: 'backend' };
 const kindOf = (event) => event.kind || 'default';
-const legendEntries = resolveLegend(undefined,
+const semanticLegendEntries = resolveLegend(tl.meta?.legend,
   Object.keys(KIND_TONE).map((kind) => ({ kind, label: i18nText(locale, `legend.timeline.${kind}`), interactive: false })),
   new Set(events.map(kindOf)))
   .filter((entry, _, all) => all.length > 1);
+const legendEntries = [
+  ...semanticLegendEntries,
+  ...changeLegendEntries(changeReview, tl.meta?.legend, locale),
+];
 
 const contentBottom = laneLayout.at(-1).y + laneLayout.at(-1).height;
 const width = Math.ceil(axisX1 + layout.margin);
@@ -454,11 +478,17 @@ function renderHeader() {
 }
 
 function renderLanes() {
-  return laneLayout.map((lane, index) => `        <g data-timeline-lane="${esc(lane.id)}">
-          <rect x="${layout.margin - 8}" y="${lane.y}" width="${axisX1 - layout.margin + 8}" height="${lane.height}" rx="10" class="tl-lane${index % 2 ? ' tl-lane-alt' : ''}"/>
+  return laneLayout.map((lane, index) => {
+    const frame = laneFrameById.get(lane.id);
+    const rect = { x: layout.margin - 8, y: lane.y, width: axisX1 - layout.margin + 8, height: lane.height };
+    const frameAttrs = frame ? ` data-graph-role="structural-frame"${changeFrameAttrs(changeReview, frame)}` : '';
+    const badge = frame?.change ? `\n          ${renderChangeBadge(frame, nodeChangeBadgePos(rect, { rx: 10 }))}` : '';
+    return `        <g data-timeline-lane="${esc(lane.id)}">
+          <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="10" class="tl-lane${index % 2 ? ' tl-lane-alt' : ''}"${frameAttrs}/>
           <line x1="${axisX0 + 8}" y1="${lane.lineY}" x2="${axisX1 - 8}" y2="${lane.lineY}" class="tl-lane-line" stroke-width="1.5" stroke-linecap="round"/>
-          ${lane.label ? `<text x="${layout.margin}" y="${lane.lineY + 4.5}" class="t-primary" font-size="13" font-weight="700">${esc(lane.label)}</text>` : ''}
-        </g>`).join('\n');
+          ${lane.label ? `<text x="${layout.margin}" y="${lane.lineY + 4.5}"${frame?.change === 'removed' ? ' data-change="removed"' : ''} class="t-primary" font-size="13" font-weight="700">${esc(lane.label)}</text>` : ''}${badge}
+        </g>`;
+  }).join('\n');
 }
 
 function renderEvent(card, order) {
@@ -478,19 +508,22 @@ function renderEvent(card, order) {
   // A tone accent down the card's leading edge carries the event kind, so the
   // card body stays a quiet surface for the text.
   const accent = `<line x1="${card.left + 6}" y1="${card.top + 7}" x2="${card.left + 6}" y2="${card.top + card.height - 7}" class="tl-accent tl-accent-${tone}" stroke-width="3" stroke-linecap="round"/>`;
-  return `        <g ${focusNodeAttrs(card.id, card.title, passport, locale)} data-timeline-at="${esc(card.at)}" data-timeline-ms="${card.t}" data-timeline-x="${card.x}">
+  const badge = card.change
+    ? `\n          ${renderChangeBadge(card, nodeChangeBadgePos({ x: card.left, y: card.top, width: card.width, height: card.height }, { rx: 7, rightInset: sourceEvidence?.nodes?.[card.id]?.length ? 28 : 0 }))}`
+    : '';
+  return `        <g ${focusNodeAttrs(card.id, card.title, passport, locale)}${changeNodeAttrs(changeReview, card)} data-timeline-at="${esc(card.at)}" data-timeline-ms="${card.t}" data-timeline-x="${card.x}">
           ${focusNodeTitle(card.title, passport)}
           <rect x="${card.left}" y="${card.top}" width="${card.width}" height="${card.height}" rx="7" class="c-mask"/>
           <rect x="${card.left}" y="${card.top}" width="${card.width}" height="${card.height}" rx="7" class="c-${tone} tl-card"${animateAttr(tl.meta, 'node', order)} stroke-width="1"/>
           ${accent}
           ${time}
           <text data-node-label="" class="t-primary" font-size="${layout.titleFont}" font-weight="650">${title}</text>
-          <circle cx="${card.x}" cy="${card.lineY}" r="4.75" class="t-${tone}"/>
+          <circle cx="${card.x}" cy="${card.lineY}" r="4.75" class="t-${tone}"/>${badge}
         </g>`;
 }
 
 function legendSwatch(entry) {
-  return `<circle cx="${entry.x + 6}" cy="${entry.baseline - 4}" r="4.5" class="t-${KIND_TONE[entry.kind]} tl-dot" stroke-width="2"/>`;
+  return renderChangeLegendSwatch(entry) ?? `<circle cx="${entry.x + 6}" cy="${entry.baseline - 4}" r="4.5" class="t-${KIND_TONE[entry.kind]} tl-dot" stroke-width="2"/>`;
 }
 
 function renderSvg() {
@@ -516,7 +549,15 @@ ${renderDefinitions(breaks.length ? `
 ${Object.values(KIND_TONE).map((tone) => `          svg[data-timeline-ui] .tl-accent-${tone} { stroke: var(--${tone}-stroke); }
           svg[data-timeline-ui] .tl-stem-${tone} { stroke: color-mix(in srgb, var(--${tone}-stroke) 45%, var(--lane-stroke)); }
           svg[data-timeline-ui] .tl-pin-${tone} { fill: var(--${tone}-fill); stroke: color-mix(in srgb, var(--${tone}-stroke) 35%, transparent); stroke-width: 1; }`).join('\n')}
-          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }
+          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }${changeReview.active ? `
+          svg[data-timeline-ui] [data-node-id][data-change="added"] > .tl-card { stroke: var(--backend-stroke); stroke-opacity: 1; stroke-width: 2.4; }
+          svg[data-timeline-ui] [data-node-id][data-change="modified"] > .tl-card { stroke: var(--cloud-stroke); stroke-opacity: 1; stroke-width: 2.4; }
+          svg[data-timeline-ui] [data-node-id][data-change="removed"] > .tl-card { stroke: var(--security-stroke); stroke-opacity: 1; stroke-width: 1.6; stroke-dasharray: 5,4; }
+          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="added"] { opacity: 0.85; stroke: var(--backend-stroke); stroke-width: 2; }
+          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="modified"] { opacity: 0.85; stroke: var(--cloud-stroke); stroke-width: 2; }
+          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="removed"] { opacity: 0.62; stroke: var(--security-stroke); stroke-width: 1.4; stroke-dasharray: 5,4; }
+          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change-context="subdued"]:not(.tl-lane-alt) { opacity: 0.36; }` : ''}
+          svg[data-timeline-ui] [data-node-id][data-emphasis] > .tl-card { stroke-opacity: 1; stroke-width: 3.2; }
         </style>
 
         <!-- Background Grid -->

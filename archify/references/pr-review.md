@@ -67,8 +67,11 @@ Each view is a single diagram that contains both sides of the change:
 - `change` and `emphasis` are accepted on architecture components, boundaries
   and connections; workflow lanes, groups, nodes and edges; sequence
   participants, segments and messages; dataflow nodes and flows; lifecycle
-  states and transitions; ERD entities, attributes and relationships. Diagrams
-  without these keys validate and render exactly as before.
+  states and transitions; ERD entities, attributes and relationships; class
+  types, attributes, methods and relationships; tree nodes; timeline lanes and
+  events; and waterfall spans (`previousType` is also accepted on changed ERD
+  and class attributes). Diagrams without these keys validate and render
+  exactly as before.
 
 ## 4. Choose the route
 
@@ -79,8 +82,8 @@ Each view is a single diagram that contains both sides of the change:
 | Both | Run `compare` for the audit numbers, cite the counts in the manifest `stats`, and draw the inline-change views for the reader. |
 
 `compare` needs two full snapshots and only covers `architecture`; inline
-marks need one candidate per view and cover six types. Neither route emits a
-risk opinion.
+marks need one candidate per view and cover ten diagram types. Neither route
+emits a risk opinion.
 
 ## 5. Command loop
 
@@ -103,9 +106,11 @@ The manifest (`schemas/pr-pack.schema.json`; worked example
 lists `title`, `summary`,
 `baseRef`/`headRef` (or `baseSha`/`headSha`), `views[]` with `id`, `title`,
 `type`, `input` (path relative to the manifest), optional `caption`,
-`collapsed`, `theme`, and an optional `changes[]` table plus objective
-`stats`. A view without `preset` bakes with the diagram's own
-`meta.visual_preset` (classic when unset); set `preset` to override it.
+`collapsed`, `theme`, `preset`, and an optional `changes[]` table plus objective
+`stats`. A view without `preset` inherits `preset` from the pack manifest
+(`classic` when unset), and `pr build` stamps that unified preset onto the
+built view snapshot's `meta.visual_preset`; set `preset` on a view only when
+that view must override the pack preset.
 `build` writes `views/<id>.json` snapshots pinned to the verified
 revisions, offline `views/<id>.html` (source links and payload diffs live
 here), `views/<id>-light.svg` / `-dark.svg` that pass strict XML and GitHub's
