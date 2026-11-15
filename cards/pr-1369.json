@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1369,
+  "author": "tt-a1i",
+  "title": "feat(geo): sync LLM discovery schema, bilingual compare, and Explainer SEO to main",
+  "mergedAt": "2026-11-15T09:26:11Z",
+  "mergeCommit": "a7ed6fd6657da90414831d1d42cf95987188750c",
+  "url": "https://github.com/tt-a1i/archify/pull/1369"
+}
