@@ -56,7 +56,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await open(first.html);
   assert.equal(await run("document.documentElement.getAttribute('data-bauify')"), 'on', 'prepare opens on the workbench without a second click');
   assert.equal(await run("document.querySelector('#bauify-overview h3').textContent"), 'Architecture check');
-  assert.match(await run("document.querySelector('.health-summary').textContent"), /error-level diagnostics still present/);
+  assert.match(await run("document.querySelector('.health-summary').textContent"), /errors/);
   assert.equal(await run("document.querySelectorAll('.priority-card button button').length"), 0);
   const assertFirstCopyVisible = async locale => {
     const visibility = await run(`(() => {
@@ -71,18 +71,21 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   };
   const assertPrimaryContrast = async label => {
     const styles = await run(`['.brief-copy','.priority-card .quick-copy'].map(selector=>{
-      const s=getComputedStyle(document.querySelector(selector));return {selector,color:s.color,background:s.backgroundColor,opacity:s.opacity};
+      const s=getComputedStyle(document.querySelector(selector)),surface=getComputedStyle(document.querySelector(selector).closest('#bauify-reader'));
+      return {selector,color:s.color,background:s.backgroundColor,surface:surface.backgroundColor,opacity:s.opacity};
     })`);
     const parse = value => value.match(/[\d.]+/g).map(Number);
     const luminance = rgb => rgb.map(v=>v/255).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[0.2126,0.7152,0.0722][i],0);
     for (const style of styles) {
-      const foreground=parse(style.color), background=parse(style.background);
-      assert.equal(background[3] ?? 1, 1, label + ': primary background must be opaque');
+      const foreground=parse(style.color), background=parse(style.background), surface=parse(style.surface);
+      if (background.length === 3) background.push(1);
+      if (surface.length === 3) surface.push(1);
       assert.equal(Number(style.opacity), 1, label + ': enabled action must not look disabled');
+      if (background[3] === 0 && surface[3] === 1) background.splice(0, background.length, ...surface);
       const alpha=foreground[3] ?? 1;
       const text=foreground.slice(0,3).map((v,i)=>v*alpha+background[i]*(1-alpha));
       const [light,dark]=[luminance(text),luminance(background.slice(0,3))].sort((a,b)=>b-a);
-      assert.ok((light+0.05)/(dark+0.05)>=4.5,label+' '+style.selector+': readable primary action contrast');
+      assert.ok((light+0.05)/(dark+0.05)>=4.5,label+' '+style.selector+': readable primary action contrast '+JSON.stringify({style,foreground,background}));
     }
   };
   await assertFirstCopyVisible('en desktop');
@@ -145,22 +148,25 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await open(second.html);
   assert.equal(await run("document.getElementById('btn-bauify').textContent"), '架构诊断');
   assert.equal(await run("document.querySelector('#bauify-reader').lang"), 'zh-CN');
-  assert.equal(await run("document.querySelector('.quick-copy').textContent"), '复制任务给 AI');
+  assert.equal(await run("document.querySelector('.quick-copy').getAttribute('aria-label')"), '复制任务给 AI');
   const sourceComparison = JSON.parse(fs.readFileSync(path.join(out, 'analysis', 'review.json'))).comparison;
   assert.ok(sourceComparison.notDetected.length > 0);
   assert.ok((await run("document.querySelector('.comparison-banner').textContent")).includes(`本轮未再检出 ${sourceComparison.notDetected.length} 项 · 新增 ${sourceComparison.new.length} 项`));
   assert.match(await run("document.querySelector('.comparison-banner').textContent"), /不代表已证实修复/);
-  assert.match(await run("document.querySelector('.health-summary').textContent"), /没有错误级发现/);
+  assert.match(await run("document.querySelector('.health-summary').textContent"), /无错误级/);
   await run("document.querySelector('.browse-findings').click();const search=document.querySelector('.finding-search');search.value='复杂';search.dispatchEvent(new Event('input'));");
   assert.ok(await run("document.querySelectorAll('.finding-list [data-finding]').length > 0"), 'Chinese search matches the visible localized title');
   await run("document.querySelector('.findings-back').click()");
   await run("document.querySelector('.priority-card [data-finding]').click()");
-  assert.equal(await run("document.querySelector('#bauify-detail .quick-copy').textContent"), '复制任务给 AI');
+  assert.equal(await run("document.querySelector('#bauify-detail .quick-copy').getAttribute('aria-label')"), '复制任务给 AI');
   assert.equal(await run("Boolean(document.querySelector('#bauify-detail .finding.warning'))"), true, 'zh-CN detail keeps canonical severity CSS class');
   assert.match(await run("document.querySelector('#bauify-detail').textContent"), /源码证据/);
   await run("document.querySelector('#bauify-detail .back').click();document.querySelector('.reader-atlas').click()");
-  assert.equal(await run("document.querySelector('.atlas-classic').textContent"), '架构图视图');
-  assert.match(await run("document.querySelector('.atlas-side').textContent"), /文件依赖/);
+  assert.equal(await run("document.querySelector('.atlas-classic').getAttribute('aria-label')"), '架构图视图');
+  assert.match(await run("document.querySelector('.atlas-side').textContent"), /高复杂度函数/);
+  assert.equal(await run("document.querySelector('.atlas-stats h3').textContent"), '本次统计');
+  assert.equal(await run("document.querySelector('.atlas-title').textContent"), '整仓星图');
+  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metrics').open"), false);
   await run("document.querySelector('.atlas-classic').click()");
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');

@@ -5,7 +5,7 @@
   var root = document.documentElement;
   var standalone = data.ui && data.ui.mode === 'standalone';
   var toolbar = document.querySelector('.toolbar');
-  var svg = document.querySelector('svg');
+  var svg = standalone ? null : document.querySelector('svg');
   if (!toolbar || (!svg && !standalone)) return;
   var byId = {}; data.components.forEach(function (c) { byId[c.id] = c; });
 
@@ -18,22 +18,59 @@
   var reader = document.createElement('aside');
   reader.lang = locale;
   reader.id = 'bauify-reader'; reader.hidden = true; reader.setAttribute('aria-label', tr("Code analysis reader"));
-  reader.innerHTML = ("<nav class=\"reader-nav\" aria-label=\"" + tr("Analysis navigation") + "\">" + "<span class=\"reader-path\">" + tr("Analysis / Overview") + "</span>" + "<span class=\"reader-actions\">") +
-    (!standalone && document.getElementById('bauify-atlas-data') ? ("<button type=\"button\" class=\"reader-atlas\" title=\"" + tr("Whole-repository view of files, dependencies and functions") + "\">" + tr("Atlas") + "</button>" + " ") : '') +
-    ("<button type=\"button\" class=\"reader-toggle\" aria-expanded=\"true\">" + (standalone ? tr("View Atlas") : tr("View diagram")) + "</button>" + "</span>" + "</nav>");
+  reader.innerHTML = '<nav class="reader-nav" aria-label="' + esc(tr('Analysis navigation')) + '"><span class="reader-path">' + esc(tr('Analysis / Overview')) + '</span><span class="reader-actions">' +
+    (!standalone && document.getElementById('bauify-atlas-data') ? iconButton('atlas', tr('Whole-repository view of files, dependencies and functions'), ' reader-atlas') : '') +
+    iconButton(standalone ? 'collapse' : 'panel', tr('Hide analysis'), ' reader-toggle', ' aria-expanded="true" aria-controls="bauify-reader"') + '</span></nav>';
   var diagramContainer = document.querySelector(standalone ? '.analysis-stage' : '.diagram-container');
-  if (diagramContainer) diagramContainer.before(reader); else document.body.appendChild(reader);
+  var restoreButton, readerToggle = reader.querySelector('.reader-toggle');
+  if (standalone) {
+    var shell = document.createElement('div');
+    shell.className = 'analysis-reader-shell';
+    var restoreLabel = tr('Show analysis');
+    shell.innerHTML = '<button type="button" class="reader-restore" aria-expanded="false" aria-controls="bauify-reader" aria-label="' + esc(restoreLabel) + '" data-analysis-tip="' + esc(restoreLabel) + '" hidden><span aria-hidden="true"></span></button>';
+    restoreButton = shell.firstElementChild;
+    restoreButton.addEventListener('click', function () { setReaderCollapsed(false); readerToggle.focus({ preventScroll: true }); });
+    shell.appendChild(reader);
+    diagramContainer.before(shell);
+  } else if (diagramContainer) diagramContainer.before(reader); else document.body.appendChild(reader);
+  function uiIcon(name) {
+    var paths = {
+      copy: '<rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M6 15a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2"></path>',
+      filter: '<path d="M4 5h16l-6 7v5l-4 2v-7z"></path>',
+      refresh: '<path d="M20 6v5h-5M4 18v-5h5M6.1 9a7 7 0 0 1 11.5-2.6L20 9M4 15l2.4 2.6A7 7 0 0 0 17.9 15"></path>',
+      atlas: '<circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>',
+      panel: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16"></path>',
+      collapse: '<path d="M6 5v14M15 8l-4 4 4 4"></path>',
+      snapshot: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h4"></path>'
+    };
+    return '<svg class="ui-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[name] + '</svg>';
+  }
+  function iconButton(kind, label, extra, attributes) {
+    return '<button type="button" class="icon-button ' + kind + (extra || '') + '" aria-label="' + esc(label) + '" data-analysis-tip="' + esc(label) + '"' + (attributes || '') + '>' + uiIcon(kind) + '</button>';
+  }
   var readerCollapsed = false;
   function setReaderCollapsed(collapsed) {
-    var changed = readerCollapsed !== collapsed;
+    if (readerCollapsed === collapsed) return;
     readerCollapsed = collapsed;
     reader.classList.toggle('collapsed', collapsed);
     if (collapsed) root.setAttribute('data-bauify-reader-collapsed', 'true'); else root.removeAttribute('data-bauify-reader-collapsed');
-    reader.querySelector('.reader-toggle').textContent = collapsed ? tr("Show analysis") : standalone ? tr("View Atlas") : tr("View diagram");
-    reader.querySelector('.reader-toggle').setAttribute('aria-expanded', String(!collapsed));
-    if (changed) requestAnimationFrame(function () { if (window.Archify && Archify.view && Archify.view.centerAt && focused.length) locateComponents(focused); });
+    readerToggle.setAttribute('aria-expanded', String(!collapsed));
+    if (restoreButton) {
+      reader.inert = collapsed;
+      restoreButton.hidden = !collapsed;
+    } else {
+      var label = tr(collapsed ? 'Show analysis' : 'Hide analysis');
+      readerToggle.setAttribute('aria-label', label);
+      readerToggle.dataset.analysisTip = label;
+      requestAnimationFrame(function () { if (window.Archify && Archify.view && Archify.view.centerAt && focused.length) locateComponents(focused); });
+    }
   }
-  reader.querySelector('.reader-toggle').addEventListener('click', function () { setReaderCollapsed(!readerCollapsed); if (readerCollapsed && window.innerWidth <= 1000 && diagramContainer) diagramContainer.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
+  readerToggle.addEventListener('click', function () {
+    setReaderCollapsed(!readerCollapsed);
+    if (!readerCollapsed) return;
+    if (restoreButton) restoreButton.focus({ preventScroll: true });
+    else if (window.innerWidth <= 1000 && diagramContainer) diagramContainer.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  });
   var atlasButton = reader.querySelector('.reader-atlas');
   if (atlasButton) atlasButton.addEventListener('click', function () { if (window.__archifyAtlas) window.__archifyAtlas.open(); });
   function readerPage(name) {
@@ -57,7 +94,7 @@
   overview.id = 'bauify-overview'; overview.hidden = true; overview.setAttribute('aria-label', tr("Code analysis overview"));
   reader.appendChild(overview);
   var findingById = {}; (data.findings || []).forEach(function (f) { findingById[f.id] = f; });
-  var overviewMode = 'summary', listScroll = 0;
+  var overviewMode = 'summary', listScroll = 0, findingReturn = null;
   var filters = { source: 'all', category: 'all', severity: 'all', status: 'open', search: '', unverified: false, page: 0 };
   var filterKey = 'archify-findings:' + (data.repository.root || '') + ':' + location.pathname;
   try { var restored = JSON.parse(sessionStorage.getItem(filterKey)); if (restored) Object.keys(filters).forEach(function (key) { if (typeof restored[key] === typeof filters[key]) filters[key] = restored[key]; }); } catch (error) { /* Storage is optional for offline reports. */ }
@@ -179,6 +216,39 @@
     var heading = overview.querySelector('h3'); if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
+
+  var tooltip = document.createElement('div'), tipAnchor = null;
+  tooltip.className = 'analysis-tooltip'; tooltip.hidden = true;
+  tooltip.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(tooltip);
+  function showTip(anchor) {
+    if (!anchor || !anchor.isConnected || !anchor.getClientRects().length || (anchor.matches('.priority-card b') && anchor.scrollWidth <= anchor.clientWidth)) { hideTip(); return; }
+    tipAnchor = anchor;
+    tooltip.textContent = anchor.dataset.analysisTip;
+    tooltip.hidden = false;
+    var box = anchor.getBoundingClientRect(), w = tooltip.offsetWidth, h = tooltip.offsetHeight;
+    var top = box.bottom + h + 14 <= window.innerHeight ? box.bottom + 6 : box.top - h - 6;
+    tooltip.style.left = Math.max(8, Math.min(box.left + (box.width - w) / 2, document.documentElement.clientWidth - w - 8)) + 'px';
+    tooltip.style.top = Math.max(8, top) + 'px';
+  }
+  function hideTip() { tipAnchor = null; tooltip.hidden = true; }
+  document.addEventListener('mouseover', function (event) {
+    var anchor = event.target.closest && event.target.closest('[data-analysis-tip]');
+    if (anchor && anchor !== tipAnchor) showTip(anchor);
+  });
+  document.addEventListener('mouseout', function (event) {
+    if (tipAnchor && tipAnchor.contains(event.target) && !tipAnchor.contains(event.relatedTarget) && !tipAnchor.matches(':focus-visible')) hideTip();
+  });
+  document.addEventListener('focusin', function (event) {
+    var anchor = event.target;
+    if (anchor.matches('[data-analysis-tip]:focus-visible')) showTip(anchor);
+  });
+  document.addEventListener('focusout', function (event) { if (tipAnchor === event.target) hideTip(); });
+  document.addEventListener('click', function () { if (tipAnchor) showTip(tipAnchor); });
+  document.addEventListener('keydown', function (event) { if (event.key === 'Escape') hideTip(); });
+  document.addEventListener('scroll', hideTip, true);
+  window.addEventListener('resize', hideTip);
+
   // One line about this component: how many of its checks reported something, by level.
   function indicatorSummary(indicators) {
     if (indicators.status === 'grey') return LEVELS.grey.text;
@@ -405,6 +475,7 @@
   // --- overview: project-level reading, built from data.overview ------------
   var GROUPS = { 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'complexity/function': tr("Complex functions"), 'redundancy/duplicate-block': tr("Duplicate code") };
   var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust' };
+  function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function plural(n, word) {
     if (locale === 'zh-CN') {
       var units = { file: ' 个文件', module: ' 个模块', function: ' 个函数', finding: ' 条发现', import: ' 条导入', line: ' 行', check: ' 项检查', source: ' 个来源', layer: ' 个层', rule: ' 条规则', entry: ' 个条目', 'other module': ' 个其他模块', 'internal file': ' 个内部文件', 'matching token': ' 个匹配词元', 'dependency record': ' 条依赖记录', 'error-level finding': ' 条错误级发现' };
@@ -461,19 +532,28 @@
   function findingWhere(f) {
     var ids = f.componentIds || [];
     var where = ids.length ? ids.map(function (id) { return byId[id] ? byId[id].label : id; }).join(', ') : standalone ? sourceModuleLabel(f) : tr("not on this diagram");
-    var e = entryById[f.id];
+    var e = entryById[f.id], path = findingLocation(f);
+    if (f.code === 'redundancy/duplicate-block' && path) return path;
+    return (path ? path + ' · ' : '') + where + (e && e.relatedIds.length ? ' · +' + e.relatedIds.length + tr(" related") : '');
+  }
+  function findingLocation(f) {
     var s = f.subject || {}, first = (f.evidence && f.evidence.imports || [])[0];
     if (f.code === 'redundancy/duplicate-block' && s.locations) return s.locations.map(function (loc) { return loc.file + ':' + loc.line; }).join(' ↔ ');
-    var path = s.file ? s.file + (s.line ? ':' + s.line : '') : first ? first.file + ':' + first.line : '';
-    return (path ? path + ' · ' : '') + where + (e && e.relatedIds.length ? ' · +' + e.relatedIds.length + tr(" related") : '');
+    return s.file ? s.file + (s.line ? ':' + s.line : '') : first ? first.file + (first.line ? ':' + first.line : '') : '';
   }
   function findingRow(id, n) {
     var f = findingById[id]; if (!f) return '';
     var r = f.review || {};
     var badges = (r.since === 'new' ? ("<span class=\"badge-new\">" + tr("new") + "</span>") : '') +
       (r.status === 'accepted' ? '<span class="badge-accepted">' + (f.severity === 'error' ? tr("accepted · still to fix") : tr('accepted')) + '</span>' : r.status === 'accepted-changed' ? ("<span class=\"badge-accepted\">" + tr("accepted · evidence changed") + "</span>") : '');
-    return '<button type="button" class="bauify-item ' + toneOf(f.severity) + (r.status === 'accepted' ? (f.severity === 'error' ? ' accepted-error' : ' accepted') : '') + '" data-finding="' + esc(id) + '"' + (r.reason ? ' title="' + tr('Accepted: ') + esc(r.reason) + '"' : '') + '>' + (n ? '<span class="n">' + n + '</span>' : '') +
-      '<b>' + esc(findingTitle(f)) + '</b> <em>' + esc(tr(f.severity)) + '</em>' + badges + '<span class="what">' + esc(findingWhat(f)) + '</span><span class="where">' + esc(findingWhere(f)) + '</span>' + '</button>';
+    var title = esc(findingTitle(f));
+    return '<button type="button" class="bauify-item ' + toneOf(f.severity) + (r.status === 'accepted' ? (f.severity === 'error' ? ' accepted-error' : ' accepted') : '') + '" data-finding="' + esc(id) + '"' + (r.reason ? ' title="' + esc(tr('Accepted: ') + r.reason) + '"' : '') + '>' + (n ? '<span class="n">' + n + '</span>' : '') +
+      '<b' + (n && !r.reason ? ' data-analysis-tip="' + title + '"' : '') + '>' + title + '</b>' + (n ? '' : '<em>' + esc(tr(f.severity)) + '</em>') + badges + (n ? '' : '<span class="what">' + esc(findingWhat(f)) + '</span><span class="where">' + esc(findingWhere(f)) + '</span>') + '</button>';
+  }
+  function priorityCard(id, n) {
+    var f = findingById[id]; if (!f) return '';
+    var tone = toneOf(f.severity), label = tr(f.severity), mark = { red: '×', amber: '!', blue: 'i' }[tone];
+    return '<article class="priority-card">' + findingRow(id, n) + '<span class="priority-level ' + tone + '" tabindex="0" role="img" aria-label="' + esc(label + ': ' + LEVELS[tone].text) + '" data-analysis-tip="' + esc(label + ': ' + LEVELS[tone].text) + '">' + mark + '</span>' + quickHandoff(f, true) + taskHtml(f) + '</article>';
   }
   var CATEGORIES = { coupling: tr("Dependencies"), complexity: tr("Complexity"), redundancy: tr("Duplicate code"), architecture: tr("Architecture"), conventions: tr("Coding conventions"), 'external-review': tr("AI review") };
   function externalSources() { return (data.overview && data.overview.coverage && data.overview.coverage.external) || []; }
@@ -571,7 +651,7 @@
     var missing = [['complexity/', 'complexity'], ['redundancy/', 'duplication'], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push(tr("Not checked: ") + missing.join(', '));
     var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
-    return ("<details class=\"coverage\">" + "<summary>" + tr("Coverage · ")) + esc(LANGS[c.language] || c.language || tr("Unknown")) + ' · ' + (files.analyzed == null ? tr("file count unavailable") : plural(files.analyzed, 'file')) + (incomplete ? tr(" · incomplete") : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
+    return ("<details class=\"coverage\">" + "<summary>" + tr("Analysis scope")) + ' · ' + esc(LANGS[c.language] || c.language || tr("Unknown")) + (incomplete ? tr(" · incomplete") : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
   }
   // Duplicate detection reports its own file coverage: files it skipped (vendored,
   // below the token/line limits, unsupported) are not checked even with zero findings.
@@ -612,19 +692,16 @@
     var errors = o.counts.error + (o.counts.acceptedErrors || 0);
     var live = typeof window.__archifyReanalyze === 'function';
     var h = '<div class="workbench-header"><h3>' + (errors ? '<i class="bauify-red"></i>' : '') + esc(tr('Architecture check')) + '</h3>' +
-      (live ? '<button type="button" class="bauify-reanalyze" title="' + esc(tr('Read the repository again and compare with this result')) + '">' + esc(tr('Re-analyze')) + '</button>' : '<span class="snapshot-label">' + esc(tr('Offline snapshot')) + '</span>') + '</div>';
-    h += '<ol class="workbench-steps" aria-label="' + esc(tr('Read the diagram and source evidence, copy a task to your coding AI, then re-analyze after edits.')) + '">' +
-      [tr("Read the signals"), tr("Copy a task for AI"), tr("Re-analyze after edits")].map(function (label, i) { return '<li><b>' + (i + 1) + '</b><span>' + esc(tr(label)) + '</span></li>'; }).join('') + '</ol>';
+      (live ? iconButton('refresh', tr('Re-analyze'), ' bauify-reanalyze') : '<span class="snapshot-label" tabindex="0" role="img" aria-label="' + esc(tr('Offline snapshot')) + '" data-analysis-tip="' + esc(tr('Offline snapshot')) + '">' + uiIcon('snapshot') + '</span>') + '</div>';
     h += reviewHtml(o.review);
     var rules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
     var fileCycles = data.findings.filter(function (f) { return f.code === 'coupling/import-cycle'; }).length;
     var moduleCycles = data.findings.filter(function (f) { return f.code === 'coupling/cycle'; }).length;
     var boundaryViolations = data.findings.filter(function (f) { return f.code === 'architecture/boundary'; }).length;
-    h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><p class="health-signal ' + (errors ? 'attention' : 'positive') + '">' + esc(!rules.length ? tr('No checks ran; no all-clear is available') : errors ? tr('{count} error-level diagnostics still present', { count: errors }) : tr('No error-level diagnostics in this scope')) + '</p>';
+    h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><div class="health-primary ' + (errors ? 'attention' : 'positive') + '"><b>' + fmt(o.counts.findings) + '</b><span>' + esc(tr('findings')) + '</span><i>' + esc(!rules.length ? tr('No checks ran') : errors ? tr('{count} errors', { count: errors }) : tr('No errors')) + '</i></div>';
+    h += '<div class="health-facts"><span>' + esc(tr('Import cycles')) + '<b>' + (rules.indexOf('coupling/import-cycle') !== -1 ? fmt(fileCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Module cycles')) + '<b>' + (rules.indexOf('coupling/cycle') !== -1 ? fmt(moduleCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Boundary violations')) + '<b>' + (!o.coverage.boundaries || !o.coverage.boundaries.rules ? tr('Not configured') : rules.indexOf('architecture/boundary') !== -1 ? fmt(boundaryViolations) : tr('Not checked')) + '</b></span></div>';
     if (o.counts.acceptedErrors) h += '<p class="scope-line">' + esc(tr('{open} open · {accepted} accepted error-level findings', { open: o.counts.error, accepted: o.counts.acceptedErrors })) + '</p>';
-    h += '<p class="health-signal">' + esc(rules.indexOf('coupling/import-cycle') !== -1 ? fileCycles ? tr('File import cycles: {count}', { count: fileCycles }) : tr('No file import cycles detected') : tr('Cycle checks did not run')) + '</p>';
-    if (moduleCycles) h += '<p class="health-signal">' + esc(tr('Module dependency loops: {count}', { count: moduleCycles })) + '</p>';
-    h += '<p class="scope-line">' + esc(o.coverage.boundaries && o.coverage.boundaries.rules > 0 ? rules.indexOf('architecture/boundary') === -1 ? tr('Configured layer checks did not run') : boundaryViolations ? tr('Configured layer violations: {count}', { count: boundaryViolations }) : tr('No configured layer violations detected') : tr('Layer rules not configured')) + '</p><p class="scope-line">' + esc((LANGS[o.coverage.language] || o.coverage.language || tr('Unknown language')) + ' · ' + (o.coverage.files.analyzed == null ? tr('file count unavailable') : plural(o.coverage.files.analyzed, 'file')) + ' · ' + plural(data.totals.modules, 'module')) + '</p></section>';
+    h += '</section>';
     h += '<p class="brief-status ev" role="status" aria-live="polite"></p>';
     h += '<details class="architecture-brief-preview" hidden><summary>' + esc(tr('Copy manually')) + '</summary><textarea readonly spellcheck="false" aria-label="' + esc(tr('Architecture brief')) + '"></textarea></details>';
     var offline = '';
@@ -634,9 +711,9 @@
       else offline += '<p class="ev">' + esc(tr('This report has no saved start command. Ask your AI to prepare a fresh analysis from the original repository and architecture JSON.')) + '</p>';
       offline += '</details>';
     }
-    h += '<div class="section-heading"><h4>' + esc(tr(o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4><button type="button" class="brief-copy">' + esc(tr('Copy architecture brief')) + '</button></div>';
+    h += '<div class="section-heading"><h4>' + esc(tr(o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4>' + iconButton('copy', tr('Copy architecture brief'), ' brief-copy') + '</div>';
     if (o.priorities.length) {
-      o.priorities.forEach(function (id, i) { var f = findingById[id]; if (f) h += '<article class="priority-card">' + findingRow(id, i + 1) + quickHandoff(f, true) + taskHtml(f) + '</article>'; });
+      o.priorities.forEach(function (id, i) { h += priorityCard(id, i + 1); });
     } else h += '<p class="ev">' + esc(tr('No open findings within the checks that ran. Accepted findings and coverage remain below.')) + '</p>';
     h += offline;
     var architecture = o.investigation && o.investigation.architecture;
@@ -650,7 +727,7 @@
       var externalCount = data.findings.filter(function (f) { return f.external; }).length;
       h += '<div class="external-entry"><button type="button" class="external-findings"><b>' + esc(tr('External diagnostics')) + ' · ' + externalCount + '</b><span>' + plural(sources.length, 'source') + '</span></button><button type="button" class="text-action overview-sources">' + esc(tr('Sources & coverage')) + '</button></div>';
     }
-    h += '<div class="overview-secondary"><button type="button" class="browse-findings">' + esc(tr('Browse findings')) + '</button><p class="ev counts">' + esc(tr('{warnings} warnings · {info} reference signals · {accepted} accepted', { warnings: o.counts.warning, info: o.counts.info, accepted: o.counts.accepted || 0 })) + '</p>';
+    h += '<div class="overview-secondary"><button type="button" class="browse-findings" aria-label="' + esc(tr('Browse findings')) + '" data-analysis-tip="' + esc(tr('Browse findings')) + '">' + uiIcon('filter') + esc(tr('Filter')) + '</button><p class="ev counts">' + esc(tr('{warnings} warnings · {info} reference signals · {accepted} accepted', { warnings: o.counts.warning, info: o.counts.info, accepted: o.counts.accepted || 0 })) + '</p>';
     if (o.groups.length) {
       h += '<details class="all-finding-groups"><summary>' + esc(tr('All findings')) + ' · ' + o.counts.findings + '</summary>';
       o.groups.forEach(function (g) { h += '<details><summary><i class="bauify-' + toneOf(g.severity) + '"></i>' + esc(GROUPS[g.code] || g.code) + ' · ' + g.count + '</summary>' + g.ids.map(function (id) { return findingRow(id); }).join('') + '</details>'; });
@@ -660,7 +737,7 @@
     if (unchecked.length) h += '<div class="coverage-notice">' + esc(tr('Not checked: ') + unchecked.join(', ') + tr('. See Coverage for the full scope.')) + '</div>';
     var dupLine = duplicateCoverageLine(o.coverage);
     if (dupLine && !dupLine.complete) h += '<div class="coverage-notice">' + esc(dupLine.text + tr('. Files it did not analyze were not checked for duplicates. See Coverage for the full scope.')) + '</div>';
-    h += coverageHtml(o.coverage) + '<p class="ev scope-note">' + esc(tr('These are static checks of the analyzed scope, not a runtime or overall quality guarantee.')) + '</p>';
+    h += coverageHtml(o.coverage);
     if (!standalone) h += '<details><summary>' + esc(tr('Colour key')) + '</summary>' + legend() + '</details>';
     h += '</div>';
     overview.innerHTML = h;
@@ -673,9 +750,9 @@
     if (startCopy) startCopy.addEventListener('click', function () { copyText(data.ui.resume.command, overview.querySelector('.start-status'), overview.querySelector('.start-command'), tr('Copied start command.')); });
     var again = overview.querySelector('.bauify-reanalyze');
     if (again) again.addEventListener('click', function () {
-      again.disabled = true; again.textContent = tr('Analyzing…'); again.setAttribute('aria-busy', 'true');
+      again.disabled = true; again.classList.add('busy'); again.setAttribute('aria-busy', 'true');
       var note = overview.querySelector('.brief-status'); note.classList.remove('reanalyze-error'); note.textContent = tr('Reading the repository — imports, modules, rules.');
-      window.__archifyReanalyze().catch(function (error) { again.disabled = false; again.textContent = tr('Re-analyze'); again.removeAttribute('aria-busy'); note.classList.add('reanalyze-error'); note.textContent = tr('Re-analysis failed: ') + error.message + tr(' The result shown is from the last successful run.'); });
+      window.__archifyReanalyze().catch(function (error) { again.disabled = false; again.classList.remove('busy'); again.removeAttribute('aria-busy'); note.classList.add('reanalyze-error'); note.textContent = tr('Re-analysis failed: ') + error.message + tr(' The result shown is from the last successful run.'); });
     });
     overview.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { showFinding(el.getAttribute('data-finding')); }); });
     wireTasks(overview);
@@ -805,7 +882,9 @@
     try { var notice = sessionStorage.getItem(filterKey + ':notice'); if (notice) { status.textContent = notice; sessionStorage.removeItem(filterKey + ':notice'); } } catch (error) { /* No storage. */ }
   }
   function quickHandoff(f, compact) {
-    return '<div class="quick-handoff" data-handoff-id="' + esc(f.id) + ("\">" + "<div class=\"task-actions\">" + "<button type=\"button\" class=\"quick-copy\">" + tr("Copy task for AI") + "</button>" + "</div>" + "<p class=\"ev handoff-status\" role=\"status\" aria-live=\"polite\">") + (compact ? '' : tr('Includes evidence, suggestions and allowed files. Paste it into your coding AI.')) + '</p></div>';
+    var button = iconButton('copy', tr('Copy task for AI'), ' quick-copy');
+    var status = '<p class="ev handoff-status" role="status" aria-live="polite">' + (compact ? '' : tr('Includes evidence, suggestions and allowed files. Paste it into your coding AI.')) + '</p>';
+    return '<div class="quick-handoff' + (compact ? ' compact' : '') + '" data-handoff-id="' + esc(f.id) + '">' + (compact ? button : '<div class="task-actions">' + button + '</div>') + status + '</div>';
   }
   function wireTasks(container) {
     container = container || detail;
@@ -870,13 +949,18 @@
   }
   function showFinding(id, parent) {
     var f = findingById[id]; if (!f) return;
-    parent = parent || (!overview.hidden && overviewMode === 'findings' ? 'findings' : 'summary');
+    parent = findingReturn ? findingReturn.parent : parent || (!overview.hidden && overviewMode === 'findings' ? 'findings' : 'summary');
+    if (standalone && !findingReturn) {
+      var opener = document.activeElement;
+      findingReturn = { parent: parent, atlas: window.__archifyAtlas && window.__archifyAtlas.saveSelection(), opener: overview.contains(opener) && opener.getAttribute('data-finding') };
+    }
     readerPage(tr("Finding")); detail.classList.remove('reviewing');
     root.removeAttribute('data-bauify-source');
     overview.hidden = true; panel.hidden = true;
     var e = entryById[id];
     var tone = toneOf(f.severity), lvl = LEVELS[tone];
-    var scope = findingScope(f);
+    var scope = findingScope(f), path = findingLocation(f);
+    var locationHtml = path ? '<p class="finding-location">' + esc(path) + '</p>' : '';
     setFocus(f.componentIds || []);
     if (standalone && window.__archifyAtlas) window.__archifyAtlas.focusFinding(id);
     var h = ("<button class=\"close\" aria-label=\"" + tr("Close") + "\">" + "×" + "</button>" + "<button class=\"back\" type=\"button\">" + "← ") + (parent === 'findings' ? tr("Findings") : tr("Overview")) + '</button>';
@@ -895,7 +979,7 @@
       : f.code === 'architecture/boundary' ? tr("These imports break a boundary declared in the analysis config. The rule comes from the config, not from the diagram.")
       : f.code === 'coupling/internal-leak' ? (f.evidence && f.evidence.entrySource === 'config' ? tr("These imports bypass the entry files declared in the analysis config.") : tr("Other modules depend on this module's internal files, so moving or renaming any of them breaks importers. Deep imports can be a deliberate convention; this is a signal, not a defect."))
       : f.code === 'complexity/function' ? tr("Cyclomatic complexity counts independent paths through the function. A high count is a maintenance signal, not a defect.") : lvl.text;
-    h += '<div class="level"><b>' + esc(tr(lvl.name)) + '</b> — ' + esc(findingWhat(f)) + (f.code === 'redundancy/duplicate-block' ? '' : '<br>' + esc(explanation)) + '</div>';
+    h += '<div class="level"><b>' + esc(tr(lvl.name)) + '</b> — ' + esc(findingWhat(f)) + (f.code === 'redundancy/duplicate-block' ? '' : '<br>' + esc(explanation)) + '</div>' + locationHtml;
     h += (f.code === 'redundancy/duplicate-block' ? '' : quickHandoff(f)) + ("<div class=\"k evidence-label\">" + tr("Code evidence") + "</div>") + evidencePreview(f) + reviewHtmlForFinding(f);
     if (f.code === 'redundancy/duplicate-block') h += quickHandoff(f);
     h += nextStepHtml(f) + taskHtml(f);
@@ -910,8 +994,8 @@
     detail.hidden = false;
     codePane.hidden = true;
     detail.scrollTop = 0;
-    detail.querySelector('.close').addEventListener('click', showOverview);
-    detail.querySelector('.back').addEventListener('click', function () { if (parent === 'findings') showFindings(); else showOverview(); });
+    detail.querySelector('.close').addEventListener('click', standalone ? leaveFinding : showOverview);
+    detail.querySelector('.back').addEventListener('click', standalone ? leaveFinding : function () { if (parent === 'findings') showFindings(); else showOverview(); });
     var locate = detail.querySelector('.locate');
     if (locate) locate.addEventListener('click', function () { locateComponents(f.componentIds, true); });
     detail.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { showFinding(el.getAttribute('data-finding')); }); });
@@ -919,6 +1003,16 @@
     wireTasks();
     wireReview(f, parent);
     var heading = detail.querySelector('h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
+  }
+  function leaveFinding() {
+    var previous = findingReturn;
+    findingReturn = null;
+    if (previous && previous.parent === 'findings') showFindings(); else showOverview();
+    if (previous && previous.atlas && window.__archifyAtlas) window.__archifyAtlas.restoreSelection(previous.atlas);
+    if (previous && previous.opener) {
+      var replacement = Array.from(overview.querySelectorAll('[data-finding]')).find(function (row) { return row.getAttribute('data-finding') === previous.opener && row.getClientRects().length; });
+      if (replacement) replacement.focus({ preventScroll: true });
+    }
   }
   window.__archifyAnalysisFindingTitle = function (id) { return findingById[id] ? findingTitle(findingById[id]) : id; };
   // Source links: GitHub-style blob/tree URLs from the origin + revision the facts were taken at.
@@ -1116,7 +1210,11 @@
   }
   function setOn(on) {
     reader.hidden = !on;
-    if (!on) root.removeAttribute('data-bauify-reader-collapsed');
+    if (!on) {
+      if (findingReturn && findingReturn.atlas && window.__archifyAtlas) window.__archifyAtlas.restoreSelection(findingReturn.atlas);
+      findingReturn = null;
+      setReaderCollapsed(false);
+    }
     positionReader();
     root.removeAttribute('data-bauify-source');
     root.setAttribute('data-bauify', on ? 'on' : 'off');

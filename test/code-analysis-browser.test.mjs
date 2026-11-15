@@ -94,6 +94,8 @@ test('Code Analysis highlights exact duplicate characters and retains both locat
     await run(`(() => {
       if (!document.getElementById('bauify-detail').hidden) document.querySelector('#bauify-detail .back').click();
       const button = document.querySelector('#bauify-overview [data-finding="${id}"]');
+      const card = button.closest('.priority-card');
+      if (card) { button.click(); return; }
       const group = button.closest('details');
       if (group && !group.open) group.querySelector('summary').click();
       button.click();
@@ -282,7 +284,8 @@ test('Code Analysis presents Java cycles as structural dependencies in the brows
     if (Date.now() > deadline) return reject(new Error('Java analysis did not open'));
     setTimeout(poll, 25);
   }; poll(); })`);
-  assert.match(await run("document.querySelector('details.coverage summary').textContent"), /^Coverage · Java · 2 files/);
+  assert.match(await run("document.querySelector('details.coverage summary').textContent"), /^Analysis scope · Java/);
+  assert.match(await run("document.querySelector('details.coverage').textContent"), /Java · 2 files analyzed/);
   // Java counts unresolved type references too, so the page does not call them imports.
   const coverage = await run("document.querySelector('details.coverage').textContent");
   assert.match(coverage, /1 dependency record could not be resolved/);
@@ -372,11 +375,11 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length"), 4);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length === [...document.querySelectorAll('#bauify-overview,#bauify-panel,#bauify-detail,#bauify-code')].filter(e => e.parentElement.id === 'bauify-reader').length"), true);
   assert.equal(await run("document.querySelector('.diagram-container').getBoundingClientRect().left > document.getElementById('bauify-reader').getBoundingClientRect().right"), true, 'desktop canvas reserves the reading column');
-  assert.match(await run("document.querySelector('#bauify-overview .health-summary .attention').textContent"), /error-level diagnostics still present/);
+  assert.match(await run("document.querySelector('#bauify-overview .health-summary .attention').textContent"), /errors/);
   assert.match(await run("document.getElementById('bauify-overview').textContent"), /Checked: import cycles, module cycles, hub modules/);
   // a.mjs <-> b.mjs is both a file cycle and a module cycle: one structure, one priority slot.
   assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 1);
-  await run("document.querySelector('#bauify-overview .bauify-item').click()");
+  await run("document.querySelector('#bauify-overview .priority-card .bauify-item').click()");
   assert.equal(await run("document.getElementById('bauify-detail').hidden"), false);
   // A source view must cover the detail on narrow screens, not remain a
   // 300px strip because a later base CSS rule overrides its media query.
@@ -512,7 +515,7 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     p.lineTo = function (x,y) { if (this.testStart) this.testSegment = {x:(x+this.testStart.x)/2,y:(y+this.testStart.y)/2,end:{x,y}}; return line.call(this,x,y); };
     p.stroke = function (...args) { if (!this.canvas.isConnected) { if (this.testArc) atlasArcs.push({...this.testArc,alpha:this.globalAlpha}); if (this.testSegment) atlasSegments.push(this.testSegment); } return stroke.apply(this,args); };
     p.fill = function (...args) { if (!this.canvas.isConnected && this.testDot) atlasDots.push(this.testDot); return fill.apply(this,args); };
-    window.dispatchEvent(new Event('resize'));
+    document.getElementById('btn-theme').click();
   })()`);
   await until(`atlasArcs.length === ${atlas.modules.length}`, 'module geometry was not painted');
   const resting = await run('atlasArcs');
@@ -521,6 +524,12 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   const clickPoint = point => run(`(() => { const c=document.querySelector('#bauify-atlas canvas'),b=c.getBoundingClientRect();c.dispatchEvent(new MouseEvent('click',{clientX:b.left+${point.x},clientY:b.top+${point.y}}));})()`);
   assert.equal(await wheel(-180), false, 'overview leaves page scrolling available');
 
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stats b'), b => b.textContent)"), [atlas.files.length, atlas.edges.length, atlas.functions.length, atlas.modules.length].map(n => n.toLocaleString('en-US')));
+  assert.equal(await run("document.querySelector('.atlas-nav .atlas-title').textContent"), 'Atlas', 'totals do not repeat in the title');
+  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metrics').open"), false, 'coverage and the legend are progressively disclosed');
+  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metric .hist') !== null"), true, 'complexity distribution stays visible');
+  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metric [data-module]') !== null"), true, 'coupled modules stay visible');
+  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-expand').getAttribute('aria-label')"), 'Disable sector zoom');
   // A module from the side panel becomes the focus; the panel names it.
   await run("document.querySelector('#bauify-atlas [data-module]').click()");
   const focused = await run("document.documentElement.getAttribute('data-bauify-atlas-focus')");

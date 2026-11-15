@@ -65,13 +65,14 @@ test('AI task reader: evidence first, live validation, clipboard fallback, downl
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
   await run("window.taskRequests = []; var nativeFetch = window.fetch; window.fetch = function (url, options) { if (url === '/task') window.taskRequests.push(JSON.parse(options.body)); return nativeFetch.apply(this, arguments); };");
   assert.match(await run("document.getElementById('bauify-overview').innerText"), /Not checked: duplicate code, project coding conventions/);
-  assert.match(await run("document.querySelector('#bauify-overview .bauify-item .where').textContent"), /deeply_nested.*\.py:1/);
+  assert.equal(await run("!!document.querySelector('.priority-card .where')"), false, 'the source path is shown in the finding, not the priority card');
   await screenshot('overview-1440');
   const openFinding = async () => {
     await run("document.querySelector('#bauify-overview .bauify-item').click()");
     await wait("!document.getElementById('bauify-detail').hidden");
   };
   await openFinding();
+  assert.match(await run("document.querySelector('#bauify-detail .finding-location').innerText"), /deeply_nested.*\.py:1/);
   assert.equal(await run("document.activeElement === document.querySelector('#bauify-detail h3')"), true);
   assert.equal(await run("document.querySelector('#bauify-detail .relationship').open"), false);
   assert.equal(await run("document.querySelectorAll('#bauify-detail .inline-evidence .evidence-line').length <= 18"), true);

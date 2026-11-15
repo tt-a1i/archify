@@ -130,7 +130,7 @@ Start the local viewer with the same analysis configuration and the authored arc
 node bin/archify.mjs code-analysis serve /path/to/repo --language ts --ir /path/to/architecture.json --config /path/to/repo/analysis.config.json --baseline /path/to/repo/analysis.baseline.json --out /path/to/view
 ```
 
-Open its local URL and click **Code Analysis**. **Browse findings** and **External diagnostics** open the findings list. Filter by source, category, severity or review status; search by rule, message or file. The unverified-report filter includes unverified and changed source bindings. **Sources & coverage** separates successful import, report binding and declared scan completeness, including valid empty reports.
+Open its local URL and click **Code Analysis**. **Filter** and **External diagnostics** open the findings list. Filter by source, category, severity or review status; search by rule, message or file. The unverified-report filter includes unverified and changed source bindings. **Sources & coverage** separates successful import, report binding and declared scan completeness, including valid empty reports.
 
 Open a finding to read its original rule/message, primary and related source excerpts, position and provenance. Task preview/export uses that captured evidence; the live service checks it against current source before returning a task. Imported findings can highlight their existing file owners on the component diagram and Atlas. Supplemental evidence does not create new dependency nodes or edges.
 
