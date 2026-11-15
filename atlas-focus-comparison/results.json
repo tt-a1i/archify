@@ -1,0 +1,28 @@
+{
+  "1203": {
+    "restingRadius": 355.39998212826794,
+    "selectedRadius": 393.8216018178104,
+    "radiusChange": 38.42161968954247,
+    "circle": [
+      681.983749489379,
+      681.983749489379
+    ],
+    "backgroundRadiiPreserved": true,
+    "wheel": true,
+    "escapeRestored": true,
+    "reducedMotion": true,
+    "expandedArcHit": true,
+    "collapsedCircle": true,
+    "findingReturn": true
+  },
+  "1368": {
+    "restingRadius": 355.39998212826794,
+    "selectedRadius": 355.39998212826794,
+    "radiusChange": 0,
+    "circle": [
+      681.983749489379,
+      681.983749489379
+    ],
+    "backgroundRadiiPreserved": true
+  }
+}
