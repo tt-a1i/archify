@@ -13,7 +13,7 @@ html[data-bauify-view="atlas"]:not([data-analysis-mode="standalone"]) #bauify-re
 #bauify-atlas .atlas-icon-button:hover { background: color-mix(in srgb, var(--text, #f8fafc) 6%, transparent); color: var(--text, #f8fafc); }
 #bauify-atlas .atlas-expand[aria-pressed="true"] { background: color-mix(in srgb, var(--backend-stroke, #34D399) 9%, transparent); color: var(--backend-stroke, #34D399); }
 #bauify-atlas .atlas-clear:disabled { opacity: .35; cursor: default; }
-#bauify-atlas .atlas-icon { display: block; }
+#bauify-atlas .atlas-icon { display: block; flex: none; width: 18px; min-width: 0; height: 18px; }
 #bauify-atlas button:hover { background: color-mix(in srgb, var(--text, #f8fafc) 6%, transparent); }
 #bauify-atlas button:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 2px; }
 #bauify-atlas .atlas-body { flex: 1; min-height: 0; display: flex; }

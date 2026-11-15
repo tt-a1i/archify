@@ -526,6 +526,8 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
 
   assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stats b'), b => b.textContent)"), [atlas.files.length, atlas.edges.length, atlas.functions.length, atlas.modules.length].map(n => n.toLocaleString('en-US')));
   assert.equal(await run("document.querySelector('.atlas-nav .atlas-title').textContent"), 'Atlas', 'totals do not repeat in the title');
+  // The delivered diagram styles every svg with width:100% and a min-width; inline icons must not inherit that.
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stat'), s => { const b = s.getBoundingClientRect(), i = s.querySelector('.atlas-icon').getBoundingClientRect(), n = s.querySelector('b').getBoundingClientRect(); return [Math.round(i.width), n.right <= b.right + 1]; })"), [[18, true], [18, true], [18, true], [18, true]], 'stat icons stay 18px wide inside the diagram page and the numbers fit their card');
   assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metrics').open"), false, 'coverage and the legend are progressively disclosed');
   assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metric .hist') !== null"), true, 'complexity distribution stays visible');
   assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metric [data-module]') !== null"), true, 'coupled modules stay visible');
