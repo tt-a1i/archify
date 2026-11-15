@@ -508,25 +508,31 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     window.atlasArcs = []; window.atlasDots = []; window.atlasSegments = [];
     const proto = CanvasRenderingContext2D.prototype;
     const clear = proto.clearRect, arc = proto.arc, begin = proto.beginPath, stroke = proto.stroke, fill = proto.fill, move = proto.moveTo, line = proto.lineTo;
+    const strokeAlpha = style => { const parts = String(style).split(','), alpha = parts.length === 4 ? Number.parseFloat(parts[3]) : 1; return Number.isFinite(alpha) ? alpha : 1; };
     proto.clearRect = function (...args) { if (!this.canvas.isConnected) { window.atlasArcs = []; window.atlasDots = []; window.atlasSegments = []; } return clear.apply(this, args); };
     proto.beginPath = function (...args) { this.testArc = null; this.testDot = null; this.testSegment = null; return begin.apply(this, args); };
     proto.arc = function (x, y, r, start, end, ...rest) {
       if (end - start < Math.PI * 2 - 0.001) this.testArc = { x, y, r, start, end };
-      if (r === 3) this.testDot = { x, y };
+      if (r === 3 || r === 5) this.testDot = { x, y };
       return arc.call(this, x, y, r, start, end, ...rest);
     };
     proto.moveTo = function (x, y) { this.testStart = { x, y }; return move.call(this, x, y); };
-    proto.lineTo = function (x, y) { if (this.testStart) this.testSegment = { x: (x + this.testStart.x) / 2, y: (y + this.testStart.y) / 2 }; return line.call(this, x, y); };
+    proto.lineTo = function (x, y) { if (this.testStart) this.testSegment = { x: (x + this.testStart.x) / 2, y: (y + this.testStart.y) / 2, end: { x, y } }; return line.call(this, x, y); };
     proto.stroke = function (...args) {
       if (this.testSegment && !this.canvas.isConnected) window.atlasSegments.push(this.testSegment);
-      if (this.testArc && !this.canvas.isConnected) window.atlasArcs.push({ ...this.testArc, alpha: this.globalAlpha });
+      if (this.testArc && !this.canvas.isConnected) window.atlasArcs.push({ ...this.testArc, alpha: this.globalAlpha * strokeAlpha(this.strokeStyle) });
       return stroke.apply(this, args);
     };
     proto.fill = function (...args) { if (this.testDot && !this.canvas.isConnected) window.atlasDots.push(this.testDot); return fill.apply(this, args); };
-    window.dispatchEvent(new Event('resize'));
+    document.getElementById('btn-theme').click();
   })()`);
   await until(`window.atlasArcs.length === ${atlas.modules.length}`, 'module strokes not captured');
   const resting = await run('window.atlasArcs');
+  const wheel = (deltaY, ctrlKey = false) => run(`(() => { const e = new WheelEvent('wheel', {deltaY:${deltaY},ctrlKey:${ctrlKey},cancelable:true}); document.querySelector('#bauify-atlas canvas').dispatchEvent(e); return e.defaultPrevented; })()`);
+  const clickPoint = async point => {
+    const origin = await run("(() => { const r = document.querySelector('#bauify-atlas canvas').getBoundingClientRect(); return { x: r.left, y: r.top }; })()");
+    for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x: origin.x + point.x, y: origin.y + point.y, button: 'left', clickCount: 1 });
+  };
   // A module from the side panel becomes the focus; the panel names it.
   await run("document.querySelector('#bauify-atlas [data-module]').click()");
   const focused = await run("document.documentElement.getAttribute('data-bauify-atlas-focus')");
@@ -538,7 +544,7 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   const expanded = await run('window.atlasArcs');
   assert.ok(expanded[first].r > resting[first].r, 'selected module moves out');
   assert.equal(expanded[second].r, resting[second].r, 'background module stays in place');
-  assert.ok(expanded[second].alpha < expanded[first].alpha, 'background module dims');
+  assert.ok(expanded[second].alpha < expanded[first].alpha, 'background module dims: ' + JSON.stringify({ selected: expanded[first], background: expanded[second] }));
   // Sample both arcs within the SAME page task so protocol latency cannot
   // turn a correct intermediate frame into a flaky endpoint assertion.
   const switching = await run(`new Promise(resolve => {
