@@ -61,12 +61,15 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
 
   let overview = await run("document.getElementById('bauify-overview').innerText");
-  assert.match(overview, /4 error-level diagnostics still present/, 'both open and accepted cycles remain visible');
+  assert.equal(await run("document.querySelector('.health-primary.attention i').textContent"), '4 errors', 'both open and accepted cycles remain visible');
   assert.match(overview, /2 open · 2 accepted error-level findings/);
   assert.match(overview, /Baseline: 2 accepted/);
   assert.match(overview, /2 accepted/);
-  const priorities = await run("[...document.querySelectorAll('#bauify-overview .bauify-item')].filter(b => b.querySelector('.n')).map(b => b.textContent)");
-  assert.ok(priorities.length >= 1 && priorities.every(p => /c\.mjs|d\.mjs|Module cycle/.test(p) && !/accepted/.test(p)), `only the new problem is a priority: ${priorities}`);
+  const priorities = await run(`(() => {
+    const data = JSON.parse(document.getElementById('bauify-analysis').textContent);
+    return [...document.querySelectorAll('.priority-card [data-finding]')].map(row => data.findings.find(f => f.id === row.dataset.finding));
+  })()`);
+  assert.ok(priorities.length >= 1 && priorities.every(f => f.review?.status !== 'accepted' && [...(f.subject.files || []), ...(f.subject.modules || [])].some(name => /^[cd](?:\.mjs)?$/.test(name))), 'only the new problem is a priority');
   assert.ok(await run("document.querySelectorAll('#bauify-overview .bauify-item.accepted-error').length >= 1"), 'accepted cycles stay listed, marked, and are not faded like an accepted warning');
   assert.match(await run("document.querySelector('#bauify-overview .bauify-item.accepted-error').title"), /Accepted: legacy loader pair/);
   assert.match(await run("document.querySelector('#bauify-overview .bauify-item.accepted-error').textContent"), /accepted · still to fix/);
@@ -85,7 +88,7 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.equal(await run("Boolean(document.querySelector('#bauify-overview h3 .bauify-red'))"), true, 'accepting an error unblocks CI; the overview still shows its error severity');
   assert.match(overview, /\d+ no longer detected · 0 new/);
   assert.match(overview, /does not prove a fix/);
-  assert.match(overview, /2 error-level diagnostics still present/);
+  assert.equal(await run("document.querySelector('.health-primary.attention i').textContent"), '2 errors');
   assert.match(overview, /0 open · 2 accepted error-level findings/, 'accepted errors are not hidden by a clean open count');
   assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 0, 'accepted findings stay listed without taking open priority slots');
   assert.equal(await run("document.querySelector('#bauify-layer rect').getAttribute('class').split(' ')[0]"), 'red', 'an accepted cycle keeps its component red');
