@@ -62,8 +62,35 @@ async function openHost(t, hostFile, colorScheme) {
   const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
   await send('Page.navigate', { url: pathToFileURL(hostFile).href });
   await loaded;
-  await run(`Promise.all([...document.images].map((img) => img.complete ? Promise.resolve() : new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; })))`);
+  await run(`Promise.all([...(document.images || [])].map((img) => img.complete ? Promise.resolve() : new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; })))`);
   return { run, send };
+}
+
+// Opens the baked SVG as the document itself so its geometry can be measured;
+// the file carries no scripts, so only the test's own CDP evaluation runs.
+async function measureSvg(t, svgFile, colorScheme) {
+  const { run } = await openHost(t, svgFile, colorScheme);
+  return run(`(() => {
+    const root = document.documentElement;
+    const rootBox = root.getBoundingClientRect();
+    const box = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
+    const inside = (r) => r.left >= rootBox.left - 0.5 && r.top >= rootBox.top - 0.5 && r.right <= rootBox.right + 0.5 && r.bottom <= rootBox.bottom + 0.5;
+    const texts = [...document.querySelectorAll('text')].filter((el) => el.textContent.trim() && !el.closest('defs'))
+      .map((el) => ({ text: el.textContent.trim(), ...box(el), inside: inside(el.getBoundingClientRect()), decoration: getComputedStyle(el).textDecorationLine }));
+    const badges = [...document.querySelectorAll('[data-change-badge]')].map((el) => {
+      const rect = el.querySelector('rect'), glyph = el.querySelector('text');
+      const r = box(rect), g = box(glyph);
+      return { change: el.getAttribute('data-change-badge'), rect: r, glyph: g, inside: inside(rect.getBoundingClientRect()),
+        glyphInside: g.left >= r.left - 0.5 && g.right <= r.right + 0.5 && g.top >= r.top - 0.5 && g.bottom <= r.bottom + 0.5 };
+    });
+    const removed = [...document.querySelectorAll('[data-change="removed"]')].map((el) => {
+      const shapes = [...el.querySelectorAll('rect, path, circle, polygon')].concat(el.matches('rect, path') ? [el] : []);
+      return { dashed: shapes.some((shape) => getComputedStyle(shape).strokeDasharray !== 'none'),
+        struck: [...el.querySelectorAll('text')].some((text) => getComputedStyle(text).textDecorationLine.includes('line-through')),
+        opacity: Number(getComputedStyle(el).opacity) };
+    });
+    return { root: { width: rootBox.width, height: rootBox.height }, texts, badges, removed, errors: pageErrors };
+  })()`);
 }
 
 function viewBoxOf(svgFile) {
@@ -135,6 +162,31 @@ for (const preset of PRESETS) test(`baked ${preset} SVGs render inside a sandbox
     for (const [theme, pixels] of [['light', state.lightPixels], ['dark', state.darkPixels]]) {
       assert.ok(pixels.distinctColours >= 12, `${theme} export draws nodes, arrows, change marks and legend (${pixels.distinctColours} colour buckets)`);
       assert.ok(pixels.differingShare > 0.02 && pixels.differingShare < 0.9, `${theme} export has visible content over the background (${pixels.differingShare})`);
+    }
+
+    const geometry = await measureSvg(t, scheme === 'dark' ? dark : light, scheme);
+    const where = `${preset}/${scheme}`;
+    assert.deepEqual(geometry.errors, [], `${where}: no page errors`);
+    assert.deepEqual({ width: geometry.root.width, height: geometry.root.height }, expected, `${where}: document renders at the authored size`);
+    assert.ok(geometry.texts.length >= 8, `${where}: labels, messages and legend text present`);
+    for (const text of geometry.texts) {
+      assert.ok(text.width > 0 && text.height > 0, `${where}: "${text.text}" is laid out`);
+      assert.ok(text.inside, `${where}: "${text.text}" stays inside the viewBox`);
+    }
+    assert.equal(geometry.badges.map((badge) => badge.change).sort().join(','), 'added,added,modified,modified,removed,removed', `${where}: one badge per marked participant and message`);
+    for (const [index, badge] of geometry.badges.entries()) {
+      assert.ok(badge.inside, `${where}: ${badge.change} badge stays inside the viewBox`);
+      assert.ok(badge.glyphInside, `${where}: ${badge.change} badge glyph sits inside its pill ${JSON.stringify(badge)}`);
+      for (const other of geometry.badges.slice(index + 1)) {
+        const separated = badge.rect.right <= other.rect.left || other.rect.right <= badge.rect.left || badge.rect.bottom <= other.rect.top || other.rect.bottom <= badge.rect.top;
+        assert.ok(separated, `${where}: badges overlap ${JSON.stringify([badge.rect, other.rect])}`);
+      }
+    }
+    assert.equal(geometry.removed.length, 2, `${where}: removed participant and message keep their ghosts`);
+    for (const ghost of geometry.removed) {
+      assert.ok(ghost.dashed, `${where}: removed ghost is drawn dashed ${JSON.stringify(ghost)}`);
+      assert.ok(ghost.struck, `${where}: removed label is struck through ${JSON.stringify(ghost)}`);
+      assert.ok(ghost.opacity < 1 && ghost.opacity > 0.3, `${where}: removed ghost stays legible (${ghost.opacity})`);
     }
   }
 });
