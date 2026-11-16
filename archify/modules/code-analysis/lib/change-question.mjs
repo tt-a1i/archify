@@ -39,7 +39,7 @@ export function changeEntryLanguage(entry) {
   if (/\.rs$/.test(entry)) return 'rust';
   if (/\.c$/.test(entry)) return 'c';
   if (/\.(?:cc|cpp|cxx|C)$/.test(entry)) return 'cpp';
-  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go, .rs, .c, .cc, .cpp or .cxx source file with --entry.');
+  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go, .rs, .c, .cc, .cpp, .cxx or .C source file with --entry.');
 }
 
 export function captureChangeSide(root, config, language = 'ts') {

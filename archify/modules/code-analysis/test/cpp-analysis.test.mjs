@@ -10,6 +10,7 @@ import { buildQuestion } from '../lib/explain.mjs';
 import { captureChangeSide, buildChangeQuestion } from '../lib/change-question.mjs';
 import * as fileCycle from '../evaluate/rules/coupling/import-cycle.mjs';
 import * as moduleCycle from '../evaluate/rules/coupling/cycle.mjs';
+import { selectAdapter } from '../extract/index.mjs';
 
 function available(t) {
   const python = process.env.ARCHIFY_CPP_PYTHON || 'python3';
@@ -107,6 +108,7 @@ test('C/C++ reports missing configuration and ambiguous or unsafe commands', t =
   if (!available(t)) return;
   const { root, database, writeDatabase } = fixture(t);
   assert.throws(() => extractFacts(root, { language: 'cpp', config: loadConfig() }), error => error.diagnostics?.[0]?.code === 'extract/cpp-database-missing');
+  assert.throws(() => extractFacts(root, { language: 'cpp', config: mergeConfig(loadConfig(), { cpp: { compileCommands: 'compile_commands.json', timeoutMs: 600001 } }) }), error => error.diagnostics?.[0]?.code === 'extract/cpp-timeout-invalid');
   database.push({ directory: root, file: 'a.cpp', arguments: ['compiler-must-not-run', '-std=c++17', '-DFEATURE_B', '-c', 'a.cpp'] });
   writeDatabase();
   assert.throws(() => capture(root), error => error.diagnostics?.[0]?.code === 'extract/cpp-command-ambiguous');
@@ -141,4 +143,11 @@ test('C/C++ structural cycle rules require a common translation-unit context', (
   facts.imports[0].contexts.push('second.cpp');
   assert.deepEqual(fileCycle.run({ graph, facts })[0].evidence.contexts, ['first.cpp', 'second.cpp']);
   assert.equal(moduleCycle.run({ graph, facts })[0].evidence.exampleContext, 'first.cpp');
+});
+
+test('C++ auto-detects an uppercase .C translation unit with default includes', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify upper C '));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, 'hello.C'), 'int hello() { return 1; }\n');
+  assert.equal(selectAdapter(root, loadConfig()).id, 'cpp');
 });

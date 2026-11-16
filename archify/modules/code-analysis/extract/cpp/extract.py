@@ -6,6 +6,7 @@ to decode command/arguments. No compiler or project command is executed.
 
 import base64
 from collections import defaultdict
+from functools import lru_cache
 import hashlib
 import json
 import os
@@ -29,6 +30,7 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+@lru_cache(maxsize=32768)
 def relative(root, name):
     if not name:
         return None

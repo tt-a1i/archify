@@ -167,7 +167,7 @@ checkouts. The validated entry suffix selects JS/TS, Python (.py) or Java (.java
 configuration (defaults, or one `--config` merged with defaults using the usual
 analysis-config rules). It accepts uncommitted files; Git metadata is background,
 while each snapshot digest identifies captured text. C/C++ paired questions select
-`.c/.cc/.cpp/.cxx` translation-unit entries and conservatively report changed
+`.c/.cc/.cpp/.cxx/.C` translation-unit entries and conservatively report changed
 compilation database settings as partial. Existing analysis directories,
 finding/verify options and `--function` are separate modes.
 

@@ -44,7 +44,8 @@ Create an analysis config, for example:
 
 The path may be absolute or relative to the analysis root; the file must be
 named `compile_commands.json`. An explicit `cpp.sysroot` overrides environment
-and macOS auto-detection. Then run:
+and macOS auto-detection. `cpp.timeoutMs` defaults to 180000 and accepts
+10000–600000 milliseconds for larger selections. Then run:
 
 ```sh
 node archify/bin/archify.mjs code-analysis check /path/to/project --language cpp --config /path/to/analysis.config.json --out /path/to/analysis --fail-on never
@@ -92,7 +93,7 @@ navigation evidence, not proof of execution or a complete call graph.
 
 ## Source questions
 
-Saved questions for `.c`, `.cc`, `.cpp` and `.cxx` entries use their own
+Saved questions for `.c`, `.cc`, `.cpp`, `.cxx` and `.C` entries use their own
 translation unit. For a header, pass one of its recorded contexts:
 
 ```sh

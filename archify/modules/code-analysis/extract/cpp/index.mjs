@@ -54,6 +54,10 @@ export function extractFor(language, root, config, { onCapture } = {}) {
   if (typeof options.compileCommands !== 'string' || !options.compileCommands || (options.sysroot !== undefined && typeof options.sysroot !== 'string')) fail('extract/cpp-database-missing', 'C/C++ analysis requires config.cpp.compileCommands pointing to an existing compile_commands.json.', {
     subject: { option: 'config.cpp.compileCommands' }, supportedFixes: ['generate a compilation database with your build system, then pass its path in --config; Archify does not run the build'],
   });
+  const timeoutMs = options.timeoutMs ?? 180000;
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 10000 || timeoutMs > 600000) fail('extract/cpp-timeout-invalid', 'config.cpp.timeoutMs must be an integer between 10000 and 600000 milliseconds.', {
+    subject: { option: 'config.cpp.timeoutMs' }, supportedFixes: ['use a timeout from 10000 to 600000 milliseconds, or omit it for the 180000 millisecond default'],
+  });
   const databasePath = path.resolve(root, options.compileCommands);
   if (path.basename(databasePath) !== 'compile_commands.json') fail('extract/cpp-database-invalid', 'The compilation database file must be named compile_commands.json.', {
     subject: { file: databasePath }, supportedFixes: ['point config.cpp.compileCommands at compile_commands.json'],
@@ -69,7 +73,7 @@ export function extractFor(language, root, config, { onCapture } = {}) {
   const candidates = [...tree.contents.keys()].filter(file => (language === 'c' ? C.test(file) : C.test(file) || CPP.test(file)) && include(file) && !exclude(file));
   const allowed = [...tree.contents.keys()].filter(file => INPUT.test(file) && include(file) && !exclude(file));
   if (!candidates.length) fail('extract/cpp-no-sources', 'No selected C/C++ translation units are inside the analyzed root.', {
-    subject: { root }, supportedFixes: ['include .c/.cc/.cpp/.cxx sources in the analysis config'],
+    subject: { root }, supportedFixes: ['include .c/.cc/.cpp/.cxx/.C sources in the analysis config'],
   });
   const sourceBytes = [...tree.contents].filter(([file]) => INPUT.test(file));
   const totalBytes = sourceBytes.reduce((sum, [, bytes]) => sum + bytes.length, 0);
@@ -85,12 +89,14 @@ export function extractFor(language, root, config, { onCapture } = {}) {
   const result = spawnSync(python, [script], {
     input: JSON.stringify({ root, language, database: databaseBytes.toString('utf8'), candidates, allowed,
       sources: Object.fromEntries(sourceBytes.map(([file, bytes]) => [file, bytes.toString('base64')])), sysroot }),
-    cwd: os.tmpdir(), encoding: 'utf8', timeout: 120000, maxBuffer: 256 * 1024 * 1024,
+    cwd: os.tmpdir(), encoding: 'utf8', timeout: timeoutMs, maxBuffer: 256 * 1024 * 1024,
     env: { ...process.env, PYTHONPATH: '', PYTHONDONTWRITEBYTECODE: '1' },
   });
-  if (result.error || result.status !== 0) fail(result.error?.code === 'ENOENT' ? 'extract/cpp-python-unavailable' : 'extract/cpp-helper-failed', 'The C/C++ libclang helper could not run.', {
-    evidence: { code: result.error?.code ?? null, exit: result.status, stderr: result.stderr?.trim().split('\n').slice(-8) },
-    supportedFixes: ['install Python 3, matching clang Python bindings and libclang; set ARCHIFY_CPP_PYTHON and ARCHIFY_LIBCLANG if needed'],
+  if (result.error || result.status !== 0) fail(result.error?.code === 'ENOENT' ? 'extract/cpp-python-unavailable' : result.error?.code === 'ETIMEDOUT' ? 'extract/cpp-timeout' : 'extract/cpp-helper-failed', 'The C/C++ libclang helper could not run.', {
+    evidence: { code: result.error?.code ?? null, exit: result.status, timeoutMs, stderr: result.stderr?.trim().split('\n').slice(-8) },
+    supportedFixes: result.error?.code === 'ETIMEDOUT'
+      ? ['increase config.cpp.timeoutMs up to 600000 milliseconds for this build selection', 'analyze a smaller root or select fewer compilation units']
+      : ['install Python 3, matching clang Python bindings and libclang; set ARCHIFY_CPP_PYTHON and ARCHIFY_LIBCLANG if needed'],
   });
   let output;
   try { output = JSON.parse(result.stdout); } catch { fail('extract/cpp-output-invalid', 'The C/C++ helper returned invalid JSON.', { evidence: { stderr: result.stderr?.trim().split('\n').slice(-8) } }); }

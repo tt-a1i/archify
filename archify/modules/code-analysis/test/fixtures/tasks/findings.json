@@ -34,7 +34,7 @@
     "language": "py",
     "adapter": "python@3.15.0",
     "adapterRevision": 10,
-    "configDigest": "d7a45ba36b2db3d77afcbfb8102a92bbd21c751fadd4d59b6eb25198e26b2777",
+    "configDigest": "c91155c80e409900edc313b27fa5ab3aaac037d25c42fa8f0e8cd3a075ca75ba",
     "ruleVersions": {
       "architecture/boundary": 1,
       "complexity/function": 1,
