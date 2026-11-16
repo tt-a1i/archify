@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { DiagnosticError } from '../core/index.mjs';
-import { isWorkspacePath } from '../overlay/workspace.mjs';
+import { DiagnosticError, isRepositoryRelativePath } from '../core/index.mjs';
 
 const SHA = /^[a-f0-9]{40}$/;
 const DIGEST = /^[a-f0-9]{64}$/;
@@ -51,7 +50,7 @@ function repoName(value) {
 }
 
 function withinScope(file, scope) {
-  if (!isWorkspacePath(file)) return null;
+  if (!isRepositoryRelativePath(file)) return null;
   if (scope === '.') return file;
   return file.startsWith(scope + '/') ? file.slice(scope.length + 1) : null;
 }

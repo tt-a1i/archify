@@ -1,21 +1,16 @@
+import { isRepositoryRelativePath } from '../core/index.mjs';
+
 const EXTRA_SOURCE_LIMIT = 128 * 1024;
 const FILE_SOURCE_LIMIT = 32 * 1024;
 const compareText = (a, b) => a < b ? -1 : a > b ? 1 : 0;
-
-// Paths identify records in the capture; they are never used to open the filesystem.
-export function isWorkspacePath(value) {
-  return typeof value === 'string' && value.length > 0 &&
-    !/[\\:\u0000-\u001f\u007f]/.test(value) &&
-    value.split('/').every(part => part && part !== '.' && part !== '..');
-}
 
 export function buildWorkspace({ facts, graph, atlas, snippets }) {
   if (!facts || !atlas) return null;
   const owners = new Map(atlas.files.map(([file, module]) => [file, atlas.modules[module].id]));
   const parseErrors = new Set((facts.parse_errors || []).map(item => item.path));
   const excluded = new Set(graph.excluded?.roles || []);
-  const captured = new Map(facts.files.filter(file => isWorkspacePath(file.path)).map(file => [file.path, file]));
-  const names = [...new Set([...captured.keys(), ...[...parseErrors].filter(isWorkspacePath)])].sort(compareText);
+  const captured = new Map(facts.files.filter(file => isRepositoryRelativePath(file.path)).map(file => [file.path, file]));
+  const names = [...new Set([...captured.keys(), ...[...parseErrors].filter(isRepositoryRelativePath)])].sort(compareText);
   const files = names.map(name => {
     const file = captured.get(name);
     const module = owners.get(name) ?? null;
@@ -65,7 +60,7 @@ export function buildWorkspace({ facts, graph, atlas, snippets }) {
   return {
     files, imports, outsideTargets: chart,
     modules: graph.modules.map(({ id, label }) => [id, label]),
-    scope: isWorkspacePath(facts.repository?.root) ? facts.repository.root : '.',
+    scope: isRepositoryRelativePath(facts.repository?.root) ? facts.repository.root : '.',
     snapshot: /^[a-f0-9]{64}$/.test(facts.repository?.snapshotId || '') ? facts.repository.snapshotId : null,
     language: facts.repository?.language || null,
     revision: facts.repository?.sourceKind === 'git-tree' ? facts.repository.revision : null,
