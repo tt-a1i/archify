@@ -79,7 +79,8 @@ and other non-call references. Archify's change question reports only captured
 direct call evidence to changed definitions.
 
 The local regressions next to the ported tests additionally reject a wrong
-constructor-looking return type, generic specialization leakage, competing
-trait owners (including unknown cfg), forged trait method digests, and stale
-target files. Those controls protect Archify's conservative source-evidence
-contract where a rust-analyzer editor destination alone is insufficient.
+constructor-looking return type, block-local unit struct shadowing, generic
+specialization leakage, competing trait owners (including unknown cfg), forged
+trait method digests, stale target files, and v14 navigation compatibility.
+Those controls protect Archify's conservative source-evidence contract where a
+rust-analyzer editor destination alone is insufficient.

@@ -103,6 +103,20 @@ fn caller() { A::missing().run(); A::maybe().run(); }
  assert.equal(calls(facts,'src/lib.rs').filter(c=>c.line===4&&c.reason==='rust-trait-or-method-dispatch').length,2);
 });
 
+test('Rust block-local unit struct imports do not inherit an outer method target',t=>{
+ const root=fixture(t,{'src/lib.rs':`struct Stwuct;
+trait Twait { fn a(&self); }
+impl Twait for Stwuct { fn a(&self) {} }
+mod other { pub struct Stwuct; }
+fn caller() { use other::Stwuct; let s = Stwuct; s.a(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const methodCalls=calls(facts,'src/lib.rs').filter(c=>c.line===5);
+ assert.equal(methodCalls.length,1);
+ assert.equal(methodCalls[0].resolution,'unresolved');
+ assert.equal(methodCalls[0].target,undefined);
+});
+
 test('Rust return typing does not erase generic specialization needed for method selection',t=>{
  const root=fixture(t,{'src/lib.rs':`struct G<T>(T);
 impl G<u8> { fn new() -> Self { G(0) } fn make() -> G<u8> { G(0) } }
@@ -210,6 +224,21 @@ test('Rust trait declaration navigation requires a captured exact method name',t
  assert.equal(buildQuestion({...args,facts:shortened}).calls.records[0].targetNavigation.reason,'target-range-unavailable');
  fs.appendFileSync(path.join(root,'src/target.rs'),'// edited\n');
  assert.equal(buildQuestion(args).calls.records[0].targetNavigation.status,'changed');
+});
+
+test('Rust v14 captures retain direct function navigation without a v15 trait name range',t=>{
+ const root=fixture(t,{'src/lib.rs':'trait Gate { fn go(); }\nfn work() {}\nfn caller() { Gate::go(); work(); }\n'});
+ const historical=structuredClone(capture(root));
+ historical.callModel='rust-source-direct-v14';
+ historical.repository.adapterRevision=14;
+ for(const trait of historical.traits)for(const method of trait.methods)delete method.sourceRange;
+ assert.deepEqual(schemaErrors('raw-facts',historical),[]);
+ const question=buildQuestion({root,facts:historical,entry:'src/lib.rs',symbol:'caller',question:'Where do these calls go?'});
+ assert.equal(question.calls.coverage,'available');
+ const trait=question.calls.records.find(record=>record.fact.target?.name==='go');
+ const direct=question.calls.records.find(record=>record.fact.target?.name==='work');
+ assert.equal(trait?.targetNavigation.reason,'target-range-unavailable');
+ assert.deepEqual(direct?.targetNavigation.location,{file:'src/lib.rs',name:'work',line:2,column:1});
 });
 
 test('Rust competing explicit and inherited trait methods leave nominal calls unresolved',t=>{

@@ -3117,7 +3117,9 @@ impl Scanner<'_> {
                         if let Some(shape) = scope.local_shapes.get(&name) {
                             return Some(shape.clone());
                         }
-                        if scope.values.contains(&name) {
+                        // A block import can hide an outer unit struct even
+                        // when it has no inferred local shape.
+                        if scope.values.contains(&name) || scope.uses.contains_key(&name) {
                             return None;
                         }
                     }
