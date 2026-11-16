@@ -94,7 +94,7 @@ h1{font:700 26px/1.35 var(--sans);color:var(--ink);letter-spacing:-.015em;max-wi
 .reasons li::before{content:counter(reason);position:absolute;left:2px;top:9px;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font:600 10.5px/1 var(--sans);color:var(--muted);background:var(--sunk);box-shadow:inset 0 0 0 1px var(--rule-strong)}
 /* A full-width conclusion sets the verdict beside its reasons instead of in one long line. */
 .answer-panel{container-type:inline-size}
-@container (min-width:900px){.answer-panel .panel-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}.answer-panel .reasons{margin-top:-5px}}
+@container (min-width:900px){.answer-panel .panel-body:has(.reasons){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}.answer-panel .reasons{margin-top:-5px}}
 .answer-scope{padding:10px 20px 12px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;line-height:1.6;color:var(--muted)}
 .scope-label{flex-shrink:0;font-size:12px;font-weight:500;color:var(--muted);margin-right:2px}
 .scope-chip{display:inline-flex;align-items:center;padding:0 8px;border-radius:999px;background:var(--sunk);border:1px solid var(--rule);color:var(--secondary);font-size:12px;line-height:1.7}
@@ -238,6 +238,12 @@ meter{width:100%;height:8px;accent-color:var(--accent)}
 .diagram-semantics code,.changes code{font-size:10px}
 .diagram-fit-status:not([hidden]){margin-top:6px}
 .changes{font-size:11px;margin-top:8px}
+/* The preview outlines each node and edge a structural change marks, in the colour of its change: the marked shape itself, such as an edge's path, or the shapes a marked group draws. The native preview styles are more specific in both themes, so the outline is important. */
+.diagram svg [data-explainer-change="added"]{--explainer-change:var(--good)}
+.diagram svg [data-explainer-change="modified"]{--explainer-change:var(--caution)}
+.diagram svg [data-explainer-change="removed"]{--explainer-change:var(--bad);opacity:.62}
+.diagram svg :is([data-explainer-change]:is(rect,path,circle,ellipse,polygon,polyline,line),[data-explainer-change]>:is(rect,path,circle,ellipse,polygon,polyline,line):not(.c-mask)){stroke:var(--explainer-change)!important;stroke-width:2.5px!important}
+.diagram svg :is([data-explainer-change="removed"]:is(rect,path,circle,ellipse,polygon,polyline,line),[data-explainer-change="removed"]>:is(rect,path,circle,ellipse,polygon,polyline,line):not(.c-mask)){stroke-dasharray:6 4!important}
 .changes dd{margin-top:3px}
 .added{color:var(--good)}.removed{color:var(--bad)}.modified{color:var(--caution)}
 

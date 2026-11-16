@@ -79,7 +79,9 @@ A diagram replaces the paragraph that would describe it. When the answer involve
 | A change to code | `@diff` or a ```` ```diff ```` fence |
 | A command, config or code that does not exist yet | Plain fence |
 
-Steps that walk through a diagram belong in the diagram's panel: the page reads them beside it, each step lighting its part, and the reader can step through them. Title each step with the label of the node it points at, so the text and the diagram match at a glance; the detail column says what to do there.
+Steps that walk through a diagram belong in the diagram's panel: the panel automatically receives a full-width 12-column row so the page reads them beside the sticky diagram without needing `span=12`, each step lighting its part. Title each step with the label of the node it points at, so the text and the diagram match at a glance; the detail column says what to do there.
+
+Keep tables to two or three columns so phones and narrow windows show each row without horizontal scrolling; split wider matrices into separate focused tables. For runnable behaviour, pair a complete copyable fenced snippet with its actual observed output rather than fragments.
 
 A small answer gets a small page: the conclusion plus one or two panels. A how-it-works, diagnosis or checklist question usually needs three to five.
 
@@ -89,8 +91,10 @@ Write for a reader who will act on the page and may check it. Use the user's lan
 
 - The conclusion is read first; every panel after it supports, qualifies or applies it. Stop once nothing is left to support.
 - Cover what the reader needs to act on the answer: the mechanism behind the conclusion, how to check it, and the cases where it does not hold. The next question a careful reader would ask gets a panel, a table row or a line in scope; a fact the reader could get wrong without it is not optional.
-- Each panel takes one question and each sentence makes one claim. A claim a table or diagram already shows is not restated; the text adds its reason or exception.
-- Keep one term per thing across the title, panels, diagram labels and table headers, and prefer the reader's own term. The page links a name in the text to the node with that label, so a reader can point at it in the diagram.
+- Lead with the concrete mechanism in plain reader terms before naming internal functions, flags or sidecars: say what happens and why it matters first, then anchor the exact identifier in backticks (`Back up the existing HTML before swapping in the staged build (\`commitDeliveryPair\`)`). Separate distinct dimensions (such as input vs. output or default vs. opt-in) instead of folding them into one blurred rule.
+- Refer to panels, diagrams and examples by heading or visible label, not by layout position (`left`, `right`, `above`, `below`), because panels stack and reflow across screen widths.
+- Give each layer one job: the diagram shows structure or sequence, `@steps` explains what happens or what to check at each stage, tables compare parallel cases, and prose explains why or states the boundary. Do not repeat the same sentence across prose, node labels and step details.
+- Keep one term per thing across the title, panels, diagram labels and table headers, and prefer the reader's own term. Keep prose in one primary language instead of mixing half-translated fragments, while keeping exact code, CLI flags, paths and protocol names in backticks. The page links a name in the text to the node with that label, so a reader can point at it in the diagram.
 - Give results with their evidence: a number with its unit, a file position, a source. Keep page-wide conditions in scope. Put a local assumption, exception or uncertainty next to the claim, chart or example it qualifies; do not move it away just to shorten the prose. Label illustrative or unmeasured values where the reader encounters them.
 - Cite a `@source` for each claim the reader cannot check alone: protocol details, thresholds, benchmark figures, API behaviour. A rule of thumb without a source is labelled as one, or left out.
 - Recompute every derived number before delivery and show the arithmetic once: “990 of 1000 requests at 80 ms → P99 = 80 ms; 11 slow → P99 = 600 ms.” Totals in tables add up.
@@ -99,17 +103,19 @@ Write for a reader who will act on the page and may check it. Use the user's lan
 
 English: short sentences (under about 25 words), common words (use, before, to, because), active voice with a named actor.
 
-中文：短句，每句不超过约 50 字；动词直接用（检查、决定，而不是进行检查、做出决定）；修饰语层层嵌套、中心词不清楚时拆句；数字后写清边界（超过 3 次、不超过 1 秒）；用具体结果代替套话（赋能、全方位、至关重要）。
+中文：短句，每句不超过约 50 字；优先写“谁做什么、结果是什么”，少用“通过……实现/进行检查/做出决定”这类空转结构；修饰语过长或双动词纠缠时果断拆句；不在中文句子里夹杂可自然表达的英文碎词（真实命令、函数名、协议名放进反引号）；数字后写清边界（超过 3 次、不超过 1 秒）；用可验证的结果代替套话。
 
 ## Compact native diagrams
 
-Write `@<type> id=<diagram-id> title="..."` followed by pipe rows. Each compiles to a full native Archify diagram, with native validation and layout, and opens in the full Viewer from the page. A document holds up to four native diagrams.
+Write `@<type> id=<diagram-id> title="..."` followed by pipe rows (`role <type> | <label>` for domain concepts in `@architecture`/`@workflow`/`@sequence`). Each compiles to a full native Archify diagram, with native validation and layout, and opens in the full Viewer from the page. A document holds up to four native diagrams.
 
 Any node, actor or entity row may end with a `source:<id>` cell naming a declared `@source`; hovering that node shows the source, and for a repository file its pinned lines, so a code diagram doubles as a code tour.
 
 To reuse an explanation already in the page, add `block:<id>` to the node row, for example `| api | API | backend | block:api-notes |`, and give its paragraph an ID with `@prose id=api-notes`. Prose, callout, list and facts blocks can be referenced. Hovering or focusing the node shows that block's current text; editing or patching the paragraph updates the explanation without changing the diagram. A row may end with both `block:<id>` and `source:<id>`.
 
 Node and participant types: `frontend`, `backend`, `database`, `cloud`, `security`, `messagebus`, `external` (default `backend`). Edge and message variants: `default`, `emphasis`, `security`, `dashed`; sequences also accept `return`. IDs start with a letter and use letters, digits, `-` and `_`.
+
+In `@architecture`, `@workflow` and `@sequence`, rename domain roles with `role <type> | <label>` rows (for example `role frontend | Draft state`). Use `role` rows whenever nodes represent domain concepts, workflow stages, state categories or everyday actions rather than literal servers and databases: declared roles rename the diagram legend and Viewer lens, and drop infrastructure corner icons from nodes of those types while keeping `?` decision marks in workflows. Role labels are plain text (up to 80 characters, without `{...}` braces).
 
 **`@sequence`**: declare actors, then messages in order.
 
@@ -136,7 +142,7 @@ Actor rows: `actor <id> | label | type`. Message rows: `from | to | label | vari
 | trace > fix | cause found | emphasis |
 ```
 
-Node rows: `id | label | type?`. Edge rows: `from > to | label? | variant?`. Nodes widen to fit their labels, so a node label names the step in a few words (up to about 10 Chinese characters or 4 English words) and `@steps` carries the detail. Keep edge labels to one or two words. A node label ending in `?` is drawn as a decision; label its outgoing edges with the answers (`yes`, `no`, `是`, `否`).
+Node rows: `id | label | type?`. Edge rows: `from > to | label? | variant?`. Nodes widen to fit their labels, so write each node label as a natural, scannable phrase (up to about 10 Chinese characters or 4 English words, avoiding `lock+journal+render` keyword pileups) and let `@steps` carry the detail and code identifiers. Omit edge labels when the step or transition is already clear from its node labels, or keep them to one or two words. A node label ending in `?` is drawn as a decision; label its outgoing edges with the answers (`yes`, `no`, `是`, `否`).
 
 Group the steps of a process into phases: declare `lane <id> | label` rows, then give each workflow node its phase as a fourth cell. Up to six nodes draw as one row with the phase labels above it; a longer process wraps into one row per phase.
 
@@ -205,13 +211,11 @@ xychart-beta
 ```
 ````
 
-Name each series (`bar "Before" [...]`) so the chart gets a legend. Bars show their values, and a pie legend shows each value with its share. Use `xychart-beta horizontal` for ranked items or long category names. When numbers carry the point, such as one value jumping while others stay flat, a before/after or a share, chart them so the contrast is seen at a glance; a table under the chart adds only the words each number needs. Put the contrast in one chart, such as mean, P50 and P99 before and after.
+Name each series (`bar "Before" [...]`) so the chart gets a legend. Bars show their values, and a pie legend shows each value with its share. Use `xychart-beta horizontal` for ranked items or long category names. Keep axis ticks, series counts and annotations readable at phone width (~390px) without wrapping into cramped rows or clipped legends; split overloaded multi-series comparisons when labels compete for space. When numbers carry the point, such as one value jumping while others stay flat, a before/after or a share, chart them so the contrast is seen at a glance; a table under the chart adds only the words each number needs. Put the contrast in one chart, such as mean, P50 and P99 before and after.
 
-数据来自草稿目录内的 CSV 或 JSON 文件时，直接使用 `@chart type=bar|line|pie data=latency.csv x=day y=p50,p99 unit=ms title="..."`。`x` 指定分类标签列，`y` 为每个系列指定数值列（饼图使用第一列）。CSV 需要表头；JSON 为对象数组。文件在交付时读取并冻结，柱状图和折线图最多 60 条记录，饼图最多 12 条。空数值仍是错误，不会变成零：补齐数值，或移除该记录并在图注中说明。
+When data lives in a CSV or JSON file inside the draft directory, use `@chart type=bar|line|pie data=latency.csv x=day y=p50,p99 unit=ms title="..."`. `x` names the category column and `y` names one or more numeric series columns (pie charts use the first). CSV files need a header row; JSON files hold an array of objects. Files are read and frozen at delivery, up to 60 records for bar or line charts and 12 for pie charts. Empty numeric cells fail instead of turning into zero: supply the missing value, or remove the row and note the omission in the caption.
 
-分类标签、系列名称和单位中的双引号与反斜线按原文显示。CSV 中含逗号或换行的字段须用双引号包围，字段内的字面双引号写成 `""`；引号内的 CRLF、CR 或 LF 作为字段内换行处理，不拆成新记录。未闭合引号、引号后多余内容、重复的选中列名或列数不匹配会报错，并提供行、字段或列名等定位信息和修复提示。
-
-解析后的标签含无法忠实显示的控制字符、Unicode 行／段落分隔符（U+2028／U+2029，请改用 LF）、孤立 Unicode 代理项，或标签仅含空白时，交付报错并保留旧产物，不会静默删改标签；普通标签的每行首尾空白会去除，Tab 和连续空格按单个空格显示，保留换行；这属于显示排版，不修改原始数据文件，也不阻断交付。CSV 标签字段无论是否加引号都适用。表头仍去掉列名两侧的空白。现有图表类型、数值规则、文件范围检查、依赖冻结和原子交付机制保持不变。
+Double quotes and backslashes in category labels, series names and units display literally. Quote CSV fields that contain commas or line breaks, escaping literal double quotes as `""`; CRLF, CR or LF inside quotes stays a multi-line label rather than splitting the record. Unclosed quotes, trailing text after closing quotes, duplicate selected columns, mismatched column counts, control characters, Unicode line/paragraph separators (`U+2028`/`U+2029`; use LF), lone surrogates or whitespace-only labels fail delivery with a located diagnostic and preserve the previous output rather than silently altering labels. Ordinary leading/trailing whitespace on each label line is trimmed and tabs or repeated spaces collapse to single spaces for display without modifying the frozen source file.
 
 A chart states where its numbers come from the same way text does: measured, from a source, estimated or illustrative, in its caption or in scope. Quote every label that contains spaces or non-ASCII text. Flowcharts, sequences, class, ER, state, timeline and mind-map Mermaid use the native shorthand above, which Archify validates and lets readers explore.
 
