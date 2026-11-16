@@ -48,6 +48,22 @@ test('Java lexical candidates distinguish fixed arities and reject members, expl
   assert.equal(facts.calls.find(call => spelling(source, call) === 'overloaded()').target.line, 2);
 });
 
+test('Java local static overload of an Object method name remains navigable', t => {
+  const source = 'class A { static int hashCode(int value) { return value; } void chosen() { hashCode(1); } }';
+  const { facts } = fixture(t, source);
+  assert.equal(facts.calls.length, 1);
+  assert.equal(facts.calls[0].resolution, 'same-file-static-method');
+  assert.equal(facts.calls[0].target.name, 'hashCode');
+});
+
+test('Java duplicate static declarations with the same signature do not create a guessed call target', t => {
+  const source = 'class A { static void run() {} static void run() {} void chosen() { run(); } }';
+  const { facts } = fixture(t, source);
+  assert.equal(facts.calls.length, 1);
+  assert.equal(facts.calls[0].resolution, 'unresolved');
+  assert.equal(facts.calls[0].reason, 'ambiguous-binding');
+});
+
 test('Java invocation inventory retains nested/local/anonymous sites while target binding excludes those owners and supertypes', t => {
   const source = `class A {
  static void yes() {} void chosen() { yes(); class Local { void run() { yes(); } } new Object() { void run() { yes(); } }; }

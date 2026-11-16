@@ -25,16 +25,51 @@ function fixture(t, sources) {
 
 test('java: captured sources retain exact text, line positions, roles and exclusions', t => {
   const text = '// 😀\r\npackage demo;\r\nclass A {\r\n  void run() {}\r\n}\r\n';
-  const root = fixture(t, { 'src/main/java/demo/A.java': text, 'src/test/java/demo/ATest.java': 'class ATest {}', 'build/Hidden.java': 'bad', 'readme.txt': 'ignored' });
+  const root = fixture(t, { 'src/main/java/demo/A.java': text, 'src/test/java/demo/ATest.java': 'class ATest {}',
+    'build/Hidden.java': 'bad', 'node_modules/fake/Hidden.java': 'bad', 'node_modules/fake/pom.xml': '<project/>', 'readme.txt': 'ignored' });
   const parsed = parseSources(root, config());
   assert.deepEqual(parsed.files.map(({ path, loc, role }) => ({ path, loc, role })), [
     { path: 'src/main/java/demo/A.java', loc: 5, role: 'source' },
     { path: 'src/test/java/demo/ATest.java', loc: 1, role: 'test' },
   ]);
   assert.equal(parsed.files[0].sourceText, text);
+  assert.ok(!parsed.packageMarkers.some(marker => marker.startsWith('node_modules/')));
   const method = [...descendants(parsed.units[0].cst)].find(n => n.name === 'methodDeclaration');
   assert.equal(method.location.startLine, 4);
   assert.equal(text.slice(method.location.startOffset, method.location.endOffset + 1), 'void run() {}');
+});
+
+test('java: a secondary top-level type resolves from a different source file', t => {
+  const root = fixture(t, {
+    'src/main/java/demo/Primary.java': 'package demo; public class Primary {} class Secondary {}',
+    'src/main/java/demo/Use.java': 'package demo; class Use { Secondary value; }',
+  });
+  const { facts } = extractFacts(root, { language: 'java', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  assert.equal(facts.imports.find(imp => imp.from === 'src/main/java/demo/Use.java' && imp.specifier === 'Secondary')?.to,
+    'src/main/java/demo/Primary.java');
+});
+
+test('java: field, local, array, return, parameter, superclass and catch type sites resolve', t => {
+  const root = fixture(t, {
+    'p1/X.java': 'package p1; public class X {}',
+    'p1/Failures.java': 'package p1; public class Failures { public static class Problem extends Exception {} }',
+    'p1/Field.java': 'package p1; class Field { X value; }',
+    'p1/Local.java': 'package p1; class Local { void run() { X value; } }',
+    'p1/Array.java': 'package p1; class Array { Object values = new X[]{}; }',
+    'p1/Return.java': 'package p1; class Return { X read() { return null; } }',
+    'p1/Param.java': 'package p1; class Param { void read(X value) {} }',
+    'p1/Derived.java': 'package p1; class Derived extends X {}',
+    'p1/Catch.java': 'package p1; class Catch { void run() { try {} catch (Failures.Problem error) {} } }',
+  });
+  const { facts } = extractFacts(root, { language: 'java', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  for (const name of ['Field', 'Local', 'Array', 'Return', 'Param', 'Derived']) {
+    assert.ok(facts.imports.some(imp => imp.from === `p1/${name}.java` && imp.specifier === 'X'
+      && imp.to === 'p1/X.java'), name);
+  }
+  assert.ok(facts.imports.some(imp => imp.from === 'p1/Catch.java' && imp.specifier === 'Failures.Problem'
+    && imp.to === 'p1/Failures.java'));
 });
 
 test('java: records, compact constructors, sealed types and switch patterns are parsed', t => {
@@ -120,6 +155,18 @@ test('java: duplicate enclosing declarations keep member types ambiguous on ever
   }
   const control = imports.filter(i => i.from === 'q/Control.java');
   assert.deepEqual(control.map(i => [i.specifier, i.to]), [['p.Unique.Member.TOKEN', 'p/Unique.java'], ['p.Unique.Member', 'p/Unique.java']]);
+});
+
+test('java: duplicate top-level declarations in one file remain ambiguous', t => {
+  const root = fixture(t, {
+    'p/Dup.java': 'package p; class Dup {} class Dup {}',
+    'q/Use.java': 'package q; import p.Dup; class Use { Dup value; }',
+  });
+  const { facts } = extractFacts(root, { language: 'java', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  const edges = facts.imports.filter(imp => imp.from === 'q/Use.java' && ['p.Dup', 'Dup'].includes(imp.specifier));
+  assert.equal(edges.length, 2);
+  assert.ok(edges.every(imp => !imp.resolved && imp.to === undefined));
 });
 
 test('java: classes local to interface methods and initializer blocks are not member types', t => {
@@ -215,18 +262,18 @@ test('java: broken syntax and unsupported input stay visible without partial fac
 
 test('java: explicit, static, nested, same-package and qualified type references resolve to declarations', t => {
   const root = fixture(t, {
-    'odd/location/Types.java': 'package demo; public class Types { public static int VALUE; public static void work() {} public static class Nested {} }',
+    'odd/location/Types.java': 'package demo; public class Types { public static int VALUE; public static void work() {} public static class Nested { public static class Deep {} } }',
     'other/Peer.java': 'package demo; class Peer {}',
     'Use.java': `package demo;
 import demo.Types;
 import demo.Types.Nested;
 import static demo.Types.VALUE;
 import static demo.Types.work;
-class Use { Peer peer; demo.Types qualified; Nested nested; }`,
+class Use { Peer peer; demo.Types qualified; Nested nested; demo.Types.Nested.Deep deep; }`,
   });
   const result = resolveImports(parseSources(root, config()).units);
   const edges = result.imports.filter(e => e.from === 'Use.java');
-  for (const name of ['demo.Types', 'demo.Types.Nested', 'demo.Types.VALUE', 'demo.Types.work', 'Peer', 'Nested']) {
+  for (const name of ['demo.Types', 'demo.Types.Nested', 'demo.Types.Nested.Deep', 'demo.Types.VALUE', 'demo.Types.work', 'Peer', 'Nested']) {
     const found = edges.find(e => e.specifier === name);
     assert.equal(found?.resolved, true, name);
     assert.equal(found.to, name === 'Peer' ? 'other/Peer.java' : 'odd/location/Types.java');
@@ -582,15 +629,48 @@ test('java: inherited member types bind body names; unknown supertype chains kee
   });
   const { imports, unresolved } = resolveImports(parseSources(root, { ...config(), exclude: ['ext/**'] }).units);
   const find = (from, specifier) => imports.find(i => i.from === from && i.specifier === specifier);
-  assert.equal(find('p/OverImport.java', 'Helper')?.resolved, false, 'counted, not dropped behind the external import');
+  assert.equal(find('p/OverImport.java', 'Helper')?.to, 'p/Base.java', 'inherited source member shadows the external import');
   assert.ok(!find('p/OverStatic.java', 'Inner'), 'a declared member shadows a static import and binds in the same file');
   assert.equal(find('p/OverPartial.java', 'N')?.resolved, false, 'a member known from an analyzed ancestor is counted');
   assert.ok(unresolved.unknown >= 2);
   assert.equal(find('p/Deep.java', 'Target')?.to, 'p/Target.java', 'a chain of analyzed supertypes opens the body');
   assert.equal(find('p/Color.java', 'Target')?.to, 'p/Target.java', 'an enum body resolves names java.lang.Enum does not declare');
-  for (const [from, specifier] of [['p/Shadowed.java', 'Helper'], ['p/Shadowed.java', 'Nested'], ['p/Outer.java', 'Helper'],
-    ['p/Outer.java', 'Target'], ['p/Color.java', 'EnumDesc'], ['p/External.java', 'Target'], ['p/CycleA.java', 'Target'], ['p/FromDup.java', 'Target']]) {
+  for (const [from, specifier, to] of [['p/Shadowed.java', 'Helper', 'p/Base.java'], ['p/Shadowed.java', 'Nested', 'p/Api.java'],
+    ['p/Outer.java', 'Helper', 'p/Base.java'], ['p/Outer.java', 'Target', 'p/Target.java']]) {
+    assert.equal(find(from, specifier)?.to, to, `${from} ${specifier}`);
+  }
+  for (const [from, specifier] of [['p/Color.java', 'EnumDesc'], ['p/External.java', 'Target'], ['p/CycleA.java', 'Target'], ['p/FromDup.java', 'Target']]) {
     assert.equal(find(from, specifier)?.resolved, false, `${from} ${specifier}`);
+  }
+});
+
+test('java: a unique protected member interface inherited from captured source resolves', t => {
+  const root = fixture(t, {
+    'test/Bug.java': 'package test; public class Bug { protected interface Proto {} }',
+    'Type.java': 'import test.Bug; import test.Bug.*; class Type extends Bug implements Proto {}',
+  });
+  const { facts } = extractFacts(root, { language: 'java', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  assert.equal(facts.imports.find(imp => imp.from === 'Type.java' && imp.specifier === 'Proto')?.to, 'test/Bug.java');
+});
+
+test('java: inherited member type targets need a unique accessible declaration and complete ancestry', t => {
+  const root = fixture(t, {
+    'lib/PrivateBase.java': 'package lib; public class PrivateBase { private interface Secret {} }',
+    'lib/PackageBase.java': 'package lib; public class PackageBase { interface PackageOnly {} }',
+    'lib/DupBase.java': 'package lib; public class DupBase { public interface Duplicate {} public interface Duplicate {} }',
+    'lib/UnknownBase.java': 'package lib; public class UnknownBase extends Missing { public interface Uncertain {} }',
+    'app/UsePrivate.java': 'package app; import lib.PrivateBase; class UsePrivate extends PrivateBase implements Secret {}',
+    'app/UsePackage.java': 'package app; import lib.PackageBase; class UsePackage extends PackageBase implements PackageOnly {}',
+    'app/UseDup.java': 'package app; import lib.DupBase; class UseDup extends DupBase implements Duplicate {}',
+    'app/UseUnknown.java': 'package app; import lib.UnknownBase; class UseUnknown extends UnknownBase implements Uncertain {}',
+  });
+  const { facts } = extractFacts(root, { language: 'java', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  for (const [file, name] of [['UsePrivate', 'Secret'], ['UsePackage', 'PackageOnly'],
+    ['UseDup', 'Duplicate'], ['UseUnknown', 'Uncertain']]) {
+    const ref = facts.imports.find(imp => imp.from === `app/${file}.java` && imp.specifier === name);
+    assert.equal(ref?.resolved, false, `${file} must not guess a member type target`);
   }
 });
 
@@ -631,9 +711,10 @@ test('java: listed JDK supertypes named by a single-type import open class bodie
   // Implicit java.lang, on-demand and fully qualified names are not inferred; nor is a name under an
   // enclosing scope that declares, inherits or may inherit it.
   for (const from of ['p/Task.java', 'p/Both.java', 'p/Unknown.java', 'p/Unlisted.java', 'p/Fault.java', 'p/Qualified.java',
-    'p/Enclosed.java', 'p/Enclosed2.java', 'p/Obscured.java', 'p/Sub.java']) {
+    'p/Enclosed.java', 'p/Obscured.java', 'p/Sub.java']) {
     assert.equal(find(from, 'Pet')?.resolved, false, `${from} keeps the guard`);
   }
+  assert.equal(find('p/Enclosed2.java', 'Pet')?.to, 'p/Base2.java', 'the captured inherited interface contributes Pet');
 });
 
 test('java: member records holding only member types keep those members, in the owner and in subclasses', t => {

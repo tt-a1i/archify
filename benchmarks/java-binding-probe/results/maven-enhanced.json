@@ -1,0 +1,73 @@
+{
+  "project": "controlled two-module Maven reactor",
+  "inputSha256": "48b64820a60ceeea2a14325688dfc02603dd0d89f0ca71b3506c5c36d635f490",
+  "sourceFiles": 2,
+  "summary": {
+    "javacInvocations": 4,
+    "archifyInvocations": 4,
+    "javacOnlyInvocations": 0,
+    "javacOnlyConstructorDelegations": 0,
+    "matchedInvocations": 4,
+    "javacSourceTargets": 4,
+    "matchedSourceTargets": 4,
+    "archifyKnownTargets": 4,
+    "knownTargetDisagreements": 0,
+    "sourceTargetsLeftUnresolved": 0,
+    "sourceTargetsAcrossPackagesLeftUnresolved": 0,
+    "byKindScope": {
+      "static/cross-file/known": 2,
+      "instance/cross-file/known": 2
+    },
+    "missedReasons": {}
+  },
+  "queries": [
+    {
+      "id": "cross-module-static",
+      "position": "app/src/main/java/probe/app/App.java:7:9:7:25",
+      "text": "Api.staticCall()",
+      "kind": "static",
+      "owner": "probe.api.Api",
+      "method": "staticCall",
+      "jdkTarget": "api/src/main/java/probe/api/Api.java:5",
+      "jsStatus": "known",
+      "jsTarget": "api/src/main/java/probe/api/Api.java:5",
+      "jsReason": null
+    },
+    {
+      "id": "cross-module-instance",
+      "position": "app/src/main/java/probe/app/App.java:8:9:8:33",
+      "text": "new Api().instanceCall()",
+      "kind": "instance",
+      "owner": "probe.api.Api",
+      "method": "instanceCall",
+      "jdkTarget": "api/src/main/java/probe/api/Api.java:6",
+      "jsStatus": "known",
+      "jsTarget": "api/src/main/java/probe/api/Api.java:6",
+      "jsReason": null
+    },
+    {
+      "id": "cross-module-factory",
+      "position": "app/src/main/java/probe/app/App.java:9:9:9:21",
+      "text": "Api.create()",
+      "kind": "static",
+      "owner": "probe.api.Api",
+      "method": "create",
+      "jdkTarget": "api/src/main/java/probe/api/Api.java:4",
+      "jsStatus": "known",
+      "jsTarget": "api/src/main/java/probe/api/Api.java:4",
+      "jsReason": null
+    },
+    {
+      "id": "cross-module-factory-instance",
+      "position": "app/src/main/java/probe/app/App.java:9:9:9:36",
+      "text": "Api.create().instanceCall()",
+      "kind": "instance",
+      "owner": "probe.api.Api",
+      "method": "instanceCall",
+      "jdkTarget": "api/src/main/java/probe/api/Api.java:6",
+      "jsStatus": "known",
+      "jsTarget": "api/src/main/java/probe/api/Api.java:6",
+      "jsReason": null
+    }
+  ]
+}

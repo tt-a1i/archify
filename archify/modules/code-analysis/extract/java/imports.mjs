@@ -28,7 +28,7 @@ export function describeUnit(unit) {
   for (const node of descendants(unit.cst)) {
     if (node.name === 'typeParameter') shadowed.add(node.children.typeIdentifier?.[0]?.children.Identifier?.[0]?.image);
   }
-  const visit = (node, owners = [], local = false) => {
+  const visit = (node, owners = [], local = false, parent = null) => {
     if (TYPE_DECLARATIONS.has(node.name)) {
       const name = typeName(node);
       if (name) {
@@ -37,14 +37,24 @@ export function describeUnit(unit) {
         // members are also in scope in its header, its component list.
         const body = node.name === 'recordDeclaration' ? node.children.recordHeader?.[0]
           : node.children[BODIES[node.name]]?.[0];
+        const modifiers = [...(parent?.children.classModifier || []), ...(parent?.children.interfaceModifier || []),
+          ...(parent?.children.enumModifier || []), ...(parent?.children.recordModifier || [])];
+        const enclosingName = [packageName, ...owners].filter(Boolean).join('.');
+        const enclosing = types.find(type => type.fullName === enclosingName);
+        const inheritable = modifiers.some(modifier => modifier.children.Public || modifier.children.Protected)
+          || ['normalInterfaceDeclaration', 'annotationInterfaceDeclaration'].includes(enclosing?.kind);
+        const supertypeRefs = supertypes(node);
         if (local) { shadowed.add(name); uncertainScopes.push(node.location); }
         else types.push({ name, fullName: [packageName, ...owners, name].filter(Boolean).join('.'), file: unit.file, owners,
           startOffset: node.location.startOffset, endOffset: node.location.endOffset,
           line: node.location.startLine, column: node.location.startColumn,
+          inheritable,
           memberScopeStartOffset: body?.location.startOffset ?? node.location.startOffset,
+          implementsRange: node.children.classImplements?.[0]?.location,
+          classSuperclass: node.children.classExtends?.length ? supertypeRefs[0] : null,
           // A record's implements clause follows its header but is outside the member scope.
           scopeGap: node.name === 'recordDeclaration' ? node.children.classImplements?.[0]?.location : undefined,
-          ...memberNames(node), kind: node.name, supertypes: supertypes(node) });
+          ...memberNames(node), kind: node.name, supertypes: supertypeRefs });
         owners = [...owners, name];
       }
     }
@@ -53,7 +63,7 @@ export function describeUnit(unit) {
     for (const child of children(node)) {
       const anonymousBody = child.name === 'classBody' && (anonymous || node.name === 'enumConstant');
       if (anonymousBody) uncertainScopes.push(child.location);
-      visit(child, owners, local || LOCAL_SCOPES.has(node.name) || anonymousBody);
+      visit(child, owners, local || LOCAL_SCOPES.has(node.name) || anonymousBody, node);
     }
   };
   visit(unit.cst);
@@ -92,7 +102,7 @@ function typeUse(node, qualifiedCreations) {
   return parts.every(Boolean) ? { node: type, name: parts.join('.') } : null;
 }
 
-export function resolveImports(units) {
+export function resolveImports(units, sourceSetVisible = () => true) {
   const described = units.map(unit => unit.references ? unit : describeUnit(unit));
   const index = new Map();
   for (const unit of described) for (const type of unit.types) {
@@ -192,11 +202,16 @@ export function resolveImports(units) {
     return typeNames.has(first) || inProject(name) ? 'unknown' : null;
   };
   const imports = [];
+  const visibleCandidates = (unit, candidates) => candidates.length === 1 && !sourceSetVisible(unit.file, candidates[0].file)
+    ? [] : candidates;
   const add = (unit, specifier, line, candidates, reason) => {
-    const files = [...new Set(candidates.map(t => t.file))];
+    // An invisible sole candidate is not a dependency. Keep existing duplicate
+    // declarations ambiguous even if one source set would later filter out.
+    const visible = visibleCandidates(unit, candidates);
+    const files = [...new Set(visible.map(t => t.file))];
     // Duplicate declarations, including main/test source-set duplicates, remain
     // ambiguous even if they happen to be written in the same source file.
-    const resolved = candidates.length === 1 && files.length === 1;
+    const resolved = visible.length === 1 && files.length === 1;
     if (resolved && files[0] === unit.file) return;
     // Ambiguous analyzed declarations are an internal resolution gap.
     if (!resolved && candidates.length) reason = 'unknown';
@@ -237,7 +252,10 @@ export function resolveImports(units) {
   const unresolved = { external: 0, outside: 0, unknown: 0, opaque: 0 };
   for (const { reason } of entries) if (reason) unresolved[reason] += 1;
   return { imports: entries.map(entry => entry.record), unresolved,
-    resolveType: (unit, reference) => referenceTargets(unit, reference, reference.name, index, lookup, inheritedMembers),
+    resolveType: (unit, reference) => {
+      const candidates = referenceTargets(unit, reference, reference.name, index, lookup, inheritedMembers);
+      return visibleCandidates(unit, candidates);
+    },
     qualifierAncestry: (unit, reference, first) => {
       const ancestors = new Set(), scopes = enclosingTypes(unit, reference);
       if (!scopes.length) return null;
@@ -262,6 +280,27 @@ function referenceTargets(unit, node, name, index, lookup, inheritedMembers) {
   if (node.uncertain) return [];
   const first = name.split('.')[0];
   if (unit.shadowed.has(first)) return [];
+  const inheritedBinding = types => {
+    const declaring = types.filter(type => index.has(`${type.fullName}.${first}`));
+    if (!declaring.length) return null;
+    if (declaring.length !== 1 || name !== first) return INHERITED;
+    const target = lookup(`${declaring[0].fullName}.${first}`);
+    return target.length === 1 && target[0].inheritable ? target : INHERITED;
+  };
+  // A class may name a member inherited from its explicit superclass in its
+  // implements clause. Its own members are not yet in scope in that header.
+  const header = unit.types.find(type => type.implementsRange?.startOffset <= node.startOffset
+    && type.implementsRange.endOffset >= node.endOffset);
+  if (header?.classSuperclass) {
+    const bases = referenceTargets(unit, header.classSuperclass, header.classSuperclass.name, index, lookup, inheritedMembers);
+    if (bases.length === 1) {
+      const base = inheritedMembers(bases[0]);
+      if (base.complete) {
+        const binding = inheritedBinding([bases[0], ...base.ancestors]);
+        if (binding) return binding;
+      }
+    }
+  }
   const enclosing = enclosingTypes(unit, node);
   // Bind the first segment in the nearest lexical scope before looking up
   // members. A missing (possibly inherited) member must not change that
@@ -271,10 +310,13 @@ function referenceTargets(unit, node, name, index, lookup, inheritedMembers) {
   for (const scope of [...enclosing].reverse()) {
     const prefix = index.get(`${scope.fullName}.${first}`) || [];
     if (prefix.length) return prefix.length === 1 ? lookup(`${scope.fullName}.${name}`) : [];
-    const { names, complete } = inheritedMembers(scope);
+    const { names, complete, ancestors } = inheritedMembers(scope);
     // An analyzed inherited member type binds the name even over an external
-    // import; it stays unresolved but counts as an internal gap.
-    if (names.get(first)) return INHERITED;
+    // import. Resolve only a unique public/protected declaration through a
+    // complete analyzed ancestry; uncertain access or ancestry stays unknown.
+    if (names.get(first)) {
+      return complete ? inheritedBinding([...ancestors]) || INHERITED : INHERITED;
+    }
     if (!complete || names.has(first)) return [];
   }
   // Member types in scope shadow imports (JLS 6.4.1). Below them, a single

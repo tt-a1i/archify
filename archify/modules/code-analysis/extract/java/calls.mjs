@@ -1,8 +1,8 @@
 import { children, descendants, tokensOf, TYPE_DECLARATIONS } from './parse.mjs';
 import { measureFunctions } from './functions.mjs';
+import { createHash } from 'node:crypto';
 
 export const CALL_MODEL = 'java-static-lexical-v5';
-const OBJECT_METHODS = new Set(['getClass', 'hashCode', 'equals', 'clone', 'toString', 'notify', 'notifyAll', 'wait', 'finalize']);
 
 // Fixed argument count can distinguish siblings, but never argument types.
 // A varargs sibling needs applicability phases this source model does not run.
@@ -17,7 +17,7 @@ function fixedArity(methods, arity) {
 export function collectFunctionsAndCalls(unit) {
   const measured = new Map();
   const functions = measureFunctions(unit, (record, node) => measured.set(node, record));
-  const contexts = new Map(), declarations = new Map(), publicOwners = new Set();
+  const contexts = new Map(), declarations = new Map(), publicOwners = new Set(), methodDeclarations = [];
   const walk = (node, types = [], method = null, anonymous = false, lambda = false) => {
     if (node.name === 'classDeclaration' && (node.children.classModifier || []).some(m => m.children.Public)) {
       for (const owner of node.children.normalClassDeclaration || []) publicOwners.add(owner);
@@ -27,6 +27,15 @@ export function collectFunctionsAndCalls(unit) {
     if (['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'].includes(node.name)) {
       method = node;
       const owner = types.at(-1);
+      if (['methodDeclaration', 'interfaceMethodDeclaration'].includes(node.name) && !measured.has(node)) {
+        const name = node.children.methodHeader?.[0]?.children.methodDeclarator?.[0]?.children.Identifier?.[0]?.image;
+        const location = node.location;
+        if (name && location) methodDeclarations.push({ file: unit.file, name, kind: node.name,
+          line: location.startLine, endLine: location.endLine,
+          sourceRange: { line: location.startLine, column: location.startColumn,
+            endLine: location.endLine, endColumn: location.endColumn + 1,
+            sha256: createHash('sha256').update(unit.sourceText.slice(location.startOffset, location.endOffset + 1)).digest('hex') } });
+      }
       if (node.name === 'methodDeclaration' && owner && !anonymous) {
         const list = declarations.get(owner) || [];
         list.push(node); declarations.set(owner, list);
@@ -95,7 +104,7 @@ export function collectFunctionsAndCalls(unit) {
       call.reason = 'no-local-function-binding';
       if (anonymous || types.length !== 1 || owner.name !== 'normalClassDeclaration'
         || owner.children.classExtends || owner.children.classImplements
-        || method?.name !== 'methodDeclaration' || !measured.has(method) || OBJECT_METHODS.has(name)) return;
+        || method?.name !== 'methodDeclaration' || !measured.has(method)) return;
       const methods = staticMethods.filter(candidate => candidate.ownerOffset === owner.location.startOffset && candidate.name === name);
       const { method: target, ambiguous } = fixedArity(methods, invocation.children.argumentList?.[0]?.children.expression?.length || 0);
       if (ambiguous) { call.reason = 'ambiguous-binding'; return; }
@@ -107,7 +116,7 @@ export function collectFunctionsAndCalls(unit) {
     });
   }
   calls.sort((a, b) => a.line - b.line || a.column - b.column || a.endLine - b.endLine || a.endColumn - b.endColumn);
-  return { functions, calls, qualifiedCalls, staticMethods };
+  return { functions, calls, qualifiedCalls, staticMethods, methodDeclarations };
 }
 
 // Only public, unique-at-fixed-arity, explicitly static source methods in ordinary top-level

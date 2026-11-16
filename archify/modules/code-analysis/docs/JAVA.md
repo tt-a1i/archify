@@ -31,6 +31,40 @@ decoded text and source locations. Broken or unsupported files remain in
 The adapter does not run Java code, Maven/Gradle builds, annotation processors
 or an LLM, and does not require a JDK.
 
+## Optional JDK method binding
+
+To add compiler-selected targets for calls whose methods are in captured source,
+pass a config file containing:
+
+```json
+{ "java": { "semantic": true, "release": 8 } }
+```
+
+`java.semantic` is off by default. When enabled, Archify uses a local JDK 17+
+`java` executable (`ARCHIFY_JAVA` can name an explicit executable) to analyze
+temporary copies of the already captured Java source. `java.release` is
+optional; when omitted, the running JDK's default source level applies. An
+unsupported release or compiler error leaves the affected source group on its
+JS results. `languageScope.semantic` records the selected release, JDK version,
+analyzed file count, added/rejected targets and failed groups. No JDK or a
+failed compiler also leaves the extraction usable; no external jar is
+downloaded or read, no annotation processor runs, and project code is not executed.
+
+Each compiler group contains only captured sources permitted by the bounded
+Maven source-set and declared direct-dependency model. Before recording any
+target, Archify matches the compiler invocation to a JS call by its full
+source range, checks the target against an exact captured declaration range,
+and checks Maven visibility again. The compiler may identify an interface or
+abstract method declaration without a body; these targets appear in
+`methodDeclarations`, separate from complexity-measured `functions`. They
+identify the statically selected declaration, not a runtime implementation.
+Enabled captures use `java-static-lexical-v6` (adapter revision 13); disabled
+captures retain the v5 binding model. Existing plain static candidates that
+cross a captured Maven boundary without a direct route are rejected in v6,
+including when the compiler is unavailable. External jars, full effective
+POMs, Gradle configurations, generated code and complete classpaths remain
+outside this mode, so a failed source group retains conservative JS coverage.
+
 ## Dependencies
 
 Declarations, rather than directory layout, map canonical type names to files.
@@ -55,7 +89,8 @@ Resolution follows lexical type scope, declarations in the file, single-type
 imports and same-package types. Fully qualified names use the source index; a
 qualified name never starts at a subpackage of the current package, and one
 whose first segment names a type an on-demand import declares stays
-unresolved (inherited members of on-demand imported types are not checked).
+unresolved (inherited members of on-demand imported types are not checked;
+an independently resolved superclass can still supply a member type).
 The guards below leave uncertain bindings unresolved.
 
 Remaining unresolved, by design:
@@ -63,6 +98,10 @@ Remaining unresolved, by design:
 - Duplicate declarations (for example main and test source sets), and member
   types whose enclosing type is declared more than once, on every lookup path
   including static imports.
+- Within one captured Maven or Gradle build module, main source cannot bind a
+  declaration found only in `src/test/java`; test source can still see main
+  source. Duplicate declarations remain ambiguous even when one is in the test
+  source set. This is a source-set boundary, not a complete classpath model.
 - Conflicting imports, type-parameter shadowing, names shadowed by a local
   type anywhere in the file, and simple names introduced by a single static
   import (the import itself is still recorded). Types declared in any block (methods, interface
@@ -75,9 +114,12 @@ Remaining unresolved, by design:
   import: in Spring PetClinic, `PetValidator implements Validator` (a Spring
   interface), so its use of `Pet` in the same package is not recorded. A
   missing edge there is not evidence of absent coupling.
-  When every supertype is analyzed, a name matching an inherited member type
-  stays unresolved and counts as `unknown`, even over an external import of
-  the same name; so does a member type declared by an analyzed ancestor when
+  When the analyzed ancestry is complete, a unique public or protected
+  member type of one ancestor resolves to its declaring file, even over an
+  external import of the same name. A class can also use such a member from
+  its explicit superclass in its `implements` clause. Private, package-only,
+  duplicate, qualified and otherwise uncertain inherited member names stay
+  `unknown`; so does a member type declared by an analyzed ancestor when
   another ancestor is external. Enum bodies leave `EnumDesc` (a member type of
   `java.lang.Enum`) unresolved. A type's own members are not in scope in its
   extends/implements clauses, so declaration headers are outside this body
@@ -195,13 +237,16 @@ branches. Existing thresholds and source-evidence views are reused.
 
 ## Method invocation source navigation
 
-Current captures use `java-static-lexical-v5` (adapter revision 11). Historical
+Default captures use `java-static-lexical-v5` (adapter revision 13). Historical
 v1 restrictions below describe the original collection contract. Later revisions
 add explicit class-qualified public static methods (v2), unique fixed-arity
 candidates among different-arity siblings (v3), and qualifier lookups from callers
 with closed captured ordinary-class ancestry (v4). Captured ancestors must have
 no inherited field or member-type blocker for the qualifier; this is not general
 inheritance or overload/type inference.
+Revision 12 removes the name-only rejection of a unique local static method
+that overloads an inherited `Object` method name; the same fixed-arity and
+source-only limits still apply.
 
 Java v5 additionally admits these inherited-context static calls across Maven
 project roots when captured POMs establish a unique **direct** project dependency.
@@ -219,14 +264,24 @@ and limitations. `calls[].buildEvidence` contains jumpable POM declaration
 points. Saved and paired investigations check these inputs for changes before
 allowing call navigation. POMs are metadata, not analyzed Java source files.
 The scanner captures configured XML/POM files so a named local parent can be
-read from the same snapshot; only used metadata is emitted. Excludes still apply.
+read from the same snapshot; only used metadata is emitted. Maven archetype
+template markers under `src/main/resources/archetype-resources/` do not by
+themselves declare projects or become resolution inputs. An explicitly named
+local parent can still be read. Java files there follow configured
+include/exclude patterns.
 
 Relevant dependency/module profiles, unresolved parents/properties, duplicate
 coordinates, imported BOMs, custom main/test layouts and Gradle dependencies
 cannot grant these new routes. This does not execute Maven, Gradle, plugins,
 annotation processors or project code, and requires no JDK or Maven installation.
-The XML reader pins `@xmldom/xmldom@0.9.12`. Existing same-root and no-parent
-source candidates retain their previous contract; dependency evidence does not
+Within a captured build module, main source cannot use a test-source ancestor
+or direct static target for navigation. Property-expanded child dependency and
+dependency-management declarations override matching parent entries before
+project-route evidence is granted.
+
+The XML reader pins `@xmldom/xmldom@0.9.12`. Apart from the main/test source-set
+boundary above, existing same-root and no-parent source candidates retain their
+previous contract; dependency evidence does not
 turn the global source type index into a complete classpath or disambiguate
 multiple declarations. External artifacts, transitive dependencies, CLI/settings
 activation, generated code, runtime loading and complete impact remain unknown.
