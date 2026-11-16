@@ -9,6 +9,7 @@ export function architectureHandoff({ overview, repository, locale, diagram = tr
     t('{files} analyzed files · {modules} modules · {edges} module edges', { files: c.files.analyzed ?? '?', modules: a.modules, edges: a.edges }),
     t('Excluded by role: {count}', { count: c.files.excludedByRole }), ...(diagram ? [t('Unmapped modules: {count}', { count: c.unmappedModules.length })] : []),
     t('Parse failures: {count}', { count: c.files.parseErrors.length }),
+    ...(c.files.notCompiled ? [t('Source files without compile commands: {count}', { count: c.files.notCompiled })] : []),
     ...(c.otherLanguages.length ? [t('Other languages not analyzed: {languages}', { languages: c.otherLanguages.map(x => `${x.adapter}: ${x.files}`).join(', ') })] : []),
     t('Unresolved dependency records: {count}', { count: (c.unresolved?.unknown || 0) + (c.unresolved?.opaque || 0) }),
     ...(c.rules.suppressed.length ? [t('Checks switched off: {rules}', { rules: c.rules.suppressed.join(', ') })] : []),

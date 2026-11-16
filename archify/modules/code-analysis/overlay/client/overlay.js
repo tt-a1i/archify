@@ -495,7 +495,7 @@
   }
   // --- overview: project-level reading, built from data.overview ------------
   var GROUPS = { 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'complexity/function': tr("Complex functions"), 'redundancy/duplicate-block': tr("Duplicate code") };
-  var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust' };
+  var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust', c: 'C', cpp: 'C++' };
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function plural(n, word) {
     if (locale === 'zh-CN') {
@@ -653,6 +653,7 @@
     lines.push((LANGS[c.language] || c.language || tr("Unknown language")) + (files.analyzed !== null && files.analyzed !== undefined ? ' · ' + plural(files.analyzed, 'file') + tr(" analyzed") : '') +
       (files.excludedByRole ? ' · ' + files.excludedByRole + ' ' + (files.excludedRoles || []).map(function (role) { return locale === 'zh-CN' ? tr(role) : role; }).join('/') + tr(" files left out") : ''));
     (c.otherLanguages || []).forEach(function (x) { lines.push(tr("Not analyzed: ") + plural(x.files, (LANGS[x.adapter] || x.adapter) + tr(" file")) + tr(" (one language per run)")); });
+    if (files.translationUnits !== undefined) lines.push(plural(files.translationUnits, 'translation unit') + tr(' in the compilation database') + (files.notCompiled ? ' · ' + plural(files.notCompiled, 'source file') + tr(' without a command') : ''));
     var pe = files.parseErrors || [];
     if (pe.length) lines.push(plural(pe.length, 'file') + tr(" could not be parsed: ") + pe.slice(0, 3).join(', ') + (pe.length > 3 ? ' …' : ''));
     var u = c.unresolved || {}, unresolved = (u.unknown || 0) + (u.opaque || 0);
@@ -671,7 +672,7 @@
     }
     var missing = [['complexity/', 'complexity'], ['redundancy/', 'duplication'], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push(tr("Not checked: ") + missing.join(', '));
-    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
+    var incomplete = (c.otherLanguages || []).length || files.notCompiled || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
     return ("<details class=\"coverage\">" + "<summary>" + tr("Analysis scope")) + ' · ' + esc(LANGS[c.language] || c.language || tr("Unknown")) + (incomplete ? tr(" · incomplete") : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
   }
   // Duplicate detection reports its own file coverage: files it skipped (vendored,

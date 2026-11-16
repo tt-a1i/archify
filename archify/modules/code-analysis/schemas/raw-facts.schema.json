@@ -77,7 +77,9 @@
             "py",
             "java",
             "go",
-            "rust"
+            "rust",
+            "c",
+            "cpp"
           ]
         },
         "adapter": {
@@ -185,6 +187,13 @@
           "implicit": {
             "const": true,
             "description": "Python package initializer loaded by this import; line points to the initiating statement."
+          },
+          "contexts": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/repoPath" },
+            "description": "C/C++ translation units in which this active include was observed."
           }
         },
         "if": {
@@ -274,6 +283,13 @@
             "type": "integer",
             "minimum": 1
           },
+          "contexts": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/repoPath" },
+            "description": "C/C++ translation units observing this physical definition."
+          },
           "sourceRange": {
             "$ref": "#/$defs/sourceRange",
             "description": "Exact decoded definition slice: Java CST declaration including modifiers, or Python def/async def through AST end excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 and java-static-lexical-v1 functions; absent in historical captures."
@@ -297,7 +313,8 @@
                   "compactConstructorDeclaration",
                   "FuncDecl",
                   "InterfaceMethod",
-                  "RustItemFn"
+                  "RustItemFn",
+                  "ClangFunction"
                 ]
               },
               "sourceRange": {
@@ -593,6 +610,7 @@
               "rust-trait-impl",
               "rust-trait-method-candidate",
               "java-qualified-static-method",
+              "cpp-direct-source",
               "unresolved"
             ]
           },
@@ -907,8 +925,19 @@
               "rust-cfg-unselected",
               "rust-trait-or-method-dispatch",
               "rust-macro-not-expanded",
-              "rust-context-dependent"
+              "rust-context-dependent",
+              "cpp-unbound",
+              "cpp-virtual-dispatch",
+              "cpp-function-pointer",
+              "cpp-macro-expansion",
+              "cpp-template",
+              "cpp-context-dependent"
             ]
+          },
+          "contexts": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": { "$ref": "#/$defs/repoPath" },
+            "description": "C/C++ translation units observing this physical callsite."
           },
           "directCaller": {
             "type": "object",
@@ -1034,7 +1063,8 @@
               "resolution": {
                 "enum": [
                   "imported-function",
-                  "java-qualified-static-method"
+                  "java-qualified-static-method",
+                  "cpp-direct-source"
                 ]
               },
               "target": {
@@ -1098,6 +1128,32 @@
     },
     "languageScope": {
       "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["language", "build", "selectedFiles", "excludedFiles", "fileContexts", "metadata", "conflicts", "limitations"],
+          "properties": {
+            "language": { "enum": ["c", "cpp"] },
+            "build": {
+              "type": "object",
+              "required": ["databasePath", "databaseSha256", "sysroot", "libclang", "units"],
+              "properties": {
+                "databasePath": { "type": "string" },
+                "databaseSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "sysroot": { "type": "string" },
+                "libclang": { "type": "string" },
+                "units": { "type": "array", "items": { "type": "object" } }
+              },
+              "additionalProperties": false
+            },
+            "selectedFiles": { "type": "array", "items": { "$ref": "#/$defs/repoPath" } },
+            "fileContexts": { "type": "object", "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/repoPath" } } },
+            "excludedFiles": { "type": "array", "items": { "type": "object" } },
+            "metadata": { "type": "array", "items": { "type": "object" } },
+            "conflicts": { "type": "array", "items": { "type": "object" } },
+            "limitations": { "type": "array", "items": { "type": "string" } }
+          }
+        },
         {
           "type": "object",
           "additionalProperties": false,

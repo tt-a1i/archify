@@ -5,7 +5,8 @@
     "**/*.py",
     "**/*.java",
     "**/*.go",
-    "**/*.rs"
+    "**/*.rs",
+    "**/*.{c,cc,cpp,cxx,h,hh,hpp,hxx,inc}"
   ],
   "exclude": [
     "**/node_modules/**",

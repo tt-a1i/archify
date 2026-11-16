@@ -30,7 +30,38 @@ const lazyOnly = (e) => (e.kinds.lazy || 0) > 0 && e.kinds.lazy === e.weight;
 const isEager = (e) => e.kinds.eager !== undefined ? e.kinds.eager > 0
   : !['lazy', 'typeOnly', 'conditional'].some((flag) => e.kinds[flag] > 0);
 
-export function run({ graph }) {
+export function run({ graph, facts }) {
+  if (['c', 'cpp'].includes(graph.repository?.language)) {
+    if (!facts) return [];
+    const contexts = [...new Set(facts.imports.flatMap(edge => edge.contexts || []))].sort();
+    const findings = new Map();
+    for (const context of contexts) {
+      const edges = new Map();
+      for (const imp of facts.imports) {
+        if (!imp.resolved || !imp.contexts?.includes(context)) continue;
+        const from = graph.fileModules?.[imp.from], to = graph.fileModules?.[imp.to];
+        if (!from || !to || from === to) continue;
+        const key = JSON.stringify([from, to]);
+        if (!edges.has(key)) edges.set(key, { from, to, weight: 0, kinds: { eager: 0, static: 0 }, evidence: [] });
+        const edge = edges.get(key);
+        edge.weight += 1; edge.kinds.static += 1;
+        if (edge.evidence.length < 5) edge.evidence.push({ file: imp.from, line: imp.line, to: imp.to });
+      }
+      const scoped = { ...graph, repository: { ...graph.repository, language: 'java' }, edges: [...edges.values()] };
+      for (const finding of run({ graph: scoped })) {
+        const key = JSON.stringify(finding.subject.modules);
+        const previous = findings.get(key);
+        if (previous) { previous.evidence.contexts.push(context); continue; }
+        finding.message = `${finding.subject.modules.length} C/C++ modules form an include dependency cycle in recorded translation-unit contexts. Example from ${context}: ${finding.evidence.path.map(id => graph.modules.find(module => module.id === id)?.label || id).join(' → ')}. This is a structural relationship, not runtime loading evidence.`;
+        finding.severity = 'warning';
+        finding.evidence.contexts = [context];
+        finding.evidence.exampleContext = context;
+        finding.supportedFixes = ['review whether the mutual include dependency is intentional', 'move shared declarations or use forward declarations where possible'];
+        findings.set(key, finding);
+      }
+    }
+    return [...findings.values()].sort((a, b) => JSON.stringify(a.subject).localeCompare(JSON.stringify(b.subject)));
+  }
   const java = ['java', 'rust'].includes(graph.repository?.language);
   const rust = graph.repository?.language === 'rust';
   const ids = graph.modules.map((m) => m.id).sort();

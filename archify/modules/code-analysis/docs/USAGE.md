@@ -21,8 +21,8 @@ The source panel marks captured changes against the base commit: green gutters f
 
 If the architecture JSON changes or becomes unavailable after startup, the analysis request is rejected and the page asks you to regenerate the diagram. Restart with the updated JSON and open the new URL. The server never rewrites your input JSON or silently combines a new architecture with the previous diagram.
 
-JavaScript, TypeScript, Python, Java, Go and Rust use five adapters. Select one
-with `--language ts|py|java|go|rust`; `ts` covers both JavaScript and TypeScript.
+JavaScript, TypeScript, Python, Java, Go, Rust, C and C++ are selectable. Select one
+with `--language ts|py|java|go|rust|c|cpp`; `ts` covers both JavaScript and TypeScript.
 Each run uses one adapter; the [language reference](LANGUAGE-REFERENCE.md) has example commands and limits. A JS/TS or Python tree that also holds `.java` files
 keeps its language unless its root has a Maven/Gradle build file (see the
 [upgrade note](JAVA.md)). Choose explicitly for a mixed-language root. Add
@@ -38,6 +38,7 @@ Language extraction has its own prerequisites:
 | `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
 | `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
+| `c`, `cpp` | An existing `compile_commands.json`, Python clang bindings and libclang; see [C/C++ scope and tooling](C_CPP.md). |
 
 The Go and Rust adapters compile Archify's source helper, not the target
 project. Rust's first use may fetch the helper's locked dependencies; cached
@@ -500,3 +501,12 @@ the locked helper dependencies are required. Saved and paired questions retain
 the captured source profile, cfg/features, omitted regions and bounded call
 model; a source binding does not establish compilation or runtime dispatch.
 See [Rust support](RUST.md) for setup, profile settings and limitations.
+
+### C and C++ source investigation
+
+Use `--language c` or `--language cpp` with `config.cpp.compileCommands` set to
+an existing compilation database. C++ selection also covers C translation
+units. Active includes, source function ranges and conservative same-unit
+direct calls carry translation-unit contexts. A saved header question requires
+`--context <translation-unit>`; a paired question accepts a translation-unit
+source entry. See [C/C++ support](C_CPP.md) for setup and limits.

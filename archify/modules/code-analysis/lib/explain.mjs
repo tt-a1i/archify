@@ -69,7 +69,7 @@ export function questionScope(root, facts) {
   return scope;
 }
 
-export function buildQuestion({ question, entry, symbol, root, facts = null, factsPath = null }) {
+export function buildQuestion({ question, entry, symbol, context = null, root, facts = null, factsPath = null }) {
   if (!question?.trim()) fail('task/question-empty', 'Provide the question to investigate.');
   const jsEntry = /\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry || '') && !/\.d\.(?:ts|mts|cts)$/.test(entry);
   // Other languages reuse saved source/function/import facts, not the TS parser.
@@ -80,8 +80,16 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
     && ((language === 'py' && /^python@\d/.test(adapter) && /\.py$/.test(entry || ''))
       || (language === 'java' && /^java-parser@\d/.test(adapter) && /\.java$/.test(entry || ''))
       || (language === 'go' && /^go-parser@\d/.test(adapter) && /\.go$/.test(entry || ''))
-      || (language === 'rust' && /^rust-syn@\d/.test(adapter) && /\.rs$/.test(entry || '')));
-  if (!jsEntry && !savedEntry) fail('task/entry-invalid', 'Question mode needs a JS/TS implementation file, or a captured .py/.java/.go/.rs entry from matching Python/Java/Go/Rust raw facts; declaration files are not supported.', { subject: { entry }, supportedFixes: ['pass a repository-relative JS/TS implementation file, or a saved analysis directory containing the Python/Java/Go/Rust entry from its matching adapter'] });
+      || (language === 'rust' && /^rust-syn@\d/.test(adapter) && /\.rs$/.test(entry || ''))
+      || (['c', 'cpp'].includes(language) && /^libclang@/.test(adapter) && /\.(?:c|cc|cpp|cxx|C|h|hh|hpp|hxx|inc)$/.test(entry || '')));
+  if (!jsEntry && !savedEntry) fail('task/entry-invalid', 'Question mode needs a supported implementation file captured by matching raw facts.', { subject: { entry }, supportedFixes: ['pass a captured JS/TS, Python, Java, Go, Rust, C or C++ source file and its matching analysis directory'] });
+  const cppContext = ['c', 'cpp'].includes(language) ? (context || (/\.(?:c|cc|cpp|cxx|C)$/.test(entry) ? entry : null)) : null;
+  if (['c', 'cpp'].includes(language) && !cppContext) fail('task/context-required', 'A C/C++ header entry needs --context <translation-unit> from the saved analysis.', {
+    subject: { entry }, evidence: { available: facts.languageScope?.fileContexts?.[entry] || [] }, supportedFixes: ['pass a translation unit listed in languageScope.fileContexts for this header'],
+  });
+  if (cppContext && !facts.languageScope?.fileContexts?.[entry]?.includes(cppContext)) fail('task/context-invalid', 'The selected translation unit did not capture this C/C++ entry.', {
+    subject: { entry, context: cppContext }, evidence: { available: facts.languageScope?.fileContexts?.[entry] || [] }, supportedFixes: ['choose one of the captured translation units for this file'],
+  });
   if (facts !== null && (!Array.isArray(facts.files) || !Array.isArray(facts.functions) || !Array.isArray(facts.imports))) fail('task/facts-invalid', 'Expected raw facts with files, functions and imports.', { supportedFixes: ['regenerate raw-facts.json with code-analysis check'] });
   const captured = new Map((facts?.files || []).map((f) => [f.path, f]));
   for (const input of facts?.languageScope?.metadata || []) if (!captured.has(input.file)) captured.set(input.file,{path:input.file,sourceText:input.sourceText});
@@ -113,9 +121,15 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
     const current = readInside(root, input.file);
     return { file: input.file, status: current.status === 'ok' && current.text === input.sourceText ? 'valid' : 'changed-or-unreadable' };
   });
+  if (cppContext) {
+    const build = facts.languageScope.build;
+    let status = 'changed-or-unreadable';
+    try { if (hash(fs.readFileSync(build.databasePath)) === build.databaseSha256) status = 'valid'; } catch { /* missing database */ }
+    languageInputs.push({ file: build.databasePath, status });
+  }
   if (languageInputs?.some(input => input.status !== 'valid')) selected.factsStatus = 'resolution-input-changed';
   if (selected.currentStatus !== 'ok') fail('task/entry-unreadable', `Cannot read entry: ${entry}`, { subject: { entry }, evidence: selected, supportedFixes: ['select an existing file inside --root'] });
-  const matches = (facts?.functions || []).filter((f) => f.file === entry && (f.qualname === symbol || f.name === symbol));
+  const matches = (facts?.functions || []).filter((f) => f.file === entry && (f.qualname === symbol || f.name === symbol) && (!cppContext || f.contexts?.includes(cppContext)));
   let location = null;
   if (symbol && selected.factsStatus === 'valid' && !selected.parseErrors.length) {
     if (matches.length !== 1) fail('task/function-unresolved', `Expected one captured function named ${symbol}; found ${matches.length}.`, { subject: { entry, symbol }, supportedFixes: ['use an exact qualname from raw-facts.json, or omit --function and inspect the file'] });
@@ -124,12 +138,12 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
     if (!Number.isInteger(f.line) || !Number.isInteger(f.endLine) || f.line < 1 || f.endLine < f.line || f.endLine > lines.length) fail('task/facts-invalid', 'Function range is outside the captured file.', { subject: { entry, symbol } });
     location = { file: entry, symbol: f.qualname, startLine: f.line, endLine: f.endLine };
   }
-  const imports = (facts?.imports || []).filter((i) => i.from === entry).map((i) => ({
+  const imports = (facts?.imports || []).filter((i) => i.from === entry && (!cppContext || i.contexts?.includes(cppContext))).map((i) => ({
     ...i, originStatus: selected.factsStatus,
     ...(i.to ? { target: inspect(i.to) } : {}),
   }));
   const selectedFunction = matches.length === 1 ? matches[0] : null;
-  const calls = questionCalls({ facts, factsPath, inspect, entry: selected, location, symbol, text: sources.get(entry), selectedFunction });
+  const calls = questionCalls({ facts, factsPath, inspect, entry: selected, location, symbol, text: sources.get(entry), selectedFunction, context: cppContext });
   return {
     kind: 'archify-function-question', question: question.trim(),
     stage: 'orientation-only', root: path.resolve(root),
@@ -137,8 +151,8 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
     snapshotId: facts?.repository?.snapshotId || null,
     factsAvailable: facts !== null, imports,
     calls,
-    ...questionIncoming({ facts, inspect, entry: selected, symbol, selectedFunction, calls }),
-    scope: { ...questionScope(root, facts), ...(facts?.languageScope ? { languageScope: facts.languageScope, languageInputs } : {}) },
+    ...questionIncoming({ facts, inspect, entry: selected, symbol, selectedFunction, calls, context: cppContext }),
+    scope: { ...questionScope(root, facts), ...(cppContext ? { translationUnit: cppContext } : {}), ...(facts?.languageScope ? { languageScope: facts.languageScope, languageInputs } : {}) },
     limitations: [
       'Locations and imports are captured static facts, usable only where factsStatus/originStatus is valid; dependency targets have separate freshness checks.',
       'Missing facts or changed source require current-source reading and fresh extraction before reusing captured function ranges.',

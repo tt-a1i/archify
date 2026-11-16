@@ -11,7 +11,7 @@ const order = (a, b) => compare(a.fact.file || a.fact.from, b.fact.file || b.fac
 const bounded = (base, records, read) => ({ ...base, coverage: 'available', reason: null, total: records.length,
   included: Math.min(records.length, LIMIT), omitted: Math.max(0, records.length - LIMIT), records: records.slice(0, LIMIT).map(read) });
 
-export function questionIncoming({ facts, inspect, entry, symbol, selectedFunction, calls }) {
+export function questionIncoming({ facts, inspect, entry, symbol, selectedFunction, calls, context = null }) {
   const base = { coverage: 'unavailable', reason: null, limit: LIMIT, total: null, included: 0, omitted: null, records: [],
     limitations: [
       'Reverse lookup covers only resolved imports and bound calls in this captured selection. Unknown, dynamic, external, excluded or uncollected paths are not a known zero or a complete impact graph.',
@@ -22,7 +22,7 @@ export function questionIncoming({ facts, inspect, entry, symbol, selectedFuncti
   const unavailable = reason => ({ ...base, reason });
   const entryReason = !facts ? 'facts-not-captured' : sourceStatus(entry) !== 'valid' ? `entry-${sourceStatus(entry)}` : null;
   const importers = entryReason ? unavailable(entryReason) : bounded(base,
-    facts.imports.flatMap((fact, factIndex) => fact.resolved && fact.to === entry.file ? [{ factIndex, fact }] : []).sort(order),
+    facts.imports.flatMap((fact, factIndex) => fact.resolved && fact.to === entry.file && (!context || fact.contexts?.includes(context)) ? [{ factIndex, fact }] : []).sort(order),
     record => {
       const origin = inspect(record.fact.from), status = sourceStatus(origin);
       return { ...record, origin, navigation: { status, location: status === 'valid' ? { file: record.fact.from, line: record.fact.line } : null } };
@@ -33,7 +33,7 @@ export function questionIncoming({ facts, inspect, entry, symbol, selectedFuncti
   const target = symbol ? { name: selectedFunction.name, line: calls.selection.range.line, column: calls.selection.range.column } : null;
   const matches = facts.calls.flatMap((fact, factIndex) => {
     const to = fact.target;
-    if (!to || (to.file || fact.file) !== entry.file) return [];
+    if (!to || (to.file || fact.file) !== entry.file || (context && !fact.contexts?.includes(context))) return [];
     if (target && (to.name !== target.name || to.line !== target.line || to.column !== target.column)) return [];
     return [{ factIndex, fact }];
   }).sort(order);
