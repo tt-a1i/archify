@@ -70,6 +70,8 @@
   });
   trigger.textContent = viewerText('viewer.update.button', { version: artifact.generatorVersion });
   trigger.addEventListener('click', function () { originalFocus = trigger; dialog.showModal(); dialog.querySelector('header button').focus(); });
+  // Let the modal handle Escape without invoking Viewer shortcuts behind it.
+  dialog.addEventListener('keydown', function (event) { if (event.key === 'Escape') event.stopPropagation(); });
   dialog.addEventListener('close', function () { if (originalFocus) originalFocus.focus(); });
   document.getElementById('reader-update-check').addEventListener('click', function () {
     var button = this;

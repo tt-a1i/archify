@@ -12,9 +12,9 @@
   let toastTimer;
   function notify(text) { const toast=byId('toast');toast.textContent=text;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),3000); }
   function setupReaderUpdate() {
-    const trigger = document.querySelector('[data-reader-update]'), dialog = byId('reader-update');
+    const trigger = document.querySelector('[data-reader-update]'), dialog = byId('explainer-reader-update');
     let disclosure;
-    try { disclosure = read('archify-reader-update-data'); } catch { trigger?.remove(); return; }
+    try { disclosure = read('explainer-reader-update-data'); } catch { trigger?.remove(); return; }
     const safe = value => { try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password && !url.hash && url.href === value ? url : null; } catch { return null; } };
     const stableVersion = value => typeof value === 'string' && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(value);
     const exactKeys = (value, keys) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).sort().join('\0') === [...keys].sort().join('\0');

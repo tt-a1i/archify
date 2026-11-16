@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { parse } from 'parse5';
 import { renderExplainer } from '../archify/explainer/render.mjs';
+import { checkExplainerHtml } from '../archify/explainer/check.mjs';
+import { validateExplainer } from '../archify/explainer/validate.mjs';
+import { prepareExplainer } from '../archify/explainer/prepare.mjs';
 import { computeExplainerRevision } from '../archify/explainer/revision.mjs';
 import { unpackPageBundle } from '../archify/explainer/page-bundle.mjs';
 
@@ -100,11 +103,35 @@ test('renderer: no-script content includes scope, system theme and inert operati
   assert.match(previewStyles,/@media print/);
   assert.equal(all(tree,node=>node.tagName === 'script' && attr(node,'type') === 'application/json').length,5,'software notices, prepared bundle, manifest, reader words, and local reader update identity');
   assert.ok(find(tree,'archify-software-notices'),'standalone explainers keep the embedded software notices');
-  const disclosure = JSON.parse(text(find(tree,'archify-reader-update-data')));
+  const disclosure = JSON.parse(text(find(tree,'explainer-reader-update-data')));
   assert.equal(disclosure.artifact.type,'explainer');
   assert.match(disclosure.artifact.contentSha256,/^[a-f0-9]{64}$/);
   assert.equal(Object.hasOwn(disclosure,'feedback'),false,'reader update data must not expose feedback capability');
   assert.equal(JSON.stringify(disclosure).includes('How <script> works?'),false,'reader update data must not include authored source');
+});
+
+test('renderer: valid authored reader-update IDs stay unique and deliverable', async () => {
+  const input = {
+    schema_version: 1, diagram_type: 'explainer',
+    meta: { id: 'reader-id-collision', title: 'Update process' },
+    answer: { summary: 'A local explanation of the update process.' },
+    panels: [{ id: 'reader-update', title: 'Update process', blocks: [
+      { id: 'reader-update-title', type: 'prose', text: 'The title can use its own identity.' },
+      { id: 'archify-reader-update-data', type: 'prose', text: 'The data section can also use its own identity.' },
+    ] }], sources: [],
+  };
+  assert.equal(validateExplainer(input).ok, true);
+  const preparedBundle = await prepareExplainer(JSON.stringify(input), { inputPath: 'test/reader-update-fixture.json' });
+  const html = renderExplainer(preparedBundle.document, { preparedBundle });
+  const checked = checkExplainerHtml(html);
+  assert.equal(checked.ok, true, JSON.stringify(checked.diagnostics));
+  const tree = parse(html);
+  for (const id of ['reader-update', 'reader-update-title', 'archify-reader-update-data']) {
+    assert.equal(all(tree, node => attr(node, 'id') === id).length, 1, id);
+  }
+  const dialog = find(tree, 'explainer-reader-update');
+  assert.equal(dialog.tagName, 'dialog');
+  assert.equal(find(tree, attr(dialog, 'aria-labelledby')).tagName, 'h2');
 });
 
 test('renderer: multiple native diagrams retain independent preview IDs and original payload hashes',()=>{

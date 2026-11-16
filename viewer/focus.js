@@ -1793,9 +1793,9 @@
         var target = event.target;
         if (chip.hidden || !target || typeof target.closest !== 'function' || chip.contains(target)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
-        // Export consumes the active semantic snapshot; its controls are not
-        // an outside selection. Genuine outside activation still clears it.
-        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu')) return;
+        // Export and artifact version controls leave the active selection in place.
+        // Genuine outside activation still clears it.
+        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu, #btn-reader-update, #reader-update')) return;
         clear();
       }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });

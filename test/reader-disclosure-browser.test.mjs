@@ -98,13 +98,15 @@ test('reader update is local on load and exposes a strict, accessible notice onl
   assert.equal(before.result.value.feedback, null);
   assert.deepEqual(before.result.value.requests, [], 'loading the artifact makes no fetch, XHR, WebSocket, or EventSource request');
 
-  const intercepted = await send('Runtime.evaluate', { expression: `document.getElementById('btn-reader-update').focus(); document.getElementById('btn-reader-update').click(); document.getElementById('reader-update-check').click();` });
+  const intercepted = await send('Runtime.evaluate', { expression: `Archify.focus.set('user', { updateUrl: false }); document.getElementById('btn-reader-update').focus(); document.getElementById('btn-reader-update').click(); document.getElementById('reader-update-check').click();` });
   assert.equal(intercepted.exceptionDetails, undefined, intercepted.exceptionDetails?.exception?.description);
   await new Promise(resolve => setTimeout(resolve, 50));
   const after = await send('Runtime.evaluate', { returnByValue: true, expression: `(() => {
     const dialog = document.getElementById('reader-update');
     return {
       open: dialog.open,
+      selection: Archify.focus.active(),
+      backdrop: getComputedStyle(dialog).backgroundColor,
       focusIsModal: document.activeElement === dialog || dialog.contains(document.activeElement),
       trigger: document.getElementById('btn-reader-update').textContent,
       current: document.getElementById('reader-update-current').textContent,
@@ -115,6 +117,8 @@ test('reader update is local on load and exposes a strict, accessible notice onl
     };
   })()` });
   assert.equal(after.result.value.open, true);
+  assert.equal(after.result.value.selection, 'user');
+  assert.match(after.result.value.backdrop, /^rgb\(/u, 'the dialog has an opaque theme background');
   assert.equal(after.result.value.focusIsModal, true, 'focus remains inside the opened dialog');
   assert.equal(after.result.value.trigger, 'New version 3.2.2');
   assert.match(after.result.value.current, /3\.2\.1/);
@@ -122,6 +126,17 @@ test('reader update is local on load and exposes a strict, accessible notice onl
   assert.deepEqual(after.result.value.summaries, ['Reader update notice is available.']);
   assert.equal(after.result.value.releaseNotes, 'https://github.com/tt-a1i/archify/releases/tag/v3.2.2');
   assert.deepEqual(after.result.value.requests, [{ kind: 'fetch', url: 'https://tt-a1i.github.io/archify/skill-updates/archify/stable.json' }]);
+  const closed = await send('Runtime.evaluate', { expression: `window.__readerUpdateClosed = new Promise(resolve => document.getElementById('reader-update').addEventListener('close', () => resolve(true), { once: true }))` });
+  assert.equal(closed.exceptionDetails, undefined);
+  for (const type of ['keyDown', 'keyUp']) {
+    await send('Input.dispatchKeyEvent', { type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  }
+  const dismissed = await send('Runtime.evaluate', { returnByValue: true, awaitPromise: true, expression: `
+    Promise.race([window.__readerUpdateClosed, new Promise(resolve => setTimeout(() => resolve(false), 1000))]).then(closed => ({
+      closed, open: document.getElementById('reader-update').open,
+      focus: document.activeElement.id, selection: Archify.focus.active(),
+    }))` });
+  assert.deepEqual(dismissed.result.value, { closed: true, open: false, focus: 'btn-reader-update', selection: 'user' });
 });
 
 test('explainer initial load calls none of the four instrumented JavaScript network APIs', {
