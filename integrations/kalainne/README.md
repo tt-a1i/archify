@@ -37,6 +37,19 @@ node integrations/kalainne/bin/install.mjs install --scope project --target /cam
 node integrations/kalainne/bin/install.mjs doctor --target . --json
 ```
 
+Para automatizar vários projetos Kalainne de uma vez:
+
+1. Copie [`targets.example.json`](targets.example.json) para `integrations/kalainne/targets.json` (esse arquivo fica no `.gitignore`).
+2. Preencha `archifyCheckout` com o caminho absoluto deste checkout e cada `projects[].path` com o clone local do produto.
+3. Rode:
+
+```bash
+node integrations/kalainne/bin/bootstrap.mjs --targets integrations/kalainne/targets.json --with-user --home "$HOME" --json
+node integrations/kalainne/bin/install.mjs doctor --target . --json
+```
+
+O bootstrap falha se algum path listado não existir, se `archifyCheckout` não for este repositório, ou se o `doctor` do Archify falhar. Ele é idempotente: pode rodar de novo após adicionar um projeto à lista.
+
 O escopo `user` escreve `~/.agents/skills/kalainne-archify` e `~/.cursor/skills/kalainne-archify`. O escopo `project` escreve `.agents/skills/kalainne-archify` e `.cursor/rules/kalainne-archify.mdc`. Claude Code, Codex e OpenCode leem o skill de projeto em `.agents/skills/`.
 
 Neste repositório a resolução é `workspace`: o CLI é `archify/bin/archify.mjs` do clone. O Cloud Agent recebe esses arquivos no checkout e não precisa do home do desktop. Em outro projeto, `archify-root.json` guarda o caminho absoluto deste checkout.

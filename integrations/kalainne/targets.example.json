@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "archifyCheckout": "/caminho/absoluto/para/este/archify",
+  "projects": [
+    { "id": "site-kalainne", "path": "/caminho/site-kalainne" },
+    { "id": "expert-guide", "path": "/caminho/expert-guide" },
+    { "id": "salon-pro", "path": "/caminho/salon-pro" }
+  ]
+}
