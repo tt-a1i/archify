@@ -3,7 +3,7 @@
   "backend": "Microsoft C/C++ VS Code extension",
   "extensionVersion": "1.35.6",
   "vscodeVersion": "1.144.0",
-  "method": "VS Code executeDefinitionProvider on the same 48 prior clangd positions; configured with selected compile_commands.json",
+  "method": "executeDefinitionProvider after official IntelliSenseReady; same selected CDB, isolated IntelliSense/browse caches; one query per position",
   "counts": {
     "match": 48,
     "different": 0,
@@ -27,7 +27,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -46,7 +48,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -65,7 +69,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -84,7 +90,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -103,7 +111,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -122,7 +132,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -141,7 +153,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -160,7 +174,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -179,7 +195,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -198,7 +216,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -217,7 +237,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -236,7 +258,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -255,7 +279,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -274,7 +300,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -293,7 +321,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -312,7 +342,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "call",
@@ -331,7 +363,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -350,7 +384,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -369,7 +405,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -388,7 +426,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -407,7 +447,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -421,20 +463,14 @@
       "expectedLine": 378,
       "actual": [
         {
-          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_constant_evaluated.h",
-          "line": 22
-        },
-        {
           "file": "include/fmt/core.h",
           "line": 378
-        },
-        {
-          "file": "../../../../../../../../usr/local/include/absl/meta/type_traits.h",
-          "line": 558
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -450,14 +486,12 @@
         {
           "file": "include/fmt/core.h",
           "line": 741
-        },
-        {
-          "file": "include/fmt/format.h",
-          "line": 3102
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -476,7 +510,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -495,7 +531,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -514,7 +552,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -533,7 +573,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -552,7 +594,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -571,7 +615,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -590,7 +636,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -609,7 +657,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "call",
@@ -628,7 +678,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "include",
@@ -647,7 +699,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "include",
@@ -666,7 +720,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "include",
@@ -685,7 +741,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "include",
@@ -704,7 +762,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "include",
@@ -723,7 +783,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "include",
@@ -742,7 +804,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "include",
@@ -761,7 +825,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "include",
@@ -780,7 +846,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "kind": "include",
@@ -799,7 +867,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "include",
@@ -818,7 +888,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "include",
@@ -837,7 +909,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "include",
@@ -856,7 +930,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "include",
@@ -875,7 +951,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "include",
@@ -894,7 +972,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "include",
@@ -913,7 +993,9 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     },
     {
       "kind": "include",
@@ -932,7 +1014,10 @@
         }
       ],
       "status": "match",
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "IntelliSenseReady",
+      "contextStatus": "unverified-header-association"
     }
-  ]
+  ],
+  "contextPolicy": "Opening a source before a header does not verify the header's active translation unit. Header results establish navigation-location agreement only."
 }

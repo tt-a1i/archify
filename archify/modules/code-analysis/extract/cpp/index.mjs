@@ -10,7 +10,7 @@ import { classifyRole, lineCount, listFiles, snapshotTree, toPosix } from '../sh
 import { matcher } from '../shared/glob.mjs';
 
 export const id = 'cpp';
-export const REVISION = 3;
+export const REVISION = 4;
 export const CALL_MODEL = 'cpp-source-direct-v1';
 const C = /\.c$/;
 const CPP = /\.(?:cc|cpp|cxx|C)$/;

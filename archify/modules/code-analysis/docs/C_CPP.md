@@ -78,6 +78,8 @@ configuration are not decoded or counted toward the source-byte budget. An
 active include of an excluded project file stops extraction with an explicit
 diagnostic. UTF-8 validation applies to translation units with a compile
 command and to active project includes; unused files do not block extraction.
+Project headers reached through an external wrapper are still captured and
+assigned to their including translation units.
 
 An include edge means the directive was active in at least one recorded
 translation-unit context. `contexts` names those units; the module graph is
@@ -96,11 +98,16 @@ matches a captured function extent, and is an ordinary direct call. Virtual
 dispatch, function pointers, template and macro-generated calls, and calls
 requiring cross-unit linkage remain unresolved. Bound targets are source
 navigation evidence, not proof of execution or a complete call graph.
+Macro callee expansion is checked against Clang's preprocessing records;
+macros confined to an ordinary call's arguments do not hide its direct target.
+If caller identities disagree across contexts, the merged call omits
+`directCaller`; an agreed caller is retained even when the target is unknown.
 
 ## Source questions
 
 Saved questions for `.c`, `.cc`, `.cpp`, `.cxx` and `.C` entries use their own
-translation unit. For a header, pass one of its recorded contexts:
+translation unit. All captured header suffixes above are accepted as saved
+question entries. For a header, pass one of its recorded contexts:
 
 ```sh
 node archify/bin/archify.mjs code-analysis task /path/to/analysis --root /path/to/project --entry include/api.h --context src/main.cpp --function chosen --question 'Who calls this definition?' --format json
@@ -111,3 +118,9 @@ compilation database digest before offering navigation. An unchanged database
 does not prove that external SDK files are unchanged. Fresh paired questions
 accept C/C++ translation-unit entries; the comparison is partial when the
 observed database or parser settings differ between roots.
+
+The full-regression CI shard installs the matching bindings and native library
+from `libclang==18.1.1` and sets `ARCHIFY_CPP_REQUIRED=1`, so the C/C++ tests fail
+when the parser is unavailable. Other local lanes may explicitly skip native
+tests when no parser is installed. Regenerate C/C++ facts with adapter revision
+4 to obtain the corrected macro and caller provenance.

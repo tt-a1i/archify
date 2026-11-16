@@ -3,7 +3,7 @@
   "backend": "Microsoft C/C++ VS Code extension",
   "vscodeVersion": "1.144.0",
   "extensionVersion": "1.35.6",
-  "method": "executeDefinitionProvider on 20 stratified Archify unresolved call positions; selected compilation database",
+  "method": "executeDefinitionProvider after official IntelliSenseReady; same selected CDB, isolated IntelliSense/browse caches; one query per position",
   "samples": [
     {
       "reason": "cpp-unbound",
@@ -27,7 +27,9 @@
           "line": 2603
         }
       ],
-      "attempts": 2
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-unbound",
@@ -51,7 +53,9 @@
           "line": 11947
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-unbound",
@@ -75,7 +79,9 @@
           "line": 557
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-unbound",
@@ -99,7 +105,9 @@
           "line": 43
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-context-dependent",
@@ -123,7 +131,9 @@
           "line": 12257
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-context-dependent",
@@ -147,7 +157,9 @@
           "line": 12257
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-context-dependent",
@@ -171,7 +183,9 @@
           "line": 1595
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-context-dependent",
@@ -195,7 +209,9 @@
           "line": 128
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-template",
@@ -219,7 +235,9 @@
           "line": 1804
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-template",
@@ -243,7 +261,9 @@
           "line": 2376
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-template",
@@ -267,7 +287,9 @@
           "line": 108
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-template",
@@ -291,7 +313,9 @@
           "line": 557
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-macro-expansion",
@@ -315,7 +339,9 @@
           "line": 229
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-macro-expansion",
@@ -339,7 +365,9 @@
           "line": 397
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-macro-expansion",
@@ -363,7 +391,9 @@
           "line": 538
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-macro-expansion",
@@ -387,7 +417,9 @@
           "line": 127
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-virtual-dispatch",
@@ -423,7 +455,9 @@
           "line": 384
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-virtual-dispatch",
@@ -459,7 +493,9 @@
           "line": 384
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "translation-unit-entry"
     },
     {
       "reason": "cpp-virtual-dispatch",
@@ -531,7 +567,9 @@
           "line": 2672
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     },
     {
       "reason": "cpp-virtual-dispatch",
@@ -559,7 +597,10 @@
           "line": 182
         }
       ],
-      "attempts": 1
+      "attempts": 1,
+      "readiness": "previously-ready-unchanged-document",
+      "contextStatus": "unverified-header-association"
     }
-  ]
+  ],
+  "contextPolicy": "Opening a source before a header does not verify the header's active translation unit. Header results establish navigation-location agreement only."
 }

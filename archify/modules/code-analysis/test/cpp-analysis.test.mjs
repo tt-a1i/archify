@@ -15,7 +15,11 @@ import { selectAdapter } from '../extract/index.mjs';
 function available(t) {
   const python = process.env.ARCHIFY_CPP_PYTHON || 'python3';
   const probe = spawnSync(python, ['-c', 'import os; from clang import cindex; cindex.Config.set_library_file(os.environ["ARCHIFY_LIBCLANG"]) if os.environ.get("ARCHIFY_LIBCLANG") else None; cindex.Index.create()'], { encoding: 'utf8', timeout: 5000 });
-  if (probe.status !== 0) { t.skip('Python clang bindings and libclang are not installed for this platform lane'); return false; }
+  if (probe.status !== 0) {
+    assert.notEqual(process.env.ARCHIFY_CPP_REQUIRED, '1', `Required C/C++ parser is unavailable: ${probe.error?.message || probe.stderr}`);
+    t.skip('Python clang bindings and libclang are not installed for this platform lane');
+    return false;
+  }
   return true;
 }
 
@@ -174,20 +178,95 @@ test('C/C++ ignores invalid bytes in a source without a compile command', t => {
   assert.throws(() => capture(root), error => error.diagnostics?.[0]?.code === 'extract/cpp-encoding-invalid');
 });
 
-test('C/C++ captures active .ipp and .def headers and binds their definitions', t => {
+test('C/C++ supports captured implementation headers through saved source questions', t => {
   if (!available(t)) return;
   const { root } = fixture(t);
-  fs.writeFileSync(path.join(root, 'part.ipp'), 'inline int part_answer() { return 7; }\n');
-  fs.writeFileSync(path.join(root, 'part.def'), 'inline int def_answer() { return 8; }\n');
+  const suffixes = ['ipp', 'inl', 'tcc', 'tpp', 'def'];
+  for (const suffix of suffixes) fs.writeFileSync(path.join(root, `part.${suffix}`), `inline int ${suffix}_answer() { return 7; }\n`);
   fs.writeFileSync(path.join(root, 'a.cpp'),
-    `#include "part.ipp"\n#include "part.def"\n${fs.readFileSync(path.join(root, 'a.cpp'), 'utf8')}\nint ipp_entry() { return part_answer(); }\nint def_entry() { return def_answer(); }\n`);
+    `${suffixes.map(suffix => `#include "part.${suffix}"\n`).join('')}${fs.readFileSync(path.join(root, 'a.cpp'), 'utf8')}\n`
+      + suffixes.map(suffix => `int ${suffix}_entry() { return ${suffix}_answer(); }\n`).join(''));
   const { facts } = capture(root);
-  assert.ok(facts.files.some(file => file.path === 'part.ipp'));
-  assert.ok(facts.files.some(file => file.path === 'part.def'));
-  assert.ok(facts.imports.some(row => row.from === 'a.cpp' && row.to === 'part.ipp'));
-  assert.ok(facts.imports.some(row => row.from === 'a.cpp' && row.to === 'part.def'));
-  assert.equal(facts.calls.find(call => call.directCaller?.name === 'ipp_entry')?.target?.file, 'part.ipp');
-  assert.equal(facts.calls.find(call => call.directCaller?.name === 'def_entry')?.target?.file, 'part.def');
+  for (const suffix of suffixes) {
+    const entry = `part.${suffix}`;
+    assert.equal(facts.calls.find(call => call.directCaller?.name === `${suffix}_entry`)?.target?.file, entry);
+    const question = buildQuestion({ root, facts, entry, context: 'a.cpp', symbol: `${suffix}_answer`, question: 'Who calls it?' });
+    assert.equal(question.calls.coverage, 'available');
+    assert.equal(question.callers.total, 1);
+    assert.equal(question.callers.records[0].navigation.status, 'valid');
+    assert.equal(question.callers.records[0].fact.directCaller.name, `${suffix}_entry`);
+    assert.throws(() => buildQuestion({ root, facts, entry, question: 'Who calls it?' }), error => error.diagnostics?.[0]?.code === 'task/context-required');
+  }
+});
+
+test('C/C++ captures a project header included through an external wrapper', t => {
+  if (!available(t)) return;
+  const { root } = fixture(t);
+  const external = fs.mkdtempSync(path.join(os.tmpdir(), 'archify cpp external '));
+  t.after(() => fs.rmSync(external, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, 'bridge-target.h'), 'inline int bridged_answer() { return 7; }\n');
+  fs.writeFileSync(path.join(external, 'wrapper.h'), `#include "${path.join(root, 'bridge-target.h').split(path.sep).join('/')}"\n`);
+  fs.writeFileSync(path.join(root, 'a.cpp'), `#include "${path.join(external, 'wrapper.h').split(path.sep).join('/')}"\nint bridged_entry() { return bridged_answer(); }\n`);
+  const { facts } = capture(root);
+  assert.ok(facts.files.some(file => file.path === 'bridge-target.h'));
+  assert.deepEqual(facts.languageScope.fileContexts['bridge-target.h'], ['a.cpp']);
+  assert.equal(facts.calls.find(call => call.directCaller?.name === 'bridged_entry')?.target?.file, 'bridge-target.h');
+  const question = buildQuestion({ root, facts, entry: 'bridge-target.h', context: 'a.cpp', symbol: 'bridged_answer', question: 'Who calls it?' });
+  assert.equal(question.callers.total, 1);
+  assert.equal(question.callers.records[0].navigation.status, 'valid');
+});
+
+test('C/C++ keeps macro callees unknown while binding ordinary calls with macro arguments', t => {
+  if (!available(t)) return;
+  const { root } = fixture(t);
+  fs.writeFileSync(path.join(root, 'a.cpp'), `int target(int x) { return x; }
+int plain(int x) { return x; }
+struct Receiver { int method(int x) { return x; } };
+namespace ns { int target(int x) { return x; } }
+#define target(x) target(x + 1)
+#define method(x) method(x + 1)
+#define ALIAS plain
+#define WRAPPER(x) plain(x)
+#define VALUE 1
+int same_name_entry() { return target(1); }
+int member_entry(Receiver& receiver) { return receiver.method(1); }
+int qualified_entry() { return ns::target(1); }
+int alias_entry() { return ALIAS(1); }
+int wrapper_entry() { return WRAPPER(1); }
+int ordinary_entry() { return plain(VALUE); }
+int nested_entry() { return plain(target(1)); }
+`);
+  const { facts } = capture(root);
+  for (const name of ['same_name_entry', 'member_entry', 'qualified_entry', 'alias_entry', 'wrapper_entry']) {
+    const calls = facts.calls.filter(call => call.directCaller?.name === name);
+    assert.equal(calls.length, 1, name);
+    assert.equal(calls[0].reason, 'cpp-macro-expansion', name);
+    assert.ok(!calls[0].target, name);
+  }
+  assert.equal(facts.calls.find(call => call.directCaller?.name === 'ordinary_entry')?.target?.name, 'plain');
+  const nested = facts.calls.filter(call => call.directCaller?.name === 'nested_entry');
+  assert.equal(nested.filter(call => call.target?.name === 'plain').length, 1);
+  assert.equal(nested.filter(call => call.reason === 'cpp-macro-expansion' && !call.target).length, 1);
+});
+
+test('C/C++ removes conflicting caller identities without discarding an agreed caller', t => {
+  if (!available(t)) return;
+  const { root } = fixture(t);
+  fs.writeFileSync(path.join(root, 'names.h'), '#pragma once\ninline int callee() { return 1; }\ninline int REBOUND() { return callee(); }\n');
+  fs.writeFileSync(path.join(root, 'stable.h'), '#pragma once\n#include "choice.h"\ninline int stable() { return chosen(); }\n');
+  for (const file of ['a.cpp', 'b.cpp']) fs.writeFileSync(path.join(root, file), `#include "stable.h"\n${fs.readFileSync(path.join(root, file), 'utf8')}`);
+  const { facts } = capture(root);
+  const conflicted = facts.calls.find(call => call.file === 'names.h');
+  assert.equal(conflicted.reason, 'cpp-context-dependent');
+  assert.ok(!conflicted.directCaller);
+  const stable = facts.calls.find(call => call.file === 'stable.h');
+  assert.equal(stable.reason, 'cpp-context-dependent');
+  assert.equal(stable.directCaller.name, 'stable');
+  for (const context of ['a.cpp', 'b.cpp']) {
+    const question = buildQuestion({ root, facts, entry: 'names.h', context, question: 'What calls are here?' });
+    assert.equal(question.calls.total, 1);
+    assert.ok(!question.calls.records[0].fact.directCaller);
+  }
 });
 
 test('C/C++ structural cycle rules require a common translation-unit context', () => {

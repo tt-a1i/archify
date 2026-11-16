@@ -186,7 +186,15 @@ def template_owned(cursor):
     return False
 
 
-def collect_calls(cursor, context, root, sources, kinds, definitions, template_points, output, caller=None):
+def macro_callee(cursor, root, macro_points):
+    callee = next(cursor.get_children(), None)
+    if not callee:
+        return False
+    location = callee.location
+    return (relative(root, location.file.name if location.file else None), location.offset) in macro_points
+
+
+def collect_calls(cursor, context, root, sources, kinds, definitions, template_points, macro_points, output, caller=None):
     location = cursor.extent.start
     file = relative(root, location.file.name if location.file else None)
     if cursor.kind in kinds and cursor.is_definition() and file in sources:
@@ -228,7 +236,7 @@ def collect_calls(cursor, context, root, sources, kinds, definitions, template_p
                         text = data[first:last].decode("utf-8")
                         if target_key in template_points:
                             record["reason"] = "cpp-template"
-                        elif target and re.search(r"\b" + re.escape(definition.spelling) + r"\s*\(", text):
+                        elif target and not macro_callee(cursor, root, macro_points) and re.search(r"\b" + re.escape(definition.spelling) + r"\s*\(", text):
                             record.pop("reason")
                             record["resolution"] = "cpp-direct-source"
                             record["target"] = {"file": target_file, "name": definition.spelling,
@@ -239,7 +247,7 @@ def collect_calls(cursor, context, root, sources, kinds, definitions, template_p
                 record["reason"] = "cpp-function-pointer"
             output.append((record, context))
     for child in cursor.get_children():
-        collect_calls(child, context, root, sources, kinds, definitions, template_points, output, caller)
+        collect_calls(child, context, root, sources, kinds, definitions, template_points, macro_points, output, caller)
 
 
 def main(payload):
@@ -347,11 +355,11 @@ def main(payload):
             for included in includes:
                 origin = relative(root, included.source.name if included.source else None)
                 target = relative(root, included.include.name if included.include else None)
-                if not origin or origin not in sources:
-                    continue
                 if target:
                     selected.add(target)
                     file_contexts[target].add(name)
+                if not origin or origin not in sources:
+                    continue
                 specifier = include_specifier(sources[origin], included.location.line,
                                               Path(included.include.name).name if included.include else "unknown")
                 row = {"from": origin, "specifier": specifier, "kind": "static",
@@ -378,7 +386,12 @@ def main(payload):
                     changed = any(old[field] != record[field] for field in ("name", "qualname", "complexity", "nesting", "deepestLine", "sourceRange"))
                     functions[key] = (old, contexts, conflict or changed)
             observed_calls = []
-            collect_calls(tu.cursor, name, root, sources, kinds, local_definitions, template_points, observed_calls)
+            # Detailed preprocessing records put active macro expansions at
+            # their source invocation points, including member-name macros.
+            macro_points = {(relative(root, child.location.file.name), child.location.offset)
+                            for child in tu.cursor.get_children()
+                            if child.kind == cindex.CursorKind.MACRO_INSTANTIATION and child.location.file}
+            collect_calls(tu.cursor, name, root, sources, kinds, local_definitions, template_points, macro_points, observed_calls)
             for record, context in observed_calls:
                 key = (record["file"], record["line"], record["column"], record["endLine"], record["endColumn"])
                 value = calls.get(key)
@@ -388,6 +401,8 @@ def main(payload):
                     old, contexts, conflict = value
                     contexts.add(context)
                     changed = any(old.get(field) != record.get(field) for field in ("resolution", "target", "reason", "directCaller"))
+                    if old.get("directCaller") != record.get("directCaller"):
+                        old.pop("directCaller", None)
                     calls[key] = (old, contexts, conflict or changed)
     if not selected:
         fail("extract/cpp-no-commands", "No selected translation unit has a compilation database command.", fixes=["generate compile_commands.json for this root and build configuration"])

@@ -6,13 +6,13 @@
     "vscode": "1.144.0",
     "cpptools": "1.35.6",
     "archifyAdapter": "libclang@Apple clang version 14.0.3 (clang-1403.0.22.14.1)",
-    "archifyAdapterRevision": 3,
+    "archifyAdapterRevision": 4,
     "selectedDatabaseSha256": "cca404601ed5699431b89930b3fa04a23e68b027210714833f38f0ccc6a635c3",
-    "rawFactsSha256": "297abff4cc325ee4dd5189104fc6d4a7e246bafefba7a8e7bbfd6bf219b3694c",
-    "positiveCpptoolsSha256": "7e09d70303ec8ac5b21a09548f66a1b741c64619d5d62edbfdb998c13a65c151",
-    "unresolvedCpptoolsSha256": "d70c822c594df9977c63d0931d36ae728cc44cd5c1d6fb8bc51257d86f159bab"
+    "rawFactsSha256": "b1ad08616e6843fcd0bef63787a2942c66486029e78bb4b06b8049f44e23260c",
+    "positiveCpptoolsSha256": "81b257e0cb7f2218b9fb61537d7135111216ebcf6b92f4a6a8d0b60c6b9c2ecd",
+    "unresolvedCpptoolsSha256": "8b0cc11cab5939cbf5ae8dc1438c00babc093f8cc80bceb6e4dd76510a15176a"
   },
-  "comparison": "VS Code executeDefinitionProvider versus Archify captured direct source targets; navigation candidates are not runtime call edges",
+  "comparison": "VS Code executeDefinitionProvider versus Archify captured direct source targets; navigation candidates are not runtime call edges; header translation-unit association is unverified",
   "summary": {
     "selectedTranslationUnits": 32,
     "parsedTranslationUnits": 32,
@@ -24,8 +24,10 @@
     "boundCalls": 2044,
     "positive": {
       "total": 48,
-      "uniqueExact": 46,
-      "expectedAmongCandidates": 2,
+      "translationUnitEntries": 24,
+      "unverifiedHeaderAssociations": 24,
+      "uniqueExact": 48,
+      "expectedAmongCandidates": 0,
       "missed": 0
     },
     "unresolved": {
@@ -40,6 +42,7 @@
       "category": "call",
       "file": "src/fmt-c.cc",
       "context": "src/fmt-c.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 41,
         "character": 14
@@ -58,7 +61,8 @@
             "line": 15
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -66,6 +70,7 @@
       "category": "call",
       "file": "test/chrono-test.cc",
       "context": "test/chrono-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 130,
         "character": 6
@@ -84,7 +89,8 @@
             "line": 75
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -92,6 +98,7 @@
       "category": "call",
       "file": "test/core-test.cc",
       "context": "test/core-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 635,
         "character": 22
@@ -110,7 +117,8 @@
             "line": 2676
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -118,6 +126,7 @@
       "category": "call",
       "file": "test/format-impl-test.cc",
       "context": "test/format-impl-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 432,
         "character": 18
@@ -136,7 +145,8 @@
             "line": 404
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -144,6 +154,7 @@
       "category": "call",
       "file": "test/format-impl-test.cc",
       "context": "test/format-impl-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 507,
         "character": 21
@@ -162,7 +173,8 @@
             "line": 584
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -170,6 +182,7 @@
       "category": "call",
       "file": "test/format-test.cc",
       "context": "test/format-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 1166,
         "character": 2
@@ -188,7 +201,8 @@
             "line": 186
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -196,6 +210,7 @@
       "category": "call",
       "file": "test/format-test.cc",
       "context": "test/format-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 2172,
         "character": 25
@@ -214,7 +229,8 @@
             "line": 2676
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -222,6 +238,7 @@
       "category": "call",
       "file": "test/gtest-extra-test.cc",
       "context": "test/gtest-extra-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 225,
         "character": 27
@@ -240,7 +257,8 @@
             "line": 4222
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -248,6 +266,7 @@
       "category": "call",
       "file": "test/gtest-extra-test.cc",
       "context": "test/gtest-extra-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 361,
         "character": 20
@@ -266,7 +285,8 @@
             "line": 204
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -274,6 +294,7 @@
       "category": "call",
       "file": "test/gtest-extra.cc",
       "context": "test/gtest-extra.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 51,
         "character": 2
@@ -292,7 +313,8 @@
             "line": 42
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -300,6 +322,7 @@
       "category": "call",
       "file": "test/os-test.cc",
       "context": "test/os-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 380,
         "character": 13
@@ -318,7 +341,8 @@
             "line": 268
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -326,6 +350,7 @@
       "category": "call",
       "file": "test/os-test.cc",
       "context": "test/os-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 507,
         "character": 14
@@ -344,7 +369,8 @@
             "line": 268
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -352,6 +378,7 @@
       "category": "call",
       "file": "test/os-test.cc",
       "context": "test/os-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 615,
         "character": 25
@@ -370,7 +397,8 @@
             "line": 204
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -378,6 +406,7 @@
       "category": "call",
       "file": "test/posix-mock-test.cc",
       "context": "test/posix-mock-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 254,
         "character": 2
@@ -396,7 +425,8 @@
             "line": 197
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -404,6 +434,7 @@
       "category": "call",
       "file": "test/posix-mock-test.cc",
       "context": "test/posix-mock-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 409,
         "character": 38
@@ -422,7 +453,8 @@
             "line": 314
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -430,6 +462,7 @@
       "category": "call",
       "file": "test/util.cc",
       "context": "test/util.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 38,
         "character": 55
@@ -448,7 +481,8 @@
             "line": 29
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -456,6 +490,7 @@
       "category": "call",
       "file": "include/fmt/chrono.h",
       "context": "test/chrono-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 338,
         "character": 33
@@ -474,7 +509,8 @@
             "line": 310
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -482,6 +518,7 @@
       "category": "call",
       "file": "include/fmt/chrono.h",
       "context": "test/chrono-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 1964,
         "character": 39
@@ -500,7 +537,8 @@
             "line": 1898
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -508,6 +546,7 @@
       "category": "call",
       "file": "include/fmt/core.h",
       "context": "src/fmt-c.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 1036,
         "character": 28
@@ -526,7 +565,8 @@
             "line": 1029
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -534,6 +574,7 @@
       "category": "call",
       "file": "include/fmt/core.h",
       "context": "src/fmt-c.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 1669,
         "character": 12
@@ -552,7 +593,8 @@
             "line": 741
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -560,6 +602,7 @@
       "category": "call",
       "file": "include/fmt/format-inl.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 1131,
         "character": 18
@@ -578,7 +621,8 @@
             "line": 285
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -586,6 +630,7 @@
       "category": "call",
       "file": "include/fmt/format.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 1330,
         "character": 7
@@ -600,26 +645,20 @@
       "cpptools": {
         "locations": [
           {
-            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_constant_evaluated.h",
-            "line": 22
-          },
-          {
             "file": "include/fmt/core.h",
             "line": 378
-          },
-          {
-            "file": "../../../../../../../../usr/local/include/absl/meta/type_traits.h",
-            "line": 558
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
-      "verdict": "expected-among-candidates"
+      "verdict": "unique-exact"
     },
     {
       "category": "call",
       "file": "include/fmt/format.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 1907,
         "character": 65
@@ -636,20 +675,18 @@
           {
             "file": "include/fmt/core.h",
             "line": 741
-          },
-          {
-            "file": "include/fmt/format.h",
-            "line": 3102
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
-      "verdict": "expected-among-candidates"
+      "verdict": "unique-exact"
     },
     {
       "category": "call",
       "file": "include/fmt/format.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 2327,
         "character": 14
@@ -668,7 +705,8 @@
             "line": 777
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -676,6 +714,7 @@
       "category": "call",
       "file": "include/fmt/format.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 2792,
         "character": 43
@@ -694,7 +733,8 @@
             "line": 781
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -702,6 +742,7 @@
       "category": "call",
       "file": "include/fmt/format.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 3095,
         "character": 4
@@ -720,7 +761,8 @@
             "line": 2911
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -728,6 +770,7 @@
       "category": "call",
       "file": "include/fmt/format.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 3461,
         "character": 28
@@ -746,7 +789,8 @@
             "line": 286
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -754,6 +798,7 @@
       "category": "call",
       "file": "include/fmt/format.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 4083,
         "character": 28
@@ -772,7 +817,8 @@
             "line": 748
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -780,6 +826,7 @@
       "category": "call",
       "file": "include/fmt/printf.h",
       "context": "test/printf-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 385,
         "character": 19
@@ -798,7 +845,8 @@
             "line": 1030
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -806,6 +854,7 @@
       "category": "call",
       "file": "include/fmt/std.h",
       "context": "test/compile-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 550,
         "character": 38
@@ -824,7 +873,8 @@
             "line": 748
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -832,6 +882,7 @@
       "category": "call",
       "file": "test/scan.h",
       "context": "test/scan-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 436,
         "character": 12
@@ -850,7 +901,8 @@
             "line": 21
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -858,6 +910,7 @@
       "category": "call",
       "file": "test/scan.h",
       "context": "test/scan-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 717,
         "character": 10
@@ -876,7 +929,8 @@
             "line": 612
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -884,6 +938,7 @@
       "category": "include",
       "file": "src/fmt-c.cc",
       "context": "src/fmt-c.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 7,
         "character": 10
@@ -901,7 +956,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -909,6 +965,7 @@
       "category": "include",
       "file": "test/color-test.cc",
       "context": "test/color-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 11,
         "character": 10
@@ -926,7 +983,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -934,6 +992,7 @@
       "category": "include",
       "file": "test/enforce-checks-test.cc",
       "context": "test/enforce-checks-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 12,
         "character": 10
@@ -951,7 +1010,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -959,6 +1019,7 @@
       "category": "include",
       "file": "test/format-test.cc",
       "context": "test/format-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 39,
         "character": 10
@@ -976,7 +1037,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -984,6 +1046,7 @@
       "category": "include",
       "file": "test/os-test.cc",
       "context": "test/os-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 14,
         "character": 10
@@ -1001,7 +1064,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -1009,6 +1073,7 @@
       "category": "include",
       "file": "test/printf-test.cc",
       "context": "test/printf-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 7,
         "character": 10
@@ -1026,7 +1091,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -1034,6 +1100,7 @@
       "category": "include",
       "file": "test/scan-test.cc",
       "context": "test/scan-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 14,
         "character": 10
@@ -1051,7 +1118,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -1059,6 +1127,7 @@
       "category": "include",
       "file": "test/xchar-test.cc",
       "context": "test/xchar-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 18,
         "character": 10
@@ -1076,7 +1145,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -1084,6 +1154,7 @@
       "category": "include",
       "file": "include/fmt/args.h",
       "context": "test/args-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 16,
         "character": 10
@@ -1101,7 +1172,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -1109,6 +1181,7 @@
       "category": "include",
       "file": "include/fmt/color.h",
       "context": "test/color-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 10,
         "character": 10
@@ -1126,7 +1199,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -1134,6 +1208,7 @@
       "category": "include",
       "file": "include/fmt/format-inl.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 26,
         "character": 10
@@ -1151,7 +1226,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "unique-exact"
     },
@@ -1159,6 +1235,7 @@
       "category": "include",
       "file": "include/fmt/os.h",
       "context": "src/os.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 10,
         "character": 10
@@ -1176,7 +1253,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -1184,6 +1262,7 @@
       "category": "include",
       "file": "include/fmt/ranges.h",
       "context": "test/ranges-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 18,
         "character": 10
@@ -1201,7 +1280,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -1209,6 +1289,7 @@
       "category": "include",
       "file": "include/fmt/xchar.h",
       "context": "test/printf-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 10,
         "character": 10
@@ -1226,7 +1307,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -1234,6 +1316,7 @@
       "category": "include",
       "file": "test/gtest-extra.h",
       "context": "test/chrono-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 15,
         "character": 10
@@ -1251,7 +1334,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -1259,6 +1343,7 @@
       "category": "include",
       "file": "test/util.h",
       "context": "test/unicode-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 12,
         "character": 10
@@ -1276,7 +1361,8 @@
             "line": 1
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "IntelliSenseReady"
       },
       "verdict": "unique-exact"
     },
@@ -1284,6 +1370,7 @@
       "category": "unresolved-call",
       "file": "src/fmt-c.cc",
       "context": "src/fmt-c.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 47,
         "character": 13
@@ -1301,7 +1388,8 @@
             "line": 2603
           }
         ],
-        "attempts": 2
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1309,6 +1397,7 @@
       "category": "unresolved-call",
       "file": "test/xchar-test.cc",
       "context": "test/xchar-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 460,
         "character": 2
@@ -1326,7 +1415,8 @@
             "line": 11947
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1334,6 +1424,7 @@
       "category": "unresolved-call",
       "file": "include/fmt/args.h",
       "context": "test/args-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 51,
         "character": 20
@@ -1351,7 +1442,8 @@
             "line": 557
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1359,6 +1451,7 @@
       "category": "unresolved-call",
       "file": "test/util.h",
       "context": "test/chrono-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 53,
         "character": 10
@@ -1376,7 +1469,8 @@
             "line": 43
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1384,6 +1478,7 @@
       "category": "unresolved-call",
       "file": "test/args-test.cc",
       "context": "test/args-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 13,
         "character": 0
@@ -1401,7 +1496,8 @@
             "line": 12257
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1409,6 +1505,7 @@
       "category": "unresolved-call",
       "file": "test/xchar-test.cc",
       "context": "test/xchar-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 486,
         "character": 0
@@ -1426,7 +1523,8 @@
             "line": 12257
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1434,6 +1532,7 @@
       "category": "unresolved-call",
       "file": "include/fmt/chrono.h",
       "context": "test/chrono-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 357,
         "character": 11
@@ -1451,7 +1550,8 @@
             "line": 1595
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1459,6 +1559,7 @@
       "category": "unresolved-call",
       "file": "test/scan.h",
       "context": "test/scan-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 718,
         "character": 28
@@ -1476,7 +1577,8 @@
             "line": 128
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1484,6 +1586,7 @@
       "category": "unresolved-call",
       "file": "src/os.cc",
       "context": "src/os.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 380,
         "character": 10
@@ -1501,7 +1604,8 @@
             "line": 1804
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1509,6 +1613,7 @@
       "category": "unresolved-call",
       "file": "test/xchar-test.cc",
       "context": "test/xchar-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 421,
         "character": 4
@@ -1526,7 +1631,8 @@
             "line": 2376
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1534,6 +1640,7 @@
       "category": "unresolved-call",
       "file": "include/fmt/args.h",
       "context": "test/args-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 133,
         "character": 38
@@ -1551,7 +1658,8 @@
             "line": 108
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1559,6 +1667,7 @@
       "category": "unresolved-call",
       "file": "test/scan.h",
       "context": "test/scan-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 687,
         "character": 53
@@ -1576,7 +1685,8 @@
             "line": 557
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1584,6 +1694,7 @@
       "category": "unresolved-call",
       "file": "src/os.cc",
       "context": "src/os.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 355,
         "character": 13
@@ -1601,7 +1712,8 @@
             "line": 229
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1609,6 +1721,7 @@
       "category": "unresolved-call",
       "file": "test/os-test.cc",
       "context": "test/os-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 419,
         "character": 6
@@ -1626,7 +1739,8 @@
             "line": 397
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1634,6 +1748,7 @@
       "category": "unresolved-call",
       "file": "include/fmt/color.h",
       "context": "test/color-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 371,
         "character": 34
@@ -1651,7 +1766,8 @@
             "line": 538
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1659,6 +1775,7 @@
       "category": "unresolved-call",
       "file": "test/scan.h",
       "context": "test/scan-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 718,
         "character": 13
@@ -1676,7 +1793,8 @@
             "line": 127
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "one-navigation-target"
     },
@@ -1684,6 +1802,7 @@
       "category": "unresolved-call",
       "file": "test/gtest-extra.cc",
       "context": "test/gtest-extra.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 29,
         "character": 17
@@ -1713,7 +1832,8 @@
             "line": 384
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "multiple-navigation-targets"
     },
@@ -1721,6 +1841,7 @@
       "category": "unresolved-call",
       "file": "test/unicode-test.cc",
       "context": "test/unicode-test.cc",
+      "contextStatus": "translation-unit-entry",
       "position": {
         "line": 28,
         "character": 39
@@ -1750,7 +1871,8 @@
             "line": 384
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "multiple-navigation-targets"
     },
@@ -1758,6 +1880,7 @@
       "category": "unresolved-call",
       "file": "include/fmt/format.h",
       "context": "src/format.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 4234,
         "character": 11
@@ -1823,7 +1946,8 @@
             "line": 2672
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "multiple-navigation-targets"
     },
@@ -1831,6 +1955,7 @@
       "category": "unresolved-call",
       "file": "test/scan.h",
       "context": "test/scan-test.cc",
+      "contextStatus": "unverified-header-association",
       "position": {
         "line": 371,
         "character": 35
@@ -1852,7 +1977,8 @@
             "line": 182
           }
         ],
-        "attempts": 1
+        "attempts": 1,
+        "readiness": "previously-ready-unchanged-document"
       },
       "verdict": "multiple-navigation-targets"
     }

@@ -17,7 +17,7 @@ const positivePath = path.join(here, 'positive-cpptools.json');
 const unresolvedPath = path.join(here, 'unresolved-cpptools.json');
 const positive = read(positivePath), unresolved = read(unresolvedPath);
 assert.equal(facts.repository.language, 'cpp');
-assert.equal(facts.repository.adapterRevision, 3);
+assert.equal(facts.repository.adapterRevision, 4);
 assert.equal(positive.extensionVersion, unresolved.extensionVersion);
 assert.equal(positive.vscodeVersion, unresolved.vscodeVersion);
 assert.equal(positive.samples.length, 48);
@@ -54,7 +54,8 @@ for (const sample of positive.samples) {
     ? item.file === expected.file : sameTarget(item, expected));
   assert.ok(included, `cpptools omitted expected target: ${sample.file}:${sample.position.line + 1}`);
   rows.push({ category: sample.kind, file: sample.file, context: sample.context,
-    position: sample.position, archify, cpptools: { locations: sample.actual, attempts: sample.attempts },
+    contextStatus: sample.file === sample.context ? 'translation-unit-entry' : 'unverified-header-association',
+    position: sample.position, archify, cpptools: { locations: sample.actual, attempts: sample.attempts, readiness: sample.readiness },
     verdict: sample.actual.length === 1 ? 'unique-exact' : 'expected-among-candidates' });
 }
 for (const sample of unresolved.samples) {
@@ -66,9 +67,10 @@ for (const sample of unresolved.samples) {
   assert.equal(matches.length, 1, `no matching unresolved call: ${sample.file}:${line}:${column}`);
   assert.ok(contains(matches[0], sample.position));
   rows.push({ category: 'unresolved-call', file: sample.file, context: sample.context,
+    contextStatus: sample.file === sample.context ? 'translation-unit-entry' : 'unverified-header-association',
     position: sample.position, callee: sample.callee, source: sample.source,
     archify: { resolution: 'unresolved', reason: sample.reason },
-    cpptools: { locations: sample.actual, attempts: sample.attempts },
+    cpptools: { locations: sample.actual, attempts: sample.attempts, readiness: sample.readiness },
     verdict: sample.actual.length === 0 ? 'no-navigation-target'
       : sample.actual.length === 1 ? 'one-navigation-target' : 'multiple-navigation-targets' });
 }
@@ -82,6 +84,8 @@ const summary = {
   calls: facts.calls.length,
   boundCalls: facts.calls.filter(call => call.resolution === 'cpp-direct-source').length,
   positive: { total: positive.samples.length,
+    translationUnitEntries: rows.filter(row => ['call', 'include'].includes(row.category) && row.contextStatus === 'translation-unit-entry').length,
+    unverifiedHeaderAssociations: rows.filter(row => ['call', 'include'].includes(row.category) && row.contextStatus === 'unverified-header-association').length,
     uniqueExact: rows.filter(row => row.verdict === 'unique-exact').length,
     expectedAmongCandidates: rows.filter(row => row.verdict === 'expected-among-candidates').length,
     missed: rows.filter(row => ['call', 'include'].includes(row.category) && row.verdict === 'missed').length },
@@ -98,7 +102,7 @@ const report = {
     selectedDatabaseSha256: facts.languageScope.build.databaseSha256,
     rawFactsSha256: sha(factsPath), positiveCpptoolsSha256: sha(positivePath),
     unresolvedCpptoolsSha256: sha(unresolvedPath) },
-  comparison: 'VS Code executeDefinitionProvider versus Archify captured direct source targets; navigation candidates are not runtime call edges',
+  comparison: 'VS Code executeDefinitionProvider versus Archify captured direct source targets; navigation candidates are not runtime call edges; header translation-unit association is unverified',
   summary, samples: rows,
 };
 fs.writeFileSync(outputPath, JSON.stringify(report, null, 2) + '\n');

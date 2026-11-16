@@ -22,15 +22,16 @@ try {
     `--extensionDevelopmentPath=${extension}`,
     `--extensionTestsPath=${path.join(here, 'vscode/test.js')}`,
     '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', root];
-  const run = spawnSync(command, args, { encoding: 'utf8', timeout: 240000,
+  const run = spawnSync(command, args, { encoding: 'utf8', timeout: 600000,
     maxBuffer: 32 * 1024 * 1024,
     env: { ...process.env, ARCHIFY_FMT_ROOT: root, ARCHIFY_FMT_CDB: cdb,
       ARCHIFY_FMT_CPPTOOLS_OUTPUT: resultPath,
-      ARCHIFY_FMT_COMPARISON: path.join(here, 'comparison.json') } });
+      ARCHIFY_FMT_COMPARISON: path.join(here, 'comparison.json'), ARCHIFY_FMT_PROFILE: temporary } });
   fs.writeFileSync(`${resultPath}.log`, `${run.stdout || ''}${run.stderr || ''}`);
   if (run.error || run.status !== 0) throw Error(`VS Code extension test failed: ${run.error?.message || run.status}`);
   const report = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
   const reference = JSON.parse(fs.readFileSync(path.join(here, 'comparison.json'), 'utf8'));
+  if (report.fatalError || report.samples.length !== reference.samples.length) throw Error(report.fatalError || 'Incomplete VS Code comparison');
   const sorted = locations => [...locations].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   const identicalLocationSets = report.samples.filter((sample, index) =>
     JSON.stringify(sorted(sample.actual)) === JSON.stringify(sorted(reference.samples[index].cpptools.locations))).length;

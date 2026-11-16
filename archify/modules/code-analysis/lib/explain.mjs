@@ -73,7 +73,7 @@ export function buildQuestion({ question, entry, symbol, context = null, root, f
   if (!question?.trim()) fail('task/question-empty', 'Provide the question to investigate.');
   const jsEntry = /\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry || '') && !/\.d\.(?:ts|mts|cts)$/.test(entry);
   // Other languages reuse saved source/function/import facts, not the TS parser.
-  // Require the producer contract and its captured inventory as well as a suffix.
+  // C/C++ already filtered its source/header suffixes when capturing the inventory.
   const language = facts?.repository?.language;
   const adapter = facts?.repository?.adapter || '';
   const savedEntry = !jsEntry && Array.isArray(facts?.files) && facts.files.some(f => f.path === entry)
@@ -81,7 +81,7 @@ export function buildQuestion({ question, entry, symbol, context = null, root, f
       || (language === 'java' && /^java-parser@\d/.test(adapter) && /\.java$/.test(entry || ''))
       || (language === 'go' && /^go-parser@\d/.test(adapter) && /\.go$/.test(entry || ''))
       || (language === 'rust' && /^rust-syn@\d/.test(adapter) && /\.rs$/.test(entry || ''))
-      || (['c', 'cpp'].includes(language) && /^libclang@/.test(adapter) && /\.(?:c|cc|cpp|cxx|C|h|hh|hpp|hxx|inc)$/.test(entry || '')));
+      || (['c', 'cpp'].includes(language) && /^libclang@/.test(adapter)));
   if (!jsEntry && !savedEntry) fail('task/entry-invalid', 'Question mode needs a supported implementation file captured by matching raw facts.', { subject: { entry }, supportedFixes: ['pass a captured JS/TS, Python, Java, Go, Rust, C or C++ source file and its matching analysis directory'] });
   const cppContext = ['c', 'cpp'].includes(language) ? (context || (/\.(?:c|cc|cpp|cxx|C)$/.test(entry) ? entry : null)) : null;
   if (['c', 'cpp'].includes(language) && !cppContext) fail('task/context-required', 'A C/C++ header entry needs --context <translation-unit> from the saved analysis.', {
