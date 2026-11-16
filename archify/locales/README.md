@@ -26,7 +26,7 @@ never collapsed onto another catalog.
 | `es` | Juan Pablo Tamayo (#457, moved to data in #586) | Complete; not independently native-reviewed |
 | `ko` | uygnoey (#457) | Complete; not independently native-reviewed |
 | `ar` | jahfaliabdulrahman-dev | Complete: 486/486 keys with placeholder parity checked mechanically; not independently native-reviewed |
-| `ru` | uygnoey (#457 example catalog) | Complete: 486/486 keys with placeholder parity checked mechanically; count-neutral `.other` wording; UI fit reviewed in the bundled Viewer; not independently native-reviewed |
+| `ru` | uygnoey (#457 example catalog) | Complete: 499/499 keys with placeholder parity checked mechanically; count-neutral `.other` wording; UI fit reviewed in the bundled Viewer; not independently native-reviewed |
 
 Completeness checks prove key and placeholder coverage, not native wording,
 plural grammar, right-to-left layout, or glyph coverage.
