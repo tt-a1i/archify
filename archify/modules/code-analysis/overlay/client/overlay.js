@@ -1400,5 +1400,9 @@
     show(g.getAttribute('data-node-id'));
   }, true);
   if (standalone || data.ui && data.ui.openByDefault && typeof window.__archifyReanalyze !== 'function') setOn(true);
+  if (workspace && data.pullRequest && location.hash === "#changes") {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { showWorkspace(); }, { once: true });
+    else showWorkspace();
+  }
   window.addEventListener('resize', function () { positionReader(); if (root.getAttribute('data-bauify') === 'on') drawLayer(); });
 })();

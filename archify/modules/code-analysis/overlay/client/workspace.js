@@ -3,6 +3,8 @@ window.__archifyCreateWorkspace = function (data, pane, actions) {
   const tr = actions.tr;
   const { files, imports, outsideTargets, modules, scope, snapshot, language, revision } = data.workspace;
   const pr = data.pullRequest;
+  const pack = pr?.reviewPack;
+  const reader = pane.closest("#bauify-reader");
   const heads = new Map(files.map(row => [row[0], row]));
   const headModules = new Map(modules);
   const labels = new Map([...(pr?.oldModules || []), ...modules]);
@@ -30,7 +32,8 @@ window.__archifyCreateWorkspace = function (data, pane, actions) {
   const storeKey = 'archify-map-refresh:' + location.pathname + ':' + scope + ':' + (pr ? pr.repository + '#' + pr.number : 'repository');
   let mode = pr ? 'changes' : 'repository', selected = null, moduleFilter = '', statusFilter = '', text = '';
   let pageSize = 100, folders = new Set(), listing, detail, count, chooser, filter, search, tabs, notice, missing = false;
-  let mounted = false;
+  let mounted = false, scrollPosition = null, reviewGuide;
+  let guideOpen = location.hash === "#changes", shownView = 0;
   const basePath = row => row?.previousPath || row?.path;
   const moduleOf = path => heads.get(path)?.[1] || (mode === 'changes' ? prior.get(basePath(findChange.get(path)) || path) : null);
   const label = id => labels.get(id) || id;
@@ -117,6 +120,9 @@ window.__archifyCreateWorkspace = function (data, pane, actions) {
 
   function updateTabs() {
     for (const child of tabs.querySelectorAll('[data-map-mode]')) child.setAttribute('aria-pressed', String(child.dataset.mapMode === mode));
+    if (reviewGuide) reviewGuide.hidden = mode !== "changes";
+    const counts = pane.querySelector(".map-pr-counts");
+    if (counts) counts.hidden = mode !== "changes";
     notice.textContent = mode === 'changes'
       ? tr('PR #{number} · merge-base {base} → head {head} · scope {scope}', { number: pr.number, base: pr.baseSHA.slice(0, 8), head: pr.headSHA.slice(0, 8), scope: pr.scope })
       : tr('Captured files · scope {scope}', { scope });
@@ -184,9 +190,117 @@ window.__archifyCreateWorkspace = function (data, pane, actions) {
     listing.replaceChildren(rendered);
   }
 
+
+  function changeCounts() {
+    const tally = pr.gitFiles;
+    const result = el('p', tr('Git changed files · {count}', { count: tally?.total ?? changes.length }), 'map-note map-pr-counts');
+    if (tally) {
+      const details = Object.entries(statuses)
+        .filter(([status]) => tally[status])
+        .map(([status, title]) => tr(title) + ' ' + tally[status]);
+      if (tally.other) details.push(tr('Other change') + ' ' + tally.other);
+      if (details.length) result.append(' · ' + details.join(' · '));
+    }
+    result.append(' · ' + tr('In analysis scope · {count}', { count: changes.length }));
+    return result;
+  }
+
+  function openSource(file, side, line, pair, opener) {
+    scrollPosition = { reader: reader.scrollTop, tree: listing.scrollTop, guide: opener?.dataset.packAnchor };
+    actions.source(file, side, line, pair, opener);
+  }
+
+
+  function diagramImages(view, lazy) {
+    return Object.entries(view.images).map(([theme, url]) => {
+      const img = el('img');
+      img.src = url;
+      img.alt = view.title;
+      if (lazy) img.loading = 'lazy';
+      if (view.images.light && view.images.dark) img.dataset.packTheme = theme;
+      return img;
+    });
+  }
+
+  function openFullDiagram(view) {
+    const dialog = el('dialog', null, 'map-diagram-dialog');
+    dialog.setAttribute('aria-label', view.title);
+    const header = el('header');
+    header.append(el('b', view.title), btn(tr('Close'), () => dialog.close()));
+    const content = el('div');
+    content.append(...diagramImages(view, false));
+    dialog.append(header, content);
+    dialog.addEventListener('close', () => dialog.remove(), { once: true });
+    document.body.append(dialog);
+    dialog.showModal();
+  }
+  function buildGuide() {
+    const guide = el('details', null, 'map-review-pack');
+    guide.open = guideOpen;
+    guide.addEventListener('toggle', () => { guideOpen = guide.open; });
+    const label = el('summary', tr('PR diagrams') + ' · ' + pack.views.length);
+    const viewButtons = el('div', null, 'map-actions map-review-tabs');
+    const body = el('div', null, 'map-review-view');
+    const buttons = [];
+    function renderView() {
+      const view = pack.views[shownView];
+      buttons.forEach((button, index) => button.setAttribute('aria-pressed', String(index === shownView)));
+      body.replaceChildren();
+      const figure = el('figure', null, 'map-review-figure');
+      const preview = btn(null, () => openFullDiagram(view), 'map-diagram-preview');
+      preview.setAttribute('aria-label', tr('Open diagram') + ' · ' + view.title);
+      preview.append(...diagramImages(view, true));
+      figure.append(preview);
+      figure.append(el('figcaption', view.caption || view.title));
+      body.append(figure);
+      if (!view.anchors.length) body.append(paragraph(tr('No captured source link for this view.')));
+      const links = el('div', null, 'map-actions map-review-sources');
+      const extra = el('div', null, 'map-actions map-review-sources');
+      for (const [index, { file, line, side }] of view.anchors.entries()) {
+        const caption = tr(side === 'base' ? 'Merge-base' : 'PR head') + ' · ' + lineLabel(file, line);
+        const list = index < 2 ? links : extra;
+        if (actions.hasSource(file, side, line)) {
+          const link = btn(caption, () => {
+            const change = side === 'base' ? changes.find(item => basePath(item) === file) : findChange.get(file);
+            if (!change) return;
+            pick('file', change.path, true);
+            highlights();
+            openSource(file, side, line, sourcePair(change.path), link);
+          }, 'map-source-link');
+          link.dataset.packAnchor = String(index);
+          list.append(link);
+        } else {
+          const fullPath = (pr.scope === '.' ? file : pr.scope + '/' + file).split('/').map(encodeURIComponent).join('/');
+          const revision = side === 'base' ? pr.baseSHA : pr.headSHA;
+          const link = el('a', caption, 'map-pack-external');
+          link.href = 'https://github.com/' + pr.repository + '/blob/' + revision + '/' + fullPath + (line ? '#L' + line : '');
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.title = tr('View pinned source on GitHub');
+          list.append(link);
+        }
+      }
+      body.append(links);
+      if (extra.childElementCount) {
+        const more = el('details', null, 'map-review-more');
+        more.open = !!scrollPosition && Number(scrollPosition.guide) >= 2;
+        more.append(el('summary', tr('{count} more source links', { count: extra.childElementCount })), extra);
+        body.append(more);
+      }
+    }
+    pack.views.forEach((view, index) => {
+      const button = btn(view.title, () => { shownView = index; renderView(); });
+      button.dataset.packView = view.id;
+      buttons.push(button);
+      viewButtons.append(button);
+    });
+    guide.append(label, el('p', pack.title, 'map-note'), viewButtons, body);
+    renderView();
+    return guide;
+  }
   function source(path, side, line, pair) {
     const node = btn((side ? tr(side === 'base' ? 'Merge-base' : 'PR head') + ' · ' : '') + lineLabel(path, line),
-      () => actions.source(path, side, line, pair, node), 'map-source-link');
+      () => openSource(path, side, line, pair, node), 'map-source-link');
     if (!actions.hasSource(path, side, line)) {
       node.disabled = true;
       node.title = tr('Source unavailable in this captured report.');
@@ -443,14 +557,27 @@ window.__archifyCreateWorkspace = function (data, pane, actions) {
     listing.setAttribute('role', 'group');
     listing.setAttribute('aria-label', tr('File tree'));
     detail = el('div', null, 'map-selection');
-    view.append(top, tabs, notice, controls, count, listing, detail);
+    view.append(top, tabs, notice);
+    if (pr) view.append(changeCounts());
+    view.append(controls);
+    if (pr) {
+      reviewGuide = pack ? buildGuide() : null;
+      if (reviewGuide) view.append(reviewGuide);
+    }
+    view.append(count, listing, detail);
     pane.append(view);
     pane.hidden = false;
     mounted = true;
     updateTabs();
     renderTree();
     renderDetail();
-    if (focus) search.focus({ preventScroll: true });
+    if (scrollPosition) {
+      reader.scrollTop = scrollPosition.reader;
+      listing.scrollTop = scrollPosition.tree;
+      const focusTarget = scrollPosition.guide ? reviewGuide?.querySelector("[data-pack-anchor=\"" + scrollPosition.guide + "\"]") : listing.querySelector("[aria-current=true]");
+      focusTarget?.focus({ preventScroll: true });
+      scrollPosition = null;
+    } else if (focus) search.focus({ preventScroll: true });
   }
 
   return {
@@ -463,7 +590,7 @@ window.__archifyCreateWorkspace = function (data, pane, actions) {
       const change = findChange.get(file) || changes.find(row => row.previousPath === file);
       if (!change || !actions.hasSource(file, side, line)) return false;
       pick('file', change.path, true);
-      actions.source(file, side, line, sourcePair(change.path), listing.querySelector('[aria-current="true"]'));
+      openSource(file, side, line, sourcePair(change.path), listing.querySelector('[aria-current="true"]'));
       return true;
     },
     restore: () => {

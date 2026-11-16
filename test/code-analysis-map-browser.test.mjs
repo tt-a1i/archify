@@ -40,6 +40,9 @@ test('Map workspace links captured files, Atlas, and both PR sides with native d
     source: { ...gitTree, revision: headSHA }, previous: path.join(base, 'findings.json'),
     pullRequest: {
       pr: { number: 42, repository: 'example/map', title: 'Reorganization', mergeBaseSHA: baseSHA, headSHA, baseSHA },
+      reviewPack: { title: 'PR review demo', views: [{ id: 'topology', title: 'Topology',
+        images: { light: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22%3E%3C/svg%3E' },
+        anchors: [{ side: 'head', file: 'new.mjs', line: 1 }] }] },
       scope: '.', sourceRoot: root, manifests: { base: { skipped: [] }, head: { skipped: [] } },
       changedFiles: [
         { path: 'added.mjs', status: 'added' }, { path: 'new.mjs', previousPath: 'old.mjs', status: 'renamed' },
@@ -76,8 +79,19 @@ test('Map workspace links captured files, Atlas, and both PR sides with native d
   assert.match(scoped.text, /Focus \(module\)/);
   assert.doesNotMatch(scoped.text, /export const surface/);
 
-  await open(pathToFileURL(pr.overlay.html).href, 940, 800);
-  await click('.reader-map');
+  await open(pathToFileURL(pr.overlay.html).href + '#changes', 940, 800);
+  await waitFor('document.querySelector(".map-review-pack img").naturalWidth === 20', 'Review link and native diagram do not open');
+  assert.match(await run('document.querySelector(".map-pr-counts").textContent'), /Git changed files · 5 .* In analysis scope · 5/);
+  await click('.map-diagram-preview');
+  assert.equal(await run('document.querySelector(".map-diagram-dialog").open'), true);
+  await click('.map-diagram-dialog button');
+  await waitFor('!document.querySelector(".map-diagram-dialog")', 'The full diagram did not close');
+  await click('.map-review-sources [data-pack-anchor]');
+  assert.match(await run('document.getElementById("bauify-code").textContent'), /Showing PR head source.*NEW_MARKER/s);
+  await click('.source-back');
+  assert.equal(await run('document.querySelector(".map-review-pack").open'), true);
+  assert.equal(await run('document.querySelector(".map-file[aria-current=true]").dataset.mapFile'), 'new.mjs');
+  await click('.map-review-pack summary');
   assert.equal(await run('document.querySelector("[data-map-mode=changes]").getAttribute("aria-pressed")'), 'true');
   await search('old.mjs');
   await click('[data-map-file="new.mjs"]');

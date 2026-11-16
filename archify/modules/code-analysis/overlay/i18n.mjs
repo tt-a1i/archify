@@ -10,6 +10,13 @@ export function createTranslator(messages = {}) {
 }
 const ZH_CN = {
   "Map workspace": "代码地图工作台",
+  "PR diagrams": "PR 变更图",
+  "Open diagram": "放大查看图表",
+  "{count} more source links": "另外 {count} 条源码链接",
+  "Git changed files · {count}": "Git 变更文件 · {count}",
+  "In analysis scope · {count}": "分析范围内 · {count}",
+  "No captured source link for this view.": "此视图没有已捕获的源码链接。",
+  "View pinned source on GitHub": "在 GitHub 查看固定提交的源码",
   "Browse module files": "浏览模块文件",
   "Changes": "变更",
   "Module": "模块",

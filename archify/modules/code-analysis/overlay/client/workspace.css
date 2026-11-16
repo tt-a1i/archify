@@ -26,3 +26,24 @@
 #bauify-reader .map-export textarea { width: 100%; min-height: 105px; resize: vertical; }
 #bauify-reader .map-export .map-actions { margin: 6px 0; }
 @media (max-width: 600px) { #bauify-reader .map-workspace button { min-height: 40px; } }
+
+#bauify-reader .map-review-pack { border: 1px solid var(--panel-border); border-radius: 7px; padding: 8px; }
+#bauify-reader .map-review-pack summary { cursor: pointer; font-weight: 600; }
+#bauify-reader .map-review-pack > :not(summary) { margin-top: 8px; }
+#bauify-reader .map-review-pack button[aria-pressed="true"] { border-color: var(--backend-stroke, #34d399); }
+#bauify-reader .map-review-figure { margin: 0 0 8px; }
+#bauify-reader .map-review-figure img { display: block; width: 100%; height: auto; border-radius: 5px; }
+#bauify-reader .map-review-figure img[data-pack-theme="light"], html[data-theme="light"] #bauify-reader .map-review-figure img[data-pack-theme="dark"] { display: none; }
+html[data-theme="light"] #bauify-reader .map-review-figure img[data-pack-theme="light"] { display: block; }
+#bauify-reader .map-review-figure figcaption, #bauify-reader .map-pack-external { padding: 4px 0; overflow-wrap: anywhere; }
+
+#bauify-reader .map-review-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#bauify-reader .map-review-tabs button { min-width: 0; white-space: normal; padding-inline: 6px; }
+#bauify-reader .map-diagram-preview { display: block; width: 100%; padding: 0; border: 0; }
+#bauify-reader .map-review-more summary { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.map-diagram-dialog { width: min(90vw, 1440px); max-height: 92vh; overflow: auto; background: var(--bg); color: var(--text); border: 1px solid var(--panel-border); border-radius: 10px; }
+.map-diagram-dialog::backdrop { background: #0009; }
+.map-diagram-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.map-diagram-dialog img { display: block; width: 100%; height: auto; }
+.map-diagram-dialog img[data-pack-theme="light"], html[data-theme="light"] .map-diagram-dialog img[data-pack-theme="dark"] { display: none; }
+html[data-theme="light"] .map-diagram-dialog img[data-pack-theme="light"] { display: block; }

@@ -16,6 +16,7 @@ export function standaloneShell({ locale = 'en', title = 'Repository' } = {}) {
 .container{--analysis-reader-width:420px;display:grid;grid-template-columns:var(--analysis-reader-width) minmax(0,1fr);gap:16px;padding:0 16px 16px;height:calc(100dvh - 74px);min-height:480px;transition:grid-template-columns 320ms cubic-bezier(.22,.68,.20,1)}
 .analysis-reader-shell,.analysis-stage{min-width:0;min-height:0;position:relative}
 .analysis-reader-shell{overflow:clip}
+@media(min-width:1181px){html[data-analysis-mode="standalone"][data-bauify-source="on"] .container{--analysis-reader-width:min(760px,54vw)}}
 .reader-restore{position:absolute;inset:0;display:grid;place-items:center;padding:0;border:0;background:none;z-index:1}
 .reader-restore[hidden]{display:none}
 .reader-restore span{width:3px;height:36px;border-radius:2px;background:var(--text-muted);opacity:.6}
