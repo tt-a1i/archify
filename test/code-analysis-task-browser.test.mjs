@@ -65,13 +65,14 @@ test('AI task reader: evidence first, live validation, clipboard fallback, downl
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
   await run("window.taskRequests = []; var nativeFetch = window.fetch; window.fetch = function (url, options) { if (url === '/task') window.taskRequests.push(JSON.parse(options.body)); return nativeFetch.apply(this, arguments); };");
   assert.match(await run("document.getElementById('bauify-overview').innerText"), /Not checked: duplicate code, project coding conventions/);
-  assert.match(await run("document.querySelector('#bauify-overview .bauify-item .where').textContent"), /deeply_nested.*\.py:1/);
+  assert.equal(await run("!!document.querySelector('.priority-card .where')"), false, 'the source path is shown in the finding, not the priority card');
   await screenshot('overview-1440');
   const openFinding = async () => {
     await run("document.querySelector('#bauify-overview .bauify-item').click()");
     await wait("!document.getElementById('bauify-detail').hidden");
   };
   await openFinding();
+  assert.match(await run("document.querySelector('#bauify-detail .finding-location').innerText"), /deeply_nested.*\.py:1/);
   assert.equal(await run("document.activeElement === document.querySelector('#bauify-detail h3')"), true);
   assert.equal(await run("document.querySelector('#bauify-detail .relationship').open"), false);
   assert.equal(await run("document.querySelectorAll('#bauify-detail .inline-evidence .evidence-line').length <= 18"), true);
@@ -83,7 +84,7 @@ test('AI task reader: evidence first, live validation, clipboard fallback, downl
     assert.equal(await run("document.getElementById('bauify-detail').scrollWidth <= document.getElementById('bauify-detail').clientWidth"), true, JSON.stringify(await run("[...document.querySelectorAll('#bauify-detail *')].filter(e => e.getBoundingClientRect().right > document.getElementById('bauify-detail').getBoundingClientRect().right).map(e => [e.tagName,e.className,e.getBoundingClientRect().width])")));
   }
   await run("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.quickCopiedTask = text; } } }); document.querySelector('#bauify-detail .quick-copy').click()");
-  await wait("/Copied AI task/.test(document.querySelector('#bauify-detail .handoff-status').textContent)");
+  await wait("['Copied','已复制'].includes(document.querySelector('#bauify-detail .quick-copy').getAttribute('aria-label')) && document.querySelector('#bauify-detail .handoff-status').textContent === ''");
   assert.equal(await run("document.querySelector('#bauify-detail .ai-task').open"), false, 'one-click handoff does not require opening the preview');
   assert.equal(await run("window.quickCopiedTask === document.querySelector('#bauify-detail .task-preview').value"), true);
   await run("document.querySelector('#bauify-detail .inline-evidence .ref').click()");
@@ -102,8 +103,8 @@ test('AI task reader: evidence first, live validation, clipboard fallback, downl
   await run("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('denied'); } } }); document.querySelector('#bauify-detail .task-copy').click()");
   await wait("/Automatic copy unavailable/.test(document.querySelector('#bauify-detail .task-status').textContent)");
   assert.equal(await run("document.querySelector('#bauify-detail .task-preview').selectionEnd === document.querySelector('#bauify-detail .task-preview').value.length"), true);
-  await run("navigator.clipboard.writeText = async text => { window.copiedTask = text; }; document.querySelector('#bauify-detail .task-copy').click()");
-  await wait("/Copied AI task/.test(document.querySelector('#bauify-detail .task-status').textContent)");
+  await run("navigator.clipboard.writeText = async text => { window.copiedTask = text; }; window.copiedTask = ''; document.querySelector('#bauify-detail .task-copy').click()");
+  await wait("window.copiedTask === document.querySelector('#bauify-detail .task-preview').value && ['Copied','已复制'].includes(document.querySelector('#bauify-detail .quick-copy').getAttribute('aria-label'))");
   assert.equal(await run("window.copiedTask === document.querySelector('#bauify-detail .task-preview').value"), true);
   const downloads = path.join(scratch, 'downloads'); fs.mkdirSync(downloads);
   await send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads });
