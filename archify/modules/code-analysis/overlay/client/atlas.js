@@ -124,8 +124,9 @@
     });
     if (p === 1) { geo = to; geometryFrom = null; anim.focus = 0; }
   }
+  function focusWeight(mi) { return mi == null || !geo.focusWeights ? 0 : geo.focusWeights[mi] || 0; }
   function focusRadius(r, mi) {
-    var weight = mi == null || !geo.focusWeights ? 0 : geo.focusWeights[mi] || 0;
+    var weight = focusWeight(mi);
     if (!weight) return r;
     var measure = canvas.getContext('2d');
     measure.font = LABEL_FONT;
@@ -133,7 +134,17 @@
     var half = Math.min(geo.w, geo.h) / 2 - labelWidth - 12;
     return r + Math.max(0, Math.min(geo.R * 0.16, half - r)) * weight;
   }
-  function pt(a, r, mi) { return [geo.cx + focusRadius(r, mi) * Math.cos(a), geo.cy + focusRadius(r, mi) * Math.sin(a)]; }
+  // One module-wide offset keeps every spike length proportional to its complexity.
+  function focusSpikeRadius(r, mi) {
+    var weight = focusWeight(mi);
+    if (!weight) return r;
+    var half = Math.min(geo.w, geo.h) / 2 - 12;
+    var shift = Math.max(0, Math.min(geo.R * 0.16, half - geo.spike0 - geo.spikeMax));
+    return r + shift * weight;
+  }
+  function px(a, r) { return [geo.cx + r * Math.cos(a), geo.cy + r * Math.sin(a)]; }
+  function pt(a, r, mi) { return px(a, focusRadius(r, mi)); }
+  function ptSpike(a, r, mi) { return px(a, focusSpikeRadius(r, mi)); }
 
   function mid(mi) { return (geo.span[mi][0] + geo.span[mi][1]) / 2; }
   function spikeLen(cx) { return geo.spikeMax * (0.06 + 0.94 * Math.min(cx, 26) / 26); }
@@ -340,7 +351,7 @@
     FN.forEach(function (fn, i) {
       var a = fnAngle(i), len = spikeLen(fn[3]), hit = fn[6] !== -1 ? FD[fn[6]] : null;
       var on = !dimmed || inSel(sel, fn[0]) || sel.fns[i];
-      var p0 = pt(a, geo.spike0, F[fn[0]][1]), p1 = pt(a, geo.spike0 + len, F[fn[0]][1]);
+      var p0 = ptSpike(a, geo.spike0, F[fn[0]][1]), p1 = ptSpike(a, geo.spike0 + len, F[fn[0]][1]);
       marks.push({ type: 'function', index: i, p0: p0, p1: p1 });
       ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
       ctx.strokeStyle = hit ? TONE[hit.severity] || TONE.info : t.muted;
@@ -373,7 +384,7 @@
   function drawHover(ctx, t) {
     var h = state.hover; if (!h) return;
     ctx.save(); ctx.strokeStyle = t.text; ctx.lineWidth = 2;
-    if (h.type === 'function') { var a = fnAngle(h.index), p0 = pt(a, geo.spike0, F[FN[h.index][0]][1]), p1 = pt(a, geo.spike0 + spikeLen(FN[h.index][3]), F[FN[h.index][0]][1]); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
+    if (h.type === 'function') { var a = fnAngle(h.index), p0 = ptSpike(a, geo.spike0, F[FN[h.index][0]][1]), p1 = ptSpike(a, geo.spike0 + spikeLen(FN[h.index][3]), F[FN[h.index][0]][1]); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
     if (h.type === 'file') { var q0 = pt(geo.ang[h.index], geo.R - 2, F[h.index][1]), q1 = pt(geo.ang[h.index], geo.R + geo.tick + 2, F[h.index][1]); ctx.beginPath(); ctx.moveTo(q0[0], q0[1]); ctx.lineTo(q1[0], q1[1]); ctx.stroke(); }
     if (h.type === 'module') {
       ctx.lineWidth = 7; ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.arc(geo.cx, geo.cy, focusRadius(geo.arc, h.index), geo.span[h.index][0], geo.span[h.index][1]); ctx.stroke();

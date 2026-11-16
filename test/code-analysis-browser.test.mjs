@@ -686,3 +686,86 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await until("document.getElementById('bauify-atlas').hidden", 'atlas stayed open after Code Analysis was turned off');
   assert.equal(await run("document.documentElement.getAttribute('data-bauify-view')"), null);
 });
+
+test('Code Analysis Atlas keeps complexity spike lengths when a focused module is constrained', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  await ensureDependencies();
+  const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
+  const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-spike-scale-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const modulePath = 'extremely_long_module_name_for_constrained_labels';
+  const file = `${modulePath}/scales.ts`;
+  const repository = { revision: null, baseRevision: null, sourceKind: 'working-tree', root: '.',
+    url: null, language: 'ts', adapter: 'typescript@5.9.3', adapterRevision: 22, snapshotId: 'd'.repeat(64) };
+  const functions = [
+    { file, name: 'complex_23', qualname: 'complex_23', line: 1, endLine: 20, complexity: 23, nesting: 3, deepestLine: 5 },
+    { file, name: 'complex_26', qualname: 'complex_26', line: 30, endLine: 55, complexity: 26, nesting: 4, deepestLine: 35 },
+  ];
+  const facts = { schema_version: 1, repository, files: [{ path: file, loc: 55, role: 'source', sourceText: 'export const scale = true;\n' }],
+    packageMarkers: [], imports: [], symbols: [], calls: [], functions, unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 } };
+  const graph = buildGraph(facts, { modules: { groups: { [modulePath]: ['**'] }, excludeRoles: [] } });
+  const diagnostics = functions.map(fn => ({
+    id: `CX-${fn.complexity}`, code: 'complexity/function', dimension: 'complexity', severity: 'warning', confidence: 1,
+    message: `${fn.name} is complex.`, subject: { file, function: fn.qualname, line: fn.line, endLine: fn.endLine },
+    evidence: { complexity: fn.complexity, nesting: fn.nesting, length: fn.endLine - fn.line + 1 }, supportedFixes: [],
+  }));
+  const { html } = buildOverlay({ ir: null, graph, facts, findings: diagnostics, sourceRoot: scratch,
+    run: { rules: ['complexity/function'], openAnalysis: true } });
+  const htmlPath = path.join(scratch, 'atlas-scale.html');
+  fs.writeFileSync(htmlPath, html);
+
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const run = async expression => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    return response.result?.value;
+  };
+  const until = (condition, what) => run(`new Promise((resolve, reject) => { const deadline = Date.now() + 10000; const poll = () => {
+    if (${condition}) return resolve(true);
+    if (Date.now() > deadline) return reject(new Error(${JSON.stringify(what)}));
+    setTimeout(poll, 25);
+  }; poll(); })`);
+  await send('Emulation.setDeviceMetricsOverride', { width: 800, height: 800, deviceScaleFactor: 1, mobile: false });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(htmlPath).href });
+  await loaded;
+  await run('document.fonts.ready');
+  await until("document.documentElement.getAttribute('data-bauify') === 'on'", 'analysis did not open');
+  await until("!document.getElementById('bauify-atlas').hidden", 'atlas did not open');
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'the opening reveal did not finish');
+
+  await run(`(() => {
+    window.atlasDots = []; window.atlasSegments = [];
+    const proto = CanvasRenderingContext2D.prototype;
+    const clear = proto.clearRect, arc = proto.arc, begin = proto.beginPath, stroke = proto.stroke, fill = proto.fill, move = proto.moveTo, line = proto.lineTo;
+    proto.clearRect = function (...args) { if (!this.canvas.isConnected) { window.atlasDots = []; window.atlasSegments = []; } return clear.apply(this, args); };
+    proto.beginPath = function (...args) { this.testDot = null; this.testSegment = null; return begin.apply(this, args); };
+    proto.arc = function (x, y, r, start, end, ...rest) { if (r === 3 || r === 5) this.testDot = { x, y }; return arc.call(this, x, y, r, start, end, ...rest); };
+    proto.moveTo = function (x, y) { this.testStart = { x, y }; return move.call(this, x, y); };
+    proto.lineTo = function (x, y) { if (this.testStart) this.testSegment = { start: this.testStart, end: { x, y } }; return line.call(this, x, y); };
+    proto.stroke = function (...args) { if (this.testSegment && !this.canvas.isConnected) window.atlasSegments.push(this.testSegment); return stroke.apply(this, args); };
+    proto.fill = function (...args) { if (this.testDot && !this.canvas.isConnected) window.atlasDots.push(this.testDot); return fill.apply(this, args); };
+    document.getElementById('btn-theme').click();
+  })()`);
+  await until("window.atlasDots.length === 2", 'reported function tips were not captured');
+  await run("document.querySelector('#bauify-atlas [data-module=\"0\"]').click()");
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'module focus did not settle');
+
+  const lengths = await run(`(() => {
+    const segments = window.atlasSegments;
+    return window.atlasDots.map(dot => {
+      const body = segments.find(segment => Math.hypot(segment.end.x - dot.x, segment.end.y - dot.y) < 0.01);
+      return body && Math.hypot(body.end.x - body.start.x, body.end.y - body.start.y);
+    }).sort((a, b) => a - b);
+  })()`);
+  assert.ok(lengths.every(length => length > 0), `both spike bodies are drawn: ${JSON.stringify(lengths)}`);
+  const encoded = complexity => 0.06 + 0.94 * Math.min(complexity, 26) / 26;
+  const expectedRatio = encoded(23) / encoded(26);
+  assert.ok(Math.abs(lengths[0] / lengths[1] - expectedRatio) < 0.01,
+    `focused spikes retain their complexity ratio (${JSON.stringify({ lengths, expectedRatio })})`);
+});
