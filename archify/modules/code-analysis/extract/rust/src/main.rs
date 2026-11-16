@@ -136,6 +136,7 @@ struct TraitMethod {
     qualname: String,
     start: usize,
     end: usize,
+    state: State,
 }
 #[derive(Clone)]
 struct DefaultMethod {
@@ -1153,12 +1154,13 @@ impl Analysis {
                                     qualname: format!("{qualname}::{method_name}"),
                                     start,
                                     end,
+                                    state: method_state,
                                 },
                             );
-                            if let Some(hint) =
-                                return_hint(&m.sig, &trait_generic_set)
-                            {
-                                returns.insert(method_name.clone(), hint);
+                            if method_state == 1 {
+                                if let Some(hint) = return_hint(&m.sig, &trait_generic_set) {
+                                    returns.insert(method_name.clone(), hint);
+                                }
                             }
                             // A default body is one source body regardless of how many
                             // types implement the trait. Register it once for scanning;
@@ -3317,7 +3319,8 @@ impl Scanner<'_> {
         (owner.plain && owner.complete && !owner.has_methods.contains(method)).then_some(declaration)
     }
     fn trait_target(&mut self, span: Span, decl: usize, method: &str, resolution: &str) {
-        if self.state == 0 {
+        let target = self.a.traits[decl].methods[method].clone();
+        if self.state == 0 || target.state != 1 {
             self.call(span, None, "rust-cfg-unselected");
             return;
         }
@@ -3325,7 +3328,6 @@ impl Scanner<'_> {
         let (a, b) = self.a.bytes(&file, span);
         let mut r = self.a.range(&file, a, b);
         r["file"] = json!(file);
-        let target = self.a.traits[decl].methods[method].clone();
         r["resolution"] = json!(resolution);
         r["target"] = json!({"file":target.file,"name":target.name,"line":target.line,"column":target.column});
         self.annotate_context(&mut r);

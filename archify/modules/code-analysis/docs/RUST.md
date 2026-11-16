@@ -155,6 +155,8 @@ can identify the implementation body or, when the implementation omits that
 method, the trait declaration. Competing trait owners keep the target unknown.
 Trait method names carry exact captured ranges and hashes, allowing a
 declaration without a body to pass the same freshness checks as a function target.
+The method declaration's cfg must also be selected before it supplies a target
+or an accessor return type; unknown method cfg remains unproved evidence.
 Agreeing copies of one trait anchor across lib/bin contexts can navigate, and
 every copy must validate the same exact name span.
 The [pinned test and implementation ledger](RUST-RA-PARITY.md) maps current

@@ -168,6 +168,25 @@ fn caller() { use other::*; let s = S; s.run(); }
  assert.equal(call.resolution,'rust-inherent-source-candidate');
 });
 
+// nameres::cfg_test/cfg_not_test select declarations before resolving names.
+// The source-profile adapter must retain an unknown method as an uncertainty.
+test('Rust rust-analyzer cfg boundary requires a selected trait method declaration',t=>{
+ const root=fixture(t,{'src/lib.rs':'trait Gate { #[cfg(build_unknown)] fn go(); }\nfn caller<T: Gate>() { T::go(); }\n'});
+ for(const selected of [false,true]){
+  const facts=capture(root,{rust:{offline:false,cfg:selected?['build_unknown']:[]}});
+  assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+  const call=calls(facts,'src/lib.rs')[0];
+  if(selected){
+   assert.equal(call.resolution,'rust-trait-method-candidate');
+   assert.equal(buildQuestion({root,facts,entry:'src/lib.rs',symbol:'caller',question:'Where is go?'}).calls.records[0].targetNavigation.status,'valid');
+  }else{
+   assert.equal(call.resolution,'unresolved');
+   assert.equal(call.reason,'rust-cfg-unselected');
+   assert.equal(call.target,undefined);
+  }
+ }
+});
+
 test('Rust return typing does not erase generic specialization needed for method selection',t=>{
  const root=fixture(t,{'src/lib.rs':`struct G<T>(T);
 impl G<u8> { fn new() -> Self { G(0) } fn make() -> G<u8> { G(0) } }

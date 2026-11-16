@@ -20,8 +20,8 @@ underline comments are removed; otherwise the relevant source forms and
 expected targets follow the pinned tests. A test name in this table is a
 specific upstream test identity, not an estimate of overall Rust accuracy.
 The directly ported fixtures cover 24 upstream test identities in 21 fixtures.
-Four additional tests use reduced failure controls derived from the upstream
-semantics; they are listed separately and are not four more passing LSP cases.
+Five additional tests use reduced failure controls derived from the upstream
+semantics; they are listed separately and are not five more passing LSP cases.
 One adapted closure fixture checks its supported free-function subset and
 retains the unsupported method-callback cases as explicit unknowns.
 
@@ -36,7 +36,7 @@ as an executable port unless it appears in the fixture tables below.
 | Existing Archify behavior | Pinned upstream tests to study | Local protection / remaining difference |
 | --- | --- | --- |
 | Free functions, module paths, aliases, edition namespaces and captured workspace crates | [nameres tests]: `use_as`, `edition_2015_imports`, `extern_crate_rename`, `values_dont_shadow_extern_crates`; [method tests]: `cross_crate_associated_method_call` | Existing crate-path, edition, dependency-alias and custom-library tests exercise captured Cargo identities. External dependencies remain uncaptured. |
-| Cargo test/cfg/path selection | [nameres tests]: `cfg_test`, `cfg_not_test`; [module tests]: `cfg_in_module_file` | Existing cfg-profile, cfg_attr/path and unknown-generated-cfg tests. Unknown build-script conditions cannot establish targets; these are conservative controls rather than equality to a fully loaded Cargo project. |
+| Cargo test/cfg/path selection | [nameres tests]: `cfg_test`, `cfg_not_test`; [module tests]: `cfg_in_module_file` | Existing cfg-profile, cfg_attr/path and unknown-generated-cfg tests, plus the trait-method cfg control. A method with unknown cfg cannot establish a target or accessor return. These are conservative controls rather than equality to a fully loaded Cargo project. |
 | Monomorphic, concrete-specialization and lifetime-only inherent paths | [method tests]: `infer_associated_method_struct`, `infer_associated_method_with_modules`, `infer_associated_method_generics_without_args` | Existing inherent/specialization/lifetime tests check targets, competing impls and unsupported siblings. Archify does not reproduce general argument-based type inference. |
 | Return values and subsequent method receivers | [method tests]: `infer_associated_method_with_modules`; [trait tests]: `infer_async`, `infer_desugar_async` | Return-type/module tests plus the async control below. A written async output is not the type of the call expression. |
 | Unit values, local imports, glob imports and shadows | [glob tests]: `glob_shadowed_def`, `glob_shadowed_def_reversed`; [block tests]: `use_from_crate`, `nested_blocks`; [simple tests]: `should_be_shadowing_imports` | Local-import and block-glob controls, plus closure shadow/reassignment tests. Receiver lookup now reuses lexical path resolution instead of module spelling. |
@@ -76,6 +76,12 @@ captured trait records at one physical method anchor now navigate when every
 record validates the same exact name span; a forged copy still rejects the
 navigation. This handles one source file shared by a lib and binary without
 changing their distinct crate contexts.
+
+RA's name-resolution cfg tests select declarations before using them as name
+evidence. The adapter now also retains each trait method's cfg state internally.
+An unknown method remains an ambiguity blocker but cannot become a target or
+provide an accessor return type. `Rust rust-analyzer cfg boundary` checks both
+the unknown and explicitly selected profiles; it failed before this guard.
 
 Before these corrections, four reduced controls failed on `b20a9355`: async
 receivers, let/parameter field patterns, block glob receiver identity, and
