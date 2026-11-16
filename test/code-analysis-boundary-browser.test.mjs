@@ -64,7 +64,7 @@ test('Code Analysis shows configured architecture boundaries in the overview, pr
 
   const overview = await run("document.getElementById('bauify-overview').innerText");
   assert.match(overview, /domain depends on ui/);
-  assert.match(overview, /2 imports in 2 files · rule: domain logic stays UI-free/);
+  assert.doesNotMatch(await run("document.querySelector('.priority-card').innerText"), /2 imports in 2 files/);
   const lead = await run("document.querySelector('.priority-card [data-finding]').textContent");
   assert.match(lead, /domain depends on ui/);
   assert.doesNotMatch(lead, /cycle|initialization/i, 'a layer violation is not presented as a cycle');
@@ -74,6 +74,8 @@ test('Code Analysis shows configured architecture boundaries in the overview, pr
 
   await run("[...document.querySelectorAll('#bauify-overview .bauify-item')].find(b => /depends on/.test(b.textContent)).click()");
   await wait("!document.getElementById('bauify-detail').hidden");
+  assert.match(await run("document.querySelector('#bauify-detail .level').innerText"), /2 imports in 2 files · rule: domain logic stays UI-free/);
+  assert.equal(await run("document.querySelector('#bauify-detail .finding-location').innerText"), 'src/domain/order.ts:1');
   await run("document.querySelector('#bauify-detail .more-evidence').open = true");
   const problem = await run("document.getElementById('bauify-detail').innerText");
   assert.match(problem, /The rule comes from the config, not from the diagram/);

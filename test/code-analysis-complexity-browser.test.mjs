@@ -65,12 +65,14 @@ test('Code Analysis shows complex Python functions in the overview, problem page
   assert.match(await run("document.querySelector('.priority-card [data-finding]').textContent"), /dispatch\(\) is complex/);
   assert.equal(await run("document.querySelector('.priority-card .quick-copy').disabled"), false);
   assert.match(overview, /dispatch\(\) is complex/);
-  assert.match(overview, /complexity 27 · nesting 4 · \d+ lines · engine\/router\.py/);
+  assert.doesNotMatch(await run("document.querySelector('.priority-card').innerText"), /complexity 27 · nesting 4/);
   assert.doesNotMatch(await run("document.getElementById('bauify-overview').textContent"), /Not checked: complexity/, 'Python functions were measured');
 
   await run("[...document.querySelectorAll('#bauify-overview .bauify-item')].find(b => /dispatch/.test(b.textContent)).click()");
   await wait("!document.getElementById('bauify-detail').hidden");
   assert.equal(await run("document.querySelector('#bauify-detail .relationship').open"), false);
+  assert.match(await run("document.querySelector('#bauify-detail .level').innerText"), /complexity 27 · nesting 4 · \d+ lines · engine\/router\.py/);
+  assert.equal(await run("document.querySelector('#bauify-detail .finding-location').innerText"), 'engine/router.py:1');
   assert.ok(await run("document.querySelector('#bauify-detail .inline-evidence pre').textContent.includes('if kind == 0:')"));
   await run("document.querySelector('#bauify-detail .more-evidence').open = true");
   const problem = await run("document.getElementById('bauify-detail').innerText");
