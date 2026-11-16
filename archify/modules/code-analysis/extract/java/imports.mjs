@@ -49,6 +49,7 @@ export function describeUnit(unit) {
           startOffset: node.location.startOffset, endOffset: node.location.endOffset,
           line: node.location.startLine, column: node.location.startColumn,
           inheritable,
+          private: modifiers.some(modifier => modifier.children.Private),
           memberScopeStartOffset: body?.location.startOffset ?? node.location.startOffset,
           implementsRange: node.children.classImplements?.[0]?.location,
           classSuperclass: node.children.classExtends?.length ? supertypeRefs[0] : null,
@@ -283,9 +284,12 @@ function referenceTargets(unit, node, name, index, lookup, inheritedMembers) {
   const inheritedBinding = types => {
     const declaring = types.filter(type => index.has(`${type.fullName}.${first}`));
     if (!declaring.length) return null;
-    if (declaring.length !== 1 || name !== first) return INHERITED;
+    if (declaring.length !== 1) return INHERITED;
     const target = lookup(`${declaring[0].fullName}.${first}`);
-    return target.length === 1 && target[0].inheritable ? target : INHERITED;
+    // A private declaration cannot bind the subclass header. Let ordinary
+    // imports and same-package types supply that name instead.
+    if (target.length === 1 && target[0].private) return null;
+    return name === first && target.length === 1 && target[0].inheritable ? target : INHERITED;
   };
   // A class may name a member inherited from its explicit superclass in its
   // implements clause. Its own members are not yet in scope in that header.

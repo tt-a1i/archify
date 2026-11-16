@@ -654,6 +654,22 @@ test('java: a unique protected member interface inherited from captured source r
   assert.equal(facts.imports.find(imp => imp.from === 'Type.java' && imp.specifier === 'Proto')?.to, 'test/Bug.java');
 });
 
+test('java: private superclass member types do not block same-package or imported implements types', t => {
+  for (const modifier of ['private', 'public']) {
+    const root = fixture(t, {
+      'p/Base.java': `package p; public class Base { ${modifier} interface I {} }`,
+      'q/I.java': 'package q; public interface I {}',
+      'q/Child.java': 'package q; public class Child extends p.Base implements I {}',
+      'r/Use.java': 'package r; import q.I; class Use extends p.Base implements I {}',
+    });
+    const { facts } = extractFacts(root, { language: 'java', config: config() });
+    for (const caller of ['q/Child.java', 'r/Use.java']) {
+      assert.equal(facts.imports.find(edge => edge.from === caller && edge.specifier === 'I')?.to,
+        modifier === 'private' ? 'q/I.java' : 'p/Base.java');
+    }
+  }
+});
+
 test('java: inherited member type targets need a unique accessible declaration and complete ancestry', t => {
   const root = fixture(t, {
     'lib/PrivateBase.java': 'package lib; public class PrivateBase { private interface Secret {} }',

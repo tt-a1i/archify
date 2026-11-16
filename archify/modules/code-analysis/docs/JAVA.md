@@ -58,7 +58,7 @@ and checks Maven visibility again. The compiler may identify an interface or
 abstract method declaration without a body; these targets appear in
 `methodDeclarations`, separate from complexity-measured `functions`. They
 identify the statically selected declaration, not a runtime implementation.
-Enabled captures use `java-static-lexical-v6` (adapter revision 13); disabled
+Enabled captures use `java-static-lexical-v6` (adapter revision 14); disabled
 captures retain the v5 binding model. Existing plain static candidates that
 cross a captured Maven boundary without a direct route are rejected in v6,
 including when the compiler is unavailable. External jars, full effective
@@ -237,7 +237,7 @@ branches. Existing thresholds and source-evidence views are reused.
 
 ## Method invocation source navigation
 
-Default captures use `java-static-lexical-v5` (adapter revision 13). Historical
+Default captures use `java-static-lexical-v5` (adapter revision 14). Historical
 v1 restrictions below describe the original collection contract. Later revisions
 add explicit class-qualified public static methods (v2), unique fixed-arity
 candidates among different-arity siblings (v3), and qualifier lookups from callers

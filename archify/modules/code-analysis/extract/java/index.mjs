@@ -10,7 +10,7 @@ import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'java';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 13;
+export const REVISION = 14;
 export const detect = (root, config) => listFiles(root, config).some(isJavaSource);
 export const countSources = (root, config) => listFiles(root, config).filter(isJavaSource).length;
 
@@ -36,7 +36,8 @@ export function extract(root, config, { onCapture } = {}) {
   const callModel = semantic ? 'java-static-lexical-v6' : CALL_MODEL;
   const languageScope = projects.scope;
   if (semantic) languageScope.semantic = semantic;
-  onCapture?.({ coverage:'source-only',model:callModel,options:{build:languageScope.build,...(semantic ? { semantic } : {})},
+  onCapture?.({ coverage:'source-only',model:callModel,options:{build:languageScope.build,
+    ...(semantic ? { semantic: { version: semantic.version, release: semantic.release } } : {})},
     reads:languageScope.metadata.map(input => [path.join(root,input.file),input.sourceText]) });
   return {
     schema_version: 1, callModel,

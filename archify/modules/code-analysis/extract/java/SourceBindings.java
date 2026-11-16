@@ -5,7 +5,6 @@ import com.sun.source.util.SourcePositions;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.Trees;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,6 +32,12 @@ public final class SourceBindings {
 
     private static String relative(Path root, JavaFileObject source) {
         return root.relativize(Path.of(source.toUri()).toAbsolutePath().normalize()).toString().replace('\\', '/');
+    }
+
+    // LineMap columns expand tabs; facts use raw UTF-16 offsets in each line.
+    private static long column(CompilationUnitTree unit, long offset) {
+        long line = unit.getLineMap().getLineNumber(offset);
+        return offset - unit.getLineMap().getStartPosition(line) + 1;
     }
 
     public static void main(String[] args) throws Exception {
@@ -97,16 +102,16 @@ public final class SourceBindings {
                             String targetFile = declaration == null ? "" : relative(root, declaration.getCompilationUnit().getSourceFile());
                             long targetOffset = declaration == null ? -1 : positions.getStartPosition(declaration.getCompilationUnit(), declaration.getLeaf());
                             long targetLine = targetOffset < 0 ? 0 : declaration.getCompilationUnit().getLineMap().getLineNumber(targetOffset);
-                            long targetColumn = targetOffset < 0 ? 0 : declaration.getCompilationUnit().getLineMap().getColumnNumber(targetOffset);
+                            long targetColumn = targetOffset < 0 ? 0 : column(declaration.getCompilationUnit(), targetOffset);
                             boolean isStatic = element != null && element.getModifiers().contains(Modifier.STATIC);
                             String owner = element == null ? "" : element.getEnclosingElement().toString();
                             String method = element instanceof ExecutableElement ? element.getSimpleName().toString() : "";
                             String text = sourceText.substring((int) first, (int) last);
                             records.add(String.join("\t", file,
                                 String.valueOf(unit.getLineMap().getLineNumber(first)),
-                                String.valueOf(unit.getLineMap().getColumnNumber(first)),
+                                String.valueOf(column(unit, first)),
                                 String.valueOf(unit.getLineMap().getLineNumber(last)),
-                                String.valueOf(unit.getLineMap().getColumnNumber(last)),
+                                String.valueOf(column(unit, last)),
                                 isStatic ? "static" : "instance",
                                 field(owner), field(method), field(targetFile), String.valueOf(targetLine), String.valueOf(targetColumn), field(text)));
                         }

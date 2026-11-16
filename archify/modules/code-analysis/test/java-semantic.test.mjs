@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { buildQuestion } from '../lib/explain.mjs';
+import { buildChangeQuestion, captureChangeSide } from '../lib/change-question.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 
 const command = process.env.ARCHIFY_JAVA || 'java';
@@ -82,6 +83,44 @@ test('Java semantic opt-in requires the direct Maven route and preserves POM fre
   assert.equal(absent.languageScope.semantic.rejectedTargets, 1);
   assert.ok(absent.calls.every(call => !call.target));
   assert.equal(absent.calls[0].reason, 'java-compiler-build-scope');
+});
+
+test('Java semantic bindings keep raw UTF-16 columns for tabbed calls and declarations', t => {
+  if (!hasJdk) return t.skip('JDK 17+ not installed for optional semantic coverage');
+  for (const indentation of ['    ', '\t']) {
+    const root = fixture(t, {
+      'Api.java': ['interface Action {', '\tvoid fire();', '}', 'class Api {', '\tvoid instance() {}',
+        '\tstatic void stat() {}', `${indentation}void run(Api api, Action action) { /* 😀 */ api.instance(); stat(); action.fire(); }`,
+        '}', ''].join('\r\n'),
+    });
+    const lexical = capture(root, false);
+    assert.equal(lexical.calls.filter(call => call.target).length, 1);
+    const facts = capture(root);
+    assert.equal(facts.languageScope.semantic.mode, 'complete');
+    assert.equal(facts.languageScope.semantic.rejectedTargets, 0);
+    assert.deepEqual(facts.calls.map(call => call.target?.name), ['instance', 'stat', 'fire']);
+    assert.ok(facts.calls.every(call => call.target.column === 2));
+    const question = buildQuestion({ root, entry: 'Api.java', facts, question: 'Where are the tabbed methods?' });
+    assert.ok(question.calls.records.every(record => record.targetNavigation.status === 'valid'));
+  }
+});
+
+test('Java paired questions do not treat source binding counts as changed compiler settings', t => {
+  if (!hasJdk) return t.skip('JDK 17+ not installed for optional semantic coverage');
+  const baseRoot = fixture(t, { 'Api.java': 'class Api { void ping() {} void run(Api api) { api.ping(); } }' });
+  const headRoot = fixture(t, { 'Api.java': 'class Api { void ping() {} void run(Api api) { api.ping(); api.ping(); } }' });
+  const config = loadConfig(); config.java = { semantic: true, release: 8 };
+  const base = captureChangeSide(baseRoot, config, 'java');
+  const head = captureChangeSide(headRoot, config, 'java');
+  assert.equal(base.facts.languageScope.semantic.newTargets, 1);
+  assert.equal(head.facts.languageScope.semantic.newTargets, 2);
+  const question = buildChangeQuestion({ question: 'What changed in run?', entry: 'Api.java', base, head, config });
+  assert.equal(question.status, 'ready');
+  assert.equal(question.changedDefinitions.total, 1);
+  assert.equal(question.comparison.resolutionChanges.optionChanges.total, 0);
+  assert.equal(question.comparison.resolutionChanges.inputChanges.total, 0);
+  assert.equal(head.resolution.options.semantic.release, 8);
+  assert.equal(head.resolution.options.semantic.version, head.facts.languageScope.semantic.version);
 });
 
 test('Java semantic opt-in falls back to JS facts when the local JDK is unavailable', t => {
