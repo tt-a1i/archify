@@ -1627,6 +1627,14 @@ export class ChromeVisualBrowser {
     const targets = await this.cdp.send(
       'Target.getTargets', {}, undefined, this.startupTimeoutMs,
     );
+    // Deny downloads before any page can trigger one. The inspected page
+    // exports diagrams during the check, and without this Chrome writes
+    // each export to the user's default download directory, where the
+    // killed partial download stays behind as a .crdownload leftover
+    // (#1371). Browser-level, so it also covers pages resetPage() creates.
+    // Kept after Target.getTargets so a slow startup still reports as a
+    // getTargets timeout, not a download-policy timeout.
+    await this.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
     let target = targets.targetInfos?.find((item) => item.type === 'page');
     if (!target) {
       const created = await this.cdp.send('Target.createTarget', { url: 'about:blank' });

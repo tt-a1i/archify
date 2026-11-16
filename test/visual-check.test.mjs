@@ -503,6 +503,40 @@ test('browser relaunch hint is absent after a response or on non-Windows hosts',
   }
 });
 
+test('browser-check denies downloads as soon as the DevTools pipe connects', async () => {
+  const child = fakeChromeChild();
+  const sent = [];
+  child.stdio[3].on('data', (chunk) => {
+    for (const raw of String(chunk).split('\0')) {
+      if (!raw) continue;
+      const message = JSON.parse(raw);
+      sent.push(message);
+      const result = message.method === 'Target.getTargets'
+        ? { targetInfos: [{ type: 'page', targetId: 'fake-target' }] }
+        : message.method === 'Target.attachToTarget'
+          ? { sessionId: 'fake-session' }
+          : {};
+      child.stdio[4].write(`${JSON.stringify({ id: message.id, result })}\0`);
+    }
+  });
+  const browser = new ChromeVisualBrowser('/fake/chrome', {
+    spawnImpl: () => child,
+  });
+  try {
+    assert.equal(await browser.sessionPromise, 'fake-session');
+    const deny = sent.find((message) => message.method === 'Browser.setDownloadBehavior');
+    assert.ok(deny, 'attach() must deny downloads before any page can trigger one');
+    assert.deepEqual(deny.params, { behavior: 'deny' });
+    assert.equal(deny.sessionId, undefined, 'the download deny is browser-level, not per session');
+    assert.ok(
+      sent.indexOf(deny) < sent.findIndex((message) => message.method === 'Page.enable'),
+      'downloads must be denied before the page session is enabled',
+    );
+  } finally {
+    await browser.close();
+  }
+});
+
 test('Windows pipe startup failure provides a non-elevated remedy without claiming its cause', async () => {
   const child = fakeChromeChild();
   const browser = new ChromeVisualBrowser('/fake/msedge.exe', {
