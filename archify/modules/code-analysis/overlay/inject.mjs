@@ -35,7 +35,7 @@ import { sourceChanges } from './source-changes.mjs';
 import { buildOverview } from './overview.mjs';
 import { buildTaskPayloads } from '../lib/task.mjs';
 import { reviewTargetDigest } from '../lib/review.mjs';
-import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
+import { buildAtlas, buildAtlas3dDetail, ATLAS_CSS, ATLAS_JS, ATLAS3D_CSS, ATLAS3D_JS, threeJs } from './atlas.mjs';
 import { clientAsset } from './client-assets.mjs';
 
 export function alignDiagram({ ir, graph, map = null, facts = null, findings = [], run = {} }) {
@@ -148,7 +148,12 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
   const atlas = buildAtlas({ graph, facts, findings, review: run.review });
   // Its data precedes the Classic script, which offers the Atlas button only when the data is present.
   const atlasData = atlas ? `<script type="application/json" id="bauify-atlas-data">${scriptSafeJson(atlas)}</script>\n` : '';
-  const atlasView = atlas ? `<style id="bauify-atlas-style">${ATLAS_CSS}</style>\n<script id="bauify-atlas-script">${ATLAS_JS}</script>\n` : '';
+  // Below a diagram, Atlas 3D is the second option: its detail and three.js (inert
+  // text, run on first open) precede the Atlas script, which offers the option only when they are present.
+  const atlas3d = atlas && ir
+    ? `<script type="application/json" id="bauify-atlas3d-data">${scriptSafeJson(buildAtlas3dDetail({ findings, document: findingsDocument }))}</script>\n<script type="text/plain" id="bauify-three">${threeJs()}</script>\n`
+    : '';
+  const atlasView = atlas ? `${atlas3d}<style id="bauify-atlas-style">${ATLAS_CSS}</style>\n<script id="bauify-atlas-script">${ATLAS_JS}</script>\n${atlas3d ? `<style id="bauify-atlas3d-style">${ATLAS3D_CSS}</style>\n<script id="bauify-atlas3d-script">${ATLAS3D_JS}</script>\n` : ''}` : '';
   const injection = `\n<!-- bauify overlay: authored diagram untouched; analysis layer below -->\n<script type="application/json" id="bauify-analysis">${scriptSafeJson(payload)}</script>\n${atlasData}<style id="bauify-style">${CSS}</style>\n<script id="bauify-script">${JS}</script>\n${atlasView}`;
   const idx = html.lastIndexOf('</body>');
   const out = idx === -1 ? html + injection : html.slice(0, idx) + injection + html.slice(idx);

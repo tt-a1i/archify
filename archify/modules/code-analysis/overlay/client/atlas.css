@@ -1,4 +1,23 @@
-html[data-bauify-view="atlas"]:not([data-analysis-mode="standalone"]) #bauify-reader { display: none; }
+/* Below a diagram: two options open the Atlas or Atlas 3D in place, under the analysed diagram. */
+#bauify-views { margin: 20px 0 24px; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+#bauify-views[hidden] { display: none; }
+#bauify-views .views-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+#bauify-views .views-option { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 12px 16px; border: 1px solid var(--panel-border, #1e293b); border-radius: 12px; background: var(--panel, #0f172a); color: var(--text, #f8fafc); text-align: left; cursor: pointer; font: inherit; transition: border-color .16s ease, background-color .16s ease; }
+#bauify-views .views-option:hover { border-color: color-mix(in srgb, var(--backend-stroke, #34D399) 55%, var(--panel-border, #1e293b)); }
+#bauify-views .views-option[aria-expanded="true"] { border-color: var(--backend-stroke, #34D399); background: color-mix(in srgb, var(--backend-stroke, #34D399) 8%, var(--panel, #0f172a)); }
+#bauify-views .views-option:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 2px; }
+#bauify-views .views-option .atlas-icon { flex: none; width: 28px; height: 28px; min-width: 0; color: var(--backend-stroke, #34D399); }
+#bauify-views .views-copy { display: grid; gap: 2px; min-width: 0; }
+#bauify-views .views-copy b { font-size: 15px; font-weight: 600; }
+#bauify-views .views-copy span { color: var(--text-muted, #94a3b8); font-size: 13px; }
+#bauify-views .views-panels > section { margin-top: 12px; }
+#bauify-atlas3d { height: min(82vh, 860px); border: 1px solid #2b2530; border-radius: 12px; overflow: hidden; }
+#bauify-atlas3d[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { #bauify-views .views-option { transition: none; } }
+/* The Atlas is a dark case wherever it sits: resetting the page colours inside it
+   lets every var() below fall back to its dark value. */
+html:not([data-analysis-mode="standalone"]) #bauify-atlas { position: relative; inset: auto; z-index: auto; height: min(82vh, 860px);
+  --bg: initial; --panel: initial; --panel-border: initial; --text: initial; --text-muted: initial; color-scheme: dark; }
 #bauify-atlas { position: fixed; left: 16px; right: 16px; top: var(--bauify-reader-top, 76px); bottom: 16px; z-index: 63; display: flex; flex-direction: column; border: 1px solid var(--panel-border, #1e293b); border-radius: 12px; background: var(--bg, #0b1220); color: var(--text, #f8fafc); font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
 #bauify-atlas[hidden] { display: none; }
 #bauify-atlas .atlas-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 16px; border-bottom: 1px solid var(--panel-border, #1e293b); }
@@ -58,4 +77,4 @@ html[data-bauify-view="atlas"]:not([data-analysis-mode="standalone"]) #bauify-re
   #bauify-atlas .atlas-stage { flex: none; height: min(100vw, 70vh); }
   #bauify-atlas .atlas-side { width: auto; border-left: 0; border-top: 1px solid var(--panel-border, #1e293b); overflow: visible; }
 }
-@media print { #bauify-atlas { display: none; } }
+@media print { #bauify-atlas, #bauify-views { display: none; } }

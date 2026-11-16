@@ -15,12 +15,13 @@
     var paths = {
       expand: '<path d="M8 3H3v5M3 3l6 6M16 21h5v-5M21 21l-6-6M21 8V3h-5M21 3l-6 6M3 16v5h5M3 21l6-6"></path>',
       clear: '<circle cx="12" cy="12" r="8"></circle><path d="m9 9 6 6M15 9l-6 6"></path>',
-      classic: '<path d="M4 5h16v12H4zM8 21h8M12 17v4M8 9l3 3-3 3M14 15h3"></path>',
       evidence: '<path d="M6 2h8l4 4v16H6zM14 2v5h5M9 12h6M9 16h4"></path>',
       files: '<path d="M5 3h9l4 4v14H5zM14 3v5h5M8 13h7M8 17h5"></path>',
       dependencies: '<circle cx="6" cy="7" r="2.5"></circle><circle cx="18" cy="17" r="2.5"></circle><path d="M7.9 9.4 15.6 14.6M6 9.5V13a3 3 0 0 0 3 3h6.5"></path>',
       functions: '<path d="M5 3h14v18H5zM9 8l-2 4 2 4M15 8l2 4-2 4M13 7l-2 10"></path>',
-      modules: '<rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect><path d="M11 7h5a2 2 0 0 1 2 2v4M13 17H8a2 2 0 0 1-2-2v-4"></path>'
+      modules: '<rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect><path d="M11 7h5a2 2 0 0 1 2 2v4M13 17H8a2 2 0 0 1-2-2v-4"></path>',
+      atlas: '<circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M9 10.5c2-1.5 4-1.5 6 0"></path>',
+      tree: '<path d="M12 22V11M12 15l-4-3M12 13l4-3M12 11 9 7M12 11l3-4"></path><circle cx="8" cy="12" r="1.6"></circle><circle cx="16" cy="10" r="1.6"></circle><circle cx="9" cy="6.5" r="1.6"></circle><circle cx="15" cy="6.5" r="1.6"></circle><path d="M6 22h12"></path>'
     };
     return '<svg class="atlas-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[name] + '</svg>';
   }
@@ -49,12 +50,35 @@
   panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', tr("Code analysis atlas"));
   var totals = [[F.length, 'files', 'file'], [E.length, 'dependencies', 'file dependency'], [FN.length, 'functions', 'function'], [M.length, 'modules', 'module']];
   panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '</div>' +
-    '<div class="atlas-controls">' + iconButton('expand', tr('Disable sector zoom'), '', ' aria-pressed="true"') + iconButton('clear', tr('Clear selection')) + (standalone ? '' : iconButton('classic', tr('Classic view'))) + '</div></nav>' +
+    '<div class="atlas-controls">' + iconButton('expand', tr('Disable sector zoom'), '', ' aria-pressed="true"') + iconButton('clear', tr('Clear selection')) + '</div></nav>' +
     '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div><aside class="atlas-side"><section class="atlas-selection" hidden></section><section class="atlas-stats"><h3 class="k">' + esc(tr('Totals')) + '</h3><div class="stats">' + totals.map(function (stat) {
       var label = plural(stat[0], stat[2], stat[2] === 'file dependency' ? 'file dependencies' : null);
       return '<div class="stat" tabindex="0" role="img" aria-label="' + esc(label) + '" data-analysis-tip="' + esc(tr(stat[2] === 'file dependency' ? 'file dependencies' : stat[1])) + '">' + icon(stat[1]) + '<b>' + fmt(stat[0]) + '</b></div>';
     }).join('') + '</div></section><div class="atlas-side-content"></div></aside></div>';
-  (standalone ? document.querySelector('.analysis-stage') : document.body).appendChild(panel);
+  // The diagram view keeps the analysed diagram first. Below it, two options open
+  // the same run as the Atlas or as Atlas 3D, in place, one at a time.
+  var views = null, panel3d = null, has3d = !!document.getElementById('bauify-three');
+  if (standalone) document.querySelector('.analysis-stage').appendChild(panel);
+  else {
+    var option = function (kind, title, text) {
+      return '<button type="button" class="views-option" data-view="' + kind + '" aria-expanded="false" aria-controls="bauify-' + kind + '">' + icon(kind === 'atlas' ? 'atlas' : 'tree') +
+        '<span class="views-copy"><b>' + esc(title) + '</b><span>' + esc(text) + '</span></span></button>';
+    };
+    views = document.createElement('section');
+    views.id = 'bauify-views'; views.lang = ui.locale || 'en'; views.hidden = true;
+    views.setAttribute('aria-label', tr('More views of this analysis'));
+    views.innerHTML = '<div class="views-options" role="group" aria-label="' + esc(tr('More views of this analysis')) + '">' +
+      option('atlas', tr('Atlas'), tr('Whole-repository view of files, dependencies and functions')) +
+      (has3d ? option('atlas3d', tr('Atlas 3D'), tr('The modules as a tree, grown by dependency layer')) : '') + '</div><div class="views-panels"></div>';
+    var diagram = document.querySelector('.diagram-container');
+    if (diagram) diagram.after(views); else document.body.appendChild(views);
+    views.querySelector('.views-panels').appendChild(panel);
+    if (has3d) {
+      panel3d = document.createElement('section');
+      panel3d.id = 'bauify-atlas3d'; panel3d.hidden = true; panel3d.setAttribute('aria-label', tr('Atlas 3D'));
+      views.querySelector('.views-panels').appendChild(panel3d);
+    }
+  }
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
   canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 
@@ -71,7 +95,10 @@
 
   // ---- colours: module hues spaced around the wheel, lightness by theme ----
   function cssVar(name, fallback) { var v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fallback; }
+  // Below a diagram the Atlas is a dark case in either page theme (atlas.css resets
+  // the page colours inside it); the standalone page follows its own theme.
   function theme() {
+    if (!standalone) return { dark: true, bg: '#0b1220', text: '#f8fafc', muted: '#94a3b8', grid: '#1e293b' };
     var dark = (root.getAttribute('data-theme') || '') !== 'light';
     return { dark: dark, bg: cssVar('--bg', dark ? '#0b1220' : '#ffffff'), text: cssVar('--text', dark ? '#f8fafc' : '#0f172a'), muted: cssVar('--text-muted', dark ? '#94a3b8' : '#475569'), grid: cssVar('--panel-border', dark ? '#1e293b' : '#e2e8f0') };
   }
@@ -552,39 +579,44 @@
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     var ev = side.querySelector('.atlas-evidence');
-    if (ev) ev.addEventListener('click', function () { var id = ev.getAttribute('data-id'); if (!standalone) close(); if (window.__archifyShowFinding) window.__archifyShowFinding(id); });
+    // The reading column stays beside the diagram, so evidence opens there and the Atlas stays put.
+    if (ev) ev.addEventListener('click', function () { if (window.__archifyShowFinding) window.__archifyShowFinding(ev.getAttribute('data-id')); });
   }
 
   // ---- open / close ----
-  // The Atlas reads best on a dark ground. Opening it from a light diagram page
-  // switches the page to dark for the visit and back on leaving, without
-  // replacing the reader's saved theme. A theme the reader picks while in the
-  // Atlas is theirs: leaving then keeps it.
-  var atlasDarkened = false, ownThemeChanges = 0;
-  function toggleTheme() {
-    var stored = null;
-    try { stored = localStorage.getItem('archify-theme'); } catch (_) {}
-    ownThemeChanges++; Archify.theme.toggle();
-    try { if (stored === null) localStorage.removeItem('archify-theme'); else localStorage.setItem('archify-theme', stored); } catch (_) {}
-  }
   function open() {
     if (root.getAttribute('data-bauify') !== 'on') return;
-    if (!standalone && panel.hidden && root.getAttribute('data-theme') === 'light' && window.Archify && Archify.theme && Archify.theme.toggle) { toggleTheme(); atlasDarkened = true; }
-    panel.hidden = false; root.setAttribute('data-bauify-view', 'atlas');
+    panel.hidden = false;
     renderSide(); draw(state.finding !== -1 || state.focusModule !== -1 ? 'fade' : 'reveal');
-    if (!standalone) panel.querySelector('.atlas-classic').focus({ preventScroll: true });
   }
   function close() {
     if (standalone) return;
-    if (atlasDarkened && root.getAttribute('data-theme') === 'dark') toggleTheme();
-    atlasDarkened = false;
-    panel.hidden = true; root.removeAttribute('data-bauify-view'); tip.hidden = true;
+    panel.hidden = true; tip.hidden = true;
     if (anim.raf) { cancelAnimationFrame(anim.raf); clearTimeout(anim.timer); }
     geometryPending = false; updateGeometry(performance.now(), true);
     anim.raf = 0; anim.timer = 0; anim.reveal = 0; anim.fade = 0; anim.flow = 0; anim.flowFor = -1;
     markMotion();
   }
-  if (!standalone) panel.querySelector('.atlas-classic').addEventListener('click', close);
+  // One view below the diagram at a time; choosing the open one again folds it away.
+  function showView(kind) {
+    if (!views) return;
+    var current = root.getAttribute('data-bauify-views') || '';
+    var next = kind === current ? '' : kind;
+    if (next !== 'atlas') close();
+    if (panel3d) panel3d.hidden = next !== 'atlas3d';
+    if (next === 'atlas') open();
+    if (next === 'atlas3d' && window.__archifyAtlas3d) { var view = window.__archifyAtlas3d.mount(panel3d); if (view && view.refresh) view.refresh(); }
+    if (next) root.setAttribute('data-bauify-views', next); else root.removeAttribute('data-bauify-views');
+    views.querySelectorAll('.views-option').forEach(function (button) { button.setAttribute('aria-expanded', String(button.getAttribute('data-view') === next)); });
+    if (next) {
+      var shown = next === 'atlas' ? panel : panel3d, box = shown.getBoundingClientRect();
+      if (box.bottom > window.innerHeight || box.top < 0) shown.scrollIntoView({ block: 'nearest', behavior: motion.matches ? 'auto' : 'smooth' });
+    }
+  }
+  if (views) {
+    views.querySelectorAll('.views-option').forEach(function (button) { button.addEventListener('click', function () { showView(button.getAttribute('data-view')); }); });
+    views.hidden = root.getAttribute('data-bauify') !== 'on';
+  }
   panel.querySelector('.atlas-clear').addEventListener('click', function () { select(-1, -1); });
   document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { e.preventDefault(); select(-1, -1); } });
   function updateExpansionControl() {
@@ -605,6 +637,7 @@
   window.__archifyAtlas = {
     open: open,
     close: close,
+    showView: showView,
     focusFinding: function (id) {
       var index = FD.findIndex(function (f) { return f.id === id; });
       if (index < 0) select(-1, -1); else selectFinding(index);
@@ -613,16 +646,15 @@
     restoreSelection: function (saved) { select(saved.module, saved.finding, saved); }
   };
   if (standalone) open();
-  new MutationObserver(function (records) {
-    // open() already draws in the theme it switched to, so that switch must not
-    // redraw again: it would cut the opening reveal short.
-    var changed = false;
-    records.forEach(function (record) {
-      if (record.attributeName !== 'data-theme') { changed = true; return; }
-      if (ownThemeChanges) { ownThemeChanges--; return; }
-      atlasDarkened = false; changed = true;
-    });
-    if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden && changed) { renderSide(); draw(); }
+  new MutationObserver(function () {
+    var on = root.getAttribute('data-bauify') === 'on';
+    if (views) {
+      views.hidden = !on;
+      if (!on && root.hasAttribute('data-bauify-views')) showView(root.getAttribute('data-bauify-views'));
+    }
+    if (!on && !panel.hidden) close();
+    // Below a diagram the Atlas keeps its dark case, so only the standalone page redraws for a theme change.
+    else if (!panel.hidden && standalone) { renderSide(); draw(); }
   }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   function redrawIfResized() {
     if (panel.hidden) return;

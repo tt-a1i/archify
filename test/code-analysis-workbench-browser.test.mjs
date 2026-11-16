@@ -119,7 +119,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       assert.equal(await run("document.querySelector('.priority-card .quick-copy').getAttribute('aria-label')"),'复制任务给 AI');
       assert.equal(await run("document.querySelector('.priority-card .quick-copy svg rect').getAttribute('width')"),'11');
       assert.equal(await run("(()=>{const d=JSON.parse(document.getElementById('bauify-analysis').textContent);return d.tasks[d.overview.priorities[0]].task.evidence.reason;})()"),'Built from the analysis snapshot; not yet compared with the current working tree.','UI localization preserves the canonical exported evidence');
-      await run("document.querySelector('.reader-atlas').click()");
+      await run("document.querySelector('.views-option[data-view=atlas]').click()");
       const selectedCycleText = await run(`(() => {
         const idx = JSON.parse(document.getElementById('bauify-atlas-data').textContent).findings.findIndex(f => f.code === 'coupling/cycle');
         document.querySelector('#bauify-atlas [data-finding="' + idx + '"]').click();
@@ -127,7 +127,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       })()`);
       assert.match(selectedCycleText, /alpha/, 'zh-CN Atlas selects module-cycle findings and lists affected modules');
       assert.match(selectedCycleText, /beta/, 'zh-CN Atlas lists both cycle modules');
-      await run("document.querySelector('.atlas-classic').click()");
+      await run("document.querySelector('.views-option[data-view=atlas]').click()");
     }
   }
   await open(first.html);
@@ -170,13 +170,14 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.equal(await run("document.querySelector('#bauify-detail .quick-copy').getAttribute('aria-label')"), '复制任务给 AI');
   assert.equal(await run("Boolean(document.querySelector('#bauify-detail .finding.warning'))"), true, 'zh-CN detail keeps canonical severity CSS class');
   assert.match(await run("document.querySelector('#bauify-detail').textContent"), /源码证据/);
-  await run("document.querySelector('#bauify-detail .back').click();document.querySelector('.reader-atlas').click()");
-  assert.equal(await run("document.querySelector('.atlas-classic').getAttribute('aria-label')"), '架构图视图');
+  await run("document.querySelector('#bauify-detail .back').click()");
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('.views-option b'), b => b.textContent)"), ['整仓星图', 'Atlas 3D 模型'], 'zh-CN names both views below the diagram');
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
   assert.match(await run("document.querySelector('.atlas-side').textContent"), /高复杂度函数/);
   assert.equal(await run("document.querySelector('.atlas-stats h3').textContent"), '本次统计');
   assert.equal(await run("document.querySelector('.atlas-title').textContent"), '整仓星图');
   assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metrics').open"), false);
-  await run("document.querySelector('.atlas-classic').click()");
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
   const narrow = await run(`(() => { const r=document.getElementById('bauify-reader').getBoundingClientRect(),d=document.querySelector('.diagram-container').getBoundingClientRect(); return { width:innerWidth, readerWidth:r.width, separate:d.top>=r.bottom, overflow:document.documentElement.scrollWidth>innerWidth }; })()`);
@@ -207,7 +208,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.match(await run("document.querySelector('.comparison-banner').textContent"), /不能直接比较/);
   assert.equal(await run("document.querySelector('.comparison-banner').classList.contains('positive')"), false);
   assert.equal(await run("Boolean(document.querySelector('#bauify-overview .bauify-item.accepted'))"), true, 'zh-CN overview keeps canonical accepted CSS class');
-  await run("document.querySelector('.reader-atlas').click()");
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
   assert.equal(await run("Boolean(document.querySelector('#bauify-atlas .row.accepted'))"), true, 'zh-CN Atlas keeps canonical accepted CSS class');
   const fallback = prepare('fr');
   await open(fallback.html);

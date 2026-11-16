@@ -192,6 +192,7 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
   html[data-bauify="on"] .container { width: 100%; max-width: none; }
   html[data-bauify="on"] .diagram-container { margin-top: 24px; }
   html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
+  html[data-bauify="on"]:not([data-bauify-reader-collapsed]) #bauify-views,
   html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .cards { margin-right: 444px; }
   html[data-bauify="on"] .guided-views { display: none; }
 }
@@ -310,6 +311,7 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 @media (min-width: 1181px) {
   html[data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
   html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) #bauify-views,
   html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-right: calc(min(760px, 54vw) + 24px); }
   #bauify-reader { transition: width .16s ease; }
 }

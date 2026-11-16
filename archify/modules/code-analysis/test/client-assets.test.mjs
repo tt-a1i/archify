@@ -8,7 +8,7 @@ const dir = new URL('../overlay/client/', import.meta.url);
 const names = fs.readdirSync(dir).sort();
 
 test('client assets: the page inlines exactly the files in overlay/client', () => {
-  assert.deepEqual(names, ['atlas.css', 'atlas.js', 'overlay.css', 'overlay.js']);
+  assert.deepEqual(names, ['atlas.css', 'atlas.js', 'atlas3d.css', 'atlas3d.js', 'overlay.css', 'overlay.js']);
   for (const name of names) assert.equal(clientAsset(name), `\n${fs.readFileSync(new URL(name, dir), 'utf8')}`);
 });
 
@@ -26,4 +26,10 @@ test('client assets: nothing can close the tag they are inlined in', () => {
     assert.doesNotMatch(source, /<\/(script|style)/i, name);
     assert.doesNotMatch(source, /\r/, `${name} must use LF line endings so the page bytes match on every platform`);
   }
+});
+
+test('client assets: the embedded three.js cannot close or escape its inert script element', () => {
+  const three = fs.readFileSync(new URL('../overlay/vendor/three.min.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(three, /<\/script|<!--|<script/i);
+  assert.match(fs.readFileSync(new URL('../overlay/vendor/THREE-LICENSE.txt', import.meta.url), 'utf8'), /The MIT License/);
 });

@@ -1,0 +1,58 @@
+/* Atlas 3D: the model fills a dark specimen case with its evidence panel beside it.
+   The look stays dark in either page theme: the particles are additive light,
+   which only reads on black. System fonts only, so the page stays offline. */
+.a3d { --a3d-bg: #0c0a0e; --a3d-panel: #141117; --a3d-panel-2: #1b171f; --a3d-line: #2b2530; --a3d-ink: #f4ecef; --a3d-muted: #a99ca4; --a3d-faint: #75696f;
+  --a3d-plain: #f7e6ea; --a3d-info: #ff8fb1; --a3d-warning: #ff3b6b; --a3d-core: #c9b8ff; --a3d-focus: #ffb3c8;
+  --a3d-mono: ui-monospace, Menlo, Consolas, monospace;
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px; height: 100%; min-height: 0; color: var(--a3d-ink); background: var(--a3d-bg);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color-scheme: dark; }
+.a3d :focus-visible { outline: 2px solid var(--a3d-focus); outline-offset: 2px; }
+.a3d button { font: inherit; }
+.a3d-main { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.a3d-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: radial-gradient(ellipse at 55% 45%, #221a22 0%, #120e13 55%, var(--a3d-bg) 100%); }
+.a3d-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.a3d-labels { position: absolute; inset: 0; pointer-events: none; }
+.a3d-lbl { position: absolute; left: 0; top: 0; pointer-events: auto; background: rgba(12, 10, 14, .55); border: 0; color: #e9dde2; font: 500 11px var(--a3d-mono); padding: 1px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+.a3d-lbl.core { color: var(--a3d-core); font-weight: 600; font-size: 12px; }
+.a3d-lbl.on { background: var(--a3d-ink); color: var(--a3d-bg); }
+.a3d-lbl[hidden], .a3d-layer[hidden], .a3d-tip[hidden] { display: none; }
+.a3d-layer { position: absolute; left: 0; top: 0; color: rgba(255, 255, 255, .62); font: 11px var(--a3d-mono); white-space: nowrap; }
+.a3d-tip { position: absolute; left: 0; top: 0; max-width: 300px; pointer-events: none; background: rgba(20, 17, 23, .94); border: 1px solid var(--a3d-line); border-radius: 6px; padding: 6px 9px; font: 11px/1.45 var(--a3d-mono); color: var(--a3d-muted); }
+.a3d-tip b { display: block; color: var(--a3d-ink); font-weight: 500; overflow-wrap: anywhere; }
+.a3d-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 18px 12px; font-size: 12px; color: var(--a3d-muted); border-top: 1px solid var(--a3d-line); }
+.a3d-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.a3d-legend .thread { width: 18px; height: 0; border-radius: 0; border-top: 1px solid var(--a3d-core); vertical-align: 3px; }
+.a3d-side { background: var(--a3d-panel); border-left: 1px solid var(--a3d-line); overflow: auto; padding: 14px 16px 24px; min-width: 0; }
+.a3d-side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.a3d-reset { background: none; border: 1px solid var(--a3d-line); color: var(--a3d-ink); border-radius: 6px; padding: 3px 9px; font-size: 12px; cursor: pointer; }
+.a3d-reset:hover { border-color: var(--a3d-muted); }
+.a3d-k { color: var(--a3d-faint); font-size: 11px; font-weight: 500; letter-spacing: .06em; margin: 18px 0 6px; }
+.a3d-side-head .a3d-k { margin: 2px 0 6px; }
+.a3d-card { background: var(--a3d-panel-2); border: 1px solid var(--a3d-line); border-radius: 8px; padding: 11px 12px; display: grid; gap: 6px; font-size: 13px; }
+.a3d-card h4 { margin: 0; font: 600 15px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-wrap: anywhere; }
+.a3d-card p { margin: 0; overflow-wrap: anywhere; }
+.a3d-card-k { font-size: 11px; color: var(--a3d-faint); }
+.a3d-mono, .a3d-card h4.a3d-mono { font-family: var(--a3d-mono); font-size: 12px; overflow-wrap: anywhere; }
+.a3d-muted { color: var(--a3d-muted); }
+.a3d-btn { justify-self: start; background: var(--a3d-ink); color: var(--a3d-bg); border: 0; border-radius: 6px; padding: 6px 11px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.a3d-check { border: 1px solid var(--a3d-line); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; display: grid; gap: 8px; }
+.a3d-check.ok { border-color: rgba(120, 220, 170, .35); }
+.a3d-check.bad { border-color: var(--a3d-warning); color: var(--a3d-warning); }
+.a3d-check dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; color: var(--a3d-muted); }
+.a3d-check dt { color: var(--a3d-ink); }
+.a3d-check dd { margin: 0; font-variant-numeric: tabular-nums; }
+.a3d-check p { margin: 0; }
+.a3d details summary { cursor: pointer; padding: 5px 0; font-weight: 500; }
+.a3d-list, .a3d-modules { display: grid; }
+.a3d-modules { max-height: 280px; overflow-y: auto; scrollbar-width: thin; }
+.a3d-row { width: 100%; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 6px; border: 0; background: none; color: var(--a3d-ink); text-align: left; cursor: pointer; border-radius: 5px; }
+.a3d-row:hover, .a3d-row.active { background: var(--a3d-panel-2); }
+.a3d-row i { width: 8px; height: 8px; border-radius: 50%; }
+.a3d-row .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--a3d-mono); font-size: 12px; }
+.a3d-row .n { color: var(--a3d-muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.a3d-fallback { padding: 40px; color: var(--a3d-muted); }
+@media (max-width: 960px) {
+  .a3d { grid-template-columns: 1fr; height: auto; }
+  .a3d-main { height: 70vh; }
+  .a3d-side { border-left: 0; border-top: 1px solid var(--a3d-line); }
+}

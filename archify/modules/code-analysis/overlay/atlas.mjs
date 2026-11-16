@@ -19,6 +19,7 @@
 // dependency records draw no curve, so a missing curve is not proof of absent
 // coupling; the side panel states the unresolved counts. Source text stays in
 // the Classic view, which the Atlas links to for any finding's evidence.
+import fs from 'node:fs';
 import { clientAsset } from './client-assets.mjs';
 
 const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
@@ -177,3 +178,25 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
 export const ATLAS_CSS = clientAsset('atlas.css');
 
 export const ATLAS_JS = clientAsset('atlas.js');
+
+// Atlas 3D draws the same payload as a tree. Besides it, its side panel quotes
+// each finding's own message and first suggested fix, and checks the drawing
+// against the run's totals; nothing else is added.
+export function buildAtlas3dDetail({ findings = [], document: findingsDocument = null }) {
+  return {
+    detail: Object.fromEntries(findings.map((f) => [f.id, { message: f.message || '', fix: (f.supportedFixes || [])[0] || null }])),
+    run: { summary: findingsDocument?.summary ?? null },
+  };
+}
+
+export const ATLAS3D_CSS = clientAsset('atlas3d.css');
+
+export const ATLAS3D_JS = clientAsset('atlas3d.js');
+
+// three.js r128 (MIT, vendor/THREE-LICENSE.txt), embedded as inert text: atlas3d.js
+// runs it the first time Atlas 3D opens. Read on first use only.
+let threeSource = null;
+export function threeJs() {
+  if (threeSource === null) threeSource = fs.readFileSync(new URL('./vendor/three.min.js', import.meta.url), 'utf8');
+  return threeSource;
+}

@@ -18,8 +18,8 @@
   var reader = document.createElement('aside');
   reader.lang = locale;
   reader.id = 'bauify-reader'; reader.hidden = true; reader.setAttribute('aria-label', tr("Code analysis reader"));
+  // The Atlas and Atlas 3D open below the diagram (atlas.js), not from this column.
   reader.innerHTML = '<nav class="reader-nav" aria-label="' + esc(tr('Analysis navigation')) + '"><span class="reader-path">' + esc(tr('Analysis / Overview')) + '</span><span class="reader-actions">' +
-    (!standalone && document.getElementById('bauify-atlas-data') ? iconButton('atlas', tr('Whole-repository view of files, dependencies and functions'), ' reader-atlas') : '') +
     iconButton(standalone ? 'collapse' : 'panel', tr('Hide analysis'), ' reader-toggle', ' aria-expanded="true" aria-controls="bauify-reader"') + '</span></nav>';
   var diagramContainer = document.querySelector(standalone ? '.analysis-stage' : '.diagram-container');
   var restoreButton, readerToggle = reader.querySelector('.reader-toggle');
@@ -39,7 +39,6 @@
       check: '<path d="m5 12 4 4L19 6"></path>',
       filter: '<path d="M4 5h16l-6 7v5l-4 2v-7z"></path>',
       refresh: '<path d="M20 6v5h-5M4 18v-5h5M6.1 9a7 7 0 0 1 11.5-2.6L20 9M4 15l2.4 2.6A7 7 0 0 0 17.9 15"></path>',
-      atlas: '<circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>',
       panel: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path>',
       collapse: '<path d="M18 5v14M9 8l4 4-4 4"></path>',
       snapshot: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h4"></path>'
@@ -92,8 +91,6 @@
     if (restoreButton) restoreButton.focus({ preventScroll: true });
     else if (window.innerWidth <= 1000 && diagramContainer) diagramContainer.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
-  var atlasButton = reader.querySelector('.reader-atlas');
-  if (atlasButton) atlasButton.addEventListener('click', function () { if (window.__archifyAtlas) window.__archifyAtlas.open(); });
   function readerPage(name) {
     reader.hidden = false;
     reader.querySelector('.reader-path').textContent = tr("Analysis / ") + name;

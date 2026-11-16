@@ -500,16 +500,22 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await run("document.getElementById('code-analysis-start').click()");
   await until("document.documentElement.getAttribute('data-bauify') === 'on'", 'analysis did not open');
 
-  // From a light page the Atlas opens on a dark ground without saving that as the reader's theme.
-  await run("if (document.documentElement.getAttribute('data-theme') !== 'light') Archify.theme.toggle(); localStorage.removeItem('archify-theme')");
-  await run("document.querySelector('#bauify-reader .reader-atlas').click()");
-  assert.deepEqual(await run("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('archify-theme')]"), ['dark', null], 'the Atlas switches a light page to dark for the visit only');
+  // The diagram comes first; below it, options open the Atlas or Atlas 3D in place. No toggle sits in the reading column.
+  assert.equal(await run("!!document.querySelector('.reader-atlas, .atlas-classic')"), false, 'no switch between the diagram and the Atlas');
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('#bauify-views .views-option'), b => [b.dataset.view, b.getAttribute('aria-expanded')])"), [['atlas', 'false'], ['atlas3d', 'false']], 'both options start folded');
+  assert.equal(await run("document.getElementById('bauify-views').getBoundingClientRect().top >= document.querySelector('.diagram-container').getBoundingClientRect().bottom"), true, 'the options sit below the diagram');
+  assert.equal(await run("typeof window.THREE"), 'undefined', 'three.js stays inert until Atlas 3D opens');
+  await run("if (document.documentElement.getAttribute('data-theme') !== 'light') Archify.theme.toggle()");
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
+  // In place, beside the reading column, and a dark case in a light page.
+  assert.deepEqual(await run(`(() => { const a = document.getElementById('bauify-atlas'), r = document.getElementById('bauify-reader');
+    return [document.documentElement.getAttribute('data-theme'), getComputedStyle(a).position, getComputedStyle(r).display !== 'none', a.getBoundingClientRect().right <= r.getBoundingClientRect().left, getComputedStyle(a).backgroundColor]; })()`),
+    ['light', 'relative', true, true, 'rgb(11, 18, 32)'], 'the Atlas opens in place below the diagram as a dark case, with the reading column still beside it');
   const atlas = JSON.parse(await run("document.getElementById('bauify-atlas-data').textContent"));
   await until(`document.documentElement.getAttribute('data-bauify-atlas-drawn') === '${atlas.edges.length}'`, 'atlas did not draw');
   assert.ok(atlas.edges.length > 0 && atlas.functions.length > 0, 'the fixture has dependencies and functions to draw');
   assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-animating')"), 'true', 'the opening reveal runs');
   await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'the opening reveal did not finish');
-  assert.equal(await run("getComputedStyle(document.getElementById('bauify-reader')).display"), 'none', 'the Classic reader steps aside');
   // The circle is painted: a good share of pixels in its bounding square are not transparent.
   const painted = await run(`(() => { const c = document.querySelector('#bauify-atlas canvas'), x = c.getContext('2d');
     const s = Math.min(c.width, c.height), d = x.getImageData((c.width - s) / 2, (c.height - s) / 2, s, s).data; let n = 0;
@@ -529,7 +535,7 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     p.lineTo = function (x,y) { if (this.testStart) this.testSegment = {x:(x+this.testStart.x)/2,y:(y+this.testStart.y)/2,end:{x,y}}; return line.call(this,x,y); };
     p.stroke = function (...args) { if (!this.canvas.isConnected) { if (this.testArc) atlasArcs.push({...this.testArc,alpha:this.globalAlpha}); if (this.testSegment) atlasSegments.push(this.testSegment); } return stroke.apply(this,args); };
     p.fill = function (...args) { if (!this.canvas.isConnected && this.testDot) atlasDots.push(this.testDot); return fill.apply(this,args); };
-    document.getElementById('btn-theme').click();
+    window.__archifyAtlas.focusFinding('');
   })()`);
   await until(`atlasArcs.length === ${atlas.modules.length}`, 'module geometry was not painted');
   const resting = await run('atlasArcs');
@@ -633,20 +639,30 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id, 'tip and body retain the selected function after zoom');
     assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), owner);
   }
+  // Evidence opens in the reading column beside the Atlas; the Atlas stays open.
   await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
-  await until("document.getElementById('bauify-atlas').hidden && !document.getElementById('bauify-detail').hidden", 'finding did not open in the Classic view');
+  await until("!document.getElementById('bauify-detail').hidden", 'finding did not open in the reading column');
   assert.match(await run("document.querySelector('#bauify-detail h3').textContent"), /is complex/);
-  assert.ok(await run("!!document.querySelector('#bauify-detail pre')"), 'the Classic view shows the source excerpt');
-  assert.equal(await run("document.documentElement.getAttribute('data-bauify-view')"), null);
-  // The theme button was pressed inside the Atlas above: that choice is the reader's and survives leaving.
-  assert.deepEqual(await run("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('archify-theme')]"), ['light', 'light'], 'a theme picked inside the Atlas is kept on leaving');
+  assert.ok(await run("!!document.querySelector('#bauify-detail pre')"), 'the reading column shows the source excerpt');
+  assert.equal(await run("document.getElementById('bauify-atlas').hidden"), false, 'the Atlas stays open beside the evidence');
 
-  // Turning Code Analysis off also closes the Atlas, and an untouched temporary dark theme is undone.
-  await run("document.querySelector('#bauify-reader .reader-atlas').click()");
+  // The second option swaps the Atlas for Atlas 3D in the same place: the same run, every item accounted for.
+  await run("document.querySelector('.views-option[data-view=atlas3d]').click()");
+  assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views'), typeof window.THREE]"),
+    [true, false, 'atlas3d', 'object'], 'Atlas 3D replaces the Atlas below the diagram and runs three.js on first open');
+  if (await run("!!document.querySelector('#bauify-atlas3d canvas')")) {
+    await until(`document.documentElement.getAttribute('data-bauify-atlas3d-drawn') === '${atlas.functions.length}'`, 'Atlas 3D did not draw');
+    assert.deepEqual(await run("[window.__archifyAtlas3d.view.consistent, window.__archifyAtlas3d.view.counts.files]"), [true, atlas.files.length], 'every file, function and finding of the run is in the model');
+  } else assert.match(await run("document.querySelector('#bauify-atlas3d .a3d-fallback').textContent"), /WebGL/, 'without WebGL the view says so');
+  // Choosing the open option again folds it away.
+  await run("document.querySelector('.views-option[data-view=atlas3d]').click()");
+  assert.deepEqual(await run("[document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views'), Array.from(document.querySelectorAll('.views-option'), b => b.getAttribute('aria-expanded'))]"),
+    [true, null, ['false', 'false']], 'the open view folds when chosen again');
+
+  // Turning Code Analysis off hides the options and closes whatever was open.
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
   assert.equal(await run("document.getElementById('bauify-atlas').hidden"), false);
-  assert.deepEqual(await run("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('archify-theme')]"), ['dark', 'light'], 'the visit is dark but the saved choice stays light');
   await run("document.getElementById('btn-bauify').click()");
-  await until("document.getElementById('bauify-atlas').hidden", 'atlas stayed open after Code Analysis was turned off');
-  assert.equal(await run("document.documentElement.getAttribute('data-bauify-view')"), null);
-  assert.deepEqual(await run("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('archify-theme')]"), ['light', 'light'], 'leaving the Atlas restores the page theme');
+  await until("document.getElementById('bauify-atlas').hidden && document.getElementById('bauify-views').hidden", 'the views stayed open after Code Analysis was turned off');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-views')"), null);
 });

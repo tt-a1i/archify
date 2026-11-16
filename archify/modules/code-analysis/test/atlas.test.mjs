@@ -104,6 +104,23 @@ test('atlas: the overlay embeds the atlas before the Classic script only when ra
   assert.deepEqual(order, [...order].sort((a, b) => a - b), 'atlas data precedes the Classic script; the atlas script follows it');
   const without = buildOverlay({ ir, graph, html, facts: null, findings }).html;
   assert.ok(!without.includes('id="bauify-atlas-data"') && !without.includes('id="bauify-atlas-script"'), 'no atlas without raw facts');
+  assert.ok(!without.includes('id="bauify-three"'), 'no Atlas 3D without raw facts');
+});
+
+test('atlas: below a diagram the overlay embeds Atlas 3D, with three.js as inert text ahead of the Atlas script', (t) => {
+  const { facts, graph, findings } = analyze(t);
+  const html = '<html><body><div class="toolbar"></div><svg><g data-node-id="app"></g></svg></body></html>';
+  const ir = { schema_version: 1, diagram_type: 'architecture', meta: { title: 't', output: 'a.html' }, components: [{ id: 'app', type: 'backend', label: 'App', pos: [0, 0], size: [100, 40] }], connections: [] };
+  const page = buildOverlay({ ir, graph, html, facts, findings }).html;
+  const order = ['bauify-atlas-data', 'bauify-atlas3d-data', 'bauify-three', 'bauify-atlas-script', 'bauify-atlas3d-script'].map((id) => page.indexOf(`id="${id}"`));
+  assert.ok(order.every((i) => i > 0), 'all Atlas 3D parts present');
+  assert.deepEqual(order, [...order].sort((a, b) => a - b), 'the Atlas script sees three.js before it offers the Atlas 3D option');
+  assert.match(page, /<script type="text\/plain" id="bauify-three">[\s\S]*Three\.js Authors/, 'three.js is embedded unexecuted, with its licence header');
+  const detail = JSON.parse(page.match(/<script type="application\/json" id="bauify-atlas3d-data">([\s\S]*?)<\/script>/)[1]);
+  assert.deepEqual(Object.keys(detail.detail).sort(), findings.map((f) => f.id).sort(), 'every finding carries its own message for the side panel');
+  for (const f of findings) assert.equal(detail.detail[f.id].message, f.message);
+  const standalone = buildOverlay({ ir: null, graph, html: null, facts, findings }).html;
+  assert.ok(standalone.includes('id="bauify-atlas-data"') && !standalone.includes('id="bauify-three"'), 'the standalone page keeps the Atlas alone');
 });
 
 test('atlas: an internal-imports finding draws its cited imports and marks its module and entry files', (t) => {
