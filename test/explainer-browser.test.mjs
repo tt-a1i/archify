@@ -208,8 +208,8 @@ test('native step opens the complete Viewer and focuses exact nodes and edges wi
 
 test('a hosted Viewer keeps preset controls and blueprint decoration without standalone badges',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
- const spec=compileExplainerDiagram('sequence',['actor api | API | backend','actor redis | Redis | database','api | redis | Read cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
- const doc=formalDocument();doc.meta.id='hosted-browser';doc.meta.style='editorial';doc.meta.quality_profile='showcase';doc.panels.push({id:'how',title:'Where does the request go?',blocks:[{id:'native',type:'diagram',diagramType:'sequence',spec},{id:'step',type:'steps',items:[{id:'read-step',text:'Read cache',target:{diagram:'native',node:'api',edges:['api-to-redis-1']}}]}]});
+ const spec=compileExplainerDiagram('sequence',['role backend | Cache engine','actor api | API | backend','actor redis | Redis | database','api | redis | Read cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
+ const doc=formalDocument();delete doc.meta.locale;doc.meta.id='hosted-browser';doc.meta.style='editorial';doc.meta.quality_profile='showcase';doc.panels.push({id:'how',title:'Where does the request go?',blocks:[{id:'native',type:'diagram',diagramType:'sequence',spec},{id:'step',type:'steps',items:[{id:'read-step',text:'Read cache',target:{diagram:'native',node:'api',edges:['api-to-redis-1']}}]}]});
  const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'source.json'),quality:'showcase'});
  const file=artifact('hosted',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
  const browser=new ChromeVisualBrowser(chrome);try {
@@ -221,6 +221,11 @@ test('a hosted Viewer keeps preset controls and blueprint decoration without sta
   assert.deepEqual(viewer.badges,['none','none'],'The header badge and the plate stay off in a hosted Viewer');
   const attached=await browser.cdp.send('Target.attachToTarget',{targetId:viewer.targetId,flatten:true});
   try {
+   const lens=await browser.cdp.send('Runtime.evaluate',{expression:`(()=>{document.querySelector('#btn-semantic-lens').click();return {title:document.querySelector('#semantic-lens-title').textContent,instruction:document.querySelector('.semantic-lens-instruction').textContent,backendKind:document.querySelector('.semantic-lens-kind[data-kind="backend"]')?.textContent||''};})()`,returnByValue:true},attached.sessionId);
+   assert.equal(lens.result.value.title,'比较分组');
+   assert.equal(lens.result.value.instruction,'选择一个分组以高亮对应元素。');
+   assert.match(lens.result.value.backendKind,/Cache engine/);
+   await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector('#semantic-lens-close').click()`,returnByValue:true},attached.sessionId);
    for(const preset of ['signal-flow','blueprint','editorial','classic']) {
     for(const selector of ['#btn-preset',`[data-preset-value="${preset}"]`]) {
      const focused=await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)}).focus();document.activeElement.matches(${JSON.stringify(selector)})`,returnByValue:true},attached.sessionId);
@@ -300,8 +305,10 @@ test('copy controls report confirmed writes and retain manual-copy text on clipb
  try {
   for(const locale of ['en','zh-CN']) {
    const doc=formalDocument();doc.meta.locale=locale;
+   doc.meta.title='Why does `flush()` **wait**?[](source:example)';
+   doc.panels[0].title='Why `why` panel?[](source:example)';
    doc.panels[0].blocks.push({id:'copy-example',type:'snippet',title:'Complete example',language:'js',text:literal});
-   const file=artifact(`clipboard-${locale}`,renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+   const file=artifact(`clipboard-${locale}`,renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedSources:{sources:{example:{title:'Example'}}}}));
    for(const mode of ['success','missing','rejected','throws']) {
     await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width:390,keyboard:false});
     await pageValue(browser,`(()=>{window.copyErrors=[];addEventListener('error',e=>{copyErrors.push(e.message);e.preventDefault();});window.written=[];const mode=${JSON.stringify(mode)};Object.defineProperty(navigator,'clipboard',{configurable:true,value:mode==='missing'?undefined:{writeText(value){written.push(value);if(mode==='throws')throw new Error('Controlled synchronous failure');if(mode==='rejected')return Promise.reject(new Error('Controlled rejection'));return new Promise(resolve=>window.finishCopy=resolve);}}});})()`);
@@ -310,29 +317,53 @@ test('copy controls report confirmed writes and retain manual-copy text on clipb
     if(mode==='success')await pageValue(browser,'finishCopy()');
     const snippet=await pageValue(browser,`({label:document.querySelector('[data-copy]').textContent,toast:document.querySelector('#toast').textContent,written:[...written]})`);
     await keyboardActivate(browser,'#why .ask-button');
+    const askWhere=await pageValue(browser,`document.querySelector('.ask-where').textContent`);
     await pageValue(browser,`document.querySelector('.ask-dialog textarea').value=${JSON.stringify(question)};document.querySelector('#toast').textContent='';`);
     await keyboardActivate(browser,'.ask-dialog [type=submit]');
     const pendingDialog=await pageValue(browser,'document.querySelector(".ask-dialog").open');
     if(mode==='success')await pageValue(browser,'finishCopy()');
     const ask=await pageValue(browser,`(()=>{const area=document.querySelector('.ask-dialog textarea');return {open:document.querySelector('.ask-dialog').open,text:area.value,selection:[area.selectionStart,area.selectionEnd],focused:document.activeElement===area,note:document.querySelector('.ask-note').textContent,noteRole:document.querySelector('.ask-note').getAttribute('role'),toast:document.querySelector('#toast').textContent,written:[...written],errors:copyErrors};})()`);
-    let reopened,retry;
-    if(mode!=='success'){await keyboardActivate(browser,'.ask-dialog [type=submit]');retry=await pageValue(browser,`({open:document.querySelector('.ask-dialog').open,text:document.querySelector('.ask-dialog textarea').value,written:[...written]})`);await keyboardActivate(browser,'.ask-dialog footer [data-ask-cancel]');await keyboardActivate(browser,'#why .ask-button');reopened=await pageValue(browser,`({note:document.querySelector('.ask-note').textContent,expected:JSON.parse(document.getElementById('explainer-reader-words').textContent).askNote,text:document.querySelector('.ask-dialog textarea').value})`);}
-    observations.push({locale,mode,pendingSnippet,pendingDialog,snippet,ask,retry,reopened});
+    let reopened,retry,editedRetry,chipRetry;
+    if(mode!=='success'){
+     await keyboardActivate(browser,'.ask-dialog [type=submit]');
+     retry=await pageValue(browser,`({open:document.querySelector('.ask-dialog').open,text:document.querySelector('.ask-dialog textarea').value,written:[...written]})`);
+     await pageValue(browser,`(()=>{const area=document.querySelector('.ask-dialog textarea');area.value=area.value.replace(${JSON.stringify(question)},'Updated follow-up');})()`);
+     await keyboardActivate(browser,'.ask-dialog [type=submit]');
+     editedRetry=await pageValue(browser,`({open:document.querySelector('.ask-dialog').open,text:document.querySelector('.ask-dialog textarea').value,written:[...written]})`);
+     await keyboardActivate(browser,'.ask-dialog [data-chip]');
+     const chipText=await pageValue(browser,`document.querySelector('.ask-dialog textarea').value`);
+     await keyboardActivate(browser,'.ask-dialog [type=submit]');
+     chipRetry={chipText,...await pageValue(browser,`({open:document.querySelector('.ask-dialog').open,text:document.querySelector('.ask-dialog textarea').value,written:[...written]})`)};
+     await keyboardActivate(browser,'.ask-dialog footer [data-ask-cancel]');
+     await keyboardActivate(browser,'#why .ask-button');
+     reopened=await pageValue(browser,`({note:document.querySelector('.ask-note').textContent,expected:JSON.parse(document.getElementById('explainer-reader-words').textContent).askNote,text:document.querySelector('.ask-dialog textarea').value})`);
+    }
+    observations.push({locale,mode,pendingSnippet,pendingDialog,snippet,askWhere,ask,retry,editedRetry,chipRetry,reopened});
    }
   }
   for(const entry of observations) {
    const {locale,mode,snippet,ask}=entry,copy=locale==='en'?'Copy':'复制',copied=locale==='en'?'Copied':'已复制',failed=locale==='en'?'Copy failed':'复制失败';
+   const pageHeader=locale==='en'?'Page: ':'页面：',patchLine=locale==='en'?'Revise only this panel with Archify panel replacement (patch explainer), keeping its ID.':'请用 Archify 的面板替换（patch explainer）只更新这个面板，保留它的 ID。';
    const success=observations.find(item=>item.locale===locale&&item.mode==='success');
    assert.deepEqual(ask.errors,[],JSON.stringify(entry));
+   assert.equal(entry.askWhere,locale==='en'?'Panel 1 · Why why panel?':'面板 1 · Why why panel?');
    if(mode==='success') {
     assert.equal(entry.pendingSnippet,copy,'success must wait for the clipboard promise');assert.equal(entry.pendingDialog,true,'a pending write keeps the question available');
     assert.equal(snippet.label,copied);assert.deepEqual(snippet.written,[literal]);assert.equal(ask.open,false);
     assert.ok(ask.written[1].includes(question));assert.ok(ask.written[1].includes('why'));assert.ok(ask.toast.startsWith(copied));
+    assert.ok(ask.written[1].includes('flush() wait?'),`plain page title has no superscript number: ${ask.written[1]}`);
+    assert.ok(!ask.written[1].includes('wait?1'),`citation number must not leak into page title: ${ask.written[1]}`);
    } else {
     assert.equal(snippet.label,copy,JSON.stringify(entry));assert.ok(snippet.toast.startsWith(failed),JSON.stringify(entry));
     assert.equal(ask.open,true,JSON.stringify(entry));assert.equal(ask.text,success.ask.written[1],'manual copy retains the complete successful payload');
     assert.deepEqual(ask.selection,[0,ask.text.length]);assert.equal(ask.focused,true);assert.ok(ask.note.startsWith(failed));assert.equal(ask.noteRole,'status');
     assert.equal(entry.retry.open,true);assert.equal(entry.retry.text,ask.text,'a retry keeps the manual-copy text instead of nesting it');
+    assert.equal(entry.editedRetry.text.split(pageHeader).length-1,1,'editing after copy failure must not nest Page headers');
+    assert.equal(entry.editedRetry.text.split(patchLine).length-1,1,'editing after copy failure must not duplicate patch instruction');
+    assert.ok(entry.editedRetry.text.includes('Updated follow-up'));
+    assert.ok(!entry.chipRetry.chipText.includes(pageHeader),'clicking a chip strips the manual envelope cleanly');
+    assert.equal(entry.chipRetry.text.split(pageHeader).length-1,1,'submitting a chip retry must not nest Page headers');
+    assert.equal(entry.chipRetry.text.split(patchLine).length-1,1,'submitting a chip retry must not duplicate patch instruction');
     if(mode!=='missing')assert.ok(entry.retry.written.length>ask.written.length,'a retry writes to the clipboard again');
     if(mode!=='missing')assert.equal(entry.retry.written.at(-1),ask.text,'a retry copies the original message unchanged');
     assert.equal(entry.reopened.note,entry.reopened.expected,'a new question restores its normal instruction');assert.equal(entry.reopened.text,'');
@@ -393,6 +424,42 @@ test('text names light their diagram nodes and walk-throughs step through steps 
   assert.deepEqual(style,{open:true,closed:true,style:'swiss',label:'Swiss',checked:'true',saved:'swiss'});
   const image=await pageValue(browser,`window.ArchifyExplainer.pageImage().then(blob=>({type:blob.type,size:blob.size}))`);
   assert.equal(image.type,'image/png');assert.ok(image.size>20000,'the long image carries the rendered page');
+ }finally{await browser.close();}
+});
+
+test('structural change marks outline their nodes and edges in the change colour, and dash and fade removed ones',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const spec=compileExplainerDiagram('architecture',['web | Web app | frontend','checkout | Checkout | backend','cache | Order cache | database','queue | Legacy queue | messagebus','web > checkout | Places order','checkout > cache | Reads first','checkout > queue | Old hand-off'],{title:'Checkout path',id:'release'});
+ const doc=formalDocument();doc.meta.id='change-marks-browser';doc.panels.push({id:'changed',title:'What changed?',blocks:[{id:'release',type:'diagram',diagramType:'architecture',spec,changes:[{target:'checkout',change:'modified'},{target:'cache',change:'added'},{target:'queue',change:'removed'},{target:'checkout-to-cache-1',change:'added'},{target:'checkout-to-queue-1',change:'removed'}]}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'change-marks.json')});
+ const file=artifact('change-marks',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
+ const browser=new ChromeVisualBrowser(chrome);const seen={};try {
+  for(const theme of ['light','dark']) {
+   if(browser.resetPage)await browser.resetPage();
+   await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme,keyboard:false});
+   const marks=await pageValue(browser,`(function(){
+    const preview=document.querySelector('#release .diagram-preview'),probe=document.createElement('span');preview.append(probe);
+    const colour=name=>{probe.style.color='var(--'+name+')';return getComputedStyle(probe).color;},colours={added:colour('good'),modified:colour('caution'),removed:colour('bad')};probe.remove();
+    const shapes='rect,path,circle,ellipse,polygon,polyline,line';
+    const look=selector=>{const target=preview.querySelector(selector),shape=target.matches(shapes)?target:target.querySelector(':scope>:is('+shapes+'):not(.c-mask)'),mask=target.querySelector(':scope>.c-mask'),style=getComputedStyle(shape);
+     return {stroke:style.stroke,width:style.strokeWidth,dash:style.strokeDasharray,opacity:getComputedStyle(target).opacity,mask:mask?getComputedStyle(mask).strokeWidth:null};};
+    return {colours,checkout:look('g[data-node-id="checkout"]'),cache:look('g[data-node-id="cache"]'),queue:look('g[data-node-id="queue"]'),web:look('g[data-node-id="web"]'),
+     read:look('path[data-edge-id="checkout-to-cache-1"]'),handoff:look('path[data-edge-id="checkout-to-queue-1"]'),order:look('path[data-edge-id="web-to-checkout-1"]')};
+   })()`);
+   const {colours}=marks;seen[theme]=colours;
+   for(const [target,change,native] of [['checkout','modified','web'],['cache','added','web'],['queue','removed','web'],['read','added','order'],['handoff','removed','order']]) {
+    assert.equal(marks[target].stroke,colours[change],`${theme}: ${target} is outlined in the ${change} colour`);
+    assert.ok(parseFloat(marks[target].width)>parseFloat(marks[native].width),`${theme}: ${target} is outlined more heavily than unmarked ${native}`);
+    assert.equal(marks[target].dash!=='none',change==='removed',`${theme}: only a removed ${target} is dashed`);
+    assert.equal(Number(marks[target].opacity)<1,change==='removed',`${theme}: only a removed ${target} fades`);
+   }
+   for(const target of ['checkout','cache','queue'])assert.equal(marks[target].mask,marks.web.mask,`${theme}: the ${target} mask keeps its native stroke`);
+   for(const target of ['web','order']) {
+    assert.equal(marks[target].opacity,'1',`${theme}: unmarked ${target} stays opaque`);
+    assert.ok(!Object.values(colours).includes(marks[target].stroke),`${theme}: unmarked ${target} keeps its native colour`);
+   }
+  }
+  assert.notDeepEqual(seen.light,seen.dark,'each theme supplies its own change colours');
  }finally{await browser.close();}
 });
 
@@ -577,4 +644,39 @@ test('image export retains long diff rows and original line numbers',{skip:!chro
    assert.deepEqual(rows.map(row=>[row.old,row.new]),[[null,null],['1','1'],['2',null],[null,'2'],['3','3']]);
   }
  }finally{await browser.close();}
+});
+
+test('wide answer panel without reasons spans cleanly while reasons sit side-by-side at 1440px',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const base=formalDocument();base.answer.span=12;
+ const withReasons=artifact('answer-with-reasons',renderExplainer(structuredClone(base),{sourceText:JSON.stringify(base)}));
+ const withoutReasonsDoc=structuredClone(base);delete withoutReasonsDoc.answer.reasons;
+ const withoutReasons=artifact('answer-without-reasons',renderExplainer(withoutReasonsDoc,{sourceText:JSON.stringify(withoutReasonsDoc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  await inspectPublicHtml(browser,{artifactPath:withReasons,width:1440,theme:'light',keyboard:false});
+  const sideBySide=await pageValue(browser,'(()=>{const b=document.querySelector(".answer-panel .panel-body").getBoundingClientRect(),v=document.querySelector(".answer-panel .verdict").getBoundingClientRect(),r=document.querySelector(".answer-panel .reasons").getBoundingClientRect();return {bodyWidth:b.width,verdictRight:v.right,reasonsLeft:r.left,reasonsTop:r.top,verdictBottom:v.bottom};})()');
+  assert.ok(sideBySide.reasonsLeft>=sideBySide.verdictRight-1 && sideBySide.reasonsTop<sideBySide.verdictBottom,'Answer with reasons splits into 2 columns');
+  await browser.resetPage();
+  await inspectPublicHtml(browser,{artifactPath:withoutReasons,width:1440,theme:'light',keyboard:false});
+  const singleCol=await pageValue(browser,'(()=>{const b=document.querySelector(".answer-panel .panel-body"),bs=getComputedStyle(b),inner=b.getBoundingClientRect().width-parseFloat(bs.paddingLeft)-parseFloat(bs.paddingRight),v=document.querySelector(".answer-panel .verdict").getBoundingClientRect().width;return {inner,verdictWidth:v};})()');
+  assert.ok(singleCol.verdictWidth>singleCol.inner*0.85,`Expected single-column verdict to fill panel body (${singleCol.verdictWidth}/${singleCol.inner})`);
+ }finally{await browser.close();}
+});
+
+test('browser diagnostics include snippet context and specific repair guidance for readability and diagram-fit',()=>{
+ const base={width:1440,height:900,theme:'light',resolvedTheme:'light',innerWidth:1440,innerHeight:900,scrollWidth:1440,overflowElements:[],keyboardIssues:[],keyboardTraversal:{ok:true,missing:[]},consoleErrors:[],references:[],duplicateIds:[],occluded:[],noJavaScript:[],print:{ok:true},smallText:[{component:'diag',text:'Compact edge label',fontSize:8.314},{component:'diag',text:'Boundary label',fontSize:9.999}],interactionFailures:[{name:'diagram-fit',component:'diag',reason:'Insufficient fit',measurement:{requiredWidth:1200,clientWidth:800}}]};
+ const diags=explainerObservationDiagnostics({artifact:artifact('diag-dummy','<!doctype html><html></html>'),allObservations:[base]});
+ const readDiag=diags.find(d=>d.code==='explainer/browser-readability');
+ const boundaryDiag=diags.find(d=>d.code==='explainer/browser-readability'&&d.message.includes('Boundary label'));
+ const fitDiag=diags.find(d=>d.code==='explainer/browser-diagram-fit');
+ assert.ok(readDiag);
+ assert.match(readDiag.message,/"Compact edge label" is 8\.31px, below 10px\./);
+ assert.notEqual(readDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
+ assert.match(readDiag.supportedFixes[0],/@steps|10px/);
+ assert.ok(boundaryDiag);
+ assert.match(boundaryDiag.message,/"Boundary label" is 9\.999px, below 10px\./);
+ assert.ok(fitDiag);
+ assert.notEqual(fitDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
+ assert.match(fitDiag.supportedFixes[0],/phase lanes|wider panel span/);
 });

@@ -13,8 +13,8 @@ const RULES = [
     reason: 'The quantity or comparison lacks a stated bound or measurement.', example: '大量请求 → 写明已知请求量或说明未测量；尽快 → 写明期限; significantly faster → give the measured comparison or say it is unmeasured', fix: 'Add a supported quantity, range, deadline or comparison basis; when unknown, state that it is unmeasured. Do not invent a number.'},
   {id: 'number-boundary', pattern: /(?<=\d\s*(?:个|次|秒|天|分钟|小时|倍|人|条|项|%|ms|MB|GB|KB|QPS)?\s*)(?:以上|以下|以内)/gu,
     reason: '“以上/以下/以内” after a number leaves the endpoint unclear.', example: '3 次以上 → 超过 3 次 / 不少于 3 次；1 秒以内 → 不超过 1 秒', fix: 'Say whether the endpoint is included: 超过/不少于, 低于/不超过.'},
-  {id: 'plain-word', pattern: /\b(?:utili[sz]e[sd]?|utili[sz]ation|prior to|in order to|commence[sd]?|facilitate[sd]?|subsequently|in the event that|due to the fact that|at this point in time|endeavou?r)\b/giu,
-    reason: 'A longer word replaces a common one with the same meaning.', example: 'utilize → use; prior to → before; in order to → to; due to the fact that → because', fix: 'Use the shorter common word.'},
+  {id: 'plain-word', pattern: /旨在通过|被用[于来]|在[^\s，。！？；：\n]{1,18}的情况下|由于[^\s，。！？；：\n]{1,18}的原因|\b(?:utili[sz]e[sd]?|utili[sz]ation|prior to|in order to|commence[sd]?|facilitate[sd]?|subsequently|in the event that|due to the fact that|at this point in time|endeavou?r)\b/giu,
+    reason: 'A longer or roundabout phrase replaces a direct common form with the same meaning.', example: '在未命中的情况下 → 未命中时；被用于校验 → 用于校验；utilize → use; prior to → before; due to the fact that → because', fix: 'Use the shorter direct word or clause.'},
   {id: 'redundancy', pattern: /提前预先|重复重复|基本基础|\b(?:each and every|future plans|completely eliminate)\b/giu,
     reason: 'Adjacent wording may repeat the same meaning.', example: '提前预先 → 提前; each and every → each', fix: 'Keep one expression of the meaning unless both terms carry a necessary distinction.'},
 ];
@@ -39,14 +39,15 @@ function proseMask(text) {
   });
 }
 
-function sentences(text) {
+function sentences(text, {clauses = false} = {}) {
   const result = [];
+  const boundary = clauses ? /[.!?。！？;；]/u : /[.!?。！？]/u;
   let start = 0;
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
     const decimal = char === '.' && /\d/u.test(text[i - 1] || '') && /\d/u.test(text[i + 1] || '');
     const paragraph = char === '\n' && /^\s*\n/u.test(text.slice(i + 1));
-    if ((/[.!?。！？]/u.test(char) && !decimal) || paragraph) {
+    if ((boundary.test(char) && !decimal) || paragraph) {
       result.push({text: text.slice(start, i + 1), offset: start});
       start = i + 1;
     }
@@ -102,7 +103,7 @@ export function lintExplainerWriting(entries, {mode = 'warn', locale = 'auto', s
       reason: `This paragraph has ${sentenceCount} sentences and ${units(text)} reading units; long paragraphs are what the page should replace.`,
       example: '把并列要点写成列表，把先后动作写成 @steps，把方案差异写成对比表。 / Turn parallel points into a list, ordered actions into @steps and option differences into a comparison.',
       fix: 'Split the paragraph into a list, steps or a comparison; keep at most two or three short sentences of prose.'});
-    if (entry.component !== 'scope') for (const sentence of sentences(text)) {
+    if (entry.component !== 'scope') for (const sentence of sentences(text, {clauses: true})) {
       const han = sentence.text.match(/\p{Script=Han}/gu)?.length || 0;
       const words = sentence.text.match(/[\p{Script=Latin}\d]+(?:[’'_-][\p{Script=Latin}\d]+)*(?:\.\d+)?/gu)?.length || 0;
       const units = han + words;

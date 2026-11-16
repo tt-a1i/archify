@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {parse} from 'parse5';
-import {layoutExplainerPanels} from '../archify/explainer/layout.mjs';
+import {layoutExplainerPanels,isGuidedPanel} from '../archify/explainer/layout.mjs';
 import {parseExplainer} from '../archify/explainer/parse.mjs';
 import {prepareExplainer} from '../archify/explainer/prepare.mjs';
 import {renderExplainer} from '../archify/explainer/render.mjs';
@@ -53,4 +53,18 @@ test('all three example HTML boards start with the conclusion and every panel ro
   const rows=new Map();for(const item of panels){const row=attr(item,'data-row');rows.set(row,(rows.get(row)||0)+Number(attr(item,'class').match(/\bspan(\d+)\b/)[1]));}assert.ok([...rows.values()].every(n=>n===12),`${name}: ${JSON.stringify([...rows])}`);
   assert.equal(prepared.document.answer.reasons.length>=2,true);assert.equal(prepared.document.answer.reasons.length<=3,true);
  }
+});
+
+test('guided diagram + targeting steps panels default to full-width 12 columns while respecting explicit spans',()=>{
+ const guided={id:'flow',title:'Flow',blocks:[{id:'fig',type:'diagram',diagramType:'workflow'},{id:'walk',type:'steps',items:[{id:'s1',title:'Step',text:'Detail.',target:{diagram:'fig',node:'start'}}]}]};
+ const unguided={id:'pair',title:'Pair',blocks:[{id:'fig2',type:'diagram',diagramType:'workflow'},{id:'plain-steps',type:'steps',items:[{id:'s2',title:'Step',text:'Detail.'}]}]};
+ const explicit={...guided,id:'fixed-flow',span:8};
+ assert.equal(isGuidedPanel(guided),true);
+ assert.equal(isGuidedPanel(unguided),false);
+ const compactDiag={fig:{svg:'<svg viewBox="0 0 700 400">'},fig2:{svg:'<svg viewBox="0 0 700 400">'}};
+ assert.deepEqual(layoutExplainerPanels(document([guided]),compactDiag).map(r=>r.map(({id,span})=>[id,span])),[[['answer',12]],[['flow',12]]]);
+ assert.deepEqual(layoutExplainerPanels(document([unguided]),compactDiag).map(r=>r.map(({id,span})=>[id,span])),[[['answer',4],['pair',8]]]);
+ const fixedRows=layoutExplainerPanels(document([explicit]),compactDiag);
+ assert.deepEqual(fixedRows.map(r=>r.map(({id,span})=>[id,span])),[[['answer',4],['fixed-flow',8]]]);
+ assert.equal(fixedRows[0][1].explicit,true);
 });

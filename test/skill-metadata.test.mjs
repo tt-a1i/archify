@@ -152,3 +152,8 @@ test('every README documents the proactive default and the on-demand switch', ()
     assert.match(readme, /~\/\.codex\/AGENTS\.md/, `${name} names a global rules file`);
   }
 });
+
+test('explainer authoring documents role naming and narrow-screen two-to-three column tables', () => {
+  assert.match(explainerAuthoring, /role <type> \| <label>/);
+  assert.match(explainerAuthoring, /Keep tables to two or three columns/);
+});
