@@ -899,8 +899,8 @@ impl Analysis {
             param_shapes,
             closure_params,
             return_type: match &f.sig.output {
-                ReturnType::Type(_, ty) => Some((**ty).clone()),
-                ReturnType::Default => None,
+                ReturnType::Type(_, ty) if f.sig.asyncness.is_none() => Some((**ty).clone()),
+                _ => None,
             },
             self_type: None,
             self_args: None,
@@ -1156,7 +1156,7 @@ impl Analysis {
                                 },
                             );
                             if let Some(hint) =
-                                return_hint(&m.sig.output, &trait_generic_set)
+                                return_hint(&m.sig, &trait_generic_set)
                             {
                                 returns.insert(method_name.clone(), hint);
                             }
@@ -1484,7 +1484,7 @@ impl Analysis {
                                         .type_params()
                                         .map(|param| param.ident.to_string()),
                                 );
-                                let returns = return_hint(&item.sig.output, &method_generics);
+                                let returns = return_hint(&item.sig, &method_generics);
                                 for param in im_generics.type_params() {
                                     let name = param.ident.to_string();
                                     for bound in &param.bounds {
@@ -2176,16 +2176,15 @@ impl Analysis {
                 let mut names = Vec::new();
                 pattern_names(&p.pat, &mut names);
                 scope.values.extend(names.iter().cloned());
+                let bindings = whole_binding_names(&p.pat).unwrap_or_default();
                 if let Some(hint) = type_hint(&p.ty, &generics) {
-                    for name in names.iter().cloned() {
+                    for name in bindings.iter().cloned() {
                         scope.local_types.insert(name, hint.clone());
                     }
                 }
                 if let Some(shape) = self.type_shape(&p.ty, &generics, module) {
-                    if let Some(bindings) = whole_binding_names(&p.pat) {
-                        for name in bindings {
-                            scope.local_shapes.insert(name, shape.clone());
-                        }
+                    for name in bindings {
+                        scope.local_shapes.insert(name, shape.clone());
                     }
                 }
             }
@@ -2397,8 +2396,11 @@ fn type_hint(ty: &Type, generics: &BTreeSet<String>) -> Option<TypeHint> {
         _ => None,
     }
 }
-fn return_hint(output: &ReturnType, generics: &BTreeSet<String>) -> Option<TypeHint> {
-    match output {
+fn return_hint(sig: &Signature, generics: &BTreeSet<String>) -> Option<TypeHint> {
+    if sig.asyncness.is_some() {
+        return None;
+    }
+    match &sig.output {
         ReturnType::Type(_, ty) => type_hint(ty, generics),
         ReturnType::Default => None,
     }
@@ -2804,10 +2806,23 @@ impl Scanner<'_> {
         }
         None
     }
-    fn local_hint(&self, name: &str) -> Option<TypeHint> {
+    fn local_scope(&self, name: &str) -> Option<&Scope> {
         for scope in self.scopes.iter().rev() {
-            if let Some(hint) = scope.local_types.get(name) {
-                return Some(hint.clone());
+            if scope.values.contains(name)
+                || scope.local_types.contains_key(name)
+                || scope.local_shapes.contains_key(name)
+            {
+                return Some(scope);
+            }
+            // Inner imports can hide outer locals. An unrelated glob does not.
+            if scope.uses.contains_key(name) || scope.uncertain_glob
+                || scope.globs.iter().any(|glob| {
+                    let mut full = glob.clone();
+                    full.push(name.to_string());
+                    self.a.resolve(self.function.module, &full, false, true, 0).is_some()
+                })
+            {
+                return None;
             }
         }
         None
@@ -2910,7 +2925,9 @@ impl Scanner<'_> {
     fn receiver_hint(&self, expr: &Expr) -> Option<TypeHint> {
         match expr {
             Expr::Path(p) if p.qself.is_none() && p.path.segments.len() == 1 => {
-                self.local_hint(&p.path.segments[0].ident.to_string())
+                let name = p.path.segments[0].ident.to_string();
+                self.local_scope(&name)
+                    .and_then(|scope| scope.local_types.get(&name).cloned())
                     .or_else(|| {
                         let shape = self.expr_shape(expr)?;
                         match &shape {
@@ -3113,25 +3130,18 @@ impl Scanner<'_> {
                     if name == "self" {
                         return self.self_shape();
                     }
-                    for scope in self.scopes.iter().rev() {
-                        if let Some(shape) = scope.local_shapes.get(&name) {
-                            return Some(shape.clone());
-                        }
-                        // A block import can hide an outer unit struct even
-                        // when it has no inferred local shape.
-                        if scope.values.contains(&name) || scope.uses.contains_key(&name) {
-                            return None;
-                        }
+                    if let Some(scope) = self.local_scope(&name) {
+                        return scope.local_shapes.get(&name).cloned();
                     }
                 }
-                // A unit struct (or another value path) is a nominal
-                // constructor, not a local binding.
-                let shape = self.a.shape_base(
-                    self.function.module,
-                    &path_parts(&p.path),
-                    p.path.leading_colon.is_some(),
-                );
-                matches!(shape, Shape::Local { .. }).then_some(shape)
+                // Reuse lexical path resolution for unit-struct values, imports
+                // and globs rather than guessing an item in the function module.
+                match self.resolve_call_path(p)? {
+                    Binding::Nominal(module, name) | Binding::Fields(module, name) => {
+                        Some(Shape::Local { module, name, args: Vec::new() })
+                    }
+                    _ => None,
+                }
             }
             Expr::Field(f) => self.field_shape(f),
             Expr::Struct(s) => Some(self.a.shape_base(
@@ -3719,10 +3729,11 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
                 let scope = self.scopes.last_mut().unwrap();
                 scope.values.insert(name.clone());
                 scope.local_shapes.remove(&name);
-                if let Some(hint) = &hint {
-                    scope.local_types.insert(name.clone(), hint.clone());
-                }
+                scope.local_types.remove(&name);
                 if shaped.contains(&name) {
+                    if let Some(hint) = &hint {
+                        scope.local_types.insert(name.clone(), hint.clone());
+                    }
                     if let Some(shape) = &shape {
                         scope.local_shapes.insert(name, shape.clone());
                     }

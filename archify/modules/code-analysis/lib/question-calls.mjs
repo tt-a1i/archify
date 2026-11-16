@@ -123,8 +123,8 @@ export function questionCallNavigator({ facts, inspect, entry, capturedRangeMode
         ? (facts.traits || []).flatMap(trait => trait.methods).filter(method => method.file === file && method.name === target.name && method.line === target.line && method.column === target.column)
         : (facts.functions || []).filter(fn => fn.file === file && fn.name === target.name && fn.sourceRange?.line === target.line && fn.sourceRange?.column === target.column);
       const valid = traitDeclaration
-        ? measured.length === 1 && validSourceRange(capturedTexts.get(file), { ...measured[0], endLine: measured[0].sourceRange?.endLine }, 'rust')
-          && measured[0].sourceRange.column === target.column && rangeText(capturedTexts.get(file), measured[0].sourceRange, 'rust') === target.name
+        ? measured.length > 0 && measured.every(method => validSourceRange(capturedTexts.get(file), { ...method, endLine: method.sourceRange?.endLine }, 'rust')
+          && method.sourceRange.column === target.column && rangeText(capturedTexts.get(file), method.sourceRange, 'rust') === target.name)
         : measured.length === 1 && validSourceRange(capturedTexts.get(file), measured[0], facts.repository.language);
       if (!valid) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-range-unavailable' } };
     }

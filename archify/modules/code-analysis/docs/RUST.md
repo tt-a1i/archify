@@ -139,24 +139,30 @@ identity, including aliases at the call site. Unresolved or external types are
 kept distinct and never select a captured local type with the same spelling;
 insufficient identity leaves the closure call unknown.
 
-v15 uses a selected captured function's declared return type to identify the
+v15 uses a selected captured synchronous function's declared return type to identify the
 receiver of a following method call, including calls through a local binding.
 The return type resolves in the function's declaring module; an inherent
 function returning `Self` uses its captured owner. A constructor-looking path
 alone no longer supplies a receiver type: `A::make() -> B` can bind `B::run`,
 while an unknown, conditional, unresolved generic or uncaptured return remains unknown.
-An unshadowed unit-struct value also supplies its nominal receiver type.
+An async function's written output is the Future's output, so an unawaited
+call or async accessor cannot supply that output as a receiver type. An
+unshadowed unit-struct value also supplies its nominal receiver type through
+lexical use/glob resolution. A destructured let/parameter field does not inherit
+the aggregate's type; an untyped shadow clears earlier receiver evidence.
 For a nominal `Type::method()` call, a single captured trait implementation
 can identify the implementation body or, when the implementation omits that
 method, the trait declaration. Competing trait owners keep the target unknown.
 Trait method names carry exact captured ranges and hashes, allowing a
 declaration without a body to pass the same freshness checks as a function target.
-This correction was checked against a fixed
-[rust-analyzer core revision](https://github.com/rust-lang/rust-analyzer/tree/e5e7830640558e323e89c831488a3172b58dc66d)
-query on the same source. rust-analyzer is a validation oracle here, not a runtime dependency;
-the source capture, conservative cfg policy and historical fact readers remain.
-The [pinned test ledger](RUST-RA-PARITY.md) maps comparable definition,
-call-hierarchy and direct-reference cases to Archify's current outputs.
+Agreeing copies of one trait anchor across lib/bin contexts can navigate, and
+every copy must validate the same exact name span.
+The [pinned test and implementation ledger](RUST-RA-PARITY.md) maps current
+capabilities to rust-analyzer's IDE, type-inference and name-resolution tests,
+records executable normalized cases, and names the remaining differences.
+rust-analyzer supplies independent expectations and implementation guidance;
+it is not a runtime dependency. These finite comparisons do not establish
+complete rust-analyzer equivalence.
 
 v6 inventories a trait method's default body once per source declaration, not
 once per implementing type. A declaration without a body adds no call. Calls in

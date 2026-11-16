@@ -117,6 +117,57 @@ fn caller() { use other::Stwuct; let s = Stwuct; s.a(); }
  assert.equal(methodCalls[0].target,undefined);
 });
 
+// hir-ide/tests/traits.rs::infer_desugar_async establishes that the call's
+// type is impl Future<Output = B>, not the written output B.
+test('Rust rust-analyzer async return boundary keeps Future receivers unknown',t=>{
+ const root=fixture(t,{'src/lib.rs':`use std::future::Future;
+struct B;
+impl B { fn run(&self) {} }
+trait FutureExt: Future { fn run(&self) {} }
+impl<F: Future> FutureExt for F {}
+async fn make() -> B { B }
+struct A;
+impl A { async fn make() -> B { B } async fn as_ref(&self) -> B { B } }
+fn caller() { make().run(); let value = make(); value.run(); A::make().run(); A.as_ref().run(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const methods=calls(facts,'src/lib.rs').filter(call=>call.line===9&&(call.reason==='rust-trait-or-method-dispatch'||call.target?.name==='run'));
+ assert.equal(methods.length,4);
+ assert.ok(methods.every(call=>call.resolution==='unresolved'&&!call.target));
+});
+
+// hir-ide/tests/patterns.rs::infer_adt_pattern gives each subpattern its field
+// type. Archify does not infer destructured let/parameter fields yet.
+test('Rust rust-analyzer pattern boundary never assigns an aggregate type to a field binding',t=>{
+ const root=fixture(t,{'src/lib.rs':`struct B { inner: C }
+struct C;
+impl B { fn run(&self) {} }
+impl C { fn run(&self) {} }
+fn make() -> B { B { inner: C } }
+fn caller() { let B { inner } = make(); inner.run(); }
+fn parameter(B { inner }: B) { inner.run(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const methods=calls(facts,'src/lib.rs').filter(call=>[6,7].includes(call.line)&&(call.reason==='rust-trait-or-method-dispatch'||call.target?.name==='run'));
+ assert.equal(methods.length,2);
+ assert.ok(methods.every(call=>call.resolution==='unresolved'&&!call.target));
+});
+
+// hir-def's block scopes and globs.rs::glob_shadowed_def resolve the inner
+// binding before a same-spelled item in an outer module.
+test('Rust rust-analyzer block glob lookup preserves the imported receiver identity',t=>{
+ const root=fixture(t,{'src/lib.rs':`struct S;
+trait Outer { fn run(&self) {} }
+impl Outer for S {}
+mod other { pub struct S; impl S { pub fn run(&self) {} } }
+fn caller() { use other::*; let s = S; s.run(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const call=calls(facts,'src/lib.rs').find(call=>call.line===5);
+ assert.equal(call?.target?.line,4);
+ assert.equal(call.resolution,'rust-inherent-source-candidate');
+});
+
 test('Rust return typing does not erase generic specialization needed for method selection',t=>{
  const root=fixture(t,{'src/lib.rs':`struct G<T>(T);
 impl G<u8> { fn new() -> Self { G(0) } fn make() -> G<u8> { G(0) } }
@@ -129,7 +180,7 @@ fn caller() { G::new().run(); G::make().run(); }
  assert.equal(calls(facts,'src/lib.rs').filter(c=>c.line===4&&c.target?.name==='run').length,0);
 });
 
-// One case per function in rust-analyzer's pinned goto_definition.rs tests.
+// Definition fixtures and type-inference premises from the pinned upstream.
 // The $0 cursor and underline expectation comments are omitted from source.
 // https://github.com/rust-lang/rust-analyzer/blob/e5e7830640558e323e89c831488a3172b58dc66d/crates/ide/src/goto_definition.rs
 for(const row of [
@@ -195,6 +246,41 @@ fn bar() { let s = Stwuct; s.a(); }
 }
 fn bar<T: Twait>(s: T) { s.a(); }
 `,callLine:4,targetLine:2,resolution:'rust-trait-method-candidate',method:'a'},
+ // hir-ide/src/tests/method_resolution.rs: the written i8 result identifies
+ // the inherent foo rather than the trait's competing u128 method.
+ {name:'method_resolution_impl_before_trait',source:`trait Trait { fn foo(self) -> u128; }
+struct S;
+impl S { fn foo(self) -> i8 { 0 } }
+impl Trait for S { fn foo(self) -> u128 { 0 } }
+fn test() { S.foo(); }
+`,callLine:5,targetLine:3,resolution:'rust-inherent-source-candidate',method:'foo',symbol:'test'},
+ {name:'method_resolution_impl_ref_before_trait',source:`trait Trait { fn foo(self) -> u128; }
+struct S;
+impl S { fn foo(&self) -> i8 { 0 } }
+impl Trait for &S { fn foo(self) -> u128 { 0 } }
+fn test() { S.foo(); }
+`,callLine:5,targetLine:3,resolution:'rust-inherent-source-candidate',method:'foo',symbol:'test'},
+ {name:'method_resolution_trait_autoderef',source:`trait Trait { fn foo(self) -> u128; }
+struct S;
+impl Trait for S { fn foo(self) -> u128 { 0 } }
+fn test() { (&S).foo(); }
+`,callLine:4,targetLine:3,resolution:'rust-trait-impl',method:'foo',symbol:'test'},
+ {name:'infer_call_trait_method_on_generic_param_2',source:`trait Trait<T> {
+    fn method(&self) -> T;
+}
+fn test<U, T: Trait<U>>(t: T) {
+    t.method();
+}
+`,callLine:5,targetLine:2,resolution:'rust-trait-method-candidate',method:'method',symbol:'test'},
+ // hir-ide/src/tests/traits.rs: a trait default body's self keeps the trait
+ // declaration as the target instead of selecting an arbitrary implementation.
+ {name:'trait_default_method_self_bound_implements_trait',source:`trait Trait {
+    fn foo(&self) -> i64;
+    fn bar(&self) -> () {
+        self.foo();
+    }
+}
+`,callLine:4,targetLine:2,resolution:'rust-trait-method-candidate',method:'foo'},
 ])test(`Rust rust-analyzer ${row.name} call target`,t=>{
  const root=fixture(t,{'src/lib.rs':row.source});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
@@ -203,7 +289,7 @@ fn bar<T: Twait>(s: T) { s.a(); }
  assert.ok(call,`missing target for ${row.name}: ${JSON.stringify(calls(facts,'src/lib.rs'))}`);
  assert.equal(call.resolution,row.resolution);
  assert.equal(call.target.line,row.targetLine);
- const question=buildQuestion({root,facts,entry:'src/lib.rs',symbol:'bar',question:'Where does frobnicate resolve?'});
+ const question=buildQuestion({root,facts,entry:'src/lib.rs',symbol:row.symbol||'bar',question:`Where does ${method} resolve?`});
  assert.equal(question.calls.coverage,'available');
  assert.ok(question.calls.records.some(r=>r.targetNavigation?.location?.name===method&&r.targetNavigation.location.line===row.targetLine));
 });
@@ -239,6 +325,44 @@ test('Rust v14 captures retain direct function navigation without a v15 trait na
  const direct=question.calls.records.find(record=>record.fact.target?.name==='work');
  assert.equal(trait?.targetNavigation.reason,'target-range-unavailable');
  assert.deepEqual(direct?.targetNavigation.location,{file:'src/lib.rs',name:'work',line:2,column:1});
+});
+
+// goto_definition.rs::goto_definition uniquifies NavigationTargets even when
+// one source declaration participates in multiple crate contexts.
+test('Rust rust-analyzer navigation deduplicates agreeing trait anchors across lib and bin',t=>{
+ const root=fixture(t,{'src/lib.rs':'mod shared;\n','src/main.rs':'mod shared;\nfn main() {}\n','src/shared.rs':'trait Gate { fn go() {} }\nfn caller<T: Gate>() { T::go(); }\n'});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.traits.length,2,'the source is captured in both crate contexts');
+ const args={root,facts,entry:'src/shared.rs',symbol:'caller',question:'Where is go?'};
+ assert.equal(buildQuestion(args).calls.records[0].targetNavigation.status,'valid');
+ const forged=structuredClone(facts);
+ forged.traits[1].methods[0].sourceRange.sha256='0'.repeat(64);
+ assert.equal(buildQuestion({...args,facts:forged}).calls.records[0].targetNavigation.reason,'target-range-unavailable');
+});
+
+// hir-ide/tests/traits.rs::closure_as_argument_inference_order, with a body
+// added to S::method. Only the free-function callback subset is supported.
+test('Rust rust-analyzer closure argument order preserves the supported free-call subset',t=>{
+ const root=fixture(t,{'src/lib.rs':`fn foo1<T, U, F: FnOnce(T) -> U>(x: T, f: F) -> U { loop {} }
+fn foo2<T, U, F: FnOnce(T) -> U>(f: F, x: T) -> U { loop {} }
+struct S;
+impl S {
+    fn method(self) -> u64 { 0 }
+    fn foo1<T, U, F: FnOnce(T) -> U>(self, x: T, f: F) -> U { loop {} }
+    fn foo2<T, U, F: FnOnce(T) -> U>(self, f: F, x: T) -> U { loop {} }
+}
+fn test() {
+    let x1 = foo1(S, |s| s.method());
+    let x2 = foo2(|s| s.method(), S);
+    let x3 = S.foo1(S, |s| s.method());
+    let x4 = S.foo2(|s| s.method(), S);
+}
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const methods=calls(facts,'src/lib.rs').filter(call=>call.closure&&[10,11,12,13].includes(call.line));
+ assert.equal(methods.length,4);
+ assert.deepEqual(methods.slice(0,2).map(call=>call.target?.line),[5,5]);
+ assert.ok(methods.slice(2).every(call=>call.resolution==='unresolved'&&!call.target));
 });
 
 test('Rust competing explicit and inherited trait methods leave nominal calls unresolved',t=>{
