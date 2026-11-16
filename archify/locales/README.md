@@ -26,6 +26,7 @@ never collapsed onto another catalog.
 | `es` | Juan Pablo Tamayo (#457, moved to data in #586) | Complete; not independently native-reviewed |
 | `ko` | uygnoey (#457) | Complete; not independently native-reviewed |
 | `ar` | jahfaliabdulrahman-dev | Complete: 486/486 keys with placeholder parity checked mechanically; not independently native-reviewed |
+| `ru` | uygnoey (#457 example catalog) | Complete: 486/486 keys with placeholder parity checked mechanically; count-neutral `.other` wording; UI fit reviewed in the bundled Viewer; not independently native-reviewed |
 
 Completeness checks prove key and placeholder coverage, not native wording,
 plural grammar, right-to-left layout, or glyph coverage.
@@ -35,6 +36,11 @@ geometry are unchanged; full RTL support is tracked in [#935](https://github.com
 Route/reach export summaries and reach controls use count-neutral labels within
 the existing `.one`/`.other` model. Other counted messages still have that
 model's Arabic plural limitations.
+
+The Russian catalog uses the singular at `{count} = 1` and count-neutral
+`.other` labels (for example `Узлов: {count}`) because the two-form model has no
+Russian few/many categories. This avoids ungrammatical counted nouns such as
+`2 узлов`; full Russian plural rules remain a model limitation.
 
 Other reusable, unenrolled examples live in `../examples/locales/`; supply
 them through `meta.translations`.
