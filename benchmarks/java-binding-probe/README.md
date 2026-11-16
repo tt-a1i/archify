@@ -1,27 +1,27 @@
 # Java 调用绑定对照实验
 
-这份固定实验比较 Archify 原有 JavaScript 调用事实、可选 JDK 语义增强，以及 JDK Compiler Tree API 在**同一份源码**上给出的声明绑定。产品仍以 JS 提取语法与 facts；启用 `java.semantic: true` 后，本机 JDK 只补充经源码范围和 Maven/source set 证据验证的调用目标。不接入 JDT LS，也不下载 jar。
+这份固定实验比较上游 Labs 基线、候选版默认 JavaScript 调用事实、可选 JDK 语义增强，以及 JDK Compiler Tree API 在**同一份源码**上给出的声明绑定。产品仍以 JS 提取语法与 facts；启用 `java.semantic: true` 后，本机 JDK 只补充经源码范围和 Maven/source set 证据验证的调用目标。不接入 JDT LS，也不下载 jar。
 
 ## 固定输入与方法
 
 - 真实输入：[Apache Commons Lang `5d2715b9da13fb584058d264c46dfed6bcc700d1`](https://github.com/apache/commons-lang/tree/5d2715b9da13fb584058d264c46dfed6bcc700d1) 的 `src/main/java`，264 个生产源码文件。该快照的 POM 使用 Java 8 source level；本次在 Temurin 25.0.5 上用 `--release 8 -proc:none` 对这 264 个文件解析和分析，编译诊断中没有错误。测试源码和外部 jar 未输入。
 - 受控输入：[`fixture/`](fixture/) 中的双模块 Maven reactor，`app` 直接依赖 `api`，两份 Java 源码。它验证跨模块的静态调用、实例调用和工厂链；**合成 fixture 不代表真实多模块项目的覆盖率**。
 - [`SourceBindings.java`](../../archify/modules/code-analysis/extract/java/SourceBindings.java) 通过 `JavacTask.parse()/analyze()` 和 `Trees.getElement()` 导出每个方法调用的源码范围、静态/实例种类与源码内声明位置。独立 oracle 把列出的全部源码一次交给 javac；它**不解析 POM，也不证明 Maven 模块可见性**。产品路径另按 Archify 捕获的 POM 将源码分组，向 JDK 传入临时源码快照，并在写入目标前核对构建可见性。
-- [`compare.mjs`](compare.mjs) 按文件和四个位置坐标匹配两边调用，验证输入指纹、固定查询与目标，汇总源码内目标的已知/未解析数量。查询分别固定在 [`commons-queries.json`](commons-queries.json) 和 [`maven-queries.json`](maven-queries.json)；原 JS 结果在 [`results/commons.json`](results/commons.json)、[`results/maven.json`](results/maven.json)，可选增强结果在 [`results/commons-enhanced.json`](results/commons-enhanced.json)、[`results/maven-enhanced.json`](results/maven-enhanced.json)。结果文件只存汇总和代表性查询，原始 facts/TSV 可按下文重建。
+- [`compare.mjs`](compare.mjs) 按文件和四个位置坐标匹配两边调用，验证输入指纹、固定查询与目标，汇总源码内目标的已知/未解析数量。查询分别固定在 [`commons-queries.json`](commons-queries.json) 和 [`maven-queries.json`](maven-queries.json)；上游 Labs 提交 `457d71b9` 的结果在 [`results/commons-base-457d.json`](results/commons-base-457d.json)，候选版默认 JS 结果在 [`results/commons.json`](results/commons.json)、[`results/maven.json`](results/maven.json)，可选增强结果在 [`results/commons-enhanced.json`](results/commons-enhanced.json)、[`results/maven-enhanced.json`](results/maven-enhanced.json)。结果文件只存汇总和代表性查询，原始 facts/TSV 可按下文重建。
 
 ## 结果
 
-| 指标 | Commons Lang 原 JS | Commons Lang 增强 | 双模块原 JS | 双模块增强 |
-| --- | ---: | ---: | ---: | ---: |
-| 两边位置完全匹配的调用 | 9,922 | 9,922 | 4 | 4 |
-| JDK 能指向输入源码的匹配调用 | 5,135 | 5,135 | 4 | 4 |
-| Archify 已给目标 | 1,357 | **5,135** | 2 | **4** |
-| 已给目标与 JDK 的文件/声明位置冲突 | 0 | 0 | 0 | 0 |
-| JDK 有源码目标、Archify 保留未解析 | 3,778 | **0** | 2 | **0** |
+| 指标 | Commons Labs 基线 | Commons 候选 JS | Commons 增强 | 双模块候选 JS | 双模块增强 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 两边位置完全匹配的调用 | 9,922 | 9,922 | 9,922 | 4 | 4 |
+| JDK 能指向输入源码的匹配调用 | 5,135 | 5,135 | 5,135 | 4 | 4 |
+| Archify 已给目标 | 1,334 | 1,357 | **5,135** | 2 | **4** |
+| 已给目标与 JDK 的文件/声明位置冲突 | 0 | 0 | 0 | 0 | 0 |
+| JDK 有源码目标、Archify 保留未解析 | 3,801 | 3,778 | **0** | 2 | **0** |
 
-Commons Lang 原有的 3,778 个未解析目标中，2,083 个是实例调用，1,695 个是静态调用；1,162 个跨文件，按源码目录计有 440 个跨包目录。原因分别为 `no-local-function-binding` 1,680、`unsupported-callee` 1,173、`ambiguous-binding` 925。增强路径新增 3,778 个目标，其中 238 个指向没有方法体的接口/抽象声明，作为独立的 `methodDeclarations` 导航证据记录，不混入函数复杂度指标。固定查询包括同文件静态正例、跨文件静态正例、重载、实例方法、接口方法、链式调用、JDK 外部方法等。
+相对上游 Labs 基线，候选版的 JS 修复先补了 23 个目标；它剩余的 3,778 个未解析目标中，2,083 个是实例调用，1,695 个是静态调用；1,162 个跨文件，按源码目录计有 440 个跨包目录。原因分别为 `no-local-function-binding` 1,680、`unsupported-callee` 1,173、`ambiguous-binding` 925。增强路径再新增 3,778 个目标，其中 238 个指向没有方法体的接口/抽象声明，作为独立的 `methodDeclarations` 导航证据记录，不混入函数复杂度指标。固定查询包括同文件静态正例、跨文件静态正例、重载、实例方法、接口方法、链式调用、JDK 外部方法等。
 
-JDK 还记录了 127 个 Archify 调用 inventory 中没有的 `this()`/`super()` 构造器委托；这属于现有方法调用 inventory 的边界，未计入 3,778 个缺口。位置匹配只说明两个工具指向相同的调用表达式；上表的目标一致检查**文件、声明行与列**，没有验证运行时虚调用分派。
+JDK 还记录了 127 个 Archify 调用 inventory 中没有的 `this()`/`super()` 构造器委托；这属于现有方法调用 inventory 的边界，未计入基线的 3,801 个缺口。位置匹配只说明两个工具指向相同的调用表达式；上表的目标一致检查**文件、声明行与列**，没有验证运行时虚调用分派。
 
 ## Maven 依赖消融
 
@@ -73,7 +73,19 @@ node "$BENCH_DIR/compare.mjs" "$BENCH_DIR/fixture" "$OUT_DIR/maven-enhanced-fact
 diff -u "$BENCH_DIR/results/maven-enhanced.json" "$OUT_DIR/maven-enhanced.json"
 ```
 
-四个 `diff` 均无输出即与保存的固定结果一致。实验本身不需要 Maven 构建，也不会安装 live Archify。
+四个 `diff` 均无输出即与保存的候选版结果一致。要单独复核真正的 Labs 基线 `457d71b9`，用同一份 Commons 源码和 JDK TSV，在临时目录提取该提交（分析模块依赖需安装在临时目录），再执行：
+
+```sh
+BASE_ROOT="$OUT_DIR/archify-base"
+mkdir -p "$BASE_ROOT"
+git archive 457d71b901b64679320811cfc04555fc5013080f | tar -xf - -C "$BASE_ROOT"
+npm --prefix "$BASE_ROOT/archify/modules/code-analysis" ci --no-audit --no-fund
+(cd "$BASE_ROOT/archify/modules/code-analysis" && node test/run-extract.mjs "$COMMONS_ROOT/src/main/java" --language java --out "$OUT_DIR/commons-base-457d-facts.json" --json)
+node "$BENCH_DIR/compare.mjs" "$COMMONS_ROOT" "$OUT_DIR/commons-base-457d-facts.json" "$OUT_DIR/commons.tsv" "$BENCH_DIR/commons-queries.json" --base-revision > "$OUT_DIR/commons-base-457d.json"
+diff -u "$BENCH_DIR/results/commons-base-457d.json" "$OUT_DIR/commons-base-457d.json"
+```
+
+`--base-revision` 只跳过候选版查询状态的断言；调用位置、输入指纹、JDK 目标和已给目标的位置仍由对照脚本核对，保存的结果再由 `diff` 验证。实验本身不需要 Maven 构建，也不会安装 live Archify。
 
 在同一 shell 中可复跑依赖消融：复制 fixture，只删除 `app` 的直接依赖；独立 JDK TSV 与原 JS 调用目标保持不变，增强模式撤销两条缺少依赖证据的静态目标。这里用临时目录，不改动保存的固定输入。
 

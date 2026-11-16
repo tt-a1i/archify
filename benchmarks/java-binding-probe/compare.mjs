@@ -3,11 +3,12 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-if (![6, 7].includes(process.argv.length) || (process.argv.length === 7 && process.argv[6] !== '--enhanced')) {
-  throw new Error('usage: node compare.mjs <project-root> <facts.json> <bindings.tsv> <queries.json> [--enhanced]');
+if (![6, 7].includes(process.argv.length) || (process.argv.length === 7 && !['--enhanced', '--base-revision'].includes(process.argv[6]))) {
+  throw new Error('usage: node compare.mjs <project-root> <facts.json> <bindings.tsv> <queries.json> [--enhanced|--base-revision]');
 }
 const [, , rootArg, factsFile, bindingsFile, queriesFile] = process.argv;
 const enhanced = process.argv[6] === '--enhanced';
+const baseRevision = process.argv[6] === '--base-revision';
 const root = path.resolve(rootArg);
 const facts = JSON.parse(fs.readFileSync(factsFile, 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(queriesFile, 'utf8'));
@@ -72,7 +73,7 @@ const queries = manifest.queries.map(query => {
   assert.ok(jdk && js, `missing query ${query.id} at ${position}`);
   const jdkTarget = jdk.targetFile ? `${jdk.targetFile}:${jdk.targetLine}` : null;
   assert.equal(jdkTarget, query.jdkTarget, `javac target changed for ${query.id}`);
-  assert.equal(js.target ? 'known' : 'unresolved', enhanced && query.jdkTarget ? 'known' : query.jsStatus, `Archify status changed for ${query.id}`);
+  if (!baseRevision) assert.equal(js.target ? 'known' : 'unresolved', enhanced && query.jdkTarget ? 'known' : query.jsStatus, `Archify status changed for ${query.id}`);
   if (js.target) {
     assert.equal(`${js.targetFile}:${js.target.line}`, jdkTarget, `Archify target changed for ${query.id}`);
     assert.equal(js.target.column, jdk.targetColumn, `Archify target column changed for ${query.id}`);

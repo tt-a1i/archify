@@ -68,7 +68,7 @@ Tree-sitter 的一处错误节点位于 `ClassUtilsOssFuzzTest.java` 的长 Unic
 
 [#1347 的维护者结论](https://github.com/tt-a1i/archify/pull/1347#issuecomment-6859076080)将有直接收益、无需新工具链的 Go 修复经 [#1354](https://github.com/tt-a1i/archify/pull/1354) 合入 Labs；完整 loader 因现有证据仅显示持平，尚不足以抵偿 SDK 门槛、下载和维护成本而暂缓。这是价值与成本的取舍，并非否定使用语言自身做分析。对应地，Java 先交付本轮已复现的源码可见性、Maven 依赖优先级、继承成员类型和静态调用覆盖修复；不把 JDT LS 实验并入这组改动。
 
-默认修复继续使用 `java-parser`。可选 JDK 增强已在 [固定绑定实验](../../benchmarks/java-binding-probe/README.md) 中核对：Commons Lang 的 9,922 个两边同位置调用中，JDK 对 5,135 个给出项目内源码声明；JS 原已给出的 1,357 个目标在文件、声明行和列上均一致，增强模式补齐剩余 3,778 个，新增目标与 JDK 的文件/声明位置冲突为零。受控双模块 Maven fixture 的两条实例调用也得到源码目标，但它不是实际多模块项目。移除 fixture 的直接依赖后，独立 JDK oracle 仍可绑定全部调用；增强模式的项目证据检查撤销原 JS 的两条跨模块静态目标，说明语义绑定和 Maven 可见性必须分别证明。
+默认修复继续使用 `java-parser`。可选 JDK 增强已在 [固定绑定实验](../../benchmarks/java-binding-probe/README.md) 中核对：Commons Lang 的 9,922 个两边同位置调用中，JDK 对 5,135 个给出项目内源码声明；上游 Labs 基线已给 1,334 个，候选版默认 JS 修复后给 1,357 个，增强模式再补齐剩余 3,778 个。全部已知目标与 JDK 的文件、声明行和列均无冲突。受控双模块 Maven fixture 的两条实例调用也得到源码目标，但它不是实际多模块项目。移除 fixture 的直接依赖后，独立 JDK oracle 仍可绑定全部调用；增强模式的项目证据检查撤销候选版 JS 的两条跨模块静态目标，说明语义绑定和 Maven 可见性必须分别证明。
 
 下一阶段需用固定的真实多模块及外部依赖项目量化可选模式的可用率、误绑定、解析失败、完整 facts 差异、整体耗时、包体、版本及离线成本。增强路径已经按 captured source set 与直接依赖分组、在写入目标时再核验构建证据；没有证据的跨模块静态候选也会撤销。只有跨更多项目的重复收益足以抵偿兼容和分发成本时，才考虑默认启用或扩展 classpath。Tree-sitter 值得在**解析器本身**成为瓶颈或 `java-parser` 出现无法受控处理的语法缺口时重新评估；其解析速度本身还不足以触发替换。
 
