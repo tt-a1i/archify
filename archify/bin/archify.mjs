@@ -7372,7 +7372,30 @@ async function commandImport(args) {
 
   let source;
   try {
-    source = fs.readFileSync(inputPath, 'utf8');
+    const bytes = fs.readFileSync(inputPath);
+    source = bytes.toString('utf8');
+    // The 'utf8' read form would silently replace invalid byte sequences with
+    // U+FFFD, so a corrupt label like "caf\xE9" would import as "caf�" and
+    // still report success. Round-trip the decoded text instead: valid UTF-8
+    // (including a literal U+FFFD) re-encodes to the same bytes, anything else
+    // is rejected before parsing — the same check prepareExplainerInput runs.
+    if (!Buffer.from(source, 'utf8').equals(bytes)) {
+      const receipt = {
+        schemaVersion: 1,
+        command: 'import',
+        source: 'mermaid-flowchart',
+        ok: false,
+        error: 'Input is not valid UTF-8.',
+        diagnostics: [diagnostic({
+          code: 'input/encoding',
+          message: 'Input is not valid UTF-8; the .mmd file must be UTF-8 encoded text.',
+          subject: { input: inputPath },
+          evidence: { reason: 'invalid-utf8' },
+          supportedFixes: ['save the .mmd file as UTF-8 text'],
+        })],
+      };
+      return emitImportFailure(json, receipt);
+    }
   } catch (error) {
     const receipt = {
       schemaVersion: 1,

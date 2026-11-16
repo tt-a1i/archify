@@ -290,6 +290,49 @@ test('CLI import command emits a schema-v1 receipt for an unknown option in --js
   assert.ok(receipt.diagnostics.some((d) => d.code === 'import/unknown-option'));
 });
 
+test('CLI import command rejects invalid UTF-8 input instead of importing replacement characters', () => {
+  const cli = path.join(skillRoot, 'bin', 'archify.mjs');
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-utf8-'));
+  const src = path.join(tmpDir, 'bad.mmd');
+  // "caf" + raw 0xE9 is not valid UTF-8; a lossy decode would import "caf�".
+  fs.writeFileSync(src, Buffer.concat([
+    Buffer.from('flowchart LR\nA["caf', 'utf8'),
+    Buffer.from([0xe9]),
+    Buffer.from('"] --> B["ok"]\n', 'utf8'),
+  ]));
+  try {
+    const result = spawnSync(process.execPath, [cli, 'import', 'flowchart', src, '--json'], {
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
+    assert.notEqual(result.status, 0, 'Expected non-zero exit for invalid UTF-8 input');
+    const receipt = JSON.parse(result.stdout.trim());
+    assert.equal(receipt.ok, false);
+    assert.ok(receipt.diagnostics.some((d) => d.code === 'input/encoding'));
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('CLI import command still accepts a correctly encoded literal U+FFFD', () => {
+  const cli = path.join(skillRoot, 'bin', 'archify.mjs');
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-utf8-ok-'));
+  const src = path.join(tmpDir, 'ok.mmd');
+  fs.writeFileSync(src, 'flowchart LR\nA["caf�"] --> B["ok"]\n', 'utf8');
+  try {
+    const result = spawnSync(process.execPath, [cli, 'import', 'flowchart', src, '--json'], {
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
+    assert.equal(result.status, 0, `Expected success for valid UTF-8, got: ${result.stderr}`);
+    const receipt = JSON.parse(result.stdout.trim());
+    assert.equal(receipt.ok, true);
+    assert.equal(receipt.components, 2);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
 test('unspaced directed edge "A-->B" is parsed rather than mangled into a node id', () => {
   const result = parseFlowchart('flowchart LR\nA-->B\n');
   assert.ok(result.ok, `Expected ok, got: ${JSON.stringify(result.diagnostics)}`);
