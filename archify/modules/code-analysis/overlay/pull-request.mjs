@@ -5,6 +5,7 @@ import path from 'node:path';
 import { buildAtlas } from './atlas.mjs';
 import { buildPullRequestImpact } from '../lib/pull-request-impact.mjs';
 import { locationsOf } from '../lib/task.mjs';
+import { prFileCounts } from '../lib/review-pack.mjs';
 
 const count = atlas => ({ files: atlas.files.length, dependencies: atlas.edges.length, functions: atlas.functions.length, modules: atlas.modules.length });
 const histogram = atlas => {
@@ -13,7 +14,7 @@ const histogram = atlas => {
   return counts;
 };
 
-export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourceRoot, baseSourceRoot = null, sourceGitRoot, facts, graph, findings, base }) {
+export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourceRoot, baseSourceRoot = null, sourceGitRoot, facts, graph, findings, base, reviewPack = null }) {
   const read = name => JSON.parse(fs.readFileSync(path.join(base, name + '.json'), 'utf8'));
   const baseFacts = read('raw-facts'), baseFindings = read('findings');
   const baseGraph = read('module-graph');
@@ -38,6 +39,7 @@ export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourc
     number: pr.number, title: pr.title, url: pr.url, repository: pr.repository, scope,
     simulation: pr.simulation === true, baseSHA: pr.mergeBaseSHA, headSHA: pr.headSHA, targetBaseSHA: pr.baseSHA,
     capturedAt: pr.capturedAt, sourceRoot, baseSourceRoot, sourceGitRoot, changedFiles, impact, cycles, baseOwners, oldModules,
+    gitFiles: prFileCounts(pr.changedFiles || changedFiles), ...(reviewPack ? { reviewPack } : {}),
     before: count(before), after: count(after),
     distribution: { labels: ['1', '2–4', '5–9', '10–14', '15–24', '25+'], before: histogram(before), after: histogram(after) },
     changes: markers.records, moduleChanges: markers.modules, ambiguousFunctions: markers.ambiguousFunctions, beforeSources,

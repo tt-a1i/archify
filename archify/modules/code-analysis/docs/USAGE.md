@@ -547,3 +547,30 @@ the locked helper dependencies are required. Saved and paired questions retain
 the captured source profile, cfg/features, omitted regions and bounded call
 model; a source binding does not establish compilation or runtime dispatch.
 See [Rust support](RUST.md) for setup, profile settings and limitations.
+
+### Use a native PR diagram pack in the review workbench
+
+Build the authored diagrams with `archify pr build --repo-root <repo>`. Set
+the manifest's `repository` to the GitHub slug and pin the PR merge-base and
+head. Keep the generated `pr-pack.receipt.json` with its `views/` directory.
+Pass that receipt and, optionally, the HTTPS address where reviewers can open
+the published offline report.
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo --pr 42 --repository OWNER/REPO \
+  --out out/pr-42 --pr-pack out/diagrams/pr-pack.receipt.json \
+  --review-url https://example.org/reviews/pr-42.html
+```
+
+The report opens its **Changes** view at `#changes`. **PR diagrams** renders
+the authored SVGs and links eligible diagram citations to the captured
+source side. Without a preview, a citation links to the pinned GitHub
+source. The full Git change counts and the number of in-scope changed
+paths stay independent of the diagram selection. A stale receipt or changed
+SVG fails preparation and preserves the previous report. Embedded SVGs have
+an 8 MiB combined budget.
+
+With `--review-url`, `analysis/pr-review.md` contains the link for the PR
+description. Publish the `repo.analysis.html` artifact at that URL and place
+the link next to the diagram pack. Native `archify pr attach` is the explicit
+publication step for the diagrams.

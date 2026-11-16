@@ -82,7 +82,7 @@ export async function ensureDependencies(root = moduleRoot) {
 
 export const USAGE = `Usage:
   archify code-analysis serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN]
-                              [--pr <GitHub-URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map overlay-map.json] [--config file.json]
+                              [--pr <GitHub-URL-or-number>] [--repository OWNER/REPO] [--scope path] [--pr-pack pr-pack.receipt.json] [--review-url HTTPS-URL] [--language ts|py|java|go|rust] [--map overlay-map.json] [--config file.json]
                               [--baseline baseline.json] [--quality standard|showcase]
 
 Without --ir, opens a standalone workbench with Atlas and analyzes on page load.
@@ -102,13 +102,14 @@ export function parseArgs(argv) {
   const options = {};
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i];
-    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale', '--pr', '--repository', '--scope'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw usageError(`Invalid option: ${key}\n${USAGE}`);
+    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale', '--pr', '--repository', '--scope', '--pr-pack', '--review-url'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw usageError(`Invalid option: ${key}\n${USAGE}`);
     options[key] = rest[i + 1];
   }
   if (!options['--out']) throw usageError(`serve requires --out\n${USAGE}`);
   if (options['--map'] && !options['--ir']) throw usageError('--map requires --ir: mapping belongs to an authored architecture diagram.');
   if (options['--locale'] && !['en', 'zh-CN'].includes(options['--locale'])) throw usageError('--locale must be en or zh-CN.');
   if (!options['--pr'] && (options['--repository'] || options['--scope'])) throw usageError('--repository and --scope require --pr.');
+  if (!options['--pr'] && (options['--pr-pack'] || options['--review-url'])) throw usageError('--pr-pack and --review-url require --pr.');
   return { repo, options };
 }
 
@@ -163,6 +164,7 @@ export async function prepareAnalysisSession(argv) {
     config: options['--config'] ? path.resolve(options['--config']) : null,
     map: options['--map'] ? path.resolve(options['--map']) : null,
     baseline: baselineFile, pr: options['--pr'], repository: options['--repository'], scope: options['--scope'],
+    prPack: options['--pr-pack'] ? path.resolve(options['--pr-pack']) : null, reviewUrl: options['--review-url'],
   }), shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh' };
   return { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile, resume, pullRequest };
 }
@@ -172,11 +174,17 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
   const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
   let capture = null;
   try {
+    let reviewPack = null, reviewLink = null;
     let language = options['--language'] || null, config = options['--config'] ? path.resolve(options['--config']) : null;
     if (pullRequest) {
       const { loadConfig, stableJson } = await import('../lib/analysis.mjs');
       const { selectAdapter } = await import('../extract/index.mjs');
       capture = await preparePRSources({ ...pullRequest, out });
+      if (options['--pr-pack'] || options['--review-url']) {
+        const { readPrReviewPack, changesUrl } = await import('../lib/review-pack.mjs');
+        if (options['--pr-pack']) reviewPack = readPrReviewPack(path.resolve(options['--pr-pack']), capture);
+        if (options['--review-url']) reviewLink = changesUrl(options['--review-url']);
+      }
       fs.mkdirSync(next, { recursive: true });
       const cfg = loadConfig(config);
       config = path.join(next, 'captured-config.json');
@@ -194,10 +202,17 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
     await runWorker({
       root: capture?.roots.head || root, ir, irSnapshot: doc, html: delivered, locale, out: next, resume, openAnalysis: !ir || openAnalysis,
       language, config, source: capture?.source('head') || null,
-      pullRequest: capture ? { pr: capture.pr, scope: capture.scope, changedFiles: capture.changedFiles, manifests: capture.manifests, sourceRoot: capture.roots.head, baseSourceRoot: capture.roots.base, sourceGitRoot: capture.sourceGitRoot } : null,
+      pullRequest: capture ? { pr: capture.pr, scope: capture.scope, changedFiles: capture.changedFiles, manifests: capture.manifests, sourceRoot: capture.roots.head, baseSourceRoot: capture.roots.base, sourceGitRoot: capture.sourceGitRoot, reviewPack } : null,
       map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
       previous: capture ? path.join(next, 'base/findings.json') : path.join(analysisDir, 'findings.json'),
     });
+    if (reviewLink) {
+      const { pr } = capture;
+      const tick = String.fromCharCode(96);
+      fs.writeFileSync(path.join(next, 'pr-review.md'), '[Open Changes and source evidence](<' + reviewLink + '>)\n\n' +
+        'Merge-base ' + tick + pr.mergeBaseSHA + tick + ' → head ' + tick + pr.headSHA + tick + '\n' +
+        'Git changed files: ' + pr.changedFiles.length + ' · In analysis scope: ' + capture.changedFiles.length + '\n', 'utf8');
+    }
   } catch (error) {
     fs.rmSync(next, { recursive: true, force: true });
     if (capture) fs.rmSync(capture.directory, { recursive: true, force: true });
