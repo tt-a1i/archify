@@ -88,7 +88,8 @@ test('renderer: resources fail closed and native previews preserve identity with
 });
 
 test('renderer: no-script content includes scope, system theme and inert operation controls',()=>{
-  const tree = parse(renderExplainer(fixture(),resources()));
+  const input = fixture();
+  const tree = parse(renderExplainer(input,resources()));
   assert.equal(attr(all(tree,node=>node.tagName === 'html')[0],'data-theme'),undefined,'default must follow system even before JavaScript');
   assert.ok(find(tree,'answer'));
   const eligible = (node,ancestorInert=false,dialog=false) => {
@@ -107,7 +108,7 @@ test('renderer: no-script content includes scope, system theme and inert operati
   assert.equal(disclosure.artifact.type,'explainer');
   assert.match(disclosure.artifact.contentSha256,/^[a-f0-9]{64}$/);
   assert.equal(Object.hasOwn(disclosure,'feedback'),false,'reader update data must not expose feedback capability');
-  assert.equal(JSON.stringify(disclosure).includes('How <script> works?'),false,'reader update data must not include authored source');
+  assert.equal(JSON.stringify(disclosure).includes(input.meta.title),false,'reader update data must not include the authored title');
 });
 
 test('renderer: valid authored reader-update IDs stay unique and deliverable', async () => {
