@@ -42,11 +42,24 @@ test('Workflow compare ignores presentation-only fields and remains deterministi
   const detached = head.nodes.find(node => !head.mainPath.includes(node.id));
   detached.col = detached.col > 0 ? detached.col - 1 : detached.col + 1;
   head.nodes[0].yOffset = 4;
-  if (head.edges[0]) head.edges[0].labelDx = 8;
+  Object.assign(base.edges[0], { via: [[90, 100]], channelY: 200 });
+  Object.assign(head.edges[0], {
+    via: [[110, 120]], channelX: 130, channelY: 240, labelAt: [140, 150],
+    fromSide: 'left', toSide: 'right', route: 'up-channel', labelSegment: 1,
+    labelDx: 8, labelDy: 3, bias: 0.2, width: 3,
+  });
   const first = run(base, head).receipt;
   const second = run(base, head).receipt;
   assert.deepEqual(first.changes, { lanes: [], phases: [], groups: [], nodes: [], edges: [], mainPath: [], semanticChecks: [] });
   assert.deepEqual(first, second);
+  head.edges[0].label = 'New transition';
+  head.edges[0].role = base.edges[0].role === 'async' ? 'return' : 'async';
+  const { result, receipt } = run(base, head);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(receipt.changes.edges.length, 1);
+  assert.equal(receipt.changes.edges[0].head.label, 'New transition');
+  assert.equal(receipt.changes.edges[0].head.role, head.edges[0].role);
+  assert.equal(Object.hasOwn(receipt.changes.edges[0].head, 'via'), false);
 });
 
 test('Workflow compare reports phase and group column-range changes', () => {
@@ -64,23 +77,37 @@ test('Workflow compare reports phase and group column-range changes', () => {
   assert.deepEqual(run(base, unchanged).receipt.changes.groups, []);
 });
 
-test('Workflow compare reports lane labels and rejects unknown options', () => {
+test('Workflow compare reports lane labels', () => {
   const base = fixture();
   const head = structuredClone(base);
   head.lanes[0].label = 'Renamed lane';
   const compared = run(base, head);
   assert.equal(compared.result.status, 0, compared.result.stderr);
   assert.deepEqual(compared.receipt.changes.lanes.map(change => [change.id, change.change]), [[base.lanes[0].id, 'modified']]);
+});
 
+test('Workflow compare usage errors preserve inputs and other destinations', (t) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-compare-options-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const basePath = path.join(directory, 'base.json');
   const headPath = path.join(directory, 'head.json');
-  fs.writeFileSync(basePath, JSON.stringify(base));
-  fs.writeFileSync(headPath, JSON.stringify(base));
-  const result = spawnSync(process.execPath, [cli, 'compare', 'workflow', basePath, headPath, '--jsno'], { encoding: 'utf8' });
-  fs.rmSync(directory, { recursive: true, force: true });
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /Usage: compare workflow/u);
+  const unrelated = path.join(directory, 'readme.txt');
+  const original = JSON.stringify(fixture());
+  fs.writeFileSync(basePath, original);
+  fs.writeFileSync(headPath, original);
+  fs.writeFileSync(unrelated, 'do not replace');
+  const args = [cli, 'compare', 'workflow', basePath, headPath];
+  for (const rest of [[basePath, '--unknown'], [headPath, 'extra.json'], [unrelated, '--unknown']]) {
+    const result = spawnSync(process.execPath, [...args, ...rest, '--json'], { encoding: 'utf8' });
+    assert.equal(result.status, 1, result.stderr);
+    assert.equal(JSON.parse(result.stdout).code, 'workflow/usage');
+    assert.equal(fs.readFileSync(basePath, 'utf8'), original);
+    assert.equal(fs.readFileSync(headPath, 'utf8'), original);
+    assert.equal(fs.readFileSync(unrelated, 'utf8'), 'do not replace');
+  }
+  const human = spawnSync(process.execPath, [...args, '--unknown'], { encoding: 'utf8' });
+  assert.equal(human.status, 1);
+  assert.match(human.stderr, /Usage: compare workflow/u);
 });
 
 test('Workflow compare rejects invalid inputs with stable diagnostics', () => {
@@ -135,6 +162,32 @@ test('Workflow compare returns a receipt when the output parent is a file', () =
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test('Workflow compare reports filesystem failures and cleans its temporary receipt', (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-compare-write-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const basePath = path.join(directory, 'base.json');
+  const headPath = path.join(directory, 'head.json');
+  const blocked = path.join(directory, 'blocked.json');
+  const destination = path.join(directory, 'receipt.json');
+  const original = JSON.stringify(fixture());
+  fs.writeFileSync(basePath, original);
+  fs.writeFileSync(headPath, original);
+  fs.mkdirSync(blocked);
+  const args = [cli, 'compare', 'workflow', basePath, headPath];
+  for (const [output, code] of [[path.join(directory, 'missing', 'receipt.json'), 'output/cli-resolve'], [blocked, 'output/cli-write']]) {
+    const result = spawnSync(process.execPath, [...args, output, '--json'], { encoding: 'utf8' });
+    assert.equal(result.status, 1, result.stderr);
+    const failure = JSON.parse(result.stdout);
+    assert.equal(failure.ok, false);
+    assert.equal(failure.diagnostics[0].code, code);
+    assert.deepEqual(fs.readdirSync(directory).sort(), ['base.json', 'blocked.json', 'head.json']);
+  }
+  assert.ok(fs.statSync(blocked).isDirectory());
+  const successful = spawnSync(process.execPath, [...args, destination, '--json'], { encoding: 'utf8' });
+  assert.equal(successful.status, 0, successful.stderr);
+  assert.deepEqual(JSON.parse(fs.readFileSync(destination, 'utf8')), JSON.parse(successful.stdout));
 });
 
 test('Workflow compare reports normalized semantic-check changes', () => {

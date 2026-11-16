@@ -3679,67 +3679,70 @@ async function commandCompareWorkflow(args) {
   const json = options.includes('--json');
   const positional = args.filter(arg => !arg.startsWith('--'));
   const [, baseInput, headInput, output] = positional;
-  let outputFailure;
-  const validateOutput = async () => {
-    if (!output) return;
-    const resolved = path.resolve(output);
-    if (path.extname(resolved).toLowerCase() !== '.json') {
-      outputFailure = { code: 'output/cli-extension', message: 'Workflow comparison output must use a .json extension.' };
-      return;
-    }
-    let resolvedTarget = resolved;
-    try {
-      resolvedTarget = fs.realpathSync.native(resolved);
-    } catch (error) {
-      if (error?.code === 'ENOTDIR') {
-        outputFailure = { code: 'output/cli-resolve', message: 'Workflow comparison output path could not be resolved.' };
-        return;
-      }
-      if (error?.code !== 'ENOENT') throw error;
-      try {
-        if (!fs.statSync(path.dirname(resolved)).isDirectory()) {
-          outputFailure = { code: 'output/cli-resolve', message: 'Workflow comparison output path could not be resolved.' };
-          return;
-        }
-      } catch (parentError) {
-        if (parentError?.code === 'ENOTDIR') {
-          outputFailure = { code: 'output/cli-resolve', message: 'Workflow comparison output path could not be resolved.' };
-          return;
-        }
-        if (parentError?.code !== 'ENOENT') throw parentError;
-      }
-    }
-    if (path.extname(resolvedTarget).toLowerCase() !== '.json') {
-      outputFailure = { code: 'output/cli-resolved-extension', message: 'Workflow comparison output must resolve to a .json extension.' };
-      return;
-    }
-    const { sameLocation } = await import('../renderers/shared/path-semantics.mjs');
-    for (const input of [baseInput, headInput].filter(Boolean)) {
-      const relation = sameLocation(resolved, path.resolve(input));
-      if (relation.status === 'match') {
-        outputFailure = { code: 'output/cli-alias', message: 'Workflow comparison output must not replace either input, including through an alias.' };
-        return;
-      }
-    }
-  };
-  const writeReceipt = (destination, receipt) => {
-    if (!destination || outputFailure) return;
-    const resolved = path.resolve(destination);
-    const temporary = `${resolved}.tmp-${process.pid}-${randomUUID()}`;
-    fs.writeFileSync(temporary, `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
-    fs.renameSync(temporary, resolved);
-  };
-  const failWorkflow = (code, message, details = {}) => {
-    const diagnostics = details.diagnostics || [{ code, message }];
-    const receipt = { schemaVersion: 1, ok: false, command: 'compare', type: 'workflow', code, error: message, diagnostics, details };
+  const failure = (code, message, details = {}) => ({
+    schemaVersion: 1, ok: false, command: 'compare', type: 'workflow', code, error: message,
+    diagnostics: details.diagnostics || [{ code, message }], details,
+  });
+  const reportFailure = receipt => {
     if (json) process.stdout.write(`${JSON.stringify(receipt)}\n`);
-    else process.stderr.write(`${message}${diagnostics.length ? `\n${JSON.stringify(diagnostics, null, 2)}` : ''}\n`);
-    writeReceipt(output, receipt);
+    else process.stderr.write(`${receipt.error}${receipt.diagnostics.length ? `\n${JSON.stringify(receipt.diagnostics, null, 2)}` : ''}\n`);
     process.exitCode = 1;
   };
-  if (options.some(option => option !== '--json') || !baseInput || !headInput || positional.length > 4) return failWorkflow('workflow/usage', 'Usage: compare workflow <base.json> <head.json> [output.json] [--json]');
-  await validateOutput();
-  if (outputFailure) return failWorkflow(outputFailure.code, outputFailure.message);
+  if (options.some(option => option !== '--json') || !baseInput || !headInput || positional.length > 4) {
+    return reportFailure(failure('workflow/usage', 'Usage: compare workflow <base.json> <head.json> [output.json] [--json]'));
+  }
+  let destination;
+  if (output) {
+    const { canonicalFuturePath, pathsAlias } = await import('../renderers/shared/output-path.mjs');
+    const resolved = path.resolve(output);
+    if (path.extname(resolved).toLowerCase() !== '.json') {
+      return reportFailure(failure('output/cli-extension', 'Workflow comparison output must use a .json extension.'));
+    }
+    try {
+      const parent = fs.realpathSync.native(path.dirname(resolved));
+      if (!fs.statSync(parent).isDirectory()) {
+        return reportFailure(failure('output/cli-resolve', 'Workflow comparison output requires an existing parent directory.'));
+      }
+      const candidate = path.join(parent, path.basename(resolved));
+      if (path.extname(canonicalFuturePath(candidate)).toLowerCase() !== '.json') {
+        return reportFailure(failure('output/cli-resolved-extension', 'Workflow comparison output must resolve to a .json extension.'));
+      }
+      if ([baseInput, headInput].some(input => pathsAlias(candidate, path.resolve(input)))) {
+        return reportFailure(failure('output/cli-alias', 'Workflow comparison output must not replace either input, including through an alias.'));
+      }
+      destination = candidate;
+    } catch (error) {
+      return reportFailure(failure('output/cli-resolve', 'Workflow comparison output requires an existing parent directory and a safely resolvable path.', {
+        reason: error.code || error.archifyDiagnostics?.[0]?.code || 'io-error',
+      }));
+    }
+  }
+  const publishReceipt = receipt => {
+    if (!destination) return true;
+    const temporary = `${destination}.tmp-${process.pid}-${randomUUID()}`;
+    let created = false;
+    try {
+      const fd = fs.openSync(temporary, 'wx');
+      created = true;
+      try { fs.writeFileSync(fd, `${JSON.stringify(receipt, null, 2)}\n`); }
+      finally { fs.closeSync(fd); }
+      fs.renameSync(temporary, destination);
+      return true;
+    } catch (error) {
+      const details = { reason: error.code || 'io-error' };
+      if (!receipt.ok) details.comparisonFailure = receipt.code;
+      if (created) {
+        try { fs.unlinkSync(temporary); }
+        catch (cleanupError) { if (cleanupError.code !== 'ENOENT') details.cleanupFailure = cleanupError.code || 'io-error'; }
+      }
+      reportFailure(failure('output/cli-write', 'Could not write Workflow comparison receipt.', details));
+      return false;
+    }
+  };
+  const failWorkflow = (code, message, details) => {
+    const receipt = failure(code, message, details);
+    if (publishReceipt(receipt)) reportFailure(receipt);
+  };
   let base;
   let head;
   try { base = JSON.parse(fs.readFileSync(baseInput, 'utf8')); } catch (error) { return failWorkflow('workflow/base-read', `Could not read base Workflow input: ${error.message}`); }
@@ -3788,14 +3791,15 @@ async function commandCompareWorkflow(args) {
   const baseGroups = stable(base.groups);
   const headGroups = stable(head.groups);
   if (!baseNodes || !headNodes || !baseEdges || !headEdges || !baseLanes || !headLanes || !basePhases || !headPhases || !baseGroups || !headGroups) return failWorkflow('workflow/identity', 'Workflow nodes, edges, lanes, phases, and groups require unique stable ids.');
-  const presentationKeys = new Set(['row', 'col', 'pos', 'width', 'height', 'x', 'y', 'xOffset', 'yOffset', 'labelDx', 'labelDy']);
-  const semantic = (value, ignored = presentationKeys) => {
-    if (Array.isArray(value)) return value.map(entry => semantic(entry, ignored));
+  const nodePresentation = new Set(['row', 'col', 'pos', 'width', 'height', 'x', 'y', 'xOffset', 'yOffset', 'labelDx', 'labelDy']);
+  const edgePresentation = new Set(['fromSide', 'toSide', 'route', 'via', 'labelAt', 'labelDx', 'labelDy', 'labelSegment', 'channelX', 'channelY', 'bias', 'width']);
+  const semantic = (value, ignored) => {
+    if (Array.isArray(value)) return value.map(entry => semantic(entry));
     if (!value || typeof value !== 'object') return value;
-    return Object.fromEntries(Object.keys(value).filter(key => !ignored.has(key)).sort().map(key => [key, semantic(value[key], ignored)]));
+    return Object.fromEntries(Object.keys(value).filter(key => !ignored?.has(key)).sort().map(key => [key, semantic(value[key])]));
   };
   const changes = { lanes: [], phases: [], groups: [], nodes: [], edges: [], mainPath: [], semanticChecks: [] };
-  const compare = (name, beforeItems, afterItems, ignored = presentationKeys) => {
+  const compare = (name, beforeItems, afterItems, ignored) => {
     for (const id of [...new Set([...beforeItems.keys(), ...afterItems.keys()])].sort()) {
       const before = beforeItems.get(id); const after = afterItems.get(id);
       if (!before) changes[name].push({ id, change: 'added', head: semantic(after, ignored) });
@@ -3803,13 +3807,13 @@ async function commandCompareWorkflow(args) {
       else if (JSON.stringify(semantic(before, ignored)) !== JSON.stringify(semantic(after, ignored))) changes[name].push({ id, change: name === 'edges' && (before.from !== after.from || before.to !== after.to) ? 'endpoint-changed' : 'modified', base: semantic(before, ignored), head: semantic(after, ignored) });
     }
   };
-  compare('lanes', baseLanes, headLanes, new Set());
+  compare('lanes', baseLanes, headLanes);
   // Column ranges decide which nodes a phase or group frames, so a range change
   // is a scope change, not a presentation change.
-  compare('phases', basePhases, headPhases, new Set());
-  compare('groups', baseGroups, headGroups, new Set());
-  compare('nodes', baseNodes, headNodes);
-  compare('edges', baseEdges, headEdges);
+  compare('phases', basePhases, headPhases);
+  compare('groups', baseGroups, headGroups);
+  compare('nodes', baseNodes, headNodes, nodePresentation);
+  compare('edges', baseEdges, headEdges, edgePresentation);
   if (JSON.stringify(base.mainPath || []) !== JSON.stringify(head.mainPath || [])) changes.mainPath.push({ change: 'modified', base: base.mainPath || [], head: head.mainPath || [] });
   const normalizeSemanticChecks = (checks) => {
     if (!checks) return null;
@@ -3830,7 +3834,7 @@ async function commandCompareWorkflow(args) {
   const headSemanticChecks = normalizeSemanticChecks(head.semanticChecks);
   if (JSON.stringify(baseSemanticChecks) !== JSON.stringify(headSemanticChecks)) changes.semanticChecks.push({ change: 'modified', base: baseSemanticChecks, head: headSemanticChecks });
   const receipt = { schemaVersion: 1, ok: true, command: 'compare', type: 'workflow', comparatorVersion: 1, diagnostics: [], changes, summary: Object.fromEntries(Object.entries(changes).map(([name, entries]) => [name, entries.length])) };
-  writeReceipt(output, receipt);
+  if (!publishReceipt(receipt)) return;
   if (json) process.stdout.write(`${JSON.stringify(receipt)}\n`);
   else {
     const total = Object.values(receipt.summary).reduce((count, entries) => count + entries, 0);
