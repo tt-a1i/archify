@@ -145,6 +145,42 @@ test('Workflow compare rejects non-JSON and input-alias outputs before writing',
   assert.equal(alias.receipt.code, 'output/cli-alias');
 });
 
+test('Workflow compare preserves the filesystem parent traversal in input aliases and receipt paths', {
+  skip: process.platform === 'win32' && 'Windows uses lexical parent traversal for ordinary Win32 paths',
+}, (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-compare-parent-alias-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const physical = path.join(directory, 'physical');
+  const subdir = path.join(physical, 'subdir');
+  const caller = path.join(directory, 'caller');
+  const link = path.join(caller, 'link');
+  fs.mkdirSync(subdir, { recursive: true });
+  fs.mkdirSync(caller);
+  try { fs.symlinkSync(subdir, link, 'dir'); }
+  catch (error) {
+    if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error.code)) return t.skip('Directory symlinks are unavailable');
+    throw error;
+  }
+  const basePath = path.join(physical, 'base.json');
+  const headPath = path.join(directory, 'head.json');
+  const original = JSON.stringify(fixture());
+  fs.writeFileSync(basePath, original);
+  fs.writeFileSync(headPath, original);
+  const throughLink = name => ['link', '..', name].join(path.sep);
+  const runCompare = (base, output) => spawnSync(process.execPath,
+    [cli, 'compare', 'workflow', base, headPath, output, '--json'], { cwd: caller, encoding: 'utf8' });
+  for (const [base, output] of [[throughLink('base.json'), basePath], [basePath, throughLink('base.json')]]) {
+    const blocked = runCompare(base, output);
+    assert.equal(blocked.status, 1, blocked.stderr);
+    assert.equal(JSON.parse(blocked.stdout).code, 'output/cli-alias');
+    assert.equal(fs.readFileSync(basePath, 'utf8'), original);
+  }
+  const result = runCompare(basePath, throughLink('receipt.json'));
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(physical, 'receipt.json'), 'utf8')), JSON.parse(result.stdout));
+  assert.equal(fs.existsSync(path.join(caller, 'receipt.json')), false);
+});
+
 test('Workflow compare returns a receipt when the output parent is a file', () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-compare-output-parent-'));
   try {

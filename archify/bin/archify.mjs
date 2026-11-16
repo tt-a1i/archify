@@ -3694,20 +3694,20 @@ async function commandCompareWorkflow(args) {
   let destination;
   if (output) {
     const { canonicalFuturePath, pathsAlias } = await import('../renderers/shared/output-path.mjs');
-    const resolved = path.resolve(output);
-    if (path.extname(resolved).toLowerCase() !== '.json') {
+    if (path.extname(output).toLowerCase() !== '.json') {
       return reportFailure(failure('output/cli-extension', 'Workflow comparison output must use a .json extension.'));
     }
     try {
-      const parent = fs.realpathSync.native(path.dirname(resolved));
+      // Follow the authored parent path before joining the receipt name.
+      const parent = fs.realpathSync.native(path.dirname(output));
       if (!fs.statSync(parent).isDirectory()) {
         return reportFailure(failure('output/cli-resolve', 'Workflow comparison output requires an existing parent directory.'));
       }
-      const candidate = path.join(parent, path.basename(resolved));
+      const candidate = path.join(parent, path.basename(output));
       if (path.extname(canonicalFuturePath(candidate)).toLowerCase() !== '.json') {
         return reportFailure(failure('output/cli-resolved-extension', 'Workflow comparison output must resolve to a .json extension.'));
       }
-      if ([baseInput, headInput].some(input => pathsAlias(candidate, path.resolve(input)))) {
+      if ([baseInput, headInput].some(input => pathsAlias(candidate, input))) {
         return reportFailure(failure('output/cli-alias', 'Workflow comparison output must not replace either input, including through an alias.'));
       }
       destination = candidate;
