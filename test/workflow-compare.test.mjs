@@ -181,6 +181,33 @@ test('Workflow compare preserves the filesystem parent traversal in input aliase
   assert.equal(fs.existsSync(path.join(caller, 'receipt.json')), false);
 });
 
+test('Workflow compare accepts drive-relative and current-drive-rooted Windows inputs', {
+  skip: process.platform !== 'win32' && 'Windows path spelling',
+}, (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-compare-drive-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const drive = path.parse(directory).root.slice(0, 2);
+  if (!/^[A-Za-z]:$/u.test(drive)) return t.skip('A drive-letter test directory is unavailable');
+  const basePath = path.join(directory, 'base.json');
+  const headPath = path.join(directory, 'head.json');
+  const receiptPath = path.join(directory, 'receipt.json');
+  const original = JSON.stringify(fixture());
+  fs.writeFileSync(basePath, original);
+  fs.writeFileSync(headPath, original);
+  const args = [cli, 'compare', 'workflow', drive + 'base.json', headPath.slice(2)];
+  const runCompare = output => spawnSync(process.execPath,
+    [...args, output, '--json'], { cwd: directory, encoding: 'utf8' });
+  for (const input of [basePath, headPath]) {
+    const blocked = runCompare(input);
+    assert.equal(blocked.status, 1, blocked.stderr);
+    assert.equal(JSON.parse(blocked.stdout).code, 'output/cli-alias');
+    assert.equal(fs.readFileSync(input, 'utf8'), original);
+  }
+  const compared = runCompare(drive + 'receipt.json');
+  assert.equal(compared.status, 0, compared.stderr);
+  assert.deepEqual(JSON.parse(fs.readFileSync(receiptPath, 'utf8')), JSON.parse(compared.stdout));
+});
+
 test('Workflow compare returns a receipt when the output parent is a file', () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-compare-output-parent-'));
   try {

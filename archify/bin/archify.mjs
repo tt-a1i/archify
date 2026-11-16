@@ -3691,6 +3691,9 @@ async function commandCompareWorkflow(args) {
   if (options.some(option => option !== '--json') || !baseInput || !headInput || positional.length > 4) {
     return reportFailure(failure('workflow/usage', 'Usage: compare workflow <base.json> <head.json> [output.json] [--json]'));
   }
+  // Use a single filesystem spelling for alias checks and input reads.
+  // This qualifies Windows drive-relative paths and leaves POSIX traversal intact.
+  const inputs = [baseInput, headInput].map(input => path.toNamespacedPath(input));
   let destination;
   if (output) {
     const { canonicalFuturePath, pathsAlias } = await import('../renderers/shared/output-path.mjs');
@@ -3707,7 +3710,7 @@ async function commandCompareWorkflow(args) {
       if (path.extname(canonicalFuturePath(candidate)).toLowerCase() !== '.json') {
         return reportFailure(failure('output/cli-resolved-extension', 'Workflow comparison output must resolve to a .json extension.'));
       }
-      if ([baseInput, headInput].some(input => pathsAlias(candidate, input))) {
+      if (inputs.some(input => pathsAlias(candidate, input))) {
         return reportFailure(failure('output/cli-alias', 'Workflow comparison output must not replace either input, including through an alias.'));
       }
       destination = candidate;
@@ -3745,8 +3748,8 @@ async function commandCompareWorkflow(args) {
   };
   let base;
   let head;
-  try { base = JSON.parse(fs.readFileSync(baseInput, 'utf8')); } catch (error) { return failWorkflow('workflow/base-read', `Could not read base Workflow input: ${error.message}`); }
-  try { head = JSON.parse(fs.readFileSync(headInput, 'utf8')); } catch (error) { return failWorkflow('workflow/head-read', `Could not read head Workflow input: ${error.message}`); }
+  try { base = JSON.parse(fs.readFileSync(inputs[0], 'utf8')); } catch (error) { return failWorkflow('workflow/base-read', `Could not read base Workflow input: ${error.message}`); }
+  try { head = JSON.parse(fs.readFileSync(inputs[1], 'utf8')); } catch (error) { return failWorkflow('workflow/head-read', `Could not read head Workflow input: ${error.message}`); }
   if (!base || typeof base !== 'object' || Array.isArray(base) || !head || typeof head !== 'object' || Array.isArray(head)) return failWorkflow('workflow/shape', 'Both inputs must be JSON objects.');
   if (base.diagram_type !== 'workflow' || head.diagram_type !== 'workflow') return failWorkflow('workflow/type', 'Both inputs must declare diagram_type: workflow.');
   const { validateSchema } = await import('../renderers/shared/validator.mjs');
