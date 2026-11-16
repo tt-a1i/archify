@@ -43,7 +43,7 @@ const CALL_MODELS = {
   py: { prefix: 'python-lexical', latest: 2 },
   java: { prefix: 'java-static-lexical', latest: 5 },
   go: { prefix: 'go-source-direct', latest: 4 },
-  rust: { prefix: 'rust-source-direct', latest: 14 },
+  rust: { prefix: 'rust-source-direct', latest: 15 },
 };
 
 function callModelVersions(data) {
@@ -89,7 +89,7 @@ function rawFactsErrors(data, report) {
   // Java build metadata is not a source file, but call evidence may point into it.
   for (const input of metadata.values()) sourceTexts.set(input.file, input.sourceText);
 
-  const traitDeclarations = traitDeclarationPoints(data, files, add);
+  const traitDeclarations = traitDeclarationPoints(data, files, sourceTexts, model, add);
   const context = callContext(data, { files, model, sourceTexts, metadata, traitDeclarations, add });
   data.calls.forEach((call, i) => callErrors(call, `/calls/${i}`, context));
   data.parse_errors?.forEach((error, i) => {
@@ -156,13 +156,17 @@ function validDefinitionExtent(fn, sourceText, language) {
 
 // Validates trait records and returns every trait method declaration point,
 // which trait-related call evidence must match.
-function traitDeclarationPoints(data, files, add) {
+function traitDeclarationPoints(data, files, sourceTexts, model, add) {
   const declarations = new Set();
   const captured = (point) => point && files.has(point.file) && isPoint(point);
   for (const [i, decl] of (data.traits || []).entries()) {
     if (!captured(decl.declaration)) add(`/traits/${i}/declaration`, 'must reference a valid captured declaration point');
     for (const [j, method] of (decl.methods || []).entries()) {
       if (!captured(method)) add(`/traits/${i}/methods/${j}`, 'must reference a valid captured declaration point');
+      if (model.rust >= 15 && (!validSourceRange(sourceTexts.get(method.file), { ...method, endLine: method.sourceRange?.endLine }, 'rust')
+        || method.sourceRange.column !== method.column || rangeText(sourceTexts.get(method.file), method.sourceRange, 'rust') !== method.name)) {
+        add(`/traits/${i}/methods/${j}/sourceRange`, 'must match the exact captured trait method name and digest');
+      }
       declarations.add(pointKey(method.file, method));
     }
   }

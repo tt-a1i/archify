@@ -12,7 +12,7 @@ This is source orientation. Exact function ranges, immutable captured text and h
 
 ## Tooling and cost
 
-Cargo/rustc 1.71+ are required; only 1.89.0 has been exercised locally. ARCHIFY_CARGO and ARCHIFY_RUSTC select installed executables. A missing tool returns structured extract/rust-unavailable with installation guidance, exit 2. The ZIP bundles source and a locked helper, not a platform binary. Its first use compiles Archify's helper and may download its locked MIT/Apache parser dependencies (syn 2.0.119, proc-macro2 1.0.107, quote 1.0.47, serde_json 1.0.154). No rust-analyzer is needed. Set rust.offline=true only after these dependencies are cached. Toolchain installation is separate; no missing-tool installation happens automatically.
+Cargo/rustc 1.71+ are required; 1.77.1 and 1.89.0 have been exercised locally. ARCHIFY_CARGO and ARCHIFY_RUSTC select installed executables. A missing tool returns structured extract/rust-unavailable with installation guidance, exit 2. The ZIP bundles source and a locked helper, not a platform binary. Its first use compiles Archify's helper and may download its locked MIT/Apache parser dependencies (syn 2.0.119, proc-macro2 1.0.107, quote 1.0.47, serde_json 1.0.154). No rust-analyzer is needed. Set rust.offline=true only after these dependencies are cached. Toolchain installation is separate; no missing-tool installation happens automatically.
 
 Project manifests and empty source-inventory stubs are captured into a temporary directory for cargo metadata --offline --locked --no-deps. Project source, .cargo config, rust-toolchain files, build scripts and macros are never executed. The syn helper parses the captured source bytes and uses a temporary compiler cache outside the installation. No project dependency source is downloaded or inspected. Absolute/path dependencies outside the captured root are unknown; manifest configurations which require them may fail with extract/rust-metadata-failed instead of inventing a workspace.
 
@@ -36,7 +36,7 @@ See the pinned real-project replay and source/ZIP evidence in benchmarks/code-an
 
 ## Current call model and trait impl candidates
 
-Current captures use rust-source-direct-v14 / adapter14. Historical v1 collects
+Current captures use rust-source-direct-v15 / adapter15. Historical v1 collects
 free functions; v2 additionally admits unique monomorphic inherent function
 paths; v3 additionally admits bare generic-struct paths to unique concrete type
 specializations. Historical facts keep their original scope without rebinding.
@@ -138,6 +138,25 @@ A generic substituted from a call argument keeps the actual type's module
 identity, including aliases at the call site. Unresolved or external types are
 kept distinct and never select a captured local type with the same spelling;
 insufficient identity leaves the closure call unknown.
+
+v15 uses a selected captured function's declared return type to identify the
+receiver of a following method call, including calls through a local binding.
+The return type resolves in the function's declaring module; an inherent
+function returning `Self` uses its captured owner. A constructor-looking path
+alone no longer supplies a receiver type: `A::make() -> B` can bind `B::run`,
+while an unknown, conditional, unresolved generic or uncaptured return remains unknown.
+An unshadowed unit-struct value also supplies its nominal receiver type.
+For a nominal `Type::method()` call, a single captured trait implementation
+can identify the implementation body or, when the implementation omits that
+method, the trait declaration. Competing trait owners keep the target unknown.
+Trait method names carry exact captured ranges and hashes, allowing a
+declaration without a body to pass the same freshness checks as a function target.
+This correction was checked against a fixed
+[rust-analyzer core revision](https://github.com/rust-lang/rust-analyzer/tree/e5e7830640558e323e89c831488a3172b58dc66d)
+query on the same source. rust-analyzer is a validation oracle here, not a runtime dependency;
+the source capture, conservative cfg policy and historical fact readers remain.
+The [pinned test ledger](RUST-RA-PARITY.md) maps comparable definition,
+call-hierarchy and direct-reference cases to Archify's current outputs.
 
 v6 inventories a trait method's default body once per source declaration, not
 once per implementing type. A declaration without a body adds no call. Calls in

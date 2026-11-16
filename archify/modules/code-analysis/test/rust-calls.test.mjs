@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 import { extractFacts, loadConfig, mergeConfig, buildGraph, evaluateGraph } from '../lib/analysis.mjs';
 import { buildQuestion } from '../lib/explain.mjs';
@@ -63,6 +64,201 @@ fn nested_use(){let run=||0u16;{use crate::util::run;let _:u8=run();}}
  const generic=calls(facts,'src/lib.rs').find(c=>c.line===6);
  assert.equal(generic.resolution,'rust-trait-method-candidate');assert.equal(generic.target.line,2);assert.equal(generic.target.name,'method');
  assert.equal(calls(facts,'src/lib.rs').find(c=>c.line===10&&c.target)?.target.line,9);
+});
+
+test('Rust method calls use captured return types instead of a constructor path guess',t=>{
+ const root=fixture(t,{'src/lib.rs':`mod producer {
+ pub struct A; pub struct B;
+ impl A { pub fn make() -> B { B } pub fn new() -> Self { A } pub fn run(&self) {} }
+ impl B { pub fn run(&self) {} }
+ pub fn make_b() -> B { B }
+}
+mod consumer {
+ pub struct B; impl B { pub fn run(&self) {} }
+ pub fn caller() {
+  crate::producer::A::make().run();
+  let made = crate::producer::A::make(); made.run();
+  crate::producer::A::new().run();
+  let made = crate::producer::make_b(); made.run();
+ }
+}
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const rows=calls(facts,'src/lib.rs').filter(c=>[10,11,12,13].includes(c.line)&&c.target?.name==='run');
+ assert.deepEqual(rows.map(c=>c.target.line),[4,4,3,4]);
+ assert.ok(rows.every(c=>c.resolution==='rust-inherent-source-candidate'));
+ const question=buildQuestion({root,facts,entry:'src/lib.rs',symbol:'caller',question:'Where does run resolve?'});
+ assert.equal(question.calls.coverage,'available');
+ assert.deepEqual(question.calls.records.filter(r=>r.targetNavigation?.location?.name==='run').map(r=>r.targetNavigation.location.line),[4,4,3,4]);
+});
+
+test('Rust missing and conditional constructors do not invent receiver methods',t=>{
+ const root=fixture(t,{'src/lib.rs':`struct A; struct B;
+impl A { fn run(&self) {} #[cfg(build_unknown)] fn maybe() -> B { B } }
+impl B { fn run(&self) {} }
+fn caller() { A::missing().run(); A::maybe().run(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(calls(facts,'src/lib.rs').filter(c=>c.line===4&&c.target?.name==='run').length,0);
+ assert.equal(calls(facts,'src/lib.rs').filter(c=>c.line===4&&c.reason==='rust-trait-or-method-dispatch').length,2);
+});
+
+test('Rust return typing does not erase generic specialization needed for method selection',t=>{
+ const root=fixture(t,{'src/lib.rs':`struct G<T>(T);
+impl G<u8> { fn new() -> Self { G(0) } fn make() -> G<u8> { G(0) } }
+impl G<u16> { fn run(&self) {} }
+fn caller() { G::new().run(); G::make().run(); }
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const methods=calls(facts,'src/lib.rs').filter(c=>c.line===4&&c.reason==='rust-trait-or-method-dispatch');
+ assert.equal(methods.length,2);
+ assert.equal(calls(facts,'src/lib.rs').filter(c=>c.line===4&&c.target?.name==='run').length,0);
+});
+
+// One case per function in rust-analyzer's pinned goto_definition.rs tests.
+// The $0 cursor and underline expectation comments are omitted from source.
+// https://github.com/rust-lang/rust-analyzer/blob/e5e7830640558e323e89c831488a3172b58dc66d/crates/ide/src/goto_definition.rs
+for(const row of [
+ {name:'goto_def_for_methods',source:`struct Foo;
+impl Foo {
+    fn frobnicate(&self) { }
+}
+fn bar(foo: &Foo) {
+    foo.frobnicate();
+}
+`,callLine:6,targetLine:3,resolution:'rust-inherent-source-candidate'},
+ {name:'goto_def_for_ufcs_inherent_methods',source:`struct Foo;
+impl Foo {
+    fn frobnicate() { }
+}
+fn bar(foo: &Foo) {
+    Foo::frobnicate();
+}
+`,callLine:6,targetLine:3,resolution:'rust-inherent-source-candidate'},
+ {name:'goto_def_for_ufcs_trait_methods_through_traits',source:`trait Foo {
+    fn frobnicate();
+}
+fn bar() {
+    Foo::frobnicate();
+}
+`,callLine:5,targetLine:2,resolution:'rust-trait-method-candidate'},
+ {name:'goto_def_for_ufcs_trait_methods_through_self',source:`struct Foo;
+trait Trait {
+    fn frobnicate();
+}
+impl Trait for Foo {}
+fn bar() {
+    Foo::frobnicate();
+}
+`,callLine:7,targetLine:3,resolution:'rust-trait-method-candidate'},
+ {name:'goto_impl_of_trait_fn::method_call',source:`trait Twait {
+    fn a(&self);
+}
+struct Stwuct;
+impl Twait for Stwuct {
+    fn a(&self) {}
+}
+fn bar() { let s = Stwuct; s.a(); }
+`,callLine:8,targetLine:6,resolution:'rust-trait-impl',method:'a'},
+ {name:'goto_impl_of_trait_fn::path_call',source:`trait Twait {
+    fn a(&self);
+}
+struct Stwuct;
+impl Twait for Stwuct {
+    fn a(&self) {}
+}
+fn bar() { let s = Stwuct; Stwuct::a(&s); }
+`,callLine:8,targetLine:6,resolution:'rust-trait-impl',method:'a'},
+ {name:'goto_impl_of_trait_fn::method_call_defaulted',source:`trait Twait {
+    fn a(&self) {}
+}
+struct Stwuct;
+impl Twait for Stwuct {}
+fn bar() { let s = Stwuct; s.a(); }
+`,callLine:6,targetLine:2,resolution:'rust-trait-method-candidate',method:'a'},
+ {name:'goto_impl_of_trait_fn::method_call_on_generic',source:`trait Twait {
+    fn a(&self) {}
+}
+fn bar<T: Twait>(s: T) { s.a(); }
+`,callLine:4,targetLine:2,resolution:'rust-trait-method-candidate',method:'a'},
+])test(`Rust rust-analyzer ${row.name} call target`,t=>{
+ const root=fixture(t,{'src/lib.rs':row.source});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const method=row.method||'frobnicate';
+ const call=calls(facts,'src/lib.rs').find(c=>c.line===row.callLine&&c.target?.name===method);
+ assert.ok(call,`missing target for ${row.name}: ${JSON.stringify(calls(facts,'src/lib.rs'))}`);
+ assert.equal(call.resolution,row.resolution);
+ assert.equal(call.target.line,row.targetLine);
+ const question=buildQuestion({root,facts,entry:'src/lib.rs',symbol:'bar',question:'Where does frobnicate resolve?'});
+ assert.equal(question.calls.coverage,'available');
+ assert.ok(question.calls.records.some(r=>r.targetNavigation?.location?.name===method&&r.targetNavigation.location.line===row.targetLine));
+});
+
+test('Rust trait declaration navigation requires a captured exact method name',t=>{
+ const root=fixture(t,{'src/lib.rs':'mod target;\nuse target::Gate;\nfn caller() { Gate::go(); }\n','src/target.rs':'pub trait Gate { fn go(); }\n'});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const args={root,facts,entry:'src/lib.rs',symbol:'caller',question:'Where is go?'};
+ assert.equal(buildQuestion(args).calls.records[0].targetNavigation.status,'valid');
+ const forged=structuredClone(facts);
+ forged.traits[0].methods[0].sourceRange.sha256='0'.repeat(64);
+ assert.ok(schemaErrors('raw-facts',forged).some(error=>error.path==='/traits/0/methods/0/sourceRange'));
+ assert.equal(buildQuestion({...args,facts:forged}).calls.records[0].targetNavigation.reason,'target-range-unavailable');
+ const shortened=structuredClone(facts);
+ shortened.traits[0].methods[0].sourceRange.endColumn--;
+ shortened.traits[0].methods[0].sourceRange.sha256=createHash('sha256').update('g').digest('hex');
+ assert.ok(schemaErrors('raw-facts',shortened).some(error=>error.path==='/traits/0/methods/0/sourceRange'));
+ assert.equal(buildQuestion({...args,facts:shortened}).calls.records[0].targetNavigation.reason,'target-range-unavailable');
+ fs.appendFileSync(path.join(root,'src/target.rs'),'// edited\n');
+ assert.equal(buildQuestion(args).calls.records[0].targetNavigation.status,'changed');
+});
+
+test('Rust competing explicit and inherited trait methods leave nominal calls unresolved',t=>{
+ for(const conditional of ['', '#[cfg(build_generated)] ']){
+  const root=fixture(t,{'src/lib.rs':`trait Left { fn go(&self); }\ntrait Right { fn go(&self) {} }\nstruct S;\nimpl Left for S { fn go(&self) {} }\n${conditional}impl Right for S {}\nfn caller() { let s = S; s.go(); S::go(&s); }\n`});
+  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+  assert.equal(calls(facts,'src/lib.rs').filter(call=>call.line===6).length,2);
+  assert.ok(calls(facts,'src/lib.rs').filter(call=>call.line===6).every(call=>call.resolution==='unresolved'&&!call.target));
+ }
+});
+
+// Call edges from the pinned rust-analyzer call_hierarchy.rs tests, normalized
+// to Archify's captured caller and source target (without LSP UI ranges).
+// https://github.com/rust-lang/rust-analyzer/blob/e5e7830640558e323e89c831488a3172b58dc66d/crates/ide/src/call_hierarchy.rs
+for(const row of [
+ {name:'test_call_hierarchy_on_ref / test_call_hierarchy_on_def',source:'fn callee() {}\nfn caller() { callee(); }\n',edges:['caller>callee@src/lib.rs:1']},
+ {name:'test_call_hierarchy_in_same_fn / test_call_hierarchy_outgoing',source:'fn callee() {}\nfn caller() { callee(); callee(); }\n',edges:['caller>callee@src/lib.rs:1','caller>callee@src/lib.rs:1']},
+ {name:'test_call_hierarchy_in_different_fn',source:'fn callee() {}\nfn caller1() { callee(); }\nfn caller2() { callee(); }\n',edges:['caller1>callee@src/lib.rs:1','caller2>callee@src/lib.rs:1']},
+ {name:'test_call_hierarchy_in_tests_mod',source:'fn callee() {}\nfn caller1() { callee(); }\n#[cfg(test)] mod tests { use super::*; #[test] fn test_caller() { callee(); } }\n',edges:['caller1>callee@src/lib.rs:1','test_caller>callee@src/lib.rs:1'],options:{rust:{offline:false,tests:true}}},
+ {name:'test_call_hierarchy_in_different_files / test_call_hierarchy_outgoing_in_different_files',source:'mod foo;\nuse foo::callee;\nfn caller() { callee(); }\n',other:{'src/foo/mod.rs':'pub fn callee() {}\n'},edges:['caller>callee@src/foo/mod.rs:1']},
+ {name:'test_call_hierarchy_incoming_outgoing',source:'fn caller1() { caller2(); }\nfn caller2() { caller3(); }\nfn caller3() {}\n',edges:['caller1>caller2@src/lib.rs:2','caller2>caller3@src/lib.rs:3']},
+ {name:'test_call_hierarchy_issue_5103',source:'fn a() { b(); }\nfn b() {}\nfn main() { a(); }\n',edges:['a>b@src/lib.rs:2','main>a@src/lib.rs:1']},
+])test(`Rust rust-analyzer ${row.name} call edges`,t=>{
+ const root=fixture(t,{'src/lib.rs':row.source,...row.other});
+ const facts=capture(root,row.options);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const edges=facts.calls.filter(call=>call.target).map(call=>`${call.directCaller?.name}>${call.target.name}@${call.target.file}:${call.target.line}`).sort();
+ assert.deepEqual(edges,row.edges.slice().sort(),row.name);
+ const question=buildQuestion({root,facts,entry:'src/lib.rs',question:'Where are calls resolved?'});
+ assert.equal(question.calls.coverage,'available');
+ assert.ok(question.calls.records.every(record=>record.targetNavigation.status==='valid'));
+});
+
+// https://github.com/rust-lang/rust-analyzer/blob/e5e7830640558e323e89c831488a3172b58dc66d/crates/ide/src/references.rs
+test('Rust rust-analyzer test_find_struct_function_refs_outside_module direct call reference',t=>{
+ const source='mod foo { pub struct Foo; impl Foo { pub fn new() -> Foo { Foo } } }\nfn main() { let _f = foo::Foo::new(); }\n';
+ const changed=source.replace('new() -> Foo { Foo }','new() -> Foo { let value = Foo; value }');
+ const baseRoot=fixture(t,{'src/lib.rs':source});
+ const headRoot=fixture(t,{'src/lib.rs':changed});
+ const settings=config();
+ const base=captureChangeSide(baseRoot,settings,'rust');
+ const head=captureChangeSide(headRoot,settings,'rust');
+ const call=head.facts.calls.find(call=>call.directCaller?.name==='main');
+ assert.equal(call?.target?.name,'new');
+ assert.equal(call.target.line,1);
+ const result=buildChangeQuestion({base,head,config:settings,entry:'src/lib.rs',question:'Which captured call reaches the changed new function?'});
+ const item=result.changedDefinitions.items.find(item=>item.head.definition.name==='new');
+ assert.equal(item.head.knownReferences.total,1);
+ assert.equal(item.head.knownReferences.items[0].fact.directCaller.name,'main');
+ assert.equal(item.head.knownReferences.items[0].navigation.status,'valid');
 });
 
 test('Rust cfg profile, unknown build flags and path attributes preserve target boundaries',t=>{
@@ -136,7 +332,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v14');
+ assert.equal(facts.callModel,'rust-source-direct-v15');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -317,7 +513,7 @@ pub fn object(x: &dyn Left) { x.act(); }
 pub fn ambiguous(x: &A) { x.act(); }
 `});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v14');
+ assert.equal(facts.callModel,'rust-source-direct-v15');
  const call=(line,column)=>calls(facts,'src/lib.rs').find(c=>c.line===line&&c.column===column);
  assert.equal(call(8,21).resolution,'rust-trait-impl');assert.equal(call(8,21).target.line,5);
  assert.equal(call(8,43).resolution,'rust-trait-impl');assert.equal(call(8,43).target.line,7);
@@ -628,7 +824,7 @@ impl<R: Gate> W<R> {
 `;
  const root=fixture(t,{'src/lib.rs':source});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v14');
+ assert.equal(facts.callModel,'rust-source-direct-v15');
  const calls=facts.calls.filter(call=>call.file==='src/lib.rs'&&call.line===5);
  const check=calls.find(call=>call.target?.name==='check')??calls.find(call=>call.reason==='rust-trait-or-method-dispatch');
  assert.equal(check.resolution,'rust-trait-method-candidate');
