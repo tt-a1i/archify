@@ -72,6 +72,12 @@ stops instead of mixing live source with frozen facts. External SDK and
 third-party headers remain parser context, not captured project files. The
 adapter rejects response files, plugins, precompiled/module state and other
 unverified file-loading flags. It does not prove that the project builds.
+The default C/C++ input set includes `.h`, `.hh`, `.hpp`, `.hxx`, `.inc`,
+`.ipp`, `.inl`, `.tcc`, `.tpp` and `.def` includes. Files excluded by the analysis
+configuration are not decoded or counted toward the source-byte budget. An
+active include of an excluded project file stops extraction with an explicit
+diagnostic. UTF-8 validation applies to translation units with a compile
+command and to active project includes; unused files do not block extraction.
 
 An include edge means the directive was active in at least one recorded
 translation-unit context. `contexts` names those units; the module graph is

@@ -1,0 +1,565 @@
+{
+  "project": "fmt 12.2.2",
+  "backend": "Microsoft C/C++ VS Code extension",
+  "vscodeVersion": "1.144.0",
+  "extensionVersion": "1.35.6",
+  "method": "executeDefinitionProvider on 20 stratified Archify unresolved call positions; selected compilation database",
+  "samples": [
+    {
+      "reason": "cpp-unbound",
+      "file": "src/fmt-c.cc",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 47,
+        "character": 13
+      },
+      "callee": "format_args",
+      "source": "fmt::format_args(format_args, static_cast<int>(num_args)));",
+      "callRange": [
+        48,
+        9,
+        48,
+        66
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 2603
+        }
+      ],
+      "attempts": 2
+    },
+    {
+      "reason": "cpp-unbound",
+      "file": "test/xchar-test.cc",
+      "context": "test/xchar-test.cc",
+      "position": {
+        "line": 460,
+        "character": 2
+      },
+      "callee": "EXPECT_EQ",
+      "source": "EXPECT_EQ(fmt::format(L\"{:-<8}\", std::complex<double>(1, 2)), L\"(1+2i)--\");",
+      "callRange": [
+        461,
+        3,
+        461,
+        77
+      ],
+      "actual": [
+        {
+          "file": "test/gtest/gtest/gtest.h",
+          "line": 11947
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-unbound",
+      "file": "include/fmt/args.h",
+      "context": "test/args-test.cc",
+      "position": {
+        "line": 51,
+        "character": 20
+      },
+      "callee": "data",
+      "source": ": value(arg.data(), arg.size()) {}",
+      "callRange": [
+        52,
+        17,
+        52,
+        27
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 557
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-unbound",
+      "file": "test/util.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 53,
+        "character": 10
+      },
+      "callee": "value",
+      "source": "os << s.value();",
+      "callRange": [
+        54,
+        9,
+        54,
+        18
+      ],
+      "actual": [
+        {
+          "file": "test/util.h",
+          "line": 43
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-context-dependent",
+      "file": "test/args-test.cc",
+      "context": "test/args-test.cc",
+      "position": {
+        "line": 13,
+        "character": 0
+      },
+      "callee": "TEST",
+      "source": "TEST(args_test, basic) {",
+      "callRange": [
+        14,
+        1,
+        14,
+        23
+      ],
+      "actual": [
+        {
+          "file": "test/gtest/gtest/gtest.h",
+          "line": 12257
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-context-dependent",
+      "file": "test/xchar-test.cc",
+      "context": "test/xchar-test.cc",
+      "position": {
+        "line": 486,
+        "character": 0
+      },
+      "callee": "TEST",
+      "source": "TEST(std_test_xchar, path) {",
+      "callRange": [
+        487,
+        1,
+        487,
+        27
+      ],
+      "actual": [
+        {
+          "file": "test/gtest/gtest/gtest.h",
+          "line": 12257
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-context-dependent",
+      "file": "include/fmt/chrono.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 357,
+        "character": 11
+      },
+      "callee": "convert",
+      "source": "if (!u.convert({unit.buf, to_unsigned(unit.end - unit.buf)}))",
+      "callRange": [
+        358,
+        10,
+        358,
+        65
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 1595
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-context-dependent",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 718,
+        "character": 28
+      },
+      "callee": "end",
+      "source": "return buf.begin() != buf.end();",
+      "callRange": [
+        719,
+        25,
+        719,
+        34
+      ],
+      "actual": [
+        {
+          "file": "test/scan.h",
+          "line": 128
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-template",
+      "file": "src/os.cc",
+      "context": "src/os.cc",
+      "position": {
+        "line": 380,
+        "character": 10
+      },
+      "callee": "size",
+      "source": "if (buf.size() == buf.capacity()) static_cast<ostream&>(buf).flush();",
+      "callRange": [
+        381,
+        7,
+        381,
+        17
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 1804
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-template",
+      "file": "test/xchar-test.cc",
+      "context": "test/xchar-test.cc",
+      "position": {
+        "line": 421,
+        "character": 4
+      },
+      "callee": "parse",
+      "source": "f.parse(parse_ctx);",
+      "callRange": [
+        422,
+        3,
+        422,
+        21
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 2376
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-template",
+      "file": "include/fmt/args.h",
+      "context": "test/args-test.cc",
+      "position": {
+        "line": 133,
+        "character": 38
+      },
+      "callee": "data",
+      "source": "return basic_format_args<Context>(data(), static_cast<int>(size()),",
+      "callRange": [
+        134,
+        39,
+        134,
+        45
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/args.h",
+          "line": 108
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-template",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 687,
+        "character": 53
+      },
+      "callee": "data",
+      "source": "return input.begin() + (buf.begin().base() - input.data());",
+      "callRange": [
+        688,
+        48,
+        688,
+        60
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 557
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-macro-expansion",
+      "file": "src/os.cc",
+      "context": "src/os.cc",
+      "position": {
+        "line": 355,
+        "character": 13
+      },
+      "callee": "file",
+      "source": "read_end = file(fds[0]);",
+      "callRange": [
+        356,
+        3,
+        356,
+        26
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/os.h",
+          "line": 229
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-macro-expansion",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 419,
+        "character": 6
+      },
+      "callee": "open_buffered_file",
+      "source": "f = open_buffered_file(fd);",
+      "callRange": [
+        420,
+        3,
+        420,
+        29
+      ],
+      "actual": [
+        {
+          "file": "test/os-test.cc",
+          "line": 397
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-macro-expansion",
+      "file": "include/fmt/color.h",
+      "context": "test/color-test.cc",
+      "position": {
+        "line": 371,
+        "character": 34
+      },
+      "callee": "string_view",
+      "source": "bool is_background = esc == string_view(\"\\x1b[48;2;\");",
+      "callRange": [
+        372,
+        28,
+        372,
+        60
+      ],
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 538
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-macro-expansion",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 718,
+        "character": 13
+      },
+      "callee": "begin",
+      "source": "return buf.begin() != buf.end();",
+      "callRange": [
+        719,
+        10,
+        719,
+        34
+      ],
+      "actual": [
+        {
+          "file": "test/scan.h",
+          "line": 127
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-virtual-dispatch",
+      "file": "test/gtest-extra.cc",
+      "context": "test/gtest-extra.cc",
+      "position": {
+        "line": 29,
+        "character": 17
+      },
+      "callee": "what",
+      "source": "std::fputs(e.what(), stderr);",
+      "callRange": [
+        30,
+        16,
+        30,
+        24
+      ],
+      "actual": [
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/filesystem_error.h",
+          "line": 64
+        },
+        {
+          "file": "test/gtest/gmock/gmock.h",
+          "line": 7960
+        },
+        {
+          "file": "test/gtest/gtest/gtest.h",
+          "line": 4753
+        },
+        {
+          "file": "test/std-test.cc",
+          "line": 384
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-virtual-dispatch",
+      "file": "test/unicode-test.cc",
+      "context": "test/unicode-test.cc",
+      "position": {
+        "line": 28,
+        "character": 39
+      },
+      "callee": "what",
+      "source": "fmt::print(\"Format error: {}\\n\", e.what());",
+      "callRange": [
+        29,
+        38,
+        29,
+        46
+      ],
+      "actual": [
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/filesystem_error.h",
+          "line": 64
+        },
+        {
+          "file": "test/gtest/gmock/gmock.h",
+          "line": 7960
+        },
+        {
+          "file": "test/gtest/gtest/gtest.h",
+          "line": 4753
+        },
+        {
+          "file": "test/std-test.cc",
+          "line": 384
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-virtual-dispatch",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 4234,
+        "character": 11
+      },
+      "callee": "do_put",
+      "source": "return do_put(out, val, specs);",
+      "callRange": [
+        4235,
+        12,
+        4235,
+        35
+      ],
+      "actual": [
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 1463
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 1519
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 1527
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 1535
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 1543
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 1608
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 1616
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 1624
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 2545
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 3365
+        },
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+          "line": 3429
+        },
+        {
+          "file": "include/fmt/format-inl.h",
+          "line": 176
+        },
+        {
+          "file": "test/format-test.cc",
+          "line": 2672
+        }
+      ],
+      "attempts": 1
+    },
+    {
+      "reason": "cpp-virtual-dispatch",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 371,
+        "character": 35
+      },
+      "callee": "consume",
+      "source": "void advance_to(iterator) { buf_.consume(); }",
+      "callRange": [
+        372,
+        31,
+        372,
+        45
+      ],
+      "actual": [
+        {
+          "file": "test/scan.h",
+          "line": 147
+        },
+        {
+          "file": "test/scan.h",
+          "line": 182
+        }
+      ],
+      "attempts": 1
+    }
+  ]
+}

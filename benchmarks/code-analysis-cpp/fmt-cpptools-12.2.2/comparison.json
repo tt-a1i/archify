@@ -1,0 +1,1860 @@
+{
+  "project": "fmt",
+  "sourceCommit": "57f1b5930dc2906875534a15c209e1c39eda59ad",
+  "reportedVersion": "12.2.2",
+  "environment": {
+    "vscode": "1.144.0",
+    "cpptools": "1.35.6",
+    "archifyAdapter": "libclang@Apple clang version 14.0.3 (clang-1403.0.22.14.1)",
+    "archifyAdapterRevision": 3,
+    "selectedDatabaseSha256": "cca404601ed5699431b89930b3fa04a23e68b027210714833f38f0ccc6a635c3",
+    "rawFactsSha256": "297abff4cc325ee4dd5189104fc6d4a7e246bafefba7a8e7bbfd6bf219b3694c",
+    "positiveCpptoolsSha256": "7e09d70303ec8ac5b21a09548f66a1b741c64619d5d62edbfdb998c13a65c151",
+    "unresolvedCpptoolsSha256": "d70c822c594df9977c63d0931d36ae728cc44cd5c1d6fb8bc51257d86f159bab"
+  },
+  "comparison": "VS Code executeDefinitionProvider versus Archify captured direct source targets; navigation candidates are not runtime call edges",
+  "summary": {
+    "selectedTranslationUnits": 32,
+    "parsedTranslationUnits": 32,
+    "selectedFiles": 57,
+    "activeIncludes": 270,
+    "resolvedProjectIncludes": 116,
+    "functions": 4256,
+    "calls": 16395,
+    "boundCalls": 2044,
+    "positive": {
+      "total": 48,
+      "uniqueExact": 46,
+      "expectedAmongCandidates": 2,
+      "missed": 0
+    },
+    "unresolved": {
+      "total": 20,
+      "oneNavigationTarget": 16,
+      "multipleNavigationTargets": 4,
+      "noNavigationTarget": 0
+    }
+  },
+  "samples": [
+    {
+      "category": "call",
+      "file": "src/fmt-c.cc",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 41,
+        "character": 14
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "src/fmt-c.cc",
+          "line": 15
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "src/fmt-c.cc",
+            "line": 15
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/chrono-test.cc",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 130,
+        "character": 6
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/chrono-test.cc",
+          "line": 75
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/chrono-test.cc",
+            "line": 75
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/core-test.cc",
+      "context": "test/core-test.cc",
+      "position": {
+        "line": 635,
+        "character": 22
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 2676
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 2676
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/format-impl-test.cc",
+      "context": "test/format-impl-test.cc",
+      "position": {
+        "line": 432,
+        "character": 18
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/format-impl-test.cc",
+          "line": 404
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/format-impl-test.cc",
+            "line": 404
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/format-impl-test.cc",
+      "context": "test/format-impl-test.cc",
+      "position": {
+        "line": 507,
+        "character": 21
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/format.h",
+          "line": 584
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 584
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/format-test.cc",
+      "context": "test/format-test.cc",
+      "position": {
+        "line": 1166,
+        "character": 2
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/format-test.cc",
+          "line": 186
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/format-test.cc",
+            "line": 186
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/format-test.cc",
+      "context": "test/format-test.cc",
+      "position": {
+        "line": 2172,
+        "character": 25
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 2676
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 2676
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/gtest-extra-test.cc",
+      "context": "test/gtest-extra-test.cc",
+      "position": {
+        "line": 225,
+        "character": 27
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/gtest/gtest/gtest.h",
+          "line": 4222
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/gtest/gtest/gtest.h",
+            "line": 4222
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/gtest-extra-test.cc",
+      "context": "test/gtest-extra-test.cc",
+      "position": {
+        "line": 361,
+        "character": 20
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/os.h",
+          "line": 204
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/os.h",
+            "line": 204
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/gtest-extra.cc",
+      "context": "test/gtest-extra.cc",
+      "position": {
+        "line": 51,
+        "character": 2
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/gtest-extra.cc",
+          "line": 42
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/gtest-extra.cc",
+            "line": 42
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 380,
+        "character": 13
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/os.h",
+          "line": 268
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/os.h",
+            "line": 268
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 507,
+        "character": 14
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/os.h",
+          "line": 268
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/os.h",
+            "line": 268
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 615,
+        "character": 25
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/os.h",
+          "line": 204
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/os.h",
+            "line": 204
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/posix-mock-test.cc",
+      "context": "test/posix-mock-test.cc",
+      "position": {
+        "line": 254,
+        "character": 2
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/posix-mock-test.cc",
+          "line": 197
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/posix-mock-test.cc",
+            "line": 197
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/posix-mock-test.cc",
+      "context": "test/posix-mock-test.cc",
+      "position": {
+        "line": 409,
+        "character": 38
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "src/os.cc",
+          "line": 314
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "src/os.cc",
+            "line": 314
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/util.cc",
+      "context": "test/util.cc",
+      "position": {
+        "line": 38,
+        "character": 55
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/util.cc",
+          "line": 29
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/util.cc",
+            "line": 29
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/chrono.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 338,
+        "character": 33
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/chrono.h",
+          "line": 310
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/chrono.h",
+            "line": 310
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/chrono.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 1964,
+        "character": 39
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/chrono.h",
+          "line": 1898
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/chrono.h",
+            "line": 1898
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/core.h",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 1036,
+        "character": 28
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 1029
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 1029
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/core.h",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 1669,
+        "character": 12
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 741
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 741
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/format-inl.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 1131,
+        "character": 18
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/format.h",
+          "line": 285
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 285
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 1330,
+        "character": 7
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 378
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_constant_evaluated.h",
+            "line": 22
+          },
+          {
+            "file": "include/fmt/core.h",
+            "line": 378
+          },
+          {
+            "file": "../../../../../../../../usr/local/include/absl/meta/type_traits.h",
+            "line": 558
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "expected-among-candidates"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 1907,
+        "character": 65
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 741
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 741
+          },
+          {
+            "file": "include/fmt/format.h",
+            "line": 3102
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "expected-among-candidates"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 2327,
+        "character": 14
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 777
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 777
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 2792,
+        "character": 43
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 781
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 781
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 3095,
+        "character": 4
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/format.h",
+          "line": 2911
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 2911
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 3461,
+        "character": 28
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/format.h",
+          "line": 286
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 286
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 4083,
+        "character": 28
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 748
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 748
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/printf.h",
+      "context": "test/printf-test.cc",
+      "position": {
+        "line": 385,
+        "character": 19
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 1030
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 1030
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "include/fmt/std.h",
+      "context": "test/compile-test.cc",
+      "position": {
+        "line": 550,
+        "character": 38
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "include/fmt/core.h",
+          "line": 748
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 748
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 436,
+        "character": 12
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/scan.h",
+          "line": 21
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/scan.h",
+            "line": 21
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "call",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 717,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "cpp-direct-source",
+        "target": {
+          "file": "test/scan.h",
+          "line": 612
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/scan.h",
+            "line": 612
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "src/fmt-c.cc",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 7,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/fmt-c.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/fmt-c.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/color-test.cc",
+      "context": "test/color-test.cc",
+      "position": {
+        "line": 11,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "test/gtest-extra.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/gtest-extra.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/enforce-checks-test.cc",
+      "context": "test/enforce-checks-test.cc",
+      "position": {
+        "line": 12,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/color.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/color.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/format-test.cc",
+      "context": "test/format-test.cc",
+      "position": {
+        "line": 39,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "test/util.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/util.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 14,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "test/util.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/util.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/printf-test.cc",
+      "context": "test/printf-test.cc",
+      "position": {
+        "line": 7,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/printf.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/printf.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/scan-test.cc",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 14,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "test/gtest-extra.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/gtest-extra.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/xchar-test.cc",
+      "context": "test/xchar-test.cc",
+      "position": {
+        "line": 18,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "test/util.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/util.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "include/fmt/args.h",
+      "context": "test/args-test.cc",
+      "position": {
+        "line": 16,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/format.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "include/fmt/color.h",
+      "context": "test/color-test.cc",
+      "position": {
+        "line": 10,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/format.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "include/fmt/format-inl.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 26,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/format.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "include/fmt/os.h",
+      "context": "src/os.cc",
+      "position": {
+        "line": 10,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/format.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "include/fmt/ranges.h",
+      "context": "test/ranges-test.cc",
+      "position": {
+        "line": 18,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/format.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "include/fmt/xchar.h",
+      "context": "test/printf-test.cc",
+      "position": {
+        "line": 10,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/color.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/color.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/gtest-extra.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 15,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "test/gtest/gmock/gmock.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/gtest/gmock/gmock.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "include",
+      "file": "test/util.h",
+      "context": "test/unicode-test.cc",
+      "position": {
+        "line": 12,
+        "character": 10
+      },
+      "archify": {
+        "resolution": "active-include",
+        "target": {
+          "file": "include/fmt/os.h"
+        }
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/os.h",
+            "line": 1
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "unique-exact"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "src/fmt-c.cc",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 47,
+        "character": 13
+      },
+      "callee": "format_args",
+      "source": "fmt::format_args(format_args, static_cast<int>(num_args)));",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-unbound"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 2603
+          }
+        ],
+        "attempts": 2
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/xchar-test.cc",
+      "context": "test/xchar-test.cc",
+      "position": {
+        "line": 460,
+        "character": 2
+      },
+      "callee": "EXPECT_EQ",
+      "source": "EXPECT_EQ(fmt::format(L\"{:-<8}\", std::complex<double>(1, 2)), L\"(1+2i)--\");",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-unbound"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/gtest/gtest/gtest.h",
+            "line": 11947
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "include/fmt/args.h",
+      "context": "test/args-test.cc",
+      "position": {
+        "line": 51,
+        "character": 20
+      },
+      "callee": "data",
+      "source": ": value(arg.data(), arg.size()) {}",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-unbound"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 557
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/util.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 53,
+        "character": 10
+      },
+      "callee": "value",
+      "source": "os << s.value();",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-unbound"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/util.h",
+            "line": 43
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/args-test.cc",
+      "context": "test/args-test.cc",
+      "position": {
+        "line": 13,
+        "character": 0
+      },
+      "callee": "TEST",
+      "source": "TEST(args_test, basic) {",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-context-dependent"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/gtest/gtest/gtest.h",
+            "line": 12257
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/xchar-test.cc",
+      "context": "test/xchar-test.cc",
+      "position": {
+        "line": 486,
+        "character": 0
+      },
+      "callee": "TEST",
+      "source": "TEST(std_test_xchar, path) {",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-context-dependent"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/gtest/gtest/gtest.h",
+            "line": 12257
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "include/fmt/chrono.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 357,
+        "character": 11
+      },
+      "callee": "convert",
+      "source": "if (!u.convert({unit.buf, to_unsigned(unit.end - unit.buf)}))",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-context-dependent"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/format.h",
+            "line": 1595
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 718,
+        "character": 28
+      },
+      "callee": "end",
+      "source": "return buf.begin() != buf.end();",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-context-dependent"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/scan.h",
+            "line": 128
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "src/os.cc",
+      "context": "src/os.cc",
+      "position": {
+        "line": 380,
+        "character": 10
+      },
+      "callee": "size",
+      "source": "if (buf.size() == buf.capacity()) static_cast<ostream&>(buf).flush();",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-template"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 1804
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/xchar-test.cc",
+      "context": "test/xchar-test.cc",
+      "position": {
+        "line": 421,
+        "character": 4
+      },
+      "callee": "parse",
+      "source": "f.parse(parse_ctx);",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-template"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 2376
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "include/fmt/args.h",
+      "context": "test/args-test.cc",
+      "position": {
+        "line": 133,
+        "character": 38
+      },
+      "callee": "data",
+      "source": "return basic_format_args<Context>(data(), static_cast<int>(size()),",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-template"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/args.h",
+            "line": 108
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 687,
+        "character": 53
+      },
+      "callee": "data",
+      "source": "return input.begin() + (buf.begin().base() - input.data());",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-template"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 557
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "src/os.cc",
+      "context": "src/os.cc",
+      "position": {
+        "line": 355,
+        "character": 13
+      },
+      "callee": "file",
+      "source": "read_end = file(fds[0]);",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-macro-expansion"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/os.h",
+            "line": 229
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 419,
+        "character": 6
+      },
+      "callee": "open_buffered_file",
+      "source": "f = open_buffered_file(fd);",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-macro-expansion"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/os-test.cc",
+            "line": 397
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "include/fmt/color.h",
+      "context": "test/color-test.cc",
+      "position": {
+        "line": 371,
+        "character": 34
+      },
+      "callee": "string_view",
+      "source": "bool is_background = esc == string_view(\"\\x1b[48;2;\");",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-macro-expansion"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "include/fmt/core.h",
+            "line": 538
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 718,
+        "character": 13
+      },
+      "callee": "begin",
+      "source": "return buf.begin() != buf.end();",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-macro-expansion"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/scan.h",
+            "line": 127
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "one-navigation-target"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/gtest-extra.cc",
+      "context": "test/gtest-extra.cc",
+      "position": {
+        "line": 29,
+        "character": 17
+      },
+      "callee": "what",
+      "source": "std::fputs(e.what(), stderr);",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-virtual-dispatch"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/filesystem_error.h",
+            "line": 64
+          },
+          {
+            "file": "test/gtest/gmock/gmock.h",
+            "line": 7960
+          },
+          {
+            "file": "test/gtest/gtest/gtest.h",
+            "line": 4753
+          },
+          {
+            "file": "test/std-test.cc",
+            "line": 384
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "multiple-navigation-targets"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/unicode-test.cc",
+      "context": "test/unicode-test.cc",
+      "position": {
+        "line": 28,
+        "character": 39
+      },
+      "callee": "what",
+      "source": "fmt::print(\"Format error: {}\\n\", e.what());",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-virtual-dispatch"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/filesystem_error.h",
+            "line": 64
+          },
+          {
+            "file": "test/gtest/gmock/gmock.h",
+            "line": 7960
+          },
+          {
+            "file": "test/gtest/gtest/gtest.h",
+            "line": 4753
+          },
+          {
+            "file": "test/std-test.cc",
+            "line": 384
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "multiple-navigation-targets"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 4234,
+        "character": 11
+      },
+      "callee": "do_put",
+      "source": "return do_put(out, val, specs);",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-virtual-dispatch"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 1463
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 1519
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 1527
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 1535
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 1543
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 1608
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 1616
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 1624
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 2545
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 3365
+          },
+          {
+            "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/locale",
+            "line": 3429
+          },
+          {
+            "file": "include/fmt/format-inl.h",
+            "line": 176
+          },
+          {
+            "file": "test/format-test.cc",
+            "line": 2672
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "multiple-navigation-targets"
+    },
+    {
+      "category": "unresolved-call",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 371,
+        "character": 35
+      },
+      "callee": "consume",
+      "source": "void advance_to(iterator) { buf_.consume(); }",
+      "archify": {
+        "resolution": "unresolved",
+        "reason": "cpp-virtual-dispatch"
+      },
+      "cpptools": {
+        "locations": [
+          {
+            "file": "test/scan.h",
+            "line": 147
+          },
+          {
+            "file": "test/scan.h",
+            "line": 182
+          }
+        ],
+        "attempts": 1
+      },
+      "verdict": "multiple-navigation-targets"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
     "**/*.java",
     "**/*.go",
     "**/*.rs",
-    "**/*.{c,cc,cpp,cxx,C,h,hh,hpp,hxx,inc}"
+    "**/*.{c,cc,cpp,cxx,C,h,hh,hpp,hxx,inc,ipp,inl,tcc,tpp,def}"
   ],
   "exclude": [
     "**/node_modules/**",

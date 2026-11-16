@@ -10,11 +10,11 @@ import { classifyRole, lineCount, listFiles, snapshotTree, toPosix } from '../sh
 import { matcher } from '../shared/glob.mjs';
 
 export const id = 'cpp';
-export const REVISION = 2;
+export const REVISION = 3;
 export const CALL_MODEL = 'cpp-source-direct-v1';
 const C = /\.c$/;
 const CPP = /\.(?:cc|cpp|cxx|C)$/;
-const INPUT = /\.(?:c|cc|cpp|cxx|C|h|hh|hpp|hxx|inc)$/;
+const INPUT = /\.(?:c|cc|cpp|cxx|C|h|hh|hpp|hxx|inc|ipp|inl|tcc|tpp|def)$/;
 const script = fileURLToPath(new URL('./extract.py', import.meta.url));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const inside = (root, file) => {
@@ -63,19 +63,27 @@ export function extractFor(language, root, config, { onCapture } = {}) {
     subject: { file: databasePath }, supportedFixes: ['point config.cpp.compileCommands at compile_commands.json'],
   });
   const databaseRel = inside(root, databasePath) ? toPosix(path.relative(root, databasePath)) : null;
-  const tree = snapshotTree(root, file => INPUT.test(file) || file === databaseRel);
+  const include = matcher(config.include), exclude = matcher(config.exclude || []);
+  const excluded = file => {
+    if (exclude(file)) return true;
+    for (let slash = file.indexOf('/'); slash !== -1; slash = file.indexOf('/', slash + 1)) {
+      if (exclude(`${file.slice(0, slash)}/`)) return true;
+    }
+    return false;
+  };
+  const sourceFile = file => INPUT.test(file) && include(file) && !excluded(file);
+  const tree = snapshotTree(root, file => sourceFile(file) || file === databaseRel);
   const databaseBytes = databaseRel ? tree.contents.get(databaseRel) : readDatabase(databasePath);
   if (!databaseBytes) fail('extract/cpp-database-unreadable', 'The configured compilation database is missing from the captured root.', { subject: { file: databaseRel } });
   let database;
   try { database = JSON.parse(databaseBytes.toString('utf8')); } catch { fail('extract/cpp-database-invalid', 'The captured compilation database is not JSON.', { subject: { file: databasePath } }); }
   if (!Array.isArray(database)) fail('extract/cpp-database-invalid', 'The captured compilation database must be an array.', { subject: { file: databasePath } });
-  const include = matcher(config.include), exclude = matcher(config.exclude || []);
-  const candidates = [...tree.contents.keys()].filter(file => (language === 'c' ? C.test(file) : C.test(file) || CPP.test(file)) && include(file) && !exclude(file));
-  const allowed = [...tree.contents.keys()].filter(file => INPUT.test(file) && include(file) && !exclude(file));
+  const sourceBytes = [...tree.contents].filter(([file]) => sourceFile(file));
+  const candidates = sourceBytes.map(([file]) => file).filter(file => language === 'c' ? C.test(file) : C.test(file) || CPP.test(file));
+  const blocked = tree.names.filter(file => INPUT.test(file) && !sourceFile(file));
   if (!candidates.length) fail('extract/cpp-no-sources', 'No selected C/C++ translation units are inside the analyzed root.', {
     subject: { root }, supportedFixes: ['include .c/.cc/.cpp/.cxx/.C sources in the analysis config'],
   });
-  const sourceBytes = [...tree.contents].filter(([file]) => INPUT.test(file));
   const totalBytes = sourceBytes.reduce((sum, [, bytes]) => sum + bytes.length, 0);
   if (sourceBytes.length > 20000 || totalBytes > 256 * 1024 * 1024) fail('extract/cpp-input-too-large', 'The frozen C/C++ input exceeds this adapter’s 20,000-file or 256 MiB limit.', {
     evidence: { files: sourceBytes.length, bytes: totalBytes }, supportedFixes: ['analyze a smaller root or exclude large generated trees'],
@@ -87,7 +95,7 @@ export function extractFor(language, root, config, { onCapture } = {}) {
   }
   const python = process.env.ARCHIFY_CPP_PYTHON || 'python3';
   const result = spawnSync(python, [script], {
-    input: JSON.stringify({ root, language, database: databaseBytes.toString('utf8'), candidates, allowed,
+    input: JSON.stringify({ root, language, database: databaseBytes.toString('utf8'), candidates, blocked,
       sources: Object.fromEntries(sourceBytes.map(([file, bytes]) => [file, bytes.toString('base64')])), sysroot }),
     cwd: os.tmpdir(), encoding: 'utf8', timeout: timeoutMs, maxBuffer: 256 * 1024 * 1024,
     env: { ...process.env, PYTHONPATH: '', PYTHONDONTWRITEBYTECODE: '1' },

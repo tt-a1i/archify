@@ -1,0 +1,938 @@
+{
+  "project": "fmt 12.2.2",
+  "backend": "Microsoft C/C++ VS Code extension",
+  "extensionVersion": "1.35.6",
+  "vscodeVersion": "1.144.0",
+  "method": "VS Code executeDefinitionProvider on the same 48 prior clangd positions; configured with selected compile_commands.json",
+  "counts": {
+    "match": 48,
+    "different": 0,
+    "error": 0
+  },
+  "samples": [
+    {
+      "kind": "call",
+      "file": "src/fmt-c.cc",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 41,
+        "character": 14
+      },
+      "expected": "src/fmt-c.cc",
+      "expectedLine": 15,
+      "actual": [
+        {
+          "file": "src/fmt-c.cc",
+          "line": 15
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/chrono-test.cc",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 130,
+        "character": 6
+      },
+      "expected": "test/chrono-test.cc",
+      "expectedLine": 75,
+      "actual": [
+        {
+          "file": "test/chrono-test.cc",
+          "line": 75
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/core-test.cc",
+      "context": "test/core-test.cc",
+      "position": {
+        "line": 635,
+        "character": 22
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 2676,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 2676
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/format-impl-test.cc",
+      "context": "test/format-impl-test.cc",
+      "position": {
+        "line": 432,
+        "character": 18
+      },
+      "expected": "test/format-impl-test.cc",
+      "expectedLine": 404,
+      "actual": [
+        {
+          "file": "test/format-impl-test.cc",
+          "line": 404
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/format-impl-test.cc",
+      "context": "test/format-impl-test.cc",
+      "position": {
+        "line": 507,
+        "character": 21
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": 584,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 584
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/format-test.cc",
+      "context": "test/format-test.cc",
+      "position": {
+        "line": 1166,
+        "character": 2
+      },
+      "expected": "test/format-test.cc",
+      "expectedLine": 186,
+      "actual": [
+        {
+          "file": "test/format-test.cc",
+          "line": 186
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/format-test.cc",
+      "context": "test/format-test.cc",
+      "position": {
+        "line": 2172,
+        "character": 25
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 2676,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 2676
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/gtest-extra-test.cc",
+      "context": "test/gtest-extra-test.cc",
+      "position": {
+        "line": 225,
+        "character": 27
+      },
+      "expected": "test/gtest/gtest/gtest.h",
+      "expectedLine": 4222,
+      "actual": [
+        {
+          "file": "test/gtest/gtest/gtest.h",
+          "line": 4222
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/gtest-extra-test.cc",
+      "context": "test/gtest-extra-test.cc",
+      "position": {
+        "line": 361,
+        "character": 20
+      },
+      "expected": "include/fmt/os.h",
+      "expectedLine": 204,
+      "actual": [
+        {
+          "file": "include/fmt/os.h",
+          "line": 204
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/gtest-extra.cc",
+      "context": "test/gtest-extra.cc",
+      "position": {
+        "line": 51,
+        "character": 2
+      },
+      "expected": "test/gtest-extra.cc",
+      "expectedLine": 42,
+      "actual": [
+        {
+          "file": "test/gtest-extra.cc",
+          "line": 42
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 380,
+        "character": 13
+      },
+      "expected": "include/fmt/os.h",
+      "expectedLine": 268,
+      "actual": [
+        {
+          "file": "include/fmt/os.h",
+          "line": 268
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 507,
+        "character": 14
+      },
+      "expected": "include/fmt/os.h",
+      "expectedLine": 268,
+      "actual": [
+        {
+          "file": "include/fmt/os.h",
+          "line": 268
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 615,
+        "character": 25
+      },
+      "expected": "include/fmt/os.h",
+      "expectedLine": 204,
+      "actual": [
+        {
+          "file": "include/fmt/os.h",
+          "line": 204
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/posix-mock-test.cc",
+      "context": "test/posix-mock-test.cc",
+      "position": {
+        "line": 254,
+        "character": 2
+      },
+      "expected": "test/posix-mock-test.cc",
+      "expectedLine": 197,
+      "actual": [
+        {
+          "file": "test/posix-mock-test.cc",
+          "line": 197
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/posix-mock-test.cc",
+      "context": "test/posix-mock-test.cc",
+      "position": {
+        "line": 409,
+        "character": 38
+      },
+      "expected": "src/os.cc",
+      "expectedLine": 314,
+      "actual": [
+        {
+          "file": "src/os.cc",
+          "line": 314
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/util.cc",
+      "context": "test/util.cc",
+      "position": {
+        "line": 38,
+        "character": 55
+      },
+      "expected": "test/util.cc",
+      "expectedLine": 29,
+      "actual": [
+        {
+          "file": "test/util.cc",
+          "line": 29
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/chrono.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 338,
+        "character": 33
+      },
+      "expected": "include/fmt/chrono.h",
+      "expectedLine": 310,
+      "actual": [
+        {
+          "file": "include/fmt/chrono.h",
+          "line": 310
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/chrono.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 1964,
+        "character": 39
+      },
+      "expected": "include/fmt/chrono.h",
+      "expectedLine": 1898,
+      "actual": [
+        {
+          "file": "include/fmt/chrono.h",
+          "line": 1898
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/core.h",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 1036,
+        "character": 28
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 1029,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 1029
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/core.h",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 1669,
+        "character": 12
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 741,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 741
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/format-inl.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 1131,
+        "character": 18
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": 285,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 285
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 1330,
+        "character": 7
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 378,
+      "actual": [
+        {
+          "file": "../../../../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_constant_evaluated.h",
+          "line": 22
+        },
+        {
+          "file": "include/fmt/core.h",
+          "line": 378
+        },
+        {
+          "file": "../../../../../../../../usr/local/include/absl/meta/type_traits.h",
+          "line": 558
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 1907,
+        "character": 65
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 741,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 741
+        },
+        {
+          "file": "include/fmt/format.h",
+          "line": 3102
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 2327,
+        "character": 14
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 777,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 777
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 2792,
+        "character": 43
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 781,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 781
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 3095,
+        "character": 4
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": 2911,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 2911
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 3461,
+        "character": 28
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": 286,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 286
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/format.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 4083,
+        "character": 28
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 748,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 748
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/printf.h",
+      "context": "test/printf-test.cc",
+      "position": {
+        "line": 385,
+        "character": 19
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 1030,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 1030
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "include/fmt/std.h",
+      "context": "test/compile-test.cc",
+      "position": {
+        "line": 550,
+        "character": 38
+      },
+      "expected": "include/fmt/core.h",
+      "expectedLine": 748,
+      "actual": [
+        {
+          "file": "include/fmt/core.h",
+          "line": 748
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 436,
+        "character": 12
+      },
+      "expected": "test/scan.h",
+      "expectedLine": 21,
+      "actual": [
+        {
+          "file": "test/scan.h",
+          "line": 21
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "call",
+      "file": "test/scan.h",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 717,
+        "character": 10
+      },
+      "expected": "test/scan.h",
+      "expectedLine": 612,
+      "actual": [
+        {
+          "file": "test/scan.h",
+          "line": 612
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "src/fmt-c.cc",
+      "context": "src/fmt-c.cc",
+      "position": {
+        "line": 7,
+        "character": 10
+      },
+      "expected": "include/fmt/fmt-c.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/fmt-c.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/color-test.cc",
+      "context": "test/color-test.cc",
+      "position": {
+        "line": 11,
+        "character": 10
+      },
+      "expected": "test/gtest-extra.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "test/gtest-extra.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/enforce-checks-test.cc",
+      "context": "test/enforce-checks-test.cc",
+      "position": {
+        "line": 12,
+        "character": 10
+      },
+      "expected": "include/fmt/color.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/color.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/format-test.cc",
+      "context": "test/format-test.cc",
+      "position": {
+        "line": 39,
+        "character": 10
+      },
+      "expected": "test/util.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "test/util.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/os-test.cc",
+      "context": "test/os-test.cc",
+      "position": {
+        "line": 14,
+        "character": 10
+      },
+      "expected": "test/util.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "test/util.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/printf-test.cc",
+      "context": "test/printf-test.cc",
+      "position": {
+        "line": 7,
+        "character": 10
+      },
+      "expected": "include/fmt/printf.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/printf.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/scan-test.cc",
+      "context": "test/scan-test.cc",
+      "position": {
+        "line": 14,
+        "character": 10
+      },
+      "expected": "test/gtest-extra.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "test/gtest-extra.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/xchar-test.cc",
+      "context": "test/xchar-test.cc",
+      "position": {
+        "line": 18,
+        "character": 10
+      },
+      "expected": "test/util.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "test/util.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "include/fmt/args.h",
+      "context": "test/args-test.cc",
+      "position": {
+        "line": 16,
+        "character": 10
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "include/fmt/color.h",
+      "context": "test/color-test.cc",
+      "position": {
+        "line": 10,
+        "character": 10
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "include/fmt/format-inl.h",
+      "context": "src/format.cc",
+      "position": {
+        "line": 26,
+        "character": 10
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "include/fmt/os.h",
+      "context": "src/os.cc",
+      "position": {
+        "line": 10,
+        "character": 10
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "include/fmt/ranges.h",
+      "context": "test/ranges-test.cc",
+      "position": {
+        "line": 18,
+        "character": 10
+      },
+      "expected": "include/fmt/format.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/format.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "include/fmt/xchar.h",
+      "context": "test/printf-test.cc",
+      "position": {
+        "line": 10,
+        "character": 10
+      },
+      "expected": "include/fmt/color.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/color.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/gtest-extra.h",
+      "context": "test/chrono-test.cc",
+      "position": {
+        "line": 15,
+        "character": 10
+      },
+      "expected": "test/gtest/gmock/gmock.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "test/gtest/gmock/gmock.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    },
+    {
+      "kind": "include",
+      "file": "test/util.h",
+      "context": "test/unicode-test.cc",
+      "position": {
+        "line": 12,
+        "character": 10
+      },
+      "expected": "include/fmt/os.h",
+      "expectedLine": null,
+      "actual": [
+        {
+          "file": "include/fmt/os.h",
+          "line": 1
+        }
+      ],
+      "status": "match",
+      "attempts": 1
+    }
+  ]
+}

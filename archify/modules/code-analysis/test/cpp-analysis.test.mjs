@@ -120,6 +120,74 @@ test('C/C++ reports missing configuration and ambiguous or unsafe commands', t =
   writeDatabase();
   const excluded = mergeConfig(loadConfig(), { cpp: { compileCommands: 'compile_commands.json' }, exclude: ['**/choice.h'] });
   assert.throws(() => extractFacts(root, { language: 'cpp', config: excluded }), error => error.diagnostics?.[0]?.code === 'extract/cpp-header-excluded');
+  const choicePath = path.join(root, 'choice.h');
+  const originalChoice = fs.readFileSync(choicePath);
+  fs.writeFileSync(choicePath, '#error invalid header\n');
+  assert.throws(() => extractFacts(root, { language: 'cpp', config: excluded }), error => error.diagnostics?.[0]?.code === 'extract/cpp-header-excluded');
+  fs.writeFileSync(choicePath, originalChoice);
+  fs.writeFileSync(path.join(root, 'part.custom'), 'inline int extra_answer() { return 7; }\n');
+  fs.writeFileSync(path.join(root, 'a.cpp'),
+    `#include "part.custom"\n${fs.readFileSync(path.join(root, 'a.cpp'), 'utf8')}`);
+  assert.throws(() => capture(root), error => error.diagnostics?.[0]?.code === 'extract/cpp-source-not-captured');
+  fs.writeFileSync(path.join(root, 'part.custom'), '#error invalid header\n');
+  assert.throws(() => capture(root), error => error.diagnostics?.[0]?.code === 'extract/cpp-source-not-captured');
+});
+
+test('C/C++ ignores invalid bytes in an unused default-excluded build header', t => {
+  if (!available(t)) return;
+  const { root } = fixture(t);
+  fs.mkdirSync(path.join(root, 'build'));
+  fs.writeFileSync(path.join(root, 'build/ignored.h'), Buffer.from([0xff]));
+  const { facts } = capture(root);
+  assert.ok(facts.languageScope.build.units.some(unit => unit.file === 'a.cpp' && unit.status === 'parsed'));
+  assert.ok(!facts.files.some(file => file.path === 'build/ignored.h'));
+});
+
+test('C/C++ honors a directory-only exclude for an active project header', t => {
+  if (!available(t)) return;
+  const { root } = fixture(t);
+  fs.mkdirSync(path.join(root, 'build'));
+  fs.writeFileSync(path.join(root, 'build/part.h'), 'inline int hidden_answer() { return 7; }\n');
+  fs.writeFileSync(path.join(root, 'a.cpp'),
+    `#include "build/part.h"\n${fs.readFileSync(path.join(root, 'a.cpp'), 'utf8')}`);
+  const config = mergeConfig(loadConfig(), { cpp: { compileCommands: 'compile_commands.json' }, exclude: ['build/'] });
+  assert.throws(() => extractFacts(root, { language: 'cpp', config }), error => error.diagnostics?.[0]?.code === 'extract/cpp-header-excluded');
+});
+
+test('C/C++ ignores invalid bytes in an unused header but rejects an active one', t => {
+  if (!available(t)) return;
+  const { root } = fixture(t);
+  fs.writeFileSync(path.join(root, 'unused.h'), Buffer.from([0xff]));
+  assert.ok(capture(root).facts.languageScope.build.units.some(unit => unit.status === 'parsed'));
+  fs.writeFileSync(path.join(root, 'choice.h'), Buffer.from([0xff]));
+  assert.throws(() => capture(root), error => error.diagnostics?.[0]?.code === 'extract/cpp-encoding-invalid');
+});
+
+test('C/C++ ignores invalid bytes in a source without a compile command', t => {
+  if (!available(t)) return;
+  const { root } = fixture(t);
+  fs.writeFileSync(path.join(root, 'extra.cpp'), Buffer.from([0xff]));
+  const { facts } = capture(root);
+  assert.deepEqual(facts.languageScope.excludedFiles, [{ file: 'extra.cpp', reason: 'no-compile-command' }]);
+  assert.ok(!facts.files.some(file => file.path === 'extra.cpp'));
+  fs.writeFileSync(path.join(root, 'a.cpp'), Buffer.from([0xff]));
+  assert.throws(() => capture(root), error => error.diagnostics?.[0]?.code === 'extract/cpp-encoding-invalid');
+});
+
+test('C/C++ captures active .ipp and .def headers and binds their definitions', t => {
+  if (!available(t)) return;
+  const { root } = fixture(t);
+  fs.writeFileSync(path.join(root, 'part.ipp'), 'inline int part_answer() { return 7; }\n');
+  fs.writeFileSync(path.join(root, 'part.def'), 'inline int def_answer() { return 8; }\n');
+  fs.writeFileSync(path.join(root, 'a.cpp'),
+    `#include "part.ipp"\n#include "part.def"\n${fs.readFileSync(path.join(root, 'a.cpp'), 'utf8')}\nint ipp_entry() { return part_answer(); }\nint def_entry() { return def_answer(); }\n`);
+  const { facts } = capture(root);
+  assert.ok(facts.files.some(file => file.path === 'part.ipp'));
+  assert.ok(facts.files.some(file => file.path === 'part.def'));
+  assert.ok(facts.imports.some(row => row.from === 'a.cpp' && row.to === 'part.ipp'));
+  assert.ok(facts.imports.some(row => row.from === 'a.cpp' && row.to === 'part.def'));
+  assert.equal(facts.calls.find(call => call.directCaller?.name === 'ipp_entry')?.target?.file, 'part.ipp');
+  assert.equal(facts.calls.find(call => call.directCaller?.name === 'def_entry')?.target?.file, 'part.def');
 });
 
 test('C/C++ structural cycle rules require a common translation-unit context', () => {

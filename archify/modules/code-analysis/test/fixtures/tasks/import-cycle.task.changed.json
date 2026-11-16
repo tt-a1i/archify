@@ -22,10 +22,10 @@
   "source": {
     "root": ".",
     "language": "py",
-    "adapter": "python@3.15.0",
+    "adapter": "python@3.14.3",
     "sourceKind": "working-tree",
-    "snapshotId": "a5500d463bb33a032d43c5c83fe6ce327cc96db7f6600aa5668d4ca5bc9f5159",
-    "configDigest": "c91155c80e409900edc313b27fa5ab3aaac037d25c42fa8f0e8cd3a075ca75ba",
+    "snapshotId": "e7dabaa18dcb26951ef49cd25ccb5f9baa0add15da6a4e1ca86950791c89ee23",
+    "configDigest": "9b1afab4dbba4cd78a0a23442e5a782edec70e7936456f3ee87e120d939f3395",
     "analyzer": {
       "name": "@archify/code-analysis",
       "version": "0.1.0-dev.1"

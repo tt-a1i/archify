@@ -261,17 +261,18 @@ def main(payload):
         fail("extract/cpp-libclang-unavailable", "libclang could not be loaded by the Python bindings.", {"reason": str(error)}, ["install libclang matching the Python clang bindings; set ARCHIFY_LIBCLANG to the library path"])
     root = Path(payload["root"]).resolve()
     sources = {name: base64.b64decode(value) for name, value in payload["sources"].items()}
-    allowed = set(payload["allowed"])
+    blocked = set(payload["blocked"])
+    declared = set(payload["candidates"])
+    decoded, invalid = {}, set()
     for name, data in sources.items():
         try:
-            data.decode("utf-8")
+            decoded[name] = data.decode("utf-8")
         except UnicodeDecodeError:
-            fail("extract/cpp-encoding-invalid", "Captured C/C++ source must be UTF-8.", {"file": name})
-    unsaved = [(str(root / name), data.decode("utf-8")) for name, data in sources.items()]
+            invalid.add(name)
+    unsaved = [(str(root / name), content) for name, content in decoded.items()]
     selected, excluded, units, errors = set(), [], [], []
     imports, functions, calls, conflicts = {}, {}, {}, []
     file_contexts = defaultdict(set)
-    declared = set(payload["candidates"])
     kinds = {cindex.CursorKind.FUNCTION_DECL, cindex.CursorKind.CXX_METHOD,
              cindex.CursorKind.CONSTRUCTOR, cindex.CursorKind.DESTRUCTOR,
              cindex.CursorKind.FUNCTION_TEMPLATE}
@@ -315,6 +316,8 @@ def main(payload):
             if len(unique) != 1:
                 fail("extract/cpp-command-ambiguous", "A translation unit has multiple distinct compilation commands.", {"file": name, "commands": len(unique)}, ["select one build configuration and regenerate compile_commands.json"])
             args = next(iter(unique.values()))
+            if name in invalid:
+                fail("extract/cpp-encoding-invalid", "Captured C/C++ source must be UTF-8.", {"file": name})
             selected.add(name)
             file_contexts[name].add(name)
             unit_scope = {"file": name, "commandSha256": digest(json.dumps(args).encode("utf-8")),
@@ -326,21 +329,26 @@ def main(payload):
                 errors.append({"path": name, "message": str(error)})
                 units.append({**unit_scope, "status": "parse-error"})
                 continue
+            includes = list(tu.get_includes())
+            for included in includes:
+                target = relative(root, included.include.name if included.include else None)
+                if target in blocked:
+                    fail("extract/cpp-header-excluded", "An active project include is excluded by the analysis configuration.", {"file": target, "translationUnit": name}, ["include this header in config.include and remove its exclude pattern"])
+                if target and target not in sources:
+                    fail("extract/cpp-source-not-captured", "libclang read a project include absent from the frozen source inventory.", {"file": target, "translationUnit": name}, ["use a supported project header suffix or extend the C/C++ adapter to capture this included file"])
+                if target in invalid:
+                    fail("extract/cpp-encoding-invalid", "Captured C/C++ source must be UTF-8.", {"file": target, "translationUnit": name})
             severe = [str(item) for item in tu.diagnostics if item.severity >= 3]
             if severe:
                 errors.append({"path": name, "message": "; ".join(severe[:3])})
                 units.append({**unit_scope, "status": "parse-error"})
                 continue
             units.append({**unit_scope, "status": "parsed"})
-            for included in tu.get_includes():
+            for included in includes:
                 origin = relative(root, included.source.name if included.source else None)
                 target = relative(root, included.include.name if included.include else None)
                 if not origin or origin not in sources:
                     continue
-                if target and target not in sources:
-                    fail("extract/cpp-source-not-captured", "libclang read a project include absent from the frozen source inventory.", {"file": target, "translationUnit": name}, ["include this header in the analysis root and accepted source suffixes"])
-                if target and target not in allowed:
-                    fail("extract/cpp-header-excluded", "An active project include is excluded by the analysis configuration.", {"file": target, "translationUnit": name}, ["include this header in config.include and remove its exclude pattern"])
                 if target:
                     selected.add(target)
                     file_contexts[target].add(name)
