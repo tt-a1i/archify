@@ -49,6 +49,12 @@ export function classifyPaths(paths) {
       plan.generated = plan.browser = plan.package = true;
       continue;
     }
+    if (name === 'archify/schemas/story-choreography.schema.json') {
+      own('schema'); plan.generated = plan.browser = plan.package = true; continue;
+    }
+    if (name.startsWith('archify/story/')) {
+      own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;
+    }
     if (name.startsWith('archify/renderers/shared/') && renderShared.test(name.slice('archify/renderers/shared/'.length))) {
       own('renderer'); plan.generated = plan.browser = plan.package = true; continue;
     }

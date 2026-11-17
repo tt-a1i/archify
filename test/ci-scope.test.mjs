@@ -56,6 +56,12 @@ test('recipe, schema and shared renderer owners include their real source consum
   const schema = classifyPaths(['archify/schemas/workflow.schema.json']);
   assert.equal(schema.scope, 'core');
   assert.ok(selectAffectedTests(schema.owners, [], available).includes('test/generate-validators.test.mjs'));
+  const storySchema = classifyPaths(['archify/schemas/story-choreography.schema.json']);
+  assert.equal(storySchema.scope, 'core');
+  assert.ok(storySchema.owners.includes('schema') && storySchema.generated && storySchema.browser && storySchema.package);
+  const storyMod = classifyPaths(['archify/story/story-svg.mjs']);
+  assert.equal(storyMod.scope, 'core');
+  assert.ok(storyMod.owners.includes('viewer') && storyMod.generated && storyMod.browser && storyMod.webm && storyMod.package);
 });
 
 test('shared SVG parser changes retain the public checker suite without selecting unrelated tests', () => {

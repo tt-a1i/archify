@@ -1,5 +1,12 @@
 # Story authoring
 
+Archify provides two complementary story workflows:
+
+1. **Viewer walkthrough attachment** (`story scan | draft | attach`): enhances a single native HTML diagram with in-Viewer playback, soundtrack synthesis, and offline 1080p MP4 export.
+2. **Component choreography & standalone deliverables** (`story validate | svg | stage | video`): orchestrates one or more native diagrams (via a `story-choreography` JSON spec or an existing `<native.html> <brief.json>` pair) into dual-theme animated `.svg`, static `.still.svg`, interactive `.stage.html`, or direct headless-Chrome 1080p `.mp4`/`.webm` video.
+
+## 1. Viewer attachment (`scan`, `draft`, `attach`)
+
 ```sh
 node bin/archify.mjs story draft <native.html> <brief.json> --json
 node bin/archify.mjs story attach <native.html> <brief.json> <enhanced.html> --json
@@ -30,47 +37,51 @@ writing files, use `story scan <native.html> --json`.
 ```
 
 Give each area a distinct job:
+- **Top (`scene.title`)**: chapter topic or central judgment; stable while points unfold.
+- **Bottom (`point.caption`)**: narrate the current action and connect adjacent steps.
+- **Side (`point.title`, `point.text`)**: explain responsibilities, conditions, branches, or scope.
 
-- **Top — `scene.title`:** the chapter's topic, question or central judgment;
-  stable while its points unfold.
-- **Bottom — `point.caption`:** narrate the current action and connect it to
-  the preceding or next step.
-- **Side — `point.title` and `point.text`:** explain responsibilities,
-  relationship meaning, conditions, branches or scope, supported by the local
-  drawing and relevant legend.
+Selection & motion rules:
+- `anchor` selects a node; optional `via` selects an edge ID or array. Point or scene `action`: `trace` follows edges in order, `parallel` shows branches together, `relation` shows associations without live token transfer (default for `erd`, `class`, `tree`, `timeline`, `waterfall`).
+- For code excerpts, pass `--repo-root <repository>` to `story attach`. Point `code` selects `node` (default: `anchor`), `source` index, optional `fromLine`, `toLine`, and `emphasis` line numbers within verified bounds (at most 20 lines).
 
-Write captions separately; omitting one falls back to the point title. Avoid
-paraphrasing the same assertion across areas. Optional `meaning` explains a
-legend symbol in context; `figureCaption` explains the local drawing. Omit
-these when they only repeat a visible label or the subtitle. Choose content
-from the actual diagram; fixed input/output slots are not required.
+Attached Viewer video export defaults to **MP4 (H.264/AAC), 1080p at 60 fps**. Downloads stream progressively via `showSaveFilePicker` when supported. Programmatic `Archify.story.exportVideo()` returns a Blob; pass `{format: "webm"}` explicitly for VP9/Opus. Unsupported codecs fail closed before rendering without changing the requested format.
 
-- `anchor` selects a node; optional `via` selects an edge ID or array. Endpoints
-  join the frame automatically. Select the connections to demonstrate in
-  `via`; prose alone does not select them. Standalone events need no edge.
-- Points appear in order. Point `focus` adds context; scene `focus` applies to
-  every point. Scene `side` can be `left` or `right`.
-- Point or scene `action`: `trace` follows edges in order, `parallel` shows
-  branches together, `relation` shows associations without transfer. ER, class,
-  tree, timeline and waterfall default to relations. Simultaneous presentation
-  does not prove concurrent execution. Replay a transfer in a separate scene;
-  static relations may support several points in one scene.
-- Preserve alternatives, loops, returns and containment. For sequences, retain
-  message order and return styles; selected opposite connections can share a
-  local exchange drawing. Derive pairing and causality from the source;
-  distinguish acceptance from completion when relevant.
+## 2. Component choreography (`validate`, `svg`, `stage`, `video`)
 
-Keep default timing unless needed. Point `seconds` sets reading time (at least
-4); `travel` sets transfer duration (0.5–3 seconds). Top-level `opening` accepts
-`auto`, `fit`, `scan-x` or `scan-y`; `auto` tours long graphs when needed for
-legibility. The opening is capped at six seconds automatically.
-Optional top-level `accent` is a literal hex color: `#rgb`, `#rgba`, `#rrggbb`
-or `#rrggbbaa` (for example, `#477bbe`).
+For multi-view choreography, component identity transitions, metric callouts, pinned code panels, or direct CLI `.svg`/`.mp4` output without modifying native HTML:
 
-For code excerpts, pass `--repo-root <repository>` to `story attach`. Point
-`code` selects `node` (default: anchor), source index `source` (default: 0),
-optional `fromLine`, `toLine` and `emphasis` line numbers. Use verified ranges
-at the HTML's pinned revision, at most twenty lines; do not invent bindings.
+```sh
+node bin/archify.mjs story validate <choreography.json> [--repo-root path] [--json]
+node bin/archify.mjs story svg <choreography.json> <out.svg|stem> [--theme both|light|dark] [--still] [--repo-root path] [--json]
+node bin/archify.mjs story stage <choreography.json> <out.html> [--theme light|dark] [--repo-root path] [--json]
+node bin/archify.mjs story video <choreography.json> <out.mp4|out.webm> [--format mp4|webm] [--fps 30|60] [--repo-root path] [--json]
+```
 
-Deliver the enhanced HTML and editable brief. Rebuild from the original native
-HTML. Export video only when requested.
+`svg`, `stage`, and `video` also accept the 3-positional single-diagram bridge `<native.html> <brief.json> <out>` to compile an existing brief into standalone SVGs, a stage player, or MP4/WebM video.
+
+Minimal `story-choreography` spec (validated against `schemas/story-choreography.schema.json`):
+
+```json
+{
+  "schema_version": 1,
+  "title": "Queue handoff walkthrough",
+  "preset": "classic",
+  "views": [
+    { "id": "arch", "type": "architecture", "input": "arch.json" },
+    { "id": "flow", "type": "dataflow", "input": "flow.json" }
+  ],
+  "steps": [
+    { "view": "arch", "title": "Ingress queues requests", "body": "API writes work items to the shared queue.", "focus": ["api", "queue"] },
+    { "view": "flow", "transition": { "from": "arch", "shared": [{ "id": "queue", "subtitle": "Durable buffer" }] },
+      "title": "Worker drains batches", "body": "Consumer reads from the queue and persists state.", "trace": { "edges": ["queue~worker"], "action": "trace" } }
+  ]
+}
+```
+
+Key capabilities & guardrails:
+- **Views & callouts**: each view accepts a native `.json` schema input, rendered `.html`, or inline `diagram` object, plus optional `callouts: { "<nodeId>": { "text": "...", "tone": "accent|added|modified|removed|neutral" } }`.
+- **Cross-view transitions**: `step.transition` morphs shared components smoothly from the preceding view (`id`, optional `targetId`, `label`, `subtitle`).
+- **Declarative beat ops**: omit `duration` / `at` to auto-time steps, or supply explicit `duration` + strictly increasing `at` timestamps. Each step supports `enter`, `connect`, `fade`, `relabel`, `focus` (`center` or `left` when paired with `detail`), `trace` (`trace`/`parallel`), `metrics` (`before -> after`), and `detail` (`path`, `lines`, `highlight`, `selections`).
+- **Structural safety**: live `trace` tokens are rejected on static relation diagrams (`erd`, `class`, `tree`) and on removed elements unless explicitly overridden; cited `detail` source paths and line numbers are verified before emitting SVG, stage HTML, or video.
+- **Outputs**: `story svg` produces Camo-safe standalone dual-theme `<stem>-light.svg` and `<stem>-dark.svg` (plus `.still.svg` static keyframes for `--still` or `stills[]`); `story stage` produces a self-contained HTML player with 1080p60 batched MP4/WebM export; `story video` invokes headless Chrome to emit atomic `.mp4` or `.webm` files directly from the CLI.

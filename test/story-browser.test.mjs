@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import vm from 'node:vm';
 import {ChromeVisualBrowser,findChrome} from '../archify/bin/visual-check.mjs';
 import {audioIsComplete,decodeDiagnostics,ffmpegVersion,isFfmpeg80} from './ffmpeg-diagnostics.mjs';
 
@@ -16,6 +17,32 @@ const ffmpegInfo=()=>{if(!ffmpegProbe){let version='',allow=false;if(ffmpegBin){
 const ffprobeBin=process.env.ARCHIFY_FFPROBE||'ffprobe';
 const audioPackets=file=>{const probe=spawnSync(ffprobeBin,['-v','error','-select_streams','a:0','-count_packets','-show_entries','stream=nb_read_packets','-of','default=nw=1:nk=1',file],{encoding:'utf8',timeout:5000});if(probe.error||probe.status!==0)return {count:NaN,error:probe.stderr?.trim()||probe.error?.message||`ffprobe exited ${probe.status}`};const count=Number.parseInt(probe.stdout?.trim(),10);return {count,error:Number.isInteger(count)?'':`unexpected ffprobe output: ${probe.stdout?.trim()||'<empty>'}`};};
 const decodeAudio=(file,seconds,label,tolerance)=>{const decoded=spawnSync(ffmpegBin,['-v','error','-i',file,'-map','0:a:0','-f','f32le','-ac','2','-ar','48000','-'],{timeout:15000}),info=ffmpegInfo(),log=decodeDiagnostics(decoded.stderr,{allowFlushNoise:info.allow});assert.ok(!decoded.error,`${label} decoder could not run: ${decoded.error?.message||decoded.error}`);assert.equal(decoded.status,0,decoded.stderr?.toString());assert.equal(log.text,'',`${label} decodes without timestamp errors (ffmpeg ${info.version||'unknown'}, tolerated ${log.tolerated})`);const frames=decoded.stdout.length/(2*4),probed=audioPackets(file),packets=probed.count;assert.ok(audioIsComplete(frames,packets),`${label} has ${frames} decoded samples from ${packets} Opus packets (ffmpeg ${info.version||'unknown'})${probed.error?`; ${probed.error}`:''}`);assert.ok(Math.abs(frames/48000-seconds)<tolerance,`${label} decodes for the requested interval (${tolerance}s)`);assert.ok(decoded.stdout.some(byte=>byte!==0),`${label} contains sound`);};
+
+test('MP4 preserves reordered video frames and trims AAC encoder priming',{
+  skip:ffmpegBin?false:'Set ARCHIFY_FFMPEG for the independent container decode check.',
+},async t=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-container-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const reference=path.join(dir,'reference.mp4'),output=path.join(dir,'story.mp4');
+  const run=(bin,args)=>execFileSync(bin,args,{timeout:15000,maxBuffer:8*1024*1024});
+  run(ffmpegBin,['-v','error','-f','lavfi','-i','testsrc2=size=128x72:rate=60:duration=0.4','-f','lavfi','-i','sine=frequency=997:sample_rate=48000:duration=0.4','-t','0.4','-c:v','libx264','-preset','veryfast','-bf','2','-g','12','-profile:v','high','-pix_fmt','yuv420p','-c:a','aac','-ar','48000','-ac','2','-movflags','+faststart',reference]);
+  const bytes=fs.readFileSync(reference),packets=JSON.parse(run(ffprobeBin,['-v','error','-show_packets','-of','json',reference])).packets;
+  const video=packets.filter(packet=>packet.stream_index===0),audio=packets.filter(packet=>packet.stream_index===1);
+  assert.equal(video.length,24);assert.ok(video.some((packet,index)=>index&&Number(packet.pts_time)<Number(video[index-1].pts_time)),'the independent fixture contains reordered B-frames');
+  assert.ok(Number(audio[0].pts_time)<0,'the independent fixture contains AAC priming');
+  const at=bytes.indexOf(Buffer.from('avcC'));assert.ok(at>4);const avc=bytes.subarray(at+4,at-4+bytes.readUInt32BE(at-4));
+  const context=vm.createContext({Blob,TextEncoder});vm.runInContext(fs.readFileSync(path.join(skill,'story/story-container.js'),'utf8'),context);
+  const mux=context.StoryContainer.open({format:'mp4',width:128,height:72,fps:60,frames:24,samples:19200,duration:.4,audioBitrate:128000,maxBytes:1024*1024,check(){}});
+  for(const packet of packets){
+    const track=packet.stream_index===0?'video':'audio',data=bytes.subarray(Number(packet.pos),Number(packet.pos)+Number(packet.size));
+    mux.add(track,{timestamp:Math.round(Number(packet.pts_time)*1e6),type:packet.flags.includes('K')?'key':'delta',byteLength:data.length,copyTo:target=>target.set(data)},
+      {decoderConfig:{description:track==='video'?avc:new Uint8Array([17,144])}});
+  }
+  try{fs.writeFileSync(output,Buffer.from(await (await mux.finish()).arrayBuffer()));}finally{await mux.settle();}
+  const decodedFrames=file=>run(ffmpegBin,['-v','error','-i',file,'-map','0:v:0','-f','framemd5','-']).toString().split('\n').filter(line=>line&&!line.startsWith('#'));
+  const expected=decodedFrames(reference);assert.equal(expected.length,24);assert.deepEqual(decodedFrames(output),expected,'the MP4 edit and composition tables preserve frame order, timing and pixels');
+  const pcm=file=>run(ffmpegBin,['-v','error','-i',file,'-map','0:a:0','-f','f32le','-ac','2','-ar','48000','-']).subarray(0,19200*2*4);
+  const expectedSound=pcm(reference);assert.equal(expectedSound.length,19200*2*4);assert.deepEqual(pcm(output),expectedSound,'AAC priming is removed without shifting or truncating the requested sound');
+});
 test('attachment preserves localized native state labels and localizes the Story transition',{
   skip:chrome?false:'Set ARCHIFY_CHROME for the real-browser story check.',
 },async t=>{
@@ -62,7 +89,7 @@ test('a public story attaches once, follows native appearance and retains source
   const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());const session=await browser.sessionPromise,errors=[];
   browser.cdp.subscribe(event=>{if(event.method==='Runtime.exceptionThrown')errors.push(event.params.exceptionDetails.exception?.description||event.params.exceptionDetails.text);});
   const send=(method,params={})=>browser.cdp.send(method,params,session,30000);
-  async function evaluate(expression,awaitPromise=false){const result=await send('Runtime.evaluate',{expression,awaitPromise,returnByValue:true,userGesture:true});assert.equal(result.exceptionDetails,undefined,result.exceptionDetails?.exception?.description);return result.result?.value;}
+  async function evaluate(expression,awaitPromise=false){let result;try{result=await send('Runtime.evaluate',{expression,awaitPromise,returnByValue:true,userGesture:true});}catch(error){error.message+='\nStory operation: '+expression.slice(0,200);throw error;}assert.equal(result.exceptionDetails,undefined,result.exceptionDetails?.exception?.description);return result.result?.value;}
   await send('Network.enable');await send('Network.setBlockedURLs',{urls:['http://*','https://*','ws://*','wss://*']});
   await send('Emulation.setDeviceMetricsOverride',{width:981,height:815,deviceScaleFactor:1,mobile:false});
   const motionState=`win=>{const doc=win.document,rule=[...doc.styleSheets].flatMap(sheet=>[...sheet.cssRules]).find(rule=>rule.cssRules?.[0]?.style?.getPropertyValue('--test-motion-policy')==='legacy');return {render:doc.documentElement.hasAttribute('data-motion-render'),reduced:win.Archify.motionGovernor.reducedMotion(),mode:win.Archify.motionGovernor.mode(),media:rule?.media.mediaText,transfers:[...doc.querySelectorAll('.ambient-edge-flow')].flatMap(flow=>flow.getAnimations()).length};}`;
@@ -100,7 +127,7 @@ test('a public story attaches once, follows native appearance and retains source
   const png=await evaluate('(async()=>{const task=Archify.story.exportPNG({time:9});document.querySelector("[data-preset-value=classic]").click();if(document.documentElement.dataset.theme!=="light")document.querySelector("#btn-theme").click();const image=await createImageBitmap(await task),canvas=document.createElement("canvas");canvas.width=canvas.height=1;canvas.getContext("2d").drawImage(image,0,0);const pixel=[...canvas.getContext("2d").getImageData(0,0,1,1).data];return {width:image.width,height:image.height,pixel};})()',true);
   assert.equal(png.width,1920);assert.equal(png.height,1080);assert.ok(Math.max(...png.pixel.slice(0,3))<70,'export retains the dark appearance selected when it started');
   const video=await evaluate(`(async()=>{
-    const blob=await Archify.story.exportVideo({start:0,seconds:.5}),url=URL.createObjectURL(blob),video=document.createElement('video');
+    const blob=await Archify.story.exportVideo({start:0,seconds:.5,format:'webm'}),url=URL.createObjectURL(blob),video=document.createElement('video');
     try{
       video.muted=true;video.src=url;
       await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Story video decode timed out')),5000);video.onloadeddata=()=>{clearTimeout(timer);resolve();};video.onerror=()=>{clearTimeout(timer);reject(Error('Story video could not be decoded'));};});
@@ -192,7 +219,7 @@ test('a public story attaches once, follows native appearance and retains source
   const lateVideo=await evaluate(`(async()=>{
     const player=document.querySelector('.story-panel iframe').contentWindow;
     const expected=player.StorySound.renderer(player.Story.duration,player.Story.audioCues,1800)(.1);
-    let peak=0,comparedSamples=0,maxSampleError=0;const blob=await Archify.story.exportVideo({start:1800,seconds:.1,onProgress:()=>{
+    let peak=0;const encoders=new Map();const installProbe=()=>{
       const win=document.querySelector('.story-render-frame').contentWindow;
       if(win.audioAllocationProbe)return;win.audioAllocationProbe=true;
       const ArrayType=win.Float32Array;win.Float32Array=new Proxy(ArrayType,{construct(target,args){
@@ -201,20 +228,24 @@ test('a public story attaches once, follows native appearance and retains source
       }});
       const encode=win.AudioEncoder.prototype.encode;
       win.AudioEncoder.prototype.encode=function(frame){
+        let proof=encoders.get(this);if(!proof){proof={comparedSamples:0,maxSampleError:0};encoders.set(this,proof);}
         const offset=Math.round(frame.timestamp*frame.sampleRate/1e6);
         for(let channel=0;channel<frame.numberOfChannels;channel++){
           const samples=new win.Float32Array(frame.numberOfFrames);frame.copyTo(samples,{planeIndex:channel,format:'f32-planar'});
-          for(let index=0;index<samples.length;index++)maxSampleError=Math.max(maxSampleError,Math.abs(samples[index]-expected.channels[channel][offset+index]));
-          comparedSamples+=samples.length;
+          for(let index=0;index<samples.length;index++)proof.maxSampleError=Math.max(proof.maxSampleError,Math.abs(samples[index]-expected.channels[channel][offset+index]));
+          proof.comparedSamples+=samples.length;
         }
         return encode.call(this,frame);
       };
-    }});
+    };
+    const observer=new MutationObserver(()=>{for(const frame of document.querySelectorAll('.story-render-frame'))if(!frame.dataset.probed){frame.dataset.probed='true';frame.addEventListener('load',installProbe,{once:true});}});
+    observer.observe(document.body,{childList:true});
+    let blob;try{blob=await Archify.story.exportVideo({start:1800,seconds:.1,format:'webm'});}finally{observer.disconnect();}
     const base64=await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(blob);});
-    return {peak,bytes:blob.size,base64,comparedSamples,maxSampleError};
+    return {peak,bytes:blob.size,base64,encoders:[...encoders.values()]};
   })()`,true);
   assert.ok(lateVideo.bytes>0);assert.ok(lateVideo.peak<=48000*30,'late exports keep the fixed music bed and requested audio window bounded');
-  assert.equal(lateVideo.comparedSamples,4800*2);assert.ok(lateVideo.maxSampleError<=1e-6,'partial export preserves the preview soundtrack instead of fading at the clip boundary: '+lateVideo.maxSampleError);
+  assert.equal(lateVideo.encoders.filter(proof=>proof.comparedSamples===4800*2&&proof.maxSampleError<=1e-6).length,1,'the actual audio encoder receives the entire preview interval unchanged; codec capability probes are separate encoders');
   if(ffmpegBin){
     const file=path.join(dir,'late-story.webm');fs.writeFileSync(file,Buffer.from(lateVideo.base64,'base64'));
     decodeAudio(file,.1,'the late audio timeline',.03);
@@ -257,4 +288,87 @@ test('flowless guides stay out of the story opening clock',{
   assert.ok(Number.isFinite(traced.rate)&&traced.rate>=1,'native transfers keep a finite opening rate');
   assert.ok(traced.span>traced.wireStart,'native transfers still extend the opening clock');
   assert.deepEqual(errors,[]);
+});
+
+
+test('story snapshots preserve appearance across styles, cascade capabilities and authored animations',{
+  timeout:120000,skip:chrome?false:'Set ARCHIFY_CHROME for story snapshot compatibility.'
+},async t=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-snapshot-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
+  const facts=JSON.parse(execFileSync(process.execPath,[cli,'story','scan',input,'--json'],{encoding:'utf8'}));
+  fs.writeFileSync(brief,JSON.stringify({version:2,title:'Snapshot compatibility',intro:'Establish the source.',outro:'Return to the whole graph.',scenes:[{title:'Inspect',points:[{anchor:facts.nodes[0].id,title:'Selected node',text:'Read the original node and its context.'}]}]}));
+  execFileSync(process.execPath,[cli,'story','attach',input,brief,output,'--json']);
+  const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());const session=await browser.sessionPromise;
+  const send=(method,params={})=>browser.cdp.send(method,params,session,60000);
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});assert.equal(result.exceptionDetails,undefined,result.exceptionDetails?.exception?.description);return result.result.value;};
+  await send('Network.enable');await send('Network.setBlockedURLs',{urls:['http://*','https://*']});
+  const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(output).href});await loaded;
+  const pixels=time=>evaluate(`(async()=>{const image=await createImageBitmap(await Archify.story.exportPNG({time:${time}})),canvas=document.createElement('canvas');try{canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);const digest=await crypto.subtle.digest('SHA-256',ctx.getImageData(0,0,canvas.width,canvas.height).data);return [...new Uint8Array(digest)].map(value=>value.toString(16).padStart(2,'0')).join('');}finally{image.close();canvas.width=canvas.height=1;}})()`);
+  const cases=[];
+  for(const preset of ['classic','signal-flow','blueprint','editorial'])for(const theme of ['light','dark'])cases.push({preset,theme,time:preset==='classic'?2.5:8.25});
+  const appearance=({preset,theme})=>evaluate(`document.querySelector('[data-preset-value="${preset}"]').click();if(document.documentElement.dataset.theme!==${JSON.stringify(theme)})document.querySelector('#btn-theme').click();`);
+  const expected=[];for(const entry of cases){await appearance(entry);expected.push(await pixels(entry.time));}
+  const noLayers=await send('Page.addScriptToEvaluateOnNewDocument',{source:"Object.defineProperty(window,'CSSLayerBlockRule',{value:undefined,configurable:true});"});
+  try{for(const [index,entry]of cases.entries()){await appearance(entry);assert.equal(await pixels(entry.time),expected[index],entry.preset+' '+entry.theme+' has the same pixels without cascade layer support');}}
+  finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:noLayers.identifier});}
+  await appearance(cases[0]);
+  const selectorStyle='.subtitle[style*="opacity"]{background:rgb(150,40,80)!important;outline:8px solid rgb(150,40,80)!important}';
+  const authored=await send('Page.addScriptToEvaluateOnNewDocument',{source:`addEventListener('DOMContentLoaded',()=>{const style=document.querySelector('#story-style');if(style)style.append(${JSON.stringify(selectorStyle)});},{once:true});`});
+  try{
+    const selected=await pixels(2.5);assert.notEqual(selected,expected[0],'the authored style selector changes the rendered image');
+    const inline=await send('Page.addScriptToEvaluateOnNewDocument',{source:"Object.defineProperty(window,'CSSLayerBlockRule',{value:undefined,configurable:true});"});
+    try{assert.equal(await pixels(2.5),selected,'style attribute selectors retain their appearance');}
+    finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:inline.identifier});}
+  }finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:authored.identifier});}
+  const animationStyle='@keyframes snapshot-background{from{background:rgb(180,70,50)}to{background:rgb(10,200,30)}}';
+  const animated=await send('Page.addScriptToEvaluateOnNewDocument',{source:`addEventListener('DOMContentLoaded',()=>{const style=document.querySelector('#story-style'),brand=document.querySelector('.brand');if(style&&brand){style.append(${JSON.stringify(animationStyle)});brand.style.setProperty('animation-name','snapshot-background','important');brand.style.setProperty('animation-duration','1s','important');}},{once:true});`});
+  try{
+    const selected=await pixels(2.5),inline=await send('Page.addScriptToEvaluateOnNewDocument',{source:"Object.defineProperty(window,'CSSLayerBlockRule',{value:undefined,configurable:true});"});
+    try{assert.equal(await pixels(2.5),selected,'important animation longhands are frozen in both snapshot paths');}
+    finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:inline.identifier});}
+  }finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:animated.identifier});}
+});
+
+test('MP4 is the default story export and streamed failures preserve the file boundary',{
+  timeout:120000,skip:chrome?false:'Set ARCHIFY_CHROME for story MP4 export.'
+},async t=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-mp4-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
+  fs.writeFileSync(brief,JSON.stringify({version:2,title:'Follow a tool call',intro:'A request enters the agent.',outro:'The result returns to the caller.',scenes:[{title:'Execute',points:[{anchor:'tool',title:'Use the tool',text:'The runtime executes the selected call.'}]}]}));
+  const scan=JSON.parse(execFileSync(process.execPath,[cli,'story','scan',input,'--json'],{encoding:'utf8'}));
+  const plan=JSON.parse(fs.readFileSync(brief));plan.scenes[0].points[0].anchor=scan.nodes[0].id;fs.writeFileSync(brief,JSON.stringify(plan));
+  execFileSync(process.execPath,[cli,'story','attach',input,brief,output,'--json']);
+  const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());const session=await browser.sessionPromise;
+  const send=(method,params={})=>browser.cdp.send(method,params,session,60000);
+  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});assert.equal(r.exceptionDetails,undefined,r.exceptionDetails?.exception?.description);return r.result.value;};
+  const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(output).href});await loaded;
+  assert.equal(await evaluate('Archify.story.defaults.format'),'mp4');
+  const supports=await evaluate("(async()=>typeof AudioEncoder!=='undefined'&&(await AudioEncoder.isConfigSupported({codec:'mp4a.40.2',sampleRate:48000,numberOfChannels:2,bitrate:192000})).supported)()");
+  if(!supports){
+    const message=await evaluate("(async()=>{try{await Archify.story.exportVideo({seconds:.1});return '';}catch(error){return error.message;}})()");
+    assert.match(message,/H.264 and AAC/);assert.equal(await evaluate('!!document.querySelector(".story-render-frame")'),false);return;
+  }
+  const result=await evaluate(`(async()=>{const blob=await Archify.story.exportVideo({seconds:.1});window.mp4=blob;const bytes=new Uint8Array(await blob.arrayBuffer());return {type:blob.type,header:new TextDecoder().decode(bytes.slice(4,8)),base64:await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(blob);})};})()`);
+  assert.equal(result.type,'video/mp4');assert.equal(result.header,'ftyp');
+  const file=path.join(dir,'story.mp4');fs.writeFileSync(file,Buffer.from(result.base64,'base64'));
+  if(ffmpegBin){
+    const streams=JSON.parse(execFileSync(ffprobeBin,['-v','error','-show_streams','-of','json',file],{encoding:'utf8',timeout:10000})).streams;
+    const video=streams.find(s=>s.codec_type==='video'),audio=streams.find(s=>s.codec_type==='audio');
+    assert.equal(video.codec_name,'h264');assert.equal(audio.codec_name,'aac');assert.equal(video.width,1920);assert.equal(video.height,1080);assert.equal(video.r_frame_rate,'60/1');assert.equal(Number(video.nb_frames),6,'the requested interval retains every frame, including the end');
+    execFileSync(ffmpegBin,['-v','error','-i',file,'-f','null','-'],{timeout:20000});
+  }
+  const failure=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({seconds:.1,writer:{write:async()=>{events.push('write');throw Error('disk full');},close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {events,message:error.message,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
+  assert.match(failure.message,/disk full/);assert.ok(failure.events.includes('write'));assert.deepEqual(failure.events.filter(e=>e!=='write'),['abort']);assert.equal(failure.frames,0);
+  const canceled=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({seconds:1,onProgress:()=>Archify.story.cancelExport(),writer:{write:async()=>events.push('write'),close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {name:error.name,events,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
+  assert.equal(canceled.name,'AbortError');assert.equal(canceled.events.includes('close'),false);assert.equal(canceled.events.filter(e=>e==='abort').length,1);assert.equal(canceled.frames,0);
+  const streamed=await evaluate(`(async()=>{const parts=[],events=[];const result=await Archify.story.exportVideo({seconds:.1,writer:{write:async chunk=>{parts.push(chunk);events.push('write');},close:async()=>events.push('close'),abort:async()=>events.push('abort')}});const data=new Uint8Array(result.size);for(const part of parts)data.set(new Uint8Array(part.data),part.position);return {type:result.type,header:new TextDecoder().decode(data.slice(4,8)),events};})()`);
+  assert.equal(streamed.type,'video/mp4');assert.equal(streamed.header,'ftyp');assert.equal(streamed.events.at(-1),'close');assert.equal(streamed.events.includes('abort'),false);
+  const picker=await evaluate(`(async()=>{window.showSaveFilePicker=async options=>{window.pickerOptions=options;throw new DOMException('Canceled','AbortError');};document.querySelector('[data-action="story-video"]').click();await new Promise(resolve=>setTimeout(resolve,0));return pickerOptions;})()`);
+  assert.ok(picker.suggestedName.endsWith('.mp4'));assert.deepEqual(picker.types[0].accept,{'video/mp4':['.mp4']});
+  const unsupported=await send('Page.addScriptToEvaluateOnNewDocument',{source:"AudioEncoder.isConfigSupported=async config=>({config,supported:false});"});
+  try{
+    const result=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({seconds:.1,writer:{write:async()=>events.push('write'),close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {events,message:error.message,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
+    assert.match(result.message,/H.264 and AAC/);assert.deepEqual(result.events,['abort']);assert.equal(result.frames,0,'unsupported encoding leaves no export frame or partial file');
+  }finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:unsupported.identifier});}
 });
