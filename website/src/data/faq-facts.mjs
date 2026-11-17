@@ -3,15 +3,15 @@
 export const faqFacts = [
   {
     question: ['What is Archify?', 'Archify 是什么？'],
-    answer: ['Archify is an open-source Agent Skill for turning a system, process, or plan into a diagram, or a question into a one-page answer. For a diagram the agent authors typed JSON; for a page, a Markdown draft. Archify renders and validates a self-contained interactive HTML artifact. The Skill and renderers are licensed under Apache-2.0.', 'Archify 是一个开源 Agent Skill，把系统、流程或计划变成图表，也能把一个问题变成一页式解答。画图时 Agent 编写类型化 JSON，写一页答案时编写 Markdown 草稿，再由 Archify 渲染、校验并交付独立的交互 HTML 成品。Skill 和渲染器采用 Apache-2.0 许可证。'],
+    answer: ['Archify is an open-source Agent Skill (Apache-2.0) that turns anything you want to understand, plan, or share — an everyday workflow, travel itinerary, complex concept, plan, or repository — into a polished interactive diagram across ten diagram types or a four-style one-page answer with zero syntax to memorize. The agent authors typed JSON or a Markdown draft; Archify runs layout and browser checks and outputs one standalone interactive HTML artifact.', 'Archify 是一个开源 Agent Skill（Apache-2.0），无需手写画图语法，即可把任何你想理解、规划或分享的事（生活日程、旅行路线、科普概念、工作流或代码仓库）快速变成十种原生图型的交互图表或四套排版风格的一页式解答。画图时 Agent 编写类型化 JSON，写一页答案时编写 Markdown 草稿，经防重叠布局与浏览器检查后交付独立可交互 HTML 成品。'],
   },
   {
     question: ['What is a one-page answer?', '一页式解答是什么？'],
-    answer: ['A page that leads with the conclusion and its reasons, then answers one question per panel with prose, tables, steps, charts, code and validated diagrams. Claims cite numbered sources, repository excerpts are read from a pinned commit, and blank chart data is rejected rather than drawn as zero. Readers can switch between four styles, export a long image or PDF, and ask about a single panel.', '一页先给结论和理由，再按问题分成几个面板，用文字、表格、步骤、图表、代码和经过校验的图讲清楚。结论标注编号来源，仓库代码从固定的提交读取，图表数据留空会报错而不是画成零。读者可以在四种样式间切换、导出长图或 PDF，也可以只追问其中一个面板。'],
+    answer: ['A visually polished explainer page that leads with the conclusion and reasons, then answers one sub-question per panel with prose, tables, steps, charts, code, and validated diagrams placed side by side so reading each step highlights the corresponding diagram part. Works for real-world decisions (such as first-time renting) and technical deep dives alike, with four built-in visual styles, light/dark themes, long-image or PDF export, and panel-scoped follow-up questions.', '一页式解答（Explainer）先把结论与理由摆在最前，再按子问题分面板并排呈现文字、表格、步骤、图表与经过校验的图，读到哪一步图就亮到哪一部分。无论是大城市首次租房避坑，还是 P99 延迟排查或协议原理科普都适用；内置四种排版风格与深浅主题，支持导出长图或 PDF 及单面板追问。'],
   },
   {
     question: ['What can I provide as input?', '可以提供哪些输入？'],
-    answer: ['Start with a plain-language description, a plan, existing Mermaid text, or repository evidence. A repository is optional. Your agent interprets the input and creates typed JSON for a diagram or a Markdown draft for a one-page answer; Archify does not promise automatic parsing of every Mermaid construct. Missing facts should be marked or clarified.', '可以从自然语言描述、计划、已有 Mermaid 文本或代码库证据开始，代码库并非必需。Agent 理解输入后，为图表创建类型化 JSON，为一页式解答编写 Markdown 草稿；Archify 不承诺自动解析全部 Mermaid 语法。缺失的事实应标明或进一步确认。'],
+    answer: ['A code repository is optional. Start fast from plain language, a travel or budget plan, existing Mermaid text, or repository evidence. Your agent picks from ten native types or creates a one-page answer and can even extend the standalone HTML afterward (for example adding map links or check-ins); Archify does not promise lossless automatic parsing of every Mermaid construct.', '代码库完全不是必需条件。你可以直接从一句自然语言、旅行行程、理财/年假规划、已有 Mermaid 文本或源码仓库开始。Agent 会自动选型为十种图型或一页式解答，还能对交付的独立 HTML 继续扩展交互功能（如地图跳转或打卡记录）；Archify 不承诺自动无损解析全部 Mermaid 语法。'],
   },
   {
     question: ['Which agents can use it?', '哪些 Agent 可以使用？'],

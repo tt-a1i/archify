@@ -1,6 +1,6 @@
 # Archify
 
-> Turn a description, a question, or a repository into an interactive diagram or a one-page explainer. Ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, and waterfall. The result is one standalone HTML file. Free and open source (Apache-2.0).
+> Turn any idea, everyday plan, concept, workflow, Mermaid draft, or codebase into a polished interactive HTML diagram (ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, waterfall) or a 4-style one-page explainer — zero diagram syntax, layout-checked, offline HTML. Free and open source (Apache-2.0).
 
 Version: 3.2.1-dev.1
 Repository: https://github.com/tt-a1i/archify
@@ -45,9 +45,7 @@ If you were only asked to install Archify, stop here and do not fetch the refere
 
 ## Documentation and verified examples
 
-- [Archify full reference](https://archify.si/llms-full.txt): Complete product facts, ten diagram types, one-page explainer boundaries, tool comparisons, and frequently asked questions.
-- [Scenario guide](https://archify.si/guide): Choose a diagram recipe from the question you need to answer, with evidence checklists and prompts.
-- [Proof gallery](https://archify.si/gallery): Validated interactive artifacts with their JSON or Markdown sources and recorded checks.
-- [Agent diagramming guide](https://archify.si/agent-diagrams): How coding agents author, review, and share diagrams from prompts or repositories.
-- [Tool comparison](https://archify.si/compare): When to use Archify rather than Mermaid, Excalidraw, PlantUML, or D2.
-- [Source-backed case](https://archify.si/cases/mco-runtime): A pinned-commit architecture walkthrough with explicit evidence limits.
+- [Full reference](https://archify.si/llms-full.txt): Complete product facts, universal life & engineering scope, 10 diagram types, 4-style explainers, and FAQ.
+- [Comparison & guides](https://archify.si/compare) · [Scenario guide](https://archify.si/guide) · [Proof gallery](https://archify.si/gallery) · [Agent guide](https://archify.si/agent-diagrams)
+- [Life & community](https://archify.si/cases/explainer/first-rental) · [Leave workflow](https://archify.si/cases/life/leave-plan.workflow) · [Shanghai CityWalk](https://archify.si/cases/community/shanghai-citywalk)
+- [Technical cases](https://archify.si/cases/explainer/p99-tail-latency) · [MCO runtime case](https://archify.si/cases/mco-runtime)
