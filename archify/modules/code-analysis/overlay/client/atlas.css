@@ -17,6 +17,16 @@ html[data-bauify-view="atlas"]:not([data-analysis-mode="standalone"]) #bauify-re
 #bauify-atlas button:hover { background: color-mix(in srgb, var(--text, #f8fafc) 6%, transparent); }
 #bauify-atlas button:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 2px; }
 #bauify-atlas .atlas-body { flex: 1; min-height: 0; display: flex; }
+#bauify-atlas .atlas-files-pane { width: 220px; flex: none; overflow: auto; border-right: 1px solid var(--panel-border, #1e293b); background: var(--panel, #0f172a); padding: 12px; box-sizing: border-box; }
+#bauify-atlas .atlas-files-pane[hidden] { display: none; }
+#bauify-atlas .atlas-files-pane .k { margin-top: 0; }
+#bauify-atlas .atlas-file-query { width: 100%; box-sizing: border-box; margin: 0 0 8px; padding: 6px 8px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
+#bauify-atlas .atlas-file-list button { display: block; width: 100%; margin: 0 0 4px; padding: 4px 6px; border: 0; background: transparent; color: inherit; text-align: left; }
+#bauify-atlas .atlas-file-list button[aria-current="true"] { background: color-mix(in srgb, var(--text, #f8fafc) 8%, transparent); }
+#bauify-atlas .atlas-file-markdown { display: block; width: 100%; min-height: 7em; box-sizing: border-box; margin: 8px 0; }
+@media (max-width: 860px) {
+  #bauify-atlas .atlas-files-pane { position: absolute; z-index: 4; top: 58px; bottom: 12px; left: 12px; width: min(280px, 80vw); box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+}
 #bauify-atlas .atlas-stage { flex: 1; min-width: 0; position: relative; overflow: clip; }
 #bauify-atlas canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
 #bauify-atlas .atlas-tip { position: absolute; width: max-content; max-width: min(320px, calc(100% - 16px)); }

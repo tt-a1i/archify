@@ -49,13 +49,45 @@
   panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', tr("Code analysis atlas"));
   var totals = [[F.length, 'files', 'file'], [E.length, 'dependencies', 'file dependency'], [FN.length, 'functions', 'function'], [M.length, 'modules', 'module']];
   panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '</div>' +
-    '<div class="atlas-controls">' + iconButton('expand', tr('Disable sector zoom'), '', ' aria-pressed="true"') + iconButton('clear', tr('Clear selection')) + (standalone ? '' : iconButton('classic', tr('Classic view'))) + '</div></nav>' +
-    '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div><aside class="atlas-side"><section class="atlas-selection" hidden></section><section class="atlas-stats"><h3 class="k">' + esc(tr('Totals')) + '</h3><div class="stats">' + totals.map(function (stat) {
+    '<div class="atlas-controls">' + iconButton('files', tr('Find file'), ' atlas-files', ' aria-pressed="false"') + iconButton('expand', tr('Disable sector zoom'), '', ' aria-pressed="true"') + iconButton('clear', tr('Clear selection')) + (standalone ? '' : iconButton('classic', tr('Classic view'))) + '</div></nav>' +
+    '<div class="atlas-body"><nav class="atlas-files-pane" hidden aria-label="' + esc(tr('Captured files')) + '"><h3 class="k">' + esc(tr('Files')) + '</h3><input class="atlas-file-query" type="search" aria-label="' + esc(tr('Find a captured file')) + '"><div class="atlas-file-list"></div></nav><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div><aside class="atlas-side"><section class="atlas-selection" hidden></section><section class="atlas-stats"><h3 class="k">' + esc(tr('Totals')) + '</h3><div class="stats">' + totals.map(function (stat) {
       var label = plural(stat[0], stat[2], stat[2] === 'file dependency' ? 'file dependencies' : null);
       return '<div class="stat" tabindex="0" role="img" aria-label="' + esc(label) + '" data-analysis-tip="' + esc(tr(stat[2] === 'file dependency' ? 'file dependencies' : stat[1])) + '">' + icon(stat[1]) + '<b>' + fmt(stat[0]) + '</b></div>';
     }).join('') + '</div></section><div class="atlas-side-content"></div></aside></div>';
   (standalone ? document.querySelector('.analysis-stage') : document.body).appendChild(panel);
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
+  var filePane = panel.querySelector('.atlas-files-pane'), fileQuery = panel.querySelector('.atlas-file-query'), fileList = panel.querySelector('.atlas-file-list');
+  var selectedFile = -1;
+  function renderFiles() {
+    var wanted = fileQuery.value.trim().toLowerCase();
+    fileList.innerHTML = F.map(function (file, index) {
+      if (wanted && file[0].toLowerCase().indexOf(wanted) < 0) return '';
+      return '<button type="button" data-file="' + index + '"' + (index === selectedFile ? ' aria-current="true"' : '') + '>' + esc(file[0]) + '</button>';
+    }).join('');
+  }
+  function fileMarkdown(index) {
+    var file = F[index];
+    var names = FN.filter(function (fn) { return fn[0] === index; }).map(function (fn) { return fn[1] + tr(" (line ") + fn[2] + ')'; });
+    return '# ' + file[0] + '\n\n' + tr("Module: ") + M[file[1]].label + '\n' + tr("Captured functions: ") + (names.join(', ') || tr("none")) + '\n\n' + tr("This export describes the captured file only. It does not modify source.");
+  }
+  panel.querySelector('.atlas-files').addEventListener('click', function () {
+    var open = filePane.hidden;
+    filePane.hidden = !open;
+    panel.querySelector('.atlas-files').setAttribute('aria-pressed', open ? 'true' : 'false');
+    if (open) { renderFiles(); fileQuery.focus(); }
+  });
+  fileQuery.addEventListener('input', renderFiles);
+  fileList.addEventListener('click', function (event) {
+    var button = event.target.closest('button[data-file]');
+    if (!button) return;
+    selectedFile = Number(button.dataset.file);
+    renderFiles();
+    renderSide();
+    if (window.matchMedia('(max-width: 860px)').matches) {
+      filePane.hidden = true;
+      panel.querySelector('.atlas-files').setAttribute('aria-pressed', 'false');
+    }
+  });
   canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 
   // ---- state ----
@@ -493,6 +525,11 @@
       }
       return '<div class="selected"><div class="selected-heading"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><h4>' + esc(findingTitle(f)) + '</h4>' + iconButton('evidence', tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view'), ' atlas-evidence', ' data-id="' + esc(f.id) + '"') + '</div><p>' + esc(what) + (f.accepted ? tr(" · accepted in baseline") : '') + '</p></div>';
     }
+    if (selectedFile !== -1) {
+      var picked = F[selectedFile];
+      var markdown = fileMarkdown(selectedFile);
+      return '<div class="selected"><h4>' + esc(picked[0]) + '</h4><p>' + esc(tr("Module ")) + esc(M[picked[1]].label) + esc(tr(" · evidence stays in the right panel")) + '</p><textarea class="atlas-file-markdown" readonly aria-label="' + esc(tr("Captured file Markdown")) + '">' + esc(markdown) + '</textarea><button type="button" class="atlas-file-download">' + esc(tr("Download .md")) + '</button></div>';
+    }
     if (state.focusModule !== -1) {
       var m = M[state.focusModule], files = F.filter(function (x) { return x[1] === state.focusModule; }).length;
       var fns = FN.filter(function (fn) { return F[fn[0]][1] === state.focusModule; });
@@ -504,6 +541,16 @@
     }
     return '';
   }
+  side.addEventListener('click', function (event) {
+    if (!event.target.classList.contains('atlas-file-download') || selectedFile === -1) return;
+    var markdown = fileMarkdown(selectedFile);
+    var blob = new Blob([markdown], { type: 'text/markdown' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = F[selectedFile][0].split('/').pop().replace(/\.[^.]+$/, '') + '.md';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
   function renderSide(view, openSelected) {
     view = view || sideView();
     var focus = document.activeElement, row = side.contains(focus) && ['data-finding', 'data-module'].find(function (name) { return focus.hasAttribute(name); });

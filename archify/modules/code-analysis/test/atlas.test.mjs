@@ -50,6 +50,16 @@ test('atlas: functions keep their measurements and reported ones point at their 
   assert.ok(atlas.functions.every((fn) => fn[6] === -1 || atlas.findings[fn[6]].kind === 'function'));
 });
 
+test('atlas: captured files stay behind Find file and export from the right panel', (t) => {
+  const { atlas } = analyze(t);
+  const client = fs.readFileSync(new URL('../overlay/client/atlas.js', import.meta.url), 'utf8');
+  assert.match(client, /class="atlas-files-pane" hidden/);
+  assert.match(client, /Find file/);
+  const first = atlas.files[0];
+  const markdown = `# ${first[0]}\n\nModule: ${atlas.modules[first[1]].label}`;
+  assert.match(markdown, new RegExp(first[0].replaceAll('/', '\\/')));
+});
+
 test('atlas: cycles, module cycles and boundary imports select the files and modules they name', (t) => {
   const { findings, atlas } = analyze(t);
   const paths = atlas.files.map((f) => f[0]);
