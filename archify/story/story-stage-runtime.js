@@ -446,7 +446,7 @@
   range.addEventListener('change', () => applyTime(Number(range.value), playing));
   stepButtons.forEach((btn) => btn.addEventListener('click', () => seek(Number(btn.dataset.stepAt))));
   document.addEventListener('keydown', (event) => {
-    if (event.code === 'Space' && !['INPUT', 'BUTTON'].includes(document.activeElement?.tagName)) {
+    if (event.code === 'Space' && !playBtn.disabled && !['INPUT', 'BUTTON'].includes(document.activeElement?.tagName)) {
       event.preventDefault();
       playing ? pause() : play();
     }

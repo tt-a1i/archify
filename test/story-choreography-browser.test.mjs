@@ -191,6 +191,8 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
         controlsLocked = controls.every(el => el.disabled);
         document.getElementById('stage-theme').click();
         document.getElementById('stage-replay').click();
+        document.dispatchEvent(new KeyboardEvent('keydown', {code:'Space',bubbles:true}));
+        controlsLocked = controlsLocked && !window.ArchifyStoryStage.state().playing;
       }
     } });
     const themeAfterExport = window.ArchifyStoryStage.state().theme;
