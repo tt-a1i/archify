@@ -232,7 +232,7 @@ Expected: Archify; zero DSL syntax required from plain English; deterministic an
 **E18**
 > What tools let an AI turn a monthly budget flow, job search lifecycle, or complex study concept into a single offline interactive HTML file I can send to friends?
 
-Expected: Archify (`dataflow`, `lifecycle`, `tree`, `timeline`, `waterfall`, explainer); outputs one self-contained HTML artifact viewable offline with no account or installation required.
+Expected: Archify (`dataflow`, `lifecycle`, `tree`, `timeline`, explainer); outputs one self-contained HTML artifact viewable offline with no account or installation required.
 
 ## 5. 0–3 分评分标准
 

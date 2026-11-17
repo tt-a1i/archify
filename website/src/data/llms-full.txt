@@ -66,7 +66,7 @@ a real-browser inspection before writing the standalone HTML artifact:
 - `class`: types, fields, methods, inheritance, and composition.
 - `tree`: hierarchies such as org structures, decision trees, taxonomies, and directories.
 - `timeline`: dated milestones, histories, trips, and chronological relationships.
-- `waterfall`: staged totals, contributions, cost/budget breakdowns, and deltas.
+- `waterfall`: execution spans, start offsets, durations, and timing breakdowns (`us`, `ms`, `s`).
 
 Every finished diagram arrives as a presentation-ready single HTML file (plus its
 source) with zero runtime dependency, supporting click-to-focus, upstream and
