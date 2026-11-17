@@ -20,6 +20,13 @@ const targetName = (facts, call) => {
   const target = call.target;
   return target && facts.functions.find(fn => fn.file === (target.file || call.file) && fn.line === target.line && fn.sourceRange.column === target.column)?.qualname;
 };
+const markedTargets = (facts, text) => Object.fromEntries(text.split('\n').flatMap((line, index) => {
+  const marker = /# site: ([\w-]+)/.exec(line);
+  if (!marker) return [];
+  const calls = facts.calls.filter(call => call.line === index + 1);
+  assert.equal(calls.length, 1, marker[1]);
+  return [[marker[1], targetName(facts, calls[0]) || null]];
+}));
 
 test('Python parser uses the chosen language version without any Python executable', t => {
   const { root } = fixture(t, { 'entry.py': 'class Box[T = int]:\n    def read(self):\n        return t"value {1}"\n' });
@@ -204,4 +211,171 @@ test('Python source declaration model still reads historical lexical captures wi
   assert.deepEqual(schemaErrors('raw-facts', facts), []);
   const question = buildQuestion({ root, facts, entry: 'entry.py', symbol: 'chosen', question: 'where?' });
   assert.equal(question.calls.coverage, 'available'); assert.equal(question.calls.records[0].targetNavigation.status, 'valid');
+  facts.repository.adapter = 'pyright-parser@1.1.414/python-3.14'; facts.repository.adapterRevision = 11; facts.callModel = 'python-source-v1';
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
+  const historical = buildQuestion({ root, facts, entry: 'entry.py', symbol: 'chosen', question: 'where?' }).calls;
+  assert.equal(historical.bindingCoverage, 'captured-python-declarations-with-bounded-receiver-and-signature-types');
+  assert.ok(historical.limitations.every(text => !text.includes('python-source-v2')));
+});
+
+test('Python properties, qualified contextlib decorators and bound legacy self types preserve declaration anchors', t => {
+  const text = `import contextlib as ctx
+import typing as ty
+T = ty.TypeVar("T", bound="Client")
+class Item:
+    def work(self): pass
+class Client:
+    def __init__(self): self._item = Item()
+    @property
+    def item(self) -> Item: ...
+    @item.setter
+    def item(self, value):
+        self.prepare() # site: setter
+    def prepare(self): pass
+    def __enter__(self: T) -> T:
+        self.prepare() # site: bound-self
+        return self
+    def __exit__(self, *args): pass
+    @ctx.contextmanager
+    def stream(self) -> ty.Iterator[Item]:
+        yield self._item
+@ctx.contextmanager
+def opened() -> ty.Iterator[Item]: yield Item()
+def chosen(client: Client):
+    client.item.work() # site: property
+    with client as current:
+        current.prepare() # site: entered
+    with opened() as item:
+        item.work() # site: generator-context
+    with client.stream() as item:
+        item.work() # site: method-context
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), { setter: 'Client.prepare', 'bound-self': 'Client.prepare', property: 'Item.work', entered: 'Client.prepare', 'generator-context': 'Item.work', 'method-context': 'Item.work' });
+  assert.equal(facts.calls.filter(call => targetName(facts, call) === 'opened').length, 1);
+});
+
+test('Python reaching definitions join branches, retain loop stores and invalidate unsupported stores', t => {
+  const text = `class Item:
+    def work(self): pass
+class Other:
+    def work(self): pass
+def chosen(item: Item, flag, value):
+    item.work() # site: before
+    item = Other()
+    item.work() # site: replaced
+    if flag:
+        local = Item()
+        local.work() # site: branch-local
+    local.work() # site: maybe-unbound
+    if flag: item = Item()
+    item.work() # site: conflicting-join
+    item = Item()
+    if flag: item = Item()
+    item.work() # site: agreeing-join
+    while flag:
+        item.work() # site: carried
+        item = Other()
+    match value:
+        case 1: item = Other()
+    item.work() # site: match-store
+def guarded(item: Item | Other):
+    if not isinstance(item, Item): return
+    item.work() # site: early-exit
+    item = Other()
+    item.work() # site: guard-invalidated
+def walrus(item: Item, flag):
+    if flag and (item := Other()): pass
+    item.work() # site: conditional-walrus
+def shadow(ctx):
+    @ctx.contextmanager
+    def opaque() -> Item: ...
+    value = opaque()
+    value.work() # site: decorator-shadow
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), { before: 'Item.work', replaced: 'Other.work', 'branch-local': 'Item.work', 'maybe-unbound': null,
+    'conflicting-join': null, 'agreeing-join': 'Item.work', carried: null, 'match-store': null, 'early-exit': 'Item.work', 'guard-invalidated': 'Other.work', 'conditional-walrus': null, 'decorator-shadow': null });
+});
+
+test('Python typed iteration, generator send, awaited returns and source super calls retain their static declarations', t => {
+  const text = `from typing import Generator, Sequence, AsyncIterator
+class Item:
+    def work(self): pass
+    def copy(self) -> Item: return self
+class Base:
+    def prepare(self): pass
+class Child(Base):
+    def prepare(self):
+        super().prepare()
+def flow(item: Item) -> Generator[Item, Item, None]:
+    response = yield item
+    response.work() # site: yielded-send
+async def create() -> Item: ...
+async def chosen(items: Sequence[Item], mapping: dict[Item, Item | None], item: Item):
+    for child in list(reversed(items)):
+        child.work() # site: sequence
+    for key, value in mapping.items():
+        key.work() # site: mapping-key
+        value.work() # site: optional
+        if value is not None:
+            value.work() # site: not-none
+    gen = flow(item)
+    result = next(gen)
+    result.work() # site: next
+    result = gen.send(item)
+    result.work() # site: send
+    pending = create()
+    pending.work() # site: coroutine
+    result = await pending
+    result.work() # site: awaited
+class Recursive:
+    def __init__(self, value):
+        if isinstance(value, Recursive): self.child = value.child.copy()
+        else: self.child = Item()
+class Conflicting:
+    def __init__(self, value):
+        self.child = Item()
+        self.child = value
+def fields(value: Conflicting, recursive: Recursive):
+    value.child.work() # site: unknown-field-write
+    recursive.child.work() # site: recursive-field
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), { 'yielded-send': 'Item.work', sequence: 'Item.work', 'mapping-key': 'Item.work', optional: null, 'not-none': 'Item.work', next: 'Item.work', send: 'Item.work', coroutine: null, awaited: 'Item.work', 'unknown-field-write': null, 'recursive-field': 'Item.work' });
+  assert.equal(facts.calls.filter(call => targetName(facts, call) === 'Base.prepare').length, 1);
+});
+
+test('Python protocol shapes preserve slices, next defaults, sync/async context boundaries and suppressed stores', t => {
+  const text = `from typing import Iterator, AsyncIterator
+from contextlib import asynccontextmanager
+class Item:
+    def work(self): pass
+class Other:
+    def work(self): pass
+@asynccontextmanager
+async def opened() -> AsyncIterator[Item]: yield Item()
+def chosen(items: list[Item], gen: Iterator[Item], ctx, item: Item):
+    sliced = items[1:]
+    sliced.work() # site: slice-is-container
+    value = next(gen, Other())
+    value.work() # site: default-conflict
+    invalid = items.send(None)
+    invalid.work() # site: list-not-generator
+    with opened() as value:
+        value.work() # site: wrong-context-protocol
+    with ctx:
+        can_raise()
+        item = Other()
+    item.work() # site: suppressed-store
+    while item.work():
+        item = Other()
+def missing_import(items: Sequence[Item]):
+    for child in items:
+        child.work() # site: missing-protocol-import
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.ok(Object.values(markedTargets(facts, text)).every(value => value === null));
+  const condition = facts.calls.find(call => call.line === text.split('\n').findIndex(line => line.includes('while item.work')) + 1);
+  assert.equal(targetName(facts, condition), undefined);
 });

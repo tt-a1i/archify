@@ -1,0 +1,940 @@
+{
+  "purpose": "Source-reviewed static function/method declaration oracle, frozen before either analyzer output is read; not runtime dispatch or a human audit.",
+  "projectCommit": "26d48e0634e6ee9cdc0533996db289ce4b430177",
+  "sampleSha256": "4091a416add33537364090c58596353abd0b71d1f506f80d7c64cfe4d4036d9c",
+  "recordedAt": "2026-11-17T12:30:12.155522+00:00",
+  "engineOutputsRead": false,
+  "constructorPolicy": "Constructors are a separate navigation category; do not score a class or __init__ anchor as an ordinary-function false positive.",
+  "cases": [
+    {
+      "index": 0,
+      "id": "httpx/__init__.py:104:11:104:34",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "__all__ holds strings; startswith is a str method."
+    },
+    {
+      "index": 1,
+      "id": "httpx/_auth.py:271:17:271:75",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_auth.py",
+          "name": "_get_client_nonce",
+          "qualname": "DigestAuth._get_client_nonce",
+          "line": 303,
+          "column": 5,
+          "endLine": 309,
+          "endColumn": 57
+        }
+      ],
+      "reason": "Direct same-class method; the receiver is DigestAuth in _build_auth_header."
+    },
+    {
+      "index": 2,
+      "id": "httpx/_auth.py:337:18:337:87",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "builtin NotImplementedError; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 3,
+      "id": "httpx/_client.py:80:11:80:53",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "get is a method on the literal dict, outside captured HTTPX functions."
+    },
+    {
+      "index": 4,
+      "id": "httpx/_client.py:121:20:121:45",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "SUPPORTED_DECODERS is a dict; keys is a mapping method."
+    },
+    {
+      "index": 5,
+      "id": "httpx/_client.py:206:54:206:67",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured URL class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 6,
+      "id": "httpx/_client.py:338:23:338:42",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured QueryParams class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 7,
+      "id": "httpx/_client.py:369:17:369:48",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "_merge_queryparams",
+          "qualname": "BaseClient._merge_queryparams",
+          "line": 433,
+          "column": 5,
+          "endLine": 443,
+          "endColumn": 22
+        }
+      ],
+      "reason": "Direct BaseClient method used by build_request."
+    },
+    {
+      "index": 8,
+      "id": "httpx/_client.py:410:19:410:67",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_urls.py",
+          "name": "copy_with",
+          "qualname": "URL.copy_with",
+          "line": 327,
+          "column": 5,
+          "endLine": 340,
+          "endColumn": 35
+        }
+      ],
+      "reason": "BaseClient.base_url getter explicitly returns URL; URL defines copy_with."
+    },
+    {
+      "index": 9,
+      "id": "httpx/_client.py:419:29:419:50",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured Cookies class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 10,
+      "id": "httpx/_client.py:429:25:429:46",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured Headers class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 11,
+      "id": "httpx/_client.py:480:17:480:57",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "_redirect_method",
+          "qualname": "BaseClient._redirect_method",
+          "line": 494,
+          "column": 5,
+          "endLine": 515,
+          "endColumn": 22
+        }
+      ],
+      "reason": "Direct BaseClient method used by _build_redirect_request."
+    },
+    {
+      "index": 12,
+      "id": "httpx/_client.py:481:14:481:51",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "_redirect_url",
+          "qualname": "BaseClient._redirect_url",
+          "line": 517,
+          "column": 5,
+          "endLine": 544,
+          "endColumn": 19
+        }
+      ],
+      "reason": "Direct BaseClient method used by _build_redirect_request."
+    },
+    {
+      "index": 13,
+      "id": "httpx/_client.py:483:17:483:55",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "_redirect_stream",
+          "qualname": "BaseClient._redirect_stream",
+          "line": 573,
+          "column": 5,
+          "endLine": 582,
+          "endColumn": 30
+        }
+      ],
+      "reason": "Direct BaseClient method used by _build_redirect_request."
+    },
+    {
+      "index": 14,
+      "id": "httpx/_client.py:589:21:589:42",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured Timeout class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 15,
+      "id": "httpx/_client.py:680:22:683:17",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "builtin ImportError; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 16,
+      "id": "httpx/_client.py:731:15:738:9",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured HTTPTransport class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 17,
+      "id": "httpx/_client.py:855:18:867:9",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "build_request",
+          "qualname": "BaseClient.build_request",
+          "line": 340,
+          "column": 5,
+          "endLine": 389,
+          "endColumn": 10
+        }
+      ],
+      "reason": "Client inherits BaseClient.build_request without an override; stream uses the same declaration anchor."
+    },
+    {
+      "index": 18,
+      "id": "httpx/_client.py:868:19:873:9",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "send",
+          "qualname": "Client.send",
+          "line": 879,
+          "column": 5,
+          "endLine": 928,
+          "endColumn": 22
+        }
+      ],
+      "reason": "Client.stream calls its own send method. contextmanager wrapping does not change the original source declaration anchor."
+    },
+    {
+      "index": 19,
+      "id": "httpx/_client.py:910:8:910:34",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "_set_timeout",
+          "qualname": "BaseClient._set_timeout",
+          "line": 584,
+          "column": 5,
+          "endLine": 591,
+          "endColumn": 87
+        }
+      ],
+      "reason": "Client inherits _set_timeout from BaseClient."
+    },
+    {
+      "index": 20,
+      "id": "httpx/_client.py:953:39:953:52",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "builtin list type; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 21,
+      "id": "httpx/_client.py:1019:26:1021:9",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured BoundSyncStream class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 22,
+      "id": "httpx/_client.py:1144:15:1158:9",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "request",
+          "qualname": "Client.request",
+          "line": 771,
+          "column": 5,
+          "endLine": 825,
+          "endColumn": 80
+        }
+      ],
+      "reason": "Client.post forwards to Client.request."
+    },
+    {
+      "index": 23,
+      "id": "httpx/_client.py:1400:20:1400:65",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "_get_proxy_map",
+          "qualname": "BaseClient._get_proxy_map",
+          "line": 239,
+          "column": 5,
+          "endLine": 251,
+          "endColumn": 37
+        }
+      ],
+      "reason": "AsyncClient inherits this method from BaseClient."
+    },
+    {
+      "index": 24,
+      "id": "httpx/_client.py:1527:18:1539:9",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "build_request",
+          "qualname": "BaseClient.build_request",
+          "line": 340,
+          "column": 5,
+          "endLine": 389,
+          "endColumn": 10
+        }
+      ],
+      "reason": "AsyncClient inherits this method from BaseClient."
+    },
+    {
+      "index": 25,
+      "id": "httpx/_client.py:1540:21:1540:85",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "send",
+          "qualname": "AsyncClient.send",
+          "line": 1594,
+          "column": 5,
+          "endLine": 1643,
+          "endColumn": 22
+        }
+      ],
+      "reason": "AsyncClient.request calls its own async send declaration."
+    },
+    {
+      "index": 26,
+      "id": "httpx/_client.py:1625:8:1625:34",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "_set_timeout",
+          "qualname": "BaseClient._set_timeout",
+          "line": 584,
+          "column": 5,
+          "endLine": 591,
+          "endColumn": 87
+        }
+      ],
+      "reason": "AsyncClient inherits this method from BaseClient."
+    },
+    {
+      "index": 27,
+      "id": "httpx/_client.py:1627:15:1627:54",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_client.py",
+          "name": "_build_request_auth",
+          "qualname": "BaseClient._build_request_auth",
+          "line": 457,
+          "column": 5,
+          "endLine": 473,
+          "endColumn": 22
+        }
+      ],
+      "reason": "AsyncClient inherits this method from BaseClient."
+    },
+    {
+      "index": 28,
+      "id": "httpx/_client.py:2002:14:2002:42",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_transports/base.py",
+          "name": "__aenter__",
+          "qualname": "AsyncBaseTransport.__aenter__",
+          "line": 66,
+          "column": 5,
+          "endLine": 67,
+          "endColumn": 20
+        }
+      ],
+      "reason": "AsyncClient._init_transport returns AsyncBaseTransport and initializes self._transport. This is the declared interface anchor, not a concrete runtime dispatch claim; self:U is bound to AsyncClient."
+    },
+    {
+      "index": 29,
+      "id": "httpx/_config.py:37:18:37:79",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "ssl.create_default_context is an imported standard-library function."
+    },
+    {
+      "index": 30,
+      "id": "httpx/_config.py:210:14:210:22",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured URL class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 31,
+      "id": "httpx/_content.py:114:24:114:40",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured ByteStream class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 32,
+      "id": "httpx/_content.py:169:11:169:31",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "html is annotated str; encode is a builtin str method."
+    },
+    {
+      "index": 33,
+      "id": "httpx/_decoders.py:143:32:143:40",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "builtin str type; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 34,
+      "id": "httpx/_decoders.py:177:28:177:72",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "decompressobj is an optional zstandard dependency method, not an HTTPX declaration."
+    },
+    {
+      "index": 35,
+      "id": "httpx/_decoders.py:393:4:393:34",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "SUPPORTED_DECODERS is a dict; pop is a mapping method."
+    },
+    {
+      "index": 36,
+      "id": "httpx/_main.py:29:4:29:62",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "console is rich.console.Console; print is an external method."
+    },
+    {
+      "index": 37,
+      "id": "httpx/_main.py:152:13:152:78",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "external rich.syntax.Syntax class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 38,
+      "id": "httpx/_main.py:196:22:196:34",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "cert is a standard-library certificate mapping alias; items is a dict method."
+    },
+    {
+      "index": 39,
+      "id": "httpx/_main.py:253:4:253:19",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "console is rich.console.Console; print is an external method."
+    },
+    {
+      "index": 40,
+      "id": "httpx/_main.py:325:1:332:1",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "click.option is an external decorator factory."
+    },
+    {
+      "index": 41,
+      "id": "httpx/_main.py:495:20:495:57",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_main.py",
+          "name": "download_response",
+          "qualname": "download_response",
+          "line": 251,
+          "column": 1,
+          "endLine": 270,
+          "endColumn": 84
+        }
+      ],
+      "reason": "Direct unique module-level function; main calls it when download is set."
+    },
+    {
+      "index": 42,
+      "id": "httpx/_models.py:276:19:276:33",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_models.py",
+          "name": "keys",
+          "qualname": "Headers.keys",
+          "line": 202,
+          "column": 5,
+          "endLine": 203,
+          "endColumn": 88
+        }
+      ],
+      "reason": "Headers.update reassigns its local headers to Headers(headers), whose class defines keys."
+    },
+    {
+      "index": 43,
+      "id": "httpx/_models.py:351:20:351:31",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_models.py",
+          "name": "keys",
+          "qualname": "Headers.keys",
+          "line": 202,
+          "column": 5,
+          "endLine": 203,
+          "endColumn": 88
+        }
+      ],
+      "reason": "Direct Headers method called by Headers.__iter__."
+    },
+    {
+      "index": 44,
+      "id": "httpx/_models.py:510:12:510:38",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "setattr is a builtin."
+    },
+    {
+      "index": 45,
+      "id": "httpx/_models.py:669:21:669:46",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "hasattr is a builtin."
+    },
+    {
+      "index": 46,
+      "id": "httpx/_models.py:682:11:682:33",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "hasattr is a builtin."
+    },
+    {
+      "index": 47,
+      "id": "httpx/_models.py:837:28:837:37",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured Cookies class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 48,
+      "id": "httpx/_models.py:913:18:913:64",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured TextDecoder class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 49,
+      "id": "httpx/_models.py:979:61:979:79",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_models.py",
+          "name": "aiter_bytes",
+          "qualname": "Response.aiter_bytes",
+          "line": 982,
+          "column": 5,
+          "endLine": 1005,
+          "endColumn": 32
+        }
+      ],
+      "reason": "Direct Response async-iterator method used by aread."
+    },
+    {
+      "index": 50,
+      "id": "httpx/_models.py:1031:30:1031:47",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_models.py",
+          "name": "aiter_text",
+          "qualname": "Response.aiter_text",
+          "line": 1007,
+          "column": 5,
+          "endLine": 1026,
+          "endColumn": 28
+        }
+      ],
+      "reason": "Direct Response async-iterator method used by aiter_lines."
+    },
+    {
+      "index": 51,
+      "id": "httpx/_models.py:1063:14:1063:27",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_models.py",
+          "name": "aclose",
+          "qualname": "Response.aclose",
+          "line": 1065,
+          "column": 5,
+          "endLine": 1076,
+          "endColumn": 43
+        }
+      ],
+      "reason": "Direct Response async close method used by aiter_raw."
+    },
+    {
+      "index": 52,
+      "id": "httpx/_models.py:1086:23:1086:34",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "stdlib http.cookiejar.CookieJar class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 53,
+      "id": "httpx/_models.py:1105:26:1105:62",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured nested Cookies._CookieCompatResponse class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 54,
+      "id": "httpx/_models.py:1258:12:1258:19",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "builtin super proxy; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 55,
+      "id": "httpx/_multipart.py:29:15:29:27",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "re.escape is a standard-library function."
+    },
+    {
+      "index": 56,
+      "id": "httpx/_multipart.py:65:15:65:63",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "content_type is bytes; split/strip/lower retain bytes and startswith is builtin."
+    },
+    {
+      "index": 57,
+      "id": "httpx/_multipart.py:107:15:107:33",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_multipart.py",
+          "name": "render_data",
+          "qualname": "DataField.render_data",
+          "line": 99,
+          "column": 5,
+          "endLine": 103,
+          "endColumn": 26
+        }
+      ],
+      "reason": "Direct DataField method called by get_length."
+    },
+    {
+      "index": 58,
+      "id": "httpx/_multipart.py:112:14:112:32",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_multipart.py",
+          "name": "render_data",
+          "qualname": "DataField.render_data",
+          "line": 99,
+          "column": 5,
+          "endLine": 103,
+          "endColumn": 26
+        }
+      ],
+      "reason": "Direct DataField method called by render."
+    },
+    {
+      "index": 59,
+      "id": "httpx/_multipart.py:172:18:172:39",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_multipart.py",
+          "name": "render_headers",
+          "qualname": "FileField.render_headers",
+          "line": 186,
+          "column": 5,
+          "endLine": 201,
+          "endColumn": 29
+        }
+      ],
+      "reason": "Direct FileField method called by get_length."
+    },
+    {
+      "index": 60,
+      "id": "httpx/_multipart.py:295:21:295:39",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_multipart.py",
+          "name": "iter_chunks",
+          "qualname": "MultipartStream.iter_chunks",
+          "line": 258,
+          "column": 5,
+          "endLine": 263,
+          "endColumn": 44
+        }
+      ],
+      "reason": "Direct MultipartStream method called by __iter__."
+    },
+    {
+      "index": 61,
+      "id": "httpx/_transports/asgi.py:175:12:175:35",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "create_event returns asyncio.Event or trio.Event; set belongs to those external classes."
+    },
+    {
+      "index": 62,
+      "id": "httpx/_transports/default.py:105:32:105:56",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "HTTPCORE_EXC_MAP is a dict; items is a mapping method."
+    },
+    {
+      "index": 63,
+      "id": "httpx/_transports/default.py:227:13:227:38",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_transports/default.py",
+          "name": "map_httpcore_exceptions",
+          "qualname": "map_httpcore_exceptions",
+          "line": 96,
+          "column": 1,
+          "endLine": 118,
+          "endColumn": 43
+        }
+      ],
+      "reason": "Direct source function wrapped by contextlib.contextmanager; the wrapper leaves the original definition as a valid declaration-navigation anchor."
+    },
+    {
+      "index": 64,
+      "id": "httpx/_transports/default.py:237:14:248:9",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "httpcore.Request belongs to an external dependency."
+    },
+    {
+      "index": 65,
+      "id": "httpx/_transports/default.py:275:11:275:51",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "hasattr is a builtin."
+    },
+    {
+      "index": 66,
+      "id": "httpx/_transports/mock.py:24:19:24:40",
+      "stratum": "self-method",
+      "category": "dynamic-callable",
+      "targets": [],
+      "reason": "MockTransport.handler is assigned the supplied SyncHandler/AsyncHandler callback in __init__; no unique implementation is determined from this declaration."
+    },
+    {
+      "index": 67,
+      "id": "httpx/_transports/mock.py:25:15:25:45",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "isinstance is a builtin."
+    },
+    {
+      "index": 68,
+      "id": "httpx/_transports/wsgi.py:107:28:107:61",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "Request.url.query returns bytes; decode is builtin."
+    },
+    {
+      "index": 69,
+      "id": "httpx/_urlparse.py:43:12:45:1",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "join is a method on a str literal."
+    },
+    {
+      "index": 70,
+      "id": "httpx/_urlparse.py:89:16:98:1",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "join is a method on a str literal."
+    },
+    {
+      "index": 71,
+      "id": "httpx/_urlparse.py:246:19:246:78",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_urlparse.py",
+          "name": "quote",
+          "qualname": "quote",
+          "line": 497,
+          "column": 1,
+          "endLine": 527,
+          "endColumn": 26
+        }
+      ],
+      "reason": "This is the local URL encoder quote at line 497, not urllib.parse.quote."
+    },
+    {
+      "index": 72,
+      "id": "httpx/_urlparse.py:298:13:298:53",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "kwargs is a dict; get is a mapping method."
+    },
+    {
+      "index": 73,
+      "id": "httpx/_urlparse.py:390:15:390:56",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "idna.encode returns bytes; the selected outer decode is builtin."
+    },
+    {
+      "index": 74,
+      "id": "httpx/_urls.py:255:15:255:28",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "unquote is imported from urllib.parse at _urls.py line 4; it is not the different _utils.unquote helper."
+    },
+    {
+      "index": 75,
+      "id": "httpx/_urls.py:369:20:369:29",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "str is a builtin type conversion."
+    },
+    {
+      "index": 76,
+      "id": "httpx/_urls.py:596:12:596:31",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "captured QueryParams class; class/constructor navigation is recorded separately from ordinary function/method navigation."
+    },
+    {
+      "index": 77,
+      "id": "httpx/_urls.py:610:15:610:30",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "len is a builtin."
+    },
+    {
+      "index": 78,
+      "id": "httpx/_urls.py:621:22:621:40",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "httpx/_urls.py",
+          "name": "multi_items",
+          "qualname": "QueryParams.multi_items",
+          "line": 498,
+          "column": 5,
+          "endLine": 510,
+          "endColumn": 27
+        }
+      ],
+      "reason": "Direct QueryParams method used by __eq__."
+    },
+    {
+      "index": 79,
+      "id": "httpx/_utils.py:88:20:88:50",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "isinstance is a builtin."
+    }
+  ]
+}

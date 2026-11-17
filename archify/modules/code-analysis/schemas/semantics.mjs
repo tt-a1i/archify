@@ -55,6 +55,7 @@ function callModelVersions(data) {
     if (data.callModel === `${prefix}-v${version}`) versions[language] = version;
   }
   if (language === 'py' && data.callModel === 'python-source-v1') versions.py = 3;
+  if (language === 'py' && data.callModel === 'python-source-v2') versions.py = 4;
   return versions;
 }
 

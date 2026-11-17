@@ -1,0 +1,426 @@
+{
+  "project": "encode/httpx",
+  "version": "0.28.1",
+  "commit": "26d48e0634e6ee9cdc0533996db289ce4b430177",
+  "license": "BSD-3-Clause",
+  "sourceUrl": "https://github.com/encode/httpx/tree/26d48e0634e6ee9cdc0533996db289ce4b430177",
+  "candidate": {
+    "parent": "3b7f5bd57181c2a343976a692a81f3b45635d779",
+    "adapterRevision": 12,
+    "callModel": "python-source-v2",
+    "analyzerSha256": "19a7eeb28dd05c9c8f93b1c028e9141ca784cdf423e9f278c845bd76a5226697",
+    "node": "v22.23.2",
+    "referenceReusedSha256": "ce941011b0b484be8e1d87d38bd569b0e5aa9f07d36b2ec51c7c63d3b2e04431"
+  },
+  "reference": {
+    "version": "1.1.414",
+    "pythonVersion": "3.14",
+    "platform": "All",
+    "inputs": [
+      {
+        "file": "httpx/__init__.py",
+        "sha256": "0ac6997bac998f4ac783adf6d8058a587193315afdb718047c3e4fdff46bcfad"
+      },
+      {
+        "file": "httpx/__version__.py",
+        "sha256": "2e853261e3974e2786cee3ffeb850bd30c5db718eebbf41b3af13b34e83e22a5"
+      },
+      {
+        "file": "httpx/_api.py",
+        "sha256": "aff660b388c8a5c3c92ea2b975b6d26b2aa8fe254c2856b164277ea0e1f12c4b"
+      },
+      {
+        "file": "httpx/_auth.py",
+        "sha256": "62bdd0c1a5122b5eeb198c7eee3f85762705233cf863d14557ed45e3eed15d7e"
+      },
+      {
+        "file": "httpx/_client.py",
+        "sha256": "c43f941baefe58c91e96d00039e1868fe719d91453026d7db1647194563bff8d"
+      },
+      {
+        "file": "httpx/_config.py",
+        "sha256": "a4fa7653ec2271f70ab05f8a6111352d876dddee84446788a1767c1a3a372d67"
+      },
+      {
+        "file": "httpx/_content.py",
+        "sha256": "2c61b3ac94d1dcebcde0c6f519554d2d7917247fbaa0a97002db4ef69e70ff28"
+      },
+      {
+        "file": "httpx/_decoders.py",
+        "sha256": "a74757f08d0d1077b1b37506a784ac66eb62321b17aeb5a5ebe1a7a956f488a3"
+      },
+      {
+        "file": "httpx/_exceptions.py",
+        "sha256": "6f15bb7f1ce054c01d3536f04f4567ab4e202435b5fe023f1858903ee3328cbd"
+      },
+      {
+        "file": "httpx/_main.py",
+        "sha256": "0a0f4631a6e24d3fecc1a0df5202118ad4b0c4b44c4b05033a6ecb7521aa940e"
+      },
+      {
+        "file": "httpx/_models.py",
+        "sha256": "e3ffc6bb2bf580bc6e6428708a6f247d036220e709f5a72b785392babbd97e6b"
+      },
+      {
+        "file": "httpx/_multipart.py",
+        "sha256": "28e1c465997aa28860f663da2b2caedf8e6aab5ac92e0df94d41b7600cd70776"
+      },
+      {
+        "file": "httpx/_status_codes.py",
+        "sha256": "0d89fedae7c180c797cb9b3cc77fd307bc2302e00031ec136a43eb9b9ad712c7"
+      },
+      {
+        "file": "httpx/_transports/__init__.py",
+        "sha256": "19b52805200ea7bcfe97ef63e5884c851dc3308727e8554b863d3bd8edcd9e7a"
+      },
+      {
+        "file": "httpx/_transports/asgi.py",
+        "sha256": "1d17e20d830fb78c101f6805807660e1cfa2dec6e5a3a6cbe464ea7044fec73f"
+      },
+      {
+        "file": "httpx/_transports/base.py",
+        "sha256": "9194bf54c6d58987c5e7bd29a205022756ee973fb26df2f9d4faacf7292d79b5"
+      },
+      {
+        "file": "httpx/_transports/default.py",
+        "sha256": "03379a454c95c0271c4f2c8d25ec437f49f57457f3cf2769748420bf0ecf2e79"
+      },
+      {
+        "file": "httpx/_transports/mock.py",
+        "sha256": "3d3a34779ebb4484d7c46ae48ba90deffebbc300317f088c0dcb972626428c4a"
+      },
+      {
+        "file": "httpx/_transports/wsgi.py",
+        "sha256": "35c3d7dd76a9fc4c0215958efce692c9036e227098c7540c35b3bc1807a2ea36"
+      },
+      {
+        "file": "httpx/_types.py",
+        "sha256": "272878d4642aec039ebfc20e58a0c083bcc26ef1c07ee7e65b983f3e24ed12b6"
+      },
+      {
+        "file": "httpx/_urlparse.py",
+        "sha256": "640987e3b38d7e4c6bae3f8f3d88467a21e36fa0232824be00d58837838bfca6"
+      },
+      {
+        "file": "httpx/_urls.py",
+        "sha256": "757f7d551d4348e1e9828f40abb3f360ee0529dc6a2a3c32369f20adff1d1cdd"
+      },
+      {
+        "file": "httpx/_utils.py",
+        "sha256": "fd355ea802afc4990a1ddcfb74579be2cd0b66a41781e1645d281f88704aff5a"
+      },
+      {
+        "file": "pyrightconfig.json",
+        "sha256": "02cd2d129b1e9501fc84e1e2c34b095ea16ed94e5998f0036e4fa9ee8124879e"
+      }
+    ],
+    "environment": {
+      "requirements": [
+        "anyio==4.9.0",
+        "certifi==2025.1.31",
+        "h11==0.16.0",
+        "httpcore==1.0.9",
+        "idna==3.10",
+        "sniffio==1.3.1",
+        "typing_extensions==4.12.2"
+      ],
+      "lockSha256": "3697058f8a859ca89b4db6489bba1e9576f41f0de8af1ddcd7f6dd786cae5f6c",
+      "optionalExtrasInstalled": false
+    }
+  },
+  "sampling": {
+    "seed": "archify-httpx-0.28.1-correctness-holdout-v1",
+    "uniform": 60,
+    "additionalSelfMethod": 20,
+    "oracleFrozenBeforeEitherEngine": true,
+    "oracleInspector": "Codex; not an independent human audit",
+    "sampleSha256": "4091a416add33537364090c58596353abd0b71d1f506f80d7c64cfe4d4036d9c",
+    "oracleSha256": "a8605685961c1b2bb5a0a31d950e682de201346f2d6ee791abcec1d6e170a789"
+  },
+  "firstHoldoutRun": {
+    "analyzerSha256": "3083bf67e094c545a367b201234156d1ad9f6c0a00940e96885a0024a4a295a1",
+    "allSites": {
+      "archifySelected": 265,
+      "pyrightCapturedFunctionCandidates": 361,
+      "pyrightUnique": 358,
+      "pyrightMultiple": 3,
+      "archifyAgreeWithReference": 265,
+      "disagreements": [],
+      "referenceOnly": 96,
+      "ownOnly": 0
+    },
+    "sample": {
+      "total": 80,
+      "constructorsSeparate": 20,
+      "archify": {
+        "eligible": 60,
+        "uniqueExpected": 29,
+        "exactCorrect": 25,
+        "unresolvedPositives": 4,
+        "wrongSites": 0,
+        "selectedSites": 25,
+        "precision": 1,
+        "recall": 0.8620689655172413
+      },
+      "pyright": {
+        "eligible": 60,
+        "uniqueExpected": 29,
+        "exactCorrect": 29,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 29,
+        "precision": 1,
+        "recall": 1
+      },
+      "uniform": {
+        "total": 60,
+        "archify": {
+          "eligible": 40,
+          "uniqueExpected": 10,
+          "exactCorrect": 6,
+          "unresolvedPositives": 4,
+          "wrongSites": 0,
+          "selectedSites": 6,
+          "precision": 1,
+          "recall": 0.6
+        },
+        "pyright": {
+          "eligible": 40,
+          "uniqueExpected": 10,
+          "exactCorrect": 10,
+          "unresolvedPositives": 0,
+          "wrongSites": 0,
+          "selectedSites": 10,
+          "precision": 1,
+          "recall": 1
+        }
+      },
+      "selfMethod": {
+        "total": 20,
+        "archify": {
+          "eligible": 20,
+          "uniqueExpected": 19,
+          "exactCorrect": 19,
+          "unresolvedPositives": 0,
+          "wrongSites": 0,
+          "selectedSites": 19,
+          "precision": 1,
+          "recall": 1
+        },
+        "pyright": {
+          "eligible": 20,
+          "uniqueExpected": 19,
+          "exactCorrect": 19,
+          "unresolvedPositives": 0,
+          "wrongSites": 0,
+          "selectedSites": 19,
+          "precision": 1,
+          "recall": 1
+        }
+      }
+    }
+  },
+  "inventory": {
+    "files": 23,
+    "lines": 8828,
+    "calls": 1559,
+    "archifyCalls": 1559,
+    "functions": 446,
+    "archifyFunctions": 446,
+    "missingCalls": [],
+    "extraCalls": [],
+    "functionIssues": [],
+    "parseErrors": []
+  },
+  "baseline": {
+    "candidateCommit": "3b7f5bd57181c2a343976a692a81f3b45635d779",
+    "targets": 265,
+    "retainedUnchanged": 265,
+    "functionsIdentical": true,
+    "importsIdentical": true,
+    "symbolsIdentical": true,
+    "callSpansIdentical": true,
+    "sample": {
+      "total": 80,
+      "constructorsSeparate": 20,
+      "archify": {
+        "eligible": 60,
+        "uniqueExpected": 29,
+        "exactCorrect": 25,
+        "unresolvedPositives": 4,
+        "wrongSites": 0,
+        "selectedSites": 25,
+        "precision": 1,
+        "recall": 0.8620689655172413
+      },
+      "pyright": {
+        "eligible": 60,
+        "uniqueExpected": 29,
+        "exactCorrect": 29,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 29,
+        "precision": 1,
+        "recall": 1
+      },
+      "uniform": {
+        "total": 60,
+        "archify": {
+          "eligible": 40,
+          "uniqueExpected": 10,
+          "exactCorrect": 6,
+          "unresolvedPositives": 4,
+          "wrongSites": 0,
+          "selectedSites": 6,
+          "precision": 1,
+          "recall": 0.6
+        },
+        "pyright": {
+          "eligible": 40,
+          "uniqueExpected": 10,
+          "exactCorrect": 10,
+          "unresolvedPositives": 0,
+          "wrongSites": 0,
+          "selectedSites": 10,
+          "precision": 1,
+          "recall": 1
+        }
+      },
+      "selfMethod": {
+        "total": 20,
+        "archify": {
+          "eligible": 20,
+          "uniqueExpected": 19,
+          "exactCorrect": 19,
+          "unresolvedPositives": 0,
+          "wrongSites": 0,
+          "selectedSites": 19,
+          "precision": 1,
+          "recall": 1
+        },
+        "pyright": {
+          "eligible": 20,
+          "uniqueExpected": 19,
+          "exactCorrect": 19,
+          "unresolvedPositives": 0,
+          "wrongSites": 0,
+          "selectedSites": 19,
+          "precision": 1,
+          "recall": 1
+        }
+      }
+    }
+  },
+  "allSites": {
+    "archifySelected": 358,
+    "pyrightCapturedFunctionCandidates": 361,
+    "pyrightUnique": 358,
+    "pyrightMultiple": 3,
+    "archifyAgreeWithReference": 358,
+    "disagreements": [],
+    "referenceOnly": 3,
+    "ownOnly": 0
+  },
+  "sample": {
+    "total": 80,
+    "constructorsSeparate": 20,
+    "archify": {
+      "eligible": 60,
+      "uniqueExpected": 29,
+      "exactCorrect": 29,
+      "unresolvedPositives": 0,
+      "wrongSites": 0,
+      "selectedSites": 29,
+      "precision": 1,
+      "recall": 1
+    },
+    "pyright": {
+      "eligible": 60,
+      "uniqueExpected": 29,
+      "exactCorrect": 29,
+      "unresolvedPositives": 0,
+      "wrongSites": 0,
+      "selectedSites": 29,
+      "precision": 1,
+      "recall": 1
+    },
+    "uniform": {
+      "total": 60,
+      "archify": {
+        "eligible": 40,
+        "uniqueExpected": 10,
+        "exactCorrect": 10,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 10,
+        "precision": 1,
+        "recall": 1
+      },
+      "pyright": {
+        "eligible": 40,
+        "uniqueExpected": 10,
+        "exactCorrect": 10,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 10,
+        "precision": 1,
+        "recall": 1
+      }
+    },
+    "selfMethod": {
+      "total": 20,
+      "archify": {
+        "eligible": 20,
+        "uniqueExpected": 19,
+        "exactCorrect": 19,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 19,
+        "precision": 1,
+        "recall": 1
+      },
+      "pyright": {
+        "eligible": 20,
+        "uniqueExpected": 19,
+        "exactCorrect": 19,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 19,
+        "precision": 1,
+        "recall": 1
+      }
+    }
+  },
+  "sampleFailures": [],
+  "remainingDifferences": [
+    {
+      "id": "httpx/_multipart.py:261:23:261:37",
+      "call": "field.render()",
+      "archify": [],
+      "pyright": [
+        "[\"httpx/_multipart.py\",\"DataField.render\",110,5]",
+        "[\"httpx/_multipart.py\",\"FileField.render\",219,5]"
+      ]
+    },
+    {
+      "id": "httpx/_multipart.py:274:27:274:45",
+      "call": "field.get_length()",
+      "archify": [],
+      "pyright": [
+        "[\"httpx/_multipart.py\",\"DataField.get_length\",105,5]",
+        "[\"httpx/_multipart.py\",\"FileField.get_length\",171,5]"
+      ]
+    },
+    {
+      "id": "httpx/_transports/asgi.py:122:30:122:56",
+      "call": "request.stream.__aiter__()",
+      "archify": [],
+      "pyright": [
+        "[\"httpx/_content.py\",\"ByteStream.__aiter__\",38,5]",
+        "[\"httpx/_content.py\",\"UnattachedStream.__aiter__\",102,5]",
+        "[\"httpx/_types.py\",\"AsyncByteStream.__aiter__\",107,5]"
+      ]
+    }
+  ],
+  "limits": "Source declaration navigation, not runtime dispatch/type-diagnostic accuracy. Oracle was inspected by Codex, not an independent human. Targeted method samples are not a repository-wide random accuracy estimate. Agreement alone is not correctness."
+}

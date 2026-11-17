@@ -53,7 +53,7 @@ flowchart LR
 | Functions and metrics | Qualified names, exact ranges, owned decorator extent, McCabe complexity, nesting and deepest line |
 | Call inventory | Every syntactic source call in a parse-valid file, including nested bodies/defaults; unresolved sites remain inventoried |
 | Direct targets | Unique undecorated module functions, unique preceding function-local from-imports and one explicit reexport |
-| Additional declaration targets | Captured module member functions; receiver annotations, `self`/`cls`, constructed receivers and declared returns; source inheritance/C3; PEP 695 parameter substitution; annotated fields/properties; positive `isinstance` narrowing; nested functions |
+| Additional declaration targets | Captured module members; receiver annotations, `self`/`cls`, constructed receivers and declared returns; source inheritance/C3 and zero-argument `super`; PEP 695 substitution and bound legacy TypeVars; fields/property accessor groups; qualified contextlib decorators; bounded local reaching definitions, typed iteration, generator send, awaited/context-manager results and early-exit narrowing |
 | Source correctness | One-based UTF-16/end-exclusive positions, decoded-slice hashes, BOM/PEP 263 decoding, independent entry/target freshness |
 | Parse failure | File-local errors, no functions/calls attributed to that file; empty inventory cannot claim known-zero coverage |
 
@@ -65,10 +65,17 @@ code is imported, executed or built.
 
 Stores are collected before lookup, so a later local assignment cannot fall
 back to an outer function. Method bodies skip the class lexical namespace.
-Callable field writes, duplicate/conditional bindings, receiver rebinding,
-private-name uncertainty and arbitrary decorators block unsupported targets.
+Callable field writes, conflicting or unknown reaching bindings, private-name
+uncertainty and arbitrary decorators block unsupported targets.
 Built-in property/classmethod/staticmethod and selected imported contextlib
 decorators are recognized only with binding evidence.
+
+Local value shapes follow assignments at the callsite. Branches join all possible
+definitions; a maybe-unbound path or conflicting receiver does not become a
+unique target. Loops include carried stores. Exception paths and context-manager
+suppression retain uncertainty. Standard container/generator/context protocols
+require recognized imports or actual builtin names, rather than spelling alone.
+These rules follow declarations and signatures; they do not execute target code.
 
 Source inheritance uses C3 when the captured hierarchy is complete. A declaration
 directly in the first captured base can be selected before inspecting its
@@ -86,24 +93,28 @@ algorithms, not from TypeScript by itself.
 
 Unresolved areas include external/stub-only targets, arbitrary value/callback
 flow, dynamic attributes/metaclasses, runtime monkey-patching, general overload
-selection, ambiguous unions, general control-flow inference, legacy typing
-generic inference and longer reexport chains. Written PEP 695 substitutions and
-selected positive parameter narrowing are bounded features, not complete type
-inference. No multi-target union candidate set is emitted. Full Pyright remains
+selection, ambiguous unions, general control-flow/type inference beyond the
+bounded local rules, unconstrained legacy generic inference and longer reexport
+chains. Conditional `TYPE_CHECKING` imports, arbitrary source decorators,
+descriptors/context proxies and external factory contracts can still block
+declarations, as the Flask holdout demonstrates. No multi-target union candidate set is emitted. Full Pyright remains
 the development reference for these gaps rather than a production dependency.
 
 ## Model and history
 
-Revision **11** emits `python-source-v1`, with adapter identity
+Revision **12** emits `python-source-v2`, with adapter identity
 `pyright-parser@1.1.414/python-3.14` (or the chosen syntax target). New targets use
 `python-source-declaration` and must match a captured function definition start.
-Existing `same-file-function` and `imported-function` evidence retains its
-meaning. The reader continues to accept historical `python-lexical-v1/v2` and
+Revision 11's `python-source-v1` retains its receiver/signature scope. Revision 12
+adds bounded local flow and protocol shapes, property accessors, bound TypeVars,
+qualified contextlib decorators and source `super` declarations. Existing
+`same-file-function` and `imported-function` evidence retains its meaning. The
+reader continues to accept historical `python-source-v1`, `python-lexical-v1/v2` and
 `python@...` captures without expanding their saved coverage. Changing the
 engine or syntax target changes adapter identity, so comparisons report an
 extractor change rather than pretending it is a source-code change.
 
-## Fixed real-project comparison
+## Original fixed real-project comparison (revision 11)
 
 The corpus is **Click 8.5.1**, commit
 `cf19179e8e2fd54c601378cec9e0d21bb12b6fb1`: only `src/click/*.py`, 17 files,
@@ -111,7 +122,7 @@ The corpus is **Click 8.5.1**, commit
 `All` and an empty third-party environment. File/config hashes and frozen source
 definition points are retained alongside [the result](benchmarks/python-click-8.5.1.json).
 
-| Measurement | Previous CPython AST adapter, revision 10 | Current source rewrite |
+| Measurement | Previous CPython AST adapter, revision 10 | Source rewrite, revision 11 |
 | --- | ---: | ---: |
 | Functions | 583 | 583 |
 | Imports | 402 | 402 |
@@ -148,6 +159,13 @@ node scripts/compare-python-reference.mjs \
 The source-only root must contain `src/click/` and the supplied config, with no
 additional Python files. Input hash mismatches fail. The optional `--baseline`
 accepts the previously saved raw facts to check exact facts and target retention.
+
+Revision 12 retains all 447 selected Click targets and increases the total to
+**514**, all in the frozen Pyright candidate sets. HTTPX 0.28.1 supplied the next
+repair corpus; Flask 3.1.2 was then sampled before either analyzer output was read.
+See [the HTTPX repair and Flask holdout](benchmarks/python-httpx-flask-validation.md)
+for exact versions, source/environment hashes, frozen oracles, separate sample
+strata, remaining gaps, ablation and reproduction commands.
 The comparison runs the current analyzer and reads saved reference data; it
 does not load Pyright or execute Click.
 

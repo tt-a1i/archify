@@ -11,6 +11,9 @@ export interface Binding {
     module?: string; level?: number; imported?: string; expr?: Node; annotation?: Node;
     runtime?: boolean;
     attributeWrite?: string;
+    source?: 'iteration' | 'context';
+    projection?: number[];
+    async?: boolean;
 }
 export class Scope {
     events = new Map<string, Binding[]>();
@@ -48,6 +51,10 @@ export function bindModule(tree: Node) {
         const add = (name: string, owner: Node, conditional: boolean, loaderConditional: boolean, extra: Partial<Binding> = {}) =>
             scope.bind({ name, node: owner, at: endOf(owner), kind: 'value', conditional, loaderConditional, ...extra });
         const target = (value: Node | undefined, owner: Node, conditional: boolean, loaderConditional: boolean, extra: Partial<Binding> = {}) => {
+            if (value?.nodeType === K.Tuple || value?.nodeType === K.List) {
+                value.d.items.forEach((item, index) => target(item, owner, conditional, loaderConditional, { ...extra, projection: [...(extra.projection || []), index] }));
+                return;
+            }
             for (const name of bindingNames(value)) add(name, owner, conditional, loaderConditional, extra);
             if (value?.nodeType === K.TypeAnnotation) value = value.d.valueExpr;
             // Attribute writes invalidate a loader/receiver alias as well.
@@ -90,8 +97,8 @@ export function bindModule(tree: Node) {
             if (current.nodeType === K.TypeAnnotation) { target(d.valueExpr, current, conditional, loaderConditional, { annotation: d.annotation, runtime: false }); return; }
             if (current.nodeType === K.AssignmentExpression) { target(d.name, current, conditional, loaderConditional, { expr: d.rightExpr }); scan(d.rightExpr, conditional, loaderConditional); return; }
             if (current.nodeType === K.Del) { for (const expr of d.targets) target(expr, current, conditional, loaderConditional); return; }
-            if ([K.For, K.ComprehensionFor].includes(current.nodeType)) target(d.targetExpr, current, true, true);
-            if (current.nodeType === K.WithItem) target(d.target, current, true, loaderConditional);
+            if ([K.For, K.ComprehensionFor].includes(current.nodeType)) target(d.targetExpr, current, true, true, { expr: d.iterableExpr, source: 'iteration', async: Boolean(d.isAsync) });
+            if (current.nodeType === K.WithItem) target(d.target, current, true, loaderConditional, { expr: d.expr, source: 'context', async: Boolean((current.parent?.d as any).isAsync) });
             if (current.nodeType === K.Except && d.name) target(d.name, current, true, true);
             if ([K.PatternCapture, K.PatternAs, K.PatternMappingExpandEntry].includes(current.nodeType) && d.target && !d.isWildcard)
                 target(d.target, current, true, loaderConditional);

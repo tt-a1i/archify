@@ -8,7 +8,7 @@ import { describeRepository } from '../shared/git.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 11;
+export const REVISION = 12;
 
 const PY_EXT = /\.py$/;
 
@@ -113,7 +113,7 @@ export function extract(root, config) {
     imports,
     symbols: symbols.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.name, b.name)),
     functions: functions.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.qualname, b.qualname)),
-    callModel: 'python-source-v1',
+    callModel: 'python-source-v2',
     calls,
     unresolved,
   };

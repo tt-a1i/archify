@@ -79,4 +79,4 @@ Read for context:
 ## Analysis context
 
 - Language: py (pyright-parser@1.1.414/python-3.14), analyzed root: `.`, source: working-tree
-- Snapshot: `a48ae77d5223b2e78aeea4821e2b1830e74a968a9daa252d8087e16127e7274c`, config `599882652663`, analyzer @archify/code-analysis 0.1.0-dev.1
+- Snapshot: `9dd6c3f15459868f3693c363152ccf896eb1851791b1b7f19e9a23c171b43125`, config `599882652663`, analyzer @archify/code-analysis 0.1.0-dev.1

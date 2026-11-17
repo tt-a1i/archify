@@ -1,0 +1,1100 @@
+{
+  "project": "pallets/flask",
+  "version": "3.1.2",
+  "commit": "2c1b30d0503cfb064f1cb252e6614a06915a362a",
+  "license": "BSD-3-Clause",
+  "sourceUrl": "https://github.com/pallets/flask/tree/2c1b30d0503cfb064f1cb252e6614a06915a362a",
+  "candidate": {
+    "parent": "3b7f5bd57181c2a343976a692a81f3b45635d779",
+    "adapterRevision": 12,
+    "callModel": "python-source-v2",
+    "analyzerSha256": "19a7eeb28dd05c9c8f93b1c028e9141ca784cdf423e9f278c845bd76a5226697",
+    "node": "v22.23.2",
+    "referenceReusedSha256": "58b78c6e572d363bb02d1227aa010e0cdabd2d179c8d1d2b368f3edbd1858a66"
+  },
+  "reference": {
+    "version": "1.1.414",
+    "pythonVersion": "3.14",
+    "platform": "All",
+    "inputs": [
+      {
+        "file": "src/flask/__init__.py",
+        "sha256": "987bc937d4b0b65d510ed8c2a82218c889e22bf499fe5fe1a94ca73b382927da"
+      },
+      {
+        "file": "src/flask/__main__.py",
+        "sha256": "6d8b7d7846a845059d7a3107143f11131f63c5511d669b44085b15ec5e3d2279"
+      },
+      {
+        "file": "src/flask/app.py",
+        "sha256": "5c6aa0151b0b8018732280761d27eda0c4c83378630e21faadd57b73783720a7"
+      },
+      {
+        "file": "src/flask/blueprints.py",
+        "sha256": "a79404da5635f0622d6ddaff44a46967c0e8d7b8343ef4062206644940e15f69"
+      },
+      {
+        "file": "src/flask/cli.py",
+        "sha256": "3df87bdbe07196fa07d101c20ce7351ef5c6ecaab95deb5fdf3ccdcf690d4879"
+      },
+      {
+        "file": "src/flask/config.py",
+        "sha256": "3e2a85d033da9ba1d6d051f8087d61a574c17b7d0d4b38cf10ec2bcf56fa92dd"
+      },
+      {
+        "file": "src/flask/ctx.py",
+        "sha256": "b0f2b36a1aad831692eced32f44fcdcd424d503c930fa3381a40eb56ed9f5376"
+      },
+      {
+        "file": "src/flask/debughelpers.py",
+        "sha256": "3c6203852b56fde7d18e969adf31c8a68fa1b52b49391e35229dce2563d8070a"
+      },
+      {
+        "file": "src/flask/globals.py",
+        "sha256": "5dd419992b4198f22cf2df77b63c7aa4eec19b78286c068e3569057141da19ab"
+      },
+      {
+        "file": "src/flask/helpers.py",
+        "sha256": "ac96607bbfc9dbcf09d5442fe7e90d7f8a046b0df7d8f3fc3535b44112016d71"
+      },
+      {
+        "file": "src/flask/json/__init__.py",
+        "sha256": "84b351f3df296aaa1e7dd78086b69ae70c89cbe6e6441da4d9d578120572d99f"
+      },
+      {
+        "file": "src/flask/json/provider.py",
+        "sha256": "e62984cd8e478d5d87a1456b41b24ba970b330da595df0f46355ea74b5765c10"
+      },
+      {
+        "file": "src/flask/json/tag.py",
+        "sha256": "0e168dc2e20e85db7647be28382f58e19f19a6bc4562245be5d50fe5bcb220dc"
+      },
+      {
+        "file": "src/flask/logging.py",
+        "sha256": "f2c33758c4ee6e2d5c05bd9cfe53e45a937427c74c02aae029160b2e2d5d0952"
+      },
+      {
+        "file": "src/flask/sansio/app.py",
+        "sha256": "e446f1c0739c86072966a4326a503dbf20c1a299273af0e0e815705c5c850f6b"
+      },
+      {
+        "file": "src/flask/sansio/blueprints.py",
+        "sha256": "4ea7beec4919fad6d67219bc883a027c3f38f1fd3fde72efe8d3637883ef1f03"
+      },
+      {
+        "file": "src/flask/sansio/scaffold.py",
+        "sha256": "c120125d8745456266a9c2f45eaf93ecdf8f0d55128851af8cef643d9839f1b9"
+      },
+      {
+        "file": "src/flask/sessions.py",
+        "sha256": "76ebd81a608687f1f772032ecb6a1e4a3ac2b02bcbca517808128e5e9374426b"
+      },
+      {
+        "file": "src/flask/signals.py",
+        "sha256": "57b94c530c3b0aa809d93854067d4f89ab59b506a73b2b7b399a6ed86648fb7e"
+      },
+      {
+        "file": "src/flask/templating.py",
+        "sha256": "207b1db05f9e0493c2244d0024b0a2d558619f2b4e19dcc70a7df24e1cfcedce"
+      },
+      {
+        "file": "src/flask/testing.py",
+        "sha256": "cf30bb5f184158e3fd1faf7b215ff8486ecb8372f36f93d68b210ff77fca4171"
+      },
+      {
+        "file": "src/flask/typing.py",
+        "sha256": "2fe2f9b768ca812d1a3a65618a843fca5a9c8225459c0eb2c4ef912cd86af865"
+      },
+      {
+        "file": "src/flask/views.py",
+        "sha256": "c73271ea826a18495386d12085937b65018cc394c3172b91c5491e73046e0280"
+      },
+      {
+        "file": "src/flask/wrappers.py",
+        "sha256": "8d492fe2655e93622ae21c3177846faab20c6faf41bf43c49438162e6779391a"
+      },
+      {
+        "file": "pyrightconfig.json",
+        "sha256": "02cd2d129b1e9501fc84e1e2c34b095ea16ed94e5998f0036e4fa9ee8124879e"
+      }
+    ],
+    "environment": {
+      "requirements": [
+        "blinker==1.9.0",
+        "click==8.1.8",
+        "itsdangerous==2.2.0",
+        "Jinja2==3.1.6",
+        "MarkupSafe==3.0.3",
+        "Werkzeug==3.1.3"
+      ],
+      "lockSha256": "1d23b980852bdb5d07a3bea8fbc85148520e15c8fd730bb2bdc707718f79c5fd",
+      "optionalExtrasInstalled": false
+    }
+  },
+  "sampling": {
+    "seed": "archify-flask-3.1.2-correctness-holdout-v1",
+    "uniform": 60,
+    "additionalSelfMethod": 20,
+    "oracleFrozenBeforeEitherEngine": true,
+    "oracleInspector": "Codex; not an independent human audit",
+    "sampleSha256": "8b7cdb1237b5a8e93cf271d1ad6a878743644d0f3b9f1f9b96900234bb4a6aa2",
+    "oracleSha256": "c6e4e09dfd4372e03fd8e377205a65033f95924dd7573bd93c9b05987aeafaff"
+  },
+  "firstHoldoutRun": {
+    "analyzerSha256": "013bc40ef4e08b852d5edcb726fb3759c6aa6e54f37b8e0e65cffd2c9fd2a39b",
+    "allSites": {
+      "archifySelected": 154,
+      "pyrightCapturedFunctionCandidates": 234,
+      "pyrightUnique": 230,
+      "pyrightMultiple": 4,
+      "archifyAgreeWithReference": 154,
+      "disagreements": [],
+      "referenceOnly": 80,
+      "ownOnly": 0
+    },
+    "sample": {
+      "total": 80,
+      "constructorsSeparate": 17,
+      "archify": {
+        "eligible": 63,
+        "uniqueExpected": 24,
+        "exactCorrect": 16,
+        "unresolvedPositives": 8,
+        "wrongSites": 0,
+        "selectedSites": 16,
+        "precision": 1,
+        "recall": 0.6666666666666666
+      },
+      "pyright": {
+        "eligible": 63,
+        "uniqueExpected": 24,
+        "exactCorrect": 24,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 24,
+        "precision": 1,
+        "recall": 1
+      },
+      "uniform": {
+        "total": 60,
+        "archify": {
+          "eligible": 45,
+          "uniqueExpected": 8,
+          "exactCorrect": 5,
+          "unresolvedPositives": 3,
+          "wrongSites": 0,
+          "selectedSites": 5,
+          "precision": 1,
+          "recall": 0.625
+        },
+        "pyright": {
+          "eligible": 45,
+          "uniqueExpected": 8,
+          "exactCorrect": 8,
+          "unresolvedPositives": 0,
+          "wrongSites": 0,
+          "selectedSites": 8,
+          "precision": 1,
+          "recall": 1
+        }
+      },
+      "selfMethod": {
+        "total": 20,
+        "archify": {
+          "eligible": 18,
+          "uniqueExpected": 16,
+          "exactCorrect": 11,
+          "unresolvedPositives": 5,
+          "wrongSites": 0,
+          "selectedSites": 11,
+          "precision": 1,
+          "recall": 0.6875
+        },
+        "pyright": {
+          "eligible": 18,
+          "uniqueExpected": 16,
+          "exactCorrect": 16,
+          "unresolvedPositives": 0,
+          "wrongSites": 0,
+          "selectedSites": 16,
+          "precision": 1,
+          "recall": 1
+        }
+      }
+    }
+  },
+  "inventory": {
+    "files": 24,
+    "lines": 9202,
+    "calls": 1195,
+    "archifyCalls": 1195,
+    "functions": 369,
+    "archifyFunctions": 369,
+    "missingCalls": [],
+    "extraCalls": [],
+    "functionIssues": [],
+    "parseErrors": []
+  },
+  "baseline": null,
+  "allSites": {
+    "archifySelected": 154,
+    "pyrightCapturedFunctionCandidates": 234,
+    "pyrightUnique": 230,
+    "pyrightMultiple": 4,
+    "archifyAgreeWithReference": 154,
+    "disagreements": [],
+    "referenceOnly": 80,
+    "ownOnly": 0
+  },
+  "sample": {
+    "total": 80,
+    "constructorsSeparate": 17,
+    "archify": {
+      "eligible": 63,
+      "uniqueExpected": 24,
+      "exactCorrect": 16,
+      "unresolvedPositives": 8,
+      "wrongSites": 0,
+      "selectedSites": 16,
+      "precision": 1,
+      "recall": 0.6666666666666666
+    },
+    "pyright": {
+      "eligible": 63,
+      "uniqueExpected": 24,
+      "exactCorrect": 24,
+      "unresolvedPositives": 0,
+      "wrongSites": 0,
+      "selectedSites": 24,
+      "precision": 1,
+      "recall": 1
+    },
+    "uniform": {
+      "total": 60,
+      "archify": {
+        "eligible": 45,
+        "uniqueExpected": 8,
+        "exactCorrect": 5,
+        "unresolvedPositives": 3,
+        "wrongSites": 0,
+        "selectedSites": 5,
+        "precision": 1,
+        "recall": 0.625
+      },
+      "pyright": {
+        "eligible": 45,
+        "uniqueExpected": 8,
+        "exactCorrect": 8,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 8,
+        "precision": 1,
+        "recall": 1
+      }
+    },
+    "selfMethod": {
+      "total": 20,
+      "archify": {
+        "eligible": 18,
+        "uniqueExpected": 16,
+        "exactCorrect": 11,
+        "unresolvedPositives": 5,
+        "wrongSites": 0,
+        "selectedSites": 11,
+        "precision": 1,
+        "recall": 0.6875
+      },
+      "pyright": {
+        "eligible": 18,
+        "uniqueExpected": 16,
+        "exactCorrect": 16,
+        "unresolvedPositives": 0,
+        "wrongSites": 0,
+        "selectedSites": 16,
+        "precision": 1,
+        "recall": 1
+      }
+    }
+  },
+  "sampleFailures": [
+    {
+      "index": 13,
+      "id": "src/flask/cli.py:631:18:631:33",
+      "expected": [
+        {
+          "file": "src/flask/cli.py",
+          "name": "load_app",
+          "qualname": "ScriptInfo.load_app",
+          "line": 333,
+          "column": 5,
+          "endLine": 372,
+          "endColumn": 19
+        }
+      ],
+      "outcome": "unresolved"
+    },
+    {
+      "index": 25,
+      "id": "src/flask/ctx.py:323:31:323:67",
+      "expected": [
+        {
+          "file": "src/flask/app.py",
+          "name": "create_url_adapter",
+          "qualname": "Flask.create_url_adapter",
+          "line": 425,
+          "column": 5,
+          "endLine": 476,
+          "endColumn": 20
+        }
+      ],
+      "outcome": "unresolved"
+    },
+    {
+      "index": 49,
+      "id": "src/flask/sansio/app.py:680:12:680:50",
+      "expected": [
+        {
+          "file": "src/flask/sansio/app.py",
+          "name": "add_template_filter",
+          "qualname": "App.add_template_filter",
+          "line": 686,
+          "column": 5,
+          "endLine": 695,
+          "endColumn": 55
+        }
+      ],
+      "outcome": "unresolved"
+    },
+    {
+      "index": 52,
+      "id": "src/flask/sansio/blueprints.py:529:12:529:54",
+      "expected": [
+        {
+          "file": "src/flask/sansio/blueprints.py",
+          "name": "add_app_template_global",
+          "qualname": "Blueprint.add_app_template_global",
+          "line": 535,
+          "column": 5,
+          "endLine": 551,
+          "endColumn": 44
+        }
+      ],
+      "outcome": "unresolved"
+    },
+    {
+      "index": 53,
+      "id": "src/flask/sansio/blueprints.py:558:8:560:9",
+      "expected": [
+        {
+          "file": "src/flask/sansio/blueprints.py",
+          "name": "record_once",
+          "qualname": "Blueprint.record_once",
+          "line": 233,
+          "column": 5,
+          "endLine": 244,
+          "endColumn": 51
+        }
+      ],
+      "outcome": "unresolved"
+    },
+    {
+      "index": 54,
+      "id": "src/flask/sansio/blueprints.py:568:8:570:9",
+      "expected": [
+        {
+          "file": "src/flask/sansio/blueprints.py",
+          "name": "record_once",
+          "qualname": "Blueprint.record_once",
+          "line": 233,
+          "column": 5,
+          "endLine": 244,
+          "endColumn": 51
+        }
+      ],
+      "outcome": "unresolved"
+    },
+    {
+      "index": 57,
+      "id": "src/flask/sansio/scaffold.py:293:15:293:60",
+      "expected": [
+        {
+          "file": "src/flask/sansio/scaffold.py",
+          "name": "route",
+          "qualname": "Scaffold.route",
+          "line": 336,
+          "column": 5,
+          "endLine": 365,
+          "endColumn": 25
+        }
+      ],
+      "outcome": "unresolved"
+    },
+    {
+      "index": 72,
+      "id": "src/flask/templating.py:168:4:168:40",
+      "expected": [
+        {
+          "file": "src/flask/app.py",
+          "name": "update_template_context",
+          "qualname": "Flask.update_template_context",
+          "line": 506,
+          "column": 5,
+          "endLine": 532,
+          "endColumn": 33
+        }
+      ],
+      "outcome": "unresolved"
+    }
+  ],
+  "remainingDifferences": [
+    {
+      "id": "src/flask/app.py:274:12:279:13",
+      "call": "self.add_url_rule(\n                f\"{self.static_url_path}/<path:filename>\",\n                endpoint=\"static\",\n                host=static_host,\n                view_func=lambda **kw: self_ref().send_static_file(**kw),  # type: ignore # noqa: B950\n            )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.add_url_rule\",605,5]"
+      ]
+    },
+    {
+      "id": "src/flask/app.py:278:39:278:72",
+      "call": "self_ref().send_static_file(**kw)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.send_static_file\",308,5]"
+      ]
+    },
+    {
+      "id": "src/flask/cli.py:349:22:349:51",
+      "call": "locate_app(import_name, name)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/cli.py\",\"locate_app\",230,1]",
+        "[\"src/flask/cli.py\",\"locate_app\",236,1]",
+        "[\"src/flask/cli.py\",\"locate_app\",241,1]"
+      ]
+    },
+    {
+      "id": "src/flask/cli.py:353:26:353:81",
+      "call": "locate_app(import_name, None, raise_if_not_found=False)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/cli.py\",\"locate_app\",230,1]",
+        "[\"src/flask/cli.py\",\"locate_app\",236,1]",
+        "[\"src/flask/cli.py\",\"locate_app\",241,1]"
+      ]
+    },
+    {
+      "id": "src/flask/cli.py:397:18:397:58",
+      "call": "ctx.ensure_object(ScriptInfo).load_app()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/cli.py\",\"ScriptInfo.load_app\",333,5]"
+      ]
+    },
+    {
+      "id": "src/flask/cli.py:398:30:398:47",
+      "call": "app.app_context()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.app_context\",1386,5]"
+      ]
+    },
+    {
+      "id": "src/flask/cli.py:631:18:631:33",
+      "call": "info.load_app()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/cli.py\",\"ScriptInfo.load_app\",333,5]"
+      ]
+    },
+    {
+      "id": "src/flask/cli.py:640:30:640:47",
+      "call": "app.app_context()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.app_context\",1386,5]"
+      ]
+    },
+    {
+      "id": "src/flask/cli.py:653:22:653:37",
+      "call": "info.load_app()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/cli.py\",\"ScriptInfo.load_app\",333,5]"
+      ]
+    },
+    {
+      "id": "src/flask/cli.py:1033:15:1033:47",
+      "call": "current_app.make_shell_context()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.make_shell_context\",534,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:187:10:187:20",
+      "call": "ctx.copy()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/ctx.py\",\"RequestContext.copy\",337,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:191:19:191:41",
+      "call": "ctx.app.ensure_sync(f)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.ensure_sync\",966,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:247:27:247:55",
+      "call": "app.create_url_adapter(None)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.create_url_adapter\",425,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:262:16:262:52",
+      "call": "self.app.do_teardown_appcontext(exc)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.do_teardown_appcontext\",1360,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:323:31:323:67",
+      "call": "app.create_url_adapter(self.request)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.create_url_adapter\",425,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:373:22:373:44",
+      "call": "self.app.app_context()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.app_context\",1386,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:374:12:374:26",
+      "call": "app_ctx.push()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/ctx.py\",\"AppContext.push\",251,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:386:27:386:81",
+      "call": "session_interface.open_session(self.app, self.request)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sessions.py\",\"SessionInterface.open_session\",263,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:389:31:389:76",
+      "call": "session_interface.make_null_session(self.app)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sessions.py\",\"SessionInterface.make_null_session\",164,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:410:16:410:49",
+      "call": "self.app.do_teardown_request(exc)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.do_teardown_request\",1326,5]"
+      ]
+    },
+    {
+      "id": "src/flask/ctx.py:426:16:426:32",
+      "call": "app_ctx.pop(exc)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/ctx.py\",\"AppContext.pop\",256,5]"
+      ]
+    },
+    {
+      "id": "src/flask/helpers.py:110:19:110:43",
+      "call": "stream_with_context(gen)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/helpers.py\",\"stream_with_context\",52,1]",
+        "[\"src/flask/helpers.py\",\"stream_with_context\",58,1]",
+        "[\"src/flask/helpers.py\",\"stream_with_context\",63,1]"
+      ]
+    },
+    {
+      "id": "src/flask/helpers.py:192:11:192:42",
+      "call": "current_app.make_response(args)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.make_response\",1129,5]"
+      ]
+    },
+    {
+      "id": "src/flask/helpers.py:239:11:246:5",
+      "call": "current_app.url_for(\n        endpoint,\n        _anchor=_anchor,\n        _method=_method,\n        _scheme=_scheme,\n        _external=_external,\n        **values,\n    )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.url_for\",1003,5]"
+      ]
+    },
+    {
+      "id": "src/flask/helpers.py:268:15:268:56",
+      "call": "current_app.redirect(location, code=code)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.redirect\",893,5]"
+      ]
+    },
+    {
+      "id": "src/flask/helpers.py:639:19:639:65",
+      "call": "_split_blueprint_path(name.rpartition(\".\")[0])",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/helpers.py\",\"_split_blueprint_path\",635,1]"
+      ]
+    },
+    {
+      "id": "src/flask/json/__init__.py:41:15:41:52",
+      "call": "current_app.json.dumps(obj, **kwargs)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/json/provider.py\",\"JSONProvider.dumps\",41,5]"
+      ]
+    },
+    {
+      "id": "src/flask/json/__init__.py:71:8:71:48",
+      "call": "current_app.json.dump(obj, fp, **kwargs)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/json/provider.py\",\"JSONProvider.dump\",49,5]"
+      ]
+    },
+    {
+      "id": "src/flask/json/__init__.py:103:15:103:50",
+      "call": "current_app.json.loads(s, **kwargs)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/json/provider.py\",\"JSONProvider.loads\",59,5]"
+      ]
+    },
+    {
+      "id": "src/flask/json/__init__.py:133:15:133:50",
+      "call": "current_app.json.load(fp, **kwargs)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/json/provider.py\",\"JSONProvider.load\",67,5]"
+      ]
+    },
+    {
+      "id": "src/flask/json/__init__.py:170:11:170:53",
+      "call": "current_app.json.response(*args, **kwargs)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/json/provider.py\",\"JSONProvider.response\",89,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/app.py:477:15:477:46",
+      "call": "self.create_jinja_environment()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.create_jinja_environment\",479,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/app.py:595:8:595:41",
+      "call": "blueprint.register(self, options)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.register\",273,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/app.py:680:12:680:50",
+      "call": "self.add_template_filter(f, name=name)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.add_template_filter\",686,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/app.py:721:12:721:48",
+      "call": "self.add_template_test(f, name=name)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.add_template_test\",727,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/app.py:759:12:759:50",
+      "call": "self.add_template_global(f, name=name)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.add_template_global\",765,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/app.py:924:32:924:82",
+      "call": "_split_blueprint_path(endpoint.rpartition(\".\")[0])",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/helpers.py\",\"_split_blueprint_path\",635,1]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:110:8:116:9",
+      "call": "self.app.add_url_rule(\n            rule,\n            f\"{self.name_prefix}.{self.name}.{endpoint}\".lstrip(\".\"),\n            view_func,\n            defaults=defaults,\n            **options,\n        )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.add_url_rule\",605,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:244:8:244:50",
+      "call": "self.record(update_wrapper(wrapper, func))",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record\",224,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:433:8:441:9",
+      "call": "self.record(\n            lambda s: s.add_url_rule(\n                rule,\n                endpoint,\n                view_func,\n                provide_automatic_options=provide_automatic_options,\n                **options,\n            )\n        )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record\",224,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:434:22:440:13",
+      "call": "s.add_url_rule(\n                rule,\n                endpoint,\n                view_func,\n                provide_automatic_options=provide_automatic_options,\n                **options,\n            )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"BlueprintSetupState.add_url_rule\",87,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:455:12:455:54",
+      "call": "self.add_app_template_filter(f, name=name)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.add_app_template_filter\",461,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:475:8:475:43",
+      "call": "self.record_once(register_template)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:491:12:491:52",
+      "call": "self.add_app_template_test(f, name=name)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.add_app_template_test\",497,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:513:8:513:43",
+      "call": "self.record_once(register_template)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:529:12:529:54",
+      "call": "self.add_app_template_global(f, name=name)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.add_app_template_global\",535,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:551:8:551:43",
+      "call": "self.record_once(register_template)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:558:8:560:9",
+      "call": "self.record_once(\n            lambda s: s.app.before_request_funcs.setdefault(None, []).append(f)\n        )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:568:8:570:9",
+      "call": "self.record_once(\n            lambda s: s.app.after_request_funcs.setdefault(None, []).append(f)\n        )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:578:8:580:9",
+      "call": "self.record_once(\n            lambda s: s.app.teardown_request_funcs.setdefault(None, []).append(f)\n        )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:590:8:592:9",
+      "call": "self.record_once(\n            lambda s: s.app.template_context_processors.setdefault(None, []).append(f)\n        )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:605:16:605:44",
+      "call": "state.app.errorhandler(code)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold.errorhandler\",598,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:607:12:607:44",
+      "call": "self.record_once(from_blueprint)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:619:8:621:9",
+      "call": "self.record_once(\n            lambda s: s.app.url_value_preprocessors.setdefault(None, []).append(f)\n        )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/blueprints.py:629:8:631:9",
+      "call": "self.record_once(\n            lambda s: s.app.url_default_functions.setdefault(None, []).append(f)\n        )",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/blueprints.py\",\"Blueprint.record_once\",233,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:293:15:293:60",
+      "call": "self.route(rule, methods=[method], **options)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold.route\",336,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:301:15:301:55",
+      "call": "self._method_route(\"GET\", rule, options)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold._method_route\",284,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:309:15:309:56",
+      "call": "self._method_route(\"POST\", rule, options)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold._method_route\",284,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:317:15:317:55",
+      "call": "self._method_route(\"PUT\", rule, options)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold._method_route\",284,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:325:15:325:58",
+      "call": "self._method_route(\"DELETE\", rule, options)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold._method_route\",284,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:333:15:333:57",
+      "call": "self._method_route(\"PATCH\", rule, options)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold._method_route\",284,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:362:12:362:59",
+      "call": "self.add_url_rule(rule, endpoint, f, **options)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold.add_url_rule\",368,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:636:12:636:61",
+      "call": "self.register_error_handler(code_or_exception, f)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold.register_error_handler\",642,5]"
+      ]
+    },
+    {
+      "id": "src/flask/sansio/scaffold.py:653:26:653:73",
+      "call": "self._get_exc_class_and_code(code_or_exception)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/scaffold.py\",\"Scaffold._get_exc_class_and_code\",657,5]"
+      ]
+    },
+    {
+      "id": "src/flask/templating.py:47:32:47:64",
+      "call": "app.create_global_jinja_loader()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.create_global_jinja_loader\",523,5]"
+      ]
+    },
+    {
+      "id": "src/flask/templating.py:106:25:106:51",
+      "call": "self.app.iter_blueprints()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.iter_blueprints\",597,5]"
+      ]
+    },
+    {
+      "id": "src/flask/templating.py:117:25:117:51",
+      "call": "self.app.iter_blueprints()",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sansio/app.py\",\"App.iter_blueprints\",597,5]"
+      ]
+    },
+    {
+      "id": "src/flask/templating.py:127:4:127:40",
+      "call": "app.update_template_context(context)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.update_template_context\",506,5]"
+      ]
+    },
+    {
+      "id": "src/flask/templating.py:168:4:168:40",
+      "call": "app.update_template_context(context)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.update_template_context\",506,5]"
+      ]
+    },
+    {
+      "id": "src/flask/templating.py:183:13:183:36",
+      "call": "stream_with_context(rv)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/helpers.py\",\"stream_with_context\",52,1]",
+        "[\"src/flask/helpers.py\",\"stream_with_context\",58,1]",
+        "[\"src/flask/helpers.py\",\"stream_with_context\",63,1]"
+      ]
+    },
+    {
+      "id": "src/flask/testing.py:94:15:94:49",
+      "call": "self.app.json.dumps(obj, **kwargs)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/json/provider.py\",\"JSONProvider.dumps\",41,5]"
+      ]
+    },
+    {
+      "id": "src/flask/testing.py:161:14:161:55",
+      "call": "app.test_request_context(*args, **kwargs)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.test_request_context\",1423,5]"
+      ]
+    },
+    {
+      "id": "src/flask/testing.py:165:19:165:71",
+      "call": "app.session_interface.open_session(app, ctx.request)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sessions.py\",\"SessionInterface.open_session\",263,5]"
+      ]
+    },
+    {
+      "id": "src/flask/testing.py:173:11:173:54",
+      "call": "app.session_interface.is_null_session(sess)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sessions.py\",\"SessionInterface.is_null_session\",176,5]"
+      ]
+    },
+    {
+      "id": "src/flask/testing.py:177:12:177:63",
+      "call": "app.session_interface.save_session(app, sess, resp)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/sessions.py\",\"SessionInterface.save_session\",277,5]"
+      ]
+    },
+    {
+      "id": "src/flask/views.py:110:23:110:69",
+      "call": "current_app.ensure_sync(self.dispatch_request)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.ensure_sync\",966,5]"
+      ]
+    },
+    {
+      "id": "src/flask/views.py:116:23:116:69",
+      "call": "current_app.ensure_sync(self.dispatch_request)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.ensure_sync\",966,5]"
+      ]
+    },
+    {
+      "id": "src/flask/views.py:191:15:191:44",
+      "call": "current_app.ensure_sync(meth)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/app.py\",\"Flask.ensure_sync\",966,5]"
+      ]
+    },
+    {
+      "id": "src/flask/wrappers.py:195:15:195:42",
+      "call": "_split_blueprint_path(name)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/helpers.py\",\"_split_blueprint_path\",635,1]"
+      ]
+    },
+    {
+      "id": "src/flask/wrappers.py:210:12:210:48",
+      "call": "attach_enctype_error_multidict(self)",
+      "archify": [],
+      "pyright": [
+        "[\"src/flask/debughelpers.py\",\"attach_enctype_error_multidict\",81,1]"
+      ]
+    }
+  ],
+  "limits": "Source declaration navigation, not runtime dispatch/type-diagnostic accuracy. Oracle was inspected by Codex, not an independent human. Targeted method samples are not a repository-wide random accuracy estimate. Agreement alone is not correctness."
+}

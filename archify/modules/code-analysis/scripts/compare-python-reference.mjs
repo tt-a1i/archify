@@ -69,12 +69,30 @@ if (options.baseline) {
 let manual = null;
 if (options.oracle) {
   const oracle = read(options.oracle), calls = new Map(facts.calls.map(call => [callId(call), call]));
-  const cases = Object.entries(oracle.sourceDeclarations).map(([id, expected]) => {
-    const call = calls.get(id), actual = call && targetOf(call);
-    return { id, expected: { file: expected.file, qualname: expected.qualname }, actual: actual ? { file: actual.file, qualname: actual.qualname } : null,
-      matched: actual?.file === expected.file && actual?.qualname === expected.qualname };
-  });
-  manual = { scope: oracle.scope, total: cases.length, matched: cases.filter(item => item.matched).length, cases };
+  if (reference.oracleSha256 && sha(fs.readFileSync(options.oracle)) !== reference.oracleSha256) throw new Error('Frozen oracle content differs from the reference record');
+  if (Array.isArray(oracle.cases)) {
+    const cases = oracle.cases.map(item => {
+      const actual = targetOf(calls.get(item.id)), expected = item.targets;
+      const separate = item.category === 'constructor-outside-function-scope';
+      const matched = separate || (expected.length === 0 ? !actual : expected.length === 1 && actual?.file === expected[0].file && actual?.qualname === expected[0].qualname
+        && actual.line === expected[0].line && actual.sourceRange.column === expected[0].column);
+      return { id: item.id, stratum: item.stratum, category: item.category, expected, actual: actual ? { file: actual.file, qualname: actual.qualname, line: actual.line, column: actual.sourceRange.column } : null, matched };
+    });
+    const positives = cases.filter(item => item.category === 'unique-source-declaration');
+    manual = { scope: oracle.purpose, reviewed: cases.length, constructorsSeparate: cases.filter(item => item.category === 'constructor-outside-function-scope').length,
+      total: positives.length, matched: positives.filter(item => item.matched).length, wrongSites: cases.filter(item => !item.matched && item.actual).length,
+      byStratum: Object.fromEntries([...new Set(cases.map(item => item.stratum))].map(stratum => {
+        const selected = positives.filter(item => item.stratum === stratum);
+        return [stratum, { uniqueExpected: selected.length, matched: selected.filter(item => item.matched).length }];
+      })), failures: cases.filter(item => !item.matched) };
+  } else {
+    const cases = Object.entries(oracle.sourceDeclarations).map(([id, expected]) => {
+      const call = calls.get(id), actual = call && targetOf(call);
+      return { id, expected: { file: expected.file, qualname: expected.qualname }, actual: actual ? { file: actual.file, qualname: actual.qualname } : null,
+        matched: actual?.file === expected.file && actual?.qualname === expected.qualname };
+    });
+    manual = { scope: oracle.scope, total: cases.length, matched: cases.filter(item => item.matched).length, cases };
+  }
 }
 console.log(JSON.stringify({
   adapter: facts.repository.adapter, callModel: facts.callModel, reference: { version: reference.pyrightVersion, commit: reference.pyrightCommit, platform: reference.pythonPlatform },
@@ -84,4 +102,4 @@ console.log(JSON.stringify({
   referenceAgreements: agreements.length, disagreements, baseline, manual, extractionMs,
   interpretation: 'Source declaration navigation only. Reference agreement is not independent accuracy; manual samples are small. Full Pyright performs more analysis than this source slice.',
 }, null, 2));
-if (disagreements.length || baseline?.changedTargets.length || manual && manual.matched !== manual.total) process.exitCode = 1;
+if (disagreements.length || baseline?.changedTargets.length || manual && (manual.matched !== manual.total || manual.wrongSites)) process.exitCode = 1;

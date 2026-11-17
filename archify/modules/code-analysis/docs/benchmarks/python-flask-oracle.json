@@ -1,0 +1,891 @@
+{
+  "purpose": "Static declaration oracle inspected by Codex from pinned source before reading either engine output; not a human independent audit or runtime-dispatch truth.",
+  "projectCommit": "2c1b30d0503cfb064f1cb252e6614a06915a362a",
+  "sampleSha256": "8b7cdb1237b5a8e93cf271d1ad6a878743644d0f3b9f1f9b96900234bb4a6aa2",
+  "recordedAt": "2026-11-17T12:57:19.017985+00:00",
+  "engineOutputsRead": false,
+  "candidateBundleSha256": "013bc40ef4e08b852d5edcb726fb3759c6aa6e54f37b8e0e65cffd2c9fd2a39b",
+  "constructorPolicy": "Class and __init__ navigation is a separate category, excluded from ordinary function precision and recall.",
+  "cases": [
+    {
+      "index": 0,
+      "id": "src/flask/app.py:224:42:224:72",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "SecureCookieSessionInterface; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 1,
+      "id": "src/flask/app.py:256:19:256:33",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "AppGroup; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 2,
+      "id": "src/flask/app.py:857:18:857:76",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/app.py",
+          "name": "_find_error_handler",
+          "qualname": "App._find_error_handler",
+          "line": 823,
+          "column": 5,
+          "endLine": 846,
+          "endColumn": 20
+        }
+      ],
+      "reason": "Flask inherits App; App defines this error-handler lookup."
+    },
+    {
+      "index": 3,
+      "id": "src/flask/app.py:961:18:961:43",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "adapter is Werkzeug MapAdapter; allowed_methods is external."
+    },
+    {
+      "index": 4,
+      "id": "src/flask/app.py:1090:22:1095:17",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "RuntimeError; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 5,
+      "id": "src/flask/app.py:1311:14:1311:47",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "_get_current_object is a Werkzeug LocalProxy operation, not RequestContext source code."
+    },
+    {
+      "index": 6,
+      "id": "src/flask/app.py:1319:31:1319:53",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/app.py",
+          "name": "ensure_sync",
+          "qualname": "Flask.ensure_sync",
+          "line": 966,
+          "column": 5,
+          "endLine": 978,
+          "endColumn": 20
+        }
+      ],
+      "reason": "The inner call is the declared Flask.ensure_sync method, independently of the returned callback invocation."
+    },
+    {
+      "index": 7,
+      "id": "src/flask/app.py:1355:28:1355:71",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "reversed is a builtin."
+    },
+    {
+      "index": 8,
+      "id": "src/flask/app.py:1536:15:1536:53",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/app.py",
+          "name": "wsgi_app",
+          "qualname": "Flask.wsgi_app",
+          "line": 1479,
+          "column": 5,
+          "endLine": 1527,
+          "endColumn": 27
+        }
+      ],
+      "reason": "Flask.__call__ forwards to its wsgi_app declaration. Middleware at runtime is outside the static declaration claim."
+    },
+    {
+      "index": 9,
+      "id": "src/flask/cli.py:180:19:180:48",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/cli.py",
+          "name": "_called_with_wrong_args",
+          "qualname": "_called_with_wrong_args",
+          "line": 94,
+          "column": 1,
+          "endLine": 117,
+          "endColumn": 15
+        }
+      ],
+      "reason": "Direct module function declared in the same file."
+    },
+    {
+      "index": 10,
+      "id": "src/flask/cli.py:425:19:425:68",
+      "stratum": "uniform",
+      "category": "dynamic-callable",
+      "targets": [],
+      "reason": "Higher-order outer call invokes the callback produced by an external decorator factory, not a uniquely captured function."
+    },
+    {
+      "index": 11,
+      "id": "src/flask/cli.py:517:19:528:1",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "external click.Option; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 12,
+      "id": "src/flask/cli.py:519:9:519:48",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "external click.Path; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 13,
+      "id": "src/flask/cli.py:631:18:631:33",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/cli.py",
+          "name": "load_app",
+          "qualname": "ScriptInfo.load_app",
+          "line": 333,
+          "column": 5,
+          "endLine": 372,
+          "endColumn": 19
+        }
+      ],
+      "reason": "info is returned by Click Context.ensure_object(ScriptInfo), whose generic signature preserves the supplied class type."
+    },
+    {
+      "index": 14,
+      "id": "src/flask/cli.py:648:15:648:44",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "ctx is Click Context; ensure_object is external."
+    },
+    {
+      "index": 15,
+      "id": "src/flask/cli.py:688:42:688:73",
+      "stratum": "self-method",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "get_help_option_names is inherited from Click Group/Command, outside the captured Flask tree."
+    },
+    {
+      "index": 16,
+      "id": "src/flask/cli.py:918:1:922:1",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "click.option is an external decorator factory."
+    },
+    {
+      "index": 17,
+      "id": "src/flask/cli.py:1031:25:1031:33",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "open returns a standard-library text stream; read is external."
+    },
+    {
+      "index": 18,
+      "id": "src/flask/cli.py:1049:12:1049:59",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "readline.set_completer is a standard-library function."
+    },
+    {
+      "index": 19,
+      "id": "src/flask/cli.py:1051:8:1051:26",
+      "stratum": "uniform",
+      "category": "dynamic-callable",
+      "targets": [],
+      "reason": "interactive_hook is read from sys.__interactivehook__; no unique captured implementation is known."
+    },
+    {
+      "index": 20,
+      "id": "src/flask/config.py:17:4:17:18",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "typing.TypeVar is external."
+    },
+    {
+      "index": 21,
+      "id": "src/flask/config.py:124:15:124:50",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/config.py",
+          "name": "from_pyfile",
+          "qualname": "Config.from_pyfile",
+          "line": 187,
+          "column": 5,
+          "endLine": 216,
+          "endColumn": 20
+        }
+      ],
+      "reason": "Direct method on Config called from from_envvar."
+    },
+    {
+      "index": 22,
+      "id": "src/flask/ctx.py:76:15:76:47",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "self.__dict__ is a mapping; get is a builtin mapping method."
+    },
+    {
+      "index": 23,
+      "id": "src/flask/ctx.py:253:8:253:49",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "_cv_tokens is a list; append is a builtin list method."
+    },
+    {
+      "index": 24,
+      "id": "src/flask/ctx.py:254:8:254:77",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "appcontext_pushed is a Blinker signal; send is external."
+    },
+    {
+      "index": 25,
+      "id": "src/flask/ctx.py:323:31:323:67",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/app.py",
+          "name": "create_url_adapter",
+          "qualname": "Flask.create_url_adapter",
+          "line": 425,
+          "column": 5,
+          "endLine": 476,
+          "endColumn": 20
+        }
+      ],
+      "reason": "RequestContext.__init__ declares app:Flask; the method belongs to Flask."
+    },
+    {
+      "index": 26,
+      "id": "src/flask/ctx.py:404:24:404:44",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "len is a builtin."
+    },
+    {
+      "index": 27,
+      "id": "src/flask/ctx.py:443:8:443:27",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/ctx.py",
+          "name": "pop",
+          "qualname": "RequestContext.pop",
+          "line": 396,
+          "column": 5,
+          "endLine": 431,
+          "endColumn": 18
+        }
+      ],
+      "reason": "RequestContext.__exit__ calls its pop declaration."
+    },
+    {
+      "index": 28,
+      "id": "src/flask/debughelpers.py:93:23:93:30",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "builtin super; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 29,
+      "id": "src/flask/helpers.py:109:18:109:56",
+      "stratum": "uniform",
+      "category": "dynamic-callable",
+      "targets": [],
+      "reason": "generator_or_function is a supplied callable parameter; its implementation is dynamic."
+    },
+    {
+      "index": 30,
+      "id": "src/flask/helpers.py:112:15:112:63",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "update_wrapper is explicitly imported from functools."
+    },
+    {
+      "index": 31,
+      "id": "src/flask/helpers.py:293:4:293:36",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "_wz_abort is explicitly imported from werkzeug.exceptions."
+    },
+    {
+      "index": 32,
+      "id": "src/flask/helpers.py:594:15:594:52",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "importlib.util.find_spec is a standard-library function."
+    },
+    {
+      "index": 33,
+      "id": "src/flask/helpers.py:613:8:613:31",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "__import__ is a builtin."
+    },
+    {
+      "index": 34,
+      "id": "src/flask/json/provider.py:121:10:121:82",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "TypeError; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 35,
+      "id": "src/flask/json/provider.py:177:8:177:60",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "kwargs is a dict; setdefault is a builtin mapping method."
+    },
+    {
+      "index": 36,
+      "id": "src/flask/json/provider.py:214:15:214:43",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/json/provider.py",
+          "name": "dumps",
+          "qualname": "DefaultJSONProvider.dumps",
+          "line": 166,
+          "column": 5,
+          "endLine": 179,
+          "endColumn": 41
+        }
+      ],
+      "reason": "Direct method in DefaultJSONProvider; this is not the different JSONProvider.dumps base declaration."
+    },
+    {
+      "index": 37,
+      "id": "src/flask/json/tag.py:105:12:105:35",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "isinstance is a builtin."
+    },
+    {
+      "index": 38,
+      "id": "src/flask/json/tag.py:107:16:107:33",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "next is a builtin."
+    },
+    {
+      "index": 39,
+      "id": "src/flask/json/tag.py:107:21:107:32",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "iter is a builtin."
+    },
+    {
+      "index": 40,
+      "id": "src/flask/sansio/app.py:53:24:53:52",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "isinstance is a builtin."
+    },
+    {
+      "index": 41,
+      "id": "src/flask/sansio/app.py:319:22:319:64",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/app.py",
+          "name": "make_config",
+          "qualname": "App.make_config",
+          "line": 482,
+          "column": 5,
+          "endLine": 496,
+          "endColumn": 54
+        }
+      ],
+      "reason": "App.__init__ calls its make_config declaration."
+    },
+    {
+      "index": 42,
+      "id": "src/flask/sansio/app.py:405:23:405:70",
+      "stratum": "self-method",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "external Werkzeug Map class assigned to url_map_class; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 43,
+      "id": "src/flask/sansio/app.py:436:29:436:79",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "getattr is a builtin."
+    },
+    {
+      "index": 44,
+      "id": "src/flask/sansio/app.py:480:14:480:35",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "NotImplementedError; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 45,
+      "id": "src/flask/sansio/app.py:496:15:496:53",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "Config class assigned to config_class; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 46,
+      "id": "src/flask/sansio/app.py:518:31:518:61",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/scaffold.py",
+          "name": "find_package",
+          "qualname": "find_package",
+          "line": 754,
+          "column": 1,
+          "endLine": 792,
+          "endColumn": 30
+        }
+      ],
+      "reason": "Explicit relative import in sansio.app from scaffold.py."
+    },
+    {
+      "index": 47,
+      "id": "src/flask/sansio/app.py:521:15:521:67",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "os.path.join is a standard-library function."
+    },
+    {
+      "index": 48,
+      "id": "src/flask/sansio/app.py:643:16:643:47",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "required_methods is a set; add is a builtin set method."
+    },
+    {
+      "index": 49,
+      "id": "src/flask/sansio/app.py:680:12:680:50",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/app.py",
+          "name": "add_template_filter",
+          "qualname": "App.add_template_filter",
+          "line": 686,
+          "column": 5,
+          "endLine": 695,
+          "endColumn": 55
+        }
+      ],
+      "reason": "Source method is wrapped by setupmethod, which forwards to f and retains the declared F -> F signature. Static declaration anchor remains the original method."
+    },
+    {
+      "index": 50,
+      "id": "src/flask/sansio/app.py:831:26:831:63",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/scaffold.py",
+          "name": "_get_exc_class_and_code",
+          "qualname": "Scaffold._get_exc_class_and_code",
+          "line": 657,
+          "column": 5,
+          "endLine": 698,
+          "endColumn": 35
+        }
+      ],
+      "reason": "App inherits this static method from Scaffold."
+    },
+    {
+      "index": 51,
+      "id": "src/flask/sansio/app.py:842:30:842:50",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "handler_map is a dict; get is a mapping method."
+    },
+    {
+      "index": 52,
+      "id": "src/flask/sansio/blueprints.py:529:12:529:54",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/blueprints.py",
+          "name": "add_app_template_global",
+          "qualname": "Blueprint.add_app_template_global",
+          "line": 535,
+          "column": 5,
+          "endLine": 551,
+          "endColumn": 44
+        }
+      ],
+      "reason": "Blueprint method wrapped by the source setupmethod; original static declaration is the navigation target."
+    },
+    {
+      "index": 53,
+      "id": "src/flask/sansio/blueprints.py:558:8:560:9",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/blueprints.py",
+          "name": "record_once",
+          "qualname": "Blueprint.record_once",
+          "line": 233,
+          "column": 5,
+          "endLine": 244,
+          "endColumn": 51
+        }
+      ],
+      "reason": "Direct Blueprint method wrapped by setupmethod."
+    },
+    {
+      "index": 54,
+      "id": "src/flask/sansio/blueprints.py:568:8:570:9",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/blueprints.py",
+          "name": "record_once",
+          "qualname": "Blueprint.record_once",
+          "line": 233,
+          "column": 5,
+          "endLine": 244,
+          "endColumn": 51
+        }
+      ],
+      "reason": "Same Blueprint declaration called from after_app_request."
+    },
+    {
+      "index": 55,
+      "id": "src/flask/sansio/scaffold.py:46:8:46:42",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/scaffold.py",
+          "name": "_check_setup_finished",
+          "qualname": "Scaffold._check_setup_finished",
+          "line": 220,
+          "column": 5,
+          "endLine": 221,
+          "endColumn": 34
+        }
+      ],
+      "reason": "wrapper_func explicitly annotates self:Scaffold; this is a declaration anchor rather than a subclass runtime implementation."
+    },
+    {
+      "index": 56,
+      "id": "src/flask/sansio/scaffold.py:259:23:259:59",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "os.path.basename is a standard-library function."
+    },
+    {
+      "index": 57,
+      "id": "src/flask/sansio/scaffold.py:293:15:293:60",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sansio/scaffold.py",
+          "name": "route",
+          "qualname": "Scaffold.route",
+          "line": 336,
+          "column": 5,
+          "endLine": 365,
+          "endColumn": 25
+        }
+      ],
+      "reason": "Scaffold.route is the source method wrapped by setupmethod."
+    },
+    {
+      "index": 58,
+      "id": "src/flask/sansio/scaffold.py:538:8:538:56",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "teardown_request_funcs is a dict; setdefault is a builtin mapping method."
+    },
+    {
+      "index": 59,
+      "id": "src/flask/sansio/scaffold.py:733:31:735:17",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "pathlib.Path; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 60,
+      "id": "src/flask/sessions.py:30:15:30:44",
+      "stratum": "self-method",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "SessionMixin inherits MutableMapping.get from collections.abc; no captured Flask get declaration is selected."
+    },
+    {
+      "index": 61,
+      "id": "src/flask/sessions.py:86:15:86:39",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "super().__getitem__ belongs to external Werkzeug CallbackDict/dict ancestry."
+    },
+    {
+      "index": 62,
+      "id": "src/flask/sessions.py:324:12:324:34",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "keys is a list; extend is a builtin list method."
+    },
+    {
+      "index": 63,
+      "id": "src/flask/sessions.py:343:19:343:39",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "SecureCookieSession assigned to session_class; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 64,
+      "id": "src/flask/sessions.py:344:18:344:69",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "int; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 65,
+      "id": "src/flask/sessions.py:347:19:347:43",
+      "stratum": "self-method",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "SecureCookieSession assigned to session_class; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 66,
+      "id": "src/flask/sessions.py:357:17:357:44",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sessions.py",
+          "name": "get_cookie_secure",
+          "qualname": "SessionInterface.get_cookie_secure",
+          "line": 216,
+          "column": 5,
+          "endLine": 220,
+          "endColumn": 51
+        }
+      ],
+      "reason": "SecureCookieSessionInterface inherits this SessionInterface method without overriding it."
+    },
+    {
+      "index": 67,
+      "id": "src/flask/sessions.py:360:19:360:48",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sessions.py",
+          "name": "get_cookie_httponly",
+          "qualname": "SessionInterface.get_cookie_httponly",
+          "line": 209,
+          "column": 5,
+          "endLine": 214,
+          "endColumn": 53
+        }
+      ],
+      "reason": "SecureCookieSessionInterface inherits this SessionInterface method."
+    },
+    {
+      "index": 68,
+      "id": "src/flask/sessions.py:387:14:387:46",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/sessions.py",
+          "name": "get_signing_serializer",
+          "qualname": "SecureCookieSessionInterface.get_signing_serializer",
+          "line": 317,
+          "column": 5,
+          "endLine": 335,
+          "endColumn": 10
+        }
+      ],
+      "reason": "The selected inner call belongs to SecureCookieSessionInterface; serializer.dumps is a separate external call."
+    },
+    {
+      "index": 69,
+      "id": "src/flask/signals.py:17:18:17:52",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "_signals is a Blinker Namespace; signal is external."
+    },
+    {
+      "index": 70,
+      "id": "src/flask/templating.py:121:20:121:40",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "result is a set; add is a builtin set method."
+    },
+    {
+      "index": 71,
+      "id": "src/flask/templating.py:123:15:123:27",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "list; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 72,
+      "id": "src/flask/templating.py:168:4:168:40",
+      "stratum": "uniform",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/app.py",
+          "name": "update_template_context",
+          "qualname": "Flask.update_template_context",
+          "line": 506,
+          "column": 5,
+          "endLine": 532,
+          "endColumn": 33
+        }
+      ],
+      "reason": "_stream declares app:Flask, whose method is defined in app.py."
+    },
+    {
+      "index": 73,
+      "id": "src/flask/templating.py:202:10:202:43",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "current_app._get_current_object is an external Werkzeug LocalProxy operation."
+    },
+    {
+      "index": 74,
+      "id": "src/flask/testing.py:168:18:168:73",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "RuntimeError; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 75,
+      "id": "src/flask/testing.py:211:20:213:9",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "isinstance is a builtin."
+    },
+    {
+      "index": 76,
+      "id": "src/flask/testing.py:216:39:216:85",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/testing.py",
+          "name": "_copy_environ",
+          "qualname": "FlaskClient._copy_environ",
+          "line": 185,
+          "column": 5,
+          "endLine": 191,
+          "endColumn": 19
+        }
+      ],
+      "reason": "Direct method on FlaskClient."
+    },
+    {
+      "index": 77,
+      "id": "src/flask/testing.py:228:22:228:67",
+      "stratum": "self-method",
+      "category": "unique-source-declaration",
+      "targets": [
+        {
+          "file": "src/flask/testing.py",
+          "name": "_request_from_builder_args",
+          "qualname": "FlaskClient._request_from_builder_args",
+          "line": 193,
+          "column": 5,
+          "endLine": 202,
+          "endColumn": 28
+        }
+      ],
+      "reason": "Direct method on FlaskClient."
+    },
+    {
+      "index": 78,
+      "id": "src/flask/views.py:83:14:83:35",
+      "stratum": "uniform",
+      "category": "constructor-outside-function-scope",
+      "targets": [],
+      "reason": "NotImplementedError; constructors are scored separately from ordinary function declarations."
+    },
+    {
+      "index": 79,
+      "id": "src/flask/wrappers.py:198:8:198:33",
+      "stratum": "uniform",
+      "category": "external-or-builtin",
+      "targets": [],
+      "reason": "Request._load_form_data calls its external Werkzeug base implementation."
+    }
+  ]
+}
