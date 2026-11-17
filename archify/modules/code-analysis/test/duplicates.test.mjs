@@ -159,7 +159,9 @@ test('duplicates: wrong version, process failure, and timeout cannot become empt
   const failed = faultTool(input.dir, 'failed', "console.error('injected scanner failure'); process.exit(7);");
   assert.throws(() => analyze(input, enabled(failed.executable)), diagnostic('duplicates/tool-failed'));
   const hung = faultTool(input.dir, 'hung', 'setInterval(() => {}, 1000);');
-  assert.throws(() => analyze(input, enabled(hung.executable, { timeoutMs: 1000 })), diagnostic('duplicates/tool-failed'));
+  // Leave the same startup budget as the launcher lifecycle case below. A
+  // saturated suite must reach the scan, not just time out starting Node.
+  assert.throws(() => analyze(input, enabled(hung.executable, { timeoutMs: 5000 })), diagnostic('duplicates/tool-failed'));
   const calls = fs.readFileSync(hung.calls, 'utf8').trim().split('\n').map(line => JSON.parse(line));
   assert.ok(calls.some(call => !call.args.includes('--version')), 'the actual scan reached the timeout control');
 });

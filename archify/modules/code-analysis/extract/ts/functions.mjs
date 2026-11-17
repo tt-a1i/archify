@@ -20,56 +20,53 @@
 // not lost (`<callback of server.on("request")>`). Only callbacks with the same
 // call and literal get a `#2`, `#3` suffix in source order.
 // Overload signatures and other bodiless declarations are skipped.
-import ts from 'typescript';
+import bundledTs from 'typescript';
+import { createHash } from 'node:crypto';
+import { syntaxChildren } from './syntax-walk.mjs';
+
+export function functionTools(ts) {
 
 const LOGICAL = new Set([
   ts.SyntaxKind.AmpersandAmpersandToken, ts.SyntaxKind.BarBarToken, ts.SyntaxKind.QuestionQuestionToken,
   ts.SyntaxKind.AmpersandAmpersandEqualsToken, ts.SyntaxKind.BarBarEqualsToken, ts.SyntaxKind.QuestionQuestionEqualsToken,
 ]);
 
-export function isShortCircuitExpression(node) {
+function isShortCircuitExpression(node) {
   return ts.isBinaryExpression(node) && LOGICAL.has(node.operatorToken.kind);
 }
 
-export function measureFunctions(source, file, onFunction) {
+function measureFunctions(source, file, onFunction) {
   const records = [];
   const seen = new Map(); // qualname -> count, for anonymous names that repeat
 
-  const walk = (node, prefix, insideFunction) => {
-    ts.forEachChild(node, (child) => {
-      if (isFunctionWithBody(child)) {
-        const name = functionName(child, source);
-        if (name || !insideFunction) {
-          let qualname = prefix + (name || anonymousName(child, source));
-          if (!name) {
-            const n = (seen.get(qualname) || 0) + 1;
-            seen.set(qualname, n);
-            if (n > 1) qualname += `#${n}`;
-          }
-          const measured = record(child, source, file, name || qualname.slice(prefix.length), qualname);
-          records.push(measured);
-          onFunction?.(measured, child);
-          walk(child, `${qualname}.<locals>.`, true);
-          return;
+  const pending = [{ node: source, prefix: '', insideFunction: false }];
+  while (pending.length) {
+    let { node, prefix, insideFunction } = pending.pop();
+    if (isFunctionWithBody(node)) {
+      const name = functionName(node, source);
+      if (name || !insideFunction) {
+        let qualname = prefix + (name || anonymousName(node, source));
+        if (!name) {
+          const n = (seen.get(qualname) || 0) + 1;
+          seen.set(qualname, n);
+          if (n > 1) qualname += `#${n}`;
         }
-        // An anonymous callback inside a function: part of that function, measured with it.
-        walk(child, prefix, insideFunction);
-        return;
+        const measured = record(node, source, file, name || qualname.slice(prefix.length), qualname);
+        records.push(measured);
+        onFunction?.(measured, node);
+        prefix = `${qualname}.<locals>.`;
+        insideFunction = true;
       }
-      if (ts.isClassLike(child)) {
-        const className = child.name ? child.name.text : bindingName(child, source);
-        walk(child, className ? `${prefix}${className}.` : prefix, insideFunction);
-        return;
-      }
-      if (ts.isObjectLiteralExpression(child)) {
-        const owner = bindingName(child, source);
-        walk(child, owner ? `${prefix}${owner}.` : prefix, insideFunction);
-        return;
-      }
-      walk(child, prefix, insideFunction);
-    });
-  };
-  walk(source, '', false);
+    } else if (ts.isClassLike(node)) {
+      const className = node.name ? node.name.text : bindingName(node, source);
+      if (className) prefix = `${prefix}${className}.`;
+    } else if (ts.isObjectLiteralExpression(node)) {
+      const owner = bindingName(node, source);
+      if (owner) prefix = `${prefix}${owner}.`;
+    }
+    const children = syntaxChildren(ts, node);
+    for (let i = children.length - 1; i >= 0; i -= 1) pending.push({ node: children[i], prefix, insideFunction });
+  }
   return records.sort((a, b) => a.line - b.line || (a.qualname < b.qualname ? -1 : a.qualname > b.qualname ? 1 : 0));
 }
 
@@ -81,37 +78,44 @@ function isFunctionWithBody(node) {
 
 function record(fn, source, file, name, qualname) {
   const m = measure(fn, source);
+  const start = fn.getStart(source), end = fn.getEnd();
+  const startPoint = source.getLineAndCharacterOfPosition(start);
+  const endPoint = source.getLineAndCharacterOfPosition(end);
   return {
     file, name, qualname,
-    line: lineOf(source, fn.getStart(source)),
-    endLine: lineOf(source, fn.getEnd()),
+    syntaxKind: ts.SyntaxKind[fn.kind],
+    line: startPoint.line + 1,
+    endLine: endPoint.line + 1,
+    sourceRange: { line: startPoint.line + 1, column: startPoint.character + 1,
+      endLine: endPoint.line + 1, endColumn: endPoint.character + 1,
+      sha256: createHash('sha256').update(source.text.slice(start, end)).digest('hex') },
     complexity: m.complexity, nesting: m.nesting, deepestLine: m.deepestLine,
   };
 }
 
 function measure(fn, source) {
   const state = { complexity: 1, nesting: 0, deepestLine: lineOf(source, fn.getStart(source)) };
-  const visit = (node, depth) => {
-    ts.forEachChild(node, (child) => {
-      // Separately measured functions and classes do not add to this one.
-      if ((isFunctionWithBody(child) && (functionName(child, source) !== null)) || ts.isClassLike(child)) return;
-      if (ts.isIfStatement(child) || ts.isConditionalExpression(child) || ts.isCatchClause(child)
-        || ts.isForStatement(child) || ts.isForInStatement(child) || ts.isForOfStatement(child)
-        || ts.isWhileStatement(child) || ts.isDoStatement(child) || ts.isCaseClause(child)) state.complexity += 1;
-      else if (isShortCircuitExpression(child)) state.complexity += 1;
-      let childDepth = depth;
-      if (isBlock(child)) {
-        const elseIf = ts.isIfStatement(child) && ts.isIfStatement(node) && node.elseStatement === child;
-        childDepth = elseIf ? depth : depth + 1;
-        if (childDepth > state.nesting) {
-          state.nesting = childDepth;
-          state.deepestLine = lineOf(source, child.getStart(source));
-        }
+  const pending = syntaxChildren(ts, fn).reverse().map(node => ({ node, parent: fn, depth: 0 }));
+  while (pending.length) {
+    const { node: child, parent, depth } = pending.pop();
+    // Separately measured functions and classes do not add to this one.
+    if ((isFunctionWithBody(child) && (functionName(child, source) !== null)) || ts.isClassLike(child)) continue;
+    if (ts.isIfStatement(child) || ts.isConditionalExpression(child) || ts.isCatchClause(child)
+      || ts.isForStatement(child) || ts.isForInStatement(child) || ts.isForOfStatement(child)
+      || ts.isWhileStatement(child) || ts.isDoStatement(child) || ts.isCaseClause(child)) state.complexity += 1;
+    else if (isShortCircuitExpression(child)) state.complexity += 1;
+    let childDepth = depth;
+    if (isBlock(child)) {
+      const elseIf = ts.isIfStatement(child) && ts.isIfStatement(parent) && parent.elseStatement === child;
+      childDepth = elseIf ? depth : depth + 1;
+      if (childDepth > state.nesting) {
+        state.nesting = childDepth;
+        state.deepestLine = lineOf(source, child.getStart(source));
       }
-      visit(child, childDepth);
-    });
-  };
-  visit(fn, 0);
+    }
+    const children = syntaxChildren(ts, child);
+    for (let i = children.length - 1; i >= 0; i -= 1) pending.push({ node: children[i], parent: child, depth: childDepth });
+  }
   return state;
 }
 
@@ -193,3 +197,9 @@ function calleeName(expr, source) {
 function lineOf(source, pos) {
   return source.getLineAndCharacterOfPosition(pos).line + 1;
 }
+
+return { isShortCircuitExpression, measureFunctions };
+}
+
+// Historical source queries still use the bundled parser for saved v1-v5 facts.
+export const { measureFunctions } = functionTools(bundledTs);

@@ -7,6 +7,7 @@ import ts from 'typescript';
 import { extract } from '../extract/ts/index.mjs';
 
 const config = JSON.parse(fs.readFileSync(new URL('../config/defaults.json', import.meta.url)));
+const nodeNext = { allowJs: true, module: 'NodeNext', moduleResolution: 'NodeNext' };
 function fixture(t, files) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-ts-snapshot-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -70,9 +71,9 @@ test('excluded source stays outside facts but remains known to resolution', t =>
 });
 
 test('installed configuration packages remain supported and changes invalidate analysis', t => {
-  // Module resolution canonicalizes the macOS /var temporary-directory alias.
-  // Match that same path so the intended input mutation actually runs.
-  const root = fs.realpathSync(fixture(t, {
+  // Match native module resolution, including macOS aliases and Windows 8.3
+  // temporary paths, so the intended input mutation actually runs.
+  const root = fs.realpathSync.native(fixture(t, {
     'entry.ts': 'import { type T } from "./dep";', 'dep.ts': 'export interface T {}',
     'tsconfig.json': JSON.stringify({ extends: 'base-config' }),
     'node_modules/base-config/package.json': JSON.stringify({ name: 'base-config', tsconfig: 'base.json' }),
@@ -158,6 +159,7 @@ test('JavaScript package implementation fallback uses the captured manifest and 
 
 test('runtime conditional null blocks siblings while arrays retain their next target', t => {
   const root = fixture(t, {
+    'tsconfig.json': JSON.stringify({ compilerOptions: nodeNext }),
     'package.json': JSON.stringify({ name: 'conditional-null-self', type: 'module', imports: {
       '#conditional': { import: null, default: './fallback.cjs' },
       '#require-blocked': { require: null, default: './fallback.cjs' },
@@ -192,6 +194,7 @@ test('runtime conditional null blocks siblings while arrays retain their next ta
 
 test('runtime package arrays stop at selected or unsupported targets, not capture availability', t => {
   const root = fixture(t, {
+    'tsconfig.json': JSON.stringify({ compilerOptions: nodeNext }),
     'package.json': JSON.stringify({ name: 'array-boundaries', type: 'module', imports: {
       '#empty-array': { import: [], default: './fallback.cjs' },
       '#empty-object': { import: {}, default: './fallback.cjs' },
@@ -222,7 +225,7 @@ test('runtime package correction respects custom conditions, option gates and ca
     '#entry': [{ import: null, default: './fallback.cjs' }, target],
     '#browser': { browser: null, default: './fallback.cjs' },
   } });
-  const root = fixture(t, { 'package.json': manifest('./old.mjs'),
+  const root = fixture(t, { 'package.json': manifest('./old.mjs'), 'tsconfig.json': JSON.stringify({ compilerOptions: nodeNext }),
     'entry.mjs': 'import "#entry";\nimport "#browser";',
     'old.mjs': 'export {};', 'fallback.cjs': 'exports.value = 1;',
   });
@@ -232,16 +235,16 @@ test('runtime package correction respects custom conditions, option gates and ca
     fs.unlinkSync(path.join(root, 'old.mjs'));
   }, () => extract(root, config));
   assert.deepEqual(captured.imports.map(e => e.to), ['old.mjs', 'fallback.cjs']);
-  fs.writeFileSync(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: { customConditions: ['browser'] } }));
+  fs.writeFileSync(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: { ...nodeNext, customConditions: ['browser'] } }));
   assert.deepEqual(extract(root, config).imports.map(e => e.to), ['new.mjs', undefined]);
   fs.writeFileSync(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: {
-    resolvePackageJsonImports: false, paths: { '#browser': ['./fallback.cjs'] },
+    ...nodeNext, resolvePackageJsonImports: false, paths: { '#browser': ['./fallback.cjs'] },
   } }));
   assert.equal(extract(root, config).imports.find(e => e.specifier === '#browser').to, 'fallback.cjs');
   const exportsRoot = fixture(t, {
     'package.json': JSON.stringify({ name: 'exports-disabled', type: 'module', exports: { import: null, default: './fallback.cjs' } }),
     'entry.mjs': 'import "exports-disabled";', 'fallback.cjs': 'exports.value = 1;',
-    'tsconfig.json': JSON.stringify({ compilerOptions: { resolvePackageJsonExports: false, paths: { 'exports-disabled': ['./fallback.cjs'] } } }),
+    'tsconfig.json': JSON.stringify({ compilerOptions: { ...nodeNext, resolvePackageJsonExports: false, paths: { 'exports-disabled': ['./fallback.cjs'] } } }),
   });
   assert.equal(extract(exportsRoot, config).imports[0].to, 'fallback.cjs');
 });

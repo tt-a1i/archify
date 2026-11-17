@@ -22,7 +22,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRangeDigest, findRanges, rangeDigest, splitLines } from '../core/index.mjs';
+import { createRangeDigest, decodeTypeScriptText, findRanges, rangeDigest, splitLines } from '../core/index.mjs';
 
 // Kept as an export of this module for existing callers; it lives in core/.
 export { createRangeDigest };
@@ -78,6 +78,7 @@ function isLatin1(declared) {
 }
 
 export function decodeSource(buffer, rel) {
+  if (/\.(?:[mc]?[jt]s|[jt]sx)$/i.test(rel)) return decodeTypeScriptText(buffer, true);
   if (!/\.pyi?$/i.test(rel)) return buffer.toString('utf8');
   // tokenize.detect_encoding selects utf-8-sig for Python's UTF-8 signature.
   // Strip it before comparing decoded text or interpreting first-line columns.

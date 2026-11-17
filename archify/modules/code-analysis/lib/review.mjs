@@ -193,6 +193,14 @@ export function comparability(before, after) {
   if (revision(before) !== revision(after)) changes.push(`Extraction logic changed from revision ${revision(before) ?? 'unrecorded'} to ${revision(after) ?? 'unrecorded'}.`);
   if (changes.length) add('adapter-changed', changes.join(' '));
   if (before.configDigest !== after.configDigest) add('config-changed', 'The analysis configuration or module grouping changed (thresholds, include/exclude, roles, boundaries or ignored rules).');
+  if (before.language === 'ts' && after.language === 'ts' && (before.tsProjects || after.tsProjects)
+    && typescriptProjectsChanged(before, after)) {
+    add('typescript-project-scope-changed', 'The TypeScript project ownership or effective compiler options changed.');
+  }
+  if (before.language === 'ts' && after.language === 'ts' && (before.tsSdks || after.tsSdks)
+    && JSON.stringify(before.tsSdks?.map(typescriptSdkIdentity).sort()) !== JSON.stringify(after.tsSdks?.map(typescriptSdkIdentity).sort())) {
+    add('typescript-sdk-scope-changed', 'The selected TypeScript SDK packages or their provenance changed.');
+  }
   if (before.language === 'go' && after.language === 'go') {
     const left = before.goBuildScope, right = after.goBuildScope;
     if (!left || !right) add('go-build-scope-missing', 'At least one Go run recorded no effective build scope; platform and build-tag selection cannot be compared.');
@@ -224,6 +232,28 @@ export function comparability(before, after) {
   if (newParseErrors.length) add('parse-errors', `${newParseErrors.length} file${newParseErrors.length === 1 ? '' : 's'} failed to parse this time: ${newParseErrors.slice(0, 5).join(', ')}${newParseErrors.length > 5 ? ', …' : ''}.`);
   reasons.push(...externalComparisonReasons(before.external, after.external));
   return { comparable: reasons.some((r) => r.code !== 'go-build-scope-missing') ? false : reasons.length ? null : true, reasons };
+}
+
+const typescriptSdkIdentity = sdk => JSON.stringify([sdk?.version, sdk?.source, sdk?.status, sdk?.packagePath]);
+
+function typescriptProjectsChanged(before, after) {
+  if (!before.tsProjects || !after.tsProjects) return true;
+  const describe = context => {
+    const files = new Map(), options = new Map();
+    for (const project of context.tsProjects) {
+      const sdk = typescriptSdkIdentity(context.tsSdks?.[project.sdkIndex] || { version: project.sdkVersion });
+      const key = JSON.stringify([project.config, sdk]);
+      options.set(key, project.optionsDigest);
+      const owner = JSON.stringify([key, project.optionsDigest]);
+      for (const file of project.files) files.set(file, owner);
+    }
+    return { files, options };
+  };
+  const left = describe(before), right = describe(after);
+  // Adding or deleting source files is the change being measured. Compare
+  // ownership for shared files and effective settings for shared projects.
+  return [...left.files].some(([file, owner]) => right.files.has(file) && right.files.get(file) !== owner)
+    || [...left.options].some(([project, options]) => right.options.has(project) && right.options.get(project) !== options);
 }
 
 // Source contexts describe how an external report was produced. The changing

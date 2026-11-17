@@ -1,6 +1,8 @@
 // Follow explicit ESM bindings through already captured static import/export
 // selections. The Program remains noResolve; no new files or inferred aliases.
-import ts from 'typescript';
+import { syntaxNodes } from './syntax-walk.mjs';
+
+export function importedCallTools(ts) {
 
 const exported = (node, name) => node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)
   && node.modifiers.some(m => m.kind === ts.SyntaxKind.DefaultKeyword) === (name === 'default');
@@ -39,7 +41,7 @@ function referencedFunction(symbol, info, checker) {
   return bodies[0];
 }
 
-export function importedCallTarget(node, source, checker, importTargets, sources) {
+function importedCallTarget(node, source, checker, importTargets, sources) {
   const declarations = checker.getSymbolAtLocation(node.expression)?.declarations || [];
   if (declarations.length !== 1) return null;
   let selected = importBinding(declarations[0], source);
@@ -100,8 +102,100 @@ export function importedCallTarget(node, source, checker, importTargets, sources
   return null;
 }
 
+// CommonJS exports have mutable object identity. Attribute only a direct
+// destructured require and a source whose module/exports references are all
+// static top-level writes. Other aliases or later mutations stay unknown.
+function commonJsCallTarget(node, source, callerFile, checker, importTargets, sources) {
+  const declarations = checker.getSymbolAtLocation(node.expression)?.declarations || [];
+  if (declarations.length !== 1 || !ts.isBindingElement(declarations[0])) return null;
+  const binding = declarations[0], pattern = binding.parent;
+  if (!ts.isObjectBindingPattern(pattern) || !ts.isIdentifier(binding.name) || binding.dotDotDotToken
+    || binding.initializer || !pattern.elements.every(element => !element.dotDotDotToken)) return null;
+  const name = binding.propertyName || binding.name;
+  if (!ts.isIdentifier(name) && !ts.isStringLiteral(name)) return null;
+  const declaration = pattern.parent, list = declaration.parent;
+  if (!ts.isVariableDeclaration(declaration) || !ts.isVariableDeclarationList(list)
+    || !(list.flags & ts.NodeFlags.Const) || !ts.isVariableStatement(list.parent)
+    || list.parent.parent !== source || !ts.isCallExpression(declaration.initializer)) return null;
+  const file = importTargets.get(declaration.initializer), info = sources.get(file);
+  if (!info?.valid || !sources.get(callerFile)?.valid || !stable(sources.get(callerFile), checker, checker.getSymbolAtLocation(node.expression))) return null;
+  // A captured loader alias, dynamic load or cache access can mutate a module
+  // without a static import edge. Do not attribute any CommonJS target when
+  // that escape is visible in this project.
+  for (const captured of sources.values()) {
+    captured.referenceEffects ||= referenceEffects(captured.source, checker);
+    if (captured.referenceEffects.commonJsOpaque) return null;
+  }
+  // A namespace result can expose the mutable exports object to a write or an
+  // arbitrary consumer. Admit only named destructuring and side-effect loads
+  // for this target throughout the captured project.
+  for (const [usage, target] of importTargets) {
+    if (target !== file) continue;
+    if (!ts.isCallExpression(usage)) return null;
+    const parent = usage.parent;
+    if (ts.isExpressionStatement(parent)) continue;
+    if (!ts.isVariableDeclaration(parent) || !ts.isObjectBindingPattern(parent.name)
+      || !parent.name.elements.every(element => ts.isIdentifier(element.name) && !element.dotDotDotToken && !element.initializer)) return null;
+  }
+  const exports = commonJsExports(info.source, checker);
+  const symbol = exports?.get(name.text);
+  const target = referencedFunction(symbol, info, checker);
+  const measured = target && info.functionRecords.get(target);
+  if (!measured) return null;
+  const start = info.source.getLineAndCharacterOfPosition(target.getStart(info.source));
+  return { file, name: measured.name, line: start.line + 1, column: start.character + 1 };
+}
+
+function commonJsExports(source, checker) {
+  const allowed = new Set(), exports = new Map();
+  let wholeObject = false;
+  const global = node => {
+    if (!ts.isIdentifier(node)) return false;
+    const declarations = checker.getSymbolAtLocation(node)?.declarations || [];
+    return !declarations.length || declarations.every(declaration => declaration === source
+      || (ts.isIdentifier(declaration) && declaration.text === 'module'
+        && ts.isPropertyAccessExpression(declaration.parent) && declaration.parent.expression === declaration));
+  };
+  const moduleExports = node => ts.isPropertyAccessExpression(node) && node.name.text === 'exports'
+    && global(node.expression) && node.expression.text === 'module';
+  const exportRoot = node => global(node) && node.text === 'exports';
+  const add = (name, value, symbol = checker.getSymbolAtLocation(value)) => {
+    if (!ts.isIdentifier(value) || exports.has(name)) return false;
+    exports.set(name, symbol);
+    return true;
+  };
+  for (const statement of source.statements) {
+    if (!ts.isExpressionStatement(statement) || !ts.isBinaryExpression(statement.expression)
+      || statement.expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken) continue;
+    const { left, right } = statement.expression;
+    if (moduleExports(left)) {
+      if (wholeObject || exports.size || !ts.isObjectLiteralExpression(right)) return null;
+      wholeObject = true;
+      allowed.add(left.expression);
+      for (const property of right.properties) {
+        if (ts.isShorthandPropertyAssignment(property)) {
+          if (!add(property.name.text, property.name, checker.getShorthandAssignmentValueSymbol(property))) return null;
+        } else if (ts.isPropertyAssignment(property) && !ts.isComputedPropertyName(property.name)
+          && (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))) {
+          if (!add(property.name.text, property.initializer)) return null;
+        } else return null;
+      }
+    } else if (ts.isPropertyAccessExpression(left) && (moduleExports(left.expression) || exportRoot(left.expression))) {
+      if (wholeObject || !add(left.name.text, right)) return null;
+      allowed.add(moduleExports(left.expression) ? left.expression.expression : left.expression);
+    }
+  }
+  let unsafe = false;
+  for (const node of syntaxNodes(ts, source)) {
+    if (ts.isIdentifier(node) && ['module', 'exports'].includes(node.text)
+      && !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node)
+      && global(node) && !allowed.has(node)) unsafe = true;
+  }
+  return unsafe ? null : exports;
+}
+
 function referenceEffects(source, checker) {
-  const writes = new Set(); let opaque = false;
+  const writes = new Set(); let opaque = false, commonJsOpaque = false;
   const write = node => {
     if (ts.isIdentifier(node)) {
       const symbol = checker.getSymbolAtLocation(node); if (symbol) writes.add(symbol);
@@ -116,7 +210,20 @@ function referenceEffects(source, checker) {
     else if (ts.isSpreadElement(node)) write(node.expression);
     // Property writes mutate an object, not the local function binding.
   };
-  const walk = node => {
+  for (const node of syntaxNodes(ts, source)) {
+    if (ts.isIdentifier(node) && node.text === 'require' && isModuleRequire(node, checker)
+      && !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node)) {
+      const parent = node.parent;
+      const direct = ts.isCallExpression(parent) && parent.expression === node
+        && parent.arguments.length === 1 && ts.isStringLiteralLike(parent.arguments[0]);
+      const declaration = ts.isVariableDeclaration(parent) && parent.name === node;
+      const resolve = ts.isPropertyAccessExpression(parent) && parent.expression === node && parent.name.text === 'resolve'
+        && ts.isCallExpression(parent.parent) && parent.parent.expression === parent;
+      if (!direct && !declaration && !resolve) commonJsOpaque = true;
+    }
+    if (ts.isIdentifier(node) && node.text === 'module' && !checker.getSymbolAtLocation(node)?.declarations?.length
+      && !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node)
+      && !(ts.isPropertyAccessExpression(node.parent) && node.parent.expression === node && node.parent.name.text === 'exports')) commonJsOpaque = true;
     if (ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
       && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) write(node.left);
     if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node))
@@ -129,7 +236,32 @@ function referenceEffects(source, checker) {
         || ts.isSatisfiesExpression(callee)) callee = callee.expression;
       if (ts.isIdentifier(callee) && callee.text === 'eval') opaque = true;
     }
-    ts.forEachChild(node, walk);
-  };
-  walk(source); return { writes, opaque };
+  }
+  return { writes, opaque, commonJsOpaque };
+}
+
+// Native CommonJS require has no source declaration. Also preserve the common
+// ESM createRequire pattern, but never infer an arbitrary local function is a loader.
+function isModuleRequire(identifier, checker) {
+  const declarations = checker.getSymbolAtLocation(identifier)?.declarations || [];
+  if (!declarations.length) return true;
+  if (declarations.length !== 1) return false;
+  const declaration = declarations[0];
+  if (!ts.isVariableDeclaration(declaration) || !declaration.initializer
+    || !ts.isCallExpression(declaration.initializer)) return false;
+  const args = declaration.initializer.arguments;
+  const base = args[0];
+  if (args.length !== 1 || !ts.isPropertyAccessExpression(base) || base.name.text !== 'url'
+    || !ts.isMetaProperty(base.expression) || base.expression.keywordToken !== ts.SyntaxKind.ImportKeyword) return false;
+  const factory = declaration.initializer.expression;
+  if (!ts.isIdentifier(factory)) return false;
+  const imported = checker.getSymbolAtLocation(factory)?.declarations?.[0];
+  if (!imported || !ts.isImportSpecifier(imported)
+    || (imported.propertyName || imported.name).text !== 'createRequire') return false;
+  const statement = imported.parent.parent.parent;
+  return ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)
+    && ['node:module', 'module'].includes(statement.moduleSpecifier.text);
+}
+
+return { importedCallTarget, commonJsCallTarget, isModuleRequire };
 }
