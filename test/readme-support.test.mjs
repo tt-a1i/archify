@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFragment } from 'parse5';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readmes = [
@@ -30,22 +31,37 @@ test('every README language places the maintainer support QR codes after contrib
 });
 
 const supportBadges = [
-  { file: 'README.md', href: '#support-archify', style: 'for-the-badge' },
-  { file: 'README_EN.md', href: '#support-archify', style: 'for-the-badge' },
-  { file: 'README_ZH.md', href: '#支持-archify', style: 'for-the-badge' },
-  { file: 'README_JA.md', href: '#archify-を支援する', style: 'for-the-badge' },
-  { file: 'README_KO.md', href: '#archify-지원하기', style: 'flat-square' },
+  { file: 'README.md', heading: 'Support Archify' },
+  { file: 'README_EN.md', heading: 'Support Archify' },
+  { file: 'README_ZH.md', heading: '支持 Archify' },
+  { file: 'README_JA.md', heading: 'Archify を支援する' },
+  { file: 'README_KO.md', heading: 'Archify 지원하기' },
 ];
 
+function checkSupportLink(text, heading, file) {
+  const firstHeading = text.search(/^##\s/m);
+  assert.ok(firstHeading > 0, `${file}: missing first heading`);
+  const headingLine = `## ${heading}`;
+  assert.ok(text.split(/\r?\n/).includes(headingLine), `${file}: missing support heading ${headingLine}`);
+  // These headings contain only letters and spaces, so GitHub's heading ID is
+  // their lowercase text with spaces replaced by hyphens.
+  const target = `#${heading.toLowerCase().replace(/ /g, '-')}`;
+  const links = [];
+  const attr = (node, name) => node.attrs?.find(attribute => attribute.name === name)?.value;
+  function visit(node, anchor) {
+    const parentLink = node.tagName === 'a' ? node : anchor;
+    if (node.tagName === 'img' && attr(node, 'alt') === 'Support Archify') {
+      links.push(parentLink && attr(parentLink, 'href'));
+    }
+    for (const child of node.childNodes || []) visit(child, parentLink);
+  }
+  visit(parseFragment(text.slice(0, firstHeading)));
+  assert.equal(links.length, 1, `${file}: expected one top Support badge`);
+  assert.equal(links[0], target, `${file}: Support badge must link to ${target}`);
+}
+
 test('every README language has a top Support badge that jumps to its support section', () => {
-  const badge = style => `https://img.shields.io/badge/Support-E2500E?style=${style}`;
-  for (const { file, href, style } of supportBadges) {
-    const text = fs.readFileSync(path.join(repoRoot, file), 'utf8');
-    const firstHeading = text.search(/\n## /);
-    assert.ok(firstHeading > 0, `${file}: missing first heading`);
-    const prefix = text.slice(0, firstHeading);
-    const expected = `<a href="${href}"><img src="${badge(style)}" alt="Support Archify" /></a>`;
-    assert.ok(prefix.includes(expected), `${file}: expected Support badge linking to ${href} with ${style} style before the first heading`);
-    assert.equal((text.match(/img\.shields\.io\/badge\/Support-E2500E/g) || []).length, 1, `${file}: Support badge should appear once`);
+  for (const { file, heading } of supportBadges) {
+    checkSupportLink(fs.readFileSync(path.join(repoRoot, file), 'utf8'), heading, file);
   }
 });
