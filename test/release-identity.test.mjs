@@ -74,6 +74,7 @@ function writeValidDevelopmentFixture(root, overrides = {}) {
     }),
     'docs/skill-updates/archify/stable.json': stableUpdateManifest('2.12.0'),
     'archify/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
+    'archify-pr/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
     'archify/assets/template.html': '<meta name="generator" content="archify 2.13.0-dev.0">',
     'CHANGELOG.md': [
       '# Changelog',
@@ -137,6 +138,7 @@ function writeValidStableFixture(root, overrides = {}) {
     }),
     'docs/skill-updates/archify/stable.json': stableUpdateManifest(version),
     'archify/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
+    'archify-pr/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
     'archify/assets/template.html': '<meta name="generator" content="archify 2.13.0">',
     'CHANGELOG.md': [
       '# Changelog',
@@ -225,6 +227,34 @@ test('the embedded update identity must match the package release exactly', () =
     const result = runCheck(fixture);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /archify\/skill-release\.json must identify archify 2\.13\.0-dev\.0 as development/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the companion PR Skill metadata follows the same package minor identity', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidDevelopmentFixture(fixture, {
+      'archify-pr/SKILL.md': '---\nmetadata:\n  version: "2.12"\n---\n',
+    });
+
+    const result = runCheck(fixture);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /archify-pr\/SKILL\.md metadata version 2\.12 must map to package 2\.13\.0-dev\.0 as 2\.13/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('a reduced checkout without the companion PR Skill still validates core identity', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidStableFixture(fixture);
+    fs.rmSync(path.join(fixture, 'archify-pr'), { recursive: true, force: true });
+
+    const result = runCheck(fixture);
+    assert.equal(result.status, 0, result.stderr);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }

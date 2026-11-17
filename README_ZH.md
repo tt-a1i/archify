@@ -245,6 +245,8 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --glo
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
+可选 PR 同伴 Skill（仅从仓库源码安装；默认安装仍只有 `archify`）：安装 `archify` 后，运行 `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` 可增加 PR 变更导览。它对文档、锁文件、格式化等小改动保持静默，只对实质性 diff 询问是否加图；在 Agent 全局规则文件写入 `[archify pr: on-demand]` 可完全关闭轻提示。
+
 <details>
 <summary>更多安装方式与更新检查说明</summary>
 

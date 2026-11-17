@@ -12,6 +12,7 @@ const workflow = parse(fs.readFileSync(new URL('../.github/workflows/ci.yml', im
 
 test('owned changes add their real gates without requiring every unrelated lane', () => {
   assert.equal(classifyPaths(['README.md', 'docs/assets/community/qq.svg']).scope, 'docs');
+  assert.equal(classifyPaths(['README_JA.md']).scope, 'docs');
   const render = classifyPaths(['archify/renderers/workflow/render-workflow.mjs']);
   assert.equal(render.scope, 'core');
   assert.deepEqual(render.owners, ['workflow']);
@@ -90,6 +91,29 @@ test('review export and PR pack changes retain their offline, export and sandbox
   assert.deepEqual(guide.owners, ['authoring']);
   assert.ok(guide.generated && guide.package);
   assert.equal(guide.website, false);
+});
+
+test('companion PR skill changes keep PR authoring suites without packaging or browser gates', () => {
+  const available = ['test/skill-metadata.test.mjs', 'test/skill-installation.test.mjs',
+    'test/pr-pack.test.mjs', 'test/pr-attach.test.mjs', 'test/cli.test.mjs'];
+  for (const source of ['archify-pr/SKILL.md', 'archify-pr/bin/archify-pr.mjs',
+    'archify-pr/references/pr-workflow.md', 'archify-pr/LICENSE']) {
+    const plan = classifyPaths([source]);
+    assert.equal(plan.scope, 'core', source);
+    assert.deepEqual(plan.owners, ['pr', 'authoring'], source);
+    assert.ok(plan.generated, source);
+    assert.equal(plan.browser, false);
+    assert.equal(plan.webm, false);
+    assert.equal(plan.package, false);
+    assert.equal(plan.website, false);
+    assert.deepEqual(plan.changedTests, []);
+    const selected = selectAffectedTests(plan.owners, [], available);
+    for (const test of ['test/skill-metadata.test.mjs', 'test/skill-installation.test.mjs',
+      'test/pr-pack.test.mjs', 'test/pr-attach.test.mjs']) {
+      assert.ok(selected.includes(test), `${source}: ${test}`);
+    }
+    assert.ok(!selected.includes('test/cli.test.mjs'), source);
+  }
 });
 
 test('Architecture grid changes retain explicit placement regression coverage', () => {

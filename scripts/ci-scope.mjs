@@ -30,7 +30,7 @@ export function classifyPaths(paths) {
       }
       continue;
     }
-    if (/^README(?:_EN|_ZH)?\.md$/.test(name)) { own('readme'); continue; }
+    if (/^README(?:_[A-Z]{2})?\.md$/.test(name)) { own('readme'); continue; }
     if (/^(CONTRIBUTING|REVIEWING|AGENTS|CODE_OF_CONDUCT|SECURITY)\.md$/.test(name)) continue;
     if (/^docs\/assets\/community\/[^/]+\.(png|svg)$/.test(name)) continue;
     if (/^(website\/|docs\/)/.test(name)) {
@@ -59,6 +59,11 @@ export function classifyPaths(paths) {
     }
     if (/^(viewer\/|archify\/assets\/)/.test(name)) {
       own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;
+    }
+    // The companion PR Skill ships outside archify.zip, so it needs the PR
+    // authoring suites and release-identity check without packaging gates.
+    if (name.startsWith('archify-pr/')) {
+      own('pr'); own('authoring'); plan.generated = true; continue;
     }
     if (/^archify\/(SKILL\.md$|references\/|recipes\/|examples\/)/.test(name)) {
       own('authoring'); plan.generated = plan.package = true;
