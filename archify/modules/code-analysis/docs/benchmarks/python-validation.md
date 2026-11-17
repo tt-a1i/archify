@@ -36,9 +36,18 @@ empty PATH and an invalid Python executable override, scope/receiver negatives,
 UTF-16/range hashes, PEP 263/BOM/Windows-1252 decoding, historical model readers,
 and 3,500-term arithmetic/boolean chains with preserved import guards.
 
-Local packaging coverage is staging/smoke coverage. Canonical ZIP/release
-reproducibility requires the repository's Node 22 and bundled zlib gate and was
-not established by this Node 20 run. Remote CI remains separate evidence.
+The original Node 20 run established staging/smoke coverage. During PR
+preparation, the archive was also rebuilt with official **Node 22.23.2** and
+bundled zlib **1.3.1-e00f703**, and checked with a second deterministic build.
+The extracted archive passed `scripts/package-smoke.mjs`; its bundled Python
+parser separately accepted modern generic/default/template-string syntax with
+an empty PATH and no Python executable. The parser/type/provenance check and
+31 focused Python/history/revision tests were rerun with the canonical Node 22
+runtime. The analyzer digest above is unchanged from the implementation commit
+`22fd845fd3b05d00a77db2e2de73ff9aed72d965`.
+
+These are local macOS results. Remote CI, Linux/Windows packaging and release
+acceptance remain separate evidence.
 
 See [the implementation and bounds](../PYTHON.md) and
 [the frozen real-project result](python-click-8.5.1.json).
