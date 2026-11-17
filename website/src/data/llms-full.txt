@@ -205,12 +205,14 @@ Archify is an open-source Agent Skill (Apache-2.0) that turns any idea, life
 plan, complex question, Mermaid draft, or repository into a polished interactive
 HTML diagram (across ten diagram types) or a four-style conclusion-first
 one-page explainer. The agent authors typed JSON for diagrams or `.archify.md`
-for explainers; Archify validates geometry/layout and browser rendering before
-delivering one self-contained HTML file.
+for explainers; Archify validates geometry/layout and runs real-browser checks by
+default for native diagrams (or when `--browser-check` is requested for
+explainers) before delivering one self-contained HTML file.
 
 中文：Archify 是开源 Agent Skill，无需手写画图语法，就能把想法、生活规划、
 复杂问题、Mermaid 草稿或代码仓变成高颜值单文件交互 HTML（支持十种原生图型与
-四套排版风格的一页式解答），并自带防重叠校验与浏览器导出。
+四套排版风格的一页式解答）；原生图表默认经防重叠与浏览器检查后交付，Explainer
+默认执行结构校验、支持 `--browser-check` 按需开启浏览器检查。
 
 ### Is Archify only for software architecture or codebases?
 
@@ -258,11 +260,15 @@ account, or paid tier is required to create or view the generated HTML.
 
 One self-contained HTML file plus its editable source (typed JSON or
 `.archify.md` Markdown), ready to inspect, share, export, or extend. Validation
-checks the authored artifact (schema, geometry, routing, and browser checks), not
-the truth of every real-world claim or runtime system behavior.
+checks the authored artifact (schema, geometry, routing, and default real-browser
+checks for native diagrams — whereas `finalize explainer` skips browser checks
+unless explicitly invoked with `--browser-check`), not the truth of every
+real-world claim or runtime system behavior.
 
-中文：交付单个离线可打开的交互 HTML 及可版本化源稿；校验覆盖结构、排版与
-浏览器渲染检查，不证明现实世界或生产运行时的全部业务事实为真。
+中文：交付单个离线可打开的交互 HTML 及可版本化源稿；校验覆盖结构与排版校验
+（原生图表默认含真实浏览器检查；Explainer 默认仅跑结构与交付校验，需显式传入
+`--browser-check` 才会运行浏览器检查），不证明现实世界或生产运行时的全部业务
+事实为真。
 
 ### How is this Archify different from the browser extension with the same name?
 

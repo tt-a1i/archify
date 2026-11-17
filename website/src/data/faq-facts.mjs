@@ -3,7 +3,7 @@
 export const faqFacts = [
   {
     question: ['What is Archify?', 'Archify 是什么？'],
-    answer: ['Archify is an open-source Agent Skill (Apache-2.0) that turns anything you want to understand, plan, or share — an everyday workflow, travel itinerary, complex concept, plan, or repository — into a polished interactive diagram across ten diagram types or a four-style one-page answer with zero syntax to memorize. The agent authors typed JSON or a Markdown draft; Archify runs layout and browser checks and outputs one standalone interactive HTML artifact.', 'Archify 是一个开源 Agent Skill（Apache-2.0），无需手写画图语法，即可把任何你想理解、规划或分享的事（生活日程、旅行路线、科普概念、工作流或代码仓库）快速变成十种原生图型的交互图表或四套排版风格的一页式解答。画图时 Agent 编写类型化 JSON，写一页答案时编写 Markdown 草稿，经防重叠布局与浏览器检查后交付独立可交互 HTML 成品。'],
+    answer: ['Archify is an open-source Agent Skill (Apache-2.0) that turns anything you want to understand, plan, or share — an everyday workflow, travel itinerary, complex concept, plan, or repository — into a polished interactive diagram across ten diagram types or a four-style one-page answer with zero syntax to memorize. The agent authors typed JSON or a Markdown draft; Archify runs structure and layout checks (running real-browser checks by default for native diagrams, and on demand via --browser-check for one-page answers) before outputting one standalone interactive HTML artifact.', 'Archify 是一个开源 Agent Skill（Apache-2.0），无需手写画图语法，即可把任何你想理解、规划或分享的事（生活日程、旅行路线、科普概念、工作流或代码仓库）快速变成十种原生图型的交互图表或四套排版风格的一页式解答。画图时 Agent 编写类型化 JSON，写一页答案时编写 Markdown 草稿；原生图表默认经防重叠布局与浏览器检查后交付，一页式解答默认执行结构校验、支持按需传入 --browser-check 开启浏览器检查，最终都交付为独立可交互 HTML 成品。'],
   },
   {
     question: ['What is a one-page answer?', '一页式解答是什么？'],
