@@ -196,6 +196,16 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
     await run("new Promise((resolve,reject)=>{const deadline=Date.now()+3000;const poll=()=>document.querySelector('.verify-preview').textContent||document.querySelector('.verify-status').textContent?resolve():Date.now()>deadline?reject(new Error('receipt did not finish')):setTimeout(poll,20);poll();})");
   };
   await run("document.querySelector('.verify-change summary').click()");
+  const wrongTask = path.join(dir, 'wrong-task-id.json');
+  const otherId = task.taskId.slice(0, -1) + (task.taskId.endsWith('0') ? '1' : '0');
+  fs.writeFileSync(wrongTask, JSON.stringify({ ...task, taskId: otherId }));
+  const rejected = spawnSync(process.execPath, [cli, 'code-analysis', 'verify-change', analysisDir, '--task', wrongTask], { encoding: 'utf8' });
+  assert.equal(rejected.status, 2, rejected.stdout + rejected.stderr);
+  assert.equal(JSON.parse(rejected.stdout).diagnostics[0].code, 'verification/wrong-task-id');
+  await choose('.verify-task', wrongTask);
+  await submit();
+  assert.match(await run("document.querySelector('.verify-status').textContent"), /任务 ID 与所选发现不匹配/);
+  assert.equal(await run("document.querySelector('.verify-download').disabled"), true);
   await choose('.verify-task', taskFile);
   await submit();
   assert.match(await run("document.querySelector('.verify-preview').textContent"), /未再检出.*没有报告项目检查结果/s);

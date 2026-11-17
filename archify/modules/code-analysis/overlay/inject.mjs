@@ -36,6 +36,7 @@ import { buildOverview } from './overview.mjs';
 import { buildTaskPayloads } from '../lib/task.mjs';
 import { reviewTargetDigest } from '../lib/review.mjs';
 import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
+import { createTaskId } from '../lib/task-id.mjs';
 import { evaluateVerification } from '../lib/verification.mjs';
 import { clientAsset } from './client-assets.mjs';
 
@@ -472,4 +473,7 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
 
 const CSS = clientAsset('overlay.css');
 
-const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\nwindow.__archifyEvaluateVerification = ${evaluateVerification.toString()};\n` + clientAsset('verification.js') + clientAsset('overlay.js');
+const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\n`
+  + `window.__archifyCreateVerificationTaskId = ${createTaskId.toString()};\n`
+  + `window.__archifyEvaluateVerification = ${evaluateVerification.toString()};\n`
+  + clientAsset('verification.js') + clientAsset('overlay.js');

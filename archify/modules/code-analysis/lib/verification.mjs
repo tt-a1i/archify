@@ -1,10 +1,12 @@
+import { taskIdOf } from './task-id.mjs';
+
 // Shared by the CLI and the self-contained report. Keep the evaluator free
-// of I/O and closed over no module state so it can be embedded in the view.
-export function evaluateVerification(context, task, reported) {
+// of I/O. The view supplies its own task ID function backed by Web Crypto.
+export async function evaluateVerification(context, task, reported, identifyTask = taskIdOf) {
   const bad = (error) => ({ error });
   if (!context) return bad('no-comparison');
   if (task?.schema_version !== 1 || task.kind !== 'archify-code-analysis-task'
-    || !/^TASK-[a-f0-9]{12}$/.test(task.taskId) || !Array.isArray(task.findings)
+    || typeof task.taskId !== 'string' || !/^TASK-[a-f0-9]{12}$/.test(task.taskId) || !Array.isArray(task.findings)
     || !task.findings.length || task.findings.length > 100) return bad('invalid-task');
   if (task.source?.snapshotId !== context.before.snapshotId || task.source?.root !== context.root
     || (task.source?.configDigest ?? null) !== context.configDigest) return bad('wrong-task-snapshot');
@@ -16,6 +18,7 @@ export function evaluateVerification(context, task, reported) {
     ids.add(id);
     const old = context.selectedFrom[id];
     if (finding.code !== old.code || (finding.evidenceDigest?.sha256 ?? null) !== old.evidence
+      || Boolean(finding.external) !== (old.sourceId !== null)
       || (finding.external?.reviewDigest ?? null) !== old.claim
       || (finding.external?.sourceId ?? null) !== old.sourceId) return bad('wrong-task-findings');
     const limitation = old.limitation || (!/^[a-f0-9]{64}$/.test(old.evidence || '') ? 'missing-evidence' : null);
@@ -26,6 +29,7 @@ export function evaluateVerification(context, task, reported) {
       observed: old.outcome, limitation,
     });
   }
+  if (await identifyTask(task.findings) !== task.taskId) return bad('wrong-task-id');
 
   const identity = { taskId: task.taskId, findingIds: [...ids].sort(), before: context.before, after: context.after };
   const checksTemplate = {

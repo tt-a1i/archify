@@ -88,7 +88,7 @@ node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis -
 node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks checks.json > verification.json
 ```
 
-Omit `--checks` to record only analysis observations. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 means the input or its binding was rejected. `task --verify` remains a separate current-source evidence check.
+Omit `--checks` to record only analysis observations. Use the original task JSON: its ID must match the selected findings. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 returns a JSON error on stdout with `status: "error"` and `diagnostics` instead of a receipt. `task --verify` remains a separate current-source evidence check.
 
 ## First look at an unfamiliar repository
 

@@ -41,6 +41,8 @@ const ZH_CN = {
   "Could not read the selected JSON file.": "无法读取选中的 JSON 文件。",
   "The task does not match the previous analysis.": "任务与上一轮分析不匹配。",
   "Invalid task or mismatched task findings.": "任务格式不正确，或发现与上一轮不符。",
+  "The task ID does not match the selected findings.": "任务 ID 与所选发现不匹配。",
+  "Task verification requires a local file or a secure page.": "任务验证需要本地文件或安全页面。",
   "Invalid project check results.": "项目检查结果格式不正确。",
   "Check results do not match this task and analysis pair.": "检查结果与该任务或快照对不匹配。",
   "Before": "修改前",

@@ -4,6 +4,7 @@
   var errors = {
     'invalid-task': 'Invalid task or mismatched task findings.',
     'wrong-task-findings': 'Invalid task or mismatched task findings.',
+    'wrong-task-id': 'The task ID does not match the selected findings.',
     'wrong-task-snapshot': 'The task does not match the previous analysis.',
     'invalid-checks': 'Invalid project check results.',
     'wrong-checks-snapshot': 'Check results do not match this task and analysis pair.',
@@ -60,6 +61,11 @@
     var download = details.querySelector('.verify-download'), input = details.querySelector('.verify-task');
     var checks = details.querySelector('.verify-checks');
     var result = null, revision = 0;
+    var identifyTask = window.__archifyCreateVerificationTaskId(async function (text) {
+      if (!window.crypto?.subtle) throw new Error(tr('Task verification requires a local file or a secure page.'));
+      var digest = new Uint8Array(await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
+      return Array.from(digest, function (byte) { return byte.toString(16).padStart(2, '0'); }).join('');
+    });
     function clear() {
       revision += 1;
       result = null;
@@ -81,7 +87,8 @@
       try {
         var files = await Promise.all([read(input.files[0]), checks.files.length ? read(checks.files[0]) : undefined]);
         if (revision !== ticket || !details.isConnected) return;
-        var evaluated = window.__archifyEvaluateVerification(context, files[0], files[1]);
+        var evaluated = await window.__archifyEvaluateVerification(context, files[0], files[1], identifyTask);
+        if (revision !== ticket || !details.isConnected) return;
         if (evaluated.error) throw new Error(tr(errors[evaluated.error]));
         result = evaluated;
         render(preview, result.receipt, tr);
