@@ -234,7 +234,7 @@
   function validateVideoRequest({ start, seconds, fps, format }, writer) {
     const selected = Object.hasOwn(FORMATS, format) && FORMATS[format];
     if (!selected) throw Error('Choose MP4 or WebM.');
-    if (!Number.isFinite(start) || !Number.isFinite(seconds) || start < 0 || seconds <= 0 || !Number.isFinite(fps) || fps < 1) {
+    if (!Number.isFinite(start) || !Number.isFinite(seconds) || start < 0 || seconds <= 0 || start + seconds > meta.duration + 0.001 || !Number.isFinite(fps) || fps < 1) {
       throw Error('Invalid video export range or frame rate.');
     }
     if (!writer && RESERVE_BYTES + (seconds * VIDEO_BITRATE) / 8 > MAX_BUFFERED_BYTES) {
@@ -316,7 +316,7 @@
 
   async function encodeVideo({
     start = 0,
-    seconds = Math.max(0.5, meta.duration - start),
+    seconds = meta.duration - start,
     fps = DEFAULT_FPS,
     format = 'mp4',
     onProgress = () => {},
@@ -328,6 +328,8 @@
     abortCheck(signal);
     const wasPlaying = playing;
     pause();
+    const themeWasDisabled = themeBtn.disabled;
+    themeBtn.disabled = true;
     const target = makeCanvas(FRAMES_PER_READ);
     const capture = createStageCapturer();
     let encoder, mux, failure, wake;
@@ -376,6 +378,7 @@
       cancel();
       await mux?.settle();
       target.width = target.height = 1;
+      themeBtn.disabled = themeWasDisabled;
       if (wasPlaying) play();
     }
   }

@@ -724,7 +724,7 @@ async function runStoryVideoCommand(spec, opts, defaultTheme) {
   });
   const allInputPaths = [...new Set([...spec.inputPaths, ...bundle.inputPaths])];
   const start = opts.start ?? 0;
-  const seconds = opts.seconds ?? Math.max(0.5, bundle.plan.duration - start);
+  const seconds = opts.seconds ?? (bundle.plan.duration - start);
   if (start >= bundle.plan.duration || start + seconds > bundle.plan.duration + 0.01) {
     failChoreography('story/invalid-timing', 'arguments', `Requested video interval (${start}s..${start + seconds}s) exceeds story duration (${bundle.plan.duration}s).`, {
       subject: { start, seconds, duration: bundle.plan.duration },

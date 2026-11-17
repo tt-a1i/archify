@@ -648,7 +648,7 @@ export function fromStoryBriefToChoreography(brief, facts, { viewId = 'main', di
   }
 
   const resolve = compiled.shots.at(-1);
-  if (resolve && steps.length < 16 && resolve.caption && resolve.caption !== steps.at(-1)?.body) {
+  if (resolve && resolve.caption && resolve.caption !== steps.at(-1)?.body) {
     steps.push({
       view: viewId,
       duration: 4.5,
@@ -666,6 +666,6 @@ export function fromStoryBriefToChoreography(brief, facts, { viewId = 'main', di
     locale,
     chrome: 'story',
     views: [{ id: viewId, type: diagramType, input: `${viewId}.html` }],
-    steps: steps.slice(0, 16),
+    steps,
   };
 }

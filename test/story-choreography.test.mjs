@@ -259,6 +259,15 @@ test('3-positional story svg and story stage bridge existing native HTML and ver
   const stageRes = run(['story', 'stage', htmlPath, briefPath, outStage, '--json'], dir);
   assert.equal(stageRes.status, 0, stageRes.stdout + stageRes.stderr);
   assert.match(fs.readFileSync(outStage, 'utf8'), /Single-diagram bridge test/);
+
+  const longBrief = JSON.parse(fs.readFileSync(briefPath, 'utf8'));
+  longBrief.scenes = Array.from({length: 20}, () => structuredClone(longBrief.scenes[0]));
+  fs.writeFileSync(briefPath, JSON.stringify(longBrief));
+  const longOut = path.join(dir, 'long.svg');
+  const tooLong = run(['story', 'svg', htmlPath, briefPath, longOut, '--theme', 'light', '--json'], dir);
+  assert.equal(tooLong.status, 1, 'Long briefs must report the choreography limit instead of silently dropping their ending');
+  assert.match(JSON.parse(tooLong.stdout).diagnostics[0].message, /steps|16|limit/i, tooLong.stdout);
+  assert.equal(fs.existsSync(longOut), false);
 });
 
 test('choreography resolves pinned repository source lines via --repo-root and rejects invalid paths/ranges/motion', (t) => {

@@ -177,7 +177,13 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const bmp = await createImageBitmap(pngBlob);
     const pngDims = { width: bmp.width, height: bmp.height };
     bmp.close();
-    const vidBlob = await window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 4.5, seconds: 0.4, fps: 10 });
+    const vidBlob = await window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 4.5, seconds: 0.5, fps: 10, onProgress: ev => {
+      if (ev.frame === 1) document.getElementById('stage-theme').click();
+    } });
+    const themeAfterExport = window.ArchifyStoryStage.state().theme;
+    let invalidRangeRejected = false;
+    try { await window.ArchifyStoryStage.exportVideo({start:window.ArchifyStoryStage.duration + 1,seconds:1}); }
+    catch(error) { invalidRangeRejected = /range/i.test(error.message); }
     const head = [...new Uint8Array(await vidBlob.slice(0, 4).arrayBuffer())];
     const vUrl = URL.createObjectURL(vidBlob);
     const video = document.createElement('video');
@@ -195,11 +201,14 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const supportsH264 = typeof VideoEncoder !== 'undefined' && (await VideoEncoder.isConfigSupported({
       codec: 'avc1.64002a', width: 1920, height: 1080, framerate: 30, bitrate: 12000000, latencyMode: 'quality', avc: { format: 'avc' },
     })).supported;
-    return { state, pngDims, head, videoDims, supportsH264 };
+    return { state, pngDims, head, videoDims, supportsH264, themeAfterExport, invalidRangeRejected, themeControlRestored: !document.getElementById('stage-theme').disabled };
   })()`);
 
   assert.equal(stageCheck.state.theme, 'light');
   assert.equal(stageCheck.state.playing, false);
+  assert.equal(stageCheck.themeAfterExport, 'light', 'Theme control cannot mix light and dark frames during export');
+  assert.equal(stageCheck.themeControlRestored, true);
+  assert.equal(stageCheck.invalidRangeRejected, true);
   assert.equal(stageCheck.pngDims.width, 1920);
   assert.equal(stageCheck.pngDims.height, 1080);
   assert.deepEqual(stageCheck.head, [0x1a, 0x45, 0xdf, 0xa3]);
