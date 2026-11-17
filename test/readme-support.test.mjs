@@ -51,6 +51,7 @@ function checkSupportLink(text, heading, file) {
   function visit(node, anchor) {
     const parentLink = node.tagName === 'a' ? node : anchor;
     if (node.tagName === 'img' && attr(node, 'alt') === 'Support Archify') {
+      assert.ok(attr(node, 'src')?.trim(), `${file}: Support badge must have an image source`);
       links.push(parentLink && attr(parentLink, 'href'));
     }
     for (const child of node.childNodes || []) visit(child, parentLink);
