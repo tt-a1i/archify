@@ -113,13 +113,29 @@ spec, and an optional `changes[]` table plus objective `stats`.
   built view snapshot's `meta.visual_preset`; set `preset` on a view only when
   that view must override the pack preset.
 - For complex or cross-layer PRs, author `story` (`duration`, `stages`, optional
-  `loop` defaulting to `true`, `nodeBadges` defaulting to `labeled`, `pair.shared`,
-  `enter`/`connect`/`fade`/`focus`/`relabel`, `traces`, `metrics`, `detail`
-  Git-verified source excerpts, and ordered `steps`) to compile a self-contained
-  960x560 animated walkthrough SVG as the hero PR visual. Mark helper baseline or
-  focus views `storyOnly: true` so they compose into the story without emitting
-  standalone images, and keep deep reference views (`erd`, `sequence`, etc.) as
-  `collapsed: true` so reviewers can still expand static diagrams inside `<details>`.
+  `loop` defaulting to `true`, `nodeBadges` defaulting to `"labeled"` across
+  both the story and static PR pack views including ERD/Class headers,
+  `pair.shared`, `enter`/`connect`/`fade`/`focus`/`relabel`, `traces`, `metrics`,
+  `detail`, and ordered `steps`) to compile a self-contained 960x560 animated
+  walkthrough SVG as the hero PR visual with active-step countdown progress
+  bars.
+  - Omit `steps[].at` (after an optional opening beat) to auto-space captions
+    evenly between timed steps or across `duration`.
+  - Set `detail.mode: "diff"` (with `baseLines` + `lines` or `maxLines` hunk
+    selection, plus optional `selections[].baseLines`) to render a genuine
+    Git-verified `−` / `+` before-and-after diff excerpt between `baseSha` and
+    `headSha` instead of a single-revision excerpt.
+  - Standard 4-stage timing template (`duration: 24`, adjust as needed):
+    - `0s – 4.5s`: Baseline `before` stage (highlight removed nodes/paths).
+    - `4.0s – 13.5s`: Paired `after` transition (`pair.at: 4.0`, `enter` +
+      `connect` at `4.8s–6.5s`, `traces` motion along new paths at `7.5s–12.5s`).
+    - `13.2s – 18.5s`: Secondary contract/data view (`erd` / `sequence`).
+    - `18.2s – 24.0s`: `code_focus` left-node + right `detail` (`mode: "diff"`)
+      + before/after `metrics`.
+  - Mark helper baseline or focus views `storyOnly: true` so they compose into
+    the story without emitting standalone images, and keep deep reference views
+    (`erd`, `workflow`, `sequence`, etc.) as `collapsed: true` so reviewers can
+    expand static diagrams inside `<details>`.
 `build` writes `views/<id>.json` snapshots pinned to the verified
 revisions, offline `views/<id>.html` (source links and payload diffs live
 here), `views/<id>-light.svg` / `-dark.svg` that pass strict XML and GitHub's
@@ -148,6 +164,10 @@ Repair by diagnostic, then rerun the same command:
 - `pr-pack/risk-verdict` — the text contains `SAFE`, `LOW RISK`, `MERGEABLE`,
   `NO IMPACT` or `VERIFIED PR`. Remove it. Report counts, names and the
   diagrams; the reviewer owns the verdict.
+- `pr-story/empty-diff`, `pr-story/invalid-detail` — `story.detail` in
+  `mode: "diff"` found no `+/−` lines in the selected range, or an excerpt /
+  selection omitted required `lines`/`baseLines`. Cite changed lines between
+  `baseSha` and `headSha` or omit `baseLines`/`lines` to slice the hunk.
 - `pr-attach/*` — read the receipt: preflight stops before any `gh` call for
   more than 50 attachments, a 5 MiB asset, an old `gh` (< 2.99.0) or a missing
   login; a failed second step restores the original body or deletes the

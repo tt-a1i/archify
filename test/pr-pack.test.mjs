@@ -7,6 +7,7 @@ import test from 'node:test';
 import { assertCamoSafeSvg } from '../archify/renderers/shared/svg-bake.mjs';
 import { attachPrPack } from '../archify/pr/attach.mjs';
 import { RISK_VERDICTS, fillAssets, findRiskVerdict, renderPackMarkdown, replacePackBlock, themedPicture } from '../archify/pr/markdown.mjs';
+import { resolveStorySteps } from '../archify/pr/story-svg.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 import { cli, git, skillRoot } from './helpers/repository-evidence-fixture.mjs';
 import { parseXml } from './helpers/xml.mjs';
@@ -543,7 +544,11 @@ test('pr validate/build/attach support hero infinite story walkthroughs with sto
     assert.match(svg, /return append\(\);/);
     assert.match(svg, /1 → 2/);
     assert.match(svg, /\+ Added/);
+    assert.match(svg, /data-story-step-progress="0"/);
     assert.match(svg, /prefers-reduced-motion:reduce/);
+    const afterStaticSvg = fs.readFileSync(receipt.views.find((v) => v.id === 'after').svgs[theme], 'utf8');
+    assert.match(afterStaticSvg, /\+ Added/);
+    assert.match(afterStaticSvg, /~ Modified/);
   }
 
   const markdown = fs.readFileSync(receipt.markdown.path, 'utf8');
@@ -625,4 +630,155 @@ test('pr story validation fails closed on unknown views, bad timings, out-of-ran
     assert.equal(result.status, 1, `expected ${expectedCode} failure`);
     assert.equal(JSON.parse(result.stdout).diagnostics[0].code, expectedCode);
   }
+});
+
+test('pr build upgrades static/ERD badges, sanitizes pair.shared baselines, auto-spaces steps, and renders git diff details', () => {
+  const autoSteps = resolveStorySteps([
+    { title: 'One', body: 'first' },
+    { title: 'Two', body: 'second' },
+    { at: 12, title: 'Three', body: 'third' },
+    { title: 'Four', body: 'fourth' },
+  ], 20);
+  assert.deepEqual(autoSteps.map((s) => s.at), [0, 6, 12, 16]);
+
+  const repo = changeRepository();
+  const dir = scratch();
+  const outDir = path.join(dir, 'out');
+  const beforeDoc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Before', output: 'before.html' },
+    components: [
+      { id: 'web', type: 'frontend', label: 'Web', pos: [40, 140], size: [130, 60] },
+      { id: 'legacy_hop', type: 'backend', label: 'Sync Hop', pos: [230, 140], size: [140, 60], change: 'removed' },
+      { id: 'gateway', type: 'external', label: 'Gateway', pos: [430, 140], size: [140, 60] },
+      // Farther than 1 hop from legacy_hop + explicitly marked removed to exercise sanitization
+      { id: 'api', type: 'backend', label: 'Old Sync API', pos: [630, 140], size: [140, 60], change: 'removed' },
+    ],
+    connections: [
+      { id: 'w_l', from: 'web', to: 'legacy_hop', label: 'call' },
+      { id: 'l_g', from: 'legacy_hop', to: 'gateway', label: 'charge' },
+      { id: 'g_a', from: 'gateway', to: 'api', label: 'reply' },
+    ],
+  };
+  const afterDoc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'After', output: 'after.html', repository: { url: 'https://github.com/acme/checkout', revision: repo.headSha } },
+    components: [
+      { id: 'web', type: 'frontend', label: 'Web', pos: [40, 140], size: [130, 60], change: 'unchanged' },
+      { id: 'api', type: 'backend', label: 'Async API', pos: [260, 140], size: [140, 60], change: 'modified', sources: [{ path: 'src/api.mjs', line: 1, end_line: 3 }] },
+      { id: 'ledger', type: 'database', label: 'Ledger', pos: [480, 140], size: [140, 60], change: 'added', sources: [{ path: 'src/ledger.mjs', line: 1, end_line: 3 }] },
+    ],
+    connections: [
+      { id: 'web_api', from: 'web', to: 'api', label: 'POST' },
+      { id: 'api_ledger', from: 'api', to: 'ledger', label: 'append', change: 'added' },
+    ],
+  };
+  const erdDoc = {
+    schema_version: 1,
+    diagram_type: 'erd',
+    meta: { title: 'Ledger schema', output: 'schema.html' },
+    entities: [
+      {
+        id: 'invoices',
+        label: 'invoices',
+        pos: [60, 80],
+        width: 240,
+        change: 'modified',
+        attributes: [
+          { name: 'id', type: 'uuid', key: 'pk' },
+          { name: 'amount_cents', type: 'bigint', previousType: 'int', change: 'modified' },
+          { name: 'legacy_col', type: 'text', change: 'removed' },
+        ],
+      },
+      {
+        id: 'orgs',
+        label: 'organizations',
+        pos: [380, 80],
+        width: 220,
+        attributes: [{ name: 'id', type: 'uuid', key: 'pk' }],
+      },
+    ],
+    relationships: [
+      { id: 'rel_org', from: 'invoices', to: 'orgs', fromCardinality: 'many', toCardinality: 'one', label: 'belongs_to', change: 'added' },
+    ],
+  };
+  fs.writeFileSync(path.join(dir, 'before.json'), JSON.stringify(beforeDoc));
+  fs.writeFileSync(path.join(dir, 'after.json'), JSON.stringify(afterDoc));
+  fs.writeFileSync(path.join(dir, 'schema.json'), JSON.stringify(erdDoc));
+  const file = path.join(dir, 'pr-pack.json');
+  fs.writeFileSync(file, JSON.stringify({
+    schema_version: 1,
+    kind: 'pr-pack',
+    title: 'Diff story & ERD pills',
+    repository: 'acme/checkout',
+    baseRef: 'main',
+    headRef: 'feat/ledger',
+    platform: 'github',
+    theme: 'both',
+    views: [
+      { id: 'before', title: 'Before', type: 'architecture', input: 'before.json', storyOnly: true },
+      { id: 'after', title: 'After', type: 'architecture', input: 'after.json', collapsed: true },
+      { id: 'schema', title: 'Schema', type: 'erd', input: 'schema.json', collapsed: true },
+    ],
+    story: {
+      duration: 20,
+      stages: [
+        { view: 'before', end: 5 },
+        { view: 'after', start: 4, end: 11 },
+        { view: 'schema', start: 10.5, end: 14 },
+        { view: 'after', start: 13.5, end: 20 },
+      ],
+      pair: {
+        before: 'before',
+        after: 'after',
+        at: 4,
+        until: 11,
+        shared: [{ id: 'api', label: 'Async API', subtitle: 'uses ledger' }],
+      },
+      detail: {
+        view: 'after',
+        nodes: ['api'],
+        start: 14,
+        end: 20,
+        mode: 'diff',
+        title: 'src/api.mjs diff',
+        path: 'src/api.mjs',
+        baseLines: [2],
+        lines: [1, 2, 3],
+        selections: [{ at: 14, baseLines: [2] }, { at: 17, lines: [2] }],
+      },
+      steps: [
+        { title: 'Baseline sync flow', body: 'Starts on sync baseline.' },
+        { title: 'Shared API migrates cleanly', body: 'Replaces sync hop without ghost marks.' },
+        { at: 10.6, title: 'Inspect ERD table badge', body: 'Table headers carry labeled pills.' },
+        { at: 14.2, title: 'Inspect real +/- diff', body: 'Compares base and head via git diff.' },
+      ],
+    },
+  }));
+
+  const build = run(['pr', 'build', file, '--out-dir', outDir, '--repo-root', repo.root, '--json']);
+  assert.equal(build.status, 0, build.stdout + build.stderr);
+  const receipt = JSON.parse(build.stdout);
+  const storyLight = fs.readFileSync(receipt.story.svgs.light, 'utf8');
+  const erdStaticLight = fs.readFileSync(receipt.views.find((v) => v.id === 'schema').svgs.light, 'utf8');
+
+  assert.match(storyLight, /id="story-shared-badge-api"[\s\S]*?~ Modified/);
+  assert.doesNotMatch(storyLight, /<g id="story-shared-api"[^>]*><g [^>]*data-change="removed"/);
+  assert.match(storyLight, /data-story-detail-mode="diff"/);
+  assert.match(storyLight, /return audit\(\);/);
+  assert.match(storyLight, /return append\(\);/);
+  assert.match(erdStaticLight, /<g data-change-badge="modified" data-story-node-badge=""[^>]*>[\s\S]*?~ Modified/);
+  assert.match(erdStaticLight, /<rect[^>]*width="14" height="12"[^>]*class="c-change-badge-modified"/, 'ERD row badges stay compact 14x12');
+
+  // Empty diff fails closed when only unchanged lines are cited.
+  const emptyDiffManifest = path.join(dir, 'empty-diff.json');
+  const emptyObj = JSON.parse(fs.readFileSync(file, 'utf8'));
+  emptyObj.story.detail = { view: 'after', nodes: ['api'], start: 14, end: 20, mode: 'diff', title: 'unchanged', path: 'src/api.mjs', lines: [1] };
+  fs.writeFileSync(emptyDiffManifest, JSON.stringify(emptyObj));
+  const emptyRes = run(['pr', 'build', emptyDiffManifest, '--out-dir', path.join(dir, 'out-empty'), '--repo-root', repo.root, '--json']);
+  assert.equal(emptyRes.status, 1);
+  assert.equal(JSON.parse(emptyRes.stdout).diagnostics[0].code, 'pr-story/empty-diff');
+  fs.rmSync(repo.root, { recursive: true, force: true });
 });

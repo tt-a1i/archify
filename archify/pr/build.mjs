@@ -5,7 +5,7 @@ import { SvgExportError, exportOutputPaths, exportSvgArtifacts, renderDiagramHtm
 import { loadViewerStyles } from '../renderers/shared/svg-bake.mjs';
 import { PACK_PLATFORMS, PrPackError, alignDiagramRevisions, loadPrPack, packDiagnostic, verifyPackRevisions } from './manifest.mjs';
 import { PACK_END, PACK_START, packPlaceholderAssets, renderPackMarkdown, sha256 } from './markdown.mjs';
-import { compilePrStorySvg, validatePrStory } from './story-svg.mjs';
+import { compilePrStorySvg, upgradeSvgNodeBadges, validatePrStory } from './story-svg.mjs';
 
 export const RECEIPT_FILE = 'pr-pack.receipt.json';
 export const MARKDOWN_FILE = 'pr-pack.md';
@@ -82,6 +82,8 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
   };
   const storyThemeSelection = pack.story ? platformTheme(resolvedPlatform, pack.manifest.theme || 'both') : null;
   const storyThemesNeeded = storyThemeSelection ? themesFor(storyThemeSelection) : [];
+  const staticBadgeMode = pack.manifest.nodeBadges || pack.story?.nodeBadges || 'labeled';
+  const packLocale = pack.views.find((v) => v.diagram?.meta?.locale)?.diagram.meta.locale || '';
   const stagedViews = new Set((pack.story?.stages || []).map((stage) => stage.view));
   const bakedViews = new Map();
   const views = [];
@@ -122,12 +124,23 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
     if (!html) fs.rmSync(htmlPath, { force: true });
     const byTheme = new Map();
     const svgs = {};
+    const viewIsZh = String(snapshot.meta?.locale || packLocale).toLowerCase().startsWith('zh');
     for (const output of exported.outputs) {
-      const svgText = fs.readFileSync(output.path, 'utf8');
-      byTheme.set(output.theme, svgText);
+      const rawSvgText = fs.readFileSync(output.path, 'utf8');
+      byTheme.set(output.theme, rawSvgText);
       if (view.storyOnly || !viewThemes.includes(output.theme)) {
         if (!view.storyOnly) fs.rmSync(output.path, { force: true });
         continue;
+      }
+      const finalSvg = staticBadgeMode === 'compact'
+        ? rawSvgText
+        : upgradeSvgNodeBadges(rawSvgText, view.type, { isZh: viewIsZh, mode: staticBadgeMode });
+      let finalBytes = output.bytes;
+      let finalSha = output.sha256;
+      if (finalSvg !== rawSvgText) {
+        publishOutputAtomically(output.path, finalSvg);
+        finalBytes = Buffer.byteLength(finalSvg, 'utf8');
+        finalSha = sha256(finalSvg);
       }
       const assetId = `${view.id}-${output.theme}`;
       svgs[output.theme] = output.path;
@@ -136,8 +149,8 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
         view: view.id,
         theme: output.theme,
         path: output.path,
-        bytes: output.bytes,
-        sha256: output.sha256,
+        bytes: finalBytes,
+        sha256: finalSha,
         animated: output.animated,
         placeholder: `{{archify:asset:${assetId}}}`,
       });

@@ -396,10 +396,12 @@ test('pr build story walkthrough SVGs animate infinitely in Chrome and keep capt
         nodes: ['api'],
         start: 11.5,
         end: 18,
+        mode: 'diff',
         title: 'src/handler.mjs · handleCheckout()',
         path: 'src/handler.mjs',
-        lines: [1, 2, 3, 4],
-        highlight: [3],
+        baseLines: [2, 3],
+        lines: [2, 3, 4],
+        selections: [{ at: 11.5, lines: [3] }],
       },
       steps: [
         { at: 0, title: 'Synchronous baseline request', body: 'CallsCheckout synchronously before queue rollout.' },
@@ -443,18 +445,23 @@ test('pr build story walkthrough SVGs animate infinitely in Chrome and keep capt
         const tokRect = tok.getBoundingClientRect();
         const detail = document.getElementById('story-source-detail');
         const metricAfter = document.querySelector('[id$="-after"]');
+        const prog0 = document.querySelector('[data-story-step-progress="0"]');
         return {
           maxCaptionBottom: caps.length ? Math.max(...caps.map((c) => c.bottom)) : 0,
           tokenX: tokRect.left + tokRect.width / 2,
           tokenOpacity: Number(getComputedStyle(tok).opacity),
           detailOpacity: Number(getComputedStyle(detail).opacity),
           detailRight: detail.getBoundingClientRect().right,
+          detailMode: detail.getAttribute('data-story-detail-mode'),
           metricAfterOpacity: metricAfter ? Number(getComputedStyle(metricAfter).opacity) : 0,
+          prog0Width: prog0 ? prog0.getBoundingClientRect().width : 0,
         };
       };
       return {
         errors: pageErrors,
         animCount: anims.length,
+        progEarly: sampleAt(200),
+        progLate: sampleAt(3200),
         t1: sampleAt(1000),
         traceStart: sampleAt(6900),
         traceMid: sampleAt(7800),
@@ -464,13 +471,14 @@ test('pr build story walkthrough SVGs animate infinitely in Chrome and keep capt
     })()`);
     assert.deepEqual(samples.errors, [], `${scheme}: zero page errors`);
     assert.ok(samples.animCount > 0, `${scheme}: has active CSS animations`);
+    assert.ok(samples.progLate.prog0Width > samples.progEarly.prog0Width + 2, `${scheme}: active step progress bar fills smoothly (${samples.progEarly.prog0Width} -> ${samples.progLate.prog0Width})`);
     for (const s of [samples.t1, samples.traceStart, samples.traceMid, samples.detailMid]) {
       assert.ok(s.maxCaptionBottom <= 112, `${scheme}: caption clears viewport (${s.maxCaptionBottom})`);
     }
     assert.ok(samples.traceMid.tokenOpacity > 0.9, `${scheme}: trace token visible mid-flight`);
     assert.ok(samples.traceMid.tokenX > samples.traceStart.tokenX + 20, `${scheme}: trace token advances along edge (${samples.traceStart.tokenX} -> ${samples.traceMid.tokenX})`);
     assert.ok(samples.traceMidCycle2.tokenOpacity > 0.9 && Math.abs(samples.traceMidCycle2.tokenX - samples.traceMid.tokenX) < 3, `${scheme}: infinite loop replays identically in Cycle 2 (${samples.traceMid.tokenX} vs ${samples.traceMidCycle2.tokenX})`);
-    assert.ok(samples.detailMid.detailOpacity > 0.9 && samples.detailMid.detailRight <= 960, `${scheme}: source excerpt fits inside canvas`);
+    assert.ok(samples.detailMid.detailOpacity > 0.9 && samples.detailMid.detailRight <= 960 && samples.detailMid.detailMode === 'diff', `${scheme}: source diff excerpt fits inside canvas`);
     assert.ok(samples.detailMid.metricAfterOpacity > 0.9, `${scheme}: metric readout transitions cleanly`);
   }
 });

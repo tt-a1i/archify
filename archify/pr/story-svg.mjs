@@ -94,9 +94,36 @@ function fitCamera(box, area, maxScale = 2) {
 
 const formatTransform = (camera) => `translate(${camera.x.toFixed(3)}px,${camera.y.toFixed(3)}px) scale(${camera.scale.toFixed(5)})`;
 
-// Validates source path and reads lines at pinned Git revision (or manifest dir when local).
-function loadDetailSourceLines(detail, { revisions, manifestDir, requireSource = false } = {}) {
-  const filePath = detail?.path;
+const splitSourceLines = (content) => (content === '' ? [] : String(content).replace(/\r?\n$/, '').split(/\r?\n/));
+
+// Resolves omitted step timestamps evenly between explicitly timed neighbors.
+export function resolveStorySteps(steps, duration) {
+  if (!Array.isArray(steps) || !steps.length || steps.every((s) => typeof s?.at === 'number')) {
+    return steps;
+  }
+  const resolved = steps.map((step) => ({ ...step }));
+  if (resolved[0].at === undefined) resolved[0].at = 0;
+  let i = 0;
+  while (i < resolved.length) {
+    if (resolved[i].at !== undefined) {
+      i += 1;
+      continue;
+    }
+    const leftIdx = i - 1;
+    const leftAt = Number(resolved[leftIdx].at);
+    let rightIdx = i;
+    while (rightIdx < resolved.length && resolved[rightIdx].at === undefined) rightIdx += 1;
+    const rightAt = rightIdx < resolved.length ? Number(resolved[rightIdx].at) : Number(duration);
+    const span = rightIdx - leftIdx;
+    for (let k = i; k < rightIdx; k += 1) {
+      resolved[k].at = Math.round((leftAt + ((k - leftIdx) / span) * (rightAt - leftAt)) * 100) / 100;
+    }
+    i = rightIdx;
+  }
+  return resolved;
+}
+
+function assertCleanRepoPath(filePath, manifestField, subjectPath = filePath) {
   const parts = typeof filePath === 'string' ? filePath.split('/') : [];
   if (
     typeof filePath !== 'string'
@@ -106,54 +133,232 @@ function loadDetailSourceLines(detail, { revisions, manifestDir, requireSource =
     || parts.some((segment) => segment === '' || segment === '.' || segment === '..')
     || /[\0\r\n:]/.test(filePath)
   ) {
-    failPrPack('pr-story/invalid-source-path', 'manifest', `Invalid story.detail path "${filePath}".`, {
-      subject: { path: '/story/detail/path' },
+    failPrPack('pr-story/invalid-source-path', 'manifest', `Invalid ${manifestField} "${filePath}".`, {
+      subject: { path: subjectPath },
       supportedFixes: ['use a clean POSIX repository-relative path without "." or ".."'],
     });
   }
+}
 
-  let content = null;
-  if (revisions?.repoRoot) {
-    const sha = detail.revision === 'base' ? revisions.baseSha : revisions.headSha;
-    if (!sha) {
-      failPrPack('pr-story/source-not-found', 'views', `Cannot read ${filePath} at ${detail.revision || 'head'}: missing commit SHA.`, {
-        subject: { path: filePath, revision: detail.revision || 'head' },
-        supportedFixes: ['declare baseSha/headSha or baseRef/headRef in the manifest'],
+function readLocalSource(manifestDir, filePath, missingCode = 'pr-story/source-not-found') {
+  const candidate = path.resolve(manifestDir, filePath);
+  const rel = path.relative(manifestDir, candidate);
+  if (!rel.startsWith('..') && !path.isAbsolute(rel) && fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+    const content = fs.readFileSync(candidate, 'utf8');
+    if (content.includes('\0')) {
+      failPrPack(missingCode, 'views', `story.detail target "${filePath}" is a binary file.`, {
+        subject: { path: filePath },
+        supportedFixes: ['cite a text source file'],
       });
     }
-    const result = runGit(revisions.repoRoot, ['show', '--no-textconv', `${sha}:${filePath}`]);
-    if (result.status !== 0) {
-      failPrPack('pr-story/source-not-found', 'views', `Could not read ${filePath} at ${sha.slice(0, 7)}: ${(result.stderr || '').trim() || 'missing file'}.`, {
-        subject: { path: filePath, revision: sha },
-        supportedFixes: ['cite an existing file path at that revision'],
-      });
+    return content;
+  }
+  return null;
+}
+
+function parseUnifiedDiff(diffText) {
+  const entries = [];
+  let inHunk = false;
+  let oldLine = 0;
+  let newLine = 0;
+  for (const rawLine of String(diffText || '').split(/\r?\n/)) {
+    const hunk = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(rawLine);
+    if (hunk) {
+      oldLine = Number(hunk[1]);
+      newLine = Number(hunk[2]);
+      inHunk = true;
+      continue;
     }
-    content = result.stdout;
-  } else if (manifestDir) {
-    const candidate = path.resolve(manifestDir, filePath);
-    const rel = path.relative(manifestDir, candidate);
-    if (!rel.startsWith('..') && !path.isAbsolute(rel) && fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-      content = fs.readFileSync(candidate, 'utf8');
+    if (!inHunk || rawLine.startsWith('\\')) continue;
+    if (rawLine.startsWith('-')) {
+      entries.push({ kind: 'del', oldLine, newLine: null, text: rawLine.slice(1) });
+      oldLine += 1;
+    } else if (rawLine.startsWith('+')) {
+      entries.push({ kind: 'add', oldLine: null, newLine, text: rawLine.slice(1) });
+      newLine += 1;
+    } else if (rawLine.startsWith(' ')) {
+      entries.push({ kind: 'ctx', oldLine, newLine, text: rawLine.slice(1) });
+      oldLine += 1;
+      newLine += 1;
     }
   }
+  return entries;
+}
 
-  if (content === null) {
+// Validates source path(s) and loads excerpt lines or Git-verified diff entries.
+function loadDetailModel(detail, { revisions, manifestDir, requireSource = false } = {}) {
+  const mode = detail?.mode || 'excerpt';
+  assertCleanRepoPath(detail?.path, 'story.detail.path', '/story/detail/path');
+
+  if (mode === 'excerpt') {
+    if (!Array.isArray(detail.lines) || !detail.lines.length) {
+      failPrPack('pr-story/invalid-detail', 'manifest', 'story.detail in excerpt mode requires at least one line in lines[].', {
+        subject: { path: '/story/detail/lines' },
+        supportedFixes: ['add detail.lines or set detail.mode to "diff"'],
+      });
+    }
+    let content = null;
+    if (revisions?.repoRoot) {
+      const sha = detail.revision === 'base' ? revisions.baseSha : revisions.headSha;
+      if (!sha) {
+        failPrPack('pr-story/source-not-found', 'views', `Cannot read ${detail.path} at ${detail.revision || 'head'}: missing commit SHA.`, {
+          subject: { path: detail.path, revision: detail.revision || 'head' },
+          supportedFixes: ['declare baseSha/headSha or baseRef/headRef in the manifest'],
+        });
+      }
+      const result = runGit(revisions.repoRoot, ['show', '--no-textconv', `${sha}:${detail.path}`]);
+      if (result.status !== 0) {
+        failPrPack('pr-story/source-not-found', 'views', `Could not read ${detail.path} at ${sha.slice(0, 7)}: ${(result.stderr || '').trim() || 'missing file'}.`, {
+          subject: { path: detail.path, revision: sha },
+          supportedFixes: ['cite an existing file path at that revision'],
+        });
+      }
+      content = result.stdout;
+    } else if (manifestDir) {
+      content = readLocalSource(manifestDir, detail.path);
+    }
+
+    if (content === null) {
+      if (requireSource) {
+        failPrPack('pr-story/source-repo-required', 'revisions', `story.detail cites "${detail.path}", which requires --repo-root <path> to read source lines cleanly.`, {
+          subject: { path: detail.path },
+          supportedFixes: ['pass --repo-root with the matching Git checkout'],
+        });
+      }
+      return { mode, entries: null };
+    }
+    if (content.includes('\0')) {
+      failPrPack('pr-story/source-not-found', 'views', `story.detail target "${detail.path}" is a binary file.`, {
+        subject: { path: detail.path },
+        supportedFixes: ['cite a text source file'],
+      });
+    }
+    const fileLines = splitSourceLines(content);
+    const checkLine = (line, where) => {
+      if (!Number.isInteger(line) || line < 1 || line > fileLines.length) {
+        failPrPack('pr-story/source-line-out-of-range', 'views', `story.detail ${where} line ${line} is outside "${detail.path}" (1..${fileLines.length}).`, {
+          subject: { path: detail.path, line, maxLine: fileLines.length },
+          supportedFixes: [`cite line numbers between 1 and ${fileLines.length}`],
+        });
+      }
+    };
+    for (const line of detail.lines) checkLine(line, 'lines');
+    for (const line of detail.highlight || []) checkLine(line, 'highlight');
+    for (const [si, sel] of (detail.selections || []).entries()) {
+      for (const line of sel.lines || []) checkLine(line, `selections/${si}/lines`);
+    }
+    return {
+      mode,
+      entries: detail.lines.map((num) => ({ kind: 'ctx', oldLine: null, newLine: num, text: fileLines[num - 1] ?? '' })),
+    };
+  }
+
+  // Diff mode compares baseSha:basePath against headSha:path using Git.
+  const basePath = detail.basePath || detail.path;
+  if (detail.basePath) assertCleanRepoPath(basePath, 'story.detail.basePath', '/story/detail/basePath');
+  if (!revisions?.repoRoot) {
     if (requireSource) {
-      failPrPack('pr-story/source-repo-required', 'revisions', `story.detail cites "${filePath}", which requires --repo-root <path> to read source lines cleanly.`, {
-        subject: { path: filePath },
+      failPrPack('pr-story/source-repo-required', 'revisions', `story.detail (mode: diff) for "${detail.path}" requires --repo-root <path>.`, {
+        subject: { path: detail.path },
         supportedFixes: ['pass --repo-root with the matching Git checkout'],
       });
     }
-    return null;
+    return { mode, entries: null };
   }
-
-  if (content.includes('\0')) {
-    failPrPack('pr-story/source-not-found', 'views', `story.detail target "${filePath}" is a binary file.`, {
-      subject: { path: filePath },
+  if (!revisions.baseSha || !revisions.headSha) {
+    failPrPack('pr-story/source-not-found', 'revisions', `story.detail (mode: diff) requires both baseSha and headSha.`, {
+      subject: { path: detail.path },
+      supportedFixes: ['declare baseRef/headRef or baseSha/headSha in the manifest'],
+    });
+  }
+  const baseShow = runGit(revisions.repoRoot, ['show', '--no-textconv', `${revisions.baseSha}:${basePath}`]);
+  const headShow = runGit(revisions.repoRoot, ['show', '--no-textconv', `${revisions.headSha}:${detail.path}`]);
+  const hasBase = baseShow.status === 0;
+  const hasHead = headShow.status === 0;
+  if (!hasBase && !hasHead) {
+    failPrPack('pr-story/source-not-found', 'views', `Could not find "${detail.path}" at base ${revisions.baseSha.slice(0, 7)} or head ${revisions.headSha.slice(0, 7)}.`, {
+      subject: { path: detail.path },
+      supportedFixes: ['cite a modified, added, or removed file present in baseSha or headSha'],
+    });
+  }
+  if (!hasBase && (detail.basePath || detail.baseLines?.length || (detail.selections || []).some((s) => s.baseLines?.length))) {
+    failPrPack('pr-story/source-not-found', 'views', `story.detail cites base lines for "${basePath}", which does not exist at ${revisions.baseSha.slice(0, 7)}.`, {
+      subject: { path: basePath, revision: revisions.baseSha },
+      supportedFixes: ['remove baseLines for newly added files or verify basePath'],
+    });
+  }
+  if (!hasHead && (detail.lines?.length || detail.highlight?.length || (detail.selections || []).some((s) => s.lines?.length))) {
+    failPrPack('pr-story/source-not-found', 'views', `story.detail cites head lines for "${detail.path}", which does not exist at ${revisions.headSha.slice(0, 7)}.`, {
+      subject: { path: detail.path, revision: revisions.headSha },
+      supportedFixes: ['remove lines[] for deleted files and use baseLines[] instead'],
+    });
+  }
+  if ((hasBase && baseShow.stdout.includes('\0')) || (hasHead && headShow.stdout.includes('\0'))) {
+    failPrPack('pr-story/source-not-found', 'views', `story.detail diff target "${detail.path}" contains binary data.`, {
+      subject: { path: detail.path },
       supportedFixes: ['cite a text source file'],
     });
   }
-  return content.split(/\r?\n/);
+
+  const baseRawLines = hasBase ? splitSourceLines(baseShow.stdout) : [];
+  const headRawLines = hasHead ? splitSourceLines(headShow.stdout) : [];
+  const checkBound = (line, max, targetPath, where) => {
+    if (!Number.isInteger(line) || line < 1 || line > max) {
+      failPrPack('pr-story/source-line-out-of-range', 'views', `story.detail ${where} line ${line} is outside "${targetPath}" (1..${max}).`, {
+        subject: { path: targetPath, line, maxLine: max },
+        supportedFixes: [`cite line numbers between 1 and ${max}`],
+      });
+    }
+  };
+  for (const line of detail.baseLines || []) checkBound(line, baseRawLines.length, basePath, 'baseLines');
+  for (const line of detail.lines || []) checkBound(line, headRawLines.length, detail.path, 'lines');
+  for (const line of detail.highlight || []) checkBound(line, headRawLines.length, detail.path, 'highlight');
+  for (const [si, sel] of (detail.selections || []).entries()) {
+    for (const line of sel.baseLines || []) checkBound(line, baseRawLines.length, basePath, `selections/${si}/baseLines`);
+    for (const line of sel.lines || []) checkBound(line, headRawLines.length, detail.path, `selections/${si}/lines`);
+  }
+
+  const hasExplicitLines = Boolean(detail.baseLines?.length || detail.lines?.length);
+  let stream;
+  if (hasBase && hasHead) {
+    const context = hasExplicitLines ? '-U999999' : '-U1';
+    const diffRes = runGit(revisions.repoRoot, [
+      'diff', '--no-color', '--no-ext-diff', context,
+      `${revisions.baseSha}:${basePath}`, `${revisions.headSha}:${detail.path}`,
+    ]);
+    if (diffRes.status !== 0 && diffRes.status !== 1) {
+      failPrPack('pr-story/source-not-found', 'views', `Git diff failed for "${detail.path}": ${(diffRes.stderr || '').trim()}`, {
+        subject: { path: detail.path },
+        supportedFixes: ['verify baseSha and headSha refer to valid commits in --repo-root'],
+      });
+    }
+    stream = parseUnifiedDiff(diffRes.stdout);
+  } else if (hasHead) {
+    stream = headRawLines.map((text, idx) => ({ kind: 'add', oldLine: null, newLine: idx + 1, text }));
+  } else {
+    stream = baseRawLines.map((text, idx) => ({ kind: 'del', oldLine: idx + 1, newLine: null, text }));
+  }
+
+  let entries;
+  if (hasExplicitLines) {
+    const baseSet = new Set(detail.baseLines || []);
+    const headSet = new Set(detail.lines || []);
+    entries = stream.filter((entry) => (
+      (entry.kind === 'del' && baseSet.has(entry.oldLine))
+      || (entry.kind === 'add' && headSet.has(entry.newLine))
+      || (entry.kind === 'ctx' && (baseSet.has(entry.oldLine) || headSet.has(entry.newLine)))
+    ));
+  } else {
+    entries = stream.slice(0, detail.maxLines || 12);
+  }
+
+  if (!entries.some((entry) => entry.kind === 'add' || entry.kind === 'del')) {
+    failPrPack('pr-story/empty-diff', 'views', `story.detail (mode: diff) for "${detail.path}" has no changed (+/−) lines in the selected range.`, {
+      subject: { path: detail.path },
+      supportedFixes: ['cite changed lines in baseLines/lines or omit them to auto-select the diff hunk'],
+    });
+  }
+  return { mode, entries };
 }
 
 function checkNoRiskVerdict(text, field) {
@@ -184,10 +389,11 @@ function checkTimestamp(value, duration, label) {
 
 export function validatePrStory(story, pack, { revisions, manifestDir, requireDetailSource = false } = {}) {
   if (!story) return null;
+  const resolvedSteps = resolveStorySteps(story.steps, story.duration);
 
   checkNoRiskVerdict(story.title, 'story/title');
   checkNoRiskVerdict(story.caption, 'story/caption');
-  for (const [index, step] of story.steps.entries()) {
+  for (const [index, step] of resolvedSteps.entries()) {
     checkNoRiskVerdict(step.title, `story/steps/${index}/title`);
     checkNoRiskVerdict(step.body, `story/steps/${index}/body`);
   }
@@ -239,7 +445,7 @@ export function validatePrStory(story, pack, { revisions, manifestDir, requireDe
 
   const duration = story.duration;
   let prevAt = -1;
-  for (const [i, step] of story.steps.entries()) {
+  for (const [i, step] of resolvedSteps.entries()) {
     checkTimestamp(step.at, duration, `steps/${i}/at`);
     if (step.at >= duration) {
       failPrPack('pr-story/invalid-timing', 'manifest', `story step ${i} at=${step.at} must be strictly less than duration ${duration}.`, {
@@ -307,7 +513,7 @@ export function validatePrStory(story, pack, { revisions, manifestDir, requireDe
     }
   }
 
-  let detailLines = null;
+  let detailModel = null;
   if (story.detail) {
     checkTimestamp(story.detail.start, duration, 'detail/start');
     checkTimestamp(story.detail.end, duration, 'detail/end');
@@ -319,26 +525,17 @@ export function validatePrStory(story, pack, { revisions, manifestDir, requireDe
     }
     for (const [si, sel] of (story.detail.selections || []).entries()) {
       checkTimestamp(sel.at, duration, `detail/selections/${si}/at`);
-    }
-    detailLines = loadDetailSourceLines(story.detail, { revisions, manifestDir, requireSource: requireDetailSource });
-    if (detailLines) {
-      const checkLineRange = (line, where) => {
-        if (!Number.isInteger(line) || line < 1 || line > detailLines.length) {
-          failPrPack('pr-story/source-line-out-of-range', 'views', `story.detail ${where} line ${line} is outside "${story.detail.path}" (1..${detailLines.length}).`, {
-            subject: { path: story.detail.path, line, maxLine: detailLines.length },
-            supportedFixes: [`cite line numbers between 1 and ${detailLines.length}`],
-          });
-        }
-      };
-      for (const line of story.detail.lines) checkLineRange(line, 'lines');
-      for (const line of story.detail.highlight || []) checkLineRange(line, 'highlight');
-      for (const [si, sel] of (story.detail.selections || []).entries()) {
-        for (const line of sel.lines) checkLineRange(line, `selections/${si}/lines`);
+      if (!(sel.lines?.length || sel.baseLines?.length)) {
+        failPrPack('pr-story/invalid-detail', 'manifest', `story.detail.selections[${si}] must declare lines[] or baseLines[].`, {
+          subject: { path: `/story/detail/selections/${si}` },
+          supportedFixes: ['cite lines[] or baseLines[] for each selection'],
+        });
       }
     }
+    detailModel = loadDetailModel(story.detail, { revisions, manifestDir, requireSource: requireDetailSource });
   }
 
-  return { detailLines };
+  return { steps: resolvedSteps, detailModel };
 }
 
 function storyPalette(theme, preset, styles) {
@@ -383,27 +580,58 @@ function computeNativeContentBounds(svg, layout) {
   return boundsOf(boxes);
 }
 
-function expandLabeledNodeBadges(svg, layout, isZh) {
+function stripNodeChangeBadge(markup) {
+  let out = markup;
+  const matches = [...out.matchAll(/<g\b[^>]*\bdata-change-badge="(?:added|modified|removed)"[^>]*>/g)];
+  for (let i = matches.length - 1; i >= 0; i -= 1) {
+    const start = matches[i].index;
+    const close = out.indexOf('</g>', start);
+    if (close === -1) continue;
+    const segment = out.slice(start, close + 4);
+    if (/\bdata-story-node-badge=/.test(matches[i][0]) || /\bwidth="18"/.test(segment)) {
+      out = out.slice(0, start) + out.slice(close + 4);
+    }
+  }
+  return out;
+}
+
+// Upgrades node-level 18x13 change badges into labeled pills while leaving 14x12 row badges untouched.
+export function upgradeSvgNodeBadges(svg, diagramType, { isZh = false, mode = 'labeled', layout } = {}) {
+  if (mode === 'compact') return svg;
+  const resolvedLayout = layout || layoutReportFromSvg(svg, diagramType);
+  const viewBoxMatch = svg.match(/\bviewBox="([^"]+)"/);
+  const vb = viewBoxMatch ? viewBoxMatch[1].trim().split(/[\s,]+/).map(Number) : [];
+  const [vx, vy, vw, vh] = vb.length === 4 && vb.every(Number.isFinite) ? vb : [0, 0, Infinity, Infinity];
   const labels = isZh
     ? { added: '+ 新增', modified: '~ 修改', removed: '− 删除' }
     : { added: '+ Added', modified: '~ Modified', removed: '− Removed' };
-  const pillW = isZh ? 54 : 62;
+  const pillW = isZh ? 54 : 68;
+  const pillH = 18;
+  const fontSize = isZh ? 10.5 : 9.5;
+  const minNodeWidth = isZh ? 104 : 116;
+  const round1 = (n) => Math.round(n * 10) / 10;
+
   let result = svg;
-  for (const node of layout.nodes) {
-    if (!node.width || node.width < 104) continue;
+  for (const node of resolvedLayout.nodes) {
+    if (!node.width || node.width < minNodeWidth) continue;
     const group = findBalancedTag(result, 'data-node-id', node.id);
     if (!group) continue;
     const head = group.svg.slice(0, group.svg.indexOf('>') + 1);
     const state = /\bdata-change="(added|modified|removed)"/.exec(head)?.[1];
     if (!state) continue;
-    const badges = [...group.svg.matchAll(new RegExp(`<g\\b[^>]*data-change-badge="${state}"[^>]*>[\\s\\S]*?</g>`, 'g'))];
+    const badges = [...group.svg.matchAll(new RegExp(`<g\\b[^>]*data-change-badge="${state}"[^>]*>[\\s\\S]*?</g>`, 'g'))]
+      .filter((m) => /\bwidth="18"/.test(m[0]) && !/\bdata-story-node-badge=/.test(m[0]));
     const badge = badges.at(-1);
     if (!badge) continue;
     const rectMatch = /<rect\b[^>]*\bx="([^"]+)"[^>]*\by="([^"]+)"[^>]*\bwidth="([^"]+)"/.exec(badge[0]);
     if (!rectMatch) continue;
-    const x = Number(rectMatch[1]) + Number(rectMatch[3]) - pillW;
-    const y = Number(rectMatch[2]) - 2.5;
-    const revised = `<g data-change-badge="${state}" data-story-node-badge="" pointer-events="none"><rect x="${x}" y="${y}" width="${pillW}" height="18" rx="6" class="c-mask"/><rect x="${x}" y="${y}" width="${pillW}" height="18" rx="6" class="c-change-badge-${state}" stroke-width="1"/><text x="${x + pillW / 2}" y="${y + 12.5}" class="t-change-badge-${state}" font-size="10.5" font-weight="600" text-anchor="middle">${labels[state]}</text></g>`;
+    const rawX = Number(rectMatch[1]) + Number(rectMatch[3]) - pillW;
+    const rawY = Number(rectMatch[2]) - 2.5;
+    const maxX = Number.isFinite(vw) ? vx + vw - pillW - 2 : Infinity;
+    const maxY = Number.isFinite(vh) ? vy + vh - pillH - 1.5 : Infinity;
+    const x = round1(Math.max(vx + 2, Math.max(node.x + 6, Math.min(maxX, rawX))));
+    const y = round1(Math.max(vy + 1.5, Math.min(maxY, rawY)));
+    const revised = `<g data-change-badge="${state}" data-story-node-badge="" pointer-events="none"><rect x="${x}" y="${y}" width="${pillW}" height="${pillH}" rx="6" class="c-mask"/><rect x="${x}" y="${y}" width="${pillW}" height="${pillH}" rx="6" class="c-change-badge-${state}" stroke-width="1"/><text x="${round1(x + pillW / 2)}" y="${round1(y + 12.5)}" class="t-change-badge-${state}" font-size="${fontSize}" font-weight="600" text-anchor="middle">${labels[state]}</text></g>`;
     const updated = group.svg.slice(0, badge.index) + revised + group.svg.slice(badge.index + badge[0].length);
     result = result.slice(0, group.start) + updated + result.slice(group.end);
   }
@@ -470,9 +698,7 @@ function prepareSubSvg({ view, rawSvg, nodeBadges, isZh }) {
     .replace(/<metadata\b[^>]*id="archify-software-notices"[^>]*>[\s\S]*?<\/metadata>/g, '')
     .replace(/<rect\b[^>]*class="archify-bake-background"[^>]*\/>/g, '')
     .replace(/<rect\b[^>]*fill="url\(#grid\)"[^>]*\/>/g, '');
-  if (nodeBadges !== 'compact' && !['erd', 'class'].includes(view.type)) {
-    svg = expandLabeledNodeBadges(svg, layout, isZh);
-  }
+  svg = upgradeSvgNodeBadges(svg, view.type, { isZh, mode: nodeBadges, layout });
   const key = `native-${view.id}`;
   svg = namespaceSubSvgIds(svg, key);
   svg = scopeEmbeddedStyles(svg, key);
@@ -564,20 +790,33 @@ function wrapSourceLines(text, maxUnits = 27.5) {
   return rows;
 }
 
-function buildDetailMarkup(detail, fileLines, timeline, duration, palette) {
+function buildDetailMarkup(detail, detailModel, timeline, duration, palette) {
+  const mode = detailModel?.mode || detail.mode || 'excerpt';
+  const entries = detailModel?.entries || [];
+  const wrapUnits = mode === 'diff' ? 26.5 : 27.5;
   const rows = [];
-  const highlights = new Set(detail.highlight || []);
-  for (const number of detail.lines) {
-    const raw = fileLines[number - 1] ?? '';
-    for (const part of wrapSourceLines(raw)) {
-      rows.push({ line: part.first ? number : '', sourceLine: number, text: part.text, highlighted: highlights.has(number) });
+  for (const entry of entries) {
+    for (const part of wrapSourceLines(entry.text, wrapUnits)) {
+      rows.push({
+        kind: entry.kind,
+        oldLine: entry.oldLine,
+        newLine: entry.newLine,
+        displayNum: part.first ? (entry.kind === 'del' ? entry.oldLine : entry.newLine) : '',
+        diffSign: mode === 'diff' && part.first ? (entry.kind === 'del' ? '−' : entry.kind === 'add' ? '+' : '') : '',
+        text: part.text,
+      });
     }
   }
   const font = rows.length > 14 ? 10.8 : rows.length > 10 ? 11.8 : 12.8;
   const gap = rows.length > 14 ? 19 : rows.length > 10 ? 22 : 25.5;
   const selections = detail.selections?.length
     ? detail.selections
-    : [{ at: detail.start, lines: detail.highlight || [] }];
+    : [{ at: detail.start, lines: detail.highlight || [], baseLines: [] }];
+  const selMatches = (sel, row) => (
+    row.kind === 'del'
+      ? (sel.baseLines || []).includes(row.oldLine)
+      : (sel.lines || []).includes(row.newLine)
+  );
 
   let content = `<line x1="${CODE_DIVIDER_X}" x2="${CODE_DIVIDER_X}" y1="125" y2="528" stroke="${palette.line}" stroke-width="1"/>`;
   content += `<text x="${CODE_X}" y="${CODE_Y}" font-size="${fitFontSize(detail.title, CODE_WIDTH, 15, 11)}" fill="${palette.text}" font-weight="600">${escapeXml(detail.title)}</text>`;
@@ -586,17 +825,28 @@ function buildDetailMarkup(detail, fileLines, timeline, duration, palette) {
   }
 
   const rowStartY = CODE_Y + (detail.note ? 66 : 44);
+  const hlX = mode === 'diff' ? CODE_X + 22 : CODE_X + 29;
+  const hlW = mode === 'diff' ? CODE_WIDTH - 22 : CODE_WIDTH - 29;
+  const textX = mode === 'diff' ? CODE_X + 38 : CODE_X + 34;
+
   rows.forEach((row, index) => {
     const yy = rowStartY + index * gap;
-    if (selections.some((sel) => sel.lines.includes(row.sourceLine))) {
+    const rectTop = yy - Math.round(gap * 0.68);
+    if (mode === 'diff' && (row.kind === 'del' || row.kind === 'add')) {
+      const tint = row.kind === 'del' ? palette.removed : palette.accent;
+      content += `<rect x="${CODE_X + 20}" y="${rectTop}" width="${CODE_WIDTH - 20}" height="${gap}" fill="${tint}" fill-opacity="0.08"/>`;
+      content += `<rect x="${CODE_X + 20}" y="${rectTop}" width="2" height="${gap}" fill="${tint}" fill-opacity="0.72"/>`;
+    }
+    if (selections.some((sel) => selMatches(sel, row))) {
       const id = `story-source-hl-${index}`;
-      const initialOpacity = selections[0].lines.includes(row.sourceLine) ? 1 : 0;
-      content += `<rect id="${id}" x="${CODE_X + 29}" y="${yy - Math.round(gap * 0.68)}" width="${CODE_WIDTH - 29}" height="${gap}" fill="${palette.accent}" fill-opacity="0.1" style="opacity:${initialOpacity}"/>`;
+      const initialOpacity = selMatches(selections[0], row) ? 1 : 0;
+      const hlColor = mode === 'diff' && row.kind === 'del' ? palette.removed : palette.accent;
+      content += `<rect id="${id}" x="${hlX}" y="${rectTop}" width="${hlW}" height="${gap}" fill="${hlColor}" fill-opacity="${mode === 'diff' ? '0.13' : '0.1'}" style="opacity:${initialOpacity}"/>`;
       if (selections.length > 1) {
         let current = initialOpacity;
         const pts = [{ t: 0, styleText: `opacity:${current}` }];
         for (const sel of selections.slice(1)) {
-          const next = sel.lines.includes(row.sourceLine) ? 1 : 0;
+          const next = selMatches(sel, row) ? 1 : 0;
           pts.push({ t: sel.at, styleText: `opacity:${current}` }, { t: Math.min(duration, sel.at + 0.45), styleText: `opacity:${next}` });
           current = next;
         }
@@ -604,8 +854,13 @@ function buildDetailMarkup(detail, fileLines, timeline, duration, palette) {
         timeline.add(`#${id}`, 'opacity', pts);
       }
     }
-    if (row.line) content += `<text x="${CODE_X}" y="${yy}" font-size="10.5" fill="${palette.muted}">${row.line}</text>`;
-    content += `<text x="${CODE_X + 34}" y="${yy}" font-size="${font}" fill="${palette.text}" xml:space="preserve" style="font-family:${CODE_FONT_FAMILY};white-space:pre">${escapeXml(row.text)}</text>`;
+    if (row.displayNum !== '') content += `<text x="${CODE_X}" y="${yy}" font-size="10.5" fill="${palette.muted}">${row.displayNum}</text>`;
+    if (row.diffSign) {
+      const signColor = row.kind === 'del' ? palette.removed : palette.accent;
+      content += `<text x="${CODE_X + 25}" y="${yy}" font-size="11.5" font-weight="700" fill="${signColor}">${row.diffSign}</text>`;
+    }
+    const textFill = mode === 'diff' && row.kind === 'del' ? palette.muted : palette.text;
+    content += `<text x="${textX}" y="${yy}" font-size="${font}" fill="${textFill}" xml:space="preserve" style="font-family:${CODE_FONT_FAMILY};white-space:pre">${escapeXml(row.text)}</text>`;
   });
 
   const inAt = Math.min(duration, detail.start + 0.5);
@@ -622,11 +877,11 @@ function buildDetailMarkup(detail, fileLines, timeline, duration, palette) {
   }
   pts.push({ t: duration, styleText: detail.end < duration ? 'opacity:0;transform:translateX(12px)' : 'opacity:1;transform:translateX(0px)' });
   timeline.add('#story-source-detail', 'motion', pts);
-  return `<g id="story-source-detail" style="opacity:0">${content}</g>`;
+  return `<g id="story-source-detail" data-story-detail-mode="${mode}" style="opacity:0">${content}</g>`;
 }
 
 export function compilePrStorySvg({ story, pack, bakedViews, theme, preset = 'classic', styles = loadViewerStyles(), revisions, manifestDir }) {
-  const { detailLines } = validatePrStory(story, pack, { revisions, manifestDir, requireDetailSource: true });
+  const { steps: resolvedSteps, detailModel } = validatePrStory(story, pack, { revisions, manifestDir, requireDetailSource: true });
   const duration = story.duration;
   const iteration = story.loop === false ? '2 both' : 'infinite';
   const palette = storyPalette(theme, preset, styles);
@@ -653,7 +908,7 @@ export function compilePrStorySvg({ story, pack, bakedViews, theme, preset = 'cl
     styles.fontCss,
     `svg{font-family:${STORY_FONT_FALLBACK}}`,
     `[data-native-key] [data-legend]{display:none}`,
-    `[data-story-node-badge] text{font-size:10.5px!important}`,
+    `[data-story-node-badge] text{font-size:${isZh ? '10.5px' : '9.5px'}!important}`,
   ];
 
   // Attach metric readouts directly under the node in its prepared sub-SVG.
@@ -824,6 +1079,14 @@ export function compilePrStorySvg({ story, pack, bakedViews, theme, preset = 'cl
       staticCss.push(`#view-${pair.after} [data-node-id="${escapeCssAttr(shared.id)}"]{visibility:hidden}`);
 
       let markup = original.svg.replace(/\sid="[^"]*"/g, '');
+      const openEnd = markup.indexOf('>');
+      if (openEnd !== -1) {
+        const cleanOpen = markup.slice(0, openEnd + 1)
+          .replace(/\sdata-change-context="[^"]*"/g, '')
+          .replace(/\sdata-change="(?:added|modified|removed|unchanged)"/g, '');
+        markup = cleanOpen + markup.slice(openEnd + 1);
+      }
+      markup = stripNodeChangeBadge(markup);
       const poseFor = (camera) => {
         const scale = camera.scale * (b.width / a.width);
         return {
@@ -866,7 +1129,11 @@ export function compilePrStorySvg({ story, pack, bakedViews, theme, preset = 'cl
 
       const targetGroup = findBalancedTag(afterPart.svg, 'data-node-id', shared.id);
       const targetState = targetGroup ? /\bdata-change="(added|modified|removed)"/.exec(targetGroup.svg.slice(0, targetGroup.svg.indexOf('>') + 1))?.[1] : null;
-      const targetBadge = targetGroup && targetState ? findBalancedTag(targetGroup.svg, 'data-change-badge', targetState)?.svg : null;
+      const targetBadge = targetGroup && targetState
+        ? ([...targetGroup.svg.matchAll(new RegExp(`<g\\b[^>]*data-change-badge="${targetState}"[^>]*>[\\s\\S]*?</g>`, 'g'))]
+          .filter((m) => /\bwidth="18"|\bdata-story-node-badge=/.test(m[0]))
+          .at(-1)?.[0] || null)
+        : null;
       if (targetBadge && !/data-change-badge=/.test(markup)) {
         const map = `translate(${a.x} ${a.y}) scale(${(a.width / b.width).toFixed(5)}) translate(${-b.x} ${-b.y})`;
         markup = markup.replace(/<\/g>$/, `<g data-native-key="${afterPart.key}"><g id="story-shared-badge-${shared.id}" transform="${map}" style="opacity:0">${targetBadge}</g></g></g>`);
@@ -1063,7 +1330,7 @@ export function compilePrStorySvg({ story, pack, bakedViews, theme, preset = 'cl
       addDetailFade(`#view-${detail.view} [data-story-edge-wrap="${ek}"], #view-${detail.view} [data-edge-id="${ek}"], #view-${detail.view} [data-story-edge-id="${ek}"]`);
     }
     addDetailFade(`#view-${detail.view} text.t-dim, #view-${detail.view} [data-graph-role="structural-frame"], #view-${detail.view} [data-domain-band]`);
-    detailMarkup = buildDetailMarkup(detail, detailLines, timeline, duration, palette);
+    detailMarkup = buildDetailMarkup(detail, detailModel, timeline, duration, palette);
   }
 
   // Pure-CSS infinite offset-path tokens embedded inside their camera group so camera pans track automatically.
@@ -1138,19 +1405,22 @@ export function compilePrStorySvg({ story, pack, bakedViews, theme, preset = 'cl
     );
   }
 
-  // Top caption band & progress pills
-  const totalSteps = story.steps.length;
-  const pillPitch = totalSteps > 7 ? Math.floor(136 / totalSteps) : 19;
+  // Top caption band & countdown progress pills
+  const totalSteps = resolvedSteps.length;
+  const activeExtra = totalSteps > 7 ? 4 : 10;
+  const pillPitch = totalSteps > 7 ? Math.floor((136 - activeExtra) / totalSteps) : 19;
   const pillW = Math.max(6, Math.min(13, pillPitch - 5));
-  const pillStartX = 930 - (totalSteps - 1) * pillPitch - pillW;
+  const activeW = pillW + activeExtra;
+  const pillStartX = 930 - ((totalSteps - 1) * pillPitch + activeW);
   const headlineBudget = Math.max(240, pillStartX - 88);
 
-  const captionLayers = story.steps.map((step, index) => {
+  const captionLayers = resolvedSteps.map((step, index) => {
     const id = `story-caption-${index}`;
     const change = step.change || 'modified';
     const tone = change === 'added' ? palette.accent : change === 'removed' ? palette.removed : palette.text;
     const barColor = change === 'added' ? palette.accent : change === 'removed' ? palette.removed : palette.amber;
-    const end = index + 1 < totalSteps ? Math.max(step.at + 0.5, story.steps[index + 1].at - 0.55) : duration;
+    const nextStepAt = index + 1 < totalSteps ? resolvedSteps[index + 1].at : duration;
+    const end = index + 1 < totalSteps ? Math.max(step.at + 0.5, nextStepAt - 0.55) : duration;
     const headlineFont = fitFontSize(step.title, headlineBudget, 20, 14);
     const bodyFont = fitFontSize(step.body, 886, 14.5, 11.5);
 
@@ -1159,7 +1429,22 @@ export function compilePrStorySvg({ story, pack, bakedViews, theme, preset = 'cl
     inner += `<text x="70" y="49" font-size="${headlineFont}" fill="${tone}" font-weight="650" class="caption-title">${escapeXml(step.title)}</text>`;
     inner += `<text x="44" y="79" font-size="${bodyFont}" fill="${palette.muted}" class="caption-body">${escapeXml(step.body)}</text>`;
     for (let p = 0; p < totalSteps; p += 1) {
-      inner += `<rect x="${pillStartX + p * pillPitch}" y="42" width="${pillW}" height="3" rx="1.5" fill="${p <= index ? palette.accent : palette.line}"/>`;
+      const px = pillStartX + p * pillPitch + (p > index ? activeExtra : 0);
+      if (p === index) {
+        const progId = `story-step-prog-${index}`;
+        inner += `<rect x="${px}" y="41.5" width="${activeW}" height="4" rx="2" fill="${palette.line}"/>`;
+        inner += `<rect id="${progId}" data-story-step-progress="${index}" x="${px}" y="41.5" width="${activeW}" height="4" rx="2" fill="${barColor}" style="transform-origin:${px}px 43.5px;transform:scaleX(0)"/>`;
+        timeline.add(`#${progId}`, 'progress', [
+          { t: 0, styleText: 'transform:scaleX(0)' },
+          { t: step.at, styleText: 'transform:scaleX(0)' },
+          { t: nextStepAt, styleText: 'transform:scaleX(1)' },
+          { t: duration, styleText: 'transform:scaleX(1)' },
+        ], 'linear');
+      } else if (p < index) {
+        inner += `<rect x="${px}" y="41.5" width="${pillW}" height="4" rx="2" fill="${palette.accent}" fill-opacity="0.48"/>`;
+      } else {
+        inner += `<rect x="${px}" y="41.5" width="${pillW}" height="4" rx="2" fill="${palette.line}"/>`;
+      }
     }
 
     const pts = [];
@@ -1183,14 +1468,14 @@ export function compilePrStorySvg({ story, pack, bakedViews, theme, preset = 'cl
     return `<g id="${id}" class="story-caption" style="opacity:${step.at === 0 ? 1 : 0}">${inner}</g>`;
   });
 
-  const reducedMotionRule = '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}[data-story-tokens],[data-story-token]{display:none}.story-caption{opacity:0!important}.story-caption:first-of-type{opacity:1!important;transform:none!important}}';
+  const reducedMotionRule = '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}[data-story-tokens],[data-story-token]{display:none}[data-story-step-progress]{transform:scaleX(1)!important}.story-caption{opacity:0!important}.story-caption:first-of-type{opacity:1!important;transform:none!important}}';
   const css = [...staticCss, ...timeline.emitCss(), reducedMotionRule].join('\n');
   if (css.includes(']]>')) {
     throw new Error('story-svg: generated stylesheet contains forbidden CDATA terminator');
   }
 
   const storyTitle = story.title || pack.manifest.title;
-  const storyDesc = `${storyTitle}: ${story.steps.map((s) => s.title).join(' -> ')}`;
+  const storyDesc = `${storyTitle}: ${resolvedSteps.map((s) => s.title).join(' -> ')}`;
   const metadata = `<metadata id="archify-software-notices">${escapeXml(softwareNotices + OCTICON_NOTICE)}</metadata>`;
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>\n`

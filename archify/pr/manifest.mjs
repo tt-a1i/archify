@@ -3,7 +3,7 @@ import path from 'node:path';
 import { FULL_SHA_RE, hasRepositoryEvidence, runGit } from '../renderers/shared/repository-evidence.mjs';
 import { validateSchema } from '../renderers/shared/validator.mjs';
 import { PrPackError, failPrPack as fail, packDiagnostic } from './errors.mjs';
-import { validatePrStory } from './story-svg.mjs';
+import { resolveStorySteps, validatePrStory } from './story-svg.mjs';
 
 export { PrPackError, packDiagnostic };
 export const PACK_PLATFORMS = ['github', 'gitlab', 'generic'];
@@ -87,7 +87,9 @@ export function loadPrPack(manifestInput) {
     manifestDir,
     manifest,
     views,
-    story: manifest.story || null,
+    story: manifest.story
+      ? { ...manifest.story, steps: resolveStorySteps(manifest.story.steps, manifest.story.duration) }
+      : null,
     platform: manifest.platform || 'github',
     changeTableLimit: manifest.changeTableLimit || DEFAULT_CHANGE_TABLE_LIMIT,
   };
