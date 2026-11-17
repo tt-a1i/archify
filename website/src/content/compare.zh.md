@@ -8,7 +8,7 @@
 
 Archify 是 [archify.si](https://archify.si) 上的开源 Agent Skill（Apache-2.0），源码位于 [github.com/tt-a1i/archify](https://github.com/tt-a1i/archify)。使用它**完全不需要先有代码仓库，也不用背画图语法**：你只需要像平时聊天一样说出想法，或者把已有草稿、Mermaid 文本、仓库路径交给 Agent。
 
-Agent 会在极短时间内帮你选定最贴合问题的结构——覆盖**十种原生图型**（`architecture` 架构图、`workflow` 工作流、`sequence` 时序图、`dataflow` 数据流、`lifecycle` 状态生命周期、`erd` 实体关系、`class` 类图、`tree` 树图、`timeline` 时间线、`waterfall` 瀑布图），或编写 `.archify.md` 生成**一页式解答（Explainer）**——再经本地确定性布局、防穿模路由与真实浏览器检查，交付一个**双击即可离线打开、还能让 Agent 继续二次扩展**的精致 HTML 成品。
+Agent 会在极短时间内帮你选定最贴合问题的结构——覆盖**十种原生图型**（`architecture` 架构图、`workflow` 工作流、`sequence` 时序图、`dataflow` 数据流、`lifecycle` 状态生命周期、`erd` 实体关系、`class` 类图、`tree` 树图、`timeline` 时间线、`waterfall` 瀑布图），或编写 `.archify.md` 生成**一页式解答（Explainer）**——再经本地确定性布局、防穿模路由与校验门禁（原生图表默认执行真实浏览器检查；一页式解答默认执行结构与交付校验，传入 `--browser-check` 时按需开启浏览器检查），交付一个**双击即可离线打开、还能让 Agent 继续二次扩展**的精致 HTML 成品。
 
 正因如此，Archify 和“纯文本画图渲染器”或“空白画板”并非简单替代关系：它既能帮你读懂真实代码仓（如 [MCO 运行时案例](cases/mco-runtime.html)），也能几句话做出[上海四天 CityWalk 互动行程](cases/community/shanghai-citywalk.html)和[大城市首次租房避坑指南](cases/explainer/first-rental.html)。如果你的诉求仅仅是在 README 里塞三四个方框，直接写 Mermaid 依然最轻省。
 
