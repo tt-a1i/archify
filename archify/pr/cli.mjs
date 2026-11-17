@@ -72,7 +72,7 @@ export async function commandPr(args, { rejectCliArgument, usage }) {
       input = path.resolve(manifest);
       const receipt = validatePrPack(manifest, { repoRoot: options.values['--repo-root'] });
       if (json) console.log(JSON.stringify(receipt, null, 2));
-      else console.log(`archify pr validate: ${receipt.views.length} view(s) valid${receipt.revisions.verified ? ` at ${receipt.revisions.baseSha.slice(0, 7)}...${receipt.revisions.headSha.slice(0, 7)}` : ''}`);
+      else console.log(`archify pr validate: ${receipt.views.length} view(s) valid${receipt.story ? ` + story (${receipt.story.steps} steps)` : ''}${receipt.revisions.verified ? ` at ${receipt.revisions.baseSha.slice(0, 7)}...${receipt.revisions.headSha.slice(0, 7)}` : ''}`);
       return;
     }
     if (subcommand === 'build') {

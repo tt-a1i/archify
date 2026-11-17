@@ -5,8 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findChrome } from '../archify/bin/visual-check.mjs';
+import { buildPrPack } from '../archify/pr/build.mjs';
 import { exportSvgArtifacts } from '../archify/renderers/shared/svg-export.mjs';
 import { desktopBrowser } from './helpers/desktop-browser.mjs';
+import { git } from './helpers/repository-evidence-fixture.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
@@ -303,3 +305,172 @@ for (const [type, document] of Object.entries(v2BrowserFixtures())) {
     }
   });
 }
+
+test('pr build story walkthrough SVGs animate infinitely in Chrome and keep captions clear of the viewport', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser SVG export checks.',
+}, async (t) => {
+  const scratch = createScratchDirectory(path.join(os.tmpdir(), 'archify-story-browser-'));
+  const repoDir = path.join(scratch, 'repo');
+  fs.mkdirSync(path.join(repoDir, 'src'), { recursive: true });
+  fs.writeFileSync(path.join(repoDir, 'src', 'handler.mjs'), [
+    'export function handleCheckout(req) {',
+    '  if (!req.idempotencyKey) return { status: 400 };',
+    '  return { status: 202, queued: true };',
+    '}',
+  ].join('\n'));
+  git(repoDir, 'init', '-b', 'main');
+  git(repoDir, 'config', 'user.name', 'Archify Tests');
+  git(repoDir, 'config', 'user.email', 'archify@example.test');
+  git(repoDir, 'remote', 'add', 'origin', 'https://github.com/acme/checkout.git');
+  git(repoDir, 'add', '.');
+  git(repoDir, 'commit', '-q', '-m', 'base');
+  const baseSha = git(repoDir, 'rev-parse', 'HEAD');
+  git(repoDir, 'checkout', '-q', '-b', 'feat/story');
+  fs.writeFileSync(path.join(repoDir, 'src', 'handler.mjs'), [
+    'export function handleCheckout(req) {',
+    '  if (!req.idempotencyKey) return { status: 400 };',
+    '  enqueueCheckout(req);',
+    '  return { status: 202, queued: true };',
+    '}',
+  ].join('\n'));
+  git(repoDir, 'add', '.');
+  git(repoDir, 'commit', '-q', '-m', 'async queue');
+  const headSha = git(repoDir, 'rev-parse', 'HEAD');
+
+  const packDir = path.join(scratch, 'pack');
+  fs.mkdirSync(packDir, { recursive: true });
+  fs.writeFileSync(path.join(packDir, 'before.json'), JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Before', output: 'before.html' },
+    components: [
+      { id: 'client', type: 'frontend', label: 'Client', pos: [40, 140], size: [130, 60] },
+      { id: 'api', type: 'backend', label: 'Checkout API', pos: [280, 140], size: [150, 60] },
+    ],
+    connections: [{ id: 'c1', from: 'client', to: 'api', label: 'POST /checkout' }],
+  }));
+  fs.writeFileSync(path.join(packDir, 'after.json'), JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'After', output: 'after.html', repository: { url: 'https://github.com/acme/checkout', revision: headSha } },
+    components: [
+      { id: 'client', type: 'frontend', label: 'Client', pos: [40, 140], size: [130, 60], change: 'unchanged' },
+      { id: 'api', type: 'backend', label: 'Checkout API', pos: [280, 140], size: [150, 60], change: 'modified', sources: [{ path: 'src/handler.mjs', line: 1, end_line: 5 }] },
+      { id: 'queue', type: 'messagebus', label: 'Checkout Queue', pos: [540, 140], size: [160, 60], change: 'added' },
+    ],
+    connections: [
+      { id: 'c1', from: 'client', to: 'api', label: 'POST /checkout', change: 'modified' },
+      { id: 'c2', from: 'api', to: 'queue', label: 'enqueue', change: 'added' },
+    ],
+  }));
+  const manifestFile = path.join(packDir, 'pr-pack.json');
+  fs.writeFileSync(manifestFile, JSON.stringify({
+    schema_version: 1,
+    kind: 'pr-pack',
+    title: 'Queue checkout walkthrough',
+    repository: 'acme/checkout',
+    baseSha,
+    headSha,
+    platform: 'github',
+    theme: 'both',
+    preset: 'classic',
+    views: [
+      { id: 'before', title: 'Before', type: 'architecture', input: 'before.json', storyOnly: true },
+      { id: 'after', title: 'After', type: 'architecture', input: 'after.json', collapsed: true },
+    ],
+    story: {
+      id: 'walkthrough',
+      duration: 18,
+      loop: true,
+      stages: [
+        { view: 'before', end: 4.5 },
+        { view: 'after', start: 3.5, end: 18 },
+      ],
+      pair: { before: 'before', after: 'after', at: 3.5, shared: [{ id: 'client' }, { id: 'api' }] },
+      enter: [{ view: 'after', nodes: ['queue'], at: 4.5 }],
+      connect: [{ view: 'after', edges: ['c2'], at: 5.2 }],
+      traces: [{ view: 'after', edges: ['c2'], times: [6.8], end: 10.2, travel: 2.0 }],
+      metrics: [{ view: 'after', node: 'api', label: 'latency', before: '420ms', after: '18ms', at: 12.2 }],
+      detail: {
+        view: 'after',
+        nodes: ['api'],
+        start: 11.5,
+        end: 18,
+        title: 'src/handler.mjs · handleCheckout()',
+        path: 'src/handler.mjs',
+        lines: [1, 2, 3, 4],
+        highlight: [3],
+      },
+      steps: [
+        { at: 0, title: 'Synchronous baseline request', body: 'CallsCheckout synchronously before queue rollout.' },
+        { at: 4, title: 'Queue decouples Checkout API', body: 'Enqueues work asynchronously on request.' },
+        { at: 6.6, title: 'Trace queued handoff', body: 'Packet moves smoothly along the added queue edge.' },
+        { at: 11.6, title: 'Inspect handler implementation', body: 'Shows enqueueCheckout line with measured metric readout.' },
+      ],
+    },
+  }));
+
+  const build = await buildPrPack(manifestFile, { outDir: path.join(scratch, 'out'), repoRoot: repoDir });
+  const light = build.story.svgs.light;
+  const dark = build.story.svgs.dark;
+  const hostFile = path.join(scratch, 'host.html');
+  fs.writeFileSync(hostFile, hostPage(light, dark));
+
+  for (const scheme of ['light', 'dark']) {
+    const { run } = await openHost(t, hostFile, scheme);
+    const imgChecks = await run(`(['light-file','dark-file','light-data','dark-data','picture']).map(id => {
+      const img = document.getElementById(id);
+      return { id, complete: img.complete, w: img.naturalWidth, h: img.naturalHeight };
+    })`);
+    for (const item of imgChecks) {
+      assert.equal(item.complete, true, `${scheme} ${item.id} completed`);
+      assert.equal(item.w, 960, `${scheme} ${item.id} width`);
+      assert.equal(item.h, 560, `${scheme} ${item.id} height`);
+    }
+  }
+
+  for (const [scheme, file] of [['light', light], ['dark', dark]]) {
+    const { run } = await openHost(t, file, scheme);
+    const samples = await run(`(() => {
+      const anims = document.getAnimations();
+      for (const a of anims) a.pause();
+      const sampleAt = (ms) => {
+        for (const a of anims) a.currentTime = ms;
+        const caps = [...document.querySelectorAll('.story-caption')]
+          .map((c) => ({ op: Number(getComputedStyle(c).opacity), bottom: c.getBoundingClientRect().bottom }))
+          .filter((c) => c.op > 0.1);
+        const tok = document.getElementById('story-token-0-0');
+        const tokRect = tok.getBoundingClientRect();
+        const detail = document.getElementById('story-source-detail');
+        const metricAfter = document.querySelector('[id$="-after"]');
+        return {
+          maxCaptionBottom: caps.length ? Math.max(...caps.map((c) => c.bottom)) : 0,
+          tokenX: tokRect.left + tokRect.width / 2,
+          tokenOpacity: Number(getComputedStyle(tok).opacity),
+          detailOpacity: Number(getComputedStyle(detail).opacity),
+          detailRight: detail.getBoundingClientRect().right,
+          metricAfterOpacity: metricAfter ? Number(getComputedStyle(metricAfter).opacity) : 0,
+        };
+      };
+      return {
+        errors: pageErrors,
+        animCount: anims.length,
+        t1: sampleAt(1000),
+        traceStart: sampleAt(6900),
+        traceMid: sampleAt(7800),
+        traceMidCycle2: sampleAt(18000 + 7800),
+        detailMid: sampleAt(14500),
+      };
+    })()`);
+    assert.deepEqual(samples.errors, [], `${scheme}: zero page errors`);
+    assert.ok(samples.animCount > 0, `${scheme}: has active CSS animations`);
+    for (const s of [samples.t1, samples.traceStart, samples.traceMid, samples.detailMid]) {
+      assert.ok(s.maxCaptionBottom <= 112, `${scheme}: caption clears viewport (${s.maxCaptionBottom})`);
+    }
+    assert.ok(samples.traceMid.tokenOpacity > 0.9, `${scheme}: trace token visible mid-flight`);
+    assert.ok(samples.traceMid.tokenX > samples.traceStart.tokenX + 20, `${scheme}: trace token advances along edge (${samples.traceStart.tokenX} -> ${samples.traceMid.tokenX})`);
+    assert.ok(samples.traceMidCycle2.tokenOpacity > 0.9 && Math.abs(samples.traceMidCycle2.tokenX - samples.traceMid.tokenX) < 3, `${scheme}: infinite loop replays identically in Cycle 2 (${samples.traceMid.tokenX} vs ${samples.traceMidCycle2.tokenX})`);
+    assert.ok(samples.detailMid.detailOpacity > 0.9 && samples.detailMid.detailRight <= 960, `${scheme}: source excerpt fits inside canvas`);
+    assert.ok(samples.detailMid.metricAfterOpacity > 0.9, `${scheme}: metric readout transitions cleanly`);
+  }
+});

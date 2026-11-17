@@ -2,26 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { FULL_SHA_RE, hasRepositoryEvidence, runGit } from '../renderers/shared/repository-evidence.mjs';
 import { validateSchema } from '../renderers/shared/validator.mjs';
+import { PrPackError, failPrPack as fail, packDiagnostic } from './errors.mjs';
+import { validatePrStory } from './story-svg.mjs';
 
+export { PrPackError, packDiagnostic };
 export const PACK_PLATFORMS = ['github', 'gitlab', 'generic'];
 export const DEFAULT_CHANGE_TABLE_LIMIT = 20;
-
-export class PrPackError extends Error {
-  constructor(message, { code, stage, diagnostics = [] } = {}) {
-    super(message);
-    this.code = code;
-    this.stage = stage;
-    this.diagnostics = diagnostics.length ? diagnostics : [packDiagnostic({ code, message })];
-  }
-}
-
-export function packDiagnostic({ code, message, subject = {}, evidence = {}, supportedFixes = [], severity = 'error' }) {
-  return { code, severity, message, subject: { surface: 'pr-pack', ...subject }, evidence, supportedFixes };
-}
-
-function fail(code, stage, message, options = {}) {
-  throw new PrPackError(message, { code, stage, diagnostics: [packDiagnostic({ code, message, ...options })] });
-}
 
 function readJson(file, { stage, subject }) {
   let text;
@@ -76,11 +62,18 @@ export function loadPrPack(manifestInput) {
       inputPath,
       diagram,
       collapsed: Boolean(view.collapsed),
+      storyOnly: Boolean(view.storyOnly),
       theme: view.theme || manifest.theme || 'both',
       preset: view.preset || manifest.preset || 'classic',
       evidence: hasRepositoryEvidence(view.type, diagram),
     };
   });
+  if (views.every((view) => view.storyOnly) && !manifest.story) {
+    fail('pr-pack/no-visible-output', 'manifest', 'Every declared view has storyOnly: true and no manifest.story is defined.', {
+      subject: { manifest: manifestPath, path: '/views' },
+      supportedFixes: ['add manifest.story or remove storyOnly from at least one view'],
+    });
+  }
   for (const [index, row] of (manifest.changes || []).entries()) {
     if (row.view !== undefined && !seen.has(row.view)) {
       fail('pr-pack/unknown-change-view', 'manifest', `Change row ${index} references unknown view "${row.view}".`, {
@@ -89,14 +82,17 @@ export function loadPrPack(manifestInput) {
       });
     }
   }
-  return {
+  const pack = {
     manifestPath,
     manifestDir,
     manifest,
     views,
+    story: manifest.story || null,
     platform: manifest.platform || 'github',
     changeTableLimit: manifest.changeTableLimit || DEFAULT_CHANGE_TABLE_LIMIT,
   };
+  if (pack.story) validatePrStory(pack.story, pack, { manifestDir });
+  return pack;
 }
 
 function gitCommit(repoRoot, ref, label) {

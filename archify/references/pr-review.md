@@ -106,11 +106,20 @@ The manifest (`schemas/pr-pack.schema.json`; worked example
 lists `title`, `summary`,
 `baseRef`/`headRef` (or `baseSha`/`headSha`), `views[]` with `id`, `title`,
 `type`, `input` (path relative to the manifest), optional `caption`,
-`collapsed`, `theme`, `preset`, and an optional `changes[]` table plus objective
-`stats`. A view without `preset` inherits `preset` from the pack manifest
-(`classic` when unset), and `pr build` stamps that unified preset onto the
-built view snapshot's `meta.visual_preset`; set `preset` on a view only when
-that view must override the pack preset.
+`collapsed`, `storyOnly`, `theme`, `preset`, an optional `story` walkthrough
+spec, and an optional `changes[]` table plus objective `stats`.
+- A view without `preset` inherits `preset` from the pack manifest
+  (`classic` when unset), and `pr build` stamps that unified preset onto the
+  built view snapshot's `meta.visual_preset`; set `preset` on a view only when
+  that view must override the pack preset.
+- For complex or cross-layer PRs, author `story` (`duration`, `stages`, optional
+  `loop` defaulting to `true`, `nodeBadges` defaulting to `labeled`, `pair.shared`,
+  `enter`/`connect`/`fade`/`focus`/`relabel`, `traces`, `metrics`, `detail`
+  Git-verified source excerpts, and ordered `steps`) to compile a self-contained
+  960x560 animated walkthrough SVG as the hero PR visual. Mark helper baseline or
+  focus views `storyOnly: true` so they compose into the story without emitting
+  standalone images, and keep deep reference views (`erd`, `sequence`, etc.) as
+  `collapsed: true` so reviewers can still expand static diagrams inside `<details>`.
 `build` writes `views/<id>.json` snapshots pinned to the verified
 revisions, offline `views/<id>.html` (source links and payload diffs live
 here), `views/<id>-light.svg` / `-dark.svg` that pass strict XML and GitHub's

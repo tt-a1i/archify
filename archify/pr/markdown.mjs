@@ -108,11 +108,31 @@ function viewAssets(view, assets) {
   return { light, dark };
 }
 
+function storyAssetsFor(story, assets, manifestTheme = 'both') {
+  const storyId = story.id || 'walkthrough';
+  const single = assets[storyId];
+  const light = assets[`${storyId}-light`] || (manifestTheme === 'light' ? single : undefined);
+  const dark = assets[`${storyId}-dark`] || (manifestTheme === 'dark' ? single : undefined);
+  return { light: light || single, dark };
+}
+
 // Renders the anchored pack block. `assets` maps "<view>-<theme>" to a URL or
 // placeholder; the same composer runs before and after upload.
 export function renderPackMarkdown(pack, assets) {
   const { manifest, platform } = pack;
-  const checked = [['title', manifest.title], ['summary', manifest.summary], ...pack.views.flatMap((view) => [[`views/${view.id}/title`, view.title], [`views/${view.id}/caption`, view.caption]]), ...(manifest.changes || []).flatMap((row, index) => [[`changes/${index}/subject`, row.subject], [`changes/${index}/detail`, row.detail]])];
+  const story = pack.story ?? manifest.story ?? null;
+  const checked = [
+    ['title', manifest.title],
+    ['summary', manifest.summary],
+    ...(story ? [
+      ['story/title', story.title],
+      ['story/caption', story.caption],
+      ...(story.steps || []).flatMap((step, index) => [[`story/steps/${index}/title`, step.title], [`story/steps/${index}/body`, step.body]]),
+      ...(story.detail ? [['story/detail/title', story.detail.title], ['story/detail/note', story.detail.note]] : []),
+    ] : []),
+    ...pack.views.flatMap((view) => [[`views/${view.id}/title`, view.title], [`views/${view.id}/caption`, view.caption]]),
+    ...(manifest.changes || []).flatMap((row, index) => [[`changes/${index}/subject`, row.subject], [`changes/${index}/detail`, row.detail]]),
+  ];
   for (const [field, text] of checked) assertNoRiskVerdict(text, `manifest ${field}`);
   const lines = [PACK_START, `## ${manifest.title}`, ''];
   if (manifest.summary) lines.push(manifest.summary, '');
@@ -120,7 +140,14 @@ export function renderPackMarkdown(pack, assets) {
   if (stats) lines.push(stats, '');
   const revisions = renderRevisions(pack);
   if (revisions) lines.push(revisions, '');
+  if (story) {
+    const { light, dark } = storyAssetsFor(story, assets, pack.storyTheme || manifest.theme || 'both');
+    const storyAlt = `${story.title || manifest.title} (animated walkthrough)`;
+    if (story.caption) lines.push(story.caption, '');
+    lines.push(renderImage({ platform, light, dark, alt: storyAlt }), '');
+  }
   for (const view of pack.views) {
+    if (view.storyOnly) continue;
     const { light, dark } = viewAssets(view, assets);
     const image = renderImage({ platform, light, dark, alt: `${view.title} (${view.type} diagram)` });
     if (view.collapsed) {
@@ -141,7 +168,17 @@ export function renderPackMarkdown(pack, assets) {
 
 export function packPlaceholderAssets(pack) {
   const assets = {};
+  const story = pack.story ?? pack.manifest?.story ?? null;
+  const platform = pack.platform || 'github';
+  if (story) {
+    const storyId = story.id || 'walkthrough';
+    const rawTheme = pack.storyTheme || pack.manifest?.theme || 'both';
+    const effective = platform === 'github' ? rawTheme : (rawTheme === 'both' ? 'light' : rawTheme);
+    const themes = effective === 'both' ? ['light', 'dark'] : [effective];
+    for (const theme of themes) assets[`${storyId}-${theme}`] = assetPlaceholder(`${storyId}-${theme}`);
+  }
   for (const view of pack.views) {
+    if (view.storyOnly) continue;
     const themes = view.theme === 'both' ? ['light', 'dark'] : [view.theme];
     for (const theme of themes) assets[`${view.id}-${theme}`] = assetPlaceholder(`${view.id}-${theme}`);
   }

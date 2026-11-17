@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { publishOutputAtomically } from '../renderers/shared/cli.mjs';
-import { SvgExportError, exportSvgArtifacts, renderDiagramHtml } from '../renderers/shared/svg-export.mjs';
+import { SvgExportError, exportOutputPaths, exportSvgArtifacts, renderDiagramHtml, themesFor } from '../renderers/shared/svg-export.mjs';
 import { loadViewerStyles } from '../renderers/shared/svg-bake.mjs';
 import { PACK_PLATFORMS, PrPackError, alignDiagramRevisions, loadPrPack, packDiagnostic, verifyPackRevisions } from './manifest.mjs';
 import { PACK_END, PACK_START, packPlaceholderAssets, renderPackMarkdown, sha256 } from './markdown.mjs';
+import { compilePrStorySvg, validatePrStory } from './story-svg.mjs';
 
 export const RECEIPT_FILE = 'pr-pack.receipt.json';
 export const MARKDOWN_FILE = 'pr-pack.md';
@@ -27,8 +28,19 @@ export function validatePrPack(manifestInput, { repoRoot } = {}) {
   const revisions = repoRoot ? verifyPackRevisions(pack, repoRoot) : { baseSha: pack.manifest.baseSha ?? null, headSha: pack.manifest.headSha ?? null, mergeBase: null, verified: false };
   const views = pack.views.map((view) => {
     alignDiagramRevisions(view, revisions);
-    return { id: view.id, title: view.title, type: view.type, input: view.inputPath, theme: view.theme, preset: view.preset, collapsed: view.collapsed, evidence: view.evidence };
+    return {
+      id: view.id,
+      title: view.title,
+      type: view.type,
+      input: view.inputPath,
+      theme: view.theme,
+      preset: view.preset,
+      collapsed: view.collapsed,
+      storyOnly: view.storyOnly,
+      evidence: view.evidence,
+    };
   });
+  if (pack.story) validatePrStory(pack.story, pack, { revisions, manifestDir: pack.manifestDir });
   return {
     schemaVersion: 1,
     ok: true,
@@ -37,6 +49,12 @@ export function validatePrPack(manifestInput, { repoRoot } = {}) {
     platform: pack.platform,
     revisions,
     views,
+    story: pack.story ? {
+      id: pack.story.id || 'walkthrough',
+      duration: pack.story.duration,
+      loop: pack.story.loop !== false,
+      steps: pack.story.steps.length,
+    } : null,
   };
 }
 
@@ -53,6 +71,7 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
   const pack = loadPrPack(manifestInput);
   const resolvedPlatform = platform || pack.platform;
   const revisions = repoRoot ? verifyPackRevisions(pack, repoRoot) : { baseSha: pack.manifest.baseSha ?? null, headSha: pack.manifest.headSha ?? null, mergeBase: null, verified: false };
+  if (pack.story) validatePrStory(pack.story, pack, { revisions, manifestDir: pack.manifestDir, requireDetailSource: true });
   const outputRoot = path.resolve(outDir);
   const viewsDir = path.join(outputRoot, 'views');
   fs.mkdirSync(viewsDir, { recursive: true });
@@ -61,8 +80,12 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
     ...(quality ? { ARCHIFY_QUALITY_PROFILE: quality } : {}),
     ...(repoRoot ? { ARCHIFY_REPO_ROOT: path.resolve(repoRoot) } : {}),
   };
+  const storyThemeSelection = pack.story ? platformTheme(resolvedPlatform, pack.manifest.theme || 'both') : null;
+  const storyThemesNeeded = storyThemeSelection ? themesFor(storyThemeSelection) : [];
+  const stagedViews = new Set((pack.story?.stages || []).map((stage) => stage.view));
+  const bakedViews = new Map();
   const views = [];
-  const assets = [];
+  const viewAssets = [];
   for (const view of pack.views) {
     const aligned = alignDiagramRevisions(view, revisions);
     const snapshot = {
@@ -73,6 +96,11 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
     publishOutputAtomically(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`);
     const htmlPath = path.join(viewsDir, `${view.id}.html`);
     const themeSelection = platformTheme(resolvedPlatform, view.theme);
+    const viewThemes = themesFor(themeSelection);
+    const bakeThemes = stagedViews.has(view.id)
+      ? [...new Set([...viewThemes, ...storyThemesNeeded])]
+      : viewThemes;
+    const bakeSelection = bakeThemes.length === 2 ? 'both' : bakeThemes[0];
     let rendered;
     let exported;
     try {
@@ -81,7 +109,7 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
         type: view.type,
         input: snapshotPath,
         output: path.join(viewsDir, view.id),
-        theme: themeSelection,
+        theme: bakeSelection,
         preset: view.preset,
         animateFlow: animateFlow && ['sequence', 'dataflow'].includes(view.type),
         env,
@@ -92,11 +120,18 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
       throw exportFailure(error, view);
     }
     if (!html) fs.rmSync(htmlPath, { force: true });
+    const byTheme = new Map();
     const svgs = {};
     for (const output of exported.outputs) {
+      const svgText = fs.readFileSync(output.path, 'utf8');
+      byTheme.set(output.theme, svgText);
+      if (view.storyOnly || !viewThemes.includes(output.theme)) {
+        if (!view.storyOnly) fs.rmSync(output.path, { force: true });
+        continue;
+      }
       const assetId = `${view.id}-${output.theme}`;
       svgs[output.theme] = output.path;
-      assets.push({
+      viewAssets.push({
         id: assetId,
         view: view.id,
         theme: output.theme,
@@ -107,24 +142,85 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
         placeholder: `{{archify:asset:${assetId}}}`,
       });
     }
+    bakedViews.set(view.id, byTheme);
     views.push({
       id: view.id,
       title: view.title,
       caption: view.caption ?? null,
       type: view.type,
       collapsed: view.collapsed,
+      storyOnly: view.storyOnly,
       input: view.inputPath,
       snapshot: snapshotPath,
       html: html ? htmlPath : null,
       payloads: html ? rendered.includes('id="archify-payloads-data"') : null,
       evidence: { declared: view.evidence, verified: view.evidence && Boolean(repoRoot) },
-      theme: themeSelection,
+      theme: view.storyOnly ? storyThemeSelection : themeSelection,
       preset: exported.preset,
       svgs,
     });
   }
-  const placeholders = packPlaceholderAssets({ ...pack, views: pack.views.map((view) => ({ ...view, theme: platformTheme(resolvedPlatform, view.theme) })) });
-  const packForMarkdown = { ...pack, platform: resolvedPlatform, baseSha: revisions.baseSha, headSha: revisions.headSha, baseRef: pack.manifest.baseRef, headRef: pack.manifest.headRef };
+  const storyAssets = [];
+  let storySummary = null;
+  if (pack.story) {
+    const storyId = pack.story.id || 'walkthrough';
+    const storyPreset = pack.manifest.preset || 'classic';
+    const storyPaths = exportOutputPaths(path.join(viewsDir, storyId), storyThemesNeeded);
+    const storySvgs = {};
+    let meta = null;
+    for (const currentTheme of storyThemesNeeded) {
+      const compiled = compilePrStorySvg({
+        story: pack.story,
+        pack,
+        bakedViews,
+        theme: currentTheme,
+        preset: storyPreset,
+        styles,
+        revisions,
+        manifestDir: pack.manifestDir,
+      });
+      meta = compiled;
+      const targetPath = storyPaths[currentTheme];
+      publishOutputAtomically(targetPath, compiled.svg);
+      const assetId = `${storyId}-${currentTheme}`;
+      storySvgs[currentTheme] = targetPath;
+      storyAssets.push({
+        id: assetId,
+        story: storyId,
+        theme: currentTheme,
+        path: targetPath,
+        bytes: Buffer.byteLength(compiled.svg, 'utf8'),
+        sha256: sha256(compiled.svg),
+        animated: true,
+        placeholder: `{{archify:asset:${assetId}}}`,
+      });
+    }
+    storySummary = {
+      id: meta.id,
+      title: meta.title,
+      duration: meta.duration,
+      loop: meta.loop,
+      steps: pack.story.steps.length,
+      theme: storyThemeSelection,
+      preset: storyPreset,
+      svgs: storySvgs,
+    };
+  }
+  const assets = [...storyAssets, ...viewAssets];
+  const placeholders = packPlaceholderAssets({
+    ...pack,
+    storyTheme: storyThemeSelection,
+    views: pack.views.map((view) => ({ ...view, theme: platformTheme(resolvedPlatform, view.theme) })),
+  });
+  const packForMarkdown = {
+    ...pack,
+    storyTheme: storyThemeSelection,
+    platform: resolvedPlatform,
+    baseSha: revisions.baseSha,
+    headSha: revisions.headSha,
+    baseRef: pack.manifest.baseRef,
+    headRef: pack.manifest.headRef,
+  };
   let markdown;
   try {
     markdown = renderPackMarkdown(packForMarkdown, placeholders);
@@ -148,6 +244,7 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
     headRef: pack.manifest.headRef ?? null,
     revisions,
     animateFlow: Boolean(animateFlow),
+    story: storySummary,
     markdown: { path: markdownPath, sha256: sha256(markdown), anchors: { start: PACK_START, end: PACK_END } },
     assets,
     views,

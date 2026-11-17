@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { assertCamoSafeSvg } from '../archify/renderers/shared/svg-bake.mjs';
+import { attachPrPack } from '../archify/pr/attach.mjs';
 import { RISK_VERDICTS, fillAssets, findRiskVerdict, renderPackMarkdown, replacePackBlock, themedPicture } from '../archify/pr/markdown.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 import { cli, git, skillRoot } from './helpers/repository-evidence-fixture.mjs';
@@ -420,4 +421,208 @@ test('pr build unifies pack views under manifest.preset unless an individual vie
   assert.equal(JSON.parse(fs.readFileSync(flowView.snapshot, 'utf8')).meta.visual_preset, 'blueprint');
   assert.match(fs.readFileSync(topologyView.svgs.light, 'utf8'), /data-preset="editorial"/);
   assert.match(fs.readFileSync(flowView.svgs.light, 'utf8'), /data-preset="blueprint"/);
+});
+
+test('pr validate/build/attach support hero infinite story walkthroughs with storyOnly and collapsed static views', async (t) => {
+  const repo = changeRepository();
+  t.after(() => fs.rmSync(repo.root, { recursive: true, force: true }));
+  const dir = scratch();
+  const outDir = path.join(dir, 'out');
+  const beforeDoc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Before', output: 'before.html' },
+    components: [
+      { id: 'web', type: 'frontend', label: 'Web', pos: [40, 140], size: [120, 60] },
+      { id: 'api', type: 'backend', label: 'Checkout API', pos: [260, 140], size: [140, 60] },
+      { id: 'legacy', type: 'external', label: 'Legacy Audit', pos: [500, 140], size: [140, 60] },
+    ],
+    connections: [
+      { id: 'web_api', from: 'web', to: 'api', label: 'POST' },
+      { id: 'api_legacy', from: 'api', to: 'legacy', label: 'audit' },
+    ],
+  };
+  const afterDoc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'After',
+      output: 'after.html',
+      repository: { url: 'https://github.com/acme/checkout', revision: repo.headSha },
+    },
+    components: [
+      { id: 'web', type: 'frontend', label: 'Web', pos: [40, 140], size: [120, 60], change: 'unchanged' },
+      { id: 'api', type: 'backend', label: 'Checkout API', pos: [260, 140], size: [140, 60], change: 'modified', sources: [{ path: 'src/api.mjs', line: 1, end_line: 3 }] },
+      { id: 'ledger', type: 'database', label: 'Ledger', pos: [500, 140], size: [140, 60], change: 'added', sources: [{ path: 'src/ledger.mjs', line: 1, end_line: 3 }] },
+    ],
+    connections: [
+      { id: 'web_api', from: 'web', to: 'api', label: 'POST' },
+      { id: 'api_ledger', from: 'api', to: 'ledger', label: 'append', change: 'added' },
+    ],
+  };
+  fs.writeFileSync(path.join(dir, 'before.json'), JSON.stringify(beforeDoc, null, 2));
+  fs.writeFileSync(path.join(dir, 'after.json'), JSON.stringify(afterDoc, null, 2));
+  const file = path.join(dir, 'pr-pack.json');
+  fs.writeFileSync(file, JSON.stringify({
+    schema_version: 1,
+    kind: 'pr-pack',
+    title: 'Checkout ledger walkthrough',
+    summary: 'Walks through replacing synchronous audit with ledger writes.',
+    repository: 'acme/checkout',
+    baseRef: 'main',
+    headRef: 'feat/ledger',
+    platform: 'github',
+    theme: 'both',
+    preset: 'classic',
+    views: [
+      { id: 'before', title: 'Sync audit baseline', type: 'architecture', input: 'before.json', storyOnly: true },
+      { id: 'after', title: 'Async ledger topology', type: 'architecture', input: 'after.json', collapsed: true },
+    ],
+    story: {
+      id: 'walkthrough',
+      title: 'Async ledger walkthrough',
+      caption: 'Loops seamlessly across architecture and source.',
+      duration: 18,
+      stages: [
+        { view: 'before', end: 5.5 },
+        { view: 'after', start: 4.5, end: 18 },
+      ],
+      pair: {
+        before: 'before',
+        after: 'after',
+        at: 4.5,
+        shared: [
+          { id: 'web' },
+          { id: 'api', subtitle: 'writes ledger' },
+        ],
+      },
+      enter: [{ view: 'after', nodes: ['ledger'], at: 5.5 }],
+      connect: [{ view: 'after', edges: ['api_ledger'], at: 6.2 }],
+      traces: [{ view: 'after', edges: ['web_api', 'api_ledger'], times: [7.5, 9.2], end: 11.2, travel: 1.2 }],
+      metrics: [{ view: 'after', node: 'api', label: 'branches', before: 1, after: 2, at: 12.6 }],
+      detail: {
+        view: 'after',
+        nodes: ['api'],
+        start: 12,
+        end: 18,
+        title: 'src/api.mjs · checkout()',
+        note: 'switches from audit to append',
+        path: 'src/api.mjs',
+        lines: [1, 2, 3],
+        highlight: [2],
+      },
+      steps: [
+        { at: 0, title: 'Baseline calls sync audit', body: 'Before the change, checkout blocked on audit().', change: 'removed' },
+        { at: 4.6, title: 'Introduce append-only ledger', body: 'Adds Ledger component while preserving Web and API.', change: 'added' },
+        { at: 7.4, title: 'Trace request handoff', body: 'Requests flow from API to Ledger.', change: 'modified' },
+        { at: 12.1, title: 'Inspect checkout() diff', body: 'Calls append() with one added branch metric.', change: 'modified' },
+      ],
+    },
+  }, null, 2));
+
+  const validate = run(['pr', 'validate', file, '--repo-root', repo.root, '--json']);
+  assert.equal(validate.status, 0, validate.stdout + validate.stderr);
+  const vJson = JSON.parse(validate.stdout);
+  assert.deepEqual(vJson.story, { id: 'walkthrough', duration: 18, loop: true, steps: 4 });
+  assert.equal(vJson.views.find((v) => v.id === 'before').storyOnly, true);
+
+  const build = run(['pr', 'build', file, '--out-dir', outDir, '--repo-root', repo.root, '--json']);
+  assert.equal(build.status, 0, build.stdout + build.stderr);
+  const receipt = JSON.parse(build.stdout);
+  assert.equal(receipt.story.id, 'walkthrough');
+  assert.equal(receipt.story.loop, true);
+  assert.deepEqual(receipt.assets.map((a) => a.id), ['walkthrough-light', 'walkthrough-dark', 'after-light', 'after-dark']);
+
+  for (const theme of ['light', 'dark']) {
+    const svg = fs.readFileSync(receipt.story.svgs[theme], 'utf8');
+    assert.equal(assertCamoSafeSvg(svg, { assert: false }).ok, true);
+    assert.match(svg, /width="960" height="560" viewBox="0 0 960 560"/);
+    assert.match(svg, /data-archify-bake="story"/);
+    assert.match(svg, /18s linear infinite/);
+    assert.match(svg, /offset-path:path\(/);
+    assert.match(svg, /return append\(\);/);
+    assert.match(svg, /1 → 2/);
+    assert.match(svg, /\+ Added/);
+    assert.match(svg, /prefers-reduced-motion:reduce/);
+  }
+
+  const markdown = fs.readFileSync(receipt.markdown.path, 'utf8');
+  assert.match(markdown, /\{\{archify:asset:walkthrough-light\}\}/);
+  assert.doesNotMatch(markdown, /before-light/);
+  assert.match(markdown, /<details><summary><b>Async ledger topology<\/b><\/summary>/);
+  assert.match(markdown, /\{\{archify:asset:after-light\}\}/);
+
+  let prBody = 'Initial summary.';
+  const uploadedUrls = {};
+  const mockGh = ({ args, input }) => {
+    if (args[0] === '--version') return { status: 0, stdout: 'gh version 2.103.3', stderr: '' };
+    if (args[0] === 'auth') return { status: 0, stdout: 'Logged in', stderr: '' };
+    if (args[0] === 'pr' && args[1] === 'view') return { status: 0, stdout: JSON.stringify({ number: 7, url: 'https://github.com/acme/checkout/pull/7', body: prBody, comments: [] }), stderr: '' };
+    if (args[0] === 'pr' && args[1] === 'edit') {
+      const idx = args.indexOf('--body-file');
+      const targetFile = args[idx + 1];
+      const nextBody = targetFile === '-' ? input : fs.readFileSync(targetFile, 'utf8');
+      prBody = nextBody.replace(/!\[(archify-asset-\d+:[a-f0-9]+)\]\(([^)]+)\)/g, (_, tok) => {
+        const u = `https://github.com/user-attachments/assets/${tok.replace(':', '-')}`;
+        uploadedUrls[tok] = u;
+        return `![${tok}](${u})`;
+      });
+      return { status: 0, stdout: '', stderr: '' };
+    }
+    throw new Error(`unexpected gh args: ${args.join(' ')}`);
+  };
+
+  const attachReceipt = await attachPrPack({
+    pullRequest: '7',
+    receipt: receipt.receipt,
+    repo: 'acme/checkout',
+    gh: mockGh,
+  });
+  assert.equal(attachReceipt.attachments.length, 4);
+  assert.doesNotMatch(prBody, /\{\{archify:asset:/);
+  assert.match(prBody, /https:\/\/github\.com\/user-attachments\/assets\/archify-asset-0-/);
+  assert.match(prBody, /https:\/\/github\.com\/user-attachments\/assets\/archify-asset-3-/);
+});
+
+test('pr story validation fails closed on unknown views, bad timings, out-of-range code lines, risk verdicts, and hidden packs', (t) => {
+  const repo = changeRepository();
+  t.after(() => fs.rmSync(repo.root, { recursive: true, force: true }));
+  const dir = scratch();
+  const baseArch = architecture({ meta: { title: 'After', output: 'after.html' } });
+  const baseStory = () => ({
+    duration: 16,
+    stages: [{ view: 'topology' }],
+    steps: [
+      { at: 0, title: 'Step one', body: 'First caption' },
+      { at: 8, title: 'Step two', body: 'Second caption' },
+    ],
+  });
+
+  const cases = [
+    ['pr-story/unknown-view', (m) => { m.story.stages.push({ view: 'missing' }); }, []],
+    ['pr-story/invalid-timing', (m) => { m.story.steps[1].at = 20; }, []],
+    ['pr-story/trace-mismatch', (m) => { m.story.traces = [{ view: 'topology', edges: ['web~api'], times: [1, 2] }]; }, []],
+    ['pr-story/source-line-out-of-range', (m) => {
+      m.story.detail = { view: 'topology', nodes: ['api'], start: 8, end: 15, title: 'api.mjs', path: 'src/api.mjs', lines: [999] };
+    }, ['--repo-root', repo.root]],
+    ['pr-pack/risk-verdict', (m) => { m.story.steps[0].title = 'This change is SAFE'; }, []],
+    ['pr-pack/no-visible-output', (m) => { delete m.story; m.views[0].storyOnly = true; }, []],
+  ];
+
+  for (const [index, [expectedCode, mutate, extraArgs]] of cases.entries()) {
+    const manifestObj = manifest({
+      baseRef: 'main',
+      headRef: 'feat/ledger',
+      changes: [],
+      views: [{ id: 'topology', title: 'Topology', type: 'architecture', input: 'topology.json' }],
+      story: baseStory(),
+    });
+    mutate(manifestObj);
+    const subDir = path.join(dir, `case-${index}`);
+    fs.mkdirSync(subDir, { recursive: true });
+    const file = writePack(subDir, { manifest: manifestObj, topology: baseArch });
+    const result = run(['pr', 'validate', file, ...extraArgs, '--json']);
+    assert.equal(result.status, 1, `expected ${expectedCode} failure`);
+    assert.equal(JSON.parse(result.stdout).diagnostics[0].code, expectedCode);
+  }
 });
