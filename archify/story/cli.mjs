@@ -28,6 +28,7 @@ const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const EXPORT_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall']);
 const LEGACY_ACTIONS = new Set(['scan', 'draft', 'attach']);
 const CHOREO_ACTIONS = new Set(['validate', 'svg', 'stage', 'video']);
+const VALUE_FLAGS = new Set(['--repo-root', '--theme', '--preset', '--quality', '--format', '--fps', '--start', '--seconds']);
 
 function runGit(repoRoot, args) {
   return spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
@@ -135,7 +136,7 @@ function detectDiagramTypeFromSvg(svg, htmlText = '') {
   return 'workflow';
 }
 
-function makeSourceLoader({ baseDir, repoRoot, viewDiagrams, htmlFacts = null, requireDetailSource = false }) {
+function makeSourceLoader({ baseDir, repoRoot, viewDiagrams, inputPaths, htmlFacts = null, requireDetailSource = false }) {
   const revisionForView = (viewId) => {
     const repository = viewDiagrams.get(viewId)?.meta?.repository;
     if (repository?.revision) {
@@ -150,9 +151,17 @@ function makeSourceLoader({ baseDir, repoRoot, viewDiagrams, htmlFacts = null, r
   return (detail) => {
     validatePortableSourcePath(detail.path);
     const revs = revisionForView(detail.view);
-    const sha = detail.revision === 'base' ? revs.base : revs.head;
-    if (repoRoot && sha && /^[0-9a-f]{40}$/i.test(sha)) {
-      const gitRes = runGit(repoRoot, ['show', '--no-textconv', `${sha}:${detail.path}`]);
+    const requested = detail.revision;
+    const sha = requested === 'base' ? revs.base : (!requested || requested === 'head' ? revs.head : requested);
+    if (requested || revs.head) {
+      if (!repoRoot || !sha || !/^[0-9a-f]{40}$/i.test(sha)) {
+        failChoreography('story/source-revision-unavailable', 'views', `Cannot resolve revision "${requested || 'head'}" for ${detail.path}.`, {
+          subject: { path: detail.path, view: detail.view, revision: requested || 'head' },
+          supportedFixes: ['pass --repo-root and supply the requested view revision, or cite an explicit full commit SHA'],
+        });
+      }
+      inputPaths.push(path.resolve(repoRoot, ...detail.path.split('/')));
+      const gitRes = runGit(repoRoot, ['show', '--no-textconv', `${sha.toLowerCase()}:${detail.path}`]);
       if (gitRes.status === 0) {
         if (gitRes.stdout.includes('\0')) {
           failChoreography('story/source-not-found', 'views', `story detail "${detail.path}" is a binary file.`, {
@@ -167,7 +176,9 @@ function makeSourceLoader({ baseDir, repoRoot, viewDiagrams, htmlFacts = null, r
         supportedFixes: ['cite an existing file at that revision'],
       });
     }
-    return readLocalSourceLines(detail.path, { baseDir, repoRoot, requireSource: requireDetailSource });
+    return readLocalSourceLines(detail.path, {
+      baseDir, repoRoot, requireSource: requireDetailSource, onRead: resolved => inputPaths.push(resolved),
+    });
   };
 }
 
@@ -346,7 +357,8 @@ async function prepareChoreographyBundle({
     : await bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride, env, themeList, styles });
 
   const loadSourceLines = makeSourceLoader({
-    baseDir, repoRoot, viewDiagrams: baked.viewDiagrams, htmlFacts: singleHtml?.facts || null, requireDetailSource,
+    baseDir, repoRoot, viewDiagrams: baked.viewDiagrams, inputPaths: baked.inputPaths,
+    htmlFacts: singleHtml?.facts || null, requireDetailSource,
   });
   const plan = normalizeChoreographySpec(rawSpec, {
     declaredViews: [...baked.viewTypes.keys()], loadSourceLines, baseDir, repoRoot, requireDetailSource,
@@ -724,8 +736,9 @@ async function runStoryVideoCommand(spec, opts, defaultTheme) {
   });
   const allInputPaths = [...new Set([...spec.inputPaths, ...bundle.inputPaths])];
   const start = opts.start ?? 0;
+  resolveOutputPath({ requestedOutput: outputArg, requiredExtension: requiredExt, inputPaths: allInputPaths });
   const seconds = opts.seconds ?? (bundle.plan.duration - start);
-  if (start >= bundle.plan.duration || start + seconds > bundle.plan.duration + 0.01) {
+  if (start >= bundle.plan.duration || start + seconds > bundle.plan.duration + 0.001) {
     failChoreography('story/invalid-timing', 'arguments', `Requested video interval (${start}s..${start + seconds}s) exceeds story duration (${bundle.plan.duration}s).`, {
       subject: { start, seconds, duration: bundle.plan.duration },
       supportedFixes: [`choose start/seconds within 0..${bundle.plan.duration}s`],
@@ -826,7 +839,12 @@ async function runStoryStageCommand(spec, opts, defaultTheme) {
 
 export async function commandStory(args) {
   const json = args.includes('--json');
-  let action = args.find((arg) => !arg.startsWith('--'));
+  const positional = [];
+  for (let i = 0; i < args.length; i++) {
+    if (VALUE_FLAGS.has(args[i])) i++;
+    else if (!args[i].startsWith('--')) positional.push(args[i]);
+  }
+  let [action] = positional;
   let inputForError;
   let briefForError;
   try {
@@ -834,9 +852,8 @@ export async function commandStory(args) {
       throw new Error('Use story scan|draft|attach|validate|svg|stage|video ...');
     }
     if (LEGACY_ACTIONS.has(action)) {
-      const legacyArgs = args.filter((arg) => !arg.startsWith('--'));
-      inputForError = legacyArgs[1] && path.resolve(legacyArgs[1]);
-      briefForError = legacyArgs[2] && path.resolve(legacyArgs[2]);
+      inputForError = positional[1] && path.resolve(positional[1]);
+      briefForError = positional[2] && path.resolve(positional[2]);
       return runLegacyStoryCommand(args, json);
     }
 

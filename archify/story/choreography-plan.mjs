@@ -56,7 +56,7 @@ export function validatePortableSourcePath(filePath, pointer = '/story/detail/pa
   }
 }
 
-export function readLocalSourceLines(filePath, { baseDir, repoRoot, requireSource = false } = {}) {
+export function readLocalSourceLines(filePath, { baseDir, repoRoot, requireSource = false, onRead } = {}) {
   validatePortableSourcePath(filePath);
   const roots = [repoRoot, baseDir].filter(Boolean);
   for (const root of roots) {
@@ -72,6 +72,7 @@ export function readLocalSourceLines(filePath, { baseDir, repoRoot, requireSourc
         supportedFixes: ['cite a text source file'],
       });
     }
+    onRead?.(candidate);
     return text.split(/\r?\n/);
   }
   if (requireSource) {
@@ -81,6 +82,21 @@ export function readLocalSourceLines(filePath, { baseDir, repoRoot, requireSourc
     });
   }
   return null;
+}
+
+function requiredMotionDuration(step) {
+  const enterCount = Array.isArray(step.enter) ? step.enter.length : (step.enter?.nodes?.length || 0);
+  const connectCount = Array.isArray(step.connect) ? step.connect.length : (step.connect?.edges?.length || 0);
+  const traceEdges = step.trace?.edges?.length || 0;
+  const travel = step.trace?.travel ?? 1.4;
+  const enterStagger = Array.isArray(step.enter) ? 0.3 : (step.enter?.stagger ?? 0.3);
+  const connectStagger = Array.isArray(step.connect) ? 0.35 : (step.connect?.stagger ?? 0.35);
+  return Math.max(
+    enterCount ? 0.3 + (enterCount - 1) * enterStagger + 1.05 : 0,
+    connectCount ? (step.enter ? 0.9 : 0.4) + (connectCount - 1) * connectStagger + 1.1 : 0,
+    traceEdges ? (step.connect ? 1.5 : step.enter ? 1.05 : 0.55)
+      + (traceEdges - 1) * (step.trace.action === 'parallel' ? 0.2 : travel + 0.2) + travel + 0.35 : 0,
+  );
 }
 
 function estimateStepDuration(step) {
@@ -103,7 +119,7 @@ function estimateStepDuration(step) {
     + traceSpan
     + (step.detail ? 2.0 : 0);
   if (motionNeed > 0) dur = Math.max(dur, Number((motionNeed + 1.2).toFixed(1)));
-  return Math.min(20, dur);
+  return roundTime(Math.max(Math.min(20, dur), requiredMotionDuration(step)));
 }
 
 function normalizeStepBeat(step, index, viewId, t0, tEnd, buckets) {
@@ -227,7 +243,7 @@ function resolveStepTimings(rawSpec) {
     }
     for (const [i, step] of stepsIn.entries()) {
       const nextAt = i + 1 < stepsIn.length ? stepsIn[i + 1].at : rawSpec.duration;
-      steps.push({ ...step, tEnd: nextAt });
+      steps.push({ ...step, tEnd: step.duration === undefined ? nextAt : roundTime(step.at + step.duration) });
     }
   } else {
     let cursor = 0;
@@ -247,6 +263,16 @@ function resolveStepTimings(rawSpec) {
   }
 
   const duration = rawSpec.duration !== undefined ? rawSpec.duration : Math.max(4, roundTime(steps.at(-1)?.tEnd ?? 6));
+  for (const [i, step] of steps.entries()) {
+    const boundary = steps[i + 1]?.at ?? duration;
+    if (step.duration !== undefined && step.tEnd > boundary) {
+      failChoreography('story/invalid-timing', 'manifest', `story step ${i} ends at ${step.tEnd}, after its boundary ${boundary}.`, {
+        subject: { path: `/story/steps/${i}/duration` },
+        supportedFixes: ['shorten step.duration, move the next step, or increase story.duration'],
+      });
+    }
+    step.tEnd = Math.min(step.tEnd, boundary);
+  }
   if (hasExplicitTiming === false && rawSpec.duration !== undefined && steps.at(-1)?.at >= duration) {
     failChoreography('story/invalid-timing', 'manifest', `story steps exceed declared duration (${duration}).`, {
       subject: { path: '/story/duration' },
@@ -259,14 +285,13 @@ function resolveStepTimings(rawSpec) {
   return { steps, duration };
 }
 
-function resolveStageWindows(rawSpec, steps, declaredViews, ensureDeclared) {
+function resolveStageWindows(rawSpec, steps, duration, declaredViews, ensureDeclared) {
   if (Array.isArray(rawSpec.stages) && rawSpec.stages.length) {
     for (const [i, stage] of rawSpec.stages.entries()) ensureDeclared(stage.view, `stages/${i}/view`);
     return rawSpec.stages.map((s) => ({ ...s }));
   }
   let activeView = declaredViews.length === 1 ? declaredViews[0] : null;
-  const windows = new Map();
-  const order = [];
+  const visits = [];
   for (const [i, step] of steps.entries()) {
     const resolvedView = step.view || activeView;
     if (!resolvedView) {
@@ -277,14 +302,28 @@ function resolveStageWindows(rawSpec, steps, declaredViews, ensureDeclared) {
     }
     ensureDeclared(resolvedView, `steps/${i}/view`);
     activeView = resolvedView;
-    if (!windows.has(resolvedView)) {
-      windows.set(resolvedView, { view: resolvedView, start: step.at, end: step.tEnd });
-      order.push(resolvedView);
+    const previous = visits.at(-1);
+    if (previous?.view !== resolvedView) {
+      if (previous) previous.end = step.at;
+      visits.push({ view: resolvedView, start: step.at, end: step.tEnd });
+    } else previous.end = step.tEnd;
+  }
+  if (visits.length) {
+    visits[0].start = 0;
+    visits.at(-1).end = duration;
+  }
+  const windows = new Map();
+  for (const visit of visits) {
+    if (!windows.has(visit.view)) {
+      windows.set(visit.view, { ...visit });
     } else {
-      windows.get(resolvedView).end = step.tEnd;
+      const stage = windows.get(visit.view);
+      stage.windows ??= [{ start: stage.start, end: stage.end }];
+      stage.windows.push({ start: visit.start, end: visit.end });
+      stage.end = visit.end;
     }
   }
-  return order.map((id) => windows.get(id));
+  return [...windows.values()];
 }
 
 const STEP_BEAT_FIELDS = ['transition', 'enter', 'connect', 'relabel', 'fade', 'focus', 'trace', 'metrics', 'detail'];
@@ -324,6 +363,7 @@ function collectNormalizedBuckets(rawSpec, steps, stages, duration, ensureStaged
     const viewId = step.view || activeStepView;
     ensureStaged(viewId, `steps/${i}/view`);
     activeStepView = viewId;
+    step.view = viewId;
     if (STEP_BEAT_FIELDS.some((key) => Boolean(step[key]))) {
       normalizeStepBeat(step, i, viewId, step.at, step.tEnd, buckets);
     }
@@ -339,8 +379,6 @@ function collectNormalizedBuckets(rawSpec, steps, stages, duration, ensureStaged
         toStage.start = Math.min(toStage.start ?? tr.at, tr.at);
       }
     }
-    stages[0].start = 0;
-    stages[stages.length - 1].end = duration;
   }
   return { buckets, stageById };
 }
@@ -445,7 +483,7 @@ export function normalizeChoreographySpec(rawSpec, {
   };
 
   const { steps, duration } = resolveStepTimings(rawSpec);
-  const stages = resolveStageWindows(rawSpec, steps, declaredViews, ensureDeclared);
+  const stages = resolveStageWindows(rawSpec, steps, duration, declaredViews, ensureDeclared);
   const stageById = new Map(stages.map((s) => [s.view, s]));
   const ensureStaged = (viewId, field) => {
     ensureDeclared(viewId, field);
@@ -624,6 +662,7 @@ function buildBriefShotBeat(shot, view, viewId, isStatic, facts) {
     beat.detail = detail;
     if (beat.focus) beat.focus.area = 'left';
   }
+  beat.duration = Math.max(beat.duration, roundTime(requiredMotionDuration(beat)));
   return beat;
 }
 

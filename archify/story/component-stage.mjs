@@ -531,11 +531,14 @@ export function applyNodeRelabel(part, nodeId, nodeBox, op, { oldLabelId, newLab
   let hasSubtitle = false;
 
   if (op.label) {
-    const labelEl = descendants.find((el) => el.tagName === 'text' && attr(el, 'data-node-label') !== undefined);
+    const labelEl = descendants.filter((el) => el.tagName === 'text' && attr(el, 'data-node-label') !== undefined).at(-1);
     const lx = Number(attr(labelEl, 'x') || nodeBox.x + nodeBox.width / 2);
     const ly = Number(attr(labelEl, 'y') || nodeBox.y + nodeBox.height / 2 - 2);
     const fontSize = attr(labelEl, 'font-size') || '13';
-    if (labelEl) setAttr(labelEl, 'id', oldLabelId);
+    if (labelEl) {
+      oldLabelId = attr(labelEl, 'id') || oldLabelId;
+      setAttr(labelEl, 'id', oldLabelId);
+    }
     appendAstChild(group, createSvgElement('text', {
       x: lx,
       y: ly,
@@ -551,12 +554,15 @@ export function applyNodeRelabel(part, nodeId, nodeBox, op, { oldLabelId, newLab
   }
 
   if (op.subtitle) {
-    const subEl = descendants.find((el) => el.tagName === 'text' && attr(el, 'data-detail') === 'context');
-    const labelEl = descendants.find((el) => el.tagName === 'text' && attr(el, 'data-node-label') !== undefined);
+    const subEl = descendants.filter((el) => el.tagName === 'text' && attr(el, 'data-detail') === 'context').at(-1);
+    const labelEl = descendants.filter((el) => el.tagName === 'text' && attr(el, 'data-node-label') !== undefined).at(-1);
     const sx = Number(attr(subEl, 'x') || attr(labelEl, 'x') || nodeBox.x + nodeBox.width / 2);
     const sy = Number(attr(subEl, 'y') || (labelEl ? Number(attr(labelEl, 'y')) + 16 : nodeBox.y + nodeBox.height / 2 + 14));
     const fontSize = attr(subEl, 'font-size') || '11';
-    if (subEl) setAttr(subEl, 'id', oldSubId);
+    if (subEl) {
+      oldSubId = attr(subEl, 'id') || oldSubId;
+      setAttr(subEl, 'id', oldSubId);
+    }
     appendAstChild(group, createSvgElement('text', {
       x: sx,
       y: sy,
@@ -564,12 +570,13 @@ export function applyNodeRelabel(part, nodeId, nodeBox, op, { oldLabelId, newLab
       fill: palette.muted,
       'text-anchor': attr(subEl, 'text-anchor') || 'middle',
       id: newSubId,
+      'data-detail': 'context',
       style: 'opacity:0',
     }, [op.subtitle]));
     hasSubtitle = true;
   }
 
-  return { hasLabel, hasSubtitle, hadOldSub: Boolean(descendants.find((el) => el.tagName === 'text' && attr(el, 'data-detail') === 'context')) };
+  return { hasLabel, hasSubtitle, oldLabelId, oldSubId, hadOldSub: Boolean(descendants.find((el) => el.tagName === 'text' && attr(el, 'data-detail') === 'context')) };
 }
 
 export function buildSharedTransitionNode(fromPart, toPart, shared, transitionId, palette) {
@@ -580,23 +587,27 @@ export function buildSharedTransitionNode(fromPart, toPart, shared, transitionId
   if (!fromNode || !toNode || !originalGroup) return null;
 
   const clone = cloneAst(originalGroup, null);
-  for (const el of visitAst(clone)) removeAttr(el, 'id');
+  const copyPrefix = `${transitionId}-${shared.id}`;
+  const copiedIds = namespaceIdsAst(clone, copyPrefix);
+  const idMap = new Map([...copiedIds].map(id => [id, `${copyPrefix}-${id}`]));
 
   const descendants = visitAst(clone);
-  let oldLabelAttr = null;
+  const oldLabelIds = [];
+  const oldSubIds = [];
   let newLabelId = null;
   let newSubId = null;
-  let hasOldSub = false;
   let badgeId = null;
 
   if (shared.label) {
-    const labelEl = descendants.find((el) => el.tagName === 'text' && attr(el, 'data-node-label') !== undefined);
+    const labels = descendants.filter((el) => el.tagName === 'text' && attr(el, 'data-node-label') !== undefined);
+    const labelEl = labels.at(-1);
     const x = Number(attr(labelEl, 'x') || fromNode.x + fromNode.width / 2);
     const y = Number(attr(labelEl, 'y') || fromNode.y + fromNode.height / 2 - 2);
     const fontSize = attr(labelEl, 'font-size') || '13';
-    if (labelEl) {
-      oldLabelAttr = 'data-story-shared-old-label';
-      setAttr(labelEl, oldLabelAttr, '');
+    for (const [i, label] of labels.entries()) {
+      const id = attr(label, 'id') || `${copyPrefix}-old-label-${i}`;
+      setAttr(label, 'id', id);
+      oldLabelIds.push(id);
     }
     newLabelId = `${transitionId}-label-${shared.id}`;
     appendAstChild(clone, createSvgElement('text', {
@@ -613,8 +624,13 @@ export function buildSharedTransitionNode(fromPart, toPart, shared, transitionId
   }
 
   if (shared.subtitle) {
-    const subEl = descendants.find((el) => el.tagName === 'text' && attr(el, 'data-detail') === 'context');
-    hasOldSub = Boolean(subEl);
+    const subtitles = descendants.filter((el) => el.tagName === 'text' && attr(el, 'data-detail') === 'context');
+    const subEl = subtitles.at(-1);
+    for (const [i, subtitle] of subtitles.entries()) {
+      const id = attr(subtitle, 'id') || `${copyPrefix}-old-subtitle-${i}`;
+      setAttr(subtitle, 'id', id);
+      oldSubIds.push(id);
+    }
     const sx = Number(attr(subEl, 'x') || fromNode.x + fromNode.width / 2);
     const sy = Number(attr(subEl, 'y') || fromNode.y + fromNode.height / 2 + 14);
     const fontSize = attr(subEl, 'font-size') || '10.5';
@@ -652,10 +668,11 @@ export function buildSharedTransitionNode(fromPart, toPart, shared, transitionId
     toNode,
     toNodeId,
     markup: serializeXmlNode(clone),
-    oldLabelAttr,
+    idMap,
+    oldLabelIds,
+    oldSubIds,
     newLabelId,
     newSubId,
-    hasOldSub,
     badgeId,
   };
 }

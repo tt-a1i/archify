@@ -8,6 +8,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findChrome } from '../archify/bin/visual-check.mjs';
 import { desktopBrowser } from './helpers/desktop-browser.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
+import { normalizeChoreographySpec } from '../archify/story/choreography-plan.mjs';
+import { createCompiledStoryTheme } from '../archify/story/story-svg.mjs';
+import { bakeSvg, extractCanonicalSvg, loadViewerStyles } from '../archify/story/svg-bake.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..', 'archify');
@@ -140,6 +143,8 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const tok = document.querySelector('[data-story-token]');
     const captionRects = [...document.querySelectorAll('.story-caption text')].map(el => el.getBoundingClientRect().bottom);
     return {
+      captionCount: captionRects.length,
+      tokenPresent: Boolean(tok),
       stageOpacity: getComputedStyle(stage).opacity,
       enteredOpacity: getComputedStyle(entered).opacity,
       enteredVisibility: getComputedStyle(entered).visibility,
@@ -148,6 +153,8 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     };
   })()`);
   assert.equal(reduced.stageOpacity, '1');
+  assert.ok(reduced.captionCount > 0);
+  assert.equal(reduced.tokenPresent, true);
   assert.equal(reduced.enteredOpacity, '1');
   assert.equal(reduced.enteredVisibility, 'visible');
   assert.equal(reduced.tokenDisplay, 'none');
@@ -177,10 +184,23 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const bmp = await createImageBitmap(pngBlob);
     const pngDims = { width: bmp.width, height: bmp.height };
     bmp.close();
+    let controlsLocked = false;
+    const controls = [...document.querySelectorAll('#stage-theme,#stage-play,#stage-replay,#stage-range,.stage-step')];
     const vidBlob = await window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 4.5, seconds: 0.5, fps: 10, onProgress: ev => {
-      if (ev.frame === 1) document.getElementById('stage-theme').click();
+      if (ev.frame === 1) {
+        controlsLocked = controls.every(el => el.disabled);
+        document.getElementById('stage-theme').click();
+        document.getElementById('stage-replay').click();
+      }
     } });
     const themeAfterExport = window.ArchifyStoryStage.state().theme;
+    const timeAfterExport = window.ArchifyStoryStage.state().time;
+    const controller = new AbortController();
+    let cancelled = false;
+    try {
+      await window.ArchifyStoryStage.exportVideo({format:'webm',start:4.5,seconds:0.5,fps:10,signal:controller.signal,onProgress:ev=>{if(ev.frame===1)controller.abort();}});
+    } catch(error) { cancelled = error.name === 'AbortError'; }
+    const cancelRestored = cancelled && window.ArchifyStoryStage.state().time === state.time && controls.every(el=>!el.disabled);
     let invalidRangeRejected = false;
     try { await window.ArchifyStoryStage.exportVideo({start:window.ArchifyStoryStage.duration + 1,seconds:1}); }
     catch(error) { invalidRangeRejected = /range/i.test(error.message); }
@@ -201,13 +221,26 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const supportsH264 = typeof VideoEncoder !== 'undefined' && (await VideoEncoder.isConfigSupported({
       codec: 'avc1.64002a', width: 1920, height: 1080, framerate: 30, bitrate: 12000000, latencyMode: 'quality', avc: { format: 'avc' },
     })).supported;
-    return { state, pngDims, head, videoDims, supportsH264, themeAfterExport, invalidRangeRejected, themeControlRestored: !document.getElementById('stage-theme').disabled };
+    let silentMp4Head = null;
+    if (supportsH264) {
+      const originalAudioEncoder = window.AudioEncoder;
+      try {
+        window.AudioEncoder = undefined;
+        const mp4 = await window.ArchifyStoryStage.exportVideo({format:'mp4',start:4.5,seconds:0.1,fps:10});
+        silentMp4Head = new TextDecoder().decode(await mp4.slice(4,12).arrayBuffer());
+      } finally { window.AudioEncoder = originalAudioEncoder; }
+    }
+    return { state, pngDims, head, videoDims, supportsH264, silentMp4Head, themeAfterExport, timeAfterExport, controlsLocked, cancelRestored, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
   })()`);
 
   assert.equal(stageCheck.state.theme, 'light');
   assert.equal(stageCheck.state.playing, false);
   assert.equal(stageCheck.themeAfterExport, 'light', 'Theme control cannot mix light and dark frames during export');
-  assert.equal(stageCheck.themeControlRestored, true);
+  assert.equal(stageCheck.controlsLocked, true);
+  assert.equal(stageCheck.controlsRestored, true);
+  assert.equal(stageCheck.cancelRestored, true);
+  assert.equal(stageCheck.timeAfterExport, stageCheck.state.time, 'Export restores the paused reader position');
+  if (stageCheck.supportsH264) assert.equal(stageCheck.silentMp4Head, 'ftypmp42', 'Stage MP4 needs no AudioEncoder');
   assert.equal(stageCheck.invalidRangeRejected, true);
   assert.equal(stageCheck.pngDims.width, 1920);
   assert.equal(stageCheck.pngDims.height, 1080);
@@ -231,4 +264,139 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     assert.equal(mp4Rec.fps, 30);
     assert.equal(fs.readFileSync(mp4Out).subarray(4, 12).toString('ascii'), 'ftypmp42');
   }
+});
+
+test('choreography preserves revisits, successive labels, parallel travel, initial focus and finite playback', { skip: !chrome }, async (t) => {
+  const dir = createScratchDirectory(path.join(os.tmpdir(), 'archify-story-motion-'));
+  buildChoreographySample(dir);
+  const diagramPath = path.join(dir, 'before.json');
+  const diagram = JSON.parse(fs.readFileSync(diagramPath, 'utf8'));
+  diagram.components.push({ id: 'audit', type: 'backend', label: 'Audit', pos: [60, 320], size: [140, 60] });
+  diagram.connections.push({ id: 'audit_call', from: 'api', to: 'audit', label: 'audit()', labelAt: [165, 245] });
+  fs.writeFileSync(diagramPath, JSON.stringify(diagram));
+  const native = path.join(dir, 'native.html');
+  const rendered = run(['render', 'architecture', diagramPath, native], dir);
+  assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+  const styles = loadViewerStyles();
+  const baked = bakeSvg(extractCanonicalSvg(fs.readFileSync(native, 'utf8')), { theme: 'light', preset: 'classic', styles });
+  const bakedViews = new Map(['main', 'other'].map(id => [id, new Map([['light', baked]])]));
+  const views = ['main', 'other'].map(id => ({ id, type: 'architecture', input: 'before.json' }));
+  const compile = (spec) => createCompiledStoryTheme({
+    plan: normalizeChoreographySpec({ schema_version: 1, views, ...spec }, {
+      declaredViews: ['main', 'other'], loadSourceLines: () => ['const result = 1;'],
+    }), bakedViews, viewTypes: new Map(views.map(v => [v.id, v.type])), theme: 'light', styles,
+  });
+  const beat = { view: 'main', at: 0, title: 'Overview', body: 'Explain the current structure.' };
+  const browser = desktopBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session, 60000);
+  const evalJs = async (expression) => {
+    const res = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(res.exceptionDetails, undefined, res.exceptionDetails?.exception?.description || res.exceptionDetails?.text);
+    return res.result?.value;
+  };
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+  let sampleIndex = 0;
+  const sample = async (svg, seconds, expression) => {
+    const file = path.join(dir, `sample-${sampleIndex++}.svg`);
+    fs.writeFileSync(file, svg);
+    const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: pathToFileURL(file).href });
+    await loaded;
+    return evalJs(`(async () => {
+      await document.fonts.ready;
+      for (const anim of document.documentElement.getAnimations({subtree:true})) { anim.pause(); anim.currentTime = ${seconds * 1000}; }
+      await new Promise(requestAnimationFrame);
+      ${expression}
+    })()`);
+  };
+
+  await t.test('returning to a view hides it during the intervening scene', async () => {
+    const compiled = compile({ duration: 12, steps: [beat, { ...beat, view: 'other', at: 4 }, { ...beat, at: 8 }] });
+    for (const [at, visible, hidden] of [[2, 'main', 'other'], [6, 'other', 'main'], [10, 'main', 'other']]) {
+      const state = await sample(compiled.renderAnimatedSvg().svg, at, `return ['main','other'].map(id => [id,Number(getComputedStyle(document.getElementById('view-'+id)).opacity)]);`);
+      const opacity = Object.fromEntries(state);
+      assert.ok(opacity[visible] > 0.99 && opacity[hidden] < 0.01, JSON.stringify({at, opacity}));
+    }
+    const still = await sample(compiled.renderStillSvg(6).svg, 0, "return Number(getComputedStyle(document.getElementById('view-main')).opacity);");
+    assert.equal(still, 0, 'Static output follows the same disjoint scene windows');
+  });
+
+  await t.test('successive relabels retire the previous label and subtitle', async () => {
+    const compiled = compile({ duration: 10, steps: [beat], relabel: [
+      { view: 'main', node: 'api', at: 1, label: 'API', subtitle: 'version one' },
+      { view: 'main', node: 'api', at: 5, label: 'Edge API', subtitle: 'version two' },
+    ] });
+    const read = "return [...document.querySelectorAll('#view-main [data-node-id=api] text')].filter(el=>Number(getComputedStyle(el).opacity)>.99).map(el=>el.textContent);";
+    const animated = await sample(compiled.renderAnimatedSvg().svg, 7, read);
+    const still = await sample(compiled.renderStillSvg(7).svg, 0, read);
+    for (const labels of [animated, still]) {
+      assert.ok(labels.includes('Edge API') && labels.includes('version two'), JSON.stringify(labels));
+      assert.ok(!labels.includes('API') && !labels.includes('version one'), JSON.stringify(labels));
+    }
+  });
+
+  await t.test('parallel tokens finish their own edge travel', async () => {
+    const compiled = compile({ duration: 5, steps: [{ ...beat, trace: { action: 'parallel', edges: ['sync_send', 'audit_call'], travel: 1.4 } }] });
+    const tokens = await sample(compiled.renderAnimatedSvg().svg, 1.2, "return [...document.querySelectorAll('[data-story-token]')].map(el=>({opacity:Number(getComputedStyle(el).opacity),distance:parseFloat(getComputedStyle(el).offsetDistance)}));");
+    assert.equal(tokens.length, 2);
+    assert.ok(tokens.every(token => token.opacity > 0.99 && token.distance > 0 && token.distance < 100), JSON.stringify(tokens));
+  });
+
+  await t.test('time-zero focus applies to both animation and still', async () => {
+    const base = { duration: 6, steps: [beat] };
+    const wide = await sample(compile(base).renderStillSvg(0).svg, 0, "return getComputedStyle(document.getElementById('camera-main')).transform;");
+    const focused = compile({ ...base, focus: [{ view: 'main', nodes: ['audit'], at: 0 }] });
+    const read = "return getComputedStyle(document.getElementById('camera-main')).transform;";
+    const animated = await sample(focused.renderAnimatedSvg().svg, 0, read);
+    const still = await sample(focused.renderStillSvg(0).svg, 0, read);
+    assert.notEqual(animated, wide, 'Initial focus must not leave the wide camera unchanged');
+    assert.equal(still, animated);
+  });
+
+  await t.test('non-looping output holds its ending after one playback', async () => {
+    const compiled = compile({ duration: 6, loop: false, steps: [beat, { ...beat, at: 3, title: 'Ending' }] });
+    const state = await sample(compiled.renderAnimatedSvg().svg, 7, "return {iterations:[...document.documentElement.getAnimations({subtree:true})].map(a=>a.effect.getTiming().iterations),ending:Number(getComputedStyle(document.getElementById('story-caption-1')).opacity)};");
+    assert.ok(state.iterations.length > 0);
+    assert.ok(state.iterations.every(n => n === 1), JSON.stringify(state));
+    assert.equal(state.ending, 1);
+  });
+
+  await t.test('an explicit short beat closes its detail and caption during a gap', async () => {
+    const compiled = compile({ duration: 20, steps: [
+      { ...beat, duration: 3, detail: { nodes: ['api'], title: 'Source', path: 'worker.mjs', lines: [1] } },
+      { ...beat, at: 10, duration: 4, title: 'Next' },
+    ] });
+    const state = await sample(compiled.renderAnimatedSvg().svg, 6, "return {detail:Number(getComputedStyle(document.getElementById('story-source-detail')).opacity),caption:Number(getComputedStyle(document.getElementById('story-caption-0')).opacity)};");
+    assert.deepEqual(state, { detail: 0, caption: 0 });
+  });
+
+  await t.test('shared nodes retain source relabels, metrics and camera motion', async () => {
+    const compiled = compile({ duration: 10, steps: [beat, { ...beat, view: 'other', at: 4 }],
+      transitions: [{ from: 'main', to: 'other', at: 4, shared: [{ id: 'api' }] }],
+      focus: [{ view: 'main', nodes: ['api'], at: 1 }],
+      relabel: [{ view: 'main', node: 'api', label: 'Reviewed API', at: 1 }],
+      metrics: [{ view: 'main', node: 'api', label: 'Complexity', before: 2, after: 6, at: 1 }],
+    });
+    const state = await sample(compiled.renderAnimatedSvg().svg, 2.8, `
+      const shared = document.querySelector('.story-shared-layer [data-node-id=api]');
+      const native = document.querySelector('#view-main [data-node-id=api]');
+      const box = group => {const r = group.querySelector('rect').getBoundingClientRect(); return [r.x,r.y,r.width,r.height];};
+      return { sharedBox:box(shared), nativeBox:box(native), labels:[...shared.querySelectorAll('text')].filter(el=>Number(getComputedStyle(el).opacity)>.99 && Number(getComputedStyle(el.parentElement).opacity)>.99).map(el=>el.textContent) };
+    `);
+    for (let i = 0; i < state.sharedBox.length; i++) assert.ok(Math.abs(state.sharedBox[i]-state.nativeBox[i]) < 0.1, JSON.stringify(state));
+    assert.ok(state.labels.includes('Reviewed API'), JSON.stringify(state));
+    assert.ok(state.labels.includes('2 → 6'), JSON.stringify(state));
+  });
+
+  await t.test('sampled stills match eased animated frames between keyframes', async () => {
+    const compiled = compile({ duration: 6, steps: [beat], enter: [{ view: 'main', nodes: ['api'], at: 1 }] });
+    const read = "const s=getComputedStyle(document.querySelector('#view-main [data-node-id=api]')); return {opacity:Number(s.opacity),transform:s.transform};";
+    const animated = await sample(compiled.renderAnimatedSvg().svg, 1.2625, read);
+    const still = await sample(compiled.renderStillSvg(1.2625).svg, 0, read);
+    assert.ok(Math.abs(animated.opacity-still.opacity) < 0.002, JSON.stringify({animated,still}));
+    const matrix = value => value.match(/-?[\d.]+/g).map(Number);
+    assert.ok(matrix(animated.transform).every((n,i)=>Math.abs(n-matrix(still.transform)[i]) < 0.02), JSON.stringify({animated,still}));
+  });
 });

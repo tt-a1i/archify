@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
-import { normalizeChoreographySpec } from '../archify/story/choreography-plan.mjs';
+import { fromStoryBriefToChoreography, normalizeChoreographySpec } from '../archify/story/choreography-plan.mjs';
 import { compileStoryStillSvg, compileStorySvg, createCompiledStoryTheme } from '../archify/story/story-svg.mjs';
 import { assertCamoSafeSvg, bakeSvg, extractCanonicalSvg, loadViewerStyles } from '../archify/story/svg-bake.mjs';
 import { git } from './helpers/repository-evidence-fixture.mjs';
@@ -256,9 +256,12 @@ test('3-positional story svg and story stage bridge existing native HTML and ver
   assert.equal(fs.existsSync(svgJson.stills[0].path), true);
 
   const outStage = path.join(dir, 'single-stage.html');
-  const stageRes = run(['story', 'stage', htmlPath, briefPath, outStage, '--json'], dir);
+  const stageRes = run(['story', '--theme', 'light', 'stage', htmlPath, briefPath, outStage, '--json'], dir);
   assert.equal(stageRes.status, 0, stageRes.stdout + stageRes.stderr);
   assert.match(fs.readFileSync(outStage, 'utf8'), /Single-diagram bridge test/);
+
+  const attached = run(['story', '--repo-root', dir, 'attach', htmlPath, briefPath, path.join(dir, 'attached.html'), '--json'], dir);
+  assert.equal(attached.status, 0, attached.stdout + attached.stderr);
 
   const longBrief = JSON.parse(fs.readFileSync(briefPath, 'utf8'));
   longBrief.scenes = Array.from({length: 20}, () => structuredClone(longBrief.scenes[0]));
@@ -266,7 +269,10 @@ test('3-positional story svg and story stage bridge existing native HTML and ver
   const longOut = path.join(dir, 'long.svg');
   const tooLong = run(['story', 'svg', htmlPath, briefPath, longOut, '--theme', 'light', '--json'], dir);
   assert.equal(tooLong.status, 1, 'Long briefs must report the choreography limit instead of silently dropping their ending');
-  assert.match(JSON.parse(tooLong.stdout).diagnostics[0].message, /steps|16|limit/i, tooLong.stdout);
+  const limit = JSON.parse(tooLong.stdout).diagnostics[0];
+  assert.equal(limit.code, 'schema/maxItems');
+  assert.equal(limit.subject.path, '/steps');
+  assert.equal(limit.evidence.limit, 16);
   assert.equal(fs.existsSync(longOut), false);
 });
 
@@ -407,12 +413,153 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   }
 });
 
+test('choreography protects cited source inputs from animated, still, stage and video outputs', async (t) => {
+  const dir = scratch();
+  multiViewFixtures(dir);
+  const source = 'Original cited text must survive an export collision.\n';
+  for (const [name, action, requested, cited, flags] of [
+    ['animated', 'svg', 'notes.svg', 'notes.svg', []],
+    ['still', 'svg', 'notes.svg', 'notes.still.svg', ['--still']],
+    ['stage', 'stage', 'notes.html', 'notes.html', []],
+    ['video', 'video', 'notes.mp4', 'notes.mp4', []],
+  ]) {
+    await t.test(name, () => {
+      fs.writeFileSync(path.join(dir, cited), source);
+      const spec = path.join(dir, `${name}.json`);
+      fs.writeFileSync(spec, JSON.stringify({
+        schema_version: 1,
+        views: [{ id: 'arch', type: 'architecture', input: 'arch1.json' }],
+        steps: [{ view: 'arch', title: 'Cited source', body: 'Keep source inputs intact.',
+          detail: { nodes: ['gateway'], title: cited, path: cited, lines: [1] } }],
+      }));
+      const res = run(['story', action, spec, path.join(dir, requested), '--theme', 'light', ...flags, '--json'], dir, {
+        ARCHIFY_CHROME: path.join(dir, 'no-browser-needed-for-output-preflight'),
+      });
+      assert.ok(fs.readFileSync(path.join(dir, cited), 'utf8') === source, 'An export must not replace a cited input');
+      assert.equal(res.status, 1, res.stdout + res.stderr);
+      assert.match(JSON.parse(res.stdout).diagnostics[0].code, /^output\//, 'Collision must be rejected before video encoding');
+    });
+  }
+});
+
+test('choreography honors explicit revision requests and rejects unfulfilled pins', async (t) => {
+  const dir = scratch();
+  multiViewFixtures(dir);
+  const repo = path.join(dir, 'repo');
+  fs.mkdirSync(repo);
+  const source = path.join(repo, 'worker.mjs');
+  fs.writeFileSync(source, 'const version = "BASE_SOURCE";\n');
+  git(repo, 'init', '-b', 'main');
+  git(repo, 'config', 'user.name', 'Archify Tests');
+  git(repo, 'config', 'user.email', 'archify@example.test');
+  git(repo, 'remote', 'add', 'origin', 'https://github.com/acme/jobs.git');
+  git(repo, 'add', '.');
+  git(repo, 'commit', '-qm', 'base');
+  const base = git(repo, 'rev-parse', 'HEAD');
+  fs.writeFileSync(source, 'const version = "HEAD_SOURCE";\n');
+  git(repo, 'commit', '-qam', 'head');
+  const head = git(repo, 'rev-parse', 'HEAD');
+  fs.writeFileSync(source, 'const version = "LOCAL_SOURCE";\n');
+  fs.writeFileSync(path.join(dir, 'worker.mjs'), 'const version = "LOCAL_SOURCE";\n');
+  const diagram = JSON.parse(fs.readFileSync(path.join(dir, 'arch1.json'), 'utf8'));
+  diagram.meta.repository = { url: 'https://github.com/acme/jobs', revision: head };
+  diagram.components[1].sources = [{ path: 'worker.mjs', line: 1, end_line: 1 }];
+  fs.writeFileSync(path.join(dir, 'arch1.json'), JSON.stringify(diagram));
+  const rendered = run(['render', 'architecture', path.join(dir, 'arch1.json'), path.join(dir, 'pinned.html'), '--repo-root', repo], dir);
+  assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+
+  for (const [name, revision, withRepo, expected] of [
+    ['explicit commit', base, true, 'BASE_SOURCE'],
+    ['head alias', 'head', true, 'HEAD_SOURCE'],
+    ['missing base', 'base', true, null],
+    ['missing repository', head, false, null],
+    ['implicit pin without repository', undefined, false, null],
+  ]) {
+    await t.test(name, () => {
+      const spec = path.join(dir, 'pinned.json');
+      const output = path.join(dir, `${name.replaceAll(' ', '-')}.svg`);
+      fs.writeFileSync(spec, JSON.stringify({
+        schema_version: 1,
+        views: [{ id: 'arch', type: 'architecture', input: 'pinned.html' }],
+        steps: [{ view: 'arch', title: 'Fixed revision', body: 'Never substitute workspace code for a pin.',
+          detail: { nodes: ['gateway'], title: 'worker.mjs', path: 'worker.mjs', lines: [1], ...(revision ? { revision } : {}) } }],
+      }));
+      const res = run(['story', 'svg', spec, output, '--theme', 'light', ...(withRepo ? ['--repo-root', repo] : []), '--json'], dir);
+      if (expected) {
+        assert.equal(res.status, 0, res.stdout + res.stderr);
+        assert.ok(fs.readFileSync(output, 'utf8').includes(expected), `Expected source at ${revision}`);
+      } else {
+        assert.equal(res.status, 1, 'An unfulfilled pin must fail before publishing');
+        assert.equal(JSON.parse(res.stdout).diagnostics[0].code, 'story/source-revision-unavailable');
+        assert.equal(fs.existsSync(output), false);
+      }
+    });
+  }
+});
+
+test('explicit step timing honors duration and rejects overlaps and story overruns', () => {
+  const spec = {
+    schema_version: 1, duration: 20,
+    views: [{ id: 'arch', input: 'arch1.json', type: 'architecture' }],
+    steps: [
+      { view: 'arch', at: 0, duration: 3, title: 'Short beat', body: 'Leave an intentional pause.' },
+      { view: 'arch', at: 10, duration: 4, title: 'Next beat', body: 'Continue after the pause.' },
+    ],
+  };
+  const normalize = (raw) => normalizeChoreographySpec(raw, { declaredViews: ['arch'] });
+  assert.deepEqual(normalize(spec).steps.map(s => [s.at, s.tEnd]), [[0, 3], [10, 14]]);
+  for (const [index, duration] of [[0, 12], [1, 11]]) {
+    const bad = structuredClone(spec);
+    bad.steps[index].duration = duration;
+    assert.throws(() => normalize(bad), error => error.code === 'story/invalid-timing');
+  }
+});
+
+test('automatic timing contains authored staggers and every trace hop, including brief conversion', () => {
+  const base = { schema_version: 1, views: [{ id: 'main', type: 'architecture', input: 'arch1.json' }] };
+  const normalize = step => normalizeChoreographySpec({ ...base, steps: [{ view: 'main', title: 'Work', body: 'Follow all operations.', ...step }] }, { declaredViews: ['main'] });
+  for (const field of ['enter', 'connect']) {
+    const op = field === 'enter' ? { nodes: ['a', 'b', 'c'], stagger: 5 } : { edges: ['a', 'b', 'c'], stagger: 5 };
+    assert.ok(normalize({ [field]: op }).duration >= (field === 'enter' ? 11.35 : 11.5), `${field} must include the last staggered operation`);
+  }
+  const edges = Array.from({ length: 16 }, (_, i) => `edge${i}`);
+  const long = normalize({ trace: { edges } });
+  assert.ok(long.duration >= long.traces[0].times.at(-1) + long.traces[0].travel);
+  const facts = { nodes: [{ id: 'a' }, { id: 'b' }], edges: edges.map(id => ({ id, from: 'a', to: 'b' })) };
+  const converted = fromStoryBriefToChoreography({
+    version: 2, title: 'Long trace', intro: 'Establish the graph.', outro: 'Every handoff has completed.',
+    scenes: [{ title: 'Trace all connections', points: [{ anchor: 'b', via: edges, title: 'Handoffs', text: 'Follow the entire route.' }] }],
+  }, facts, { diagramType: 'architecture' });
+  const bridged = normalizeChoreographySpec(converted, { declaredViews: ['main'] });
+  const trace = bridged.traces[0];
+  assert.ok(bridged.steps[1].tEnd >= trace.times.at(-1) + trace.travel);
+});
+
+test('Camo checks distinguish inert source text from active SVG attributes and CSS', () => {
+  const svg = body => `<svg xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  assert.equal(assertCamoSafeSvg(svg('<text>const onClick = save; @import url(https://example.test/a); javascript: sample</text>')).ok, true);
+  for (const [body, expected] of [
+    ['<g onclick="save()"/>', 'svg/event-handler'],
+    ["<g onclick='save()'/>", 'svg/event-handler'],
+    ['<script>save()</script>', 'svg/script'],
+    ['<foreignObject/>', 'svg/foreign-object'],
+    ['<a href="&#106;avascript:save()"/>', 'svg/javascript-url'],
+    ['<image href="https://example.test/a.png"/>', 'svg/external-href'],
+    ['<style>@import "https://example.test/style.css";</style>', 'svg/css-import'],
+    ['<g style="fill:url(https://example.test/fill.svg)"/>', 'svg/external-css-url'],
+  ]) {
+    const result = assertCamoSafeSvg(svg(body), { assert: false });
+    assert.ok(result.problems.some(p => p.code === expected), JSON.stringify({ body, result }));
+  }
+});
+
 test('story video reports structured diagnostic without Chrome and StoryContainer supports silent MP4/WebM tracks', async () => {
   const dir = scratch();
   multiViewFixtures(dir);
   const specPath = path.join(dir, 'mini.json');
   fs.writeFileSync(specPath, JSON.stringify({
     schema_version: 1,
+    duration: 6,
     title: 'Video preflight',
     views: [{ id: 'arch', type: 'architecture', input: 'arch1.json' }],
     steps: [{ view: 'arch', title: 'Entry', body: 'Client requests gateway.', focus: ['client', 'gateway'] }],
@@ -423,6 +570,14 @@ test('story video reports structured diagnostic without Chrome and StoryContaine
   });
   assert.equal(missingBrowser.status, 1);
   assert.equal(JSON.parse(missingBrowser.stdout).diagnostics[0].code, 'story/browser-unavailable');
+  const overrun = run(['story', 'video', specPath, path.join(dir, 'out.mp4'), '--seconds', '6.005', '--json'], dir, {
+    ARCHIFY_CHROME: path.join(dir, 'nonexistent-chrome'),
+  });
+  assert.equal(JSON.parse(overrun.stdout).diagnostics[0].code, 'story/invalid-timing', 'CLI rejects the runtime-invalid interval before launching Chrome');
+  const extension = run(['story', 'video', specPath, path.join(dir, 'out.mov'), '--json'], dir, {
+    ARCHIFY_CHROME: path.join(dir, 'nonexistent-chrome'),
+  });
+  assert.equal(JSON.parse(extension.stdout).diagnostics[0].code, 'output/cli-extension');
 
   // Verify video-only (audio: false) MP4 & WebM container construction in StoryContainer.
   const ctx = vm.createContext({ Blob, TextEncoder });

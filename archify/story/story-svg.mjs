@@ -112,6 +112,21 @@ function parseStyleDeclarations(styleText) {
   return decls;
 }
 
+function easedProgress(easing, progress) {
+  if (progress <= 0 || progress >= 1) return progress;
+  if (easing === 'step-end') return 0;
+  const controls = /^cubic-bezier\(([^)]+)\)$/.exec(easing)?.[1].split(',').map(Number);
+  if (!controls || controls.length !== 4 || !controls.every(Number.isFinite)) return progress;
+  const curve = (t, a, b) => 3 * (1 - t) ** 2 * t * a + 3 * (1 - t) * t ** 2 * b + t ** 3;
+  let low = 0, high = 1;
+  for (let i = 0; i < 24; i++) {
+    const mid = (low + high) / 2;
+    if (curve(mid, controls[0], controls[2]) < progress) low = mid;
+    else high = mid;
+  }
+  return curve((low + high) / 2, controls[1], controls[3]);
+}
+
 function interpolateCssValue(prop, a, b, alpha, easing) {
   if (a === b || alpha <= 0) return a;
   if (alpha >= 1) return b;
@@ -169,6 +184,14 @@ class StoryTimeline {
     existing.points = [...kept, ...spliced];
   }
 
+  copyIdTracks(idMap) {
+    for (const [selector, channels] of [...this.tracks]) {
+      const mapped = selector.replace(/#([A-Za-z0-9_.:-]+)/g, (match, id) => idMap.has(id) ? `#${idMap.get(id)}` : match);
+      if (mapped === selector) continue;
+      for (const [channel, { points, ease }] of channels) this.add(mapped, channel, points, ease);
+    }
+  }
+
   emitCss() {
     const bindings = [];
     for (const [selector, channels] of this.tracks.entries()) {
@@ -216,7 +239,7 @@ class StoryTimeline {
         for (const prop of new Set([...declA.keys(), ...declB.keys()])) {
           const valA = declA.get(prop) ?? declB.get(prop);
           const valB = declB.get(prop) ?? declA.get(prop);
-          merged.set(prop, interpolateCssValue(prop, valA, valB, alpha, easing));
+          merged.set(prop, interpolateCssValue(prop, valA, valB, easedProgress(easing, alpha), easing));
         }
       }
       if (merged.size) {
@@ -448,6 +471,22 @@ function computeInitialCameras(plan, parts) {
 }
 
 function bindStageOpacityTrack(stage, inTr, outTr, timeline, duration) {
+  if (stage.windows?.length) {
+    const points = [{ t: 0, styleText: `opacity:${stage.windows[0].start === 0 ? 1 : 0}` }];
+    for (const [i, window] of stage.windows.entries()) {
+      if (window.start > 0) points.push(
+        { t: window.start, styleText: 'opacity:0' },
+        { t: Math.min(window.end, window.start + 1.1), styleText: 'opacity:1' },
+      );
+      points.push({ t: window.end, styleText: 'opacity:1' });
+      if (window.end < duration) points.push({
+        t: Math.min(duration, window.end + 0.85, stage.windows[i + 1]?.start ?? duration), styleText: 'opacity:0',
+      });
+    }
+    points.push({ t: duration, styleText: `opacity:${stage.windows.at(-1).end === duration ? 1 : 0}` });
+    timeline.add(`#view-${stage.view}`, 'opacity', points);
+    return stage.windows[0].start === 0 ? 1 : 0;
+  }
   if (inTr?.isPair || outTr?.isPair) {
     if (outTr?.isPair) {
       const outEnd = Math.min(duration, outTr.at + 0.9);
@@ -511,6 +550,7 @@ function applyFocusCameraTracks(plan, parts, cameras, timeline, duration) {
     const panEnd = Math.min(duration, op.at + 1.45);
     if (op.at === 0 && cameraMoves[op.view].length === 1) {
       cameraMoves[op.view][0] = { t: 0, camera: nextCamera };
+      cameras[op.view] = nextCamera;
     } else {
       cameraMoves[op.view].push({ t: op.at, camera: prevCamera }, { t: panEnd, camera: nextCamera });
     }
@@ -534,7 +574,17 @@ function addSharedNodeOpacityTrack(layerId, fromIn, until, duration, timeline) {
   timeline.add(`#${layerId}`, 'opacity', opPts);
 }
 
-function buildSharedTransitionNodeLayer({ tr, shared, fromPart, toPart, trPrefix, cameras, afterCameraLater, fromIn, until, duration, palette, timeline }) {
+function cameraAt(points, time) {
+  let previous = points[0];
+  for (const next of points.slice(1)) {
+    if (next.t <= time) { previous = next; continue; }
+    const progress = easedProgress('cubic-bezier(.65,0,.35,1)', (time - previous.t) / (next.t - previous.t));
+    return Object.fromEntries(['x', 'y', 'scale'].map(key => [key, previous.camera[key] + (next.camera[key] - previous.camera[key]) * progress]));
+  }
+  return previous.camera;
+}
+
+function buildSharedTransitionNodeLayer({ tr, shared, fromPart, toPart, trPrefix, cameras, cameraMoves, afterCameraLater, fromIn, until, duration, palette, timeline }) {
   const built = buildSharedTransitionNode(fromPart, toPart, shared, trPrefix, palette);
   if (!built) return null;
   const layerId = `${trPrefix}-${shared.id}`;
@@ -549,9 +599,10 @@ function buildSharedTransitionNodeLayer({ tr, shared, fromPart, toPart, trPrefix
   const transitionDur = tr.duration ?? 1.6;
   const midAt = Math.min(duration, tr.at + transitionDur * 0.5);
   const doneAt = Math.min(duration, tr.at + transitionDur);
+  timeline.copyIdTracks(built.idMap);
 
-  if (built.oldLabelAttr && built.newLabelId) {
-    timeline.add(`#${layerId} [${built.oldLabelAttr}]`, 'opacity', [
+  if (built.newLabelId) {
+    for (const id of built.oldLabelIds) timeline.add(`#${id}`, 'opacity', [
       { t: 0, styleText: 'opacity:1' }, { t: tr.at, styleText: 'opacity:1' }, { t: midAt, styleText: 'opacity:0' }, { t: duration, styleText: 'opacity:0' },
     ]);
     timeline.add(`#${built.newLabelId}`, 'opacity', [
@@ -559,8 +610,8 @@ function buildSharedTransitionNodeLayer({ tr, shared, fromPart, toPart, trPrefix
     ]);
   }
   if (built.newSubId) {
-    if (built.hasOldSub) {
-      timeline.add(`#${layerId} [data-node-id="${escapeCssAttr(shared.id)}"] > text:not([data-node-label]):not(#${built.newSubId})`, 'opacity', [
+    for (const id of built.oldSubIds) {
+      timeline.add(`#${id}`, 'opacity', [
         { t: 0, styleText: 'opacity:1' }, { t: tr.at, styleText: 'opacity:1' }, { t: doneAt, styleText: 'opacity:0' }, { t: duration, styleText: 'opacity:0' },
       ]);
     }
@@ -575,9 +626,9 @@ function buildSharedTransitionNodeLayer({ tr, shared, fromPart, toPart, trPrefix
   }
 
   const movePts = [
-    { t: 0, styleText: `transform:${formatTransform(cameras[tr.from])}` },
-    { t: tr.at, styleText: `transform:${formatTransform(cameras[tr.from])}` },
-    { t: doneAt, styleText: `transform:${formatTransform(poseFor(cameras[tr.to]))}` },
+    ...cameraMoves[tr.from].filter(p => p.t < tr.at).map(p => ({ t: p.t, styleText: `transform:${formatTransform(p.camera)}` })),
+    { t: tr.at, styleText: `transform:${formatTransform(cameraAt(cameraMoves[tr.from], tr.at))}` },
+    { t: doneAt, styleText: `transform:${formatTransform(poseFor(cameraAt(cameraMoves[tr.to], doneAt)))}` },
     ...afterCameraLater.map((p) => ({ t: p.t, styleText: `transform:${formatTransform(poseFor(p.camera))}` })),
   ];
   movePts.push({ t: duration, styleText: movePts.at(-1).styleText });
@@ -617,7 +668,7 @@ function buildSharedTransitionLayers({ plan, parts, cameras, cameraMoves, incomi
       staticCss.push(`#view-${tr.to} [data-node-id="${escapeCssAttr(targetId)}"]{visibility:hidden}`);
 
       const markup = buildSharedTransitionNodeLayer({
-        tr, shared, fromPart, toPart, trPrefix, cameras, afterCameraLater, fromIn, until, duration, palette, timeline,
+        tr, shared, fromPart, toPart, trPrefix, cameras, cameraMoves, afterCameraLater, fromIn, until, duration, palette, timeline,
       });
       if (markup) sharedLayers.push(markup);
     }
@@ -626,7 +677,7 @@ function buildSharedTransitionLayers({ plan, parts, cameras, cameraMoves, incomi
 }
 
 function applyRelabelOps(plan, parts, timeline, duration, palette) {
-  for (const [index, op] of plan.relabel.entries()) {
+  for (const [index, op] of [...plan.relabel].sort((a, b) => a.at - b.at).entries()) {
     const part = parts[op.view];
     const node = part.nodes.find((n) => n.id === op.node);
     const ids = {
@@ -639,13 +690,13 @@ function applyRelabelOps(plan, parts, timeline, duration, palette) {
     const doneAt = Math.min(duration, op.at + 0.8);
     if (op.label) {
       if (res.hasLabel) {
-        timeline.add(`#${ids.oldLabelId}`, 'opacity', [{ t: 0, styleText: 'opacity:1' }, { t: op.at, styleText: 'opacity:1' }, { t: doneAt, styleText: 'opacity:0' }, { t: duration, styleText: 'opacity:0' }]);
+        timeline.add(`#${res.oldLabelId}`, 'opacity', [{ t: 0, styleText: 'opacity:1' }, { t: op.at, styleText: 'opacity:1' }, { t: doneAt, styleText: 'opacity:0' }, { t: duration, styleText: 'opacity:0' }]);
       }
       timeline.add(`#${ids.newLabelId}`, 'opacity', [{ t: 0, styleText: 'opacity:0' }, { t: op.at, styleText: 'opacity:0' }, { t: doneAt, styleText: 'opacity:1' }, { t: duration, styleText: 'opacity:1' }]);
     }
     if (op.subtitle) {
       if (res.hadOldSub) {
-        timeline.add(`#${ids.oldSubId}`, 'opacity', [{ t: 0, styleText: 'opacity:1' }, { t: op.at, styleText: 'opacity:1' }, { t: doneAt, styleText: 'opacity:0' }, { t: duration, styleText: 'opacity:0' }]);
+        timeline.add(`#${res.oldSubId}`, 'opacity', [{ t: 0, styleText: 'opacity:1' }, { t: op.at, styleText: 'opacity:1' }, { t: doneAt, styleText: 'opacity:0' }, { t: duration, styleText: 'opacity:0' }]);
       }
       timeline.add(`#${ids.newSubId}`, 'opacity', [{ t: 0, styleText: 'opacity:0' }, { t: op.at, styleText: 'opacity:0' }, { t: doneAt, styleText: 'opacity:1' }, { t: duration, styleText: 'opacity:1' }]);
     }
@@ -770,7 +821,7 @@ function addTraceTokenHopTracks({ tokenId, isFirst, hopStart, hopMoveEnd, nextSt
   }
   opacityPts.push({ t: hopHideAt, styleText: 'opacity:1' });
   if (nextStart !== null) {
-    opacityPts.push({ t: Math.min(duration, nextStart + 0.01), styleText: 'opacity:0' });
+    opacityPts.push({ t: Math.min(duration, hopHideAt + 0.01), styleText: 'opacity:0' });
   } else {
     opacityPts.push({ t: Math.min(duration, hopHideAt + 0.3), styleText: 'opacity:0' });
   }
@@ -798,7 +849,7 @@ function buildTraceTokenLayers(plan, parts, timeline, staticCss, duration, palet
       const cleanPath = route.d.replace(/[^0-9A-Za-z.,\s+-]/g, ' ').trim();
       const hopMoveEnd = Math.min(duration, hopStart + travel);
       const nextStart = i + 1 < trace.times.length ? trace.times[i + 1] : null;
-      const hopHideAt = nextStart !== null ? nextStart : Math.min(duration, trace.end ?? hopMoveEnd + 0.25);
+      const hopHideAt = nextStart !== null ? Math.max(nextStart, hopMoveEnd) : Math.min(duration, trace.end ?? hopMoveEnd + 0.25);
 
       addTraceTokenHopTracks({
         tokenId,
@@ -839,7 +890,8 @@ function buildCaptionLayers(plan, timeline, duration, palette) {
 
   return plan.steps.map((step, index) => {
     const id = `story-caption-${index}`;
-    const end = index + 1 < totalSteps ? Math.max(step.at + 0.5, plan.steps[index + 1].at - 0.55) : duration;
+    const fadesOut = index + 1 < totalSteps || step.tEnd < duration;
+    const end = fadesOut ? Math.max(step.at + 0.5, step.tEnd - 0.55) : duration;
     const inner = buildCaptionHeader(step, index, totalSteps, pillStartX, pillPitch, pillW, plan.chrome, plan.badge, palette);
 
     const pts = step.at === 0
@@ -850,7 +902,7 @@ function buildCaptionLayers(plan, timeline, duration, palette) {
           { t: Math.min(duration, step.at + 0.6), styleText: 'opacity:1;transform:translateY(0px)' },
         ];
     pts.push({ t: end, styleText: 'opacity:1;transform:translateY(0px)' });
-    if (index + 1 < totalSteps) {
+    if (fadesOut) {
       const hiddenAt = Math.min(duration, end + 0.4);
       pts.push({ t: hiddenAt, styleText: 'opacity:0;transform:translateY(-6px)' }, { t: duration, styleText: 'opacity:0;transform:translateY(-6px)' });
     } else {
@@ -862,7 +914,7 @@ function buildCaptionLayers(plan, timeline, duration, palette) {
 }
 
 function buildReducedMotionRule(plan, cameras) {
-  const repView = plan.transitions.at(-1)?.to || plan.stages.at(-1).view;
+  const repView = plan.steps.at(-1)?.view || plan.transitions.at(-1)?.to || plan.stages.at(-1).view;
   const repCaptionIdx = Math.max(0, plan.steps.length - 1);
   return [
     `@media(prefers-reduced-motion:reduce){`,
@@ -917,7 +969,7 @@ function assembleStorySvgMarkup({ plan, theme, preset, palette, staticCss, timel
 // allowing animated SVG and arbitrary static still snapshots without repeating AST passes.
 export function createCompiledStoryTheme({ plan, bakedViews, viewTypes = new Map(), theme, preset = 'classic', styles = loadViewerStyles() }) {
   const duration = plan.duration;
-  const iteration = plan.loop === false ? '2 both' : 'infinite';
+  const iteration = plan.loop === false ? '1 both' : 'infinite';
   const palette = storyPalette(theme, preset, styles);
   const isZh = (plan.locale || '').toLowerCase().startsWith('zh');
 
@@ -940,11 +992,11 @@ export function createCompiledStoryTheme({ plan, bakedViews, viewTypes = new Map
   const outgoingTr = new Map(plan.transitions.map((tr) => [tr.from, tr]));
   const stageOpacity = applyStageOpacityTracks(plan, incomingTr, outgoingTr, timeline, duration);
   const cameraMoves = applyFocusCameraTracks(plan, parts, cameras, timeline, duration);
+  applyRelabelOps(plan, parts, timeline, duration, palette);
   const { sharedLayers, hiddenByView } = buildSharedTransitionLayers({
     plan, parts, cameras, cameraMoves, incomingTr, outgoingTr, timeline, staticCss, duration, palette,
   });
 
-  applyRelabelOps(plan, parts, timeline, duration, palette);
   applyEnterOps(plan, parts, timeline, staticCss, duration);
   applyConnectOps(plan, parts, timeline, duration);
   applyFadeOps(plan, parts, timeline, duration);

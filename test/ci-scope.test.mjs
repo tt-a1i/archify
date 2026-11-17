@@ -43,6 +43,14 @@ test('Windows evidence replacement fixtures retain their native host gate', () =
   assert.equal(plan.package, false);
 });
 
+test('Story filesystem and process owners retain full regression and Windows gates', () => {
+  for (const file of ['output.mjs', 'tool.mjs', 'cli.mjs', 'choreography-plan.mjs']) {
+    const plan = classifyPaths([`archify/story/${file}`]);
+    assert.equal(plan.scope, 'full', file);
+    assert.equal(plan.windows, true, file);
+  }
+});
+
 test('recipe, schema and shared renderer owners include their real source consumers', () => {
   const available = ['test/guide.test.mjs', 'test/guide-page.test.mjs', 'test/gallery.test.mjs', 'test/start-page.test.mjs', 'test/engineering-profile.test.mjs', 'test/legend-contract.test.mjs', 'test/generate-validators.test.mjs'];
   const recipe = classifyPaths(['archify/recipes/scenarios.mjs']);

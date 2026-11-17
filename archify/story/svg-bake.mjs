@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { softwareNotices } from '../renderers/shared/software-notices.mjs';
+import { parse } from './vendor/html-parser.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templatePath = path.join(skillRoot, 'assets', 'template.html');
@@ -508,19 +509,31 @@ export function bakeSvg(svg, { theme, preset, styles = loadViewerStyles() }) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n${openTag}${body.slice(0, split)}<style><![CDATA[\n${css}\n]]></style>${background}${body.slice(split)}${metadata}</svg>\n`;
 }
 
-const CAMO_CHECKS = [
-  { code: 'svg/script', pattern: /<script\b/i, message: 'contains a <script> element', fix: 'remove script elements; GitHub strips scripted SVGs' },
-  { code: 'svg/javascript-url', pattern: /javascript\s*:/i, message: 'contains a javascript: URL', fix: 'replace the URL with a data: or fragment reference' },
-  { code: 'svg/event-handler', pattern: /\son[a-z]+\s*=/i, message: 'contains an inline on* event handler attribute', fix: 'remove on* attributes' },
-  { code: 'svg/foreign-object', pattern: /<foreignObject\b/i, message: 'contains <foreignObject>, which Camo renders blank', fix: 'draw the content with native SVG elements' },
-  { code: 'svg/css-import', pattern: /@import\b/i, message: 'contains a CSS @import', fix: 'inline the stylesheet' },
-];
+function activeSvgContent(svgString) {
+  const tags = new Set();
+  const hrefs = [];
+  const css = [];
+  let eventHandler = false;
+  const pending = [parse(svgString)];
+  const urlAttributes = new Set(['style', 'fill', 'stroke', 'filter', 'clip-path', 'mask', 'cursor', 'marker', 'marker-start', 'marker-mid', 'marker-end']);
+  while (pending.length) {
+    const node = pending.pop();
+    if (node.tagName) tags.add(node.tagName.toLowerCase());
+    for (const attribute of node.attrs || []) {
+      if (/^on[a-z]+$/i.test(attribute.name)) eventHandler = true;
+      if (attribute.name === 'href') hrefs.push(attribute.value.trim());
+      if (urlAttributes.has(attribute.name)) css.push(attribute.value);
+    }
+    if (node.tagName === 'style') css.push((node.childNodes || []).filter(child => child.nodeName === '#text').map(child => child.value).join(''));
+    pending.push(...(node.childNodes || []));
+  }
+  return { tags, hrefs, css: stripComments(css.join('\n')), eventHandler };
+}
 
-function externalReference(svgString) {
-  const hrefs = [...svgString.matchAll(/\s(?:xlink:)?href\s*=\s*"([^"]*)"/gi)].map((match) => match[1].trim());
+function externalReference({ hrefs, css }) {
   const external = hrefs.find((href) => !(href === '' || href.startsWith('#') || href.startsWith('data:')));
   if (external) return { code: 'svg/external-href', message: `references an external resource ${JSON.stringify(external.slice(0, 80))}`, fix: 'embed the asset as a data: URL or drop the reference' };
-  const urls = [...svgString.matchAll(/url\(\s*(['"]?)([^)'"]*)\1\s*\)/gi)].map((match) => match[2].trim());
+  const urls = [...css.matchAll(/url\(\s*(['"]?)([^)'"]*)\1\s*\)/gi)].map((match) => match[2].trim());
   const externalUrl = urls.find((url) => !(url.startsWith('#') || url.startsWith('data:')));
   if (externalUrl) return { code: 'svg/external-css-url', message: `CSS url() points outside the file ${JSON.stringify(externalUrl.slice(0, 80))}`, fix: 'use data: or #fragment url() targets only' };
   return null;
@@ -535,10 +548,17 @@ export function assertCamoSafeSvg(svgString, { maxBytes = CAMO_MAX_BYTES, assert
   if (!/\sxmlns="http:\/\/www\.w3\.org\/2000\/svg"/.test(svgString.slice(0, 4000))) {
     problems.push({ code: 'svg/missing-xmlns', message: 'root lacks the SVG namespace, so <img> cannot render it', fix: 'declare xmlns="http://www.w3.org/2000/svg" on the root' });
   }
-  for (const check of CAMO_CHECKS) {
-    if (check.pattern.test(svgString)) problems.push({ code: check.code, message: check.message, fix: check.fix });
+  const active = activeSvgContent(svgString);
+  for (const [detected, code, message, fix] of [
+    [active.tags.has('script'), 'svg/script', 'contains a <script> element', 'remove script elements; GitHub strips scripted SVGs'],
+    [active.hrefs.some(href => /^javascript\s*:/i.test(href)), 'svg/javascript-url', 'contains a javascript: URL', 'replace the URL with a data: or fragment reference'],
+    [active.eventHandler, 'svg/event-handler', 'contains an inline on* event handler attribute', 'remove on* attributes'],
+    [active.tags.has('foreignobject'), 'svg/foreign-object', 'contains <foreignObject>, which Camo renders blank', 'draw the content with native SVG elements'],
+    [/@import\b/i.test(active.css), 'svg/css-import', 'contains a CSS @import', 'inline the stylesheet'],
+  ]) {
+    if (detected) problems.push({ code, message, fix });
   }
-  const external = externalReference(svgString);
+  const external = externalReference(active);
   if (external) problems.push(external);
   if (bytes >= maxBytes) {
     problems.push({ code: 'svg/too-large', message: `${bytes} bytes meets or exceeds the ${maxBytes}-byte Camo limit`, fix: 'reduce the diagram or split it into several exports' });

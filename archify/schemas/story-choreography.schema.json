@@ -75,6 +75,10 @@
     "steps": { "$ref": "#/$defs/stepList" }
   },
   "$defs": {
+    "sourceRevision": {
+      "type": "string",
+      "pattern": "^(head|base|[0-9a-fA-F]{40})$"
+    },
     "viewType": {
       "enum": ["architecture", "workflow", "sequence", "dataflow", "lifecycle", "erd", "tree", "class", "timeline", "waterfall"]
     },
@@ -356,7 +360,7 @@
         "title": { "type": "string", "minLength": 1, "maxLength": 120 },
         "note": { "type": "string", "maxLength": 200 },
         "path": { "type": "string", "minLength": 1, "maxLength": 240 },
-        "revision": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "revision": { "$ref": "#/$defs/sourceRevision" },
         "lines": {
           "type": "array",
           "minItems": 1,
@@ -533,7 +537,7 @@
         "title": { "type": "string", "minLength": 1, "maxLength": 120 },
         "note": { "type": "string", "maxLength": 200 },
         "path": { "type": "string", "minLength": 1, "maxLength": 240 },
-        "revision": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "revision": { "$ref": "#/$defs/sourceRevision" },
         "lines": {
           "type": "array",
           "minItems": 1,

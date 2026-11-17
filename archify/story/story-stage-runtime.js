@@ -327,9 +327,11 @@
 
     abortCheck(signal);
     const wasPlaying = playing;
+    const savedTime = currentTime;
     pause();
-    const themeWasDisabled = themeBtn.disabled;
-    themeBtn.disabled = true;
+    const controls = [themeBtn, playBtn, replayBtn, range, ...stepButtons];
+    const disabledStates = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
     const target = makeCanvas(FRAMES_PER_READ);
     const capture = createStageCapturer();
     let encoder, mux, failure, wake;
@@ -376,10 +378,13 @@
     } finally {
       signal?.removeEventListener('abort', cancel);
       cancel();
-      await mux?.settle();
-      target.width = target.height = 1;
-      themeBtn.disabled = themeWasDisabled;
-      if (wasPlaying) play();
+      try { await mux?.settle(); }
+      finally {
+        target.width = target.height = 1;
+        controls.forEach((control, i) => { control.disabled = disabledStates[i]; });
+        playing = wasPlaying;
+        applyTime(savedTime, wasPlaying);
+      }
     }
   }
 

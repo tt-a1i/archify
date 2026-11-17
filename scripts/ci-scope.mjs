@@ -8,6 +8,11 @@ const modes = 'architecture|workflow|sequence|dataflow|lifecycle|erd|class|tree|
 const rendererPath = new RegExp(`^archify/(?:renderers/(${modes})/|schemas/(${modes})\\.schema\\.json$)`);
 const renderShared = /^(geometry|utils|i18n|route-quality|diagnostics|brand-marks|generated-validators|legend|layout-report|engineering-profiles|validator|generated-brand-marks|desktop-readability|text-fit|svg-path-analysis|automatic-labels|spatial-grid)\.mjs$/;
 const gates = ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website'];
+const storyPresentationFiles = new Set([
+  'component-stage.mjs', 'story-svg.mjs', 'svg-bake.mjs', 'story-stage-html.mjs', 'story-plan.mjs',
+  'story.js', 'story.css', 'story-attachment.js', 'story-attachment.css', 'story-audio.js',
+  'story-container.js', 'story-export.js', 'story-stage-runtime.js', 'native-motion.js',
+]);
 export function classifyPaths(paths) {
   const plan = { scope: 'core', owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
   const full = () => ({ ...plan, scope: 'full', ...Object.fromEntries(gates.map(name => [name, true])) });
@@ -52,7 +57,7 @@ export function classifyPaths(paths) {
     if (name === 'archify/schemas/story-choreography.schema.json') {
       own('schema'); plan.generated = plan.browser = plan.package = true; continue;
     }
-    if (name.startsWith('archify/story/')) {
+    if (name.startsWith('archify/story/') && storyPresentationFiles.has(name.slice('archify/story/'.length))) {
       own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;
     }
     if (name.startsWith('archify/renderers/shared/') && renderShared.test(name.slice('archify/renderers/shared/'.length))) {
