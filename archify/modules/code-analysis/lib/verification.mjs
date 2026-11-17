@@ -18,11 +18,12 @@ export function evaluateVerification(context, task, reported) {
     if (finding.code !== old.code || (finding.evidenceDigest?.sha256 ?? null) !== old.evidence
       || (finding.external?.reviewDigest ?? null) !== old.claim
       || (finding.external?.sourceId ?? null) !== old.sourceId) return bad('wrong-task-findings');
+    const limitation = old.limitation || (!/^[a-f0-9]{64}$/.test(old.evidence || '') ? 'missing-evidence' : null);
     selected.push({
       id, code: old.code, sourceId: old.sourceId, externalReport: old.report,
-      outcome: context.comparable !== true || old.limitation || (old.report && old.report !== 'different-bytes')
+      outcome: context.comparable !== true || limitation || (old.report && old.report !== 'different-bytes')
         ? 'inconclusive' : old.outcome,
-      observed: old.outcome, limitation: old.limitation,
+      observed: old.outcome, limitation,
     });
   }
 

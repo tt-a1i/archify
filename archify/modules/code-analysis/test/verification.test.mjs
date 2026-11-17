@@ -38,6 +38,14 @@ test('receipt distinguishes an unchanged external report from a detected source 
     comparable: false, reasons: [{ code: 'config-changed' }], new: ['unaudited-addition'] } });
   assert.equal(evaluateVerification(limited, task).receipt.analysis.newCount, null);
   assert.equal(evaluateVerification(limited, task).receipt.analysis.selected[0].outcome, 'inconclusive');
+  const missing = structuredClone(task);
+  delete missing.findings[0].evidenceDigest;
+  const missingPrevious = fixture('1', missing.findings, sha('c'));
+  const missingContext = verificationContext(missingPrevious, current, review);
+  const missingResult = evaluateVerification(missingContext, missing);
+  assert.equal(missingResult.receipt.analysis.selected[0].outcome, 'inconclusive');
+  assert.equal(missingResult.receipt.analysis.selected[0].observed, 'not-detected');
+  assert.equal(missingResult.receipt.analysis.selected[0].limitation, 'missing-evidence');
   const lossy = verificationContext(previous, current, { comparison: { ...review.comparison, notDetected: [{ id: diagnostics[0].id, likelyCause: 'parse-error' }] } });
   assert.equal(evaluateVerification(lossy, task).receipt.analysis.selected[0].outcome, 'inconclusive');
 });
