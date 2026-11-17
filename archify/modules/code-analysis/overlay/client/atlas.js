@@ -408,7 +408,7 @@
     if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + (hubOf[h.index] != null ? tr(" · reported hub") : '') + ("<br>" + tr("Click to focus its dependencies.")); }
     if (h.type === 'file') { var f = F[h.index]; return '<b>' + esc(f[0]) + '</b>' + esc(M[f[1]].label) + ' · ' + plural(f[2], 'line') + ' · ' + plural(fnsByFile[h.index].length, 'function'); }
     var fn = FN[h.index], fd = fn[6] !== -1 ? FD[fn[6]] : null;
-    return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + ("<br>" + tr("complexity ")) + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? ("<br>" + tr("Reported (")) + esc(fd.severity) + tr("). Click to select.") : '');
+    return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + esc(functionColumns(fn)) + ("<br>" + tr("complexity ")) + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? ("<br>" + tr("Reported (")) + esc(fd.severity) + tr("). Click to select.") : ("<br>" + tr("Captured source position, not a runtime call.")));
   }
   canvas.addEventListener('mousemove', function (e) {
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
@@ -477,11 +477,16 @@
     };
   }
   function findingTitle(f) { return window.__archifyAnalysisFindingTitle ? window.__archifyAnalysisFindingTitle(f.id) : f.title; }
+  function functionColumns(fn) {
+    var range = fn[7];
+    if (!range) return '';
+    return ':' + range.column + '-' + range.endLine + ':' + range.endColumn;
+  }
   function selectedCard() {
     var f = FD[state.finding];
     if (f) {
       var what = '';
-      if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + tr(" · complexity ") + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + tr(". Curves: dependencies of its file."); }
+      if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + functionColumns(fn) + tr(" · complexity ") + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + tr(". Curves: dependencies of its file. The position locates captured source, not a runtime call."); }
       if (f.kind === 'cycle') what = tr("Path: ") + f.path.map(function (x) { return F[x][0].split('/').pop(); }).join(' → ') + tr(" → back");
       if (f.kind === 'modules') what = f.modules.map(function (x) { return M[x].label; }).join(', ');
       if (f.kind === 'module' || f.kind === 'area') what = tr("fan-in") + " " + M[f.module].fanIn + tr(" · fan-out ") + M[f.module].fanOut;

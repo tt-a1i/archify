@@ -105,6 +105,10 @@ Fresh paired orientation below also supports captured named Python/Java definiti
    unresolved reasons require reading the current callee,
    parameters, imports or assignments. Selected ranges include nested function
    and closure bodies, not just direct calls of the selected function.
+   Current JS/TS measurements also record `functions[].sourceRange` for the implementation:
+   one-based UTF-16 columns, an exclusive end, and a SHA256 of the captured slice.
+   A position inside that range identifies the measured implementation. It does not
+   prove runtime dispatch. Historical measurements without `sourceRange` remain readable.
    Output includes the first 40 records in source order. Check total/included/
    omitted before drawing conclusions; use current source or raw facts to read
    the remainder. Entry freshness covers same-file targets only.
