@@ -1,8 +1,8 @@
 # Create diagrams with your coding agent
 
-Archify is an open-source diagram skill for coding agents including Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. Your agent interprets a description or repository evidence and writes typed JSON. Archify renders and checks that source to produce an interactive HTML diagram.
+Archify is an open-source visual explanation skill for coding agents including Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. From a plain-language idea, an everyday plan, a complex topic, a Mermaid draft, or repository evidence, your agent writes typed JSON across **10 native diagram types** or an `.archify.md` **one-page explainer**; Archify renders and validates a polished, standalone interactive HTML file.
 
-Use it when you want to explain a system's parts, a process, a sequence of calls, or another supported relationship structure. Start from words if you do not have a repository. Start from code when the diagram needs source evidence.
+Use it to make anything complex easy to see and explore — travel schedules, apartment-renting checklists, monthly cashflows, science/protocol explainers, workflows, or production system architectures. Start fast in plain words with zero diagram syntax to learn; add repository evidence when you want code-backed diagrams, or ask your agent afterward to extend the standalone HTML.
 
 The generated diagram is a model of the facts its author supplied. Passing its checks does not prove that a running system behaves that way.
 

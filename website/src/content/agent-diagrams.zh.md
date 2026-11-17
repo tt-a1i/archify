@@ -1,8 +1,8 @@
 # 用 Coding Agent 画出可检查的图
 
-Archify 是面向 Coding Agent 的开源画图技能，可配合 Claude Code、Codex、Cursor、OpenCode 和 GitHub Copilot 使用。Agent 理解你的描述或代码仓库证据，编写结构化 JSON；Archify 将其渲染并校验为可交互的 HTML 图。
+Archify 是面向 Coding Agent 的开源交互式可视化技能，支持 Claude Code、Codex、Cursor、OpenCode 和 GitHub Copilot。无论是自然语言想法、日常生活规划、复杂概念拆解、Mermaid 草稿还是代码仓库，Agent 都能自动选择**十种原生图型**编写结构化 JSON，或编写 `.archify.md` 生成**四套风格的一页式解答（Explainer）**，经确定性防穿模布局与真实浏览器校验后交付精致的独立交互 HTML。
 
-当你需要讲清系统组成、流程步骤、调用顺序或其他受支持的关系结构时，可以使用它。没有仓库也能从文字开始；需要解释真实代码时，再让 Agent 查阅相关源码。
+它远不止用于画代码架构：从旅行攻略、租房签约避坑、年假/月薪规划，到科普机理、业务流转与真实仓库源码地图，都无需背任何画图语法、不用仓库即可直接开始，还能对生成的独立 HTML 对话扩展更多互动功能；需要追溯代码时，再让 Agent 对接仓库源码。
 
 图表达的是作者提供的事实模型。通过图表校验，不等于证明真实系统确实如此运行。
 
