@@ -247,7 +247,7 @@ npx -y skills@latest add https://archify.si --skill archify --agent codex --glob
 | 类型、字段、继承关系？ | `class` | 领域模型、SDK |
 | 层级结构是什么样？ | `tree` | 目录、组织、决策树 |
 | 事情按什么顺序发生？ | `timeline` | 故障时间线、项目里程碑 |
-| 总量怎么被分阶段消耗？ | `waterfall` | 预算、耗时、成本归因 |
+| 一个请求或流程的时间花在了哪几段？ | `waterfall` | 首屏加载、调用链阶段耗时跨度（us/ms/s） |
 
 选型原则：先确定读者要回答的问题，再选图型。不要为了“看起来复杂”上来就画架构图。
 
