@@ -1,17 +1,18 @@
 // Lexical declaration bindings, not runtime dispatch or execution evidence.
-import ts from 'typescript';
 
 // v2 adds direct default function declarations to v1's relative named imports.
 // Unlike adapter revisions, this identifier describes the emitted call contract.
 // v3 also binds stable same-module default references to ordinary functions.
-export const CALL_MODEL = 'js-ts-lexical-v5';
+export const CALL_MODEL = 'js-ts-lexical-v6';
+
+export function callTools(ts) {
 
 function point(source, node) {
   const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source));
   return { line: line + 1, column: character + 1 };
 }
 
-export function callsite(node, source, file, checker, functionRecords) {
+function callsite(node, source, file, checker, functionRecords) {
   const end = source.getLineAndCharacterOfPosition(node.getEnd());
   const record = { file, ...point(source, node), endLine: end.line + 1, endColumn: end.character + 1 };
   const unknown = (reason) => ({ ...record, resolution: 'unresolved', reason });
@@ -47,4 +48,7 @@ export function callsite(node, source, file, checker, functionRecords) {
     if (body && body.pos <= target.pos && target.end <= body.end) return unknown('no-local-function-binding');
   }
   return { ...record, resolution: 'same-file-function', target: { name: target.name.text, ...point(source, target) } };
+}
+
+return { callsite };
 }

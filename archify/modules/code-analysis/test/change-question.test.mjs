@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { buildChangeQuestion, captureChangeSide, captureChangeQuestion, changeEntryLanguage } from '../lib/change-question.mjs';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
@@ -13,6 +14,7 @@ import { parseTaskArgs } from '../bin/task.mjs';
 const cli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
 const source = 'export function selected(){return 1}\nexport function untouched(){return 3}\n';
 const caller = 'import {selected} from "./entry.mjs"; export function caller(){return selected()}\n';
+const require = createRequire(import.meta.url);
 function setup(t, a = { 'entry.mjs': source, 'caller.mjs': caller }, b = { 'entry.mjs': source.replace('return 1', 'return 2'), 'caller.mjs': caller }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-change-question-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -32,6 +34,29 @@ function capture(args) {
 function run(args, extra = []) {
   return spawnSync(process.execPath, [cli, 'code-analysis', 'task', '--question', args.question, '--base-root', args.baseRoot, '--root', args.root, '--entry', args.entry, '--format', 'json', ...extra], { encoding: 'utf8' });
 }
+
+test('paired multi-SDK captures disclose a changed subproject version', t => {
+  const files = {
+    'a/package.json': JSON.stringify({ devDependencies: { typescript: '5.9.71' } }),
+    'a/entry.mjs': 'export function selected(){ return 1; }',
+    'b/package.json': JSON.stringify({ devDependencies: { typescript: '5.9.72' } }),
+    'b/other.mjs': 'export function other(){ return 2; }',
+  };
+  const args = { ...setup(t, files, { ...files, 'b/package.json': JSON.stringify({ devDependencies: { typescript: '5.9.73' } }) }), entry: 'a/entry.mjs' };
+  for (const [root, version] of [[args.baseRoot, '5.9.72'], [args.root, '5.9.73']]) {
+    for (const [dir, installed] of [['a', '5.9.71'], ['b', version]]) {
+      const sdk = path.join(root, dir, 'node_modules/typescript');
+      fs.mkdirSync(sdk, { recursive: true });
+      fs.writeFileSync(path.join(sdk, 'package.json'), JSON.stringify({ name: 'typescript', version: installed, main: 'index.cjs' }));
+      fs.writeFileSync(path.join(sdk, 'index.cjs'), `module.exports = { ...require(${JSON.stringify(require.resolve('typescript'))}), version: ${JSON.stringify(installed)} };`);
+    }
+  }
+  const brief = buildChangeQuestion(capture(args));
+  assert.equal(brief.comparison.bindingAttribution, 'limited');
+  assert.ok(brief.comparison.reasons.some(reason => reason.code === 'resolution-settings-differ'));
+  assert.equal(brief.sides.base.languageScope.projects.find(project => project.config === null && project.files.includes('b/other.mjs')).sdkVersion, '5.9.72');
+  assert.equal(brief.sides.head.languageScope.projects.find(project => project.config === null && project.files.includes('b/other.mjs')).sdkVersion, '5.9.73');
+});
 
 test('Python BOM decoding preserves fresh paired definition bodies and known callers', t => {
   const files = { 'entry.py': '\ufeffdef work(): return 1\n', 'caller.py': '\ufefffrom entry import work\ndef caller(): return work()\n' };
@@ -71,7 +96,7 @@ test('public paired question captures dirty working trees, preserves side coordi
   const change = brief.changedDefinitions.items[0];
   assert.equal(change.base.definition.line, 1); assert.equal(change.head.definition.line, 2);
   for (const side of ['base', 'head']) {
-    assert.equal(brief.sides[side].callModel, 'js-ts-lexical-v5');
+    assert.equal(brief.sides[side].callModel, 'js-ts-lexical-v6');
     const ref = change[side].knownReferences.items[0];
     assert.equal(ref.fact.target.line, change[side].definition.line);
     assert.equal(ref.navigation.location.file, 'caller.mjs'); assert.equal(ref.side, side);
@@ -136,7 +161,7 @@ test('parse errors are partial and suppress affected definitions without losing 
 test('root/extended compiler settings and package contents limit binding attribution, even with one analysis config', t => {
   const args = setup(t);
   for (const root of [args.baseRoot, args.root]) {
-    fs.writeFileSync(path.join(root, 'tsconfig.json'), '{"extends":"./settings.json"}');
+    fs.writeFileSync(path.join(root, 'tsconfig.json'), '{"extends":"./settings.json","compilerOptions":{"allowJs":true,"module":"NodeNext","moduleResolution":"NodeNext"}}');
     fs.writeFileSync(path.join(root, 'settings.json'), '{"compilerOptions":{"customConditions":["first"]}}');
   }
   assert.equal(captureChangeQuestion(args).comparison.bindingAttribution, 'same-observed-settings');
@@ -433,4 +458,20 @@ test('changed implementation retains its known caller through an explicit ESM fo
   assert.equal(refs.items[0].navigation.status,'valid');assert.equal(refs.items[0].navigation.location.file,'consumer.mjs');
   assert.deepEqual(refs.items[0].fact.via,[{file:'api.mjs',line:1,column:1}]);
  }
+});
+
+test('changed CommonJS implementation retains a stable destructured require caller', t => {
+  const caller = "const { selected } = require('./impl.cjs');\nfunction ask() { selected(); }\n";
+  const args = setup(t,
+    { 'impl.cjs': 'function selected() { return 1; }\nmodule.exports.selected = selected;\n', 'caller.cjs': caller },
+    { 'impl.cjs': 'function selected() { return 2; }\nmodule.exports.selected = selected;\n', 'caller.cjs': caller });
+  const brief = captureChangeQuestion({ ...args, entry: 'impl.cjs' });
+  assert.equal(brief.changedDefinitions.total, 1);
+  for (const side of ['base', 'head']) {
+    const references = brief.changedDefinitions.items[0][side].knownReferences;
+    assert.equal(references.coverage, 'available');
+    assert.equal(references.total, 1);
+    assert.equal(references.items[0].fact.resolution, 'commonjs-function');
+    assert.equal(references.items[0].navigation.location.file, 'caller.cjs');
+  }
 });

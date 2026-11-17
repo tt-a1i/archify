@@ -29,7 +29,8 @@ const UPDATE = process.env.UPDATE_EXTRACTOR_REVISIONS === '1';
 // What extraction decided, without what depends on the checkout: the repository
 // block (paths, Git state, parser and runtime versions, snapshot id), captured
 // source text (line endings) and parse error wording (it comes from the parser
-// or Python version, which `adapter` already records).
+// or Python version, which `adapter` already records). Installed SDK paths are
+// machine-specific provenance; SDK selection tests cover their correctness.
 function extractionDigest(facts) {
   const { repository: _repository, files, parse_errors: parseErrors, ...rest } = facts;
   const output = {
@@ -37,6 +38,10 @@ function extractionDigest(facts) {
     files: files.map(({ sourceText: _sourceText, ...file }) => file),
     ...(parseErrors ? { parse_errors: parseErrors.map((e) => e.path) } : {}),
   };
+  if (output.languageScope?.language === 'ts' && output.languageScope.sdks) {
+    output.languageScope = { ...output.languageScope,
+      sdks: output.languageScope.sdks.map(({ packagePath: _path, ...sdk }) => sdk) };
+  }
   return createHash('sha256').update(stableJson(output)).digest('hex');
 }
 
@@ -49,6 +54,13 @@ for (const adapter of ADAPTERS) {
     assert.deepEqual(schemaErrors('raw-facts', facts), []);
     assert.equal(facts.repository.adapterRevision, adapter.revision, 'raw facts record the adapter REVISION');
     const current = { revision: adapter.revision, digest: extractionDigest(facts) };
+    if (adapter.language === 'ts') {
+      const relocated = structuredClone(facts);
+      for (const sdk of relocated.languageScope.sdks) sdk.packagePath = '/different/checkout/node_modules/typescript';
+      assert.equal(extractionDigest(relocated), current.digest, 'checkout location must not change the revision fixture');
+      relocated.languageScope.sdks[0].version = '0.0.0';
+      assert.notEqual(extractionDigest(relocated), current.digest, 'SDK identity remains part of the revision fixture');
+    }
     recorded[adapter.language] = { fixture: adapter.fixture, ...current };
     if (UPDATE) return;
     const expected = lock[adapter.language];

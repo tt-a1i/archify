@@ -1,7 +1,7 @@
 // Bounded correction for TS5's conditional-null package-map ambiguity.
 // Select a target from captured metadata; never search for/load the target here.
 import path from 'node:path';
-import ts from 'typescript';
+import bundledTs from 'typescript';
 
 const NO_MATCH = { status: 'no-match' };
 const BLOCKED = { status: 'blocked' };
@@ -11,7 +11,9 @@ const object = value => value !== null && typeof value === 'object' && !Array.is
 const boundary = value => value === null || (Array.isArray(value) && !value.length)
   || (value !== null && typeof value === 'object' && Object.values(value).some(boundary));
 
-export function runtimePackageTarget(record, file, root, options, inputs, resolutionMode) {
+export function runtimePackageTools(ts) {
+
+function runtimePackageTarget(record, file, root, options, inputs, resolutionMode) {
   if (record.typeOnly || !/\.[cm]?js$/.test(file)
     || ![ts.ModuleResolutionKind.Node16, ts.ModuleResolutionKind.NodeNext].includes(options.moduleResolution)) return null;
   const internal = record.specifier.startsWith('#');
@@ -108,3 +110,8 @@ function select(target, conditions, dir, internal) {
   if (parts.some(p => !p) || !/\.[cm]?js$/.test(target)) return UNSUPPORTED;
   return { status: 'selected', file: path.resolve(dir, target) };
 }
+
+return { runtimePackageTarget };
+}
+
+export const { runtimePackageTarget } = runtimePackageTools(bundledTs);
