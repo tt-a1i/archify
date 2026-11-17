@@ -26,6 +26,25 @@ function run(args,cwd,entry=cli){return spawnSync(process.execPath,[entry,'story
 function brief(facts){const edge=facts.edges[0];return {version:2,title:'Explain the native handoff',intro:'Establish the complete diagram.',outro:'Return to its original context.',scenes:[{title:'Read this relationship',points:[{anchor:edge?.to||facts.nodes[0].id,...(edge?{via:edge.id}:{}),title:'Explain the selected point',text:'Describe the responsibility shown by this source relationship.'}]}]};}
 function embedded(html){return Buffer.from(JSON.parse(/id="archify-story-payload" type="application\/json">([\s\S]*?)<\/script>/.exec(html)[1]).html,'base64').toString('utf8');}
 
+test('story svg exports one self-contained animation and a static first frame', t => {
+  const dir = workspace(t), plan = path.join(dir, 'brief.json'), output = path.join(dir, 'story.svg');
+  const facts = scanStory(native);
+  const edge = facts.edges[0];
+  fs.writeFileSync(plan, JSON.stringify({ version: 2, title: 'Explain one change', intro: 'Start with the intent.', outro: 'The affected object and its evidence remain visible.', scenes: [
+    { title: 'Follow the change', points: [{ anchor: edge.to, via: edge.id, title: 'Show the relationship', text: 'The selected relationship explains the change.' }] },
+    { title: 'Read the evidence', points: [{ anchor: edge.from, title: 'Show the source object', text: 'The ending names the object affected by the change.' }] },
+  ] }));
+  const result = run(['svg', native, plan, output], dir);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const svg = fs.readFileSync(output, 'utf8'), still = fs.readFileSync(output.replace(/\.svg$/, '.still.svg'), 'utf8');
+  assert.match(svg, /^<svg\b/);
+  assert.doesNotMatch(svg.replaceAll('http://www.w3.org', ''), /<script\b|https?:\/\/|url\(\s*['"]?(?:https?:|\/\/)/i);
+  assert.match(svg, /animation:/);
+  assert.equal((svg.match(/<svg\b/g) || []).length, 1);
+  assert.match(still, /animation:none/);
+  assert.equal(fs.readdirSync(dir).some(name => name.endsWith('.html')), false);
+});
+
 test('public story draft returns source identities and attach preserves the entire native document',t=>{
   const dir=workspace(t),plan=path.join(dir,'讲解 brief.json'),output=path.join(dir,'enhanced.html');
   const source=fs.readFileSync(native,'utf8'),draft=run(['draft',native,plan],dir);assert.equal(draft.status,0,draft.stderr+draft.stdout);
