@@ -54,11 +54,13 @@ function callModelVersions(data) {
   for (let version = 1; version <= latest; version += 1) {
     if (data.callModel === `${prefix}-v${version}`) versions[language] = version;
   }
+  if (language === 'py' && data.callModel === 'python-source-v1') versions.py = 3;
   return versions;
 }
 
 // A call resolution that only a given language's model version can produce.
 const RESOLUTION_MODELS = new Map([
+  ['python-source-declaration', ['py', 3, 'requires the Python source declaration model']],
   ['java-qualified-static-method', ['java', 2, 'requires the Java v2 source model']],
   ['rust-inherent-source-candidate', ['rust', 2, 'requires the Rust v2 inherent source-candidate model']],
   ['rust-specialized-inherent-source-candidate', ['rust', 3, 'requires the Rust v3 concrete-specialization source-candidate model']],
@@ -286,7 +288,7 @@ function callTargetErrors(call, at, context) {
 function importedTargetErrors(call, at, targetFile, context) {
   const { add, model, brokenFiles, staticImports, forwardingModel } = context;
   const direct = staticImports.get(call.file)?.has(targetFile);
-  let forwarded = model.py === 2 && [...(staticImports.get(call.file) || [])].some((via) => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
+  let forwarded = model.py >= 2 && [...(staticImports.get(call.file) || [])].some((via) => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
   if (call.via && forwardingModel) {
     forwarded = followsForwardingPath(call, targetFile, context);
     if (!forwarded) add(`${at}/via`, 'must follow an acyclic recorded value import/export path at captured source points');

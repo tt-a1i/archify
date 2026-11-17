@@ -7,9 +7,9 @@
     "root": ".",
     "url": null,
     "language": "py",
-    "adapter": "python@3.15.0",
-    "adapterRevision": 10,
-    "snapshotId": "a5500d463bb33a032d43c5c83fe6ce327cc96db7f6600aa5668d4ca5bc9f5159"
+    "adapter": "pyright-parser@1.1.414/python-3.14",
+    "adapterRevision": 11,
+    "snapshotId": "a48ae77d5223b2e78aeea4821e2b1830e74a968a9daa252d8087e16127e7274c"
   },
   "files": [
     {
@@ -511,7 +511,7 @@
       "deepestLine": 9
     }
   ],
-  "callModel": "python-lexical-v2",
+  "callModel": "python-source-v1",
   "calls": [
     {
       "file": "app/a.py",
@@ -677,8 +677,13 @@
       "column": 25,
       "endLine": 8,
       "endColumn": 38,
-      "resolution": "unresolved",
-      "reason": "unsupported-callee"
+      "resolution": "python-source-declaration",
+      "target": {
+        "file": "domain/model.py",
+        "name": "total",
+        "line": 8,
+        "column": 5
+      }
     },
     {
       "file": "ui/view.py",
@@ -708,8 +713,13 @@
       "column": 25,
       "endLine": 10,
       "endColumn": 45,
-      "resolution": "unresolved",
-      "reason": "unsupported-callee"
+      "resolution": "python-source-declaration",
+      "target": {
+        "file": "domain/model.py",
+        "name": "total",
+        "line": 8,
+        "column": 5
+      }
     }
   ],
   "unresolved": {

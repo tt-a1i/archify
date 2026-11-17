@@ -10,3 +10,8 @@ contributed by tt-a1i (Archify's author):
   - fix(analyzers): constrain createRequire to the source module base
 
 See LICENSE for the copyright and permission notice.
+
+The Python syntax analyzer includes portions of Microsoft Pyright 1.1.414
+(commit a28cce4077d87b80bead12de809f79845e39c8ba), Copyright (c) Microsoft
+Corporation, under the MIT License. See extract/py/upstream/LICENSE.txt and
+extract/py/upstream/UPSTREAM.json for the full license and source provenance.

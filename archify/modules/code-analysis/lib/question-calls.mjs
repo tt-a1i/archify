@@ -23,7 +23,7 @@ const before = (aLine, aColumn, bLine, bColumn) => aLine < bLine || (aLine === b
 
 export function questionCalls({ facts, factsPath, inspect, entry, location, symbol, text, selectedFunction }) {
   const knownAdapter = facts?.repository?.language === 'ts' && /^typescript@/.test(facts?.repository?.adapter || '');
-  const pythonModel = facts?.repository?.language === 'py' && /^python@/.test(facts?.repository?.adapter || '') && ['python-lexical-v1', 'python-lexical-v2'].includes(facts?.callModel);
+  const pythonModel = facts?.repository?.language === 'py' && /^(?:python|pyright-parser)@/.test(facts?.repository?.adapter || '') && ['python-lexical-v1', 'python-lexical-v2', 'python-source-v1'].includes(facts?.callModel);
   const javaAdapter = facts?.repository?.language === 'java' && /^java-parser@/.test(facts?.repository?.adapter || '');
   const javaModel = javaAdapter && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts?.callModel)
     && (facts.callModel !== 'java-static-lexical-v5' || facts.languageScope?.language === 'java');
@@ -35,7 +35,7 @@ const bindingCoverage = rustModel ? (facts.callModel === 'rust-source-direct-v4'
     coverage: 'unavailable', reason: null,
     provenance: { rawFactsPath: factsPath ? path.resolve(factsPath) : null, adapter: facts?.repository?.adapter ?? null, adapterRevision: facts?.repository?.adapterRevision ?? null,
       snapshotId: facts?.repository?.snapshotId ?? null, callModel: facts?.callModel ?? null },
-    bindingCoverage: bindingCoverage ?? 'unknown',
+    bindingCoverage: pythonModel && facts.callModel === 'python-source-v1' ? 'captured-python-declarations-with-bounded-receiver-and-signature-types' : bindingCoverage ?? 'unknown',
     factRole: 'captured-evidence; use targetNavigation for current target locations',
     selection: { file: entry.file, kind: symbol ? 'function-source-range' : 'entry-file', range: null },
     total: null, included: 0, omitted: null, limit: LIMIT, records: [],
@@ -61,7 +61,13 @@ const bindingCoverage = rustModel ? (facts.callModel === 'rust-source-direct-v4'
     'Locations use exact UTF-16 source ranges and hashes. Metadata freshness is checked by the question entrypoint; at most 40 call records are presented. Read languageScope for selected packages, build conditions, excluded files and incomplete typing.',
   ];
   if (rustModel) result.limitations = [...facts.languageScope.limitations, 'Targets identify source declarations under the recorded crate/cfg profile, not compiler type attribution, general macro expansion or runtime dispatch. Records with macroEvidence come from the local macro_rules! binding visible at the callsite (including block-local shadowing) whose single argument expression is used exactly once under the active cfg; the definition location is the captured macro name. Read excluded/opaque regions before interpreting absent callers.'];
-  if (pythonModel) result.limitations.push(facts.callModel === 'python-lexical-v2'
+  if (pythonModel && facts.callModel === 'python-source-v1') result.limitations = [
+    'Records inventory Python source calls in the selected exact range, including nested bodies and defaults. Parsing uses transplanted Pyright syntax code; no Python executable, target execution or full Pyright type evaluator is used.',
+    'python-source-declaration identifies a unique captured source anchor using receiver declarations, source inheritance/C3, explicit annotations, PEP 695 substitution, annotated fields/properties or positive isinstance narrowing. It does not determine runtime dispatch, argument applicability or whole-project validity. Unknown bases before a candidate, shadows, callable fields, arbitrary decorators, ambiguous unions and overload-dependent results remain unknown.',
+    'Direct ordinary module functions, preceding unique local from-imports and one unconditional explicit reexport retain lexical targets. External/stub-only targets and longer reexport chains remain unknown. Current entry/target freshness verifies saved coordinates and content; it does not re-resolve other files or runtime mutations.',
+    'Definition ranges exclude preceding decorators. Coordinates are one-based UTF-16 and end-exclusive; hashes use the exact decoded source slice. Each factIndex identifies an unchanged snapshot call; at most 40 records are shown.',
+  ];
+  if (pythonModel && facts.callModel !== 'python-source-v1') result.limitations.push(facts.callModel === 'python-lexical-v2'
     ? 'One unconditional unique explicit from-import reexport may reach a captured ordinary function, including aliases. Longer chains, conditional/rebound/wildcard exports and runtime module initialization remain unproved.'
     : 'Historical python-lexical-v1 does not bind reexports; newer reader capabilities do not expand this saved capture.');
   if (facts?.callModel === 'js-ts-lexical-v5') result.limitations.push('JS/TS v5 follows explicit ESM local/imported function exports over captured acyclic value import/export edges; via records each forwarding statement. Observed writes/eval block imported implementation attribution. Star/type-only/dynamic/CommonJS forwarding and arbitrary value aliases/factory flow remain unsupported. Current forwarding-file freshness is required for target navigation; historical snapshots are not rebound.');

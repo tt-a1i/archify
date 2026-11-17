@@ -77,7 +77,7 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
   const language = facts?.repository?.language;
   const adapter = facts?.repository?.adapter || '';
   const savedEntry = !jsEntry && Array.isArray(facts?.files) && facts.files.some(f => f.path === entry)
-    && ((language === 'py' && /^python@\d/.test(adapter) && /\.py$/.test(entry || ''))
+    && ((language === 'py' && /^(?:python|pyright-parser)@\d/.test(adapter) && /\.py$/.test(entry || ''))
       || (language === 'java' && /^java-parser@\d/.test(adapter) && /\.java$/.test(entry || ''))
       || (language === 'go' && /^go-parser@\d/.test(adapter) && /\.go$/.test(entry || ''))
       || (language === 'rust' && /^rust-syn@\d/.test(adapter) && /\.rs$/.test(entry || '')));

@@ -1,0 +1,11 @@
+{
+  "pythonVersion": "3.14",
+  "venvPath": ".",
+  "venv": ".empty-env",
+  "typeCheckingMode": "off",
+  "useLibraryCodeForTypes": true,
+  "exclude": [
+    ".empty-env"
+  ],
+  "pythonPlatform": "All"
+}
