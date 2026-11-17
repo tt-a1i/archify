@@ -276,6 +276,7 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   git(repo, 'add', '-A');
   git(repo, 'commit', '-q', '-m', 'worker guard');
   const headSha = git(repo, 'rev-parse', 'HEAD');
+  const baseSha = git(repo, 'rev-parse', 'HEAD^');
 
   const dir = scratch();
   multiViewFixtures(dir);
@@ -309,6 +310,31 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   const okRes = run(['story', 'svg', specPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
   assert.equal(okRes.status, 0, okRes.stdout + okRes.stderr);
   assert.match(fs.readFileSync(outSvg, 'utf8'), /if \(!job\) return &quot;skip&quot;;/);
+
+  // Multiple pinned views must read the revision of the view owning the excerpt.
+  const beforeSeq = structuredClone(workerSeq);
+  beforeSeq.meta.repository.revision = baseSha;
+  beforeSeq.participants[1].sources[0].end_line = 3;
+  fs.writeFileSync(path.join(dir, 'before-seq.json'), JSON.stringify(beforeSeq));
+  const pairedSpec = JSON.parse(fs.readFileSync(specPath, 'utf8'));
+  pairedSpec.views.unshift({ id: 'before', type: 'sequence', input: 'before-seq.json' });
+  pairedSpec.steps.unshift({ view: 'before', title: 'Before the guard', body: 'The earlier implementation returns ok.', duration: 4 });
+  fs.writeFileSync(specPath, JSON.stringify(pairedSpec));
+  const pairedRes = run(['story', 'svg', specPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
+  assert.equal(pairedRes.status, 0, pairedRes.stdout + pairedRes.stderr);
+  assert.match(fs.readFileSync(outSvg, 'utf8'), /if \(!job\) return &quot;skip&quot;;/, 'The second view keeps its own pinned source instead of the first view revision');
+
+  // The same pin survives when the views arrive as rendered native HTML.
+  for (const [input, output] of [['before-seq.json', 'before-seq.html'], ['seq.json', 'seq.html']]) {
+    const rendered = run(['render', 'sequence', path.join(dir, input), path.join(dir, output), '--repo-root', repo], dir);
+    assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+  }
+  pairedSpec.views.forEach(view => { view.input = view.input.replace(/\.json$/, '.html'); });
+  fs.writeFileSync(specPath, JSON.stringify(pairedSpec));
+  fs.writeFileSync(path.join(repo, 'worker.mjs'), 'export function processJob() { return "uncommitted"; }\n');
+  const htmlViews = run(['story', 'svg', specPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
+  assert.equal(htmlViews.status, 0, htmlViews.stdout + htmlViews.stderr);
+  assert.match(fs.readFileSync(outSvg, 'utf8'), /if \(!job\) return &quot;skip&quot;;/, 'Rendered HTML views retain pinned source despite working-tree edits');
 
   const removedArch = {
     schema_version: 1,

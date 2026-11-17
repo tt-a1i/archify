@@ -143,9 +143,10 @@ function interpolateCssValue(prop, a, b, alpha, easing) {
 }
 
 class StoryTimeline {
-  constructor(duration, iteration) {
+  constructor(duration, iteration, theme) {
     this.duration = duration;
     this.iteration = iteration;
+    this.theme = theme;
     this.keyframesCss = [];
     this.tracks = new Map();
     this.index = 0;
@@ -174,7 +175,7 @@ class StoryTimeline {
       const anims = [];
       for (const { points, ease } of channels.values()) {
         const sorted = [...points].sort((a, b) => a.t - b.t);
-        const name = `sf${this.index++}`;
+        const name = `sf-${this.theme}-${this.index++}`;
         const stops = sorted.map(({ t, styleText, easing }) => {
           const pct = `${((Math.max(0, Math.min(this.duration, t)) / this.duration) * 100).toFixed(5)}%`;
           return `${pct}{${styleText};animation-timing-function:${easing || ease}}`;
@@ -182,7 +183,7 @@ class StoryTimeline {
         this.keyframesCss.push(`@keyframes ${name}{${stops}}`);
         anims.push(`${name} ${this.duration}s linear ${this.iteration}`);
       }
-      bindings.push(`${selector}{animation:${anims.join(',')}}`);
+      bindings.push(`svg[data-theme="${this.theme}"][data-archify-bake] :is(${selector}){animation:${anims.join(',')}}`);
     }
     return [...this.keyframesCss, ...bindings];
   }
@@ -394,7 +395,7 @@ function prepareStageParts({ plan, bakedViews, viewTypes, theme, palette, isZh }
       || stage.type
       || 'architecture';
     parts[stage.view] = prepareStageSvg({
-      view: { id: stage.view, type: viewType },
+      view: { id: `${theme}-${stage.view}`, type: viewType },
       rawSvg,
       statusBadges: plan.statusBadges,
       callouts: plan.viewCallouts?.[stage.view] || plan.callouts,
@@ -923,7 +924,7 @@ export function createCompiledStoryTheme({ plan, bakedViews, viewTypes = new Map
   const parts = prepareStageParts({ plan, bakedViews, viewTypes, theme, palette, isZh });
   validatePlanAgainstParts(plan, parts);
 
-  const timeline = new StoryTimeline(duration, iteration);
+  const timeline = new StoryTimeline(duration, iteration, theme);
   const staticCss = [
     styles.fontCss,
     `svg{font-family:${STORY_FONT_FALLBACK}}`,

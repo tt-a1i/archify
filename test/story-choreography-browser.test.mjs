@@ -153,11 +153,21 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
   assert.equal(reduced.tokenDisplay, 'none');
   assert.ok(reduced.maxCaptionBottom <= 112, `caption bottom ${reduced.maxCaptionBottom} must stay above 112px viewport`);
 
+  const nativeColors = `svg => [...svg.querySelectorAll('[data-node-id] text')].map(el => ({ text: el.textContent, fill: getComputedStyle(el).fill }))`;
+  const expectedColors = { light: await evalJs(`(${nativeColors})(document.documentElement)`) };
+  loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(darkSvg).href }); await loaded;
+  expectedColors.dark = await evalJs(`(${nativeColors})(document.documentElement)`);
+
   // 3. Interactive ArchifyStoryStage PNG & 1080p video export (WebM always, MP4 when H.264 supported)
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
   loaded = browser.cdp.waitFor('Page.loadEventFired', session);
   await send('Page.navigate', { url: pathToFileURL(stageHtml).href });
   await loaded;
+  for (const theme of ['light', 'dark']) {
+    const actualColors = await evalJs(`(() => { window.ArchifyStoryStage.pause(); window.ArchifyStoryStage.setTheme('${theme}'); return (${nativeColors})(document.querySelector('.stage-pane.is-active > svg')); })()`);
+    assert.deepEqual(actualColors, expectedColors[theme], `${theme} native diagram colors match the standalone SVG without contamination from the other pane`);
+  }
   const stageCheck = await evalJs(`(async () => {
     window.ArchifyStoryStage.pause();
     window.ArchifyStoryStage.seek(6.0);

@@ -135,22 +135,21 @@ function detectDiagramTypeFromSvg(svg, htmlText = '') {
   return 'workflow';
 }
 
-function makeSourceLoader({ baseDir, repoRoot, rawSpec, viewDiagrams, htmlFacts = null, requireDetailSource = false }) {
-  const revFromViews = () => {
-    for (const diagram of viewDiagrams.values()) {
-      if (diagram?.meta?.repository?.revision) {
-        return { head: diagram.meta.repository.revision, base: diagram.meta.repository.base_revision || null };
-      }
+function makeSourceLoader({ baseDir, repoRoot, viewDiagrams, htmlFacts = null, requireDetailSource = false }) {
+  const revisionForView = (viewId) => {
+    const repository = viewDiagrams.get(viewId)?.meta?.repository;
+    if (repository?.revision) {
+      return { head: repository.revision, base: repository.base_revision || null };
     }
     if (htmlFacts?.repository?.revision) {
       return { head: htmlFacts.repository.revision, base: htmlFacts.repository.baseRevision || null };
     }
-    return { head: rawSpec?.headSha || null, base: rawSpec?.baseSha || null };
+    return { head: null, base: null };
   };
 
   return (detail) => {
     validatePortableSourcePath(detail.path);
-    const revs = revFromViews();
+    const revs = revisionForView(detail.view);
     const sha = detail.revision === 'base' ? revs.base : revs.head;
     if (repoRoot && sha && /^[0-9a-f]{40}$/i.test(sha)) {
       const gitRes = runGit(repoRoot, ['show', '--no-textconv', `${sha}:${detail.path}`]);
@@ -286,6 +285,10 @@ function loadCanonicalViewSvg(view, { baseDir, tempDir, env, inputPaths, viewDia
         supportedFixes: ['pass an existing rendered native HTML file'],
       });
     }
+    const facts = scanStory(htmlPath);
+    if (facts.repository) viewDiagrams.set(view.id, { meta: { repository: {
+      ...facts.repository, base_revision: facts.repository.baseRevision,
+    } } });
     return extractCanonicalSvg(fs.readFileSync(htmlPath, 'utf8'));
   }
 
@@ -343,7 +346,7 @@ async function prepareChoreographyBundle({
     : await bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride, env, themeList, styles });
 
   const loadSourceLines = makeSourceLoader({
-    baseDir, repoRoot, rawSpec, viewDiagrams: baked.viewDiagrams, htmlFacts: singleHtml?.facts || null, requireDetailSource,
+    baseDir, repoRoot, viewDiagrams: baked.viewDiagrams, htmlFacts: singleHtml?.facts || null, requireDetailSource,
   });
   const plan = normalizeChoreographySpec(rawSpec, {
     declaredViews: [...baked.viewTypes.keys()], loadSourceLines, baseDir, repoRoot, requireDetailSource,
