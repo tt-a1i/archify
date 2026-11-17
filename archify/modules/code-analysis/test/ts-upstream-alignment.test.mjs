@@ -35,7 +35,7 @@ test('upstream configured-project theme: sibling jsconfig changes the import tar
   const project = ts.parseJsonConfigFileContent(loaded.config, ts.sys, path.dirname(configPath), undefined, configPath);
   assert.deepEqual(project.errors, []);
   const upstream = ts.resolveModuleName('@lib/helper', path.join(root, 'src/main.js'), project.options, ts.sys);
-  assert.equal(fs.realpathSync(upstream.resolvedModule?.resolvedFileName), fs.realpathSync(path.join(root, 'src/lib/helper.js')));
+  assert.equal(fs.realpathSync.native(upstream.resolvedModule?.resolvedFileName), fs.realpathSync.native(path.join(root, 'src/lib/helper.js')));
 
   const facts = extract(root, config);
   const imported = facts.imports.find(item => item.specifier === '@lib/helper');
@@ -84,7 +84,8 @@ test('upstream definition theme: navigation does not prove a runtime member-call
   });
   const callStart = source.lastIndexOf('run');
   const definitions = languageService.getDefinitionAtPosition(file, callStart);
-  assert.ok(definitions?.some(definition => definition.fileName === file && definition.textSpan.start < callStart));
+  assert.ok(definitions?.some(definition => fs.realpathSync.native(definition.fileName) === fs.realpathSync.native(file)
+    && definition.textSpan.start < callStart));
   const call = extract(root, config).calls.find(item => item.line === 1 && item.column > 30);
   assert.equal(call?.resolution, 'unresolved');
   assert.equal(call?.reason, 'unsupported-callee');
@@ -100,7 +101,7 @@ test('upstream CommonJS reference theme: a stable destructured require reaches o
   const upstream = ts.resolveModuleName('./a', path.join(root, 'b.js'), {
     allowJs: true, module: ts.ModuleKind.CommonJS, moduleResolution: ts.ModuleResolutionKind.Node10,
   }, ts.sys);
-  assert.equal(fs.realpathSync(upstream.resolvedModule?.resolvedFileName), fs.realpathSync(path.join(root, 'a.js')));
+  assert.equal(fs.realpathSync.native(upstream.resolvedModule?.resolvedFileName), fs.realpathSync.native(path.join(root, 'a.js')));
   const facts = extract(root, config);
   assert.deepEqual(facts.imports.filter(item => item.from === 'b.js').map(item => item.to), ['a.js']);
   const call = facts.calls.find(item => item.file === 'b.js' && item.line === 2);
@@ -198,7 +199,7 @@ test('upstream declaration-only package stays outside captured runtime edges', t
   const upstream = ts.resolveModuleName('foo', path.join(root, 'app.mts'), {
     module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext,
   }, ts.sys, undefined, undefined, ts.ModuleKind.ESNext);
-  assert.equal(fs.realpathSync(upstream.resolvedModule?.resolvedFileName), fs.realpathSync(path.join(root, 'node_modules/foo/index.d.ts')));
+  assert.equal(fs.realpathSync.native(upstream.resolvedModule?.resolvedFileName), fs.realpathSync.native(path.join(root, 'node_modules/foo/index.d.ts')));
   const facts = extract(root, config);
   assert.equal(facts.imports[0].resolved, false);
   assert.equal(facts.unresolved.external, 1);

@@ -71,9 +71,9 @@ test('excluded source stays outside facts but remains known to resolution', t =>
 });
 
 test('installed configuration packages remain supported and changes invalidate analysis', t => {
-  // Module resolution canonicalizes the macOS /var temporary-directory alias.
-  // Match that same path so the intended input mutation actually runs.
-  const root = fs.realpathSync(fixture(t, {
+  // Match native module resolution, including macOS aliases and Windows 8.3
+  // temporary paths, so the intended input mutation actually runs.
+  const root = fs.realpathSync.native(fixture(t, {
     'entry.ts': 'import { type T } from "./dep";', 'dep.ts': 'export interface T {}',
     'tsconfig.json': JSON.stringify({ extends: 'base-config' }),
     'node_modules/base-config/package.json': JSON.stringify({ name: 'base-config', tsconfig: 'base.json' }),
