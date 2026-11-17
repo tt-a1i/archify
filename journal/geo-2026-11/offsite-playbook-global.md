@@ -375,3 +375,19 @@ I am a maintainer of Archify.
 7. Re-run the GEO benchmark prompts after each channel, and record citations rather than impressions.
 
 Do not treat any single channel as a guaranteed citation source. The durable asset is the set of canonical pages and verifiable artifacts that every channel links back to.
+
+---
+
+## 7. Universal Positioning Draft ("Explain Anything — Beyond Software Code")
+
+Use this positioning whenever targeting broader design, knowledge-management, productivity, or Awesome-list entries rather than purely code-analysis threads:
+
+- **One-line Awesome-list summary (universal)**:
+  `Turns any idea, everyday workflow, domain question, Mermaid draft, or codebase into a polished, layout-checked interactive HTML diagram (10 diagram types) or a 4-style conclusion-first one-page explainer — light/dark themes, path tracing, browser collision checks, and extensible HTML.`
+- **Cross-domain proof links (no signup required)**:
+  - Everyday checklist explainer (first apartment lease): `https://archify.si/cases/explainer/first-rental`
+  - Community-extended interactive itinerary (4-day Shanghai CityWalk): `https://archify.si/cases/community/shanghai-citywalk`
+  - Personal planning & cashflow: `https://archify.si/cases/life/leave-plan.workflow`, `https://archify.si/cases/life/monthly-money.dataflow`, `https://archify.si/cases/life/job-search.lifecycle`
+  - Concept & engineering explainers: `https://archify.si/cases/explainer/tls-first-visit`, `https://archify.si/cases/explainer/p99-tail-latency`, `https://archify.si/cases/mco-runtime`
+  - Canonical comparison & complete retrieval reference: `https://archify.si/compare`, `https://archify.si/llms-full.txt`
+
