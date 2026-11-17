@@ -1,14 +1,14 @@
 # Archify vs Mermaid, Excalidraw, and PlantUML
 
-**Short answer:** use Mermaid when a small diagram must live inside a Markdown code block, Excalidraw when several people need to sketch together in real time, and PlantUML or D2 when diagrams are text files in a classic CI pipeline. Choose Archify when a coding agent should read a description, an existing Mermaid draft, or a real repository and produce a layout-checked, interactive standalone HTML diagram — or a conclusion-first one-page answer with cited panels. These tools overlap less than their marketing suggests.
+**Short answer:** use Mermaid when a tiny diagram must sit inside a Markdown code block, Excalidraw when several people need live freehand whiteboarding, and PlantUML or D2 when diagrams are text files in a classic CI pipeline. Choose **Archify** when you want an AI coding agent to turn **anything you want to understand, plan, or share** — an everyday life decision, a travel route, a complex concept, a tangled Mermaid draft, or a codebase — quickly and without diagram syntax into a polished, layout-checked interactive HTML diagram (**10 diagram types**) or a **4-style, conclusion-first one-page explainer**.
 
 <span id="answer" class="section-anchor" aria-hidden="true"></span>
 
-## The division of labor
+## Visual clarity across everyday life and software
 
-Archify is an open-source Agent Skill (Apache-2.0) at [archify.si](https://archify.si), maintained at [github.com/tt-a1i/archify](https://github.com/tt-a1i/archify). Your agent writes typed JSON for a diagram, or an `.archify.md` draft for a one-page answer. Archify then checks the schema, lays out and routes diagram geometry (running a real-browser inspection for diagrams; one-page explainers validate structure and leave browser checks opt-in), and writes one HTML file that needs no build step or network connection.
+Archify is an open-source Agent Skill (Apache-2.0) at [archify.si](https://archify.si), maintained at [github.com/tt-a1i/archify](https://github.com/tt-a1i/archify). Instead of forcing you to memorize diagram syntax or drag boxes around, you describe your topic in plain language — or point your agent at an existing plan, Mermaid draft, or repository. Your agent writes typed JSON across **10 native diagram types** (`architecture`, `workflow`, `sequence`, `dataflow`, `lifecycle`, `erd`, `class`, `tree`, `timeline`, `waterfall`), or an `.archify.md` draft for a **one-page explainer**. Archify validates schema and deterministic layout/routing (running real-browser inspection by default for native diagrams; one-page explainers run structural/delivery checks by default and browser checks when `--browser-check` is passed), then outputs a self-contained HTML file with no build step or network dependency.
 
-That makes Archify a different category from a diagram renderer. The hard part it targets is not typing diagram syntax; it is reading evidence, choosing a readable structure, avoiding overlapping connectors, and giving readers a way to inspect the result. If your problem is “render this text to an image in a README”, Archify is more machinery than you need.
+That makes Archify a different category from syntax renderers or blank whiteboards. Its goal is fast, zero-friction visual understanding across any complex subject — from [a 4-day Shanghai CityWalk itinerary](cases/community/shanghai-citywalk.html) or [a first-time apartment rental guide](cases/explainer/first-rental.html) to [the MCO runtime codebase](cases/mco-runtime.html). If all you need is a quick 5-box snippet rendered inline in a README, Archify is more machinery than necessary.
 
 <span id="matrix" class="section-anchor" aria-hidden="true"></span>
 
@@ -16,56 +16,58 @@ That makes Archify a different category from a diagram renderer. The hard part i
 
 | Dimension | Archify | Mermaid | Excalidraw | PlantUML / D2 |
 | --- | --- | --- | --- | --- |
-| Primary authoring | Coding agent writes typed JSON or a Markdown draft | You write text syntax | You draw by hand on a canvas | You write text syntax |
-| Inputs | Natural language, a plan, existing Mermaid text, or repository evidence at a pinned commit | Diagram text | Pointer or touch strokes | Diagram text |
-| Output | One self-contained interactive HTML artifact plus its source | Rendered SVG/PNG inside Markdown or a host page | Canvas scene, usually an image or share link | Rendered image |
-| Complex-graph readability | Schema, geometry, routing, and browser checks; focus and path highlighting | Depends on the renderer and the author's layout | Depends on the drawing | Layout is mostly explicit or automatic, without an interaction layer |
-| Interactive exploration | Focus, upstream/downstream reach, path highlight, source cards | Usually static | Static image after export | Usually static |
-| One-page answer | Panels with prose, tables, steps, charts, code, and validated diagrams | No | No | No |
-| Runtime requirements | Agent with file access and Node.js to author; any browser to read | Renderer in the host | Browser or app | Renderer or server |
-| Best fit | Agent-generated, evidence-aware diagrams and technical one-page answers | Small diagrams in Markdown | Real-time visual thinking | Text-authored diagrams in version control |
+| Primary authoring | AI agent from plain language | Hand-written text DSL | Manual canvas drawing | Hand-written text DSL |
+| Subject scope | Plans, concepts, life, repos | Markdown doc snippets | Freehand sketches | System/UML specs |
+| Output | Standalone interactive HTML + source | Inline SVG/PNG | Canvas / image export | Static SVG/PNG |
+| Visual polish & checks | 10 types, routing + browser check | Host renderer dependent | Manual arrangement | Auto layout, no browser check |
+| Interactive exploration | Focus, reach, path trace, themes | Usually static | Static on export | Usually static |
+| One-page explainer | 4 styles, synced diagrams & sources | No | No | No |
+| Delivery & extend | Zero-dep HTML + image/PDF export | Markdown host embed | App or share link | CI image artifact |
+| Best fit | Explain anything with polish & speed | Small inline diagrams | Live group sketching | Text-diff CI diagrams |
 
-The table describes default strengths, not absolute limits. A skilled author can make Mermaid look excellent, and a hand-drawn Excalidraw sketch often communicates faster than any formal diagram. The point is to match the tool to the work, not to declare a winner.
+The table describes default strengths, not rigid limits. Skilled authors can polish Mermaid, and a five-minute Excalidraw sketch often sparks great team discussion. Pick the artifact your readers actually need.
 
 <span id="boundaries" class="section-anchor" aria-hidden="true"></span>
 
 ## When another tool fits better
 
-- **Use Mermaid** when the diagram is small, must render directly inside GitHub or a docs site, and should stay editable as a few lines of text. This is still the least-friction choice for most README diagrams.
-- **Use Excalidraw** when the value is the shared sketching session, the informal style, or rapid whiteboarding with people who will not write diagram syntax.
-- **Use PlantUML or D2** when your team already treats diagrams as text, wants deterministic diffs in review, and runs rendering in CI. PlantUML coverage of UML notation is broader than Archify's class and sequence modes.
-- **Use a BI or observability tool** when the question is a live metric, a dashboard, or a trace explorer. Archify produces an authored artifact, not a live monitor.
-- **Use a hosted collaboration service** when several people must edit the same diagram at once or manage permissions. Archify is not a hosted editor.
+- **Use Mermaid** when the diagram is small, must render natively inside GitHub READMEs or docs Markdown, and should stay editable as a few lines of inline text.
+- **Use Excalidraw** when real-time collaborative whiteboarding, rough hand-drawn sketching, or mouse drag-and-drop brainstorming is the primary goal.
+- **Use PlantUML or D2** when your team already maintains diagrams as plain text in Git, wants line-by-line DSL diffs in review, or needs deep formal UML notation beyond Archify's `class` and `sequence` modes.
+- **Use a BI or observability tool** when you need live metrics, telemetry dashboards, or real-time trace streaming. Archify produces an authored artifact, not a live monitor.
+- **Use a hosted collaboration service** when several users need simultaneous cloud editing and role permissions. Archify is not a hosted SaaS editor.
 
-Archify also does not promise to parse every Mermaid construct, to discover a system automatically, or to prove that a diagram matches production behavior. A passing check validates the authored artifact, not the truth of every claim.
+Archify also does not promise lossless parsing of every Mermaid construct, automatic discovery of arbitrary systems without guidance, or proof that claims match runtime reality. Validation guarantees a clean, non-overlapping, browser-verified deliverable — human review still owns factual accuracy.
 
 <span id="workflows" class="section-anchor" aria-hidden="true"></span>
 
-## Three common workflows
+## Four high-leverage workflows
 
-### 1. A Mermaid draft has become too tangled
+### 1. Explain everyday plans, travel routes, or complex decisions (no code needed)
 
-Paste the Mermaid source into your configured agent and ask it to re-author the relationships as an Archify workflow or architecture diagram. The [Mermaid input guide](agent-diagrams.html#mermaid-input) shows a four-step example, the exact prompt, and what to verify before accepting the result. Then open [Start with a workflow description](start.html?type=workflow&input=description) to copy a bounded prompt of your own.
+Because a codebase is optional, Archify shines whenever a topic has too many moving parts for a wall of text: view [an annual leave workflow](cases/life/leave-plan.workflow.html), [a tenant-landlord renting sequence](cases/life/renting.sequence.html), [a monthly paycheck dataflow](cases/life/monthly-money.dataflow.html), [a job-search lifecycle](cases/life/job-search.lifecycle.html), or [a first-rental checklist explainer](cases/explainer/first-rental.html). And because the result is clean standalone HTML, your agent can extend it afterward with custom links or widgets — such as this community-extended [4-day Shanghai CityWalk interactive itinerary](cases/community/shanghai-citywalk.html). Open [Start with a workflow description](start.html?type=workflow&input=description) to try one from plain English.
 
-This is not a lossless converter. The agent reads the relationships and writes fresh JSON; styling, layout directives, and callbacks should not be assumed to carry over.
+### 2. Untangle a crowded Mermaid draft
 
-### 2. Nobody wants to draw boxes from a real repository
+Paste messy Mermaid source into your configured agent and ask it to re-author the relationships as a clean, non-overlapping Archify diagram with focus and path tracing. The [Mermaid input guide](agent-diagrams.html#mermaid-input) shows the workflow, exact prompt, and review checklist. Note that this is not a lossless converter: the agent understands your relationships and generates fresh typed JSON rather than preserving arbitrary Mermaid directives.
 
-Ask the agent to map one request or job through a specific repository, name the revision it inspected, and distinguish runtime components from build tooling. The [MCO runtime case](cases/mco-runtime.html) walks through a pinned-commit example, and the [MCO architecture artifact](cases/mco-runtime.architecture.html) shows the resulting diagram. The [repository evidence checklist](agent-diagrams.html#repository-evidence) lists the questions to ask before accepting a source-backed diagram.
+### 3. Answer a multi-part question on one page (Explainer)
 
-### 3. One diagram is not enough
+When one diagram still leaves readers asking "why?", an `.archify.md` one-page explainer leads with the conclusion first and explains each sub-question side by side with prose, tables, charts, code, and interactive diagrams — lighting up the exact part of the diagram each step refers to. Readers can switch among **four visual styles**, toggle light/dark mode, export long images or PDF, and trigger panel-scoped follow-up questions. Explore recorded examples: the [P99 tail-latency explainer](cases/explainer/p99-tail-latency.html) and the [first TLS visit explainer](cases/explainer/tls-first-visit.html).
 
-For an incident review or a protocol walkthrough, a single picture often hides the argument. A one-page explainer leads with the conclusion and reasons, then answers one sub-question per panel with prose, tables, steps, charts, code, and validated diagrams. See the [P99 tail-latency explainer](cases/explainer/p99-tail-latency.html) and the [first TLS visit explainer](cases/explainer/tls-first-visit.html). These artifacts are recorded examples, not generated on demand.
+### 4. Map a real codebase with pinned source evidence
+
+When understanding software matters, ask the agent to trace a concrete request or module at a specific revision and attach source file paths cleanly to diagram nodes. See the [MCO runtime case](cases/mco-runtime.html) and its [MCO architecture artifact](cases/mco-runtime.architecture.html), plus the [repository evidence checklist](agent-diagrams.html#repository-evidence).
 
 <span id="limits" class="section-anchor" aria-hidden="true"></span>
 
 ## What to check before choosing Archify
 
-- Do you have an agent environment with file access and Node.js?
-- Is the input more than diagram syntax — a description, a draft, or repository evidence?
-- Do readers need interaction, source links, or a conclusion-first written answer?
-- Can you accept an authored HTML artifact instead of a Markdown-renderable code block?
+- Do you have a coding agent environment (such as Claude Code, Codex, Cursor, OpenCode, or GitHub Copilot) with file access and Node.js?
+- Do you want clean layout, **10 diagram types** or **4-style synced Explainers** without writing diagram DSL by hand?
+- Will readers benefit from click-to-focus exploration, themes, clean presentation export, or an extensible HTML deliverable?
+- Are you comfortable delivering a self-contained `.html` file (plus JSON/Markdown source) rather than an inline Markdown code fence?
 
-If the answer to the first three is no, start with Mermaid. If you cannot accept a standalone HTML file and require a Markdown-renderable code block, Mermaid is the correct tool. Archify's advantage appears when the diagram must be generated, checked, explained, and inspected as a deliverable.
+If you strictly need an inline Markdown code block for a small flow, Mermaid remains the lightest tool. Whenever you want speed, visual polish, and rich interactivity to explain anything clearly — in work or everyday life — Archify is built for the job.
 
-Continue with the [scenario guide](guide.html) to pick a diagram type, the [agent diagramming guide](agent-diagrams.html) to learn the review workflow, or [Start](start.html) to install the Skill for your agent.
+Next steps: pick from all 10 types in the [scenario guide](guide.html), learn the authoring loop in the [agent diagramming guide](agent-diagrams.html), or head to [Start](start.html) to install the Skill.
