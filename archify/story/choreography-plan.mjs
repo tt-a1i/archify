@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { containedBy } from '../renderers/shared/path-semantics.mjs';
 import { STATIC_RELATION_TYPES } from './component-stage.mjs';
-import { compileBrief } from './story-plan.mjs';
+import { compileBrief, MAX_BRIEF_EXCERPT_LINES } from './story-plan.mjs';
 
 const roundTime = (value) => Math.round(value * 1000) / 1000;
 
@@ -635,14 +635,15 @@ function resolveShotCodeDetail(note, facts) {
   const fromLine = note.code.fromLine ?? source.line ?? 1;
   const toLine = note.code.toLine ?? Math.min(source.endLine || fromLine + 10, fromLine + 10);
   const lines = [];
-  for (let l = fromLine; l <= toLine && lines.length < 16; l += 1) lines.push(l);
+  for (let line = fromLine; line <= toLine && lines.length < MAX_BRIEF_EXCERPT_LINES; line += 1) lines.push(line);
   if (!lines.length) return null;
+  const highlight = (note.code.emphasis || []).filter((line) => lines.includes(line));
   return {
     nodes: [targetNode.id],
     title: `${source.path}`,
     path: source.path,
     lines,
-    ...(note.code.emphasis?.length ? { highlight: note.code.emphasis } : {}),
+    ...(highlight.length ? { highlight } : {}),
   };
 }
 

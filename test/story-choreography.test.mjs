@@ -118,13 +118,12 @@ test('standalone multi-view component choreography validates, compiles dual-them
     title: 'Gateway to Worker Component Walkthrough',
     caption: 'Standalone ARC component demonstration across architecture, sequence, and schema layers.',
     locale: 'zh-CN',
-    preset: 'classic',
     chrome: 'story',
     badge: 'v2 Async',
     stills: [1.0, 9.0],
     views: [
-      { id: 'arch', type: 'architecture', input: 'arch1.json', callouts: { gateway: { text: 'Edge Entry', tone: 'accent' } } },
-      { id: 'seq', type: 'sequence', input: 'seq2.json' },
+      { id: 'arch', type: 'architecture', input: 'arch1.json', preset: 'blueprint', callouts: { gateway: { text: 'Edge Entry', tone: 'accent' } } },
+      { id: 'seq', type: 'sequence', input: 'seq2.json', preset: 'editorial' },
       { id: 'schema', type: 'erd', input: 'erd3.json' },
     ],
     steps: [
@@ -185,6 +184,7 @@ test('standalone multi-view component choreography validates, compiles dual-them
   const svgRes = run(['story', 'svg', choreoPath, svgStem, '--theme', 'both', '--still', '--json'], dir);
   assert.equal(svgRes.status, 0, svgRes.stdout + svgRes.stderr);
   const svgJson = JSON.parse(svgRes.stdout);
+  assert.equal(svgJson.preset, 'blueprint');
   assert.equal(svgJson.outputs.length, 2);
   assert.equal(svgJson.stills.length, 4);
 
@@ -192,6 +192,7 @@ test('standalone multi-view component choreography validates, compiles dual-them
     const svg = fs.readFileSync(out.path, 'utf8');
     parseXml(svg);
     assert.equal(assertCamoSafeSvg(svg, { assert: false }).ok, true);
+    assert.match(svg, /<svg\b[^>]* data-preset="blueprint"/);
     assert.match(svg, /data-archify-bake="story"/);
     assert.match(svg, /Gateway API/);
     assert.match(svg, /Edge Entry/);
@@ -212,8 +213,9 @@ test('standalone multi-view component choreography validates, compiles dual-them
   }
 
   const stageHtmlPath = path.join(dir, 'stage.html');
-  const stageRes = run(['story', 'stage', choreoPath, stageHtmlPath, '--theme', 'dark', '--json'], dir);
+  const stageRes = run(['story', 'stage', choreoPath, stageHtmlPath, '--theme', 'dark', '--preset', 'signal-flow', '--json'], dir);
   assert.equal(stageRes.status, 0, stageRes.stdout + stageRes.stderr);
+  assert.equal(JSON.parse(stageRes.stdout).preset, 'signal-flow');
   const html = fs.readFileSync(stageHtmlPath, 'utf8');
   assert.match(html, /data-theme="dark"/);
   assert.match(html, /window\.ArchifyStoryStage/);
@@ -287,7 +289,13 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   git(repo, 'add', '.');
   git(repo, 'commit', '-q', '-m', 'base');
   git(repo, 'checkout', '-q', '-b', 'feat/worker');
-  fs.writeFileSync(path.join(repo, 'worker.mjs'), 'export function processJob(job) {\n  if (!job) return "skip";\n  return job.id;\n}\n');
+  fs.writeFileSync(path.join(repo, 'worker.mjs'), [
+    'export function processJob(job) {',
+    '  if (!job) return "skip";',
+    '  return job.id;',
+    '}',
+    ...Array.from({ length: 26 }, (_, i) => `// Cited line ${i + 5}`),
+  ].join('\n'));
   git(repo, 'add', '-A');
   git(repo, 'commit', '-q', '-m', 'worker guard');
   const headSha = git(repo, 'rev-parse', 'HEAD');
@@ -298,10 +306,10 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   const workerSeq = {
     schema_version: 1,
     diagram_type: 'sequence',
-    meta: { title: 'Worker Sequence', output: 'seq.html', repository: { url: 'https://github.com/acme/jobs', revision: headSha } },
+    meta: { title: 'Worker Sequence', output: 'seq.html', visual_preset: 'editorial', repository: { url: 'https://github.com/acme/jobs', revision: headSha } },
     participants: [
       { id: 'gateway', label: 'Gateway', type: 'backend' },
-      { id: 'worker', label: 'Worker', type: 'backend', sources: [{ path: 'worker.mjs', line: 1, end_line: 4 }] },
+      { id: 'worker', label: 'Worker', type: 'backend', sources: [{ path: 'worker.mjs', line: 1, end_line: 30 }] },
     ],
     messages: [
       { id: 'dispatch', from: 'gateway', to: 'worker', y: 170, label: 'dispatch()' },
@@ -350,6 +358,26 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   const htmlViews = run(['story', 'svg', specPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
   assert.equal(htmlViews.status, 0, htmlViews.stdout + htmlViews.stderr);
   assert.match(fs.readFileSync(outSvg, 'utf8'), /if \(!job\) return &quot;skip&quot;;/, 'Rendered HTML views retain pinned source despite working-tree edits');
+
+  const briefPath = path.join(dir, 'worker-brief.json');
+  fs.writeFileSync(briefPath, JSON.stringify({
+    version: 2,
+    title: 'Worker sources',
+    intro: 'Introduce the worker.',
+    outro: 'Return to the diagram.',
+    scenes: [{ title: 'Inspect the worker', points: [{
+      anchor: 'worker', title: 'Read the worker source', text: 'Show the full cited excerpt.',
+      code: { fromLine: 4, toLine: 23, emphasis: [23, 99] },
+    }] }],
+  }));
+  const bridged = run(['story', 'svg', path.join(dir, 'seq.html'), briefPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
+  assert.equal(bridged.status, 0, bridged.stdout + bridged.stderr);
+  const bridgeSvg = fs.readFileSync(outSvg, 'utf8');
+  const codeRows = [...bridgeSvg.matchAll(/<text\b[^>]*xml:space="preserve"[^>]*>([^<]*)<\/text>/g)];
+  assert.equal(codeRows.length, 20);
+  assert.equal(codeRows.at(-1)[1], '// Cited line 23');
+  assert.equal((bridgeSvg.match(/<rect id="story-source-hl-/g) || []).length, 1);
+  assert.equal(JSON.parse(bridged.stdout).preset, 'editorial');
 
   const removedArch = {
     schema_version: 1,

@@ -967,7 +967,10 @@ function assembleStorySvgMarkup({ plan, theme, preset, palette, staticCss, timel
 
 // Compiles stage AST, transforms, shared layers, and CSS timeline tracks once per theme,
 // allowing animated SVG and arbitrary static still snapshots without repeating AST passes.
-export function createCompiledStoryTheme({ plan, bakedViews, viewTypes = new Map(), theme, preset = 'classic', styles = loadViewerStyles() }) {
+export function createCompiledStoryTheme({
+  plan, bakedViews, viewTypes = new Map(), theme, preset = 'classic',
+  styles = loadViewerStyles(), reducedMotionFallback = true,
+}) {
   const duration = plan.duration;
   const iteration = plan.loop === false ? '1 both' : 'infinite';
   const palette = storyPalette(theme, preset, styles);
@@ -1005,8 +1008,6 @@ export function createCompiledStoryTheme({ plan, bakedViews, viewTypes = new Map
   const tokenMarkupByView = buildTraceTokenLayers(plan, parts, timeline, staticCss, duration, palette);
   const stageLayers = buildStageLayers(plan, parts, cameras, stageOpacity, tokenMarkupByView);
   const captionLayers = buildCaptionLayers(plan, timeline, duration, palette);
-  const reducedMotionRule = buildReducedMotionRule(plan, cameras);
-
   let cachedAnimatedCss = null;
   const baseMarkup = { plan, theme, preset, palette, staticCss, stageLayers, sharedLayers, detailMarkup, captionLayers };
 
@@ -1021,7 +1022,10 @@ export function createCompiledStoryTheme({ plan, bakedViews, viewTypes = new Map
       viewportTop: VIEWPORT.y,
     },
     renderAnimatedSvg() {
-      if (!cachedAnimatedCss) cachedAnimatedCss = [...timeline.emitCss(), reducedMotionRule];
+      if (!cachedAnimatedCss) {
+        cachedAnimatedCss = timeline.emitCss();
+        if (reducedMotionFallback) cachedAnimatedCss.push(buildReducedMotionRule(plan, cameras));
+      }
       return assembleStorySvgMarkup({ ...baseMarkup, timelineCss: cachedAnimatedCss, stillAt: null });
     },
     renderStillSvg(atTime = null) {
@@ -1031,8 +1035,8 @@ export function createCompiledStoryTheme({ plan, bakedViews, viewTypes = new Map
   };
 }
 
-export function compileStorySvg({ plan, bakedViews, viewTypes, theme, preset = 'classic', styles = loadViewerStyles() }) {
-  return createCompiledStoryTheme({ plan, bakedViews, viewTypes, theme, preset, styles }).renderAnimatedSvg();
+export function compileStorySvg(options) {
+  return createCompiledStoryTheme(options).renderAnimatedSvg();
 }
 
 export function compileStoryStillSvg({ plan, bakedViews, viewTypes, theme, preset = 'classic', styles = loadViewerStyles(), atTime = null }) {

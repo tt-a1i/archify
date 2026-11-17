@@ -328,18 +328,18 @@
     abortCheck(signal);
     const wasPlaying = playing;
     const savedTime = currentTime;
-    pause();
     const controls = [themeBtn, playBtn, replayBtn, range, ...stepButtons];
     const disabledStates = controls.map(control => control.disabled);
-    controls.forEach(control => { control.disabled = true; });
-    const target = makeCanvas(FRAMES_PER_READ);
-    const capture = createStageCapturer();
-    let encoder, mux, failure, wake;
+    let target, encoder, mux, failure, wake;
     const check = () => { abortCheck(signal); if (failure) throw failure; };
     const failed = (error) => { failure ??= error; wake?.(); };
     const cancel = () => { if (encoder && encoder.state !== 'closed') encoder.close(); wake?.(); };
 
     try {
+      pause();
+      controls.forEach(control => { control.disabled = true; });
+      target = makeCanvas(FRAMES_PER_READ);
+      const capture = createStageCapturer();
       mux = StoryContainer.open({
         format, audio: false, width: WIDTH, height: HEIGHT, fps, frames, samples: 0,
         duration: seconds, audioBitrate: 0, writer, maxBytes: MAX_BUFFERED_BYTES, check,
@@ -380,7 +380,7 @@
       cancel();
       try { await mux?.settle(); }
       finally {
-        target.width = target.height = 1;
+        if (target) target.width = target.height = 1;
         controls.forEach((control, i) => { control.disabled = disabledStates[i]; });
         playing = wasPlaying;
         applyTime(savedTime, wasPlaying);
@@ -409,10 +409,17 @@
     return handle.createWritable();
   }
 
-  async function runDownload(format) {
+  async function withVideoExport(run, controller = null) {
     if (activeJob) throw Error('A story export is already running.');
-    activeJob = new AbortController();
-    const signal = activeJob.signal;
+    activeJob = { controller };
+    try {
+      return await run();
+    } finally {
+      activeJob = null;
+    }
+  }
+
+  async function saveVideo(format, signal) {
     mp4Btn.disabled = webmBtn.disabled = pngBtn.disabled = true;
     const prev = statusEl.textContent;
     const ext = format === 'webm' ? '.webm' : '.mp4';
@@ -433,11 +440,17 @@
       try { await writer?.abort(error); } catch {}
       statusEl.textContent = error.name === 'AbortError' ? prev : (error.message || String(error));
     } finally {
-      activeJob = null;
       mp4Btn.disabled = webmBtn.disabled = pngBtn.disabled = false;
     }
   }
 
+  function runDownload(format) {
+    if (activeJob) return;
+    const controller = new AbortController();
+    return withVideoExport(() => saveVideo(format, controller.signal), controller);
+  }
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) pause();
   requestAnimationFrame(tick);
   playBtn.addEventListener('click', () => (playing ? pause() : play()));
   replayBtn.addEventListener('click', () => { playing = true; applyTime(0, true); });
@@ -465,9 +478,9 @@
     seek,
     setTheme,
     exportPNG,
-    exportVideo: (options) => encodeVideo(options),
-    writeVideo: (writer, options) => encodeVideo(options, writer),
-    cancelExport: () => activeJob?.abort(),
+    exportVideo: (options) => withVideoExport(() => encodeVideo(options)),
+    writeVideo: (writer, options) => withVideoExport(() => encodeVideo(options, writer)),
+    cancelExport: () => activeJob?.controller?.abort(),
     duration: meta.duration,
     defaults: { width: WIDTH, height: HEIGHT, fps: DEFAULT_FPS, format: 'mp4' },
     state: () => ({ theme: currentTheme, playing, time: currentTime, duration: meta.duration, steps: meta.steps }),

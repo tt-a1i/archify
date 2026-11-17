@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
-import {compileBrief,draftBrief,nativeMotions,openingModes} from './story-plan.mjs';
+import {compileBrief,draftBrief,nativeMotions,openingModes,MAX_BRIEF_EXCERPT_LINES} from './story-plan.mjs';
 import {resolveOutputPath} from '../renderers/shared/output-path.mjs';
 import {writeStoryOutput,rollbackStoryOutput} from './output.mjs';
 import {parse,serializeOuter} from './vendor/html-parser.mjs';
@@ -88,7 +88,7 @@ function excerpt(spec,anchor,facts,repoRoot){
   if(content.includes('\0'))throw Error('Code excerpts require text files.');
   const lines=content.split(/\r?\n/),first=source.line||1,last=source.endLine||lines.length;
   const from=spec.fromLine??first,to=spec.toLine??Math.min(last,from+13);
-  if(!Number.isInteger(from)||!Number.isInteger(to)||from<first||to>last||to<from||to-from>=20)throw Error('Code excerpt must fit its source range and contain at most 20 lines.');
+  if(!Number.isInteger(from)||!Number.isInteger(to)||from<first||to>last||to<from||to-from>=MAX_BRIEF_EXCERPT_LINES)throw Error(`Code excerpt must fit its source range and contain at most ${MAX_BRIEF_EXCERPT_LINES} lines.`);
   return {path:source.path,revision,line:from,endLine:to,lines:lines.slice(from-1,to).map((value,index)=>({number:from+index,text:value,emphasis:(spec.emphasis||[]).includes(from+index)}))};
 }
 

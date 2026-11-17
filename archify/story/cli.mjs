@@ -272,6 +272,7 @@ function bakeSingleHtmlBundleView({ singleHtml, presetOverride, rawPreset, theme
     viewTypes: new Map([['main', singleHtml.diagramType]]),
     viewDiagrams: new Map(),
     inputPaths: [singleHtml.htmlPath, singleHtml.briefPath],
+    resolvedPreset,
   };
 }
 
@@ -320,6 +321,7 @@ async function bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride,
   const viewTypes = new Map();
   const viewDiagrams = new Map();
   const inputPaths = [];
+  let resolvedPreset;
   const temp = createOwnedTempDirectory('archify-story-choreo-');
   try {
     for (const view of rawSpec.views) {
@@ -332,13 +334,14 @@ async function bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride,
       viewTypes.set(view.id, view.type);
       const canonical = loadCanonicalViewSvg(view, { baseDir, tempDir: temp.path, env, inputPaths, viewDiagrams });
       const effectivePreset = presetOverride || view.preset || rawSpec.preset || authoredPreset(canonical) || 'classic';
+      resolvedPreset ??= effectivePreset;
       const byTheme = new Map(themeList.map((theme) => [theme, bakeSvg(canonical, { theme, preset: effectivePreset, styles })]));
       bakedViews.set(view.id, byTheme);
     }
   } finally {
     await temp.cleanup();
   }
-  return { bakedViews, viewTypes, viewDiagrams, inputPaths };
+  return { bakedViews, viewTypes, viewDiagrams, inputPaths, resolvedPreset };
 }
 
 async function prepareChoreographyBundle({
@@ -387,7 +390,7 @@ async function prepareChoreographyBundle({
     viewTypes: baked.viewTypes,
     styles,
     inputPaths: baked.inputPaths,
-    resolvedPreset: presetOverride || rawSpec.preset || 'classic',
+    resolvedPreset: baked.resolvedPreset,
   };
 }
 
@@ -712,6 +715,17 @@ async function runStorySvgCommand(spec, opts) {
   return result;
 }
 
+function compileStoryStage(bundle, defaultTheme) {
+  const compileTheme = (theme) => compileStorySvg({
+    plan: bundle.plan, bakedViews: bundle.bakedViews, viewTypes: bundle.viewTypes,
+    theme, preset: bundle.resolvedPreset, styles: bundle.styles, reducedMotionFallback: false,
+  }).svg;
+  return buildStoryStageHtml({
+    plan: bundle.plan, lightSvg: compileTheme('light'), darkSvg: compileTheme('dark'),
+    defaultTheme, preset: bundle.resolvedPreset,
+  });
+}
+
 async function runStoryVideoCommand(spec, opts, defaultTheme) {
   const outputArg = opts.positional.at(-1);
   const ext = path.extname(outputArg).toLowerCase();
@@ -745,18 +759,7 @@ async function runStoryVideoCommand(spec, opts, defaultTheme) {
     });
   }
 
-  const lightCompiled = compileStorySvg({
-    plan: bundle.plan, bakedViews: bundle.bakedViews, viewTypes: bundle.viewTypes,
-    theme: 'light', preset: bundle.resolvedPreset, styles: bundle.styles,
-  });
-  const darkCompiled = compileStorySvg({
-    plan: bundle.plan, bakedViews: bundle.bakedViews, viewTypes: bundle.viewTypes,
-    theme: 'dark', preset: bundle.resolvedPreset, styles: bundle.styles,
-  });
-  const html = buildStoryStageHtml({
-    plan: bundle.plan, lightSvg: lightCompiled.svg, darkSvg: darkCompiled.svg,
-    defaultTheme, preset: bundle.resolvedPreset,
-  });
+  const html = compileStoryStage(bundle, defaultTheme);
 
   const buffer = await renderStageVideoViaChrome({ html, format, fps, start, seconds });
   const safeVideo = writeValidatedStoryFile({
@@ -800,18 +803,7 @@ async function runStoryStageCommand(spec, opts, defaultTheme) {
     requireDetailSource: true,
   });
   const allInputPaths = [...new Set([...spec.inputPaths, ...bundle.inputPaths])];
-  const lightCompiled = compileStorySvg({
-    plan: bundle.plan, bakedViews: bundle.bakedViews, viewTypes: bundle.viewTypes,
-    theme: 'light', preset: bundle.resolvedPreset, styles: bundle.styles,
-  });
-  const darkCompiled = compileStorySvg({
-    plan: bundle.plan, bakedViews: bundle.bakedViews, viewTypes: bundle.viewTypes,
-    theme: 'dark', preset: bundle.resolvedPreset, styles: bundle.styles,
-  });
-  const html = buildStoryStageHtml({
-    plan: bundle.plan, lightSvg: lightCompiled.svg, darkSvg: darkCompiled.svg,
-    defaultTheme, preset: bundle.resolvedPreset,
-  });
+  const html = compileStoryStage(bundle, defaultTheme);
   const safeHtml = writeValidatedStoryFile({
     requestedOutput: opts.positional.at(-1),
     requiredExtension: '.html',

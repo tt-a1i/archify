@@ -60,7 +60,7 @@ function buildChoreographySample(dir) {
     id: 'browser-demo',
     title: 'Async Queue Choreography',
     chrome: 'story',
-    stills: [7.5],
+    stills: [2, 6],
     views: [
       { id: 'before', type: 'architecture', input: 'before.json', callouts: { mail: { text: 'Retired', tone: 'removed' } } },
       { id: 'after', type: 'architecture', input: 'after.json', callouts: { api: { text: 'Modified', tone: 'modified' }, queue: { text: 'New Queue', tone: 'added' } } },
@@ -98,14 +98,14 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
 
   const lightSvg = svgJson.outputs.find((o) => o.theme === 'light').path;
   const darkSvg = svgJson.outputs.find((o) => o.theme === 'dark').path;
-  const lightStill = svgJson.stills.find((s) => s.theme === 'light').path;
+  const lightStills = svgJson.stills.filter((s) => s.theme === 'light');
 
   const hostHtml = path.join(dir, 'host.html');
   const toDataUri = (f) => `data:image/svg+xml;base64,${fs.readFileSync(f).toString('base64')}`;
   fs.writeFileSync(hostHtml, `<!doctype html><html><head><meta charset="utf-8"></head><body>
     <img id="img-light" src="${toDataUri(lightSvg)}" alt="light">
     <img id="img-dark" src="${toDataUri(darkSvg)}" alt="dark">
-    <img id="img-still" src="${pathToFileURL(lightStill).href}" alt="still">
+    <img id="img-still" src="${pathToFileURL(lightStills[0].path).href}" alt="still">
     <picture><source media="(prefers-color-scheme: dark)" srcset="${pathToFileURL(darkSvg).href}"><img id="pic" src="${pathToFileURL(lightSvg).href}" alt="pic"></picture>
   </body></html>`);
 
@@ -166,11 +166,29 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
   await send('Page.navigate', { url: pathToFileURL(darkSvg).href }); await loaded;
   expectedColors.dark = await evalJs(`(${nativeColors})(document.documentElement)`);
 
-  // 3. Interactive ArchifyStoryStage PNG & 1080p video export (WebM always, MP4 when H.264 supported)
-  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+  // 3. Interactive Stage playback and export with reduced motion enabled.
   loaded = browser.cdp.waitFor('Page.loadEventFired', session);
   await send('Page.navigate', { url: pathToFileURL(stageHtml).href });
   await loaded;
+  const playback = await evalJs(`(() => {
+    const captionOpacity = () => [...document.querySelectorAll('.stage-pane.is-active .story-caption')]
+      .map(caption => Number(getComputedStyle(caption).opacity));
+    const opening = window.ArchifyStoryStage.state();
+    const openingCaptions = captionOpacity();
+    const range = document.getElementById('stage-range');
+    range.value = 6;
+    range.dispatchEvent(new Event('change'));
+    const scrubbed = window.ArchifyStoryStage.state();
+    return { opening, openingCaptions, scrubbed, scrubbedCaptions: captionOpacity() };
+  })()`);
+  await t.test('Stage opens paused and scrubs between scenes with reduced motion', () => {
+    assert.deepEqual(playback.openingCaptions, [1, 0]);
+    assert.equal(playback.opening.playing, false);
+    assert.equal(playback.opening.time, 0);
+    assert.equal(playback.scrubbed.playing, false);
+    assert.equal(playback.scrubbed.time, 6);
+    assert.deepEqual(playback.scrubbedCaptions, [0, 1]);
+  });
   for (const theme of ['light', 'dark']) {
     const actualColors = await evalJs(`(() => { window.ArchifyStoryStage.pause(); window.ArchifyStoryStage.setTheme('${theme}'); return (${nativeColors})(document.querySelector('.stage-pane.is-active > svg')); })()`);
     assert.deepEqual(actualColors, expectedColors[theme], `${theme} native diagram colors match the standalone SVG without contamination from the other pane`);
@@ -185,16 +203,20 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const pngDims = { width: bmp.width, height: bmp.height };
     bmp.close();
     let controlsLocked = false;
+    let overlappingExport;
     const controls = [...document.querySelectorAll('#stage-theme,#stage-play,#stage-replay,#stage-range,.stage-step')];
-    const vidBlob = await window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 4.5, seconds: 0.5, fps: 10, onProgress: ev => {
+    const vidBlob = await window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 2, seconds: 5, fps: 1, onProgress: ev => {
       if (ev.frame === 1) {
         controlsLocked = controls.every(el => el.disabled);
         document.getElementById('stage-theme').click();
         document.getElementById('stage-replay').click();
         document.dispatchEvent(new KeyboardEvent('keydown', {code:'Space',bubbles:true}));
         controlsLocked = controlsLocked && !window.ArchifyStoryStage.state().playing;
+        overlappingExport = window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 0, seconds: 0.1, fps: 10 })
+          .then(() => null, error => error.message);
       }
     } });
+    const overlapMessage = await overlappingExport;
     const themeAfterExport = window.ArchifyStoryStage.state().theme;
     const timeAfterExport = window.ArchifyStoryStage.state().time;
     const controller = new AbortController();
@@ -217,9 +239,36 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
       video.onerror = () => { clearTimeout(timer); reject(new Error('WebM decode failed')); };
     });
     const videoDims = { width: video.videoWidth, height: video.videoHeight, duration: video.duration };
+    // Compare decoded frames with the requested timeline stills.
+    const thumbnail = document.createElement('canvas');
+    thumbnail.width = 96;
+    thumbnail.height = 54;
+    const ctx = thumbnail.getContext('2d', { willReadFrequently: true });
+    const frameSample = (source, x = 0, width = thumbnail.width) => {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, thumbnail.width, thumbnail.height);
+      ctx.drawImage(source, x, 0, width, thumbnail.height);
+      return ctx.getImageData(0, 0, thumbnail.width, thumbnail.height).data;
+    };
+    const firstFrame = frameSample(video);
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('WebM seek timeout')), 5000);
+      video.onseeked = () => { clearTimeout(timer); resolve(); };
+      video.currentTime = video.duration - 0.5;
+    });
+    const lastFrame = frameSample(video);
     video.removeAttribute('src');
     video.load();
     URL.revokeObjectURL(vUrl);
+    const stills = await Promise.all(${JSON.stringify(lightStills.map(still => toDataUri(still.path)))}.map(async (src) => {
+      const img = new Image();
+      img.src = src;
+      await img.decode();
+      const width = thumbnail.height * img.width / img.height;
+      return frameSample(img, (thumbnail.width - width) / 2, width);
+    }));
+    const distance = (pixels, still) => pixels.reduce((sum, channel, i) => sum + Math.abs(channel - still[i]), 0);
+    const matchedStills = [firstFrame, lastFrame].map(frame => distance(frame, stills[0]) < distance(frame, stills[1]) ? 0 : 1);
     const supportsH264 = typeof VideoEncoder !== 'undefined' && (await VideoEncoder.isConfigSupported({
       codec: 'avc1.64002a', width: 1920, height: 1080, framerate: 30, bitrate: 12000000, latencyMode: 'quality', avc: { format: 'avc' },
     })).supported;
@@ -232,9 +281,15 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
         silentMp4Head = new TextDecoder().decode(await mp4.slice(4,12).arrayBuffer());
       } finally { window.AudioEncoder = originalAudioEncoder; }
     }
-    return { state, pngDims, head, videoDims, supportsH264, silentMp4Head, themeAfterExport, timeAfterExport, controlsLocked, cancelRestored, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
+    return { state, pngDims, head, videoDims, matchedStills, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, timeAfterExport, controlsLocked, cancelRestored, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
   })()`);
 
+  await t.test('Stage rejects an overlapping export before it can change reader state', () => {
+    assert.match(stageCheck.overlapMessage ?? '', /already running/i);
+  });
+  await t.test('decoded Stage video advances under reduced motion', () => {
+    assert.deepEqual(stageCheck.matchedStills, [0, 1]);
+  });
   assert.equal(stageCheck.state.theme, 'light');
   assert.equal(stageCheck.state.playing, false);
   assert.equal(stageCheck.themeAfterExport, 'light', 'Theme control cannot mix light and dark frames during export');
