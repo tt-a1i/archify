@@ -108,6 +108,9 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       await assertPrimaryContrast(locale+' '+theme);
     }
     if (locale==='zh-CN') {
+      const coverage = await run("document.querySelector('.coverage .cov').textContent");
+      assert.match(coverage, /未检查：[^。]*重复代码/);
+      assert.doesNotMatch(coverage, /\bduplication\b/);
       await run("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__copied=value;}}});document.querySelector('.priority-card .quick-copy').click()");
       await run("new Promise((resolve,reject)=>{const deadline=Date.now()+3000;const poll=()=>window.__copied?resolve():Date.now()>deadline?reject(new Error('Chinese copy did not finish')):setTimeout(poll,20);poll();})");
       const status=await run("document.querySelector('.priority-card .handoff-status').textContent");
