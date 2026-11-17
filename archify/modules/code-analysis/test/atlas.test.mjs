@@ -53,8 +53,9 @@ test('atlas: functions keep their measurements and reported ones point at their 
 test('atlas: captured files stay behind Find file and export from the right panel', (t) => {
   const { atlas } = analyze(t);
   const client = fs.readFileSync(new URL('../overlay/client/atlas.js', import.meta.url), 'utf8');
-  assert.match(client, /class="atlas-files-pane" hidden/);
-  assert.match(client, /Find file/);
+  assert.match(client, /id="atlas-tab-map"/);
+  assert.match(client, /id="atlas-tab-files"/);
+  assert.match(client, /class="atlas-files-pane" id="atlas-files-panel" role="tabpanel" aria-labelledby="atlas-tab-files" hidden/);
   const first = atlas.files[0];
   const markdown = `# ${first[0]}\n\nModule: ${atlas.modules[first[1]].label}`;
   assert.match(markdown, new RegExp(first[0].replaceAll('/', '\\/')));
