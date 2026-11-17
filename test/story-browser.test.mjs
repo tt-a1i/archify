@@ -92,6 +92,9 @@ test('a public story attaches once, follows native appearance and retains source
   async function evaluate(expression,awaitPromise=false){let result;try{result=await send('Runtime.evaluate',{expression,awaitPromise,returnByValue:true,userGesture:true});}catch(error){error.message+='\nStory operation: '+expression.slice(0,200);throw error;}assert.equal(result.exceptionDetails,undefined,result.exceptionDetails?.exception?.description);return result.result?.value;}
   await send('Network.enable');await send('Network.setBlockedURLs',{urls:['http://*','https://*','ws://*','wss://*']});
   await send('Emulation.setDeviceMetricsOverride',{width:981,height:815,deviceScaleFactor:1,mobile:false});
+  // This fixture protects motion, audio bounds and cleanup, using portable WebM.
+  // Model Linux Chrome's missing AAC encoder; the dedicated test below owns MP4 defaults.
+  await send('Page.addScriptToEvaluateOnNewDocument',{source:`if(typeof AudioEncoder!=='undefined'){const supported=AudioEncoder.isConfigSupported.bind(AudioEncoder);AudioEncoder.isConfigSupported=config=>config.codec==='mp4a.40.2'?Promise.resolve({config,supported:false}):supported(config);}`});
   const motionState=`win=>{const doc=win.document,rule=[...doc.styleSheets].flatMap(sheet=>[...sheet.cssRules]).find(rule=>rule.cssRules?.[0]?.style?.getPropertyValue('--test-motion-policy')==='legacy');return {render:doc.documentElement.hasAttribute('data-motion-render'),reduced:win.Archify.motionGovernor.reducedMotion(),mode:win.Archify.motionGovernor.mode(),media:rule?.media.mediaText,transfers:[...doc.querySelectorAll('.ambient-edge-flow')].flatMap(flow=>flow.getAnimations()).length};}`;
   const reducedPolicy={render:false,reduced:true,mode:'still',media:'(prefers-reduced-motion: reduce)',transfers:0};
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
@@ -163,7 +166,7 @@ test('a public story attaches once, follows native appearance and retains source
   await evaluate('Archify.story.setView("story")',true);
   assert.deepEqual(await evaluate(`(${motionState})(document.querySelector('.story-panel iframe').contentWindow)`),reducedPolicy,'interactive Story playback keeps its original reduced-motion policy');
   const rendered=await evaluate(`(async()=>{
-    let result;await Archify.story.exportVideo({seconds:.1,onProgress:()=>{
+    let result;await Archify.story.exportVideo({format:'webm',seconds:.1,onProgress:()=>{
       if(result)return;const win=document.querySelector('.story-render-frame').contentWindow,start=win.Story.shots[1].start;
       Object.defineProperty(win.document,'hidden',{configurable:true,get:()=>true});win.document.dispatchEvent(new win.Event('visibilitychange'));
       result={first:win.Story.seek(start+.1).camera,next:win.Story.seek(start+.8).camera,wash:win.document.querySelector('.transition-light').style.opacity,
@@ -189,12 +192,12 @@ test('a public story attaches once, follows native appearance and retains source
   const longLoaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(longOutput).href});await longLoaded;
   await evaluate('Archify.story.setView("story")',true);
   const rejected=await evaluate(`(async()=>{
-    Archify.story.seek(8);const task=Archify.story.exportVideo();Archify.story.cancelExport();
+    Archify.story.seek(8);const task=Archify.story.exportVideo({format:'webm'});Archify.story.cancelExport();
     try{await task;return {message:'Unexpected success'};}catch(error){return {message:error.message,frames:document.querySelectorAll('.story-render-frame').length,time:Archify.story.state().time};}
   })()`,true);
   assert.match(rejected.message,/supported buffer budget/,'oversized export is rejected before cancellation or frame encoding');assert.equal(rejected.frames,0);assert.equal(rejected.time,8);
   const supported=await evaluate(`(async()=>{
-    const task=Archify.story.exportVideo({seconds:110});Archify.story.cancelExport();
+    const task=Archify.story.exportVideo({format:'webm',seconds:110});Archify.story.cancelExport();
     try{await task;return 'Unexpected success';}catch(error){return error.name;}
   })()`,true);
   assert.equal(supported,'AbortError','a normal full-story range passes preflight without encoding in this cancellation probe');
