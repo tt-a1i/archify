@@ -219,6 +219,10 @@ test('a hosted Viewer keeps preset controls and blueprint decoration without sta
   let viewer;for(let attempt=0;attempt<40;attempt++){viewer=await inspectNativeViewer(browser);if(viewer.available&&viewer.preset==='editorial')break;await new Promise(resolve=>setTimeout(resolve,50));}
   assert.equal(viewer.preset,'editorial',JSON.stringify(viewer));
   assert.deepEqual(viewer.badges,['none','none'],'The header badge and the plate stay off in a hosted Viewer');
+  // Enter the hosted frame as a reader would. Chrome 158 keeps child focus
+  // on body when DevTools calls .focus() before the host enters that frame.
+  await keyboardActivate(browser,'[data-close-diagram]','Tab');
+  assert.equal(await pageValue(browser,`document.activeElement.matches('#diagram-dialog iframe')`),true,'Tab enters the native Viewer from the dialog close button');
   const attached=await browser.cdp.send('Target.attachToTarget',{targetId:viewer.targetId,flatten:true});
   try {
    const lens=await browser.cdp.send('Runtime.evaluate',{expression:`(()=>{document.querySelector('#btn-semantic-lens').click();return {title:document.querySelector('#semantic-lens-title').textContent,instruction:document.querySelector('.semantic-lens-instruction').textContent,backendKind:document.querySelector('.semantic-lens-kind[data-kind="backend"]')?.textContent||''};})()`,returnByValue:true},attached.sessionId);
@@ -228,8 +232,8 @@ test('a hosted Viewer keeps preset controls and blueprint decoration without sta
    await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector('#semantic-lens-close').click()`,returnByValue:true},attached.sessionId);
    for(const preset of ['signal-flow','blueprint','editorial','classic']) {
     for(const selector of ['#btn-preset',`[data-preset-value="${preset}"]`]) {
-     const focused=await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)}).focus();document.activeElement.matches(${JSON.stringify(selector)})`,returnByValue:true},attached.sessionId);
-     assert.equal(focused.result.value,true);
+     const focused=await browser.cdp.send('Runtime.evaluate',{expression:`(()=>{const e=document.querySelector(${JSON.stringify(selector)});e.focus();return {focused:document.activeElement===e,selector:${JSON.stringify(selector)},active:document.activeElement?.outerHTML?.slice(0,400),documentFocused:document.hasFocus(),menuOpen:document.querySelector('#preset-menu').classList.contains('open'),visible:Boolean(e.getClientRects().length),preset:document.documentElement.dataset.preset};})()`,returnByValue:true},attached.sessionId);
+     assert.equal(focused.result.value.focused,true,JSON.stringify(focused.result.value));
      for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key:'Enter',code:'Enter',windowsVirtualKeyCode:13,...(type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})},attached.sessionId);
     }
     const result=await browser.cdp.send('Runtime.evaluate',{expression:`({preset:document.documentElement.dataset.preset,selected:document.querySelector('[data-preset-value="${preset}"]').getAttribute('aria-checked'),header:getComputedStyle(document.querySelector('.header-row'),'::after').display,decoration:getComputedStyle(document.querySelector('.diagram-container'),'::after').display,background:getComputedStyle(document.querySelector('.diagram-container'),'::after').backgroundImage})`,returnByValue:true},attached.sessionId);
