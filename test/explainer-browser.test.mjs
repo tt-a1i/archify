@@ -228,8 +228,8 @@ test('a hosted Viewer keeps preset controls and blueprint decoration without sta
    await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector('#semantic-lens-close').click()`,returnByValue:true},attached.sessionId);
    for(const preset of ['signal-flow','blueprint','editorial','classic']) {
     for(const selector of ['#btn-preset',`[data-preset-value="${preset}"]`]) {
-     const focused=await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)}).focus();document.activeElement.matches(${JSON.stringify(selector)})`,returnByValue:true},attached.sessionId);
-     assert.equal(focused.result.value,true);
+     const focused=await browser.cdp.send('Runtime.evaluate',{expression:`(()=>{const e=document.querySelector(${JSON.stringify(selector)});e.focus();return {focused:document.activeElement===e,selector:${JSON.stringify(selector)},active:document.activeElement?.outerHTML?.slice(0,400),documentFocused:document.hasFocus(),menuOpen:document.querySelector('#preset-menu').classList.contains('open'),visible:Boolean(e.getClientRects().length),preset:document.documentElement.dataset.preset};})()`,returnByValue:true},attached.sessionId);
+     assert.equal(focused.result.value.focused,true,JSON.stringify(focused.result.value));
      for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key:'Enter',code:'Enter',windowsVirtualKeyCode:13,...(type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})},attached.sessionId);
     }
     const result=await browser.cdp.send('Runtime.evaluate',{expression:`({preset:document.documentElement.dataset.preset,selected:document.querySelector('[data-preset-value="${preset}"]').getAttribute('aria-checked'),header:getComputedStyle(document.querySelector('.header-row'),'::after').display,decoration:getComputedStyle(document.querySelector('.diagram-container'),'::after').display,background:getComputedStyle(document.querySelector('.diagram-container'),'::after').backgroundImage})`,returnByValue:true},attached.sessionId);
