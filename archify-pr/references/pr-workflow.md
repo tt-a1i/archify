@@ -86,7 +86,7 @@ node <archify-pr-root>/bin/archify-pr.mjs pr attach <pr-number-or-url> --manifes
 
 On GitLab, use a static pack of standalone views. Sign in to the MR host with a
 version of `glab` that supports `glab api --form`. Use the full HTTPS MR URL.
-The GitLab target defaults to `comment`.
+The GitLab target defaults to `comment`. For a custom HTTPS port, configure the matching `api_host` (including port) and HTTPS API protocol in `glab` for that hostname.
 
 ```sh
 node <archify-pr-root>/bin/archify-pr.mjs pr build <pr-pack.json> --out-dir <out> --repo-root <repo> --platform gitlab --json
@@ -94,7 +94,7 @@ node <archify-pr-root>/bin/archify-pr.mjs pr attach <gitlab-mr-url> --manifest <
 node <archify-pr-root>/bin/archify-pr.mjs pr attach <gitlab-mr-url> --manifest <out>/pr-pack.receipt.json --json
 ```
 
-GitLab attach checks the MR head, uploads changed SVGs to the target project,
+GitLab attach checks the MR head and any pinned merge base, uploads changed SVGs to the target project,
 and creates or updates the signed-in user's Archify comment. If an upload or
 note write fails, retry the command. Files already uploaded during a failed
 attempt can remain in project storage.
