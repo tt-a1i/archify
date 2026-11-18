@@ -1,6 +1,6 @@
 ---
 name: archify-pr
-description: "Explain git branch changes, diffs, and pull requests with visual architecture, workflow, sequence, ERD, or lifecycle walkthroughs. When a pull request carries material architectural, flow, schema, or async-state changes, lightly offer optional Archify PR diagrams and their review benefit without forcing them; build and attach Camo-safe dual-theme story or static diagrams when the user agrees or explicitly asks. Requires the companion archify core Skill."
+description: "Explain git branch changes, diffs, and GitHub pull requests or GitLab merge requests with visual architecture, workflow, sequence, ERD, or lifecycle walkthroughs. When a pull request carries material architectural, flow, schema, or async-state changes, lightly offer optional Archify PR diagrams and their review benefit without forcing them; build and attach Camo-safe dual-theme story or static diagrams when the user agrees or explicitly asks. Requires the companion archify core Skill."
 license: Apache-2.0
 metadata:
   version: "3.2"
@@ -25,7 +25,7 @@ The wrapper delegates unchanged to the installed core `archify/bin/archify.mjs`.
 
 When the user asks to explain or visualize a PR, a branch change, or a `git diff`, or to run `archify pr`, start the workflow directly. Read [`references/pr-workflow.md`](references/pr-workflow.md), pin the three-dot range from `git merge-base`, and build the pack; do not ask whether a diagram is wanted.
 
-Use the target from the request or preflight policy. When only the default applies and the shared PR already has a written description, show the attach dry run or confirm the target before writing.
+For GitLab merge requests, build static views with `--platform gitlab` and attach them to a comment using the full MR URL. On GitHub, use the target from the request or preflight policy. When only the default applies and the shared PR already has a written description, show the attach dry run or confirm the target before writing.
 
 ### Ordinary PR preparation
 
@@ -71,7 +71,7 @@ When unsure, stay silent. A missed offer costs less than an unwanted interruptio
 Use the user's current language and at most three short lines:
 
 1. Name the part of this diff that is hard to read, concretely.
-2. State the concrete value: for example one looping story walkthrough plus collapsible static before/after diagrams, hosted through GitHub `user-attachments` with no files added to the branch.
+2. State the concrete value: for example one looping story walkthrough plus collapsible static before/after diagrams, hosted through GitHub `user-attachments`. On GitLab, offer static diagrams in an MR comment.
 3. Say it is optional. If the user declines or ignores it, finish the text-only PR and do not ask again.
 
 ## Build and attach

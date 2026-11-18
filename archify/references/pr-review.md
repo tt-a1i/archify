@@ -16,7 +16,7 @@ node bin/archify.mjs pr preflight --repo-root <repo> --base origin/<base> --head
 
 Preflight resolves the merge-base and head, counts changed files and lines, classifies paths, and returns `materiality` and `policy`. Omit `--init` for a read-only check. With `--init`, fill in the generated manifest’s title and views before building. An existing manifest is preserved. Inspect the changed hunks with `git diff --find-renames <baseSha> <headSha>`.
 
-Use `policy.target` as the value of attach’s `--target`. A standalone rule such as `[archify pr: ask, target=comment]` in the repository root’s `AGENTS.md` or `CONTRIBUTING.md` sets the team preference. Preflight gives priority to explicit `--mode` and `--target`, then personal rules, then repository rules, then `ask` and `body`. Only a selected host’s personal rule, explicit personal path or explicit request can enable proactive attachment. Personal discovery supports Codex, Claude Code, Cursor and Devin using `HOME` or `USERPROFILE`; fallback discovery respects `on-demand` and never enables proactive attachment. Pass `--global-rules <path>` for a specific personal file. Small schema or migration changes remain candidates below the usual line threshold.
+On GitHub, use `policy.target` as the value of attach’s `--target`. A standalone rule such as `[archify pr: ask, target=comment]` in the repository root’s `AGENTS.md` or `CONTRIBUTING.md` sets the team preference. Preflight gives priority to explicit `--mode` and `--target`, then personal rules, then repository rules, then `ask` and `body`. Only a selected host’s personal rule, explicit personal path or explicit request can enable proactive attachment. Personal discovery supports Codex, Claude Code, Cursor and Devin using `HOME` or `USERPROFILE`; fallback discovery respects `on-demand` and never enables proactive attachment. Pass `--global-rules <path>` for a specific personal file. Small schema or migration changes remain candidates below the usual line threshold.
 
 ## 2. Slice by dependency (change stacks)
 
@@ -87,12 +87,27 @@ node bin/archify.mjs finalize <type> <view.json> <view.html> --repo-root <repo> 
 # optional single-view export for a comment or another forge
 node bin/archify.mjs export-svg <type> <view.json> <out/view> --theme both --json
 
-# the pack (set target to policy.target or the user’s explicit choice)
+# GitHub pack (set target to policy.target or the user’s explicit choice)
 node bin/archify.mjs pr validate <pr-pack.json> --repo-root <repo> --json
 node bin/archify.mjs pr build <pr-pack.json> --out-dir <out> --repo-root <repo> --json
 node bin/archify.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.receipt.json --target "$target" --dry-run --json
 node bin/archify.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.receipt.json --target "$target" --json
 ```
+
+On GitLab, use a static pack of standalone views. Sign in to the MR host with a
+version of `glab` that supports `glab api --form`. Use the full HTTPS MR URL.
+The GitLab target defaults to `comment`.
+
+```sh
+node bin/archify.mjs pr build <pr-pack.json> --out-dir <out> --repo-root <repo> --platform gitlab --json
+node bin/archify.mjs pr attach <gitlab-mr-url> --manifest <out>/pr-pack.receipt.json --dry-run --json
+node bin/archify.mjs pr attach <gitlab-mr-url> --manifest <out>/pr-pack.receipt.json --json
+```
+
+GitLab attach checks the MR head, uploads changed SVGs to the target project,
+and creates or updates the signed-in user's Archify comment. If an upload or
+note write fails, retry the command. Files already uploaded during a failed
+attempt can remain in project storage.
 
 The manifest (`schemas/pr-pack.schema.json`; worked example
 `examples/checkout-ledger.pr-pack.json` with its three change-marked views)
@@ -135,7 +150,7 @@ here), `views/<id>-light.svg` / `-dark.svg` that pass strict XML and GitHub's
 Camo limits, `pr-pack.md` with asset placeholders, and `pr-pack.receipt.json`.
 On refresh, `attach` reads asset hashes and URLs from the hidden metadata in the selected body or sticky comment. It uploads only changed SVGs. A text-only refresh writes the pack in place with the existing URLs. GitHub diff links are filled with the actual PR URL during attach.
 
-`attach` uploads the SVGs with `gh … --attach`, rewrites the placeholders to
+On GitHub, `attach` uploads the SVGs with `gh … --attach`, rewrites the placeholders to
 the returned `user-attachments` URLs, and replaces only the
 `<!-- archify-pr-pack:start/end -->` block, so a hand-written description and
 a re-run both survive. `--target comment` keeps one sticky comment instead.

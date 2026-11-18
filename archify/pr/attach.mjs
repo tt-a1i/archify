@@ -1,9 +1,9 @@
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { PrPackError, packDiagnostic } from './manifest.mjs';
-import { PACK_END, PACK_START, PR_URL_PLACEHOLDER, fillAssets, locatePackBlock, replacePackBlock, sha256 } from './markdown.mjs';
-import { readPackMetadata, setPackMetadata } from './metadata.mjs';
+import { PrPackError } from './manifest.mjs';
+import { PACK_END, PACK_START, locatePackBlock, replacePackBlock, sha256 } from './markdown.mjs';
+import { createExecutor, fail, preparePublication } from './attach-common.mjs';
+import { attachGitLab } from './attach-gitlab.mjs';
 
 export const MAX_ATTACHMENTS = 50;
 export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
@@ -12,18 +12,8 @@ export const ATTACH_TARGETS = ['body', 'comment'];
 const ASSET_URL_RE = 'https://github\\.com/user-attachments/assets/[A-Za-z0-9._-]+';
 const TOKEN_RE = new RegExp(`!\\[archify-asset-(\\d+):([a-f0-9]{16})\\]\\((${ASSET_URL_RE})\\)`, 'g');
 
-function fail(code, stage, message, options = {}) {
-  throw new PrPackError(message, { code, stage, diagnostics: [packDiagnostic({ code, message, ...options })] });
-}
-
-// Default adapter: runs the real gh binary. Tests inject a scripted executor
-// with the same shape: ({ args, input }) => { status, stdout, stderr }.
-export function createGhExecutor({ binary = 'gh', cwd } = {}) {
-  return ({ args, input }) => {
-    const result = spawnSync(binary, args, { encoding: 'utf8', input, cwd, maxBuffer: 64 * 1024 * 1024, env: process.env });
-    if (result.error) return { status: null, stdout: '', stderr: result.error.message };
-    return { status: result.status, stdout: result.stdout || '', stderr: result.stderr || '' };
-  };
+export function createGhExecutor(options = {}) {
+  return createExecutor({ binary: 'gh', ...options });
 }
 
 function runGh(gh, args, { input, stage, code, label } = {}) {
@@ -91,8 +81,8 @@ function loadReceipt(receiptInput) {
   return { receiptPath, receipt, markdown };
 }
 
-function checkAttachments(assets) {
-  if (assets.length > MAX_ATTACHMENTS) {
+function checkAttachments(assets, platform) {
+  if (platform === 'github' && assets.length > MAX_ATTACHMENTS) {
     fail('pr-attach/too-many-attachments', 'preflight', `${assets.length} attachments exceed the GitHub limit of ${MAX_ATTACHMENTS} per edit.`, {
       evidence: { attachments: assets.length, limit: MAX_ATTACHMENTS },
       supportedFixes: ['reduce the number of views or use a single theme for some views'],
@@ -105,7 +95,7 @@ function checkAttachments(assets) {
     } catch (error) {
       fail('pr-attach/attachment-missing', 'preflight', `Attachment ${asset.path} is missing: ${error.message}`, { subject: { asset: asset.id }, supportedFixes: ['rebuild the pack with archify pr build'] });
     }
-    if (stat.size >= MAX_ATTACHMENT_BYTES) {
+    if (platform === 'github' && stat.size >= MAX_ATTACHMENT_BYTES) {
       fail('pr-attach/attachment-too-large', 'preflight', `Attachment ${asset.path} is ${stat.size} bytes; GitHub rejects files of ${MAX_ATTACHMENT_BYTES} bytes or more.`, {
         subject: { asset: asset.id }, evidence: { bytes: stat.size, limit: MAX_ATTACHMENT_BYTES },
         supportedFixes: ['simplify the diagram or split it into collapsed views'],
@@ -167,13 +157,20 @@ function commentId(comment) {
   return match ? Number(match[1]) : null;
 }
 
-export async function attachPrPack({ pullRequest, receipt: receiptInput, target = 'body', repo, dryRun = false, allowStale = false, gh = createGhExecutor() }) {
+export async function attachPrPack({ pullRequest, receipt: receiptInput, target, repo, dryRun = false, allowStale = false, gh = createGhExecutor(), glab = createExecutor({ binary: 'glab' }) }) {
+  const { receiptPath, receipt, markdown } = loadReceipt(receiptInput);
+  if (receipt.platform === 'gitlab' || /^https:\/\/[^?#]+\/-\/merge_requests\//.test(pullRequest)) {
+    return attachGitLab({
+      pullRequest, repo, target, dryRun, allowStale, receiptPath, receipt, markdown, glab,
+      attachments: checkAttachments(receipt.assets, 'gitlab'),
+    });
+  }
+  target ??= 'body';
   if (!ATTACH_TARGETS.includes(target)) {
     fail('cli/unsupported-option', 'arguments', `Unknown --target "${target}". Expected body or comment.`, { supportedFixes: ['pass --target body|comment'] });
   }
   const parsed = parsePullRequest(pullRequest, repo);
-  const { receiptPath, receipt, markdown } = loadReceipt(receiptInput);
-  const attachments = checkAttachments(receipt.assets);
+  const attachments = checkAttachments(receipt.assets, 'github');
   const steps = [];
 
   const version = parseGhVersion(runGh(gh, ['--version'], { stage: 'preflight', code: 'pr-attach/gh-unavailable', label: 'gh --version' }));
@@ -210,20 +207,9 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
   if (sticky && !stickyId) fail('pr-attach/comment-id-unresolved', 'preflight', `Could not derive the comment id from ${sticky.url}.`, { supportedFixes: ['pass --target body or delete the stale comment'] });
   steps.push({ step: 0, action: 'read-target', target, existingBlock: target === 'body' ? Boolean(locatePackBlock(originalBody)) : Boolean(sticky), ...(sticky ? { comment: { id: stickyId, url: sticky.url } } : {}) });
 
-  const cached = readPackMetadata(target === 'body' ? originalBody : sticky?.body)?.assets || {};
-  const reusedUrls = {};
-  const uploads = attachments.filter((asset) => {
-    const url = cached[`${asset.id}:${asset.hash}`];
-    if (url) reusedUrls[asset.id] = url;
-    return !url;
+  const { uploads, reusedUrls, finalMarkdown } = preparePublication({
+    body: target === 'body' ? originalBody : sticky?.body, attachments, markdown, receipt, url: pr.url,
   });
-  const resolvedMarkdown = markdown.replaceAll(PR_URL_PLACEHOLDER, pr.url);
-  const finalMarkdown = (urls) => setPackMetadata(fillAssets(resolvedMarkdown, urls).markdown, {
-    baseSha: receipt.revisions?.baseSha ?? null,
-    headSha: receipt.revisions?.headSha ?? null,
-    assets: Object.fromEntries(attachments.map((asset) => [`${asset.id}:${asset.hash}`, urls[asset.id]])),
-  });
-
   const planned = {
     schemaVersion: 1,
     ok: true,

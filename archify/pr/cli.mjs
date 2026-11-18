@@ -124,7 +124,7 @@ export async function commandPr(args, { rejectCliArgument, usage }) {
     const receipt = await attachPrPack({
       pullRequest,
       receipt: options.values['--manifest'],
-      target: options.values['--target'] || 'body',
+      target: options.values['--target'],
       repo: options.values['--repo'],
       dryRun: Boolean(options.flags['--dry-run']),
       allowStale: Boolean(options.flags['--allow-stale']),

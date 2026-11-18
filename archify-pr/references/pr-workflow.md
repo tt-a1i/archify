@@ -12,7 +12,7 @@ node <archify-pr-root>/bin/archify-pr.mjs pr preflight --repo-root <repo> --base
 
 Preflight resolves the merge-base and head, counts changed files and lines, classifies paths, and returns `materiality` and `policy`. Omit `--init` for a read-only check. With `--init`, fill in the generated manifest’s title and views before building. An existing manifest is preserved. Inspect the changed hunks with `git diff --find-renames <baseSha> <headSha>`.
 
-Use `policy.target` as the value of attach’s `--target`. A standalone rule such as `[archify pr: ask, target=comment]` in the repository root’s `AGENTS.md` or `CONTRIBUTING.md` sets the team preference. Preflight gives priority to explicit `--mode` and `--target`, then personal rules, then repository rules, then `ask` and `body`. Only a personal rule or explicit request can enable proactive attachment.
+On GitHub, use `policy.target` as the value of attach’s `--target`. A standalone rule such as `[archify pr: ask, target=comment]` in the repository root’s `AGENTS.md` or `CONTRIBUTING.md` sets the team preference. Preflight gives priority to explicit `--mode` and `--target`, then personal rules, then repository rules, then `ask` and `body`. Only a personal rule or explicit request can enable proactive attachment.
 
 ### Personal rule discovery
 
@@ -77,18 +77,33 @@ node <archify-pr-root>/bin/archify-pr.mjs finalize <type> <view.json> <view.html
 # optional single-view export for a comment or another forge
 node <archify-pr-root>/bin/archify-pr.mjs export-svg <type> <view.json> <out/view> --theme both --json
 
-# the pack (set target to policy.target or the user’s explicit choice)
+# GitHub pack (set target to policy.target or the user’s explicit choice)
 node <archify-pr-root>/bin/archify-pr.mjs pr validate <pr-pack.json> --repo-root <repo> --json
 node <archify-pr-root>/bin/archify-pr.mjs pr build <pr-pack.json> --out-dir <out> --repo-root <repo> --json
 node <archify-pr-root>/bin/archify-pr.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.receipt.json --target "$target" --dry-run --json
 node <archify-pr-root>/bin/archify-pr.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.receipt.json --target "$target" --json
 ```
 
+On GitLab, use a static pack of standalone views. Sign in to the MR host with a
+version of `glab` that supports `glab api --form`. Use the full HTTPS MR URL.
+The GitLab target defaults to `comment`.
+
+```sh
+node <archify-pr-root>/bin/archify-pr.mjs pr build <pr-pack.json> --out-dir <out> --repo-root <repo> --platform gitlab --json
+node <archify-pr-root>/bin/archify-pr.mjs pr attach <gitlab-mr-url> --manifest <out>/pr-pack.receipt.json --dry-run --json
+node <archify-pr-root>/bin/archify-pr.mjs pr attach <gitlab-mr-url> --manifest <out>/pr-pack.receipt.json --json
+```
+
+GitLab attach checks the MR head, uploads changed SVGs to the target project,
+and creates or updates the signed-in user's Archify comment. If an upload or
+note write fails, retry the command. Files already uploaded during a failed
+attempt can remain in project storage.
+
 `build` writes pinned view snapshots, offline HTML, Camo-safe dual-theme SVGs, `pr-pack.md` with asset placeholders, and `pr-pack.receipt.json`.
 
 On refresh, `attach` reads asset hashes and URLs from the hidden metadata in the selected body or sticky comment. It uploads only changed SVGs. A text-only refresh writes the pack in place with the existing URLs. GitHub diff links are filled with the actual PR URL during attach.
 
-`attach` uploads the SVGs with `gh … --attach`, rewrites the placeholders to the returned `user-attachments` URLs, and replaces only the `<!-- archify-pr-pack:start/end -->` block, so a hand-written description and a re-run both survive. `--target comment` keeps one sticky comment instead. Use `--no-html` when only SVGs are needed, `--platform gitlab|generic` for a single-theme image, and `--animate-flow` only when the user asks for a finite flow animation.
+On GitHub, `attach` uploads the SVGs with `gh … --attach`, rewrites the placeholders to the returned `user-attachments` URLs, and replaces only the `<!-- archify-pr-pack:start/end -->` block, so a hand-written description and a re-run both survive. `--target comment` keeps one sticky comment instead. Use `--no-html` when only SVGs are needed, `--platform gitlab|generic` for a single-theme image, and `--animate-flow` only when the user asks for a finite flow animation.
 
 When only the default target applies and the PR already has a written description, show the dry run or confirm the body target before writing.
 
