@@ -840,6 +840,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
+    /* A Viewer an explainer page opens keeps its tools and the preset's look; the page names the
+       diagram, so the standalone badges stay off, as the embedded plate does. */
+    html[data-hosted="explainer"][data-preset] .header-row::after,
+    html[data-hosted="explainer"][data-preset="editorial"] .diagram-container::after { display: none; }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
@@ -5596,8 +5600,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="118.5" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
-          <text data-detail="context" x="118.5" y="122" class="t-muted" font-size="7" text-anchor="middle">browser session</text>
+          <text data-node-label="" data-detail-anchor="" x="118.5" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
+          <text data-detail="context" x="118.5" y="115" class="t-muted" font-size="7" text-anchor="middle">browser session</text>
         </g>
 
         <g id="node-web" data-node-id="web" data-node-label="Web App" tabindex="0" role="button" aria-label="Focus Web App, React UI, Sequence participant" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="React UI" data-node-context="Sequence participant">
@@ -5610,8 +5614,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="262.66666666666663" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Web App</text>
-          <text data-detail="context" x="262.66666666666663" y="122" class="t-muted" font-size="7" text-anchor="middle">React UI</text>
+          <text data-node-label="" data-detail-anchor="" x="262.66666666666663" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Web App</text>
+          <text data-detail="context" x="262.66666666666663" y="115" class="t-muted" font-size="7" text-anchor="middle">React UI</text>
         </g>
 
         <g id="node-api" data-node-id="api" data-node-label="API" tabindex="0" role="button" aria-label="Focus API, request handler, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="request handler" data-node-context="Sequence participant">
@@ -5621,8 +5625,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(356.3333333333333 78) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="406.8333333333333" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API</text>
-          <text data-detail="context" x="406.8333333333333" y="122" class="t-muted" font-size="7" text-anchor="middle">request handler</text>
+          <text data-node-label="" data-detail-anchor="" x="406.8333333333333" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API</text>
+          <text data-detail="context" x="406.8333333333333" y="115" class="t-muted" font-size="7" text-anchor="middle">request handler</text>
         </g>
 
         <g id="node-auth" data-node-id="auth" data-node-label="Auth" tabindex="0" role="button" aria-label="Focus Auth, JWT verify, Sequence participant" aria-pressed="false" data-node-kind="security" data-node-sublabel="JWT verify" data-node-context="Sequence participant">
@@ -5633,8 +5637,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="551" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Auth</text>
-          <text data-detail="context" x="551" y="122" class="t-muted" font-size="7" text-anchor="middle">JWT verify</text>
+          <text data-node-label="" data-detail-anchor="" x="551" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Auth</text>
+          <text data-detail="context" x="551" y="115" class="t-muted" font-size="7" text-anchor="middle">JWT verify</text>
         </g>
 
         <g id="node-redis" data-node-id="redis" data-node-label="Redis" tabindex="0" role="button" aria-label="Focus Redis, cache, Sequence participant" aria-pressed="false" data-node-kind="database" data-node-sublabel="cache" data-node-context="Sequence participant">
@@ -5645,8 +5649,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="695.1666666666666" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Redis</text>
-          <text data-detail="context" x="695.1666666666666" y="122" class="t-muted" font-size="7" text-anchor="middle">cache</text>
+          <text data-node-label="" data-detail-anchor="" x="695.1666666666666" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Redis</text>
+          <text data-detail="context" x="695.1666666666666" y="115" class="t-muted" font-size="7" text-anchor="middle">cache</text>
         </g>
 
         <g id="node-db" data-node-id="db" data-node-label="Postgres" tabindex="0" role="button" aria-label="Focus Postgres, source of truth, Sequence participant" aria-pressed="false" data-node-kind="database" data-node-sublabel="source of truth" data-node-context="Sequence participant">
@@ -5657,8 +5661,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="839.3333333333333" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Postgres</text>
-          <text data-detail="context" x="839.3333333333333" y="122" class="t-muted" font-size="7" text-anchor="middle">source of truth</text>
+          <text data-node-label="" data-detail-anchor="" x="839.3333333333333" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Postgres</text>
+          <text data-detail="context" x="839.3333333333333" y="115" class="t-muted" font-size="7" text-anchor="middle">source of truth</text>
         </g>
 
         <g id="node-trace" data-node-id="trace" data-node-label="Trace" tabindex="0" role="button" aria-label="Focus Trace, async event, Sequence participant" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="async event" data-node-context="Sequence participant">
@@ -5671,8 +5675,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="983.5" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace</text>
-          <text data-detail="context" x="983.5" y="122" class="t-muted" font-size="7" text-anchor="middle">async event</text>
+          <text data-node-label="" data-detail-anchor="" x="983.5" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace</text>
+          <text data-detail="context" x="983.5" y="115" class="t-muted" font-size="7" text-anchor="middle">async event</text>
         </g>
 
         <!-- Legend -->
@@ -6274,10 +6278,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function diagramFilename() {
-        var title = (document.title || 'diagram')
-          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
-          .replace(/\s+Diagram$/i, '')
-          .trim();
+        // Prefer the authored heading: the document title may carry a
+        // locale-specific page decoration ("Diagram", "Diagrama", ...).
+        // Without a heading, keep the complete document title; suffix-like
+        // words in either source are authored text and are not stripped.
+        var heading = document.querySelector('.header h1');
+        var title = (heading && heading.textContent || '').trim() ||
+          (document.title || '').trim();
         // A mark is kept only while attached to a letter or number base;
         // a detached mark (the variation selector after an emoji, say)
         // would otherwise survive as an invisible filename.
@@ -11293,7 +11300,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+        // Body and stage padding already bound the actual viewport. The
+        // optional bottom gap may yield to the source-text floor; otherwise
+        // a late header reflow can select an enlarged, scrolling diagram
+        // even though its original size still fits the screen.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth + SAFE_BOTTOM_GAP * ratio, maxWidth) >=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading && !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;

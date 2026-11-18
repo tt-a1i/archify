@@ -1,6 +1,6 @@
 # Archify
 
-> Turn a description, a question, or a repository into an interactive diagram or a one-page explainer. Ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, and waterfall. The result is one standalone HTML file. Free and open source (Apache-2.0).
+> Turn any idea, everyday plan, concept, workflow, Mermaid draft, or codebase into a polished interactive HTML diagram (ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, waterfall) or a 4-style one-page explainer — zero diagram syntax, layout-checked, offline HTML. Free and open source (Apache-2.0).
 
 Version: 3.2.1-dev.1
 Repository: https://github.com/tt-a1i/archify
@@ -17,7 +17,7 @@ Confirm this scope first:
 
 1. Discover the skill. This only lists the package; it does not install it.
 
-   `npx -y skills add tt-a1i/archify --list --full-depth`
+   `npx -y skills@latest add https://archify.si --list --full-depth`
 
    Stop unless the listing contains exactly one skill named `archify`.
 
@@ -27,11 +27,11 @@ Confirm this scope first:
 
    One agent:
 
-   `npx -y skills add tt-a1i/archify --skill archify --agent <agent> --global --copy --yes`
+   `npx -y skills@latest add https://archify.si --skill archify --agent <agent> --global --copy --yes`
 
    Several agents, by repeating `--agent`:
 
-   `npx -y skills add tt-a1i/archify --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes`
+   `npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes`
 
    Omit `--global` for a project-only install. Do not add other skills, agents, sources, or force flags.
 
@@ -40,3 +40,12 @@ Confirm this scope first:
    `node <installed-path>/bin/archify.mjs doctor`
 
    Report each selected target and its verification result. Say Archify is ready only for targets whose installation and doctor check succeeded; report skipped or failed targets separately. They can ask for any of the ten diagram types, or a one-page explainer.
+
+If you were only asked to install Archify, stop here and do not fetch the reference links below.
+
+## Documentation and verified examples
+
+- [Full reference](https://archify.si/llms-full.txt): Complete product facts, universal life & engineering scope, 10 diagram types, 4-style explainers, and FAQ.
+- [Comparison & guides](https://archify.si/compare) · [Scenario guide](https://archify.si/guide) · [Proof gallery](https://archify.si/gallery) · [Agent guide](https://archify.si/agent-diagrams)
+- [Life & community](https://archify.si/cases/explainer/first-rental) · [Leave workflow](https://archify.si/cases/life/leave-plan.workflow) · [Shanghai CityWalk](https://archify.si/cases/community/shanghai-citywalk)
+- [Technical cases](https://archify.si/cases/explainer/p99-tail-latency) · [MCO runtime case](https://archify.si/cases/mco-runtime)

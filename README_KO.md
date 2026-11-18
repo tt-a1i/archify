@@ -24,6 +24,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
+  <a href="#archify-지원하기"><img src="https://img.shields.io/badge/Support-E2500E?style=flat-square" alt="Support Archify" /></a>
 </p>
 
 ## Archify 살펴보기
@@ -39,10 +40,6 @@ https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 ### 설치한 뒤 아이디어 설명하기
 
 Cursor, Claude Code, Codex CLI, OpenCode에서 사용할 수 있습니다.
-
-```bash
-npx skills add tt-a1i/archify -g
-```
 
 **AI 에이전트에게 맡기기.** 다음 문장을 그대로 붙여 넣으세요.
 
@@ -83,6 +80,8 @@ Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐�
 평균은 거의 그대로야. 원인은 무엇이고 어떻게 조사해야 해?
 ```
 
+기본적으로 복잡한 흐름, 문제 진단 결과, 선택지 비교, 테스트 보고서 같은 답에서는 요청하지 않아도 에이전트가 페이지를 만듭니다. 답장에는 채팅에서 바로 읽을 수 있는 짧은 결론이 남고, 마지막 줄은 "테스트 보고서 열기" 같은 페이지 링크입니다. 짧은 답, 텍스트만 원하는 요청, 생성에 실패한 페이지에는 페이지도 링크도 붙지 않습니다. 요청할 때만 페이지를 만들게 하려면 에이전트에게 그렇게 말하거나 전역 규칙 파일(`~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md` 등)에 `[archify explainer: on-demand]`를 추가하세요. `[archify explainer: always-on]`은 결론이 있는 모든 답에 간결한 페이지를 붙이며, 이 줄을 지우면 기본 동작으로 돌아갑니다.
+
 라이브 예시: [처음 HTTPS 접속(영어)](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 지연(중국어)](https://archify.si/cases/explainer/p99-tail-latency.html) · [저장소에서 읽은 Archify finalize(중국어)](https://archify.si/cases/explainer/finalize-delivery.html) · [첫 임대 체크리스트(중국어)](https://archify.si/cases/explainer/first-rental.html)
 
 ## 무엇을 보여줄 수 있나요?
@@ -100,10 +99,6 @@ Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐�
 
 ### 1. 설치
 
-```bash
-npx skills add tt-a1i/archify -g
-```
-
 **AI 에이전트에게 맡기기**
 
 다음 문장을 그대로 붙여 넣으세요.
@@ -117,13 +112,13 @@ Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archi
 Cursor에만 설치:
 
 ```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
 ```
 
 또는 다섯 에이전트가 모두 필요한 경우에만:
 
 ```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
 <details>
@@ -248,6 +243,30 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 ## 기여하기
 
 Issue, Pull Request, 실제 사용 사례 다이어그램을 환영합니다. [기여 가이드](CONTRIBUTING.md)에서 시작하세요. 실패는 재현 가능한 버그 양식으로 제보하고, 검증된 다이어그램은 [커뮤니티 Showcase 양식](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)으로 제출할 수 있습니다.
+
+## Archify 지원하기
+
+Archify가 도움이 되었다면, 지속적인 개발을 지원해 주실 수 있습니다. 프로젝트가 계속 이어지도록 응원해 주셔서 감사합니다 ❤️
+
+<details>
+<summary>WeChat Pay로 지원하기</summary>
+
+아래 QR 코드를 WeChat으로 스캔하거나, 이미지를 저장한 뒤 WeChat에서 인식하세요.
+
+<p align="center"><img src="docs/assets/support/wechat-pay.png" alt="Archify 유지 관리자를 지원하는 WeChat Pay QR 코드" width="240" /></p>
+
+</details>
+
+<details>
+<summary>Alipay로 지원하기</summary>
+
+아래 QR 코드를 Alipay로 스캔하거나, 이미지를 저장한 뒤 Alipay에서 인식하세요.
+
+<p align="center"><img src="docs/assets/support/alipay.png" alt="Archify 유지 관리자를 지원하는 Alipay QR 코드(이름은 가려져 있습니다)" width="240" /></p>
+
+</details>
+
+Archify를 사용하고, 공유하고, 버그를 제보하고, 개선에 기여하는 것도 프로젝트에 도움이 됩니다.
 
 ## 기여자
 
