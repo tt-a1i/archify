@@ -38,7 +38,7 @@ export function extract(root, config) {
   }
   const analyses = [...snapshot].map(([file, bytes]) => analyzeFile(file, bytes, targetVersion));
   const dependencies = captureDeclarations(fs.realpathSync(absRoot), config.python?.declarations, targetVersion, fileSet);
-  const output = { files: analyses.map(analysis => analysis.record) };
+  const records = analyses.map(analysis => analysis.record);
   resolveSourceCalls(analyses, (from, module, level, name) => {
     if (level && dependencies.origins.has(from)) return dependencies.locate(from, module, level, name);
     const edges = resolveDeclaredImport({ module, level, names: name ? [name] : ['*'] }, from, fileSet, directories);
@@ -49,7 +49,7 @@ export function extract(root, config) {
   }, dependencies.analyses);
 
   const calls = [];
-  const parsedFiles = new Map(output.files.filter(record => !record.error).map(record => [record.path, record]));
+  const parsedFiles = new Map(records.filter(record => !record.error).map(record => [record.path, record]));
   // Reuse captured import resolution for one explicit reexport. No project
   // import or arbitrary chain traversal; ambiguous/rebound bindings are absent.
   const importedDefinition = (from, binding, reexports = 1) => {
@@ -69,7 +69,7 @@ export function extract(root, config) {
   const fileRecords = [];
   const symbols = [];
   const functions = [];
-  for (const record of output.files) {
+  for (const record of records) {
     fileRecords.push({ path: record.path, loc: record.loc, role: classifyRole(record.path, config.roles), sourceText: record.sourceText });
     for (const b of record.symbols || []) symbols.push({ file: record.path, name: b.name, kind: b.kind, line: b.line });
     for (const fn of record.functions || []) functions.push({ file: record.path, ...fn });

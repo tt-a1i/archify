@@ -47,12 +47,8 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
         return items.length === 1 ? items[0] : items.length ? { kind: 'union', items } : undefined;
     };
     const scopeOf = (file: File, node: Node) => file.bindings.nodeScopes.get(node) || file.bindings.module;
-    const unique = (scope: Scope, name: string) => {
-        const values = scope.events.get(name)?.filter(value => !value.attributeWrite);
-        return values?.length === 1 && !values[0].conditional ? values[0] : undefined;
-    };
     const typeBinding = (file: File, scope: Scope, name: string) => {
-        const ordinary = unique(scope, name);
+        const ordinary = scope.unique(name);
         if (ordinary) return ordinary;
         const values = scope.events.get(name)?.filter(value => !value.attributeWrite);
         if (values?.length !== 1 || !['import', 'module'].includes(values[0].kind) || locate(file.record.path, 'typing', 0)) return;
@@ -70,7 +66,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
         if (scope.declarations.has(name) || scope.events.has('*') || file.bindings.mutable.has(name) || name === '__class__') return;
         const values = scope.events.get(name)?.filter(value => !value.attributeWrite);
         if (values?.length) {
-            const value = types ? typeBinding(file, scope, name) : unique(scope, name);
+            const value = types ? typeBinding(file, scope, name) : scope.unique(name);
             if (scope.kind === 'function' && scope === origin && values.every(value => ['value', 'parameter'].includes(value.kind))) {
                 return union(reachingBindings(scope, name, at).values.map(value => value && bindingShape(file, scope, value, at, seen, substitutions)));
             }
@@ -130,7 +126,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
             for (let current: Scope | undefined = scope; current; current = current.parent) {
                 if (current.declarations.has(name) || current.events.has('*') || file.bindings.mutable.has(name)) return;
                 if (!current.events.has(name)) continue;
-                const value = types ? typeBinding(file, current, name) : unique(current, name);
+                const value = types ? typeBinding(file, current, name) : current.unique(name);
                 if (!value || current.kind !== 'module' && value.at > node.start || value.level || !value.module) return;
                 if (/^(?:typing|collections|contextlib|builtins|dataclasses)(?:\.|$)/.test(value.module)
                     && (locate(file.record.path, value.module, 0) || current.events.get(name)?.some(event => event.attributeWrite))) return;
@@ -177,7 +173,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
         if (file.bindings.mutable.has(name)) return;
         for (let current: Scope | undefined = scope; current; current = current.parent) {
             if (!current.events.has(name)) continue;
-            const value = unique(current, name);
+            const value = current.unique(name);
             if (value?.expr?.nodeType !== K.Call || standard(file, current, value.expr.d.leftExpr) !== 'typing.TypeVar') return;
             const [label, ...options] = value.expr.d.args;
             if (label?.d.argCategory !== ArgCategory.Simple || label.d.name || literalString(label.d.valueExpr) !== name
@@ -205,7 +201,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
             for (let current: Scope | undefined = scope; current; current = current.parent) {
                 const events = current.events.get(baseName);
                 if (!events) continue;
-                const binding = unique(current, baseName);
+                const binding = current.unique(baseName);
                 if (!binding || binding.at > node.start || events.some(event => event.attributeWrite)) return false;
                 break;
             }
@@ -359,7 +355,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
             } finally { activeFields.pop(); }
         }
         if (!entries.length) return { present: false };
-        const value = propertyGroup(file, scope, name) || unique(scope, name);
+        const value = propertyGroup(file, scope, name) || scope.unique(name);
         if (!value) return { present: true };
         if (value.kind === 'function') {
             const decorators = (value.node.d as any).decorators;
@@ -517,7 +513,6 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
         }
         return;
     }
-    let added = 0;
     for (const analysis of analyses) {
         if (!analysis.tree) continue;
         const file = analysis as File;
@@ -535,7 +530,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
             if (callee.nodeType === K.Name) {
                 const name = callee.d.value;
                 if (file.bindings.privateCalls.has(node) && name.startsWith('__') && !name.endsWith('__')) continue;
-                requireDecorator = scope.kind !== 'function' || unique(scope, name)?.kind !== 'function';
+                requireDecorator = scope.kind !== 'function' || scope.unique(name)?.kind !== 'function';
                 if (requireDecorator) {
                     const value = file.bindings.lookup(scope, name, node.start);
                     if (!value || !['function', 'import'].includes(value.kind)) continue;
@@ -548,8 +543,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
             const fn = target.file.measured?.byNode.get(target.node);
             if (!fn) continue;
             fact.resolution = 'python-source-declaration'; delete fact.reason; delete fact._import;
-            fact.target = { file: target.file.record.path, name: fn.name, line: fn.line, column: fn.sourceRange.column }; added++;
+            fact.target = { file: target.file.record.path, name: fn.name, line: fn.line, column: fn.sourceRange.column };
         }
     }
-    return { added };
 }

@@ -14447,6 +14447,10 @@ var Scope = class {
     values.push(binding);
     this.events.set(binding.name, values);
   }
+  unique(name) {
+    const values = this.events.get(name)?.filter((value) => !value.attributeWrite);
+    return values?.length === 1 && !values[0].conditional ? values[0] : void 0;
+  }
 };
 var conditionalBlocks = /* @__PURE__ */ new Set([22 /* If */, 53 /* Try */, 29 /* For */, 57 /* While */, 63 /* Match */]);
 var defaults = (node) => (node.d.params || []).flatMap((p) => p.d.defaultValue ? [p.d.defaultValue] : []);
@@ -14612,15 +14616,11 @@ function bindModule(tree) {
     for (const child of flatChildren(node, true)) visit(child, scope, isAnnotation, inClass);
   };
   visit(tree, module);
-  const unique = (scope, name) => {
-    const values = scope.events.get(name)?.filter((value) => !value.attributeWrite);
-    return values?.length === 1 && !values[0].conditional ? values[0] : void 0;
-  };
   const lookup = (scope, name, at, origin = scope) => {
     if (scope.declarations.has(name) || scope.events.has("*") || name === "__class__") return;
-    if (scope.kind === "module") return mutable.has(name) ? void 0 : unique(scope, name);
+    if (scope.kind === "module") return mutable.has(name) ? void 0 : scope.unique(name);
     if (scope.events.has(name)) {
-      const value = unique(scope, name);
+      const value = scope.unique(name);
       return scope === origin && scope.kind === "function" && value?.kind === "import" && value.at <= at ? value : void 0;
     }
     return scope.parent ? lookup(scope.parent, name, at, origin) : void 0;
@@ -14644,7 +14644,7 @@ function bindModule(tree) {
     }
     return name === "__import__" && !loaderMutable.has(name) ? "loader" : void 0;
   };
-  return { module, scopes, nodeScopes, suppressed, privateCalls, mutable, unique, lookup, loader };
+  return { module, scopes, nodeScopes, suppressed, privateCalls, mutable, lookup, loader };
 }
 function flatChildren(node, flattenBooleans = false) {
   const out = [], pending = children(node).reverse();
@@ -14928,12 +14928,8 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     return items.length === 1 ? items[0] : items.length ? { kind: "union", items } : void 0;
   };
   const scopeOf = (file, node) => file.bindings.nodeScopes.get(node) || file.bindings.module;
-  const unique = (scope, name) => {
-    const values = scope.events.get(name)?.filter((value) => !value.attributeWrite);
-    return values?.length === 1 && !values[0].conditional ? values[0] : void 0;
-  };
   const typeBinding = (file, scope, name) => {
-    const ordinary = unique(scope, name);
+    const ordinary = scope.unique(name);
     if (ordinary) return ordinary;
     const values = scope.events.get(name)?.filter((value) => !value.attributeWrite);
     if (values?.length !== 1 || !["import", "module"].includes(values[0].kind) || locate(file.record.path, "typing", 0)) return;
@@ -14951,7 +14947,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     if (scope.declarations.has(name) || scope.events.has("*") || file.bindings.mutable.has(name) || name === "__class__") return;
     const values = scope.events.get(name)?.filter((value) => !value.attributeWrite);
     if (values?.length) {
-      const value = types ? typeBinding(file, scope, name) : unique(scope, name);
+      const value = types ? typeBinding(file, scope, name) : scope.unique(name);
       if (scope.kind === "function" && scope === origin && values.every((value2) => ["value", "parameter"].includes(value2.kind))) {
         return union(reachingBindings(scope, name, at).values.map((value2) => value2 && bindingShape(file, scope, value2, at, seen, substitutions)));
       }
@@ -15011,7 +15007,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       for (let current = scope; current; current = current.parent) {
         if (current.declarations.has(name) || current.events.has("*") || file.bindings.mutable.has(name)) return;
         if (!current.events.has(name)) continue;
-        const value = types ? typeBinding(file, current, name) : unique(current, name);
+        const value = types ? typeBinding(file, current, name) : current.unique(name);
         if (!value || current.kind !== "module" && value.at > node.start || value.level || !value.module) return;
         if (/^(?:typing|collections|contextlib|builtins|dataclasses)(?:\.|$)/.test(value.module) && (locate(file.record.path, value.module, 0) || current.events.get(name)?.some((event) => event.attributeWrite))) return;
         if (value.kind === "import") return `${value.module}.${value.imported}`;
@@ -15056,7 +15052,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     if (file.bindings.mutable.has(name)) return;
     for (let current = scope; current; current = current.parent) {
       if (!current.events.has(name)) continue;
-      const value = unique(current, name);
+      const value = current.unique(name);
       if (value?.expr?.nodeType !== 9 /* Call */ || standard(file, current, value.expr.d.leftExpr) !== "typing.TypeVar") return;
       const [label, ...options] = value.expr.d.args;
       if (label?.d.argCategory !== 0 /* Simple */ || label.d.name || literalString(label.d.valueExpr) !== name || options.some((arg) => arg.d.argCategory !== 0 /* Simple */ || !arg.d.name)) return;
@@ -15081,7 +15077,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       for (let current = scope; current; current = current.parent) {
         const events = current.events.get(baseName);
         if (!events) continue;
-        const binding = unique(current, baseName);
+        const binding = current.unique(baseName);
         if (!binding || binding.at > node.start || events.some((event) => event.attributeWrite)) return false;
         break;
       }
@@ -15240,7 +15236,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       }
     }
     if (!entries.length) return { present: false };
-    const value = propertyGroup(file, scope, name) || unique(scope, name);
+    const value = propertyGroup(file, scope, name) || scope.unique(name);
     if (!value) return { present: true };
     if (value.kind === "function") {
       const decorators2 = value.node.d.decorators;
@@ -15399,7 +15395,6 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     }
     return;
   }
-  let added = 0;
   for (const analysis of analyses) {
     if (!analysis.tree) continue;
     const file = analysis;
@@ -15414,7 +15409,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       if (callee.nodeType === 38 /* Name */) {
         const name = callee.d.value;
         if (file.bindings.privateCalls.has(node) && name.startsWith("__") && !name.endsWith("__")) continue;
-        requireDecorator = scope.kind !== "function" || unique(scope, name)?.kind !== "function";
+        requireDecorator = scope.kind !== "function" || scope.unique(name)?.kind !== "function";
         if (requireDecorator) {
           const value = file.bindings.lookup(scope, name, node.start);
           if (!value || !["function", "import"].includes(value.kind)) continue;
@@ -15429,10 +15424,8 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       delete fact.reason;
       delete fact._import;
       fact.target = { file: target.file.record.path, name: fn.name, line: fn.line, column: fn.sourceRange.column };
-      added++;
     }
   }
-  return { added };
 }
 export {
   analyzeFile,

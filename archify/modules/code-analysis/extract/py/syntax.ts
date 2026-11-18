@@ -1,5 +1,5 @@
 import { ParseOptions, Parser } from './upstream/parser/parser.js';
-import { ParseNode, ParseNodeType } from './upstream/parser/parseNodes.js';
+import { ParseNode } from './upstream/parser/parseNodes.js';
 import { DiagnosticSink } from './upstream/common/diagnosticSink.js';
 import { DiagnosticCategory } from './upstream/common/diagnostic.js';
 import { PythonVersion } from './upstream/common/pythonVersion.js';

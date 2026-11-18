@@ -23,6 +23,10 @@ export class Scope {
         const values = this.events.get(binding.name) || [];
         values.push(binding); this.events.set(binding.name, values);
     }
+    unique(name: string): Binding | undefined {
+        const values = this.events.get(name)?.filter(value => !value.attributeWrite);
+        return values?.length === 1 && !values[0].conditional ? values[0] : undefined;
+    }
 }
 const conditionalBlocks = new Set([K.If, K.Try, K.For, K.While, K.Match]);
 const defaults = (node: Node): Node[] => ((node.d as any).params || []).flatMap((p: Node) => (p.d as any).defaultValue ? [(p.d as any).defaultValue] : []);
@@ -155,15 +159,11 @@ export function bindModule(tree: Node) {
         for (const child of flatChildren(node, true)) visit(child, scope, isAnnotation, inClass);
     };
     visit(tree, module);
-    const unique = (scope: Scope, name: string) => {
-        const values = scope.events.get(name)?.filter(value => !value.attributeWrite);
-        return values?.length === 1 && !values[0].conditional ? values[0] : undefined;
-    };
     const lookup = (scope: Scope, name: string, at: number, origin = scope): Binding | undefined => {
         if (scope.declarations.has(name) || scope.events.has('*') || name === '__class__') return;
-        if (scope.kind === 'module') return mutable.has(name) ? undefined : unique(scope, name);
+        if (scope.kind === 'module') return mutable.has(name) ? undefined : scope.unique(name);
         if (scope.events.has(name)) {
-            const value = unique(scope, name);
+            const value = scope.unique(name);
             // Preserve the existing local-import execution guard. Value/parameter
             // types are handled separately, never mistaken for callable defs.
             return scope === origin && scope.kind === 'function' && value?.kind === 'import' && value.at <= at ? value : undefined;
@@ -189,7 +189,7 @@ export function bindModule(tree: Node) {
         }
         return name === '__import__' && !loaderMutable.has(name) ? 'loader' : undefined;
     };
-    return { module, scopes, nodeScopes, suppressed, privateCalls, mutable, unique, lookup, loader };
+    return { module, scopes, nodeScopes, suppressed, privateCalls, mutable, lookup, loader };
 }
 export type Bindings = ReturnType<typeof bindModule>;
 
