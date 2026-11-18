@@ -167,6 +167,7 @@ test('a killed checker holding the cache claim can be followed by a new check', 
     await checkForUpdate({
       releasePath: ${JSON.stringify(testFixture.releasePath)},
       cacheDirectory: ${JSON.stringify(testFixture.cacheDirectory)},
+      timeoutMs: 30_000,
       fetchImpl: async () => {
         process.stdout.write('entered fetch\\n');
         return new Promise(() => {});
