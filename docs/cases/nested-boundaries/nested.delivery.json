@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "26b236c9-818f-4c56-b68a-afe04c5509a5",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/archify/.archify/architecture-nested-boundaries-pr-evidence-20261118-002147/nested.architecture.json",
+  "output": "/workspace/archify/docs/cases/nested-boundaries/nested.html",
+  "specification": {
+    "sha256": "ca98d0ee2585c6188c798f39a0945a58bc3c03026a4e640d52633c77590d786f",
+    "bytes": 1467
+  },
+  "artifact": {
+    "sha256": "70ce76ca73c960573d731fd05508a1a2f90cbc0d774fa2caf2c91a86bada68e4",
+    "bytes": 862049
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "cf44d1a6-d69e-4e5f-a434-ea5ad26ec0ad",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/archify/.archify/architecture-nested-boundaries-pr-evidence-20261118-002147/dev-flat.architecture.json",
+  "output": "/workspace/archify/docs/cases/nested-boundaries/dev-flat.html",
+  "specification": {
+    "sha256": "006ac38c4a76b93680e3a551a63d2943010c88539f0bf998b04d05172fa25587",
+    "bytes": 1433
+  },
+  "artifact": {
+    "sha256": "0cfc39bfe23c6cb5db7d4571ee4d07deb375f50c5fe902b5e9605f43523aaa23",
+    "bytes": 862049
+  }
+}

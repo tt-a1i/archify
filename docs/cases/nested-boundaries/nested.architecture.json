@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Checkout Platform — Boundary Example",
+    "output": "docs/cases/nested-boundaries/nested.html",
+    "locale": "en",
+    "visual_preset": "classic",
+    "animation": "none",
+    "quality_profile": "standard",
+    "viewBox": [1100, 540]
+  },
+  "components": [
+    { "id": "cart-svc", "type": "backend", "label": "Cart Service", "pos": [80, 80], "size": [160, 64] },
+    { "id": "payment-svc", "type": "backend", "label": "Payment Service", "pos": [80, 180], "size": [160, 64] },
+    { "id": "inventory-svc", "type": "backend", "label": "Inventory Service", "pos": [80, 280], "size": [160, 64] },
+    { "id": "shared-cache", "type": "database", "label": "Shared Cache", "pos": [390, 180], "size": [150, 64] },
+    { "id": "notifications", "type": "external", "label": "Notifications", "pos": [790, 80], "size": [170, 64] }
+  ],
+  "boundaries": [
+    {
+      "id": "checkout-subsystem",
+      "kind": "security-group",
+      "label": "Checkout Subsystem",
+      "wraps": ["cart-svc", "payment-svc", "inventory-svc"],
+      "pad": 24
+    },
+    {
+      "id": "platform",
+      "kind": "region",
+      "label": "Platform",
+      "wraps": ["checkout-subsystem", "shared-cache"],
+      "pad": 36
+    }
+  ],
+  "connections": [
+    { "from": "cart-svc", "to": "notifications", "label": "emits events" },
+    { "from": "inventory-svc", "to": "shared-cache", "label": "reads/writes" }
+  ]
+}
