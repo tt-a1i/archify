@@ -62,7 +62,7 @@ function batchMarkers(report, changed) {
 // Batch-read literal Git objects so a large diagram does not spawn Git per file.
 export function sourceChanges(root, repository, sources) {
   const result = new Map([...sources.keys()].map(file => [file, empty('unavailable')]));
-  if (repository?.sourceKind !== 'working-tree' || !/^[a-f0-9]{40}$/.test(repository.baseRevision || '')) return result;
+  if (!['working-tree', 'git-tree'].includes(repository?.sourceKind) || !/^[a-f0-9]{40}$/.test(repository.baseRevision || '')) return result;
   const tree = git(root, ['ls-tree', '-rz', '--full-tree', repository.baseRevision]);
   if (tree.error || tree.status !== 0) return result;
   const entries = new Map();

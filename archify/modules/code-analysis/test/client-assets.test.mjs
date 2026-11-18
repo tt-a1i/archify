@@ -9,7 +9,7 @@ const dir = new URL('../overlay/client/', import.meta.url);
 const names = fs.readdirSync(dir).sort();
 
 test('client assets: the page inlines exactly the files in overlay/client', () => {
-  assert.deepEqual(names, ['atlas.css', 'atlas.js', 'overlay.css', 'overlay.js', 'verification.js']);
+  assert.deepEqual(names, ['atlas.css', 'atlas.js', 'overlay.css', 'overlay.js', 'verification.js', 'workspace.css', 'workspace.js']);
   const { html } = buildOverlay({ graph: { modules: [], edges: [], repository: { language: 'ts' }, excluded: {}, unresolved: {} } });
   for (const name of names) assert.equal(clientAsset(name), '\n' + fs.readFileSync(new URL(name, dir), 'utf8'));
   assert.ok(html.includes(clientAsset('verification.js')), 'the offline report carries its receipt client');

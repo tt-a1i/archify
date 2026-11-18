@@ -11,7 +11,21 @@ const order = (a, b) => compare(a.fact.file || a.fact.from, b.fact.file || b.fac
 const bounded = (base, records, read) => ({ ...base, coverage: 'available', reason: null, total: records.length,
   included: Math.min(records.length, LIMIT), omitted: Math.max(0, records.length - LIMIT), records: records.slice(0, LIMIT).map(read) });
 
-export function questionIncoming({ facts, inspect, entry, symbol, selectedFunction, calls }) {
+// Build once when several changed definitions ask about the same saved facts.
+// Identity and navigation rules remain those of questionIncoming below.
+export function indexIncoming(facts) {
+  const imports = new Map(), files = new Map(), definitions = new Map();
+  const add = (map, key, record) => { const list=map.get(key)||[];list.push(record);map.set(key,list); };
+  (Array.isArray(facts.imports)?facts.imports:[]).forEach((fact,factIndex) => { if(fact.resolved) add(imports,fact.to,{fact,factIndex}); });
+  (Array.isArray(facts.calls)?facts.calls:[]).forEach((fact,factIndex) => {
+    if(!fact.target) return;
+    const to=fact.target,file=to.file||fact.file,record={fact,factIndex};
+    add(files,file,record);add(definitions,JSON.stringify([file,to.name,to.line,to.column]),record);
+  });
+  return { facts, imports, files, definitions };
+}
+
+export function questionIncoming({ facts, inspect, entry, symbol, selectedFunction, calls, index = null }) {
   const base = { coverage: 'unavailable', reason: null, limit: LIMIT, total: null, included: 0, omitted: null, records: [],
     limitations: [
       'Reverse lookup covers only resolved imports and bound calls in this captured selection. Unknown, dynamic, external, excluded or uncollected paths are not a known zero or a complete impact graph.',
@@ -20,9 +34,10 @@ export function questionIncoming({ facts, inspect, entry, symbol, selectedFuncti
       'Records are sorted by source path and exact call range; at most 40 of each list are shown. total/included/omitted refer to captured records, not distinct source files.',
     ] };
   const unavailable = reason => ({ ...base, reason });
+  if (facts && index?.facts !== facts) index = indexIncoming(facts);
   const entryReason = !facts ? 'facts-not-captured' : sourceStatus(entry) !== 'valid' ? `entry-${sourceStatus(entry)}` : null;
   const importers = entryReason ? unavailable(entryReason) : bounded(base,
-    facts.imports.flatMap((fact, factIndex) => fact.resolved && fact.to === entry.file ? [{ factIndex, fact }] : []).sort(order),
+    [...(index.imports.get(entry.file) || [])].sort(order),
     record => {
       const origin = inspect(record.fact.from), status = sourceStatus(origin);
       return { ...record, origin, navigation: { status, location: status === 'valid' ? { file: record.fact.from, line: record.fact.line } : null } };
@@ -31,12 +46,7 @@ export function questionIncoming({ facts, inspect, entry, symbol, selectedFuncti
   if (!reason && symbol && (!selectedFunction || !calls.selection.range)) reason = 'function-range-unavailable';
   if (reason) return { importers, callers: unavailable(reason) };
   const target = symbol ? { name: selectedFunction.name, line: calls.selection.range.line, column: calls.selection.range.column } : null;
-  const matches = facts.calls.flatMap((fact, factIndex) => {
-    const to = fact.target;
-    if (!to || (to.file || fact.file) !== entry.file) return [];
-    if (target && (to.name !== target.name || to.line !== target.line || to.column !== target.column)) return [];
-    return [{ factIndex, fact }];
-  }).sort(order);
+  const matches = [...(target ? index.definitions.get(JSON.stringify([entry.file,target.name,target.line,target.column])) || [] : index.files.get(entry.file) || [])].sort(order);
   const callers = bounded({ ...base, provenance: calls.provenance, bindingCoverage: calls.bindingCoverage,
     selection: { file: entry.file, kind: symbol ? 'exact-function-declaration' : 'entry-file-bound-targets', target } }, matches, record => {
     const origin = inspect(record.fact.file);

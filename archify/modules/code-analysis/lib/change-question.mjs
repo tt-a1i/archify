@@ -152,6 +152,15 @@ function compareSettings(base, head) {
   return { optionChanges: bounded(optionChanges), inputChanges: bounded(inputChanges) };
 }
 
+// Snapshot-only reading helper shared with PR impact. It parses only this TS
+// file, or reuses the other adapters' captured definition ranges. No extraction,
+// compiler Program, filesystem traversal or symbol re-resolution is performed.
+export function capturedDefinitions(facts, file) {
+  const captured = facts.files.find(item => item.path === file);
+  const status = (facts.parse_errors || []).some(error => error.path === file) ? 'parse-error' : 'valid';
+  return definitions({ facts, files: new Map(captured ? [[file, { ...captured, status }]] : []) }, file);
+}
+
 function definitions(side, file) {
   const captured = side.files.get(file);
   if (!captured || captured.status !== 'valid') return { coverage: captured?.status || 'not-captured', records: [] };

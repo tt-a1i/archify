@@ -1,5 +1,24 @@
 # Code Analysis Quick Start
 
+An explicitly requested GitHub PR uses the same workbench:
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo --pr https://github.com/OWNER/REPO/pull/42 --out out/pr-42 --locale zh-CN
+node bin/archify.mjs start /path/to/repo --pr 42 --repository OWNER/REPO --out out/pr-42
+```
+
+`--scope` selects a repository-relative directory (default: the supplied local subdirectory). PR mode captures the merge-base and head as immutable Git blobs and runs the existing analyzer on both with one captured configuration and language adapter. `--language` and `--locale` retain their normal meanings. The local checkout and index are not changed; repository code, hooks and package scripts are not executed.
+
+The native workbench shows head findings, source evidence, review decisions and AI tasks. Its comparison stays against the PR merge-base; refreshing recaptures the requested PR. Failed runs preserve the last successful result. Atlas keeps before/after counts and the complexity distribution visible. Green `+` and amber `◇` mark added and changed captured objects; red dashed curves mark removed dependencies whose endpoints remain in head. Removed objects stay in the change list and open base source through the shared source pane. Source-side buttons switch between captured base and head text. Ambiguous function names are not paired. Source changes do not establish changed runtime behavior or a confirmed defect; an existing head finding is not automatically introduced by the PR. External reports retain the original binding, coverage and comparison limits; this workflow does not run an AI reviewer.
+
+Capture snapshots remain under the chosen output directory so live tasks and review decisions can verify the pinned head even if the local checkout changes. Review acceptance uses the configured baseline and existing service authorization. Offline tasks stay labeled as captured evidence; verify the intended checkout and source revision before editing.
+
+PR priorities use a bounded impact layer over the saved facts and graph, not the whole head's existing hotspots. It compares changed dependency edges and module fan-in/out, reads exact definition fingerprints only in changed source files, and reuses the existing incoming-reference reader to locate direct callers/importers, including unchanged source files. A same-metric body change remains a reading signal; position-only movement does not become an impact. Existing constraints appear only as context attached to a changed dependency or coupling witness. Rule-report evidence updates alone are not promoted to increased risk.
+
+This layer performs no new extraction or repository traversal. Reading is bounded to 32 changed files, 4 MiB of paired source, 80 changed definitions and 160 result records; each reference preview is bounded. Unsupported models, parse errors, excluded roles and exhausted budgets remain explicit unknowns. This is direct static orientation, not runtime tracing, behavior equivalence or complete transitive impact. Full head findings remain separately available as background. The PR brief copies change evidence and its coverage rather than unrelated whole-head recommendations.
+
+In PR mode, short file/function addition and removal counts follow the original module labels, with detailed counts available on hover. Change badges (+/−/◇) open the captured source; grey dashed spikes show merge-base complexity alongside the current spikes. Removed functions can be marked against a surviving file; deleted files/modules remain in the change list. These annotations do not appear in ordinary repository analysis. A same-metric source edit can have a change badge without implying increased complexity or changed behavior.
+
 From the `archify/` package directory inside the Archify repository:
 
 ```sh
@@ -12,6 +31,34 @@ Open the printed URL. Without `--ir`, analysis starts on page load: the left wor
 To align an existing authored architecture diagram, add `--ir architecture.json`. That mode still delivers the original diagram first and analyzes only after **Code Analysis** is clicked. Use **Atlas** / **Classic view** to switch views; source mapping and IR validation are preserved. `--map` requires `--ir`.
 
 In either mode choose a priority or browse all findings, copy an AI task, and inspect captured source excerpts. **Show full file** expands a snippet. The task labels its evidence status; verify source before editing. `--locale en|zh-CN` overrides the diagram locale; without an override the IR locale is used, then English. Unrecognized IR locales fall back to English.
+
+Use **Map workspace** to browse the captured file tree, including files with
+no finding. Search by name or path, filter by module, or pick a file on Atlas.
+File selection highlights its Atlas position when one exists. A file that
+failed to parse, was excluded by role, or has no captured source may still be
+listed; it does not gain a node or an invented import target. Open the import
+location to inspect captured source. From an existing architecture analysis,
+a component with one unambiguous mapped module also offers **Browse module
+files**. Opening the original architecture drawing still does not start an
+analysis.
+
+On a pinned PR, **Map workspace → Changes** lists captured changed paths, even
+when the analyzer could not measure the file. Search can match the old name,
+and the status filter separates added, modified, removed and renamed files.
+Source links identify the merge-base or head, and switched sides use the
+matching path after a rename. Moves across the analysis scope are labeled
+as such. The reader separates new, existing and no-longer-detected cycles
+when the snapshots are comparable, shows known direct references and measured
+complexity changes from the comparison, and notes omissions. Switch to
+**Repository** to see the captured head without PR markers.
+
+Under a selected file or module, **Agent context** previews a bounded
+Markdown handoff. Copy it or use **Download .md**. It states the capture,
+scope, directly observed relationships or change records, source anchors
+and omissions. It does not run commands, give a file a modification
+permission, or include its full source. A prepared HTML can browse and export
+captured context offline; the live service can **Re-analyze** and restore the
+selection if it still exists.
 
 Keep the terminal running. After changing source code or the `--config` file, click **Re-analyze** on the overview: the repository and the config are read again without restarting, the page reloads with the new result, and the overview shows what changed since the previous analysis (new, no longer detected, and findings whose code changed). A finding that is no longer detected is not necessarily fixed: if the config, the rules that ran, or the files that parsed changed between the two runs, the comparison is marked as not directly comparable and says why (see [Comparing runs](#comparing-runs)). If a re-analysis fails, the last good result stays in place and the reason is shown next to the button. Only a changed architecture JSON needs a restart.
 
@@ -518,3 +565,30 @@ the locked helper dependencies are required. Saved and paired questions retain
 the captured source profile, cfg/features, omitted regions and bounded call
 model; a source binding does not establish compilation or runtime dispatch.
 See [Rust support](RUST.md) for setup, profile settings and limitations.
+
+### Use a native PR diagram pack in the review workbench
+
+Build the authored diagrams with `archify pr build --repo-root <repo>`. Set
+the manifest's `repository` to the GitHub slug and pin the PR merge-base and
+head. Keep the generated `pr-pack.receipt.json` with its `views/` directory.
+Pass that receipt and, optionally, the HTTPS address where reviewers can open
+the published offline report.
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo --pr 42 --repository OWNER/REPO \
+  --out out/pr-42 --pr-pack out/diagrams/pr-pack.receipt.json \
+  --review-url https://example.org/reviews/pr-42.html
+```
+
+The report opens its **Changes** view at `#changes`. **PR diagrams** renders
+the authored SVGs and links eligible diagram citations to the captured
+source side. Without a preview, a citation links to the pinned GitHub
+source. The full Git change counts and the number of in-scope changed
+paths stay independent of the diagram selection. A stale receipt or changed
+SVG fails preparation and preserves the previous report. Embedded SVGs have
+an 8 MiB combined budget.
+
+With `--review-url`, `analysis/pr-review.md` contains the link for the PR
+description. Publish the `repo.analysis.html` artifact at that URL and place
+the link next to the diagram pack. Native `archify pr attach` is the explicit
+publication step for the diagrams.

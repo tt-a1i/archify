@@ -58,7 +58,7 @@ test('source links preserve distinct finding lines and never invent line one', (
   assert.match(links,/worker.py:47/);
   assert.doesNotMatch(render(c,'other.py'),/data-line="1"/);
   assert.match(render({incoming:[],outgoing:[{evidence:[{file:'hub.py',line:28}]}]},'hub.py'),/data-line="28"/);
-  const start=script.indexOf('  function showCode('),end=script.indexOf('  function showDetail(',start);
+  const start=script.indexOf('  function capturedSource('),end=script.indexOf('  function showDetail(',start);
   let pane={hidden:true,innerHTML:'',querySelector:()=>({addEventListener(){},scrollIntoView(){}})};
   const show=new Function('tr','codePane','data','detail','function readerPage(){} const document={documentElement:{setAttribute(){},removeAttribute(){}}}; function esc(x){return x} '+script.slice(start,end)+';return showCode;')(createTranslator(),pane,{snippets:{'worker.py':{lines:Array.from({length:100},(_,i)=>'code '+(i+1))}}},{});
   show('worker.py',47,'','amber');

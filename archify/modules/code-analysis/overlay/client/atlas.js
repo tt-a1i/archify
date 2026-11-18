@@ -2,13 +2,17 @@
   var source = document.getElementById('bauify-atlas-data');
   if (!source) return;
   var atlas = JSON.parse(source.textContent);
-  var ui = JSON.parse(document.getElementById('bauify-analysis').textContent).ui || {};
+  var analysis = JSON.parse(document.getElementById('bauify-analysis').textContent), ui = analysis.ui || {}, capturedPr = analysis.pullRequest, pr = capturedPr;
   var tr = window.__archifyMakeAnalysisTranslator(ui.messages || {});
   var root = document.documentElement;
   var standalone = ui.mode === 'standalone';
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
   var NAMES = { 'complexity/function': tr("Complex functions"), 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'redundancy/duplicate-block': tr("Duplicate code") };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
+  var fileIndex = new Map(F.map(function (f, i) { return [f[0], i]; }));
+  var prFiles = pr ? fileIndex : null, prFunctions = pr ? new Map() : null;
+  var prMarkerHits = [], prModuleChanges = pr ? new Map((pr.moduleChanges || []).map(function(m){return[m.id,m];})) : null;
+  if (pr) FN.forEach(function(fn,i){prFunctions.set(JSON.stringify([F[fn[0]][0],fn[1]]),i);});
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function icon(name) {
@@ -59,12 +63,29 @@
   canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 
   // ---- state ----
-  var state = { focusModule: -1, finding: -1, hover: null };
+  var state = { focusModule: -1, focusFile: -1, finding: -1, hover: null };
   var expansionEnabled = true, focusZoom = 1;
   var geometryKey = '', geometryTarget = null, geometryFrom = null, geometryPending = false;
-  var LABEL_FONT = '11px ui-monospace, Menlo, Consolas, monospace';
+  var LABEL_FONT = (pr ? '600 12px ' : '11px ') + 'ui-monospace, Menlo, Consolas, monospace';
+  var PR_BRIEF_FONT = '11px system-ui, -apple-system, "Segoe UI", sans-serif';
   // Long module names are cut on the circle (the tooltip and side panel keep them whole).
   function shortLabel(label) { return label.length > 20 ? '…' + label.slice(-19) : label; }
+  function prModuleRows(mi) {
+    var change=pr&&prModuleChanges.get(M[mi].id);if(!change)return [];
+    return ['files','functions'].map(function(kind) {
+      var counts=change[kind],text=[['added','+'],['removed','−'],['modified','◇']].filter(function(item){return counts[item[0]];}).map(function(item){return item[1]+counts[item[0]];}).join(' ');
+      return text?tr(kind==='files'?'Files: {counts}':'Functions: {counts}',{counts:text}):'';
+    }).filter(Boolean);
+  }
+  function prModuleBrief(mi) {
+    var change=prModuleChanges.get(M[mi].id);if(!change)return '';
+    return ['files','functions'].map(function(kind){
+      var counts=change[kind],changes=[counts.added?'+'+counts.added:'',counts.removed?'−'+counts.removed:''].filter(Boolean).join('/');
+      if(!changes)return '';
+      var many=Math.max(counts.added,counts.removed)>1;
+      return tr(kind==='files'?(many?'{changes} files':'{changes} file'):(many?'{changes} fns':'{changes} fn'),{changes:changes});
+    }).filter(Boolean).join(' · ') || '◇';
+  }
   // Many curves add up: fainter strokes for denser graphs keep strands readable.
   function density(n, most) { return Math.max(0.05, Math.min(most, 8 / Math.sqrt(Math.max(n, 1)))); }
   var geo = null, marks = [];
@@ -87,8 +108,12 @@
     if (key === geometryKey && geometryTarget) { if (!anim.focus) geo = geometryTarget; return; }
     var old = geo, size = Math.max(200, Math.min(w, h));
     var measure = canvas.getContext('2d'); measure.font = LABEL_FONT;
-    var longest = M.reduce(function (n, m) { return Math.max(n, measure.measureText(shortLabel(m.label)).width); }, 0);
-    var R = Math.max(40, Math.min(size * 0.34, (size / 2 - Math.min(longest, size * 0.22) - 12) / 1.53));
+    var longest = M.reduce(function(n,m,mi) {
+      measure.font=LABEL_FONT;var width=measure.measureText(shortLabel(m.label)).width;
+      if(pr) {var brief=prModuleBrief(mi);measure.font=PR_BRIEF_FONT;if(brief)width=Math.max(width,measure.measureText(brief).width);}
+      return Math.max(n,width);
+    },0);
+    var R = Math.max(40, Math.min(size * 0.34, (size / 2 - Math.min(longest, size * (pr ? 0.24 : 0.22)) - 12) / 1.53));
     // Reuse the PR prototype's partition: selected files gain angular space;
     // all other sectors compress within the same circle, without overlap.
     var weights = F.map(function (f, i) { return selected < 0 ? 1 : f[1] === selected ? (2 + Math.min(fnsByFile[i].length, 45) / 12) * focusZoom : 0.55; });
@@ -152,6 +177,10 @@
     if (finding == null) finding = state.finding;
     var sel = { modules: {}, files: {}, edges: null, fns: {}, tone: null, any: false, arcs: {}, entries: {} };
     if (state.focusModule !== -1 && finding === -1) { sel.modules[state.focusModule] = true; sel.any = true; }
+    if (finding === -1 && state.focusFile !== -1) {
+      sel.anchor = state.focusFile; sel.files[state.focusFile] = true;
+      sel.tone = theme().text; sel.any = true;
+    }
     var f = FD[finding];
     if (f) {
       sel.any = true; sel.tone = TONE[f.severity] || TONE.info;
@@ -275,7 +304,7 @@
     ctx.lineWidth = 1; ctx.strokeStyle = t.grid;
     [0.42, 0.8, 1.0, 1.42].forEach(function (f) { ctx.beginPath(); ctx.arc(geo.cx, geo.cy, geo.R * f, 0, 2 * Math.PI); ctx.stroke(); });
     // dependencies, one path per source module
-    var focusM = state.finding === -1 ? state.focusModule : -1;
+    var focusM = state.finding === -1 && state.focusFile === -1 ? state.focusModule : -1;
     var byModule = M.map(function () { return []; });
     E.forEach(function (e) { byModule[F[e[0]][1]].push(e); });
     ctx.lineCap = 'round';
@@ -351,12 +380,21 @@
       ctx.strokeStyle = hue(mi, t, on ? 1 : 0.25); ctx.lineWidth = hub ? 5 : 2; ctx.lineCap = 'butt'; ctx.stroke();
       var a = mid(mi), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label);
       // A module too narrow for its own label is named only when selected or hovered.
-      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || sel.modules[mi] || state.focusModule === mi;
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= (pr ? 16 : 12) || sel.modules[mi] || state.focusModule === mi;
       if (!named) return;
       ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(flip ? a + Math.PI : a);
       ctx.textAlign = flip ? 'right' : 'left'; ctx.fillStyle = hue(mi, t, on ? 1 : 0.35);
-      ctx.fillText(shortLabel(m.label), 0, 0); ctx.restore();
+      ctx.fillText(shortLabel(m.label), 0, 0);
+      if(pr&&((geo.span[mi][1]-geo.span[mi][0])*geo.arc>=32||sel.modules[mi])) {
+        var brief=prModuleBrief(mi);
+        ctx.font=PR_BRIEF_FONT;
+        var room=Math.min(geo.w,geo.h)/2-geo.label-12;
+        if(ctx.measureText(brief).width>room+1)brief=room>=ctx.measureText('◇').width?'◇':'';
+        if(brief!=='◇'){ctx.fillStyle=hue(mi,t,on?0.85:0.3);ctx.fillText(brief,0,16);}
+      }
+      ctx.restore();
     });
+    if (pr) drawPRMarks(ctx,sel);
     ctx.lineCap = 'round';
   }
   function drawHover(ctx, t) {
@@ -378,6 +416,7 @@
   // unreported functions), and stays aligned during animation and resizing.
   function hit(x, y) {
     if (!geo) return null;
+    if(pr) for(var marker=prMarkerHits.length-1;marker>=0;marker--) {var p=prMarkerHits[marker];if(Math.hypot(x-p.x,y-p.y)<=6)return {type:'pr-change',index:p.index};}
     var best = null, bestDistance = 4;
     marks.forEach(function (mark) {
       var dx = mark.p1[0] - mark.p0[0], dy = mark.p1[1] - mark.p0[1];
@@ -399,13 +438,14 @@
       var along = dx * Math.cos(mid(mi)) + dy * Math.sin(mid(mi));
       var across = -dx * Math.sin(mid(mi)) + dy * Math.cos(mid(mi));
       var labelStart = geo.label;
-      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || state.focusModule === mi || selected.modules[mi];
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= (pr ? 16 : 12) || state.focusModule === mi || selected.modules[mi];
       if (named && Math.abs(across) <= 7 && along >= labelStart - 4 && along <= labelStart + measure.measureText(shortLabel(M[mi].label)).width + 4) return { type: 'module', index: mi };
     }
     return null;
   }
   function tipText(h) {
-    if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + (hubOf[h.index] != null ? tr(" · reported hub") : '') + ("<br>" + tr("Click to focus its dependencies.")); }
+    if(h.type==='pr-change') {var change=pr.changes[h.index],a=change.before,b=change.after;return '<b>'+esc(change.name||change.path||change.from+' → '+change.to)+'</b>'+esc(tr(change.status))+(change.kind==='function'&&a&&b?'<br>'+esc(tr('Complexity {before} → {after}',{before:a.complexity,after:b.complexity})):'');}
+    if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + (hubOf[h.index] != null ? tr(" · reported hub") : '') + (pr?prModuleRows(h.index).map(function(text){return '<br>'+esc(text);}).join(''):'') + ("<br>" + tr("Click to focus its dependencies.")); }
     if (h.type === 'file') { var f = F[h.index]; return '<b>' + esc(f[0]) + '</b>' + esc(M[f[1]].label) + ' · ' + plural(f[2], 'line') + ' · ' + plural(fnsByFile[h.index].length, 'function'); }
     var fn = FN[h.index], fd = fn[6] !== -1 ? FD[fn[6]] : null;
     return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + ("<br>" + tr("complexity ")) + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? ("<br>" + tr("Reported (")) + esc(fd.severity) + tr("). Click to select.") : '');
@@ -424,10 +464,11 @@
   canvas.addEventListener('mouseleave', function () { tip.hidden = true; if (state.hover) { state.hover = null; schedule(); } });
   canvas.addEventListener('click', function (e) {
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
-    if (!h) { select(-1, -1); return; }
-    if (h.type === 'module') select(state.focusModule === h.index ? -1 : h.index, -1);
+    if (!h) { pickModule(-1); return; }
+    if (h.type === 'pr-change') showPRChange(h.index);
+    else if (h.type === 'module') pickModule(state.focusModule === h.index && state.focusFile === -1 ? -1 : h.index);
     else if (h.type === 'function' && FN[h.index][6] !== -1) selectFinding(FN[h.index][6]);
-    else select(F[h.type === 'function' ? FN[h.index][0] : h.index][1], -1);
+    else pickFile(h.type === 'function' ? FN[h.index][0] : h.index);
   });
   canvas.addEventListener('wheel', function (e) {
     if (panel.hidden || !expansionEnabled || state.focusModule === -1 || e.ctrlKey || !e.deltaY) return;
@@ -453,13 +494,22 @@
     var owner = modules.length && modules.every(function (mi) { return mi === modules[0]; }) ? modules[0] : -1;
     select(owner, index);
   }
-  function select(module, finding, saved) {
+  function pickModule(index) {
+    select(index, -1);
+    window.__archifyWorkspaceSelection?.('module', M[index]?.id);
+  }
+  function pickFile(index) {
+    select(F[index][1], -1, index);
+    window.__archifyWorkspaceSelection?.('file', F[index][0]);
+  }
+  function select(module, finding, file = -1, saved = null) {
     updateGeometry(performance.now(), motion.matches);
     var view = saved ? saved.view : sideView();
     if (saved) focusZoom = saved.zoom;
     else if (module !== state.focusModule) focusZoom = 1;
     if (!saved && (module !== state.focusModule || finding !== state.finding)) view.moduleDetails = false;
-    state.focusModule = module; state.finding = finding;
+    state.focusModule = module; state.finding = finding; state.focusFile = file;
+    root.setAttribute('data-bauify-atlas-file', file === -1 ? '' : F[file][0]);
     state.hover = null; tip.hidden = true;
     root.setAttribute('data-bauify-atlas-focus', module === -1 ? '' : M[module].id);
     root.setAttribute('data-bauify-atlas-finding', finding === -1 ? '' : FD[finding].id);
@@ -473,6 +523,7 @@
       modules: modules ? modules.scrollTop : 0,
       groups: new Set(Array.from(side.querySelectorAll('details[data-group][open]'), function (group) { return group.dataset.group; })),
       coverage: !!side.querySelector('.atlas-metrics[open]'),
+      prChanges: !!side.querySelector('.pr-changes[open]'),
       moduleDetails: !!side.querySelector('.selected-details[open]')
     };
   }
@@ -504,15 +555,84 @@
     }
     return '';
   }
+  function prSummary(view) {
+    var h = '<section class="pr-summary"><div class="k">' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', {number:pr.number})) + '</div>';
+    h += '<p class="note"><code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code> · ' + esc(pr.scope) + '</p><dl class="pr-totals">';
+    [['files','files'],['dependencies','file dependencies'],['functions','functions'],['modules','modules']].forEach(function(item) {
+      h += '<div><dt>' + esc(tr(item[1])) + '</dt><dd>' + fmt(pr.before[item[0]]) + ' → <b>' + fmt(pr.after[item[0]]) + '</b></dd></div>';
+    });
+    h += '</dl><div class="k">' + esc(tr('Complexity distribution · function counts')) + '</div><p class="note">' + esc(tr('Grey: merge-base · green: PR head')) + '</p><div class="pr-distribution" role="img" aria-label="' + esc(tr('Complexity distribution · function counts')) + '">';
+    var d=pr.distribution, max=Math.max.apply(Math,d.before.concat(d.after,1));
+    d.labels.forEach(function(label,i) { h += '<div class="pr-band"><span>' + esc(label) + '</span><span class="pr-tracks"><i style="width:' + 100*d.before[i]/max + '%"></i><b style="width:' + 100*d.after[i]/max + '%"></b></span><span>' + d.before[i] + ' → ' + d.after[i] + '</span></div>'; });
+    h += '</div><p class="note">' + esc(tr('Green +: added · amber ◇: changed · red dashed curve: removed dependency. Removed objects remain in the change list.')) + '</p><p class="note">' + esc(tr('Grey dashed spikes: merge-base complexity · red −: removed function. Click a marker for source; hover a module for counts.')) + '</p>';
+    h += '<details class="pr-changes"' + (view.prChanges ? ' open' : '') + '><summary>' + esc(tr('PR changes · {count}',{count:pr.changes.length})) + '</summary>';
+    pr.changes.forEach(function(change,i) {
+      var label=change.kind==='edge'?change.from+' → '+change.to:change.kind==='function'?change.name+'() · '+change.path:change.path;
+      var metrics=change.kind==='function'&&change.before&&change.after?' · '+tr('complexity ')+change.before.complexity+' → '+change.after.complexity:'';
+      h += '<button type="button" class="row" data-pr-change="' + i + '"><i class="pr-mark-' + change.status + '"></i><span class="t" title="' + esc(label) + '">' + esc(label) + '</span><span class="n">' + esc(tr(change.status)) + '</span></button>' + (metrics?'<p class="note">'+esc(metrics)+'</p>':'');
+    });
+    h += '</details>';
+    if(pr.ambiguousFunctions) h += '<p class="note">' + esc(tr('{count} function names are ambiguous; no before/after identity is inferred.',{count:pr.ambiguousFunctions})) + '</p>';
+    if(pr.omitted.base.length||pr.omitted.head.length) h += '<p class="note">' + esc(tr('Source capture omitted {base} base and {head} head entries (symlinks or submodules).',{base:pr.omitted.base.length,head:pr.omitted.head.length})) + '</p>';
+    return h + '</section>';
+  }
+  function drawPRMarks(ctx, sel) {
+    prMarkerHits=[];
+    var t=theme();
+    ctx.save();ctx.font='bold 10px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    pr.changes.forEach(function(change,index) {
+      var fi=prFiles.get(change.path), tone=change.status==='added'?'#34d399':change.status==='removed'?'#fb7185':'#fbbf24';
+      ctx.strokeStyle=tone;ctx.fillStyle=tone;ctx.globalAlpha=!sel.any||fi!=null&&inSel(sel,fi)?1:.35;
+      var p;
+      if(change.kind==='edge') {
+        var a=prFiles.get(change.from),b=prFiles.get(change.to);if(a==null||b==null)return;
+        ctx.setLineDash(change.status==='removed'?[4,4]:[]);ctx.lineWidth=1.5;ctx.beginPath();curve(ctx,a,b);ctx.stroke();ctx.setLineDash([]);
+        p=along(curvePoints(a,b),0.5);
+      } else {
+        if(fi==null||change.kind==='file'&&change.status==='removed')return;
+        var angle=geo.ang[fi],radius=geo.R-7;
+        if(change.kind==='function') {
+        var fn=prFunctions.get(JSON.stringify([change.path,change.name]));
+        if(change.status!=='removed'&&fn==null)return;
+        angle=fn==null?geo.ang[fi]:fnAngle(fn);
+        radius=geo.spike0+spikeLen((change.after||change.before).complexity)+8;
+        if(change.before) {
+          var start=pt(angle,geo.spike0),old=pt(angle,geo.spike0+spikeLen(change.before.complexity)),dx=-Math.sin(angle)*2,dy=Math.cos(angle)*2;
+          ctx.strokeStyle=change.status==='removed'?tone:t.muted;ctx.lineWidth=1.2;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(start[0]+dx,start[1]+dy);ctx.lineTo(old[0]+dx,old[1]+dy);ctx.stroke();ctx.setLineDash([]);
+        }
+        }
+        p=pt(angle,radius);
+      }
+      if(prMarkerHits.some(function(other){return Math.hypot(p[0]-other.x,p[1]-other.y)<10;}))return;
+      ctx.fillStyle=t.bg;ctx.beginPath();ctx.arc(p[0],p[1],5.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=tone;
+      ctx.fillText(change.status==='added'?'+':change.status==='removed'?'−':'◇',p[0],p[1]);
+      prMarkerHits.push({x:p[0],y:p[1],index:index});
+    });
+    ctx.restore();
+  }
+  function showPRChange(index) {
+    var change=pr.changes[index],path=change.path||change.from,file=prFiles.get(path);
+    if(file!=null)select(F[file][1],-1,file);
+    var loc=change.after&&typeof change.after==='object'?change.after:change.before&&typeof change.before==='object'?change.before:null;
+    var diff=analysis.snippets[path]&&analysis.snippets[path].changes,line=loc&&loc.line||(change.status==='removed'?null:diff&&(diff.modified[0]||diff.added[0]))||null;
+    var snapshot = change.status === 'removed' ? 'base' : 'head';
+    if (window.__archifyWorkspaceSource?.(path, line, snapshot)) return;
+    if(window.__archifyShowSource)window.__archifyShowSource(path,line,snapshot);
+  }
   function renderSide(view, openSelected) {
     view = view || sideView();
-    var focus = document.activeElement, row = side.contains(focus) && ['data-finding', 'data-module'].find(function (name) { return focus.hasAttribute(name); });
+    var focus = document.activeElement, row = side.contains(focus) && ['data-finding', 'data-module', 'data-pr-change'].find(function (name) { return focus.hasAttribute(name); });
     var selected = side.querySelector('.atlas-selection'), card = selectedCard();
     selected.hidden = !card;
+    side.querySelector('.atlas-stats').hidden = !!pr;
     selected.innerHTML = card ? '<h3 class="k">' + esc(tr('Selection')) + '</h3>' + card : '';
+    if (analysis.workspace && state.focusModule !== -1 && state.finding === -1) {
+      selected.insertAdjacentHTML('beforeend', '<button type="button" class="atlas-browse-module">' + esc(tr('Browse module files')) + '</button>');
+      if (state.focusFile !== -1) selected.insertAdjacentHTML('beforeend', '<p class="note">' + esc(F[state.focusFile][0]) + '</p>');
+    }
     var moduleDetails = selected.querySelector('.selected-details');
     if (moduleDetails) moduleDetails.open = view.moduleDetails;
-    var h = '';
+    var h = pr ? prSummary(view) : '';
     var groups = {};
     FD.forEach(function (f, i) { (groups[f.code] = groups[f.code] || []).push(i); });
     var codes = Object.keys(groups).sort();
@@ -525,7 +645,7 @@
         return '<button type="button" class="row' + (i === state.finding ? ' active' : '') + (f.accepted ? ' accepted' : '') + '" data-finding="' + i + '"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><span class="t" title="' + esc(findingTitle(f)) + '">' + esc(findingTitle(f)) + '</span><span class="n">' + esc(tr(f.severity)) + '</span></button>';
       }).join('') + '</details>';
     });
-    if (atlas.measured && FN.length) {
+    if (!pr && atlas.measured && FN.length) {
       var counts = []; for (var c = 0; c < 20; c++) counts.push(0);
       FN.forEach(function (fn) { counts[Math.max(1, Math.min(fn[3], 20)) - 1]++; });
       var max = Math.max.apply(Math, counts);
@@ -548,9 +668,16 @@
     side.querySelector('.atlas-side-content').innerHTML = h;
     side.querySelector('.module-list').scrollTop = view.modules;
     side.scrollTop = view.scroll;
-    if (row) side.querySelector('[' + row + '="' + focus.getAttribute(row) + '"]').focus({ preventScroll: true });
+    if (row) side.querySelector('[' + row + '="' + focus.getAttribute(row) + '"]')?.focus({ preventScroll: true });
+    side.querySelectorAll('[data-pr-change]').forEach(function(button) { button.addEventListener('click', function() {
+      showPRChange(Number(button.getAttribute('data-pr-change')));
+    }); });
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
-    side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
+    side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); pickModule(state.focusModule === i && state.focusFile === -1 ? -1 : i); }); });
+    var browse = side.querySelector('.atlas-browse-module');
+    if (browse) browse.addEventListener('click', function () {
+      window.__archifyWorkspaceSelection?.('module', M[state.focusModule].id, true);
+    });
     var ev = side.querySelector('.atlas-evidence');
     if (ev) ev.addEventListener('click', function () { var id = ev.getAttribute('data-id'); if (!standalone) close(); if (window.__archifyShowFinding) window.__archifyShowFinding(id); });
   }
@@ -571,8 +698,8 @@
     markMotion();
   }
   if (!standalone) panel.querySelector('.atlas-classic').addEventListener('click', close);
-  panel.querySelector('.atlas-clear').addEventListener('click', function () { select(-1, -1); });
-  document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { e.preventDefault(); select(-1, -1); } });
+  panel.querySelector('.atlas-clear').addEventListener('click', function () { pickModule(-1); });
+  document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { if (e.target.matches?.('input, select, textarea')) return; e.preventDefault(); pickModule(-1); } });
   function updateExpansionControl() {
     var button = panel.querySelector('.atlas-expand'), label = tr(expansionEnabled ? 'Disable sector zoom' : 'Enable sector zoom');
     button.setAttribute('aria-label', label);
@@ -594,9 +721,23 @@
     focusFinding: function (id) {
       var index = FD.findIndex(function (f) { return f.id === id; });
       if (index < 0) select(-1, -1); else selectFinding(index);
+      return index !== -1;
     },
-    saveSelection: function () { return { module: state.focusModule, finding: state.finding, zoom: focusZoom, view: sideView() }; },
-    restoreSelection: function (saved) { select(saved.module, saved.finding, saved); }
+    saveSelection: function () { return { module: state.focusModule, file: state.focusFile, finding: state.finding, zoom: focusZoom, view: sideView(), review: !!pr }; },
+    restoreSelection: function (saved) {
+      pr = saved.review ? capturedPr : null;
+      select(saved.module, saved.finding, saved.file, saved);
+    },
+    showReviewMarkers: function () {
+      if (pr === capturedPr) return;
+      pr = capturedPr; renderSide(); if (!panel.hidden) draw();
+    },
+    focusWorkspace: function (mode, file, module) {
+      pr = mode === 'changes' ? capturedPr : null;
+      var i = fileIndex.get(file) ?? -1;
+      var m = i === -1 ? M.findIndex(function (entry) { return entry.id === module; }) : F[i][1];
+      select(m, -1, i);
+    }
   };
   if (standalone) open();
   new MutationObserver(function () { if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden) { renderSide(); draw(); } }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });

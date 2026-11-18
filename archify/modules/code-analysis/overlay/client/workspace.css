@@ -1,0 +1,49 @@
+#bauify-reader .map-workspace { display: grid; gap: 9px; font: 13px/1.5 system-ui, sans-serif; }
+#bauify-reader .map-workspace-head, #bauify-reader .map-actions, #bauify-reader .map-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+#bauify-reader .map-workspace-head h3 { margin: 0; flex: 1 0 110px; }
+#bauify-reader .map-workspace button { min-height: 30px; }
+#bauify-reader .map-workspace button:focus-visible { outline: 2px solid var(--backend-stroke, #34d399); outline-offset: 1px; }
+#bauify-reader .map-workspace button[disabled] { opacity: .65; cursor: default; }
+#bauify-reader .map-tabs button[aria-pressed="true"], #bauify-reader .map-file[aria-current="true"] { border-color: var(--backend-stroke, #34d399); background: color-mix(in srgb, var(--backend-stroke, #34d399) 14%, var(--panel, #0f172a)); }
+#bauify-reader .map-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+#bauify-reader .map-controls > :first-child { grid-column: 1 / -1; }
+#bauify-reader .map-controls label, #bauify-reader .map-controls input, #bauify-reader .map-controls select { width: 100%; min-width: 0; }
+#bauify-reader .map-controls input, #bauify-reader .map-controls select, #bauify-reader .map-export textarea { box-sizing: border-box; padding: 5px 6px; border: 1px solid var(--panel-border); border-radius: 5px; background: var(--bg); color: var(--text); font: inherit; }
+#bauify-reader .map-tree { max-height: 230px; overflow: auto; padding: 2px; border: 1px solid var(--panel-border); border-radius: 7px; }
+#bauify-reader button.map-tree-row { display: flex; width: 100%; gap: 6px; justify-content: space-between; align-items: center; text-align: left; padding-left: calc(8px + 9px * var(--map-depth, 0)); border: 1px solid transparent; background: none; }
+#bauify-reader .map-tree-row span, #bauify-reader .map-selection, #bauify-reader .map-evidence-row { min-width: 0; overflow-wrap: anywhere; }
+#bauify-reader .map-folder::before { content: "›"; margin-right: 4px; }
+#bauify-reader .map-folder[aria-expanded="true"]::before { content: "⌄"; }
+#bauify-reader button.map-folder { justify-content: flex-start; }
+#bauify-reader .map-badge { font-size: 11px; color: var(--text-muted); }
+#bauify-reader .map-note { margin: 2px 0; color: var(--text-muted); }
+#bauify-reader .map-selection { display: grid; gap: 7px; }
+#bauify-reader .map-selection h4, #bauify-reader .map-selection p { margin: 2px 0; }
+#bauify-reader .map-evidence { padding-top: 6px; border-top: 1px solid var(--panel-border); }
+#bauify-reader .map-evidence-row, #bauify-reader .map-observation { padding: 4px 0; }
+#bauify-reader .map-observation + .map-observation { border-top: 1px solid var(--panel-border); }
+#bauify-reader .map-source-link { max-width: 100%; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+#bauify-reader .map-export textarea { width: 100%; min-height: 105px; resize: vertical; }
+#bauify-reader .map-export .map-actions { margin: 6px 0; }
+@media (max-width: 600px) { #bauify-reader .map-workspace button { min-height: 40px; } }
+
+#bauify-reader .map-review-pack { border: 1px solid var(--panel-border); border-radius: 7px; padding: 8px; }
+#bauify-reader .map-review-pack summary { cursor: pointer; font-weight: 600; }
+#bauify-reader .map-review-pack > :not(summary) { margin-top: 8px; }
+#bauify-reader .map-review-pack button[aria-pressed="true"] { border-color: var(--backend-stroke, #34d399); }
+#bauify-reader .map-review-figure { margin: 0 0 8px; }
+#bauify-reader .map-review-figure img { display: block; width: 100%; height: auto; border-radius: 5px; }
+#bauify-reader .map-review-figure img[data-pack-theme="light"], html[data-theme="light"] #bauify-reader .map-review-figure img[data-pack-theme="dark"] { display: none; }
+html[data-theme="light"] #bauify-reader .map-review-figure img[data-pack-theme="light"] { display: block; }
+#bauify-reader .map-review-figure figcaption, #bauify-reader .map-pack-external { padding: 4px 0; overflow-wrap: anywhere; }
+
+#bauify-reader .map-review-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#bauify-reader .map-review-tabs button { min-width: 0; white-space: normal; padding-inline: 6px; }
+#bauify-reader .map-diagram-preview { display: block; width: 100%; padding: 0; border: 0; }
+#bauify-reader .map-review-more summary { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.map-diagram-dialog { width: min(90vw, 1440px); max-height: 92vh; overflow: auto; background: var(--bg); color: var(--text); border: 1px solid var(--panel-border); border-radius: 10px; }
+.map-diagram-dialog::backdrop { background: #0009; }
+.map-diagram-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.map-diagram-dialog img { display: block; width: 100%; height: auto; }
+.map-diagram-dialog img[data-pack-theme="light"], html[data-theme="light"] .map-diagram-dialog img[data-pack-theme="dark"] { display: none; }
+html[data-theme="light"] .map-diagram-dialog img[data-pack-theme="light"] { display: block; }
