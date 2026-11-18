@@ -40,7 +40,7 @@ const isPoint = (point) => Number.isInteger(point.line) && point.line >= 1 && Nu
 // "needs version N" is one comparison. When an extractor adds a model version,
 // raise the number here.
 const CALL_MODELS = {
-  py: { prefix: 'python-lexical', latest: 2 },
+  py: { prefix: 'python-lexical', latest: 3 },
   java: { prefix: 'java-static-lexical', latest: 5 },
   go: { prefix: 'go-source-direct', latest: 4 },
   rust: { prefix: 'rust-source-direct', latest: 14 },
@@ -59,6 +59,7 @@ function callModelVersions(data) {
 
 // A call resolution that only a given language's model version can produce.
 const RESOLUTION_MODELS = new Map([
+  ['python-jedi-declaration', ['py', 3, 'requires the Python Jedi source model']],
   ['java-qualified-static-method', ['java', 2, 'requires the Java v2 source model']],
   ['rust-inherent-source-candidate', ['rust', 2, 'requires the Rust v2 inherent source-candidate model']],
   ['rust-specialized-inherent-source-candidate', ['rust', 3, 'requires the Rust v3 concrete-specialization source-candidate model']],
@@ -286,7 +287,7 @@ function callTargetErrors(call, at, context) {
 function importedTargetErrors(call, at, targetFile, context) {
   const { add, model, brokenFiles, staticImports, forwardingModel } = context;
   const direct = staticImports.get(call.file)?.has(targetFile);
-  let forwarded = model.py === 2 && [...(staticImports.get(call.file) || [])].some((via) => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
+  let forwarded = model.py >= 2 && [...(staticImports.get(call.file) || [])].some((via) => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
   if (call.via && forwardingModel) {
     forwarded = followsForwardingPath(call, targetFile, context);
     if (!forwarded) add(`${at}/via`, 'must follow an acyclic recorded value import/export path at captured source points');

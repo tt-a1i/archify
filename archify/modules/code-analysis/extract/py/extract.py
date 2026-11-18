@@ -15,7 +15,7 @@ Each import: {"line", "kind": "static"|"dynamic", "level", "module", "names"}
   - `from ..p import *`     -> level 2, module "p",    names ["*"]
   - importlib.import_module("a.b") / __import__("a.b") with a literal -> kind "dynamic"
 Resolution against the file set happens in Node so both adapters share one policy.
-Standard library only; no third-party imports.
+CPython AST collects the inventory. Optional Jedi queries enrich unresolved calls.
 """
 import ast
 import base64
@@ -286,8 +286,9 @@ def _is_irrefutable(case):
     return case.guard is None and isinstance(pattern, getattr(ast, "MatchAs", ())) and pattern.pattern is None
 
 
-def _measure(func):
+def _measure(func, text):
     state = {"complexity": 1, "nesting": 0, "deepest": func.lineno}
+    lines, _ = source_lines(text)
 
     def visit(node, depth):
         for child in analysis_children(node):
@@ -310,8 +311,9 @@ def _measure(func):
                 if not _is_irrefutable(child):
                     state["complexity"] += 1
             if isinstance(child, _BLOCKS):
-                # `elif` is an If alone in its parent If's orelse: same depth.
-                is_elif = isinstance(child, ast.If) and isinstance(node, ast.If) and node.orelse == [child]
+                # CPython represents both elif and a nested else: if as an If.
+                is_elif = (isinstance(child, ast.If) and isinstance(node, ast.If) and node.orelse == [child]
+                           and lines[child.lineno - 1].encode('utf-8')[child.col_offset:].startswith(b'elif'))
                 child_depth = depth if is_elif else depth + 1
                 if child_depth > state["nesting"]:
                     state["nesting"] = child_depth
@@ -322,13 +324,13 @@ def _measure(func):
     return state
 
 
-def functions(tree, text):
+def functions(tree, text, tokens):
     out = []
     # Token columns are Unicode character offsets; AST columns are UTF-8 bytes.
     # In particular, a parenthesized decorator's AST starts after its opening
     # parentheses, potentially on another line. Find the owning @ token instead.
     decorator_tokens = []
-    for token in tokenize.generate_tokens(io.StringIO(text.replace('\r\n', '\n').replace('\r', '\n')).readline):
+    for token in tokens:
         if token.type == tokenize.OP and token.string == '@' and not token.line[:token.start[1]].strip():
             decorator_tokens.append(token)
 
@@ -351,7 +353,7 @@ def functions(tree, text):
         for child in analysis_children(node):
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 qualname = prefix + child.name
-                m = _measure(child)
+                m = _measure(child, text)
                 out.append({
                     "name": child.name, "qualname": qualname, "line": child.lineno,
                     "endLine": getattr(child, "end_lineno", None) or child.lineno,
@@ -371,6 +373,16 @@ def functions(tree, text):
 
 def main():
     request = json.load(sys.stdin)
+    with_jedi = request.get("jedi")
+    if with_jedi:
+        try:
+            from jedi_targets import add_targets
+        except ModuleNotFoundError as error:
+            if error.name not in ("jedi", "parso"):
+                raise
+            json.dump({"jediMissing": error.name}, sys.stdout)
+            return
+    jedi_inputs = []
     out = []
     for rel in request["files"]:
         raw = base64.b64decode(request["sources"][rel], validate=True)
@@ -382,12 +394,21 @@ def main():
             tree = ast.parse(text, filename=rel)
             record["imports"] = collect(tree)
             record["symbols"] = module_bindings(tree)
-            record["functions"] = functions(tree, text)
-            record["calls"], record["definitions"], record["importBindings"] = collect_calls(tree, text)
+            tokens = tokenize.generate_tokens(io.StringIO(text.replace('\r\n', '\n').replace('\r', '\n')).readline)
+            queries = [] if with_jedi else None
+            if with_jedi:
+                tokens = list(tokens)
+            record["functions"] = functions(tree, text, tokens)
+            record["calls"], record["definitions"], record["importBindings"] = collect_calls(tree, text, queries)
+            if with_jedi:
+                jedi_inputs.append((record, tokens, queries))
         except (SyntaxError, ValueError, UnicodeError, LookupError) as error:
             record["error"] = "%s (line %s)" % (getattr(error, "msg", str(error)), getattr(error, "lineno", None))
         out.append(record)
-    json.dump({"files": out, "python": platform.python_version()}, sys.stdout)
+    result = {"files": out, "python": platform.python_version()}
+    if with_jedi:
+        result["jedi"] = add_targets(request["sources"], jedi_inputs)
+    json.dump(result, sys.stdout)
 
 
 if __name__ == "__main__":

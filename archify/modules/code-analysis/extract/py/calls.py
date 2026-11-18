@@ -111,7 +111,7 @@ def events(nodes, module=False):
     return found, declarations
 
 
-def collect_calls(tree, text):
+def collect_calls(tree, text, queries=None):
     module_events, _ = events(tree.body, module=True)
     # Explicit global/nonlocal names stay outside this model, including class writers.
     mutable = set()
@@ -240,6 +240,8 @@ def collect_calls(tree, text):
                 record = {**span, 'resolution': 'same-file-function', 'target': {k: target[k] for k in ('name', 'line', 'column')}}
             else:
                 record['_import'] = candidate
+        if queries is not None and 'target' not in record:
+            queries.append((record, node.func))
         records.append(record)
     imports = {name: value for name, value in candidates.items() if value['kind'] == 'import'}
     return sorted(records, key=lambda x: (x['line'], x['column'], x['endLine'], x['endColumn'])), definitions, imports

@@ -63,6 +63,9 @@ Fresh paired orientation below also supports captured named Python/Java definiti
    It binds only unique ordinary undecorated module-level definitions or explicit
    static from-import aliases to direct captured definitions. Attributes, classes,
    decorated targets, reexports, shadows and ambiguous bindings stay unresolved.
+   Python v2 adds one explicit from-import reexport. Opt-in v3 adds unique
+   Jedi declaration candidates inside the captured files. See
+   [Jedi declaration navigation](LANGUAGE-REFERENCE.md#jedi-declaration-navigation).
    Captured `functions[].sourceRange` stores exact UTF-16/end-exclusive positions
    and a decoded-source slice hash; this consumer verifies it without TS reparsing.
    The range starts at def/async def, excluding preceding decorators; defaults and
@@ -239,6 +242,7 @@ Read the orientation before following locations:
   call evidence; decorated definitions can be paired even though decorated and
   method call targets remain unresolved. In-range unresolved sites use the full
   owned extent and can include decorator expressions and nested definitions.
+  Python v3 also supports paired references to captured Jedi declaration targets.
   Matching Java producers with `java-static-lexical-v1` support bounded
   `same-file-static-method` source candidates and retain member calls as unresolved.
   These candidates do not check argument type applicability or compilation.

@@ -8,16 +8,16 @@ import { test } from 'node:test';
 import { createHash } from 'node:crypto';
 const base = process.env.ARCHIFY_CALL_TEST_MODULE;
 const load = relative => import(base ? pathToFileURL(path.join(base, relative)) : new URL(`../${relative}`, import.meta.url));
-const { extractFacts } = await load('lib/analysis.mjs');
+const { extractFacts, loadConfig, mergeConfig } = await load('lib/analysis.mjs');
 const { buildQuestion } = await load('lib/explain.mjs');
 const { schemaErrors } = await load('extract/shared/schema.mjs');
-function fixture(t, files) {
+function fixture(t, files, config = null) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-python-calls-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   for (const [file, text] of Object.entries(files)) {
     fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), text);
   }
-  return { root, facts: extractFacts(root, { language: 'py' }).facts, entry: 'entry.py', question: 'Where is the source definition?' };
+  return { root, facts: extractFacts(root, { language: 'py', config }).facts, entry: 'entry.py', question: 'Where is the source definition?' };
 }
 const selected = args => buildQuestion({ ...args, symbol: 'chosen' }).calls;
 
@@ -32,13 +32,72 @@ test('Python BOM decoding keeps fresh entry and imported target coordinates alig
 
 test('Python call inventory, direct alias targets, async definition and known zero', t => {
   const args = fixture(t, { 'entry.py': 'from helper import work as alias\ndef local(): pass\nasync def task(): pass\ndef chosen():\n    local()\n    alias()\n    task()\n    obj.method()\n    factory()()\n', 'helper.py': 'def work(): pass\n' });
-  assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 10);
+  assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 11);
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
   const calls = selected(args); assert.equal(calls.coverage, 'available'); assert.equal(calls.total, 6);
   assert.deepEqual(calls.records.map(r => r.fact.resolution), ['same-file-function', 'imported-function', 'same-file-function', ...Array(3).fill('unresolved')]);
   assert.deepEqual(calls.records[1].targetNavigation.location, { file: 'helper.py', name: 'work', line: 1, column: 1 });
   assert.ok(calls.records.every(r => JSON.stringify(r.fact) === JSON.stringify(args.facts.calls[r.factIndex])));
   const zero = buildQuestion({ ...args, symbol: 'local' }).calls; assert.equal(zero.coverage, 'available'); assert.equal(zero.total, 0);
+});
+
+test('Python measures an if inside else deeper than elif', t => {
+  const { facts } = fixture(t, { 'entry.py': `def nested(a, b):
+    if a: return 1
+    else:
+        if b: return 2
+def sibling(a, b):
+    if a: return 1
+    elif b: return 2
+` });
+  assert.deepEqual(facts.functions.map(f => [f.name, f.nesting]), [['nested', 2], ['sibling', 1]]);
+});
+
+test('Python Jedi fills captured declaration targets while retaining lexical and parse coverage', {
+  skip: process.env.ARCHIFY_TEST_PYTHON_JEDI !== '1' && 'set ARCHIFY_TEST_PYTHON_JEDI=1 with Jedi in BAUIFY_PYTHON',
+}, t => {
+  const config = mergeConfig(loadConfig(), { python: { jedi: true }, exclude: ['**/hidden.py'] });
+  const args = fixture(t, {
+    'entry.py': `from forwarded import helper
+from models import Worker
+from hidden import Hidden
+def local(): pass
+def chosen(worker: Worker, hidden: Hidden):
+    local()
+    helper()
+    "😀"; worker.run()
+    hidden.run()
+    Worker()
+`,
+    'forwarded.py': 'from base import helper\n',
+    'base.py': 'def helper(): pass\n',
+    'models.py': 'class Worker:\n    async def run(self): pass\n',
+    'hidden.py': 'from models import Worker as Hidden\n',
+    'fallback.py': `from models import Worker
+def local(): pass
+def chosen(worker: Worker, value):
+    match value:
+        case 0: local()
+    worker.run()
+`,
+  }, config);
+  assert.equal(args.facts.callModel, 'python-lexical-v3');
+  assert.match(args.facts.repository.adapter, /\+jedi@[^+]+\+parso@/);
+  assert.equal(args.facts.parse_errors, undefined);
+  assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
+  const calls = selected(args);
+  assert.equal(calls.coverage, 'available');
+  assert.deepEqual(calls.records.map(r => r.fact.resolution), [
+    'same-file-function', 'imported-function', 'python-jedi-declaration', 'unresolved', 'unresolved',
+  ]);
+  assert.deepEqual(calls.records[2].targetNavigation.location, { file: 'models.py', name: 'run', line: 2, column: 5 });
+  assert.deepEqual(args.facts.calls.filter(c => c.file === 'fallback.py').map(c => c.resolution), [
+    'same-file-function', 'unresolved',
+  ]);
+  assert.ok(schemaErrors('raw-facts', { ...args.facts, callModel: 'python-lexical-v2' })
+    .some(e => e.message.includes('Python Jedi source model')));
+  fs.writeFileSync(path.join(args.root, 'models.py'), 'class Worker:\n    async def run(self): return 1\n');
+  assert.equal(selected(args).records[2].targetNavigation.status, 'changed');
 });
 
 test('Python unsupported/rebound/conditional/decorated/long-reexport/class targets stay inventoried', t => {

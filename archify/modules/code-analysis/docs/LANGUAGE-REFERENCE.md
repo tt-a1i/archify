@@ -34,6 +34,34 @@ show that parse failures and unresolved imports remain visible in coverage.
 Python code is parsed by the configured interpreter; a parser error is not
 recovered by silently choosing another interpreter.
 
+### Jedi declaration navigation
+
+To enrich call navigation, install the pinned packages in a Python 3.10+
+environment and select that interpreter with `BAUIFY_PYTHON`.
+
+```sh
+/path/to/python -m pip install -r archify/modules/code-analysis/extract/py/requirements-jedi.txt
+```
+
+Pass `--config` with this JSON option.
+
+```json
+{
+  "python": { "jedi": true }
+}
+```
+
+CPython still supplies file, import, function and call facts. Jedi queries an
+isolated copy of the captured sources with the interpreter's standard library.
+Existing lexical targets take priority. New targets require a single Jedi
+definition location that matches a captured function. Files that trigger
+Parso syntax errors keep their CPython facts and lexical targets.
+
+The capture records the interpreter, Jedi and Parso versions and emits
+`python-lexical-v3`. `python-jedi-declaration` identifies source declaration
+candidates. Runtime dispatch and third-party environments remain outside
+this capture. The default uses the existing lexical model.
+
 ## Java
 
 ```sh
