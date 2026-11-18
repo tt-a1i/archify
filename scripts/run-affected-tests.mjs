@@ -12,7 +12,7 @@ const shared = /^(geometry|spatial-grid|svg-path-(?:analysis|checker)|layout-rul
 const viewer = /^(viewer-|reader-|desktop-|semantic-|finder|focus|intent-|crossover-|animation|export-|motion-|offline-|i18n|relationship-|share-|reach-|presentation)/;
 export function selectAffectedTests(owners, changed, available) {
   if (!Array.isArray(owners) || !Array.isArray(changed)) throw new Error('CI test selection must contain arrays');
-  const allowed = new Set(['renderer', 'viewer', 'authoring', 'schema', 'pr', 'site', 'artifact', 'delta', 'readme', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']);
+  const allowed = new Set(['renderer', 'viewer', 'authoring', 'schema', 'pr', 'site', 'artifact', 'delta', 'readme', 'changelog', 'policy', 'readme-assets', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']);
   if (owners.some(owner => !allowed.has(owner))) throw new Error('Unknown CI test owner');
   if (changed.some(name => !/^test\/[^/]+\.test\.mjs$/.test(name))) throw new Error('Invalid changed test path');
   return available.filter(file => {
@@ -26,17 +26,32 @@ export function selectAffectedTests(owners, changed, available) {
             : owner === 'delta' ? name === 'architecture-delta.test.mjs'
             : owner === 'pr' ? /^(pr-|svg-bake|svg-export-|change-marks|export-svg)/.test(name)
             : owner === 'schema' ? /^(generate-validators|base-input-|v1-|workflow-migration)/.test(name)
-            : owner === 'readme' ? name === 'readme-showcase.test.mjs'
+            : owner === 'readme' ? /^(readme-showcase|readme-support|cursor-onboarding|llms-txt|skill-metadata|preview-contract|community-proof-intake|real-repository-proof)\.test\.mjs$/.test(name)
+            : owner === 'changelog' ? false
+            : owner === 'policy' ? name === 'community-proof-intake.test.mjs'
+            : owner === 'readme-assets' ? name === 'readme-showcase.test.mjs'
               : name.startsWith(`${owner}-`) || shared.test(name)
                 || (owner === 'architecture' && name === 'grid.test.mjs'));
   }).sort();
 }
 if (process.argv[1] && sameEntry(process.argv[1], fileURLToPath(import.meta.url)).status === 'match') {
   const available = fs.readdirSync(path.join(root, 'test')).filter(name => name.endsWith('.test.mjs')).map(name => `test/${name}`);
-  const files = selectAffectedTests(JSON.parse(process.env.CI_TEST_OWNERS || '[]'), JSON.parse(process.env.CI_CHANGED_TESTS || '[]'), available);
-  if (files.length) {
-    const result = spawnSync(process.execPath, ['scripts/run-tests.mjs', ...files], { cwd: root, stdio: 'inherit' });
+  const owners = JSON.parse(process.env.CI_TEST_OWNERS || '[]');
+  const files = selectAffectedTests(owners, JSON.parse(process.env.CI_CHANGED_TESTS || '[]'), available);
+  const run = args => {
+    const result = spawnSync(process.execPath, args, { cwd: root, stdio: 'inherit' });
     if (result.error) throw result.error;
-    process.exitCode = result.signal ? 1 : (result.status ?? 1);
-  } else console.log('No additional owned regression suites; core gate remains required.');
+    if (result.signal || result.status !== 0) process.exit(result.status || 1);
+  };
+  if (owners.some(owner => ['readme', 'changelog'].includes(owner))) run(['scripts/check-release-identity.mjs']);
+  if (owners.includes('readme')) {
+    // This consumer reads the README directly; the other cases need an Astro build.
+    run(['--test', '--test-name-pattern=README entry points', 'website/test/agent-diagrams.test.mjs']);
+    run(['--test', '--test-name-pattern=READMEs', 'test/automatic-port-spread.test.mjs',
+      'test/reach-share-card.test.mjs', 'test/route-share-card.test.mjs']);
+    run(['--test', 'integrations/deepseek-harness/test/docs-contract.test.mjs']);
+    run(['--test', '--test-name-pattern=README install tables', 'integrations/hermes-agent/test/plugin-contract.test.mjs']);
+  }
+  if (files.length) run(['scripts/run-tests.mjs', ...files]);
+  else console.log('No owned regression suites selected.');
 }
