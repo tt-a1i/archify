@@ -30,15 +30,21 @@ export function createOwnedTempDirectory(prefix, { parent = os.tmpdir() } = {}) 
   if (!/^[a-zA-Z0-9-]+-$/.test(prefix)) throw new Error('Invalid temporary directory prefix');
   const canonicalParent = fs.realpathSync.native(path.resolve(parent));
   const ancestors = [];
+  let verifiedParent;
   for (let current = canonicalParent; ; current = path.dirname(current)) {
-    ancestors.push(directoryIdentity(current));
+    const childIdentity = verifiedParent ?? directoryIdentity(current);
+    if (verifiedParent) verifyIdentity(childIdentity);
+    verifiedParent = undefined;
+    ancestors.push(childIdentity);
     let parentRelation = sameEntry(current, path.dirname(current));
     if (process.platform === 'win32' && parentRelation.status === 'unknown'
+      && parentRelation.reason.code === 'path-resolution-failed'
       && parentRelation.reason.systemCode === 'EPERM') {
-      const childIdentity = ancestors[ancestors.length - 1];
       const parentIdentity = directoryIdentity(path.dirname(current));
       verifyIdentity(childIdentity);
       verifyIdentity(parentIdentity);
+      // Carry the checked parent into the next iteration instead of recapturing it.
+      verifiedParent = parentIdentity;
       parentRelation = { status: childIdentity.dev === parentIdentity.dev
         && childIdentity.ino === parentIdentity.ino
         && childIdentity.birthtimeNs === parentIdentity.birthtimeNs ? 'match' : 'different' };
