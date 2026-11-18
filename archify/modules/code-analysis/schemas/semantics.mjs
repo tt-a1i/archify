@@ -129,7 +129,8 @@ const DEFINITION_LANGUAGE = { FunctionDef: 'py', AsyncFunctionDef: 'py', FuncDec
 
 function functionRangeErrors(data, sourceTexts, model, add) {
   const language = data.repository.language;
-  const exactRanges = model.py || model.java || model.go || model.rust;
+  const exactRanges = model.py || model.java || model.go || model.rust
+    || (language === 'ts' && data.repository.adapterRevision >= 23);
   data.functions?.forEach((fn, i) => {
     if ((exactRanges || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn, language)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
     if (fn.definition && !validDefinitionExtent(fn, sourceTexts.get(fn.file), language)) {

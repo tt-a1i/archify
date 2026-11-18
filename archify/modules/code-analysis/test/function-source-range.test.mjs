@@ -92,8 +92,10 @@ test('same names stay separate, bodiless overloads are omitted, and dynamic call
     assert.equal(shown[7].column, 1);
     assert.equal(shown[7].endColumn, text.split('\n')[0].length + 1);
     const legacy = structuredClone(facts);
-    legacy.repository.adapterRevision = 22;
     for (const fn of legacy.functions) delete fn.sourceRange;
+    assert.ok(schemaErrors('raw-facts', legacy).some(error => error.path === '/functions/0/sourceRange'),
+      'revision 23 must reject functions without a captured range');
+    legacy.repository.adapterRevision = 22;
     assert.deepEqual(schemaErrors('raw-facts', legacy), [], 'old facts remain schema-valid');
     const oldAtlas = buildAtlas({ facts: legacy, graph: buildGraph(legacy), findings: [] });
     assert.deepEqual(oldAtlas.functions.map(fn => fn.slice(0, 7)), atlas.functions.map(fn => fn.slice(0, 7)));

@@ -108,7 +108,8 @@ Fresh paired orientation below also supports captured named Python/Java definiti
    Current JS/TS measurements also record `functions[].sourceRange` for the implementation:
    one-based UTF-16 columns, an exclusive end, and a SHA256 of the captured slice.
    A position inside that range identifies the measured implementation. It does not
-   prove runtime dispatch. Historical measurements without `sourceRange` remain readable.
+   prove runtime dispatch. JS/TS adapter revision 23 and later require `sourceRange`.
+   Earlier JS/TS captures without it remain readable.
    Output includes the first 40 records in source order. Check total/included/
    omitted before drawing conclusions; use current source or raw facts to read
    the remainder. Entry freshness covers same-file targets only.
