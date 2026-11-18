@@ -54,6 +54,7 @@ flowchart LR
 | Call inventory | Every syntactic source call in a parse-valid file, including nested bodies/defaults; unresolved sites remain inventoried |
 | Direct targets | Unique undecorated module functions, unique preceding function-local from-imports and one explicit reexport |
 | Additional declaration targets | Captured module members; receiver annotations, `self`/`cls`, constructed receivers and declared returns; source inheritance/C3 and zero-argument `super`; PEP 695 substitution and bound legacy TypeVars; fields/property accessor groups; qualified contextlib decorators; bounded local reaching definitions, typed iteration, generator send, awaited/context-manager results and early-exit narrowing |
+| Type and dependency signatures | Stable `TYPE_CHECKING` imports in annotations, callable-preserving `F -> F` decorator contracts, `type[T]` factory returns and explicit dependency declarations |
 | Source correctness | One-based UTF-16/end-exclusive positions, decoded-slice hashes, BOM/PEP 263 decoding, independent entry/target freshness |
 | Parse failure | File-local errors, no functions/calls attributed to that file; empty inventory cannot claim known-zero coverage |
 
@@ -70,6 +71,13 @@ uncertainty and arbitrary decorators block unsupported targets.
 Built-in property/classmethod/staticmethod and selected imported contextlib
 decorators are recognized only with binding evidence.
 
+An annotation can resolve a unique import under a recognized `typing.TYPE_CHECKING`
+guard. Runtime expressions still use their own bindings. A captured decorator
+can preserve a declaration's signature when its only ordinary parameter and
+its return use the same type variable bounded by `Callable`. An ordinary class
+argument can specialize a written `type[T]` or `typing.Type[T]` factory signature.
+The substitution takes the argument's captured class identity into the return type.
+
 Local value shapes follow assignments at the callsite. Branches join all possible
 definitions; a maybe-unbound path or conflicting receiver does not become a
 unique target. Loops include carried stores. Exception paths and context-manager
@@ -83,6 +91,32 @@ external tail bases: it precedes later bases in every consistent C3 order.
 Unknown bases before a possible inherited declaration, cycles and inconsistent
 orders remain unknown. This is not a proof that the whole class compiles.
 
+## Supplying dependency declarations
+
+Pass an analysis config when a project's source depends on a factory or receiver
+signature defined in another package.
+
+```json
+{
+  "python": {
+    "declarations": { "dependency": "types/dependency.pyi" }
+  }
+}
+```
+
+Each key is an import module name. Supply a `.py` or `.pyi` file or a package
+directory with matching module paths. Paths can be absolute or relative to the
+analyzed root. A `.pyi` takes precedence over its matching `.py`. Keep declaration
+inputs outside the captured project source selection. Pass the config through
+the existing `--config` option or the library's `config` parameter.
+
+Archify parses the declared inputs in Node and records their relative file names
+and byte hashes in `languageScope.declarations`. They can inform local method
+navigation. Project inventories and dependency edges still describe the analyzed
+tree, and navigation targets still point to captured project definitions. The
+default declaration mapping is empty. Project imports with no configured or
+captured signature may leave dependent receivers unresolved.
+
 ## Explicit limits
 
 The runtime does **not** contain Pyright's Program, LSP, binder, type evaluator,
@@ -95,21 +129,22 @@ Unresolved areas include external/stub-only targets, arbitrary value/callback
 flow, dynamic attributes/metaclasses, runtime monkey-patching, general overload
 selection, ambiguous unions, general control-flow/type inference beyond the
 bounded local rules, unconstrained legacy generic inference and longer reexport
-chains. Conditional `TYPE_CHECKING` imports, arbitrary source decorators,
-descriptors/context proxies and external factory contracts can still block
-declarations, as the Flask holdout demonstrates. No multi-target union candidate set is emitted. Full Pyright remains
-the development reference for these gaps rather than a production dependency.
+chains. Complex conditional imports, arbitrary decorators, descriptors and
+context proxies may still block declarations. Ambiguous sites remain unresolved.
+Full Pyright provides the development reference for these gaps.
 
 ## Model and history
 
-Revision **12** emits `python-source-v2`, with adapter identity
+Revision **13** emits `python-source-v3`, with adapter identity
 `pyright-parser@1.1.414/python-3.14` (or the chosen syntax target). New targets use
 `python-source-declaration` and must match a captured function definition start.
 Revision 11's `python-source-v1` retains its receiver/signature scope. Revision 12
 adds bounded local flow and protocol shapes, property accessors, bound TypeVars,
-qualified contextlib decorators and source `super` declarations. Existing
+qualified contextlib decorators and source `super` declarations. Revision 13
+adds type-only annotation imports, typed decorator contracts and generic factory
+returns with explicit dependency inputs. Existing
 `same-file-function` and `imported-function` evidence retains its meaning. The
-reader continues to accept historical `python-source-v1`, `python-lexical-v1/v2` and
+reader continues to accept historical `python-source-v1/v2`, `python-lexical-v1/v2` and
 `python@...` captures without expanding their saved coverage. Changing the
 engine or syntax target changes adapter identity, so comparisons report an
 extractor change rather than pretending it is a source-code change.
@@ -166,6 +201,11 @@ repair corpus; Flask 3.1.2 was then sampled before either analyzer output was re
 See [the HTTPX repair and Flask holdout](benchmarks/python-httpx-flask-validation.md)
 for exact versions, source/environment hashes, frozen oracles, separate sample
 strata, remaining gaps, ablation and reproduction commands.
+
+Revision 13 resolves the eight Flask sample misses when supplied the pinned
+Click declarations. The fixed sample reaches **24/24** and selected targets
+increase from **154 to 220**. The verification report records the default result,
+dependency configuration and exact before/after evidence.
 The comparison runs the current analyzer and reads saved reference data; it
 does not load Pyright or execute Click.
 

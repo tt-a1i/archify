@@ -1697,7 +1697,7 @@ var FunctionNode;
   FunctionNode3.create = create;
 })(FunctionNode || (FunctionNode = {}));
 var ParameterNode;
-((ParameterNode2) => {
+((ParameterNode3) => {
   function create(key, startToken, paramCategory) {
     const node = {
       start: startToken.start,
@@ -1716,7 +1716,7 @@ var ParameterNode;
     };
     return node;
   }
-  ParameterNode2.create = create;
+  ParameterNode3.create = create;
 })(ParameterNode || (ParameterNode = {}));
 var ClassNode;
 ((ClassNode2) => {
@@ -2646,7 +2646,7 @@ var ListNode;
   ListNode2.create = create;
 })(ListNode || (ListNode = {}));
 var ArgumentNode;
-((ArgumentNode2) => {
+((ArgumentNode3) => {
   function create(key, startToken, valueExpr, argCategory) {
     const node = {
       start: startToken ? startToken.start : valueExpr.start,
@@ -2665,7 +2665,7 @@ var ArgumentNode;
     extendRange(node, valueExpr);
     return node;
   }
-  ArgumentNode2.create = create;
+  ArgumentNode3.create = create;
 })(ArgumentNode || (ArgumentNode = {}));
 var DelNode;
 ((DelNode2) => {
@@ -14768,7 +14768,7 @@ function collectImports(tree, context, bindings) {
   visit(tree, {});
   return found.sort((a, b) => a.line - b.line || a.module.localeCompare(b.module));
 }
-function analyzeFile(path, bytes, targetVersion = "3.14") {
+function analyzeFile(path, bytes, targetVersion = "3.14", declarationsOnly = false) {
   const record = {
     path,
     loc: 0,
@@ -14796,10 +14796,12 @@ function analyzeFile(path, bytes, targetVersion = "3.14") {
     return { record };
   }
   const tree = parsed.parserOutput.parseTree;
-  const bindings = bindModule(tree), measured = functionFacts(tree, context);
+  const bindings = bindModule(tree);
+  record.imports = collectImports(tree, context, bindings);
+  if (declarationsOnly) return { record, tree, bindings, context };
+  const measured = functionFacts(tree, context);
   record.functions = measured.facts;
   record.symbols = moduleBindings(tree, context);
-  record.imports = collectImports(tree, context, bindings);
   const eligible = (binding) => binding?.kind === "function" && !binding.node.d.decorators.length ? measured.byNode.get(binding.node) : void 0;
   for (const name of bindings.module.events.keys()) {
     const candidate = bindings.lookup(bindings.module, name, Infinity), fn = eligible(candidate);
@@ -14903,12 +14905,14 @@ function reachingBindings(scope, name, at) {
 }
 
 // extract/py/source.ts
-function resolveSourceCalls(analyses, locate) {
-  const files = new Map(analyses.filter((analysis) => analysis.tree).map((analysis) => [analysis.record.path, analysis]));
+function resolveSourceCalls(analyses, locate, declarations = []) {
+  const captured = new Set(analyses.map((analysis) => analysis.record.path));
+  const files = new Map([...analyses, ...declarations].filter((analysis) => analysis.tree).map((analysis) => [analysis.record.path, analysis]));
   const classOf = (file, node, instance = false, args = /* @__PURE__ */ new Map()) => ({ kind: "class", file, node, instance, args });
   const same = (a, b, depth = 0) => {
     if (!a || !b) return a === b;
     if (a.kind !== b.kind || depth > 16) return false;
+    if (a.kind === "class" && b.kind === "class" && a.instance !== b.instance) return false;
     if ("file" in a && "file" in b) return a.file === b.file && ("node" in a && "node" in b ? a.node === b.node && a.args.size === b.args.size && [...a.args].every(([name, value]) => same(value, b.args.get(name), depth + 1)) : a.kind === "module");
     if ("items" in a && "items" in b) return a.items.length === b.items.length && a.items.every((value, i) => same(value, b.items[i], depth + 1));
     if (a.kind === "mapping" && b.kind === "mapping") return same(a.key, b.key, depth + 1) && same(a.value, b.value, depth + 1);
@@ -14928,18 +14932,26 @@ function resolveSourceCalls(analyses, locate) {
     const values = scope.events.get(name)?.filter((value) => !value.attributeWrite);
     return values?.length === 1 && !values[0].conditional ? values[0] : void 0;
   };
+  const typeBinding = (file, scope, name) => {
+    const ordinary = unique(scope, name);
+    if (ordinary) return ordinary;
+    const values = scope.events.get(name)?.filter((value) => !value.attributeWrite);
+    if (values?.length !== 1 || !["import", "module"].includes(values[0].kind) || locate(file.record.path, "typing", 0)) return;
+    const point = file.context.point(values[0].node.start);
+    return file.record.imports.some((item) => item.line === point.line && item.column === point.column && item.typeOnly && !item.conditional) ? values[0] : void 0;
+  };
   const unshadowed = (scope, name) => {
     for (let current = scope; current; current = current.parent)
       if (current.events.has(name) || current.declarations.has(name) || current.events.has("*")) return false;
     return true;
   };
   const activeFields = [];
-  const symbol = (file, scope, name, at, seen, substitutions, importsLeft = 2, origin = scope) => {
+  const symbol = (file, scope, name, at, seen, substitutions, types = false, importsLeft = 2, origin = scope) => {
     if (substitutions.has(name)) return substitutions.get(name);
     if (scope.declarations.has(name) || scope.events.has("*") || file.bindings.mutable.has(name) || name === "__class__") return;
     const values = scope.events.get(name)?.filter((value) => !value.attributeWrite);
     if (values?.length) {
-      const value = unique(scope, name);
+      const value = types ? typeBinding(file, scope, name) : unique(scope, name);
       if (scope.kind === "function" && scope === origin && values.every((value2) => ["value", "parameter"].includes(value2.kind))) {
         return union(reachingBindings(scope, name, at).values.map((value2) => value2 && bindingShape(file, scope, value2, at, seen, substitutions)));
       }
@@ -14947,7 +14959,7 @@ function resolveSourceCalls(analyses, locate) {
       if (value.kind === "class") return !value.node.d.decorators.length || knownDecorators(file, value.node, ["dataclass"]) ? classOf(file, value.node) : void 0;
       if (value.kind === "function") {
         if (scope.kind !== "module" && value.at > at) return;
-        if (!value.node.d.decorators.length || knownDecorators(file, value.node, ["contextmanager", "asynccontextmanager"]))
+        if (!value.node.d.decorators.length || knownDecorators(file, value.node, ["contextmanager", "asynccontextmanager"]) || signatureDecorators(file, value.node, seen))
           return { kind: "function", file, node: value.node, args: substitutions };
         return;
       }
@@ -14959,23 +14971,23 @@ function resolveSourceCalls(analyses, locate) {
         const other = target && files.get(target.file);
         if (!target || !other || seen.has(value.node)) return;
         if (target.module) return { kind: "module", file: other };
-        return symbol(other, other.bindings.module, value.imported, Infinity, /* @__PURE__ */ new Set([...seen, value.node]), /* @__PURE__ */ new Map(), importsLeft - 1);
+        return symbol(other, other.bindings.module, value.imported, Infinity, /* @__PURE__ */ new Set([...seen, value.node]), /* @__PURE__ */ new Map(), types, importsLeft - 1);
       }
       return bindingShape(file, scope, value, at, seen, substitutions);
     }
-    return scope.parent ? symbol(file, scope.parent, name, at, seen, substitutions, importsLeft, origin) : void 0;
+    return scope.parent ? symbol(file, scope.parent, name, at, seen, substitutions, types, importsLeft, origin) : void 0;
   };
   function bindingShape(file, scope, value, at, seen, substitutions) {
     if (seen.has(value.node)) return;
     const next = /* @__PURE__ */ new Set([...seen, value.node]);
-    if (value.annotation) return annotation(file, scope, value.annotation, value.at, next, substitutions);
+    if (value.annotation) return annotation(file, scopeOf(file, value.annotation), value.annotation, value.at, next, substitutions);
     if (value.kind === "parameter") {
       const method = scope.node;
       const parameters = method.d.params || [];
       if (parameters[0] === value.node) {
         let owner = method.parent;
         while (owner && ![31 /* Function */, 10 /* Class */].includes(owner.nodeType)) owner = owner.parent;
-        if (owner?.nodeType === 10 /* Class */ && (!method.d.decorators.length || knownDecorators(file, method, ["property", "classmethod", "contextmanager", "asynccontextmanager"]) || propertyAccessor(file, method)))
+        if (owner?.nodeType === 10 /* Class */ && (!method.d.decorators.length || knownDecorators(file, method, ["property", "classmethod", "contextmanager", "asynccontextmanager"]) || propertyAccessor(file, method) || signatureDecorators(file, method, seen)))
           return classOf(file, owner, !knownDecorators(file, method, ["classmethod"]));
       }
       return;
@@ -14986,26 +14998,30 @@ function resolveSourceCalls(analyses, locate) {
     if (value.source === "context") {
       if (shape?.kind === "class") {
         const enter = member(shape, value.async ? "__aenter__" : "__enter__", at, next);
-        shape = enter?.kind === "function" ? returns(enter, [], at, next) : void 0;
+        shape = enter?.kind === "function" ? returns(enter, at, next) : void 0;
         if (value.async && shape?.kind === "awaitable") shape = shape.item;
       } else shape = shape?.kind === "context" && Boolean(shape.async) === Boolean(value.async) ? shape.item : void 0;
     }
     for (const index of value.projection || []) shape = shape?.kind === "tuple" ? shape.items[index] : void 0;
     return shape;
   }
-  function standard(file, scope, node) {
+  function standard(file, scope, node, types = false) {
     if (node.nodeType === 38 /* Name */) {
       const name = node.d.value;
       for (let current = scope; current; current = current.parent) {
         if (current.declarations.has(name) || current.events.has("*") || file.bindings.mutable.has(name)) return;
         if (!current.events.has(name)) continue;
-        const value = unique(current, name);
-        return value && (current.kind === "module" || value.at <= node.start) && !value.level && ["import", "module"].includes(value.kind) ? value.kind === "import" ? `${value.module}.${value.imported}` : value.imported === "*" ? value.module : value.imported : void 0;
+        const value = types ? typeBinding(file, current, name) : unique(current, name);
+        if (!value || current.kind !== "module" && value.at > node.start || value.level || !value.module) return;
+        if (/^(?:typing|collections|contextlib|builtins|dataclasses)(?:\.|$)/.test(value.module) && (locate(file.record.path, value.module, 0) || current.events.get(name)?.some((event) => event.attributeWrite))) return;
+        if (value.kind === "import") return `${value.module}.${value.imported}`;
+        if (value.kind === "module") return value.imported === "*" ? value.module : value.imported;
+        return;
       }
       return unshadowed(scope, name) ? `builtins.${name}` : void 0;
     }
     if (node.nodeType === 35 /* MemberAccess */) {
-      const left = standard(file, scope, node.d.leftExpr);
+      const left = standard(file, scope, node.d.leftExpr, types);
       return left && `${left}.${node.d.member.d.value}`;
     }
     return;
@@ -15034,6 +15050,50 @@ function resolveSourceCalls(analyses, locate) {
       return Boolean(name && allowed.includes(name) && [`builtins.classmethod`, `builtins.staticmethod`, `builtins.property`, "contextlib.contextmanager", "contextlib.asynccontextmanager", "dataclasses.dataclass"].includes(full));
     });
   }
+  function typeVariable(file, scope, name, fn) {
+    const generic = fn && typeParameters(fn).find((param) => param.d.name.d.value === name);
+    if (generic?.nodeType === 75 /* TypeParameter */) return generic.d.typeParamKind === 0 /* TypeVar */ ? { node: generic, bound: generic.d.boundExpr, scope } : void 0;
+    if (file.bindings.mutable.has(name)) return;
+    for (let current = scope; current; current = current.parent) {
+      if (!current.events.has(name)) continue;
+      const value = unique(current, name);
+      if (value?.expr?.nodeType !== 9 /* Call */ || standard(file, current, value.expr.d.leftExpr) !== "typing.TypeVar") return;
+      const [label, ...options] = value.expr.d.args;
+      if (label?.d.argCategory !== 0 /* Simple */ || label.d.name || literalString(label.d.valueExpr) !== name || options.some((arg) => arg.d.argCategory !== 0 /* Simple */ || !arg.d.name)) return;
+      const bounds = options.filter((arg) => nameOf(arg.d.name) === "bound");
+      if (bounds.length > 1) return;
+      return { node: value.node, bound: bounds[0]?.d.valueExpr, scope: current };
+    }
+    return;
+  }
+  function signatureDecorators(file, node, seen) {
+    const decorators2 = node.d.decorators || [];
+    if (!decorators2.length || seen.has(node) || seen.size > 64) return false;
+    const next = /* @__PURE__ */ new Set([...seen, node]);
+    return decorators2.every((decorator) => {
+      const expr = decorator.d.expr;
+      if (![38 /* Name */, 35 /* MemberAccess */].includes(expr.nodeType)) return false;
+      const scope = scopeOf(file, node);
+      let base = expr;
+      while (base.nodeType === 35 /* MemberAccess */) base = base.d.leftExpr;
+      const baseName = nameOf(base);
+      if (!baseName) return false;
+      for (let current = scope; current; current = current.parent) {
+        const events = current.events.get(baseName);
+        if (!events) continue;
+        const binding = unique(current, baseName);
+        if (!binding || binding.at > node.start || events.some((event) => event.attributeWrite)) return false;
+        break;
+      }
+      const value = expression(file, scope, expr, node.start, next, /* @__PURE__ */ new Map());
+      if (value?.kind !== "function" || value.node.d.decorators.length || value.file === file && value.node.start > node.start) return false;
+      const d = value.node.d, params = d.params || [], name = nameOf(d.returnAnnotation);
+      if (d.isAsync || params.length !== 1 || params[0].d.category !== 0 /* Simple */ || nameOf(params[0].d.annotation) !== name || !name) return false;
+      const variable = typeVariable(value.file, scopeOf(value.file, value.node), name, value.node), bound = variable?.bound;
+      const contract = bound?.nodeType === 27 /* Index */ ? standard(value.file, variable.scope, bound.d.leftExpr) : void 0;
+      return contract === "typing.Callable" || contract === "collections.abc.Callable";
+    });
+  }
   function annotation(file, scope, node, at, seen, substitutions) {
     if (!node) return;
     if (node.nodeType === 48 /* StringList */ && node.d.strings.every((part) => part.nodeType === 49 /* String */)) {
@@ -15042,9 +15102,15 @@ function resolveSourceCalls(analyses, locate) {
       const statement = parsed.parserOutput.parseTree.d.statements[0]?.d.statements?.[0];
       return !parsed.errors.length && statement?.nodeType === 54 /* TypeAnnotation */ ? annotation(file, scope, statement.d.annotation, at, seen, substitutions) : void 0;
     }
+    if (node.nodeType === 38 /* Name */ && substitutions.has(node.d.value)) return substitutions.get(node.d.value);
     if (node.nodeType === 27 /* Index */) {
-      const type = standard(file, scope, node.d.leftExpr), short = type?.split(".").at(-1);
+      const type = standard(file, scope, node.d.leftExpr, true), short = type?.split(".").at(-1);
       const args = () => node.d.items.map((item) => annotation(file, scope, item.d.valueExpr, at, seen, substitutions));
+      if (type === "typing.Type" || type === "builtins.type") {
+        if (node.d.items.length !== 1) return;
+        const value2 = args()[0];
+        return value2?.kind === "class" ? { ...value2, instance: false } : void 0;
+      }
       const namespace = type?.slice(0, type.lastIndexOf("."));
       const protocol = namespace === "typing" || namespace === "builtins" && ["list", "dict", "tuple", "set", "frozenset"].includes(short) || namespace === "collections.abc" && ["Sequence", "MutableSequence", "Iterable", "Iterator", "Generator", "AsyncIterable", "AsyncIterator", "AsyncGenerator", "Mapping", "MutableMapping", "Awaitable", "Coroutine"].includes(short) || namespace === "contextlib" && ["AbstractContextManager", "AbstractAsyncContextManager"].includes(short);
       if (protocol) {
@@ -15063,7 +15129,7 @@ function resolveSourceCalls(analyses, locate) {
         if (["Awaitable", "Coroutine"].includes(short)) return { kind: "awaitable", item: args().at(-1) };
         if (["ContextManager", "AsyncContextManager", "AbstractContextManager", "AbstractAsyncContextManager"].includes(short)) return { kind: "context", item: args()[0], async: short.includes("Async") };
       }
-      const base = expression(file, scope, node.d.leftExpr, at, seen, substitutions);
+      const base = expression(file, scope, node.d.leftExpr, at, seen, substitutions, true);
       if (base?.kind !== "class") return;
       const mapped = new Map(base.args);
       const params = typeParameters(base.node);
@@ -15077,25 +15143,15 @@ function resolveSourceCalls(analyses, locate) {
       return union([annotation(file, scope, node.d.leftExpr, at, seen, substitutions), annotation(file, scope, node.d.rightExpr, at, seen, substitutions)]);
     if (node.nodeType === 14 /* Constant */ && node.d.constType === 27 /* None */) return { kind: "none" };
     if (node.nodeType === 38 /* Name */ && !substitutions.has(node.d.value)) {
-      for (let current = scope; current; current = current.parent) {
-        const value2 = unique(current, node.d.value);
-        if (!value2) {
-          if (current.events.has(node.d.value)) break;
-          continue;
-        }
-        if (value2.expr?.nodeType === 9 /* Call */ && standard(file, current, value2.expr.d.leftExpr) === "typing.TypeVar" && !seen.has(value2.node)) {
-          const bound = value2.expr.d.args.find((arg) => nameOf(arg.d.name) === "bound");
-          return bound ? annotation(file, current, bound.d.valueExpr, at, /* @__PURE__ */ new Set([...seen, value2.node]), substitutions) : void 0;
-        }
-        break;
-      }
+      const variable = typeVariable(file, scope, node.d.value);
+      if (variable) return variable.bound && !seen.has(variable.node) ? annotation(file, variable.scope, variable.bound, at, /* @__PURE__ */ new Set([...seen, variable.node]), substitutions) : void 0;
     }
-    if (standard(file, scope, node) === "typing.Self") {
+    if (standard(file, scope, node, true) === "typing.Self") {
       let owner = scope.node;
       while (owner && owner.nodeType !== 10 /* Class */) owner = owner.parent;
       return owner && classOf(file, owner, true);
     }
-    const value = expression(file, scope, node, at, seen, substitutions);
+    const value = expression(file, scope, node, at, seen, substitutions, true);
     return value?.kind === "class" ? { ...value, instance: true } : value;
   }
   function bases(owner, seen) {
@@ -15160,7 +15216,7 @@ function resolveSourceCalls(analyses, locate) {
     if (activeFields.length > 32) return { present: true };
     const file = owner.file, scope = file.bindings.scopes.get(owner.node);
     const writes = [];
-    for (const candidate of file.bindings.scopes.values()) {
+    for (const candidate of captured.has(file.record.path) ? file.bindings.scopes.values() : []) {
       let parent = candidate.node.parent;
       while (parent && ![31 /* Function */, 10 /* Class */].includes(parent.nodeType)) parent = parent.parent;
       if (parent !== owner.node) continue;
@@ -15188,29 +15244,55 @@ function resolveSourceCalls(analyses, locate) {
     if (!value) return { present: true };
     if (value.kind === "function") {
       const decorators2 = value.node.d.decorators;
-      if (decorators2.length && !knownDecorators(file, value.node, ["property", "classmethod", "staticmethod", "contextmanager", "asynccontextmanager"])) return { present: true };
+      if (decorators2.length && !knownDecorators(file, value.node, ["property", "classmethod", "staticmethod", "contextmanager", "asynccontextmanager"]) && !signatureDecorators(file, value.node, seen)) return { present: true };
       const fn = { kind: "function", file, node: value.node, args: owner.args, receiver: owner };
-      return { present: true, value: knownDecorators(file, value.node, ["property"]) ? returns(fn, [], at, seen) : fn };
+      if (knownDecorators(file, value.node, ["property"])) return { present: true, value: owner.instance ? returns(fn, at, seen) : void 0 };
+      return { present: true, value: fn };
     }
     return { present: true, value: value.annotation ? annotation(file, scope, value.annotation, at, seen, owner.args) : value.expr ? expression(file, scope, value.expr, at, seen, owner.args) : void 0 };
   }
-  function returns(fn, args, at, seen) {
-    const d = fn.node.d, substitutions = new Map(fn.args);
-    const params = d.params || [];
-    const offset = fn.receiver && !knownDecorators(fn.file, fn.node, ["staticmethod"]) ? 1 : 0;
-    const names = new Set(typeParameters(fn.node).map((node) => node.d.name.d.value));
-    for (let i = offset; i < params.length; i++) {
-      const param = params[i].d, name = nameOf(param.annotation);
-      if (name && names.has(name) && args[i - offset]) substitutions.set(name, args[i - offset]);
+  function inferTypeArguments(fn, scope, args, shapeOf) {
+    const boundReceiver = fn.receiver && !knownDecorators(fn.file, fn.node, ["staticmethod"]) && (fn.receiver.instance || knownDecorators(fn.file, fn.node, ["classmethod"]));
+    const params = fn.node.d.params.slice(boundReceiver ? 1 : 0);
+    if (params.some((param) => !param.d.name || param.d.category !== 0 /* Simple */)) return;
+    const supplied = /* @__PURE__ */ new Map();
+    let position = 0;
+    for (const arg of args) {
+      if (arg.d.argCategory !== 0 /* Simple */) return;
+      const index = arg.d.name ? params.findIndex((param) => param.d.name?.d.value === arg.d.name.d.value) : position++;
+      if (index < 0 || index >= params.length || supplied.has(index)) return;
+      supplied.set(index, arg.d.valueExpr);
     }
-    if (d.returnAnnotation) {
-      const value = annotation(fn.file, scopeOf(fn.file, fn.node), d.returnAnnotation, at, seen, substitutions);
-      if (knownDecorators(fn.file, fn.node, ["contextmanager", "asynccontextmanager"])) return value?.kind === "sequence" ? { kind: "context", item: value.item, async: knownDecorators(fn.file, fn.node, ["asynccontextmanager"]) } : void 0;
-      const ownScope = fn.file.bindings.scopes.get(fn.node);
-      const generator = [...walk(fn.node)].some((node) => [60 /* Yield */, 61 /* YieldFrom */].includes(node.nodeType) && scopeOf(fn.file, node) === ownScope);
-      return d.isAsync && !generator ? { kind: "awaitable", item: value } : value;
+    if (params.some((param, index) => !supplied.has(index) && !param.d.defaultValue)) return;
+    const substitutions = /* @__PURE__ */ new Map();
+    for (const [index, argument] of supplied) {
+      const type = params[index].d.annotation;
+      const classType = type?.nodeType === 27 /* Index */ && type.d.items.length === 1 && ["typing.Type", "builtins.type"].includes(standard(fn.file, scope, type.d.leftExpr, true));
+      const name = nameOf(classType && type?.nodeType === 27 /* Index */ ? type.d.items[0].d.valueExpr : type);
+      if (!name) continue;
+      const variable = typeVariable(fn.file, scope, name, fn.node);
+      if (!variable || !classType && variable.node.nodeType !== 75 /* TypeParameter */) continue;
+      const shape = shapeOf(argument);
+      const actual = classType ? shape?.kind === "class" && !shape.instance ? { ...shape, instance: true } : void 0 : shape;
+      const values = substitutions.get(name) || [];
+      values.push(actual);
+      substitutions.set(name, values);
     }
-    return;
+    return substitutions;
+  }
+  function returns(fn, at, seen, args = [], shapeOf) {
+    const d = fn.node.d;
+    if (!d.returnAnnotation) return;
+    const scope = scopeOf(fn.file, fn.node), substitutions = new Map(fn.args);
+    if (shapeOf && args.length) {
+      for (const [name, values] of inferTypeArguments(fn, scope, args, shapeOf) || []) substitutions.set(name, union(values));
+    }
+    const value = annotation(fn.file, scope, d.returnAnnotation, at, seen, substitutions);
+    if (knownDecorators(fn.file, fn.node, ["contextmanager", "asynccontextmanager"])) return value?.kind === "sequence" ? { kind: "context", item: value.item, async: knownDecorators(fn.file, fn.node, ["asynccontextmanager"]) } : void 0;
+    if (!d.isAsync) return value;
+    const ownScope = fn.file.bindings.scopes.get(fn.node);
+    const generator = [...walk(fn.node)].some((node) => [60 /* Yield */, 61 /* YieldFrom */].includes(node.nodeType) && scopeOf(fn.file, node) === ownScope);
+    return generator ? value : { kind: "awaitable", item: value };
   }
   function element(value, async = false) {
     if (value?.kind === "sequence" && Boolean(value.async) === async) return value.item;
@@ -15232,9 +15314,12 @@ function resolveSourceCalls(analyses, locate) {
       }
       if (path.includes(".") && (scope.events.get(name) || []).some((event) => event.attributeWrite === path.split(".")[1] && event.at > endOf(guard.test) && event.at <= at)) continue;
       if (test.nodeType === 9 /* Call */ && nameOf(test.d.leftExpr) === "isinstance" && unshadowed(scope, "isinstance") && test.d.args.length === 2 && test.d.args.every((arg) => !arg.d.name && arg.d.argCategory === 0) && reference(test.d.args[0].d.valueExpr) === path) {
-        const type = annotation(file, scope, test.d.args[1].d.valueExpr, test.start, seen, substitutions);
-        if (positive && type?.kind === "class") value = type;
-        else if (!positive && value?.kind === "union" && type?.kind === "class") value = union(value.items.filter((item) => !same(item, type)));
+        const type = expression(file, scope, test.d.args[1].d.valueExpr, test.start, seen, substitutions);
+        if (type?.kind === "class" && !type.instance) {
+          const instance = { ...type, instance: true };
+          if (positive) value = instance;
+          else if (value?.kind === "union") value = union(value.items.filter((item) => !same(item, instance)));
+        }
       }
       if (test.nodeType === 7 /* BinaryOperation */ && [39 /* Is */, 40 /* IsNot */].includes(test.d.operator) && reference(test.d.leftExpr) === path && test.d.rightExpr.nodeType === 14 /* Constant */ && test.d.rightExpr.d.constType === 27 /* None */) {
         const isNone = positive === (test.d.operator === 39 /* Is */);
@@ -15243,12 +15328,13 @@ function resolveSourceCalls(analyses, locate) {
     }
     return value;
   }
-  function expression(file, scope, node, at, seen, substitutions) {
+  function expression(file, scope, node, at, seen, substitutions, types = false) {
     if (seen.has(node) || seen.size > 64) return;
     seen = /* @__PURE__ */ new Set([...seen, node]);
     const d = node.d;
     if (node.nodeType === 38 /* Name */) {
-      return narrowed(file, scope, node, at, symbol(file, scope, d.value, at, seen, substitutions), seen, substitutions);
+      const value = symbol(file, scope, d.value, at, seen, substitutions, types);
+      return types ? value : narrowed(file, scope, node, at, value, seen, substitutions);
     }
     if (node.nodeType === 14 /* Constant */ && d.constType === 27 /* None */) return { kind: "none" };
     if (node.nodeType === 52 /* Tuple */) return { kind: "tuple", items: d.items.map((item) => expression(file, scope, item, at, seen, substitutions)) };
@@ -15279,15 +15365,15 @@ function resolveSourceCalls(analyses, locate) {
         const receiver = symbol(file, scope, first.d.name.d.value, at, seen, substitutions);
         return receiver?.kind === "class" && receiver.node === owner.node ? member(receiver, d.member.d.value, at, seen, true) : void 0;
       }
-      const left = expression(file, scope, d.leftExpr, at, seen, substitutions);
+      const left = expression(file, scope, d.leftExpr, at, seen, substitutions, types);
       if (left?.kind === "module") {
-        const value2 = symbol(left.file, left.file.bindings.module, d.member.d.value, Infinity, seen, /* @__PURE__ */ new Map());
-        if (value2 || left.file.bindings.module.events.has(d.member.d.value) || !left.file.record.path.endsWith("__init__.py")) return value2;
+        const value2 = symbol(left.file, left.file.bindings.module, d.member.d.value, Infinity, seen, /* @__PURE__ */ new Map(), types);
+        if (value2 || left.file.bindings.module.events.has(d.member.d.value) || !/__init__\.pyi?$/.test(left.file.record.path)) return value2;
         const target = locate(left.file.record.path, "", 1, d.member.d.value), other = target && files.get(target.file);
         return target?.module && other ? { kind: "module", file: other } : void 0;
       }
       const value = left?.kind === "class" ? d.member.d.value === "__class__" && left.instance ? { ...left, instance: false } : member(left, d.member.d.value, at, seen) : void 0;
-      return narrowed(file, scope, node, at, value, seen, substitutions);
+      return types ? value : narrowed(file, scope, node, at, value, seen, substitutions);
     }
     if (node.nodeType === 9 /* Call */) {
       const builtin = standard(file, scope, d.leftExpr);
@@ -15308,14 +15394,15 @@ function resolveSourceCalls(analyses, locate) {
         if (left?.kind === "mapping" && !d.args.length && ["items", "keys", "values"].includes(name)) return { kind: "sequence", item: name === "items" ? { kind: "tuple", items: [left.key, left.value] } : name === "keys" ? left.key : left.value };
       }
       const callee = expression(file, scope, d.leftExpr, at, seen, substitutions);
-      const args = d.args.map((arg) => expression(file, scope, arg.d.valueExpr, at, seen, substitutions));
-      if (callee?.kind === "class") return { ...callee, instance: true };
-      if (callee?.kind === "function") return returns(callee, args, at, seen);
+      if (callee?.kind === "class" && !callee.instance) return { ...callee, instance: true };
+      if (callee?.kind === "function") return returns(callee, at, seen, d.args, (argument) => expression(file, scope, argument, at, seen, substitutions));
     }
     return;
   }
   let added = 0;
-  for (const file of files.values()) {
+  for (const analysis of analyses) {
+    if (!analysis.tree) continue;
+    const file = analysis;
     const calls = [...walk(file.tree)].filter((node) => node.nodeType === 9 /* Call */).sort((a, b) => a.start - b.start || endOf(a) - endOf(b));
     for (let i = 0; i < calls.length; i++) {
       const node = calls[i], fact = file.record.calls[i];
@@ -15323,15 +15410,20 @@ function resolveSourceCalls(analyses, locate) {
       const callee = node.d.leftExpr;
       if (callee.nodeType !== 35 /* MemberAccess */ && callee.nodeType !== 38 /* Name */) continue;
       const scope = scopeOf(file, node);
-      if (callee.nodeType === 38 /* Name */ && !(unique(scope, callee.d.value)?.kind === "function" && scope.kind === "function")) {
-        const value = file.bindings.lookup(scope, callee.d.value, node.start);
-        if (!value || !["function", "import"].includes(value.kind)) continue;
-        const target2 = symbol(file, scope, callee.d.value, node.start, /* @__PURE__ */ new Set(), /* @__PURE__ */ new Map());
-        if (target2?.kind !== "function" || !knownDecorators(target2.file, target2.node, ["contextmanager", "asynccontextmanager"])) continue;
+      let requireDecorator = false;
+      if (callee.nodeType === 38 /* Name */) {
+        const name = callee.d.value;
+        if (file.bindings.privateCalls.has(node) && name.startsWith("__") && !name.endsWith("__")) continue;
+        requireDecorator = scope.kind !== "function" || unique(scope, name)?.kind !== "function";
+        if (requireDecorator) {
+          const value = file.bindings.lookup(scope, name, node.start);
+          if (!value || !["function", "import"].includes(value.kind)) continue;
+        }
       }
       const target = expression(file, scope, callee, node.start, /* @__PURE__ */ new Set(), /* @__PURE__ */ new Map());
-      if (target?.kind !== "function") continue;
-      const fn = target.file.measured.byNode.get(target.node);
+      if (target?.kind !== "function" || !captured.has(target.file.record.path)) continue;
+      if (requireDecorator && !knownDecorators(target.file, target.node, ["contextmanager", "asynccontextmanager"]) && !signatureDecorators(target.file, target.node, /* @__PURE__ */ new Set())) continue;
+      const fn = target.file.measured?.byNode.get(target.node);
       if (!fn) continue;
       fact.resolution = "python-source-declaration";
       delete fact.reason;

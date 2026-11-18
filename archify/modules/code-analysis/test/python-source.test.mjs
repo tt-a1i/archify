@@ -23,7 +23,7 @@ const targetName = (facts, call) => {
 const markedTargets = (facts, text) => Object.fromEntries(text.split('\n').flatMap((line, index) => {
   const marker = /# site: ([\w-]+)/.exec(line);
   if (!marker) return [];
-  const calls = facts.calls.filter(call => call.line === index + 1);
+  const calls = facts.calls.filter(call => call.file === 'entry.py' && call.line === index + 1);
   assert.equal(calls.length, 1, marker[1]);
   return [[marker[1], targetName(facts, calls[0]) || null]];
 }));
@@ -378,4 +378,122 @@ def missing_import(items: Sequence[Item]):
   assert.ok(Object.values(markedTargets(facts, text)).every(value => value === null));
   const condition = facts.calls.find(call => call.line === text.split('\n').findIndex(line => line.includes('while item.work')) + 1);
   assert.equal(targetName(facts, condition), undefined);
+});
+
+test('Python annotations can use stable type-only imports without treating them as runtime bindings', t => {
+  const model = `class Job:
+    def run(self): pass
+    @staticmethod
+    def start(): pass
+`;
+  const text = `from typing import TYPE_CHECKING as checking
+if checking:
+    from model import Job as TypeOnly
+    import model as types
+if checking and flag:
+    from model import Job as Maybe
+def chosen(job: "TypeOnly", other: types.Job, maybe: "Maybe", value):
+    TypeOnly = unknown
+    job.run() # site: annotation-scope
+    other.run() # site: qualified-type
+    maybe.run() # site: conditional-import
+    types.Job.start() # site: runtime-module
+    if isinstance(value, types.Job):
+        value.run() # site: runtime-guard
+`;
+  const { facts } = fixture(t, { 'entry.py': text, 'model.py': model });
+  assert.deepEqual(markedTargets(facts, text), {
+    'annotation-scope': 'Job.run', 'qualified-type': 'Job.run', 'conditional-import': null,
+    'runtime-module': null, 'runtime-guard': null,
+  });
+  const shadow = fixture(t, { 'entry.py': text, 'model.py': model, 'typing.py': 'TYPE_CHECKING = False\n' });
+  assert.ok(Object.values(markedTargets(shadow.facts, text)).every(target => target === null));
+});
+
+test('Python captured callable-preserving decorator signatures recover the method and its receiver', t => {
+  const text = `from hooks import preserve as checked, untyped, differently_typed
+@checked
+def __helper(): pass
+class Service:
+    @checked
+    def execute(self):
+        self.prepare() # site: decorated-receiver
+    def prepare(self): pass
+    @untyped
+    def unknown(self): pass
+    @differently_typed
+    def replacement(self): pass
+    def hidden(self):
+        __helper() # site: mangled-helper
+def chosen(service: Service):
+    __helper() # site: decorated-function
+    service.execute() # site: decorated-method
+    service.unknown() # site: untyped
+    service.replacement() # site: replacement
+class BeforeImport:
+    @late
+    def execute(self): pass
+from hooks import preserve as late
+def earlier(value: BeforeImport):
+    value.execute() # site: late-decorator
+`;
+  const hooks = `from typing import Callable, TypeVar
+F = TypeVar("F", bound=Callable[..., object])
+G = TypeVar("G", bound=Callable[..., object])
+def preserve(f: F) -> F: return f
+def untyped(f): return f
+def differently_typed(f: F) -> G: ...
+`;
+  const { facts } = fixture(t, { 'entry.py': text, 'hooks.py': hooks });
+  assert.deepEqual(markedTargets(facts, text), {
+    'decorated-receiver': 'Service.prepare', 'mangled-helper': null, 'decorated-function': '__helper',
+    'decorated-method': 'Service.execute', untyped: null, replacement: null, 'late-decorator': null,
+  });
+});
+
+test('Python dependency declarations specialize class factories and keep dependency files out of project facts', t => {
+  const text = `from dependency import Context
+class Job:
+    def run(self): pass
+class Other:
+    def run(self): pass
+def chosen(ctx: Context, job_type: type[Job]):
+    first = ctx.build(Job) # site: external-factory
+    first.run() # site: positional
+    second = ctx.build(kind=job_type)
+    second.run() # site: keyword-class-object
+    invalid = ctx.build(Job())
+    invalid.run() # site: instance-is-not-class
+    uncertain = ctx.match(Job, Other)
+    uncertain.run() # site: conflicting-types
+`;
+  const declarations = {
+    'decls/__init__.pyi': 'from .factory import Context as Context\n',
+    'decls/factory.pyi': `from typing import Type, TypeVar
+T = TypeVar("T")
+class Context:
+    def build(self, kind: Type[T]) -> T: ...
+    def match(self, first: Type[T], second: Type[T]) -> T: ...
+`,
+  };
+  const { root, capture, facts } = fixture(t, { 'entry.py': text, ...declarations }, { declarations: { dependency: 'decls' } });
+  assert.deepEqual(markedTargets(facts, text), {
+    'external-factory': null, positional: 'Job.run', 'keyword-class-object': 'Job.run', 'instance-is-not-class': null, 'conflicting-types': null,
+  });
+  assert.deepEqual(facts.files.map(file => file.path), ['entry.py']);
+  assert.equal(facts.functions.some(fn => fn.name === 'build'), false);
+  assert.deepEqual(facts.imports.map(edge => [edge.specifier, edge.resolved]), [['dependency', false]]);
+  assert.deepEqual(Object.keys(facts.languageScope.declarations[0].files[0]).sort(), ['file', 'sha256']);
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
+
+  const question = buildQuestion({ root, facts, entry: 'entry.py', symbol: 'chosen', question: 'where?' });
+  assert.equal(question.calls.coverage, 'available');
+  assert.equal(question.calls.records.filter(record => record.targetNavigation.status === 'valid').length, 2);
+  const implicit = extractFacts(root, { language: 'py' }).facts;
+  assert.ok(Object.values(markedTargets(implicit, text)).every(target => target === null));
+
+  fs.writeFileSync(path.join(root, 'decls/factory.pyi'), declarations['decls/factory.pyi'].replace('kind: Type[T]) -> T', 'kind: Type[T]) -> object'));
+  const changed = capture();
+  assert.notEqual(changed.repository.snapshotId, facts.repository.snapshotId);
+  assert.equal(markedTargets(changed, text).positional, null);
 });

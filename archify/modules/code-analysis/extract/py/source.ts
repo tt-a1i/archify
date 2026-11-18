@@ -2,15 +2,15 @@
 // declaration modules and keep syntax, binding, member lookup and type shapes
 // separate. Only a unique captured declaration becomes a navigation target.
 // No target import, runtime dispatch, third-party type evaluator or stub engine.
-import { ParseNode as Node, ParseNodeType as K } from './upstream/parser/parseNodes.js';
+import { ArgCategory, ArgumentNode, ParamCategory, ParameterNode, ParseNode as Node, ParseNodeType as K, TypeParamKind } from './upstream/parser/parseNodes.js';
 import { OperatorType as Op, KeywordType } from './upstream/parser/tokenizerTypes.js';
 import { Analysis } from './collect.js';
 import { Binding, Scope, typeParameters } from './bindings.js';
-import { endOf, nameOf } from './facts.js';
+import { endOf, literalString, nameOf } from './facts.js';
 import { parsePython, walk } from './syntax.js';
 import { reachingBindings } from './flow.js';
 
-type File = Analysis & Required<Pick<Analysis, 'tree' | 'bindings' | 'measured' | 'context'>>;
+type File = Analysis & Required<Pick<Analysis, 'tree' | 'bindings' | 'context'>>;
 type Shape = { kind: 'module'; file: File } | { kind: 'class'; file: File; node: Node; instance: boolean; args: Map<string, Shape> }
     | { kind: 'function'; file: File; node: Node; args: Map<string, Shape>; receiver?: ClassShape }
     | { kind: 'sequence'; item?: Shape; async?: boolean; send?: Shape; generator?: boolean }
@@ -23,12 +23,14 @@ type ClassShape = Extract<Shape, { kind: 'class' }>;
 type FunctionShape = Extract<Shape, { kind: 'function' }>;
 type Locate = (from: string, module: string, level: number, name?: string) => { file: string; module: boolean } | undefined;
 
-export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
-    const files = new Map(analyses.filter(analysis => analysis.tree).map(analysis => [analysis.record.path, analysis as File]));
+export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declarations: Analysis[] = []) {
+    const captured = new Set(analyses.map(analysis => analysis.record.path));
+    const files = new Map([...analyses, ...declarations].filter(analysis => analysis.tree).map(analysis => [analysis.record.path, analysis as File]));
     const classOf = (file: File, node: Node, instance = false, args = new Map<string, Shape>()): ClassShape => ({ kind: 'class', file, node, instance, args });
     const same = (a?: Shape, b?: Shape, depth = 0): boolean => {
         if (!a || !b) return a === b;
         if (a.kind !== b.kind || depth > 16) return false;
+        if (a.kind === 'class' && b.kind === 'class' && a.instance !== b.instance) return false;
         if ('file' in a && 'file' in b) return a.file === b.file && ('node' in a && 'node' in b ? a.node === b.node
             && a.args.size === b.args.size && [...a.args].every(([name, value]) => same(value, b.args.get(name), depth + 1)) : a.kind === 'module');
         if ('items' in a && 'items' in b) return a.items.length === b.items.length && a.items.every((value, i) => same(value, b.items[i], depth + 1));
@@ -49,18 +51,26 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
         const values = scope.events.get(name)?.filter(value => !value.attributeWrite);
         return values?.length === 1 && !values[0].conditional ? values[0] : undefined;
     };
+    const typeBinding = (file: File, scope: Scope, name: string) => {
+        const ordinary = unique(scope, name);
+        if (ordinary) return ordinary;
+        const values = scope.events.get(name)?.filter(value => !value.attributeWrite);
+        if (values?.length !== 1 || !['import', 'module'].includes(values[0].kind) || locate(file.record.path, 'typing', 0)) return;
+        const point = file.context.point(values[0].node.start);
+        return file.record.imports.some(item => item.line === point.line && item.column === point.column && item.typeOnly && !item.conditional) ? values[0] : undefined;
+    };
     const unshadowed = (scope: Scope, name: string) => {
         for (let current: Scope | undefined = scope; current; current = current.parent)
             if (current.events.has(name) || current.declarations.has(name) || current.events.has('*')) return false;
         return true;
     };
     const activeFields: { owner: ClassShape; name: string; value?: Shape }[] = [];
-    const symbol = (file: File, scope: Scope, name: string, at: number, seen: Set<Node>, substitutions: Map<string, Shape>, importsLeft = 2, origin = scope): Shape | undefined => {
+    const symbol = (file: File, scope: Scope, name: string, at: number, seen: Set<Node>, substitutions: Map<string, Shape>, types = false, importsLeft = 2, origin = scope): Shape | undefined => {
         if (substitutions.has(name)) return substitutions.get(name);
         if (scope.declarations.has(name) || scope.events.has('*') || file.bindings.mutable.has(name) || name === '__class__') return;
         const values = scope.events.get(name)?.filter(value => !value.attributeWrite);
         if (values?.length) {
-            const value = unique(scope, name);
+            const value = types ? typeBinding(file, scope, name) : unique(scope, name);
             if (scope.kind === 'function' && scope === origin && values.every(value => ['value', 'parameter'].includes(value.kind))) {
                 return union(reachingBindings(scope, name, at).values.map(value => value && bindingShape(file, scope, value, at, seen, substitutions)));
             }
@@ -68,7 +78,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
             if (value.kind === 'class') return !(value.node.d as any).decorators.length || knownDecorators(file, value.node, ['dataclass']) ? classOf(file, value.node) : undefined;
             if (value.kind === 'function') {
                 if (scope.kind !== 'module' && value.at > at) return;
-                if (!(value.node.d as any).decorators.length || knownDecorators(file, value.node, ['contextmanager', 'asynccontextmanager']))
+                if (!(value.node.d as any).decorators.length || knownDecorators(file, value.node, ['contextmanager', 'asynccontextmanager']) || signatureDecorators(file, value.node, seen))
                     return { kind: 'function', file, node: value.node, args: substitutions };
                 return;
             }
@@ -80,23 +90,23 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
                 const other = target && files.get(target.file);
                 if (!target || !other || seen.has(value.node)) return;
                 if (target.module) return { kind: 'module', file: other };
-                return symbol(other, other.bindings.module, value.imported!, Infinity, new Set([...seen, value.node]), new Map(), importsLeft - 1);
+                return symbol(other, other.bindings.module, value.imported!, Infinity, new Set([...seen, value.node]), new Map(), types, importsLeft - 1);
             }
             return bindingShape(file, scope, value, at, seen, substitutions);
         }
-        return scope.parent ? symbol(file, scope.parent, name, at, seen, substitutions, importsLeft, origin) : undefined;
+        return scope.parent ? symbol(file, scope.parent, name, at, seen, substitutions, types, importsLeft, origin) : undefined;
     };
     function bindingShape(file: File, scope: Scope, value: Binding, at: number, seen: Set<Node>, substitutions: Map<string, Shape>): Shape | undefined {
             if (seen.has(value.node)) return;
             const next = new Set([...seen, value.node]);
-            if (value.annotation) return annotation(file, scope, value.annotation, value.at, next, substitutions);
+            if (value.annotation) return annotation(file, scopeOf(file, value.annotation), value.annotation, value.at, next, substitutions);
             if (value.kind === 'parameter') {
                 const method = scope.node;
                 const parameters = (method.d as any).params || [];
                 if (parameters[0] === value.node) {
                     let owner = method.parent;
                     while (owner && ![K.Function, K.Class].includes(owner.nodeType)) owner = owner.parent;
-                    if (owner?.nodeType === K.Class && (!(method.d as any).decorators.length || knownDecorators(file, method, ['property', 'classmethod', 'contextmanager', 'asynccontextmanager']) || propertyAccessor(file, method)))
+                    if (owner?.nodeType === K.Class && (!(method.d as any).decorators.length || knownDecorators(file, method, ['property', 'classmethod', 'contextmanager', 'asynccontextmanager']) || propertyAccessor(file, method) || signatureDecorators(file, method, seen)))
                         return classOf(file, owner, !knownDecorators(file, method, ['classmethod']));
                 }
                 return;
@@ -107,26 +117,31 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
             if (value.source === 'context') {
                 if (shape?.kind === 'class') {
                     const enter = member(shape, value.async ? '__aenter__' : '__enter__', at, next);
-                    shape = enter?.kind === 'function' ? returns(enter, [], at, next) : undefined;
+                    shape = enter?.kind === 'function' ? returns(enter, at, next) : undefined;
                     if (value.async && shape?.kind === 'awaitable') shape = shape.item;
                 } else shape = shape?.kind === 'context' && Boolean(shape.async) === Boolean(value.async) ? shape.item : undefined;
             }
             for (const index of value.projection || []) shape = shape?.kind === 'tuple' ? shape.items[index] : undefined;
             return shape;
     }
-    function standard(file: File, scope: Scope, node: Node): string | undefined {
+    function standard(file: File, scope: Scope, node: Node, types = false): string | undefined {
         if (node.nodeType === K.Name) {
             const name = node.d.value;
             for (let current: Scope | undefined = scope; current; current = current.parent) {
                 if (current.declarations.has(name) || current.events.has('*') || file.bindings.mutable.has(name)) return;
                 if (!current.events.has(name)) continue;
-                const value = unique(current, name);
-                return value && (current.kind === 'module' || value.at <= node.start) && !value.level && ['import', 'module'].includes(value.kind) ? value.kind === 'import' ? `${value.module}.${value.imported}` : value.imported === '*' ? value.module : value.imported : undefined;
+                const value = types ? typeBinding(file, current, name) : unique(current, name);
+                if (!value || current.kind !== 'module' && value.at > node.start || value.level || !value.module) return;
+                if (/^(?:typing|collections|contextlib|builtins|dataclasses)(?:\.|$)/.test(value.module)
+                    && (locate(file.record.path, value.module, 0) || current.events.get(name)?.some(event => event.attributeWrite))) return;
+                if (value.kind === 'import') return `${value.module}.${value.imported}`;
+                if (value.kind === 'module') return value.imported === '*' ? value.module : value.imported;
+                return;
             }
             return unshadowed(scope, name) ? `builtins.${name}` : undefined;
         }
         if (node.nodeType === K.MemberAccess) {
-            const left = standard(file, scope, node.d.leftExpr);
+            const left = standard(file, scope, node.d.leftExpr, types);
             return left && `${left}.${node.d.member.d.value}`;
         }
         return;
@@ -156,6 +171,53 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
             return Boolean(name && allowed.includes(name) && [`builtins.classmethod`, `builtins.staticmethod`, `builtins.property`, 'contextlib.contextmanager', 'contextlib.asynccontextmanager', 'dataclasses.dataclass'].includes(full!));
         });
     }
+    function typeVariable(file: File, scope: Scope, name: string, fn?: Node): { node: Node; bound?: Node; scope: Scope } | undefined {
+        const generic = fn && typeParameters(fn).find(param => (param.d as any).name.d.value === name);
+        if (generic?.nodeType === K.TypeParameter) return generic.d.typeParamKind === TypeParamKind.TypeVar ? { node: generic, bound: generic.d.boundExpr, scope } : undefined;
+        if (file.bindings.mutable.has(name)) return;
+        for (let current: Scope | undefined = scope; current; current = current.parent) {
+            if (!current.events.has(name)) continue;
+            const value = unique(current, name);
+            if (value?.expr?.nodeType !== K.Call || standard(file, current, value.expr.d.leftExpr) !== 'typing.TypeVar') return;
+            const [label, ...options] = value.expr.d.args;
+            if (label?.d.argCategory !== ArgCategory.Simple || label.d.name || literalString(label.d.valueExpr) !== name
+                || options.some(arg => arg.d.argCategory !== ArgCategory.Simple || !arg.d.name)) return;
+            const bounds = options.filter(arg => nameOf(arg.d.name) === 'bound');
+            if (bounds.length > 1) return;
+            return { node: value.node, bound: bounds[0]?.d.valueExpr, scope: current };
+        }
+        return;
+    }
+    // A captured F -> F contract with F bound to Callable preserves the static
+    // callable signature. It says nothing about the wrapper's runtime identity.
+    function signatureDecorators(file: File, node: Node, seen: Set<Node>): boolean {
+        const decorators: Node[] = (node.d as any).decorators || [];
+        if (!decorators.length || seen.has(node) || seen.size > 64) return false;
+        const next = new Set([...seen, node]);
+        return decorators.every(decorator => {
+            const expr = (decorator.d as any).expr;
+            if (![K.Name, K.MemberAccess].includes(expr.nodeType)) return false;
+            const scope = scopeOf(file, node);
+            let base = expr as Node;
+            while (base.nodeType === K.MemberAccess) base = base.d.leftExpr;
+            const baseName = nameOf(base);
+            if (!baseName) return false;
+            for (let current: Scope | undefined = scope; current; current = current.parent) {
+                const events = current.events.get(baseName);
+                if (!events) continue;
+                const binding = unique(current, baseName);
+                if (!binding || binding.at > node.start || events.some(event => event.attributeWrite)) return false;
+                break;
+            }
+            const value = expression(file, scope, expr, node.start, next, new Map());
+            if (value?.kind !== 'function' || (value.node.d as any).decorators.length || value.file === file && value.node.start > node.start) return false;
+            const d = value.node.d as any, params: Node[] = d.params || [], name = nameOf(d.returnAnnotation);
+            if (d.isAsync || params.length !== 1 || (params[0].d as any).category !== ParamCategory.Simple || nameOf((params[0].d as any).annotation) !== name || !name) return false;
+            const variable = typeVariable(value.file, scopeOf(value.file, value.node), name, value.node), bound = variable?.bound;
+            const contract = bound?.nodeType === K.Index ? standard(value.file, variable!.scope, bound.d.leftExpr) : undefined;
+            return contract === 'typing.Callable' || contract === 'collections.abc.Callable';
+        });
+    }
     function annotation(file: File, scope: Scope, node: Node | undefined, at: number, seen: Set<Node>, substitutions: Map<string, Shape>): Shape | undefined {
         if (!node) return;
         if (node.nodeType === K.StringList && node.d.strings.every(part => part.nodeType === K.String)) {
@@ -164,9 +226,15 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
             const statement = (parsed.parserOutput.parseTree.d.statements[0] as any)?.d.statements?.[0];
             return !parsed.errors.length && statement?.nodeType === K.TypeAnnotation ? annotation(file, scope, statement.d.annotation, at, seen, substitutions) : undefined;
         }
+        if (node.nodeType === K.Name && substitutions.has(node.d.value)) return substitutions.get(node.d.value);
         if (node.nodeType === K.Index) {
-            const type = standard(file, scope, node.d.leftExpr), short = type?.split('.').at(-1);
+            const type = standard(file, scope, node.d.leftExpr, true), short = type?.split('.').at(-1);
             const args = () => node.d.items.map(item => annotation(file, scope, item.d.valueExpr, at, seen, substitutions));
+            if (type === 'typing.Type' || type === 'builtins.type') {
+                if (node.d.items.length !== 1) return;
+                const value = args()[0];
+                return value?.kind === 'class' ? { ...value, instance: false } : undefined;
+            }
             const namespace = type?.slice(0, type.lastIndexOf('.'));
             const protocol = namespace === 'typing' || namespace === 'builtins' && ['list', 'dict', 'tuple', 'set', 'frozenset'].includes(short!)
                 || namespace === 'collections.abc' && ['Sequence', 'MutableSequence', 'Iterable', 'Iterator', 'Generator', 'AsyncIterable', 'AsyncIterator', 'AsyncGenerator', 'Mapping', 'MutableMapping', 'Awaitable', 'Coroutine'].includes(short!)
@@ -183,7 +251,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
                 if (['Awaitable', 'Coroutine'].includes(short!)) return { kind: 'awaitable', item: args().at(-1) };
                 if (['ContextManager', 'AsyncContextManager', 'AbstractContextManager', 'AbstractAsyncContextManager'].includes(short!)) return { kind: 'context', item: args()[0], async: short!.includes('Async') };
             }
-            const base = expression(file, scope, node.d.leftExpr, at, seen, substitutions);
+            const base = expression(file, scope, node.d.leftExpr, at, seen, substitutions, true);
             if (base?.kind !== 'class') return;
             const mapped = new Map(base.args);
             const params = typeParameters(base.node);
@@ -197,22 +265,15 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
             return union([annotation(file, scope, node.d.leftExpr, at, seen, substitutions), annotation(file, scope, node.d.rightExpr, at, seen, substitutions)]);
         if (node.nodeType === K.Constant && node.d.constType === KeywordType.None) return { kind: 'none' };
         if (node.nodeType === K.Name && !substitutions.has(node.d.value)) {
-            for (let current: Scope | undefined = scope; current; current = current.parent) {
-                const value = unique(current, node.d.value);
-                if (!value) { if (current.events.has(node.d.value)) break; continue; }
-                if (value.expr?.nodeType === K.Call && standard(file, current, value.expr.d.leftExpr) === 'typing.TypeVar' && !seen.has(value.node)) {
-                    const bound = value.expr.d.args.find(arg => nameOf(arg.d.name) === 'bound');
-                    return bound ? annotation(file, current, bound.d.valueExpr, at, new Set([...seen, value.node]), substitutions) : undefined;
-                }
-                break;
-            }
+            const variable = typeVariable(file, scope, node.d.value);
+            if (variable) return variable.bound && !seen.has(variable.node) ? annotation(file, variable.scope, variable.bound, at, new Set([...seen, variable.node]), substitutions) : undefined;
         }
-        if (standard(file, scope, node) === 'typing.Self') {
+        if (standard(file, scope, node, true) === 'typing.Self') {
             let owner: Node | undefined = scope.node;
             while (owner && owner.nodeType !== K.Class) owner = owner.parent;
             return owner && classOf(file, owner, true);
         }
-        const value = expression(file, scope, node, at, seen, substitutions);
+        const value = expression(file, scope, node, at, seen, substitutions, true);
         return value?.kind === 'class' ? { ...value, instance: true } : value;
     }
     function bases(owner: ClassShape, seen: Set<Node>): ClassShape[] | undefined {
@@ -271,7 +332,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
         const writes: Binding[] = [];
         // Instance assignments override a method declaration. A same-spelled
         // assignment in another class has no effect on this receiver.
-        for (const candidate of file.bindings.scopes.values()) {
+        for (const candidate of captured.has(file.record.path) ? file.bindings.scopes.values() : []) {
             let parent = candidate.node.parent;
             while (parent && ![K.Function, K.Class].includes(parent.nodeType)) parent = parent.parent;
             if (parent !== owner.node) continue;
@@ -302,30 +363,59 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
         if (!value) return { present: true };
         if (value.kind === 'function') {
             const decorators = (value.node.d as any).decorators;
-            if (decorators.length && !knownDecorators(file, value.node, ['property', 'classmethod', 'staticmethod', 'contextmanager', 'asynccontextmanager'])) return { present: true };
+            if (decorators.length && !knownDecorators(file, value.node, ['property', 'classmethod', 'staticmethod', 'contextmanager', 'asynccontextmanager']) && !signatureDecorators(file, value.node, seen)) return { present: true };
             const fn: FunctionShape = { kind: 'function', file, node: value.node, args: owner.args, receiver: owner };
-            return { present: true, value: knownDecorators(file, value.node, ['property']) ? returns(fn, [], at, seen) : fn };
+            if (knownDecorators(file, value.node, ['property'])) return { present: true, value: owner.instance ? returns(fn, at, seen) : undefined };
+            return { present: true, value: fn };
         }
         return { present: true, value: value.annotation ? annotation(file, scope, value.annotation, at, seen, owner.args)
             : value.expr ? expression(file, scope, value.expr, at, seen, owner.args) : undefined };
     }
-    function returns(fn: FunctionShape, args: Shape[], at: number, seen: Set<Node>): Shape | undefined {
-        const d = fn.node.d as any, substitutions = new Map(fn.args);
-        const params: Node[] = d.params || [];
-        const offset = fn.receiver && !knownDecorators(fn.file, fn.node, ['staticmethod']) ? 1 : 0;
-        const names = new Set(typeParameters(fn.node).map(node => (node.d as any).name.d.value));
-        for (let i = offset; i < params.length; i++) {
-            const param = params[i].d as any, name = nameOf(param.annotation);
-            if (name && names.has(name) && args[i - offset]) substitutions.set(name, args[i - offset]);
+    function inferTypeArguments(fn: FunctionShape, scope: Scope, args: ArgumentNode[], shapeOf: (node: Node) => Shape | undefined) {
+        const boundReceiver = fn.receiver && !knownDecorators(fn.file, fn.node, ['staticmethod'])
+            && (fn.receiver.instance || knownDecorators(fn.file, fn.node, ['classmethod']));
+        const params: ParameterNode[] = (fn.node.d as any).params.slice(boundReceiver ? 1 : 0);
+        if (params.some(param => !param.d.name || param.d.category !== ParamCategory.Simple)) return;
+        const supplied = new Map<number, Node>();
+        let position = 0;
+        for (const arg of args) {
+            if (arg.d.argCategory !== ArgCategory.Simple) return;
+            const index = arg.d.name ? params.findIndex(param => param.d.name?.d.value === arg.d.name!.d.value) : position++;
+            if (index < 0 || index >= params.length || supplied.has(index)) return;
+            supplied.set(index, arg.d.valueExpr);
         }
-        if (d.returnAnnotation) {
-            const value = annotation(fn.file, scopeOf(fn.file, fn.node), d.returnAnnotation, at, seen, substitutions);
-            if (knownDecorators(fn.file, fn.node, ['contextmanager', 'asynccontextmanager'])) return value?.kind === 'sequence' ? { kind: 'context', item: value.item, async: knownDecorators(fn.file, fn.node, ['asynccontextmanager']) } : undefined;
-            const ownScope = fn.file.bindings.scopes.get(fn.node);
-            const generator = [...walk(fn.node)].some(node => [K.Yield, K.YieldFrom].includes(node.nodeType) && scopeOf(fn.file, node) === ownScope);
-            return d.isAsync && !generator ? { kind: 'awaitable', item: value } : value;
+        if (params.some((param, index) => !supplied.has(index) && !param.d.defaultValue)) return;
+
+        const substitutions = new Map<string, (Shape | undefined)[]>();
+        for (const [index, argument] of supplied) {
+            const type = params[index].d.annotation;
+            const classType = type?.nodeType === K.Index && type.d.items.length === 1
+                && ['typing.Type', 'builtins.type'].includes(standard(fn.file, scope, type.d.leftExpr, true)!);
+            const name = nameOf(classType && type?.nodeType === K.Index ? type.d.items[0].d.valueExpr : type);
+            if (!name) continue;
+            const variable = typeVariable(fn.file, scope, name, fn.node);
+            if (!variable || !classType && variable.node.nodeType !== K.TypeParameter) continue;
+            const shape = shapeOf(argument);
+            const actual = classType ? shape?.kind === 'class' && !shape.instance ? { ...shape, instance: true } : undefined : shape;
+            const values = substitutions.get(name) || [];
+            values.push(actual);
+            substitutions.set(name, values);
         }
-        return;
+        return substitutions;
+    }
+    function returns(fn: FunctionShape, at: number, seen: Set<Node>, args: ArgumentNode[] = [], shapeOf?: (node: Node) => Shape | undefined): Shape | undefined {
+        const d = fn.node.d as any;
+        if (!d.returnAnnotation) return;
+        const scope = scopeOf(fn.file, fn.node), substitutions = new Map(fn.args);
+        if (shapeOf && args.length) {
+            for (const [name, values] of inferTypeArguments(fn, scope, args, shapeOf) || []) substitutions.set(name, union(values)!);
+        }
+        const value = annotation(fn.file, scope, d.returnAnnotation, at, seen, substitutions);
+        if (knownDecorators(fn.file, fn.node, ['contextmanager', 'asynccontextmanager'])) return value?.kind === 'sequence' ? { kind: 'context', item: value.item, async: knownDecorators(fn.file, fn.node, ['asynccontextmanager']) } : undefined;
+        if (!d.isAsync) return value;
+        const ownScope = fn.file.bindings.scopes.get(fn.node);
+        const generator = [...walk(fn.node)].some(node => [K.Yield, K.YieldFrom].includes(node.nodeType) && scopeOf(fn.file, node) === ownScope);
+        return generator ? value : { kind: 'awaitable', item: value };
     }
     function element(value: Shape | undefined, async = false): Shape | undefined {
         if (value?.kind === 'sequence' && Boolean(value.async) === async) return value.item;
@@ -345,9 +435,12 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
             if (path.includes('.') && (scope.events.get(name) || []).some(event => event.attributeWrite === path.split('.')[1] && event.at > endOf(guard.test) && event.at <= at)) continue;
             if (test.nodeType === K.Call && nameOf(test.d.leftExpr) === 'isinstance' && unshadowed(scope, 'isinstance')
                 && test.d.args.length === 2 && test.d.args.every(arg => !arg.d.name && arg.d.argCategory === 0) && reference(test.d.args[0].d.valueExpr) === path) {
-                const type = annotation(file, scope, test.d.args[1].d.valueExpr, test.start, seen, substitutions);
-                if (positive && type?.kind === 'class') value = type;
-                else if (!positive && value?.kind === 'union' && type?.kind === 'class') value = union(value.items.filter(item => !same(item, type)));
+                const type = expression(file, scope, test.d.args[1].d.valueExpr, test.start, seen, substitutions);
+                if (type?.kind === 'class' && !type.instance) {
+                    const instance = { ...type, instance: true };
+                    if (positive) value = instance;
+                    else if (value?.kind === 'union') value = union(value.items.filter(item => !same(item, instance)));
+                }
             }
             if (test.nodeType === K.BinaryOperation && [Op.Is, Op.IsNot].includes(test.d.operator) && reference(test.d.leftExpr) === path
                 && test.d.rightExpr.nodeType === K.Constant && test.d.rightExpr.d.constType === KeywordType.None) {
@@ -357,12 +450,13 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
         }
         return value;
     }
-    function expression(file: File, scope: Scope, node: Node, at: number, seen: Set<Node>, substitutions: Map<string, Shape>): Shape | undefined {
+    function expression(file: File, scope: Scope, node: Node, at: number, seen: Set<Node>, substitutions: Map<string, Shape>, types = false): Shape | undefined {
         if (seen.has(node) || seen.size > 64) return;
         seen = new Set([...seen, node]);
         const d = node.d as any;
         if (node.nodeType === K.Name) {
-            return narrowed(file, scope, node, at, symbol(file, scope, d.value, at, seen, substitutions), seen, substitutions);
+            const value = symbol(file, scope, d.value, at, seen, substitutions, types);
+            return types ? value : narrowed(file, scope, node, at, value, seen, substitutions);
         }
         if (node.nodeType === K.Constant && d.constType === KeywordType.None) return { kind: 'none' };
         if (node.nodeType === K.Tuple) return { kind: 'tuple', items: d.items.map((item: Node) => expression(file, scope, item, at, seen, substitutions)) };
@@ -390,15 +484,15 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
                 const receiver = symbol(file, scope, first.d.name.d.value, at, seen, substitutions);
                 return receiver?.kind === 'class' && receiver.node === owner.node ? member(receiver, d.member.d.value, at, seen, true) : undefined;
             }
-            const left = expression(file, scope, d.leftExpr, at, seen, substitutions);
+            const left = expression(file, scope, d.leftExpr, at, seen, substitutions, types);
             if (left?.kind === 'module') {
-                const value = symbol(left.file, left.file.bindings.module, d.member.d.value, Infinity, seen, new Map());
-                if (value || left.file.bindings.module.events.has(d.member.d.value) || !left.file.record.path.endsWith('__init__.py')) return value;
+                const value = symbol(left.file, left.file.bindings.module, d.member.d.value, Infinity, seen, new Map(), types);
+                if (value || left.file.bindings.module.events.has(d.member.d.value) || !/__init__\.pyi?$/.test(left.file.record.path)) return value;
                 const target = locate(left.file.record.path, '', 1, d.member.d.value), other = target && files.get(target.file);
                 return target?.module && other ? { kind: 'module', file: other } : undefined;
             }
             const value = left?.kind === 'class' ? d.member.d.value === '__class__' && left.instance ? { ...left, instance: false } : member(left, d.member.d.value, at, seen) : undefined;
-            return narrowed(file, scope, node, at, value, seen, substitutions);
+            return types ? value : narrowed(file, scope, node, at, value, seen, substitutions);
         }
         if (node.nodeType === K.Call) {
             const builtin = standard(file, scope, d.leftExpr);
@@ -418,14 +512,15 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
                 if (left?.kind === 'mapping' && !d.args.length && ['items', 'keys', 'values'].includes(name)) return { kind: 'sequence', item: name === 'items' ? { kind: 'tuple', items: [left.key, left.value] } : name === 'keys' ? left.key : left.value };
             }
             const callee = expression(file, scope, d.leftExpr, at, seen, substitutions);
-            const args = d.args.map((arg: Node) => expression(file, scope, (arg.d as any).valueExpr, at, seen, substitutions));
-            if (callee?.kind === 'class') return { ...callee, instance: true };
-            if (callee?.kind === 'function') return returns(callee, args, at, seen);
+            if (callee?.kind === 'class' && !callee.instance) return { ...callee, instance: true };
+            if (callee?.kind === 'function') return returns(callee, at, seen, d.args, argument => expression(file, scope, argument, at, seen, substitutions));
         }
         return;
     }
     let added = 0;
-    for (const file of files.values()) {
+    for (const analysis of analyses) {
+        if (!analysis.tree) continue;
+        const file = analysis as File;
         const calls = [...walk(file.tree)].filter(node => node.nodeType === K.Call)
             .sort((a, b) => a.start - b.start || endOf(a) - endOf(b));
         for (let i = 0; i < calls.length; i++) {
@@ -436,15 +531,21 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate) {
             // execution guards. Extend only member paths and nested functions.
             if (callee.nodeType !== K.MemberAccess && callee.nodeType !== K.Name) continue;
             const scope = scopeOf(file, node);
-            if (callee.nodeType === K.Name && !(unique(scope, callee.d.value)?.kind === 'function' && scope.kind === 'function')) {
-                const value = file.bindings.lookup(scope, callee.d.value, node.start);
-                if (!value || !['function', 'import'].includes(value.kind)) continue;
-                const target = symbol(file, scope, callee.d.value, node.start, new Set(), new Map());
-                if (target?.kind !== 'function' || !knownDecorators(target.file, target.node, ['contextmanager', 'asynccontextmanager'])) continue;
+            let requireDecorator = false;
+            if (callee.nodeType === K.Name) {
+                const name = callee.d.value;
+                if (file.bindings.privateCalls.has(node) && name.startsWith('__') && !name.endsWith('__')) continue;
+                requireDecorator = scope.kind !== 'function' || unique(scope, name)?.kind !== 'function';
+                if (requireDecorator) {
+                    const value = file.bindings.lookup(scope, name, node.start);
+                    if (!value || !['function', 'import'].includes(value.kind)) continue;
+                }
             }
             const target = expression(file, scope, callee, node.start, new Set(), new Map());
-            if (target?.kind !== 'function') continue;
-            const fn = target.file.measured.byNode.get(target.node);
+            if (target?.kind !== 'function' || !captured.has(target.file.record.path)) continue;
+            if (requireDecorator && !knownDecorators(target.file, target.node, ['contextmanager', 'asynccontextmanager'])
+                && !signatureDecorators(target.file, target.node, new Set())) continue;
+            const fn = target.file.measured?.byNode.get(target.node);
             if (!fn) continue;
             fact.resolution = 'python-source-declaration'; delete fact.reason; delete fact._import;
             fact.target = { file: target.file.record.path, name: fn.name, line: fn.line, column: fn.sourceRange.column }; added++;

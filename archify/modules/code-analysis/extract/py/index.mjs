@@ -1,14 +1,16 @@
 // Python source analysis using the transplanted Pyright parser. Target source
 // is captured once and never imported or executed.
+import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from '../shared/diagnostics.mjs';
 import { analyzeFile, resolveSourceCalls } from './analyze.mjs';
 import { classifyRole, listFiles, snapshotSources } from '../shared/files.mjs';
 import { describeRepository } from '../shared/git.mjs';
+import { captureDeclarations } from './declarations.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 12;
+export const REVISION = 13;
 
 const PY_EXT = /\.py$/;
 
@@ -35,12 +37,16 @@ export function extract(root, config) {
     for (let i = 1; i < parts.length; i += 1) directories.add(parts.slice(0, i).join('/'));
   }
   const analyses = [...snapshot].map(([file, bytes]) => analyzeFile(file, bytes, targetVersion));
+  const dependencies = captureDeclarations(fs.realpathSync(absRoot), config.python?.declarations, targetVersion, fileSet);
   const output = { files: analyses.map(analysis => analysis.record) };
   resolveSourceCalls(analyses, (from, module, level, name) => {
-    const edges = resolveDeclaredImport({ module, level, names: name ? [name] : ['*'] }, from, fileSet, directories).filter(edge => edge.to);
+    if (level && dependencies.origins.has(from)) return dependencies.locate(from, module, level, name);
+    const edges = resolveDeclaredImport({ module, level, names: name ? [name] : ['*'] }, from, fileSet, directories);
     if (edges.length !== 1) return;
-    return { file: edges[0].to, module: !name || !edges[0].names?.includes(name) };
-  });
+    const edge = edges[0];
+    if (edge.to) return { file: edge.to, module: !name || !edge.names?.includes(name) };
+    if (edge.reason === 'external') return dependencies.locate(from, module, level, name);
+  }, dependencies.analyses);
 
   const calls = [];
   const parsedFiles = new Map(output.files.filter(record => !record.error).map(record => [record.path, record]));
@@ -113,7 +119,8 @@ export function extract(root, config) {
     imports,
     symbols: symbols.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.name, b.name)),
     functions: functions.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.qualname, b.qualname)),
-    callModel: 'python-source-v2',
+    callModel: 'python-source-v3',
+    ...(dependencies.scope.declarations.length ? { languageScope: dependencies.scope } : {}),
     calls,
     unresolved,
   };

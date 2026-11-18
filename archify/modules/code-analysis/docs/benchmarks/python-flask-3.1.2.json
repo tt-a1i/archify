@@ -1096,5 +1096,262 @@
       ]
     }
   ],
-  "limits": "Source declaration navigation, not runtime dispatch/type-diagnostic accuracy. Oracle was inspected by Codex, not an independent human. Targeted method samples are not a repository-wide random accuracy estimate. Agreement alone is not correctness."
+  "limits": "Source declaration navigation, not runtime dispatch/type-diagnostic accuracy. Oracle was inspected by Codex, not an independent human. Targeted method samples are not a repository-wide random accuracy estimate. Agreement alone is not correctness.",
+  "revision13Repair": {
+    "recorded": "2026-11-18",
+    "baselineCommit": "c89e21c312e42a755deb91b5f799a19ca1cac467",
+    "adapterRevision": 13,
+    "callModel": "python-source-v3",
+    "analyzerSha256": "380730e92a36961e16d4e22d902d5bbd20a412e4a422685a0a1a20eb1511cd96",
+    "node": "v22.23.2",
+    "platform": "darwin",
+    "frozenOracleSha256": "c6e4e09dfd4372e03fd8e377205a65033f95924dd7573bd93c9b05987aeafaff",
+    "frozenReferenceSha256": "e835e1c0bd5b42519310d344e3ee205cbec5adf90bde709ec6b7c8d919c3dcf9",
+    "dependencyVersion": "click==8.1.8",
+    "declarationInputs": [
+      {
+        "module": "click",
+        "files": [
+          {
+            "file": "__init__.py",
+            "sha256": "8f50c97826e06b8ae26e4bf9bb2bc8033234a05375ddf5bd99ebc32928457a5a"
+          },
+          {
+            "file": "_compat.py",
+            "sha256": "2062a1fc9e5075f2842e2b6745f4c61e779e8d6c680b0fcd5fdb5f31b75c837c"
+          },
+          {
+            "file": "_termui_impl.py",
+            "sha256": "6b9cfb23d80e15e326bbb19bebf44fc90f063ee54fd4479b962c5c5923d240f9"
+          },
+          {
+            "file": "_textwrap.py",
+            "sha256": "d747d0eb839c05432e2bb985be1f37eb7feea0ec4f95122d64198acd12438286"
+          },
+          {
+            "file": "_winconsole.py",
+            "sha256": "e63bb78d091c643d16dbb584306aa610fe32fdcad45733c2aac5ff1586fb04ed"
+          },
+          {
+            "file": "core.py",
+            "sha256": "4359c455d72d670bc83ce96de2f7c7928d136271c2784e3450412e97c5a9cafb"
+          },
+          {
+            "file": "decorators.py",
+            "sha256": "eede85f905a8c2d2e1e85ffa97ee18578638c8d4dca85404bbd8b7ef3233ebcb"
+          },
+          {
+            "file": "exceptions.py",
+            "sha256": "57bcc34fa7a6a89f22365d241753f99291662cc590d53d4beda34d28ce18474c"
+          },
+          {
+            "file": "formatting.py",
+            "sha256": "16b7f4fb95b7dfe968c98fe2f6aaf05d1f3e4939d6de6e60bf2c4b554772c729"
+          },
+          {
+            "file": "globals.py",
+            "sha256": "72e27a05ba34ef79601049a18ebdfde0f78cf901665ccf828bec267ec77b1f98"
+          },
+          {
+            "file": "parser.py",
+            "sha256": "878b2775ca45e4e1eb65037cbc3f0859be4e072bd6ec005b8514e8c68beba92f"
+          },
+          {
+            "file": "shell_completion.py",
+            "sha256": "4d1d1d5c419cbd66fd128dda6901171a19ef352dc51781f841cb8b9ef02f628e"
+          },
+          {
+            "file": "termui.py",
+            "sha256": "74bc624bbd143af21805d6bf9c411968f0053950d5991b35b043ccb8b0e8c10a"
+          },
+          {
+            "file": "testing.py",
+            "sha256": "dd103c6a709fed367cfb94401798add937be6965c100be552dab109cc882d994"
+          },
+          {
+            "file": "types.py",
+            "sha256": "043e50aaae21fbc91ac0198e2332659aae31cd38407f8c02bda38b652043371d"
+          },
+          {
+            "file": "utils.py",
+            "sha256": "71ef88acef6294823be8b1a4537e78a4e7476dea4cf147ed7cd1fb49f314ff6f"
+          }
+        ]
+      }
+    ],
+    "flaskDefault": {
+      "targets": 215,
+      "referenceAgreements": 215,
+      "previousTargetsRetained": 154,
+      "functionFactsIdentical": true,
+      "importsIdentical": true,
+      "symbolsIdentical": true,
+      "callInventoryIdentical": true,
+      "sample": {
+        "total": 24,
+        "matched": 23,
+        "wrongSites": 0,
+        "byStratum": {
+          "uniform": {
+            "uniqueExpected": 8,
+            "matched": 7
+          },
+          "self-method": {
+            "uniqueExpected": 16,
+            "matched": 16
+          }
+        }
+      }
+    },
+    "flaskWithClickDeclarations": {
+      "targets": 220,
+      "referenceAgreements": 220,
+      "previousTargetsRetained": 154,
+      "functionFactsIdentical": true,
+      "importsIdentical": true,
+      "symbolsIdentical": true,
+      "callInventoryIdentical": true,
+      "sample": {
+        "total": 24,
+        "matched": 24,
+        "wrongSites": 0,
+        "byStratum": {
+          "uniform": {
+            "uniqueExpected": 8,
+            "matched": 8
+          },
+          "self-method": {
+            "uniqueExpected": 16,
+            "matched": 16
+          }
+        }
+      }
+    },
+    "httpxRegression": {
+      "targets": 358,
+      "referenceAgreements": 358,
+      "previousTargetsRetained": 358,
+      "functionFactsIdentical": true,
+      "importsIdentical": true,
+      "symbolsIdentical": true,
+      "callInventoryIdentical": true,
+      "sample": {
+        "total": 29,
+        "matched": 29,
+        "wrongSites": 0,
+        "byStratum": {
+          "uniform": {
+            "uniqueExpected": 10,
+            "matched": 10
+          },
+          "self-method": {
+            "uniqueExpected": 19,
+            "matched": 19
+          }
+        }
+      }
+    },
+    "clickRegression": {
+      "targets": 523,
+      "referenceAgreements": 523,
+      "previousTargetsRetained": 514,
+      "functionFactsIdentical": true,
+      "importsIdentical": true,
+      "symbolsIdentical": true,
+      "callInventoryIdentical": true,
+      "sample": {
+        "total": 19,
+        "matched": 19
+      }
+    },
+    "resolvedOriginalSampleCases": [
+      "src/flask/cli.py:631:18:631:33",
+      "src/flask/ctx.py:323:31:323:67",
+      "src/flask/sansio/app.py:680:12:680:50",
+      "src/flask/sansio/blueprints.py:529:12:529:54",
+      "src/flask/sansio/blueprints.py:558:8:560:9",
+      "src/flask/sansio/blueprints.py:568:8:570:9",
+      "src/flask/sansio/scaffold.py:293:15:293:60",
+      "src/flask/templating.py:168:4:168:40"
+    ],
+    "remainingReferenceDifferences": [
+      {
+        "id": "src/flask/app.py:278:39:278:72",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/cli.py:349:22:349:51",
+        "definitionCandidates": 3
+      },
+      {
+        "id": "src/flask/cli.py:353:26:353:81",
+        "definitionCandidates": 3
+      },
+      {
+        "id": "src/flask/ctx.py:187:10:187:20",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/ctx.py:191:19:191:41",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/ctx.py:426:16:426:32",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/helpers.py:110:19:110:43",
+        "definitionCandidates": 3
+      },
+      {
+        "id": "src/flask/helpers.py:639:19:639:65",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/sansio/app.py:477:15:477:46",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/sansio/app.py:924:32:924:82",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/sansio/blueprints.py:434:22:440:13",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/templating.py:183:13:183:36",
+        "definitionCandidates": 3
+      },
+      {
+        "id": "src/flask/wrappers.py:195:15:195:42",
+        "definitionCandidates": 1
+      },
+      {
+        "id": "src/flask/wrappers.py:210:12:210:48",
+        "definitionCandidates": 1
+      }
+    ],
+    "ablation": {
+      "without-type-imports": {
+        "targets": 185,
+        "sampleMatched": 22
+      },
+      "without-typed-decorators": {
+        "targets": 190,
+        "sampleMatched": 19
+      },
+      "without-class-argument": {
+        "targets": 215,
+        "sampleMatched": 23
+      }
+    },
+    "verification": {
+      "focusedPassed": 165,
+      "focusedFailed": 0,
+      "focusedSkipped": 0,
+      "originalFailureGroups": 4,
+      "publicPrepareFlaskTargets": 220
+    }
+  }
 }

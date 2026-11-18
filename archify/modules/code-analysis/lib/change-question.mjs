@@ -67,6 +67,9 @@ function inspectSide(capture, side) {
     if (status !== 'valid') resolutionFresh = false;
     if (text !== undefined) inputs.push({ file: normalize(file, root), sha256: digest(text) });
   }
+  for (const declaration of facts.languageScope?.declarations || []) {
+    for (const file of declaration.files) inputs.push({ file: `@python-declarations/${declaration.module}/${file.file}`, sha256: file.sha256 });
+  }
   inputs.sort((a, b) => a.file.localeCompare(b.file));
   const settings = { options: normalize(resolution.options || {}, root), inputs };
   const unavailable = [...files.values()].filter(file => file.status !== 'valid').map(file => ({ file: file.path, status: file.status, ...(file.parseError ? { parseError: file.parseError } : {}) }));
@@ -77,7 +80,9 @@ function inspectSide(capture, side) {
     unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
     ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
     ...(evidence ? { interfaceEvidence: evidence } : {}),
-    resolution: ['ts', 'go', 'rust', 'java'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
+    resolution: ['ts', 'go', 'rust', 'java'].includes(facts.repository.language) || inputs.length
+      ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) }
+      : { ...resolution, digest: capture.configDigest },
   };
   const references = new Map(), calls = new Map(), interfaceReferences = new Map(), externalInterfaceReferences = new Map();
   (facts.calls || []).forEach((fact, factIndex) => {
@@ -133,7 +138,7 @@ function inspectSide(capture, side) {
   });
   for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5'].includes(facts.callModel))
-    || (facts.repository.language === 'py' && /^(?:python|pyright-parser)@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2', 'python-source-v1', 'python-source-v2'].includes(facts.callModel))
+    || (facts.repository.language === 'py' && /^(?:python|pyright-parser)@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2', 'python-source-v1', 'python-source-v2', 'python-source-v3'].includes(facts.callModel))
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(facts.callModel))
     || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12', 'rust-source-direct-v13', 'rust-source-direct-v14'].includes(facts.callModel));
@@ -447,7 +452,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
     comparison: { sourceText: 'reading-signals-only', bindingAttribution, reasons, resolutionChanges },
     fileChanges: bounded(fileChanges), ...selected,
     limitations: [
-      'Python source models add bounded source declaration anchors from transplanted Pyright syntax, receiver/signature types and captured inheritance. python-source-v2 adds local reaching definitions, typed container/generator/async/context protocols, property accessors, bound TypeVars and source super calls. These are declaration candidates, not runtime callers or full Pyright type-checking results. Historical captures retain their saved binding scope.',
+      'Python source models provide static declaration anchors from captured source. Python v2 adds local flow and protocol types. Python v3 adds type-only imports, callable-preserving decorators and generic arguments from captured dependency signatures.',
       'File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.',
       'Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.',
       'Known references are conservative source callsites, not runtime callers or complete/transitive impact. Dynamic dispatch, unsupported member calls, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets ordinary undecorated module definitions or direct from-import aliases; v2 additionally follows one unique unconditional explicit reexport. Longer/rebound/conditional chains, decorated/method targets and runtime module initialization remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; v3 additionally distinguishes different fixed arities while same-arity/varargs competition, member dispatch and inherited owners remain unresolved. Go v1 binds captured free functions; v2 additionally follows compiler-selected concrete methods, including promotion, expressions and generic instances; v3 additionally binds interface method declarations captured in source as declaration anchors, while runtime interface dispatch and function variables remain unknown under incomplete external typing. Current Go change orientation additionally lists interface-mediated candidate callsites when captured go/types method sets prove that the changed concrete method is in an interface implementation; candidates are not definite runtime callers. Captures without interface implementation edges report interfaceCandidates as unavailable rather than zero. Argument type applicability and complete compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.',

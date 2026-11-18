@@ -86,7 +86,7 @@ export function collectImports(tree: Node, context: SourceContext, bindings: Bin
     return found.sort((a, b) => a.line - b.line || a.module.localeCompare(b.module));
 }
 
-export function analyzeFile(path: string, bytes: Uint8Array, targetVersion = '3.14') {
+export function analyzeFile(path: string, bytes: Uint8Array, targetVersion = '3.14', declarationsOnly = false) {
     const record = { path, loc: 0, sourceText: '', imports: [] as ImportFact[], symbols: [] as ReturnType<typeof moduleBindings>,
         functions: [] as ReturnType<typeof functionFacts>['facts'], calls: [] as CallFact[],
         definitions: Object.create(null) as Record<string, unknown>, importBindings: Object.create(null) as Record<string, unknown>, error: undefined as string | undefined };
@@ -100,9 +100,11 @@ export function analyzeFile(path: string, bytes: Uint8Array, targetVersion = '3.
         return { record };
     }
     const tree = parsed.parserOutput.parseTree;
-    const bindings = bindModule(tree), measured = functionFacts(tree, context);
-    record.functions = measured.facts; record.symbols = moduleBindings(tree, context);
+    const bindings = bindModule(tree);
     record.imports = collectImports(tree, context, bindings);
+    if (declarationsOnly) return { record, tree, bindings, context };
+    const measured = functionFacts(tree, context);
+    record.functions = measured.facts; record.symbols = moduleBindings(tree, context);
     const eligible = (binding: ReturnType<Bindings['lookup']>) => binding?.kind === 'function'
         && !(binding.node.d as any).decorators.length ? measured.byNode.get(binding.node) : undefined;
     for (const name of bindings.module.events.keys()) {

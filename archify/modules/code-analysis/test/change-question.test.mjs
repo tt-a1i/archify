@@ -45,6 +45,20 @@ test('Python BOM decoding preserves fresh paired definition bodies and known cal
   }
 });
 
+test('Paired Python questions distinguish dependency declaration changes from project source edits', t => {
+  const source = { 'entry.py': 'from dep import work\ndef chosen(): work()\n', 'dep.pyi': 'def work() -> int: ...\n' };
+  const args = { ...setup(t, source, { ...source, 'dep.pyi': 'def work() -> str: ...\n' }), entry: 'entry.py' };
+  const config = { ...loadConfig(null), python: { declarations: { dep: 'dep.pyi' } } };
+  const base = captureChangeSide(args.baseRoot, config, 'py'), head = captureChangeSide(args.root, config, 'py');
+  const brief = buildChangeQuestion({ ...args, base, head, config });
+  assert.equal(brief.status, 'partial');
+  assert.equal(brief.fileChanges.total, 0);
+  assert.ok(brief.comparison.reasons.some(item => item.code === 'resolution-settings-differ'));
+  const [input] = brief.comparison.resolutionChanges.inputChanges.items;
+  assert.equal(input.file, '@python-declarations/dep/dep.pyi');
+  assert.notEqual(input.baseSha256, input.headSha256);
+});
+
 test('optional capture observation leaves raw facts and their revision/snapshot fingerprints unchanged', t => {
   const args = setup(t), config = loadConfig(null);
   const plain = extractFacts(args.root, { language: 'ts', config });

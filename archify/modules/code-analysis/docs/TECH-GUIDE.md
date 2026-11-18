@@ -545,7 +545,7 @@ Most tests call the library directly (`extractFacts`, `buildGraph`, `evaluateGra
 
 ### Python call capture
 
-Python adapter revision 11 adds the Node-only `python-source-v1` declaration
+Python adapter revision 13 emits the Node-only `python-source-v3` declaration
 model. See [Python support](PYTHON.md). Historical revision 7 adds `python-lexical-v1`, source-contained Call records
 and optional exact `functions[].sourceRange` proof. UTF-8 byte offsets from the
 AST are converted to UTF-16 columns against decoded source. Ranges exclude

@@ -6,8 +6,8 @@
   },
   "py": {
     "fixture": "py-basic",
-    "revision": 12,
-    "digest": "c072537f6ed9cf9a9c7f3f2a0b31ad4dea7bba86cdb383d20ee83f446d975dc5"
+    "revision": 13,
+    "digest": "7c957c452808a2b2820a8710c4d7611f3ec5fdbfb1ae09ccbd58f4dd74f4704f"
   },
   "java": {
     "fixture": "java-basic",

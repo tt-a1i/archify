@@ -9,8 +9,8 @@ import { analyzeFile } from '../extract/py/analyze.mjs';
 const options = {};
 for (let i = 2; i < process.argv.length; i += 2) {
   const key = process.argv[i];
-  if (!['--root', '--reference', '--baseline', '--oracle'].includes(key) || !process.argv[i + 1])
-    throw new Error('Usage: node scripts/compare-python-reference.mjs --root SOURCE_TREE --reference PYRIGHT_JSON [--baseline OLD_FACTS_JSON] [--oracle MANUAL_ORACLE_JSON]');
+  if (!['--root', '--reference', '--baseline', '--oracle', '--config'].includes(key) || !process.argv[i + 1])
+    throw new Error('Usage: node scripts/compare-python-reference.mjs --root SOURCE_TREE --reference PYRIGHT_JSON [--baseline OLD_FACTS_JSON] [--oracle MANUAL_ORACLE_JSON] [--config ANALYSIS_CONFIG]');
   options[key.slice(2)] = process.argv[i + 1];
 }
 if (!options.root || !options.reference) throw new Error('--root and --reference are required');
@@ -18,7 +18,7 @@ const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const reference = read(options.reference);
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const started = performance.now();
-const facts = extractFacts(options.root, { language: 'py' }).facts;
+const facts = extractFacts(options.root, { language: 'py', config: options.config }).facts;
 const extractionMs = performance.now() - started;
 const sources = new Map(facts.files.map(file => [file.path, file.sourceText]));
 if (!Array.isArray(reference.inputs) || reference.inputs.filter(input => input.file.endsWith('.py')).length !== sources.size) throw new Error('Reference inventory differs from the current capture');
@@ -95,7 +95,8 @@ if (options.oracle) {
   }
 }
 console.log(JSON.stringify({
-  adapter: facts.repository.adapter, callModel: facts.callModel, reference: { version: reference.pyrightVersion, commit: reference.pyrightCommit, platform: reference.pythonPlatform },
+  adapter: facts.repository.adapter, callModel: facts.callModel, declarationInputs: facts.languageScope?.declarations ?? [],
+  reference: { version: reference.pyrightVersion, commit: reference.pyrightCommit, platform: reference.pythonPlatform },
   inputs: reference.inputs, files: facts.files.length, loc: facts.files.reduce((sum, file) => sum + file.loc, 0), functions: facts.functions.length, imports: facts.imports.length,
   calls: facts.calls.length, targets: facts.calls.filter(call => call.target).length, additionalSourceTargets: facts.calls.filter(call => call.resolution === 'python-source-declaration').length,
   referenceCandidateCalls: candidateRows.length, referenceUniqueCandidateCalls: candidateRows.filter(row => row.targets === 1).length,

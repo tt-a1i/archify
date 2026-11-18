@@ -92,4 +92,4 @@ Read for context:
 ## Analysis context
 
 - Language: py (pyright-parser@1.1.414/python-3.14), analyzed root: `.`, source: working-tree
-- Snapshot: `9dd6c3f15459868f3693c363152ccf896eb1851791b1b7f19e9a23c171b43125`, config `599882652663`, analyzer @archify/code-analysis 0.1.0-dev.1
+- Snapshot: `1cec76ce6d2961062d765c051da50877519cbc5deaafebd061cc017fe757a663`, config `599882652663`, analyzer @archify/code-analysis 0.1.0-dev.1

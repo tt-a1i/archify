@@ -1,6 +1,8 @@
 # HTTPX repair and Flask holdout
 
-Recorded 2026-11-17, Node 22.23.2/macOS. Revision 12 emits `python-source-v2`.
+Original holdout recorded 2026-11-17, Node 22.23.2/macOS. The
+[2026-11-18 Flask repair](#flask-repair-in-revision-13) reuses its frozen oracle
+and reference. Revision 12 emits `python-source-v2`.
 The generated analyzer SHA256 is
 `19a7eeb28dd05c9c8f93b1c028e9141ca784cdf423e9f278c845bd76a5226697`.
 The baseline is revision 11 at `3b7f5bd57181c2a343976a692a81f3b45635d779`.
@@ -68,7 +70,7 @@ the declared static anchor is `AsyncBaseTransport.__aenter__`. This explicitly
 separates source declaration navigation from runtime dispatch. The upstream
 HTTPX test suite was not run.
 
-## Flask holdout and remaining gaps
+## Original Flask holdout
 
 Flask was selected after the HTTPX fixes, with a frozen candidate bundle and
 oracle before either Flask result was read. The first holdout and the final
@@ -93,11 +95,49 @@ and four multiple candidate sets. The eight sample gaps were inspected from
 source; the 76 full-corpus gaps are reference differences, not 76 independently
 proved bugs.
 
-Next semantic work should separate type-only import scope from runtime callable
-evidence, establish generic decorator signature propagation without accepting
-arbitrary wrappers, and decide how captured dependency declarations should
-inform factory returns. Dynamic context proxies and descriptors also appear in
-the full differential. These findings prevent a claim of full Pyright parity.
+The following repair tests these three causes against the same frozen inputs.
+Dynamic context proxies and descriptors also appear in the full differential.
+
+## Flask repair in revision 13
+
+Revision 13 adds annotation lookup for stable `TYPE_CHECKING` imports, preserves
+captured `F -> F` decorator signatures when `F` is bounded by `Callable`, and
+substitutes class arguments into `type[T]` and `typing.Type[T]` factory returns.
+For Flask's `info.load_app()` call, `python.declarations` supplies Click 8.1.8
+from the pinned reference environment. The factory's declared signature maps
+`ScriptInfo` to the return type, which gives `ScriptInfo.load_app` as the local
+target. See [the pinned Click signature](https://github.com/pallets/click/blob/8.1.8/src/click/core.py)
+and [the declaration input contract](../PYTHON.md#supplying-dependency-declarations).
+
+| Flask measurement | Revision 12 | Revision 13 defaults | Revision 13 with Click declarations | Pyright |
+| --- | ---: | ---: | ---: | ---: |
+| Selected captured targets | 154 | 215 | **220** | 230 unique, 4 multiple |
+| Selected targets agreeing with reference | 154/154 | 215/215 | **220/220** | — |
+| Frozen unique declarations | 16/24 | 23/24 | **24/24** | 24/24 |
+| Uniform stratum | 5/8 | 7/8 | **8/8** | 8/8 |
+| Additional self-method stratum | 11/16 | 16/16 | **16/16** | 16/16 |
+| Wrong targets in frozen sample | 0 | 0 | **0** | 0 |
+
+Flask retains all 154 prior targets, all function/import/symbol facts and all
+1,195 call spans. The configured run has **10 unique reference differences and
+four multiple candidate sets** outside the repaired sample. Click 8.5.1 retains
+all 514 prior targets and reaches **523/523** reference agreements, with sample
+**19/19**. HTTPX retains all **358** targets and sample **29/29**.
+
+| Rule removed in isolation | Flask sample result | Total selected targets |
+| --- | ---: | ---: |
+| Type-only annotation bindings | 22/24 | 185 |
+| Callable-preserving decorator contracts | 19/24 | 190 |
+| Substitution from class arguments | 23/24 | 215 |
+
+Each removed rule reintroduces its original sample misses. Dependency capture
+reuses the parser and binder and records byte hashes in the project facts. Four
+focused regression groups fail on revision 12 and pass on revision 13. Final
+local verification passed 165 affected tests on Node 22.23.2. The public
+`code-analysis prepare` command also produced the 220-target Flask capture.
+
+Exact bundle and oracle identities, dependency hashes and remaining callsites
+are in the [Flask measurement record](python-flask-3.1.2.json).
 
 ## Regression and ablation
 
@@ -140,9 +180,16 @@ node scripts/compare-python-reference.mjs --root /path/to/flask-source-only \
   --oracle docs/benchmarks/python-flask-oracle.json
 ```
 
-Input/oracle hash mismatches fail. The Flask command intentionally exits 1 for
-the eight documented unresolved oracle positives; it must not be reported as a
-passing accuracy gate. The HTTPX command passes. Reading frozen references does
-not launch Pyright or require the isolated Python environments; those pins
-document the original reference capture. Local verification and package evidence
-are recorded separately in [the revision-12 validation record](python-flow-validation.md).
+Input and oracle hash mismatches fail. The HTTPX command passes. On revision 13
+the Flask command exits 1 with one unresolved oracle positive when run with the
+default configuration. To reproduce **24/24**, use `--config` with a JSON file
+that maps `click` to the same Click 8.1.8 package directory used by the reference.
+For the recorded corpus with its sibling isolated environment the file contains:
+
+```json
+{"python":{"declarations":{"click":"../env/lib/python3.14/site-packages/click"}}}
+```
+
+The comparison reads the frozen Pyright results. It requires only Node and the
+configured declaration files. The [revision-12 validation record](python-flow-validation.md)
+preserves the original local and package verification.

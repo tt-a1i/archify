@@ -48,13 +48,13 @@ For the conditional-null boundary in exact in-root JavaScript package imports/se
 
 ## Python call facts
 
-Current `python-source-v1` runs a transplanted Pyright tokenizer/parser in Node.
+Current `python-source-v3` runs a transplanted Pyright tokenizer/parser in Node.
 Archify's binding pass, import collector, metrics and bounded source type shapes
 consume that tree. Full Pyright's Program, LSP, binder, evaluator and typeshed are
 not shipped. `python-source-declaration` extends lexical calls to captured
-receiver/signature declarations, source inheritance/C3, PEP 695 substitution,
-annotated fields/properties and positive `isinstance` narrowing. These are source
-anchors; runtime dispatch and full type checking remain unknown. See
+receiver/signature declarations, source inheritance, bounded local flow, typed
+decorator contracts and generic factories. Explicit dependency declaration inputs
+can refine a receiver's type without adding project navigation targets. See
 [Python implementation and bounds](docs/PYTHON.md).
 
 The following `python-lexical-v1` contract describes historical captures, which

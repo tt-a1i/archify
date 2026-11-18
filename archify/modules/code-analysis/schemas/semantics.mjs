@@ -56,6 +56,7 @@ function callModelVersions(data) {
   }
   if (language === 'py' && data.callModel === 'python-source-v1') versions.py = 3;
   if (language === 'py' && data.callModel === 'python-source-v2') versions.py = 4;
+  if (language === 'py' && data.callModel === 'python-source-v3') versions.py = 5;
   return versions;
 }
 
@@ -84,6 +85,13 @@ function rawFactsErrors(data, report) {
   recordedFileErrors(data, files, add);
 
   const model = callModelVersions(data);
+  if (data.languageScope?.language === 'py') {
+    if (model.py < 5) add('/languageScope', 'requires the Python v3 source model');
+    report.unique(data.languageScope.declarations, 'module', '/languageScope/declarations');
+    for (const [index, input] of data.languageScope.declarations.entries()) {
+      report.unique(input.files, 'file', `/languageScope/declarations/${index}/files`);
+    }
+  }
   if (model.go >= 3 && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
   const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
   const metadata = javaProjectMetadata(data, files, model, report);

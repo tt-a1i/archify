@@ -23,8 +23,8 @@ const before = (aLine, aColumn, bLine, bColumn) => aLine < bLine || (aLine === b
 
 export function questionCalls({ facts, factsPath, inspect, entry, location, symbol, text, selectedFunction }) {
   const knownAdapter = facts?.repository?.language === 'ts' && /^typescript@/.test(facts?.repository?.adapter || '');
-  const pythonModel = facts?.repository?.language === 'py' && /^(?:python|pyright-parser)@/.test(facts?.repository?.adapter || '') && ['python-lexical-v1', 'python-lexical-v2', 'python-source-v1', 'python-source-v2'].includes(facts?.callModel);
-  const pythonSource = pythonModel && ['python-source-v1', 'python-source-v2'].includes(facts.callModel);
+  const pythonModel = facts?.repository?.language === 'py' && /^(?:python|pyright-parser)@/.test(facts?.repository?.adapter || '') && ['python-lexical-v1', 'python-lexical-v2', 'python-source-v1', 'python-source-v2', 'python-source-v3'].includes(facts?.callModel);
+  const pythonSource = pythonModel && ['python-source-v1', 'python-source-v2', 'python-source-v3'].includes(facts.callModel);
   const javaAdapter = facts?.repository?.language === 'java' && /^java-parser@/.test(facts?.repository?.adapter || '');
   const javaModel = javaAdapter && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts?.callModel)
     && (facts.callModel !== 'java-static-lexical-v5' || facts.languageScope?.language === 'java');
@@ -36,7 +36,7 @@ const bindingCoverage = rustModel ? (facts.callModel === 'rust-source-direct-v4'
     coverage: 'unavailable', reason: null,
     provenance: { rawFactsPath: factsPath ? path.resolve(factsPath) : null, adapter: facts?.repository?.adapter ?? null, adapterRevision: facts?.repository?.adapterRevision ?? null,
       snapshotId: facts?.repository?.snapshotId ?? null, callModel: facts?.callModel ?? null },
-    bindingCoverage: pythonSource ? facts.callModel === 'python-source-v2' ? 'captured-python-declarations-with-bounded-local-flow-and-protocol-types' : 'captured-python-declarations-with-bounded-receiver-and-signature-types' : bindingCoverage ?? 'unknown',
+    bindingCoverage: pythonSource ? facts.callModel === 'python-source-v3' ? 'captured-python-declarations-with-type-imports-generic-signatures-and-dependency-inputs' : facts.callModel === 'python-source-v2' ? 'captured-python-declarations-with-bounded-local-flow-and-protocol-types' : 'captured-python-declarations-with-bounded-receiver-and-signature-types' : bindingCoverage ?? 'unknown',
     factRole: 'captured-evidence; use targetNavigation for current target locations',
     selection: { file: entry.file, kind: symbol ? 'function-source-range' : 'entry-file', range: null },
     total: null, included: 0, omitted: null, limit: LIMIT, records: [],
@@ -68,7 +68,8 @@ const bindingCoverage = rustModel ? (facts.callModel === 'rust-source-direct-v4'
     'Direct ordinary module functions, preceding unique local from-imports and one unconditional explicit reexport retain lexical targets. External/stub-only targets and longer reexport chains remain unknown. Current entry/target freshness verifies saved coordinates and content; it does not re-resolve other files or runtime mutations.',
     'Definition ranges exclude preceding decorators. Coordinates are one-based UTF-16 and end-exclusive; hashes use the exact decoded source slice. Each factIndex identifies an unchanged snapshot call; at most 40 records are shown.',
   ];
-  if (pythonSource && facts.callModel === 'python-source-v2') result.limitations.push('python-source-v2 additionally joins local reaching definitions, typed iteration/generator send/await/context-manager shapes, bound legacy TypeVars, property getter/setter groups, qualified contextlib decorators, early-exit narrowing and captured source super declarations. Conflicting/unknown paths remain unresolved. This bounded flow does not infer external factory contracts, arbitrary decorator transparency, general overloads or runtime dispatch.');
+  if (pythonSource && ['python-source-v2', 'python-source-v3'].includes(facts.callModel)) result.limitations.push('python-source-v2 additionally joins local reaching definitions, typed iteration/generator send/await/context-manager shapes, bound legacy TypeVars, property getter/setter groups, qualified contextlib decorators, early-exit narrowing and captured source super declarations. Conflicting/unknown paths remain unresolved. This bounded flow does not establish general overload applicability or runtime dispatch.');
+  if (pythonSource && facts.callModel === 'python-source-v3') result.limitations.push('python-source-v3 additionally reads proved TYPE_CHECKING imports in annotations, captured callable-preserving F -> F decorator contracts and Type[T] factory signatures. Explicit python.declarations inputs can supply dependency signatures; they remain separate from project files and navigation targets. Unconfigured dependency contracts stay unknown. Captured dependency inputs are not re-resolved against current external files when reading a saved snapshot.');
   if (pythonModel && !pythonSource) result.limitations.push(facts.callModel === 'python-lexical-v2'
     ? 'One unconditional unique explicit from-import reexport may reach a captured ordinary function, including aliases. Longer chains, conditional/rebound/wildcard exports and runtime module initialization remain unproved.'
     : 'Historical python-lexical-v1 does not bind reexports; newer reader capabilities do not expand this saved capture.');
