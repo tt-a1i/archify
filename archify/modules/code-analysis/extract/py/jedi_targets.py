@@ -46,6 +46,50 @@ def callee_point(node, lines, names_by_end):
     return None
 
 
+def blocked_lines(script, functions):
+    errors = {error.line for error in script.get_syntax_errors()}
+    blocked = set()
+    if errors:
+        for fn in functions:
+            region = range(fn["definition"]["sourceRange"]["line"], fn["endLine"] + 1)
+            if any(line in region for line in errors):
+                blocked.update(region)
+    return blocked if errors <= blocked else None
+
+
+def exact_target(anchors, names):
+    locations = {(name.module_path, name.line, name.column) for name in names}
+    if len(locations) == 1:
+        file, line, column = locations.pop()
+        return anchors.get(file, {}).get((line, column))
+    return None
+
+
+def member_fallback(script, callee, point, receiver_point, declaration, anchors):
+    # Jedi can report an enum method as a builtin descriptor/value. A
+    # captured class and its direct declaration give a source location.
+    class_value = declaration.type == "instance" and declaration.module_name == "builtins"
+    # goto stops at an export assignment. Follow its value only across a
+    # captured module boundary and only to a single same-named function.
+    export = (declaration.type == "statement" and declaration.module_path in anchors
+              and declaration.module_path != script.path)
+    if not (class_value or export) or receiver_point is None:
+        return None
+    receivers = script.goto(*receiver_point, follow_imports=True)
+    if len(receivers) != 1 or receivers[0].module_path not in anchors:
+        return None
+    receiver = receivers[0]
+    if class_value and receiver.type == "class":
+        names = [name for name in receiver.defined_names() if name.name == callee.attr]
+    elif export and receiver.type == "module" and receiver.module_path == declaration.module_path:
+        names = script.infer(*point)
+    else:
+        return None
+    if len(names) == 1 and names[0].type == "function" and names[0].name == callee.attr:
+        return exact_target(anchors, names)
+    return None
+
+
 def add_targets(sources, inputs):
     """Run Jedi on a disposable copy of the capture and the interpreter's stdlib."""
     with TemporaryDirectory(prefix="archify-python-jedi-") as scratch:
@@ -72,24 +116,25 @@ def add_targets(sources, inputs):
         for record, tokens, queries in inputs:
             lines, _ = source_lines(record["sourceText"])
             names_by_end = {token.end: token for token in tokens if token.type == tokenize.NAME}
-            queries = [(call, callee_point(callee, lines, names_by_end)) for call, callee in queries]
-            if not any(point for _, point in queries):
+            queries = [(call, callee, callee_point(callee, lines, names_by_end)) for call, callee in queries]
+            if not any(point for _, _, point in queries):
                 continue
             script = jedi.Script(record["sourceText"], path=str(root / record["path"]),
                                  project=project, environment=environment)
-            if script.get_syntax_errors():
+            blocked = blocked_lines(script, record["functions"])
+            if blocked is None:
                 continue
             selected = {}
-            for call, point in queries:
-                if point is None:
+            for call, callee, point in queries:
+                if point is None or point[0] in blocked:
                     continue
                 if point not in selected:
-                    locations = {(name.module_path, name.line, name.column)
-                                 for name in script.goto(*point, follow_imports=True)}
-                    selected[point] = None
-                    if len(locations) == 1:
-                        file, line, column = locations.pop()
-                        selected[point] = anchors.get(file, {}).get((line, column))
+                    names = script.goto(*point, follow_imports=True)
+                    target = exact_target(anchors, names)
+                    if target is None and len(names) == 1 and isinstance(callee, ast.Attribute):
+                        receiver = callee_point(callee.value, lines, names_by_end)
+                        target = member_fallback(script, callee, point, receiver, names[0], anchors)
+                    selected[point] = target
                 if selected[point]:
                     call["_jedi"] = selected[point]
     return {"jedi": jedi.__version__, "parso": parso.__version__}

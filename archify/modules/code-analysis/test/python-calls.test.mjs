@@ -32,7 +32,7 @@ test('Python BOM decoding keeps fresh entry and imported target coordinates alig
 
 test('Python call inventory, direct alias targets, async definition and known zero', t => {
   const args = fixture(t, { 'entry.py': 'from helper import work as alias\ndef local(): pass\nasync def task(): pass\ndef chosen():\n    local()\n    alias()\n    task()\n    obj.method()\n    factory()()\n', 'helper.py': 'def work(): pass\n' });
-  assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 11);
+  assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 12);
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
   const calls = selected(args); assert.equal(calls.coverage, 'available'); assert.equal(calls.total, 6);
   assert.deepEqual(calls.records.map(r => r.fact.resolution), ['same-file-function', 'imported-function', 'same-file-function', ...Array(3).fill('unresolved')]);
@@ -79,6 +79,14 @@ def chosen(worker: Worker, value):
     match value:
         case 0: local()
     worker.run()
+def unaffected(worker: Worker):
+    worker.run()
+`,
+    'module-match.py': `from models import Worker
+match 0:
+    case 0: pass
+def unaffected(worker: Worker):
+    worker.run()
 `,
   }, config);
   assert.equal(args.facts.callModel, 'python-lexical-v3');
@@ -92,12 +100,77 @@ def chosen(worker: Worker, value):
   ]);
   assert.deepEqual(calls.records[2].targetNavigation.location, { file: 'models.py', name: 'run', line: 2, column: 5 });
   assert.deepEqual(args.facts.calls.filter(c => c.file === 'fallback.py').map(c => c.resolution), [
-    'same-file-function', 'unresolved',
+    'same-file-function', 'unresolved', 'python-jedi-declaration',
   ]);
+  assert.equal(args.facts.calls.find(c => c.file === 'module-match.py').resolution, 'unresolved');
   assert.ok(schemaErrors('raw-facts', { ...args.facts, callModel: 'python-lexical-v2' })
     .some(e => e.message.includes('Python Jedi source model')));
   fs.writeFileSync(path.join(args.root, 'models.py'), 'class Worker:\n    async def run(self): return 1\n');
   assert.equal(selected(args).records[2].targetNavigation.status, 'changed');
+});
+
+test('Python Jedi recovers enum class method declarations without treating enum members as functions', {
+  skip: process.env.ARCHIFY_TEST_PYTHON_JEDI !== '1' && 'set ARCHIFY_TEST_PYTHON_JEDI=1 with Jedi in BAUIFY_PYTHON',
+}, t => {
+  const config = mergeConfig(loadConfig(), { python: { jedi: true } });
+  const { facts } = fixture(t, {
+    'entry.py': `import status
+def chosen():
+    status.Status.accepts(200)
+    status.Status.OK()
+`,
+    'status.py': `from enum import IntEnum
+class Status(IntEnum):
+    OK = 200
+    @classmethod
+    def accepts(cls, code: int) -> bool: return code == 200
+`,
+  }, config);
+  const calls = facts.calls.filter(c => c.file === 'entry.py');
+  assert.deepEqual(calls.map(c => c.target), [
+    { file: 'status.py', name: 'accepts', line: 5, column: 5 },
+    undefined,
+  ]);
+});
+
+test('Python Jedi follows unique cross-module callable exports', {
+  skip: process.env.ARCHIFY_TEST_PYTHON_JEDI !== '1' && 'set ARCHIFY_TEST_PYTHON_JEDI=1 with Jedi in BAUIFY_PYTHON',
+}, t => {
+  // Pyright findDefinitions.functions covers both an alias and a factory export.
+  const config = mergeConfig(loadConfig(), { python: { jedi: true } });
+  const { facts } = fixture(t, {
+    'entry.py': `import api
+def chosen(holder: api.Holder):
+    api.direct()
+    api.created()
+    api.ambiguous()
+    holder.direct()
+`,
+    'api.py': `import impl
+import other
+direct = impl.direct
+created = impl.make()
+def choose(flag: bool):
+    return impl.ambiguous if flag else other.ambiguous
+ambiguous = choose(unknown)
+class Holder:
+    def __init__(self):
+        self.direct = impl.direct
+`,
+    'impl.py': `def direct(): pass
+def make():
+    def created(): pass
+    return created
+def ambiguous(): pass
+`,
+    'other.py': 'def ambiguous(): pass\n',
+  }, config);
+  assert.deepEqual(facts.calls.filter(c => c.file === 'entry.py').map(c => c.target), [
+    { file: 'impl.py', name: 'direct', line: 1, column: 1 },
+    { file: 'impl.py', name: 'created', line: 3, column: 5 },
+    undefined,
+    undefined,
+  ]);
 });
 
 test('Python unsupported/rebound/conditional/decorated/long-reexport/class targets stay inventoried', t => {

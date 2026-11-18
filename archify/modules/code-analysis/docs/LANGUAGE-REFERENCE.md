@@ -54,8 +54,11 @@ Pass `--config` with this JSON option.
 CPython still supplies file, import, function and call facts. Jedi queries an
 isolated copy of the captured sources with the interpreter's standard library.
 Existing lexical targets take priority. New targets require a single Jedi
-definition location that matches a captured function. Files that trigger
-Parso syntax errors keep their CPython facts and lexical targets.
+definition location that matches a captured function. A captured class
+declaration or cross-module export can supply the function location when
+Jedi initially reports a descriptor or an assignment. When Parso errors
+are contained in functions, Jedi still queries calls outside those functions.
+CPython facts and lexical targets remain available in either case.
 
 The capture records the interpreter, Jedi and Parso versions and emits
 `python-lexical-v3`. `python-jedi-declaration` identifies source declaration
