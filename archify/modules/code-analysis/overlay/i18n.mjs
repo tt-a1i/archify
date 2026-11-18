@@ -567,6 +567,8 @@ const ZH_CN = {
   "Reported (": "已报告（",
   "). Click to select.": "）。点击选择。",
   ". Curves: dependencies of its file.": "。曲线表示所属文件的依赖。",
+  "Captured source position, not a runtime call.": "已记录的源码位置，不代表运行时调用。",
+  ". Curves: dependencies of its file. The position locates captured source, not a runtime call.": "。曲线表示所属文件的依赖。此位置定位已记录的源码，不代表运行时调用。",
   "Path: ": "路径：",
   " cross the rule.": " 违反规则。",
   " from other modules reach ": " 来自其他模块，直接访问 ",

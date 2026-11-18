@@ -12,6 +12,7 @@ import { extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { buildGraph } from '../lib/analysis.mjs';
 import { buildAtlas } from '../overlay/atlas.mjs';
 import { schemaErrors } from '../extract/shared/schema.mjs';
+import { rangeText } from '../core/source-range.mjs';
 
 const VUE = {
   base: '38aadf5e7e0ba9daf13889655b129a6a7a8cadd7',
@@ -22,26 +23,13 @@ function sourceFile(name, text) {
   return ts.createSourceFile(name, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 }
 
-function contains(range, line, column) {
-  const afterStart = line > range.line || (line === range.line && column >= range.column);
-  const beforeEnd = line < range.endLine || (line === range.endLine && column < range.endColumn);
-  return afterStart && beforeEnd;
-}
-
-function ownerAt(records, line, column) {
-  return records.filter(record => contains(record.sourceRange, line, column))
-    .sort((a, b) => (a.endLine - a.line) - (b.endLine - b.line))[0];
-}
-
-test('JS/TS source ranges locate the Vue prefix implementation without claiming runtime dispatch', () => {
+test('JS/TS source ranges record the Vue prefix implementation without changing outer measurements', () => {
   for (const [side, commit, expected] of [
     ['base', VUE.base, { line: 21, endLine: 26, complexity: 2, nesting: 0, outer: 22 }],
     ['head', VUE.head, { line: 21, endLine: 33, complexity: 6, nesting: 2, outer: 22 }],
   ]) {
-    const file = path.join(os.tmpdir(), `archify-vue-${side}.ts`);
     const text = fs.readFileSync(new URL(`./fixtures/vue-2532-${side}-processExpression.ts`, import.meta.url), 'utf8');
-    fs.writeFileSync(file, text);
-    const records = measureFunctions(sourceFile(file, text), 'transformExpression.ts');
+    const records = measureFunctions(sourceFile('transformExpression.ts', text), 'transformExpression.ts');
     const prefix = records.find(record => record.qualname === 'processExpression.<locals>.prefix');
     const outer = records.find(record => record.qualname === 'processExpression');
     assert.equal(prefix.complexity, expected.complexity, commit);
@@ -51,18 +39,28 @@ test('JS/TS source ranges locate the Vue prefix implementation without claiming 
       { line: prefix.sourceRange.line, endLine: prefix.sourceRange.endLine },
       { line: expected.line, endLine: expected.endLine },
     );
-    const body = text.split(/\n/).findIndex(line => line.includes('hasOwn(bindingMetadata, raw)'));
-    const bodyColumn = text.split(/\n/)[body].indexOf('hasOwn') + 1;
-    const after = text.split(/\n/).findIndex(line => line.includes('bail on parens'));
-    assert.equal(ownerAt(records, body + 1, bodyColumn).qualname, prefix.qualname);
-    assert.equal(ownerAt(records, after + 1, 3).qualname, outer.qualname);
     const slice = text.slice(
       text.split(/\n/).slice(0, prefix.line - 1).join('\n').length + 1 + prefix.sourceRange.column - 1,
       text.split(/\n/).slice(0, prefix.endLine - 1).join('\n').length + 1 + prefix.sourceRange.endColumn - 1,
     );
     assert.equal(createHash('sha256').update(slice).digest('hex'), prefix.sourceRange.sha256);
-    fs.rmSync(file, { force: true });
   }
+});
+
+test('JS/TS ranges use UTF-16 columns and retain CRLF bytes in the decoded source hash', () => {
+  const outerText = 'export function outer() {\r\n  const inner = () => "🧭"; return inner();\r\n}';
+  const text = '// header 😀\r\nconst icon = "😀"; ' + outerText + '\r\n';
+  const records = measureFunctions(sourceFile('unicode.ts', text), 'unicode.ts');
+  const outer = records.find(fn => fn.name === 'outer');
+  const inner = records.find(fn => fn.name === 'inner');
+  assert.deepEqual(outer.sourceRange, {
+    line: 2, column: 20, endLine: 4, endColumn: 2,
+    sha256: createHash('sha256').update(outerText).digest('hex'),
+  });
+  assert.deepEqual(inner.sourceRange, {
+    line: 3, column: 17, endLine: 3, endColumn: 27,
+    sha256: createHash('sha256').update('() => "🧭"').digest('hex'),
+  });
 });
 
 test('same names stay separate, bodiless overloads are omitted, and dynamic calls have no target', () => {
@@ -93,7 +91,29 @@ test('same names stay separate, bodiless overloads are omitted, and dynamic call
     const shown = atlas.functions.find(fn => fn[1] === 'run' && fn[2] === 1);
     assert.equal(shown[7].column, 1);
     assert.equal(shown[7].endColumn, text.split('\n')[0].length + 1);
+    const legacy = structuredClone(facts);
+    legacy.repository.adapterRevision = 22;
+    for (const fn of legacy.functions) delete fn.sourceRange;
+    assert.deepEqual(schemaErrors('raw-facts', legacy), [], 'old facts remain schema-valid');
+    const oldAtlas = buildAtlas({ facts: legacy, graph: buildGraph(legacy), findings: [] });
+    assert.deepEqual(oldAtlas.functions.map(fn => fn.slice(0, 7)), atlas.functions.map(fn => fn.slice(0, 7)));
+    assert.ok(oldAtlas.functions.every(fn => fn[7] === null), 'old records remain readable without column metadata');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('JS/TS facts with Unicode line separators pass captured-range validation', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-unicode-lines-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  for (const [name, separator] of [['line', '\u2028'], ['paragraph', '\u2029']]) {
+    fs.writeFileSync(path.join(dir, name + '.ts'), 'const x = 1;' + separator + 'export function f() { return 1; }');
+  }
+  const { facts } = extractFacts(dir, { language: 'ts', config: loadConfig(null) });
+  assert.deepEqual(facts.functions.map(fn => fn.sourceRange.line), [2, 2]);
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
+  const text = 'x\u2028fn', range = { line: 2, column: 1, endLine: 2, endColumn: 3 };
+  assert.equal(rangeText(text, range, 'ts'), 'fn');
+  assert.equal(rangeText(text, range, 'py'), null, 'TS separators do not change Python line policy or reuse its cache');
+  assert.equal(rangeText(text, range, 'ts'), 'fn');
 });
