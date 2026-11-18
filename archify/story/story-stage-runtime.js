@@ -322,6 +322,7 @@
     onProgress = () => {},
     signal,
   } = {}, writer) {
+    abortCheck(signal);
     const { selected, frames } = validateVideoRequest({ start, seconds, fps, format }, writer);
     const vc = await selectSupportedVideoConfig(selected, format, fps);
 
@@ -409,14 +410,23 @@
     return handle.createWritable();
   }
 
-  async function withVideoExport(run, controller = null) {
+  async function withVideoExport(run, callerSignal) {
     if (activeJob) throw Error('A story export is already running.');
-    activeJob = { controller };
+    const controller = new AbortController();
+    activeJob = controller;
+    const abortFromCaller = () => controller.abort(callerSignal.reason);
     try {
-      return await run();
+      if (callerSignal?.aborted) abortFromCaller();
+      else callerSignal?.addEventListener('abort', abortFromCaller, { once: true });
+      return await run(controller.signal);
     } finally {
       activeJob = null;
+      callerSignal?.removeEventListener('abort', abortFromCaller);
     }
+  }
+
+  function startVideoExport(options, writer) {
+    return withVideoExport(signal => encodeVideo({ ...options, signal }, writer), options?.signal);
   }
 
   async function saveVideo(format, signal) {
@@ -446,8 +456,7 @@
 
   function runDownload(format) {
     if (activeJob) return;
-    const controller = new AbortController();
-    return withVideoExport(() => saveVideo(format, controller.signal), controller);
+    return withVideoExport(signal => saveVideo(format, signal));
   }
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) pause();
@@ -478,9 +487,9 @@
     seek,
     setTheme,
     exportPNG,
-    exportVideo: (options) => withVideoExport(() => encodeVideo(options)),
-    writeVideo: (writer, options) => withVideoExport(() => encodeVideo(options, writer)),
-    cancelExport: () => activeJob?.controller?.abort(),
+    exportVideo: (options) => startVideoExport(options),
+    writeVideo: (writer, options) => startVideoExport(options, writer),
+    cancelExport: () => activeJob?.abort(),
     duration: meta.duration,
     defaults: { width: WIDTH, height: HEIGHT, fps: DEFAULT_FPS, format: 'mp4' },
     state: () => ({ theme: currentTheme, playing, time: currentTime, duration: meta.duration, steps: meta.steps }),

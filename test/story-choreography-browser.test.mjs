@@ -219,12 +219,27 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const overlapMessage = await overlappingExport;
     const themeAfterExport = window.ArchifyStoryStage.state().theme;
     const timeAfterExport = window.ArchifyStoryStage.state().time;
+    const stage = window.ArchifyStoryStage;
+    const cancelDuringExport = async (startExport, cancel, signal) => {
+      try {
+        await startExport({
+          format: 'webm', start: 4.5, seconds: 0.5, fps: 10, signal,
+          onProgress: (ev) => { if (ev.frame === 1) cancel(); },
+        });
+        return { error: null };
+      } catch (error) {
+        return { error: error.name, time: stage.state().time, unlocked: controls.every(el => !el.disabled) };
+      }
+    };
     const controller = new AbortController();
-    let cancelled = false;
-    try {
-      await window.ArchifyStoryStage.exportVideo({format:'webm',start:4.5,seconds:0.5,fps:10,signal:controller.signal,onProgress:ev=>{if(ev.frame===1)controller.abort();}});
-    } catch(error) { cancelled = error.name === 'AbortError'; }
-    const cancelRestored = cancelled && window.ArchifyStoryStage.state().time === state.time && controls.every(el=>!el.disabled);
+    const writer = { write: async () => {} };
+    const cancellations = {
+      callerSignal: await cancelDuringExport(stage.exportVideo, () => controller.abort(), controller.signal),
+      blob: await cancelDuringExport(stage.exportVideo, stage.cancelExport),
+      writer: await cancelDuringExport(
+        (options) => stage.writeVideo(writer, options), stage.cancelExport, new AbortController().signal,
+      ),
+    };
     let invalidRangeRejected = false;
     try { await window.ArchifyStoryStage.exportVideo({start:window.ArchifyStoryStage.duration + 1,seconds:1}); }
     catch(error) { invalidRangeRejected = /range/i.test(error.message); }
@@ -281,7 +296,7 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
         silentMp4Head = new TextDecoder().decode(await mp4.slice(4,12).arrayBuffer());
       } finally { window.AudioEncoder = originalAudioEncoder; }
     }
-    return { state, pngDims, head, videoDims, matchedStills, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, timeAfterExport, controlsLocked, cancelRestored, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
+    return { state, pngDims, head, videoDims, matchedStills, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, timeAfterExport, controlsLocked, cancellations, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
   })()`);
 
   await t.test('Stage rejects an overlapping export before it can change reader state', () => {
@@ -290,12 +305,15 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
   await t.test('decoded Stage video advances under reduced motion', () => {
     assert.deepEqual(stageCheck.matchedStills, [0, 1]);
   });
+  await t.test('Stage programmatic video cancellation restores controls and reader position', () => {
+    const cancelled = { error: 'AbortError', time: stageCheck.state.time, unlocked: true };
+    assert.deepEqual(stageCheck.cancellations, { callerSignal: cancelled, blob: cancelled, writer: cancelled });
+  });
   assert.equal(stageCheck.state.theme, 'light');
   assert.equal(stageCheck.state.playing, false);
   assert.equal(stageCheck.themeAfterExport, 'light', 'Theme control cannot mix light and dark frames during export');
   assert.equal(stageCheck.controlsLocked, true);
   assert.equal(stageCheck.controlsRestored, true);
-  assert.equal(stageCheck.cancelRestored, true);
   assert.equal(stageCheck.timeAfterExport, stageCheck.state.time, 'Export restores the paused reader position');
   if (stageCheck.supportsH264) assert.equal(stageCheck.silentMp4Head, 'ftypmp42', 'Stage MP4 needs no AudioEncoder');
   assert.equal(stageCheck.invalidRangeRejected, true);
