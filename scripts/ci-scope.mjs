@@ -33,9 +33,10 @@ export function classifyPaths(paths) {
       }
       continue;
     }
-    if (/^README(?:_EN|_ZH)?\.md$/.test(name)) { own('readme'); continue; }
-    if (/^(CONTRIBUTING|REVIEWING|AGENTS|CODE_OF_CONDUCT|SECURITY)\.md$/.test(name)) continue;
-    if (/^docs\/assets\/community\/[^/]+\.(png|svg)$/.test(name)) continue;
+    if (/^README(?:_EN|_ZH|_JA|_KO)?\.md$/.test(name)) { own('readme'); continue; }
+    if (name === 'CHANGELOG.md') { own('changelog'); continue; }
+    if (/^(CONTRIBUTING|REVIEWING|AGENTS|CODE_OF_CONDUCT|SECURITY)\.md$/.test(name)) { own('policy'); continue; }
+    if (/^docs\/assets\/community\/[^/]+\.(png|svg)$/.test(name)) { own('readme-assets'); continue; }
     if (/^(website\/|docs\/)/.test(name)) {
       plan.website = true;
       if (/^docs\/(gallery(?:\/|\.html$)|guide\.html$|start\.html$)/.test(name)) own('site');
@@ -78,7 +79,7 @@ export function classifyPaths(paths) {
   }
   if (requireFull) return full();
   if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', ...modes.split('|')].includes(owner))) return full();
-  if (plan.owners.every(owner => owner === 'readme') && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
+  if (plan.owners.every(owner => ['readme', 'changelog', 'policy', 'readme-assets'].includes(owner)) && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
   return plan;
 }
 
