@@ -11,6 +11,7 @@ export const MIN_GH_VERSION = [2, 99, 0];
 export const ATTACH_TARGETS = ['body', 'comment'];
 const ASSET_URL_RE = 'https://github\\.com/user-attachments/assets/[A-Za-z0-9._-]+';
 const TOKEN_RE = new RegExp(`!\\[archify-asset-(\\d+):([a-f0-9]{16})\\]\\((${ASSET_URL_RE})\\)`, 'g');
+const GITHUB_PR_URL = /^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)(?:[/?#].*)?$/;
 
 export function createGhExecutor(options = {}) {
   return createExecutor({ binary: 'gh', ...options });
@@ -43,7 +44,7 @@ export function supportsAttach(version) {
 
 export function parsePullRequest(reference, repoOption) {
   const text = String(reference ?? '').trim();
-  const url = /^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)(?:[/?#].*)?$/.exec(text);
+  const url = GITHUB_PR_URL.exec(text);
   if (url) {
     if (repoOption && repoOption !== url[1]) {
       fail('pr-attach/repo-mismatch', 'arguments', `--repo ${repoOption} does not match the pull request URL repository ${url[1]}.`, { supportedFixes: ['drop --repo or make it match the URL'] });
@@ -159,9 +160,10 @@ function commentId(comment) {
 
 export async function attachPrPack({ pullRequest, receipt: receiptInput, target, repo, dryRun = false, allowStale = false, gh = createGhExecutor(), glab = createExecutor({ binary: 'glab' }) }) {
   const { receiptPath, receipt, markdown } = loadReceipt(receiptInput);
-  if (receipt.platform === 'gitlab' || /^https:\/\/[^?#]+\/-\/merge_requests\//.test(pullRequest)) {
+  const reference = String(pullRequest ?? '').trim();
+  if (!GITHUB_PR_URL.test(reference) && /^https:\/\/[^?#]+\/-\/merge_requests\//.test(reference)) {
     return attachGitLab({
-      pullRequest, repo, target, dryRun, allowStale, receiptPath, receipt, markdown, glab,
+      pullRequest: reference, repo, target, dryRun, allowStale, receiptPath, receipt, markdown, glab,
       attachments: checkAttachments(receipt.assets, 'gitlab'),
     });
   }

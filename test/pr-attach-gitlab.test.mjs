@@ -11,8 +11,9 @@ const HOST = 'gitlab.example.com';
 const PROJECT = `https://${HOST}/group/subgroup/project`;
 const MR = `${PROJECT}/-/merge_requests/42`;
 const HEAD = 'a'.repeat(40);
+const BASE = 'c'.repeat(40);
 
-function fixture({ head = HEAD, repository = PROJECT } = {}) {
+function fixture({ head = HEAD, base = BASE, verified = true, repository = PROJECT } = {}) {
   const dir = createScratchDirectory(path.join(os.tmpdir(), 'archify-gitlab-attach-'));
   const file = path.join(dir, 'topology-light.svg');
   fs.writeFileSync(file, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
@@ -20,18 +21,29 @@ function fixture({ head = HEAD, repository = PROJECT } = {}) {
   const markdownPath = path.join(dir, 'pr-pack.md');
   fs.writeFileSync(markdownPath, `${markdown}\n`);
   const receiptPath = path.join(dir, 'receipt.json');
-  fs.writeFileSync(receiptPath, JSON.stringify({ schemaVersion: 1, ok: true, command: 'pr build', kind: 'pr-pack-receipt', platform: 'gitlab', repository, revisions: { headSha: head }, markdown: { path: markdownPath, sha256: sha256(markdown) }, assets: [{ id: 'topology-light', view: 'topology', theme: 'light', path: file, placeholder: '{{archify:asset:topology-light}}' }] }));
+  fs.writeFileSync(receiptPath, JSON.stringify({ schemaVersion: 1, ok: true, command: 'pr build', kind: 'pr-pack-receipt', platform: 'gitlab', repository, revisions: { headSha: head, baseSha: base, verified }, markdown: { path: markdownPath, sha256: sha256(markdown) }, assets: [{ id: 'topology-light', view: 'topology', theme: 'light', path: file, placeholder: '{{archify:asset:topology-light}}' }] }));
   return receiptPath;
 }
 
-function fakeGlab({ notes = [], head = HEAD, headAfterUpload = head, failUpload = false } = {}) {
+function fakeGlab({ notes = [], head = HEAD, headAfterUpload = head, base = BASE, baseAfterUpload = base, failUpload = false, webUrl = MR, apiHost = '', apiProtocol = 'https' } = {}) {
   const state = { calls: [], notes: notes.map((note) => ({ ...note })), uploads: 0 };
-  const glab = ({ args, input }) => {
+  const glab = ({ args, input, env }) => {
     state.calls.push({ args: [...args], input });
     const ok = (value) => ({ status: 0, stdout: JSON.stringify(value), stderr: '' });
     const error = (message) => ({ status: 1, stdout: '', stderr: message });
+    if (args[0] === 'config') {
+      assert.equal(args[args.indexOf('--host') + 1], HOST);
+      assert.equal(args[1], 'get');
+      const value = { api_host: apiHost, api_protocol: apiProtocol }[args[2]];
+      return { status: 0, stdout: `${value}\n`, stderr: '' };
+    }
     if (args[0] !== 'api') return error(`unexpected glab command ${args[0]}`);
     assert.equal(args[args.indexOf('--hostname') + 1], HOST);
+    const target = new URL(webUrl);
+    if (target.port) {
+      assert.equal(env?.GITLAB_API_HOST, target.host);
+      assert.equal(env?.GLAB_API_PROTOCOL, 'https');
+    }
     const route = args.find((arg) => /^(?:\/?api\/v4\/)?(?:projects\/|user(?:\?|$))/.test(arg));
     if (!route) return error('missing API route');
     const endpoint = route.replace(/^\/?api\/v4\//, '').split('?')[0];
@@ -40,7 +52,10 @@ function fakeGlab({ notes = [], head = HEAD, headAfterUpload = head, failUpload 
     if (endpoint === 'user' && method === 'GET') return ok({ id: 7, username: 'me' });
     const decoded = decodeURIComponent(endpoint);
     if (!decoded.startsWith('projects/group/subgroup/project/')) return error(`unexpected endpoint ${endpoint}`);
-    if (decoded.endsWith('/merge_requests/42') && method === 'GET') return ok({ iid: 42, sha: state.uploads ? headAfterUpload : head, web_url: MR, target_project_id: 123, project_id: 123 });
+    if (decoded.endsWith('/merge_requests/42') && method === 'GET') {
+      const sha = state.uploads ? headAfterUpload : head;
+      return ok({ iid: 42, sha, diff_refs: { base_sha: state.uploads ? baseAfterUpload : base, start_sha: BASE, head_sha: sha }, web_url: webUrl, target_project_id: 123, project_id: 123 });
+    }
     if (decoded.endsWith('/uploads') && method === 'POST') {
       assert.ok(args.some((arg, i) => args[i - 1] === '--form' && arg.startsWith('file=@')));
       if (failUpload) return error('upload failed');
@@ -85,6 +100,42 @@ test('GitLab rejects stale head before writes unless explicitly allowed', async 
   await assert.rejects(attachPrPack({ pullRequest: MR, receipt, glab }), (error) => error.code === 'pr-attach/head-sha-outdated');
   assert.equal(writes(state).length, 0);
   assert.equal((await attachPrPack({ pullRequest: MR, receipt, allowStale: true, glab })).ok, true);
+});
+
+test('GitLab checks a pinned merge base rather than the target branch tip', async () => {
+  const { glab, state } = fakeGlab({ base: 'd'.repeat(40) });
+  for (const verified of [true, false]) {
+    await assert.rejects(attachPrPack({ pullRequest: MR, receipt: fixture({ verified }), glab }), (error) => error.code === 'pr-attach/base-sha-outdated');
+  }
+  assert.equal(writes(state).length, 0);
+  assert.equal((await attachPrPack({ pullRequest: MR, receipt: fixture(), dryRun: true, allowStale: true, glab })).ok, true);
+  assert.equal((await attachPrPack({ pullRequest: MR, receipt: fixture({ base: null, verified: false }), dryRun: true, glab })).ok, true);
+});
+
+test('GitLab reports when the MR merge base is unavailable', async () => {
+  const { glab, state } = fakeGlab({ base: null });
+  await assert.rejects(attachPrPack({ pullRequest: MR, receipt: fixture(), glab }), (error) => error.code === 'pr-attach/base-sha-unavailable');
+  assert.equal(writes(state).length, 0);
+});
+
+test('GitLab keeps the nondefault port for every API call', async () => {
+  const repository = `https://${HOST}:9443/group/subgroup/project`;
+  const pullRequest = `${repository}/-/merge_requests/42`;
+  const { glab, state } = fakeGlab({ webUrl: pullRequest, apiHost: `${HOST}:9443` });
+  const result = await attachPrPack({ pullRequest, receipt: fixture({ repository }), glab });
+  assert.equal(result.comment.url, `${pullRequest}#note_99`);
+  assert.equal(writes(state).length, 2);
+});
+
+test('GitLab stops before API calls when glab cannot route to the requested HTTPS port', async () => {
+  const repository = `https://${HOST}:9443/group/subgroup/project`;
+  const pullRequest = `${repository}/-/merge_requests/42`;
+  const receipt = fixture({ repository });
+  for (const config of [{}, { apiHost: `${HOST}:8443` }, { apiHost: 'other.example.com:9443' }, { apiHost: `${HOST}:9443`, apiProtocol: 'http' }]) {
+    const { glab, state } = fakeGlab({ webUrl: pullRequest, ...config });
+    await assert.rejects(attachPrPack({ pullRequest, receipt, glab }), (error) => error.code === 'pr-attach/gitlab-api-host');
+    assert.ok(state.calls.every(({ args }) => args[0] === 'config'));
+  }
 });
 
 test('GitLab rejects a receipt built for another project before writes', async () => {
@@ -134,12 +185,15 @@ test('GitLab rejects body target and a receipt without a head revision before wr
   assert.equal(writes(state).length, 0);
 });
 
-test('GitLab rechecks the head after upload before publishing a comment', async () => {
-  const { glab, state } = fakeGlab({ headAfterUpload: 'b'.repeat(40) });
-  await assert.rejects(attachPrPack({ pullRequest: MR, receipt: fixture(), glab }), (error) => error.code === 'pr-attach/head-sha-outdated');
-  assert.equal(state.uploads, 1);
-  assert.equal(state.notes.length, 0);
-  assert.equal(state.calls.some(({ args }) => args.includes('--input')), false);
+test('GitLab rechecks both revisions after upload before publishing a comment', async () => {
+  const receipt = fixture();
+  for (const [changed, expected] of [['headAfterUpload', 'pr-attach/head-sha-outdated'], ['baseAfterUpload', 'pr-attach/base-sha-outdated']]) {
+    const { glab, state } = fakeGlab({ [changed]: 'b'.repeat(40) });
+    await assert.rejects(attachPrPack({ pullRequest: MR, receipt, glab }), (error) => error.code === expected);
+    assert.equal(state.uploads, 1);
+    assert.equal(state.notes.length, 0);
+    assert.equal(state.calls.some(({ args }) => args.includes('--input')), false);
+  }
 });
 
 test('GitLab rejects a story pack before contacting the MR', async () => {

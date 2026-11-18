@@ -21,7 +21,27 @@ function parseTarget(reference, repo, receipt) {
   if ((repo && repo !== project) || (repository && repository !== project && repository !== `${url.origin}/${project}`)) {
     fail('pr-attach/repo-mismatch', 'arguments', 'The merge request project differs from --repo or the build receipt repository.');
   }
-  return { host: url.host, project, iid, webUrl: `${url.origin}/${project}/-/merge_requests/${iid}` };
+  return { url, project, iid, webUrl: `${url.origin}/${project}/-/merge_requests/${iid}` };
+}
+
+function apiEnvironment(glab, url) {
+  if (!url.port) return undefined;
+  const config = (key) => glab({ args: ['config', 'get', key, '--host', url.hostname] });
+  const apiHost = config('api_host');
+  const protocol = config('api_protocol');
+  if (apiHost.status !== 0 || apiHost.stdout.trim().toLowerCase() !== url.host || protocol.status !== 0 || protocol.stdout.trim() !== 'https') {
+    fail('pr-attach/gitlab-api-host', 'preflight', `glab must use https://${url.host} for the GitLab API.`, {
+      subject: { host: url.host },
+      supportedFixes: [
+        `run glab config set api_host ${url.host} --host ${url.hostname}`,
+        `run glab config set api_protocol https --host ${url.hostname}`,
+        'check the GITLAB_API_HOST, GLAB_API_PROTOCOL and API_PROTOCOL environment overrides',
+      ],
+    });
+  }
+  // glab uses the bare hostname to choose credentials and api_host to route the
+  // request. Keep the validated endpoint in effect for each subprocess.
+  return { GITLAB_API_HOST: url.host, GLAB_API_PROTOCOL: 'https', API_PROTOCOL: 'https' };
 }
 
 export function attachGitLab({ pullRequest, repo, target = 'comment', dryRun, allowStale, receiptPath, receipt, markdown, glab, attachments }) {
@@ -29,12 +49,13 @@ export function attachGitLab({ pullRequest, repo, target = 'comment', dryRun, al
   if (receipt.platform !== 'gitlab' || attachments.some((asset) => asset.animated || asset.story || !asset.path.endsWith('.svg'))) {
     fail('pr-attach/gitlab-static-pack-required', 'receipt', 'Build a static pack with --platform gitlab and standalone views.');
   }
-  const { host, project, iid, webUrl } = parseTarget(pullRequest, repo, receipt);
+  const { url, project, iid, webUrl } = parseTarget(pullRequest, repo, receipt);
+  const env = apiEnvironment(glab, url);
   const projectRoute = `projects/${encodeURIComponent(project)}`;
   const mrRoute = `${projectRoute}/merge_requests/${iid}`;
   const notesRoute = `${mrRoute}/notes`;
   function api(route, { args = [], input, stage = 'preflight', code = 'pr-attach/gitlab-unreadable' } = {}) {
-    const result = glab({ args: ['api', '--hostname', host, route, ...args], input });
+    const result = glab({ args: ['api', '--hostname', url.hostname, route, ...args], input, env });
     if (result.status !== 0) fail(code, stage, `glab api failed during ${stage}: ${result.stderr.trim() || 'no diagnostic'}`);
     try {
       return JSON.parse(result.stdout);
@@ -42,14 +63,34 @@ export function attachGitLab({ pullRequest, repo, target = 'comment', dryRun, al
       fail(code, stage, `glab api returned invalid JSON during ${stage}.`);
     }
   }
-  function checkHead() {
+  function checkRevisions() {
     const mr = api(mrRoute);
     const head = mr.sha || mr.diff_refs?.head_sha;
     if (!head || !receipt.revisions?.headSha || (!allowStale && head !== receipt.revisions.headSha)) {
       fail('pr-attach/head-sha-outdated', 'preflight', 'Rebuild with a pinned headSha matching the current merge request head.');
     }
+    const { baseSha, verified } = receipt.revisions;
+    if (!baseSha && !verified) return;
+    if (!baseSha) {
+      fail('pr-attach/base-sha-unavailable', 'preflight', 'The verified build receipt lacks its merge base.', {
+        supportedFixes: ['rebuild with --repo-root against the current merge request diff'],
+      });
+    }
+    const base = mr.diff_refs?.base_sha;
+    const diffHead = mr.diff_refs?.head_sha;
+    if (!base || (diffHead && diffHead !== head)) {
+      fail('pr-attach/base-sha-unavailable', 'preflight', 'GitLab has not returned a merge base for the current merge request head.', {
+        supportedFixes: ['retry after GitLab finishes preparing the merge request diff'],
+      });
+    }
+    if (!allowStale && baseSha !== base) {
+      fail('pr-attach/base-sha-outdated', 'preflight', 'The build merge base does not match the current merge request diff.', {
+        evidence: { baseSha, mergeRequestBaseSha: base },
+        supportedFixes: ['rebuild against the current merge request diff', 'use --allow-stale only when attaching this older revision is intentional'],
+      });
+    }
   }
-  checkHead();
+  checkRevisions();
   const user = api('user');
   if (!Number.isSafeInteger(user.id)) fail('pr-attach/gitlab-auth', 'preflight', 'Could not identify the authenticated GitLab user.');
   function findNote() {
@@ -89,8 +130,8 @@ export function attachGitLab({ pullRequest, repo, target = 'comment', dryRun, al
     urls[asset.id] = uploaded.url;
   }
   steps.push({ step: 1, action: uploads.length ? 'upload' : 'skipped', attachments: uploads.length, reused: attachments.length - uploads.length });
-  // Uploading can take time. Read the head and note again before publishing.
-  checkHead();
+  // Uploading can take time. Read the revisions and note again before publishing.
+  checkRevisions();
   const current = findNote();
   const block = finalMarkdown(urls);
   const body = replacePackBlock(current?.body, block);

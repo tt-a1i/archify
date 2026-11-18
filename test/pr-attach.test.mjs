@@ -14,25 +14,28 @@ function svg(label) {
 }
 
 // Writes a build receipt the way `archify pr build` lays it out.
-function receiptFixture({ views = ['topology', 'flow'], bytes, revisions, prefix = 'archify-pr-attach-' } = {}) {
+function receiptFixture({ views = ['topology', 'flow'], bytes, revisions, platform, prefix = 'archify-pr-attach-' } = {}) {
   const dir = createScratchDirectory(path.join(os.tmpdir(), prefix));
   const viewsDir = path.join(dir, 'views');
   fs.mkdirSync(viewsDir);
   const assets = [];
   const lines = [PACK_START, '## Ledger rollout', ''];
   for (const view of views) {
-    for (const theme of ['light', 'dark']) {
+    for (const theme of platform === 'gitlab' ? ['light'] : ['light', 'dark']) {
       const file = path.join(viewsDir, `${view}-${theme}.svg`);
       fs.writeFileSync(file, bytes ? Buffer.alloc(bytes, 0x20) : svg(`${view}-${theme}`));
       assets.push({ id: `${view}-${theme}`, view, theme, path: file, placeholder: `{{archify:asset:${view}-${theme}}}` });
     }
-    lines.push(`### ${view}`, '', `<a href="{{archify:asset:${view}-light}}"><picture><source media="(prefers-color-scheme: dark)" srcset="{{archify:asset:${view}-dark}}"><img alt="${view}" src="{{archify:asset:${view}-light}}"></picture></a>`, '');
+    const image = platform === 'gitlab'
+      ? `![${view}]({{archify:asset:${view}-light}})`
+      : `<a href="{{archify:asset:${view}-light}}"><picture><source media="(prefers-color-scheme: dark)" srcset="{{archify:asset:${view}-dark}}"><img alt="${view}" src="{{archify:asset:${view}-light}}"></picture></a>`;
+    lines.push(`### ${view}`, '', image, '');
   }
   lines.push(PACK_END);
   const markdown = lines.join('\n');
   const markdownPath = path.join(dir, 'pr-pack.md');
   fs.writeFileSync(markdownPath, `${markdown}\n`);
-  const receipt = { schemaVersion: 1, ok: true, command: 'pr build', kind: 'pr-pack-receipt', revisions, markdown: { path: markdownPath, sha256: sha256(markdown) }, assets };
+  const receipt = { schemaVersion: 1, ok: true, command: 'pr build', kind: 'pr-pack-receipt', platform, revisions, markdown: { path: markdownPath, sha256: sha256(markdown) }, assets };
   const receiptPath = path.join(dir, 'pr-pack.receipt.json');
   fs.writeFileSync(receiptPath, JSON.stringify(receipt, null, 2));
   return { dir, receiptPath, markdown, assets };
@@ -92,6 +95,17 @@ function fakeGh({ body = '', comments = [], headRefOid = 'a'.repeat(40), version
 }
 
 const HAND_WRITTEN = '## Why\n\nHand-written motivation.\n\n- [ ] migrate\n- [x] tests\n';
+
+test('GitHub numbers and URLs still accept single-theme GitLab build receipts', async () => {
+  const { receiptPath } = receiptFixture({ platform: 'gitlab', views: ['topology'] });
+  for (const pullRequest of ['42', 'https://github.com/acme/checkout/pull/42']) {
+    const { gh, state } = fakeGh({ body: HAND_WRITTEN });
+    const glab = () => assert.fail('a GitHub target must use gh');
+    const result = await attachPrPack({ pullRequest, repo: 'acme/checkout', receipt: receiptPath, gh, glab });
+    assert.equal(result.target, 'body');
+    assert.match(state.body, /!\[topology\]\(https:\/\/github\.com\/user-attachments\/assets\//);
+  }
+});
 
 test('attachment paths become CommonMark-safe destinations without losing their Windows spelling', () => {
   assert.equal(markdownDestination('out/flow-dark.svg'), 'out/flow-dark.svg');

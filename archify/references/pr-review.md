@@ -96,7 +96,9 @@ node bin/archify.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.recei
 
 On GitLab, use a static pack of standalone views. Sign in to the MR host with a
 version of `glab` that supports `glab api --form`. Use the full HTTPS MR URL.
-The GitLab target defaults to `comment`.
+The GitLab target defaults to `comment`. If the URL uses a nondefault HTTPS
+port, configure `glab` with `api_host` set to `hostname:port` and `api_protocol`
+set to `https` for that hostname.
 
 ```sh
 node bin/archify.mjs pr build <pr-pack.json> --out-dir <out> --repo-root <repo> --platform gitlab --json
@@ -104,7 +106,8 @@ node bin/archify.mjs pr attach <gitlab-mr-url> --manifest <out>/pr-pack.receipt.
 node bin/archify.mjs pr attach <gitlab-mr-url> --manifest <out>/pr-pack.receipt.json --json
 ```
 
-GitLab attach checks the MR head, uploads changed SVGs to the target project,
+GitLab attach checks the MR head and any merge base pinned in the receipt.
+It uploads changed SVGs to the target project, checks the revisions again,
 and creates or updates the signed-in user's Archify comment. If an upload or
 note write fails, retry the command. Files already uploaded during a failed
 attempt can remain in project storage.
@@ -163,6 +166,12 @@ Repair by diagnostic, then rerun the same command:
 
 - `pr-pack/invalid-source-anchor` — choose a changed file and check the one-based line against the pinned Git blob. Put `path` and `line` on a change row or story step for a head-side link. Use `baseLine` for a deletion and `basePath` on a renamed change row for its old path. Select a line visible in the PR diff. GitHub can fold unchanged context or large files even when the cited line exists. GitHub builds include links in the table and below the story; other platforms show the location as text.
 - `pr-attach/head-sha-outdated` — compare the receipt head with the online PR head, push or fetch as appropriate, and rebuild at the intended commit. Use `--allow-stale` only when deliberately attaching an older pack.
+- `pr-attach/base-sha-outdated` — rebuild against the GitLab MR's current merge
+  base. Use `--allow-stale` only when deliberately attaching an older pack.
+- `pr-attach/base-sha-unavailable` — wait for GitLab to prepare the current
+  diff, or rebuild if the verified build receipt lacks `baseSha`.
+- `pr-attach/gitlab-api-host` — make the `glab` API host, port, and protocol
+  match the HTTPS MR URL before retrying.
 - `repository-evidence/*` — the cited path or line is wrong at the pinned
   revision. A removed element is checked at `meta.repository.base_revision`
   (the merge-base), everything else at `revision`; `build` fills both from the

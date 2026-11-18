@@ -8,10 +8,10 @@ export function fail(code, stage, message, options = {}) {
 }
 
 // Run the forge CLI directly. Tests inject a scripted executor
-// with the same shape: ({ args, input }) => { status, stdout, stderr }.
+// with the same shape: ({ args, input, env }) => { status, stdout, stderr }.
 export function createExecutor({ binary, cwd }) {
-  return ({ args, input }) => {
-    const result = spawnSync(binary, args, { encoding: 'utf8', input, cwd, maxBuffer: 64 * 1024 * 1024, env: process.env });
+  return ({ args, input, env }) => {
+    const result = spawnSync(binary, args, { encoding: 'utf8', input, cwd, maxBuffer: 64 * 1024 * 1024, env: env ? { ...process.env, ...env } : process.env });
     if (result.error) return { status: null, stdout: '', stderr: result.error.message };
     return { status: result.status, stdout: result.stdout || '', stderr: result.stderr || '' };
   };
