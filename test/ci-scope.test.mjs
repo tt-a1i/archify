@@ -35,6 +35,45 @@ test('owned changes add their real gates without requiring every unrelated lane'
   assert.ok(classifyPaths(['docs/skill-updates/archify/stable.json']).manifest);
 });
 
+test('five README languages and changelog use documentation checks and preserve mixed product gates', () => {
+  const readmes = ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md', 'README_KO.md'];
+  const available = ['readme-showcase', 'readme-support', 'cursor-onboarding', 'llms-txt', 'skill-metadata',
+    'preview-contract', 'community-proof-intake', 'real-repository-proof', 'workflow-compiler']
+    .map(name => `test/${name}.test.mjs`);
+  for (const file of readmes) {
+    const plan = classifyPaths([file]);
+    assert.equal(plan.scope, 'docs', file);
+    assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice(0, -1).sort());
+    for (const gate of ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website']) assert.equal(plan[gate], false, `${file}: ${gate}`);
+  }
+  assert.deepEqual(selectAffectedTests(classifyPaths(['CONTRIBUTING.md']).owners, [], available), ['test/community-proof-intake.test.mjs']);
+  assert.deepEqual(selectAffectedTests(classifyPaths(['docs/assets/community/qq.svg']).owners, [], available), ['test/readme-showcase.test.mjs']);
+  const changelog = classifyPaths(['CHANGELOG.md']);
+  assert.equal(changelog.scope, 'docs');
+  assert.deepEqual(selectAffectedTests(changelog.owners, [], available), []);
+  assert.equal(classifyPaths([...readmes, 'CHANGELOG.md']).scope, 'docs');
+  const mixed = classifyPaths(['README_KO.md', 'CHANGELOG.md', 'archify/renderers/workflow/render-workflow.mjs']);
+  assert.equal(mixed.scope, 'core');
+  assert.ok(mixed.generated && mixed.browser && mixed.package);
+  assert.deepEqual(selectAffectedTests(mixed.owners, [], available), available.slice().sort());
+  assert.equal(classifyPaths(['README_JA.md', 'test/readme-support.test.mjs']).scope, 'core');
+  for (const file of ['README_FR.md', 'CHANGELOG_ZH.md', 'archify/README.md']) assert.equal(classifyPaths([file]).scope, 'full', file);
+});
+
+test('documentation workflow installs parser dependencies and runs the affected contracts', () => {
+  const steps = workflow.jobs.scope.steps;
+  const install = steps.findIndex(step => step.name === 'Install documentation check dependencies');
+  const check = steps.findIndex(step => step.name === 'Check affected documentation contracts');
+  assert.ok(install >= 0 && check > install);
+  assert.match(steps[install].if, /scope == 'docs'/);
+  assert.match(steps[install].if, /'readme'/);
+  assert.match(steps[install].if, /'changelog'/);
+  assert.match(steps[install].run, /^npm ci\b/);
+  assert.equal(steps[check].if, "steps.classify.outputs.scope == 'docs'");
+  assert.equal(steps[check].run, 'npm run test:affected');
+  assert.equal(steps[check].env.CI_TEST_OWNERS, '${{ steps.classify.outputs.owners }}');
+});
+
 test('Windows evidence replacement fixtures retain their native host gate', () => {
   const plan = classifyPaths(['test/repository-evidence-replacement.test.mjs']);
   assert.equal(plan.scope, 'core');
@@ -228,7 +267,7 @@ test('required jobs fail when classification fails or returns an unknown scope',
   for (const name of ['test', 'canonical-test', 'browser-regression', 'webm-decode', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability']) {
     const step = workflow.jobs[name].steps.find(step => step.name === 'Require successful scope checks');
     assert.ok(step, name);
-    for (const [result, scope, status] of [['success', 'core', 0], ['success', 'full', 0], ['failure', 'core', 1], ['success', '', 1], ['success', 'unknown', 1]]) {
+    for (const [result, scope, status] of [['success', 'docs', 0], ['failure', 'docs', 1], ['success', 'core', 0], ['success', 'full', 0], ['failure', 'core', 1], ['success', '', 1], ['success', 'unknown', 1]]) {
       const run = spawnSync('bash', ['-e', '-c', step.run], { env: { ...process.env, SCOPE_RESULT: result, CI_SCOPE: scope } });
       assert.equal(run.status, status, `${name}: ${result}/${scope}`);
     }
