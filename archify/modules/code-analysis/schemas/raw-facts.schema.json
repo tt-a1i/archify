@@ -1103,6 +1103,20 @@
         {
           "type": "object",
           "additionalProperties": false,
+          "required": ["language", "extraPaths", "stubs", "declarations", "limitations"],
+          "properties": {
+            "language": { "const": "py" },
+            "targetVersion": { "type": "string", "pattern": "^3\\.[0-9]+$" },
+            "targetPlatform": { "enum": ["All", "Darwin", "Linux", "Windows", "Android", "iOS"] },
+            "extraPaths": { "type": "array", "items": { "$ref": "#/$defs/repoPath" } },
+            "stubs": { "$ref": "#/$defs/pythonTypeInputs" },
+            "declarations": { "$ref": "#/$defs/pythonTypeInputs" },
+            "limitations": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
           "required": [
             "language",
             "build",
@@ -1657,6 +1671,18 @@
     }
   },
   "$defs": {
+    "pythonTypeInputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "sha256"],
+        "properties": {
+          "file": { "$ref": "#/$defs/repoPath" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
     "sourceRange": {
       "type": "object",
       "additionalProperties": false,

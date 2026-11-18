@@ -65,7 +65,7 @@ const bindingCoverage = rustModel ? (facts.callModel === 'rust-source-direct-v4'
     ? 'One unconditional unique explicit from-import reexport may reach a captured ordinary function, including aliases. Longer chains, conditional/rebound/wildcard exports and runtime module initialization remain unproved.'
     : 'Historical python-lexical-v1 does not bind reexports; newer reader capabilities do not expand this saved capture.');
   if (pythonModel && facts.callModel === 'python-lexical-v3') result.limitations.push(
-    'Jedi supplies source declaration candidates for otherwise unresolved Python calls. Candidates match a unique captured function definition. Parso syntax errors leave the affected file on lexical bindings. Runtime dispatch remains unknown.');
+    'Jedi and bounded receiver evidence supply Python source declaration candidates. Each selected target matches a unique captured function. Configured type inputs can support declaration lookup. Runtime dispatch remains unknown.');
   if (facts?.callModel === 'js-ts-lexical-v5') result.limitations.push('JS/TS v5 follows explicit ESM local/imported function exports over captured acyclic value import/export edges; via records each forwarding statement. Observed writes/eval block imported implementation attribution. Star/type-only/dynamic/CommonJS forwarding and arbitrary value aliases/factory flow remain unsupported. Current forwarding-file freshness is required for target navigation; historical snapshots are not rebound.');
   const unavailable = (reason) => ({ ...result, reason });
   if (entry.factsStatus !== 'valid') return unavailable(`entry-${entry.factsStatus}`);

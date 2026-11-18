@@ -2,6 +2,7 @@
 
 import ast
 import base64
+import io
 from pathlib import Path
 import sys
 import sysconfig
@@ -13,6 +14,8 @@ import jedi
 import parso
 
 from calls import source_lines
+from platform_view import PLATFORMS, platform_view
+from receiver_types import ReceiverTypes, Source
 
 
 def definition_anchors(file, tokens, functions):
@@ -57,8 +60,10 @@ def blocked_lines(script, functions):
     return blocked if errors <= blocked else None
 
 
-def exact_target(anchors, names):
+def exact_target(anchors, names, non_callable=()):
     locations = {(name.module_path, name.line, name.column) for name in names}
+    if non_callable:
+        locations -= non_callable
     if len(locations) == 1:
         file, line, column = locations.pop()
         return anchors.get(file, {}).get((line, column))
@@ -90,51 +95,185 @@ def member_fallback(script, callee, point, receiver_point, declaration, anchors)
     return None
 
 
-def add_targets(sources, inputs):
-    """Run Jedi on a disposable copy of the capture and the interpreter's stdlib."""
+def write_snapshot(root, sources, views=None):
+    for relative, encoded in sources.items():
+        file = (root / relative).resolve()
+        file.relative_to(root)
+        file.parent.mkdir(parents=True, exist_ok=True)
+        raw = base64.b64decode(encoded, validate=True)
+        if views and relative in views:
+            encoding = tokenize.detect_encoding(io.BytesIO(raw).readline)[0]
+            raw = views[relative].encode(encoding)
+        file.write_bytes(raw)
+
+
+def none_assignments(root, inputs):
+    locations = set()
+    for record, _, _, tree in inputs:
+        path = root / record["path"]
+        lines, _ = source_lines(record["sourceText"])
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant) and node.value.value is None:
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        line, column = target.lineno, target.col_offset
+                        locations.add((path, line, len(lines[line - 1].encode("utf-8")[:column].decode("utf-8"))))
+    return locations
+
+
+def resolve_queries(root, search, inputs, anchors, environment, views):
+    project = jedi.Project(str(root), sys_path=list(map(str, search)), smart_sys_path=False,
+                           load_unsafe_extensions=False)
+    non_callable = none_assignments(root, inputs)
+    for record, tokens, queries, _ in inputs:
+        lines, _ = source_lines(record["sourceText"])
+        names_by_end = {token.end: token for token in tokens if token.type == tokenize.NAME}
+        queries = [(call, callee, callee_point(callee, lines, names_by_end)) for call, callee in queries if not call.get("_jedi")]
+        if not any(point for _, _, point in queries):
+            continue
+        code = views.get(record["path"], record["sourceText"])
+        script = jedi.Script(code, path=str(root / record["path"]),
+                             project=project, environment=environment)
+        blocked = blocked_lines(script, record["functions"])
+        if blocked is None:
+            continue
+        selected, retry = {}, []
+        for _, callee, point in queries:
+            if point is None or point[0] in blocked or point in selected:
+                continue
+            names = script.goto(*point, follow_imports=True)
+            # A None alternative cannot be the target of a successful call.
+            target = exact_target(anchors, names, non_callable if isinstance(callee, ast.Name) else ())
+            if target is None and len(names) == 1 and isinstance(callee, ast.Attribute):
+                receiver = callee_point(callee.value, lines, names_by_end)
+                target = member_fallback(script, callee, point, receiver, names[0], anchors)
+            if not names and isinstance(callee, ast.Attribute):
+                retry.append(point)
+            selected[point] = target
+        if retry:
+            # A fresh inference state can recover an empty member lookup. Keep
+            # retry results grounded in static types, without array mutations.
+            dynamic = jedi.settings.dynamic_array_additions
+            jedi.settings.dynamic_array_additions = False
+            try:
+                fresh = jedi.Script(code, path=script.path, project=project, environment=environment)
+                for point in reversed(retry):
+                    selected[point] = exact_target(anchors, fresh.goto(*point, follow_imports=True))
+            finally:
+                jedi.settings.dynamic_array_additions = dynamic
+        for call, _, point in queries:
+            if selected.get(point):
+                call["_jedi"] = selected[point]
+
+
+def resolve_receiver_types(root, search, inputs, environment, views):
+    project = jedi.Project(str(root), sys_path=list(map(str, search)), smart_sys_path=False,
+                           load_unsafe_extensions=False)
+    sources = {root / record["path"]: Source(tree, record) for record, _, _, tree in inputs}
+    tokens_by_source = {sources[root / record["path"]]: tokens for record, tokens, _, _ in inputs}
+    scripts = {}
+
+    for record, _, queries, _ in inputs:
+        source = sources[root / record["path"]]
+        source.targets = {source.parents[callee]: call for call, callee in queries}
+
+    def lookup_function(source, call):
+        target = source.targets.get(call, {}).get("_jedi")
+        if target:
+            origin = sources[root / target["file"]]
+            if function := origin.functions.get((target["line"], target["name"])):
+                return origin, function
+        return None
+
+    def captured_import(source, expr, scope):
+        if not isinstance(expr, ast.Name) or not (binding := source.module_binding(expr.id, scope)):
+            return None
+        entry = binding[0]
+        if not entry or entry["kind"] != "import":
+            return None
+        relative = Path(source.record["path"]).parent
+        level = entry["level"]
+        if level > len(relative.parts) + 1:
+            return None
+        parents = [root.joinpath(*relative.parts[:len(relative.parts) - level + 1])] if level else search[:2]
+        matches = []
+        for folder in parents:
+            module = folder.joinpath(*entry["module"].split("."))
+            candidates = [module / "__init__.py"]
+            if entry["module"]:
+                candidates.append(module.with_suffix(".py"))
+            for candidate in candidates:
+                if origin := sources.get(candidate):
+                    matches.append(origin)
+        if len(matches) == 1:
+            origin = matches[0]
+            cls = origin.local_type(entry["name"], origin.tree)
+            if isinstance(cls, ast.ClassDef):
+                return origin, cls
+        return None
+
+    def lookup_class(source, expr, scope):
+        if captured := captured_import(source, expr, scope):
+            return captured
+        path = root / source.record["path"]
+        if source not in scripts:
+            code = views.get(source.record["path"], source.record["sourceText"])
+            script = jedi.Script(code, path=str(path), project=project, environment=environment)
+            tokens = {t.end: t for t in tokens_by_source[source] if t.type == tokenize.NAME}
+            lines, _ = source_lines(source.record["sourceText"])
+            scripts[source] = script, tokens, lines, blocked_lines(script, source.record["functions"])
+        script, tokens, lines, blocked = scripts[source]
+        point = callee_point(expr, lines, tokens)
+        if point is None or blocked is None or point[0] in blocked:
+            return None
+        names = script.goto(*point, follow_imports=True)
+        if len(names) == 1 and names[0].type == "class" and (origin := sources.get(names[0].module_path)):
+            if cls := origin.classes.get((names[0].line, unicodedata.normalize("NFKC", names[0].name))):
+                return origin, cls
+        return None
+
+    for record, _, queries, _ in inputs:
+        evidence = ReceiverTypes(sources[root / record["path"]], lookup_class, lookup_function)
+        for call, callee in queries:
+            if not isinstance(callee, ast.Attribute):
+                continue
+            previous = call.get("_jedi")
+            target, narrowed = evidence.target(callee, previous)
+            if target and previous is None:
+                call["_jedi"] = target
+            elif target and target != previous and narrowed:
+                owner = sources[root / previous["file"]].owners.get((previous["line"], previous["name"]))
+                if owner and evidence.derives_from(narrowed, owner):
+                    call["_jedi"] = target
+
+
+def add_targets(sources, inputs, profile, stubs, dependencies):
+    """Resolve project declarations using the captured sources and explicit type inputs."""
     with TemporaryDirectory(prefix="archify-python-jedi-") as scratch:
         workspace = Path(scratch).resolve()
-        root = workspace / "source"
-        for relative, encoded in sources.items():
-            file = (root / relative).resolve()
-            file.relative_to(root)
-            file.parent.mkdir(parents=True, exist_ok=True)
-            file.write_bytes(base64.b64decode(encoded, validate=True))
-
-        anchors = {}
-        for record, tokens, _ in inputs:
-            relative = record["path"]
-            anchors[root / relative] = definition_anchors(relative, tokens, record["functions"])
-
+        root, library = workspace / "source", workspace / "declarations"
+        anchors = {root / record["path"]: definition_anchors(record["path"], tokens, record["functions"])
+                   for record, tokens, _, _ in inputs}
+        views = {}
+        platform = profile.get("targetPlatform") or next((name for name, sys_name in PLATFORMS.items() if sys_name == sys.platform), "All")
+        if platform != "All":
+            for record, _, _, tree in inputs:
+                text = record["sourceText"]
+                code = platform_view(text, tree, platform)
+                if code != text:
+                    views[record["path"]] = code
         stdlib = Path(sysconfig.get_path("stdlib"))
-        search = [root, root / "src", stdlib, stdlib / "lib-dynload"]
         jedi.settings.cache_directory = str(workspace / "cache")
-        project = jedi.Project(str(root), sys_path=list(map(str, search)), smart_sys_path=False,
-                               load_unsafe_extensions=False)
         environment = jedi.create_environment(sys.executable, safe=False)
-
-        for record, tokens, queries in inputs:
-            lines, _ = source_lines(record["sourceText"])
-            names_by_end = {token.end: token for token in tokens if token.type == tokenize.NAME}
-            queries = [(call, callee, callee_point(callee, lines, names_by_end)) for call, callee in queries]
-            if not any(point for _, _, point in queries):
-                continue
-            script = jedi.Script(record["sourceText"], path=str(root / record["path"]),
-                                 project=project, environment=environment)
-            blocked = blocked_lines(script, record["functions"])
-            if blocked is None:
-                continue
-            selected = {}
-            for call, callee, point in queries:
-                if point is None or point[0] in blocked:
-                    continue
-                if point not in selected:
-                    names = script.goto(*point, follow_imports=True)
-                    target = exact_target(anchors, names)
-                    if target is None and len(names) == 1 and isinstance(callee, ast.Attribute):
-                        receiver = callee_point(callee.value, lines, names_by_end)
-                        target = member_fallback(script, callee, point, receiver, names[0], anchors)
-                    selected[point] = target
-                if selected[point]:
-                    call["_jedi"] = selected[point]
-    return {"jedi": jedi.__version__, "parso": parso.__version__}
+        search = [root, root / "src", stdlib, stdlib / "lib-dynload"]
+        root.mkdir()
+        write_snapshot(root, sources, views)
+        resolve_queries(root, search, inputs, anchors, environment, views)
+        extra_paths = profile.get("extraPaths", [])
+        if stubs or dependencies or extra_paths:
+            write_snapshot(root, stubs)
+            write_snapshot(library, dependencies)
+            search = [root, root / "src", *(root / relative for relative in extra_paths), stdlib, stdlib / "lib-dynload", library]
+            resolve_queries(root, search, inputs, anchors, environment, views)
+        resolve_receiver_types(root, search, inputs, environment, views)
+    return {"jedi": jedi.__version__, "parso": parso.__version__, "platform": platform if views else None}

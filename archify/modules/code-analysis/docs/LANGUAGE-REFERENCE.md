@@ -51,19 +51,27 @@ Pass `--config` with this JSON option.
 }
 ```
 
-CPython still supplies file, import, function and call facts. Jedi queries an
-isolated copy of the captured sources with the interpreter's standard library.
-Existing lexical targets take priority. New targets require a single Jedi
-definition location that matches a captured function. A captured class
-declaration or cross-module export can supply the function location when
-Jedi initially reports a descriptor or an assignment. When Parso errors
-are contained in functions, Jedi still queries calls outside those functions.
-CPython facts and lexical targets remain available in either case.
+CPython supplies file, import, function and call facts. Jedi queries a copy of
+the captured sources and the interpreter's standard library. Existing lexical
+targets take priority. Unique declaration locations must match a captured
+function. Proven receiver types can resolve local calls in CPython-valid
+scopes with Parso errors and refine a base-method target after narrowing.
+The capture records the analyzer versions and emits `python-lexical-v3`.
 
-The capture records the interpreter, Jedi and Parso versions and emits
-`python-lexical-v3`. `python-jedi-declaration` identifies source declaration
-candidates. Runtime dispatch and third-party environments remain outside
-this capture. The default uses the existing lexical model.
+The `python` config also accepts these settings.
+
+- `targetVersion` selects the CPython grammar within the installed interpreter's
+  supported range. Use a version string such as `"3.12"`.
+- `targetPlatform` selects supported `sys.platform` and `os.name` branches for
+  Jedi. It defaults to the interpreter platform. `"All"` keeps every branch.
+- `extraPaths` adds directories from the captured tree to Jedi's import search.
+- `declarations` maps module names to explicitly selected `.py`, `.pyi`, or
+  package directories. Paths can be relative to the analysis root or absolute.
+
+With Jedi enabled, captured project `.pyi` files and the configured type inputs
+supplement unresolved lookups. The capture records their hashes and registers
+only project `.py` functions as targets. Runtime dispatch and ambiguous callable
+declarations remain unknown. The default uses the lexical model.
 
 ## Java
 

@@ -373,6 +373,12 @@ def functions(tree, text, tokens):
 
 def main():
     request = json.load(sys.stdin)
+    profile = request.get("profile", {})
+    configured_version = profile.get("targetVersion")
+    version = tuple(map(int, configured_version.split("."))) if configured_version else None
+    if version and version > sys.version_info[:2]:
+        json.dump({"unsupportedVersion": True, "python": platform.python_version()}, sys.stdout)
+        return
     with_jedi = request.get("jedi")
     if with_jedi:
         try:
@@ -391,7 +397,7 @@ def main():
             encoding, _ = tokenize.detect_encoding(io.BytesIO(raw).readline)
             text = raw.decode(encoding)
             record.update(loc=line_count(text), sourceText=text)
-            tree = ast.parse(text, filename=rel)
+            tree = ast.parse(text, filename=rel, feature_version=version)
             record["imports"] = collect(tree)
             record["symbols"] = module_bindings(tree)
             tokens = tokenize.generate_tokens(io.StringIO(text.replace('\r\n', '\n').replace('\r', '\n')).readline)
@@ -401,13 +407,14 @@ def main():
             record["functions"] = functions(tree, text, tokens)
             record["calls"], record["definitions"], record["importBindings"] = collect_calls(tree, text, queries)
             if with_jedi:
-                jedi_inputs.append((record, tokens, queries))
+                jedi_inputs.append((record, tokens, queries, tree))
         except (SyntaxError, ValueError, UnicodeError, LookupError) as error:
             record["error"] = "%s (line %s)" % (getattr(error, "msg", str(error)), getattr(error, "lineno", None))
         out.append(record)
     result = {"files": out, "python": platform.python_version()}
     if with_jedi:
-        result["jedi"] = add_targets(request["sources"], jedi_inputs)
+        result["jedi"] = add_targets(request["sources"], jedi_inputs, profile,
+                                     request.get("stubs", {}), request.get("dependencies", {}))
     json.dump(result, sys.stdout)
 
 
