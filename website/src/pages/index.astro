@@ -10,6 +10,7 @@ import { defaultProofLabels } from '../data/default-proof-labels.mjs';
 import head from '../data/index-head.html?raw';
 import css from '../styles/index.css?raw';
 import pageScript from '../scripts/index.js?raw';
+import clipboardScript from '../scripts/clipboard.js?raw';
 
 const diagramTypes = [
   ['arch', 'Architecture', 'What is it made of?'],
@@ -46,11 +47,13 @@ const { lang = 'en' } = Astro.props;
       <div class="hero-actions fade-up d3">
         <div class="cmd-chip">
           <span data-en="Paste into your agent to install" data-zh="复制给 Agent 安装">Paste into your agent to install</span>
-          <button class="cmd-copy" type="button" data-copy-text="Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt" aria-label="Copy installation prompt">
+          <button class="cmd-copy" type="button" aria-describedby="hero-copy-status" data-copy-text="Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt" aria-label="Copy installation prompt">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 4.5V3A1.5 1.5 0 0 0 8 1.5H3A1.5 1.5 0 0 0 1.5 3v5A1.5 1.5 0 0 0 3 9.5h1.5" stroke="currentColor" stroke-width="1.3"/></svg>
             <span class="cmd-copy-label" data-i18n="copy">Copy</span>
           </button>
         </div>
+        <p id="hero-copy-status" class="copy-status" role="status" aria-live="polite"></p>
+        <code id="hero-copy-fallback" class="copy-fallback" hidden>Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt</code>
         <a class="btn btn-primary" href="start.html">
           <span data-i18n="hero-cta">Get started</span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -233,6 +236,11 @@ const { lang = 'en' } = Astro.props;
             <img data-type="timeline" src="assets/archify-timeline.png" alt="Timeline diagram" loading="lazy" decoding="async" width="2752" height="1544">
             <img data-type="waterfall" src="assets/archify-waterfall.png" alt="Waterfall diagram" loading="lazy" decoding="async" width="2752" height="1544">
           </div>
+          <a class="type-more" href="cases/mco-runtime.html">
+            <span data-i18n="types-more-case">Read the source-backed MCO case</span>
+            <span class="type-more-sub" data-en="Read the MCO case · replay the source · try your own repo" data-zh="阅读 MCO 案例 · 复现源文件 · 换成自己的仓库">Read the MCO case · replay the source · try your own repo</span>
+            <span class="type-more-arrow" aria-hidden="true">→</span>
+          </a>
           <a class="type-more" href="gallery.html">
             <span data-i18n="types-more">Browse the full proof gallery</span>
             <span class="type-more-sub" data-i18n="types-more-sub">Live artifacts · every preset · every type</span>
@@ -305,11 +313,12 @@ const { lang = 'en' } = Astro.props;
             <p class="install-cmt" data-i18n="term-c1"># Install globally for your agent</p>
             <div class="install-line">
               <p class="install-cmd"><span aria-hidden="true">$ </span><code id="agent-command">{installCommand}</code></p>
-              <button class="cmd-copy" type="button" data-copy-from="agent-command" aria-label="Copy install command">
+              <button class="cmd-copy" type="button" aria-describedby="agent-copy-status" data-copy-from="agent-command" aria-label="Copy install command">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 4.5V3A1.5 1.5 0 0 0 8 1.5H3A1.5 1.5 0 0 0 1.5 3v5A1.5 1.5 0 0 0 3 9.5h1.5" stroke="currentColor" stroke-width="1.3"/></svg>
                 <span class="cmd-copy-label" data-i18n="copy">Copy</span>
               </button>
             </div>
+            <p id="agent-copy-status" class="copy-status" role="status" aria-live="polite"></p>
             <p class="install-cmt" data-i18n="term-c2"># Or try it once with Codex, no permanent install</p>
             <p class="install-cmd"><span aria-hidden="true">$ </span><code>npx skills use tt-a1i/archify@archify --agent codex</code></p>
             <p class="install-cmt" data-i18n="term-c3"># Then just ask</p>
@@ -336,6 +345,8 @@ const { lang = 'en' } = Astro.props;
           </li>
         </ol>
       </div>
+
+      <p class="guide-discovery"><a href="agent-diagrams.html" data-en="Learn to create and check diagrams with your agent →" data-zh="学习用 Agent 画图并检查结果 →">Learn to create and check diagrams with your agent →</a></p>
 
       <details class="shortcut-drawer fade-up d2">
         <summary class="shortcut-summary">
@@ -435,6 +446,6 @@ const { lang = 'en' } = Astro.props;
   </dialog>
 
   <script is:inline src="assets/site-language.js"></script>
-  <script is:inline set:html={versioned(pageScript)}></script>
+  <script is:inline set:html={versioned(clipboardScript + "\n" + pageScript)}></script>
 
 </SiteLayout>
