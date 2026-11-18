@@ -58,7 +58,7 @@ for (const lang of ['en', 'zh']) {
 
     const links = nodes(article).filter(node => node.tagName === 'a')
       .map(node => new URL(attr(node, 'href'), base));
-    const required = [`agent-diagrams${extension}#mermaid-input`, `start${extension}?type=workflow&input=description`, `cases/mco-runtime${extension}`, 'cases/mco-runtime.architecture.html', 'cases/explainer/p99-tail-latency.html', 'cases/explainer/tls-first-visit.html'];
+    const required = [`agent-diagrams${extension}#mermaid-input`, `start${extension}?type=workflow&input=description`, `cases/mco-runtime${extension}`, 'cases/mco-runtime.architecture.html', 'cases/explainer/p99-tail-latency.html', 'cases/explainer/tls-first-visit.html', 'cases/explainer/first-rental.html', 'cases/life/leave-plan.workflow.html', 'cases/community/shanghai-citywalk.html'];
     for (const target of required) {
       const url = new URL(target, base);
       const suffix = url.pathname.slice(url.pathname.lastIndexOf('/') + 1) + url.search + url.hash;

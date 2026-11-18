@@ -36,6 +36,13 @@ test('llms-full.txt derives release identity from package metadata and covers ca
   for (const tool of ['Mermaid', 'Excalidraw', 'PlantUML', 'D2']) assert.ok(text.includes(tool), tool);
   assert.match(text, /one-page (answer|explainer)/i);
   assert.match(text, /does not prove/i);
+  for (const lifeLink of [
+    'https://archify.si/cases/explainer/first-rental',
+    'https://archify.si/cases/life/leave-plan.workflow',
+    'https://archify.si/cases/community/shanghai-citywalk',
+  ]) {
+    assert.ok(text.includes(lifeLink), `missing non-code/community canonical link: ${lifeLink}`);
+  }
   assert.doesNotMatch(text, /aggregateRating|reviewCount|ratingValue/, 'no invented rating signals');
 });
 
