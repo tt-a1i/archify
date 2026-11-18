@@ -44,7 +44,7 @@ When the user only asks to create or summarize a PR:
 - `on-demand`: never offer; act only on an explicit request. Rule line: `[archify pr: on-demand]`.
 - `proactive`: build and attach for material changes without asking. Only when the user explicitly requests this mode. Rule line: `[archify pr: proactive]`.
 
-A rule may also select the attach target, for example `[archify pr: ask, target=comment]`. An explicit request takes precedence (pass `--mode` or `--target` to preflight), followed by the current agent’s personal rules, then the repository root’s `AGENTS.md` or `CONTRIBUTING.md`. The default is `ask` with target `body`. Repository rules requesting `proactive` resolve to `ask`. Pass `--global-rules <path>` for the current agent’s personal file when it differs from the default Codex rules file.
+A rule may also select the attach target, for example `[archify pr: ask, target=comment]`. An explicit request takes precedence (pass `--mode` or `--target` to preflight), followed by the current agent’s personal rules, then the repository root’s `AGENTS.md` or `CONTRIBUTING.md`. The default is `ask` with target `body`. Repository rules requesting `proactive` resolve to `ask`. Preflight discovers personal rules for Codex, Claude Code, Cursor and Devin. See [personal rule discovery](references/pr-workflow.md#personal-rule-discovery); pass `--global-rules <path>` to select the current agent’s personal file explicitly.
 
 To switch personal modes, only when the user asks, write or replace one rule line in the current agent's global rules file (such as `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md` or `~/.config/devin/AGENTS.md`) and name the file. Deleting the line restores the repository or default policy. Never switch to `proactive` unasked.
 
@@ -56,7 +56,7 @@ If `materiality.shouldOffer` is false, finish the ordinary PR flow silently. For
 - lockfiles, version or dependency manifests, or simple configuration values;
 - formatting, lint fixes, or file renames without a logic change;
 - tests only, with no production architecture, interface or state change;
-- a small single-point edit: one or two files clearly under about 40 changed lines, with no cross-module chain, API contract, state machine or migration change.
+- a small single-point edit: one or two files clearly under about 40 changed lines, with no cross-module chain, API contract, state machine or migration change. Schema and migration changes remain candidates even below this threshold.
 
 Offer a diagram only when at least one is true:
 

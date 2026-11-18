@@ -102,6 +102,9 @@ test('preflight: deterministic classification and materiality thresholds', () =>
   assert.equal(assess(['code', 'code'], 40).shouldOffer, true);
   assert.equal(assess(['code', 'code', 'code'], 3).shouldOffer, true);
   assert.equal(assess(['schema'], 40).shouldOffer, true);
+  assert.equal(assess(['schema'], 1).shouldOffer, true);
+  assert.equal(assess(['schema', 'test'], 2).shouldOffer, true);
+  assert.equal(assessPrMateriality([{ category: 'schema', basePath: 'old.sql', binary: false, additions: 0, deletions: 0 }, { category: 'docs', additions: 1, deletions: 0 }], { additions: 1, deletions: 0 }).shouldOffer, false);
   assert.equal(assess(['code'], 0, true).shouldOffer, true);
 });
 
@@ -162,4 +165,88 @@ test('preflight: policy examples cannot grant proactive consent', (t) => {
   assert.deepEqual(resolvePrPolicy({ repoRoot: root, globalRulesFile: global }), { mode: 'on-demand', target: 'comment', source: global });
   assert.equal(classifyPrFile('db/schema.sql'), 'schema');
   assert.equal(classifyPrFile('db/migrations/001.sql'), 'schema');
+});
+
+test('preflight: discovers personal rules for each host and HOME or USERPROFILE', (t) => {
+  const root = scratch(t);
+  const home = scratch(t);
+  const locations = {
+    codex: ['.codex', 'AGENTS.md'], claude: ['.claude', 'CLAUDE.md'],
+    cursor: ['.cursor', 'AGENTS.md'], devin: ['.config', 'devin', 'AGENTS.md'],
+  };
+  for (const [host, parts] of Object.entries(locations)) {
+    const file = path.join(home, ...parts);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, '[archify pr: proactive, target=comment]\n');
+    for (const homeVariable of ['HOME', 'USERPROFILE']) {
+      const policy = resolvePrPolicy({ repoRoot: root, env: { [homeVariable]: home, ARCHIFY_AGENT: host } });
+      assert.deepEqual(policy, { mode: 'proactive', target: 'comment', source: file });
+    }
+  }
+  for (const [host, marker] of Object.entries({ codex: 'CODEX_THREAD_ID', claude: 'CLAUDECODE', cursor: 'CURSOR_AGENT', devin: 'DEVIN_SESSION_ID' })) {
+    assert.equal(resolvePrPolicy({ repoRoot: root, env: { HOME: home, [marker]: 'test' } }).source, path.join(home, ...locations[host]));
+  }
+  assert.equal(resolvePrPolicy({ repoRoot: root, env: { HOME: home } }).mode, 'ask', 'unknown host must not borrow proactive consent');
+});
+
+test('preflight: selected host wins conflicts; missing host policy respects other on-demand rules', (t) => {
+  const root = scratch(t);
+  const home = scratch(t);
+  const codex = path.join(home, '.codex', 'AGENTS.md');
+  const claude = path.join(home, '.claude', 'CLAUDE.md');
+  fs.mkdirSync(path.dirname(codex), { recursive: true });
+  fs.mkdirSync(path.dirname(claude), { recursive: true });
+  fs.writeFileSync(codex, '[archify pr: proactive, target=body]\n');
+  fs.writeFileSync(claude, '[archify pr: on-demand, target=comment]\n');
+  assert.equal(resolvePrPolicy({ repoRoot: root, env: { HOME: home, ARCHIFY_AGENT: 'codex' } }).mode, 'proactive');
+  assert.equal(resolvePrPolicy({ repoRoot: root, env: { HOME: home } }).mode, 'on-demand');
+  assert.equal(resolvePrPolicy({ repoRoot: root, env: { HOME: home, ARCHIFY_AGENT: 'cursor' } }).mode, 'on-demand');
+  assert.deepEqual(resolvePrPolicy({ repoRoot: root, globalRulesFile: claude, env: { HOME: home, ARCHIFY_AGENT: 'codex' } }), { mode: 'on-demand', target: 'comment', source: claude });
+  assert.equal(resolvePrPolicy({ repoRoot: root, mode: 'ask', env: { HOME: home } }).mode, 'ask');
+  fs.writeFileSync(claude, '[archify pr: ask, target=comment]\n');
+  assert.deepEqual(resolvePrPolicy({ repoRoot: root, env: { HOME: home } }), { mode: 'ask', target: 'body', source: 'global-conflict' });
+  fs.writeFileSync(codex, 'No PR policy here.\n');
+  fs.writeFileSync(claude, '[archify pr: on-demand]\n');
+  assert.equal(resolvePrPolicy({ repoRoot: root, env: { HOME: home, ARCHIFY_AGENT: 'codex' } }).mode, 'on-demand');
+});
+
+test('preflight: custom agent configuration directories are honored', (t) => {
+  const root = scratch(t);
+  const home = scratch(t);
+  for (const [host, variable, parts] of [
+    ['codex', 'CODEX_HOME', ['AGENTS.md']],
+    ['claude', 'CLAUDE_CONFIG_DIR', ['CLAUDE.md']],
+    ['devin', 'XDG_CONFIG_HOME', ['devin', 'AGENTS.md']],
+  ]) {
+    const directory = scratch(t);
+    const file = path.join(directory, ...parts);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, '[archify pr: on-demand]\n');
+    assert.equal(resolvePrPolicy({ repoRoot: root, env: { HOME: home, ARCHIFY_AGENT: host, [variable]: directory } }).source, file);
+  }
+});
+
+test('preflight: fallback targets resolve within the winning mode after proactive is capped', (t) => {
+  const root = scratch(t);
+  const home = scratch(t);
+  const codex = path.join(home, '.codex', 'AGENTS.md');
+  const claude = path.join(home, '.claude', 'CLAUDE.md');
+  fs.mkdirSync(path.dirname(codex), { recursive: true });
+  fs.mkdirSync(path.dirname(claude), { recursive: true });
+  fs.writeFileSync(path.join(root, 'AGENTS.md'), '[archify pr: ask, target=comment]\n');
+  const resolve = () => resolvePrPolicy({ repoRoot: root, env: { HOME: home } });
+  fs.writeFileSync(codex, '[archify pr: proactive, target=comment]\n');
+  fs.writeFileSync(claude, '[archify pr: ask, target=comment]\n');
+  assert.deepEqual(resolve(), { mode: 'ask', target: 'comment', source: codex });
+  fs.writeFileSync(codex, '[archify pr: proactive, target=body]\n');
+  assert.deepEqual(resolve(), { mode: 'ask', target: 'body', source: 'global-conflict' });
+  fs.writeFileSync(codex, '[archify pr: on-demand]\n');
+  assert.deepEqual(resolve(), { mode: 'on-demand', target: 'comment', source: codex }, 'losing ask target must not override inherited repository target');
+  fs.writeFileSync(claude, '[archify pr: on-demand, target=body]\n');
+  assert.deepEqual(resolve(), { mode: 'on-demand', target: 'body', source: codex }, 'explicit target wins over an unspecified target');
+  fs.writeFileSync(codex, '[archify pr: on-demand, target=comment]\n');
+  assert.deepEqual(resolve(), { mode: 'on-demand', target: 'body', source: 'global-conflict' });
+  fs.writeFileSync(codex, '[archify pr: ask]\n');
+  fs.writeFileSync(claude, '[archify pr: proactive]\n');
+  assert.deepEqual(resolve(), { mode: 'ask', target: 'comment', source: codex });
 });

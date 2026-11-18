@@ -16,7 +16,7 @@ node bin/archify.mjs pr preflight --repo-root <repo> --base origin/<base> --head
 
 Preflight resolves the merge-base and head, counts changed files and lines, classifies paths, and returns `materiality` and `policy`. Omit `--init` for a read-only check. With `--init`, fill in the generated manifest’s title and views before building. An existing manifest is preserved. Inspect the changed hunks with `git diff --find-renames <baseSha> <headSha>`.
 
-Use `policy.target` as the value of attach’s `--target`. A standalone rule such as `[archify pr: ask, target=comment]` in the repository root’s `AGENTS.md` or `CONTRIBUTING.md` sets the team preference. Preflight gives priority to explicit `--mode` and `--target`, then personal rules, then repository rules, then `ask` and `body`. Only a personal rule or explicit request can enable proactive attachment.
+Use `policy.target` as the value of attach’s `--target`. A standalone rule such as `[archify pr: ask, target=comment]` in the repository root’s `AGENTS.md` or `CONTRIBUTING.md` sets the team preference. Preflight gives priority to explicit `--mode` and `--target`, then personal rules, then repository rules, then `ask` and `body`. Only a selected host’s personal rule, explicit personal path or explicit request can enable proactive attachment. Personal discovery supports Codex, Claude Code, Cursor and Devin using `HOME` or `USERPROFILE`; fallback discovery respects `on-demand` and never enables proactive attachment. Pass `--global-rules <path>` for a specific personal file. Small schema or migration changes remain candidates below the usual line threshold.
 
 ## 2. Slice by dependency (change stacks)
 

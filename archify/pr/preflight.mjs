@@ -70,12 +70,14 @@ function changedFiles(root, baseSha, headSha) {
 }
 
 export function assessPrMateriality(files, stats) {
+  const isPureRename = (file) => Boolean(file.basePath) && !file.binary && file.additions === 0 && file.deletions === 0;
+  if (files.some((file) => file.category === 'schema' && !isPureRename(file))) return { shouldOffer: true, reasons: ['schema-change'] };
   const reasons = [];
   if (!files.length) reasons.push('no-changes');
   else if (files.every((file) => ['docs', 'lockfile'].includes(file.category))) reasons.push('only-docs-and-lockfiles');
   else if (files.every((file) => ['docs', 'lockfile', 'test'].includes(file.category))) reasons.push('only-tests-and-supporting-files');
   if (files.length && files.every((file) => ['docs', 'lockfile', 'config'].includes(file.category))) reasons.push('only-configuration-and-supporting-files');
-  if (files.length && files.every((file) => file.basePath && !file.binary && file.additions === 0 && file.deletions === 0)) reasons.push('rename-only');
+  if (files.length && files.every(isPureRename)) reasons.push('rename-only');
   // Binary changes have unknown line counts and must not silently look small.
   if (files.length && files.length <= 2 && stats.additions + stats.deletions < 40 && !files.some((file) => file.binary)) reasons.push('small-change');
   return { shouldOffer: reasons.length === 0, reasons: reasons.length ? reasons : ['material-change'] };
@@ -123,20 +125,55 @@ function readPolicy(file, repository) {
   return { mode: repository && match[1] === 'proactive' ? 'ask' : match[1], ...(match[2] ? { target: match[2] } : {}), source: file };
 }
 
-export function resolvePrPolicy({ repoRoot, mode, target, globalRulesFile } = {}) {
+function personalPolicy(root, { globalRulesFile, env }) {
+  if (globalRulesFile === false) return null;
+  function read(file) {
+    const absolute = path.resolve(file);
+    let inRepository = false;
+    if (fs.existsSync(absolute)) {
+      const relative = path.relative(fs.realpathSync(root), fs.realpathSync(absolute));
+      inRepository = relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+    }
+    return readPolicy(absolute, inRepository);
+  }
+  if (globalRulesFile) return read(globalRulesFile);
+  const home = env.HOME || env.USERPROFILE || os.homedir();
+  const files = {
+    codex: path.join(env.CODEX_HOME || path.join(home, '.codex'), 'AGENTS.md'),
+    claude: path.join(env.CLAUDE_CONFIG_DIR || path.join(home, '.claude'), 'CLAUDE.md'),
+    cursor: path.join(home, '.cursor', 'AGENTS.md'),
+    devin: path.join(env.XDG_CONFIG_HOME || path.join(home, '.config'), 'devin', 'AGENTS.md'),
+  };
+  const explicitHost = env.ARCHIFY_AGENT?.toLowerCase();
+  const detected = [
+    ...(env.CODEX_THREAD_ID || env.CODEX_INTERNAL_ORIGINATOR || env.CODEX_CI ? ['codex'] : []),
+    ...(env.CLAUDECODE || env.CLAUDE_CODE_ENTRYPOINT ? ['claude'] : []),
+    ...(env.CURSOR_AGENT || env.CURSOR_TRACE_ID || env.TERM_PROGRAM?.toLowerCase() === 'cursor' ? ['cursor'] : []),
+    ...(env.DEVIN_SESSION_ID || env.DEVIN_AGENT || env.DEVIN ? ['devin'] : []),
+  ];
+  const host = Object.hasOwn(files, explicitHost) ? explicitHost : detected.length === 1 ? detected[0] : null;
+  const own = host ? read(files[host]) : null;
+  if (own) return own;
+  const found = Object.values(files).map(read).filter(Boolean);
+  if (!found.length) return null;
+  // Unidentified or other-host rules may request silence, never grant publication consent.
+  const silent = found.filter((policy) => policy.mode === 'on-demand');
+  const selected = silent.length ? silent : found;
+  const targets = new Set(selected.map((policy) => policy.target).filter(Boolean));
+  return {
+    mode: silent.length ? 'on-demand' : 'ask',
+    ...(targets.size ? { target: targets.size === 1 ? [...targets][0] : 'body' } : {}),
+    source: targets.size > 1 ? 'global-conflict' : selected[0].source,
+  };
+}
+
+export function resolvePrPolicy({ repoRoot, mode, target, globalRulesFile, env = process.env } = {}) {
   if (mode !== undefined && !MODES.includes(mode)) fail('pr-preflight/invalid-policy', 'arguments', `Unknown PR mode "${mode}".`, { supportedFixes: [`use one of: ${MODES.join(', ')}`] });
   if (target !== undefined && !TARGETS.includes(target)) fail('pr-preflight/invalid-policy', 'arguments', `Unknown PR target "${target}".`, { supportedFixes: ['use body or comment'] });
   const root = path.resolve(repoRoot || process.cwd());
   const contributing = readPolicy(path.join(root, 'CONTRIBUTING.md'), true);
   const agents = readPolicy(path.join(root, 'AGENTS.md'), true);
-  const globalFile = globalRulesFile === false ? null : path.resolve(globalRulesFile || path.join(process.env.CODEX_HOME || path.join(os.homedir(), '.codex'), 'AGENTS.md'));
-  // A checkout (including a symlink into it) cannot grant itself personal consent.
-  let globalInRepository = false;
-  if (globalFile && fs.existsSync(globalFile)) {
-    const relative = path.relative(fs.realpathSync(root), fs.realpathSync(globalFile));
-    globalInRepository = relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
-  }
-  const global = globalFile ? readPolicy(globalFile, globalInRepository) : null;
+  const global = personalPolicy(root, { globalRulesFile, env });
   return { mode: 'ask', target: 'body', source: 'default', ...contributing, ...agents, ...global, ...(mode !== undefined ? { mode, source: 'cli' } : {}), ...(target !== undefined ? { target, source: 'cli' } : {}) };
 }
 

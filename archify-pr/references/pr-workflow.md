@@ -14,6 +14,15 @@ Preflight resolves the merge-base and head, counts changed files and lines, clas
 
 Use `policy.target` as the value of attach’s `--target`. A standalone rule such as `[archify pr: ask, target=comment]` in the repository root’s `AGENTS.md` or `CONTRIBUTING.md` sets the team preference. Preflight gives priority to explicit `--mode` and `--target`, then personal rules, then repository rules, then `ask` and `body`. Only a personal rule or explicit request can enable proactive attachment.
 
+### Personal rule discovery
+
+Explicit `--global-rules <path>` selects one personal file. Otherwise preflight checks the current host’s file: Codex `$CODEX_HOME/AGENTS.md` (default `~/.codex/AGENTS.md`), Claude Code `$CLAUDE_CONFIG_DIR/CLAUDE.md` (default `~/.claude/CLAUDE.md`), Cursor `~/.cursor/AGENTS.md`, or Devin `$XDG_CONFIG_HOME/devin/AGENTS.md` (default `~/.config/devin/AGENTS.md`). Home comes from `HOME`, then `USERPROFILE`, then the operating system. These are discovery locations; use the explicit path for other rule storage.
+
+Host detection uses Codex, Claude Code, Cursor or Devin process markers; `ARCHIFY_AGENT=codex|claude|cursor|devin` selects the host explicitly. A matching host rule wins over other agents’ preferences. If its file has no directive, or no host is identified, preflight checks the other locations and gives `on-demand` priority. Other fallback rules resolve to `ask`. Among rules for the resulting mode (`on-demand` when present, otherwise `ask`), one shared explicit target is retained; different explicit targets use `body` with source `global-conflict`. Rules without a target inherit the repository target when none of the selected rules specifies one. Fallback discovery never enables `proactive`. Only the selected host’s personal rule, an explicit personal path, or `--mode proactive` can do that. Files inside the repository, including symlink targets, retain the repository’s `ask` cap.
+
+Rules must be standalone lines outside Markdown code examples and HTML comments. Each CLI policy field overrides its corresponding personal or repository field. Small schema and migration changes remain materiality candidates even when fewer than 40 lines change; inspect the code before offering.
+
+
 ## 2. Slice by dependency
 
 Order the views the way the change propagates, and draw only the layers the PR actually touches:

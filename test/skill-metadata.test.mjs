@@ -134,7 +134,7 @@ test('companion PR skill stays bounded and resolves its packaged references', ()
 });
 
 test('companion PR skill keeps ask-first filtering, install boundaries and the rules switch', () => {
-  assert.match(companionSkill, /Default is `ask`/);
+  assert.match(companionSkill, /(?:default[^.\n]*`ask`|`ask`[^.\n]*default)/i);
   assert.match(companionSkill, /Materiality filter[\s\S]*Stay silent/);
   assert.match(companionSkill, /small single-point edit/);
   assert.match(companionSkill, /at most three short lines/);
@@ -143,6 +143,12 @@ test('companion PR skill keeps ask-first filtering, install boundaries and the r
   assert.match(companionSkill, /Never run `npx skills add`[\s\S]*unless the user explicitly asks/);
   assert.match(companionSkill, /archify-pr\/core-skill-missing/);
   assert.match(companionSkill, /bin\/archify-pr\.mjs/);
+  const workflow = readFileSync(path.join(companionRoot, 'references/pr-workflow.md'), 'utf8');
+  const documentation = `${companionSkill}\n${workflow}`;
+  for (const command of ['preflight', 'validate', 'build', 'attach']) {
+    assert.ok(documentation.includes(`pr ${command}`), `companion workflow must document pr ${command}`);
+  }
+  for (const rule of ['[archify pr: on-demand]', '[archify pr: proactive]', '[archify pr: ask, target=comment]']) assert.ok(companionSkill.includes(rule), `missing rule example: ${rule}`);
 });
 
 test('contributor review skill is internal and retains its repository references', () => {
