@@ -92,14 +92,10 @@ function excerpt(spec,anchor,facts,repoRoot){
   return {path:source.path,revision,line:from,endLine:to,lines:lines.slice(from-1,to).map((value,index)=>({number:from+index,text:value,emphasis:(spec.emphasis||[]).includes(from+index)}))};
 }
 
-export function buildStory(file,planFile,out,{standalone=false,repoRoot}={}){
-  const attach=!standalone;
-  const outputGuard={requestedOutput:out,inputPaths:[file,planFile],inputDescription:'the source HTML or brief'};
-  out=resolveOutputPath(outputGuard).outputPath;
+export function prepareStory(file,planFile,{repoRoot}={}){
   const source=read(file),facts=factsOf(source),input=JSON.parse(fs.readFileSync(planFile,'utf8'));
   if(!input||typeof input!=='object'||Array.isArray(input))throw Error('The story brief must be a JSON object.');
   if(input.accent!==undefined&&(typeof input.accent!=='string'||!/^#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(input.accent)))throw Error('Accent must be a literal hex color (#rgb, #rgba, #rrggbb or #rrggbbaa).');
-  if(attach&&!['btn-motion','motion-label','export-menu'].every(id=>source.tree.some(node=>attr(node,'id')===id)))throw Error('Story attachment needs the native Viewer controls; generate the source with archify render first.');
   const plan=input.version===2?compileBrief(input,facts):input;
   plan.defaultMode='explain';
   const nodes=new Set(facts.nodes.map(node=>node.id)),edges=new Set(facts.edges.map(edge=>edge.id));
@@ -136,6 +132,15 @@ export function buildStory(file,planFile,out,{standalone=false,repoRoot}={}){
     if(base.preset==='establish')base.duration=Math.min(6,base.duration);
     if(base.explain&&(base.explain.preset||base.preset)==='establish')base.explain.duration=Math.min(6,base.explain.duration??base.duration);
   }
+  return {source,facts,input,plan};
+}
+
+export function buildStory(file,planFile,out,{standalone=false,repoRoot}={}){
+  const attach=!standalone;
+  const outputGuard={requestedOutput:out,inputPaths:[file,planFile],inputDescription:'the source HTML or brief'};
+  out=resolveOutputPath(outputGuard).outputPath;
+  const {source,facts,input,plan}=prepareStory(file,planFile,{repoRoot});
+  if(attach&&!['btn-motion','motion-label','export-menu'].every(id=>source.tree.some(node=>attr(node,'id')===id)))throw Error('Story attachment needs the native Viewer controls; generate the source with archify render first.');
   const styles=source.tree.filter(node=>node.tagName==='style').map(node=>(node.childNodes||[]).map(child=>child.value||'').join('')).join('\n');
   const nativeMotion=fs.readFileSync(path.join(here,'native-motion.js'),'utf8');
   const data=JSON.stringify({plan,source:{file:path.basename(file),sha256:createHash('sha256').update(source.html).digest('hex')},facts}).replace(/</g,'\\u003c');

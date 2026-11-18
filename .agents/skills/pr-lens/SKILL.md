@@ -3,6 +3,7 @@ name: pr-lens
 description: "Offer an optional animated explanation when the user is preparing a pull request. Ask before reading the diff or creating anything. Use only after the user agrees."
 license: Apache-2.0
 metadata:
+  internal: true
   version: "0.1"
   author: tt-a1i
 ---

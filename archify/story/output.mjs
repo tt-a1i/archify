@@ -3,7 +3,7 @@ import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {captureAtomicOutput,captureRegularFileBinding,publishRegularFileBinding,releaseRegularFileBinding,removeOwnedRegularFile,quarantineRemoveRegularFileBinding} from '../renderers/shared/atomic-output.mjs';
 
-export function writeStoryOutput(file,content,guard=()=>{},{createOnly=false,committed}={}){
+export function writeStoryOutput(file,content,guard=()=>{},{createOnly=false,committed,fallbackMode}={}){
   let descriptor,identity,binding,record,error;
   const failure=result=>{
     const message=(record?'Story output was published but cleanup failed':'Story output could not be published')
@@ -33,8 +33,8 @@ export function writeStoryOutput(file,content,guard=()=>{},{createOnly=false,com
     }
   };
   try{
-    descriptor=fs.openSync(temporary,'wx',output.mode??0o666);const stat=fs.fstatSync(descriptor,{bigint:true});identity={device:stat.dev,inode:stat.ino};
-    fs.writeFileSync(descriptor,content);if(output.mode!==null)fs.fchmodSync(descriptor,output.mode);closeCandidate();
+    descriptor=fs.openSync(temporary,'wx',output.mode??fallbackMode??0o666);const stat=fs.fstatSync(descriptor,{bigint:true});identity={device:stat.dev,inode:stat.ino};
+    fs.writeFileSync(descriptor,content);if(output.mode!==null||fallbackMode!==undefined)fs.fchmodSync(descriptor,output.mode??fallbackMode);closeCandidate();
     guard();
     const candidate=captureRegularFileBinding(temporary,{subject:'story-candidate',expectedIdentity:identity,expectedBytes:bytes,expectedSha256:sha256});
     if(candidate.status!=='captured')failure(candidate);binding=candidate.binding;

@@ -1,24 +1,6 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import {scanStory,draftStory,buildStory} from './tool.mjs';
-
-function exportStorySvg(input, brief, output) {
-  if (path.extname(output).toLowerCase() !== '.svg') throw Error('Story SVG output must use a .svg extension.');
-  const temporary = path.join(path.dirname(output), `.${path.basename(output)}.html`);
-  const built = buildStory(input, brief, temporary);
-  const html = fs.readFileSync(temporary, 'utf8');
-  const match = html.match(/<svg\b[^>]*>[\s\S]*?<\/svg>/);
-  const style = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map(item => item[1]).filter(item => item.includes('@keyframes') || item.includes('animation:')).join('\n');
-  fs.rmSync(temporary, { force: true });
-  if (!match || !style) throw Error('The story did not contain one animated SVG.');
-  const svg = match[0].replace(/(<svg\b[^>]*>)/, `$1<style>${style}</style>`);
-  const external = svg.replaceAll('http://www.w3.org', '').match(/<script\b|https?:\/\/|url\(\s*['"]?(?:https?:|\/\/)/i);
-  if (external) throw Error('The story SVG must stay self-contained: ' + svg.slice(Math.max(0, external.index - 50), external.index + 80).replace(/\s+/g, ' '));
-  fs.writeFileSync(output, svg);
-  const still = output.replace(/\.svg$/i, '.still.svg');
-  fs.writeFileSync(still, svg.replace(/animation:[^;}]+/g, 'animation:none'));
-  return { output, still, scenes: built.scenes ?? null };
-}
+import {exportStorySvg} from './svg.mjs';
 
 export function commandStory(args){
   const json=args.includes('--json'),positional=[];let repoRoot,action;

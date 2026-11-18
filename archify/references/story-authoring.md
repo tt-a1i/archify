@@ -74,3 +74,29 @@ at the HTML's pinned revision, at most twenty lines; do not invent bindings.
 
 Deliver the enhanced HTML and editable brief. Rebuild from the original native
 HTML. Export video only when requested.
+
+## Standalone SVG for a pull request
+
+When explicitly requested, run:
+
+```sh
+node archify/bin/archify.mjs story svg native.html brief.json story.svg --json
+```
+
+This writes `story.svg` and `story.still.svg`. The animation uses the compiled
+brief's scene and annotation times, captions, fields and figure captions. The
+static companion contains the first frame. Both are namespaced XML, contain
+their own diagram and styles, and need no script or network resource. Imported
+styles, external images and active SVG content are rejected before publication.
+
+This is a discrete, full-diagram overview with selected objects highlighted.
+It does not reproduce the HTML player's audio, interactive camera or native
+edge-transfer choreography. Use the HTML for detailed exploration; a dense
+overview may need zoom to read its small labels. Reduced-motion viewers see the
+first frame. Inspect both actual images before sharing them.
+
+The two outputs must be distinct from the HTML, brief and each other, including
+filesystem aliases. Validation failure preserves existing outputs. Publication
+uses the existing atomic writer; if publication and restoration both fail,
+the error reports persistent recovery copies rather than discarding the old
+bytes. Keep that recovery directory until the outputs have been restored.
