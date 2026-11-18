@@ -246,6 +246,13 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     assert.ok(await run("document.querySelector('.analysis-reader-shell').getBoundingClientRect().height") <= 36);
     await click('.reader-restore');
     assert.equal(await run("document.documentElement.scrollWidth"), 390);
+    await click('#atlas-tab-files');
+    assert.equal(await run(`(() => {
+      const pane = document.querySelector('.atlas-files-pane').getBoundingClientRect();
+      const query = document.querySelector('.atlas-file-query').getBoundingClientRect();
+      const row = document.querySelector('.atlas-file-list [data-file]').getBoundingClientRect();
+      return query.top >= pane.top && row.bottom <= pane.bottom;
+    })()`), true, 'narrow Files keeps the search and first result visible together');
     await motion('no-preference');
   }
 });

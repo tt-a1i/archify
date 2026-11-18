@@ -65,6 +65,7 @@ html[data-bauify-view="atlas"]:not([data-analysis-mode="standalone"]) #bauify-re
 @media (max-width: 900px) {
   #bauify-atlas .atlas-body { flex-direction: column; overflow: auto; }
   #bauify-atlas .atlas-stage { flex: none; height: min(100vw, 70vh); }
+  #bauify-atlas .atlas-files-pane { flex: none; height: min(100vw, 50vh); }
   #bauify-atlas .atlas-side { width: auto; border-left: 0; border-top: 1px solid var(--panel-border, #1e293b); overflow: visible; }
 }
 @media print { #bauify-atlas { display: none; } }
