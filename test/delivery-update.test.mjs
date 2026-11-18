@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -173,10 +173,30 @@ test('a killed checker holding the cache claim can be followed by a new check', 
       },
     });
   `);
-  const killed = await startDeliveryUpdateCheck({
-    env: env(testFixture), checkerPath: blockedChecker, deadlineMs: 250,
+  const child = spawn(process.execPath, [blockedChecker], {
+    env: env(testFixture), stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true,
   });
-  assert.equal(killed.reason, 'timeout');
+  const closed = new Promise(resolve => child.once('close', resolve));
+  let timer;
+  try {
+    await new Promise((resolve, reject) => {
+      let output = '';
+      timer = setTimeout(() => reject(new Error('checker did not enter fetch after claiming the cache')), 10_000);
+      child.once('error', reject);
+      child.once('exit', () => reject(new Error('checker exited before entering fetch')));
+      child.stdout.on('data', chunk => {
+        output += chunk.toString('utf8');
+        if (output.includes('entered fetch\n')) resolve();
+      });
+    });
+    clearTimeout(timer);
+    assert.equal(child.kill('SIGKILL'), true);
+    await closed;
+  } finally {
+    clearTimeout(timer);
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    await closed;
+  }
   const fresh = await seed(testFixture);
   assert.equal(fresh.status, 'update_available');
   assert.equal(fresh.source, 'network');
