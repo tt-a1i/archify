@@ -72,13 +72,27 @@ test('story SVG preserves unrelated temporary-looking files and rejects invalid 
 });
 
 test('story SVG keeps recovery copies and reports them in JSON when publication and restoration both fail',t=>{
-  const s=sample(t),still=s.output.replace(/\.svg$/,'.still.svg'),hook=path.join(s.dir,'fault.mjs');
+  const s=sample(t),physical=path.join(s.dir,'physical'),alias=path.join(s.dir,'alias');
+  fs.mkdirSync(physical);
+  fs.symlinkSync(physical,alias,process.platform==='win32'?'junction':'dir');
+  s.output=path.join(alias,'story.svg');
+  const still=s.output.replace(/\.svg$/,'.still.svg'),hook=path.join(s.dir,'fault.mjs');
+  const destination=path.join(fs.realpathSync(path.dirname(s.output)),path.basename(s.output));
+  const trace=path.join(s.dir,'faults.txt');
   fs.writeFileSync(s.output,'previous animation');fs.writeFileSync(still,'previous still');
   fs.writeFileSync(hook,`import fs from 'node:fs';import path from 'node:path';
 const link=fs.linkSync,open=fs.openSync;let failed=false;
-fs.linkSync=function(from,to,...args){if(!failed&&path.resolve(to)===${JSON.stringify(s.output)}){failed=true;throw Object.assign(Error('injected publication failure'),{code:'EIO'});}return link.call(this,from,to,...args);};
-fs.openSync=function(file,flags,...args){if(failed&&flags==='wx'&&/^\\.archify-story-[a-f0-9-]+\\.tmp$/.test(path.basename(String(file))))throw Object.assign(Error('injected restoration failure'),{code:'EIO'});return open.call(this,file,flags,...args);};`);
-  const result=spawnSync(process.execPath,['--import',pathToFileURL(hook).href,cli,'story','svg',s.source,s.brief,s.output,'--json'],{encoding:'utf8',env:{...process.env,ARCHIFY_UPDATE_CHECK_DISABLED:'1'}});
+const trace=${JSON.stringify(trace)};
+function inject(stage){fs.appendFileSync(trace,stage+'\\n');throw Object.assign(Error('injected '+stage+' failure'),{code:'EIO'});}
+fs.linkSync=function(from,to,...args){if(!failed&&path.resolve(to)===${JSON.stringify(destination)}){failed=true;inject('publication');}return link.call(this,from,to,...args);};
+fs.openSync=function(file,flags,...args){if(failed&&flags==='wx'&&/^\\.archify-story-[a-f0-9-]+\\.tmp$/.test(path.basename(String(file))))inject('restoration');return open.call(this,file,flags,...args);};`);
+  const runFaulted=(...options)=>{
+    fs.writeFileSync(trace,'');
+    const result=spawnSync(process.execPath,['--import',pathToFileURL(hook).href,cli,'story','svg',s.source,s.brief,s.output,...options],{encoding:'utf8',env:{...process.env,ARCHIFY_UPDATE_CHECK_DISABLED:'1'}});
+    assert.equal(fs.readFileSync(trace,'utf8'),'publication\nrestoration\n',result.stderr+result.stdout);
+    return result;
+  };
+  const result=runFaulted('--json');
   assert.equal(result.status,1);const diagnostic=JSON.parse(result.stdout).diagnostics[0];
   assert.equal(diagnostic.code,'story/svg-publication');assert.equal(diagnostic.evidence.restoration,'incomplete');
   assert.match(diagnostic.message,/restoration failure/);assert.ok(fs.statSync(diagnostic.evidence.recoveryDirectory).isDirectory());
@@ -86,7 +100,7 @@ fs.openSync=function(file,flags,...args){if(failed&&flags==='wx'&&/^\\.archify-s
   assert.ok(copies.includes('previous animation'));assert.ok(copies.includes('previous still'));
   assert.equal(fs.readFileSync(s.output,'utf8'),'previous animation');
   fs.writeFileSync(still,'previous still');
-  const plain=spawnSync(process.execPath,['--import',pathToFileURL(hook).href,cli,'story','svg',s.source,s.brief,s.output],{encoding:'utf8',env:{...process.env,ARCHIFY_UPDATE_CHECK_DISABLED:'1'}});
+  const plain=runFaulted();
   assert.equal(plain.status,1);assert.match(plain.stderr,/Recovery incomplete/);assert.match(plain.stderr,/recovery directory:/);
 });
 
