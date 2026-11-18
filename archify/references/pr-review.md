@@ -8,22 +8,15 @@ changed, where, and with what neighbours. They never grade the change.
 
 ## 1. Read the real change
 
-Review the three-dot range the forge shows, not the working tree and not a
-two-dot diff against a base that moved on:
+Run preflight against a checkout with current remote refs. Supply the PR’s actual target when it differs from the remote default.
 
 ```sh
-git fetch origin <base>
-merge_base=$(git merge-base origin/<base> HEAD)
-git diff --stat --find-renames "$merge_base"...HEAD
-git diff --find-renames "$merge_base"...HEAD -- <paths you need>
-git rev-parse HEAD            # headSha
-echo "$merge_base"            # baseSha
+node bin/archify.mjs pr preflight --repo-root <repo> --base origin/<base> --head HEAD --init <pack-dir> --json
 ```
 
-Record both SHAs: the pack manifest and every repository-backed view pin them,
-and `archify pr validate` refuses a base that is not the merge-base of the head.
-Read renamed and deleted files from the diff, then the surrounding modules at
-`HEAD` and, for deletions, at the merge-base (`git show <merge_base>:<path>`).
+Preflight resolves the merge-base and head, counts changed files and lines, classifies paths, and returns `materiality` and `policy`. Omit `--init` for a read-only check. With `--init`, fill in the generated manifest’s title and views before building. An existing manifest is preserved. Inspect the changed hunks with `git diff --find-renames <baseSha> <headSha>`.
+
+Use `policy.target` as the value of attach’s `--target`. A standalone rule such as `[archify pr: ask, target=comment]` in the repository root’s `AGENTS.md` or `CONTRIBUTING.md` sets the team preference. Preflight gives priority to explicit `--mode` and `--target`, then personal rules, then repository rules, then `ask` and `body`. Only a personal rule or explicit request can enable proactive attachment.
 
 ## 2. Slice by dependency (change stacks)
 
@@ -94,11 +87,11 @@ node bin/archify.mjs finalize <type> <view.json> <view.html> --repo-root <repo> 
 # optional single-view export for a comment or another forge
 node bin/archify.mjs export-svg <type> <view.json> <out/view> --theme both --json
 
-# the pack
+# the pack (set target to policy.target or the user’s explicit choice)
 node bin/archify.mjs pr validate <pr-pack.json> --repo-root <repo> --json
 node bin/archify.mjs pr build <pr-pack.json> --out-dir <out> --repo-root <repo> --json
-node bin/archify.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.receipt.json --dry-run --json
-node bin/archify.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.receipt.json --json
+node bin/archify.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.receipt.json --target "$target" --dry-run --json
+node bin/archify.mjs pr attach <pr-number-or-url> --manifest <out>/pr-pack.receipt.json --target "$target" --json
 ```
 
 The manifest (`schemas/pr-pack.schema.json`; worked example
@@ -140,6 +133,8 @@ spec, and an optional `changes[]` table plus objective `stats`.
 revisions, offline `views/<id>.html` (source links and payload diffs live
 here), `views/<id>-light.svg` / `-dark.svg` that pass strict XML and GitHub's
 Camo limits, `pr-pack.md` with asset placeholders, and `pr-pack.receipt.json`.
+On refresh, `attach` reads asset hashes and URLs from the hidden metadata in the selected body or sticky comment. It uploads only changed SVGs. A text-only refresh writes the pack in place with the existing URLs. GitHub diff links are filled with the actual PR URL during attach.
+
 `attach` uploads the SVGs with `gh … --attach`, rewrites the placeholders to
 the returned `user-attachments` URLs, and replaces only the
 `<!-- archify-pr-pack:start/end -->` block, so a hand-written description and
@@ -151,6 +146,8 @@ static and nothing moves the canvas.
 
 Repair by diagnostic, then rerun the same command:
 
+- `pr-pack/invalid-source-anchor` — choose a changed file and check the one-based line against the pinned Git blob. Put `path` and `line` on a change row or story step for a head-side link. Use `baseLine` for a deletion and `basePath` on a renamed change row for its old path. Select a line visible in the PR diff. GitHub can fold unchanged context or large files even when the cited line exists. GitHub builds include links in the table and below the story; other platforms show the location as text.
+- `pr-attach/head-sha-outdated` — compare the receipt head with the online PR head, push or fetch as appropriate, and rebuild at the intended commit. Use `--allow-stale` only when deliberately attaching an older pack.
 - `repository-evidence/*` — the cited path or line is wrong at the pinned
   revision. A removed element is checked at `meta.repository.base_revision`
   (the merge-base), everything else at `revision`; `build` fills both from the

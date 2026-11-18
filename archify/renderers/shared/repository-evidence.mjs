@@ -123,6 +123,47 @@ function sourceLineCount(content) {
   return lines.length - (/(?:\r\n|\n|\r)$/.test(content) ? 1 : 0);
 }
 
+// PR table and story anchors use the same pinned Git blobs and line counting
+// as diagram evidence. Batch reads keep repeated navigation anchors cheap.
+export function verifyRepositorySourceAnchors(repoRoot, anchors) {
+  const checked = anchors.map((anchor) => {
+    try {
+      return { ...anchor, path: withDiagnosticRecordingSuppressed(() => verifiedSourcePath(anchor.path, anchor.subject.path)) };
+    } catch {
+      evidenceFailure('pr-pack/invalid-source-anchor', `${anchor.subject.path} must use a repository-relative POSIX path.`, {
+        subject: anchor.subject, evidence: { sourcePath: anchor.path },
+        supportedFixes: ['use a repository-relative path with forward slashes'],
+      });
+    }
+  });
+  const needsContent = new Map();
+  for (const anchor of checked) {
+    const object = `${anchor.revision}:${anchor.path}`;
+    needsContent.set(object, needsContent.get(object) || anchor.line !== undefined);
+  }
+  const blobs = prefetchBlobs(repoRoot, needsContent);
+  for (const anchor of checked) {
+    const object = `${anchor.revision}:${anchor.path}`;
+    const blob = blobs?.get(object);
+    const type = blob ? blob.type : runGit(repoRoot, ['cat-file', '-t', object]).stdout.trim();
+    let reason = type !== 'blob' ? 'does not identify a readable file' : null;
+    let lineCount;
+    if (!reason && anchor.line !== undefined) {
+      const content = blob && Object.hasOwn(blob, 'content') ? { status: 0, stdout: blob.content } : runGit(repoRoot, ['show', object]);
+      if (content.status !== 0) reason = 'could not be read';
+      else {
+        lineCount = sourceLineCount(content.stdout);
+        if (anchor.line > lineCount) reason = `requests line ${anchor.line}, but the file has ${lineCount} lines`;
+      }
+    }
+    if (reason) evidenceFailure('pr-pack/invalid-source-anchor', `${anchor.subject.path} ${reason} at revision ${anchor.revision}.`, {
+      subject: anchor.subject,
+      evidence: { sourcePath: anchor.path, revision: anchor.revision, ...(anchor.line !== undefined ? { line: anchor.line } : {}), ...(lineCount !== undefined ? { lineCount } : {}) },
+      supportedFixes: ['reread the file at the pinned revision and use an existing path and line'],
+    });
+  }
+}
+
 // Every diagram type carries its nodes under a different property name, and
 // source evidence is authored on those nodes. One table keeps the verification
 // below identical for all five types instead of branching per type: the only

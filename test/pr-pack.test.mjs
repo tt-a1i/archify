@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -269,6 +270,8 @@ test('pr attach --dry-run through the CLI uses the injected gh binary and report
 function changeRepository() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-pr-repo-'));
   fs.mkdirSync(path.join(root, 'src'));
+  fs.writeFileSync(path.join(root, 'README.md'), 'Unchanged context.\n');
+  fs.writeFileSync(path.join(root, 'src', 'old-name.mjs'), 'export const oldName = 1;\nexport const retained = 2;\n');
   fs.writeFileSync(path.join(root, 'src', 'api.mjs'), 'export function checkout() {\n  return audit();\n}\n');
   fs.writeFileSync(path.join(root, 'src', 'legacy.mjs'), 'export function audit() {\n  return true;\n}\n');
   git(root, 'init', '-b', 'main');
@@ -280,6 +283,7 @@ function changeRepository() {
   const baseSha = git(root, 'rev-parse', 'HEAD');
   git(root, 'checkout', '-q', '-b', 'feat/ledger');
   fs.rmSync(path.join(root, 'src', 'legacy.mjs'));
+  fs.renameSync(path.join(root, 'src', 'old-name.mjs'), path.join(root, 'src', 'new-name.mjs'));
   fs.writeFileSync(path.join(root, 'src', 'ledger.mjs'), 'export function append(entry) {\n  return entry;\n}\n');
   fs.writeFileSync(path.join(root, 'src', 'api.mjs'), 'export function checkout() {\n  return append();\n}\n');
   git(root, 'add', '-A');
@@ -562,7 +566,7 @@ test('pr validate/build/attach support hero infinite story walkthroughs with sto
   const mockGh = ({ args, input }) => {
     if (args[0] === '--version') return { status: 0, stdout: 'gh version 2.103.3', stderr: '' };
     if (args[0] === 'auth') return { status: 0, stdout: 'Logged in', stderr: '' };
-    if (args[0] === 'pr' && args[1] === 'view') return { status: 0, stdout: JSON.stringify({ number: 7, url: 'https://github.com/acme/checkout/pull/7', body: prBody, comments: [] }), stderr: '' };
+    if (args[0] === 'pr' && args[1] === 'view') return { status: 0, stdout: JSON.stringify({ number: 7, headRefOid: repo.headSha, url: 'https://github.com/acme/checkout/pull/7', body: prBody, comments: [] }), stderr: '' };
     if (args[0] === 'pr' && args[1] === 'edit') {
       const idx = args.indexOf('--body-file');
       const targetFile = args[idx + 1];
@@ -781,4 +785,91 @@ test('pr build upgrades static/ERD badges, sanitizes pair.shared baselines, auto
   assert.equal(emptyRes.status, 1);
   assert.equal(JSON.parse(emptyRes.stdout).diagnostics[0].code, 'pr-story/empty-diff');
   fs.rmSync(repo.root, { recursive: true, force: true });
+});
+
+test('pr source anchors render GitHub diff links and story navigation with readable platform fallbacks', () => {
+  const row = { subject: 'renamed', change: 'removed', path: 'src/current.mjs', basePath: 'src/old.mjs', baseLine: 2 };
+  const pack = {
+    manifest: manifest({ changes: [row], story: { title: 'Walkthrough', steps: [{ title: 'Read checkout', path: 'src/api.mjs', line: 3 }] } }),
+    views: [], platform: 'github', changeTableLimit: 20,
+  };
+  const markdown = renderPackMarkdown(pack, { 'walkthrough-light': 'light.svg', 'walkthrough-dark': 'dark.svg' });
+  // These digests come from GitHub's documented path hash convention, rather
+  // than the implementation helper, so changing the hashed field fails here.
+  const hash = (value) => createHash('sha256').update(value).digest('hex');
+  assert.ok(markdown.includes(`{{archify:pr-url}}/files#diff-${hash('src/current.mjs')}L2`));
+  assert.ok(markdown.includes(`{{archify:pr-url}}/files#diff-${hash('src/api.mjs')}R3`));
+  assert.match(markdown, /1\. Read checkout \(src\/api\.mjs:3\)/);
+  assert.ok(markdown.indexOf('1. Read checkout') > markdown.indexOf('</picture>'));
+  for (const platform of ['gitlab', 'generic']) {
+    const fallback = renderPackMarkdown({ ...pack, platform }, { 'walkthrough-light': 'light.svg' });
+    assert.ok(!fallback.includes('{{archify:pr-url}}'));
+    assert.match(fallback, /<code>src\/old\.mjs:2<\/code>/);
+    assert.match(fallback, /1\. Read checkout \(src\/api\.mjs:3\)/);
+  }
+});
+
+test('pr validate and build verify change and story anchors against pinned head and base files', (t) => {
+  const repo = changeRepository();
+  t.after(() => fs.rmSync(repo.root, { recursive: true, force: true }));
+  const dir = scratch();
+  const data = manifest({
+    baseRef: 'main', headRef: 'feat/ledger',
+    changes: [
+      { subject: 'API', change: 'modified', path: 'src/api.mjs', line: 3, baseLine: 2 },
+      { subject: 'Retired audit', change: 'removed', path: 'src/legacy.mjs', baseLine: 3 },
+      { subject: 'Rename navigation', change: 'modified', path: 'src/new-name.mjs', basePath: 'src/old-name.mjs', line: 2, baseLine: 2 },
+      { subject: 'Retired rename', change: 'removed', path: 'src/new-name.mjs', basePath: 'src/old-name.mjs' },
+    ],
+    story: { duration: 16, stages: [{ view: 'topology' }], steps: [
+      { title: 'Read ledger', body: 'The ledger is new.', path: 'src/ledger.mjs', line: 3 },
+      { title: 'Read removed audit', body: 'The audit is gone.', path: 'src/legacy.mjs', baseLine: 3 },
+      { title: 'Read rename base', body: 'The old name is retained in the base.', path: 'src/old-name.mjs', baseLine: 2 },
+    ] },
+  });
+  let file = writePack(dir, { manifest: data });
+  for (const command of ['validate', 'build']) {
+    const args = ['pr', command, file, '--repo-root', repo.root, '--json'];
+    if (command === 'build') args.push('--out-dir', path.join(dir, 'out'));
+    const result = run(args);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    if (command === 'build') {
+      const markdown = fs.readFileSync(JSON.parse(result.stdout).markdown.path, 'utf8');
+      const newHash = createHash('sha256').update('src/new-name.mjs').digest('hex');
+      const oldHash = createHash('sha256').update('src/old-name.mjs').digest('hex');
+      assert.ok(markdown.includes(`/files#diff-${newHash}L2`));
+      assert.ok(markdown.includes(`/files#diff-${newHash}R2`));
+      assert.ok(!markdown.includes(`/files#diff-${oldHash}`));
+      assert.ok(markdown.includes('Read rename base (src/old-name.mjs:2)'));
+    }
+  }
+  const cases = [
+    (m) => { m.changes[0].line = 4; },
+    (m) => { m.changes[0].path = 'README.md'; m.changes[0].line = 1; delete m.changes[0].baseLine; },
+    (m) => { m.story.steps[0].path = 'README.md'; m.story.steps[0].line = 1; },
+    (m) => { m.changes[2].basePath = 'src/api.mjs'; },
+    (m) => { m.changes[1].baseLine = 4; },
+    (m) => { m.changes[2].basePath = 'src/ledger.mjs'; },
+    (m) => { m.changes[2].path = 'src/typo.mjs'; delete m.changes[2].line; },
+    (m) => { m.changes[2].basePath = 'src/missing-old.mjs'; delete m.changes[2].line; delete m.changes[2].baseLine; },
+    (m) => { m.changes[3].basePath = 'src/missing-old.mjs'; },
+    (m) => { m.story.steps[0].line = 4; },
+    (m) => { m.story.steps[1].baseLine = 4; },
+    (m) => { m.story.steps[0].path = 'src/legacy.mjs'; },
+    (m) => { m.changes[0].path = 'src'; delete m.changes[0].line; delete m.changes[0].baseLine; },
+  ];
+  for (const mutate of cases) {
+    const invalid = structuredClone(data);
+    mutate(invalid);
+    file = writePack(dir, { manifest: invalid });
+    const result = run(['pr', 'validate', file, '--repo-root', repo.root, '--json']);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'pr-pack/invalid-source-anchor', result.stdout);
+  }
+  for (const invalidAnchor of [{ line: 1 }, { path: '../escape.mjs', line: 1 }, { path: 'src/api.mjs', line: 0 }]) {
+    file = writePack(dir, { manifest: { ...data, changes: [{ subject: 'bad', change: 'modified', ...invalidAnchor }] } });
+    const result = run(['pr', 'validate', file, '--json']);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(JSON.parse(result.stdout).diagnostics[0].code, /^schema\//);
+  }
 });

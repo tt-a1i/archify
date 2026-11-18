@@ -72,7 +72,12 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["subject", "change"],
+        "dependencies": { "line": ["path"], "baseLine": ["path"], "basePath": ["path"] },
         "properties": {
+          "path": { "$ref": "#/$defs/sourcePath" },
+          "basePath": { "$ref": "#/$defs/sourcePath" },
+          "line": { "type": "integer", "minimum": 1 },
+          "baseLine": { "type": "integer", "minimum": 1 },
           "subject": { "type": "string", "minLength": 1, "maxLength": 160 },
           "kind": { "type": "string", "minLength": 1, "maxLength": 40 },
           "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
@@ -85,6 +90,7 @@
     "story": { "$ref": "#/$defs/prStory" }
   },
   "$defs": {
+    "sourcePath": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])(?!.*(?:^|/)\\.\\.?(?:/|$))(?!\\.git(?:/|$))(?!.*//)(?!.*\\/$).+$"},
     "sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
     "prStory": {
       "type": "object",
@@ -354,7 +360,11 @@
             "type": "object",
             "additionalProperties": false,
             "required": ["title", "body"],
+            "dependencies": { "line": ["path"], "baseLine": ["path"] },
             "properties": {
+              "path": { "$ref": "#/$defs/sourcePath" },
+              "line": { "type": "integer", "minimum": 1 },
+              "baseLine": { "type": "integer", "minimum": 1 },
               "at": { "type": "number", "minimum": 0 },
               "title": { "type": "string", "minLength": 1, "maxLength": 120 },
               "body": { "type": "string", "minLength": 1, "maxLength": 240 },

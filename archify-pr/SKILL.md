@@ -25,14 +25,14 @@ The wrapper delegates unchanged to the installed core `archify/bin/archify.mjs`.
 
 When the user asks to explain or visualize a PR, a branch change, or a `git diff`, or to run `archify pr`, start the workflow directly. Read [`references/pr-workflow.md`](references/pr-workflow.md), pin the three-dot range from `git merge-base`, and build the pack; do not ask whether a diagram is wanted.
 
-If the target is a shared PR that already has a written description and the user did not name an update target (`body` or `--target comment`), confirm the target, or show the `pr attach --dry-run` summary before changing the online PR.
+Use the target from the request or preflight policy. When only the default applies and the shared PR already has a written description, show the attach dry run or confirm the target before writing.
 
 ### Ordinary PR preparation
 
 When the user only asks to create or summarize a PR:
 
-1. Read the mode. Default is `ask`.
-2. Run the materiality filter below.
+1. Run `node <archify-pr-root>/bin/archify-pr.mjs pr preflight --repo-root <repo> --json`. Pass the PR base with `--base <ref>` when it differs from the repository default.
+2. Read `policy` and `materiality` from the result.
 3. Follow the mode:
    - `on-demand`: stay silent and complete the text-only PR flow.
    - `ask`: make the optional offer only when the filter recommends it.
@@ -44,11 +44,13 @@ When the user only asks to create or summarize a PR:
 - `on-demand`: never offer; act only on an explicit request. Rule line: `[archify pr: on-demand]`.
 - `proactive`: build and attach for material changes without asking. Only when the user explicitly requests this mode. Rule line: `[archify pr: proactive]`.
 
-To switch modes, only when the user asks, write or replace one `[archify pr: <mode>]` line in the current agent's global rules file (such as `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md` or `~/.config/devin/AGENTS.md`) and name the file. Deleting the line restores `ask`. Never switch to `proactive` unasked.
+A rule may also select the attach target, for example `[archify pr: ask, target=comment]`. An explicit request takes precedence (pass `--mode` or `--target` to preflight), followed by the current agent’s personal rules, then the repository root’s `AGENTS.md` or `CONTRIBUTING.md`. The default is `ask` with target `body`. Repository rules requesting `proactive` resolve to `ask`. Pass `--global-rules <path>` for the current agent’s personal file when it differs from the default Codex rules file.
+
+To switch personal modes, only when the user asks, write or replace one rule line in the current agent's global rules file (such as `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md` or `~/.config/devin/AGENTS.md`) and name the file. Deleting the line restores the repository or default policy. Never switch to `proactive` unasked.
 
 ## Materiality filter
 
-Run `git diff --stat <merge-base>...HEAD` and classify the changed files. Stay silent, without asking, when the change is any of:
+If `materiality.shouldOffer` is false, finish the ordinary PR flow silently. For a candidate, inspect the changed code before offering. Stay silent when the change is any of:
 
 - docs, Markdown, comments or copy only;
 - lockfiles, version or dependency manifests, or simple configuration values;

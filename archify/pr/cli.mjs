@@ -2,8 +2,9 @@ import path from 'node:path';
 import { PrPackError } from './manifest.mjs';
 import { buildPrPack, validatePrPack } from './build.mjs';
 import { attachPrPack, createGhExecutor } from './attach.mjs';
+import { preflightPrPack } from './preflight.mjs';
 
-const SUBCOMMANDS = ['validate', 'build', 'attach'];
+const SUBCOMMANDS = ['preflight', 'validate', 'build', 'attach'];
 
 function parseOptions(args, { flags = [], values = [] }, subcommand, rejectCliArgument) {
   const options = { flags: {}, values: {}, positional: [] };
@@ -65,6 +66,24 @@ export async function commandPr(args, { rejectCliArgument, usage }) {
   const json = rest.includes('--json');
   let input;
   try {
+    if (subcommand === 'preflight') {
+      const { positional, values } = parseOptions(rest, { flags: ['--json'], values: ['--repo-root', '--base', '--head', '--init', '--mode', '--target', '--global-rules'] }, subcommand, rejectCliArgument);
+      if (positional.length) rejectCliArgument('pr preflight accepts named options only.', { code: 'cli/invalid-arguments', subject: { command: 'pr preflight' } });
+      input = path.resolve(values['--repo-root'] || '.');
+      const receipt = preflightPrPack({
+        repoRoot: input, base: values['--base'], head: values['--head'], init: values['--init'],
+        mode: values['--mode'], target: values['--target'], globalRulesFile: values['--global-rules'],
+      });
+      if (json) console.log(JSON.stringify(receipt, null, 2));
+      else {
+        const { stats, policy, materiality } = receipt;
+        console.log(`${receipt.baseRef}...${receipt.headRef} (${receipt.baseSha.slice(0, 7)} → ${receipt.headSha.slice(0, 7)})`);
+        console.log(`${stats.filesChanged} files, +${stats.additions} −${stats.deletions}`);
+        console.log(`Offer diagram: ${materiality.shouldOffer} (${materiality.reasons.join(', ')}). Policy: ${policy.mode}, target=${policy.target}`);
+        if (receipt.initialized) console.log(receipt.initialized.manifest);
+      }
+      return;
+    }
     if (subcommand === 'validate') {
       const options = parseOptions(rest, { flags: ['--json'], values: ['--repo-root'] }, subcommand, rejectCliArgument);
       const [manifest] = options.positional;
@@ -97,7 +116,7 @@ export async function commandPr(args, { rejectCliArgument, usage }) {
       }
       return;
     }
-    const options = parseOptions(rest, { flags: ['--json', '--dry-run'], values: ['--manifest', '--target', '--repo'] }, subcommand, rejectCliArgument);
+    const options = parseOptions(rest, { flags: ['--json', '--dry-run', '--allow-stale'], values: ['--manifest', '--target', '--repo'] }, subcommand, rejectCliArgument);
     const [pullRequest] = options.positional;
     if (!pullRequest || options.positional.length !== 1) rejectCliArgument(`pr attach expects <pr-number-or-url> --manifest <build-receipt.json>.\n\n${usage()}`, { code: 'cli/invalid-arguments', subject: { command: 'pr attach' } });
     if (!options.values['--manifest']) rejectCliArgument('pr attach requires --manifest <build-receipt.json>.', { code: 'cli/missing-option-value', subject: { command: 'pr attach', option: '--manifest' }, supportedFixes: ['pass --manifest with the pr-pack.receipt.json from archify pr build'] });
@@ -108,6 +127,7 @@ export async function commandPr(args, { rejectCliArgument, usage }) {
       target: options.values['--target'] || 'body',
       repo: options.values['--repo'],
       dryRun: Boolean(options.flags['--dry-run']),
+      allowStale: Boolean(options.flags['--allow-stale']),
       gh: createGhExecutor({ binary: process.env.ARCHIFY_GH || 'gh' }),
     });
     if (json) console.log(JSON.stringify(receipt, null, 2));

@@ -2199,7 +2199,7 @@ const COMMAND_USAGE = {
   preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
   validate: '<type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]',
   'export-svg': '<type> <input.json> <output.svg|stem> [--theme both|light|dark] [--preset name] [--animate-flow] [--json] [--quality standard|showcase] [--repo-root path]',
-  pr: ['validate <manifest.json> [--repo-root path] [--json]', 'build <manifest.json> --out-dir <dir> [--repo-root path] [--platform github|gitlab|generic] [--no-html] [--animate-flow] [--quality standard|showcase] [--json]', 'attach <pr-number-or-url> --manifest <build-receipt.json> [--target body|comment] [--repo owner/name] [--dry-run] [--json]'],
+  pr: ['preflight [--repo-root path] [--base ref] [--head ref] [--init dir] [--mode ask|on-demand|proactive] [--target body|comment] [--global-rules path] [--json]', 'validate <manifest.json> [--repo-root path] [--json]', 'build <manifest.json> --out-dir <dir> [--repo-root path] [--platform github|gitlab|generic] [--no-html] [--animate-flow] [--quality standard|showcase] [--json]', 'attach <pr-number-or-url> --manifest <build-receipt.json> [--target body|comment] [--repo owner/name] [--allow-stale] [--dry-run] [--json]'],
   migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
   inspect: '<type> <input.json>',
   check: '<output.html> [--json] [--require-provenance]',

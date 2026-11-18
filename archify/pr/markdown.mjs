@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
+import { renderPackMetadata } from './metadata.mjs';
 
 export const PACK_START = '<!-- archify-pr-pack:start -->';
+export const PR_URL_PLACEHOLDER = '{{archify:pr-url}}';
 export const PACK_END = '<!-- archify-pr-pack:end -->';
 export const RISK_VERDICTS = ['SAFE', 'LOW RISK', 'MERGEABLE', 'NO IMPACT', 'VERIFIED PR'];
 const CHANGE_GLYPH = { added: '+ added', modified: '~ modified', removed: '− removed', unchanged: '· unchanged' };
@@ -71,9 +73,32 @@ function renderRevisions(pack) {
   return `Diff: ${[refs, shas].filter(Boolean).join(' · ')} (three-dot, merge-base)`;
 }
 
-function changeRow(row) {
+function sourceAnchorLocation(row) {
+  const side = row.change === 'removed' || (row.line === undefined && row.baseLine !== undefined) ? 'L' : 'R';
+  const line = side === 'L' ? (row.baseLine ?? row.line) : row.line;
+  const lookupPath = side === 'L' ? (row.basePath || row.path) : row.path;
+  return { side, line, lookupPath };
+}
+
+// GitHub hashes the current diff path, including for the left side of renames.
+export function sourceAnchorHref(row, diffPaths) {
+  const { side, line, lookupPath } = sourceAnchorLocation(row);
+  const diffPath = diffPaths?.get(`${side}:${lookupPath}`) || row.path;
+  const lineAnchor = line === undefined ? '' : `${side}${line}`;
+  return `${PR_URL_PLACEHOLDER}/files#diff-${sha256(diffPath)}${lineAnchor}`;
+}
+
+function sourceAnchor(row, platform, label, diffPaths) {
+  const { line, lookupPath } = sourceAnchorLocation(row);
+  const location = `${lookupPath}${line === undefined ? '' : `:${line}`}`;
+  const text = label ? `${label} (${location})` : location;
+  const code = `<code>${escapeHtml(text)}</code>`;
+  return platform === 'github' ? `<a href="${escapeAttr(sourceAnchorHref(row, diffPaths))}">${code} ↗</a>` : code;
+}
+
+function changeRow(row, platform, diffPaths) {
   const cells = [
-    `<td style="white-space: nowrap"><code>${escapeHtml(row.subject)}</code></td>`,
+    `<td style="white-space: nowrap"><code>${escapeHtml(row.subject)}</code>${row.path ? `<br>${sourceAnchor(row, platform, undefined, diffPaths)}` : ''}</td>`,
     `<td style="white-space: nowrap">${escapeHtml(row.kind || '')}</td>`,
     `<td style="white-space: nowrap">${CHANGE_GLYPH[row.change]}</td>`,
     `<td>${escapeHtml(row.detail || '')}</td>`,
@@ -82,22 +107,22 @@ function changeRow(row) {
   return `<tr>${cells.join('')}</tr>`;
 }
 
-function changeTable(rows) {
+function changeTable(rows, platform, diffPaths) {
   return [
     '<table>',
     '<thead><tr><th>Subject</th><th>Kind</th><th>Change</th><th>Detail</th><th>View</th></tr></thead>',
-    `<tbody>${rows.map(changeRow).join('')}</tbody>`,
+    `<tbody>${rows.map((row) => changeRow(row, platform, diffPaths)).join('')}</tbody>`,
     '</table>',
   ].join('\n');
 }
 
-export function renderChangeTable(changes, limit) {
+export function renderChangeTable(changes, limit, platform = 'github', diffPaths) {
   if (!changes?.length) return '';
   const visible = changes.slice(0, limit);
   const folded = changes.slice(limit);
-  const parts = [`### Changes (${changes.length})`, '', changeTable(visible)];
+  const parts = [`### Changes (${changes.length})`, '', changeTable(visible, platform, diffPaths)];
   if (folded.length) {
-    parts.push('', `<details><summary>More changes <kbd>+${folded.length}</kbd></summary>`, '', changeTable(folded), '', '</details>');
+    parts.push('', `<details><summary>More changes <kbd>+${folded.length}</kbd></summary>`, '', changeTable(folded, platform, diffPaths), '', '</details>');
   }
   return parts.join('\n');
 }
@@ -134,7 +159,7 @@ export function renderPackMarkdown(pack, assets) {
     ...(manifest.changes || []).flatMap((row, index) => [[`changes/${index}/subject`, row.subject], [`changes/${index}/detail`, row.detail]]),
   ];
   for (const [field, text] of checked) assertNoRiskVerdict(text, `manifest ${field}`);
-  const lines = [PACK_START, `## ${manifest.title}`, ''];
+  const lines = [PACK_START, renderPackMetadata({ baseSha: pack.baseSha, headSha: pack.headSha }), `## ${manifest.title}`, ''];
   if (manifest.summary) lines.push(manifest.summary, '');
   const stats = renderStats(manifest.stats);
   if (stats) lines.push(stats, '');
@@ -145,6 +170,8 @@ export function renderPackMarkdown(pack, assets) {
     const storyAlt = `${story.title || manifest.title} (animated walkthrough)`;
     if (story.caption) lines.push(story.caption, '');
     lines.push(renderImage({ platform, light, dark, alt: storyAlt }), '');
+    const navigation = (story.steps || []).flatMap((step, index) => step.path ? [sourceAnchor(step, platform, `${index + 1}. ${step.title}`, pack.sourceAnchorPaths)] : []);
+    if (navigation.length) lines.push(navigation.join(' · '), '');
   }
   for (const view of pack.views) {
     if (view.storyOnly) continue;
@@ -160,7 +187,7 @@ export function renderPackMarkdown(pack, assets) {
       lines.push(image, '');
     }
   }
-  const table = renderChangeTable(manifest.changes, pack.changeTableLimit);
+  const table = renderChangeTable(manifest.changes, pack.changeTableLimit, platform, pack.sourceAnchorPaths);
   if (table) lines.push(table, '');
   lines.push('<sub>Diagrams generated by Archify from change-marked JSON; removed items stay in place as ghosts. Counts are objective evidence, not a review verdict.</sub>', PACK_END);
   return lines.join('\n');

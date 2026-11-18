@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { FULL_SHA_RE, hasRepositoryEvidence, runGit } from '../renderers/shared/repository-evidence.mjs';
+import { FULL_SHA_RE, hasRepositoryEvidence, runGit, verifyRepositorySourceAnchors } from '../renderers/shared/repository-evidence.mjs';
 import { validateSchema } from '../renderers/shared/validator.mjs';
 import { PrPackError, failPrPack as fail, packDiagnostic } from './errors.mjs';
 import { resolveStorySteps, validatePrStory } from './story-svg.mjs';
@@ -167,6 +167,61 @@ export function verifyPackRevisions(pack, repoRoot) {
         supportedFixes: [mergeBase ? `set baseSha to ${mergeBase}` : 'declare a baseSha that shares history with headSha'],
       });
     }
+  }
+  const anchors = [];
+  const groups = [['changes', manifest.changes || []], ['story/steps', manifest.story?.steps || []]];
+  for (const [group, rows] of groups) for (const [index, row] of rows.entries()) {
+    if (!row.path) continue;
+    const subject = { manifest: pack.manifestPath, path: `/${group}/${index}` };
+    if (row.change === 'removed') {
+      anchors.push({ path: row.basePath || row.path, line: row.baseLine ?? row.line, revision: baseSha, subject });
+    } else {
+      if (row.line !== undefined || row.baseLine === undefined || row.basePath !== undefined) anchors.push({ path: row.path, line: row.line, revision: headSha, subject });
+      if (row.baseLine !== undefined || row.basePath !== undefined) anchors.push({ path: row.basePath || row.path, line: row.baseLine, revision: baseSha, subject });
+    }
+  }
+  if (anchors.length) {
+    const diff = runGit(root, ['diff', '--name-status', '-z', '--find-renames', baseSha, headSha, '--']);
+    if (diff.status !== 0) fail('pr-pack/invalid-source-anchor', 'revisions', 'Could not read the pinned PR diff to verify source anchors.', {
+      supportedFixes: ['verify both pinned revisions are available in the local checkout'],
+    });
+    const fields = diff.stdout.split('\0');
+    const diffPaths = new Map();
+    for (let index = 0; index < fields.length - 1;) {
+      const status = fields[index++];
+      const oldPath = fields[index++];
+      const currentPath = /^[RC]/.test(status) ? fields[index++] : oldPath;
+      if (!status.startsWith('A')) diffPaths.set(`L:${oldPath}`, currentPath);
+      if (!status.startsWith('D')) diffPaths.set(`R:${currentPath}`, currentPath);
+    }
+    for (const anchor of anchors) {
+      const side = anchor.revision === baseSha ? 'L' : 'R';
+      const diffPath = diffPaths.get(`${side}:${anchor.path}`);
+      if (!diffPath) fail('pr-pack/invalid-source-anchor', 'revisions', `${anchor.subject.path} cites ${anchor.path}, which is not on the ${side === 'L' ? 'base' : 'head'} side of this PR diff.`, {
+        subject: anchor.subject, evidence: { sourcePath: anchor.path, revision: anchor.revision, baseSha, headSha },
+        supportedFixes: ['cite a file changed in the pinned PR diff; put unchanged context in the summary or diagram sources instead', 'for a rename, use path for the new filename and basePath for the old filename; story baseLine may cite the old filename'],
+      });
+    }
+    for (const [index, row] of (manifest.changes || []).entries()) {
+      if (!row.basePath) continue;
+      const baseDiffPath = diffPaths.get(`L:${row.basePath}`);
+      const sameFile = row.change === 'removed'
+        ? row.path === baseDiffPath || row.path === row.basePath
+        : diffPaths.get(`R:${row.path}`) === baseDiffPath;
+      if (!sameFile) fail('pr-pack/invalid-source-anchor', 'revisions', `/changes/${index} path and basePath do not identify the same file in the pinned PR diff.`, {
+        subject: { manifest: pack.manifestPath, path: `/changes/${index}` },
+        evidence: { path: row.path, basePath: row.basePath },
+        supportedFixes: ['use the new and old names of one renamed file from git diff --name-status --find-renames'],
+      });
+    }
+    pack.sourceAnchorPaths = diffPaths;
+  }
+  try {
+    verifyRepositorySourceAnchors(root, anchors);
+  } catch (error) {
+    if (!error.archifyDiagnostics) throw error;
+    const diagnostics = error.archifyDiagnostics.map((entry) => ({ ...entry, subject: { ...entry.subject, surface: 'pr-pack' } }));
+    throw new PrPackError(error.message, { code: diagnostics[0].code, stage: 'revisions', diagnostics });
   }
   return { repoRoot: root, baseSha, headSha, mergeBase, verified: true };
 }

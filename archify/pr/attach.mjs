@@ -2,7 +2,8 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PrPackError, packDiagnostic } from './manifest.mjs';
-import { PACK_END, PACK_START, fillAssets, locatePackBlock, replacePackBlock, sha256 } from './markdown.mjs';
+import { PACK_END, PACK_START, PR_URL_PLACEHOLDER, fillAssets, locatePackBlock, replacePackBlock, sha256 } from './markdown.mjs';
+import { readPackMetadata, setPackMetadata } from './metadata.mjs';
 
 export const MAX_ATTACHMENTS = 50;
 export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
@@ -150,12 +151,23 @@ export function extractAssetUrls(body, attachments) {
   return { urls, missing };
 }
 
+function uploadedAssetUrls(body, uploads) {
+  const { urls, missing } = extractAssetUrls(body, uploads);
+  if (missing.length) {
+    fail('pr-attach/asset-mapping-incomplete', 'map', `${missing.length} attachments were not rewritten to user-attachments URLs: ${missing.join(', ')}.`, {
+      evidence: { missing, mapped: Object.keys(urls).length },
+      supportedFixes: ['retry; if it persists, check that gh rewrote the Markdown image references'],
+    });
+  }
+  return urls;
+}
+
 function commentId(comment) {
   const match = /#issuecomment-(\d+)$/.exec(comment?.url || '');
   return match ? Number(match[1]) : null;
 }
 
-export async function attachPrPack({ pullRequest, receipt: receiptInput, target = 'body', repo, dryRun = false, gh = createGhExecutor() }) {
+export async function attachPrPack({ pullRequest, receipt: receiptInput, target = 'body', repo, dryRun = false, allowStale = false, gh = createGhExecutor() }) {
   if (!ATTACH_TARGETS.includes(target)) {
     fail('cli/unsupported-option', 'arguments', `Unknown --target "${target}". Expected body or comment.`, { supportedFixes: ['pass --target body|comment'] });
   }
@@ -175,7 +187,7 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
   steps.push({ step: 0, action: 'preflight', gh: version.join('.'), attachments: attachments.length });
 
   const repoArgs = parsed.repo ? ['--repo', parsed.repo] : [];
-  const prJson = runGh(gh, ['pr', 'view', String(parsed.number), ...repoArgs, '--json', 'number,url,body,comments'], { stage: 'preflight', code: 'pr-attach/pr-unreadable', label: 'gh pr view' });
+  const prJson = runGh(gh, ['pr', 'view', String(parsed.number), ...repoArgs, '--json', 'number,url,body,comments,headRefOid'], { stage: 'preflight', code: 'pr-attach/pr-unreadable', label: 'gh pr view' });
   let pr;
   try {
     pr = JSON.parse(prJson);
@@ -184,6 +196,12 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
   }
   const resolvedRepo = parsed.repo || /^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\//.exec(pr.url || '')?.[1] || null;
   if (!resolvedRepo) fail('pr-attach/repo-unresolved', 'preflight', 'Could not determine the repository for the pull request.', { supportedFixes: ['pass --repo owner/name'] });
+  if (receipt.revisions?.headSha && receipt.revisions.headSha !== pr.headRefOid && !allowStale) {
+    fail('pr-attach/head-sha-outdated', 'preflight', 'The build headSha does not match the current pull request head; rebuild against the latest pushed commit before attaching.', {
+      evidence: { headSha: receipt.revisions.headSha, headRefOid: pr.headRefOid ?? null },
+      supportedFixes: ['push the intended commit and rebuild against the current PR head', 'use --allow-stale only when attaching this older revision is intentional'],
+    });
+  }
   const originalBody = String(pr.body ?? '');
   const sticky = target === 'comment'
     ? (pr.comments || []).find((comment) => locatePackBlock(comment.body)) || null
@@ -191,6 +209,20 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
   const stickyId = sticky ? commentId(sticky) : null;
   if (sticky && !stickyId) fail('pr-attach/comment-id-unresolved', 'preflight', `Could not derive the comment id from ${sticky.url}.`, { supportedFixes: ['pass --target body or delete the stale comment'] });
   steps.push({ step: 0, action: 'read-target', target, existingBlock: target === 'body' ? Boolean(locatePackBlock(originalBody)) : Boolean(sticky), ...(sticky ? { comment: { id: stickyId, url: sticky.url } } : {}) });
+
+  const cached = readPackMetadata(target === 'body' ? originalBody : sticky?.body)?.assets || {};
+  const reusedUrls = {};
+  const uploads = attachments.filter((asset) => {
+    const url = cached[`${asset.id}:${asset.hash}`];
+    if (url) reusedUrls[asset.id] = url;
+    return !url;
+  });
+  const resolvedMarkdown = markdown.replaceAll(PR_URL_PLACEHOLDER, pr.url);
+  const finalMarkdown = (urls) => setPackMetadata(fillAssets(resolvedMarkdown, urls).markdown, {
+    baseSha: receipt.revisions?.baseSha ?? null,
+    headSha: receipt.revisions?.headSha ?? null,
+    assets: Object.fromEntries(attachments.map((asset) => [`${asset.id}:${asset.hash}`, urls[asset.id]])),
+  });
 
   const planned = {
     schemaVersion: 1,
@@ -204,7 +236,7 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
     attachments: attachments.map((asset) => ({ id: asset.id, path: asset.path, bytes: asset.bytes, token: asset.token })),
   };
   if (dryRun) {
-    const preview = fillAssets(markdown, Object.fromEntries(attachments.map((asset) => [asset.id, `<user-attachments:${asset.id}>`]))).markdown;
+    const preview = finalMarkdown(Object.fromEntries(attachments.map((asset) => [asset.id, reusedUrls[asset.id] || `<user-attachments:${asset.id}>`])));
     return {
       ...planned,
       steps: [...steps, { step: 1, action: 'skipped', reason: 'dry-run' }, { step: 2, action: 'skipped', reason: 'dry-run' }],
@@ -214,11 +246,11 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
     };
   }
 
-  const attachArgs = attachments.flatMap((asset) => ['--attach', portableAttachmentPath(asset.path)]);
+  const attachArgs = uploads.flatMap((asset) => ['--attach', portableAttachmentPath(asset.path)]);
   const ghApi = (method, route, body) => runGh(gh, ['api', '-X', method, route, ...(body === undefined ? [] : ['--input', '-'])], { input: body === undefined ? undefined : JSON.stringify(body), stage: 'write', label: `gh api ${method} ${route}` });
 
   if (target === 'body') {
-    const stagedBody = replacePackBlock(originalBody, tokenBlock(attachments));
+    const stagedBody = replacePackBlock(originalBody, tokenBlock(uploads));
     let modified = false;
     const restore = () => {
       if (!modified) return null;
@@ -226,18 +258,19 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
       return { restored: result.status === 0, status: result.status, stderr: (result.stderr || '').trim() };
     };
     try {
-      modified = true;
-      runGh(gh, ['pr', 'edit', String(parsed.number), '--repo', resolvedRepo, '--body-file', '-', ...attachArgs], { input: stagedBody, stage: 'upload', code: 'pr-attach/upload-failed', label: 'gh pr edit --attach' });
-      steps.push({ step: 1, action: 'upload', attachments: attachments.length });
-      const uploaded = JSON.parse(runGh(gh, ['pr', 'view', String(parsed.number), '--repo', resolvedRepo, '--json', 'body'], { stage: 'map', code: 'pr-attach/pr-unreadable', label: 'gh pr view' }));
-      const { urls, missing } = extractAssetUrls(uploaded.body, attachments);
-      if (missing.length) {
-        fail('pr-attach/asset-mapping-incomplete', 'map', `${missing.length} of ${attachments.length} attachments were not rewritten to user-attachments URLs: ${missing.join(', ')}.`, {
-          evidence: { missing, mapped: Object.keys(urls).length }, supportedFixes: ['retry; if it persists, check that gh rewrote the Markdown image references'],
-        });
+      let urls = reusedUrls;
+      if (uploads.length) {
+        modified = true;
+        runGh(gh, ['pr', 'edit', String(parsed.number), '--repo', resolvedRepo, '--body-file', '-', ...attachArgs], { input: stagedBody, stage: 'upload', code: 'pr-attach/upload-failed', label: 'gh pr edit --attach' });
+        steps.push({ step: 1, action: 'upload', attachments: uploads.length, reused: attachments.length - uploads.length });
+        const uploaded = JSON.parse(runGh(gh, ['pr', 'view', String(parsed.number), '--repo', resolvedRepo, '--json', 'body'], { stage: 'map', code: 'pr-attach/pr-unreadable', label: 'gh pr view' }));
+        urls = { ...reusedUrls, ...uploadedAssetUrls(uploaded.body, uploads) };
+      } else {
+        steps.push({ step: 1, action: 'skipped', reason: 'assets-unchanged', reused: attachments.length });
       }
-      const finalBlock = fillAssets(markdown, urls);
-      const finalBody = replacePackBlock(originalBody, finalBlock.markdown);
+      const finalBlock = finalMarkdown(urls);
+      const finalBody = replacePackBlock(originalBody, finalBlock);
+      modified = true;
       runGh(gh, ['pr', 'edit', String(parsed.number), '--repo', resolvedRepo, '--body-file', '-'], { input: finalBody, stage: 'write', code: 'pr-attach/write-failed', label: 'gh pr edit' });
       steps.push({ step: 2, action: 'write', mapped: Object.keys(urls).length });
       return {
@@ -245,7 +278,7 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
         steps,
         comment: null,
         assets: Object.fromEntries(attachments.map((asset) => [asset.path, urls[asset.id]])),
-        markdown: { sha256: sha256(finalBlock.markdown), bytes: Buffer.byteLength(finalBlock.markdown, 'utf8'), bodySha256: sha256(finalBody) },
+        markdown: { sha256: sha256(finalBlock), bytes: Buffer.byteLength(finalBlock, 'utf8'), bodySha256: sha256(finalBody) },
       };
     } catch (error) {
       const rollback = restore();
@@ -264,30 +297,37 @@ export async function attachPrPack({ pullRequest, receipt: receiptInput, target 
     return { deletedComment: result.status === 0 ? tempCommentId : null, status: result.status, stderr: (result.stderr || '').trim() };
   };
   try {
-    const created = runGh(gh, ['pr', 'comment', String(parsed.number), '--repo', resolvedRepo, '--body-file', '-', ...attachArgs], { input: tokenBlock(attachments), stage: 'upload', code: 'pr-attach/upload-failed', label: 'gh pr comment --attach' });
-    const createdUrl = created.trim().split('\n').find((line) => /#issuecomment-\d+$/.test(line)) || '';
-    tempCommentId = commentId({ url: createdUrl });
-    if (tempCommentId === null) {
-      fail('pr-attach/comment-id-unresolved', 'upload', `gh pr comment did not return a comment URL: ${created.trim() || 'no output'}`, { supportedFixes: ['upgrade gh or retry'] });
+    let urls = reusedUrls;
+    let createdUrl = '';
+    if (uploads.length) {
+      const created = runGh(gh, ['pr', 'comment', String(parsed.number), '--repo', resolvedRepo, '--body-file', '-', ...attachArgs], { input: tokenBlock(uploads), stage: 'upload', code: 'pr-attach/upload-failed', label: 'gh pr comment --attach' });
+      createdUrl = created.trim().split('\n').find((line) => /#issuecomment-\d+$/.test(line)) || '';
+      tempCommentId = commentId({ url: createdUrl });
+      if (tempCommentId === null) {
+        fail('pr-attach/comment-id-unresolved', 'upload', `gh pr comment did not return a comment URL: ${created.trim() || 'no output'}`, { supportedFixes: ['upgrade gh or retry'] });
+      }
+      steps.push({ step: 1, action: 'upload', comment: { id: tempCommentId, url: createdUrl }, attachments: uploads.length, reused: attachments.length - uploads.length });
+      const uploaded = JSON.parse(ghApi('GET', `repos/${resolvedRepo}/issues/comments/${tempCommentId}`));
+      urls = { ...reusedUrls, ...uploadedAssetUrls(uploaded.body, uploads) };
+    } else {
+      steps.push({ step: 1, action: 'skipped', reason: 'assets-unchanged', reused: attachments.length });
     }
-    steps.push({ step: 1, action: 'upload', comment: { id: tempCommentId, url: createdUrl }, attachments: attachments.length });
-    const uploaded = JSON.parse(ghApi('GET', `repos/${resolvedRepo}/issues/comments/${tempCommentId}`));
-    const { urls, missing } = extractAssetUrls(uploaded.body, attachments);
-    if (missing.length) {
-      fail('pr-attach/asset-mapping-incomplete', 'map', `${missing.length} of ${attachments.length} attachments were not rewritten to user-attachments URLs: ${missing.join(', ')}.`, {
-        evidence: { missing, mapped: Object.keys(urls).length }, supportedFixes: ['retry; if it persists, check that gh rewrote the Markdown image references'],
-      });
-    }
-    const finalBlock = fillAssets(markdown, urls).markdown;
+    const finalBlock = finalMarkdown(urls);
     let finalComment;
     if (sticky) {
       const finalBody = replacePackBlock(sticky.body, finalBlock);
       ghApi('PATCH', `repos/${resolvedRepo}/issues/comments/${stickyId}`, { body: finalBody });
-      ghApi('DELETE', `repos/${resolvedRepo}/issues/comments/${tempCommentId}`);
+      if (tempCommentId !== null) ghApi('DELETE', `repos/${resolvedRepo}/issues/comments/${tempCommentId}`);
       tempCommentId = null;
       finalComment = { id: stickyId, url: sticky.url, bodySha256: sha256(finalBody) };
     } else {
-      ghApi('PATCH', `repos/${resolvedRepo}/issues/comments/${tempCommentId}`, { body: finalBlock });
+      if (tempCommentId === null) {
+        createdUrl = runGh(gh, ['pr', 'comment', String(parsed.number), '--repo', resolvedRepo, '--body-file', '-'], { input: finalBlock, stage: 'write', code: 'pr-attach/write-failed', label: 'gh pr comment' }).trim();
+        tempCommentId = commentId({ url: createdUrl });
+        if (tempCommentId === null) fail('pr-attach/comment-id-unresolved', 'write', 'gh pr comment did not return a comment URL.', { supportedFixes: ['inspect the pull request comments before retrying'] });
+      } else {
+        ghApi('PATCH', `repos/${resolvedRepo}/issues/comments/${tempCommentId}`, { body: finalBlock });
+      }
       finalComment = { id: tempCommentId, url: createdUrl, bodySha256: sha256(finalBlock) };
       tempCommentId = null;
     }

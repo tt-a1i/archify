@@ -14,7 +14,7 @@ function svg(label) {
 }
 
 // Writes a build receipt the way `archify pr build` lays it out.
-function receiptFixture({ views = ['topology', 'flow'], bytes, prefix = 'archify-pr-attach-' } = {}) {
+function receiptFixture({ views = ['topology', 'flow'], bytes, revisions, prefix = 'archify-pr-attach-' } = {}) {
   const dir = createScratchDirectory(path.join(os.tmpdir(), prefix));
   const viewsDir = path.join(dir, 'views');
   fs.mkdirSync(viewsDir);
@@ -32,7 +32,7 @@ function receiptFixture({ views = ['topology', 'flow'], bytes, prefix = 'archify
   const markdown = lines.join('\n');
   const markdownPath = path.join(dir, 'pr-pack.md');
   fs.writeFileSync(markdownPath, `${markdown}\n`);
-  const receipt = { schemaVersion: 1, ok: true, command: 'pr build', kind: 'pr-pack-receipt', markdown: { path: markdownPath, sha256: sha256(markdown) }, assets };
+  const receipt = { schemaVersion: 1, ok: true, command: 'pr build', kind: 'pr-pack-receipt', revisions, markdown: { path: markdownPath, sha256: sha256(markdown) }, assets };
   const receiptPath = path.join(dir, 'pr-pack.receipt.json');
   fs.writeFileSync(receiptPath, JSON.stringify(receipt, null, 2));
   return { dir, receiptPath, markdown, assets };
@@ -40,7 +40,7 @@ function receiptFixture({ views = ['topology', 'flow'], bytes, prefix = 'archify
 
 // Scripted gh: models the one behaviour that matters, `--attach` rewriting
 // Markdown image references to user-attachments URLs and nothing else.
-function fakeGh({ body = '', comments = [], version = '2.99.0', auth = true, rewrite = (token) => `https://github.com/user-attachments/assets/${token.replace(/[^a-z0-9]/gi, '')}`, fail = {} } = {}) {
+function fakeGh({ body = '', comments = [], headRefOid = 'a'.repeat(40), version = '2.99.0', auth = true, rewrite = (token) => `https://github.com/user-attachments/assets/${token.replace(/[^a-z0-9]/gi, '')}`, fail = {} } = {}) {
   const state = { body, comments: comments.map((comment) => ({ ...comment })), calls: [], nextComment: 900 };
   const rewriteMarkdown = (text) => text.replace(/!\[([^\]]+)\]\((<[^>]*>|[^)]+)\)/g, (match, token, raw) => {
     const file = raw.startsWith('<') ? raw.slice(1, -1) : raw;
@@ -56,7 +56,7 @@ function fakeGh({ body = '', comments = [], version = '2.99.0', auth = true, rew
     if (key === 'auth status') return auth ? { status: 0, stdout: 'Logged in\n', stderr: '' } : { status: 1, stdout: '', stderr: 'You are not logged into any GitHub hosts.' };
     if (key === 'pr view') {
       const fields = args[args.indexOf('--json') + 1].split(',');
-      const full = { number: 42, url: 'https://github.com/acme/checkout/pull/42', body: state.body, comments: state.comments.map(({ id, url, body: commentBody }) => ({ id: `IC_${id}`, url, body: commentBody })) };
+      const full = { number: 42, headRefOid, url: 'https://github.com/acme/checkout/pull/42', body: state.body, comments: state.comments.map(({ id, url, body: commentBody }) => ({ id: `IC_${id}`, url, body: commentBody })) };
       return { status: 0, stdout: JSON.stringify(Object.fromEntries(fields.map((field) => [field, full[field]]))), stderr: '' };
     }
     if (key === 'pr edit') {
@@ -221,12 +221,14 @@ test('attach --target comment creates a sticky comment, then updates it in place
   assert.ok(sticky.body.endsWith(PACK_END));
   for (const line of sticky.body.split('\n').filter((entry) => entry.startsWith('<a href='))) assert.match(line, PICTURE_LINE);
 
+  state.calls.length = 0;
   const second = await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, target: 'comment', gh });
   assert.equal(second.comment.id, 901, 'the existing sticky comment is reused');
-  assert.equal(state.comments.length, 2, 'the temporary upload comment is deleted');
+  assert.equal(state.comments.length, 2, 'the existing comment is updated without a temporary comment');
+  assert.equal(state.calls.some((call) => call.args.includes('--attach')), false);
   assert.equal(state.comments[1].id, 901);
   assert.doesNotMatch(state.comments[1].body, /archify-asset-/);
-  assert.deepEqual(second.steps.map((step) => step.action), ['preflight', 'read-target', 'upload', 'write']);
+  assert.deepEqual(second.steps.map((step) => step.action), ['preflight', 'read-target', 'skipped', 'write']);
 });
 
 test('attach --target comment deletes its temporary comment when mapping fails', async () => {
@@ -280,4 +282,82 @@ test('attach helpers parse gh versions, PR references and user-attachments token
   const attachments = [{ id: 'a-light', token: 'archify-asset-0:0123456789abcdef' }, { id: 'a-dark', token: 'archify-asset-1:0123456789abcdef' }];
   const body = '![archify-asset-0:0123456789abcdef](https://github.com/user-attachments/assets/aaa-111)\n![archify-asset-1:0123456789abcdef](views/a-dark.svg)\n![archify-asset-1:0123456789abcdef](https://evil.example/assets/x)';
   assert.deepEqual(extractAssetUrls(body, attachments), { urls: { 'a-light': 'https://github.com/user-attachments/assets/aaa-111' }, missing: ['a-dark'] });
+});
+
+test('attach refuses a build for another PR head before writing unless allowStale is explicit', async () => {
+  const { receiptPath } = receiptFixture({ revisions: { baseSha: 'b'.repeat(40), headSha: 'c'.repeat(40) } });
+  const { gh, state } = fakeGh();
+  await assert.rejects(attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, gh }), (error) => {
+    assert.equal(error.code, 'pr-attach/head-sha-outdated');
+    assert.equal(error.diagnostics[0].evidence.headRefOid, 'a'.repeat(40));
+    return true;
+  });
+  assert.equal(state.calls.some((call) => call.args.includes('--attach')), false);
+  const result = await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, allowStale: true, gh });
+  assert.equal(result.ok, true);
+  assert.match(state.body, /"headSha":"c{40}"/);
+});
+
+test('attach fills PR URLs and caches unchanged SVG bytes across metadata-only and partial updates', async () => {
+  const { receiptPath, assets, dir } = receiptFixture({ revisions: { headSha: 'a'.repeat(40) } });
+  const markdownPath = path.join(dir, 'pr-pack.md');
+  const draft = fs.readFileSync(markdownPath, 'utf8').trimEnd().replace('## Ledger rollout', '## Ledger rollout\n[Code]({{archify:pr-url}}/files#diff-abcR10)');
+  fs.writeFileSync(markdownPath, `${draft}\n`);
+  const receipt = JSON.parse(fs.readFileSync(receiptPath));
+  receipt.markdown.sha256 = sha256(draft);
+  fs.writeFileSync(receiptPath, JSON.stringify(receipt));
+  const { gh, state } = fakeGh({ body: HAND_WRITTEN });
+  const first = await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, gh });
+  assert.match(state.body, /\[Code\]\(https:\/\/github.com\/acme\/checkout\/pull\/42\/files#diff-abcR10\)/);
+  assert.match(state.body, /<!-- archify-pr-pack:start -->\n<!-- archify-pr-meta: /);
+  const revisedDraft = draft.replace('## Ledger rollout', '## Ledger rollout update');
+  fs.writeFileSync(markdownPath, `${revisedDraft}\n`);
+  receipt.markdown.sha256 = sha256(revisedDraft);
+  fs.writeFileSync(receiptPath, JSON.stringify(receipt));
+  state.calls.length = 0;
+  const same = await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, gh });
+  assert.deepEqual(same.assets, first.assets);
+  assert.match(state.body, /## Ledger rollout update/);
+  assert.equal(state.calls.filter((call) => call.args.includes('--attach')).length, 0);
+  assert.equal(state.calls.filter((call) => call.args.slice(0, 2).join(' ') === 'pr edit').length, 1);
+  fs.appendFileSync(assets[0].path, '<!-- changed -->');
+  state.calls.length = 0;
+  const partial = await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, gh });
+  const upload = state.calls.find((call) => call.args.includes('--attach'));
+  assert.equal(upload.args.filter((arg) => arg === '--attach').length, 1);
+  assert.notEqual(partial.assets[assets[0].path], first.assets[assets[0].path]);
+  for (const asset of assets.slice(1)) assert.equal(partial.assets[asset.path], first.assets[asset.path]);
+});
+
+test('attach ignores malformed metadata and untrusted cached URLs', async () => {
+  const { receiptPath, assets } = receiptFixture();
+  const key = `${assets[0].id}:${sha256(fs.readFileSync(assets[0].path)).slice(0, 16)}`;
+  for (const metadata of ['not JSON', JSON.stringify({ v: 1, assets: { [key]: 'https://evil.example/image.svg' } })]) {
+    const { gh, state } = fakeGh({ body: `${PACK_START}\n<!-- archify-pr-meta: ${metadata} -->\n${PACK_END}` });
+    await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, gh });
+    const upload = state.calls.find((call) => call.args.includes('--attach'));
+    assert.equal(upload.args.filter((arg) => arg === '--attach').length, 4);
+    assert.doesNotMatch(state.body, /evil.example/);
+  }
+});
+
+
+test('an unchanged-asset refresh restores its original body when the final write fails', async () => {
+  const { receiptPath } = receiptFixture();
+  const { gh, state } = fakeGh({ body: HAND_WRITTEN });
+  await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, gh });
+  const original = state.body;
+  state.calls.length = 0;
+  let failed = false;
+  const failOnce = (call) => {
+    if (!failed && call.args.slice(0, 2).join(' ') === 'pr edit') {
+      failed = true;
+      state.body = 'partially updated body';
+      return { status: 1, stdout: '', stderr: 'connection lost after write' };
+    }
+    return gh(call);
+  };
+  await assert.rejects(attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: receiptPath, gh: failOnce }), (error) => error.code === 'pr-attach/write-failed' && error.rollback.restored);
+  assert.equal(state.body, original);
+  assert.equal(state.calls.some((call) => call.args.includes('--attach')), false);
 });
