@@ -25,8 +25,6 @@ import {
 } from './characters.js';
 import { CharacterStream } from './characterStream.js';
 import {
-    Comment,
-    CommentType,
     DedentToken,
     FStringEndToken,
     FStringMiddleToken,
@@ -90,8 +88,6 @@ const _keywords: Map<string, KeywordType> = new Map([
     ['None', KeywordType.None],
     ['True', KeywordType.True],
 ]);
-
-const _softKeywords = new Set(['match', 'case', 'type', 'lazy']);
 
 // Fast-reject table: keywords are 2–9 chars long and only start with these
 // character codes. A 128-entry boolean table indexed by charCodeAt(0) rejects
@@ -353,253 +349,12 @@ function removeUnderscoresFromRange(text: string, start: number, end: number): s
     return result;
 }
 
-// Manual replacement for magicsRegEx = /\\\s*$/
-// Check if a range [start, end) within `text` ends with a backslash followed
-// by optional whitespace.
-function endsWithBackslashContinuation(text: string, start: number, end: number): boolean {
-    let i = end - 1;
-    // Skip trailing whitespace
-    while (i >= start) {
-        const ch = text.charCodeAt(i);
-        if (ch === Char.Space || ch === Char.Tab || ch === Char.FormFeed) {
-            i--;
-        } else {
-            break;
-        }
-    }
-    return i >= start && text.charCodeAt(i) === Char.Backslash;
-}
-
-// Result structure matching the shape previously extracted from regex match groups.
-interface IgnoreDirectiveMatch {
-    fullMatch: string; // group 0: full matched text
-    prefix: string; // group 1: prefix before directive keyword
-    bracketContent?: string; // group 4: content inside [...] if present
-    index: number; // match position within the input string
-}
-
-// Parses a bracketed rule list starting at `pos` (which must point at '[').
-// Returns the bracket content (without brackets) and the position just past ']',
-// or undefined if the bracket is malformed (e.g. unclosed, or contains invalid chars
-// before a closing bracket is found).
-function parseIgnoreBracketContent(
-    text: string,
-    pos: number,
-    rangeEnd: number,
-    allowColon: boolean
-): { content: string; newPos: number } | undefined {
-    pos++; // skip '['
-    const bracketStart = pos;
-    while (pos < rangeEnd && text.charCodeAt(pos) !== Char.CloseBracket) {
-        // Only allow valid bracket content chars: \s, \w, -, ,
-        // (plus ':' for type: ignore to support tool-namespaced codes)
-        const bc = text.charCodeAt(pos);
-        if (
-            (bc >= Char.a && bc <= Char.z) ||
-            (bc >= Char.A && bc <= Char.Z) ||
-            (bc >= Char._0 && bc <= Char._9) ||
-            bc === Char.Underscore ||
-            bc === Char.Hyphen ||
-            bc === Char.Comma ||
-            bc === Char.Space ||
-            bc === Char.Tab ||
-            (allowColon && bc === Char.Colon)
-        ) {
-            pos++;
-        } else {
-            break;
-        }
-    }
-    if (pos < rangeEnd && text.charCodeAt(pos) === Char.CloseBracket) {
-        return { content: text.slice(bracketStart, pos), newPos: pos + 1 };
-    }
-    return undefined;
-}
-
-// Manual replacement for typeIgnoreCommentRegEx / pyrightIgnoreCommentRegEx.
-// Scans `text` within [rangeStart, rangeEnd) for `<directive>: ignore [rules]`
-// where directive is 'type' or 'pyright'.
-// Returns a match object or undefined. Returned `index` is absolute within `text`.
-function matchIgnoreDirective(
-    text: string,
-    rangeStart: number,
-    rangeEnd: number,
-    directive: string
-): IgnoreDirectiveMatch | undefined {
-    // The directive can be preceded by optional `#` and whitespace, or
-    // appear at the start of the range with optional whitespace.
-    // type: ignore allows tool-namespaced codes (e.g. "ty:rule-name") in brackets;
-    // pyright: ignore does not.
-    const allowColonInBracket = directive === 'type';
-    let searchFrom = rangeStart;
-
-    while (searchFrom < rangeEnd) {
-        // Find the next occurrence of the directive keyword, bounded by
-        // rangeEnd. A bounded hand-rolled scan is important here: native
-        // String.prototype.indexOf has no end bound and, when the keyword is
-        // absent from the current comment but present elsewhere in the file,
-        // can scan well past rangeEnd — producing O(n) behavior per comment
-        // and O(n^2) overall on comment-heavy files.
-        const firstCharCode = directive.charCodeAt(0);
-        let directiveIdx = -1;
-        const scanLimit = rangeEnd - directive.length;
-        for (let i = searchFrom; i <= scanLimit; i++) {
-            if (text.charCodeAt(i) === firstCharCode) {
-                let found = true;
-                for (let d = 1; d < directive.length; d++) {
-                    if (text.charCodeAt(i + d) !== directive.charCodeAt(d)) {
-                        found = false;
-                        break;
-                    }
-                }
-                if (found) {
-                    directiveIdx = i;
-                    break;
-                }
-            }
-        }
-        if (directiveIdx < 0) {
-            return undefined;
-        }
-
-        // Determine the prefix: scan backward from directiveIdx to find
-        // the `#` or start-of-range, collecting whitespace.
-        let prefixStart = directiveIdx;
-        let foundAnchor = false;
-
-        // Walk backward over spaces/tabs
-        let j = directiveIdx - 1;
-        while (j >= rangeStart && (text.charCodeAt(j) === Char.Space || text.charCodeAt(j) === Char.Tab)) {
-            j--;
-        }
-
-        if (j < rangeStart) {
-            // At start of range
-            prefixStart = rangeStart;
-            foundAnchor = true;
-        } else if (text.charCodeAt(j) === Char.Hash) {
-            prefixStart = j;
-            foundAnchor = true;
-        }
-
-        if (!foundAnchor) {
-            searchFrom = directiveIdx + 1;
-            continue;
-        }
-
-        // After directive keyword, expect ':'
-        let pos = directiveIdx + directive.length;
-        if (pos >= rangeEnd || text.charCodeAt(pos) !== Char.Colon) {
-            searchFrom = directiveIdx + 1;
-            continue;
-        }
-        pos++; // skip ':'
-
-        // Skip optional whitespace after ':'
-        while (pos < rangeEnd && (text.charCodeAt(pos) === Char.Space || text.charCodeAt(pos) === Char.Tab)) {
-            pos++;
-        }
-
-        // Expect 'ignore'
-        const ignoreStr = 'ignore';
-        if (pos + ignoreStr.length > rangeEnd) {
-            searchFrom = directiveIdx + 1;
-            continue;
-        }
-
-        let matched = true;
-        for (let k = 0; k < ignoreStr.length; k++) {
-            if (text.charCodeAt(pos + k) !== ignoreStr.charCodeAt(k)) {
-                matched = false;
-                break;
-            }
-        }
-        if (!matched) {
-            searchFrom = directiveIdx + 1;
-            continue;
-        }
-        pos += ignoreStr.length;
-
-        // After 'ignore', expect whitespace, '[', or end-of-range
-        let bracketContent: string | undefined;
-
-        if (pos >= rangeEnd) {
-            // End of range — valid
-        } else {
-            const ch = text.charCodeAt(pos);
-            if (ch === Char.Space || ch === Char.Tab) {
-                // Skip whitespace to check for optional bracket
-                while (pos < rangeEnd && (text.charCodeAt(pos) === Char.Space || text.charCodeAt(pos) === Char.Tab)) {
-                    pos++;
-                }
-                if (pos < rangeEnd && text.charCodeAt(pos) === Char.OpenBracket) {
-                    const parsed = parseIgnoreBracketContent(text, pos, rangeEnd, allowColonInBracket);
-                    if (parsed === undefined) {
-                        searchFrom = directiveIdx + 1;
-                        continue;
-                    }
-                    bracketContent = parsed.content;
-                    pos = parsed.newPos;
-                }
-            } else if (ch === Char.OpenBracket) {
-                // Bracket immediately after 'ignore'
-                const parsed = parseIgnoreBracketContent(text, pos, rangeEnd, allowColonInBracket);
-                if (parsed === undefined) {
-                    searchFrom = directiveIdx + 1;
-                    continue;
-                }
-                bracketContent = parsed.content;
-                pos = parsed.newPos;
-            } else {
-                // No space, no bracket — not a valid match
-                searchFrom = directiveIdx + 1;
-                continue;
-            }
-        }
-
-        const prefix = text.slice(prefixStart, directiveIdx);
-        const fullMatch = text.slice(prefixStart, pos);
-
-        return {
-            fullMatch,
-            prefix,
-            bracketContent,
-            index: prefixStart,
-        };
-    }
-
-    return undefined;
-}
-
 export interface TokenizerOutput {
     // List of all tokens.
     tokens: TextRangeCollection<Token>;
 
     // List of ranges that comprise the lines.
     lines: TextRangeCollection<TextRange>;
-
-    // Map of all line numbers that end in a "type: ignore" comment.
-    typeIgnoreLines: Map<number, IgnoreComment>;
-
-    // Map of all line numbers that end in a "pyright: ignore" comment.
-    pyrightIgnoreLines: Map<number, IgnoreComment>;
-
-    // Program starts with a "type: ignore" comment.
-    typeIgnoreAll: IgnoreComment | undefined;
-
-    // Line-end sequence ('/n', '/r', or '/r/n').
-    predominantEndOfLineSequence: string;
-
-    // True if the tokenizer was able to identify the file's predominant
-    // tab sequence. False if predominantTabSequence is set to our default.
-    hasPredominantTabSequence: boolean;
-
-    // Tab sequence ('/t or consecutive spaces).
-    predominantTabSequence: string;
-
-    // Does the code mostly use single or double quote
-    // characters for string literals?
-    predominantSingleQuoteCharacter: string;
 }
 
 interface StringScannerOutput {
@@ -614,16 +369,6 @@ interface IndentInfo {
     isTabPresent: boolean;
 }
 
-export interface IgnoreCommentRule {
-    text: string;
-    range: TextRange;
-}
-
-export interface IgnoreComment {
-    range: TextRange;
-    rulesList: IgnoreCommentRule[] | undefined;
-}
-
 interface FStringReplacementFieldContext {
     inFormatSpecifier: boolean;
     parenDepth: number;
@@ -635,12 +380,6 @@ interface FStringContext {
     activeReplacementField?: FStringReplacementFieldContext;
 }
 
-enum MagicsKind {
-    None,
-    Line,
-    Cell,
-}
-
 export class Tokenizer {
     private _cs = new CharacterStream('');
     private _tokens: Token[] = [];
@@ -648,41 +387,8 @@ export class Tokenizer {
     private _parenDepth = 0;
     private _lineRanges: TextRange[] = [];
     private _indentAmounts: IndentInfo[] = [];
-    private _typeIgnoreAll: IgnoreComment | undefined;
-    // Cached answer to "are there any non-trivial tokens yet?" Once true it
-    // stays true, so the O(n) scan in _handleComment only runs while the token
-    // stream consists purely of NewLine / Indent tokens.
-    private _hasTokenBeforeIgnoreAll = false;
-    private _typeIgnoreLines = new Map<number, IgnoreComment>();
-    private _pyrightIgnoreLines = new Map<number, IgnoreComment>();
-    private _comments: Comment[] | undefined;
     private _fStringStack: FStringContext[] = [];
     private _activeFString: FStringContext | undefined;
-
-    // Total times CR, CR/LF, and LF are used to terminate
-    // lines. Used to determine the predominant line ending.
-    private _crCount = 0;
-    private _crLfCount = 0;
-    private _lfCount = 0;
-
-    // Number of times an indent token is emitted.
-    private _indentCount = 0;
-
-    // Number of times an indent token is emitted and a tab character
-    // is present (used to determine predominant tab sequence).
-    private _indentTabCount = 0;
-
-    // Number of spaces that are added for an indent token
-    // (used to determine predominant tab sequence).
-    private _indentSpacesTotal = 0;
-
-    // Number of single or double quote string literals found
-    // in the code.
-    private _singleQuoteCount = 0;
-    private _doubleQuoteCount = 0;
-
-    // Assume Jupyter notebook tokenization rules?
-    private _useNotebookMode = false;
 
     // Direct-mapped identifier intern cache. Indexed by a cheap hash of
     // (firstChar, lastChar, length). On a hit (slot defined and string
@@ -694,13 +400,7 @@ export class Tokenizer {
     private static readonly _identifierCacheMask = Tokenizer._identifierCacheSize - 1;
     private _identifierCache: Array<string | undefined> = new Array(Tokenizer._identifierCacheSize);
 
-    tokenize(
-        text: string,
-        start?: number,
-        length?: number,
-        initialParenDepth = 0,
-        useNotebookMode = false
-    ): TokenizerOutput {
+    tokenize(text: string, start?: number, length?: number): TokenizerOutput {
         if (start === undefined) {
             start = 0;
         } else if (start < 0 || start > text.length) {
@@ -719,10 +419,9 @@ export class Tokenizer {
         this._cs.position = start;
         this._tokens = [];
         this._prevLineStart = 0;
-        this._parenDepth = initialParenDepth;
+        this._parenDepth = 0;
         this._lineRanges = [];
         this._indentAmounts = [];
-        this._useNotebookMode = useNotebookMode;
         // Clear per-source identifier intern cache.
         this._identifierCache.fill(undefined);
 
@@ -755,7 +454,7 @@ export class Tokenizer {
         // Insert an implied new line to make parsing easier.
         if (this._tokens.length === 0 || this._tokens[this._tokens.length - 1].type !== TokenType.NewLine) {
             if (this._parenDepth === 0) {
-                this._tokens.push(NewLineToken.create(this._cs.position, 0, NewLineType.Implied, this._getComments()));
+                this._tokens.push(NewLineToken.create(this._cs.position, 0, NewLineType.Implied));
             }
         }
 
@@ -763,7 +462,7 @@ export class Tokenizer {
         this._setIndent(this._cs.position, 0, 0, /* isSpacePresent */ false, /* isTabPresent */ false);
 
         // Add a final end-of-stream token to make parsing easier.
-        this._tokens.push(Token.create(TokenType.EndOfStream, this._cs.position, 0, this._getComments()));
+        this._tokens.push(Token.create(TokenType.EndOfStream, this._cs.position, 0));
 
         // Add the final line range.
         this._addLineRange();
@@ -777,78 +476,14 @@ export class Tokenizer {
             }
         }
 
-        let predominantEndOfLineSequence = '\n';
-        if (this._crCount > this._crLfCount && this._crCount > this._lfCount) {
-            predominantEndOfLineSequence = '\r';
-        } else if (this._crLfCount > this._crCount && this._crLfCount > this._lfCount) {
-            predominantEndOfLineSequence = '\r\n';
-        }
-
-        let predominantTabSequence = '    ';
-        let hasPredominantTabSequence = false;
-        // If more than half of the indents use tab sequences,
-        // assume we're using tabs rather than spaces.
-        if (this._indentTabCount > this._indentCount / 2) {
-            hasPredominantTabSequence = true;
-            predominantTabSequence = '\t';
-        } else if (this._indentCount > 0) {
-            hasPredominantTabSequence = true;
-            // Compute the average number of spaces per indent
-            // to estimate the predominant tab value.
-            let averageSpacePerIndent = Math.round(this._indentSpacesTotal / this._indentCount);
-            if (averageSpacePerIndent < 1) {
-                averageSpacePerIndent = 1;
-            } else if (averageSpacePerIndent > defaultTabSize) {
-                averageSpacePerIndent = defaultTabSize;
-            }
-            predominantTabSequence = '';
-            for (let i = 0; i < averageSpacePerIndent; i++) {
-                predominantTabSequence += ' ';
-            }
-        }
-
         return {
             tokens: new TextRangeCollection(this._tokens),
             lines: new TextRangeCollection(this._lineRanges),
-            typeIgnoreLines: this._typeIgnoreLines,
-            typeIgnoreAll: this._typeIgnoreAll,
-            pyrightIgnoreLines: this._pyrightIgnoreLines,
-            predominantEndOfLineSequence,
-            hasPredominantTabSequence,
-            predominantTabSequence,
-            predominantSingleQuoteCharacter: this._singleQuoteCount >= this._doubleQuoteCount ? "'" : '"',
         };
     }
 
     static getOperatorInfo(operatorType: OperatorType): OperatorFlags {
         return _operatorInfo[operatorType];
-    }
-
-    static isWhitespace(token: Token) {
-        return token.type === TokenType.NewLine || token.type === TokenType.Indent || token.type === TokenType.Dedent;
-    }
-
-    static isPythonKeyword(name: string, includeSoftKeywords = false): boolean {
-        const keyword = _keywords.get(name);
-        if (!keyword) {
-            return false;
-        }
-
-        if (includeSoftKeywords) {
-            return true;
-        }
-
-        return !_softKeywords.has(name);
-    }
-
-    static isPythonIdentifier(value: string) {
-        for (let i = 0; i < value.length; i++) {
-            if (i === 0 ? !isIdentifierStartChar(value.charCodeAt(i)) : !isIdentifierChar(value.charCodeAt(i))) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     static isOperatorAssignment(operatorType?: OperatorType): boolean {
@@ -912,27 +547,8 @@ export class Tokenizer {
         }
 
         if (this._cs.currentChar === Char.Hash) {
-            this._handleComment();
+            this._cs.skipToEol();
             return true;
-        }
-
-        if (this._useNotebookMode) {
-            const kind = this._getIPythonMagicsKind();
-            if (kind === MagicsKind.Line) {
-                this._handleIPythonMagics(
-                    this._cs.currentChar === Char.Percent ? CommentType.IPythonMagic : CommentType.IPythonShellEscape
-                );
-                return true;
-            }
-
-            if (kind === MagicsKind.Cell) {
-                this._handleIPythonMagics(
-                    this._cs.currentChar === Char.Percent
-                        ? CommentType.IPythonCellMagic
-                        : CommentType.IPythonCellShellEscape
-                );
-                return true;
-            }
         }
 
         switch (this._cs.currentChar) {
@@ -996,7 +612,7 @@ export class Tokenizer {
 
             case Char.OpenParenthesis: {
                 this._parenDepth++;
-                this._tokens.push(Token.create(TokenType.OpenParenthesis, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.OpenParenthesis, this._cs.position, 1));
                 break;
             }
 
@@ -1004,13 +620,13 @@ export class Tokenizer {
                 if (this._parenDepth > 0) {
                     this._parenDepth--;
                 }
-                this._tokens.push(Token.create(TokenType.CloseParenthesis, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.CloseParenthesis, this._cs.position, 1));
                 break;
             }
 
             case Char.OpenBracket: {
                 this._parenDepth++;
-                this._tokens.push(Token.create(TokenType.OpenBracket, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.OpenBracket, this._cs.position, 1));
                 break;
             }
 
@@ -1018,13 +634,13 @@ export class Tokenizer {
                 if (this._parenDepth > 0) {
                     this._parenDepth--;
                 }
-                this._tokens.push(Token.create(TokenType.CloseBracket, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.CloseBracket, this._cs.position, 1));
                 break;
             }
 
             case Char.OpenBrace: {
                 this._parenDepth++;
-                this._tokens.push(Token.create(TokenType.OpenCurlyBrace, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.OpenCurlyBrace, this._cs.position, 1));
 
                 if (this._activeFString) {
                     // Are we starting a new replacement field?
@@ -1059,22 +675,22 @@ export class Tokenizer {
                 if (this._parenDepth > 0) {
                     this._parenDepth--;
                 }
-                this._tokens.push(Token.create(TokenType.CloseCurlyBrace, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.CloseCurlyBrace, this._cs.position, 1));
                 break;
             }
 
             case Char.Comma: {
-                this._tokens.push(Token.create(TokenType.Comma, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.Comma, this._cs.position, 1));
                 break;
             }
 
             case Char.Backtick: {
-                this._tokens.push(Token.create(TokenType.Backtick, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.Backtick, this._cs.position, 1));
                 break;
             }
 
             case Char.Semicolon: {
-                this._tokens.push(Token.create(TokenType.Semicolon, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.Semicolon, this._cs.position, 1));
                 break;
             }
 
@@ -1086,14 +702,14 @@ export class Tokenizer {
                         this._activeFString.activeReplacementField.parenDepth !== this._parenDepth
                     ) {
                         this._tokens.push(
-                            OperatorToken.create(this._cs.position, 2, OperatorType.Walrus, this._getComments())
+                            OperatorToken.create(this._cs.position, 2, OperatorType.Walrus)
                         );
                         this._cs.advance(1);
                         break;
                     }
                 }
 
-                this._tokens.push(Token.create(TokenType.Colon, this._cs.position, 1, this._getComments()));
+                this._tokens.push(Token.create(TokenType.Colon, this._cs.position, 1));
 
                 if (
                     this._activeFString?.activeReplacementField &&
@@ -1113,11 +729,11 @@ export class Tokenizer {
 
                 if (this._cs.currentChar === Char.Period) {
                     if (this._cs.nextChar === Char.Period && this._cs.lookAhead(2) === Char.Period) {
-                        this._tokens.push(Token.create(TokenType.Ellipsis, this._cs.position, 3, this._getComments()));
+                        this._tokens.push(Token.create(TokenType.Ellipsis, this._cs.position, 3));
                         this._cs.advance(3);
                         return true;
                     }
-                    this._tokens.push(Token.create(TokenType.Dot, this._cs.position, 1, this._getComments()));
+                    this._tokens.push(Token.create(TokenType.Dot, this._cs.position, 1));
                     break;
                 }
 
@@ -1146,15 +762,8 @@ export class Tokenizer {
             // New lines are ignored within parentheses.
             // We'll also avoid adding multiple newlines in a row to simplify parsing.
             if (this._tokens.length === 0 || this._tokens[this._tokens.length - 1].type !== TokenType.NewLine) {
-                this._tokens.push(NewLineToken.create(this._cs.position, length, newLineType, this._getComments()));
+                this._tokens.push(NewLineToken.create(this._cs.position, length, newLineType));
             }
-        }
-        if (newLineType === NewLineType.CarriageReturn) {
-            this._crCount++;
-        } else if (newLineType === NewLineType.CarriageReturnLineFeed) {
-            this._crLfCount++;
-        } else {
-            this._lfCount++;
         }
         this._cs.advance(length);
         this._addLineRange();
@@ -1227,19 +836,13 @@ export class Tokenizer {
         // Insert indent or dedent tokens as necessary.
         if (this._indentAmounts.length === 0) {
             if (tab8Spaces > 0) {
-                this._indentCount++;
-                if (isTabPresent) {
-                    this._indentTabCount++;
-                }
-                this._indentSpacesTotal += tab8Spaces;
-
                 this._indentAmounts.push({
                     tab1Spaces,
                     tab8Spaces,
                     isSpacePresent,
                     isTabPresent,
                 });
-                this._tokens.push(IndentToken.create(startOffset, tab1Spaces, tab8Spaces, false, this._getComments()));
+                this._tokens.push(IndentToken.create(startOffset, tab1Spaces, tab8Spaces, false));
             }
         } else {
             const prevTabInfo = this._indentAmounts[this._indentAmounts.length - 1];
@@ -1252,12 +855,6 @@ export class Tokenizer {
                     ((prevTabInfo.isSpacePresent && isTabPresent) || (prevTabInfo.isTabPresent && isSpacePresent)) &&
                     prevTabInfo.tab1Spaces >= tab1Spaces;
 
-                this._indentCount++;
-                if (isTabPresent) {
-                    this._indentTabCount++;
-                }
-                this._indentSpacesTotal += tab8Spaces - this._indentAmounts[this._indentAmounts.length - 1].tab8Spaces;
-
                 this._indentAmounts.push({
                     tab1Spaces,
                     tab8Spaces,
@@ -1266,7 +863,7 @@ export class Tokenizer {
                 });
 
                 this._tokens.push(
-                    IndentToken.create(startOffset, tab1Spaces, tab8Spaces, isIndentAmbiguous, this._getComments())
+                    IndentToken.create(startOffset, tab1Spaces, tab8Spaces, isIndentAmbiguous)
                 );
             } else if (prevTabInfo.tab8Spaces === tab8Spaces) {
                 // The Python spec says that if there is ambiguity about how tabs should
@@ -1275,7 +872,7 @@ export class Tokenizer {
                 // so the parser can later report it.
                 if ((prevTabInfo.isSpacePresent && isTabPresent) || (prevTabInfo.isTabPresent && isSpacePresent)) {
                     this._tokens.push(
-                        IndentToken.create(startOffset, tab1Spaces, tab8Spaces, true, this._getComments())
+                        IndentToken.create(startOffset, tab1Spaces, tab8Spaces, true)
                     );
                 }
             } else {
@@ -1312,8 +909,7 @@ export class Tokenizer {
                             0,
                             actualDedentAmount,
                             matchesIndent,
-                            isDedentAmbiguous,
-                            this._getComments()
+                            isDedentAmbiguous
                         )
                     );
 
@@ -1380,10 +976,10 @@ export class Tokenizer {
             const keywordType = getKeywordTypeFromTextSlice(text, start, length);
 
             if (keywordType !== undefined) {
-                this._tokens.push(KeywordToken.create(start, length, keywordType, this._getComments()));
+                this._tokens.push(KeywordToken.create(start, length, keywordType));
             } else {
                 const value = this._internIdentifier(text, start, end, length);
-                this._tokens.push(IdentifierToken.create(start, length, value, this._getComments()));
+                this._tokens.push(IdentifierToken.create(start, length, value));
             }
             return true;
         }
@@ -1493,7 +1089,7 @@ export class Tokenizer {
                     }
 
                     this._tokens.push(
-                        NumberToken.create(start, end - start, intValue, true, false, this._getComments())
+                        NumberToken.create(start, end - start, intValue, true, false)
                     );
                     return true;
                 }
@@ -1556,7 +1152,7 @@ export class Tokenizer {
                 }
 
                 this._tokens.push(
-                    NumberToken.create(start, tokenLength, intValue, true, isImaginary, this._getComments())
+                    NumberToken.create(start, tokenLength, intValue, true, isImaginary)
                 );
                 return true;
             }
@@ -1581,7 +1177,7 @@ export class Tokenizer {
                         tokenLength += 1;
                     }
                     this._tokens.push(
-                        NumberToken.create(start, tokenLength, value, false, isImaginary, this._getComments())
+                        NumberToken.create(start, tokenLength, value, false, isImaginary)
                     );
                     return true;
                 }
@@ -1602,14 +1198,14 @@ export class Tokenizer {
             const twoCharKey = (currentChar << 8) | nextChar;
             const specialTokenType = _twoCharSpecialTokenTypeMap.get(twoCharKey);
             if (specialTokenType !== undefined) {
-                this._tokens.push(Token.create(specialTokenType, this._cs.position, 2, this._getComments()));
+                this._tokens.push(Token.create(specialTokenType, this._cs.position, 2));
                 this._cs.advance(2);
                 return true;
             }
 
             const twoCharOperatorType = _twoCharOperatorTypeMap.get(twoCharKey);
             if (twoCharOperatorType !== undefined) {
-                this._tokens.push(OperatorToken.create(this._cs.position, 2, twoCharOperatorType, this._getComments()));
+                this._tokens.push(OperatorToken.create(this._cs.position, 2, twoCharOperatorType));
                 this._cs.advance(2);
                 return true;
             }
@@ -1626,8 +1222,7 @@ export class Tokenizer {
                         OperatorToken.create(
                             this._cs.position,
                             repeatedLength,
-                            operatorType as OperatorType,
-                            this._getComments()
+                            operatorType as OperatorType
                         )
                     );
                     this._cs.advance(repeatedLength);
@@ -1648,7 +1243,7 @@ export class Tokenizer {
                     operatorType = singleCharOperatorType as OperatorType;
                 }
 
-                this._tokens.push(OperatorToken.create(this._cs.position, length, operatorType, this._getComments()));
+                this._tokens.push(OperatorToken.create(this._cs.position, length, operatorType));
                 this._cs.advance(length);
                 return true;
             }
@@ -1657,7 +1252,7 @@ export class Tokenizer {
         // `!=` is handled by the 2-char fast path above.
         if (currentChar === Char.ExclamationMark && this._activeFString) {
             // Handle the conversion separator (!) within an f-string.
-            this._tokens.push(Token.create(TokenType.ExclamationMark, this._cs.position, 1, this._getComments()));
+            this._tokens.push(Token.create(TokenType.ExclamationMark, this._cs.position, 1));
             this._cs.advance(1);
             return true;
         }
@@ -1686,164 +1281,10 @@ export class Tokenizer {
         }
         const length = this._cs.position - start;
         if (length > 0) {
-            this._tokens.push(Token.create(TokenType.Invalid, start, length, this._getComments()));
+            this._tokens.push(Token.create(TokenType.Invalid, start, length));
             return true;
         }
         return false;
-    }
-
-    private _getComments(): Comment[] | undefined {
-        const prevComments = this._comments;
-        this._comments = undefined;
-        return prevComments;
-    }
-
-    private _getIPythonMagicsKind(): MagicsKind {
-        const curChar = this._cs.currentChar;
-        if (curChar !== Char.Percent && curChar !== Char.ExclamationMark) {
-            return MagicsKind.None;
-        }
-
-        const prevToken = this._tokens.length > 0 ? this._tokens[this._tokens.length - 1] : undefined;
-        if (prevToken !== undefined && !Tokenizer.isWhitespace(prevToken)) {
-            return MagicsKind.None;
-        }
-
-        if (this._cs.nextChar === curChar) {
-            // Eat up next magic char.
-            this._cs.moveNext();
-            return MagicsKind.Cell;
-        }
-
-        return MagicsKind.Line;
-    }
-
-    private _handleIPythonMagics(type: CommentType): void {
-        const start = this._cs.position + 1;
-        const sourceText = this._cs.getText();
-
-        let begin = start;
-        while (true) {
-            this._cs.skipToEol();
-
-            if (type === CommentType.IPythonMagic || type === CommentType.IPythonShellEscape) {
-                // is it multiline magics?
-                // %magic command \
-                //        next arguments
-                if (!endsWithBackslashContinuation(sourceText, begin, this._cs.position)) {
-                    break;
-                }
-            }
-
-            this._cs.moveNext();
-            begin = this._cs.position + 1;
-
-            if (this._cs.isEndOfStream()) {
-                break;
-            }
-        }
-
-        const length = this._cs.position - start;
-        const comment = Comment.create(start, length, sourceText.slice(start, start + length), type);
-        this._addComments(comment);
-    }
-
-    private _handleComment(): void {
-        const start = this._cs.position + 1;
-        this._cs.skipToEol();
-
-        const length = this._cs.position - start;
-        const sourceText = this._cs.getText();
-        const end = start + length;
-        const comment = Comment.create(start, length, sourceText.slice(start, end));
-
-        // Fast pre-filter: any ignore directive must contain the substring 'ignore'.
-        // Search only the current comment so comment-heavy files remain linear in size.
-        if (comment.value.includes('ignore')) {
-            const typeIgnoreMatch = matchIgnoreDirective(sourceText, start, end, 'type');
-            if (typeIgnoreMatch) {
-                const commentStart = typeIgnoreMatch.index;
-                const textRange: TextRange = {
-                    start: commentStart + typeIgnoreMatch.prefix.length,
-                    length: typeIgnoreMatch.fullMatch.length - typeIgnoreMatch.prefix.length,
-                };
-                const ignoreComment: IgnoreComment = {
-                    range: textRange,
-                    rulesList: this._getIgnoreCommentRulesList(commentStart, typeIgnoreMatch),
-                };
-
-                let isIgnoreAll = false;
-                if (!this._hasTokenBeforeIgnoreAll) {
-                    // Are there any tokens other than NewLine / Indent yet?
-                    const hasOther = this._tokens.some(
-                        (t) => t && t.type !== TokenType.NewLine && t.type !== TokenType.Indent
-                    );
-                    if (hasOther) {
-                        this._hasTokenBeforeIgnoreAll = true;
-                    } else {
-                        isIgnoreAll = true;
-                    }
-                }
-
-                if (isIgnoreAll) {
-                    this._typeIgnoreAll = ignoreComment;
-                } else {
-                    this._typeIgnoreLines.set(this._lineRanges.length, ignoreComment);
-                }
-            }
-
-            const pyrightIgnoreMatch = matchIgnoreDirective(sourceText, start, end, 'pyright');
-            if (pyrightIgnoreMatch) {
-                const commentStart = pyrightIgnoreMatch.index;
-                const textRange: TextRange = {
-                    start: commentStart + pyrightIgnoreMatch.prefix.length,
-                    length: pyrightIgnoreMatch.fullMatch.length - pyrightIgnoreMatch.prefix.length,
-                };
-                const ignoreComment: IgnoreComment = {
-                    range: textRange,
-                    rulesList: this._getIgnoreCommentRulesList(commentStart, pyrightIgnoreMatch),
-                };
-                this._pyrightIgnoreLines.set(this._lineRanges.length, ignoreComment);
-            }
-        }
-
-        this._addComments(comment);
-    }
-
-    // Extracts the individual rules within a "type: ignore [x, y, z]" comment.
-    private _getIgnoreCommentRulesList(start: number, match: IgnoreDirectiveMatch): IgnoreCommentRule[] | undefined {
-        if (match.bracketContent === undefined) {
-            return undefined;
-        }
-
-        const splitElements = match.bracketContent.split(',');
-        const commentRules: IgnoreCommentRule[] = [];
-        let currentOffset = start + match.fullMatch.indexOf('[') + 1;
-
-        for (const element of splitElements) {
-            const frontTrimmed = element.trimStart();
-            currentOffset += element.length - frontTrimmed.length;
-            const endTrimmed = frontTrimmed.trimEnd();
-
-            if (endTrimmed.length > 0) {
-                commentRules.push({
-                    range: { start: currentOffset, length: endTrimmed.length },
-                    text: cloneStr(endTrimmed),
-                });
-            }
-
-            currentOffset += frontTrimmed.length + 1;
-        }
-
-        return commentRules;
-    }
-
-    private _addComments(comment: Comment) {
-        if (this._comments) {
-            this._comments.push(comment);
-        } else {
-            this._comments = [comment];
-        }
     }
 
     private _getStringPrefixLength(): number {
@@ -1950,8 +1391,7 @@ export class Tokenizer {
                 start,
                 end - start,
                 flags,
-                stringPrefixLength,
-                this._getComments()
+                stringPrefixLength
             );
 
             // Create a new f-string context and push it on the stack.
@@ -1971,12 +1411,6 @@ export class Tokenizer {
                 this._cs.advance(3);
             } else {
                 this._cs.moveNext();
-
-                if (flags & StringTokenFlags.SingleQuote) {
-                    this._singleQuoteCount++;
-                } else {
-                    this._doubleQuoteCount++;
-                }
             }
 
             const stringLiteralInfo = this._skipToEndOfStringLiteral(flags);
@@ -2023,8 +1457,7 @@ export class Tokenizer {
                     end - start,
                     stringLiteralInfo.flags,
                     stringLiteralInfo.escapedValue,
-                    stringPrefixLength,
-                    this._getComments()
+                    stringPrefixLength
                 )
             );
         }

@@ -30,7 +30,7 @@ export function sourceContext(text: string, parsed: ReturnType<typeof parsePytho
         endLine: point(end).line, endColumn: point(end).column,
         ...(digest ? { sha256: createHash('sha256').update(text.slice(start, end)).digest('hex') } : {}) });
     const tokenIndex = new Map<number, number>();
-    const tokens = parsed.tokenizerOutput.tokens;
+    const { tokens } = parsed;
     for (let index = 0; index < tokens.count; index++) tokenIndex.set(tokens.getItemAt(index).start, index);
     const functionStart = (node: FunctionNode) => {
         const index = tokenIndex.get(node.d.firstToken.start)!;

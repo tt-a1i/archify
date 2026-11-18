@@ -184,47 +184,18 @@ export const enum StringTokenFlags {
     Unterminated = 1 << 16,
 }
 
-export const enum CommentType {
-    Regular,
-    IPythonMagic,
-    IPythonShellEscape,
-    IPythonCellMagic,
-    IPythonCellShellEscape,
-}
-
-export interface Comment extends TextRange {
-    readonly type: CommentType;
-    readonly value: string;
-    readonly start: number;
-    readonly length: number;
-}
-
-export namespace Comment {
-    export function create(start: number, length: number, value: string, type = CommentType.Regular): Comment {
-        return { type, start, length, value };
-    }
-}
-
 export interface TokenBase extends TextRange {
     readonly type: TokenType;
-
-    // Comments prior to the token.
-    // Intentionally optional: most tokens have no comments, so omitting this
-    // property keeps V8 object size smaller for the common case. Each `create`
-    // factory returns a two-shape object (with vs. without `comments`) so that
-    // comment-free tokens skip the extra property slot entirely.
-    readonly comments?: Comment[] | undefined;
 }
 
 export interface Token extends TokenBase {}
 
 export namespace Token {
-    export function create(type: TokenType, start: number, length: number, comments: Comment[] | undefined): Token {
+    export function create(type: TokenType, start: number, length: number): Token {
         return {
             start,
             length,
             type,
-            comments,
         };
     }
 }
@@ -240,22 +211,8 @@ export namespace IndentToken {
         start: number,
         length: number,
         indentAmount: number,
-        isIndentAmbiguous: boolean,
-        comments: Comment[] | undefined
+        isIndentAmbiguous: boolean
     ): IndentToken {
-        // Two-shape pattern: omit `comments` slot when unused to reduce
-        // per-token allocation size. ~95% of tokens carry no comments.
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.Indent,
-                isIndentAmbiguous,
-                comments,
-                indentAmount,
-            };
-        }
-
         return {
             start,
             length,
@@ -279,21 +236,8 @@ export namespace DedentToken {
         length: number,
         indentAmount: number,
         matchesIndent: boolean,
-        isDedentAmbiguous: boolean,
-        comments: Comment[] | undefined
+        isDedentAmbiguous: boolean
     ): DedentToken {
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.Dedent,
-                comments,
-                indentAmount,
-                matchesIndent,
-                isDedentAmbiguous,
-            };
-        }
-
         return {
             start,
             length,
@@ -314,19 +258,8 @@ export namespace NewLineToken {
     export function create(
         start: number,
         length: number,
-        newLineType: NewLineType,
-        comments: Comment[] | undefined
+        newLineType: NewLineType
     ): NewLineToken {
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.NewLine,
-                comments,
-                newLineType,
-            };
-        }
-
         return {
             start,
             length,
@@ -345,19 +278,8 @@ export namespace KeywordToken {
     export function create(
         start: number,
         length: number,
-        keywordType: KeywordType,
-        comments: Comment[] | undefined
+        keywordType: KeywordType
     ): KeywordToken {
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.Keyword,
-                comments,
-                keywordType,
-            };
-        }
-
         return {
             start,
             length,
@@ -393,23 +315,9 @@ export namespace StringToken {
         length: number,
         flags: StringTokenFlags,
         escapedValue: string,
-        prefixLength: number,
-        comments: Comment[] | undefined
+        prefixLength: number
     ): StringToken {
         const quoteMarkLength = flags & StringTokenFlags.Triplicate ? 3 : 1;
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.String,
-                flags,
-                escapedValue,
-                prefixLength,
-                quoteMarkLength,
-                comments,
-            };
-        }
-
         return {
             start,
             length,
@@ -440,22 +348,9 @@ export namespace FStringStartToken {
         start: number,
         length: number,
         flags: StringTokenFlags,
-        prefixLength: number,
-        comments: Comment[] | undefined
+        prefixLength: number
     ): FStringStartToken {
         const quoteMarkLength = flags & StringTokenFlags.Triplicate ? 3 : 1;
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.FStringStart,
-                flags,
-                prefixLength,
-                quoteMarkLength,
-                comments,
-            };
-        }
-
         return {
             start,
             length,
@@ -520,21 +415,8 @@ export namespace NumberToken {
         length: number,
         value: number | bigint,
         isInteger: boolean,
-        isImaginary: boolean,
-        comments: Comment[] | undefined
+        isImaginary: boolean
     ): NumberToken {
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.Number,
-                isInteger,
-                isImaginary,
-                value,
-                comments,
-            };
-        }
-
         return {
             start,
             length,
@@ -555,19 +437,8 @@ export namespace OperatorToken {
     export function create(
         start: number,
         length: number,
-        operatorType: OperatorType,
-        comments: Comment[] | undefined
+        operatorType: OperatorType
     ): OperatorToken {
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.Operator,
-                operatorType,
-                comments,
-            };
-        }
-
         return {
             start,
             length,
@@ -586,8 +457,7 @@ export namespace IdentifierToken {
     export function create(
         start: number,
         length: number,
-        value: string,
-        comments: Comment[] | undefined
+        value: string
     ): IdentifierToken {
         // Perform "NFKC normalization", as per the Python lexical spec.
         let normalizedValue = value;
@@ -596,16 +466,6 @@ export namespace IdentifierToken {
                 normalizedValue = value.normalize('NFKC');
                 break;
             }
-        }
-
-        if (comments !== undefined) {
-            return {
-                start,
-                length,
-                type: TokenType.Identifier,
-                value: normalizedValue,
-                comments,
-            };
         }
 
         return {

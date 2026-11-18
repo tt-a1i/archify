@@ -25,10 +25,4 @@ export class DiagnosticSink {
     addError(message: string, range: Range) {
         return this.addDiagnostic(new Diagnostic(DiagnosticCategory.Error, message, range));
     }
-    addWarning(message: string, range: Range) {
-        return this.addDiagnostic(new Diagnostic(DiagnosticCategory.Warning, message, range));
-    }
-    addInformation(message: string, range: Range) {
-        return this.addDiagnostic(new Diagnostic(DiagnosticCategory.Information, message, range));
-    }
 }

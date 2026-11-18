@@ -1,20 +1,5 @@
 /*! Python parser derived from microsoft/pyright 1.1.414 (MIT), Copyright Microsoft Corporation. See extract/py/upstream/LICENSE.txt and UPSTREAM.json. */
 
-// extract/py/upstream/common/core.ts
-function cloneStr(str) {
-  if (str.length < 13) {
-    return str;
-  }
-  return Buffer.from(str, "utf8").toString("utf8");
-}
-var Disposable;
-((Disposable2) => {
-  function is(value) {
-    return value && typeof value.dispose === "function";
-  }
-  Disposable2.is = is;
-})(Disposable || (Disposable = {}));
-
 // extract/py/upstream/common/collectionUtils.ts
 function appendArray(to, elementsToPush) {
   if (elementsToPush.length < 256) {
@@ -44,9 +29,6 @@ function fail(message, stackCrawlMark) {
 }
 
 // extract/py/upstream/common/diagnostic.ts
-var defaultMaxDiagnosticDepth = 5;
-var defaultMaxDiagnosticLineCount = 8;
-var maxRecursionCount = 64;
 var Diagnostic = class {
   constructor(category, message, range) {
     this.category = category;
@@ -56,116 +38,6 @@ var Diagnostic = class {
   category;
   message;
   range;
-};
-var DiagnosticAddendum = class _DiagnosticAddendum {
-  _messages = [];
-  _childAddenda = [];
-  // The nest level is accurate only for the common case where all
-  // addendum are created using createAddendum. This is an upper bound.
-  // The actual nest level may be smaller.
-  _nestLevel;
-  // Addenda normally don't have their own ranges, but there are cases
-  // where we want to track ranges that can influence the range of the
-  // diagnostic.
-  _range;
-  addMessage(message) {
-    this._messages.push(message);
-  }
-  addMessageMultiline(message) {
-    message.split("\n").forEach((line) => {
-      this._messages.push(line);
-    });
-  }
-  addTextRange(range) {
-    this._range = range;
-  }
-  // Create a new (nested) addendum to which messages can be added.
-  createAddendum() {
-    const newAddendum = new _DiagnosticAddendum();
-    newAddendum._nestLevel = (this._nestLevel ?? 0) + 1;
-    this.addAddendum(newAddendum);
-    return newAddendum;
-  }
-  getString(maxDepth = defaultMaxDiagnosticDepth, maxLineCount = defaultMaxDiagnosticLineCount) {
-    let lines = this._getLinesRecursive(maxDepth, maxLineCount);
-    if (lines.length > maxLineCount) {
-      lines = lines.slice(0, maxLineCount);
-      lines.push("  ...");
-    }
-    const text = lines.join("\n");
-    if (text.length > 0) {
-      return "\n" + text;
-    }
-    return "";
-  }
-  isEmpty() {
-    return this._getMessageCount() === 0;
-  }
-  addAddendum(addendum) {
-    this._childAddenda.push(addendum);
-  }
-  getChildren() {
-    return this._childAddenda;
-  }
-  getMessages() {
-    return this._messages;
-  }
-  getNestLevel() {
-    return this._nestLevel ?? 0;
-  }
-  // Returns undefined if no range is associated with this addendum
-  // or its children. Returns a non-empty range if there is a single range
-  // associated.
-  getEffectiveTextRange() {
-    const range = this._getTextRangeRecursive();
-    if (range?.length === 0) {
-      return void 0;
-    }
-    return range;
-  }
-  _getTextRangeRecursive(recursionCount = 0) {
-    if (recursionCount > maxRecursionCount) {
-      return void 0;
-    }
-    recursionCount++;
-    const childRanges = this._childAddenda.map((child) => child._getTextRangeRecursive(recursionCount)).filter((r) => !!r);
-    if (childRanges.length > 1) {
-      return { start: 0, length: 0 };
-    }
-    if (childRanges.length === 1) {
-      return childRanges[0];
-    }
-    if (this._range) {
-      return this._range;
-    }
-    return void 0;
-  }
-  _getMessageCount(recursionCount = 0) {
-    if (recursionCount > maxRecursionCount) {
-      return 0;
-    }
-    let messageCount = this._messages.length;
-    for (const diag of this._childAddenda) {
-      messageCount += diag._getMessageCount(recursionCount + 1);
-    }
-    return messageCount;
-  }
-  _getLinesRecursive(maxDepth, maxLineCount, recursionCount = 0) {
-    if (maxDepth <= 0 || recursionCount > maxRecursionCount) {
-      return [];
-    }
-    let childLines = [];
-    for (const addendum of this._childAddenda) {
-      const maxDepthRemaining = this._messages.length > 0 ? maxDepth - 1 : maxDepth;
-      appendArray(childLines, addendum._getLinesRecursive(maxDepthRemaining, maxLineCount, recursionCount + 1));
-      if (childLines.length >= maxLineCount) {
-        childLines = childLines.slice(0, maxLineCount);
-        break;
-      }
-    }
-    const extraSpace = this._messages.length > 0 ? "  " : "";
-    return this._messages.concat(childLines).map((line) => extraSpace + line);
-  }
 };
 
 // extract/py/upstream/common/diagnosticSink.ts
@@ -190,102 +62,7 @@ var DiagnosticSink = class {
   addError(message, range) {
     return this.addDiagnostic(new Diagnostic(0 /* Error */, message, range));
   }
-  addWarning(message, range) {
-    return this.addDiagnostic(new Diagnostic(1 /* Warning */, message, range));
-  }
-  addInformation(message, range) {
-    return this.addDiagnostic(new Diagnostic(2 /* Information */, message, range));
-  }
 };
-
-// extract/py/upstream/common/textRange.ts
-var TextRange;
-((TextRange2) => {
-  function create(start, length) {
-    if (start < 0) {
-      fail("start must be non-negative");
-    }
-    if (length < 0) {
-      fail("length must be non-negative");
-    }
-    return { start, length };
-  }
-  TextRange2.create = create;
-  function fromBounds(start, end) {
-    if (start < 0) {
-      fail("start must be non-negative");
-    }
-    if (start > end) {
-      fail("end must be greater than or equal to start");
-    }
-    return create(start, end - start);
-  }
-  TextRange2.fromBounds = fromBounds;
-  function getEnd(range) {
-    return range.start + range.length;
-  }
-  TextRange2.getEnd = getEnd;
-  function contains(range, position) {
-    return position >= range.start && position < getEnd(range);
-  }
-  TextRange2.contains = contains;
-  function containsRange(range, span) {
-    return span.start >= range.start && getEnd(span) <= getEnd(range);
-  }
-  TextRange2.containsRange = containsRange;
-  function overlaps(range, position) {
-    return position >= range.start && position <= getEnd(range);
-  }
-  TextRange2.overlaps = overlaps;
-  function overlapsRange(range, other) {
-    return overlaps(range, other.start) || overlaps(other, range.start);
-  }
-  TextRange2.overlapsRange = overlapsRange;
-  function extend(range, extension) {
-    let result = range;
-    if (extension.start < result.start) {
-      result = {
-        start: extension.start,
-        length: result.length + result.start - extension.start
-      };
-    }
-    const extensionEnd = getEnd(extension);
-    const resultEnd = getEnd(result);
-    if (extensionEnd > resultEnd) {
-      result = {
-        start: result.start,
-        length: result.length + extensionEnd - resultEnd
-      };
-    }
-    return result;
-  }
-  TextRange2.extend = extend;
-  function combine(ranges) {
-    if (ranges.length === 0) {
-      return void 0;
-    }
-    let combinedRange = { start: ranges[0].start, length: ranges[0].length };
-    for (let i = 1; i < ranges.length; i++) {
-      combinedRange = extend(combinedRange, ranges[i]);
-    }
-    return combinedRange;
-  }
-  TextRange2.combine = combine;
-})(TextRange || (TextRange = {}));
-var Position;
-((Position3) => {
-  function print(value) {
-    return `(${value.line}:${value.character})`;
-  }
-  Position3.print = print;
-})(Position || (Position = {}));
-var Range;
-((Range3) => {
-  function print(value) {
-    return `${Position.print(value.start)}-${Position.print(value.end)}`;
-  }
-  Range3.print = print;
-})(Range || (Range = {}));
 
 // extract/py/upstream/common/positionUtils.ts
 function convertOffsetToPosition(offset, lines) {
@@ -489,106 +266,47 @@ var pythonVersion3_14 = PythonVersion.create(3, 14);
 var pythonVersion3_15 = PythonVersion.create(3, 15);
 var latestStablePythonVersion = pythonVersion3_14;
 
-// extract/py/upstream/common/stringUtils.ts
-var NEEDS_FALLBACK = -1;
-var latin1LowerCaseTable = (() => {
-  const table = new Int32Array(256);
-  for (let i = 0; i < 256; i++) {
-    const lower = String.fromCharCode(i).toLocaleLowerCase();
-    table[i] = lower.length === 1 ? lower.charCodeAt(0) : NEEDS_FALLBACK;
-  }
-  return table;
-})();
-function getStringFingerprint(contents) {
-  let primary = 0;
-  let secondary = 2166136261;
-  for (let i = 0; i < contents.length; i++) {
-    const codeUnit = contents.charCodeAt(i);
-    primary = (primary << 5) - primary + codeUnit | 0;
-    secondary = Math.imul(secondary ^ codeUnit, 16777619);
-  }
-  return { primary, secondary };
-}
-
-// extract/py/upstream/common/timing.ts
-var Duration = class {
-  _startTime;
-  constructor() {
-    this._startTime = Date.now();
-  }
-  getDurationInMilliseconds() {
-    const curTime = Date.now();
-    return curTime - this._startTime;
-  }
-  getDurationInSeconds() {
-    return this.getDurationInMilliseconds() / 1e3;
-  }
-};
-var TimingStat = class {
-  totalTime = 0;
-  callCount = 0;
-  isTiming = false;
-  timeOperation(callback, ...args) {
-    this.callCount++;
-    if (this.isTiming) {
-      return callback(...args);
-    } else {
-      this.isTiming = true;
-      const duration = new Duration();
-      const result = callback(...args);
-      this.totalTime += duration.getDurationInMilliseconds();
-      this.isTiming = false;
-      return result;
+// extract/py/upstream/common/textRange.ts
+var TextRange;
+((TextRange2) => {
+  function create(start, length) {
+    if (start < 0) {
+      fail("start must be non-negative");
     }
-  }
-  subtractFromTime(callback) {
-    if (this.isTiming) {
-      this.isTiming = false;
-      const duration = new Duration();
-      callback();
-      this.totalTime -= duration.getDurationInMilliseconds();
-      this.isTiming = true;
-    } else {
-      callback();
+    if (length < 0) {
+      fail("length must be non-negative");
     }
+    return { start, length };
   }
-  printTime() {
-    const totalTimeInSec = this.totalTime / 1e3;
-    const roundedTime = Math.round(totalTimeInSec * 100) / 100;
-    return roundedTime.toString() + "sec";
+  TextRange2.create = create;
+  function getEnd(range) {
+    return range.start + range.length;
   }
-};
-var TimingStats = class {
-  totalDuration = new Duration();
-  findFilesTime = new TimingStat();
-  readFileTime = new TimingStat();
-  tokenizeFileTime = new TimingStat();
-  parseFileTime = new TimingStat();
-  resolveImportsTime = new TimingStat();
-  cycleDetectionTime = new TimingStat();
-  bindTime = new TimingStat();
-  typeCheckerTime = new TimingStat();
-  typeEvaluationTime = new TimingStat();
-  printSummary(console) {
-    console.info(`Completed in ${this.totalDuration.getDurationInSeconds()}sec`);
+  TextRange2.getEnd = getEnd;
+  function contains(range, position) {
+    return position >= range.start && position < getEnd(range);
   }
-  printDetails(console) {
-    console.info("");
-    console.info("Timing stats");
-    console.info("Find Source Files:    " + this.findFilesTime.printTime());
-    console.info("Read Source Files:    " + this.readFileTime.printTime());
-    console.info("Tokenize:             " + this.tokenizeFileTime.printTime());
-    console.info("Parse:                " + this.parseFileTime.printTime());
-    console.info("Resolve Imports:      " + this.resolveImportsTime.printTime());
-    console.info("Bind:                 " + this.bindTime.printTime());
-    console.info("Check:                " + this.typeCheckerTime.printTime());
-    console.info("Detect Cycles:        " + this.cycleDetectionTime.printTime());
+  TextRange2.contains = contains;
+  function extend(range, extension) {
+    let result = range;
+    if (extension.start < result.start) {
+      result = {
+        start: extension.start,
+        length: result.length + result.start - extension.start
+      };
+    }
+    const extensionEnd = getEnd(extension);
+    const resultEnd = getEnd(result);
+    if (extensionEnd > resultEnd) {
+      result = {
+        start: result.start,
+        length: result.length + extensionEnd - resultEnd
+      };
+    }
+    return result;
   }
-  getTotalDuration() {
-    return this.totalDuration.getDurationInSeconds();
-  }
-};
-var timingStats = new TimingStats();
+  TextRange2.extend = extend;
+})(TextRange || (TextRange = {}));
 
 // extract/py/upstream/localization/strings.ts
 var strings_default = {
@@ -993,188 +711,164 @@ function getRawString(key) {
 }
 var Localizer;
 ((Localizer2) => {
-  let Diagnostic3;
-  ((Diagnostic4) => {
-    Diagnostic4.annotationFormatString = () => getRawString("Diagnostic.annotationFormatString");
-    Diagnostic4.annotationSpansStrings = () => getRawString("Diagnostic.annotationSpansStrings");
-    Diagnostic4.annotationStringEscape = () => getRawString("Diagnostic.annotationStringEscape");
-    Diagnostic4.assignmentExprInSubscript = () => getRawString("Diagnostic.assignmentExprInSubscript");
-    Diagnostic4.awaitIllegal = () => getRawString("Diagnostic.awaitIllegal");
-    Diagnostic4.backticksIllegal = () => getRawString("Diagnostic.backticksIllegal");
-    Diagnostic4.breakInExceptionGroup = () => getRawString("Diagnostic.breakInExceptionGroup");
-    Diagnostic4.breakOutsideLoop = () => getRawString("Diagnostic.breakOutsideLoop");
-    Diagnostic4.casePatternIsIrrefutable = () => getRawString("Diagnostic.casePatternIsIrrefutable");
-    Diagnostic4.classTypeParametersIllegal = () => getRawString("Diagnostic.classTypeParametersIllegal");
-    Diagnostic4.comprehensionInDict = () => getRawString("Diagnostic.comprehensionInDict");
-    Diagnostic4.comprehensionInSet = () => getRawString("Diagnostic.comprehensionInSet");
-    Diagnostic4.continueInExceptionGroup = () => getRawString("Diagnostic.continueInExceptionGroup");
-    Diagnostic4.continueOutsideLoop = () => getRawString("Diagnostic.continueOutsideLoop");
-    Diagnostic4.defaultValueNotAllowed = () => getRawString("Diagnostic.defaultValueNotAllowed");
-    Diagnostic4.dictExpandIllegalInComprehension = () => getRawString("Diagnostic.dictExpandIllegalInComprehension");
-    Diagnostic4.dictKeyValuePairs = () => getRawString("Diagnostic.dictKeyValuePairs");
-    Diagnostic4.duplicateArgsParam = () => getRawString("Diagnostic.duplicateArgsParam");
-    Diagnostic4.duplicateCatchAll = () => getRawString("Diagnostic.duplicateCatchAll");
-    Diagnostic4.duplicateKwargsParam = () => getRawString("Diagnostic.duplicateKwargsParam");
-    Diagnostic4.duplicateKeywordOnly = () => getRawString("Diagnostic.duplicateKeywordOnly");
-    Diagnostic4.duplicateParam = () => new ParameterizedString(getRawString("Diagnostic.duplicateParam"));
-    Diagnostic4.duplicateCapturePatternTarget = () => new ParameterizedString(getRawString("Diagnostic.duplicateCapturePatternTarget"));
-    Diagnostic4.duplicateStarPattern = () => getRawString("Diagnostic.duplicateStarPattern");
-    Diagnostic4.duplicateStarStarPattern = () => getRawString("Diagnostic.duplicateStarStarPattern");
-    Diagnostic4.duplicatePositionOnly = () => getRawString("Diagnostic.duplicatePositionOnly");
-    Diagnostic4.duplicateUnpack = () => getRawString("Diagnostic.duplicateUnpack");
-    Diagnostic4.exceptionGroupIncompatible = () => getRawString("Diagnostic.exceptionGroupIncompatible");
-    Diagnostic4.exceptGroupMismatch = () => getRawString("Diagnostic.exceptGroupMismatch");
-    Diagnostic4.exceptGroupRequiresType = () => getRawString("Diagnostic.exceptGroupRequiresType");
-    Diagnostic4.exceptRequiresParens = () => getRawString("Diagnostic.exceptRequiresParens");
-    Diagnostic4.exceptWithAsRequiresParens = () => getRawString("Diagnostic.exceptWithAsRequiresParens");
-    Diagnostic4.expectedAfterDecorator = () => getRawString("Diagnostic.expectedAfterDecorator");
-    Diagnostic4.expectedArrow = () => getRawString("Diagnostic.expectedArrow");
-    Diagnostic4.expectedAssignRightHandExpr = () => getRawString("Diagnostic.expectedAssignRightHandExpr");
-    Diagnostic4.expectedBinaryRightHandExpr = () => getRawString("Diagnostic.expectedBinaryRightHandExpr");
-    Diagnostic4.expectedCase = () => getRawString("Diagnostic.expectedCase");
-    Diagnostic4.expectedClassName = () => getRawString("Diagnostic.expectedClassName");
-    Diagnostic4.expectedCloseBrace = () => getRawString("Diagnostic.expectedCloseBrace");
-    Diagnostic4.expectedCloseBracket = () => getRawString("Diagnostic.expectedCloseBracket");
-    Diagnostic4.expectedCloseParen = () => getRawString("Diagnostic.expectedCloseParen");
-    Diagnostic4.expectedColon = () => getRawString("Diagnostic.expectedColon");
-    Diagnostic4.expectedComplexNumberLiteral = () => getRawString("Diagnostic.expectedComplexNumberLiteral");
-    Diagnostic4.expectedDecoratorExpr = () => getRawString("Diagnostic.expectedDecoratorExpr");
-    Diagnostic4.expectedDecoratorNewline = () => getRawString("Diagnostic.expectedDecoratorNewline");
-    Diagnostic4.expectedDelExpr = () => getRawString("Diagnostic.expectedDelExpr");
-    Diagnostic4.expectedElse = () => getRawString("Diagnostic.expectedElse");
-    Diagnostic4.expectedEquals = () => getRawString("Diagnostic.expectedEquals");
-    Diagnostic4.expectedExpr = () => getRawString("Diagnostic.expectedExpr");
-    Diagnostic4.expectedIdentifier = () => getRawString("Diagnostic.expectedIdentifier");
-    Diagnostic4.expectedImport = () => getRawString("Diagnostic.expectedImport");
-    Diagnostic4.expectedImportAlias = () => getRawString("Diagnostic.expectedImportAlias");
-    Diagnostic4.expectedImportSymbols = () => getRawString("Diagnostic.expectedImportSymbols");
-    Diagnostic4.expectedIndentedBlock = () => getRawString("Diagnostic.expectedIndentedBlock");
-    Diagnostic4.expectedIn = () => getRawString("Diagnostic.expectedIn");
-    Diagnostic4.expectedInExpr = () => getRawString("Diagnostic.expectedInExpr");
-    Diagnostic4.expectedFunctionAfterAsync = () => getRawString("Diagnostic.expectedFunctionAfterAsync");
-    Diagnostic4.expectedFunctionName = () => getRawString("Diagnostic.expectedFunctionName");
-    Diagnostic4.expectedMemberName = () => getRawString("Diagnostic.expectedMemberName");
-    Diagnostic4.expectedModuleName = () => getRawString("Diagnostic.expectedModuleName");
-    Diagnostic4.expectedNameAfterAs = () => getRawString("Diagnostic.expectedNameAfterAs");
-    Diagnostic4.expectedNamedParameter = () => getRawString("Diagnostic.expectedNamedParameter");
-    Diagnostic4.expectedNewline = () => getRawString("Diagnostic.expectedNewline");
-    Diagnostic4.expectedNewlineOrSemicolon = () => getRawString("Diagnostic.expectedNewlineOrSemicolon");
-    Diagnostic4.expectedOpenParen = () => getRawString("Diagnostic.expectedOpenParen");
-    Diagnostic4.expectedParamName = () => getRawString("Diagnostic.expectedParamName");
-    Diagnostic4.expectedPatternExpr = () => getRawString("Diagnostic.expectedPatternExpr");
-    Diagnostic4.expectedPatternValue = () => getRawString("Diagnostic.expectedPatternValue");
-    Diagnostic4.expectedReturnExpr = () => getRawString("Diagnostic.expectedReturnExpr");
-    Diagnostic4.expectedSliceIndex = () => getRawString("Diagnostic.expectedSliceIndex");
-    Diagnostic4.expectedTypeParameterName = () => getRawString("Diagnostic.expectedTypeParameterName");
-    Diagnostic4.expectedYieldExpr = () => getRawString("Diagnostic.expectedYieldExpr");
-    Diagnostic4.finallyBreak = () => getRawString("Diagnostic.finallyBreak");
-    Diagnostic4.finallyContinue = () => getRawString("Diagnostic.finallyContinue");
-    Diagnostic4.finallyReturn = () => getRawString("Diagnostic.finallyReturn");
-    Diagnostic4.formatStringBrace = () => getRawString("Diagnostic.formatStringBrace");
-    Diagnostic4.formatStringBytes = () => getRawString("Diagnostic.formatStringBytes");
-    Diagnostic4.formatStringDebuggingIllegal = () => getRawString("Diagnostic.formatStringDebuggingIllegal");
-    Diagnostic4.formatStringExpectedConversion = () => getRawString("Diagnostic.formatStringExpectedConversion");
-    Diagnostic4.formatStringInPattern = () => getRawString("Diagnostic.formatStringInPattern");
-    Diagnostic4.formatStringIllegal = () => getRawString("Diagnostic.formatStringIllegal");
-    Diagnostic4.formatStringNestedFormatSpecifier = () => getRawString("Diagnostic.formatStringNestedFormatSpecifier");
-    Diagnostic4.formatStringTemplate = () => getRawString("Diagnostic.formatStringTemplate");
-    Diagnostic4.formatStringUnicode = () => getRawString("Diagnostic.formatStringUnicode");
-    Diagnostic4.formatStringUnterminated = () => getRawString("Diagnostic.formatStringUnterminated");
-    Diagnostic4.functionTypeParametersIllegal = () => getRawString("Diagnostic.functionTypeParametersIllegal");
-    Diagnostic4.generatorNotParenthesized = () => getRawString("Diagnostic.generatorNotParenthesized");
-    Diagnostic4.inconsistentIndent = () => getRawString("Diagnostic.inconsistentIndent");
-    Diagnostic4.inconsistentTabs = () => getRawString("Diagnostic.inconsistentTabs");
-    Diagnostic4.invalidIdentifierChar = () => getRawString("Diagnostic.invalidIdentifierChar");
-    Diagnostic4.invalidTokenChars = () => new ParameterizedString(getRawString("Diagnostic.invalidTokenChars"));
-    Diagnostic4.keyValueInSet = () => getRawString("Diagnostic.keyValueInSet");
-    Diagnostic4.keywordOnlyAfterArgs = () => getRawString("Diagnostic.keywordOnlyAfterArgs");
-    Diagnostic4.keywordParameterMissing = () => getRawString("Diagnostic.keywordParameterMissing");
-    Diagnostic4.keywordSubscriptIllegal = () => getRawString("Diagnostic.keywordSubscriptIllegal");
-    Diagnostic4.lazyImportIllegal = () => getRawString("Diagnostic.lazyImportIllegal");
-    Diagnostic4.lazyImportWildcardIllegal = () => getRawString("Diagnostic.lazyImportWildcardIllegal");
-    Diagnostic4.matchIncompatible = () => getRawString("Diagnostic.matchIncompatible");
-    Diagnostic4.maxParseDepthExceeded = () => getRawString("Diagnostic.maxParseDepthExceeded");
-    Diagnostic4.namedExceptAfterCatchAll = () => getRawString("Diagnostic.namedExceptAfterCatchAll");
-    Diagnostic4.nonDefaultAfterDefault = () => getRawString("Diagnostic.nonDefaultAfterDefault");
-    Diagnostic4.operatorLessOrGreaterDeprecated = () => getRawString("Diagnostic.operatorLessOrGreaterDeprecated");
-    Diagnostic4.orPatternIrrefutable = () => getRawString("Diagnostic.orPatternIrrefutable");
-    Diagnostic4.orPatternMissingName = () => getRawString("Diagnostic.orPatternMissingName");
-    Diagnostic4.paramAfterKwargsParam = () => getRawString("Diagnostic.paramAfterKwargsParam");
-    Diagnostic4.parenthesizedContextManagerIllegal = () => getRawString("Diagnostic.parenthesizedContextManagerIllegal");
-    Diagnostic4.positionArgAfterNamedArg = () => getRawString("Diagnostic.positionArgAfterNamedArg");
-    Diagnostic4.positionArgAfterUnpackedDictArg = () => getRawString("Diagnostic.positionArgAfterUnpackedDictArg");
-    Diagnostic4.positionOnlyAfterArgs = () => getRawString("Diagnostic.positionOnlyAfterArgs");
-    Diagnostic4.positionOnlyAfterKeywordOnly = () => getRawString("Diagnostic.positionOnlyAfterKeywordOnly");
-    Diagnostic4.positionOnlyIncompatible = () => getRawString("Diagnostic.positionOnlyIncompatible");
-    Diagnostic4.positionOnlyFirstParam = () => getRawString("Diagnostic.positionOnlyFirstParam");
-    Diagnostic4.relativeImportNotAllowed = () => getRawString("Diagnostic.relativeImportNotAllowed");
-    Diagnostic4.returnInExceptionGroup = () => getRawString("Diagnostic.returnInExceptionGroup");
-    Diagnostic4.returnOutsideFunction = () => getRawString("Diagnostic.returnOutsideFunction");
-    Diagnostic4.starPatternInAsPattern = () => getRawString("Diagnostic.starPatternInAsPattern");
-    Diagnostic4.starPatternInOrPattern = () => getRawString("Diagnostic.starPatternInOrPattern");
-    Diagnostic4.starStarWildcardNotAllowed = () => getRawString("Diagnostic.starStarWildcardNotAllowed");
-    Diagnostic4.stringNonAsciiBytes = () => getRawString("Diagnostic.stringNonAsciiBytes");
-    Diagnostic4.stringUnterminated = () => getRawString("Diagnostic.stringUnterminated");
-    Diagnostic4.sublistParamsIncompatible = () => getRawString("Diagnostic.sublistParamsIncompatible");
-    Diagnostic4.templateStringBytes = () => getRawString("Diagnostic.templateStringBytes");
-    Diagnostic4.templateStringIllegal = () => getRawString("Diagnostic.templateStringIllegal");
-    Diagnostic4.templateStringUnicode = () => getRawString("Diagnostic.templateStringUnicode");
-    Diagnostic4.trailingCommaInFromImport = () => getRawString("Diagnostic.trailingCommaInFromImport");
-    Diagnostic4.tryWithoutExcept = () => getRawString("Diagnostic.tryWithoutExcept");
-    Diagnostic4.typeAliasStatementIllegal = () => getRawString("Diagnostic.typeAliasStatementIllegal");
-    Diagnostic4.typeParameterBoundNotAllowed = () => getRawString("Diagnostic.typeParameterBoundNotAllowed");
-    Diagnostic4.typeParametersMissing = () => getRawString("Diagnostic.typeParametersMissing");
-    Diagnostic4.typeVarDefaultIllegal = () => getRawString("Diagnostic.typeVarDefaultIllegal");
-    Diagnostic4.unexpectedAsyncToken = () => getRawString("Diagnostic.unexpectedAsyncToken");
-    Diagnostic4.unexpectedEof = () => getRawString("Diagnostic.unexpectedEof");
-    Diagnostic4.unexpectedExprToken = () => getRawString("Diagnostic.unexpectedExprToken");
-    Diagnostic4.unexpectedIndent = () => getRawString("Diagnostic.unexpectedIndent");
-    Diagnostic4.unexpectedUnindent = () => getRawString("Diagnostic.unexpectedUnindent");
-    Diagnostic4.unpackedDictSubscriptIllegal = () => getRawString("Diagnostic.unpackedDictSubscriptIllegal");
-    Diagnostic4.unpackedSubscriptIllegal = () => getRawString("Diagnostic.unpackedSubscriptIllegal");
-    Diagnostic4.unpackIllegalInComprehension = () => getRawString("Diagnostic.unpackIllegalInComprehension");
-    Diagnostic4.unpackInDict = () => getRawString("Diagnostic.unpackInDict");
-    Diagnostic4.unpackInSet = () => getRawString("Diagnostic.unpackInSet");
-    Diagnostic4.unpackOperatorNotAllowed = () => getRawString("Diagnostic.unpackOperatorNotAllowed");
-    Diagnostic4.unpackTuplesIllegal = () => getRawString("Diagnostic.unpackTuplesIllegal");
-    Diagnostic4.varAnnotationIllegal = () => getRawString("Diagnostic.varAnnotationIllegal");
-    Diagnostic4.walrusIllegal = () => getRawString("Diagnostic.walrusIllegal");
-    Diagnostic4.walrusNotAllowed = () => getRawString("Diagnostic.walrusNotAllowed");
-    Diagnostic4.walrusNotAllowedInComprehension = () => getRawString("Diagnostic.walrusNotAllowedInComprehension");
-    Diagnostic4.yieldFromIllegal = () => getRawString("Diagnostic.yieldFromIllegal");
-    Diagnostic4.zeroCaseStatementsFound = () => getRawString("Diagnostic.zeroCaseStatementsFound");
-  })(Diagnostic3 = Localizer2.Diagnostic || (Localizer2.Diagnostic = {}));
-  let DiagnosticAddendum2;
-  ((DiagnosticAddendum3) => {
-    DiagnosticAddendum3.orPatternMissingName = () => new ParameterizedString(getRawString("DiagnosticAddendum.orPatternMissingName"));
-  })(DiagnosticAddendum2 = Localizer2.DiagnosticAddendum || (Localizer2.DiagnosticAddendum = {}));
+  let Diagnostic2;
+  ((Diagnostic3) => {
+    Diagnostic3.annotationFormatString = () => getRawString("Diagnostic.annotationFormatString");
+    Diagnostic3.annotationSpansStrings = () => getRawString("Diagnostic.annotationSpansStrings");
+    Diagnostic3.annotationStringEscape = () => getRawString("Diagnostic.annotationStringEscape");
+    Diagnostic3.assignmentExprInSubscript = () => getRawString("Diagnostic.assignmentExprInSubscript");
+    Diagnostic3.awaitIllegal = () => getRawString("Diagnostic.awaitIllegal");
+    Diagnostic3.backticksIllegal = () => getRawString("Diagnostic.backticksIllegal");
+    Diagnostic3.breakInExceptionGroup = () => getRawString("Diagnostic.breakInExceptionGroup");
+    Diagnostic3.breakOutsideLoop = () => getRawString("Diagnostic.breakOutsideLoop");
+    Diagnostic3.casePatternIsIrrefutable = () => getRawString("Diagnostic.casePatternIsIrrefutable");
+    Diagnostic3.classTypeParametersIllegal = () => getRawString("Diagnostic.classTypeParametersIllegal");
+    Diagnostic3.comprehensionInDict = () => getRawString("Diagnostic.comprehensionInDict");
+    Diagnostic3.comprehensionInSet = () => getRawString("Diagnostic.comprehensionInSet");
+    Diagnostic3.continueInExceptionGroup = () => getRawString("Diagnostic.continueInExceptionGroup");
+    Diagnostic3.continueOutsideLoop = () => getRawString("Diagnostic.continueOutsideLoop");
+    Diagnostic3.defaultValueNotAllowed = () => getRawString("Diagnostic.defaultValueNotAllowed");
+    Diagnostic3.dictExpandIllegalInComprehension = () => getRawString("Diagnostic.dictExpandIllegalInComprehension");
+    Diagnostic3.dictKeyValuePairs = () => getRawString("Diagnostic.dictKeyValuePairs");
+    Diagnostic3.duplicateArgsParam = () => getRawString("Diagnostic.duplicateArgsParam");
+    Diagnostic3.duplicateCatchAll = () => getRawString("Diagnostic.duplicateCatchAll");
+    Diagnostic3.duplicateKwargsParam = () => getRawString("Diagnostic.duplicateKwargsParam");
+    Diagnostic3.duplicateKeywordOnly = () => getRawString("Diagnostic.duplicateKeywordOnly");
+    Diagnostic3.duplicateParam = () => new ParameterizedString(getRawString("Diagnostic.duplicateParam"));
+    Diagnostic3.duplicateCapturePatternTarget = () => new ParameterizedString(getRawString("Diagnostic.duplicateCapturePatternTarget"));
+    Diagnostic3.duplicateStarPattern = () => getRawString("Diagnostic.duplicateStarPattern");
+    Diagnostic3.duplicateStarStarPattern = () => getRawString("Diagnostic.duplicateStarStarPattern");
+    Diagnostic3.duplicatePositionOnly = () => getRawString("Diagnostic.duplicatePositionOnly");
+    Diagnostic3.duplicateUnpack = () => getRawString("Diagnostic.duplicateUnpack");
+    Diagnostic3.exceptionGroupIncompatible = () => getRawString("Diagnostic.exceptionGroupIncompatible");
+    Diagnostic3.exceptGroupMismatch = () => getRawString("Diagnostic.exceptGroupMismatch");
+    Diagnostic3.exceptGroupRequiresType = () => getRawString("Diagnostic.exceptGroupRequiresType");
+    Diagnostic3.exceptRequiresParens = () => getRawString("Diagnostic.exceptRequiresParens");
+    Diagnostic3.exceptWithAsRequiresParens = () => getRawString("Diagnostic.exceptWithAsRequiresParens");
+    Diagnostic3.expectedAfterDecorator = () => getRawString("Diagnostic.expectedAfterDecorator");
+    Diagnostic3.expectedArrow = () => getRawString("Diagnostic.expectedArrow");
+    Diagnostic3.expectedAssignRightHandExpr = () => getRawString("Diagnostic.expectedAssignRightHandExpr");
+    Diagnostic3.expectedBinaryRightHandExpr = () => getRawString("Diagnostic.expectedBinaryRightHandExpr");
+    Diagnostic3.expectedCase = () => getRawString("Diagnostic.expectedCase");
+    Diagnostic3.expectedClassName = () => getRawString("Diagnostic.expectedClassName");
+    Diagnostic3.expectedCloseBrace = () => getRawString("Diagnostic.expectedCloseBrace");
+    Diagnostic3.expectedCloseBracket = () => getRawString("Diagnostic.expectedCloseBracket");
+    Diagnostic3.expectedCloseParen = () => getRawString("Diagnostic.expectedCloseParen");
+    Diagnostic3.expectedColon = () => getRawString("Diagnostic.expectedColon");
+    Diagnostic3.expectedComplexNumberLiteral = () => getRawString("Diagnostic.expectedComplexNumberLiteral");
+    Diagnostic3.expectedDecoratorExpr = () => getRawString("Diagnostic.expectedDecoratorExpr");
+    Diagnostic3.expectedDecoratorNewline = () => getRawString("Diagnostic.expectedDecoratorNewline");
+    Diagnostic3.expectedDelExpr = () => getRawString("Diagnostic.expectedDelExpr");
+    Diagnostic3.expectedElse = () => getRawString("Diagnostic.expectedElse");
+    Diagnostic3.expectedEquals = () => getRawString("Diagnostic.expectedEquals");
+    Diagnostic3.expectedExpr = () => getRawString("Diagnostic.expectedExpr");
+    Diagnostic3.expectedIdentifier = () => getRawString("Diagnostic.expectedIdentifier");
+    Diagnostic3.expectedImport = () => getRawString("Diagnostic.expectedImport");
+    Diagnostic3.expectedImportAlias = () => getRawString("Diagnostic.expectedImportAlias");
+    Diagnostic3.expectedImportSymbols = () => getRawString("Diagnostic.expectedImportSymbols");
+    Diagnostic3.expectedIndentedBlock = () => getRawString("Diagnostic.expectedIndentedBlock");
+    Diagnostic3.expectedIn = () => getRawString("Diagnostic.expectedIn");
+    Diagnostic3.expectedInExpr = () => getRawString("Diagnostic.expectedInExpr");
+    Diagnostic3.expectedFunctionAfterAsync = () => getRawString("Diagnostic.expectedFunctionAfterAsync");
+    Diagnostic3.expectedFunctionName = () => getRawString("Diagnostic.expectedFunctionName");
+    Diagnostic3.expectedMemberName = () => getRawString("Diagnostic.expectedMemberName");
+    Diagnostic3.expectedModuleName = () => getRawString("Diagnostic.expectedModuleName");
+    Diagnostic3.expectedNameAfterAs = () => getRawString("Diagnostic.expectedNameAfterAs");
+    Diagnostic3.expectedNamedParameter = () => getRawString("Diagnostic.expectedNamedParameter");
+    Diagnostic3.expectedNewline = () => getRawString("Diagnostic.expectedNewline");
+    Diagnostic3.expectedNewlineOrSemicolon = () => getRawString("Diagnostic.expectedNewlineOrSemicolon");
+    Diagnostic3.expectedOpenParen = () => getRawString("Diagnostic.expectedOpenParen");
+    Diagnostic3.expectedParamName = () => getRawString("Diagnostic.expectedParamName");
+    Diagnostic3.expectedPatternExpr = () => getRawString("Diagnostic.expectedPatternExpr");
+    Diagnostic3.expectedPatternValue = () => getRawString("Diagnostic.expectedPatternValue");
+    Diagnostic3.expectedReturnExpr = () => getRawString("Diagnostic.expectedReturnExpr");
+    Diagnostic3.expectedSliceIndex = () => getRawString("Diagnostic.expectedSliceIndex");
+    Diagnostic3.expectedTypeParameterName = () => getRawString("Diagnostic.expectedTypeParameterName");
+    Diagnostic3.expectedYieldExpr = () => getRawString("Diagnostic.expectedYieldExpr");
+    Diagnostic3.finallyBreak = () => getRawString("Diagnostic.finallyBreak");
+    Diagnostic3.finallyContinue = () => getRawString("Diagnostic.finallyContinue");
+    Diagnostic3.finallyReturn = () => getRawString("Diagnostic.finallyReturn");
+    Diagnostic3.formatStringBrace = () => getRawString("Diagnostic.formatStringBrace");
+    Diagnostic3.formatStringBytes = () => getRawString("Diagnostic.formatStringBytes");
+    Diagnostic3.formatStringDebuggingIllegal = () => getRawString("Diagnostic.formatStringDebuggingIllegal");
+    Diagnostic3.formatStringExpectedConversion = () => getRawString("Diagnostic.formatStringExpectedConversion");
+    Diagnostic3.formatStringInPattern = () => getRawString("Diagnostic.formatStringInPattern");
+    Diagnostic3.formatStringIllegal = () => getRawString("Diagnostic.formatStringIllegal");
+    Diagnostic3.formatStringNestedFormatSpecifier = () => getRawString("Diagnostic.formatStringNestedFormatSpecifier");
+    Diagnostic3.formatStringTemplate = () => getRawString("Diagnostic.formatStringTemplate");
+    Diagnostic3.formatStringUnicode = () => getRawString("Diagnostic.formatStringUnicode");
+    Diagnostic3.formatStringUnterminated = () => getRawString("Diagnostic.formatStringUnterminated");
+    Diagnostic3.functionTypeParametersIllegal = () => getRawString("Diagnostic.functionTypeParametersIllegal");
+    Diagnostic3.generatorNotParenthesized = () => getRawString("Diagnostic.generatorNotParenthesized");
+    Diagnostic3.inconsistentIndent = () => getRawString("Diagnostic.inconsistentIndent");
+    Diagnostic3.inconsistentTabs = () => getRawString("Diagnostic.inconsistentTabs");
+    Diagnostic3.invalidIdentifierChar = () => getRawString("Diagnostic.invalidIdentifierChar");
+    Diagnostic3.invalidTokenChars = () => new ParameterizedString(getRawString("Diagnostic.invalidTokenChars"));
+    Diagnostic3.keyValueInSet = () => getRawString("Diagnostic.keyValueInSet");
+    Diagnostic3.keywordOnlyAfterArgs = () => getRawString("Diagnostic.keywordOnlyAfterArgs");
+    Diagnostic3.keywordParameterMissing = () => getRawString("Diagnostic.keywordParameterMissing");
+    Diagnostic3.keywordSubscriptIllegal = () => getRawString("Diagnostic.keywordSubscriptIllegal");
+    Diagnostic3.lazyImportIllegal = () => getRawString("Diagnostic.lazyImportIllegal");
+    Diagnostic3.lazyImportWildcardIllegal = () => getRawString("Diagnostic.lazyImportWildcardIllegal");
+    Diagnostic3.matchIncompatible = () => getRawString("Diagnostic.matchIncompatible");
+    Diagnostic3.maxParseDepthExceeded = () => getRawString("Diagnostic.maxParseDepthExceeded");
+    Diagnostic3.namedExceptAfterCatchAll = () => getRawString("Diagnostic.namedExceptAfterCatchAll");
+    Diagnostic3.nonDefaultAfterDefault = () => getRawString("Diagnostic.nonDefaultAfterDefault");
+    Diagnostic3.operatorLessOrGreaterDeprecated = () => getRawString("Diagnostic.operatorLessOrGreaterDeprecated");
+    Diagnostic3.orPatternIrrefutable = () => getRawString("Diagnostic.orPatternIrrefutable");
+    Diagnostic3.orPatternMissingName = () => getRawString("Diagnostic.orPatternMissingName");
+    Diagnostic3.paramAfterKwargsParam = () => getRawString("Diagnostic.paramAfterKwargsParam");
+    Diagnostic3.parenthesizedContextManagerIllegal = () => getRawString("Diagnostic.parenthesizedContextManagerIllegal");
+    Diagnostic3.positionArgAfterNamedArg = () => getRawString("Diagnostic.positionArgAfterNamedArg");
+    Diagnostic3.positionArgAfterUnpackedDictArg = () => getRawString("Diagnostic.positionArgAfterUnpackedDictArg");
+    Diagnostic3.positionOnlyAfterArgs = () => getRawString("Diagnostic.positionOnlyAfterArgs");
+    Diagnostic3.positionOnlyAfterKeywordOnly = () => getRawString("Diagnostic.positionOnlyAfterKeywordOnly");
+    Diagnostic3.positionOnlyIncompatible = () => getRawString("Diagnostic.positionOnlyIncompatible");
+    Diagnostic3.positionOnlyFirstParam = () => getRawString("Diagnostic.positionOnlyFirstParam");
+    Diagnostic3.relativeImportNotAllowed = () => getRawString("Diagnostic.relativeImportNotAllowed");
+    Diagnostic3.returnInExceptionGroup = () => getRawString("Diagnostic.returnInExceptionGroup");
+    Diagnostic3.returnOutsideFunction = () => getRawString("Diagnostic.returnOutsideFunction");
+    Diagnostic3.starPatternInAsPattern = () => getRawString("Diagnostic.starPatternInAsPattern");
+    Diagnostic3.starPatternInOrPattern = () => getRawString("Diagnostic.starPatternInOrPattern");
+    Diagnostic3.starStarWildcardNotAllowed = () => getRawString("Diagnostic.starStarWildcardNotAllowed");
+    Diagnostic3.stringNonAsciiBytes = () => getRawString("Diagnostic.stringNonAsciiBytes");
+    Diagnostic3.stringUnterminated = () => getRawString("Diagnostic.stringUnterminated");
+    Diagnostic3.sublistParamsIncompatible = () => getRawString("Diagnostic.sublistParamsIncompatible");
+    Diagnostic3.templateStringBytes = () => getRawString("Diagnostic.templateStringBytes");
+    Diagnostic3.templateStringIllegal = () => getRawString("Diagnostic.templateStringIllegal");
+    Diagnostic3.templateStringUnicode = () => getRawString("Diagnostic.templateStringUnicode");
+    Diagnostic3.trailingCommaInFromImport = () => getRawString("Diagnostic.trailingCommaInFromImport");
+    Diagnostic3.tryWithoutExcept = () => getRawString("Diagnostic.tryWithoutExcept");
+    Diagnostic3.typeAliasStatementIllegal = () => getRawString("Diagnostic.typeAliasStatementIllegal");
+    Diagnostic3.typeParameterBoundNotAllowed = () => getRawString("Diagnostic.typeParameterBoundNotAllowed");
+    Diagnostic3.typeParametersMissing = () => getRawString("Diagnostic.typeParametersMissing");
+    Diagnostic3.typeVarDefaultIllegal = () => getRawString("Diagnostic.typeVarDefaultIllegal");
+    Diagnostic3.unexpectedAsyncToken = () => getRawString("Diagnostic.unexpectedAsyncToken");
+    Diagnostic3.unexpectedEof = () => getRawString("Diagnostic.unexpectedEof");
+    Diagnostic3.unexpectedExprToken = () => getRawString("Diagnostic.unexpectedExprToken");
+    Diagnostic3.unexpectedIndent = () => getRawString("Diagnostic.unexpectedIndent");
+    Diagnostic3.unexpectedUnindent = () => getRawString("Diagnostic.unexpectedUnindent");
+    Diagnostic3.unpackedDictSubscriptIllegal = () => getRawString("Diagnostic.unpackedDictSubscriptIllegal");
+    Diagnostic3.unpackedSubscriptIllegal = () => getRawString("Diagnostic.unpackedSubscriptIllegal");
+    Diagnostic3.unpackIllegalInComprehension = () => getRawString("Diagnostic.unpackIllegalInComprehension");
+    Diagnostic3.unpackInDict = () => getRawString("Diagnostic.unpackInDict");
+    Diagnostic3.unpackInSet = () => getRawString("Diagnostic.unpackInSet");
+    Diagnostic3.unpackOperatorNotAllowed = () => getRawString("Diagnostic.unpackOperatorNotAllowed");
+    Diagnostic3.unpackTuplesIllegal = () => getRawString("Diagnostic.unpackTuplesIllegal");
+    Diagnostic3.varAnnotationIllegal = () => getRawString("Diagnostic.varAnnotationIllegal");
+    Diagnostic3.walrusIllegal = () => getRawString("Diagnostic.walrusIllegal");
+    Diagnostic3.walrusNotAllowed = () => getRawString("Diagnostic.walrusNotAllowed");
+    Diagnostic3.walrusNotAllowedInComprehension = () => getRawString("Diagnostic.walrusNotAllowedInComprehension");
+    Diagnostic3.yieldFromIllegal = () => getRawString("Diagnostic.yieldFromIllegal");
+    Diagnostic3.zeroCaseStatementsFound = () => getRawString("Diagnostic.zeroCaseStatementsFound");
+  })(Diagnostic2 = Localizer2.Diagnostic || (Localizer2.Diagnostic = {}));
+  let DiagnosticAddendum;
+  ((DiagnosticAddendum2) => {
+    DiagnosticAddendum2.orPatternMissingName = () => new ParameterizedString(getRawString("DiagnosticAddendum.orPatternMissingName"));
+  })(DiagnosticAddendum = Localizer2.DiagnosticAddendum || (Localizer2.DiagnosticAddendum = {}));
 })(Localizer || (Localizer = {}));
 var LocMessage = Localizer.Diagnostic;
 var LocAddendum = Localizer.DiagnosticAddendum;
-
-// extract/py/upstream/parser/stringAnnotationInfo.ts
-function createStringAnnotationInfo() {
-  const annotations2 = /* @__PURE__ */ new Map();
-  return {
-    info: {
-      get size() {
-        return annotations2.size;
-      },
-      get: (node) => annotations2.get(node),
-      forEach: (callback) => annotations2.forEach(callback)
-    },
-    writer: {
-      set: (node, annotation) => annotations2.set(node, annotation),
-      addAll: (info) => info.forEach((annotation, node) => annotations2.set(node, annotation))
-    }
-  };
-}
-var emptyStringAnnotationInfo = Object.freeze({
-  size: 0,
-  get: () => void 0,
-  forEach: () => {
-  }
-});
 
 // extract/py/upstream/parser/tokenizerTypes.ts
 var softKeywords = [
@@ -1184,38 +878,20 @@ var softKeywords = [
   36 /* Type */,
   25 /* Lazy */
 ];
-var Comment;
-((Comment2) => {
-  function create(start, length, value, type = 0 /* Regular */) {
-    return { type, start, length, value };
-  }
-  Comment2.create = create;
-})(Comment || (Comment = {}));
 var Token;
 ((Token4) => {
-  function create(type, start, length, comments) {
+  function create(type, start, length) {
     return {
       start,
       length,
-      type,
-      comments
+      type
     };
   }
   Token4.create = create;
 })(Token || (Token = {}));
 var IndentToken;
 ((IndentToken3) => {
-  function create(start, length, indentAmount, isIndentAmbiguous, comments) {
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 3 /* Indent */,
-        isIndentAmbiguous,
-        comments,
-        indentAmount
-      };
-    }
+  function create(start, length, indentAmount, isIndentAmbiguous) {
     return {
       start,
       length,
@@ -1228,18 +904,7 @@ var IndentToken;
 })(IndentToken || (IndentToken = {}));
 var DedentToken;
 ((DedentToken3) => {
-  function create(start, length, indentAmount, matchesIndent, isDedentAmbiguous, comments) {
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 4 /* Dedent */,
-        comments,
-        indentAmount,
-        matchesIndent,
-        isDedentAmbiguous
-      };
-    }
+  function create(start, length, indentAmount, matchesIndent, isDedentAmbiguous) {
     return {
       start,
       length,
@@ -1253,16 +918,7 @@ var DedentToken;
 })(DedentToken || (DedentToken = {}));
 var NewLineToken;
 ((NewLineToken2) => {
-  function create(start, length, newLineType, comments) {
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 2 /* NewLine */,
-        comments,
-        newLineType
-      };
-    }
+  function create(start, length, newLineType) {
     return {
       start,
       length,
@@ -1274,16 +930,7 @@ var NewLineToken;
 })(NewLineToken || (NewLineToken = {}));
 var KeywordToken;
 ((KeywordToken3) => {
-  function create(start, length, keywordType, comments) {
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 8 /* Keyword */,
-        comments,
-        keywordType
-      };
-    }
+  function create(start, length, keywordType) {
     return {
       start,
       length,
@@ -1299,20 +946,8 @@ var KeywordToken;
 })(KeywordToken || (KeywordToken = {}));
 var StringToken;
 ((StringToken4) => {
-  function create(start, length, flags, escapedValue, prefixLength, comments) {
+  function create(start, length, flags, escapedValue, prefixLength) {
     const quoteMarkLength = flags & 4 /* Triplicate */ ? 3 : 1;
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 5 /* String */,
-        flags,
-        escapedValue,
-        prefixLength,
-        quoteMarkLength,
-        comments
-      };
-    }
     return {
       start,
       length,
@@ -1327,19 +962,8 @@ var StringToken;
 })(StringToken || (StringToken = {}));
 var FStringStartToken;
 ((FStringStartToken4) => {
-  function create(start, length, flags, prefixLength, comments) {
+  function create(start, length, flags, prefixLength) {
     const quoteMarkLength = flags & 4 /* Triplicate */ ? 3 : 1;
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 24 /* FStringStart */,
-        flags,
-        prefixLength,
-        quoteMarkLength,
-        comments
-      };
-    }
     return {
       start,
       length,
@@ -1380,18 +1004,7 @@ var FStringEndToken;
 })(FStringEndToken || (FStringEndToken = {}));
 var NumberToken;
 ((NumberToken4) => {
-  function create(start, length, value, isInteger, isImaginary, comments) {
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 6 /* Number */,
-        isInteger,
-        isImaginary,
-        value,
-        comments
-      };
-    }
+  function create(start, length, value, isInteger, isImaginary) {
     return {
       start,
       length,
@@ -1405,16 +1018,7 @@ var NumberToken;
 })(NumberToken || (NumberToken = {}));
 var OperatorToken;
 ((OperatorToken3) => {
-  function create(start, length, operatorType, comments) {
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 9 /* Operator */,
-        operatorType,
-        comments
-      };
-    }
+  function create(start, length, operatorType) {
     return {
       start,
       length,
@@ -1426,22 +1030,13 @@ var OperatorToken;
 })(OperatorToken || (OperatorToken = {}));
 var IdentifierToken;
 ((IdentifierToken3) => {
-  function create(start, length, value, comments) {
+  function create(start, length, value) {
     let normalizedValue = value;
     for (let i = 0; i < value.length; i++) {
       if (value.charCodeAt(i) > 127) {
         normalizedValue = value.normalize("NFKC");
         break;
       }
-    }
-    if (comments !== void 0) {
-      return {
-        start,
-        length,
-        type: 7 /* Identifier */,
-        value: normalizedValue,
-        comments
-      };
     }
     return {
       start,
@@ -1454,9 +1049,6 @@ var IdentifierToken;
 })(IdentifierToken || (IdentifierToken = {}));
 
 // extract/py/upstream/parser/parseNodes.ts
-function setParserStringAnnotationInfo(key, stringAnnotations) {
-  key.stringAnnotations = stringAnnotations;
-}
 var _nextNodeId = 1;
 function getNextNodeId() {
   return _nextNodeId++;
@@ -1475,24 +1067,21 @@ var ModuleNode;
       nodeType: 36 /* Module */,
       id: _nextNodeId++,
       parent: void 0,
-      a: void 0,
       d: { statements: [] }
     };
-    node.a = node;
     return node;
   }
   ModuleNode3.create = create;
 })(ModuleNode || (ModuleNode = {}));
 var SuiteNode;
 ((SuiteNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 50 /* Suite */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         statements: [],
         typeComment: void 0
@@ -1504,14 +1093,13 @@ var SuiteNode;
 })(SuiteNode || (SuiteNode = {}));
 var IfNode;
 ((IfNode2) => {
-  function create(key, ifOrElifToken, testExpr, ifSuite, elseSuite) {
+  function create(ifOrElifToken, testExpr, ifSuite, elseSuite) {
     const node = {
       start: ifOrElifToken.start,
       length: ifOrElifToken.length,
       nodeType: 22 /* If */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: ifOrElifToken,
         testExpr,
@@ -1533,14 +1121,13 @@ var IfNode;
 })(IfNode || (IfNode = {}));
 var WhileNode;
 ((WhileNode2) => {
-  function create(key, whileToken, testExpr, whileSuite) {
+  function create(whileToken, testExpr, whileSuite) {
     const node = {
       start: whileToken.start,
       length: whileToken.length,
       nodeType: 57 /* While */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: whileToken,
         testExpr,
@@ -1556,14 +1143,13 @@ var WhileNode;
 })(WhileNode || (WhileNode = {}));
 var ForNode;
 ((ForNode2) => {
-  function create(key, forToken, targetExpr, iterableExpr, forSuite) {
+  function create(forToken, targetExpr, iterableExpr, forSuite) {
     const node = {
       start: forToken.start,
       length: forToken.length,
       nodeType: 29 /* For */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: forToken,
         targetExpr,
@@ -1581,14 +1167,13 @@ var ForNode;
 })(ForNode || (ForNode = {}));
 var ComprehensionForNode;
 ((ComprehensionForNode2) => {
-  function create(key, startToken, targetExpr, iterableExpr) {
+  function create(startToken, targetExpr, iterableExpr) {
     const node = {
       start: startToken.start,
       length: startToken.length,
       nodeType: 12 /* ComprehensionFor */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         targetExpr,
         iterableExpr
@@ -1604,14 +1189,13 @@ var ComprehensionForNode;
 })(ComprehensionForNode || (ComprehensionForNode = {}));
 var ComprehensionIfNode;
 ((ComprehensionIfNode2) => {
-  function create(key, ifToken, testExpr) {
+  function create(ifToken, testExpr) {
     const node = {
       start: ifToken.start,
       length: ifToken.length,
       nodeType: 13 /* ComprehensionIf */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { testExpr }
     };
     testExpr.parent = node;
@@ -1622,14 +1206,13 @@ var ComprehensionIfNode;
 })(ComprehensionIfNode || (ComprehensionIfNode = {}));
 var TryNode;
 ((TryNode2) => {
-  function create(key, tryToken, trySuite) {
+  function create(tryToken, trySuite) {
     const node = {
       start: tryToken.start,
       length: tryToken.length,
       nodeType: 53 /* Try */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: tryToken,
         trySuite,
@@ -1644,14 +1227,13 @@ var TryNode;
 })(TryNode || (TryNode = {}));
 var ExceptNode;
 ((ExceptNode2) => {
-  function create(key, exceptToken, exceptSuite, isExceptGroup) {
+  function create(exceptToken, exceptSuite, isExceptGroup) {
     const node = {
       start: exceptToken.start,
       length: exceptToken.length,
       nodeType: 28 /* Except */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         exceptSuite,
         isExceptGroup,
@@ -1666,14 +1248,13 @@ var ExceptNode;
 })(ExceptNode || (ExceptNode = {}));
 var FunctionNode;
 ((FunctionNode3) => {
-  function create(key, defToken, name, suite, typeParams) {
+  function create(defToken, name, suite, typeParams) {
     const node = {
       start: defToken.start,
       length: defToken.length,
       nodeType: 31 /* Function */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: defToken,
         decorators: [],
@@ -1698,14 +1279,13 @@ var FunctionNode;
 })(FunctionNode || (FunctionNode = {}));
 var ParameterNode;
 ((ParameterNode3) => {
-  function create(key, startToken, paramCategory) {
+  function create(startToken, paramCategory) {
     const node = {
       start: startToken.start,
       length: startToken.length,
       nodeType: 41 /* Parameter */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         category: paramCategory,
         name: void 0,
@@ -1720,14 +1300,13 @@ var ParameterNode;
 })(ParameterNode || (ParameterNode = {}));
 var ClassNode;
 ((ClassNode2) => {
-  function create(key, classToken, name, suite, typeParams) {
+  function create(classToken, name, suite, typeParams) {
     const node = {
       start: classToken.start,
       length: classToken.length,
       nodeType: 10 /* Class */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: classToken,
         decorators: [],
@@ -1746,20 +1325,18 @@ var ClassNode;
     return node;
   }
   ClassNode2.create = create;
-  function createDummyForDecorators(key, decorators2) {
+  function createDummyForDecorators(decorators2) {
     const node = {
       start: decorators2[0].start,
       length: 0,
       nodeType: 10 /* Class */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: {
           type: 8 /* Keyword */,
           start: 0,
-          length: 0,
-          comments: []
+          length: 0
         },
         decorators: decorators2,
         name: {
@@ -1768,13 +1345,11 @@ var ClassNode;
           nodeType: 38 /* Name */,
           id: 0,
           parent: void 0,
-          a: key,
           d: {
             token: {
               type: 7 /* Identifier */,
               start: 0,
               length: 0,
-              comments: [],
               value: ""
             },
             value: ""
@@ -1788,7 +1363,6 @@ var ClassNode;
           nodeType: 50 /* Suite */,
           id: 0,
           parent: void 0,
-          a: key,
           d: { statements: [], typeComment: void 0 }
         }
       }
@@ -1805,14 +1379,13 @@ var ClassNode;
 })(ClassNode || (ClassNode = {}));
 var WithNode;
 ((WithNode2) => {
-  function create(key, withToken, suite) {
+  function create(withToken, suite) {
     const node = {
       start: withToken.start,
       length: withToken.length,
       nodeType: 58 /* With */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: withToken,
         withItems: [],
@@ -1827,14 +1400,13 @@ var WithNode;
 })(WithNode || (WithNode = {}));
 var WithItemNode;
 ((WithItemNode2) => {
-  function create(key, expr) {
+  function create(expr) {
     const node = {
       start: expr.start,
       length: expr.length,
       nodeType: 59 /* WithItem */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { expr }
     };
     expr.parent = node;
@@ -1844,14 +1416,13 @@ var WithItemNode;
 })(WithItemNode || (WithItemNode = {}));
 var DecoratorNode;
 ((DecoratorNode2) => {
-  function create(key, atToken, expr) {
+  function create(atToken, expr) {
     const node = {
       start: atToken.start,
       length: atToken.length,
       nodeType: 16 /* Decorator */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { expr }
     };
     expr.parent = node;
@@ -1862,14 +1433,13 @@ var DecoratorNode;
 })(DecoratorNode || (DecoratorNode = {}));
 var StatementListNode;
 ((StatementListNode2) => {
-  function create(key, atToken) {
+  function create(atToken) {
     const node = {
       start: atToken.start,
       length: atToken.length,
       nodeType: 47 /* StatementList */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { firstToken: atToken, statements: [] }
     };
     return node;
@@ -1878,14 +1448,13 @@ var StatementListNode;
 })(StatementListNode || (StatementListNode = {}));
 var ErrorNode;
 ((ErrorNode2) => {
-  function create(key, initialRange, category, child, decorators2) {
+  function create(initialRange, category, child, decorators2) {
     const node = {
       start: initialRange.start,
       length: initialRange.length,
       nodeType: 0 /* Error */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         category,
         child,
@@ -1910,14 +1479,13 @@ var ErrorNode;
 })(ErrorNode || (ErrorNode = {}));
 var UnaryOperationNode;
 ((UnaryOperationNode2) => {
-  function create(key, operatorToken, expr, operator) {
+  function create(operatorToken, expr, operator) {
     const node = {
       start: operatorToken.start,
       length: operatorToken.length,
       nodeType: 55 /* UnaryOperation */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         operator,
         operatorToken,
@@ -1933,14 +1501,13 @@ var UnaryOperationNode;
 })(UnaryOperationNode || (UnaryOperationNode = {}));
 var BinaryOperationNode;
 ((BinaryOperationNode2) => {
-  function create(key, leftExpr, rightExpr, operatorToken, operator) {
+  function create(leftExpr, rightExpr, operatorToken, operator) {
     const node = {
       start: leftExpr.start,
       length: leftExpr.length,
       nodeType: 7 /* BinaryOperation */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         leftExpr,
         operatorToken,
@@ -1958,14 +1525,13 @@ var BinaryOperationNode;
 })(BinaryOperationNode || (BinaryOperationNode = {}));
 var AssignmentExpressionNode;
 ((AssignmentExpressionNode2) => {
-  function create(key, name, walrusToken, rightExpr) {
+  function create(name, walrusToken, rightExpr) {
     const node = {
       start: name.start,
       length: name.length,
       nodeType: 4 /* AssignmentExpression */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         name,
         walrusToken,
@@ -1982,14 +1548,13 @@ var AssignmentExpressionNode;
 })(AssignmentExpressionNode || (AssignmentExpressionNode = {}));
 var AssignmentNode;
 ((AssignmentNode2) => {
-  function create(key, leftExpr, rightExpr) {
+  function create(leftExpr, rightExpr) {
     const node = {
       start: leftExpr.start,
       length: leftExpr.length,
       nodeType: 3 /* Assignment */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         leftExpr,
         rightExpr
@@ -2004,14 +1569,13 @@ var AssignmentNode;
 })(AssignmentNode || (AssignmentNode = {}));
 var TypeParameterNode;
 ((TypeParameterNode2) => {
-  function create(key, name, typeParamKind, boundExpr, defaultExpr) {
+  function create(name, typeParamKind, boundExpr, defaultExpr) {
     const node = {
       start: name.start,
       length: name.length,
       nodeType: 75 /* TypeParameter */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         name,
         typeParamKind,
@@ -2034,14 +1598,13 @@ var TypeParameterNode;
 })(TypeParameterNode || (TypeParameterNode = {}));
 var TypeParameterListNode;
 ((TypeParameterListNode2) => {
-  function create(key, startToken, endToken, params) {
+  function create(startToken, endToken, params) {
     const node = {
       start: startToken.start,
       length: startToken.length,
       nodeType: 76 /* TypeParameterList */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { params }
     };
     extendRange(node, endToken);
@@ -2055,14 +1618,13 @@ var TypeParameterListNode;
 })(TypeParameterListNode || (TypeParameterListNode = {}));
 var TypeAliasNode;
 ((TypeAliasNode2) => {
-  function create(key, typeToken, name, expr, typeParams) {
+  function create(typeToken, name, expr, typeParams) {
     const node = {
       start: typeToken.start,
       length: typeToken.length,
       nodeType: 77 /* TypeAlias */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: typeToken,
         name,
@@ -2082,14 +1644,13 @@ var TypeAliasNode;
 })(TypeAliasNode || (TypeAliasNode = {}));
 var TypeAnnotationNode;
 ((TypeAnnotationNode2) => {
-  function create(key, valueExpr, annotation) {
+  function create(valueExpr, annotation) {
     const node = {
       start: valueExpr.start,
       length: valueExpr.length,
       nodeType: 54 /* TypeAnnotation */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         valueExpr,
         annotation
@@ -2104,14 +1665,13 @@ var TypeAnnotationNode;
 })(TypeAnnotationNode || (TypeAnnotationNode = {}));
 var FunctionAnnotationNode;
 ((FunctionAnnotationNode2) => {
-  function create(key, openParenToken, isEllipsis, paramAnnotations, returnAnnotation) {
+  function create(openParenToken, isEllipsis, paramAnnotations, returnAnnotation) {
     const node = {
       start: openParenToken.start,
       length: openParenToken.length,
       nodeType: 62 /* FunctionAnnotation */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         isEllipsis,
         paramAnnotations,
@@ -2129,14 +1689,13 @@ var FunctionAnnotationNode;
 })(FunctionAnnotationNode || (FunctionAnnotationNode = {}));
 var AugmentedAssignmentNode;
 ((AugmentedAssignmentNode2) => {
-  function create(key, leftExpr, rightExpr, operator, destExpr) {
+  function create(leftExpr, rightExpr, operator, destExpr) {
     const node = {
       start: leftExpr.start,
       length: leftExpr.length,
       nodeType: 5 /* AugmentedAssignment */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         leftExpr,
         operator,
@@ -2154,14 +1713,13 @@ var AugmentedAssignmentNode;
 })(AugmentedAssignmentNode || (AugmentedAssignmentNode = {}));
 var AwaitNode;
 ((AwaitNode2) => {
-  function create(key, awaitToken, expr) {
+  function create(awaitToken, expr) {
     const node = {
       start: awaitToken.start,
       length: awaitToken.length,
       nodeType: 6 /* Await */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { expr, awaitToken, hasParens: false }
     };
     expr.parent = node;
@@ -2172,14 +1730,13 @@ var AwaitNode;
 })(AwaitNode || (AwaitNode = {}));
 var TernaryNode;
 ((TernaryNode2) => {
-  function create(key, ifExpr, testExpr, elseExpr) {
+  function create(ifExpr, testExpr, elseExpr) {
     const node = {
       start: ifExpr.start,
       length: ifExpr.length,
       nodeType: 51 /* Ternary */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         ifExpr,
         testExpr,
@@ -2196,14 +1753,13 @@ var TernaryNode;
 })(TernaryNode || (TernaryNode = {}));
 var UnpackNode;
 ((UnpackNode2) => {
-  function create(key, starToken, expr) {
+  function create(starToken, expr) {
     const node = {
       start: starToken.start,
       length: starToken.length,
       nodeType: 56 /* Unpack */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         expr,
         starToken
@@ -2217,14 +1773,13 @@ var UnpackNode;
 })(UnpackNode || (UnpackNode = {}));
 var TupleNode;
 ((TupleNode2) => {
-  function create(key, range, hasParens) {
+  function create(range, hasParens) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 52 /* Tuple */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         items: [],
         hasParens
@@ -2236,14 +1791,13 @@ var TupleNode;
 })(TupleNode || (TupleNode = {}));
 var CallNode;
 ((CallNode2) => {
-  function create(key, leftExpr, args, trailingComma) {
+  function create(leftExpr, args, trailingComma) {
     const node = {
       start: leftExpr.start,
       length: leftExpr.length,
       nodeType: 9 /* Call */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         leftExpr,
         args,
@@ -2263,14 +1817,13 @@ var CallNode;
 })(CallNode || (CallNode = {}));
 var ComprehensionNode;
 ((ComprehensionNode2) => {
-  function create(key, expr, isGenerator) {
+  function create(expr, isGenerator) {
     const node = {
       start: expr.start,
       length: expr.length,
       nodeType: 11 /* Comprehension */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         expr,
         forIfNodes: [],
@@ -2285,14 +1838,13 @@ var ComprehensionNode;
 })(ComprehensionNode || (ComprehensionNode = {}));
 var IndexNode;
 ((IndexNode2) => {
-  function create(key, leftExpr, items, trailingComma, closeBracketToken) {
+  function create(leftExpr, items, trailingComma, closeBracketToken) {
     const node = {
       start: leftExpr.start,
       length: leftExpr.length,
       nodeType: 27 /* Index */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         leftExpr,
         items,
@@ -2310,14 +1862,13 @@ var IndexNode;
 })(IndexNode || (IndexNode = {}));
 var SliceNode;
 ((SliceNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 46 /* Slice */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {}
     };
     return node;
@@ -2326,14 +1877,13 @@ var SliceNode;
 })(SliceNode || (SliceNode = {}));
 var YieldNode;
 ((YieldNode2) => {
-  function create(key, yieldToken, expr) {
+  function create(yieldToken, expr) {
     const node = {
       start: yieldToken.start,
       length: yieldToken.length,
       nodeType: 60 /* Yield */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { expr }
     };
     if (expr) {
@@ -2346,14 +1896,13 @@ var YieldNode;
 })(YieldNode || (YieldNode = {}));
 var YieldFromNode;
 ((YieldFromNode2) => {
-  function create(key, yieldToken, expr) {
+  function create(yieldToken, expr) {
     const node = {
       start: yieldToken.start,
       length: yieldToken.length,
       nodeType: 61 /* YieldFrom */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { expr }
     };
     expr.parent = node;
@@ -2364,14 +1913,13 @@ var YieldFromNode;
 })(YieldFromNode || (YieldFromNode = {}));
 var MemberAccessNode;
 ((MemberAccessNode2) => {
-  function create(key, leftExpr, member) {
+  function create(leftExpr, member) {
     const node = {
       start: leftExpr.start,
       length: leftExpr.length,
       nodeType: 35 /* MemberAccess */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         leftExpr,
         member
@@ -2386,14 +1934,13 @@ var MemberAccessNode;
 })(MemberAccessNode || (MemberAccessNode = {}));
 var LambdaNode;
 ((LambdaNode2) => {
-  function create(key, lambdaToken, expr) {
+  function create(lambdaToken, expr) {
     const node = {
       start: lambdaToken.start,
       length: lambdaToken.length,
       nodeType: 33 /* Lambda */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         params: [],
         expr
@@ -2407,14 +1954,13 @@ var LambdaNode;
 })(LambdaNode || (LambdaNode = {}));
 var NameNode;
 ((NameNode2) => {
-  function create(key, nameToken) {
+  function create(nameToken) {
     const node = {
       start: nameToken.start,
       length: nameToken.length,
       nodeType: 38 /* Name */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         token: nameToken,
         value: nameToken.value
@@ -2426,14 +1972,13 @@ var NameNode;
 })(NameNode || (NameNode = {}));
 var ConstantNode;
 ((ConstantNode2) => {
-  function create(key, token) {
+  function create(token) {
     const node = {
       start: token.start,
       length: token.length,
       nodeType: 14 /* Constant */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { constType: token.keywordType }
     };
     return node;
@@ -2442,14 +1987,13 @@ var ConstantNode;
 })(ConstantNode || (ConstantNode = {}));
 var EllipsisNode;
 ((EllipsisNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 21 /* Ellipsis */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {}
     };
     return node;
@@ -2458,14 +2002,13 @@ var EllipsisNode;
 })(EllipsisNode || (EllipsisNode = {}));
 var NumberNode;
 ((NumberNode2) => {
-  function create(key, token) {
+  function create(token) {
     const node = {
       start: token.start,
       length: token.length,
       nodeType: 40 /* Number */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         value: token.value,
         isInteger: token.isInteger,
@@ -2478,14 +2021,13 @@ var NumberNode;
 })(NumberNode || (NumberNode = {}));
 var StringNode;
 ((StringNode2) => {
-  function create(key, token, value) {
+  function create(token, value) {
     const node = {
       start: token.start,
       length: token.length,
       nodeType: 49 /* String */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         token,
         value
@@ -2497,14 +2039,13 @@ var StringNode;
 })(StringNode || (StringNode = {}));
 var FormatStringNode;
 ((FormatStringNode3) => {
-  function create(key, startToken, endToken, middleTokens, fieldExprs, formatExprs) {
+  function create(startToken, endToken, middleTokens, fieldExprs, formatExprs) {
     const node = {
       start: startToken.start,
       length: startToken.length,
       nodeType: 30 /* FormatString */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         token: startToken,
         middleTokens,
@@ -2532,14 +2073,13 @@ var FormatStringNode;
 })(FormatStringNode || (FormatStringNode = {}));
 var StringListNode;
 ((StringListNode2) => {
-  function create(key, strings) {
+  function create(strings) {
     const node = {
       start: strings[0].start,
       length: strings[0].length,
       nodeType: 48 /* StringList */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         strings,
         hasParens: false
@@ -2557,14 +2097,13 @@ var StringListNode;
 })(StringListNode || (StringListNode = {}));
 var DictionaryNode;
 ((DictionaryNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 18 /* Dictionary */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         items: [],
         trailingCommaToken: void 0
@@ -2576,14 +2115,13 @@ var DictionaryNode;
 })(DictionaryNode || (DictionaryNode = {}));
 var DictionaryKeyEntryNode;
 ((DictionaryKeyEntryNode2) => {
-  function create(key, keyExpr, valueExpr) {
+  function create(keyExpr, valueExpr) {
     const node = {
       start: keyExpr.start,
       length: keyExpr.length,
       nodeType: 20 /* DictionaryKeyEntry */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         keyExpr,
         valueExpr
@@ -2598,14 +2136,13 @@ var DictionaryKeyEntryNode;
 })(DictionaryKeyEntryNode || (DictionaryKeyEntryNode = {}));
 var DictionaryExpandEntryNode;
 ((DictionaryExpandEntryNode2) => {
-  function create(key, expr) {
+  function create(expr) {
     const node = {
       start: expr.start,
       length: expr.length,
       nodeType: 19 /* DictionaryExpandEntry */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { expr }
     };
     expr.parent = node;
@@ -2615,14 +2152,13 @@ var DictionaryExpandEntryNode;
 })(DictionaryExpandEntryNode || (DictionaryExpandEntryNode = {}));
 var SetNode;
 ((SetNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 45 /* Set */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { items: [] }
     };
     return node;
@@ -2631,14 +2167,13 @@ var SetNode;
 })(SetNode || (SetNode = {}));
 var ListNode;
 ((ListNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 34 /* List */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { items: [] }
     };
     return node;
@@ -2647,14 +2182,13 @@ var ListNode;
 })(ListNode || (ListNode = {}));
 var ArgumentNode;
 ((ArgumentNode3) => {
-  function create(key, startToken, valueExpr, argCategory) {
+  function create(startToken, valueExpr, argCategory) {
     const node = {
       start: startToken ? startToken.start : valueExpr.start,
       length: startToken ? startToken.length : valueExpr.length,
       nodeType: 1 /* Argument */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         argCategory,
         name: void 0,
@@ -2669,14 +2203,13 @@ var ArgumentNode;
 })(ArgumentNode || (ArgumentNode = {}));
 var DelNode;
 ((DelNode2) => {
-  function create(key, delToken) {
+  function create(delToken) {
     const node = {
       start: delToken.start,
       length: delToken.length,
       nodeType: 17 /* Del */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { targets: [] }
     };
     return node;
@@ -2685,14 +2218,13 @@ var DelNode;
 })(DelNode || (DelNode = {}));
 var PassNode;
 ((PassNode2) => {
-  function create(key, passToken) {
+  function create(passToken) {
     const node = {
       start: passToken.start,
       length: passToken.length,
       nodeType: 42 /* Pass */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {}
     };
     return node;
@@ -2701,14 +2233,13 @@ var PassNode;
 })(PassNode || (PassNode = {}));
 var ImportNode;
 ((ImportNode2) => {
-  function create(key, importToken) {
+  function create(importToken) {
     const node = {
       start: importToken.start,
       length: importToken.length,
       nodeType: 23 /* Import */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { list: [] }
     };
     return node;
@@ -2717,14 +2248,13 @@ var ImportNode;
 })(ImportNode || (ImportNode = {}));
 var ModuleNameNode;
 ((ModuleNameNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 37 /* ModuleName */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         leadingDots: 0,
         nameParts: []
@@ -2736,14 +2266,13 @@ var ModuleNameNode;
 })(ModuleNameNode || (ModuleNameNode = {}));
 var ImportAsNode;
 ((ImportAsNode2) => {
-  function create(key, module) {
+  function create(module) {
     const node = {
       start: module.start,
       length: module.length,
       nodeType: 24 /* ImportAs */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { module }
     };
     module.parent = node;
@@ -2753,14 +2282,13 @@ var ImportAsNode;
 })(ImportAsNode || (ImportAsNode = {}));
 var ImportFromNode;
 ((ImportFromNode2) => {
-  function create(key, fromToken, module) {
+  function create(fromToken, module) {
     const node = {
       start: fromToken.start,
       length: fromToken.length,
       nodeType: 25 /* ImportFrom */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         module,
         imports: [],
@@ -2776,14 +2304,13 @@ var ImportFromNode;
 })(ImportFromNode || (ImportFromNode = {}));
 var ImportFromAsNode;
 ((ImportFromAsNode2) => {
-  function create(key, name) {
+  function create(name) {
     const node = {
       start: name.start,
       length: name.length,
       nodeType: 26 /* ImportFromAs */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { name }
     };
     name.parent = node;
@@ -2793,14 +2320,13 @@ var ImportFromAsNode;
 })(ImportFromAsNode || (ImportFromAsNode = {}));
 var GlobalNode;
 ((GlobalNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 32 /* Global */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { targets: [] }
     };
     return node;
@@ -2809,14 +2335,13 @@ var GlobalNode;
 })(GlobalNode || (GlobalNode = {}));
 var NonlocalNode;
 ((NonlocalNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 39 /* Nonlocal */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { targets: [] }
     };
     return node;
@@ -2825,14 +2350,13 @@ var NonlocalNode;
 })(NonlocalNode || (NonlocalNode = {}));
 var AssertNode;
 ((AssertNode2) => {
-  function create(key, assertToken, testExpr) {
+  function create(assertToken, testExpr) {
     const node = {
       start: assertToken.start,
       length: assertToken.length,
       nodeType: 2 /* Assert */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { testExpr }
     };
     testExpr.parent = node;
@@ -2843,14 +2367,13 @@ var AssertNode;
 })(AssertNode || (AssertNode = {}));
 var BreakNode;
 ((BreakNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 8 /* Break */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {}
     };
     return node;
@@ -2859,14 +2382,13 @@ var BreakNode;
 })(BreakNode || (BreakNode = {}));
 var ContinueNode;
 ((ContinueNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 15 /* Continue */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {}
     };
     return node;
@@ -2875,14 +2397,13 @@ var ContinueNode;
 })(ContinueNode || (ContinueNode = {}));
 var ReturnNode;
 ((ReturnNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 44 /* Return */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {}
     };
     return node;
@@ -2891,14 +2412,13 @@ var ReturnNode;
 })(ReturnNode || (ReturnNode = {}));
 var RaiseNode;
 ((RaiseNode2) => {
-  function create(key, range) {
+  function create(range) {
     const node = {
       start: range.start,
       length: range.length,
       nodeType: 43 /* Raise */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {}
     };
     return node;
@@ -2907,14 +2427,13 @@ var RaiseNode;
 })(RaiseNode || (RaiseNode = {}));
 var MatchNode;
 ((MatchNode2) => {
-  function create(key, matchToken, expr) {
+  function create(matchToken, expr) {
     const node = {
       start: matchToken.start,
       length: matchToken.length,
       nodeType: 63 /* Match */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         firstToken: matchToken,
         expr,
@@ -2929,14 +2448,13 @@ var MatchNode;
 })(MatchNode || (MatchNode = {}));
 var CaseNode;
 ((CaseNode2) => {
-  function create(key, caseToken, pattern, isIrrefutable, guardExpr, suite) {
+  function create(caseToken, pattern, isIrrefutable, guardExpr, suite) {
     const node = {
       start: caseToken.start,
       length: caseToken.length,
       nodeType: 64 /* Case */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         pattern,
         isIrrefutable,
@@ -2956,7 +2474,7 @@ var CaseNode;
 })(CaseNode || (CaseNode = {}));
 var PatternSequenceNode;
 ((PatternSequenceNode2) => {
-  function create(key, firstToken, entries) {
+  function create(firstToken, entries) {
     const starEntryIndex = entries.findIndex(
       (entry) => entry.d.orPatterns.length === 1 && entry.d.orPatterns[0].nodeType === 69 /* PatternCapture */ && entry.d.orPatterns[0].d.isStar
     );
@@ -2966,7 +2484,6 @@ var PatternSequenceNode;
       nodeType: 65 /* PatternSequence */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         entries,
         starEntryIndex: starEntryIndex >= 0 ? starEntryIndex : void 0
@@ -2984,14 +2501,13 @@ var PatternSequenceNode;
 })(PatternSequenceNode || (PatternSequenceNode = {}));
 var PatternAsNode;
 ((PatternAsNode2) => {
-  function create(key, orPatterns, target) {
+  function create(orPatterns, target) {
     const node = {
       start: orPatterns[0].start,
       length: orPatterns[0].length,
       nodeType: 66 /* PatternAs */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         orPatterns,
         target
@@ -3013,14 +2529,13 @@ var PatternAsNode;
 })(PatternAsNode || (PatternAsNode = {}));
 var PatternLiteralNode;
 ((PatternLiteralNode2) => {
-  function create(key, expr) {
+  function create(expr) {
     const node = {
       start: expr.start,
       length: expr.length,
       nodeType: 67 /* PatternLiteral */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { expr }
     };
     expr.parent = node;
@@ -3030,14 +2545,13 @@ var PatternLiteralNode;
 })(PatternLiteralNode || (PatternLiteralNode = {}));
 var PatternClassNode;
 ((PatternClassNode2) => {
-  function create(key, className, args) {
+  function create(className, args) {
     const node = {
       start: className.start,
       length: className.length,
       nodeType: 68 /* PatternClass */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         className,
         args
@@ -3056,14 +2570,13 @@ var PatternClassNode;
 })(PatternClassNode || (PatternClassNode = {}));
 var PatternClassArgumentNode;
 ((PatternClassArgumentNode2) => {
-  function create(key, pattern, name) {
+  function create(pattern, name) {
     const node = {
       start: pattern.start,
       length: pattern.length,
       nodeType: 74 /* PatternClassArgument */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         pattern,
         name
@@ -3080,14 +2593,13 @@ var PatternClassArgumentNode;
 })(PatternClassArgumentNode || (PatternClassArgumentNode = {}));
 var PatternCaptureNode;
 ((PatternCaptureNode2) => {
-  function create(key, target, starToken) {
+  function create(target, starToken) {
     const node = {
       start: target.start,
       length: target.length,
       nodeType: 69 /* PatternCapture */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         target,
         isStar: starToken !== void 0,
@@ -3104,14 +2616,13 @@ var PatternCaptureNode;
 })(PatternCaptureNode || (PatternCaptureNode = {}));
 var PatternMappingNode;
 ((PatternMappingNode2) => {
-  function create(key, startToken, entries) {
+  function create(startToken, entries) {
     const node = {
       start: startToken.start,
       length: startToken.length,
       nodeType: 70 /* PatternMapping */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { entries }
     };
     if (entries.length > 0) {
@@ -3126,14 +2637,13 @@ var PatternMappingNode;
 })(PatternMappingNode || (PatternMappingNode = {}));
 var PatternMappingKeyEntryNode;
 ((PatternMappingKeyEntryNode2) => {
-  function create(key, keyPattern, valuePattern) {
+  function create(keyPattern, valuePattern) {
     const node = {
       start: keyPattern.start,
       length: keyPattern.length,
       nodeType: 71 /* PatternMappingKeyEntry */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: {
         keyPattern,
         valuePattern
@@ -3148,14 +2658,13 @@ var PatternMappingKeyEntryNode;
 })(PatternMappingKeyEntryNode || (PatternMappingKeyEntryNode = {}));
 var PatternMappingExpandEntryNode;
 ((PatternMappingExpandEntryNode2) => {
-  function create(key, starStarToken, target) {
+  function create(starStarToken, target) {
     const node = {
       start: starStarToken.start,
       length: starStarToken.length,
       nodeType: 72 /* PatternMappingExpandEntry */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { target }
     };
     target.parent = node;
@@ -3166,14 +2675,13 @@ var PatternMappingExpandEntryNode;
 })(PatternMappingExpandEntryNode || (PatternMappingExpandEntryNode = {}));
 var PatternValueNode;
 ((PatternValueNode2) => {
-  function create(key, expr) {
+  function create(expr) {
     const node = {
       start: expr.start,
       length: expr.length,
       nodeType: 73 /* PatternValue */,
       id: _nextNodeId++,
       parent: void 0,
-      a: key,
       d: { expr }
     };
     expr.parent = node;
@@ -3459,6 +2967,14 @@ function _getHexDigitValue(charCode) {
     return charCode - 65 /* A */ + 10;
   }
   return 0;
+}
+
+// extract/py/upstream/common/core.ts
+function cloneStr(str) {
+  if (str.length < 13) {
+    return str;
+  }
+  return Buffer.from(str, "utf8").toString("utf8");
 }
 
 // extract/py/upstream/common/textRangeCollection.ts
@@ -8268,7 +7784,6 @@ var _keywords = /* @__PURE__ */ new Map([
   ["None", 27 /* None */],
   ["True", 34 /* True */]
 ]);
-var _softKeywords = /* @__PURE__ */ new Set(["match", "case", "type", "lazy"]);
 var _keywordFirstCharTable = (() => {
   const table = new Array(128).fill(false);
   for (const kw of _keywords.keys()) {
@@ -8474,143 +7989,6 @@ function removeUnderscoresFromRange(text, start, end) {
   }
   return result;
 }
-function endsWithBackslashContinuation(text, start, end) {
-  let i = end - 1;
-  while (i >= start) {
-    const ch = text.charCodeAt(i);
-    if (ch === 32 /* Space */ || ch === 9 /* Tab */ || ch === 12 /* FormFeed */) {
-      i--;
-    } else {
-      break;
-    }
-  }
-  return i >= start && text.charCodeAt(i) === 92 /* Backslash */;
-}
-function parseIgnoreBracketContent(text, pos, rangeEnd, allowColon) {
-  pos++;
-  const bracketStart = pos;
-  while (pos < rangeEnd && text.charCodeAt(pos) !== 93 /* CloseBracket */) {
-    const bc = text.charCodeAt(pos);
-    if (bc >= 97 /* a */ && bc <= 122 /* z */ || bc >= 65 /* A */ && bc <= 90 /* Z */ || bc >= 48 /* _0 */ && bc <= 57 /* _9 */ || bc === 95 /* Underscore */ || bc === 45 /* Hyphen */ || bc === 44 /* Comma */ || bc === 32 /* Space */ || bc === 9 /* Tab */ || allowColon && bc === 58 /* Colon */) {
-      pos++;
-    } else {
-      break;
-    }
-  }
-  if (pos < rangeEnd && text.charCodeAt(pos) === 93 /* CloseBracket */) {
-    return { content: text.slice(bracketStart, pos), newPos: pos + 1 };
-  }
-  return void 0;
-}
-function matchIgnoreDirective(text, rangeStart, rangeEnd, directive) {
-  const allowColonInBracket = directive === "type";
-  let searchFrom = rangeStart;
-  while (searchFrom < rangeEnd) {
-    const firstCharCode = directive.charCodeAt(0);
-    let directiveIdx = -1;
-    const scanLimit = rangeEnd - directive.length;
-    for (let i = searchFrom; i <= scanLimit; i++) {
-      if (text.charCodeAt(i) === firstCharCode) {
-        let found = true;
-        for (let d = 1; d < directive.length; d++) {
-          if (text.charCodeAt(i + d) !== directive.charCodeAt(d)) {
-            found = false;
-            break;
-          }
-        }
-        if (found) {
-          directiveIdx = i;
-          break;
-        }
-      }
-    }
-    if (directiveIdx < 0) {
-      return void 0;
-    }
-    let prefixStart = directiveIdx;
-    let foundAnchor = false;
-    let j = directiveIdx - 1;
-    while (j >= rangeStart && (text.charCodeAt(j) === 32 /* Space */ || text.charCodeAt(j) === 9 /* Tab */)) {
-      j--;
-    }
-    if (j < rangeStart) {
-      prefixStart = rangeStart;
-      foundAnchor = true;
-    } else if (text.charCodeAt(j) === 35 /* Hash */) {
-      prefixStart = j;
-      foundAnchor = true;
-    }
-    if (!foundAnchor) {
-      searchFrom = directiveIdx + 1;
-      continue;
-    }
-    let pos = directiveIdx + directive.length;
-    if (pos >= rangeEnd || text.charCodeAt(pos) !== 58 /* Colon */) {
-      searchFrom = directiveIdx + 1;
-      continue;
-    }
-    pos++;
-    while (pos < rangeEnd && (text.charCodeAt(pos) === 32 /* Space */ || text.charCodeAt(pos) === 9 /* Tab */)) {
-      pos++;
-    }
-    const ignoreStr = "ignore";
-    if (pos + ignoreStr.length > rangeEnd) {
-      searchFrom = directiveIdx + 1;
-      continue;
-    }
-    let matched = true;
-    for (let k = 0; k < ignoreStr.length; k++) {
-      if (text.charCodeAt(pos + k) !== ignoreStr.charCodeAt(k)) {
-        matched = false;
-        break;
-      }
-    }
-    if (!matched) {
-      searchFrom = directiveIdx + 1;
-      continue;
-    }
-    pos += ignoreStr.length;
-    let bracketContent;
-    if (pos >= rangeEnd) {
-    } else {
-      const ch = text.charCodeAt(pos);
-      if (ch === 32 /* Space */ || ch === 9 /* Tab */) {
-        while (pos < rangeEnd && (text.charCodeAt(pos) === 32 /* Space */ || text.charCodeAt(pos) === 9 /* Tab */)) {
-          pos++;
-        }
-        if (pos < rangeEnd && text.charCodeAt(pos) === 91 /* OpenBracket */) {
-          const parsed = parseIgnoreBracketContent(text, pos, rangeEnd, allowColonInBracket);
-          if (parsed === void 0) {
-            searchFrom = directiveIdx + 1;
-            continue;
-          }
-          bracketContent = parsed.content;
-          pos = parsed.newPos;
-        }
-      } else if (ch === 91 /* OpenBracket */) {
-        const parsed = parseIgnoreBracketContent(text, pos, rangeEnd, allowColonInBracket);
-        if (parsed === void 0) {
-          searchFrom = directiveIdx + 1;
-          continue;
-        }
-        bracketContent = parsed.content;
-        pos = parsed.newPos;
-      } else {
-        searchFrom = directiveIdx + 1;
-        continue;
-      }
-    }
-    const prefix = text.slice(prefixStart, directiveIdx);
-    const fullMatch = text.slice(prefixStart, pos);
-    return {
-      fullMatch,
-      prefix,
-      bracketContent,
-      index: prefixStart
-    };
-  }
-  return void 0;
-}
 var Tokenizer = class _Tokenizer {
   _cs = new CharacterStream("");
   _tokens = [];
@@ -8618,35 +7996,8 @@ var Tokenizer = class _Tokenizer {
   _parenDepth = 0;
   _lineRanges = [];
   _indentAmounts = [];
-  _typeIgnoreAll;
-  // Cached answer to "are there any non-trivial tokens yet?" Once true it
-  // stays true, so the O(n) scan in _handleComment only runs while the token
-  // stream consists purely of NewLine / Indent tokens.
-  _hasTokenBeforeIgnoreAll = false;
-  _typeIgnoreLines = /* @__PURE__ */ new Map();
-  _pyrightIgnoreLines = /* @__PURE__ */ new Map();
-  _comments;
   _fStringStack = [];
   _activeFString;
-  // Total times CR, CR/LF, and LF are used to terminate
-  // lines. Used to determine the predominant line ending.
-  _crCount = 0;
-  _crLfCount = 0;
-  _lfCount = 0;
-  // Number of times an indent token is emitted.
-  _indentCount = 0;
-  // Number of times an indent token is emitted and a tab character
-  // is present (used to determine predominant tab sequence).
-  _indentTabCount = 0;
-  // Number of spaces that are added for an indent token
-  // (used to determine predominant tab sequence).
-  _indentSpacesTotal = 0;
-  // Number of single or double quote string literals found
-  // in the code.
-  _singleQuoteCount = 0;
-  _doubleQuoteCount = 0;
-  // Assume Jupyter notebook tokenization rules?
-  _useNotebookMode = false;
   // Direct-mapped identifier intern cache. Indexed by a cheap hash of
   // (firstChar, lastChar, length). On a hit (slot defined and string
   // equals the current source range), reuse the cached string instead of
@@ -8656,7 +8007,7 @@ var Tokenizer = class _Tokenizer {
   static _identifierCacheSize = 2048;
   static _identifierCacheMask = _Tokenizer._identifierCacheSize - 1;
   _identifierCache = new Array(_Tokenizer._identifierCacheSize);
-  tokenize(text, start, length, initialParenDepth = 0, useNotebookMode = false) {
+  tokenize(text, start, length) {
     if (start === void 0) {
       start = 0;
     } else if (start < 0 || start > text.length) {
@@ -8673,10 +8024,9 @@ var Tokenizer = class _Tokenizer {
     this._cs.position = start;
     this._tokens = [];
     this._prevLineStart = 0;
-    this._parenDepth = initialParenDepth;
+    this._parenDepth = 0;
     this._lineRanges = [];
     this._indentAmounts = [];
-    this._useNotebookMode = useNotebookMode;
     this._identifierCache.fill(void 0);
     const end = start + length;
     if (start === 0) {
@@ -8700,7 +8050,7 @@ var Tokenizer = class _Tokenizer {
     }
     if (this._tokens.length === 0 || this._tokens[this._tokens.length - 1].type !== 2 /* NewLine */) {
       if (this._parenDepth === 0) {
-        this._tokens.push(NewLineToken.create(this._cs.position, 0, 3 /* Implied */, this._getComments()));
+        this._tokens.push(NewLineToken.create(this._cs.position, 0, 3 /* Implied */));
       }
     }
     this._setIndent(
@@ -8712,7 +8062,7 @@ var Tokenizer = class _Tokenizer {
       /* isTabPresent */
       false
     );
-    this._tokens.push(Token.create(1 /* EndOfStream */, this._cs.position, 0, this._getComments()));
+    this._tokens.push(Token.create(1 /* EndOfStream */, this._cs.position, 0));
     this._addLineRange();
     if (this._lineRanges.length > 0) {
       const lastLine = this._lineRanges[this._lineRanges.length - 1];
@@ -8721,65 +8071,13 @@ var Tokenizer = class _Tokenizer {
         this._lineRanges.push({ start: this._cs.position, length: 0 });
       }
     }
-    let predominantEndOfLineSequence = "\n";
-    if (this._crCount > this._crLfCount && this._crCount > this._lfCount) {
-      predominantEndOfLineSequence = "\r";
-    } else if (this._crLfCount > this._crCount && this._crLfCount > this._lfCount) {
-      predominantEndOfLineSequence = "\r\n";
-    }
-    let predominantTabSequence = "    ";
-    let hasPredominantTabSequence = false;
-    if (this._indentTabCount > this._indentCount / 2) {
-      hasPredominantTabSequence = true;
-      predominantTabSequence = "	";
-    } else if (this._indentCount > 0) {
-      hasPredominantTabSequence = true;
-      let averageSpacePerIndent = Math.round(this._indentSpacesTotal / this._indentCount);
-      if (averageSpacePerIndent < 1) {
-        averageSpacePerIndent = 1;
-      } else if (averageSpacePerIndent > defaultTabSize) {
-        averageSpacePerIndent = defaultTabSize;
-      }
-      predominantTabSequence = "";
-      for (let i = 0; i < averageSpacePerIndent; i++) {
-        predominantTabSequence += " ";
-      }
-    }
     return {
       tokens: new TextRangeCollection(this._tokens),
-      lines: new TextRangeCollection(this._lineRanges),
-      typeIgnoreLines: this._typeIgnoreLines,
-      typeIgnoreAll: this._typeIgnoreAll,
-      pyrightIgnoreLines: this._pyrightIgnoreLines,
-      predominantEndOfLineSequence,
-      hasPredominantTabSequence,
-      predominantTabSequence,
-      predominantSingleQuoteCharacter: this._singleQuoteCount >= this._doubleQuoteCount ? "'" : '"'
+      lines: new TextRangeCollection(this._lineRanges)
     };
   }
   static getOperatorInfo(operatorType) {
     return _operatorInfo[operatorType];
-  }
-  static isWhitespace(token) {
-    return token.type === 2 /* NewLine */ || token.type === 3 /* Indent */ || token.type === 4 /* Dedent */;
-  }
-  static isPythonKeyword(name, includeSoftKeywords = false) {
-    const keyword = _keywords.get(name);
-    if (!keyword) {
-      return false;
-    }
-    if (includeSoftKeywords) {
-      return true;
-    }
-    return !_softKeywords.has(name);
-  }
-  static isPythonIdentifier(value) {
-    for (let i = 0; i < value.length; i++) {
-      if (i === 0 ? !isIdentifierStartChar(value.charCodeAt(i)) : !isIdentifierChar(value.charCodeAt(i))) {
-        return false;
-      }
-    }
-    return true;
   }
   static isOperatorAssignment(operatorType) {
     if (operatorType === void 0 || _operatorInfo[operatorType] === void 0) {
@@ -8827,23 +8125,8 @@ var Tokenizer = class _Tokenizer {
       }
     }
     if (this._cs.currentChar === 35 /* Hash */) {
-      this._handleComment();
+      this._cs.skipToEol();
       return true;
-    }
-    if (this._useNotebookMode) {
-      const kind = this._getIPythonMagicsKind();
-      if (kind === 1 /* Line */) {
-        this._handleIPythonMagics(
-          this._cs.currentChar === 37 /* Percent */ ? 1 /* IPythonMagic */ : 2 /* IPythonShellEscape */
-        );
-        return true;
-      }
-      if (kind === 2 /* Cell */) {
-        this._handleIPythonMagics(
-          this._cs.currentChar === 37 /* Percent */ ? 3 /* IPythonCellMagic */ : 4 /* IPythonCellShellEscape */
-        );
-        return true;
-      }
     }
     switch (this._cs.currentChar) {
       case _byteOrderMarker: {
@@ -8891,31 +8174,31 @@ var Tokenizer = class _Tokenizer {
       }
       case 40 /* OpenParenthesis */: {
         this._parenDepth++;
-        this._tokens.push(Token.create(13 /* OpenParenthesis */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(13 /* OpenParenthesis */, this._cs.position, 1));
         break;
       }
       case 41 /* CloseParenthesis */: {
         if (this._parenDepth > 0) {
           this._parenDepth--;
         }
-        this._tokens.push(Token.create(14 /* CloseParenthesis */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(14 /* CloseParenthesis */, this._cs.position, 1));
         break;
       }
       case 91 /* OpenBracket */: {
         this._parenDepth++;
-        this._tokens.push(Token.create(15 /* OpenBracket */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(15 /* OpenBracket */, this._cs.position, 1));
         break;
       }
       case 93 /* CloseBracket */: {
         if (this._parenDepth > 0) {
           this._parenDepth--;
         }
-        this._tokens.push(Token.create(16 /* CloseBracket */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(16 /* CloseBracket */, this._cs.position, 1));
         break;
       }
       case 123 /* OpenBrace */: {
         this._parenDepth++;
-        this._tokens.push(Token.create(17 /* OpenCurlyBrace */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(17 /* OpenCurlyBrace */, this._cs.position, 1));
         if (this._activeFString) {
           if (!this._activeFString.activeReplacementField || this._activeFString.activeReplacementField.inFormatSpecifier) {
             if (this._activeFString.activeReplacementField) {
@@ -8936,32 +8219,32 @@ var Tokenizer = class _Tokenizer {
         if (this._parenDepth > 0) {
           this._parenDepth--;
         }
-        this._tokens.push(Token.create(18 /* CloseCurlyBrace */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(18 /* CloseCurlyBrace */, this._cs.position, 1));
         break;
       }
       case 44 /* Comma */: {
-        this._tokens.push(Token.create(12 /* Comma */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(12 /* Comma */, this._cs.position, 1));
         break;
       }
       case 96 /* Backtick */: {
-        this._tokens.push(Token.create(22 /* Backtick */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(22 /* Backtick */, this._cs.position, 1));
         break;
       }
       case 59 /* Semicolon */: {
-        this._tokens.push(Token.create(11 /* Semicolon */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(11 /* Semicolon */, this._cs.position, 1));
         break;
       }
       case 58 /* Colon */: {
         if (this._cs.nextChar === 61 /* Equal */) {
           if (!this._activeFString || !this._activeFString.activeReplacementField || this._activeFString.activeReplacementField.parenDepth !== this._parenDepth) {
             this._tokens.push(
-              OperatorToken.create(this._cs.position, 2, 35 /* Walrus */, this._getComments())
+              OperatorToken.create(this._cs.position, 2, 35 /* Walrus */)
             );
             this._cs.advance(1);
             break;
           }
         }
-        this._tokens.push(Token.create(10 /* Colon */, this._cs.position, 1, this._getComments()));
+        this._tokens.push(Token.create(10 /* Colon */, this._cs.position, 1));
         if (this._activeFString?.activeReplacementField && this._parenDepth === this._activeFString.activeReplacementField.parenDepth) {
           this._activeFString.activeReplacementField.inFormatSpecifier = true;
         }
@@ -8975,11 +8258,11 @@ var Tokenizer = class _Tokenizer {
         }
         if (this._cs.currentChar === 46 /* Period */) {
           if (this._cs.nextChar === 46 /* Period */ && this._cs.lookAhead(2) === 46 /* Period */) {
-            this._tokens.push(Token.create(19 /* Ellipsis */, this._cs.position, 3, this._getComments()));
+            this._tokens.push(Token.create(19 /* Ellipsis */, this._cs.position, 3));
             this._cs.advance(3);
             return true;
           }
-          this._tokens.push(Token.create(20 /* Dot */, this._cs.position, 1, this._getComments()));
+          this._tokens.push(Token.create(20 /* Dot */, this._cs.position, 1));
           break;
         }
         if (!this._tryIdentifier()) {
@@ -9002,15 +8285,8 @@ var Tokenizer = class _Tokenizer {
   _handleNewLine(length, newLineType) {
     if (this._parenDepth === 0 && newLineType !== 3 /* Implied */) {
       if (this._tokens.length === 0 || this._tokens[this._tokens.length - 1].type !== 2 /* NewLine */) {
-        this._tokens.push(NewLineToken.create(this._cs.position, length, newLineType, this._getComments()));
+        this._tokens.push(NewLineToken.create(this._cs.position, length, newLineType));
       }
-    }
-    if (newLineType === 0 /* CarriageReturn */) {
-      this._crCount++;
-    } else if (newLineType === 2 /* CarriageReturnLineFeed */) {
-      this._crLfCount++;
-    } else {
-      this._lfCount++;
     }
     this._cs.advance(length);
     this._addLineRange();
@@ -9062,28 +8338,18 @@ var Tokenizer = class _Tokenizer {
     }
     if (this._indentAmounts.length === 0) {
       if (tab8Spaces > 0) {
-        this._indentCount++;
-        if (isTabPresent) {
-          this._indentTabCount++;
-        }
-        this._indentSpacesTotal += tab8Spaces;
         this._indentAmounts.push({
           tab1Spaces,
           tab8Spaces,
           isSpacePresent,
           isTabPresent
         });
-        this._tokens.push(IndentToken.create(startOffset, tab1Spaces, tab8Spaces, false, this._getComments()));
+        this._tokens.push(IndentToken.create(startOffset, tab1Spaces, tab8Spaces, false));
       }
     } else {
       const prevTabInfo = this._indentAmounts[this._indentAmounts.length - 1];
       if (prevTabInfo.tab8Spaces < tab8Spaces) {
         const isIndentAmbiguous = (prevTabInfo.isSpacePresent && isTabPresent || prevTabInfo.isTabPresent && isSpacePresent) && prevTabInfo.tab1Spaces >= tab1Spaces;
-        this._indentCount++;
-        if (isTabPresent) {
-          this._indentTabCount++;
-        }
-        this._indentSpacesTotal += tab8Spaces - this._indentAmounts[this._indentAmounts.length - 1].tab8Spaces;
         this._indentAmounts.push({
           tab1Spaces,
           tab8Spaces,
@@ -9091,12 +8357,12 @@ var Tokenizer = class _Tokenizer {
           isTabPresent
         });
         this._tokens.push(
-          IndentToken.create(startOffset, tab1Spaces, tab8Spaces, isIndentAmbiguous, this._getComments())
+          IndentToken.create(startOffset, tab1Spaces, tab8Spaces, isIndentAmbiguous)
         );
       } else if (prevTabInfo.tab8Spaces === tab8Spaces) {
         if (prevTabInfo.isSpacePresent && isTabPresent || prevTabInfo.isTabPresent && isSpacePresent) {
           this._tokens.push(
-            IndentToken.create(startOffset, tab1Spaces, tab8Spaces, true, this._getComments())
+            IndentToken.create(startOffset, tab1Spaces, tab8Spaces, true)
           );
         }
       } else {
@@ -9117,8 +8383,7 @@ var Tokenizer = class _Tokenizer {
               0,
               actualDedentAmount,
               matchesIndent,
-              isDedentAmbiguous,
-              this._getComments()
+              isDedentAmbiguous
             )
           );
           isDedentAmbiguous = false;
@@ -9170,10 +8435,10 @@ var Tokenizer = class _Tokenizer {
       const length = end - start;
       const keywordType = getKeywordTypeFromTextSlice(text, start, length);
       if (keywordType !== void 0) {
-        this._tokens.push(KeywordToken.create(start, length, keywordType, this._getComments()));
+        this._tokens.push(KeywordToken.create(start, length, keywordType));
       } else {
         const value = this._internIdentifier(text, start, end, length);
-        this._tokens.push(IdentifierToken.create(start, length, value, this._getComments()));
+        this._tokens.push(IdentifierToken.create(start, length, value));
       }
       return true;
     }
@@ -9256,7 +8521,7 @@ var Tokenizer = class _Tokenizer {
             intValue = bigIntValue;
           }
           this._tokens.push(
-            NumberToken.create(start, end - start, intValue, true, false, this._getComments())
+            NumberToken.create(start, end - start, intValue, true, false)
           );
           return true;
         }
@@ -9296,7 +8561,7 @@ var Tokenizer = class _Tokenizer {
           tokenLength += 1;
         }
         this._tokens.push(
-          NumberToken.create(start, tokenLength, intValue, true, isImaginary, this._getComments())
+          NumberToken.create(start, tokenLength, intValue, true, isImaginary)
         );
         return true;
       }
@@ -9316,7 +8581,7 @@ var Tokenizer = class _Tokenizer {
             tokenLength += 1;
           }
           this._tokens.push(
-            NumberToken.create(start, tokenLength, value, false, isImaginary, this._getComments())
+            NumberToken.create(start, tokenLength, value, false, isImaginary)
           );
           return true;
         }
@@ -9334,13 +8599,13 @@ var Tokenizer = class _Tokenizer {
       const twoCharKey = currentChar << 8 | nextChar;
       const specialTokenType = _twoCharSpecialTokenTypeMap.get(twoCharKey);
       if (specialTokenType !== void 0) {
-        this._tokens.push(Token.create(specialTokenType, this._cs.position, 2, this._getComments()));
+        this._tokens.push(Token.create(specialTokenType, this._cs.position, 2));
         this._cs.advance(2);
         return true;
       }
       const twoCharOperatorType = _twoCharOperatorTypeMap.get(twoCharKey);
       if (twoCharOperatorType !== void 0) {
-        this._tokens.push(OperatorToken.create(this._cs.position, 2, twoCharOperatorType, this._getComments()));
+        this._tokens.push(OperatorToken.create(this._cs.position, 2, twoCharOperatorType));
         this._cs.advance(2);
         return true;
       }
@@ -9354,8 +8619,7 @@ var Tokenizer = class _Tokenizer {
             OperatorToken.create(
               this._cs.position,
               repeatedLength,
-              operatorType2,
-              this._getComments()
+              operatorType2
             )
           );
           this._cs.advance(repeatedLength);
@@ -9374,13 +8638,13 @@ var Tokenizer = class _Tokenizer {
           length = 1;
           operatorType = singleCharOperatorType;
         }
-        this._tokens.push(OperatorToken.create(this._cs.position, length, operatorType, this._getComments()));
+        this._tokens.push(OperatorToken.create(this._cs.position, length, operatorType));
         this._cs.advance(length);
         return true;
       }
     }
     if (currentChar === 33 /* ExclamationMark */ && this._activeFString) {
-      this._tokens.push(Token.create(23 /* ExclamationMark */, this._cs.position, 1, this._getComments()));
+      this._tokens.push(Token.create(23 /* ExclamationMark */, this._cs.position, 1));
       this._cs.advance(1);
       return true;
     }
@@ -9401,132 +8665,10 @@ var Tokenizer = class _Tokenizer {
     }
     const length = this._cs.position - start;
     if (length > 0) {
-      this._tokens.push(Token.create(0 /* Invalid */, start, length, this._getComments()));
+      this._tokens.push(Token.create(0 /* Invalid */, start, length));
       return true;
     }
     return false;
-  }
-  _getComments() {
-    const prevComments = this._comments;
-    this._comments = void 0;
-    return prevComments;
-  }
-  _getIPythonMagicsKind() {
-    const curChar = this._cs.currentChar;
-    if (curChar !== 37 /* Percent */ && curChar !== 33 /* ExclamationMark */) {
-      return 0 /* None */;
-    }
-    const prevToken = this._tokens.length > 0 ? this._tokens[this._tokens.length - 1] : void 0;
-    if (prevToken !== void 0 && !_Tokenizer.isWhitespace(prevToken)) {
-      return 0 /* None */;
-    }
-    if (this._cs.nextChar === curChar) {
-      this._cs.moveNext();
-      return 2 /* Cell */;
-    }
-    return 1 /* Line */;
-  }
-  _handleIPythonMagics(type) {
-    const start = this._cs.position + 1;
-    const sourceText = this._cs.getText();
-    let begin = start;
-    while (true) {
-      this._cs.skipToEol();
-      if (type === 1 /* IPythonMagic */ || type === 2 /* IPythonShellEscape */) {
-        if (!endsWithBackslashContinuation(sourceText, begin, this._cs.position)) {
-          break;
-        }
-      }
-      this._cs.moveNext();
-      begin = this._cs.position + 1;
-      if (this._cs.isEndOfStream()) {
-        break;
-      }
-    }
-    const length = this._cs.position - start;
-    const comment = Comment.create(start, length, sourceText.slice(start, start + length), type);
-    this._addComments(comment);
-  }
-  _handleComment() {
-    const start = this._cs.position + 1;
-    this._cs.skipToEol();
-    const length = this._cs.position - start;
-    const sourceText = this._cs.getText();
-    const end = start + length;
-    const comment = Comment.create(start, length, sourceText.slice(start, end));
-    if (comment.value.includes("ignore")) {
-      const typeIgnoreMatch = matchIgnoreDirective(sourceText, start, end, "type");
-      if (typeIgnoreMatch) {
-        const commentStart = typeIgnoreMatch.index;
-        const textRange = {
-          start: commentStart + typeIgnoreMatch.prefix.length,
-          length: typeIgnoreMatch.fullMatch.length - typeIgnoreMatch.prefix.length
-        };
-        const ignoreComment = {
-          range: textRange,
-          rulesList: this._getIgnoreCommentRulesList(commentStart, typeIgnoreMatch)
-        };
-        let isIgnoreAll = false;
-        if (!this._hasTokenBeforeIgnoreAll) {
-          const hasOther = this._tokens.some(
-            (t) => t && t.type !== 2 /* NewLine */ && t.type !== 3 /* Indent */
-          );
-          if (hasOther) {
-            this._hasTokenBeforeIgnoreAll = true;
-          } else {
-            isIgnoreAll = true;
-          }
-        }
-        if (isIgnoreAll) {
-          this._typeIgnoreAll = ignoreComment;
-        } else {
-          this._typeIgnoreLines.set(this._lineRanges.length, ignoreComment);
-        }
-      }
-      const pyrightIgnoreMatch = matchIgnoreDirective(sourceText, start, end, "pyright");
-      if (pyrightIgnoreMatch) {
-        const commentStart = pyrightIgnoreMatch.index;
-        const textRange = {
-          start: commentStart + pyrightIgnoreMatch.prefix.length,
-          length: pyrightIgnoreMatch.fullMatch.length - pyrightIgnoreMatch.prefix.length
-        };
-        const ignoreComment = {
-          range: textRange,
-          rulesList: this._getIgnoreCommentRulesList(commentStart, pyrightIgnoreMatch)
-        };
-        this._pyrightIgnoreLines.set(this._lineRanges.length, ignoreComment);
-      }
-    }
-    this._addComments(comment);
-  }
-  // Extracts the individual rules within a "type: ignore [x, y, z]" comment.
-  _getIgnoreCommentRulesList(start, match) {
-    if (match.bracketContent === void 0) {
-      return void 0;
-    }
-    const splitElements = match.bracketContent.split(",");
-    const commentRules = [];
-    let currentOffset = start + match.fullMatch.indexOf("[") + 1;
-    for (const element of splitElements) {
-      const frontTrimmed = element.trimStart();
-      currentOffset += element.length - frontTrimmed.length;
-      const endTrimmed = frontTrimmed.trimEnd();
-      if (endTrimmed.length > 0) {
-        commentRules.push({
-          range: { start: currentOffset, length: endTrimmed.length },
-          text: cloneStr(endTrimmed)
-        });
-      }
-      currentOffset += frontTrimmed.length + 1;
-    }
-    return commentRules;
-  }
-  _addComments(comment) {
-    if (this._comments) {
-      this._comments.push(comment);
-    } else {
-      this._comments = [comment];
-    }
   }
   _getStringPrefixLength() {
     if (this._cs.currentChar === 39 /* SingleQuote */ || this._cs.currentChar === 34 /* DoubleQuote */) {
@@ -9613,8 +8755,7 @@ var Tokenizer = class _Tokenizer {
         start,
         end - start,
         flags,
-        stringPrefixLength,
-        this._getComments()
+        stringPrefixLength
       );
       const fStringContext = {
         startToken: fStringStartToken,
@@ -9630,11 +8771,6 @@ var Tokenizer = class _Tokenizer {
         this._cs.advance(3);
       } else {
         this._cs.moveNext();
-        if (flags & 1 /* SingleQuote */) {
-          this._singleQuoteCount++;
-        } else {
-          this._doubleQuoteCount++;
-        }
       }
       const stringLiteralInfo = this._skipToEndOfStringLiteral(flags);
       const end = this._cs.position;
@@ -9658,8 +8794,7 @@ var Tokenizer = class _Tokenizer {
           end - start,
           stringLiteralInfo.flags,
           stringLiteralInfo.escapedValue,
-          stringPrefixLength,
-          this._getComments()
+          stringPrefixLength
         )
       );
     }
@@ -9836,20 +8971,7 @@ var Tokenizer = class _Tokenizer {
 var commentRegEx = /^(\s*#\s*type:\s*)([^\r\n]*)/;
 var ignoreCommentRegEx = /^ignore(\s|\[|$)/;
 var ParseOptions = class {
-  isStubFile;
-  pythonVersion;
-  reportInvalidStringEscapeSequence;
-  skipFunctionAndClassBody;
-  useNotebookMode;
-  reportErrorsForParsedStringContents;
-  constructor() {
-    this.isStubFile = false;
-    this.pythonVersion = latestStablePythonVersion;
-    this.reportInvalidStringEscapeSequence = false;
-    this.skipFunctionAndClassBody = false;
-    this.useNotebookMode = false;
-    this.reportErrorsForParsedStringContents = false;
-  }
+  pythonVersion = latestStablePythonVersion;
 };
 var maxChildNodeDepth = 4096;
 var Parser = class _Parser {
@@ -9869,144 +8991,56 @@ var Parser = class _Parser {
   _isParsingQuotedText = false;
   _isInFinallyBlock = false;
   _isInFinallyLoop = false;
-  _futureImports = /* @__PURE__ */ new Set();
-  _importedModules = [];
-  _containsWildcardImport = false;
   _assignmentExpressionsAllowed = true;
   _typingImportAliases = [];
   _typingSymbolAliases = /* @__PURE__ */ new Map();
   _maxChildDepthMap = /* @__PURE__ */ new Map();
-  _hasTypeAnnotations = false;
-  _ownerKey;
-  _createdOwnerKey = false;
-  _stringAnnotations = createStringAnnotationInfo();
-  parseSourceFile(fileContents, parseOptions, diagSink, contentHash) {
-    this._hasTypeAnnotations = false;
-    this._stringAnnotations = createStringAnnotationInfo();
-    timingStats.tokenizeFileTime.timeOperation(() => {
-      this._startNewParse(fileContents, 0, fileContents.length, parseOptions, diagSink);
-    });
+  parseSourceFile(fileContents, parseOptions, diagSink) {
+    this._startNewParse(fileContents, 0, fileContents.length, parseOptions, diagSink);
     const moduleNode = ModuleNode.create({ start: 0, length: fileContents.length });
-    this._ownerKey = moduleNode.a;
-    this._createdOwnerKey = true;
-    timingStats.parseFileTime.timeOperation(() => {
-      while (!this._atEof()) {
-        if (!this._consumeTokenIfType(2 /* NewLine */)) {
-          const nextToken = this._peekToken();
-          if (nextToken.type === 3 /* Indent */) {
-            this._getNextToken();
-            const indentToken = nextToken;
-            if (indentToken.isIndentAmbiguous) {
-              this._addSyntaxError(LocMessage.inconsistentTabs(), indentToken);
-            } else {
-              this._addSyntaxError(LocMessage.unexpectedIndent(), nextToken);
-            }
-          }
-          const statement = this._parseStatement();
-          if (!statement) {
-            this._consumeTokensUntilType([2 /* NewLine */]);
+    while (!this._atEof()) {
+      if (!this._consumeTokenIfType(2 /* NewLine */)) {
+        const nextToken = this._peekToken();
+        if (nextToken.type === 3 /* Indent */) {
+          this._getNextToken();
+          const indentToken = nextToken;
+          if (indentToken.isIndentAmbiguous) {
+            this._addSyntaxError(LocMessage.inconsistentTabs(), indentToken);
           } else {
-            statement.parent = moduleNode;
-            moduleNode.d.statements.push(statement);
+            this._addSyntaxError(LocMessage.unexpectedIndent(), nextToken);
           }
         }
-      }
-    });
-    this._attachParserStringAnnotations();
-    assert(this._tokenizerOutput !== void 0);
-    return {
-      text: fileContents,
-      contentHash: contentHash ?? getStringFingerprint(fileContents),
-      parserOutput: {
-        parseTree: moduleNode,
-        stringAnnotations: this._stringAnnotations.info,
-        importedModules: this._importedModules,
-        futureImports: this._futureImports,
-        containsWildcardImport: this._containsWildcardImport,
-        typingSymbolAliases: this._typingSymbolAliases,
-        hasTypeAnnotations: this._hasTypeAnnotations,
-        lines: this._tokenizerOutput.lines
-      },
-      tokenizerOutput: this._tokenizerOutput
-    };
-  }
-  parseTextExpression(fileContents, textOffset, textLength, parseOptions, parseTextMode = 0 /* Expression */, initialParenDepth = 0, typingSymbolAliases, ownerKey) {
-    this._stringAnnotations = createStringAnnotationInfo();
-    this._createdOwnerKey = ownerKey === void 0;
-    this._ownerKey = ownerKey ?? {};
-    const diagSink = new DiagnosticSink();
-    this._startNewParse(fileContents, textOffset, textLength, parseOptions, diagSink, initialParenDepth);
-    if (typingSymbolAliases) {
-      this._typingSymbolAliases = new Map(typingSymbolAliases);
-    }
-    let parseTree;
-    if (parseTextMode === 1 /* VariableAnnotation */) {
-      this._isParsingQuotedText = true;
-      parseTree = this._parseTypeAnnotation();
-    } else if (parseTextMode === 2 /* FunctionAnnotation */) {
-      this._isParsingQuotedText = true;
-      parseTree = this._parseFunctionTypeAnnotation();
-    } else {
-      const exprListResult = this._parseTestOrStarExpressionList(
-        /* allowAssignmentExpression */
-        false,
-        /* allowMultipleUnpack */
-        true
-      );
-      if (exprListResult.parseError) {
-        parseTree = exprListResult.parseError;
-      } else {
-        if (exprListResult.list.length === 0) {
-          this._addSyntaxError(LocMessage.expectedExpr(), this._peekToken());
+        const statement = this._parseStatement();
+        if (!statement) {
+          this._consumeTokensUntilType([2 /* NewLine */]);
+        } else {
+          statement.parent = moduleNode;
+          moduleNode.d.statements.push(statement);
         }
-        parseTree = this._makeExpressionOrTuple(
-          exprListResult,
-          /* enclosedInParens */
-          false
-        );
       }
     }
-    if (this._peekTokenType() === 2 /* NewLine */) {
-      this._getNextToken();
-    }
-    if (!this._atEof()) {
-      this._addSyntaxError(LocMessage.unexpectedExprToken(), this._peekToken());
-    }
-    this._attachParserStringAnnotations();
-    return {
-      parseTree,
-      stringAnnotations: this._stringAnnotations.info,
-      lines: this._tokenizerOutput.lines,
-      diagnostics: diagSink.fetchAndClear()
-    };
+    assert(this._tokenizerOutput !== void 0);
+    return { parseTree: moduleNode, tokenizerOutput: this._tokenizerOutput };
   }
-  // Attaches parser-derived string annotations onto the owner key, but only when
-  // this parser instance created that key (top-level file parse, or a standalone
-  // expression parse with no inherited owner key) and only when the tree actually
-  // contains at least one quoted annotation. Nested re-parses inherit their
-  // parent's owner key and merge their annotations back into the parent, so they
-  // must not attach; the key-creating parser attaches the fully merged set.
-  _attachParserStringAnnotations() {
-    if (this._createdOwnerKey && this._ownerKey !== void 0 && this._stringAnnotations.info.size > 0) {
-      setParserStringAnnotationInfo(this._ownerKey, this._stringAnnotations.info);
+  _parseTypeComment(token, parse) {
+    const parser = new _Parser();
+    parser._typingSymbolAliases = new Map(this._typingSymbolAliases);
+    parser._isParsingQuotedText = true;
+    const diagSink = new DiagnosticSink();
+    parser._startNewParse(this._fileContents, token.start, token.length, this._parseOptions, diagSink);
+    const parseTree = parse(parser);
+    parser._consumeTokenIfType(2 /* NewLine */);
+    if (!parser._atEof()) {
+      parser._addSyntaxError(LocMessage.unexpectedExprToken(), parser._peekToken());
     }
+    return { parseTree, diagnostics: diagSink.fetchAndClear() };
   }
-  _getOwnerKey() {
-    assert(this._ownerKey !== void 0);
-    return this._ownerKey;
-  }
-  _startNewParse(fileContents, textOffset, textLength, parseOptions, diagSink, initialParenDepth = 0) {
+  _startNewParse(fileContents, textOffset, textLength, parseOptions, diagSink) {
     this._fileContents = fileContents;
     this._parseOptions = parseOptions;
     this._diagSink = diagSink;
     const tokenizer = new Tokenizer();
-    this._tokenizerOutput = tokenizer.tokenize(
-      fileContents,
-      textOffset,
-      textLength,
-      initialParenDepth,
-      this._parseOptions.useNotebookMode
-    );
+    this._tokenizerOutput = tokenizer.tokenize(fileContents, textOffset, textLength);
     this._tokens = this._tokenizerOutput.tokens;
     this._tokenCount = this._tokens.count;
     this._tokenIndex = 0;
@@ -10077,7 +9111,7 @@ var Parser = class _Parser {
   // lazy_import_stmt: "lazy" import_stmt | "lazy" from_import_stmt
   _parseLazyImportStatement() {
     const lazyToken = this._getKeywordToken(25 /* Lazy */);
-    if (!this._parseOptions.isStubFile && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_15)) {
+    if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_15)) {
       this._addSyntaxError(LocMessage.lazyImportIllegal(), lazyToken);
     }
     const nextToken = this._peekToken();
@@ -10098,12 +9132,12 @@ var Parser = class _Parser {
   // type_alias_stmt: "type" name [type_param_seq] = expr
   _parseTypeAliasStatement() {
     const typeToken = this._getKeywordToken(36 /* Type */);
-    if (!this._parseOptions.isStubFile && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_12)) {
+    if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_12)) {
       this._addSyntaxError(LocMessage.typeAliasStatementIllegal(), typeToken);
     }
     const nameToken = this._getTokenIfIdentifier();
     assert(nameToken !== void 0);
-    const name = NameNode.create(this._getOwnerKey(), nameToken);
+    const name = NameNode.create(nameToken);
     let typeParameters2;
     if (this._peekToken().type === 15 /* OpenBracket */) {
       typeParameters2 = this._parseTypeParameterList();
@@ -10121,7 +9155,7 @@ var Parser = class _Parser {
       false
     );
     this._isParsingTypeAnnotation = wasParsingTypeAnnotation;
-    return TypeAliasNode.create(this._getOwnerKey(), typeToken, name, expression, typeParameters2);
+    return TypeAliasNode.create(typeToken, name, expression, typeParameters2);
   }
   // type_param_seq: '[' (type_param ',')+ ']'
   _parseTypeParameterList() {
@@ -10152,7 +9186,7 @@ var Parser = class _Parser {
     } else {
       this._getNextToken();
     }
-    return TypeParameterListNode.create(this._getOwnerKey(), openBracketToken, closingToken, typeVariableNodes);
+    return TypeParameterListNode.create(openBracketToken, closingToken, typeVariableNodes);
   }
   // type_param: ['*' | '**'] NAME [':' bound_expr] ['=' default_expr]
   _parseTypeParameter() {
@@ -10167,7 +9201,7 @@ var Parser = class _Parser {
       this._addSyntaxError(LocMessage.expectedTypeParameterName(), this._peekToken());
       return void 0;
     }
-    const name = NameNode.create(this._getOwnerKey(), nameToken);
+    const name = NameNode.create(nameToken);
     let boundExpression;
     if (this._consumeTokenIfType(10 /* Colon */)) {
       boundExpression = this._parseExpression(
@@ -10184,12 +9218,11 @@ var Parser = class _Parser {
         /* allowUnpack */
         typeParamCategory === 1 /* TypeVarTuple */
       );
-      if (!this._parseOptions.isStubFile && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_13)) {
+      if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_13)) {
         this._addSyntaxError(LocMessage.typeVarDefaultIllegal(), defaultExpression);
       }
     }
     return TypeParameterNode.create(
-      this._getOwnerKey(),
       name,
       typeParamCategory,
       boundExpression,
@@ -10228,7 +9261,7 @@ var Parser = class _Parser {
       12 /* MissingPatternSubject */,
       () => LocMessage.expectedReturnExpr()
     );
-    const matchNode = MatchNode.create(this._getOwnerKey(), matchToken, subjectExpression);
+    const matchNode = MatchNode.create(matchToken, subjectExpression);
     const nextToken = this._peekToken();
     if (!this._consumeTokenIfType(10 /* Colon */)) {
       this._addSyntaxError(LocMessage.expectedColon(), nextToken);
@@ -10316,16 +9349,16 @@ var Parser = class _Parser {
       casePattern = patternList.parseError;
     } else if (patternList.list.length === 0) {
       this._addSyntaxError(LocMessage.expectedPatternExpr(), this._peekToken());
-      casePattern = ErrorNode.create(this._getOwnerKey(), caseToken, 11 /* MissingPattern */);
+      casePattern = ErrorNode.create(caseToken, 11 /* MissingPattern */);
     } else if (patternList.list.length === 1 && !patternList.trailingComma) {
       const pattern = patternList.list[0].d.orPatterns[0];
       if (pattern.nodeType === 69 /* PatternCapture */ && pattern.d.isStar) {
-        casePattern = PatternSequenceNode.create(this._getOwnerKey(), patternList.list[0], patternList.list);
+        casePattern = PatternSequenceNode.create(patternList.list[0], patternList.list);
       } else {
         casePattern = patternList.list[0];
       }
     } else {
-      casePattern = PatternSequenceNode.create(this._getOwnerKey(), patternList.list[0], patternList.list);
+      casePattern = PatternSequenceNode.create(patternList.list[0], patternList.list);
     }
     if (casePattern.nodeType !== 0 /* Error */) {
       const globalNameMap = /* @__PURE__ */ new Map();
@@ -10341,7 +9374,6 @@ var Parser = class _Parser {
     }
     const suite = this._parseSuite(this._isInFunction);
     return CaseNode.create(
-      this._getOwnerKey(),
       caseToken,
       casePattern,
       this._isPatternIrrefutable(casePattern),
@@ -10517,7 +9549,7 @@ var Parser = class _Parser {
     if (this._consumeTokenIfKeyword(1 /* As */)) {
       const nameToken = this._getTokenIfIdentifier();
       if (nameToken) {
-        target = NameNode.create(this._getOwnerKey(), nameToken);
+        target = NameNode.create(nameToken);
       } else {
         this._addSyntaxError(LocMessage.expectedNameAfterAs(), this._peekToken());
       }
@@ -10539,16 +9571,13 @@ var Parser = class _Parser {
       this._getPatternTargetNames(orPattern, localNameSet);
       if (localNameSet.size < fullNameSet.size) {
         const missingNames = Array.from(fullNameSet.keys()).filter((name) => !localNameSet.has(name));
-        const diag = new DiagnosticAddendum();
-        diag.addMessage(
-          LocAddendum.orPatternMissingName().format({
-            name: missingNames.map((name) => `"${name}"`).join(", ")
-          })
-        );
-        this._addSyntaxError(LocMessage.orPatternMissingName() + diag.getString(), orPattern);
+        const detail = LocAddendum.orPatternMissingName().format({
+          name: missingNames.map((name) => `"${name}"`).join(", ")
+        });
+        this._addSyntaxError(LocMessage.orPatternMissingName() + "\n  " + detail, orPattern);
       }
     });
-    return PatternAsNode.create(this._getOwnerKey(), orPatterns, target);
+    return PatternAsNode.create(orPatterns, target);
   }
   // pattern_atom:
   //     | literal_pattern
@@ -10576,7 +9605,7 @@ var Parser = class _Parser {
       }
       const args = this._parseClassPatternArgList();
       const classNameExpr = patternCaptureOrValue.nodeType === 69 /* PatternCapture */ ? patternCaptureOrValue.d.target : patternCaptureOrValue.d.expr;
-      const classPattern = PatternClassNode.create(this._getOwnerKey(), classNameExpr, args);
+      const classPattern = PatternClassNode.create(classNameExpr, args);
       if (!this._consumeTokenIfType(14 /* CloseParenthesis */)) {
         this._addSyntaxError(LocMessage.expectedCloseParen(), openParenToken);
         this._consumeTokensUntilType([2 /* NewLine */]);
@@ -10591,11 +9620,10 @@ var Parser = class _Parser {
       const identifierToken = this._getTokenIfIdentifier();
       if (!identifierToken) {
         this._addSyntaxError(LocMessage.expectedIdentifier(), this._peekToken());
-        return ErrorNode.create(this._getOwnerKey(), starToken, 2 /* MissingExpression */);
+        return ErrorNode.create(starToken, 2 /* MissingExpression */);
       } else {
         return PatternCaptureNode.create(
-          this._getOwnerKey(),
-          NameNode.create(this._getOwnerKey(), identifierToken),
+          NameNode.create(identifierToken),
           starToken
         );
       }
@@ -10609,13 +9637,13 @@ var Parser = class _Parser {
       } else if (patternList.list.length === 1 && !patternList.trailingComma && startToken.type === 13 /* OpenParenthesis */) {
         const pattern = patternList.list[0].d.orPatterns[0];
         if (pattern.nodeType === 69 /* PatternCapture */ && pattern.d.isStar) {
-          casePattern = PatternSequenceNode.create(this._getOwnerKey(), startToken, patternList.list);
+          casePattern = PatternSequenceNode.create(startToken, patternList.list);
         } else {
           casePattern = patternList.list[0];
         }
         extendRange(casePattern, nextToken);
       } else {
-        casePattern = PatternSequenceNode.create(this._getOwnerKey(), startToken, patternList.list);
+        casePattern = PatternSequenceNode.create(startToken, patternList.list);
       }
       const endToken = this._peekToken();
       if (this._consumeTokenIfType(
@@ -10684,12 +9712,12 @@ var Parser = class _Parser {
     if ((firstToken.type === 7 /* Identifier */ || firstToken.type === 8 /* Keyword */) && secondToken.type === 9 /* Operator */ && secondToken.operatorType === 2 /* Assign */) {
       const classNameToken = this._getTokenIfIdentifier();
       if (classNameToken !== void 0) {
-        keywordName = NameNode.create(this._getOwnerKey(), classNameToken);
+        keywordName = NameNode.create(classNameToken);
         this._getNextToken();
       }
     }
     const pattern = this._parsePatternAs();
-    return PatternClassArgumentNode.create(this._getOwnerKey(), pattern, keywordName);
+    return PatternClassArgumentNode.create(pattern, keywordName);
   }
   // literal_pattern:
   //     | signed_number
@@ -10713,12 +9741,12 @@ var Parser = class _Parser {
           this._addSyntaxError(LocMessage.formatStringInPattern(), stringAtom);
         }
       });
-      return PatternLiteralNode.create(this._getOwnerKey(), stringList);
+      return PatternLiteralNode.create(stringList);
     }
     if (nextToken.type === 8 /* Keyword */) {
       const keywordToken = nextToken;
       if (keywordToken.keywordType === 15 /* False */ || keywordToken.keywordType === 34 /* True */ || keywordToken.keywordType === 27 /* None */) {
-        return PatternLiteralNode.create(this._getOwnerKey(), this._parseAtom());
+        return PatternLiteralNode.create(this._parseAtom());
       }
     }
     return void 0;
@@ -10753,7 +9781,7 @@ var Parser = class _Parser {
         this._addSyntaxError(LocMessage.expectedComplexNumberLiteral(), expression);
       }
     }
-    return PatternLiteralNode.create(this._getOwnerKey(), expression);
+    return PatternLiteralNode.create(expression);
   }
   _parsePatternMapping(firstToken) {
     const itemList = this._parseExpressionListGeneric(() => this._parsePatternMappingItem());
@@ -10764,9 +9792,9 @@ var Parser = class _Parser {
       if (starStarEntries.length > 1) {
         this._addSyntaxError(LocMessage.duplicateStarStarPattern(), starStarEntries[1]);
       }
-      return PatternMappingNode.create(this._getOwnerKey(), firstToken, itemList.list);
+      return PatternMappingNode.create(firstToken, itemList.list);
     }
-    return itemList.parseError || ErrorNode.create(this._getOwnerKey(), this._peekToken(), 11 /* MissingPattern */);
+    return itemList.parseError || ErrorNode.create(this._peekToken(), 11 /* MissingPattern */);
   }
   // key_value_pattern:
   //     | (literal_pattern | attr) ':' as_pattern
@@ -10778,13 +9806,13 @@ var Parser = class _Parser {
       const identifierToken = this._getTokenIfIdentifier();
       if (!identifierToken) {
         this._addSyntaxError(LocMessage.expectedIdentifier(), this._peekToken());
-        return ErrorNode.create(this._getOwnerKey(), this._peekToken(), 11 /* MissingPattern */);
+        return ErrorNode.create(this._peekToken(), 11 /* MissingPattern */);
       }
-      const nameNode = NameNode.create(this._getOwnerKey(), identifierToken);
+      const nameNode = NameNode.create(identifierToken);
       if (identifierToken.value === "_") {
         this._addSyntaxError(LocMessage.starStarWildcardNotAllowed(), nameNode);
       }
-      return PatternMappingExpandEntryNode.create(this._getOwnerKey(), doubleStar, nameNode);
+      return PatternMappingExpandEntryNode.create(doubleStar, nameNode);
     }
     const patternLiteral = this._parsePatternLiteral();
     if (patternLiteral) {
@@ -10797,7 +9825,6 @@ var Parser = class _Parser {
         } else {
           this._addSyntaxError(LocMessage.expectedPatternValue(), patternCaptureOrValue);
           keyExpression = ErrorNode.create(
-            this._getOwnerKey(),
             this._peekToken(),
             11 /* MissingPattern */
           );
@@ -10807,7 +9834,6 @@ var Parser = class _Parser {
     if (!keyExpression) {
       this._addSyntaxError(LocMessage.expectedPatternExpr(), this._peekToken());
       keyExpression = ErrorNode.create(
-        this._getOwnerKey(),
         this._peekToken(),
         11 /* MissingPattern */
       );
@@ -10816,14 +9842,13 @@ var Parser = class _Parser {
     if (!this._consumeTokenIfType(10 /* Colon */)) {
       this._addSyntaxError(LocMessage.expectedColon(), this._peekToken());
       valuePattern = ErrorNode.create(
-        this._getOwnerKey(),
         this._peekToken(),
         11 /* MissingPattern */
       );
     } else {
       valuePattern = this._parsePatternAs();
     }
-    return PatternMappingKeyEntryNode.create(this._getOwnerKey(), keyExpression, valuePattern);
+    return PatternMappingKeyEntryNode.create(keyExpression, valuePattern);
   }
   _parsePatternCaptureOrValue() {
     const nextToken = this._peekToken();
@@ -10832,8 +9857,8 @@ var Parser = class _Parser {
       while (true) {
         const identifierToken = this._getTokenIfIdentifier();
         if (identifierToken) {
-          const nameNode = NameNode.create(this._getOwnerKey(), identifierToken);
-          nameOrMember = nameOrMember ? MemberAccessNode.create(this._getOwnerKey(), nameOrMember, nameNode) : nameNode;
+          const nameNode = NameNode.create(identifierToken);
+          nameOrMember = nameOrMember ? MemberAccessNode.create(nameOrMember, nameNode) : nameNode;
         } else {
           this._addSyntaxError(LocMessage.expectedIdentifier(), this._peekToken());
           break;
@@ -10844,12 +9869,12 @@ var Parser = class _Parser {
       }
       if (!nameOrMember) {
         this._addSyntaxError(LocMessage.expectedIdentifier(), this._peekToken());
-        return ErrorNode.create(this._getOwnerKey(), this._peekToken(), 11 /* MissingPattern */);
+        return ErrorNode.create(this._peekToken(), 11 /* MissingPattern */);
       }
       if (nameOrMember.nodeType === 35 /* MemberAccess */) {
-        return PatternValueNode.create(this._getOwnerKey(), nameOrMember);
+        return PatternValueNode.create(nameOrMember);
       }
-      return PatternCaptureNode.create(this._getOwnerKey(), nameOrMember);
+      return PatternCaptureNode.create(nameOrMember);
     }
     return void 0;
   }
@@ -10863,7 +9888,7 @@ var Parser = class _Parser {
       true
     );
     const suite = this._parseSuite(this._isInFunction);
-    const ifNode = IfNode.create(this._getOwnerKey(), ifOrElifToken, test, suite);
+    const ifNode = IfNode.create(ifOrElifToken, test, suite);
     if (this._consumeTokenIfKeyword(13 /* Else */)) {
       ifNode.d.elseSuite = this._parseSuite(this._isInFunction);
       ifNode.d.elseSuite.parent = ifNode;
@@ -10892,17 +9917,12 @@ var Parser = class _Parser {
     const wasInFinallyLoop = this._isInFinallyLoop;
     this._isInFinallyLoop = false;
     let typeComment;
-    const suite = this._parseSuite(
-      this._isInFunction,
-      /* skipBody */
-      false,
-      () => {
-        const comment = this._getTypeAnnotationCommentText();
-        if (comment) {
-          typeComment = comment;
-        }
+    const suite = this._parseSuite(this._isInFunction, () => {
+      const comment = this._getTypeAnnotationCommentText();
+      if (comment) {
+        typeComment = comment;
       }
-    );
+    });
     this._isInLoop = wasInLoop;
     this._isInFinallyLoop = wasInFinallyLoop;
     this._isInExceptionGroup = wasInExceptionGroup;
@@ -10912,9 +9932,9 @@ var Parser = class _Parser {
     return suite;
   }
   // suite: ':' (simple_stmt | NEWLINE INDENT stmt+ DEDENT)
-  _parseSuite(isFunction = false, skipBody = false, postColonCallback) {
+  _parseSuite(isFunction = false, postColonCallback) {
     const nextToken = this._peekToken();
-    const suite = SuiteNode.create(this._getOwnerKey(), nextToken);
+    const suite = SuiteNode.create(nextToken);
     if (!this._consumeTokenIfType(10 /* Colon */)) {
       this._addSyntaxError(LocMessage.expectedColon(), nextToken);
       if (this._consumeTokensUntilType([2 /* NewLine */, 10 /* Colon */])) {
@@ -10925,35 +9945,6 @@ var Parser = class _Parser {
           return suite;
         }
       }
-    }
-    if (skipBody) {
-      if (this._consumeTokenIfType(2 /* NewLine */)) {
-        let indent = 0;
-        while (true) {
-          const nextToken2 = this._getNextToken();
-          if (nextToken2.type === 3 /* Indent */) {
-            indent++;
-          }
-          if (nextToken2.type === 4 /* Dedent */) {
-            if (nextToken2.isDedentAmbiguous) {
-              this._addSyntaxError(LocMessage.inconsistentTabs(), nextToken2);
-            }
-            indent--;
-            if (indent === 0) {
-              break;
-            }
-          }
-          if (nextToken2.type === 1 /* EndOfStream */) {
-            break;
-          }
-        }
-      } else {
-        this._parseSimpleStatement();
-      }
-      if (this._tokenIndex > 0) {
-        extendRange(suite, this._tokenizerOutput.tokens.getItemAt(this._tokenIndex - 1));
-      }
-      return suite;
     }
     if (postColonCallback) {
       postColonCallback();
@@ -10974,20 +9965,6 @@ var Parser = class _Parser {
         this._addSyntaxError(LocMessage.inconsistentTabs(), bodyIndentToken);
       }
       while (true) {
-        if (this._parseOptions.useNotebookMode && this._peekTokenType() === 2 /* NewLine */) {
-          this._getNextToken();
-          if (this._peekTokenType() === 4 /* Dedent */ && suite.d.statements.length === 0) {
-            const dedentToken = this._peekToken();
-            this._reportDedentInconsistencies(dedentToken);
-            this._getNextToken();
-            extendRange(suite, dedentToken);
-            break;
-          }
-          if (this._peekTokenType() === 1 /* EndOfStream */) {
-            break;
-          }
-          continue;
-        }
         const nextToken2 = this._peekToken();
         if (nextToken2.type === 3 /* Indent */) {
           this._getNextToken();
@@ -11061,7 +10038,7 @@ var Parser = class _Parser {
     let elseSuite;
     if (!this._consumeTokenIfKeyword(22 /* In */)) {
       seqExpr = this._handleExpressionParseError(0 /* MissingIn */, LocMessage.expectedIn());
-      forSuite = SuiteNode.create(this._getOwnerKey(), TextRange.create(
+      forSuite = SuiteNode.create(TextRange.create(
         this._peekToken().start,
         /* length */
         0
@@ -11076,7 +10053,7 @@ var Parser = class _Parser {
         () => LocMessage.expectedInExpr()
       );
       forSuite = this._parseLoopSuite();
-      if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_9) && !this._parseOptions.isStubFile) {
+      if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_9)) {
         if (seqExpr.nodeType === 52 /* Tuple */ && !seqExpr.d.hasParens) {
           let sawStar = false;
           seqExpr.d.items.forEach((expr) => {
@@ -11091,7 +10068,7 @@ var Parser = class _Parser {
         elseSuite = this._parseSuite(this._isInFunction);
       }
     }
-    const forNode = ForNode.create(this._getOwnerKey(), forToken, targetExpr, seqExpr, forSuite);
+    const forNode = ForNode.create(forToken, targetExpr, seqExpr, forSuite);
     forNode.d.elseSuite = elseSuite;
     if (elseSuite) {
       extendRange(forNode, elseSuite);
@@ -11118,7 +10095,7 @@ var Parser = class _Parser {
     } else if (target.nodeType === 19 /* DictionaryExpandEntry */) {
       this._addSyntaxError(LocMessage.dictExpandIllegalInComprehension(), target);
     }
-    const compNode = ComprehensionNode.create(this._getOwnerKey(), target, isGenerator);
+    const compNode = ComprehensionNode.create(target, isGenerator);
     const forIfList = [compFor];
     while (true) {
       const compIter = this._tryParseCompForStatement() || this._tryParseCompIfStatement();
@@ -11167,7 +10144,6 @@ var Parser = class _Parser {
       });
     }
     const compForNode = ComprehensionForNode.create(
-      this._getOwnerKey(),
       asyncToken || forToken,
       targetExpr,
       seqExpr
@@ -11189,14 +10165,13 @@ var Parser = class _Parser {
       /* disallowAssignmentExpression */
       true
     );
-    const compIfNode = ComprehensionIfNode.create(this._getOwnerKey(), ifToken, ifExpr);
+    const compIfNode = ComprehensionIfNode.create(ifToken, ifExpr);
     return compIfNode;
   }
   // while_stmt: 'while' test suite ['else' suite]
   _parseWhileStatement() {
     const whileToken = this._getKeywordToken(37 /* While */);
     const whileNode = WhileNode.create(
-      this._getOwnerKey(),
       whileToken,
       this._parseTestExpression(
         /* allowAssignmentExpression */
@@ -11220,7 +10195,7 @@ var Parser = class _Parser {
   _parseTryStatement() {
     const tryToken = this._getKeywordToken(35 /* Try */);
     const trySuite = this._parseSuite(this._isInFunction);
-    const tryNode = TryNode.create(this._getOwnerKey(), tryToken, trySuite);
+    const tryNode = TryNode.create(tryToken, trySuite);
     let sawCatchAllExcept = false;
     let reportedExceptGroupMismatch = false;
     while (true) {
@@ -11231,7 +10206,7 @@ var Parser = class _Parser {
       const possibleStarToken = this._peekToken();
       let isExceptGroup = false;
       if (this._consumeTokenIfOperator(26 /* Multiply */)) {
-        if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_11) && !this._parseOptions.isStubFile) {
+        if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_11)) {
           this._addSyntaxError(LocMessage.exceptionGroupIncompatible(), possibleStarToken);
         }
         isExceptGroup = true;
@@ -11293,13 +10268,13 @@ var Parser = class _Parser {
         }
       }
       const exceptSuite = this._parseExceptSuite(isExceptGroup, () => this._parseSuite(this._isInFunction));
-      const exceptNode = ExceptNode.create(this._getOwnerKey(), exceptToken, exceptSuite, isExceptGroup);
+      const exceptNode = ExceptNode.create(exceptToken, exceptSuite, isExceptGroup);
       if (typeExpr) {
         exceptNode.d.typeExpr = typeExpr;
         exceptNode.d.typeExpr.parent = exceptNode;
       }
       if (symbolName) {
-        exceptNode.d.name = NameNode.create(this._getOwnerKey(), symbolName);
+        exceptNode.d.name = NameNode.create(symbolName);
         exceptNode.d.name.parent = exceptNode;
       }
       tryNode.d.exceptClauses.push(exceptNode);
@@ -11337,7 +10312,6 @@ var Parser = class _Parser {
     if (!nameToken) {
       this._addSyntaxError(LocMessage.expectedFunctionName(), defToken);
       return ErrorNode.create(
-        this._getOwnerKey(),
         defToken,
         10 /* MissingFunctionParameterList */,
         void 0,
@@ -11348,7 +10322,7 @@ var Parser = class _Parser {
     const possibleOpenBracket = this._peekToken();
     if (possibleOpenBracket.type === 15 /* OpenBracket */) {
       typeParameters2 = this._parseTypeParameterList();
-      if (!this._parseOptions.isStubFile && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_12)) {
+      if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_12)) {
         this._addSyntaxError(LocMessage.functionTypeParametersIllegal(), typeParameters2);
       }
     }
@@ -11356,10 +10330,9 @@ var Parser = class _Parser {
     if (!this._consumeTokenIfType(13 /* OpenParenthesis */)) {
       this._addSyntaxError(LocMessage.expectedOpenParen(), this._peekToken());
       return ErrorNode.create(
-        this._getOwnerKey(),
         nameToken,
         10 /* MissingFunctionParameterList */,
-        NameNode.create(this._getOwnerKey(), nameToken),
+        NameNode.create(nameToken),
         decorators2
       );
     }
@@ -11386,7 +10359,6 @@ var Parser = class _Parser {
     const suite = this._parseSuite(
       /* isFunction */
       true,
-      this._parseOptions.skipFunctionAndClassBody,
       () => {
         if (!functionTypeAnnotationToken) {
           functionTypeAnnotationToken = this._getTypeAnnotationCommentText();
@@ -11397,9 +10369,8 @@ var Parser = class _Parser {
     this._isInFinallyBlock = wasInFinallyBlock;
     this._isInFinallyLoop = wasInFinallyLoop;
     const functionNode = FunctionNode.create(
-      this._getOwnerKey(),
       defToken,
-      NameNode.create(this._getOwnerKey(), nameToken),
+      NameNode.create(nameToken),
       suite,
       typeParameters2
     );
@@ -11554,7 +10525,7 @@ var Parser = class _Parser {
     } else if (this._consumeTokenIfOperator(29 /* Power */)) {
       starCount = 2;
     } else if (this._consumeTokenIfOperator(10 /* Divide */)) {
-      if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_8) && !this._parseOptions.isStubFile) {
+      if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_8)) {
         this._addSyntaxError(LocMessage.positionOnlyIncompatible(), firstToken);
       }
       slashCount = 1;
@@ -11562,10 +10533,10 @@ var Parser = class _Parser {
     const paramName = this._getTokenIfIdentifier();
     if (!paramName) {
       if (starCount === 1) {
-        const paramNode2 = ParameterNode.create(this._getOwnerKey(), firstToken, 1 /* ArgsList */);
+        const paramNode2 = ParameterNode.create(firstToken, 1 /* ArgsList */);
         return paramNode2;
       } else if (slashCount === 1) {
-        const paramNode2 = ParameterNode.create(this._getOwnerKey(), firstToken, 0 /* Simple */);
+        const paramNode2 = ParameterNode.create(firstToken, 0 /* Simple */);
         return paramNode2;
       }
       if (this._peekTokenType() === 13 /* OpenParenthesis */) {
@@ -11584,9 +10555,9 @@ var Parser = class _Parser {
     } else if (starCount === 2) {
       paramType = 2 /* KwargsDict */;
     }
-    const paramNode = ParameterNode.create(this._getOwnerKey(), firstToken, paramType);
+    const paramNode = ParameterNode.create(firstToken, paramType);
     if (paramName) {
-      paramNode.d.name = NameNode.create(this._getOwnerKey(), paramName);
+      paramNode.d.name = NameNode.create(paramName);
       paramNode.d.name.parent = paramNode;
       extendRange(paramNode, paramName);
     }
@@ -11659,18 +10630,13 @@ var Parser = class _Parser {
       }
     }
     let typeComment;
-    const withSuite = this._parseSuite(
-      this._isInFunction,
-      /* skipBody */
-      false,
-      () => {
-        const comment = this._getTypeAnnotationCommentText();
-        if (comment) {
-          typeComment = comment;
-        }
+    const withSuite = this._parseSuite(this._isInFunction, () => {
+      const comment = this._getTypeAnnotationCommentText();
+      if (comment) {
+        typeComment = comment;
       }
-    );
-    const withNode = WithNode.create(this._getOwnerKey(), withToken, withSuite);
+    });
+    const withNode = WithNode.create(withToken, withSuite);
     if (asyncToken) {
       withNode.d.isAsync = true;
       withNode.d.asyncToken = asyncToken;
@@ -11691,7 +10657,7 @@ var Parser = class _Parser {
       /* allowAssignmentExpression */
       true
     );
-    const itemNode = WithItemNode.create(this._getOwnerKey(), expr);
+    const itemNode = WithItemNode.create(expr);
     if (this._consumeTokenIfKeyword(1 /* As */)) {
       itemNode.d.target = this._parseExpression(
         /* allowUnpack */
@@ -11729,7 +10695,7 @@ var Parser = class _Parser {
       }
     }
     this._addSyntaxError(LocMessage.expectedAfterDecorator(), this._peekToken());
-    return ClassNode.createDummyForDecorators(this._getOwnerKey(), decoratorList);
+    return ClassNode.createDummyForDecorators(decoratorList);
   }
   // decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
   _parseDecorator() {
@@ -11750,7 +10716,7 @@ var Parser = class _Parser {
         this._addSyntaxError(LocMessage.expectedDecoratorExpr(), expression);
       }
     }
-    const decoratorNode = DecoratorNode.create(this._getOwnerKey(), atOperator, expression);
+    const decoratorNode = DecoratorNode.create(atOperator, expression);
     if (!this._consumeTokenIfType(2 /* NewLine */)) {
       this._addSyntaxError(LocMessage.expectedDecoratorNewline(), this._peekToken());
       this._consumeTokensUntilType([2 /* NewLine */]);
@@ -11771,19 +10737,13 @@ var Parser = class _Parser {
     let nameToken = this._getTokenIfIdentifier();
     if (!nameToken) {
       this._addSyntaxError(LocMessage.expectedClassName(), this._peekToken());
-      nameToken = IdentifierToken.create(
-        0,
-        0,
-        "",
-        /* comments */
-        void 0
-      );
+      nameToken = IdentifierToken.create(0, 0, "");
     }
     let typeParameters2;
     const possibleOpenBracket = this._peekToken();
     if (possibleOpenBracket.type === 15 /* OpenBracket */) {
       typeParameters2 = this._parseTypeParameterList();
-      if (!this._parseOptions.isStubFile && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_12)) {
+      if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_12)) {
         this._addSyntaxError(LocMessage.classTypeParametersIllegal(), typeParameters2);
       }
     }
@@ -11797,13 +10757,11 @@ var Parser = class _Parser {
     }
     const suite = this._parseSuite(
       /* isFunction */
-      false,
-      this._parseOptions.skipFunctionAndClassBody
+      false
     );
     const classNode = ClassNode.create(
-      this._getOwnerKey(),
       classToken,
-      NameNode.create(this._getOwnerKey(), nameToken),
+      NameNode.create(nameToken),
       suite,
       typeParameters2
     );
@@ -11823,7 +10781,7 @@ var Parser = class _Parser {
     return classNode;
   }
   _parsePassStatement() {
-    return PassNode.create(this._getOwnerKey(), this._getKeywordToken(31 /* Pass */));
+    return PassNode.create(this._getKeywordToken(31 /* Pass */));
   }
   _parseBreakStatement() {
     const breakToken = this._getKeywordToken(5 /* Break */);
@@ -11835,7 +10793,7 @@ var Parser = class _Parser {
     if (this._isInFinallyLoop && PythonVersion.isGreaterOrEqualTo(this._getLanguageVersion(), pythonVersion3_14)) {
       this._addSyntaxError(LocMessage.finallyBreak(), breakToken);
     }
-    return BreakNode.create(this._getOwnerKey(), breakToken);
+    return BreakNode.create(breakToken);
   }
   _parseContinueStatement() {
     const continueToken = this._getKeywordToken(8 /* Continue */);
@@ -11847,12 +10805,12 @@ var Parser = class _Parser {
     if (this._isInFinallyLoop && PythonVersion.isGreaterOrEqualTo(this._getLanguageVersion(), pythonVersion3_14)) {
       this._addSyntaxError(LocMessage.finallyContinue(), continueToken);
     }
-    return ContinueNode.create(this._getOwnerKey(), continueToken);
+    return ContinueNode.create(continueToken);
   }
   // return_stmt: 'return' [testlist]
   _parseReturnStatement() {
     const returnToken = this._getKeywordToken(33 /* Return */);
-    const returnNode = ReturnNode.create(this._getOwnerKey(), returnToken);
+    const returnNode = ReturnNode.create(returnToken);
     if (!this._isInFunction) {
       this._addSyntaxError(LocMessage.returnOutsideFunction(), returnToken);
     } else if (this._isInExceptionGroup) {
@@ -11887,8 +10845,7 @@ var Parser = class _Parser {
       /* allowJustDots */
       true
     );
-    const importFromNode = ImportFromNode.create(this._getOwnerKey(), fromToken, modName);
-    const isFutureImport = modName.d.leadingDots === 0 && modName.d.nameParts.length === 1 && modName.d.nameParts[0].d.value === "__future__";
+    const importFromNode = ImportFromNode.create(fromToken, modName);
     const possibleInputToken = this._peekToken();
     if (!this._consumeTokenIfKeyword(21 /* Import */)) {
       this._addSyntaxError(LocMessage.expectedImport(), this._peekToken());
@@ -11902,7 +10859,6 @@ var Parser = class _Parser {
         extendRange(importFromNode, possibleStarToken);
         importFromNode.d.isWildcardImport = true;
         importFromNode.d.wildcardToken = possibleStarToken;
-        this._containsWildcardImport = true;
       } else {
         const openParenToken = this._peekToken();
         const inParen = this._consumeTokenIfType(13 /* OpenParenthesis */);
@@ -11914,15 +10870,14 @@ var Parser = class _Parser {
           }
           trailingCommaToken = void 0;
           const importFromAsNode = ImportFromAsNode.create(
-            this._getOwnerKey(),
-            NameNode.create(this._getOwnerKey(), importName)
+            NameNode.create(importName)
           );
           if (this._consumeTokenIfKeyword(1 /* As */)) {
             const aliasName = this._getTokenIfIdentifier();
             if (!aliasName) {
               this._addSyntaxError(LocMessage.expectedImportAlias(), this._peekToken());
             } else {
-              importFromAsNode.d.alias = NameNode.create(this._getOwnerKey(), aliasName);
+              importFromAsNode.d.alias = NameNode.create(aliasName);
               importFromAsNode.d.alias.parent = importFromAsNode;
               extendRange(importFromAsNode, aliasName);
             }
@@ -11930,9 +10885,6 @@ var Parser = class _Parser {
           importFromNode.d.imports.push(importFromAsNode);
           importFromAsNode.parent = importFromNode;
           extendRange(importFromNode, importFromAsNode);
-          if (isFutureImport) {
-            this._futureImports.add(importName.value);
-          }
           const nextToken = this._peekToken();
           if (!this._consumeTokenIfType(12 /* Comma */)) {
             break;
@@ -11955,12 +10907,6 @@ var Parser = class _Parser {
         }
       }
     }
-    this._importedModules.push({
-      nameNode: importFromNode.d.module,
-      leadingDots: importFromNode.d.module.d.leadingDots,
-      nameParts: importFromNode.d.module.d.nameParts.map((p) => p.d.value),
-      importedSymbols: new Set(importFromNode.d.imports.map((imp) => imp.d.name.d.value))
-    });
     let isTypingImport = false;
     if (importFromNode.d.module.d.nameParts.length === 1) {
       const firstNamePartValue = importFromNode.d.module.d.nameParts[0].d.value;
@@ -11989,14 +10935,14 @@ var Parser = class _Parser {
   // dotted_as_name: dotted_name ['as' NAME]
   _parseImportStatement() {
     const importToken = this._getKeywordToken(21 /* Import */);
-    const importNode = ImportNode.create(this._getOwnerKey(), importToken);
+    const importNode = ImportNode.create(importToken);
     while (true) {
       const modName = this._parseDottedModuleName();
-      const importAsNode = ImportAsNode.create(this._getOwnerKey(), modName);
+      const importAsNode = ImportAsNode.create(modName);
       if (this._consumeTokenIfKeyword(1 /* As */)) {
         const aliasToken = this._getTokenIfIdentifier();
         if (aliasToken) {
-          importAsNode.d.alias = NameNode.create(this._getOwnerKey(), aliasToken);
+          importAsNode.d.alias = NameNode.create(aliasToken);
           importAsNode.d.alias.parent = importAsNode;
           extendRange(importAsNode, importAsNode.d.alias);
         } else {
@@ -12008,24 +10954,6 @@ var Parser = class _Parser {
       }
       importNode.d.list.push(importAsNode);
       importAsNode.parent = importNode;
-      const nameParts = importAsNode.d.module.d.nameParts.map((p) => p.d.value);
-      if (importAsNode.d.alias || importAsNode.d.module.d.leadingDots > 0 || importAsNode.d.module.d.nameParts.length === 0) {
-        this._importedModules.push({
-          nameNode: importAsNode.d.module,
-          leadingDots: importAsNode.d.module.d.leadingDots,
-          nameParts,
-          importedSymbols: void 0
-        });
-      } else {
-        importAsNode.d.module.d.nameParts.forEach((_, index) => {
-          this._importedModules.push({
-            nameNode: importAsNode.d.module,
-            leadingDots: importAsNode.d.module.d.leadingDots,
-            nameParts: nameParts.slice(0, index + 1),
-            importedSymbols: void 0
-          });
-        });
-      }
       if (modName.d.nameParts.length === 1) {
         const firstNamePartValue = modName.d.nameParts[0].d.value;
         if (firstNamePartValue === "typing" || firstNamePartValue === "typing_extensions") {
@@ -12044,7 +10972,7 @@ var Parser = class _Parser {
   // ('.' | '...')* dotted_name | ('.' | '...')+
   // dotted_name: NAME ('.' NAME)*
   _parseDottedModuleName(allowJustDots = false) {
-    const moduleNameNode = ModuleNameNode.create(this._getOwnerKey(), this._peekToken());
+    const moduleNameNode = ModuleNameNode.create(this._peekToken());
     while (true) {
       const token = this._getTokenIfType(19 /* Ellipsis */) ?? this._getTokenIfType(20 /* Dot */);
       if (token) {
@@ -12067,7 +10995,7 @@ var Parser = class _Parser {
         }
         break;
       }
-      const namePart = NameNode.create(this._getOwnerKey(), identifier);
+      const namePart = NameNode.create(identifier);
       moduleNameNode.d.nameParts.push(namePart);
       namePart.parent = moduleNameNode;
       extendRange(moduleNameNode, namePart);
@@ -12081,7 +11009,7 @@ var Parser = class _Parser {
   }
   _parseGlobalStatement() {
     const globalToken = this._getKeywordToken(19 /* Global */);
-    const globalNode = GlobalNode.create(this._getOwnerKey(), globalToken);
+    const globalNode = GlobalNode.create(globalToken);
     globalNode.d.targets = this._parseNameList();
     if (globalNode.d.targets.length > 0) {
       globalNode.d.targets.forEach((name) => {
@@ -12093,7 +11021,7 @@ var Parser = class _Parser {
   }
   _parseNonlocalStatement() {
     const nonlocalToken = this._getKeywordToken(28 /* Nonlocal */);
-    const nonlocalNode = NonlocalNode.create(this._getOwnerKey(), nonlocalToken);
+    const nonlocalNode = NonlocalNode.create(nonlocalToken);
     nonlocalNode.d.targets = this._parseNameList();
     if (nonlocalNode.d.targets.length > 0) {
       nonlocalNode.d.targets.forEach((name) => {
@@ -12111,7 +11039,7 @@ var Parser = class _Parser {
         this._addSyntaxError(LocMessage.expectedIdentifier(), this._peekToken());
         break;
       }
-      nameList.push(NameNode.create(this._getOwnerKey(), name));
+      nameList.push(NameNode.create(name));
       if (!this._consumeTokenIfType(12 /* Comma */)) {
         break;
       }
@@ -12122,7 +11050,7 @@ var Parser = class _Parser {
   // (old) raise_stmt: 'raise' [test [',' test [',' test]]]
   _parseRaiseStatement() {
     const raiseToken = this._getKeywordToken(32 /* Raise */);
-    const raiseNode = RaiseNode.create(this._getOwnerKey(), raiseToken);
+    const raiseNode = RaiseNode.create(raiseToken);
     if (!this._isNextTokenNeverExpression()) {
       raiseNode.d.expr = this._parseTestExpression(
         /* allowAssignmentExpression */
@@ -12148,7 +11076,7 @@ var Parser = class _Parser {
       /* allowAssignmentExpression */
       false
     );
-    const assertNode = AssertNode.create(this._getOwnerKey(), assertToken, expr);
+    const assertNode = AssertNode.create(assertToken, expr);
     if (this._consumeTokenIfType(12 /* Comma */)) {
       const exceptionExpr = this._parseTestExpression(
         /* allowAssignmentExpression */
@@ -12170,7 +11098,7 @@ var Parser = class _Parser {
     if (!exprListResult.parseError && exprListResult.list.length === 0) {
       this._addSyntaxError(LocMessage.expectedDelExpr(), this._peekToken());
     }
-    const delNode = DelNode.create(this._getOwnerKey(), delToken);
+    const delNode = DelNode.create(delToken);
     delNode.d.targets = exprListResult.list;
     if (delNode.d.targets.length > 0) {
       delNode.d.targets.forEach((expr) => {
@@ -12190,7 +11118,6 @@ var Parser = class _Parser {
         this._addSyntaxError(LocMessage.yieldFromIllegal(), nextToken);
       }
       return YieldFromNode.create(
-        this._getOwnerKey(),
         yieldToken,
         this._parseTestExpression(
           /* allowAssignmentExpression */
@@ -12210,7 +11137,7 @@ var Parser = class _Parser {
       );
       this._reportConditionalErrorForStarTupleElement(exprList);
     }
-    return YieldNode.create(this._getOwnerKey(), yieldToken, exprList);
+    return YieldNode.create(yieldToken, exprList);
   }
   _tryParseYieldExpression() {
     if (this._peekKeywordType() !== 39 /* Yield */) {
@@ -12220,7 +11147,7 @@ var Parser = class _Parser {
   }
   // simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
   _parseSimpleStatement() {
-    const statement = StatementListNode.create(this._getOwnerKey(), this._peekToken());
+    const statement = StatementListNode.create(this._peekToken());
     while (true) {
       if (this._peekTokenType() === 0 /* Invalid */) {
         const invalidToken = this._getNextToken();
@@ -12325,7 +11252,7 @@ var Parser = class _Parser {
       return exprListResult.list[0];
     }
     const tupleStartRange = exprListResult.list.length > 0 ? exprListResult.list[0] : this._peekToken(-1);
-    const tupleNode = TupleNode.create(this._getOwnerKey(), tupleStartRange, enclosedInParens);
+    const tupleNode = TupleNode.create(tupleStartRange, enclosedInParens);
     tupleNode.d.items = exprListResult.list;
     if (exprListResult.list.length > 0) {
       exprListResult.list.forEach((expr) => {
@@ -12338,7 +11265,7 @@ var Parser = class _Parser {
   _parseExpressionListAsPossibleTuple(errorCategory, getErrorString, errorToken) {
     if (this._isNextTokenNeverExpression()) {
       this._addSyntaxError(getErrorString(), errorToken);
-      return ErrorNode.create(this._getOwnerKey(), errorToken, errorCategory);
+      return ErrorNode.create(errorToken, errorCategory);
     }
     const exprListResult = this._parseExpressionList(
       /* allowStar */
@@ -12415,7 +11342,7 @@ var Parser = class _Parser {
   _parseExpression(allowUnpack) {
     const startToken = this._peekToken();
     if (allowUnpack && this._consumeTokenIfOperator(26 /* Multiply */)) {
-      return UnpackNode.create(this._getOwnerKey(), startToken, this._parseExpression(
+      return UnpackNode.create(startToken, this._parseExpression(
         /* allowUnpack */
         false
       ));
@@ -12450,7 +11377,6 @@ var Parser = class _Parser {
     }
     if (!this._consumeTokenIfKeyword(13 /* Else */)) {
       return TernaryNode.create(
-        this._getOwnerKey(),
         ifExpr,
         testExpr,
         this._handleExpressionParseError(1 /* MissingElse */, LocMessage.expectedElse())
@@ -12460,7 +11386,7 @@ var Parser = class _Parser {
       /* allowAssignmentExpression */
       true
     );
-    return TernaryNode.create(this._getOwnerKey(), ifExpr, testExpr, elseExpr);
+    return TernaryNode.create(ifExpr, testExpr, elseExpr);
   }
   // assign_expr: NAME := test
   _parseAssignmentExpression(disallowAssignmentExpression = false) {
@@ -12487,7 +11413,7 @@ var Parser = class _Parser {
       /* allowAssignmentExpression */
       false
     );
-    return AssignmentExpressionNode.create(this._getOwnerKey(), leftExpr, walrusToken, rightExpr);
+    return AssignmentExpressionNode.create(leftExpr, walrusToken, rightExpr);
   }
   // or_test: and_test ('or' and_test)*
   _parseOrTest() {
@@ -12733,7 +11659,6 @@ var Parser = class _Parser {
         this._isParsingTypeAnnotation = false;
         const argListResult = this._parseArgList();
         const callNode = CallNode.create(
-          this._getOwnerKey(),
           atomExpression,
           argListResult.args,
           argListResult.trailingComma
@@ -12761,7 +11686,6 @@ var Parser = class _Parser {
         const maxDepth = this._maxChildDepthMap.get(atomExpression.id) ?? 0;
         if (maxDepth >= maxChildNodeDepth) {
           atomExpression = ErrorNode.create(
-            this._getOwnerKey(),
             callNode,
             15 /* MaxDepthExceeded */
           );
@@ -12785,7 +11709,6 @@ var Parser = class _Parser {
         this._isParsingIndexTrailer = wasParsingIndexTrailer;
         const closingToken = this._peekToken();
         const indexNode = IndexNode.create(
-          this._getOwnerKey(),
           atomExpression,
           subscriptList.list,
           subscriptList.trailingComma,
@@ -12803,7 +11726,6 @@ var Parser = class _Parser {
         const maxDepth = this._maxChildDepthMap.get(atomExpression.id) ?? 0;
         if (maxDepth >= maxChildNodeDepth) {
           atomExpression = ErrorNode.create(
-            this._getOwnerKey(),
             indexNode,
             15 /* MaxDepthExceeded */
           );
@@ -12824,14 +11746,12 @@ var Parser = class _Parser {
           );
         }
         const memberAccessNode = MemberAccessNode.create(
-          this._getOwnerKey(),
           atomExpression,
-          NameNode.create(this._getOwnerKey(), memberName)
+          NameNode.create(memberName)
         );
         const maxDepth = this._maxChildDepthMap.get(atomExpression.id) ?? 0;
         if (maxDepth >= maxChildNodeDepth) {
           atomExpression = ErrorNode.create(
-            this._getOwnerKey(),
             memberAccessNode,
             15 /* MaxDepthExceeded */
           );
@@ -12845,7 +11765,7 @@ var Parser = class _Parser {
       }
     }
     if (awaitToken) {
-      return AwaitNode.create(this._getOwnerKey(), awaitToken, atomExpression);
+      return AwaitNode.create(awaitToken, atomExpression);
     }
     return atomExpression;
   }
@@ -12883,14 +11803,14 @@ var Parser = class _Parser {
             /* allowAssignmentExpression */
             true
           );
-          if (!this._parseOptions.isStubFile && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_10)) {
+          if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_10)) {
             this._addSyntaxError(LocMessage.assignmentExprInSubscript(), valueExpr);
           }
         }
       }
-      const argNode = ArgumentNode.create(this._getOwnerKey(), firstToken, valueExpr, argType);
+      const argNode = ArgumentNode.create(firstToken, valueExpr, argType);
       if (nameIdentifier) {
-        argNode.d.name = NameNode.create(this._getOwnerKey(), nameIdentifier);
+        argNode.d.name = NameNode.create(nameIdentifier);
         argNode.d.name.parent = argNode;
       }
       if (argNode.d.name) {
@@ -12903,7 +11823,7 @@ var Parser = class _Parser {
         this._addSyntaxError(LocMessage.keywordSubscriptIllegal(), argNode.d.name);
       }
       if (argType !== 0 /* Simple */) {
-        const unpackListAllowed = this._parseOptions.isStubFile || this._isParsingQuotedText || PythonVersion.isGreaterOrEqualTo(this._getLanguageVersion(), pythonVersion3_11);
+        const unpackListAllowed = this._isParsingQuotedText || PythonVersion.isGreaterOrEqualTo(this._getLanguageVersion(), pythonVersion3_11);
         if (argType === 1 /* UnpackedList */ && !unpackListAllowed) {
           this._addSyntaxError(LocMessage.unpackedSubscriptIllegal(), argNode);
         }
@@ -12927,7 +11847,7 @@ var Parser = class _Parser {
         void 0,
         [16 /* CloseBracket */]
       );
-      argList.push(ArgumentNode.create(this._getOwnerKey(), this._peekToken(), errorNode, 0 /* Simple */));
+      argList.push(ArgumentNode.create(this._peekToken(), errorNode, 0 /* Simple */));
     }
     return {
       list: argList,
@@ -12947,7 +11867,7 @@ var Parser = class _Parser {
         break;
       }
       if (nextTokenType !== 10 /* Colon */) {
-        const allowAssignmentExpression = this._parseOptions.isStubFile || PythonVersion.isGreaterOrEqualTo(this._getLanguageVersion(), pythonVersion3_10);
+        const allowAssignmentExpression = PythonVersion.isGreaterOrEqualTo(this._getLanguageVersion(), pythonVersion3_10);
         sliceExpressions[sliceIndex] = this._parseTestExpression(allowAssignmentExpression);
       }
       sliceIndex++;
@@ -12961,12 +11881,11 @@ var Parser = class _Parser {
         return sliceExpressions[0];
       }
       return ErrorNode.create(
-        this._getOwnerKey(),
         this._peekToken(),
         3 /* MissingIndexOrSlice */
       );
     }
-    const sliceNode = SliceNode.create(this._getOwnerKey(), firstToken);
+    const sliceNode = SliceNode.create(firstToken);
     sliceNode.d.startValue = sliceExpressions[0];
     if (sliceNode.d.startValue) {
       sliceNode.d.startValue.parent = sliceNode;
@@ -13059,9 +11978,9 @@ var Parser = class _Parser {
         }
       }
     }
-    const argNode = ArgumentNode.create(this._getOwnerKey(), firstToken, valueExpr, argType);
+    const argNode = ArgumentNode.create(firstToken, valueExpr, argType);
     if (nameIdentifier) {
-      argNode.d.name = NameNode.create(this._getOwnerKey(), nameIdentifier);
+      argNode.d.name = NameNode.create(nameIdentifier);
       argNode.d.name.parent = argNode;
     }
     return argNode;
@@ -13073,13 +11992,13 @@ var Parser = class _Parser {
   _parseAtom() {
     const nextToken = this._peekToken();
     if (nextToken.type === 19 /* Ellipsis */) {
-      return EllipsisNode.create(this._getOwnerKey(), this._getNextToken());
+      return EllipsisNode.create(this._getNextToken());
     }
     if (nextToken.type === 6 /* Number */) {
-      return NumberNode.create(this._getOwnerKey(), this._getNextToken());
+      return NumberNode.create(this._getNextToken());
     }
     if (nextToken.type === 7 /* Identifier */) {
-      return NameNode.create(this._getOwnerKey(), this._getNextToken());
+      return NameNode.create(this._getNextToken());
     }
     if (nextToken.type === 5 /* String */ || nextToken.type === 24 /* FStringStart */) {
       return this._parseStringList();
@@ -13111,11 +12030,11 @@ var Parser = class _Parser {
     if (nextToken.type === 8 /* Keyword */) {
       const keywordToken = nextToken;
       if (keywordToken.keywordType === 15 /* False */ || keywordToken.keywordType === 34 /* True */ || keywordToken.keywordType === 9 /* Debug */ || keywordToken.keywordType === 27 /* None */) {
-        return ConstantNode.create(this._getOwnerKey(), this._getNextToken());
+        return ConstantNode.create(this._getNextToken());
       }
       const keywordAsIdentifier = this._getTokenIfIdentifier();
       if (keywordAsIdentifier) {
-        return NameNode.create(this._getOwnerKey(), keywordAsIdentifier);
+        return NameNode.create(keywordAsIdentifier);
       }
     }
     return this._handleExpressionParseError(2 /* MissingExpression */, LocMessage.expectedExpr());
@@ -13136,7 +12055,7 @@ var Parser = class _Parser {
       /* length */
       0
     ) : nextToken;
-    const expr = ErrorNode.create(this._getOwnerKey(), initialRange, category, childNode);
+    const expr = ErrorNode.create(initialRange, category, childNode);
     this._consumeTokensUntilType(stopTokens);
     return expr;
   }
@@ -13163,7 +12082,7 @@ var Parser = class _Parser {
         false
       ) || this._parseOrTest();
     }
-    const lambdaNode = LambdaNode.create(this._getOwnerKey(), lambdaToken, testExpr);
+    const lambdaNode = LambdaNode.create(lambdaToken, testExpr);
     lambdaNode.d.params = argList;
     argList.forEach((arg) => {
       arg.parent = lambdaNode;
@@ -13222,7 +12141,6 @@ var Parser = class _Parser {
   _parseListAtom() {
     const startBracket = this._getNextToken();
     assert(startBracket.type === 15 /* OpenBracket */);
-    const ownerKey = this._getOwnerKey();
     const exprListResult = this._parseTestListWithComprehension(
       /* isGenerator */
       false
@@ -13238,7 +12156,7 @@ var Parser = class _Parser {
     }
     return _createList();
     function _createList() {
-      const listAtom = ListNode.create(ownerKey, startBracket);
+      const listAtom = ListNode.create(startBracket);
       if (closeBracket) {
         extendRange(listAtom, closeBracket);
       }
@@ -13330,7 +12248,6 @@ var Parser = class _Parser {
           this._addSyntaxError(LocMessage.keyValueInSet(), valueExpression);
         } else {
           const keyEntryNode = DictionaryKeyEntryNode.create(
-            this._getOwnerKey(),
             keyExpression,
             valueExpression
           );
@@ -13354,7 +12271,7 @@ var Parser = class _Parser {
         if (isSet) {
           this._addSyntaxError(LocMessage.unpackInSet(), doubleStarExpression);
         } else {
-          const listEntryNode = DictionaryExpandEntryNode.create(this._getOwnerKey(), doubleStarExpression);
+          const listEntryNode = DictionaryExpandEntryNode.create(doubleStarExpression);
           extendRange(listEntryNode, doubleStar);
           let expandEntryNode = listEntryNode;
           const comprehension = this._tryParseComprehension(
@@ -13377,12 +12294,10 @@ var Parser = class _Parser {
         if (keyExpression) {
           if (isDictionary) {
             const missingValueErrorNode = ErrorNode.create(
-              this._getOwnerKey(),
               this._peekToken(),
               13 /* MissingDictValue */
             );
             const keyEntryNode = DictionaryKeyEntryNode.create(
-              this._getOwnerKey(),
               keyExpression,
               missingValueErrorNode
             );
@@ -13421,7 +12336,7 @@ var Parser = class _Parser {
       closeCurlyBrace = void 0;
     }
     if (isSet) {
-      const setAtom = SetNode.create(this._getOwnerKey(), startBrace);
+      const setAtom = SetNode.create(startBrace);
       if (closeCurlyBrace) {
         extendRange(setAtom, closeCurlyBrace);
       }
@@ -13434,7 +12349,7 @@ var Parser = class _Parser {
       setAtom.d.items = setEntries;
       return setAtom;
     }
-    const dictionaryAtom = DictionaryNode.create(this._getOwnerKey(), startBrace);
+    const dictionaryAtom = DictionaryNode.create(startBrace);
     if (trailingCommaToken) {
       dictionaryAtom.d.trailingCommaToken = trailingCommaToken;
       extendRange(dictionaryAtom, trailingCommaToken);
@@ -13497,8 +12412,8 @@ var Parser = class _Parser {
     }
     if (this._consumeTokenIfType(10 /* Colon */)) {
       annotationExpr = this._parseTypeAnnotation();
-      leftExpr = TypeAnnotationNode.create(this._getOwnerKey(), leftExpr, annotationExpr);
-      if (!this._parseOptions.isStubFile && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_6)) {
+      leftExpr = TypeAnnotationNode.create(leftExpr, annotationExpr);
+      if (PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_6)) {
         this._addSyntaxError(LocMessage.varAnnotationIllegal(), annotationExpr);
       }
       if (!this._consumeTokenIfOperator(2 /* Assign */)) {
@@ -13518,7 +12433,7 @@ var Parser = class _Parser {
         () => LocMessage.expectedAssignRightHandExpr()
       );
       this._isParsingTypeAnnotation = wasParsingTypeAnnotation;
-      return AssignmentNode.create(this._getOwnerKey(), leftExpr, rightExpr);
+      return AssignmentNode.create(leftExpr, rightExpr);
     }
     if (this._consumeTokenIfOperator(2 /* Assign */)) {
       return this._parseChainAssignments(leftExpr);
@@ -13537,7 +12452,6 @@ var Parser = class _Parser {
       const destExpr = Object.assign({}, leftExpr);
       destExpr.id = getNextNodeId();
       return AugmentedAssignmentNode.create(
-        this._getOwnerKey(),
         leftExpr,
         rightExpr,
         operatorToken.operatorType,
@@ -13566,7 +12480,7 @@ var Parser = class _Parser {
       }
       assignmentTargets.push(rightExpr);
     }
-    let assignmentNode = AssignmentNode.create(this._getOwnerKey(), assignmentTargets[0], rightExpr);
+    let assignmentNode = AssignmentNode.create(assignmentTargets[0], rightExpr);
     const typeAnnotationComment = this._parseVariableTypeAnnotationComment();
     if (typeAnnotationComment) {
       if (assignmentTargets.length > 1) {
@@ -13579,7 +12493,7 @@ var Parser = class _Parser {
     }
     assignmentTargets.forEach((target, index) => {
       if (index > 0) {
-        assignmentNode = AssignmentNode.create(this._getOwnerKey(), target, assignmentNode);
+        assignmentNode = AssignmentNode.create(target, assignmentNode);
       }
     });
     return assignmentNode;
@@ -13618,7 +12532,6 @@ var Parser = class _Parser {
       isParamListEllipsis = true;
     }
     return FunctionAnnotationNode.create(
-      this._getOwnerKey(),
       openParenToken,
       isParamListEllipsis,
       paramAnnotations,
@@ -13630,7 +12543,7 @@ var Parser = class _Parser {
     this._isParsingTypeAnnotation = true;
     const startToken = this._peekToken();
     const isUnpack = this._consumeTokenIfOperator(26 /* Multiply */);
-    if (isUnpack && allowUnpack && !this._parseOptions.isStubFile && !this._isParsingQuotedText && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_11)) {
+    if (isUnpack && allowUnpack && !this._isParsingQuotedText && PythonVersion.isLessThan(this._getLanguageVersion(), pythonVersion3_11)) {
       this._addSyntaxError(LocMessage.unpackedSubscriptIllegal(), startToken);
     }
     let result = this._parseTestExpression(
@@ -13638,10 +12551,9 @@ var Parser = class _Parser {
       false
     );
     if (isUnpack) {
-      result = UnpackNode.create(this._getOwnerKey(), startToken, result);
+      result = UnpackNode.create(startToken, result);
     }
     this._isParsingTypeAnnotation = wasParsingTypeAnnotation;
-    this._hasTypeAnnotations = true;
     return result;
   }
   _reportStringTokenErrors(stringToken, unescapedResult) {
@@ -13680,7 +12592,7 @@ var Parser = class _Parser {
   _makeStringNode(stringToken) {
     const unescapedResult = getUnescapedString(stringToken);
     this._reportStringTokenErrors(stringToken, unescapedResult);
-    return StringNode.create(this._getOwnerKey(), stringToken, unescapedResult.value);
+    return StringNode.create(stringToken, unescapedResult.value);
   }
   _getTypeAnnotationCommentText() {
     if (this._tokenIndex === 0) {
@@ -13706,9 +12618,7 @@ var Parser = class _Parser {
       typeString.length,
       0 /* None */,
       typeString,
-      0,
-      /* comments */
-      void 0
+      0
     );
   }
   _parseVariableTypeAnnotationComment() {
@@ -13717,51 +12627,24 @@ var Parser = class _Parser {
       return void 0;
     }
     const stringNode = this._makeStringNode(stringToken);
-    const stringListNode = StringListNode.create(this._getOwnerKey(), [stringNode]);
-    const parser = new _Parser();
-    const parseResults = parser.parseTextExpression(
-      this._fileContents,
-      stringToken.start,
-      stringToken.length,
-      this._parseOptions,
-      1 /* VariableAnnotation */,
-      /* initialParenDepth */
-      void 0,
-      this._typingSymbolAliases,
-      this._getOwnerKey()
-    );
+    const stringListNode = StringListNode.create([stringNode]);
+    const parseResults = this._parseTypeComment(stringToken, (parser) => parser._parseTypeAnnotation());
     parseResults.diagnostics.forEach((diag) => {
       this._addSyntaxError(diag.message, stringListNode);
     });
-    if (!parseResults.parseTree) {
-      return void 0;
-    }
-    this._stringAnnotations.writer.addAll(parseResults.stringAnnotations);
     return parseResults.parseTree;
   }
   _parseFunctionTypeAnnotationComment(stringToken, functionNode) {
     const stringNode = this._makeStringNode(stringToken);
-    const stringListNode = StringListNode.create(this._getOwnerKey(), [stringNode]);
-    const parser = new _Parser();
-    const parseResults = parser.parseTextExpression(
-      this._fileContents,
-      stringToken.start,
-      stringToken.length,
-      this._parseOptions,
-      2 /* FunctionAnnotation */,
-      /* initialParenDepth */
-      void 0,
-      this._typingSymbolAliases,
-      this._getOwnerKey()
-    );
+    const stringListNode = StringListNode.create([stringNode]);
+    const parseResults = this._parseTypeComment(stringToken, (parser) => parser._parseFunctionTypeAnnotation());
     parseResults.diagnostics.forEach((diag) => {
       this._addSyntaxError(diag.message, stringListNode);
     });
-    if (!parseResults.parseTree) {
+    const functionAnnotation = parseResults.parseTree;
+    if (!functionAnnotation) {
       return;
     }
-    this._stringAnnotations.writer.addAll(parseResults.stringAnnotations);
-    const functionAnnotation = parseResults.parseTree;
     functionNode.d.funcAnnotationComment = functionAnnotation;
     functionAnnotation.parent = functionNode;
     extendRange(functionNode, functionAnnotation);
@@ -13876,7 +12759,6 @@ var Parser = class _Parser {
     }
     this._reportStringTokenErrors(startToken);
     return FormatStringNode.create(
-      this._getOwnerKey(),
       startToken,
       endToken,
       middleTokens,
@@ -13886,7 +12768,6 @@ var Parser = class _Parser {
   }
   _createBinaryOperationNode(leftExpression, rightExpression, operatorToken, operator) {
     const binaryNode = BinaryOperationNode.create(
-      this._getOwnerKey(),
       leftExpression,
       rightExpression,
       operatorToken,
@@ -13896,17 +12777,17 @@ var Parser = class _Parser {
     const rightMaxDepth = this._maxChildDepthMap.get(rightExpression.id) ?? 0;
     if (leftMaxDepth >= maxChildNodeDepth || rightMaxDepth >= maxChildNodeDepth) {
       this._addSyntaxError(LocMessage.maxParseDepthExceeded(), binaryNode);
-      return ErrorNode.create(this._getOwnerKey(), binaryNode, 15 /* MaxDepthExceeded */);
+      return ErrorNode.create(binaryNode, 15 /* MaxDepthExceeded */);
     }
     this._maxChildDepthMap.set(binaryNode.id, Math.max(leftMaxDepth, rightMaxDepth) + 1);
     return binaryNode;
   }
   _createUnaryOperationNode(operatorToken, expression, operator) {
-    const unaryNode = UnaryOperationNode.create(this._getOwnerKey(), operatorToken, expression, operator);
+    const unaryNode = UnaryOperationNode.create(operatorToken, expression, operator);
     const maxDepth = this._maxChildDepthMap.get(expression.id) ?? 0;
     if (maxDepth >= maxChildNodeDepth) {
       this._addSyntaxError(LocMessage.maxParseDepthExceeded(), unaryNode);
-      return ErrorNode.create(this._getOwnerKey(), unaryNode, 15 /* MaxDepthExceeded */);
+      return ErrorNode.create(unaryNode, 15 /* MaxDepthExceeded */);
     }
     this._maxChildDepthMap.set(unaryNode.id, maxDepth + 1);
     return unaryNode;
@@ -13923,52 +12804,21 @@ var Parser = class _Parser {
         break;
       }
     }
-    const stringNode = StringListNode.create(this._getOwnerKey(), stringList);
-    if (this._isParsingTypeAnnotation) {
-      if (stringNode.d.strings.length > 1) {
-        if (this._isParsingQuotedText) {
-          this._addSyntaxError(LocMessage.annotationSpansStrings(), stringNode);
-        }
-      } else if (stringNode.d.strings[0].nodeType === 30 /* FormatString */) {
-        if (this._isParsingQuotedText) {
-          this._addSyntaxError(LocMessage.annotationFormatString(), stringNode);
-        }
+    const stringNode = StringListNode.create(stringList);
+    if (this._isParsingTypeAnnotation && this._isParsingQuotedText) {
+      if (stringList.length > 1) {
+        this._addSyntaxError(LocMessage.annotationSpansStrings(), stringNode);
+      } else if (stringList[0].nodeType === 30 /* FormatString */) {
+        this._addSyntaxError(LocMessage.annotationFormatString(), stringNode);
       } else {
-        const stringToken = stringNode.d.strings[0].d.token;
-        const stringValue = getUnescapedString(
-          stringNode.d.strings[0].d.token,
+        const token = stringList[0].d.token;
+        const value = getUnescapedString(
+          token,
           /* elideCrlf */
           false
-        );
-        const unescapedString = stringValue.value;
-        const tokenOffset = stringToken.start;
-        const prefixLength = stringToken.prefixLength + stringToken.quoteMarkLength;
-        if (unescapedString.length !== stringToken.length - prefixLength - stringToken.quoteMarkLength) {
-          if (this._isParsingQuotedText) {
-            this._addSyntaxError(LocMessage.annotationStringEscape(), stringNode);
-          }
-        } else if ((stringToken.flags & (8 /* Raw */ | 32 /* Bytes */ | 64 /* Format */ | 128 /* Template */)) === 0) {
-          const parser = new _Parser();
-          const parseResults = parser.parseTextExpression(
-            this._fileContents,
-            tokenOffset + prefixLength,
-            unescapedString.length,
-            this._parseOptions,
-            1 /* VariableAnnotation */,
-            (stringNode.d.strings[0].d.token.flags & 4 /* Triplicate */) !== 0 ? 1 : 0,
-            this._typingSymbolAliases,
-            this._getOwnerKey()
-          );
-          if (parseResults.diagnostics.length === 0 || this._parseOptions.reportErrorsForParsedStringContents) {
-            parseResults.diagnostics.forEach((diag) => {
-              this._addSyntaxError(diag.message, stringNode);
-            });
-            if (parseResults.parseTree) {
-              this._stringAnnotations.writer.set(stringNode, parseResults.parseTree);
-              this._stringAnnotations.writer.addAll(parseResults.stringAnnotations);
-              parseResults.parseTree.parent = stringNode;
-            }
-          }
+        ).value;
+        if (value.length !== token.length - token.prefixLength - 2 * token.quoteMarkLength) {
+          this._addSyntaxError(LocMessage.annotationStringEscape(), stringNode);
         }
       }
     }
@@ -14095,14 +12945,14 @@ var Parser = class _Parser {
     if (nextToken.type === 0 /* Invalid */) {
       this._getNextToken();
       this._addSyntaxError(LocMessage.invalidIdentifierChar(), nextToken);
-      return IdentifierToken.create(nextToken.start, nextToken.length, "", nextToken.comments);
+      return IdentifierToken.create(nextToken.start, nextToken.length, "");
     }
     if (nextToken.type === 8 /* Keyword */) {
       const keywordToken = nextToken;
       if (KeywordToken.isSoftKeyword(keywordToken)) {
         const keywordText = this._fileContents.substr(nextToken.start, nextToken.length);
         this._getNextToken();
-        return IdentifierToken.create(nextToken.start, nextToken.length, keywordText, nextToken.comments);
+        return IdentifierToken.create(nextToken.start, nextToken.length, keywordText);
       }
     }
     return void 0;
@@ -14201,11 +13051,11 @@ function parsePython(text, targetVersion = "3.14") {
   const options = new ParseOptions();
   options.pythonVersion = PythonVersion.create(...targetVersion.split(".").map(Number));
   const sink = new DiagnosticSink();
-  const parsed = new Parser().parseSourceFile(text, options, sink);
+  const { parseTree, tokenizerOutput: { tokens, lines } } = new Parser().parseSourceFile(text, options, sink);
   if (Number(targetVersion.split(".")[1]) < 12)
-    for (const node of walk(parsed.parserOutput.parseTree)) validateStringVersion(node, parsed.tokenizerOutput.lines, sink);
+    for (const node of walk(parseTree)) validateStringVersion(node, lines, sink);
   const errors = sink.fetchAndClear().filter((error) => error.category === 0 /* Error */);
-  return { ...parsed, errors };
+  return { parseTree, tokens, errors };
 }
 function children(node) {
   const out = [];
@@ -14301,7 +13151,7 @@ function sourceContext(text, parsed) {
     ...digest ? { sha256: createHash("sha256").update(text.slice(start, end)).digest("hex") } : {}
   });
   const tokenIndex = /* @__PURE__ */ new Map();
-  const tokens = parsed.tokenizerOutput.tokens;
+  const { tokens } = parsed;
   for (let index = 0; index < tokens.count; index++) tokenIndex.set(tokens.getItemAt(index).start, index);
   const functionStart = (node) => {
     const index = tokenIndex.get(node.d.firstToken.start);
@@ -14795,7 +13645,7 @@ function analyzeFile(path, bytes, targetVersion = "3.14", declarationsOnly = fal
     record.error = parsed.errors.map((error) => `${error.message} (line ${error.range.start.line + 1})`).join("; ");
     return { record };
   }
-  const tree = parsed.parserOutput.parseTree;
+  const tree = parsed.parseTree;
   const bindings = bindModule(tree);
   record.imports = collectImports(tree, context, bindings);
   if (declarationsOnly) return { record, tree, bindings, context };
@@ -15095,7 +13945,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     if (node.nodeType === 48 /* StringList */ && node.d.strings.every((part) => part.nodeType === 49 /* String */)) {
       const text = node.d.strings.map((part) => part.d.value).join("");
       const parsed = parsePython(`_annotation: ${text}`);
-      const statement = parsed.parserOutput.parseTree.d.statements[0]?.d.statements?.[0];
+      const statement = parsed.parseTree.d.statements[0]?.d.statements?.[0];
       return !parsed.errors.length && statement?.nodeType === 54 /* TypeAnnotation */ ? annotation(file, scope, statement.d.annotation, at, seen, substitutions) : void 0;
     }
     if (node.nodeType === 38 /* Name */ && substitutions.has(node.d.value)) return substitutions.get(node.d.value);

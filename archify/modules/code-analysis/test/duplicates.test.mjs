@@ -152,12 +152,16 @@ test('duplicates: missing executable is an analysis failure', t => {
   assert.throws(() => analyze(input, enabled(path.join(input.dir, 'not-installed'))), diagnostic('duplicates/tool-unavailable'));
 });
 
-test('duplicates: wrong version and process failure cannot become empty findings', { skip: POSIX_ONLY }, t => {
+test('duplicates: wrong version, process failure, and timeout cannot become empty findings', { skip: POSIX_ONLY }, t => {
   const input = fixture(t);
   const wrong = faultTool(input.dir, 'wrong-version', 'process.exit(0);', '5.4.2');
   assert.throws(() => analyze(input, enabled(wrong.executable)), diagnostic('duplicates/tool-version'));
   const failed = faultTool(input.dir, 'failed', "console.error('injected scanner failure'); process.exit(7);");
   assert.throws(() => analyze(input, enabled(failed.executable)), diagnostic('duplicates/tool-failed'));
+  const hung = faultTool(input.dir, 'hung', 'setInterval(() => {}, 1000);');
+  assert.throws(() => analyze(input, enabled(hung.executable, { timeoutMs: 1000 })), diagnostic('duplicates/tool-failed'));
+  const calls = fs.readFileSync(hung.calls, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  assert.ok(calls.some(call => !call.args.includes('--version')), 'the actual scan reached the timeout control');
 });
 
 test('duplicates: a timed-out POSIX launcher also stops its scanner child', { skip: POSIX_ONLY, timeout: 20000 }, async t => {

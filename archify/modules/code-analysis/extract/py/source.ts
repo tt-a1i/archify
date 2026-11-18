@@ -219,7 +219,7 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
         if (node.nodeType === K.StringList && node.d.strings.every(part => part.nodeType === K.String)) {
             const text = node.d.strings.map(part => (part.d as any).value).join('');
             const parsed = parsePython(`_annotation: ${text}`);
-            const statement = (parsed.parserOutput.parseTree.d.statements[0] as any)?.d.statements?.[0];
+            const statement = (parsed.parseTree.d.statements[0] as any)?.d.statements?.[0];
             return !parsed.errors.length && statement?.nodeType === K.TypeAnnotation ? annotation(file, scope, statement.d.annotation, at, seen, substitutions) : undefined;
         }
         if (node.nodeType === K.Name && substitutions.has(node.d.value)) return substitutions.get(node.d.value);

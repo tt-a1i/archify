@@ -19,42 +19,42 @@
       "path": "common/collectionUtils.ts",
       "source": "packages/pyright-internal/src/common/collectionUtils.ts",
       "sha256": "6a5a92d464bd0097e4230d5589efa61a683c3721a36b2c65008244502a4ade83",
-      "localSha256": "1313d8a52a19ea27b0e106a0fad4a30f2f50bc0fe4eabd200752b243383644af",
+      "localSha256": "19c886e3f6f7c011f00feeefa5fa7a5e4408447a9dbc731efb560f7eb7840f74",
       "modified": true
     },
     {
       "path": "common/core.ts",
       "source": "packages/pyright-internal/src/common/core.ts",
       "sha256": "806f5abb7534423c1d9939feb18554b6fb95807df4436702cda1214f5afa9190",
-      "localSha256": "806f5abb7534423c1d9939feb18554b6fb95807df4436702cda1214f5afa9190",
-      "modified": false
+      "localSha256": "b74066687270ec969c76d2c5ab2dcbb92d6e06cd23826fed8a4c7303688dd2dd",
+      "modified": true
     },
     {
       "path": "common/debug.ts",
       "source": "packages/pyright-internal/src/common/debug.ts",
       "sha256": "7cbaf910f43f5fc7398461a32294d187bef7458bbd1e6fa4595b701278f36a36",
-      "localSha256": "cddbed14bc507c35b6a3ce8deb84ea7d7b701db5ca58e24b9f551919bc72cb9e",
+      "localSha256": "a99ba4aaa2236bbcadfcf45e4522d11548d55ecd4b28425fdf63d21de8e6d85c",
       "modified": true
     },
     {
       "path": "common/diagnostic.ts",
       "source": "packages/pyright-internal/src/common/diagnostic.ts",
       "sha256": "73c3587a8e07fab9b50a01213aa66d7eb51a498fc5798326e5f76604a994e8f4",
-      "localSha256": "30c5958317eb01e87497d3d018d4fb4dcaa4b0f4eaf07663be4781424048e4dd",
+      "localSha256": "c974c96716b673e41c15176eee156b1670027c458cc8e8704a51d3021dfee3e4",
       "modified": true
     },
     {
       "path": "common/diagnosticSink.ts",
       "source": "packages/pyright-internal/src/common/diagnosticSink.ts",
       "sha256": "439abe39f80da9c839cbcf705c658abaaf00ec83c7807c47b710b2cec9529941",
-      "localSha256": "4ddaa23a4a8f2220b5df903968aab6c0b7da0898d298d02bf49b48a868a08354",
+      "localSha256": "7fc6d211e1181e5122b2fc180cf2ba5fd99b1e25377d7ab48e0b7df7991845fc",
       "modified": true
     },
     {
       "path": "common/positionUtils.ts",
       "source": "packages/pyright-internal/src/common/positionUtils.ts",
       "sha256": "2758a017efd6eaba651646e6bd9c22d3e349d0b1d01675919af548e79931b53a",
-      "localSha256": "02b4ca0ae086d79c48cd74945e6cb83d29aee5422f8dac3e2648cebd7993ce4f",
+      "localSha256": "eb900cab9680e9d8d343c85bb360f027638988d0c2ffd12fc24c527da46dfafa",
       "modified": true
     },
     {
@@ -65,17 +65,10 @@
       "modified": false
     },
     {
-      "path": "common/stringUtils.ts",
-      "source": "packages/pyright-internal/src/common/stringUtils.ts",
-      "sha256": "2839521eaf5cca63cbfe6e06bec9853563320f56f872efb59e68dd357e1d6935",
-      "localSha256": "6b5ca6620b5ad63db1434afac48d20c77662cfb32bc1d7820b8d410e13a7a282",
-      "modified": true
-    },
-    {
       "path": "common/textRange.ts",
       "source": "packages/pyright-internal/src/common/textRange.ts",
       "sha256": "8370d8a0012385884e1d591b231e6573510d323cd6dc9cfa553080b17f5270b7",
-      "localSha256": "2a10db7b4b80207ce889b7389f16a7db2f15061f090751f6b228a7f80fccfc98",
+      "localSha256": "5b657871a6da5dabeb2e96f758c145e604be3fbed0cb79db9f6f0046b0dfd5bc",
       "modified": true
     },
     {
@@ -83,13 +76,6 @@
       "source": "packages/pyright-internal/src/common/textRangeCollection.ts",
       "sha256": "6d30c04171f713d100a0021586fd94f85891d150f6e884e0e45be47f9236596b",
       "localSha256": "8a217f02e7d912f3d6238550546bc585b245d0fe6ae714675282cf787d0bfce2",
-      "modified": true
-    },
-    {
-      "path": "common/timing.ts",
-      "source": "packages/pyright-internal/src/common/timing.ts",
-      "sha256": "132e95dd7492ad1cb58dda0e9a88ba4956e40e0024411a8f3402f94864fd65ea",
-      "localSha256": "1511524568f636d11857e958e8fea0e1f98fa5b2255eefc90e8c03f1786dc2f8",
       "modified": true
     },
     {
@@ -124,21 +110,14 @@
       "path": "parser/parseNodes.ts",
       "source": "packages/pyright-internal/src/parser/parseNodes.ts",
       "sha256": "3b5ce95ff4914c29bb3ccb3473fc36b9b227df33f58e9cac080df38996f0e8e1",
-      "localSha256": "e4626e4d078b84bca1b076e2d1ec02c54b00dc356de9f00588059ba72d84e4ad",
+      "localSha256": "9159134b7b26b4c2033c1bb23b0d13a65b7a8c2277037c3eeb69aeea8cbf9d6f",
       "modified": true
     },
     {
       "path": "parser/parser.ts",
       "source": "packages/pyright-internal/src/parser/parser.ts",
       "sha256": "16458a9e6036128413b58d1e5ab46dcd943118aa01712c6b82f23cf5f7edd65d",
-      "localSha256": "f97f07110459f106f38b53b37ee46336f7da1bcf046f4fad1db4c17a7f4ea419",
-      "modified": true
-    },
-    {
-      "path": "parser/stringAnnotationInfo.ts",
-      "source": "packages/pyright-internal/src/parser/stringAnnotationInfo.ts",
-      "sha256": "8cc6895a4e85ea4be6afd77f403dd495d532fc2ac2aaa9a9c87eae031f0b2fb0",
-      "localSha256": "a57139659022afd3f651078e7afb64b9dcaabbabe37c970cc85647a162e2ff04",
+      "localSha256": "0de9145a5d29695c97a3203a2640e117750416b8a9cd06af76fa48c9b4ee881f",
       "modified": true
     },
     {
@@ -159,14 +138,14 @@
       "path": "parser/tokenizer.ts",
       "source": "packages/pyright-internal/src/parser/tokenizer.ts",
       "sha256": "88615f5176da37c38293980cb2b1390b03b6554c66bd32cce1651e9adff6943f",
-      "localSha256": "d1eaec028ba43d967fae3cf30353a56ef570bf204796b6856a990f7f5fe55f63",
+      "localSha256": "9a8b7a546cec31f4a212f035f75a6d4dff4fda467c55f16a18efcdfb62912f3e",
       "modified": true
     },
     {
       "path": "parser/tokenizerTypes.ts",
       "source": "packages/pyright-internal/src/parser/tokenizerTypes.ts",
       "sha256": "8040a1dcc897332b7aff6956cbf102252535eeb1beaba51c2383fdee6a8ccd76",
-      "localSha256": "413960e5a92cee027b5fdbacc42420352c766f9de4e672820adfde044f559f77",
+      "localSha256": "933e77bb52390a1c580011fb257708b3255203c147ae765a0b8a4f5dcfdec1b4",
       "modified": true
     },
     {
@@ -177,13 +156,11 @@
       "modified": false
     }
   ],
-  "shims": [
-    "common/console.ts"
-  ],
   "modifications": [
     "All relative TypeScript imports use .js specifiers for Node ESM and Archify self-analysis.",
     "parser/parser.ts: arithmetic-chain depth limit raised from 256 to 4096; Archify traverses such chains iteratively and does not run the recursive type evaluator.",
-    "common/diagnostic.ts and diagnosticSink.ts retain parser-only values/addenda and diagnostics; URI/editor actions, serialization and filesystem services are excluded.",
+    "Parser and tokenizer return syntax nodes, tokens and line ranges. Parsing drops profiling, Notebook and stub-specific modes, editor formatting statistics, diagnostic suppression metadata, duplicate import and file indexes, and unused AST ownership and string-annotation tables. Syntax diagnostics and type-comment parsing are retained.",
+    "common helpers retain parser-required assertions, ranges, diagnostic messages and token utilities. Editor APIs and type-checker diagnostics are excluded.",
     "localization/localize.ts and strings.ts retain only referenced English parser diagnostics; environment locale lookup and other analyzer/editor strings are excluded. strings.ts is the filtered JSON data expressed as a TypeScript constant.",
     "parser/stringVersionChecks.ts adapts only pre-3.12 f-string syntax checks from checker.ts visitStringList, using the parser diagnostic sink instead of a type evaluator.",
     "No upstream CLI, LSP, Program, binder, type evaluator, typeshed or target-code execution is included."

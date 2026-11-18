@@ -8,7 +8,6 @@
  * line/column positions.
  */
 
-import { TokenizerOutput } from '../parser/tokenizer.js';
 import { assert } from './debug.js';
 import { Position, Range, TextRange } from './textRange.js';
 import { TextRangeCollection } from './textRangeCollection.js';
@@ -63,54 +62,4 @@ export function convertOffsetsToRange(
 
     const end = convertOffsetToPosition(endOffset, lines);
     return { start, end };
-}
-
-// Translates a position (line and col) into a file offset.
-export function convertPositionToOffset(position: Position, lines: TextRangeCollection<TextRange>): number | undefined {
-    if (position.line >= lines.count) {
-        return undefined;
-    }
-
-    return lines.getItemAt(position.line).start + position.character;
-}
-
-export function convertRangeToTextRange(range: Range, lines: TextRangeCollection<TextRange>): TextRange | undefined {
-    const start = convertPositionToOffset(range.start, lines);
-    if (start === undefined) {
-        return undefined;
-    }
-
-    const end = convertPositionToOffset(range.end, lines);
-    if (end === undefined) {
-        return undefined;
-    }
-
-    return TextRange.fromBounds(start, end);
-}
-
-export function convertTextRangeToRange(range: TextRange, lines: TextRangeCollection<TextRange>): Range {
-    return convertOffsetsToRange(range.start, TextRange.getEnd(range), lines);
-}
-
-// Returns the position of the last character in a line (before the newline).
-export function getLineEndPosition(tokenizerOutput: TokenizerOutput, text: string, line: number): Position {
-    return convertOffsetToPosition(getLineEndOffset(tokenizerOutput, text, line), tokenizerOutput.lines);
-}
-
-export function getLineEndOffset(tokenizerOutput: TokenizerOutput, text: string, line: number): number {
-    const lineRange = tokenizerOutput.lines.getItemAt(line);
-
-    const lineEndOffset = TextRange.getEnd(lineRange);
-    let newLineLength = 0;
-    for (let i = lineEndOffset - 1; i >= lineRange.start; i--) {
-        const char = text[i];
-        if (char !== '\r' && char !== '\n') {
-            break;
-        }
-
-        newLineLength++;
-    }
-
-    // Character should be at the end of the line but before the newline.
-    return lineEndOffset - newLineLength;
 }

@@ -10,11 +10,11 @@ export function parsePython(text: string, targetVersion = '3.14') {
     const options = new ParseOptions();
     options.pythonVersion = PythonVersion.create(...targetVersion.split('.').map(Number) as [number, number]);
     const sink = new DiagnosticSink();
-    const parsed = new Parser().parseSourceFile(text, options, sink);
+    const { parseTree, tokenizerOutput: { tokens, lines } } = new Parser().parseSourceFile(text, options, sink);
     if (Number(targetVersion.split('.')[1]) < 12)
-        for (const node of walk(parsed.parserOutput.parseTree)) validateStringVersion(node, parsed.tokenizerOutput.lines, sink);
+        for (const node of walk(parseTree)) validateStringVersion(node, lines, sink);
     const errors = sink.fetchAndClear().filter(error => error.category === DiagnosticCategory.Error);
-    return { ...parsed, errors };
+    return { parseTree, tokens, errors };
 }
 
 // Raw parser children only. Quoted annotations are strings, not extra executed

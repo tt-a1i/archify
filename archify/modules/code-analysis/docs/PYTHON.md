@@ -1,10 +1,10 @@
 # Python source analyzer
 
 Python extraction runs entirely in Node. The tokenizer, parser, source positions
-and necessary parser diagnostics are transplanted from **Pyright 1.1.414**,
-commit `a28cce4077d87b80bead12de809f79845e39c8ba`. Archify owns the binding,
-import, measurement and bounded declaration analysis built on that syntax tree.
-This is a source migration, not integration of the complete Pyright package.
+and necessary parser diagnostics come from **Pyright 1.1.414**, commit
+`a28cce4077d87b80bead12de809f79845e39c8ba`. The parser provides the syntax tree
+and token positions. Archify uses these to collect imports, measure functions,
+list calls and locate unique source declarations.
 
 ## Runtime and version selection
 
@@ -149,66 +149,6 @@ reader continues to accept historical `python-source-v1/v2`, `python-lexical-v1/
 engine or syntax target changes adapter identity, so comparisons report an
 extractor change rather than pretending it is a source-code change.
 
-## Original fixed real-project comparison (revision 11)
-
-The corpus is **Click 8.5.1**, commit
-`cf19179e8e2fd54c601378cec9e0d21bb12b6fb1`: only `src/click/*.py`, 17 files,
-12,706 lines. Complete Pyright 1.1.414 was queried with Python 3.14, platform
-`All` and an empty third-party environment. File/config hashes and frozen source
-definition points are retained alongside [the result](benchmarks/python-click-8.5.1.json).
-
-| Measurement | Previous CPython AST adapter, revision 10 | Source rewrite, revision 11 |
-| --- | ---: | ---: |
-| Functions | 583 | 583 |
-| Imports | 402 | 402 |
-| Module symbols | 637 | 637 |
-| Source calls | 2,027 | 2,027 |
-| Selected declaration targets | 204 | **447** |
-| Previously selected targets retained unchanged | — | **204/204** |
-| Source-reviewed unique declaration samples | 8/19 | **19/19** |
-
-Function facts (including metrics/ranges/hashes), import facts, symbol facts and
-call positions match the baseline exactly. The rewrite adds **243** targets.
-All **447** selected targets occur in the saved full-Pyright candidate sets;
-none disagrees. Full Pyright supplied captured function candidates for **598**
-calls: 562 unique and 36 multiple. This leaves substantial semantic work outside
-the source slice. Candidate counts are not accuracy scores or runtime edges.
-
-The manual oracle covers 19 unique declarations within 46 reviewed sites: a
-34-site per-file hash sample plus 12 self-method sites. It is small and includes
-a targeted method stratum; it is not a repository-wide random accuracy estimate.
-Reference agreement is not independent correctness. These checks establish
-source navigation on fixed inputs, not all Python behavior or a performance
-comparison with a full language server.
-
-From this module directory, prepare a source-only Click checkout, copy
-`docs/benchmarks/python-pyrightconfig.json` to its `pyrightconfig.json`, then run:
-
-```sh
-node scripts/compare-python-reference.mjs \
-  --root /path/to/click-source-only \
-  --reference docs/benchmarks/python-click-pyright-reference.json \
-  --oracle docs/benchmarks/python-click-oracle.json
-```
-
-The source-only root must contain `src/click/` and the supplied config, with no
-additional Python files. Input hash mismatches fail. The optional `--baseline`
-accepts the previously saved raw facts to check exact facts and target retention.
-
-Revision 12 retains all 447 selected Click targets and increases the total to
-**514**, all in the frozen Pyright candidate sets. HTTPX 0.28.1 supplied the next
-repair corpus; Flask 3.1.2 was then sampled before either analyzer output was read.
-See [the HTTPX repair and Flask holdout](benchmarks/python-httpx-flask-validation.md)
-for exact versions, source/environment hashes, frozen oracles, separate sample
-strata, remaining gaps, ablation and reproduction commands.
-
-Revision 13 resolves the eight Flask sample misses when supplied the pinned
-Click declarations. The fixed sample reaches **24/24** and selected targets
-increase from **154 to 220**. The verification report records the default result,
-dependency configuration and exact before/after evidence.
-The comparison runs the current analyzer and reads saved reference data; it
-does not load Pyright or execute Click.
-
 ## Source maintenance and license
 
 `extract/py/upstream/UPSTREAM.json` records the exact upstream commit, original
@@ -222,15 +162,9 @@ npm run check:python
 npm test
 ```
 
-Only development needs esbuild. Production loads the checked-in bundle.
+Development uses esbuild. The package and source checkout load the same
+checked-in bundle.
 `check:python` rejects a stale bundle and checks the TypeScript sources; it also
 runs before the module suite. Updating upstream requires reviewing the recorded
 source changes, refreshing provenance and running syntax, binding, encoding,
-history and fixed-project differential checks. Do not replace this process with
-an npm Pyright runtime integration.
-
-The migration's ablation removed unreferenced localization/diagnostic APIs and
-environment locale loading, eliminated the parser/collector import cycle and
-shared encoding with source freshness. The generated analyzer decreased from
-about 649 KB to about 453 KB while retaining the same acceptance results. The
-old Python subprocess helpers and launcher were removed completely.
+history and fixed-project differential checks.

@@ -99,7 +99,7 @@ export function analyzeFile(path: string, bytes: Uint8Array, targetVersion = '3.
         record.error = parsed.errors.map(error => `${error.message} (line ${error.range.start.line + 1})`).join('; ');
         return { record };
     }
-    const tree = parsed.parserOutput.parseTree;
+    const tree = parsed.parseTree;
     const bindings = bindModule(tree);
     record.imports = collectImports(tree, context, bindings);
     if (declarationsOnly) return { record, tree, bindings, context };
