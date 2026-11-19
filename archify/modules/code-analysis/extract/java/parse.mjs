@@ -17,7 +17,9 @@ export function parseSources(root, config, consume = unit => unit) {
   const captured = snapshotFiles(root, { ...config, include: [...(config.include || ['**/*']), '**/*.xml', '**/*.pom', ...markers.map(name => '**/' + name)] },
     file => included(file) && isJavaSource(file) || /\.(?:xml|pom)$/.test(file) || markers.includes(file.slice(file.lastIndexOf('/') + 1)));
   const snapshot = { contents: new Map([...captured].filter(([file]) => included(file) && isJavaSource(file))),
-    packageMarkers: packageMarkersIn([...captured.keys()],config,markers) };
+    // Archetype resource files are templates, not another Maven module.
+    packageMarkers: packageMarkersIn([...captured.keys()],config,markers)
+      .filter(file => !/(^|\/)src\/main\/resources\/archetype-resources\//.test(file)) };
   const files = [], units = [], parse_errors = [];
   for (const [file, bytes] of snapshot.contents) {
     let sourceText;
