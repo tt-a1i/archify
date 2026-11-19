@@ -99,6 +99,8 @@ When a passing Architecture receipt reports `visualReviewRecommendation.signals.
 
 When `layoutReviewRecommendation.action` is `inspect-sequence-width`, follow [Sequence width review](references/delivery-contract.md#sequence-width-review) before handing off a newly authored Sequence.
 
+For a project README, deliver a static SVG by default unless the user specifically asks for a link or interactive HTML. Export the finished standalone HTML with `node <skill-dir>/bin/export-svg.mjs <diagram.html> <image.svg> [auto|light|dark]` (Chrome or Chromium required). The output path must be new. The SVG contains the diagram, not the Viewer’s HTML cards; put essential claims in the diagram or document text. Inspect the exported image at its intended reading size.
+
 For a diagram intended for a README or project document, open the finished diagram at the intended reading size. Find its starting point and follow the relationships that answer the request, including any return or branch the reader needs. Read the arrows and cards as factual sentences. If a step, returned field, or check only applies in one case, name that case where the reader sees the claim and verify it at the source. If the reading path breaks, repair the affected layout and inspect the new result.
 
 For a repository document that spans several runtimes or conditional handoffs,
