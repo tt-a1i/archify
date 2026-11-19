@@ -8,6 +8,60 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
+
+test('short architecture cards keep all text inside their authored borders', async (t) => {
+  if (!Object.hasOwn(process.env, 'ARCHIFY_CHROME')) return t.skip('Set ARCHIFY_CHROME for real browser checks');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-short-cards-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const input = path.join(dir, 'input.json');
+  const output = path.join(dir, 'output.html');
+  const components = [
+    { id: 'short', type: 'backend', label: 'UI', sublabel: 'API', tag: 'R', pos: [30, 70], size: [84, 24] },
+    { id: 'brand', type: 'backend', label: 'AI', sublabel: 'UI', tag: 'L', brand: 'openai', pos: [185, 64], size: [68, 36] },
+    { id: 'detail', type: 'backend', label: '网关', sublabel: '队列', tag: '批次', href: 'gateway.html', pos: [30, 130], size: [105, 36] },
+  ];
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'architecture', meta: { title: 'Small cards', output: 'output.html', viewBox: [320, 240] },
+    components,
+    connections: [{ from: 'short', to: 'brand', fromSide: 'right', toSide: 'left', via: [[145, 82]], label: 'sync', labelAt: [150, 68] }],
+  }));
+  execFileSync(process.execPath, [path.join(root, 'bin/archify.mjs'), 'render', 'architecture', input, output, '--quality', 'showcase']);
+  const browser = new ChromeVisualBrowser(findChrome());
+  t.after(() => browser.close());
+  await browser.inspect({ artifactPath: output, width: 1440, height: 900, theme: 'light' });
+  const observed = await browser.cdp.send('Runtime.evaluate', { returnByValue: true, expression: `(() => {
+    const svg = document.querySelector('.diagram-container > svg');
+    const ctx = document.createElement('canvas').getContext('2d');
+    const edge = svg.querySelector('path[data-edge-from="short"][data-edge-to="brand"]');
+    const label = svg.querySelector('g[data-edge-from="short"][data-edge-to="brand"] text');
+    return { points: edge.dataset.compositionPoints, marker: edge.getAttribute('marker-end'), pin: [Number(label.getAttribute('x')), Number(label.getAttribute('y'))],
+      cards: [...svg.querySelectorAll('g[data-node-id]')].map(card => {
+        const { x, y, width, height } = card.querySelector(':scope > rect.c-mask').getBBox();
+        const rows = [...card.querySelectorAll(':scope > text')].map(text => {
+          const css = getComputedStyle(text);
+          ctx.font = css.fontWeight + ' ' + css.fontSize + ' ' + css.fontFamily;
+          ctx.textAlign = 'center';
+          const ink = ctx.measureText(text.textContent);
+          const cx = Number(text.getAttribute('x')), cy = Number(text.getAttribute('y'));
+          return { text: text.textContent, l: cx - ink.actualBoundingBoxLeft, r: cx + ink.actualBoundingBoxRight,
+            t: cy - ink.actualBoundingBoxAscent, b: cy + ink.actualBoundingBoxDescent };
+        });
+        return { bounds: [x, y, width, height], rows };
+      }) };
+  })()` }, await browser.sessionPromise);
+  assert.equal(observed.exceptionDetails, undefined);
+  const { cards, points, marker, pin } = observed.result.value;
+  assert.deepEqual(cards.map(card => card.bounds), components.map(component => [...component.pos, ...component.size]));
+  assert.deepEqual(cards.map(card => card.rows.map(row => row.text)), components.map(component => [component.label, component.sublabel, component.tag]));
+  assert.deepEqual(points.split(';'), ['114,82', '145,82', '185,82']);
+  assert.ok(marker);
+  assert.deepEqual(pin, [150, 68]);
+  for (const { bounds: [x, y, width, height], rows } of cards) rows.forEach((row, index) => {
+    assert.ok(row.l >= x && row.r <= x + width && row.t >= y && row.b <= y + height, JSON.stringify(row));
+    assert.ok(rows.slice(index + 1).every(other => row.r <= other.l || row.l >= other.r || row.b <= other.t || row.t >= other.b), JSON.stringify(rows));
+  });
+});
+
 test('automatic architectures preserve primary reading size when fitting the full page would shrink text', async (t) => {
   if (!Object.hasOwn(process.env, 'ARCHIFY_CHROME')) return t.skip('Set ARCHIFY_CHROME for real browser checks');
   const chrome = findChrome();

@@ -470,6 +470,7 @@ function componentDiagnosticBox(component) {
 function validateArchitecture() {
   const problems = [];
   const diagnostics = [];
+  const quality = process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile;
   if (resolvedBoundaryTitles.readabilityProblem) {
     problems.push(resolvedBoundaryTitles.readabilityProblem);
   }
@@ -564,6 +565,17 @@ function validateArchitecture() {
     }
     const brandRailProblem = brandTopRailProblem(c, c.width, 8, 'Component');
     if (brandRailProblem) problems.push(brandRailProblem);
+    if (quality === 'showcase' && !componentTextRows(c, resolveNodeDrilldowns(c)).fits) {
+      const minimumHeight = Math.max(Math.ceil(c.height + 1), 60);
+      const message = `Component "${c.id}" cannot fit its text legibly in its ${c.width} × ${c.height}px card — increase its height to ${minimumHeight}px and leave room around its routes.`;
+      problems.push(message);
+      diagnostics.push({
+        code: 'architecture/component-text-height', severity: 'error', message,
+        subject: { diagramType: 'architecture', nodeId: c.id },
+        evidence: { bounds: componentDiagnosticBox(c), recommendedHeightPx: minimumHeight },
+        supportedFixes: [`set component "${c.id}" size to [${c.width}, ${minimumHeight}]`],
+      });
+    }
     // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
     // handles the ordinary case, this rejects what it cannot rescue.
     const availableTextW = availableNodeTextWidth(c.width);
@@ -1082,12 +1094,13 @@ function renderConnectionLabel(conn, index) {
 
 const scalableComponentText = /^[ -~·←↑→↓、。！？：；「」，“”\p{Unified_Ideograph}\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3]+$/u;
 
-function renderComponent(c) {
-  const fill = componentFill[c.type] || 'c-external';
-  const accent = componentText[c.type] || 't-muted';
-  const cx = c.cx;
-  const hasSub = c.sublabel != null && c.sublabel !== '';
-  const drilldowns = resolveNodeDrilldowns(c);
+function componentBrandY(height) {
+  return Math.min(6, Math.max(0, (height - 16) / 2));
+}
+
+// The normal card keeps its authored geometry and familiar baseline spacing.
+function componentTextRows(c, drilldowns) {
+  const hasSub = Boolean(c.sublabel);
   const bottom = c.y + c.height;
   const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
   const sublabelY = c.y + c.height / 2 + 14;
@@ -1096,14 +1109,6 @@ function renderComponent(c) {
   const sublabelPreferred = hasSub && sublabelY + 3.5 <= sublabelLimit && scalableComponentText.test(c.sublabel)
     ? 10.5
     : componentTextFit.sublabelPreferred;
-  const sub = hasSub
-    ? `\n        <text data-detail="context" x="${cx}" y="${sublabelY}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
-    : '';
-  const tag = c.tag
-    ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
-    : '';
-  const brandYInset = Math.min(6, Math.max(0, (c.height - 16) / 2));
-  const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + brandYInset });
   const labelWidth = brandLabelFitWidth(c, c.width);
   const originalFontSize = fittedNodeFontSize(c.label, labelWidth, 11, 8);
   const titleRoom = labelY - c.y >= 22 && (!c.tag || bottom - 8 - labelY >= 14)
@@ -1113,6 +1118,77 @@ function renderComponent(c) {
   const labelFontSize = titleRoom && scalableComponentText.test(c.label)
     ? Math.max(originalFontSize, fittedNodeFontSize(c.label, titleWidth, 14, 8))
     : originalFontSize;
+  const rows = [{ key: 'title', text: c.label, y: labelY - c.y, font: labelFontSize, minimum: 8 }];
+  if (hasSub) rows.push({ key: 'sublabel', text: c.sublabel, y: sublabelY - c.y,
+    font: fittedNodeFontSize(c.sublabel, c.width, sublabelPreferred, componentTextFit.sublabelMinimum),
+    minimum: componentTextFit.sublabelMinimum });
+  if (c.tag) rows.push({ key: 'tag', text: c.tag, y: c.height - 8,
+    font: fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum),
+    minimum: componentTextFit.tagMinimum });
+  const normal = Object.fromEntries(rows.map(row => [row.key, { ...row, x: c.width / 2 }]));
+  const needsFit = rows.some((row, index) => {
+    const top = row.y - row.font * 0.8;
+    const bottom = row.y + row.font * 0.15;
+    return top < 1 || bottom > c.height - 1
+      || (index > 0 && top < rows[index - 1].y + rows[index - 1].font * 0.15);
+  });
+  if (!needsFit) return { rows: normal, fits: true };
+
+  // Fit a compact stack first, then put both secondary values on one row.
+  // Reserve each corner mark only on lines that pass through it.
+  const brandY = componentBrandY(c.height);
+  for (const fonts of [rows.map(row => row.font), rows.map(row => row.minimum)]) {
+    const entries = rows.map((row, index) => {
+      const font = fonts[index];
+      return { ...row, font, width: minimumNodeTextWidth(row.text, font) };
+    });
+    const stacks = [entries.map(row => [row])];
+    if (entries.length === 3) stacks.push([[entries[0]], entries.slice(1)]);
+    for (const lines of stacks) {
+      const lineFonts = lines.map(line => Math.max(...line.map(row => row.font)));
+      const height = lineFonts.reduce((sum, font) => sum + font * 1.25, lines.length - 1);
+      if (height > c.height - 4) continue;
+      let y = (c.height - height) / 2;
+      const fitted = {};
+      for (const [index, line] of lines.entries()) {
+        const font = lineFonts[index];
+        const lineBottom = y + font * 1.25;
+        const intersects = (top, bottom) => y < bottom && lineBottom > top;
+        const left = c.icon !== 'none' && intersects(4, 19) ? 20 : 4;
+        const rightInset = Math.max(4,
+          labelWidth < c.width && intersects(brandY - 2, brandY + 18) ? 24 : 0,
+          drilldowns.length && intersects(c.height - 19, c.height - 3) ? 19 : 0);
+        const right = c.width - rightInset;
+        const width = line.reduce((sum, row) => sum + row.width, (line.length - 1) * 6);
+        if (width > right - left) break;
+        let x = Math.max(left, Math.min(right - width, (c.width - width) / 2));
+        for (const row of line) {
+          fitted[row.key] = { ...row, x: x + row.width / 2, y: y + font };
+          x += row.width + 6;
+        }
+        y = lineBottom + 1;
+      }
+      if (Object.keys(fitted).length < rows.length) continue;
+      return { rows: fitted, compact: true, fits: true };
+    }
+  }
+  return { rows: normal, fits: false };
+}
+
+function renderComponent(c) {
+  const fill = componentFill[c.type] || 'c-external';
+  const accent = componentText[c.type] || 't-muted';
+  const drilldowns = resolveNodeDrilldowns(c);
+  const { rows, compact } = componentTextRows(c, drilldowns);
+  const hasSub = Boolean(rows.sublabel);
+  const sub = hasSub
+    ? `\n        <text data-detail="context" x="${c.x + rows.sublabel.x}" y="${c.y + rows.sublabel.y}" class="t-muted" font-size="${rows.sublabel.font}" text-anchor="middle">${esc(c.sublabel)}</text>`
+    : '';
+  const tag = rows.tag
+    ? `\n        <text data-detail="fine" x="${c.x + rows.tag.x}" y="${c.y + rows.tag.y}" class="${accent}" font-size="${rows.tag.font}" text-anchor="middle">${esc(c.tag)}</text>`
+    : '';
+  const brandYInset = componentBrandY(c.height);
+  const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + brandYInset });
   // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
@@ -1121,7 +1197,7 @@ function renderComponent(c) {
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}
+          <text data-node-label=""${hasSub && !compact ? ' data-detail-anchor=""' : ''} x="${c.x + rows.title.x}" y="${c.y + rows.title.y}" class="t-primary" font-size="${rows.title.font}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}
         </g>`, drilldowns);
 }
 

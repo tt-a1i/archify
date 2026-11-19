@@ -38,6 +38,28 @@ function rewrite(input, diagram) {
   fs.writeFileSync(input, JSON.stringify(diagram, null, 2));
 }
 
+test('explicit showcase quality diagnoses unreadable card height and gives an executable repair', t => {
+  const { cwd, input, diagram } = setup(t, [
+    { id: 'short', type: 'backend', label: 'UI', sublabel: 'API', tag: 'R', pos: [30, 70], size: [84, 16] },
+  ]);
+  delete diagram.meta.quality_profile;
+  rewrite(input, diagram);
+  const standard = spawnSync(process.execPath, [cli, 'render', 'architecture', input, path.join(cwd, 'standard.html'), '--quality', 'standard'], { cwd, encoding: 'utf8' });
+  assert.equal(standard.status, 0, standard.stdout + standard.stderr);
+  const result = spawnSync(process.execPath, [cli, 'validate', 'architecture', input, '--json', '--quality', 'showcase'], { cwd, encoding: 'utf8' });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  const diagnostic = receipt.diagnostics.find(item => item.code === 'architecture/component-text-height');
+  assert.equal(diagnostic?.subject.nodeId, 'short');
+  assert.equal(diagnostic.evidence.bounds.height, 16);
+  const fix = diagnostic.supportedFixes[0].match(/size to \[(84), (\d+)\]/);
+  assert.ok(fix, diagnostic.supportedFixes[0]);
+  diagram.components[0].size = fix.slice(1).map(Number);
+  rewrite(input, diagram);
+  const delivered = spawnSync(process.execPath, [cli, 'deliver', 'architecture', input, path.join(cwd, 'fixed.html'), '--json', '--quality', 'showcase'], { cwd, encoding: 'utf8' });
+  assert.equal(delivered.status, 0, delivered.stdout + delivered.stderr);
+});
+
 const handPlacedFixture = () => [
   { id: 'left', type: 'backend', label: 'Left', pos: [40, 40], size: [200, 80] },
   { id: 'right', type: 'backend', label: 'Right', pos: [244, 40], size: [200, 80] },
