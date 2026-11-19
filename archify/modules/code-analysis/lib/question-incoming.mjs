@@ -25,7 +25,7 @@ export function indexIncoming(facts) {
   return { facts, imports, files, definitions };
 }
 
-export function questionIncoming({ facts, inspect, entry, symbol, selectedFunction, calls, index = null }) {
+export function questionIncoming({ facts, inspect, entry, symbol, selectedFunction, calls, context = null, index = null }) {
   const base = { coverage: 'unavailable', reason: null, limit: LIMIT, total: null, included: 0, omitted: null, records: [],
     limitations: [
       'Reverse lookup covers only resolved imports and bound calls in this captured selection. Unknown, dynamic, external, excluded or uncollected paths are not a known zero or a complete impact graph.',
@@ -37,7 +37,7 @@ export function questionIncoming({ facts, inspect, entry, symbol, selectedFuncti
   if (facts && index?.facts !== facts) index = indexIncoming(facts);
   const entryReason = !facts ? 'facts-not-captured' : sourceStatus(entry) !== 'valid' ? `entry-${sourceStatus(entry)}` : null;
   const importers = entryReason ? unavailable(entryReason) : bounded(base,
-    [...(index.imports.get(entry.file) || [])].sort(order),
+    (index.imports.get(entry.file) || []).filter(record => !context || record.fact.contexts?.includes(context)).sort(order),
     record => {
       const origin = inspect(record.fact.from), status = sourceStatus(origin);
       return { ...record, origin, navigation: { status, location: status === 'valid' ? { file: record.fact.from, line: record.fact.line } : null } };
@@ -46,7 +46,8 @@ export function questionIncoming({ facts, inspect, entry, symbol, selectedFuncti
   if (!reason && symbol && (!selectedFunction || !calls.selection.range)) reason = 'function-range-unavailable';
   if (reason) return { importers, callers: unavailable(reason) };
   const target = symbol ? { name: selectedFunction.name, line: calls.selection.range.line, column: calls.selection.range.column } : null;
-  const matches = [...(target ? index.definitions.get(JSON.stringify([entry.file,target.name,target.line,target.column])) || [] : index.files.get(entry.file) || [])].sort(order);
+  const matches = (target ? index.definitions.get(JSON.stringify([entry.file,target.name,target.line,target.column])) || [] : index.files.get(entry.file) || [])
+    .filter(record => !context || record.fact.contexts?.includes(context)).sort(order);
   const callers = bounded({ ...base, provenance: calls.provenance, bindingCoverage: calls.bindingCoverage,
     selection: { file: entry.file, kind: symbol ? 'exact-function-declaration' : 'entry-file-bound-targets', target } }, matches, record => {
     const origin = inspect(record.fact.file);

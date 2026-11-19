@@ -587,8 +587,6 @@ test('evaluate rejects changed dependency aggregates with identical metadata', (
 });
 
 test('Python generic function bounds retain deferred imports on 3.12+', (t) => {
-  const probe = python(os.tmpdir(), 'import sys; print(sys.version_info >= (3, 12))');
-  if (probe.stdout.trim() !== 'True') return t.skip('type parameter syntax requires Python 3.12+');
   const { facts } = analyze(t, { 'a.py': 'def f[T: __import__(name)]():\n    pass\n' });
   const edge = facts.imports.find((e) => e.specifier === '<computed>');
   assert.ok(edge);
@@ -633,7 +631,6 @@ test('finally imports inherit enclosing flags instead of adding a conditional gu
 });
 
 test('Python 3.12 class bounds and aliases are lazy while class bases and bodies are eager', (t) => {
-  if (python(os.tmpdir(), 'import sys; print(sys.version_info >= (3, 12))').stdout.trim() !== 'True') return t.skip('requires Python 3.12+');
   const { facts } = analyze(t, { 'a.py': 'class C[T: __import__(bound)](__import__(base).Base):\n    value = __import__(body)\ntype Alias[T: __import__(constraint)] = __import__(alias)\n' });
   assert.equal(facts.unresolved.opaque, 5);
   assert.equal(facts.imports.filter((e) => e.lazy).length, 3);

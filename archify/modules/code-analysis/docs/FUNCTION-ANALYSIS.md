@@ -8,9 +8,13 @@ finding is not required. `task --help` describes question mode and its options.
 Single-entry orientation accepts JS/TS implementation files, or a .py/.java entry
 captured in a saved analysis directory with matching Python/Java producer metadata.
 Python/Java use captured function ranges and file dependencies. Fresh Python
-`python-lexical-v1` facts supply source callsites and bounded direct-name targets;
+`python-source-v3` facts supply source callsites, lexical targets and bounded
+receiver/signature declaration targets (see [Python support](PYTHON.md));
 fresh Java `java-static-lexical-v1` facts supply bounded method invocation navigation.
 Fresh paired orientation below also supports captured named Python/Java definitions.
+C/C++ saved orientation uses `cpp-source-direct-v1` and the captured compilation
+database. Header entries require `--context <translation-unit>` from
+`languageScope.fileContexts`; virtual and cross-unit calls remain unknown.
 
 1. **Scope.** Before reading the path in depth, record the question, entry,
    acceptance questions and excluded areas. For a code change, pin full base/head
@@ -59,7 +63,9 @@ Fresh paired orientation below also supports captured named Python/Java definiti
    to be the direct caller of nested calls.
    Older JS/TS facts without the marker remain readable, but require fresh
    extraction for call orientation even if their calls array is nonempty.
-   Python `python-lexical-v1` inventories every `ast.Call` in parse-valid files.
+   Current Python `python-source-v3` inventories source calls using transplanted
+   Pyright syntax code and extends targets to bounded receiver declarations.
+   Historical Python `python-lexical-v1` inventories every `ast.Call` in parse-valid files.
    It binds only unique ordinary undecorated module-level definitions or explicit
    static from-import aliases to direct captured definitions. Attributes, classes,
    decorated targets, reexports, shadows and ambiguous bindings stay unresolved.
@@ -131,7 +137,7 @@ semantic interpretation. Report the analyzed revision and working-tree state.
 A single run is neither independent validation nor an accuracy/cost benchmark.
 A semantic explanation does not authorize implementing its proposed changes.
 
-For saved Python/Java questions, pass the existing analysis directory and a unique
+For saved Python/Java/C/C++ questions, pass the existing analysis directory and a unique
 captured function qualname. For example, from `archify/`:
 
 ```sh
@@ -163,7 +169,9 @@ dependencies and reads source without running the target application or changing
 checkouts. The validated entry suffix selects JS/TS, Python (.py) or Java (.java) once for both sides, even in mixed-language roots. Both sides use that current extractor and one effective analysis
 configuration (defaults, or one `--config` merged with defaults using the usual
 analysis-config rules). It accepts uncommitted files; Git metadata is background,
-while each snapshot digest identifies captured text. Existing analysis directories,
+while each snapshot digest identifies captured text. C/C++ paired questions select
+`.c/.cc/.cpp/.cxx/.C` translation-unit entries and conservatively report changed
+compilation database settings as partial. Existing analysis directories,
 finding/verify options and `--function` are separate modes.
 
 Read the orientation before following locations:
@@ -235,7 +243,10 @@ Read the orientation before following locations:
   snapshot. No saved raw-facts directory is produced by this mode; the selected
   records are embedded. Resolution-input drift suppresses call navigation.
 - `knownReferences` and `unresolvedWithinSourceRange` expose call coverage.
-  Matching Python producers with `python-lexical-v1` support direct-name lexical
+  Current Python `python-source-v3` producers support bounded receiver and
+  signature declaration anchors. Paired comparisons record differences in
+  explicit dependency declaration hashes. See [the model limits](PYTHON.md).
+  Historical matching Python producers with `python-lexical-v1` support direct-name lexical
   call evidence; decorated definitions can be paired even though decorated and
   method call targets remain unresolved. In-range unresolved sites use the full
   owned extent and can include decorator expressions and nested definitions.

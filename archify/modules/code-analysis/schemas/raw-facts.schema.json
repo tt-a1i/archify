@@ -20,7 +20,7 @@
     "callModel": {
       "type": "string",
       "minLength": 1,
-      "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. js-ts-lexical-v3 additionally follows same-module default identifier/export-specifier references to ordinary function declarations with one body and no observed source writes or direct eval. js-ts-lexical-v4 additionally binds configured non-relative static imports to captured in-project implementations under the same export restrictions. js-ts-lexical-v5 additionally follows explicit ESM imported/local function exports through captured acyclic value routes, retaining forwarding statement positions in via. Imported callable targets reject observed source writes or direct eval. Wildcard/type-only/dynamic/CommonJS forwarding and arbitrary value aliases/factories remain unsupported. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. python-lexical-v2 additionally follows one unique unconditional explicit from-import reexport. Neither resolves attributes, classes, longer/conditional/rebound export chains or runtime dispatch. java-static-lexical-v1 inventories Java method invocations and binds only unqualified fixed-arity calls to a uniquely declared explicit static body method in a top-level ordinary class without extends/implements; inherited Object names and nested/local/anonymous owners are excluded. java-static-lexical-v2 additionally binds explicit class-qualified calls to public unique static fixed-arity methods in captured public top-level classes without explicit supertypes, after native type/value namespace guards. go-source-direct-v1 binds captured free-function declarations under the recorded module/build/test profile with incomplete external types. java-static-lexical-v3 additionally permits unique fixed-arity static candidates among different-arity siblings, preserving same-arity and variable-arity unknowns. go-source-direct-v3 uses recorded optional installed SDK standard-library compiler exports to improve captured source bindings while third-party types remain incomplete. go-source-direct-v2 additionally binds compiler-selected concrete receiver methods, including promotion, method expressions and generic instances; interfaces and function-variable calls remain unresolved. rust-source-direct-v3 additionally permits bare generic-struct paths to unique concrete-specialization inherent source candidates; generic/receiver/unsupported siblings block selection. Explicit generic call arguments, lifetime/const/bounded owners, trait/alias applicability and full type inference remain unsupported. Java-static-lexical-v4 additionally admits explicit class-qualified static candidates from callers with closed captured ordinary-class ancestry and no inherited qualifier field blocker; historical Java scopes remain distinct. Java-static-lexical-v5 additionally permits declared direct captured Maven jar/test-jar project source routes with POM evidence and main/test role checks. rust-source-direct-v4 additionally admits bare paths to unique lifetime-only struct/enum inherent source candidates with unbounded one-to-one impl lifetime parameters; unsupported siblings and enum variant names block selection. Historical Rust v1/v2/v3 scopes remain distinct. rust-source-direct-v5 additionally captures local trait declarations and impl edges: explicit <Type as Trait>::method resolves to a unique captured impl, while calls through a declared T: Trait bound, dyn Trait or a generic trait path target the trait method declaration only; local bindings/parameters with explicit captured nominal types may resolve a method call to a unique trait impl. Trait candidates do not determine runtime dispatch. rust-source-direct-v6 additionally inventories trait default method bodies once per source declaration and records defaultMethod context; calls in those bodies use the same receiver typing as other functions, while declarations without a body produce no calls. rust-source-direct-v7 additionally requires captured evidence for self.as_ref()/deref()/borrow(): an inherent method return type, an AsRef/Borrow generic target, or a Deref Target, prefers a unique inherent method over those wrapper targets, and substitutes generic struct fields by declaration position. Calls without that evidence remain unresolved. rust-source-direct-v8 additionally resolves accessor traits from captured local declarations (including aliases and defaulted generic parameters), reads impl where-clause bounds, applies default type parameters to field receivers, follows standard Box/Arc/Rc accessor payloads, and binds tuple-variant match payloads. rust-source-direct-v9 additionally traverses the argument expression of a local macro_rules! invocation whose every rule matches one $x:expr used exactly once outside repetition and nested macro arguments, marking those calls with macroEvidence; other macro invocations stay opaque. rust-source-direct-v10 additionally resolves the block-local macro binding visible at the callsite, restores the outer binding after that block, and requires the active cfg to keep the argument use; cfg-removed or unprovable uses stay unknown. rust-source-direct-v11 additionally binds self method calls in a trait default body to the enclosing trait declaration and expands one zero-argument local macro used as the whole body of an impl; generated forwarding methods inherit the impl self type and bounds, calls through *self/**self keep the captured trait bound, direct callers are marked macro-generated-method, and runtime concrete implementations remain undetermined. rust-source-direct-v12 additionally applies the selected cfg to generated impl-body methods and their bodies and preserves deduplicated macroTemplate definition/expansion origins. Generated callers use template-qualified identities rather than a unique impl identity; divergent expansion targets remain unresolved with rust-context-dependent and no target. rust-source-direct-v13 additionally binds closure input types from a local free function's declared signature: a bare fn(...) parameter or a generic parameter with exactly one Fn/FnMut/FnOnce bound, after substituting call-argument shapes. Bound closures carry an innermost closure anchor; unresolved or conflicting parameter evidence binds nothing and stays unknown. rust-source-direct-v14 additionally resolves written signature and actual types in their declaration modules, keeps module identity through generic substitution, and never binds an unresolved or external type to a same-spelled captured local type. Historical v5-v13 scopes remain distinct. Targets are source candidates, not proof of full compilation or execution."
+      "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. js-ts-lexical-v3 additionally follows same-module default identifier/export-specifier references to ordinary function declarations with one body and no observed source writes or direct eval. js-ts-lexical-v4 additionally binds configured non-relative static imports to captured in-project implementations under the same export restrictions. js-ts-lexical-v5 additionally follows explicit ESM imported/local function exports through captured acyclic value routes, retaining forwarding statement positions in via. Imported callable targets reject observed source writes or direct eval. Wildcard/type-only/dynamic/CommonJS forwarding and arbitrary value aliases/factories remain unsupported. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. python-lexical-v2 additionally follows one unique unconditional explicit from-import reexport. python-source-v1 uses transplanted Pyright syntax and adds python-source-declaration anchors for bounded receiver/signature types and captured inheritance, while retaining lexical targets. python-source-v2 additionally joins bounded local reaching definitions and supports typed iteration, generator send, awaited and context-manager results, property accessor groups, bound TypeVars, qualified contextlib decorators, early-exit narrowing and source super calls. python-source-v3 additionally uses stable type-only imports in annotations and follows captured callable-preserving decorator and generic factory signatures. Neither resolves attributes, classes, longer/conditional/rebound export chains or runtime dispatch. java-static-lexical-v1 inventories Java method invocations and binds only unqualified fixed-arity calls to a uniquely declared explicit static body method in a top-level ordinary class without extends/implements; inherited Object names and nested/local/anonymous owners are excluded. java-static-lexical-v2 additionally binds explicit class-qualified calls to public unique static fixed-arity methods in captured public top-level classes without explicit supertypes, after native type/value namespace guards. go-source-direct-v1 binds captured free-function declarations under the recorded module/build/test profile with incomplete external types. java-static-lexical-v3 additionally permits unique fixed-arity static candidates among different-arity siblings, preserving same-arity and variable-arity unknowns. go-source-direct-v3 uses recorded optional installed SDK standard-library compiler exports to improve captured source bindings while third-party types remain incomplete. go-source-direct-v2 additionally binds compiler-selected concrete receiver methods, including promotion, method expressions and generic instances; interfaces and function-variable calls remain unresolved. rust-source-direct-v3 additionally permits bare generic-struct paths to unique concrete-specialization inherent source candidates; generic/receiver/unsupported siblings block selection. Explicit generic call arguments, lifetime/const/bounded owners, trait/alias applicability and full type inference remain unsupported. Java-static-lexical-v4 additionally admits explicit class-qualified static candidates from callers with closed captured ordinary-class ancestry and no inherited qualifier field blocker; historical Java scopes remain distinct. Java-static-lexical-v5 additionally permits declared direct captured Maven jar/test-jar project source routes with POM evidence and main/test role checks. Java-static-lexical-v6 optionally uses an installed JDK 17+ compiler on isolated captured source groups to bind exact method invocations to captured body or declaration-only methods, with Maven source-set/direct-route checks and an empty external classpath; unavailable compiler groups retain conservative JS results. rust-source-direct-v4 additionally admits bare paths to unique lifetime-only struct/enum inherent source candidates with unbounded one-to-one impl lifetime parameters; unsupported siblings and enum variant names block selection. Historical Rust v1/v2/v3 scopes remain distinct. rust-source-direct-v5 additionally captures local trait declarations and impl edges: explicit <Type as Trait>::method resolves to a unique captured impl, while calls through a declared T: Trait bound, dyn Trait or a generic trait path target the trait method declaration only; local bindings/parameters with explicit captured nominal types may resolve a method call to a unique trait impl. Trait candidates do not determine runtime dispatch. rust-source-direct-v6 additionally inventories trait default method bodies once per source declaration and records defaultMethod context; calls in those bodies use the same receiver typing as other functions, while declarations without a body produce no calls. rust-source-direct-v7 additionally requires captured evidence for self.as_ref()/deref()/borrow(): an inherent method return type, an AsRef/Borrow generic target, or a Deref Target, prefers a unique inherent method over those wrapper targets, and substitutes generic struct fields by declaration position. Calls without that evidence remain unresolved. rust-source-direct-v8 additionally resolves accessor traits from captured local declarations (including aliases and defaulted generic parameters), reads impl where-clause bounds, applies default type parameters to field receivers, follows standard Box/Arc/Rc accessor payloads, and binds tuple-variant match payloads. rust-source-direct-v9 additionally traverses the argument expression of a local macro_rules! invocation whose every rule matches one $x:expr used exactly once outside repetition and nested macro arguments, marking those calls with macroEvidence; other macro invocations stay opaque. rust-source-direct-v10 additionally resolves the block-local macro binding visible at the callsite, restores the outer binding after that block, and requires the active cfg to keep the argument use; cfg-removed or unprovable uses stay unknown. rust-source-direct-v11 additionally binds self method calls in a trait default body to the enclosing trait declaration and expands one zero-argument local macro used as the whole body of an impl; generated forwarding methods inherit the impl self type and bounds, calls through *self/**self keep the captured trait bound, direct callers are marked macro-generated-method, and runtime concrete implementations remain undetermined. rust-source-direct-v12 additionally applies the selected cfg to generated impl-body methods and their bodies and preserves deduplicated macroTemplate definition/expansion origins. Generated callers use template-qualified identities rather than a unique impl identity; divergent expansion targets remain unresolved with rust-context-dependent and no target. rust-source-direct-v13 additionally binds closure input types from a local free function's declared signature: a bare fn(...) parameter or a generic parameter with exactly one Fn/FnMut/FnOnce bound, after substituting call-argument shapes. Bound closures carry an innermost closure anchor; unresolved or conflicting parameter evidence binds nothing and stays unknown. rust-source-direct-v14 additionally resolves written signature and actual types in their declaration modules, keeps module identity through generic substitution, and never binds an unresolved or external type to a same-spelled captured local type. rust-source-direct-v15 uses selected captured function return types in their declaring modules to identify following method receivers, including inherent Self returns; it removes constructor-path receiver guesses and leaves unproven returns unknown. Rust v15 also derives nominal receivers from unshadowed unit-struct values, resolves a nominal associated call through one captured trait owner, and seals trait method name ranges for declaration navigation; competing owners remain unknown. Historical v5-v14 scopes remain distinct. Targets are source candidates, not proof of full compilation or execution."
     },
     "repository": {
       "type": "object",
@@ -78,7 +78,9 @@
             "py",
             "java",
             "go",
-            "rust"
+            "rust",
+            "c",
+            "cpp"
           ]
         },
         "adapter": {
@@ -186,6 +188,13 @@
           "implicit": {
             "const": true,
             "description": "Python package initializer loaded by this import; line points to the initiating statement."
+          },
+          "contexts": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/repoPath" },
+            "description": "C/C++ translation units in which this active include was observed."
           }
         },
         "if": {
@@ -223,6 +232,23 @@
             }
           }
         ]
+      }
+    },
+    "methodDeclarations": {
+      "type": "array",
+      "description": "Java v6 source method declarations without bodies. They are navigation targets, not function complexity measurements.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "name", "kind", "line", "endLine", "sourceRange"],
+        "properties": {
+          "file": { "$ref": "#/$defs/repoPath" },
+          "name": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["methodDeclaration", "interfaceMethodDeclaration"] },
+          "line": { "type": "integer", "minimum": 1 },
+          "endLine": { "type": "integer", "minimum": 1 },
+          "sourceRange": { "$ref": "#/$defs/sourceRange" }
+        }
       }
     },
     "functions": {
@@ -264,7 +290,7 @@
           "complexity": {
             "type": "integer",
             "minimum": 1,
-            "description": "Cyclomatic complexity: 1 plus each branch point (see extract/py/extract.py)."
+            "description": "Cyclomatic complexity: 1 plus each branch point (see extract/py/facts.ts)."
           },
           "nesting": {
             "type": "integer",
@@ -274,6 +300,13 @@
           "deepestLine": {
             "type": "integer",
             "minimum": 1
+          },
+          "contexts": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/repoPath" },
+            "description": "C/C++ translation units observing this physical definition."
           },
           "sourceRange": {
             "$ref": "#/$defs/sourceRange",
@@ -298,7 +331,8 @@
                   "compactConstructorDeclaration",
                   "FuncDecl",
                   "InterfaceMethod",
-                  "RustItemFn"
+                  "RustItemFn",
+                  "ClangFunction"
                 ]
               },
               "sourceRange": {
@@ -418,6 +452,10 @@
                 "column": {
                   "type": "integer",
                   "minimum": 1
+                },
+                "sourceRange": {
+                  "$ref": "#/$defs/sourceRange",
+                  "description": "Exact captured trait method name in Rust v15 and later."
                 }
               }
             }
@@ -543,7 +581,7 @@
     },
     "calls": {
       "type": "array",
-      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage. python-lexical-v1 records Python ast.Call with the same UTF-16/end-exclusive coordinates, binding only eligible module-level ordinary definitions or direct from-import aliases; unsupported calls remain unresolved. Java java-static-lexical-v1 also inventories syntactic method invocations (excluding constructors and method references); same-file-static-method identifies a bounded lexical source candidate, not compiler resolution. Java v2 additionally permits java-qualified-static-method with explicit target.file after native class/value namespace lookup; visibility, overload and scope restrictions apply.",
+      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. python-source-declaration additionally identifies bounded Python source anchors under Python source models v1–v3, with target.file explicit for both local and imported declarations. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage. python-lexical-v1 records Python ast.Call with the same UTF-16/end-exclusive coordinates, binding only eligible module-level ordinary definitions or direct from-import aliases; unsupported calls remain unresolved. Java java-static-lexical-v1 also inventories syntactic method invocations (excluding constructors and method references); same-file-static-method identifies a bounded lexical source candidate, not compiler resolution. Java v2 additionally permits java-qualified-static-method with explicit target.file after native class/value namespace lookup; visibility, overload and scope restrictions apply. Java v6 optionally adds java-compiler-source-method targets from exact captured compiler bindings; methodDeclarations holds target declarations without bodies, separate from measured functions.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -583,6 +621,7 @@
               "same-file-function",
               "same-file-function-initializer",
               "imported-function",
+              "python-source-declaration",
               "same-file-static-method",
               "go-direct-function",
               "go-direct-method",
@@ -594,6 +633,8 @@
               "rust-trait-impl",
               "rust-trait-method-candidate",
               "java-qualified-static-method",
+              "java-compiler-source-method",
+              "cpp-direct-source",
               "unresolved"
             ]
           },
@@ -710,7 +751,7 @@
               "column": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "1-based UTF-16 column at the function declaration or initializer expression start in target.file for imported-function/java-qualified-static-method, otherwise the callsite file (including modifiers)."
+                "description": "1-based UTF-16 column at the declaration or initializer expression start in target.file for imported-function/java-qualified-static-method/java-compiler-source-method, otherwise the callsite file (including modifiers)."
               }
             }
           },
@@ -905,11 +946,24 @@
               "go-method-dispatch",
               "go-interface-external-method",
               "java-inherited-build-scope",
+              "java-compiler-build-scope",
+              "java-compiler-conflict",
               "rust-cfg-unselected",
               "rust-trait-or-method-dispatch",
               "rust-macro-not-expanded",
-              "rust-context-dependent"
+              "rust-context-dependent",
+              "cpp-unbound",
+              "cpp-virtual-dispatch",
+              "cpp-function-pointer",
+              "cpp-macro-expansion",
+              "cpp-template",
+              "cpp-context-dependent"
             ]
+          },
+          "contexts": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": { "$ref": "#/$defs/repoPath" },
+            "description": "C/C++ translation units observing this physical callsite."
           },
           "directCaller": {
             "type": "object",
@@ -1035,7 +1089,9 @@
               "resolution": {
                 "enum": [
                   "imported-function",
-                  "java-qualified-static-method"
+                  "java-qualified-static-method",
+                  "cpp-direct-source",
+                  "java-compiler-source-method"
                 ]
               },
               "target": {
@@ -1059,6 +1115,7 @@
               "resolution": {
                 "enum": [
                   "go-direct-function",
+                  "python-source-declaration",
                   "go-direct-method",
                   "go-interface-method",
                   "rust-direct-function",
@@ -1099,6 +1156,68 @@
     },
     "languageScope": {
       "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["language", "declarations", "limitations"],
+          "properties": {
+            "language": { "const": "py" },
+            "declarations": {
+              "type": "array",
+              "minItems": 1,
+              "description": "Explicit dependency type inputs, separate from project files and call targets. No package is executed or imported.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["module", "files"],
+                "properties": {
+                  "module": { "type": "string", "pattern": "^[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*$" },
+                  "files": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["file", "sha256"],
+                      "properties": {
+                        "file": { "$ref": "#/$defs/repoPath" },
+                        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                        "parseError": { "const": true }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "limitations": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["language", "build", "selectedFiles", "excludedFiles", "fileContexts", "metadata", "conflicts", "limitations"],
+          "properties": {
+            "language": { "enum": ["c", "cpp"] },
+            "build": {
+              "type": "object",
+              "required": ["databasePath", "databaseSha256", "sysroot", "libclang", "units"],
+              "properties": {
+                "databasePath": { "type": "string" },
+                "databaseSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "sysroot": { "type": "string" },
+                "libclang": { "type": "string" },
+                "units": { "type": "array", "items": { "type": "object" } }
+              },
+              "additionalProperties": false
+            },
+            "selectedFiles": { "type": "array", "items": { "$ref": "#/$defs/repoPath" } },
+            "fileContexts": { "type": "object", "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/repoPath" } } },
+            "excludedFiles": { "type": "array", "items": { "type": "object" } },
+            "metadata": { "type": "array", "items": { "type": "object" } },
+            "conflicts": { "type": "array", "items": { "type": "object" } },
+            "limitations": { "type": "array", "items": { "type": "string" } }
+          }
+        },
         {
           "type": "object",
           "additionalProperties": false,
@@ -1159,6 +1278,45 @@
               "type": "array",
               "items": {
                 "type": "object"
+              }
+            },
+            "semantic": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "mode",
+                "version",
+                "release",
+                "analyzedFiles",
+                "groups",
+                "failedGroups",
+                "newTargets",
+                "correctedTargets",
+                "rejectedTargets",
+                "declarationOnlyTargets"
+              ],
+              "properties": {
+                "mode": { "enum": ["unavailable", "partial", "complete"] },
+                "version": { "type": ["string", "null"] },
+                "release": { "type": ["integer", "null"], "minimum": 7 },
+                "analyzedFiles": { "type": "integer", "minimum": 0 },
+                "groups": { "type": "integer", "minimum": 0 },
+                "failedGroups": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["exampleFile", "reason"],
+                    "properties": {
+                      "exampleFile": { "$ref": "#/$defs/repoPath" },
+                      "reason": { "type": "string" }
+                    }
+                  }
+                },
+                "newTargets": { "type": "integer", "minimum": 0 },
+                "correctedTargets": { "type": "integer", "minimum": 0 },
+                "rejectedTargets": { "type": "integer", "minimum": 0 },
+                "declarationOnlyTargets": { "type": "integer", "minimum": 0 }
               }
             },
             "limitations": {

@@ -101,8 +101,9 @@ restart. The previous run is kept in `analysis.previous/` and compared with.
 The local process exists because a standalone HTML cannot run the source
 extractors. It listens only on loopback and accepts analysis requests
 only from its own page; browser requests cannot select repository or output
-paths. Python analysis requires Python 3; `BAUIFY_PYTHON` can select its
-executable. The analyzed code is never executed.
+paths. Python analysis runs in Node using a transplanted Pyright parser and
+Archify's source declaration analysis. No Python executable is needed. The
+analyzed code is never executed. See [Python support](docs/PYTHON.md).
 
 Java analysis runs in Node.js without a JDK. It extracts source dependencies and
 method/constructor complexity; it does not build the project or resolve Maven,

@@ -40,8 +40,8 @@ The source panel marks captured changes against the base commit: green gutters f
 
 If the architecture JSON changes or becomes unavailable after startup, the analysis request is rejected and the page asks you to regenerate the diagram. Restart with the updated JSON and open the new URL. The server never rewrites your input JSON or silently combines a new architecture with the previous diagram.
 
-JavaScript, TypeScript, Python, Java, Go and Rust use five adapters. Select one
-with `--language ts|py|java|go|rust`; `ts` covers both JavaScript and TypeScript.
+JavaScript, TypeScript, Python, Java, Go, Rust, C and C++ are selectable. Select one
+with `--language ts|py|java|go|rust|c|cpp`; `ts` covers both JavaScript and TypeScript.
 Each run uses one adapter; the [language reference](LANGUAGE-REFERENCE.md) has example commands and limits. A JS/TS or Python tree that also holds `.java` files
 keeps its language unless its root has a Maven/Gradle build file (see the
 [upgrade note](JAVA.md)). Choose explicitly for a mixed-language root. Add
@@ -53,10 +53,11 @@ Language extraction has its own prerequisites:
 | Adapter | Required tools and source scope |
 | --- | --- |
 | `ts` | Node.js and the module's installed TypeScript parser dependencies. |
-| `py` | Python 3; `BAUIFY_PYTHON` can select the interpreter. |
+| `py` | Node only; transplanted Pyright parser, Python 3.14 syntax by default. Set `python.targetVersion` to 3.8–3.14. |
 | `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
 | `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
+| `c`, `cpp` | An existing `compile_commands.json`, Python clang bindings and libclang; see [C/C++ scope and tooling](C_CPP.md). |
 
 The Go and Rust adapters compile Archify's source helper, not the target
 project. Rust's first use may fetch the helper's locked dependencies; cached
@@ -85,9 +86,29 @@ Under **Recheck after edits**, copy the saved start command and run it on the ge
 
 Deliver the analysis HTML with one or two scoped conclusions; tasks may be given to a coding AI or investigated in the current conversation. Users need not learn command flags or supply a maintenance objective. Preserve a separately delivered diagram if analysis fails, and disclose the coverage/tool gap.
 
-The reader follows explicit `--locale`, then `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen separates error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran. Information-level signals remain available through finding filters. **Copy architecture brief** shares the bounded hotspot/structural orientation with the headless receipt; its order is not inferred business importance.
+The reader follows explicit `--locale`, then `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen summarizes error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran; a rule that did not run is labelled as unchecked. Information-level signals remain available through finding filters. Select a priority card title to see its measurements and source location directly in the finding. The copy icon on the card copies the AI task without opening the finding; a check mark confirms success briefly without adding a status message. The **Copy architecture brief** icon shares the bounded hotspot and structural orientation with the headless receipt; its order is not inferred business importance.
+
+Atlas shows the relationship map and the four repository totals in the right sidebar. **Map** and **Files** are short tabs. Map stays selected by default. Files replaces the map with a searchable captured-file list; it does not add a third column or a lower scrolling region. Hover a tab for its explanation, or use Left/Right and Home/End while a tab is focused. Choosing a file replaces the current finding and highlights its owner module when you return to Map; choosing a module/finding or clearing the selection replaces the file. The right panel previews and downloads its path, module and captured function names/lines as Markdown. This is navigation context from the saved analysis, without source content or complete diagnostic/task evidence; use a finding's source evidence and task actions for those. No fresh source or external-tool verification is implied. Hover or focus an icon for its meaning. The complexity distribution and scrollable module list are visible without expanding anything. **Coverage and reading guide** contains the dependency records and legend. When you leave a finding in the standalone report, Atlas restores the previous selection, zoom, tab and search. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
 
 After edits, the prominent comparison reports **no longer detected**, **new** and changed evidence. Missing findings do not prove fixes. Configuration, grouping, model or coverage changes make results non-comparable and show the reason. Verify source changes and project tests before claiming an improvement.
+
+## Verify a previous task after edits
+
+1. Open a finding's **Task preview and download**, then click **Download task JSON** before editing. Use the Markdown or copy action to hand the task to a developer or coding agent.
+2. Make the change, run the project's checks separately, and **Re-analyze** in the live workbench, or run `prepare` again with the same output directory. Keep the immediately previous capture; running analysis again rotates the pair.
+3. Under **Verify a previous task**, select the task JSON and preview the analysis observations. To record your project checks, download the checks template, enter short check names and their statuses (`passed`, `failed`, `skipped`, or `not-run`), then load it and preview again. **Download verification JSON** exports the combined receipt. The prepared HTML works offline; these files are read in the browser and never sent to the local service.
+
+The receipt distinguishes observed finding changes from checks reported by the user. It does not run tests, verify their execution, or prove a fix. New findings are counted for the captured scope, not attributed to the task. Limited comparisons, missing evidence and unchanged imported reports are marked inconclusive where applicable. Refresh external reports with their original tools and settings before re-analysis; different bytes alone still do not prove the tool ran against the captured source. Do not put commands, logs or secrets into check names.
+
+For the same flow headlessly, point `verify-change` at the `analysis/` directory from `prepare` or `serve`. It reads the adjacent `analysis.previous/` capture. Example from the package directory:
+
+```sh
+node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks-template > checks.json
+# Edit checks.json to record the checks and results you actually ran.
+node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks checks.json > verification.json
+```
+
+Omit `--checks` to record only analysis observations. Use the original task JSON: its ID must match the selected findings. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 returns a JSON error on stdout with `status: "error"` and `diagnostics` instead of a receipt. `task --verify` remains a separate current-source evidence check.
 
 ## First look at an unfamiliar repository
 
@@ -504,7 +525,7 @@ The first `serve`, `check` or `task` run initializes the analysis module's missi
 
 An offline report exports the captured snapshot and labels it as not checked against current source. Changed, missing, and unverifiable evidence is called out in both the preview and exported brief; ask your coding AI to read the current files before editing. An expired page or a rejected server request requires retry or re-analysis. Export does not apply a patch or execute project checks.
 
-Relationships and metrics are folded below the code evidence. A source link opens the nine-line context; **Show full file** expands the file while preserving function-range highlighting. On narrow screens, **View diagram** / **Show analysis** switches between the canvas and reading column. Unchecked categories remain visible in the overview; a clean result only covers the rules that ran.
+Relationships and metrics are folded below the code evidence. A source link opens the nine-line context; **Show full file** expands the file while preserving function-range highlighting. **Hide analysis** frees space for the canvas; use the restore control to reopen the reader. Unchecked categories remain visible in the overview; a clean result only covers the rules that ran.
 
 ### Go source investigation
 
@@ -517,3 +538,12 @@ the locked helper dependencies are required. Saved and paired questions retain
 the captured source profile, cfg/features, omitted regions and bounded call
 model; a source binding does not establish compilation or runtime dispatch.
 See [Rust support](RUST.md) for setup, profile settings and limitations.
+
+### C and C++ source investigation
+
+Use `--language c` or `--language cpp` with `config.cpp.compileCommands` set to
+an existing compilation database. C++ selection also covers C translation
+units. Active includes, source function ranges and conservative same-unit
+direct calls carry translation-unit contexts. A saved header question requires
+`--context <translation-unit>`; a paired question accepts a translation-unit
+source entry. See [C/C++ support](C_CPP.md) for setup and limits.

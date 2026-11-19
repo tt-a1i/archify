@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import { fail } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { summarizeModule } from './module-summary.mjs';
+import { taskIdOf } from './task-id.mjs';
 
 export const TASK_SCHEMA_VERSION = 1;
 export const KIND = 'archify-code-analysis-task';
@@ -435,11 +436,6 @@ function titleOf(selected, language) {
     return `Address ${d.code}`;
   };
   return selected.length === 1 ? one(selected[0]) : `${one(selected[0])} and ${selected.length - 1} related finding${selected.length === 2 ? '' : 's'}`;
-}
-
-function taskIdOf(selected) {
-  const identity = selected.map((d) => [d.id, d.evidenceDigest?.sha256 || null, ...(d.external ? [d.external.reviewDigest] : [])]).sort((a, b) => compareText(a[0], b[0]));
-  return `TASK-${sha256(JSON.stringify(identity)).slice(0, 12)}`;
 }
 
 // ---- Markdown ----------------------------------------------------------

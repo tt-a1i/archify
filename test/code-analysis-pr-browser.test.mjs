@@ -62,6 +62,16 @@ test('native PR view keeps comparison chart visible and shares localized source/
 
     }
     await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+    assert.ok(await run("document.querySelector('[data-assessment=complexity] .pr-impact-measures').getBoundingClientRect().width > 200"));
+    await run("document.getElementById('atlas-tab-files').click()");
+    assert.equal(await run("document.getElementById('atlas-files-panel').hidden"),false);
+    assert.equal(await run("document.getElementById('atlas-map-panel').hidden"),true);
+    assert.match(await run("document.getElementById('atlas-files-panel').textContent"),/main\.mjs/);
+    await run("document.getElementById('atlas-tab-map').click()");
+    await settle();
+    assert.equal(await run("document.getElementById('atlas-files-panel').hidden"),true);
+    assert.equal(await run("document.getElementById('atlas-map-panel').hidden"),false);
+    assert.equal(await run("getComputedStyle(document.querySelector('.pr-distribution')).display!=='none'"),true);
     await run("document.querySelector('.pr-changes').open=true;const d=JSON.parse(document.getElementById('bauify-analysis').textContent),i=d.pullRequest.changes.findIndex(c=>c.path==='main.mjs'&&c.kind==='function');document.querySelector('[data-pr-change=\"'+i+'\"]').click()");
     assert.equal(await run("document.getElementById('bauify-code').hidden"),false);
     assert.match(await run("document.getElementById('bauify-code').textContent"),/if\(x\)return 2/);

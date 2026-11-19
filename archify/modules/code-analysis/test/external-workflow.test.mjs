@@ -68,6 +68,18 @@ function fixture(t) {
   return { dir, root, files, reports, config, configFile, out, baseline, args, cli, check, manifest };
 }
 
+test('external workflow: default TypeScript settings remain comparable with pre-C++ findings', (t) => {
+  const f = fixture(t);
+  const originalInclude = ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', '**/*.py', '**/*.java', '**/*.go', '**/*.rs'];
+  write(f.configFile, { ...f.config, include: originalInclude });
+  f.check(['--out', f.out, '--fail-on', 'never']);
+  delete f.config.include;
+  write(f.configFile, f.config);
+  const after = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'warning']);
+  assert.equal(after.review.comparison.comparable, true);
+  assert.equal(after.review.comparison.new, 0);
+});
+
 test('external workflow: evaluateGraph validates combined findings and records checked sources even for valid empty reports', (t) => {
   const f = fixture(t);
   const config = loadConfig(f.configFile);

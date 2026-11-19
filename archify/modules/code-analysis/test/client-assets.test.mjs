@@ -2,14 +2,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { buildOverlay } from '../overlay/inject.mjs';
 import { clientAsset } from '../overlay/client-assets.mjs';
 
 const dir = new URL('../overlay/client/', import.meta.url);
 const names = fs.readdirSync(dir).sort();
 
 test('client assets: the page inlines exactly the files in overlay/client', () => {
-  assert.deepEqual(names, ['atlas.css', 'atlas.js', 'overlay.css', 'overlay.js']);
-  for (const name of names) assert.equal(clientAsset(name), `\n${fs.readFileSync(new URL(name, dir), 'utf8')}`);
+  assert.deepEqual(names, ['atlas.css', 'atlas.js', 'overlay.css', 'overlay.js', 'verification.js']);
+  const { html } = buildOverlay({ graph: { modules: [], edges: [], repository: { language: 'ts' }, excluded: {}, unresolved: {} } });
+  for (const name of names) assert.equal(clientAsset(name), '\n' + fs.readFileSync(new URL(name, dir), 'utf8'));
+  assert.ok(html.includes(clientAsset('verification.js')), 'the offline report carries its receipt client');
 });
 
 test('client assets: scripts are valid classic scripts', () => {

@@ -41,25 +41,32 @@ const isPoint = (point) => Number.isInteger(point.line) && point.line >= 1 && Nu
 // raise the number here.
 const CALL_MODELS = {
   py: { prefix: 'python-lexical', latest: 2 },
-  java: { prefix: 'java-static-lexical', latest: 5 },
+  java: { prefix: 'java-static-lexical', latest: 6 },
   go: { prefix: 'go-source-direct', latest: 4 },
-  rust: { prefix: 'rust-source-direct', latest: 14 },
+  rust: { prefix: 'rust-source-direct', latest: 15 },
+  c: { prefix: 'cpp-source-direct', latest: 1 },
+  cpp: { prefix: 'cpp-source-direct', latest: 1 },
 };
 
 function callModelVersions(data) {
-  const versions = { py: 0, java: 0, go: 0, rust: 0 };
+  const versions = { py: 0, java: 0, go: 0, rust: 0, c: 0, cpp: 0 };
   const language = data.repository.language;
   if (!Object.hasOwn(CALL_MODELS, language)) return versions;
   const { prefix, latest } = CALL_MODELS[language];
   for (let version = 1; version <= latest; version += 1) {
     if (data.callModel === `${prefix}-v${version}`) versions[language] = version;
   }
+  if (language === 'py' && data.callModel === 'python-source-v1') versions.py = 3;
+  if (language === 'py' && data.callModel === 'python-source-v2') versions.py = 4;
+  if (language === 'py' && data.callModel === 'python-source-v3') versions.py = 5;
   return versions;
 }
 
 // A call resolution that only a given language's model version can produce.
 const RESOLUTION_MODELS = new Map([
+  ['python-source-declaration', ['py', 3, 'requires the Python source declaration model']],
   ['java-qualified-static-method', ['java', 2, 'requires the Java v2 source model']],
+  ['java-compiler-source-method', ['java', 6, 'requires the Java v6 compiler binding model']],
   ['rust-inherent-source-candidate', ['rust', 2, 'requires the Rust v2 inherent source-candidate model']],
   ['rust-specialized-inherent-source-candidate', ['rust', 3, 'requires the Rust v3 concrete-specialization source-candidate model']],
   ['rust-lifetime-inherent-source-candidate', ['rust', 4, 'requires the Rust v4 lifetime-only inherent source-candidate model']],
@@ -69,6 +76,7 @@ const RESOLUTION_MODELS = new Map([
   ['go-direct-method', ['go', 2, 'requires the Go v2 concrete-method model']],
   ['go-interface-method', ['go', 3, 'requires the Go v3 interface-declaration model']],
   ['go-direct-function', ['go', 1, 'requires the Go source-direct model']],
+  ['cpp-direct-source', ['cpp', 1, 'requires the C/C++ source-direct model']],
 ]);
 
 function rawFactsErrors(data, report) {
@@ -81,19 +89,50 @@ function rawFactsErrors(data, report) {
   recordedFileErrors(data, files, add);
 
   const model = callModelVersions(data);
+  if (data.languageScope?.language === 'py') {
+    if (model.py < 5) add('/languageScope', 'requires the Python v3 source model');
+    report.unique(data.languageScope.declarations, 'module', '/languageScope/declarations');
+    for (const [index, input] of data.languageScope.declarations.entries()) {
+      report.unique(input.files, 'file', `/languageScope/declarations/${index}/files`);
+    }
+  }
   if (model.go >= 3 && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
+  if (model.java >= 6 && (!data.languageScope?.semantic || !Array.isArray(data.methodDeclarations))) add('/languageScope/semantic', 'requires recorded Java v6 semantic scope and method declarations');
   const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
   const metadata = javaProjectMetadata(data, files, model, report);
 
   functionRangeErrors(data, sourceTexts, model, add);
+  cppContextErrors(data, add);
+  methodDeclarationErrors(data, sourceTexts, model, add);
   // Java build metadata is not a source file, but call evidence may point into it.
   for (const input of metadata.values()) sourceTexts.set(input.file, input.sourceText);
 
-  const traitDeclarations = traitDeclarationPoints(data, files, add);
+  const traitDeclarations = traitDeclarationPoints(data, files, sourceTexts, model, add);
   const context = callContext(data, { files, model, sourceTexts, metadata, traitDeclarations, add });
   data.calls.forEach((call, i) => callErrors(call, `/calls/${i}`, context));
   data.parse_errors?.forEach((error, i) => {
     if (!files.has(error.path)) add(`/parse_errors/${i}/path`, 'must reference a recorded file');
+  });
+}
+
+function cppContextErrors(data, add) {
+  if (!['c', 'cpp'].includes(data.repository.language)) return;
+  const parsed = new Set((data.languageScope?.build?.units || []).filter(unit => unit.status === 'parsed').map(unit => unit.file));
+  const fileContexts = data.languageScope?.fileContexts || {};
+  const check = (rows, path, fileOf) => rows.forEach((row, index) => {
+    const file = fileOf(row);
+    if (!row.contexts?.length || row.contexts.some(context => !parsed.has(context) || !fileContexts[file]?.includes(context))) {
+      add(`${path}/${index}/contexts`, 'must identify parsed translation units that captured this file');
+    }
+  });
+  check(data.imports, '/imports', row => row.from);
+  check(data.functions || [], '/functions', row => row.file);
+  check(data.calls, '/calls', row => row.file);
+  const functions = new Map((data.functions || []).map(fn => [pointKey(fn.file, { name: fn.name, line: fn.sourceRange?.line, column: fn.sourceRange?.column }), fn]));
+  data.calls.forEach((call, index) => {
+    if (!call.target) return;
+    const target = functions.get(pointKey(call.target.file || call.file, call.target));
+    if (!target || call.contexts.some(context => !target.contexts?.includes(context))) add(`/calls/${index}/target`, 'must identify a captured definition active in every call context');
   });
 }
 
@@ -112,10 +151,10 @@ function recordedFileErrors(data, files, add) {
   });
 }
 
-// Java v5 records the build files that declare project scope, separately from
-// source files. Returns them by path; empty for every other model.
+// Java v5+ records the build files that declare project scope, separately from
+// source files. Returns them by path; empty for older models.
 function javaProjectMetadata(data, files, model, { add, unique }) {
-  if (model.java !== 5) return new Map();
+  if (model.java < 5) return new Map();
   if (data.languageScope?.language !== 'java') add('/languageScope', 'requires Java v5 declared project scope');
   unique(data.languageScope?.metadata || [], 'file', '/languageScope/metadata');
   const metadata = new Map((data.languageScope?.metadata || []).map((input) => [input.file, input]));
@@ -129,13 +168,25 @@ const DEFINITION_LANGUAGE = { FunctionDef: 'py', AsyncFunctionDef: 'py', FuncDec
 
 function functionRangeErrors(data, sourceTexts, model, add) {
   const language = data.repository.language;
-  const exactRanges = model.py || model.java || model.go || model.rust;
+  const exactRanges = model.py || model.java || model.go || model.rust || model.c || model.cpp;
   data.functions?.forEach((fn, i) => {
     if ((exactRanges || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn, language)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
     if (fn.definition && !validDefinitionExtent(fn, sourceTexts.get(fn.file), language)) {
       add(`/functions/${i}/definition/sourceRange`, 'must match exact captured owned definition extent and digest');
     }
   });
+}
+
+function methodDeclarationErrors(data, sourceTexts, model, add) {
+  if (data.methodDeclarations && model.java < 6) add('/methodDeclarations', 'requires the Java v6 compiler binding model');
+  const seen = new Set();
+  for (const [i, declaration] of (data.methodDeclarations || []).entries()) {
+    const at = `/methodDeclarations/${i}`;
+    if (!validSourceRange(sourceTexts.get(declaration.file), declaration, 'java')) add(`${at}/sourceRange`, 'must match exact captured declaration range and digest');
+    const key = JSON.stringify([declaration.file, declaration.name, declaration.sourceRange?.line, declaration.sourceRange?.column]);
+    if (seen.has(key)) add(at, 'must be a unique method declaration');
+    seen.add(key);
+  }
 }
 
 // The owned extent (decorators, attributes, doc headers) must hash to its
@@ -146,8 +197,8 @@ function validDefinitionExtent(fn, sourceText, language) {
   const slice = rangeText(sourceText, range, language);
   if (slice === null || sha256(slice) !== range.sha256) return false;
   if (range.line > fn.line || range.endLine !== fn.endLine) return false;
-  const expected = Object.hasOwn(DEFINITION_LANGUAGE, kind) ? DEFINITION_LANGUAGE[kind] : 'java';
-  if (language !== expected) return false;
+  const expected = kind === 'ClangFunction' ? ['c', 'cpp'] : [Object.hasOwn(DEFINITION_LANGUAGE, kind) ? DEFINITION_LANGUAGE[kind] : 'java'];
+  if (!expected.includes(language)) return false;
   const inner = fn.sourceRange;
   if (!inner) return true;
   const startsAfter = range.line > inner.line || (range.line === inner.line && range.column > inner.column);
@@ -156,13 +207,17 @@ function validDefinitionExtent(fn, sourceText, language) {
 
 // Validates trait records and returns every trait method declaration point,
 // which trait-related call evidence must match.
-function traitDeclarationPoints(data, files, add) {
+function traitDeclarationPoints(data, files, sourceTexts, model, add) {
   const declarations = new Set();
   const captured = (point) => point && files.has(point.file) && isPoint(point);
   for (const [i, decl] of (data.traits || []).entries()) {
     if (!captured(decl.declaration)) add(`/traits/${i}/declaration`, 'must reference a valid captured declaration point');
     for (const [j, method] of (decl.methods || []).entries()) {
       if (!captured(method)) add(`/traits/${i}/methods/${j}`, 'must reference a valid captured declaration point');
+      if (model.rust >= 15 && (!validSourceRange(sourceTexts.get(method.file), { ...method, endLine: method.sourceRange?.endLine }, 'rust')
+        || method.sourceRange.column !== method.column || rangeText(sourceTexts.get(method.file), method.sourceRange, 'rust') !== method.name)) {
+        add(`/traits/${i}/methods/${j}/sourceRange`, 'must match the exact captured trait method name and digest');
+      }
       declarations.add(pointKey(method.file, method));
     }
   }
@@ -194,10 +249,12 @@ function callContext(data, { files, model, sourceTexts, metadata, traitDeclarati
   const forwardingModel = data.repository.language === 'ts' && /^typescript@/.test(data.repository.adapter) && data.callModel === 'js-ts-lexical-v5';
   const valueImportLines = forwardingModel ? new Set(data.imports.filter((edge) => edge.resolved && ['static', 'export'].includes(edge.kind) && !edge.typeOnly).map((edge) => JSON.stringify([edge.from, edge.line, edge.to]))) : null;
   const functions = data.functions || [];
+  const declarations = data.methodDeclarations || [];
   return {
     add, files, model, metadata, traitDeclarations, validPoint, brokenFiles, staticImports, forwardingModel, valueImportLines,
     functionStarts: new Set(functions.map((fn) => JSON.stringify([fn.file, fn.name, fn.line]))),
     functionPoints: new Set(functions.map((fn) => JSON.stringify([fn.file, fn.name, fn.sourceRange?.line, fn.sourceRange?.column]))),
+    methodDeclarationPoints: new Set(declarations.map((decl) => JSON.stringify([decl.file, decl.name, decl.sourceRange?.line, decl.sourceRange?.column]))),
     // A point in a captured, parse-valid file that lies inside its source.
     capturedPoint: (point) => files.has(point.file) && !brokenFiles.has(point.file) && validPoint(point.file, point),
   };
@@ -249,9 +306,11 @@ function closureErrors(call, at, { add, model, files, brokenFiles, validPoint })
 function callProvenanceErrors(call, at, { add, model, metadata, validPoint, capturedPoint, forwardingModel }) {
   if (call.directCaller?.kind === 'macro-generated-method' && model.rust < 11) add(`${at}/directCaller/kind`, 'requires the Rust v11+ impl-body macro model');
   if (call.reason === 'java-inherited-build-scope' && model.java < 4) add(`${at}/reason`, 'requires the Java v4 inherited-context model');
+  if (['java-compiler-build-scope', 'java-compiler-conflict'].includes(call.reason) && model.java < 6) add(`${at}/reason`, 'requires the Java v6 compiler binding model');
   const qualified = call.resolution === 'java-qualified-static-method';
+  const compiled = call.resolution === 'java-compiler-source-method';
   if (call.buildEvidence) {
-    if (model.java !== 5 || !qualified) add(`${at}/buildEvidence`, 'requires a qualified Java v5 project-source candidate');
+    if (model.java < 5 || !(qualified || compiled)) add(`${at}/buildEvidence`, 'requires a Java v5+ project-source candidate');
     for (const point of call.buildEvidence) if (!metadata.has(point.file) || !validPoint(point.file, point)) add(`${at}/buildEvidence`, 'must reference a captured POM source point');
   }
   if (call.qualifierAncestry) {
@@ -267,18 +326,20 @@ function callProvenanceErrors(call, at, { add, model, metadata, validPoint, capt
 }
 
 function callTargetErrors(call, at, context) {
-  const { add, model, validPoint, traitDeclarations, functionPoints, functionStarts } = context;
+  const { add, model, validPoint, traitDeclarations, functionPoints, functionStarts, methodDeclarationPoints } = context;
   const targetFile = call.target.file || call.file;
   const traitCandidate = call.resolution === 'rust-trait-method-candidate';
   const required = RESOLUTION_MODELS.get(call.resolution);
-  if (required && model[required[0]] < required[1]) add(`${at}/resolution`, required[2]);
+  if (required && (required[0] === 'cpp' ? Math.max(model.c, model.cpp) : model[required[0]]) < required[1]) add(`${at}/resolution`, required[2]);
   if (call.resolution === 'imported-function') importedTargetErrors(call, at, targetFile, context);
   if (traitCandidate && !traitDeclarations.has(pointKey(targetFile, call.target))) add(`${at}/target`, 'must match a captured trait method declaration');
   if (!validPoint(targetFile, call.target)) add(`${at}/target`, 'target must lie inside captured source');
   // A trait candidate points at a declaration, which need not be a measured function.
   if (traitCandidate) return;
-  if ((model.py || model.java || model.go || model.rust) && !functionPoints.has(pointKey(targetFile, call.target))) add(`${at}/target`, 'must match a captured definition start');
-  if (!functionStarts.has(JSON.stringify([targetFile, call.target.name, call.target.line]))) add(`${at}/target`, 'target must reference a recorded function in its target file');
+  const abstractMethod = model.java >= 6 && call.resolution === 'java-compiler-source-method'
+    && methodDeclarationPoints.has(pointKey(targetFile, call.target));
+  if ((model.py || model.java || model.go || model.rust || model.c || model.cpp) && !functionPoints.has(pointKey(targetFile, call.target)) && !abstractMethod) add(`${at}/target`, 'must match a captured definition start');
+  if (!functionStarts.has(JSON.stringify([targetFile, call.target.name, call.target.line])) && !abstractMethod) add(`${at}/target`, 'target must reference a recorded function in its target file');
 }
 
 // An imported target must be reachable from the call's file: directly, through
@@ -286,7 +347,7 @@ function callTargetErrors(call, at, context) {
 function importedTargetErrors(call, at, targetFile, context) {
   const { add, model, brokenFiles, staticImports, forwardingModel } = context;
   const direct = staticImports.get(call.file)?.has(targetFile);
-  let forwarded = model.py === 2 && [...(staticImports.get(call.file) || [])].some((via) => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
+  let forwarded = model.py >= 2 && [...(staticImports.get(call.file) || [])].some((via) => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
   if (call.via && forwardingModel) {
     forwarded = followsForwardingPath(call, targetFile, context);
     if (!forwarded) add(`${at}/via`, 'must follow an acyclic recorded value import/export path at captured source points');
