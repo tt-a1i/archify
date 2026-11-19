@@ -4,7 +4,7 @@ import { fail } from '../shared/diagnostics.mjs';
 
 // Config and module resolution share captured in-root inputs. Outside inputs
 // (including installed config packages) are memoized and checked before return.
-export function snapshotHost(root, { contents, names, assertFileUnchanged }) {
+export function snapshotHost(root, { contents, names, assertFileUnchanged }, { capturedOnly = false } = {}) {
   const canonical = file => {
     const absolute = path.resolve(file);
     return ts.sys.useCaseSensitiveFileNames ? absolute : absolute.toLowerCase();
@@ -27,6 +27,7 @@ export function snapshotHost(root, { contents, names, assertFileUnchanged }) {
   const observed = new Map();
   const uncaptured = new Set();
   const live = (method, file) => {
+    if (capturedOnly && !captured(file)) return method === 'getDirectories' ? [] : undefined;
     if (captured(file)) uncaptured.add(file);
     if (captured(file)) assertFileUnchanged(path.relative(root, file).split(path.sep).join('/'));
     const key = JSON.stringify([method, path.resolve(file)]);

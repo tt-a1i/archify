@@ -91,6 +91,51 @@ node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis -
 
 Omit `--checks` to record only analysis observations. Use the original task JSON: its ID must match the selected findings. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 returns a JSON error on stdout with `status: "error"` and `diagnostics` instead of a receipt. `task --verify` remains a separate current-source evidence check.
 
+
+## Review architecture drift between two commits
+
+Use `drift` when a code change may invalidate an existing Architecture diagram.
+It compares observed directed component pairs under the **same** authored IR
+and component mapping. Unlike `check --ir`, it says which relationship was
+already observed and which is newly observed in the selected head.
+
+```sh
+node bin/archify.mjs code-analysis drift /path/to/local/repo \
+  --base BASE_FULL_SHA --head HEAD_FULL_SHA --ir architecture.json \
+  --map overlay-map.json --out /path/to/new-review-directory --json
+```
+
+Use two full local Git commit SHAs and a fresh output directory outside the
+source repository (with an existing parent). `--map` is optional and uses the
+same component-to-module mapping as `check --ir`. `--config` supplies one
+Code Analysis configuration for both pins. Use `--locale en` or
+`--locale zh-CN` to choose the review language. An authored IR with repository
+evidence must pin either compared commit and pass the ordinary Architecture
+delivery checks.
+
+Open `architecture-drift.html` offline and choose **Architecture drift**.
+Select a relationship to see its direction on the diagram and its evidence in
+the side panel. Source buttons open the captured import line and identify the
+exact commit; the panel never reads the current working tree. **Download .md**
+saves the selected relationship, both pins, source paths and line numbers, and
+coverage limits, without copying the source text. `architecture-drift.json`
+contains the same comparison used by the page. `--json` also prints it to
+stdout. Exit 0 means the comparison was produced, even when it reports an
+undeclared relationship or inconclusive evidence. Errors exit 2 with
+structured diagnostics. Existing `check` gates and ordinary render output
+are unchanged.
+
+The first version covers resolved module-scope static JS/TS imports, exports
+and requires, excluding type-only, conditional and deferred references. It
+uses committed files only. It does not check out refs, run project scripts,
+load local dependency configuration outside the capture, or fetch missing
+objects. Symlinks and submodules are omitted and disclosed. A link change,
+conflicting ownership, missing component coverage, affected parse errors, or a
+change in resolution inputs can make a relationship inconclusive. A new
+import site on an existing pair is still an existing relationship. Unmapped
+and unresolved source is outside the report; even a report with no added
+relationship does not establish full-coverage alignment or runtime behavior.
+
 ## First look at an unfamiliar repository
 
 Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-map.json]` to verify diagram-to-code component mapping and undeclared component-level imports alongside the headless check) and write the artifacts to a directory:
