@@ -235,8 +235,13 @@ class ReceiverTypes:
             return self.comprehension_type(expr, scope, use, comp)
         previous = use
         for parent in self.source.ancestors(use):
-            if parent is scope or isinstance(parent, (ast.Lambda, *COMPREHENSIONS)):
+            if parent is scope or isinstance(parent, (ast.Lambda, ast.GeneratorExp)):
                 break
+            if isinstance(parent, COMPREHENSIONS):
+                # A comprehension can change the receiver before evaluating its result.
+                path = receiver_path(expr)
+                if any(path[:len(written)] == written for _, written in self.source.writes(parent)):
+                    return None
             if isinstance(parent, ast.If) and previous in parent.body:
                 if candidate := self.guard(parent.test, expr, scope):
                     if not self.reassigned(expr, parent, use, parent.test):

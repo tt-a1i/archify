@@ -8,8 +8,8 @@
     "url": null,
     "language": "py",
     "adapter": "python@3.14.3",
-    "adapterRevision": 14,
-    "snapshotId": "3e3753511f379c8b63555b7905785674f1ddb160428b089fc5c57a8990e5e059"
+    "adapterRevision": 15,
+    "snapshotId": "649c100c4356eef3cf42ee431f6fac7f1b4bcda2421ab64fba398e6bb41446bf"
   },
   "rules": [
     "coupling/import-cycle",
@@ -33,7 +33,7 @@
     },
     "language": "py",
     "adapter": "python@3.14.3",
-    "adapterRevision": 14,
+    "adapterRevision": 15,
     "configDigest": "d7a45ba36b2db3d77afcbfb8102a92bbd21c751fadd4d59b6eb25198e26b2777",
     "ruleVersions": {
       "architecture/boundary": 1,

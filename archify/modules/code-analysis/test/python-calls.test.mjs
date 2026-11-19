@@ -32,7 +32,7 @@ test('Python BOM decoding keeps fresh entry and imported target coordinates alig
 
 test('Python call inventory, direct alias targets, async definition and known zero', t => {
   const args = fixture(t, { 'entry.py': 'from helper import work as alias\ndef local(): pass\nasync def task(): pass\ndef chosen():\n    local()\n    alias()\n    task()\n    obj.method()\n    factory()()\n', 'helper.py': 'def work(): pass\n' });
-  assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 14);
+  assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 15);
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
   const calls = selected(args); assert.equal(calls.coverage, 'available'); assert.equal(calls.total, 6);
   assert.deepEqual(calls.records.map(r => r.fact.resolution), ['same-file-function', 'imported-function', 'same-file-function', ...Array(3).fill('unresolved')]);
@@ -325,6 +325,14 @@ def chosen(worker: Worker, others):
 def guarded(worker: Worker | None, others):
     if not isinstance(worker, Worker): return
     return [worker.run() for worker in others]
+class Preferred(Worker):
+    def run(self): pass
+def narrowed(worker: Worker, others):
+    if isinstance(worker, Preferred):
+        [worker.run() for item in others]
+        {worker.run() for item in others}
+        {item: worker.run() for item in others}
+        return [worker.run() for item in others if (worker := Worker())]
 ` }, config);
   for (const line of [5, 6, 7, 8, 9, 14]) {
     assert.equal(facts.calls.find(c => c.line === line)?.resolution, 'unresolved', `line ${line}`);
@@ -333,6 +341,8 @@ def guarded(worker: Worker | None, others):
     { file: 'entry.py', name: 'items', line: 3, column: 5 });
   assert.deepEqual(facts.calls.find(c => c.line === 11)?.target,
     { file: 'entry.py', name: 'run', line: 2, column: 5 });
+  assert.deepEqual(facts.calls.filter(c => c.line >= 19 && c.target?.name === 'run').map(c => [c.line, c.target.line]),
+    [[19, 16], [20, 16], [21, 16], [22, 2]]);
 });
 
 test('Python callback argument positions follow the captured method binding', {
