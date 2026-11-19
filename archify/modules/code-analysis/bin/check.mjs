@@ -199,8 +199,10 @@ export async function runCheck(argv) {
       // without opening the output directory. The gate below does not read it.
       coverage: {
         parseErrors: overview.coverage.files.parseErrors,
-        ...(overview.coverage.files.excludedByRole ? {
+        ...(overview.coverage.files.parseErrors.length || overview.coverage.files.excludedByRole ? {
           analyzedFiles: overview.coverage.files.analyzed,
+        } : {}),
+        ...(overview.coverage.files.excludedByRole ? {
           excludedByRole: overview.coverage.files.excludedByRole,
           excludedRoleCounts: countExcludedRoles(facts.files, graph.excluded?.roles),
         } : {}),
@@ -264,9 +266,10 @@ export function formatText(r) {
     lines.push('  Source profile only; inspect coverage.languageScope for cfg/features, omissions and unknown dispatch.');
   }
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
-  if (uncovered.excludedByRole) {
+  if (uncovered.analyzedFiles !== undefined) {
+    const scope = `  Graph/rule scope: ${uncovered.analyzedFiles} source file${uncovered.analyzedFiles === 1 ? '' : 's'} analyzed`;
     const breakdown = Object.entries(uncovered.excludedRoleCounts || {}).map(([role, count]) => `${count} ${formatTerminalText(role)}`).join(', ');
-    lines.push(`  Graph/rule scope: ${uncovered.analyzedFiles} source file${uncovered.analyzedFiles === 1 ? '' : 's'} analyzed, ${uncovered.excludedByRole} excluded by role${breakdown ? ` (${breakdown})` : ''}`);
+    lines.push(uncovered.excludedByRole ? `${scope}, ${uncovered.excludedByRole} excluded by role${breakdown ? ` (${breakdown})` : ''}` : scope);
   }
   if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.map(formatTerminalText).join(', ')}`);
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);
