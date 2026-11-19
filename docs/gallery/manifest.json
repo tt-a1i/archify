@@ -1815,8 +1815,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
-      "artifactBytes": 870500,
-      "artifactSha256": "27ffa3ce35b171abc38c877e8380b1a4066c2b85ea7281f74880f74749056f6a",
+      "artifactBytes": 870499,
+      "artifactSha256": "563200bb529d4430fb482a2cd181276f43b81d5cd0e563c7a09bfdf89cc12e64",
       "sourceBytes": 1214,
       "sourceSha256": "1e99f37b3845d67fa97c9a2ff33109981c23bfdb0d03ba05b7d92944dcdfc61f",
       "checks": [
@@ -1876,7 +1876,7 @@
           "minLabelRouteClearance": null,
           "desktopReadabilityIssues": 0,
           "viewportHeightIssues": 0,
-          "minProjectedNodeTextPx": 9.569691300280637,
+          "minProjectedNodeTextPx": 10,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
           "maxStretch": null,
@@ -1905,13 +1905,13 @@
         "desktopReadability": {
           "budgetBasis": "recognized-declared-wide",
           "readerContract": "declared-wide-v1",
-          "availableDiagramWidth": 930,
-          "actualBudgetPx": 930,
-          "actualReaderWidth": 960,
-          "desiredReaderWidth": 960,
+          "availableDiagramWidth": 971.8181818181818,
+          "actualBudgetPx": 971.8181818181818,
+          "actualReaderWidth": 1001.8181818181818,
+          "desiredReaderWidth": 1001.8181818181818,
           "viewportCap": 1376,
           "limit": "source-size",
-          "requestedTargetPx": 7.5,
+          "requestedTargetPx": 10,
           "requestedTargetMet": true,
           "hardFloorPx": 6,
           "hardFloorMet": true,
@@ -1920,7 +1920,7 @@
             "id": "platform"
           },
           "minimumSourceTextPx": 11,
-          "minimumProjectedTextPx": 9.569691300280637,
+          "minimumProjectedTextPx": 10,
           "semanticTextCount": 14
         },
         "issues": []
