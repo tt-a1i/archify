@@ -1,0 +1,30 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import Navigation from '../../components/Navigation.astro';
+import { Content as English, getHeadings as englishHeadings } from '../../content/mco-source-case.en.md';
+import { Content as Chinese, getHeadings as chineseHeadings } from '../../content/mco-source-case.zh.md';
+import head from '../../data/agent-diagrams-head.html?raw';
+import css from '../../styles/agent-diagrams.css?raw';
+const { lang = 'en' } = Astro.props;
+const Content = lang === 'zh' ? Chinese : English;
+const sectionIds = ['case-reproduce', 'case-use-your-repo', 'case-version-boundary', 'case-decoding', 'case-file-writes', 'case-persistence', 'case-reading-the-arrow', 'case-limits'];
+const headings = (lang === 'zh' ? chineseHeadings() : englishHeadings()).filter(heading => heading.depth === 2).map((heading, index) => ({ ...heading, slug: sectionIds[index] }));
+---
+<SiteLayout page="cases/mco-runtime" lang={lang} head={head} css={css}>
+  <div class="grid-bg" aria-hidden="true"></div>
+  <Navigation page="cases/mco-runtime" />
+  <main class="agent-guide">
+    <header class="article-meta">
+      <p>{lang === 'zh' ? '源码案例 · MCO 运行时' : 'Source-backed case · MCO runtime'}</p>
+      <p>{lang === 'zh' ? '源码核对：2026-10-16 · 复用已有图表，并非新执行的 Agent 任务。' : 'Source reviewed: 2026-10-16 · Existing diagram, not a newly executed agent task.'}</p>
+    </header>
+    <div class="article-grid">
+      <nav class="article-toc" aria-label={lang === 'zh' ? '本页目录' : 'On this page'}>
+        <p>{lang === 'zh' ? '本页目录' : 'On this page'}</p>
+        <ol>{headings.map(heading => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol>
+      </nav>
+      <article class="article-body"><Content /></article>
+    </div>
+  </main>
+  <footer class="article-footer"><a href="agent-diagrams.html">{lang === 'zh' ? '阅读 Agent 画图指南 →' : 'Read the agent diagramming guide →'}</a><a href="gallery.html">{lang === 'zh' ? '探索验证作品集 →' : 'Explore the Proof Lab →'}</a></footer>
+</SiteLayout>
