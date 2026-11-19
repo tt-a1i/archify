@@ -69,9 +69,27 @@ Deliver the analysis HTML with one or two scoped conclusions; tasks may be given
 
 The reader follows explicit `--locale`, then `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen summarizes error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran; a rule that did not run is labelled as unchecked. Information-level signals remain available through finding filters. Select a priority card title to see its measurements and source location directly in the finding. The copy icon on the card copies the AI task without opening the finding; a check mark confirms success briefly without adding a status message. The **Copy architecture brief** icon shares the bounded hotspot and structural orientation with the headless receipt; its order is not inferred business importance.
 
-Atlas shows the four repository totals in the right sidebar. Hover or focus an icon for its meaning. The complexity distribution and scrollable module list are visible without expanding anything. **Coverage and reading guide** contains the dependency records and legend. When you leave a finding in the standalone report, Atlas returns to the previous selection and zoom. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
+Atlas shows the relationship map and the four repository totals in the right sidebar. **Map** and **Files** are short tabs. Map stays selected by default. Files replaces the map with a searchable captured-file list; it does not add a third column or a lower scrolling region. Hover a tab for its explanation, or use Left/Right and Home/End while a tab is focused. Choosing a file replaces the current finding and highlights its owner module when you return to Map; choosing a module/finding or clearing the selection replaces the file. The right panel previews and downloads its path, module and captured function names/lines as Markdown. This is navigation context from the saved analysis, without source content or complete diagnostic/task evidence; use a finding's source evidence and task actions for those. No fresh source or external-tool verification is implied. Hover or focus an icon for its meaning. The complexity distribution and scrollable module list are visible without expanding anything. **Coverage and reading guide** contains the dependency records and legend. When you leave a finding in the standalone report, Atlas restores the previous selection, zoom, tab and search. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
 
 After edits, the prominent comparison reports **no longer detected**, **new** and changed evidence. Missing findings do not prove fixes. Configuration, grouping, model or coverage changes make results non-comparable and show the reason. Verify source changes and project tests before claiming an improvement.
+
+## Verify a previous task after edits
+
+1. Open a finding's **Task preview and download**, then click **Download task JSON** before editing. Use the Markdown or copy action to hand the task to a developer or coding agent.
+2. Make the change, run the project's checks separately, and **Re-analyze** in the live workbench, or run `prepare` again with the same output directory. Keep the immediately previous capture; running analysis again rotates the pair.
+3. Under **Verify a previous task**, select the task JSON and preview the analysis observations. To record your project checks, download the checks template, enter short check names and their statuses (`passed`, `failed`, `skipped`, or `not-run`), then load it and preview again. **Download verification JSON** exports the combined receipt. The prepared HTML works offline; these files are read in the browser and never sent to the local service.
+
+The receipt distinguishes observed finding changes from checks reported by the user. It does not run tests, verify their execution, or prove a fix. New findings are counted for the captured scope, not attributed to the task. Limited comparisons, missing evidence and unchanged imported reports are marked inconclusive where applicable. Refresh external reports with their original tools and settings before re-analysis; different bytes alone still do not prove the tool ran against the captured source. Do not put commands, logs or secrets into check names.
+
+For the same flow headlessly, point `verify-change` at the `analysis/` directory from `prepare` or `serve`. It reads the adjacent `analysis.previous/` capture. Example from the package directory:
+
+```sh
+node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks-template > checks.json
+# Edit checks.json to record the checks and results you actually ran.
+node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks checks.json > verification.json
+```
+
+Omit `--checks` to record only analysis observations. Use the original task JSON: its ID must match the selected findings. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 returns a JSON error on stdout with `status: "error"` and `diagnostics` instead of a receipt. `task --verify` remains a separate current-source evidence check.
 
 ## First look at an unfamiliar repository
 

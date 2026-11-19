@@ -43,7 +43,10 @@ Create an analysis config, for example:
 ```
 
 The path may be absolute or relative to the analysis root; the file must be
-named `compile_commands.json`. An explicit `cpp.sysroot` overrides environment
+named `compile_commands.json`. Automatic language detection considers C and C++
+only when `cpp.compileCommands` is configured. Mixed repositories can still
+report unexamined C/C++ files when another language is selected. An explicit
+`cpp.sysroot` overrides environment
 and macOS auto-detection. `cpp.timeoutMs` defaults to 180000 and accepts
 10000–600000 milliseconds for larger selections. Then run:
 
@@ -70,8 +73,11 @@ Project source bytes are captured once and passed to libclang as unsaved files.
 If an active project include was not captured or was excluded, extraction
 stops instead of mixing live source with frozen facts. External SDK and
 third-party headers remain parser context, not captured project files. The
-adapter rejects response files, plugins, precompiled/module state and other
-unverified file-loading flags. It does not prove that the project builds.
+adapter rejects response files, compiler plugin and argument forwarding options,
+and unsupported file-loading flags such as precompiled/module state. Use an
+`arguments` array when a command contains a literal `@` inside an argument.
+Dependency and time-trace output options are dropped before parsing.
+The resulting facts do not establish that the project builds.
 The default C/C++ input set includes `.h`, `.hh`, `.hpp`, `.hxx`, `.inc`,
 `.ipp`, `.inl`, `.tcc`, `.tpp` and `.def` includes. Files excluded by the analysis
 configuration are not decoded or counted toward the source-byte budget. An

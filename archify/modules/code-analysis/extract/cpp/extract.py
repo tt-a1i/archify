@@ -56,8 +56,11 @@ def flags(command, source, directory, sysroot):
     args = []
     next_path = {"-I", "-isystem", "-iquote", "-idirafter", "-isysroot", "--sysroot", "-F", "-iframework"}
     joined_path = ("-iframework", "-isystem", "-iquote", "-idirafter", "-isysroot", "-I", "-F")
-    drop_next = {"-o", "-MF", "-MT", "-MQ", "-MJ"}
-    unsafe = ("-Xclang", "-Xpreprocessor", "--config", "-load", "-plugin", "-fplugin", "-include", "-imacros",
+    drop_next = ("-o", "-MF", "-MT", "-MQ", "-MJ")
+    drop_output = {"-M", "-MM", "-MD", "-MMD", "-MG", "-MP", "-MV", "--dependencies", "--user-dependencies",
+                   "--write-dependencies", "--write-user-dependencies", "--print-missing-file-dependencies", "-ftime-trace"}
+    unsafe = ("-Xclang", "-Xpreprocessor", "-Wp,", "-mllvm", "/clang:", "--config",
+              "-load", "-add-plugin", "-plugin", "-fplugin", "-fpass-plugin", "-include", "-imacros",
               "-ivfsoverlay", "-fmodule", "-fprebuilt-module", "-fprofile-instr-use",
               "-fprofile-sample-use", "-fprofile-use", "-fprofile-list",
               "-fprofile-remapping-file", "-index-store-path", "-fmodules-cache-path")
@@ -83,7 +86,7 @@ def flags(command, source, directory, sysroot):
         elif arg.startswith("--sysroot="):
             value = arg[len("--sysroot="):]
             args.append("--sysroot=" + (str(Path(directory, value).resolve()) if not os.path.isabs(value) else value))
-        elif arg.startswith("-o") and len(arg) > 2 or any(arg.startswith(flag) and len(arg) > len(flag) for flag in ("-MF", "-MT", "-MQ", "-MJ")):
+        elif arg in drop_output or arg.startswith((*drop_next, "-ftime-trace=", "-ftime-trace-granularity=")):
             pass
         elif arg == "-c" or Path(directory, arg).resolve() == Path(source):
             pass
@@ -251,6 +254,21 @@ def collect_calls(cursor, context, root, sources, kinds, definitions, template_p
 
 
 def main(payload):
+    exact_files = set()
+    for entry in json.loads(payload["database"]):
+        if not isinstance(entry, dict) or not isinstance(entry.get("directory"), str) or not isinstance(entry.get("file"), str):
+            fail("extract/cpp-database-invalid", "Compilation database entries need directory and file strings.")
+        if not os.path.isabs(entry["directory"]):
+            fail("extract/cpp-command-invalid", "Compilation command directory must be absolute.", {"directory": entry["directory"]})
+        # libclang expands response files while reading commands from its
+        # database. Reject these before it sees the raw entries.
+        argv = entry.get("arguments")
+        command = entry.get("command")
+        if ((isinstance(argv, list) and any(isinstance(arg, str) and arg.startswith("@") for arg in argv))
+                or (isinstance(command, str) and "@" in command)):
+            fail("extract/cpp-command-unsupported", "Compilation command may contain a response file.",
+                 {"file": entry["file"]}, ["remove response files; use an arguments array for a literal @ within an argument"])
+        exact_files.add(str(Path(entry["directory"], entry["file"]).resolve()))
     try:
         from clang import cindex
     except ImportError:
@@ -292,14 +310,6 @@ def main(payload):
     nesting_kinds.add(cindex.CursorKind.SWITCH_STMT)
     with tempfile.TemporaryDirectory(prefix="archify-cpp-cdb-") as temporary:
         (Path(temporary) / "compile_commands.json").write_text(payload["database"], encoding="utf-8")
-        entries = json.loads(payload["database"])
-        exact_files = set()
-        for entry in entries:
-            if not isinstance(entry, dict) or not isinstance(entry.get("directory"), str) or not isinstance(entry.get("file"), str):
-                fail("extract/cpp-database-invalid", "Compilation database entries need directory and file strings.")
-            if not os.path.isabs(entry["directory"]):
-                fail("extract/cpp-command-invalid", "Compilation command directory must be absolute.", {"directory": entry["directory"]})
-            exact_files.add(str(Path(entry["directory"], entry["file"]).resolve()))
         try:
             database = cindex.CompilationDatabase.fromDirectory(temporary)
         except Exception as error:

@@ -24,7 +24,8 @@ const inside = (root, file) => {
 
 export const countC = (root, config) => listFiles(root, config).filter(file => C.test(file)).length;
 export const countSources = (root, config) => listFiles(root, config).filter(file => CPP.test(file)).length;
-export const detect = (root, config) => countSources(root, config) > 0;
+export const hasCompilationDatabase = config => typeof config.cpp?.compileCommands === 'string' && config.cpp.compileCommands.length > 0;
+export const detect = (root, config) => hasCompilationDatabase(config) && countSources(root, config) > 0;
 export const extract = (root, config, options) => extractFor(id, root, config, options);
 
 // An out-of-tree compilation database is allowed, but it receives the same
@@ -51,7 +52,7 @@ function readDatabase(file) {
 export function extractFor(language, root, config, { onCapture } = {}) {
   root = fs.realpathSync(root);
   const options = config.cpp || {};
-  if (typeof options.compileCommands !== 'string' || !options.compileCommands || (options.sysroot !== undefined && typeof options.sysroot !== 'string')) fail('extract/cpp-database-missing', 'C/C++ analysis requires config.cpp.compileCommands pointing to an existing compile_commands.json.', {
+  if (!hasCompilationDatabase(config) || (options.sysroot !== undefined && typeof options.sysroot !== 'string')) fail('extract/cpp-database-missing', 'C/C++ analysis requires config.cpp.compileCommands pointing to an existing compile_commands.json.', {
     subject: { option: 'config.cpp.compileCommands' }, supportedFixes: ['generate a compilation database with your build system, then pass its path in --config; Archify does not run the build'],
   });
   const timeoutMs = options.timeoutMs ?? 180000;

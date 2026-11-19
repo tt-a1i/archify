@@ -4,13 +4,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { extractFacts, buildGraph, evaluateGraph, loadConfig, mergeConfig } from '../lib/analysis.mjs';
 import { comparability } from '../lib/review.mjs';
 import { buildQuestion } from '../lib/explain.mjs';
 import { captureChangeSide, buildChangeQuestion } from '../lib/change-question.mjs';
 import * as fileCycle from '../evaluate/rules/coupling/import-cycle.mjs';
 import * as moduleCycle from '../evaluate/rules/coupling/cycle.mjs';
-import { selectAdapter } from '../extract/index.mjs';
+import { otherLanguageFiles, selectAdapter } from '../extract/index.mjs';
 
 function available(t) {
   const python = process.env.ARCHIFY_CPP_PYTHON || 'python3';
@@ -135,6 +136,45 @@ test('C/C++ reports missing configuration and ambiguous or unsafe commands', t =
   assert.throws(() => capture(root), error => error.diagnostics?.[0]?.code === 'extract/cpp-source-not-captured');
   fs.writeFileSync(path.join(root, 'part.custom'), '#error invalid header\n');
   assert.throws(() => capture(root), error => error.diagnostics?.[0]?.code === 'extract/cpp-source-not-captured');
+});
+
+test('C/C++ rejects plugin and response options and drops build outputs before native parsing', t => {
+  // Isolate Python from site packages so the guard can be regressed without
+  // opening libclang, reading a response file or attempting to load a plugin.
+  const probe = [
+    'import json, os, runpy, sys',
+    'from types import SimpleNamespace',
+    'module = runpy.run_path(sys.argv[1])',
+    'def result(action):',
+    '    try: return action()',
+    '    except module["ScopeError"] as error: return error.code',
+    'root = os.getcwd()',
+    'source = os.path.join(root, "a.cpp")',
+    'def flags(*options):',
+    '    command = SimpleNamespace(arguments=["cc", *options, "-c", source])',
+    '    return result(lambda: module["flags"](command, source, root, ""))',
+    'def database(**spelling):',
+    '    entry = dict(directory=root, file=source, **spelling)',
+    '    return result(lambda: module["main"]({"database": json.dumps([entry])}))',
+    'print(json.dumps([',
+    '    flags("-fpass-plugin=unused"),',
+    '    database(arguments=["cc", "@unused", "a.cpp"]),',
+    '    database(command="cc \'@unused\' a.cpp"),',
+    '    flags("-MMD", "-MP", "-MF", "unused.d", "--write-dependencies",',
+    '          "-ftime-trace", "-ftime-trace=unused.json", "-ftime-trace-granularity=10",',
+    '          "-std=c++17", "-DFEATURE=1"),',
+    ']))',
+  ].join('\n');
+  const helper = fileURLToPath(new URL('../extract/cpp/extract.py', import.meta.url));
+  const run = spawnSync(process.env.ARCHIFY_CPP_PYTHON || 'python3', ['-I', '-S', '-c', probe, helper], { encoding: 'utf8', timeout: 5000 });
+  if (run.error?.code === 'ENOENT' && process.env.ARCHIFY_CPP_REQUIRED !== '1') return t.skip('Python 3 is unavailable');
+  assert.equal(run.status, 0, run.error?.message || run.stderr);
+  assert.deepEqual(JSON.parse(run.stdout), [
+    'extract/cpp-command-unsupported',
+    'extract/cpp-command-unsupported',
+    'extract/cpp-command-unsupported',
+    ['-std=c++17', '-DFEATURE=1'],
+  ]);
 });
 
 test('C/C++ ignores invalid bytes in an unused default-excluded build header', t => {
@@ -292,9 +332,23 @@ test('C/C++ structural cycle rules require a common translation-unit context', (
   assert.equal(moduleCycle.run({ graph, facts })[0].evidence.exampleContext, 'first.cpp');
 });
 
-test('C++ auto-detects an uppercase .C translation unit with default includes', t => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify upper C '));
+test('C/C++ only participates in automatic language selection with a configured database', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify mixed C '));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const config = loadConfig();
+  const configured = mergeConfig(config, { cpp: { compileCommands: 'compile_commands.json' } });
+  fs.writeFileSync(path.join(root, 'ext.c'), 'int ext() { return 1; }\n');
+  assert.equal(selectAdapter(root, configured).id, 'c');
+  fs.writeFileSync(path.join(root, 'app.py'), 'print(1)\n');
+  assert.equal(selectAdapter(root, config).id, 'py');
+  fs.rmSync(path.join(root, 'app.py'));
   fs.writeFileSync(path.join(root, 'hello.C'), 'int hello() { return 1; }\n');
-  assert.equal(selectAdapter(root, loadConfig()).id, 'cpp');
+  assert.equal(selectAdapter(root, configured).id, 'cpp');
+  for (const language of ['c', 'cpp']) {
+    assert.equal(selectAdapter(root, config, language).id, language);
+  }
+  fs.writeFileSync(path.join(root, 'app.ts'), 'export const app = 1;\n');
+  assert.equal(selectAdapter(root, config).id, 'ts');
+  assert.deepEqual(otherLanguageFiles(root, config, 'ts'), [{ adapter: 'c', files: 1 }, { adapter: 'cpp', files: 1 }]);
+  assert.throws(() => selectAdapter(root, configured), error => error.diagnostics?.[0]?.code === 'extract/adapter-ambiguous');
 });
