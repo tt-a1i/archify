@@ -51,7 +51,12 @@ function expand(value, props) {
   return result.includes('$' + '{') ? null : result;
 }
 function mergeDeps(parent, own) {
-  const result = new Map(parent.map(d => [depKey(d), d]));
+  const result = new Map();
+  for (const item of parent) {
+    const key = depKey(item);
+    if (result.has(key)) throw new Error('duplicate inherited dependency ' + key);
+    result.set(key,item);
+  }
   const seen = new Set();
   for (const item of own) {
     const key = depKey(item);
@@ -111,7 +116,6 @@ export function projectScope(contents, packageMarkers) {
         'pom.groupId':groupId,'pom.artifactId':pom.artifactId,'pom.version':version });
       const deps = mergeDeps(parent?.rawDependencies || [],pom.deps);
       const management = mergeDeps(parent?.rawManagement || [],pom.management);
-      if (management.some(d => d.type==='pom' && d.scope==='import')) throw new Error('imported BOM management is not resolved');
       let critical = JSON.stringify([deps,management,groupId,version]);
       const referenced = new Set();
       for (let previous; previous !== critical;) {
@@ -129,10 +133,19 @@ export function projectScope(contents, packageMarkers) {
         if (value!==null && (result===null || result==='')) throw new Error('unresolved or empty dependency field '+key);
         return [key,result];
       }));
-      const resolvedManagement = management.map(resolveDependency);
+      // Raw overrides can discard unresolved parent fields; other keys may
+      // collide only after interpolation and still need child precedence.
+      const resolveMerged = (rawItems, ownItems) => {
+        const ownKeys = new Set(ownItems.map(depKey));
+        return mergeDeps(
+          rawItems.filter(item => !ownKeys.has(depKey(item))).map(resolveDependency),
+          rawItems.filter(item => ownKeys.has(depKey(item))).map(resolveDependency),
+        );
+      };
+      const resolvedManagement = resolveMerged(management,pom.management);
       if (resolvedManagement.some(d=>d.type==='pom' && d.scope==='import')) throw new Error('imported BOM management is not resolved');
-      const resolved = deps.map(d => {
-        const expanded = resolveDependency(d);
+      const resolvedDependencies = resolveMerged(deps,pom.deps);
+      const resolved = resolvedDependencies.map(expanded => {
         const managed = resolvedManagement.find(m => depKey(m) === depKey(expanded)) || {};
         return { ...managed, ...Object.fromEntries(Object.entries(expanded).filter(([,v]) => v !== null)) };
       });
@@ -164,9 +177,16 @@ export function projectScope(contents, packageMarkers) {
     const relative=file.slice(root.length);
     return relative.startsWith('src/main/java/') ? 'main' : relative.startsWith('src/test/java/') ? 'test' : null;
   }
+  function sourceSetVisible(caller,targetFile) {
+    const from=owner(caller), to=owner(targetFile);
+    return !from || from.root!==to?.root || sourceSet(caller,from.root)!=='main' || sourceSet(targetFile,to.root)!=='test';
+  }
   return {
+    sourceSetVisible,
     evidence(caller,points) {
       const own=owner(caller);
+      // Main compilation does not include this module's test sources.
+      if (points.some(p=>!sourceSetVisible(caller,p.file))) return null;
       if (points.every(p => owner(p.file)?.root === own?.root)) return [];
       const from=own?.file.endsWith('/pom.xml') || own?.file==='pom.xml' ? model(own.file) : null;
       const callerSet=own && sourceSet(caller,own.root);

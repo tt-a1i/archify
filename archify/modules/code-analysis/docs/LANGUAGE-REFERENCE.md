@@ -80,6 +80,18 @@ compilation, unsupported paths, macros and unresolved dispatch retain explicit
 uncertainty. See [Rust support and limitations](RUST.md) for toolchain,
 workspace, call-model and source-question details.
 
+## C and C++
+
+```sh
+node archify/bin/archify.mjs code-analysis check /path/to/project --language cpp --config /path/to/analysis.config.json --out out/cpp --fail-on never
+```
+
+C and C++ require an existing compilation database, matching Python clang
+bindings and an installed libclang. The adapter captures active includes,
+source definitions and bounded direct-call navigation under each recorded
+translation-unit context. See [C/C++ support and limitations](C_CPP.md) for
+configuration, platform status, questions and unknowns.
+
 ## Evidence
 
 For every language, `raw-facts.json` records parsed files, source locations,

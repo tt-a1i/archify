@@ -21,8 +21,8 @@ The source panel marks captured changes against the base commit: green gutters f
 
 If the architecture JSON changes or becomes unavailable after startup, the analysis request is rejected and the page asks you to regenerate the diagram. Restart with the updated JSON and open the new URL. The server never rewrites your input JSON or silently combines a new architecture with the previous diagram.
 
-JavaScript, TypeScript, Python, Java, Go and Rust use five adapters. Select one
-with `--language ts|py|java|go|rust`; `ts` covers both JavaScript and TypeScript.
+JavaScript, TypeScript, Python, Java, Go, Rust, C and C++ are selectable. Select one
+with `--language ts|py|java|go|rust|c|cpp`; `ts` covers both JavaScript and TypeScript.
 Each run uses one adapter; the [language reference](LANGUAGE-REFERENCE.md) has example commands and limits. A JS/TS or Python tree that also holds `.java` files
 keeps its language unless its root has a Maven/Gradle build file (see the
 [upgrade note](JAVA.md)). Choose explicitly for a mixed-language root. Add
@@ -38,6 +38,7 @@ Language extraction has its own prerequisites:
 | `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
 | `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
+| `c`, `cpp` | An existing `compile_commands.json`, Python clang bindings and libclang; see [C/C++ scope and tooling](C_CPP.md). |
 
 The Go and Rust adapters compile Archify's source helper, not the target
 project. Rust's first use may fetch the helper's locked dependencies; cached
@@ -68,7 +69,7 @@ Deliver the analysis HTML with one or two scoped conclusions; tasks may be given
 
 The reader follows explicit `--locale`, then `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen summarizes error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran; a rule that did not run is labelled as unchecked. Information-level signals remain available through finding filters. Select a priority card title to see its measurements and source location directly in the finding. The copy icon on the card copies the AI task without opening the finding; a check mark confirms success briefly without adding a status message. The **Copy architecture brief** icon shares the bounded hotspot and structural orientation with the headless receipt; its order is not inferred business importance.
 
-Atlas shows the four repository totals in the right sidebar. Hover or focus an icon for its meaning. The complexity distribution and scrollable module list are visible without expanding anything. **Coverage and reading guide** contains the dependency records and legend. When you leave a finding in the standalone report, Atlas returns to the previous selection and zoom. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
+Atlas shows the relationship map and the four repository totals in the right sidebar. **Map** and **Files** are short tabs. Map stays selected by default. Files replaces the map with a searchable captured-file list; it does not add a third column or a lower scrolling region. Hover a tab for its explanation, or use Left/Right and Home/End while a tab is focused. Choosing a file replaces the current finding and highlights its owner module when you return to Map; choosing a module/finding or clearing the selection replaces the file. The right panel previews and downloads its path, module and captured function names/lines as Markdown. This is navigation context from the saved analysis, without source content or complete diagnostic/task evidence; use a finding's source evidence and task actions for those. No fresh source or external-tool verification is implied. Hover or focus an icon for its meaning. The complexity distribution and scrollable module list are visible without expanding anything. **Coverage and reading guide** contains the dependency records and legend. When you leave a finding in the standalone report, Atlas restores the previous selection, zoom, tab and search. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
 
 After edits, the prominent comparison reports **no longer detected**, **new** and changed evidence. Missing findings do not prove fixes. Configuration, grouping, model or coverage changes make results non-comparable and show the reason. Verify source changes and project tests before claiming an improvement.
 
@@ -518,3 +519,12 @@ the locked helper dependencies are required. Saved and paired questions retain
 the captured source profile, cfg/features, omitted regions and bounded call
 model; a source binding does not establish compilation or runtime dispatch.
 See [Rust support](RUST.md) for setup, profile settings and limitations.
+
+### C and C++ source investigation
+
+Use `--language c` or `--language cpp` with `config.cpp.compileCommands` set to
+an existing compilation database. C++ selection also covers C translation
+units. Active includes, source function ranges and conservative same-unit
+direct calls carry translation-unit contexts. A saved header question requires
+`--context <translation-unit>`; a paired question accepts a translation-unit
+source entry. See [C/C++ support](C_CPP.md) for setup and limits.

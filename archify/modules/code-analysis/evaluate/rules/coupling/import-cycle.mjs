@@ -29,6 +29,26 @@ const compareImport = (a, b) => canonical(a) < canonical(b) ? -1 : canonical(a) 
 
 export function run({ graph, facts }) {
   if (!facts) return [];
+  if (['c', 'cpp'].includes(facts.repository.language)) {
+    const contexts = [...new Set(facts.imports.flatMap(edge => edge.contexts || []))].sort();
+    const byFiles = new Map();
+    for (const context of contexts) {
+      const scoped = { ...facts, repository: { ...facts.repository, language: 'java' },
+        imports: facts.imports.filter(edge => edge.contexts?.includes(context)) };
+      for (const finding of run({ graph, facts: scoped })) {
+        const key = JSON.stringify(finding.subject.files);
+        const previous = byFiles.get(key);
+        if (previous) { previous.evidence.contexts.push(context); continue; }
+        finding.message = `${finding.subject.files.length} C/C++ files form an active include cycle in recorded translation-unit contexts. Example from ${context}: ${finding.evidence.path.join(' → ')} → ${finding.evidence.path[0]}. This is a structural preprocessor relationship, not runtime initialization evidence.`;
+        finding.evidence.contexts = [context];
+        finding.evidence.exampleContext = context;
+        finding.evidence.risk.loadingNote = 'Preprocessor include relationships do not establish runtime loading order or partial initialization.';
+        finding.supportedFixes = ['review include guards and whether the mutual header dependency is intentional', 'use a forward declaration when it removes an unnecessary include'];
+        byFiles.set(key, finding);
+      }
+    }
+    return [...byFiles.values()].sort((a, b) => compareImport(a.subject.files, b.subject.files));
+  }
   const excluded = new Set(graph.excluded.roles || []);
   const skip = new Set(facts.files.filter((f) => excluded.has(f.role)).map((f) => f.path));
   const edges = facts.imports.filter((i) => i.resolved && !(facts.repository.language === 'rust' && i.from === i.to) && !i.typeOnly && !skip.has(i.from) && !skip.has(i.to)).map((e) => ({ ...e, ...(e.names ? { names: [...e.names].sort() } : {}) })).sort(compareImport);

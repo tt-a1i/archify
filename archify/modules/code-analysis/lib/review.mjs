@@ -198,6 +198,10 @@ export function comparability(before, after) {
     if (!left || !right) add('go-build-scope-missing', 'At least one Go run recorded no effective build scope; platform and build-tag selection cannot be compared.');
     else if (!['goos', 'goarch', 'cgo', 'tests', 'tags', 'releaseTags', 'toolTags'].every((key) => JSON.stringify(left[key]) === JSON.stringify(right[key]))) add('go-build-scope-changed', 'The effective Go platform, build tags, test or cgo selection changed.');
   }
+  if (['c', 'cpp'].includes(before.language) && before.language === after.language) {
+    if (!before.cppBuildScope || !after.cppBuildScope) add('cpp-build-scope-missing', 'At least one C/C++ run lacks its compilation database and parser scope.');
+    else if (JSON.stringify(before.cppBuildScope) !== JSON.stringify(after.cppBuildScope)) add('cpp-build-scope-changed', 'The C/C++ compilation database, selected commands, parser or sysroot changed.');
+  }
   const rulesBefore = before.ruleVersions || {}, rulesAfter = after.ruleVersions || {};
   const removed = Object.keys(rulesBefore).filter((r) => !(r in rulesAfter)).sort(compareText);
   const added = Object.keys(rulesAfter).filter((r) => !(r in rulesBefore)).sort(compareText);
