@@ -99,13 +99,9 @@ When a passing Architecture receipt reports `visualReviewRecommendation.signals.
 
 When `layoutReviewRecommendation.action` is `inspect-sequence-width`, follow [Sequence width review](references/delivery-contract.md#sequence-width-review) before handing off a newly authored Sequence.
 
-For a project README, deliver a static SVG by default unless the user specifically asks for a link or interactive HTML. Export the finished standalone HTML with `node <skill-dir>/bin/export-svg.mjs <diagram.html> <image.svg> [auto|light|dark]` (Chrome or Chromium required). The output path must be new. The SVG contains the diagram, not the Viewer’s HTML cards; put essential claims in the diagram or document text. Inspect the exported image at its intended reading size.
+For a project README, deliver a static SVG by default. Follow an explicit request for a link or interactive HTML. Use Chrome or Chromium to export the finished HTML to a new file with `node <skill-dir>/bin/export-svg.mjs <diagram.html> <image.svg> [auto|light|dark]`. Put essential facts from Viewer cards in the image or a README caption.
 
-For a diagram intended for a README or project document, open the finished diagram at the intended reading size. Find its starting point and follow the relationships that answer the request, including any return or branch the reader needs. Read the arrows and cards as factual sentences. If a step, returned field, or check only applies in one case, name that case where the reader sees the claim and verify it at the source. If the reading path breaks, repair the affected layout and inspect the new result.
-
-For a repository document that spans several runtimes or conditional handoffs,
-use the [reader check](references/repository-authoring.md#check-the-readers-answer)
-before handing it over.
+For a README or project document, inspect the delivered diagram at its intended reading size. Follow the arrows from the starting point through each return or branch needed to answer the request. Verify conditional steps, fields and checks against the source, and name the condition where the reader sees the claim. Repair a broken reading path and inspect the result. For multiple runtimes or conditional handoffs, use the [reader check](references/repository-authoring.md#check-the-readers-answer).
 
 Perceptual review is optional for ordinary generation. Use [Optional capture evidence](references/delivery-contract.md#optional-capture-evidence), with `--out-dir <folder>/visual-check`, for a reproducible review or a concrete route/browser concern. `visualReviewRecommendation` is advisory. Inspect captures before claiming visual quality; qualify any check claim as automated when perceptual review has not occurred.
 
