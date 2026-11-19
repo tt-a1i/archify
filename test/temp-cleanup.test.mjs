@@ -71,6 +71,144 @@ function fixture(t) {
   return parent;
 }
 
+test('Windows owned temporary ancestry retains identity after native EPERM', { skip: process.platform !== 'win32' }, async t => {
+  const parent = fixture(t);
+  const native = fs.realpathSync.native;
+  const resolved = native(parent);
+  const ancestor = path.dirname(resolved);
+  t.mock.method(fs.realpathSync, 'native', target => {
+    if (path.resolve(String(target)) === ancestor) {
+      throw Object.assign(new Error('restricted ancestor'), { code: 'EPERM' });
+    }
+    return native(target);
+  });
+  const owned = createOwnedTempDirectory('test-', { parent });
+  await owned.cleanup();
+  assert.equal(fs.existsSync(owned.path), false);
+});
+
+// Simulate Windows paths and filesystem identities without host filesystem I/O.
+function mockWindowsTempAncestors(t, { denied = 'parent' } = {}) {
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  if (process.platform !== 'win32') {
+    for (const method of ['dirname', 'resolve', 'join']) t.mock.method(path, method, path.win32[method]);
+  }
+  Object.defineProperty(process, 'platform', { ...platform, value: 'win32' });
+  t.after(() => Object.defineProperty(process, 'platform', platform));
+  const parent = String.raw`C:\archify-tests\parent`;
+  const ancestor = String.raw`C:\archify-tests`;
+  const root = 'C:\\';
+  const ownedPath = String.raw`C:\archify-tests\parent\test-owned`;
+  const identities = new Map([[root, 1n], [ancestor, 2n], [parent, 3n]]);
+  const reads = new Map();
+  let canonicalParentResolved = false;
+  let fallbackStarted = false;
+  let changeAtRead;
+  const key = target => path.win32.normalize(String(target));
+  const existing = target => {
+    const name = key(target);
+    if (!identities.has(name)) throw Object.assign(new Error(`missing virtual directory: ${name}`), { code: 'ENOENT' });
+    return name;
+  };
+  const statFor = target => {
+    const name = existing(target);
+    return { dev: 1n, ino: identities.get(name), birthtimeNs: 1n,
+      isDirectory: () => true, isSymbolicLink: () => false };
+  };
+  const realpath = fs.realpathSync;
+  function virtualRealpath(target) { return existing(target); }
+  virtualRealpath.native = target => {
+    const name = existing(target);
+    if (name === parent && !canonicalParentResolved) {
+      canonicalParentResolved = true;
+      return name;
+    }
+    if (name === (denied === 'root' ? root : parent)) {
+      fallbackStarted = true;
+      throw Object.assign(new Error('restricted native resolution'), { code: 'EPERM' });
+    }
+    return name;
+  };
+  fs.realpathSync = virtualRealpath;
+  t.after(() => { fs.realpathSync = realpath; });
+  t.mock.method(fs, 'statSync', statFor);
+  t.mock.method(fs, 'lstatSync', target => {
+    const name = existing(target);
+    if (fallbackStarted) {
+      const count = (reads.get(name) || 0) + 1;
+      reads.set(name, count);
+      if (name === changeAtRead?.target && count === changeAtRead.count) {
+        identities.set(name, identities.get(name) + 100n);
+      }
+    }
+    return statFor(name);
+  });
+  t.mock.method(fs, 'mkdtempSync', prefix => {
+    assert.equal(prefix, String.raw`C:\archify-tests\parent\test-`);
+    existing(parent);
+    identities.set(ownedPath, 4n);
+    return ownedPath;
+  });
+  t.mock.method(fs, 'rmSync', target => { identities.delete(existing(target)); });
+  t.mock.method(fs, 'existsSync', target => identities.has(key(target)));
+  return {
+    parent, ancestor, ownedPath,
+    changeOnRecheck: target => {
+      const name = key(target);
+      changeAtRead = { target: name, count: name === parent ? 1 : 2 };
+    },
+    changeAtParentHandoff: () => { changeAtRead = { target: ancestor, count: 3 }; },
+    replace: target => {
+      const name = existing(target);
+      identities.set(name, identities.get(name) + 100n);
+    },
+  };
+}
+
+for (const changed of ['child', 'parent']) {
+  test('Windows EPERM refuses a changed ' + changed + ' identity before temporary creation', t => {
+    const fixture = mockWindowsTempAncestors(t);
+    const changedPath = changed === 'child' ? fixture.parent : fixture.ancestor;
+    fixture.changeOnRecheck(changedPath);
+    assert.throws(() => createOwnedTempDirectory('test-', { parent: fixture.parent }),
+      error => /identity changed/i.test(error.message) && error.message.includes(changedPath));
+    assert.equal(fs.existsSync(fixture.ownedPath), false);
+  });
+}
+
+test('Windows EPERM retains distinct ancestor identities through cleanup', async t => {
+  const fixture = mockWindowsTempAncestors(t);
+  const owned = createOwnedTempDirectory('test-', { parent: fixture.parent });
+  fixture.replace(fixture.ancestor);
+  await assert.rejects(owned.cleanup(), error => error.code === 'ARCHIFY_TEMP_CLEANUP'
+    && /identity changed/i.test(error.cause.message) && error.cause.message.includes(fixture.ancestor));
+  assert.equal(fs.existsSync(fixture.ownedPath), true);
+});
+
+test('Windows root EPERM refuses temporary creation', t => {
+  const fixture = mockWindowsTempAncestors(t, { denied: 'root' });
+  assert.throws(() => createOwnedTempDirectory('test-', { parent: fixture.parent }),
+    /ancestor identity is unavailable/);
+  assert.equal(fs.existsSync(fixture.ownedPath), false);
+});
+
+test('Windows EPERM refuses a parent changed at the verified ancestry handoff', t => {
+  const fixture = mockWindowsTempAncestors(t);
+  fixture.changeAtParentHandoff();
+  assert.throws(() => createOwnedTempDirectory('test-', { parent: fixture.parent }),
+    error => /identity changed/i.test(error.message) && error.message.includes(fixture.ancestor));
+  assert.equal(fs.existsSync(fixture.ownedPath), false);
+});
+
+test('Windows non-root EPERM creates and cleans a stable ancestry chain', async t => {
+  const fixture = mockWindowsTempAncestors(t);
+  const owned = createOwnedTempDirectory('test-', { parent: fixture.parent });
+  assert.equal(owned.path, String.raw`C:\archify-tests\parent\test-owned`);
+  assert.equal(fs.existsSync(owned.path), true);
+  await owned.cleanup();
+  assert.equal(fs.existsSync(owned.path), false);
+});
+
 for (const replacement of ['directory', 'link']) {
   test(`cleanup refuses an ancestor replaced with a ${replacement}`, async t => {
     const base = fixture(t);
