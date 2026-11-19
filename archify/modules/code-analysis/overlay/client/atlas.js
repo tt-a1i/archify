@@ -55,23 +55,25 @@
       var label = plural(stat[0], stat[2], stat[2] === 'file dependency' ? 'file dependencies' : null);
       return '<div class="stat" tabindex="0" role="img" aria-label="' + esc(label) + '" data-analysis-tip="' + esc(tr(stat[2] === 'file dependency' ? 'file dependencies' : stat[1])) + '">' + icon(stat[1]) + '<b>' + fmt(stat[0]) + '</b></div>';
     }).join('') + '</div></section><div class="atlas-side-content"></div></aside></div>';
-  // The diagram view keeps the analysed diagram first. Below it, two options open
-  // the same run as the Atlas or as Atlas 3D, in place, one at a time.
+  // The diagram view opens on the analysed diagram. Tabs above it page between the
+  // diagram and the same run as the Atlas or as Atlas 3D, one at a time.
   var views = null, panel3d = null, has3d = !!document.getElementById('bauify-three');
   if (standalone) document.querySelector('.analysis-stage').appendChild(panel);
   else {
     var option = function (kind, title, text) {
-      return '<button type="button" class="views-option" data-view="' + kind + '" aria-expanded="false" aria-controls="bauify-' + kind + '">' + icon(kind === 'atlas' ? 'atlas' : 'tree') +
-        '<span class="views-copy"><b>' + esc(title) + '</b><span>' + esc(text) + '</span></span></button>';
+      var selected = kind === 'diagram';
+      return '<button type="button" class="views-option" data-view="' + kind + '" aria-pressed="' + selected + '" title="' + esc(text) + '">' + icon({ diagram: 'modules', atlas: 'atlas', atlas3d: 'tree' }[kind]) +
+        '<span class="views-copy"><b>' + esc(title) + '</b></span></button>';
     };
     views = document.createElement('section');
     views.id = 'bauify-views'; views.lang = ui.locale || 'en'; views.hidden = true;
     views.setAttribute('aria-label', tr('More views of this analysis'));
     views.innerHTML = '<div class="views-options" role="group" aria-label="' + esc(tr('More views of this analysis')) + '">' +
+      option('diagram', tr('Module diagram'), tr('The analysed diagram with its finding rings')) +
       option('atlas', tr('Atlas'), tr('Whole-repository view of files, dependencies and functions')) +
       (has3d ? option('atlas3d', tr('Atlas 3D'), tr('The modules as a tree, grown by dependency layer')) : '') + '</div><div class="views-panels"></div>';
     var diagram = document.querySelector('.diagram-container');
-    if (diagram) diagram.after(views); else document.body.appendChild(views);
+    if (diagram) diagram.before(views); else document.body.appendChild(views);
     views.querySelector('.views-panels').appendChild(panel);
     if (has3d) {
       panel3d = document.createElement('section');
@@ -597,21 +599,16 @@
     anim.raf = 0; anim.timer = 0; anim.reveal = 0; anim.fade = 0; anim.flow = 0; anim.flowFor = -1;
     markMotion();
   }
-  // One view below the diagram at a time; choosing the open one again folds it away.
+  // One view at a time; the diagram is the default page ('' or 'diagram').
   function showView(kind) {
     if (!views) return;
-    var current = root.getAttribute('data-bauify-views') || '';
-    var next = kind === current ? '' : kind;
+    var next = kind === 'diagram' ? '' : kind || '';
     if (next !== 'atlas') close();
     if (panel3d) panel3d.hidden = next !== 'atlas3d';
     if (next === 'atlas') open();
     if (next === 'atlas3d' && window.__archifyAtlas3d) { var view = window.__archifyAtlas3d.mount(panel3d); if (view && view.refresh) view.refresh(); }
     if (next) root.setAttribute('data-bauify-views', next); else root.removeAttribute('data-bauify-views');
-    views.querySelectorAll('.views-option').forEach(function (button) { button.setAttribute('aria-expanded', String(button.getAttribute('data-view') === next)); });
-    if (next) {
-      var shown = next === 'atlas' ? panel : panel3d, box = shown.getBoundingClientRect();
-      if (box.bottom > window.innerHeight || box.top < 0) shown.scrollIntoView({ block: 'nearest', behavior: motion.matches ? 'auto' : 'smooth' });
-    }
+    views.querySelectorAll('.views-option').forEach(function (button) { button.setAttribute('aria-pressed', String(button.getAttribute('data-view') === (next || 'diagram'))); });
   }
   if (views) {
     views.querySelectorAll('.views-option').forEach(function (button) { button.addEventListener('click', function () { showView(button.getAttribute('data-view')); }); });
@@ -650,7 +647,7 @@
     var on = root.getAttribute('data-bauify') === 'on';
     if (views) {
       views.hidden = !on;
-      if (!on && root.hasAttribute('data-bauify-views')) showView(root.getAttribute('data-bauify-views'));
+      if (!on && root.hasAttribute('data-bauify-views')) showView('');
     }
     if (!on && !panel.hidden) close();
     // Below a diagram the Atlas keeps its dark case, so only the standalone page redraws for a theme change.

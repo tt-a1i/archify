@@ -127,7 +127,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       })()`);
       assert.match(selectedCycleText, /alpha/, 'zh-CN Atlas selects module-cycle findings and lists affected modules');
       assert.match(selectedCycleText, /beta/, 'zh-CN Atlas lists both cycle modules');
-      await run("document.querySelector('.views-option[data-view=atlas]').click()");
+      await run("document.querySelector('.views-option[data-view=diagram]').click()");
     }
   }
   await open(first.html);
@@ -171,13 +171,13 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.equal(await run("Boolean(document.querySelector('#bauify-detail .finding.warning'))"), true, 'zh-CN detail keeps canonical severity CSS class');
   assert.match(await run("document.querySelector('#bauify-detail').textContent"), /源码证据/);
   await run("document.querySelector('#bauify-detail .back').click()");
-  assert.deepEqual(await run("Array.from(document.querySelectorAll('.views-option b'), b => b.textContent)"), ['整仓星图', 'Atlas 3D 模型'], 'zh-CN names both views below the diagram');
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('.views-option b'), b => b.textContent)"), ['模块分析', '整仓星图', 'Atlas 3D 模型'], 'zh-CN names the three tabs above the diagram');
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
   assert.match(await run("document.querySelector('.atlas-side').textContent"), /高复杂度函数/);
   assert.equal(await run("document.querySelector('.atlas-stats h3').textContent"), '本次统计');
   assert.equal(await run("document.querySelector('.atlas-title').textContent"), '整仓星图');
   assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metrics').open"), false);
-  await run("document.querySelector('.views-option[data-view=atlas]').click()");
+  await run("document.querySelector('.views-option[data-view=diagram]').click()");
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
   const narrow = await run(`(() => { const r=document.getElementById('bauify-reader').getBoundingClientRect(),d=document.querySelector('.diagram-container').getBoundingClientRect(); return { width:innerWidth, readerWidth:r.width, separate:d.top>=r.bottom, overflow:document.documentElement.scrollWidth>innerWidth }; })()`);

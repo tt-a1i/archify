@@ -111,6 +111,8 @@ const ZH_CN = {
   "Analysis / Overview": "架构诊断 / 总览",
   "Atlas": "整仓星图",
   "More views of this analysis": "更多视图",
+  "Module diagram": "模块分析",
+  "The analysed diagram with its finding rings": "带发现标记的架构图",
   "Atlas 3D": "Atlas 3D 模型",
   "The modules as a tree, grown by dependency layer": "把模块画成一棵树，按依赖层级生长",
   "Atlas 3D needs WebGL, which this browser does not provide. The Atlas shows the same data.": "Atlas 3D 需要 WebGL，当前浏览器不支持。整仓星图展示的是同一份数据。",

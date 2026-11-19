@@ -500,10 +500,10 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await run("document.getElementById('code-analysis-start').click()");
   await until("document.documentElement.getAttribute('data-bauify') === 'on'", 'analysis did not open');
 
-  // The diagram comes first; below it, options open the Atlas or Atlas 3D in place. No toggle sits in the reading column.
+  // The diagram comes first; tabs above it page to the Atlas or Atlas 3D in place. No toggle sits in the reading column.
   assert.equal(await run("!!document.querySelector('.reader-atlas, .atlas-classic')"), false, 'no switch between the diagram and the Atlas');
-  assert.deepEqual(await run("Array.from(document.querySelectorAll('#bauify-views .views-option'), b => [b.dataset.view, b.getAttribute('aria-expanded')])"), [['atlas', 'false'], ['atlas3d', 'false']], 'both options start folded');
-  assert.equal(await run("document.getElementById('bauify-views').getBoundingClientRect().top >= document.querySelector('.diagram-container').getBoundingClientRect().bottom"), true, 'the options sit below the diagram');
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('#bauify-views .views-option'), b => [b.dataset.view, b.getAttribute('aria-pressed')])"), [['diagram', 'true'], ['atlas', 'false'], ['atlas3d', 'false']], 'the diagram tab starts selected');
+  assert.equal(await run("document.getElementById('bauify-views').getBoundingClientRect().bottom <= document.querySelector('.diagram-container').getBoundingClientRect().top"), true, 'the tabs sit above the diagram');
   assert.equal(await run("typeof window.THREE"), 'undefined', 'three.js stays inert until Atlas 3D opens');
   await run("if (document.documentElement.getAttribute('data-theme') !== 'light') Archify.theme.toggle()");
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
@@ -654,10 +654,10 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     await until(`document.documentElement.getAttribute('data-bauify-atlas3d-drawn') === '${atlas.functions.length}'`, 'Atlas 3D did not draw');
     assert.deepEqual(await run("[window.__archifyAtlas3d.view.consistent, window.__archifyAtlas3d.view.counts.files]"), [true, atlas.files.length], 'every file, function and finding of the run is in the model');
   } else assert.match(await run("document.querySelector('#bauify-atlas3d .a3d-fallback').textContent"), /WebGL/, 'without WebGL the view says so');
-  // Choosing the open option again folds it away.
-  await run("document.querySelector('.views-option[data-view=atlas3d]').click()");
-  assert.deepEqual(await run("[document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views'), Array.from(document.querySelectorAll('.views-option'), b => b.getAttribute('aria-expanded'))]"),
-    [true, null, ['false', 'false']], 'the open view folds when chosen again');
+  // The diagram tab pages back to the diagram.
+  await run("document.querySelector('.views-option[data-view=diagram]').click()");
+  assert.deepEqual(await run("[document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views'), getComputedStyle(document.querySelector('.diagram-container')).display !== 'none', Array.from(document.querySelectorAll('.views-option'), b => b.getAttribute('aria-pressed'))]"),
+    [true, null, true, ['true', 'false', 'false']], 'the diagram tab shows the diagram again');
 
   // Turning Code Analysis off hides the options and closes whatever was open.
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
