@@ -3266,6 +3266,35 @@ impl Scanner<'_> {
             self.closure_types.insert(start, shapes);
         }
     }
+    fn trait_in_scope(&self, declaration: usize) -> bool {
+        let module = self.function.module;
+        let name = &self.a.traits[declaration].name;
+        let aliases = self.a.modules[module].use_lines.keys()
+            .chain(self.scopes.iter().flat_map(|scope| scope.uses.keys()));
+        std::iter::once(name).chain(aliases).any(|name| {
+            let parts = std::slice::from_ref(name);
+            for scope in self.scopes.iter().rev() {
+                if scope.uncertain_glob || scope.types.contains(name) {
+                    return false;
+                }
+                if let Some((path, absolute)) = scope.uses.get(name) {
+                    return matches!(self.a.resolve(module, path, *absolute, true, 0),
+                        Some(Binding::Trait(index)) if index == declaration);
+                }
+                let mut found = scope.globs.iter().filter_map(|glob| {
+                    let mut path = glob.clone();
+                    path.extend_from_slice(parts);
+                    self.a.resolve(module, &path, false, true, 0)
+                });
+                if let Some(binding) = found.next() {
+                    return found.next().is_none()
+                        && matches!(binding, Binding::Trait(index) if index == declaration);
+                }
+            }
+            matches!(self.a.resolve(module, parts, false, false, 0),
+                Some(Binding::Trait(index)) if index == declaration)
+        })
+    }
     fn nominal_trait_owners(&self, module: usize, name: &str, method: &str) -> Vec<(&TraitImplOwner, usize)> {
         self.a.trait_impl_owners.iter().filter_map(|owner| {
             let (parts, absolute) = owner.self_path.as_ref()?;
@@ -3286,17 +3315,22 @@ impl Scanner<'_> {
         }).collect()
     }
     fn unique_trait_impl(&self, module: usize, name: &str, method: &str) -> Option<usize> {
+        let owners = self.nominal_trait_owners(module, name, method);
+        let [(_, declaration)] = owners.as_slice() else {
+            return None;
+        };
         if self
             .a
             .inherent
             .contains_key(&(module, name.to_string(), method.to_string()))
-            || self.nominal_trait_owners(module, name, method).len() != 1
+            || !self.trait_in_scope(*declaration)
         {
             return None;
         }
         let mut functions = BTreeSet::new();
         for edge in &self.a.trait_impls {
             if edge.state >= 0
+                && edge.trait_decl == *declaration
                 && edge.self_module == Some(module)
                 && edge.self_name.as_deref() == Some(name)
                 && edge.method == method
@@ -3316,7 +3350,8 @@ impl Scanner<'_> {
             return None;
         }
         let (owner, declaration) = owners[0];
-        (owner.plain && owner.complete && !owner.has_methods.contains(method)).then_some(declaration)
+        (owner.plain && owner.complete && !owner.has_methods.contains(method)
+            && self.trait_in_scope(declaration)).then_some(declaration)
     }
     fn trait_target(&mut self, span: Span, decl: usize, method: &str, resolution: &str) {
         let target = self.a.traits[decl].methods[method].clone();

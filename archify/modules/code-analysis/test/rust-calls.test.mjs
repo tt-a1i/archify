@@ -17,6 +17,29 @@ const config=overrides=>mergeConfig(loadConfig(),{rust:{offline:false},...overri
 const capture=(root,overrides)=>extractFacts(root,{language:'rust',config:config(overrides)}).facts;
 const calls=(facts,file)=>facts.calls.filter(call=>call.file===file);
 
+test('Rust nominal associated calls require a trait in scope', t => {
+ const root = fixture(t, {'src/main.rs': `struct Worker;
+mod hidden {
+    pub trait Hidden { fn default() -> super::Worker; }
+    impl Hidden for super::Worker { fn default() -> super::Worker { panic!("wrong trait") } }
+}
+impl Default for Worker { fn default() -> Worker { Worker } }
+fn main() { let _: Worker = Worker::default(); }
+fn explicit() { use hidden::Hidden as Alias; let _: Worker = <Worker as Alias>::default(); }
+struct Builder;
+mod construction {
+    pub trait Build { fn build() -> super::Builder { super::Builder } }
+    impl Build for super::Builder {}
+}
+fn imported() { use construction::Build as Alias; let _: Builder = Builder::build(); }
+`});
+ const facts = capture(root);
+ const site = line => calls(facts, 'src/main.rs').find(call => call.line === line);
+ assert.equal(site(7).target, undefined, 'the hidden trait must not replace the standard prelude implementation');
+ assert.equal(site(8).target.line, 4);
+ assert.equal(site(14).target.line, 11);
+});
+
 test('Rust native LF ranges preserve bare CR inside block comments', t => {
  const source = '/* a\rb */ pub fn work()->i32 {/* c\rd */ 1}\npub fn caller()->i32 {work()}\n';
  const root = fixture(t, {'src/lib.rs': source});

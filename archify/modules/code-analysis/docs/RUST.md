@@ -153,6 +153,7 @@ the aggregate's type; an untyped shadow clears earlier receiver evidence.
 For a nominal `Type::method()` call, a single captured trait implementation
 can identify the implementation body or, when the implementation omits that
 method, the trait declaration. Competing trait owners keep the target unknown.
+The trait must also be visible in the caller's lexical scope.
 Trait method names carry exact captured ranges and hashes, allowing a
 declaration without a body to pass the same freshness checks as a function target.
 The method declaration's cfg must also be selected before it supplies a target
