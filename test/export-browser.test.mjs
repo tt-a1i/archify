@@ -348,26 +348,35 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
             assert.deepEqual(actual.rendered, dimensions, `${mode} ${theme}: intrinsic size at ${width}px viewport`);
           }
           if (mode === 'architecture') {
-            const labels = await run(`(() => {
+            const { labels, userTitle, userSublabel } = await run(`(() => {
               const svg = document.documentElement;
               svg.style.width = '830px';
               svg.style.height = 'auto';
               const scale = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
-              return [...svg.querySelectorAll('g[data-edge-from] > text')].map(text => {
+              const projectedSize = text => parseFloat(getComputedStyle(text).fontSize) * scale;
+              const labels = [...svg.querySelectorAll('g[data-edge-from] > text')].map(text => {
                 const bounds = text.getBBox();
                 const plate = text.previousElementSibling.getBBox();
                 return {
                   label: text.textContent,
-                  size: parseFloat(getComputedStyle(text).fontSize) * scale,
+                  size: projectedSize(text),
                   fits: bounds.x >= plate.x && bounds.x + bounds.width <= plate.x + plate.width,
                 };
               });
+              const users = svg.querySelector('g[data-node-id="users"]');
+              return {
+                labels,
+                userTitle: projectedSize(users.querySelector('text[data-node-label]')),
+                userSublabel: projectedSize(users.querySelector('text.t-muted')),
+              };
             })()`);
             assert.ok(labels.length > 0, 'the exported architecture has relationship labels');
             for (const { label, size, fits } of labels) {
               assert.ok(size >= 7.5, `${theme} ${label}: label is ${size}px at 830px`);
               assert.ok(fits, `${theme} ${label}: text extends past the label background`);
             }
+            assert.ok(userTitle >= 10.5, `${theme}: the roomy card title is ${userTitle}px at 830px`);
+            assert.ok(userSublabel >= 7.75, `${theme}: the roomy card sublabel is ${userSublabel}px at 830px`);
           }
         }
       }

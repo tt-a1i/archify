@@ -1080,23 +1080,40 @@ function renderConnectionLabel(conn, index) {
         </g>`;
 }
 
+const scalableComponentText = /^[ -~·←↑→↓、。！？：；「」，“”\p{Unified_Ideograph}\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3]+$/u;
+
 function renderComponent(c) {
   const fill = componentFill[c.type] || 'c-external';
   const accent = componentText[c.type] || 't-muted';
   const cx = c.cx;
   const hasSub = c.sublabel != null && c.sublabel !== '';
+  const drilldowns = resolveNodeDrilldowns(c);
+  const bottom = c.y + c.height;
   const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
+  const sublabelY = c.y + c.height / 2 + 14;
+  // Keep the larger sublabel's descenders above the tag or drilldown mark.
+  const sublabelLimit = bottom - (c.tag || drilldowns.length ? 18 : 6);
+  const sublabelPreferred = hasSub && sublabelY + 3.5 <= sublabelLimit && scalableComponentText.test(c.sublabel)
+    ? 10.5
+    : componentTextFit.sublabelPreferred;
   const sub = hasSub
-    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
+    ? `\n        <text data-detail="context" x="${cx}" y="${sublabelY}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
     : '';
   const tag = c.tag
     ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
   const brandYInset = Math.min(6, Math.max(0, (c.height - 16) / 2));
   const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + brandYInset });
-  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
+  const labelWidth = brandLabelFitWidth(c, c.width);
+  const originalFontSize = fittedNodeFontSize(c.label, labelWidth, 11, 8);
+  const titleRoom = labelY - c.y >= 22 && (!c.tag || bottom - 8 - labelY >= 14)
+    && (!drilldowns.length || labelY + 4 <= bottom - 17);
+  // A title close to the top row needs clearance from the corner icons.
+  const titleWidth = labelY - c.y < 38 ? Math.min(labelWidth, c.width - 40) : labelWidth;
+  const labelFontSize = titleRoom && scalableComponentText.test(c.label)
+    ? Math.max(originalFontSize, fittedNodeFontSize(c.label, titleWidth, 14, 8))
+    : originalFontSize;
   // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
-  const drilldowns = resolveNodeDrilldowns(c);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
