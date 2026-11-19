@@ -2352,6 +2352,7 @@ enum Shape {
 #[derive(Clone, Default)]
 struct Scope {
     uncertain_glob: bool,
+    anonymous_traits: BTreeSet<usize>,
     values: BTreeSet<String>,
     types: BTreeSet<String>,
     uses: BTreeMap<String, (Vec<String>, bool)>,
@@ -3268,9 +3269,20 @@ impl Scanner<'_> {
     }
     fn trait_in_scope(&self, declaration: usize) -> bool {
         let module = self.function.module;
+        let module_bindings = &self.a.modules[module];
+        // Anonymous imports bring each trait into scope independently.
+        if self.scopes.iter().any(|scope| scope.anonymous_traits.contains(&declaration))
+            || module_bindings.bindings.get("_").is_some_and(|imports| imports.iter().any(|binding| {
+                matches!(self.a.follow(module, binding.clone(), 0),
+                    Some(Binding::Trait(index)) if index == declaration)
+            }))
+        {
+            return true;
+        }
         let name = &self.a.traits[declaration].name;
-        let aliases = self.a.modules[module].use_lines.keys()
-            .chain(self.scopes.iter().flat_map(|scope| scope.uses.keys()));
+        let aliases = module_bindings.use_lines.keys()
+            .chain(self.scopes.iter().flat_map(|scope| scope.uses.keys()))
+            .filter(|alias| alias.as_str() != "_");
         std::iter::once(name).chain(aliases).any(|name| {
             let parts = std::slice::from_ref(name);
             for scope in self.scopes.iter().rev() {
@@ -3594,12 +3606,18 @@ impl Scanner<'_> {
                             }
                             if let Some(alias) = use_name.alias {
                                 record["names"] = json!([alias]);
-                                if state == 0 || scope.uses.contains_key(&alias) {
-                                    scope.values.insert(alias.clone());
-                                    scope.types.insert(alias.clone());
-                                }
-                                if state == 1 {
-                                    scope.uses.insert(alias, (use_name.path, use_name.absolute));
+                                if alias == "_" {
+                                    if let Some(Binding::Trait(index)) = target {
+                                        scope.anonymous_traits.insert(index);
+                                    }
+                                } else {
+                                    if state == 0 || scope.uses.contains_key(&alias) {
+                                        scope.values.insert(alias.clone());
+                                        scope.types.insert(alias.clone());
+                                    }
+                                    if state == 1 {
+                                        scope.uses.insert(alias, (use_name.path, use_name.absolute));
+                                    }
                                 }
                             } else if state == 1 {
                                 scope.globs.push(use_name.path)

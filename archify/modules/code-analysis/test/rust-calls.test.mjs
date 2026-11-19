@@ -20,8 +20,8 @@ const calls=(facts,file)=>facts.calls.filter(call=>call.file===file);
 test('Rust nominal associated calls require a trait in scope', t => {
  const root = fixture(t, {'src/main.rs': `struct Worker;
 mod hidden {
-    pub trait Hidden { fn default() -> super::Worker; }
-    impl Hidden for super::Worker { fn default() -> super::Worker { panic!("wrong trait") } }
+    pub trait Hidden { fn default() -> super::Worker; fn run(&self); }
+    impl Hidden for super::Worker { fn default() -> super::Worker { panic!("wrong trait") } fn run(&self) {} }
 }
 impl Default for Worker { fn default() -> Worker { Worker } }
 fn main() { let _: Worker = Worker::default(); }
@@ -32,12 +32,29 @@ mod construction {
     impl Build for super::Builder {}
 }
 fn imported() { use construction::Build as Alias; let _: Builder = Builder::build(); }
+mod anonymous_module {
+    use super::Builder;
+    use super::hidden::Hidden as _;
+    use super::construction::Build as _;
+    fn make() { let _: Builder = Builder::build(); }
+    fn run(worker: &super::Worker) { worker.run(); }
+}
+fn anonymous_block(worker: &Worker) {
+    use hidden::Hidden as _;
+    use construction::Build as _;
+    worker.run();
+    let _: Builder = Builder::build();
+}
 `});
  const facts = capture(root);
  const site = line => calls(facts, 'src/main.rs').find(call => call.line === line);
  assert.equal(site(7).target, undefined, 'the hidden trait must not replace the standard prelude implementation');
  assert.equal(site(8).target.line, 4);
  assert.equal(site(14).target.line, 11);
+ assert.equal(site(19).target.line, 11);
+ assert.equal(site(20).target.line, 4);
+ assert.equal(site(25).target.line, 4);
+ assert.equal(site(26).target.line, 11);
 });
 
 test('Rust native LF ranges preserve bare CR inside block comments', t => {
