@@ -123,6 +123,59 @@ test('architecture placement still rejects overlapping pins and missing free coo
   assert.ok(free.diagnostics.some(entry => /Component "store" must include pos/.test(entry.message)));
 });
 
+test('architecture straight chains honor explicit sides around pinned endpoints', t => {
+  const { input, run } = workspace(t);
+  const pin = [600, 600];
+  const spec = mixedPlacementSpec();
+  const directions = [
+    ['left', 'right', 0, -1], ['right', 'left', 0, 1],
+    ['top', 'bottom', 1, -1], ['bottom', 'top', 1, 1],
+  ];
+  for (const [fromSide, toSide, axis, sign] of directions) {
+    for (const pinned of ['a', 'b']) {
+      spec.components = ['a', 'b'].map(id => ({
+        id, type: 'backend', label: id, size: [120, 60], ...(id === pinned ? { pos: pin } : {}),
+      }));
+      spec.connections = [{ from: 'a', to: 'b', route: 'straight', fromSide, toSide }];
+      fs.writeFileSync(input, JSON.stringify(spec));
+      const report = run(['inspect', 'architecture', input], 0);
+      const fixed = report.components.find(card => card.id === pinned);
+      assert.deepEqual([fixed.x, fixed.y], pin);
+      const [route] = report.connections;
+      assert.equal(route.points.length, 2);
+      const [start, end] = route.points;
+      assert.equal(start[1 - axis], end[1 - axis]);
+      assert.ok((end[axis] - start[axis]) * sign > 0, `${pinned} pinned, ${fromSide}: ${JSON.stringify(route)}`);
+    }
+  }
+
+  spec.components = [
+    { id: 'a', type: 'backend', label: 'A', size: [120, 60], pos: [800, 200] },
+    { id: 'b', type: 'backend', label: 'B', size: [120, 60] },
+    { id: 'c', type: 'backend', label: 'C', size: [120, 60], pos: [376, 200] },
+  ];
+  spec.connections = [['a', 'b'], ['b', 'c']].map(([from, to]) => ({
+    from, to, route: 'straight', fromSide: 'left', toSide: 'right',
+  }));
+  fs.writeFileSync(input, JSON.stringify(spec));
+  const compatible = run(['inspect', 'architecture', input], 0);
+  for (const card of compatible.components) {
+    const authored = spec.components.find(component => component.id === card.id);
+    if (authored.pos) assert.deepEqual([card.x, card.y], authored.pos);
+  }
+  for (const { points } of compatible.connections) {
+    assert.equal(points.length, 2);
+    assert.equal(points[0][1], points[1][1]);
+    assert.ok(points[0][0] > points[1][0]);
+  }
+
+  spec.components[2].pos = [1100, 200];
+  fs.writeFileSync(input, JSON.stringify(spec));
+  const incompatible = run(['inspect', 'architecture', input], 1);
+  assert.deepEqual(incompatible.components.find(card => card.id === 'c').pos, [1100, 200]);
+  assert.ok(incompatible.diagnostics.some(issue => issue.code === 'clean-flow/endpoint-side-direction'));
+});
+
 test('architecture sizes unmeasured auto cards for multilingual text and footers', t => {
   const { input, run } = workspace(t);
   const spec = mixedPlacementSpec();
