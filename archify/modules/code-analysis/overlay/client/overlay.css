@@ -487,6 +487,8 @@ html[data-bauify-context="pr"] #bauify-reader .comparison-banner.positive { bord
 #bauify-reader .pr-assessment-scope { margin: 4px 0; color: var(--text-muted); font-size: 12px; line-height: 1.65; }
 #bauify-reader .pr-assessment-count { margin: 8px 0; color: var(--text-muted); font-size: 11px; }
 #bauify-reader .pr-review .priority-card { margin: 10px 0 0; padding: 12px 0 4px; border: 0; border-top: 1px solid var(--panel-border); border-radius: 0; }
+#bauify-reader .pr-review .pr-impact-record { display: block; }
+#bauify-reader .pr-review .pr-impact-record .quick-handoff.compact { display: flex; align-items: center; gap: 6px; }
 #bauify-reader .pr-review .priority-card .bauify-item { background: none; border-radius: 5px; padding: 3px 0; gap: 0 3px; }
 #bauify-reader .pr-review .priority-card .bauify-item:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }
 #bauify-reader .pr-review .bauify-item > b { line-height: 1.5; }
@@ -503,7 +505,7 @@ html[data-bauify-context="pr"] #bauify-reader .comparison-banner.positive { bord
 #bauify-reader .pr-impact-record h6 { margin: 0; font: 600 12px/1.5 system-ui,sans-serif; color: var(--text-muted); }
 #bauify-reader .pr-impact-subject { margin: 5px 0; font: 600 13px/1.5 ui-monospace,Menlo,monospace; overflow-wrap: anywhere; }
 #bauify-reader .pr-impact-measures { margin: 5px 0; font-size: 12px; font-variant-numeric: tabular-nums; }
-#bauify-reader .pr-impact-path { font: 11px/1.6 ui-monospace,Menlo,monospace; }
+#bauify-reader .pr-impact-path { max-width: 100%; text-align: left; overflow-wrap: anywhere; font: 11px/1.6 ui-monospace,Menlo,monospace; }
 #bauify-reader .pr-impact-evidence { margin: 6px 0; font-size: 12px; }
 #bauify-reader .pr-impact-evidence .text-action { display: block; max-width: 100%; overflow-wrap: anywhere; }
 #bauify-reader .pr-impact-evidence .pr-assessment-scope .text-action { display: inline; }

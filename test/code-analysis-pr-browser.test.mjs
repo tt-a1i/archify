@@ -64,6 +64,7 @@ test('native PR view keeps comparison chart visible and shares localized source/
     assert.equal(assessments.count,2);assert.equal(assessments.architecture,locale==='zh-CN'?'自动检测':'Automatic detection');assert.equal(assessments.complexity,assessments.architecture);
     assert.ok(assessments.architecturePriorities>=1);assert.ok(assessments.complexityPriorities>=1);assert.equal(assessments.ai,false);assert.match(assessments.body,/1 → 26/);
     assert.equal(await run("document.querySelector('.pr-review').textContent.includes('oldHotspot')"),false);
+    assert.equal(await run("(()=>{const card=document.querySelector('.pr-impact-record');const evidence=card.querySelector('.pr-impact-evidence');return evidence.getBoundingClientRect().width >= card.getBoundingClientRect().width * .9;})()"),true);
     for(const theme of ['light','dark'])for(const [width,height] of [[1440,900],[390,844]]){
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
       await run(`if(document.documentElement.getAttribute('data-theme')!==${JSON.stringify(theme)})document.getElementById('btn-theme').click();document.fonts.ready.then(()=>new Promise(r=>setTimeout(r,250)))`);
