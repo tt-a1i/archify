@@ -608,7 +608,9 @@ const portabilityPattern = [
 const groups = options.includes('--smoke') ? [
   ['--test', '--test-concurrency=1', 'test/core-smoke.test.mjs'],
 ] : [
-  ['--test', '--test-concurrency=1', ...fullSuites],
+  // Each file owns temporary fixtures and runs in a separate Node process.
+  // Bound this at two files; keep the browser/watcher portability group serial.
+  ['--test', '--test-concurrency=2', ...fullSuites],
   [
     '--test',
     '--test-concurrency=1',

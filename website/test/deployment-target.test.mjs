@@ -1,15 +1,33 @@
+import { sitePages } from '../src/data/site-urls.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { parse, parseFragment } from 'parse5';
-import { SEO_BLOCK_START, SEO_BLOCK_END, stripPublishedArtifactMetadata, artifactMetadata } from '../scripts/publish-seo.mjs';
+import { SEO_BLOCK_START, SEO_BLOCK_END, stripPublishedArtifactMetadata, artifactMetadata, caseMetadata } from '../scripts/publish-seo.mjs';
 import { CASES } from '../src/data/gallery-presentation.mjs';
+import { PUBLISHED_CASES } from '../src/data/published-cases.mjs';
 
 const cloudflare = process.env.ARCHIFY_SITE_TARGET === 'cloudflare';
 const output = new URL(cloudflare ? '../dist-cloudflare/' : '../dist/', import.meta.url);
 const nodes = node => [node, ...(node.childNodes || []).flatMap(nodes)];
 const attr = (node, name) => node?.attrs?.find(item => item.name === name)?.value;
-const pages = ['index', 'start', 'guide', 'gallery', 'community'];
+const pages = sitePages;
+
+test('deployment publishes only the declared case metadata while retaining every original artifact and source byte', () => {
+  for (const entry of PUBLISHED_CASES) {
+    const html = fs.readFileSync(new URL(entry.artifact, output), 'utf8');
+    assert.equal(html.split(SEO_BLOCK_START).length, 2);
+    assert.equal(html.split(SEO_BLOCK_END).length, 2);
+    const start = html.indexOf(SEO_BLOCK_START), end = html.indexOf(SEO_BLOCK_END) + SEO_BLOCK_END.length;
+    assert.ok(start > html.indexOf('<head>') && end < html.indexOf('</head>'));
+    assert.equal(html.slice(start, end) + '\n', caseMetadata(entry), entry.artifact);
+    const all = nodes(parse(html));
+    assert.equal(all.filter(node => attr(node, 'rel') === 'canonical').length, 1);
+    assert.equal(attr(all.find(node => node.tagName === 'html'), 'lang'), entry.language);
+    assert.deepEqual(Buffer.from(stripPublishedArtifactMetadata(html)), fs.readFileSync(new URL(`../../docs/${entry.artifact}`, import.meta.url)));
+    assert.deepEqual(fs.readFileSync(new URL(entry.input, output)), fs.readFileSync(new URL(`../../docs/${entry.input}`, import.meta.url)));
+  }
+});
 
 test('built deployment uses host-compatible generated assets and canonical metadata in both languages', () => {
   for (const lang of ['en', 'zh']) for (const page of pages) {
@@ -19,7 +37,7 @@ test('built deployment uses host-compatible generated assets and canonical metad
     const canonicalUrl = `https://archify.si/${page === 'index' ? (lang === 'zh' ? 'zh' : '') : `${lang === 'zh' ? 'zh/' : ''}${page}`}`;
     const bases = all.filter(node => node.tagName === 'base');
     assert.equal(bases.length, 1, file);
-    assert.equal(attr(bases[0], 'href'), lang === 'zh' && page !== 'index' ? '../' : './', file);
+    assert.equal(attr(bases[0], 'href'), '../'.repeat(file.split('/').length - 1) || './', file);
     const documentUrl = cloudflare ? canonicalUrl : `https://tt-a1i.github.io/archify/${file}`;
     const baseUri = new URL(attr(bases[0], 'href'), documentUrl);
     const nav = all.find(node => node.tagName === 'nav' && attr(node, 'class') === 'site-nav');
