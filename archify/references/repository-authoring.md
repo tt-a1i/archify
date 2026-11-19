@@ -110,6 +110,22 @@ the pinned source ranges Archify checked. If it reports `not-declared`,
 add the missing pin and citations before delivering a repository-backed
 diagram. Reading the cited code establishes what each arrow means.
 
+## Check the reader's answer
+
+With the finished diagram open, answer the original question using only what a
+reader can see. For a topology arrow, say who initiates the connection, who
+receives it and what crosses it. If the receiver forwards the operation, show
+that handoff or explicitly label the link as logical. For a branch, say what
+selects it. Compare the answer with the source that implements it. A qualifier
+in a card cannot fix an arrow that points at the wrong process.
+
+When independent review is available and allowed, give a fresh reader the
+original question, the rendered diagram and access to the pinned repository.
+Ask them to write their reading before opening the implementation, then flag
+any concrete contradiction or ambiguity that changes their answer. Otherwise
+do the same check yourself. Correct material discrepancies in the editable
+input and review the resulting diagram after the next complete finalize.
+
 ## Choose an example by structure
 
 Select the main example in the [Type router](../SKILL.md#type-router) before

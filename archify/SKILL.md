@@ -101,6 +101,10 @@ When `layoutReviewRecommendation.action` is `inspect-sequence-width`, follow [Se
 
 For a diagram intended for a README or project document, open the finished diagram at the intended reading size. Find its starting point and follow the relationships that answer the request, including any return or branch the reader needs. Read the arrows and cards as factual sentences. If a step, returned field, or check only applies in one case, name that case where the reader sees the claim and verify it at the source. If the reading path breaks, repair the affected layout and inspect the new result.
 
+For a repository document that spans several runtimes or conditional handoffs,
+use the [reader check](references/repository-authoring.md#check-the-readers-answer)
+before handing it over.
+
 Perceptual review is optional for ordinary generation. Use [Optional capture evidence](references/delivery-contract.md#optional-capture-evidence), with `--out-dir <folder>/visual-check`, for a reproducible review or a concrete route/browser concern. `visualReviewRecommendation` is advisory. Inspect captures before claiming visual quality; qualify any check claim as automated when perceptual review has not occurred.
 
 Read [Delivery contract](references/delivery-contract.md) for failed gates, standalone commands, provenance/recovery, repeated delivery, exports, or opening. Native diagram recovery follows `deliver` → strict provenance `check` → `browser-check`; captures require strict provenance. Explainer delivery uses validate, deliver and check as described in its authoring guide.
