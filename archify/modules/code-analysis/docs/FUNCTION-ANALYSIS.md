@@ -11,6 +11,9 @@ Python/Java use captured function ranges and file dependencies. Fresh Python
 `python-lexical-v1` facts supply source callsites and bounded direct-name targets;
 fresh Java `java-static-lexical-v1` facts supply bounded method invocation navigation.
 Fresh paired orientation below also supports captured named Python/Java definitions.
+C/C++ saved orientation uses `cpp-source-direct-v1` and the captured compilation
+database. Header entries require `--context <translation-unit>` from
+`languageScope.fileContexts`; virtual and cross-unit calls remain unknown.
 
 1. **Scope.** Before reading the path in depth, record the question, entry,
    acceptance questions and excluded areas. For a code change, pin full base/head
@@ -131,7 +134,7 @@ semantic interpretation. Report the analyzed revision and working-tree state.
 A single run is neither independent validation nor an accuracy/cost benchmark.
 A semantic explanation does not authorize implementing its proposed changes.
 
-For saved Python/Java questions, pass the existing analysis directory and a unique
+For saved Python/Java/C/C++ questions, pass the existing analysis directory and a unique
 captured function qualname. For example, from `archify/`:
 
 ```sh
@@ -163,7 +166,9 @@ dependencies and reads source without running the target application or changing
 checkouts. The validated entry suffix selects JS/TS, Python (.py) or Java (.java) once for both sides, even in mixed-language roots. Both sides use that current extractor and one effective analysis
 configuration (defaults, or one `--config` merged with defaults using the usual
 analysis-config rules). It accepts uncommitted files; Git metadata is background,
-while each snapshot digest identifies captured text. Existing analysis directories,
+while each snapshot digest identifies captured text. C/C++ paired questions select
+`.c/.cc/.cpp/.cxx/.C` translation-unit entries and conservatively report changed
+compilation database settings as partial. Existing analysis directories,
 finding/verify options and `--function` are separate modes.
 
 Read the orientation before following locations:

@@ -56,12 +56,17 @@ test('Java qualified methods keep overload, visibility, varargs, supertype and d
 });
 
 test('Java paired changed definition recovers captured foreign callers and v1 stays a distinct model',t=>{
- const files={'p/Api.java':api,'q/Calls.java':'package q; import p.Api; public class Calls { public void call(){Api.run();} }'};
+ const files={'p/Api.java':api,'q/Calls.java':'package q; import p.Api; public class Calls { public void call(){Api.run();Api.run();} }'};
  const root=fixture(t,files),headRoot=fixture(t,{...files,'p/Api.java':api.replace('void run(){}','void run(){int changed=1;}')});
  const config=loadConfig();const base=captureChangeSide(root,config,'java'),head=captureChangeSide(headRoot,config,'java');
  const paired=buildChangeQuestion({question:'Which known references reach this change?',entry:'p/Api.java',base,head,config});
  const changed=paired.changedDefinitions.items.find(item=>item.head?.definition.name==='run');
- for(const side of ['base','head']){assert.equal(changed[side].knownReferences.total,1);assert.equal(changed[side].knownReferences.items[0].fact.file,'q/Calls.java');assert.equal(changed[side].knownReferences.items[0].navigation.status,'valid');}
+ for(const side of ['base','head']){
+  const refs=changed[side].knownReferences;
+  assert.equal(refs.total,2);
+  assert.ok(refs.items.every(item=>item.fact.file==='q/Calls.java'&&item.navigation.status==='valid'));
+  assert.equal(new Set(refs.items.map(item=>item.fact.column)).size,2);
+ }
  const historical=capture(root);historical.callModel='java-static-lexical-v1';
  assert.ok(schemaErrors('raw-facts',historical).some(e=>e.message.includes('Java v2')));
  historical.calls=historical.calls.map(({target,...call})=>({...call,resolution:'unresolved',reason:'unsupported-callee'}));

@@ -189,6 +189,10 @@ function coverageOf({ graph, facts, unmapped, ambiguousModules, run }) {
       // Files matching these patterns are never enumerated, so they are named, not counted.
       excludePatterns: run.exclude || [],
       parseErrors: facts?.parse_errors ? facts.parse_errors.map((e) => e.path).sort(compareText) : [],
+      ...(['c', 'cpp'].includes(facts?.repository?.language) ? {
+        notCompiled: facts.languageScope?.excludedFiles?.length || 0,
+        translationUnits: facts.languageScope?.build?.units?.length || 0,
+      } : {}),
     },
     otherLanguages: run.otherLanguages || [],
     unresolved: graph?.unresolved || null,
