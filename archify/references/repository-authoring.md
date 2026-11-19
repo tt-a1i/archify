@@ -30,7 +30,11 @@ fact has supporting source evidence.
    Follow imports and call sites
    until the requested responsibility reaches its actual input, output, or
    side effect. Read a small connected slice instead of scanning the repository
-   for a convenient label.
+   for a convenient label. When a dispatcher selects between runtimes, follow
+   each supported branch that the diagram groups under the same node. If those
+   branches execute in different places or reach the outside world through
+   different components, show the distinction or name the narrower scope on
+   the diagram.
 
 3. **Trace ownership.** Derive runtime and I/O relationships from the observed
    actor, operation, and target at their call sites; deployment and trust
@@ -53,6 +57,17 @@ fact has supporting source evidence.
    state change or control ownership, trace to the actual write or execution
    site and the conditions that permit it; an upstream caller alone does not
    establish those conditions.
+
+   Trace each direction of a round trip separately. A request and its reply can
+   use one channel while state updates use another. For a state transition,
+   read the branch that assigns the next state. An error reported to the user
+   can accompany an ordinary transition, so an error label alone does not
+   establish a separate state.
+
+   For a shortcut or fallback, read the entire condition at the call site.
+   Preserve each clause whose absence would change which path runs. Check the
+   arrow, its label, and any explanatory card against a case where just one
+   of those clauses changes.
 
 5. **Name uncertainty.** Write unresolved questions beside the claim they
    affect: for example, “`writeFile` is called here; durability is unknown.”
@@ -88,6 +103,12 @@ history, or noon local time for a date-only record. A tag or commit outside
 that history is not citable. Say either in a card. A Waterfall without a
 recorded trace uses `meta.evidence: "illustrative"` and keeps its durations
 labelled as such; do not run the project only to time it.
+
+When finalizing a native diagram with `--repo-root`, read
+`repositoryReferences` in the summary. Its revision and count identify
+the pinned source ranges Archify checked. If it reports `not-declared`,
+add the missing pin and citations before delivering a repository-backed
+diagram. Reading the cited code establishes what each arrow means.
 
 ## Choose an example by structure
 

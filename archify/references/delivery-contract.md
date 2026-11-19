@@ -631,8 +631,10 @@ Never start it by default. Do not use it for CI, unattended agents, remote shari
 The automated path ends with the deterministic browser gate and reports
 `visual_review: not_requested`. Ordinary generation does not require screenshots
 or an image-reading step, including newly authored or repositioned Architecture.
-Perceptual review is optional; use it for an explicit request or a concrete visual
-investigation. Possible reasons include:
+When the requested output is for a README or project document, open it at the
+intended reading size and follow the path that answers the reader's question.
+The rendered HTML is sufficient for this reading check. Reasons to capture
+screenshots for a reproducible visual review include:
 
 - the compact finalizer includes `visualReviewRecommendation` for crossings or detours (advisory, not a delivery gate);
 - the user explicitly requests an aesthetic or visual review;

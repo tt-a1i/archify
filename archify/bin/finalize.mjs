@@ -683,6 +683,7 @@ export function compactFinalizeReceipt(receipt) {
       ...(truncated ? { omittedByCode: Object.fromEntries([...omittedCounts].filter(([, count]) => count > 0)) } : {}),
     },
     evidence: receipt.evidence,
+    ...(receipt.repositoryReferences ? { repositoryReferences: receipt.repositoryReferences } : {}),
     ...(receipt.update && receipt.update.status !== 'unavailable'
       ? { update: receipt.update }
       : {}),
@@ -1225,6 +1226,13 @@ export async function runFinalize({
     if (repair) {
       if (receipt.ok) receipt.autoRepair = { ...repair.record, outcome: 'applied' };
       else restoreRepair();
+    }
+    if (receipt.ok && repoRoot && type !== 'explainer') {
+      const source = receipt.stages.deliver.receipt.evidence;
+      receipt.repositoryReferences = source?.verified
+        ? { status: 'verified', revision: source.revision, count: source.references }
+        : { status: 'not-declared', count: 0,
+          guidance: 'For a repository diagram, pin meta.repository and cite the source ranges on its primary elements, then rerun finalize.' };
     }
     receipt.artifact = receipt.ok
       ? { path: resolvedOutput, ...receipt.stages.deliver.receipt.artifact }
