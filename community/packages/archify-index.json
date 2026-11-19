@@ -1,0 +1,35 @@
+{
+  "name": "archify-index",
+  "type": "wrapper",
+  "summary": {
+    "en": "Writes one index.html that shows a set of delivered Archify diagrams in one window, a tab per diagram. It can deliver JSON specs with Archify first.",
+    "zh": "生成一个 index.html，在同一窗口中按标签页浏览一组已交付的 Archify 图表；也可先用 Archify 交付 JSON 源。"
+  },
+  "author": {
+    "name": "Thakay",
+    "url": "https://github.com/Thakay"
+  },
+  "repository": "https://github.com/Thakay/archify-index",
+  "homepage": "https://archify-index.thakay.dev/",
+  "archify": "3.0.1",
+  "schemaVersions": [1, 2],
+  "tags": ["index", "multi-diagram", "tabs", "standalone-html", "cli"],
+  "evidence": [
+    {
+      "label": "Demo, built in CI from five Archify 3.0.1 example specs",
+      "url": "https://archify-index.thakay.dev/"
+    },
+    {
+      "label": "CI run: unit tests on Node 18 to 24, Chrome tests with Archify 3.0.1",
+      "url": "https://github.com/Thakay/archify-index/actions/runs/38179492758"
+    },
+    {
+      "label": "Archify delivery receipt for one demo page",
+      "url": "https://archify-index.thakay.dev/web-app.architecture.delivery.json"
+    },
+    {
+      "label": "Screenshot of the index, light theme",
+      "url": "https://github.com/Thakay/archify-index/blob/main/docs/index-light.png"
+    }
+  ]
+}
