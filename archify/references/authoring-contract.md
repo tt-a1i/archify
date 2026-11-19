@@ -420,13 +420,17 @@ parent (`tree/missing-parent`), zero or several roots (`tree/root-count`), a
 parent cycle (`tree/cycle`, which also covers every node stranded beneath it),
 and duplicate ids are refused. Children read in declaration order.
 
-Use `layout.direction: "down"` (default) for a shallow, balanced breakdown and
-`"right"` for a deep or leaf-heavy tree such as a repository layout; a rightward
-tree aligns each parent with its first child and scrolls vertically in the
-reader. Labels wrap between words. `collapsed: true` makes a branch start
-collapsed in the Viewer; it never removes content from the artifact, and every
-export is the complete tree. For a real codebase, ground each node in the
-observed path and attach `sources`. See
+Use `layout.direction: "down"` (default) for a shallow breakdown and `"right"`
+for a deep or leaf-heavy tree such as a repository layout. A rightward tree
+whose automatic canvas is taller than it is wide starts near the root and
+scrolls vertically in the reader. Labels wrap between words. `collapsed: true`
+makes a branch start collapsed in the Viewer. Every export contains the
+complete tree. For a real codebase, ground each node in the observed path and
+attach `sources`.
+
+When a user asks for a decision tree, use Tree if each outcome has exactly one
+parent and the conditions fit in the child labels. Use Workflow for labeled
+transitions, joins, or loops. See
 [`../renderers/tree/README.md`](../renderers/tree/README.md).
 
 ### Class
