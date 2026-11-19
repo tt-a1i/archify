@@ -270,8 +270,37 @@ test('ERD capacity uses inherited widths, the entity index and no type gap when 
   assert.equal(diagnostic.evidence.keyColumnWidth, 30);
   assert.equal(diagnostic.evidence.requiredEntityWidth, 371);
   assert.match(diagnostic.supportedFixes[0], /entities\[1\]\.width/);
+  assert.match(diagnostic.supportedFixes[1], /Remove layout\.entityW/);
   document.entities[1].width = diagnostic.evidence.requiredEntityWidth;
   const repaired = invoke(t, document);
   assert.equal(repaired.status, 0, repaired.stdout + repaired.stderr);
   assert.match(repaired.html, new RegExp(document.entities[1].attributes[0].name));
+});
+
+test('ERD automatic grid widens a table for a complete row and moves the next column', t => {
+  const document = fixture();
+  delete document.layout.entityW;
+  document.entities = [
+    { id: 'first', label: 'First', row: 0, col: 0, attributes: [
+      { name: 'external_reference_code', type: 'varchar(128)', key: ['pk', 'uk'] },
+    ] },
+    { id: 'second', label: 'Second', row: 0, col: 1, width: 230, attributes: rows(1) },
+  ];
+  document.relationships = [];
+  const result = invoke(t, document);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const [first, second] = boxes(result.html);
+  assert.equal(first.width, 310);
+  assert.equal(second.width, 230);
+  assert.equal(second.x - (first.x + first.width), document.layout.gapX);
+  assert.match(result.html, /font-size="11">external_reference_code<\/text>/);
+  assert.match(result.html, /font-size="10.5"[^>]*>varchar\(128\)<\/text>/);
+  for (const key of ['pk', 'uk']) assert.match(result.html, new RegExp(`data-er-badge="${key}"`));
+
+  document.meta.viewBox = [900, 400];
+  const pinned = invoke(t, document, 'validate');
+  assert.equal(pinned.status, 1, pinned.stdout);
+  const diagnostic = JSON.parse(pinned.stdout).diagnostics.find(entry => entry.code === 'erd/attribute-text-capacity');
+  assert.equal(diagnostic.evidence.entityWidth, 240);
+  assert.equal(diagnostic.supportedFixes.length, 1);
 });
