@@ -47,7 +47,10 @@ in `references`, and that target is checked against the declared entities and
 attributes.
 
 A relationship reads `from` -> `to` and is drawn with crow's foot notation at
-both ends. The foot opens toward the entity whose cardinality it describes: its
+both ends. Each end attaches to a table; its position beside a row does not
+identify a column. Use the attribute's `references` for the exact column target
+and a relationship label to distinguish parallel relationships. The foot opens
+toward the entity whose cardinality it describes: its
 toes stand on that table's edge and its apex sits one foot back along the line,
 so the glyph cannot be read as an arrowhead pointing at the table. Both ends
 declare their own maximum: `fromCardinality`/`toCardinality` take `one` or
@@ -61,11 +64,18 @@ variant still selects the accent for every identifying relationship.
 
 ## Layout and routing
 
-`layout.mode: "grid"` places each entity by `row`/`col`. Every raw attribute index
+`layout.mode: "grid"` places each entity by `row`/`col`. Every column index
 owns the width of its widest entity and every raw row index owns the height of
 its tallest, so boxes in one band line up without hand measurement and an empty
 index leaves a routing channel. `pos` overrides the cell for a bounded
 exception.
+
+Start with `row`/`col` and omit `layout.entityW` and `entities[].width`. The
+automatic grid starts at 240 units per table and widens individual tables to
+fit their field names, types, and key badges at the normal text size. A table's
+explicit `width` or an inherited `layout.entityW` stays fixed. A fixed view box,
+pinned table position, or authored route, waypoint, channel, or label point
+also prevents automatic sizing, because it can move table edges and corridors.
 
 Relationships route through the orthogonal router the other typed renderers use
 (`../architecture/routing.mjs`), so the same contracts apply: automatic port
@@ -207,7 +217,10 @@ field names, and a 10.5-unit type. The type keeps the same ink as the field name
 because it is data, not an aside: at the muted token it measured 3.98:1 against a
 table fill, under the 4.5:1 text floor, which is why it read as faint in review.
 A row whose text cannot fit is a diagnostic rather than a silently truncated
-cell, so a narrow table names the field it cannot show and asks for a wider box.
+cell. `erd/attribute-text-capacity` names the field and gives the minimum
+width for that row. Widen the table or remove the fixed grid width when the
+grid can size it automatically. Preserve the field name, physical type, and
+key roles.
 
 Field rows, their types, and the key glyph each carry `data-detail="context"` on
 the text itself, not only on the row group: the Viewer's reader sizes the diagram
@@ -231,6 +244,8 @@ visibility remains the priority; promote to `showcase` only after the grouped
 layout is genuinely readable. Include every physical column in
 `entities[].attributes`, keep its SQL type, and preserve the source comment in the
 type string as `SQL_TYPE｜中文备注` when the schema has no separate comment field.
+For example, a SQLite `TEXT` column stays `TEXT` when application code restricts
+its values. Record those values in a card when they help explain the domain.
 The renderer shows ERD attribute rows at the default `read` level, so fields do
 not depend on hover or focus. Use cards only for supplementary constraints,
 inferred relationships, and domain rules; never use them to hide the full table.
