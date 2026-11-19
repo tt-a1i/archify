@@ -693,28 +693,37 @@ export function compactFinalizeReceipt(receipt) {
   };
   const metrics = receipt.stages?.check?.receipt?.composition?.metrics;
   const reviewSignals = Object.fromEntries([
-    'resolvedCrossovers', 'routesOverSuggestedBends', 'routesOverSuggestedStretch',
+    'resolvedCrossovers', 'routesOverSuggestedBends', 'routesOverSuggestedStretch', 'coincidentCardinalityPorts',
   ].filter((key) => Number.isFinite(metrics?.[key]) && metrics[key] > 0)
     .map((key) => [key, metrics[key]]));
   if (receipt.ok && Object.keys(reviewSignals).length) {
     const routeReview = receipt.stages?.check?.receipt?.composition?.routeReview;
     const hints = routeReview ? placementHints(routeReview) : [];
+    const cardinalityPorts = routeReview?.coincidentCardinalityPorts || [];
     // Modes without free node placement cannot act on node-move hints.
     const advisoryOnly = Boolean(receipt.type) && receipt.type !== 'architecture';
     compact.visualReviewRecommendation = {
       action: 'inspect-route-readability',
       signals: reviewSignals,
-      reason: 'Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.',
+      reason: cardinalityPorts.length
+        ? 'Separate ERD relationships draw cardinality glyphs at the same table port.'
+        : 'Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.',
       ...(routeReview ? {
         affectedRoutes: {
           crossings: routeReview.crossings.slice(0, 8),
           detours: routeReview.detours.slice(0, 8),
-          truncated: routeReview.crossings.length > 8 || routeReview.detours.length > 8,
+          ...(cardinalityPorts.length ? {
+            coincidentCardinalityPorts: cardinalityPorts.slice(0, 8).map((port) => ({ ...port, ends: port.ends.slice(0, 8) })),
+          } : {}),
+          truncated: routeReview.crossings.length > 8 || routeReview.detours.length > 8
+            || cardinalityPorts.length > 8 || cardinalityPorts.some(port => port.ends.length > 8),
         },
         ...(hints.length && !advisoryOnly ? { hints } : {}),
         repair: !advisoryOnly
           ? 'Trace these relationships at the desktop viewport. For Architecture, use references/architecture-layout-repair.md: reflow a blocked main path or tangled connected scene, and repair an isolated defect locally only when the surrounding composition is accepted. Preserve all semantic content and user-fixed geometry. Rerun finalize once after the edit.'
-          : 'Advisory only: this mode places or routes these relationships itself. Report them; do not remove relationships or meaning to reduce crossings.',
+          : cardinalityPorts.length
+            ? 'Trace the named relationships. If a free side has a clear route, set the named fromSide or toSide on one relationship to use it and check both ends. If that would tangle the routes, move the adjacent tables to open a clear corridor. Keep the relationships and cardinalities, then rerun finalize.'
+            : 'Advisory only: this mode places or routes these relationships itself. Report them; do not remove relationships or meaning to reduce crossings.',
       } : {}),
     };
   }

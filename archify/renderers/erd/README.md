@@ -125,6 +125,14 @@ The renderer also reports ER-specific diagnostics: unknown entities in
 names, self-referencing relationships, overlapping entity boxes, and rows whose
 text cannot fit inside the declared entity width.
 
+The artifact check also reports an advisory when two relationship glyphs land
+at exactly the same table port, even though their inferred sides had room.
+The finalize receipt names each relationship and its `fromSide` or `toSide`.
+Give one relationship a clear alternate side, adjusting its other end if that
+keeps the route clear. If a side change tangles the routes, move the adjacent
+tables to open space. Keep the existing cardinalities and valid shared trunks,
+which already draw separate glyphs, and rerun finalize to check the new layout.
+
 ## Domain bands
 
 `tag` names a table's functional domain, and a domain is drawn as a band when the

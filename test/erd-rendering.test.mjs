@@ -12,6 +12,7 @@ import { segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs'
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
 const renderer = path.join(skillRoot, 'renderers', 'erd', 'render-erd.mjs');
+const cli = path.join(skillRoot, 'bin', 'archify.mjs');
 const checker = path.join(skillRoot, 'scripts', 'check-render-output.mjs');
 const examplePath = path.join(skillRoot, 'examples', 'orders.erd.json');
 // One legend band plus the title gap a band has to clear below the content.
@@ -232,6 +233,8 @@ test('relationships sharing one target side bundle into a trunk with short branc
   }
   const { status: checkStatus, receipt } = artifactReceipt(output);
   assert.equal(checkStatus, 0, JSON.stringify(receipt.checks.filter((check) => !check.ok), null, 2));
+  assert.equal(receipt.composition.routeReview.coincidentCardinalityPorts, undefined,
+    'branches sharing a trunk still draw separate markers');
 
   // Bundling needs one dash language: mixing a dashed relationship into the
   // group dissolves it instead of drawing a trunk with a borrowed style.
@@ -241,6 +244,52 @@ test('relationships sharing one target side bundle into a trunk with short branc
   const mixedResult = render(mixed, mixedDirectory);
   assert.equal(mixedResult.status, 0);
   assert.doesNotMatch(fs.readFileSync(mixedResult.output, 'utf8'), /data-er-trunk/);
+});
+
+test('ERD finalize names co-located cardinality glyphs until a side pin separates them', () => {
+  const diagram = {
+    schema_version: 1,
+    diagram_type: 'erd',
+    meta: { title: 'Duplicate relationship endpoints', output: 'erd.html', quality_profile: 'standard' },
+    layout: { mode: 'grid' },
+    entities: [
+      { id: 'parent', label: 'Parent', row: 0, col: 0 },
+      { id: 'near', label: 'Near', row: 1, col: 0 },
+      { id: 'far', label: 'Far', row: 2, col: 0 },
+    ],
+    relationships: [
+      { id: 'near_parent', from: 'near', to: 'parent', fromSide: 'left', toSide: 'left',
+        fromCardinality: 'many', toCardinality: 'one' },
+      { id: 'far_parent', from: 'far', to: 'parent', fromCardinality: 'many', toCardinality: 'one' },
+    ],
+  };
+  function finalize() {
+    const directory = createScratchDirectory(path.join(os.tmpdir(), 'archify-erd-coincident-port-'));
+    const input = path.join(directory, 'erd.json');
+    const output = path.join(directory, 'erd.html');
+    fs.writeFileSync(input, JSON.stringify(diagram));
+    const result = spawnSync(process.execPath, [cli, 'finalize', 'erd', input, output, '--json'], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    return { output, summary: JSON.parse(result.stdout), routes: relationshipRoutes(fs.readFileSync(output, 'utf8')) };
+  }
+
+  const original = finalize();
+  const recommendation = original.summary.visualReviewRecommendation;
+  const [port] = recommendation.affectedRoutes.coincidentCardinalityPorts;
+  assert.equal(recommendation.signals.coincidentCardinalityPorts, 1);
+  assert.equal(port.entityId, 'parent');
+  assert.equal(port.side, 'left');
+  assert.deepEqual(port.point, original.routes[0].points.at(-1));
+  assert.deepEqual(port.ends.map(({ relationship, glyph, sideField }) => [relationship.id, glyph, sideField]),
+    [['near_parent', 'one', 'toSide'], ['far_parent', 'one', 'toSide']]);
+  assert.match(recommendation.repair, /fromSide or toSide/);
+  assert.deepEqual(artifactReceipt(original.output).receipt.composition.routeReview.coincidentCardinalityPorts, [port]);
+
+  Object.assign(diagram.relationships[1], { fromSide: 'right', toSide: 'right' });
+  const repaired = finalize();
+  assert.equal(repaired.summary.visualReviewRecommendation?.signals?.coincidentCardinalityPorts, undefined);
+  assert.deepEqual(repaired.routes[0], original.routes[0], 'an existing authored side stays put');
+  assert.notDeepEqual(repaired.routes[0].points.at(-1), repaired.routes[1].points.at(-1));
 });
 
 test('differently styled fan-in groups never share one trunk coordinate', () => {
