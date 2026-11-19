@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { fail } from '../core/index.mjs';
-import { resolveMapping } from '../overlay/inject.mjs';
+import { resolveMapping } from './diagram-mapping.mjs';
 
 const EVIDENCE_LIMIT = 8;
 const order = (a, b) => a < b ? -1 : a > b ? 1 : 0;

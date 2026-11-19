@@ -8,7 +8,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { ARCHIFY_AVAILABLE, ARCHIFY_PACKAGE, BAUIFY_ROOT } from './helpers.mjs';
-import { alignDiagram, buildOverlay, resolveMapping, scriptSafeJson } from '../overlay/inject.mjs';
+import { alignDiagram, buildOverlay, scriptSafeJson } from '../overlay/inject.mjs';
+import { resolveMapping } from '../lib/diagram-mapping.mjs';
 import { analyzeRepository } from '../overlay/page.mjs';
 import { DiagnosticError } from '../extract/shared/diagnostics.mjs';
 
