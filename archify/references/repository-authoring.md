@@ -116,7 +116,11 @@ With the finished diagram open, answer the original question using only what a
 reader can see. For a topology arrow, say who initiates the connection, who
 receives it and what crosses it. If the receiver forwards the operation, show
 that handoff or explicitly label the link as logical. For a branch, say what
-selects it. Compare the answer with the source that implements it. A qualifier
+selects it. For a question about where an output comes from, follow its inputs
+in the direction they travel. For example, a stored result supplies the report
+generator, which writes the report. If an arrow depicts a read request, label
+the operation so the reader can distinguish that request from the returned data.
+Compare the answer with the source that implements it. A qualifier
 in a card cannot fix an arrow that points at the wrong process.
 
 When independent review is available and allowed, give a fresh reader the

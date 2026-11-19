@@ -6,11 +6,12 @@ import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagra
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
 import { rendererFailure, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeTextFit } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
+import { automaticComponentPositions } from './automatic-placement.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
@@ -42,11 +43,15 @@ import {
 } from '../shared/geometry.mjs';
 
 const componentTextFit = {
+  titleCornerClearance: 40,
+  drilldownInset: 19,
+  sublabelScalable: 10.5,
   sublabelPreferred: 9,
   sublabelMinimum: 6,
   tagPreferred: 7,
   tagMinimum: 6,
 };
+const scalableComponentText = /^[ -~·←↑→↓、。！？：；「」，“”\p{Unified_Ideograph}\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3]+$/u;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const layoutJsonMode = process.argv.includes('--layout-json');
@@ -88,14 +93,43 @@ const LEGEND_CATALOG = [
   'external',
 ].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 
-// ---- Measure components from free coordinates --------------------------------
-function measureComponent(c) {
-  const [x, y] = resolveComponentPos(c, grid);
-  const [w, h] = Array.isArray(c.size) ? c.size : [layout.defaultW, layout.defaultH];
+function automaticComponentSize(c) {
+  const hasDrilldown = resolveNodeDrilldowns(c).length > 0;
+  const titleFont = scalableComponentText.test(c.label) ? 12 : 11;
+  const sublabelFont = scalableComponentText.test(c.sublabel ?? '')
+    ? componentTextFit.sublabelScalable : componentTextFit.sublabelPreferred;
+  const titleInset = Math.max(componentTextFit.titleCornerClearance,
+    layout.defaultW - brandLabelFitWidth(c, layout.defaultW));
+  const width = Math.ceil(Math.max(
+    layout.defaultW,
+    minimumNodeTextWidth(c.label, titleFont) + titleInset + nodeTextFit.horizontalPadding,
+    minimumNodeTextWidth(c.sublabel, sublabelFont) + nodeTextFit.horizontalPadding,
+    minimumNodeTextWidth(c.tag, componentTextFit.tagPreferred)
+      + (hasDrilldown ? 2 * componentTextFit.drilldownInset : nodeTextFit.horizontalPadding),
+  ));
+  // Leave space for neighboring cards and routes. Text that cannot fit at the
+  // legible minimum within this width still gets the usual overflow diagnostics.
+  return [Math.min(width, 256), c.sublabel && (c.tag || hasDrilldown) ? 72 : layout.defaultH];
+}
+
+const auto = arch.layout?.mode === 'auto';
+const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
+const fitInferredBoundaryNesting = auto && requiresNestedBoundaryMembership && !arch.meta?.viewBox
+  && arch.components.every(c => !c.pos);
+const sizedComponents = asArray(arch.components).map(c => [
+  c, c.size ?? (auto ? automaticComponentSize(c) : [layout.defaultW, layout.defaultH]),
+]);
+const automaticPositions = auto
+  ? automaticComponentPositions({ ...arch, components: sizedComponents.map(([c, size]) => ({ ...c, size })) })
+  : null;
+
+// ---- Measure components from resolved coordinates ----------------------------
+function measureComponent(c, [w, h]) {
+  const [x, y] = automaticPositions ? automaticPositions.get(c.id) : resolveComponentPos(c, grid);
   return { ...c, x, y, width: w, height: h, cx: x + w / 2, cy: y + h / 2 };
 }
 
-const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
+const components = new Map(sizedComponents.map(([c, size]) => [c.id, measureComponent(c, size)]));
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
@@ -145,6 +179,29 @@ function rectContains(outer, inner) {
     && outer.y <= inner.y + epsilon
     && outer.x + outer.width + epsilon >= inner.x + inner.width
     && outer.y + outer.height + epsilon >= inner.y + inner.height;
+}
+
+function containNestedBoundaryFrames(boundaries) {
+  if (!fitInferredBoundaryNesting) return boundaries;
+  const entries = boundaries.map(boundary => ({ boundary, members: new Set(boundary.wraps) }));
+  const innerFirst = [...entries].sort((a, b) => a.members.size - b.members.size);
+  for (const child of innerFirst) {
+    for (const parent of entries) {
+      if (child.members.size >= parent.members.size || rectContains(parent.boundary, child.boundary)) continue;
+      if (![...child.members].every(id => parent.members.has(id))) continue;
+      // The child may request more padding than its parent. Leave a visible
+      // gap between the frames without moving any inferred component.
+      const gap = 8;
+      const outer = parent.boundary;
+      const inner = child.boundary;
+      const x = Math.min(outer.x, inner.x - gap);
+      const y = Math.min(outer.y, inner.y - gap);
+      const right = Math.max(outer.x + outer.width, inner.x + inner.width + gap);
+      const bottom = Math.max(outer.y + outer.height, inner.y + inner.height + gap);
+      parent.boundary = { ...outer, x, y, width: right - x, height: bottom - y };
+    }
+  }
+  return entries.map(entry => entry.boundary);
 }
 
 function boundaryLabelWidth(label, fontSize) {
@@ -323,7 +380,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
     measured.set(index, { boundary, title });
   }
 
-  return rawBoundaries.map((_boundary, index) => {
+  const measuredFrames = rawBoundaries.map((_boundary, index) => {
     const { boundary, title } = measured.get(index);
     const bottom = boundary.y + boundary.height;
     // Profile-less schema-v1 inputs keep their legacy boundary geometry. A
@@ -339,6 +396,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
       title,
     };
   });
+  return containNestedBoundaryFrames(measuredFrames);
 }
 
 // ---- Routing state ----------------------------------------------------------
@@ -349,7 +407,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 // reads components, connections and the member-derived boundary frames (so an
 // automatic route never borrows a frame border as its corridor), never the
 // title-expanded frames or the viewBox.
-const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const rawBoundaries = containNestedBoundaryFrames(asArray(arch.boundaries).map(boundaryRect).filter(Boolean));
 const { pathFor, connectionSides, connectionEndpointSide } = createArchitectureRouter(components, arch.connections, {
   fixedCanvas: Boolean(arch.meta?.viewBox),
   frames: rawBoundaries.map((boundary) => ({
@@ -474,11 +532,10 @@ function validateArchitecture() {
   if (resolvedBoundaryTitles.readabilityProblem) {
     problems.push(resolvedBoundaryTitles.readabilityProblem);
   }
-  const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
   if (components.size !== asArray(arch.components).length) problems.push('Component ids must be unique.');
   if (grid) {
     validateGridPlacement(arch, grid, problems);
-  } else {
+  } else if (!automaticPositions) {
     for (const c of asArray(arch.components)) {
       if (!Array.isArray(c.pos) || c.pos.length !== 2) {
         problems.push(`Component "${c.id}" must include pos [x, y] when layout.mode is omitted (free placement).`);
@@ -1019,7 +1076,7 @@ function buildLayoutReport() {
   return {
     ok: true,
     diagram_type: 'architecture',
-    layout: grid ? { mode: 'grid', ...grid } : { mode: 'free' },
+    layout: grid ?? { mode: automaticPositions ? 'auto' : 'free' },
     viewBox,
     components: [...components.values()].map(componentBox),
     boundaries: boundaries.map(boundaryBox),
@@ -1092,8 +1149,6 @@ function renderConnectionLabel(conn, index) {
         </g>`;
 }
 
-const scalableComponentText = /^[ -~·←↑→↓、。！？：；「」，“”\p{Unified_Ideograph}\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3]+$/u;
-
 function componentBrandY(height) {
   return Math.min(6, Math.max(0, (height - 16) / 2));
 }
@@ -1107,14 +1162,14 @@ function componentTextRows(c, drilldowns) {
   // Keep the larger sublabel's descenders above the tag or drilldown mark.
   const sublabelLimit = bottom - (c.tag || drilldowns.length ? 18 : 6);
   const sublabelPreferred = hasSub && sublabelY + 3.5 <= sublabelLimit && scalableComponentText.test(c.sublabel)
-    ? 10.5
+    ? componentTextFit.sublabelScalable
     : componentTextFit.sublabelPreferred;
   const labelWidth = brandLabelFitWidth(c, c.width);
   const originalFontSize = fittedNodeFontSize(c.label, labelWidth, 11, 8);
   const titleRoom = labelY - c.y >= 22 && (!c.tag || bottom - 8 - labelY >= 14)
     && (!drilldowns.length || labelY + 4 <= bottom - 17);
   // A title close to the top row needs clearance from the corner icons.
-  const titleWidth = labelY - c.y < 38 ? Math.min(labelWidth, c.width - 40) : labelWidth;
+  const titleWidth = labelY - c.y < 38 ? Math.min(labelWidth, c.width - componentTextFit.titleCornerClearance) : labelWidth;
   const labelFontSize = titleRoom && scalableComponentText.test(c.label)
     ? Math.max(originalFontSize, fittedNodeFontSize(c.label, titleWidth, 14, 8))
     : originalFontSize;
@@ -1157,7 +1212,7 @@ function componentTextRows(c, drilldowns) {
         const left = c.icon !== 'none' && intersects(4, 19) ? 20 : 4;
         const rightInset = Math.max(4,
           labelWidth < c.width && intersects(brandY - 2, brandY + 18) ? 24 : 0,
-          drilldowns.length && intersects(c.height - 19, c.height - 3) ? 19 : 0);
+          drilldowns.length && intersects(c.height - componentTextFit.drilldownInset, c.height - 3) ? componentTextFit.drilldownInset : 0);
         const right = c.width - rightInset;
         const width = line.reduce((sum, row) => sum + row.width, (line.length - 1) * 6);
         if (width > right - left) break;

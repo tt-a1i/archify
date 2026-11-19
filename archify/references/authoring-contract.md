@@ -283,7 +283,22 @@ After every edit, rerun the complete `finalize` as the delivery contract require
 
 Choose overview or mechanism detail using [Composition and meaning](authoring-defaults.md#composition-and-meaning). Use one obvious primary reading path, which may step across meaningful rows when the requested topology needs room. Keep the overview readable at its chosen abstraction; expand implementation details when they answer the reader's question. Group only real ownership, trust, process, or deployment boundaries. Boundaries do not replace relationships.
 
-Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true. A boundary is drawn as the padded box around all of its members, so place them as one compact axis-aligned cluster (no empty bay that lets a non-member sit inside the padded frame) and keep every non-member outside that box; `layout/boundary-encloses-non-member` reports a component the box swallows in showcase quality. Standard retains its existing acceptance behavior.
+For a fresh Architecture, set `"layout": {"mode": "auto"}` at the top level. Supply the real components and directed connections. The renderer computes positions for components without a `pos` and measures cards with no `size` from their text. Let it fit the canvas by omitting `meta.viewBox`. For example, these top-level fields place the two endpoints of a relationship:
+
+```json
+{
+  "layout": {"mode": "auto"},
+  "components": [
+    {"id": "client", "type": "frontend", "label": "Client"},
+    {"id": "api", "type": "backend", "label": "API"}
+  ],
+  "connections": [{"from": "client", "to": "api", "label": "HTTP"}]
+}
+```
+
+Keep a supplied absolute location in the component’s `pos`. Explicit sizes, connection sides, waypoints and label positions continue to constrain the drawing. Use `mode: "grid"` for row/column assignments. A document that omits the layout mode keeps its existing coordinate contract. Inspect resolved component boxes and connection paths with `validate architecture <source.json> --layout-json` when a branch is hard to follow.
+
+Keep external actors outside the system boundary when that is factually true. A boundary is drawn as the padded box around all of its members, so place them as one compact axis-aligned cluster (no empty bay that lets a non-member sit inside the padded frame) and keep every non-member outside that box; `layout/boundary-encloses-non-member` reports a component the box swallows in showcase quality. Standard retains its existing acceptance behavior.
 
 ### Workflow
 
