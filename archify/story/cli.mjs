@@ -635,7 +635,8 @@ async function runStoryValidateCommand(spec, opts) {
 
 async function runStorySvgCommand(spec, opts) {
   const outputArg = opts.positional.at(-1);
-  const themes = themesFor(opts.theme || spec.rawSpec.theme || 'both');
+  const bridge = spec.mode === 'bridge';
+  const themes = themesFor(opts.theme || spec.rawSpec.theme || (bridge ? 'light' : 'both'));
   const bundle = await prepareChoreographyBundle({
     rawSpec: spec.rawSpec,
     baseDir: spec.baseDir,
@@ -648,7 +649,24 @@ async function runStorySvgCommand(spec, opts) {
   });
   const allInputPaths = [...new Set([...spec.inputPaths, ...bundle.inputPaths])];
   const outPaths = exportOutputPaths(outputArg, themes);
-  const stillTimes = bundle.plan.stills?.length ? bundle.plan.stills : (opts.still ? [null] : []);
+  const stillTimes = bundle.plan.stills?.length ? bundle.plan.stills : bridge ? [0] : opts.still ? [null] : [];
+  const stillPaths = new Map(themes.map(theme => [theme, stillTimes.map((_, stillIndex) => stillOutputPath({
+    outputArg, themes, theme, stillCount: bundle.plan.stills?.length || 0, stillIndex,
+  }))]));
+  const destinations = [...Object.values(outPaths), ...[...stillPaths.values()].flat()];
+  const siblingPaths = requestedOutput => destinations.filter(file => file !== requestedOutput);
+  for (const requestedOutput of destinations) {
+    const { outputPath } = resolveOutputPath({
+      requestedOutput, requiredExtension: '.svg', inputPaths: allInputPaths, otherOutputPaths: siblingPaths(requestedOutput),
+      inputDescription: 'the story choreography or view input',
+    });
+    const existing = fs.statSync(outputPath, { throwIfNoEntry: false });
+    if (existing && !existing.isFile()) {
+      failChoreography('output/invalid-target', 'output', 'Story SVG output must target a regular file.', {
+        subject: { output: outputPath }, supportedFixes: ['choose a filename that does not already name a directory or another special file'],
+      });
+    }
+  }
   const outputs = [];
   const stills = [];
   let meta = null;
@@ -669,20 +687,19 @@ async function runStorySvgCommand(spec, opts) {
       requiredExtension: '.svg',
       inputPaths: allInputPaths,
       content: animated.svg,
+      otherOutputPaths: siblingPaths(outPaths[theme]),
     });
     outputs.push({ theme, path: safeOut, bytes: Buffer.byteLength(animated.svg, 'utf8'), sha256: sha256(animated.svg) });
 
     for (const [si, atTime] of stillTimes.entries()) {
       const stillCompiled = compiledTheme.renderStillSvg(atTime);
-      const rawStillPath = stillOutputPath({
-        outputArg, themes, theme, stillCount: bundle.plan.stills?.length || 0, stillIndex: si,
-      });
+      const rawStillPath = stillPaths.get(theme)[si];
       const safeStill = writeValidatedStoryFile({
         requestedOutput: rawStillPath,
         requiredExtension: '.svg',
         inputPaths: allInputPaths,
         content: stillCompiled.svg,
-        otherOutputPaths: [safeOut],
+        otherOutputPaths: siblingPaths(rawStillPath),
       });
       stills.push({
         time: atTime ?? Math.max(0, bundle.plan.duration - 0.5),
@@ -729,7 +746,7 @@ function compileStoryStage(bundle, defaultTheme) {
 async function runStoryVideoCommand(spec, opts, defaultTheme) {
   const outputArg = opts.positional.at(-1);
   const ext = path.extname(outputArg).toLowerCase();
-  const format = opts.format || (ext === '.webm' ? 'webm' : 'mp4');
+  const format = opts.format || (ext === '.mp4' ? 'mp4' : 'webm');
   const requiredExt = format === 'webm' ? '.webm' : '.mp4';
   if ((ext === '.mp4' || ext === '.webm') && ext !== requiredExt) {
     failChoreography('cli/unsupported-option', 'arguments', `Output extension "${ext}" does not match --format ${format}.`, {

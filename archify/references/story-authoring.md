@@ -2,7 +2,7 @@
 
 Archify provides two complementary story workflows:
 
-1. **Viewer walkthrough attachment** (`story scan | draft | attach`): enhances a single native HTML diagram with in-Viewer playback, soundtrack synthesis, and offline 1080p MP4 export.
+1. **Viewer walkthrough attachment** (`story scan | draft | attach`): enhances a single native HTML diagram with in-Viewer playback, soundtrack synthesis, and offline 1080p WebM or MP4 export.
 2. **Component choreography & standalone deliverables** (`story validate | svg | stage | video`): orchestrates one or more native diagrams (via a `story-choreography` JSON spec or an existing `<native.html> <brief.json>` pair) into dual-theme animated `.svg`, static `.still.svg`, interactive `.stage.html`, or direct headless-Chrome 1080p `.mp4`/`.webm` video.
 
 ## 1. Viewer attachment (`scan`, `draft`, `attach`)
@@ -45,7 +45,7 @@ Selection & motion rules:
 - `anchor` selects a node; optional `via` selects an edge ID or array. Point or scene `action`: `trace` follows edges in order, `parallel` shows branches together, `relation` shows associations without live token transfer (default for `erd`, `class`, `tree`, `timeline`, `waterfall`).
 - For code excerpts, pass `--repo-root <repository>` to `story attach`. Point `code` selects `node` (default: `anchor`), `source` index, optional `fromLine`, `toLine`, and `emphasis` line numbers within verified bounds (at most 20 lines).
 
-Attached Viewer video export defaults to **MP4 (H.264/AAC), 1080p at 60 fps**. Downloads stream progressively via `showSaveFilePicker` when supported. Programmatic `Archify.story.exportVideo()` returns a Blob; pass `{format: "webm"}` explicitly for VP9/Opus. Unsupported codecs fail closed before rendering without changing the requested format.
+Attached Viewer video export defaults to **WebM (VP9/Opus), 1080p at 60 fps**. The export menu offers WebM and MP4. Downloads stream via `showSaveFilePicker` when supported. Programmatic `Archify.story.exportVideo()` returns a Blob. Pass `{format: "mp4"}` to request H.264/AAC.
 
 ## 2. Component choreography (`validate`, `svg`, `stage`, `video`)
 
@@ -59,6 +59,7 @@ node bin/archify.mjs story video <choreography.json> <out.mp4|out.webm> [--forma
 ```
 
 `svg`, `stage`, and `video` also accept the 3-positional single-diagram bridge `<native.html> <brief.json> <out>` to compile an existing brief into standalone SVGs, a stage player, or MP4/WebM video.
+With the single-diagram bridge, `story svg diagram.html brief.json story.svg` writes the animated `story.svg` and the static first frame `story.still.svg`. Use `--theme both` to produce one pair per theme.
 
 Minimal `story-choreography` spec (validated against `schemas/story-choreography.schema.json`):
 
@@ -90,6 +91,6 @@ Key capabilities & guardrails:
 
 The story palette follows the effective preset of the first declared view, or of the native diagram when using the single-HTML bridge. Code details accept up to 20 source lines. The Stage opens paused when reduced motion is preferred and still supports scrubbing, explicit playback, and video export. Standalone animated SVGs use a static overview under that preference.
 
-Stage MP4 is video-only and requires an H.264-capable Chrome. Attached Story MP4 also includes AAC audio. Choose WebM explicitly with `story video ... out.webm --format webm`, the Stage WebM button, or `Archify.story.exportVideo({format:'webm'})` in an attached Viewer. Unsupported codecs produce an error instead of silently changing format.
+Stage MP4 is video-only and requires an H.264-capable Chrome. Attached Story MP4 also includes AAC audio. Request MP4 with a `.mp4` CLI output, `--format mp4`, the Stage MP4 button, or `Archify.story.exportVideo({format:'mp4'})` in an attached Viewer. Unsupported codecs produce a format-specific error.
 
 CLI publication is atomic per file: rendering/encoding failures leave the destination intact; publication/cleanup errors report any recovery paths. A multi-output SVG command may already have published earlier outputs when a later output fails. Inspect those files before retrying with distinct output names. Playback controls are locked during a Stage video export and restored, with the reader's position, on success, failure, or cancellation. Existing `story scan|draft|attach` commands remain available independently of choreography.

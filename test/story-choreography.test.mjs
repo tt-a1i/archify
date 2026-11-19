@@ -250,12 +250,18 @@ test('3-positional story svg and story stage bridge existing native HTML and ver
   }, null, 2));
 
   const outSvg = path.join(dir, 'single.svg');
-  const svgRes = run(['story', 'svg', htmlPath, briefPath, outSvg, '--theme', 'light', '--still', '--json'], dir);
+  const svgRes = run(['story', 'svg', htmlPath, briefPath, outSvg, '--json'], dir);
   assert.equal(svgRes.status, 0, svgRes.stdout + svgRes.stderr);
   const svgJson = JSON.parse(svgRes.stdout);
-  assert.equal(svgJson.outputs[0].path, outSvg);
+  assert.deepEqual(svgJson.outputs.map(item => item.path), [outSvg]);
   parseXml(fs.readFileSync(outSvg, 'utf8'));
-  assert.equal(fs.existsSync(svgJson.stills[0].path), true);
+  assert.deepEqual(svgJson.stills.map(item => [item.path, item.time]), [[path.join(dir, 'single.still.svg'), 0]]);
+  parseXml(fs.readFileSync(svgJson.stills[0].path, 'utf8'));
+  const blockedSvg = path.join(dir, 'blocked.svg');
+  fs.mkdirSync(path.join(dir, 'blocked.still.svg'));
+  const blocked = run(['story', 'svg', htmlPath, briefPath, blockedSvg, '--json'], dir);
+  assert.notEqual(blocked.status, 0);
+  assert.equal(fs.existsSync(blockedSvg), false, 'an invalid static destination also blocks animated SVG publication');
 
   const outStage = path.join(dir, 'single-stage.html');
   const stageRes = run(['story', '--theme', 'light', 'stage', htmlPath, briefPath, outStage, '--json'], dir);

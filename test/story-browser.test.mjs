@@ -149,7 +149,7 @@ test('a public story attaches once, follows native appearance and retains source
   }
   await evaluate('Archify.exportMenu.run("svg")',true);assert.equal(await evaluate('document.documentElement.dataset.lastExportCanonical'),'true');
   assert.deepEqual(await evaluate('[...document.querySelectorAll("#export-menu [data-format]")].map(button=>[button.dataset.format,button.textContent,button.hidden,button.disabled])'),exportsBefore);
-  assert.equal(await evaluate('[...document.querySelectorAll("#export-menu button")].at(-1).dataset.action'),'story-video');
+  assert.deepEqual(await evaluate('[...document.querySelectorAll("#export-menu button[data-story-format]")].map(button=>button.dataset.storyFormat)'),['webm','mp4']);
   await evaluate('Archify.story.setView("live")',true);assert.deepEqual(await evaluate(snapshot),original);assert.equal(await evaluate('document.querySelector("#reader-rail > .cards")===window.nativeNotes'),true);
   await evaluate('Promise.all([Archify.story.setView("story"),Archify.story.setView("still")])',true);assert.equal(await evaluate('Archify.story.state().view'),'native');
   await evaluate('Promise.all([Archify.story.play(),Archify.story.setView("still")])',true);
@@ -333,7 +333,7 @@ test('story snapshots preserve appearance across styles, cascade capabilities an
   }finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:animated.identifier});}
 });
 
-test('MP4 is the default story export and streamed failures preserve the file boundary',{
+test('Story keeps WebM as the default and explicit MP4 preserves the file boundary',{
   timeout:120000,skip:chrome?false:'Set ARCHIFY_CHROME for story MP4 export.'
 },async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-mp4-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
@@ -346,13 +346,18 @@ test('MP4 is the default story export and streamed failures preserve the file bo
   const send=(method,params={})=>browser.cdp.send(method,params,session,60000);
   const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});assert.equal(r.exceptionDetails,undefined,r.exceptionDetails?.exception?.description);return r.result.value;};
   const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(output).href});await loaded;
-  assert.equal(await evaluate('Archify.story.defaults.format'),'mp4');
+  assert.equal(await evaluate('Archify.story.defaults.format'),'webm');
+  const defaultType=await evaluate('(async()=>{const blob=await Archify.story.exportVideo({seconds:.1});return blob.type;})()');
+  assert.equal(defaultType,'video/webm');
+  const pickers=await evaluate(`(async()=>{const options=[];window.showSaveFilePicker=async value=>{options.push(value);throw new DOMException('Canceled','AbortError');};for(const format of ['webm','mp4'])document.querySelector('[data-story-format="'+format+'"]').click();await new Promise(resolve=>setTimeout(resolve,0));return options;})()`);
+  assert.deepEqual(pickers.map(picker=>picker.suggestedName.split('.').at(-1)),['webm','mp4']);
+  assert.deepEqual(pickers.map(picker=>picker.types[0].accept),[{'video/webm':['.webm']},{'video/mp4':['.mp4']}]);
   const supports=await evaluate("(async()=>typeof AudioEncoder!=='undefined'&&(await AudioEncoder.isConfigSupported({codec:'mp4a.40.2',sampleRate:48000,numberOfChannels:2,bitrate:192000})).supported)()");
   if(!supports){
-    const message=await evaluate("(async()=>{try{await Archify.story.exportVideo({seconds:.1});return '';}catch(error){return error.message;}})()");
+    const message=await evaluate("(async()=>{try{await Archify.story.exportVideo({format:'mp4',seconds:.1});return '';}catch(error){return error.message;}})()");
     assert.match(message,/H.264 and AAC/);assert.equal(await evaluate('!!document.querySelector(".story-render-frame")'),false);return;
   }
-  const result=await evaluate(`(async()=>{const blob=await Archify.story.exportVideo({seconds:.1});window.mp4=blob;const bytes=new Uint8Array(await blob.arrayBuffer());return {type:blob.type,header:new TextDecoder().decode(bytes.slice(4,8)),base64:await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(blob);})};})()`);
+  const result=await evaluate(`(async()=>{const blob=await Archify.story.exportVideo({format:'mp4',seconds:.1});window.mp4=blob;const bytes=new Uint8Array(await blob.arrayBuffer());return {type:blob.type,header:new TextDecoder().decode(bytes.slice(4,8)),base64:await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(blob);})};})()`);
   assert.equal(result.type,'video/mp4');assert.equal(result.header,'ftyp');
   const file=path.join(dir,'story.mp4');fs.writeFileSync(file,Buffer.from(result.base64,'base64'));
   if(ffmpegBin){
@@ -361,17 +366,15 @@ test('MP4 is the default story export and streamed failures preserve the file bo
     assert.equal(video.codec_name,'h264');assert.equal(audio.codec_name,'aac');assert.equal(video.width,1920);assert.equal(video.height,1080);assert.equal(video.r_frame_rate,'60/1');assert.equal(Number(video.nb_frames),6,'the requested interval retains every frame, including the end');
     execFileSync(ffmpegBin,['-v','error','-i',file,'-f','null','-'],{timeout:20000});
   }
-  const failure=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({seconds:.1,writer:{write:async()=>{events.push('write');throw Error('disk full');},close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {events,message:error.message,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
+  const failure=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({format:'mp4',seconds:.1,writer:{write:async()=>{events.push('write');throw Error('disk full');},close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {events,message:error.message,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
   assert.match(failure.message,/disk full/);assert.ok(failure.events.includes('write'));assert.deepEqual(failure.events.filter(e=>e!=='write'),['abort']);assert.equal(failure.frames,0);
-  const canceled=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({seconds:1,onProgress:()=>Archify.story.cancelExport(),writer:{write:async()=>events.push('write'),close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {name:error.name,events,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
+  const canceled=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({format:'mp4',seconds:1,onProgress:()=>Archify.story.cancelExport(),writer:{write:async()=>events.push('write'),close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {name:error.name,events,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
   assert.equal(canceled.name,'AbortError');assert.equal(canceled.events.includes('close'),false);assert.equal(canceled.events.filter(e=>e==='abort').length,1);assert.equal(canceled.frames,0);
-  const streamed=await evaluate(`(async()=>{const parts=[],events=[];const result=await Archify.story.exportVideo({seconds:.1,writer:{write:async chunk=>{parts.push(chunk);events.push('write');},close:async()=>events.push('close'),abort:async()=>events.push('abort')}});const data=new Uint8Array(result.size);for(const part of parts)data.set(new Uint8Array(part.data),part.position);return {type:result.type,header:new TextDecoder().decode(data.slice(4,8)),events};})()`);
+  const streamed=await evaluate(`(async()=>{const parts=[],events=[];const result=await Archify.story.exportVideo({format:'mp4',seconds:.1,writer:{write:async chunk=>{parts.push(chunk);events.push('write');},close:async()=>events.push('close'),abort:async()=>events.push('abort')}});const data=new Uint8Array(result.size);for(const part of parts)data.set(new Uint8Array(part.data),part.position);return {type:result.type,header:new TextDecoder().decode(data.slice(4,8)),events};})()`);
   assert.equal(streamed.type,'video/mp4');assert.equal(streamed.header,'ftyp');assert.equal(streamed.events.at(-1),'close');assert.equal(streamed.events.includes('abort'),false);
-  const picker=await evaluate(`(async()=>{window.showSaveFilePicker=async options=>{window.pickerOptions=options;throw new DOMException('Canceled','AbortError');};document.querySelector('[data-action="story-video"]').click();await new Promise(resolve=>setTimeout(resolve,0));return pickerOptions;})()`);
-  assert.ok(picker.suggestedName.endsWith('.mp4'));assert.deepEqual(picker.types[0].accept,{'video/mp4':['.mp4']});
   const unsupported=await send('Page.addScriptToEvaluateOnNewDocument',{source:"AudioEncoder.isConfigSupported=async config=>({config,supported:false});"});
   try{
-    const result=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({seconds:.1,writer:{write:async()=>events.push('write'),close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {events,message:error.message,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
+    const result=await evaluate(`(async()=>{const events=[];try{await Archify.story.exportVideo({format:'mp4',seconds:.1,writer:{write:async()=>events.push('write'),close:async()=>events.push('close'),abort:async()=>events.push('abort')}});}catch(error){return {events,message:error.message,frames:document.querySelectorAll('.story-render-frame').length};}})()`);
     assert.match(result.message,/H.264 and AAC/);assert.deepEqual(result.events,['abort']);assert.equal(result.frames,0,'unsupported encoding leaves no export frame or partial file');
   }finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:unsupported.identifier});}
 });

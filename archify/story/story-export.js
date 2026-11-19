@@ -53,7 +53,7 @@ globalThis.StoryExport=(()=>{
     mp4:{videoCodec:'avc1.64002a',audioCodec:'mp4a.40.2'},
     webm:{videoCodec:'vp09.00.41.08',audioCodec:'opus'},
   };
-  async function encode({start=0,seconds=Story.duration-start,signal,onProgress=()=>{},format='mp4'}={},writer){
+  async function encode({start=0,seconds=Story.duration-start,signal,onProgress=()=>{},format='webm'}={},writer){
     const selected=Object.hasOwn(formats,format)&&formats[format];if(!selected)throw Error('Choose MP4 or WebM.');
     if(!Number.isFinite(start)||!Number.isFinite(seconds)||start<0||seconds<=0||start+seconds>Story.duration+.001)throw Error('Invalid export range.');
     const samples=Math.ceil(seconds*48000),frames=Math.ceil(seconds*fps);
@@ -111,5 +111,5 @@ globalThis.StoryExport=(()=>{
       check();throw error;
     }finally{signal?.removeEventListener('abort',cancel);cancel();await mux?.settle();target.width=target.height=1;}
   }
-  return {defaults:{width,height,fps,format:'mp4'},image,png:options=>image({...options,format:'png'}),video:options=>encode(options),writeVideo:(writer,options)=>encode(options,writer)};
+  return {defaults:{width,height,fps,format:'webm'},image,png:options=>image({...options,format:'png'}),video:options=>encode(options),writeVideo:(writer,options)=>encode(options,writer)};
 })();

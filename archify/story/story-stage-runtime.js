@@ -318,7 +318,7 @@
     start = 0,
     seconds = meta.duration - start,
     fps = DEFAULT_FPS,
-    format = 'mp4',
+    format = 'webm',
     onProgress = () => {},
     signal,
   } = {}, writer) {
@@ -491,7 +491,7 @@
     writeVideo: (writer, options) => startVideoExport(options, writer),
     cancelExport: () => activeJob?.abort(),
     duration: meta.duration,
-    defaults: { width: WIDTH, height: HEIGHT, fps: DEFAULT_FPS, format: 'mp4' },
+    defaults: { width: WIDTH, height: HEIGHT, fps: DEFAULT_FPS, format: 'webm' },
     state: () => ({ theme: currentTheme, playing, time: currentTime, duration: meta.duration, steps: meta.steps }),
   };
   window.ArchifyStoryStage = api;

@@ -95,41 +95,49 @@
       if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();const story=player?.contentWindow?.Story;story?.pause();story?.seek(state().time+(event.key==='ArrowLeft'?-2:2));}
     },true);
     document.querySelector('#btn-present')?.addEventListener('click',event=>{if(view!=='story')return;event.preventDefault();event.stopImmediatePropagation();(document.fullscreenElement?document.exitFullscreen():panel.requestFullscreen()).catch(showError);},true);
-    const section=element('div','export-menu-section'),videoButton=element('button'),videoCopy=element('span','export-item-copy');
-    section.lang='en';section.setAttribute('role','group');section.setAttribute('aria-label','Story');videoButton.type='button';videoButton.dataset.action='story-video';videoButton.setAttribute('role','menuitem');videoButton.tabIndex=-1;
-    videoCopy.append(element('strong','','Story video'),element('small','hint','MP4 · 1080p · 60 fps'));videoButton.append(videoCopy);section.append(videoButton);exportMenu.append(section);
-    const nativeVideo=exportMenu.querySelector('[data-format="webm"]');if(nativeVideo)videoButton.style.setProperty('--story-export-icon',getComputedStyle(nativeVideo,'::before').maskImage);
+    const defaultFormat='webm',section=element('div','export-menu-section');
+    section.lang='en';section.setAttribute('role','group');section.setAttribute('aria-label','Story');
+    const nativeVideo=exportMenu.querySelector('[data-format="webm"]');
+    const videoButtons=[[defaultFormat,'WebM'],['mp4','MP4']].map(([format,label])=>{
+      const button=element('button'),copy=element('span','export-item-copy');
+      button.type='button';button.dataset.action='story-video';button.dataset.storyFormat=format;button.setAttribute('role','menuitem');button.tabIndex=-1;
+      copy.append(element('strong','','Story video · '+label),element('small','hint','1080p · 60 fps'));button.append(copy);
+      if(nativeVideo)button.style.setProperty('--story-export-icon',getComputedStyle(nativeVideo,'::before').maskImage);
+      button.onclick=()=>{if(!button.disabled)downloadVideo(format).catch(showError);};
+      section.append(button);return button;
+    });
+    exportMenu.append(section);
     const status=element('div','story-export-status'),statusText=element('span'),cancel=element('button','','Cancel');status.lang='en';status.setAttribute('role','status');status.hidden=true;cancel.type='button';status.append(statusText,cancel);document.body.append(status);cancel.onclick=()=>job?.abort();
     function message(text,cancellable=false){clearTimeout(statusTimer);status.hidden=false;statusText.textContent=text;cancel.hidden=!cancellable;if(!cancellable)statusTimer=setTimeout(()=>status.hidden=true,6000);}
     function showError(error){message(error.name==='AbortError'?'Export cancelled.':error.message||String(error));}
     async function render(kind,options={}){
       const writer=kind==='video'?options.writer:undefined;
       if(job){try{await writer?.abort();}catch{}throw Error('A story export is already running.');}job=new AbortController();const controller=job,frame=element('iframe','story-render-frame');frame.title='Story export';frame.setAttribute('aria-hidden','true');
-      videoButton.disabled=true;message(kind==='video'?'Preparing story video · 1080p · 60 fps…':'Exporting story image…',true);
+      videoButtons.forEach(button=>{button.disabled=true;});message(kind==='video'?'Preparing story video · 1080p · 60 fps…':'Exporting story image…',true);
       const sourceTime=options.time??state().time,ready=loadFrame(frame,appearance(),true);document.body.append(frame);
       try{
         const win=await ready;win.Story.setSound(false);
-        const videoOptions={...options,signal:controller.signal,onProgress:event=>{message('Exporting story video · '+Math.round(event.fraction*100)+'% · '+(options.format||'mp4').toUpperCase()+' · 1080p · 60 fps',true);options.onProgress?.(event);}};
+        const format=options.format??defaultFormat;
+        const videoOptions={...options,format,signal:controller.signal,onProgress:event=>{message('Exporting story video · '+Math.round(event.fraction*100)+'% · '+format.toUpperCase()+' · 1080p · 60 fps',true);options.onProgress?.(event);}};
         const blob=kind==='video'?(writer?await win.StoryExport.writeVideo(writer,videoOptions):await win.StoryExport.video(videoOptions)):await win.StoryExport.image({time:sourceTime,signal:controller.signal,format:kind});
         if(controller.signal.aborted)throw new DOMException('Export cancelled.','AbortError');
         if(writer)await writer.close();
-        root.dataset.lastStoryExportFormat=kind==='video'?(options.format||'mp4'):kind;root.dataset.lastStoryExportWidth='1920';root.dataset.lastStoryExportHeight='1080';root.dataset.lastStoryExportFps=kind==='video'?'60':'0';root.dataset.lastStoryExportBytes=blob.size;
+        root.dataset.lastStoryExportFormat=kind==='video'?format:kind;root.dataset.lastStoryExportWidth='1920';root.dataset.lastStoryExportHeight='1080';root.dataset.lastStoryExportFps=kind==='video'?'60':'0';root.dataset.lastStoryExportBytes=blob.size;
         message('Story '+(kind==='video'?'video':'image')+' exported.');return writer?blob:new Blob([blob],{type:blob.type});
       }catch(error){try{await writer?.abort(error);}catch{}showError(error);throw error;}
-      finally{frame.remove();job=undefined;videoButton.disabled=false;}
+      finally{frame.remove();job=undefined;videoButtons.forEach(button=>{button.disabled=false;});}
     }
-    async function downloadVideo(){
+    async function downloadVideo(format){
       Archify.exportMenu.close(true);
-      const filename=document.title.replace(/[<>:"/\\|?*]/g,'-').slice(0,80)+'-story.mp4';
+      const ext='.'+format,filename=document.title.replace(/[<>:"/\\|?*]/g,'-').slice(0,80)+'-story'+ext;
       if(typeof showSaveFilePicker==='function'){
-        const handle=await showSaveFilePicker({suggestedName:filename,types:[{description:'MP4 video',accept:{'video/mp4':['.mp4']}}]});
-        const writer=await handle.createWritable();return render('video',{writer});
+        const handle=await showSaveFilePicker({suggestedName:filename,types:[{description:(format==='webm'?'WebM':'MP4')+' video',accept:{['video/'+format]:[ext]}}]});
+        const writer=await handle.createWritable();return render('video',{writer,format});
       }
-      const blob=await render('video'),url=URL.createObjectURL(blob),link=element('a');
+      const blob=await render('video',{format}),url=URL.createObjectURL(blob),link=element('a');
       link.href=url;link.download=filename;link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);return blob;
     }
-    videoButton.onclick=()=>{if(!videoButton.disabled)downloadVideo().catch(showError);};
-    Archify.story={setView,state,seek:time=>player?.contentWindow?.Story?.seek(time),play:async()=>{await setView('story');if(view==='story')return player.contentWindow.Story.play();},pause:()=>player?.contentWindow?.Story?.pause(),setSound:on=>player?.contentWindow?.Story?.setSound(on),exportVideo:options=>render('video',options),exportPNG:options=>render('png',options),cancelExport:()=>job?.abort(),defaults:{width:1920,height:1080,fps:60,format:'mp4'}};
+    Archify.story={setView,state,seek:time=>player?.contentWindow?.Story?.seek(time),play:async()=>{await setView('story');if(view==='story')return player.contentWindow.Story.play();},pause:()=>player?.contentWindow?.Story?.pause(),setSound:on=>player?.contentWindow?.Story?.setSound(on),exportVideo:options=>render('video',options),exportPNG:options=>render('png',options),cancelExport:()=>job?.abort(),defaults:{width:1920,height:1080,fps:60,format:defaultFormat}};
     refresh();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
