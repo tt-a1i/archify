@@ -750,6 +750,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     groupFooterHeights,
     nodeOffsets,
     compactLaneWidth,
+    laneLabelWidth,
     colXs,
     nodeW: 92,
     nodeH: 52,
@@ -1563,6 +1564,7 @@ const {
 } = laneGeometry;
 let viewBox = laneGeometry.initialViewBox;
 let requiredViewBox = [...viewBox];
+let renderedLaneWidth = layout.laneW;
 let measuredPlanReady = false;
 
 function workflowLegendLayout(obstacles = []) {
@@ -5332,11 +5334,12 @@ function labelRectFor(edge, relationIndex) {
   return rect;
 }
 
-function measuredContentBounds() {
+function measuredContentBounds(fitOccupiedRanks = false) {
   let left = layout.laneX;
   let top = 27;
-  let right = layout.laneX + layout.laneW;
-  let bottom = legendY() + 18;
+  let right = fitOccupiedRanks ? layout.laneX : layout.laneX + layout.laneW;
+  let bottom = fitOccupiedRanks && !workflowLegendEntries.length
+    ? lastLaneBottom() + 18 : legendY() + 18;
   const owners = {
     left: 'workflow lanes',
     top: asArray(workflow.phases).length ? 'phase header band' : 'workflow top padding',
@@ -5420,7 +5423,31 @@ function measuredContentBounds() {
   };
 }
 
+function canFitOccupiedRanks() {
+  if (workflow.schema_version !== 2 || workflow.lanes.length < 2 || preservesWorkflowAbsoluteGeometry(workflow)
+    || hasVerticalStack(workflow)) return false;
+  const lastRank = layout.colXs.length - 1;
+  const occupiedRanks = new Set(workflow.nodes.map(({ col }) => col));
+  return occupiedRanks.size > 1 && !occupiedRanks.has(lastRank)
+    && asArray(workflow.phases).every(({ toCol }) => toCol < lastRank)
+    && asArray(workflow.groups).every(({ toCol }) => toCol < lastRank);
+}
+
 function measuredPlanFootprint() {
+  if (canFitOccupiedRanks()) {
+    // Route within the full rank plan first. A route using the outer right
+    // corridor already reaches past the frame and prevents it from shrinking.
+    const bounds = measuredContentBounds(true);
+    const laneWidth = Math.ceil(Math.max(layout.laneLabelWidth, bounds.right - layout.laneX + 8));
+    if (laneWidth < layout.laneW) {
+      bounds.right = layout.laneX + laneWidth;
+      return {
+        bounds,
+        laneWidth,
+        requiredViewBox: [bounds.right + 16, Math.ceil(bounds.bottom + 18)],
+      };
+    }
+  }
   const bounds = measuredContentBounds();
   return {
     bounds,
@@ -5458,6 +5485,7 @@ function finalizeReadableViewBox() {
     }]);
   }
   if (!workflow.meta?.viewBox) {
+    renderedLaneWidth = footprint.laneWidth ?? layout.laneW;
     viewBox = [...requiredViewBox];
     return;
   }
@@ -5495,11 +5523,11 @@ function renderLane(lane, index) {
   const y = laneTop(lane.id);
   const height = laneHeight(index);
   const exception = lane.variant === 'exception'
-    ? `\n        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-${index}-exception" x="${layout.laneX + 6}" y="${y + 6}" width="${layout.laneW - 12}" height="${height - 12}" rx="8" class="c-security-group" stroke-width="1"/>`
+    ? `\n        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-${index}-exception" x="${layout.laneX + 6}" y="${y + 6}" width="${renderedLaneWidth - 12}" height="${height - 12}" rx="8" class="c-security-group" stroke-width="1"/>`
     : '';
   const labelClass = lane.variant === 'exception' ? 't-security' : 't-muted';
   const prefix = lane.variant === 'exception' ? 'EX' : String(index + 1).padStart(2, '0');
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}" x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}" x="${layout.laneX}" y="${y}" width="${renderedLaneWidth}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
         <text x="${layout.laneX + 14}" y="${y + 22}" class="${labelClass}" font-size="10" font-weight="600">${prefix} / ${esc(lane.label)}</text>`;
 }
 

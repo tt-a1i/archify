@@ -184,6 +184,11 @@ growth with a legal channel instead of widening every downstream rank. Measured
 multi-row legends participate in intrinsic height and explicit viewBox
 capacity.
 
+For an implicit horizontal workflow with multiple lanes and unused trailing
+columns, the compiler can fit the lane frames and canvas to the measured scene
+after routing. Nodes, routes, labels, and legend placement keep their positions.
+An outside-right route or a wide lane heading can preserve the full width.
+
 ### Vertical workflows
 
 For a top-to-bottom chain, place every step in the same lane and column and
