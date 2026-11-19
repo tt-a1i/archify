@@ -310,7 +310,7 @@
           },
           "sourceRange": {
             "$ref": "#/$defs/sourceRange",
-            "description": "Exact decoded definition slice: Java CST declaration including modifiers, or Python def/async def through AST end excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 and java-static-lexical-v1 functions; absent in historical captures."
+            "description": "Exact decoded implementation slice. Java includes modifiers; Python starts at def/async def and excludes preceding decorators; JS/TS starts at the function or arrow and ends at its body. One-based UTF-16 columns; end exclusive; SHA256 of the UTF-8 encoded slice. Required for current python-lexical and java-static-lexical measurements and JS/TS adapter revision 23 onward. Earlier JS/TS captures may omit it."
           },
           "definition": {
             "type": "object",

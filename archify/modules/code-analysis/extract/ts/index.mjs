@@ -17,7 +17,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 22;
+export const REVISION = 23;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -38,14 +38,14 @@ const COMPILER_OPTIONS = {
   target: ts.ScriptTarget.ESNext,
 };
 
-export function extract(root, config, { onCapture } = {}) {
+export function extract(root, config, { onCapture, capturedOnly = false } = {}) {
   const absRoot = path.resolve(root);
   const include = matcher(config.include), exclude = matcher(config.exclude);
   const selected = file => SOURCE_EXT.test(file) && include(file) && !exclude(file)
     && !file.split('/').slice(0, -1).some((_, i, parts) => exclude(`${parts.slice(0, i + 1).join('/')}/`));
   const snapshot = snapshotTree(absRoot, file => selected(file) || file.endsWith('.json'));
   const files = snapshot.names.filter(selected);
-  const inputs = snapshotHost(absRoot, snapshot);
+  const inputs = snapshotHost(absRoot, snapshot, { capturedOnly });
   const options = compilerOptions(absRoot, inputs);
   const fileSet = new Set(files);
   const programOptions = {
@@ -121,7 +121,9 @@ export function extract(root, config, { onCapture } = {}) {
   inputs.assertUnchanged();
   // Markers come from the frozen inventory, like every other resolution input.
   const packageMarkers = packageMarkersIn(snapshot.names, config);
-  const repo = describeRepository(absRoot);
+  const repo = capturedOnly
+    ? { revision: null, baseRevision: null, sourceKind: 'working-tree', root: '.', url: null }
+    : describeRepository(absRoot);
   return {
     schema_version: 1,
     repository: { ...repo, language: 'ts', adapter: `typescript@${ts.version}`, adapterRevision: REVISION },
