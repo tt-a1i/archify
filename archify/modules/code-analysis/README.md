@@ -4,6 +4,8 @@ Start Archify with `npm start -- "/path/to/project" [--locale zh-CN]` from the A
 
 [Quick start guide](docs/USAGE.md) — installation, startup, and viewing analysis results.
 
+To investigate a requested GitHub PR, add `--pr <URL-or-number>` to the same `prepare`, `start` or `serve` flow. Numeric PRs use the local origin or explicit `--repository OWNER/REPO`; `--scope` selects a repository-relative directory. Both pinned sides use the existing analyzer, workbench, locale, evidence and task pipeline. See the quick start for comparison and source-capture limits.
+
 [External diagnostics (C7)](docs/EXTERNAL-DIAGNOSTICS.md) — import existing ESLint, Ruff, SARIF and GitHub review results; browse/filter them with source coverage and evidence; export tasks and accept/revoke baseline decisions in the CLI or local viewer. Static reports retain reading and captured task export.
 
 Imported lint errors default to warning; info stays info and the original source

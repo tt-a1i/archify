@@ -48,14 +48,18 @@ export function buildOverview({ findings = [], graph, facts = null, unmapped = [
   const take = (e) => { priorities.push(e.id); covered.add(e.id); for (const r of e.relatedIds) covered.add(r); };
   const rulesTaken = new Set();
   const open = ranked.filter((e) => e.status !== 'accepted');
-  const topSeverity = open.length ? open[0].severity : null;
-  for (const e of open) {
+  // PR priorities need a measured delta witness. A missing/limited impact model
+  // never falls back to unrelated whole-head hotspots or changed digests.
+  const impacted = new Set(run.pullRequest?.impact?.findingIds || []);
+  const candidates = run.pullRequest ? open.filter(e => impacted.has(e.id)) : open;
+  const topSeverity = candidates.length ? candidates[0].severity : null;
+  for (const e of candidates) {
     if (priorities.length >= MAX_PRIORITIES || e.severity !== topSeverity) break;
     if (covered.has(e.id) || rulesTaken.has(e.code)) continue;
     rulesTaken.add(e.code);
     take(e);
   }
-  for (const e of open) {
+  for (const e of candidates) {
     if (priorities.length >= MAX_PRIORITIES) break;
     if (!covered.has(e.id)) take(e);
   }
