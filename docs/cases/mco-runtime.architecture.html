@@ -188,6 +188,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #94a3b8;
       --arrow-emphasis: #34d399;
+      --edge-label: var(--arrow);
 
       /* Opaque mask color used behind semi-transparent component fills
          so the arrows drawn underneath are properly hidden. */
@@ -231,6 +232,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #64748b;
       --arrow-emphasis: #059669;
+      --edge-label: var(--text-muted);
 
       --mask: #ffffff;
 
@@ -291,6 +293,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a5b4c7;
       --arrow: #7890ad;
       --arrow-emphasis: #2dd4bf;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 16, 30, 0.86);
       --toolbar-border: #29415f;
       --toolbar-menu-bg: #07101e;
@@ -326,6 +329,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #607a8c;
       --arrow: #7b97aa;
       --arrow-emphasis: #0d9488;
+      --edge-label: var(--text-muted);
     }
 
     /* ==========================================================
@@ -362,6 +366,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a7cad9;
       --arrow: #78a3b7;
       --arrow-emphasis: #64dfc1;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 28, 45, 0.92);
       --toolbar-border: #34799a;
       --toolbar-text: #d8f3ff;
@@ -397,6 +402,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #506f7e;
       --arrow: #6d93a5;
       --arrow-emphasis: #087f69;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(247, 252, 254, 0.94);
       --toolbar-border: #8ab5c5;
       --toolbar-text: #294f61;
@@ -439,6 +445,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #b8ad99;
       --arrow: #948978;
       --arrow-emphasis: #dd6b3d;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(35, 31, 24, 0.92);
       --toolbar-border: #625a4a;
       --toolbar-text: #eee5d5;
@@ -476,6 +483,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #746b5e;
       --arrow: #8a806f;
       --arrow-emphasis: #bb4c23;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(251, 248, 241, 0.94);
       --toolbar-border: #c4b9a6;
       --toolbar-text: #40392f;
@@ -832,6 +840,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
+    /* A Viewer an explainer page opens keeps its tools and the preset's look; the page names the
+       diagram, so the standalone badges stay off, as the embedded plate does. */
+    html[data-hosted="explainer"][data-preset] .header-row::after,
+    html[data-hosted="explainer"][data-preset="editorial"] .diagram-container::after { display: none; }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
@@ -3224,6 +3236,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         --lane-stroke: #cbd5e1;
         --arrow: #94a3b8;
         --arrow-emphasis: #059669;
+        --edge-label: var(--text-muted);
         --frontend-fill:    rgba(34, 211, 238, 0.15);
         --frontend-stroke:  #0891b2;
         --backend-fill:     rgba(52, 211, 153, 0.18);
@@ -4291,8 +4304,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
-    /* Relationship labels share the exact color token used by their path. */
-    .t-edge-default  { fill: var(--arrow); }
+    /* Colored relationship labels share the exact color token used by their path.
+       Default labels use --edge-label so light palettes can keep a quiet stroke
+       while the text stays readable on the label mask. */
+    .t-edge-default  { fill: var(--edge-label); }
     .t-edge-emphasis { fill: var(--arrow-emphasis); }
     .t-edge-security { fill: var(--security-stroke); }
     .t-edge-dashed   { fill: var(--database-stroke); }
@@ -4305,7 +4320,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.4px) 0 0 / 20px 20px,
         var(--panel);
     }
-    html[data-preset="classic"] .diagram-container > svg .c-grid { stroke: transparent; }
+    svg[data-preset="classic"] .c-grid { stroke: transparent; }
     html[data-preset="classic"][data-theme="light"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
       --ambient-node-base-filter: drop-shadow(0 1px 1px rgba(17, 24, 39, 0.05)) drop-shadow(0 6px 12px rgba(17, 24, 39, 0.06));
       filter: var(--ambient-node-base-filter);
@@ -6319,10 +6334,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function diagramFilename() {
-        var title = (document.title || 'diagram')
-          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
-          .replace(/\s+Diagram$/i, '')
-          .trim();
+        // Prefer the authored heading: the document title may carry a
+        // locale-specific page decoration ("Diagram", "Diagrama", ...).
+        // Without a heading, keep the complete document title; suffix-like
+        // words in either source are authored text and are not stripped.
+        var heading = document.querySelector('.header h1');
+        var title = (heading && heading.textContent || '').trim() ||
+          (document.title || '').trim();
         // A mark is kept only while attached to a letter or number base;
         // a detached mark (the variation selector after an emoji, say)
         // would otherwise survive as an invisible filename.
@@ -11338,7 +11356,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+        // Body and stage padding already bound the actual viewport. The
+        // optional bottom gap may yield to the source-text floor; otherwise
+        // a late header reflow can select an enlarged, scrolling diagram
+        // even though its original size still fits the screen.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth + SAFE_BOTTOM_GAP * ratio, maxWidth) >=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading && !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;
