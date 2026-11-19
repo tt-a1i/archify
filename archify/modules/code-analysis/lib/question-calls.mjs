@@ -1,6 +1,6 @@
 // Source-contained orientation, never a caller graph or runtime trace.
 import ts from 'typescript';
-import { validSourceRange } from '../core/index.mjs';
+import { rangeText, validSourceRange } from '../core/index.mjs';
 import path from 'node:path';
 import { measureFunctions } from '../extract/ts/functions.mjs';
 
@@ -28,7 +28,7 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   const javaModel = javaAdapter && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts?.callModel)
     && (facts.callModel !== 'java-static-lexical-v5' || facts.languageScope?.language === 'java');
   const goModel = facts?.repository?.language === 'go' && /^go-parser@/.test(facts?.repository?.adapter || '') && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(facts?.callModel);
-  const rustModel = facts?.repository?.language === 'rust' && /^rust-syn@/.test(facts?.repository?.adapter || '') && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12', 'rust-source-direct-v13', 'rust-source-direct-v14'].includes(facts?.callModel);
+  const rustModel = facts?.repository?.language === 'rust' && /^rust-syn@/.test(facts?.repository?.adapter || '') && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12', 'rust-source-direct-v13', 'rust-source-direct-v14', 'rust-source-direct-v15'].includes(facts?.callModel);
   const capturedRangeModel = pythonModel || javaModel || goModel || rustModel;
 const bindingCoverage = rustModel ? (facts.callModel === 'rust-source-direct-v4' ? 'rust-explicit-functions-and-unique-lifetime-only-inherent-source-candidates-under-declared-cargo-cfg-profile' : facts.callModel === 'rust-source-direct-v3' ? 'rust-explicit-functions-monomorphic-and-unique-concrete-specialization-source-candidates-under-declared-cargo-cfg-profile' : facts.callModel === 'rust-source-direct-v2' ? 'rust-explicit-functions-and-monomorphic-inherent-source-candidates-under-declared-cargo-cfg-profile' : 'rust-explicit-source-functions-under-declared-cargo-cfg-profile') : goModel ? ((['go-source-direct-v3', 'go-source-direct-v4'].includes(facts.callModel)) ? (facts.languageScope?.standardLibrary?.mode === 'disabled' ? 'go-types-direct-functions-concrete-methods-and-interface-declarations-with-sdk-types-disabled' : 'go-types-direct-functions-concrete-methods-and-interface-declarations-with-recorded-sdk-and-incomplete-thirdparty-types') : facts.callModel === 'go-source-direct-v2' ? 'go-types-direct-functions-and-concrete-methods-with-incomplete-external-types' : 'go-types-direct-source-functions-with-incomplete-external-types') : pythonModel ? (facts.callModel === 'python-lexical-v2' ? 'ordinary-module-definitions-direct-imports-and-one-explicit-reexport' : 'ordinary-module-definitions-and-direct-from-import-aliases') : javaModel ? (facts.callModel === 'java-static-lexical-v5' ? 'static-source-candidates-with-captured-parents-and-declared-direct-project-dependencies' : facts.callModel === 'java-static-lexical-v4' ? 'top-level-class-static-source-candidates-with-captured-superclass-value-guards' : facts.callModel === 'java-static-lexical-v3' ? 'top-level-class-unique-fixed-arity-static-source-candidates' : facts.callModel === 'java-static-lexical-v2' ? 'top-level-class-and-explicit-qualified-static-source-candidates' : 'top-level-class-unique-static-fixed-arity-source-candidates') : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
   const result = {
@@ -118,8 +118,15 @@ export function questionCallNavigator({ facts, inspect, entry, capturedRangeMode
     const file = target.file || entry.file;
     if (!capturedFiles.has(file)) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-not-captured' } };
     if (capturedRangeModel) {
-      const measured = (facts.functions || []).filter(fn => fn.file === file && fn.name === target.name && fn.sourceRange?.line === target.line && fn.sourceRange?.column === target.column);
-      if (measured.length !== 1 || !validSourceRange(capturedTexts.get(file), measured[0], facts.repository.language)) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-range-unavailable' } };
+      const traitDeclaration = facts.repository.language === 'rust' && facts.callModel === 'rust-source-direct-v15' && record.fact.resolution === 'rust-trait-method-candidate';
+      const measured = traitDeclaration
+        ? (facts.traits || []).flatMap(trait => trait.methods).filter(method => method.file === file && method.name === target.name && method.line === target.line && method.column === target.column)
+        : (facts.functions || []).filter(fn => fn.file === file && fn.name === target.name && fn.sourceRange?.line === target.line && fn.sourceRange?.column === target.column);
+      const valid = traitDeclaration
+        ? measured.length > 0 && measured.every(method => validSourceRange(capturedTexts.get(file), { ...method, endLine: method.sourceRange?.endLine }, 'rust')
+          && method.sourceRange.column === target.column && rangeText(capturedTexts.get(file), method.sourceRange, 'rust') === target.name)
+        : measured.length === 1 && validSourceRange(capturedTexts.get(file), measured[0], facts.repository.language);
+      if (!valid) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-range-unavailable' } };
     }
     const support = {};
     for (const [key, points, prefix] of [
