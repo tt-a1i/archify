@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { once } from 'node:events';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
@@ -17,7 +18,11 @@ test('Architecture drift opens from the toolbar, navigates pinned source and dow
   let browser;
   t.after(async () => {
     if (browser) {
-      await browser.cdp.send('Browser.close').catch(() => {});
+      if (browser.child.exitCode === null && browser.child.signalCode === null) {
+        const exit = once(browser.child, 'exit', { signal: AbortSignal.timeout(5_000) }).catch(() => {});
+        await browser.cdp.send('Browser.close').catch(() => {});
+        await exit;
+      }
       await browser.close();
     }
     fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
@@ -94,6 +99,14 @@ test('Architecture drift opens from the toolbar, navigates pinned source and dow
   }
   if (actual.token2) assert.ok(md.includes(actual.file + ':39'));
   assert.ok(!md.includes('onlyWorkingTree'));
+  await click(panel + ' button', 'Download verification task .json');
+  const taskName = md.match(/Task: (DRIFT-[a-f0-9]{16})/u)[1] + '.json';
+  const taskPath = path.join(dir, taskName);
+  for (let i = 0; !fs.existsSync(taskPath) && i < 100; i++) await new Promise(resolve => setTimeout(resolve, 100));
+  const task = JSON.parse(fs.readFileSync(taskPath, 'utf8'));
+  assert.deepEqual(task.pair, [actual.from, actual.to]);
+  assert.match(task.reportSha256, /^[a-f0-9]{64}$/u);
+  if (process.env.ARCHIFY_DRIFT_BROWSER_EVIDENCE) fs.copyFileSync(taskPath, path.join(process.env.ARCHIFY_DRIFT_BROWSER_EVIDENCE, taskName));
   if (process.env.ARCHIFY_DRIFT_BROWSER_EVIDENCE) fs.copyFileSync(download, path.join(process.env.ARCHIFY_DRIFT_BROWSER_EVIDENCE, 'architecture-drift.md'));
 
   await evalValue('document.querySelector("#architecture-drift-filter").value="all"; document.querySelector("#architecture-drift-filter").dispatchEvent(new Event("change"))');

@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { driftFixture } from './helpers/code-analysis-drift-fixture.mjs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 test('CLI compares pinned directed pairs; the authored IR and dirty working tree are unchanged', t => {
   const f = driftFixture(t);
@@ -41,6 +43,50 @@ test('cannot treat an affected parse failure or ambiguous component as absence',
   assert.equal(ambiguous.result.summary.newUndeclared, 0);
   assert.equal(ambiguous.result.coverage.head.ambiguousModules, 1);
   assert.ok(ambiguous.result.edges.find(e => e.to === 'db').reasons.includes('unverified-edge-evidence'));
+});
+
+test('verify-drift binds the downloaded pair and distinguishes removal from an affected parse failure', t => {
+  const f = driftFixture(t);
+  const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
+  const original = f.analyze();
+  assert.equal(original.p.status, 0, original.p.stdout);
+  const html = fs.readFileSync(path.join(original.out, 'architecture-drift.html'), 'utf8');
+  const data = JSON.parse(html.match(/id="architecture-drift-data">([^<]*)<\/script>/u)[1]);
+  const task = data.edges.find(edge => edge.from === 'app' && edge.to === 'db').task;
+  assert.match(task.id, /^DRIFT-[a-f0-9]{16}$/);
+  const taskFile = path.join(f.dir, 'task.json');
+  const checksFile = path.join(f.dir, 'checks.json');
+  const report = sample => path.join(sample.out, 'architecture-drift.json');
+  const verify = (followup, ...args) => {
+    const run = spawnSync(process.execPath, [cli, 'code-analysis', 'verify-drift', report(original),
+      '--task', taskFile, '--after', report(followup), ...args], { encoding: 'utf8', timeout: 30_000 });
+    return { status: run.status, value: JSON.parse(run.stdout) };
+  };
+  fs.writeFileSync(taskFile, JSON.stringify(task));
+  f.write('src/app/main.ts', "import { ui } from '../ui/module.js';\nexport const app = ui;\n");
+  const removed = f.analyze({ b: f.head, h: f.commit(), output: 'removed', extra: ['--from-report', report(original)] });
+  assert.equal(removed.p.status, 0, removed.p.stdout);
+  assert.deepEqual(verify(removed).value.analysis, { outcome: 'not-observed-at-head', reasons: [] });
+  const template = verify(removed, '--checks-template').value;
+  fs.writeFileSync(checksFile, JSON.stringify({ ...template, checks: [{ name: 'Unit tests', status: 'passed' }] }));
+  assert.deepEqual(verify(removed, '--checks', checksFile).value.projectChecks, {
+    status: 'reported-not-independently-verified', checks: [{ name: 'Unit tests', status: 'passed' }],
+  });
+
+  f.write('src/app/main.ts', "import { db } from '../db/module.js';\nexport const app = db;\n");
+  const retained = f.analyze({ b: f.head, h: f.commit(), output: 'still-observed' });
+  assert.equal(retained.p.status, 0, retained.p.stdout);
+  assert.equal(verify(retained).value.analysis.outcome, 'still-observed');
+
+  f.write('src/app/main.ts', 'export const broken = ;\n');
+  const broken = f.analyze({ b: f.head, h: f.commit(), output: 'broken' });
+  assert.equal(broken.p.status, 0, broken.p.stdout);
+  assert.equal(verify(broken).value.analysis.outcome, 'inconclusive');
+  assert.ok(verify(broken).value.analysis.reasons.includes('affected-parse-errors'));
+  assert.equal(verify(broken, '--checks', checksFile).value.diagnostics[0].code, 'drift-verification/invalid-checks');
+  assert.equal(verify(original).value.diagnostics[0].code, 'drift-verification/mismatched-followup');
+  fs.writeFileSync(taskFile, JSON.stringify({ ...task, pair: ['app', 'ui'] }));
+  assert.equal(verify(removed).value.diagnostics[0].code, 'drift-verification/invalid-task');
 });
 
 test('rejects a noncommit pin, an unrelated IR pin and an existing destination without writing', t => {

@@ -125,6 +125,27 @@ undeclared relationship or inconclusive evidence. Errors exit 2 with
 structured diagnostics. Existing `check` gates and ordinary render output
 are unchanged.
 
+For a newly observed undeclared relationship, download its Markdown and
+**Download verification task .json**. Keep the original report JSON alongside
+the task. After the prospective change is committed, run `drift` again using
+the first report's head as the new base and the same IR, mapping and config.
+Pass `--from-report original/architecture-drift.json` to bind this capture to
+the original report and keep an IR that pins the original base revision.
+
+```sh
+node bin/archify.mjs code-analysis verify-drift original/architecture-drift.json \
+  --task DRIFT-<id>.json --after follow-up/architecture-drift.json
+```
+
+The verification receipt reports `not-observed-at-head`, `still-observed`, or
+`inconclusive` for that pair. If the starting observation cannot be reproduced
+or the relevant source does not parse, the outcome is inconclusive. The task
+is tied to the original report bytes. Save those bytes without reformatting.
+The verifier accepts saved drift reports up to 32 MiB each.
+Add `--checks-template` to generate a template, and then pass the completed
+template with `--checks <checks.json>` to record project checks. The command
+records these results as reported, without running or verifying the checks.
+
 The first version covers resolved module-scope static JS/TS imports, exports
 and requires, excluding type-only, conditional and deferred references. It
 uses committed files only. It does not check out refs, run project scripts,
