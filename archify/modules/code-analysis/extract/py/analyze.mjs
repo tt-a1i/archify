@@ -13718,8 +13718,13 @@ function reachingBindings(scope, name, at) {
       if (node.nodeType === 47 /* StatementList */ || node.nodeType === 50 /* Suite */) {
         state = scan(body(node), state, limit);
       } else if (node.nodeType === 2 /* Assert */) {
-        if (inside) return beforeTest(state, d.testExpr, limit);
-        state = confirmed(state, d.testExpr, true);
+        const { testExpr, exceptionExpr } = node.d;
+        if (inside) {
+          if (limit <= endOf(testExpr)) return beforeTest(state, testExpr, limit);
+          const failure = confirmed(state, testExpr, false);
+          return exceptionExpr ? opaqueStores(failure, exceptionExpr, limit, true) : failure;
+        }
+        state = confirmed(state, testExpr, true);
       } else if (node.nodeType === 22 /* If */) {
         if (inside && limit <= endOf(d.testExpr)) return beforeTest(state, d.testExpr, limit);
         const yes = confirmed(state, d.testExpr, true), no = confirmed(state, d.testExpr, false);
@@ -14133,11 +14138,17 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
   function bases(owner, seen) {
     const out = [];
     const scope = scopeOf(owner.file, owner.node);
-    for (const arg of owner.node.d.arguments || []) {
+    const arguments_ = owner.node.d.arguments || [];
+    for (const [index, arg] of arguments_.entries()) {
       if (arg.d.name) return;
       let expr = arg.d.valueExpr;
       if (expr.nodeType === 27 /* Index */) expr = expr.d.leftExpr;
-      if (["typing.Generic", "abc.ABC"].includes(standard(owner.file, scope, expr, true))) continue;
+      const standardBase = standard(owner.file, scope, expr, true);
+      if (standardBase === "builtins.object") {
+        if (index !== arguments_.length - 1 || expr !== arg.d.valueExpr) return;
+        continue;
+      }
+      if (["typing.Generic", "abc.ABC"].includes(standardBase)) continue;
       const base = expression(owner.file, scope, expr, owner.node.start, seen, owner.args);
       if (base?.kind === "class") out.push(base);
       else return;
@@ -14422,12 +14433,14 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       return result?.kind === "sequence" ? result.send : void 0;
     }
     if (node.nodeType === 27 /* Index */) {
-      if (d.items.length !== 1 || d.trailingComma) return;
-      const value = expression(file, scope, d.leftExpr, at, seen, substitutions);
-      if (d.items.some((item) => item.d.valueExpr.nodeType === 46 /* Slice */)) return value?.kind === "sequence" ? value : void 0;
-      if (value?.kind === "mapping") return value.value;
+      const { leftExpr, items, trailingComma } = node.d;
+      const value = expression(file, scope, leftExpr, at, seen, substitutions);
+      if (value?.kind === "mapping") return items.some((item) => item.d.valueExpr.nodeType === 46 /* Slice */) ? void 0 : value.value;
+      if (items.length !== 1 || trailingComma) return;
+      const index = items[0].d.valueExpr;
+      if (index.nodeType === 46 /* Slice */) return value?.kind === "sequence" ? value : void 0;
       if (value?.kind === "sequence" && !value.async) return value.item;
-      if (value?.kind === "tuple" && d.items[0].d.valueExpr.nodeType === 40 /* Number */) return value.items[Number(d.items[0].d.valueExpr.d.value)];
+      if (value?.kind === "tuple" && index.nodeType === 40 /* Number */) return value.items[Number(index.d.value)];
       return;
     }
     if (node.nodeType === 35 /* MemberAccess */) {

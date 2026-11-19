@@ -278,6 +278,33 @@ def shadowed(item: Work, values):
   });
 });
 
+test('Python evaluates assertion messages with the failure condition', t => {
+  const text = `class A:
+    def run(self): pass
+class B:
+    def run(self): pass
+def ambiguous(value: A | B, flag: bool):
+    assert isinstance(value, A) and flag, (
+        value.run(), # site: can-fail-either-side
+    )
+    value.run() # site: assertion-passed
+def known_failure(value: A | B):
+    assert isinstance(value, A), (
+        value.run(), # site: only-b-can-fail
+    )
+def rebound(value: A | B):
+    assert isinstance(value, A), (
+        (value := A()),
+        value.run() # site: message-rebind
+    )
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    'can-fail-either-side': null, 'assertion-passed': 'A.run',
+    'only-b-can-fail': 'B.run', 'message-rebind': null,
+  });
+});
+
 test('Python follows standard abstract and cached property declarations and captured base chains', t => {
   const text = `from abc import ABC, abstractmethod
 from functools import cached_property
@@ -304,6 +331,42 @@ def chosen(value: Concrete):
   });
   const superLine = text.split('\n').findIndex(line => line.includes('# super declaration')) + 1;
   assert.deepEqual(facts.calls.filter(call => call.line === superLine).map(call => targetName(facts, call)), [undefined, 'Root.work']);
+});
+
+test('Python follows diamond inheritance through an explicit builtin object base', t => {
+  const text = `class Root(object):
+    def run(self): pass
+class Left(Root): pass
+class Right(Root): pass
+class Child(Left, Right): pass
+class Last(Left, object): pass
+class Inconsistent(object, Left): pass
+def chosen(child: Child, last: Last, inconsistent: Inconsistent):
+    child.run() # site: inherited-diamond
+    last.run() # site: terminal-object
+    inconsistent.run() # site: inconsistent-order
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    'inherited-diamond': 'Root.run', 'terminal-object': 'Root.run', 'inconsistent-order': null,
+  });
+});
+
+test('Python resolves tuple-keyed mappings while sequence indices stay scalar', t => {
+  const text = `class Work:
+    def run(self): pass
+def chosen(pairs: dict[tuple[int, int], Work], single: dict[tuple[int], Work], items: list[Work]):
+    pairs[1, 2].run() # site: tuple-key
+    pairs[(1, 2)].run() # site: parenthesized-key
+    single[1,].run() # site: one-element-key
+    items[0].run() # site: scalar-index
+    items[0,].run() # site: tuple-index
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    'tuple-key': 'Work.run', 'parenthesized-key': 'Work.run', 'one-element-key': 'Work.run',
+    'scalar-index': 'Work.run', 'tuple-index': null,
+  });
 });
 
 test('Python follows declarations visible in a branch and stable enclosing functions', t => {

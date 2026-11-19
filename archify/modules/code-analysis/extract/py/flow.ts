@@ -58,8 +58,13 @@ export function reachingBindings(scope: Scope, name: string, at: number): State 
             if (node.nodeType === K.StatementList || node.nodeType === K.Suite) {
                 state = scan(body(node), state, limit);
             } else if (node.nodeType === K.Assert) {
-                if (inside) return beforeTest(state, d.testExpr, limit);
-                state = confirmed(state, d.testExpr, true);
+                const { testExpr, exceptionExpr } = node.d;
+                if (inside) {
+                    if (limit <= endOf(testExpr)) return beforeTest(state, testExpr, limit);
+                    const failure = confirmed(state, testExpr, false);
+                    return exceptionExpr ? opaqueStores(failure, exceptionExpr, limit, true) : failure;
+                }
+                state = confirmed(state, testExpr, true);
             } else if (node.nodeType === K.If) {
                 if (inside && limit <= endOf(d.testExpr)) return beforeTest(state, d.testExpr, limit);
                 const yes = confirmed(state, d.testExpr, true), no = confirmed(state, d.testExpr, false);

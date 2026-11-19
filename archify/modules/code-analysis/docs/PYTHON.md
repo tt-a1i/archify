@@ -141,7 +141,7 @@ Full Pyright provides the development reference for these gaps.
 
 ## Model and history
 
-Revision **16** emits `python-source-v3`, with adapter identity
+Revision **17** emits `python-source-v3`, with adapter identity
 `pyright-parser@1.1.414/python-3.14` (or the chosen syntax target). New targets use
 `python-source-declaration` and must match a captured function definition start.
 Revision 11's `python-source-v1` retains its receiver/signature scope. Revision 12
@@ -157,7 +157,9 @@ successful `try` bindings into `else`, later local declarations after wildcard
 imports, and verified cache and single-dispatch decorators. It keeps typed
 elements across empty-list fallbacks, preserves shared return types across
 distinct methods, and can navigate a property used at a callsite. A written
-`Any` remains unknown until a supported type guard supplies more evidence. Existing
+`Any` remains unknown until a supported type guard supplies more evidence.
+Revision 17 follows tuple keys in mappings, terminal builtin `object` bases
+and the failure condition inside assertion messages. Existing
 `same-file-function` and `imported-function` evidence retains its meaning. The
 reader continues to accept historical `python-source-v1/v2`, `python-lexical-v1/v2` and
 `python@...` captures without expanding their saved coverage. Changing the

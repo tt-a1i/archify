@@ -389,11 +389,18 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
     function bases(owner: ClassShape, seen: Set<Node>): ClassShape[] | undefined {
         const out: ClassShape[] = [];
         const scope = scopeOf(owner.file, owner.node);
-        for (const arg of (owner.node.d as any).arguments || []) {
+        const arguments_ = (owner.node.d as any).arguments || [];
+        for (const [index, arg] of arguments_.entries()) {
             if (arg.d.name) return; // custom metaclass / class keywords
             let expr = arg.d.valueExpr;
             if (expr.nodeType === K.Index) expr = expr.d.leftExpr;
-            if (['typing.Generic', 'abc.ABC'].includes(standard(owner.file, scope, expr, true)!)) continue;
+            const standardBase = standard(owner.file, scope, expr, true);
+            if (standardBase === 'builtins.object') {
+                // An explicit object base must follow every other direct base.
+                if (index !== arguments_.length - 1 || expr !== arg.d.valueExpr) return;
+                continue;
+            }
+            if (['typing.Generic', 'abc.ABC'].includes(standardBase!)) continue;
             const base = expression(owner.file, scope, expr, owner.node.start, seen, owner.args);
             if (base?.kind === 'class') out.push(base);
             else return;
@@ -681,12 +688,14 @@ export function resolveSourceCalls(analyses: Analysis[], locate: Locate, declara
             return result?.kind === 'sequence' ? result.send : undefined;
         }
         if (node.nodeType === K.Index) {
-            if (d.items.length !== 1 || d.trailingComma) return;
-            const value = expression(file, scope, d.leftExpr, at, seen, substitutions);
-            if (d.items.some((item: Node) => (item.d as any).valueExpr.nodeType === K.Slice)) return value?.kind === 'sequence' ? value : undefined;
-            if (value?.kind === 'mapping') return value.value;
+            const { leftExpr, items, trailingComma } = node.d;
+            const value = expression(file, scope, leftExpr, at, seen, substitutions);
+            if (value?.kind === 'mapping') return items.some(item => item.d.valueExpr.nodeType === K.Slice) ? undefined : value.value;
+            if (items.length !== 1 || trailingComma) return;
+            const index = items[0].d.valueExpr;
+            if (index.nodeType === K.Slice) return value?.kind === 'sequence' ? value : undefined;
             if (value?.kind === 'sequence' && !value.async) return value.item;
-            if (value?.kind === 'tuple' && d.items[0].d.valueExpr.nodeType === K.Number) return value.items[Number(d.items[0].d.valueExpr.d.value)];
+            if (value?.kind === 'tuple' && index.nodeType === K.Number) return value.items[Number(index.d.value)];
             return;
         }
         if (node.nodeType === K.MemberAccess) {

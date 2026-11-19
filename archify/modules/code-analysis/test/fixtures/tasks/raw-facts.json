@@ -8,8 +8,8 @@
     "url": null,
     "language": "py",
     "adapter": "pyright-parser@1.1.414/python-3.14",
-    "adapterRevision": 16,
-    "snapshotId": "46b33e43e71bdca741f024a3292ff3a1c6b1ac620a9002df6bf3867bef3a2952"
+    "adapterRevision": 17,
+    "snapshotId": "f1c9bfd491749465032c6b9299dd131d39314bfd3bf4c6874ec3f06bfa494ad2"
   },
   "files": [
     {
