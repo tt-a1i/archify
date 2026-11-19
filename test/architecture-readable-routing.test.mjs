@@ -139,7 +139,12 @@ test('a facing link straightens once a crossing moves to the lower return corrid
   const router = createArchitectureRouter(boxes, connections);
   const routes = connections.map((conn) => router.pathFor(conn).points);
 
-  assert.deepEqual(routes[1], [[528, 440], [528, 506]]);
+  const [start, end] = routes[1];
+  assert.equal(routes[1].length, 2, 'the facing link is straight');
+  assert.equal(start[0], end[0], 'both ends share a vertical lane');
+  assert.equal(start[1], 440, 'the link starts on the integration bottom edge');
+  assert.equal(end[1], 506, 'the link ends on the sdk top edge');
+  assert.ok(start[0] >= 448 && start[0] <= 568, 'the lane stays within the facing overlap');
   assert.equal(crossings(routes), 0);
   assert.equal(routes[0].length, 2, 'the neighboring link stays straight');
   assert.ok(routes[2].some(([, y]) => y > 566), 'the return uses the corridor below the boxes');

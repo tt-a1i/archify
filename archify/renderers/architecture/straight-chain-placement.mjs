@@ -18,8 +18,9 @@ export function straightChainPlacementDirection(items, edges) {
     sources.add(edge.from);
     targets.add(edge.to);
     if (edge.route !== 'straight' || edge.via?.length || (!edge.fromSide && !edge.toSide)) continue;
-    const candidate = directions[edge.fromSide];
-    if (!candidate || candidate.opposite !== edge.toSide) return null;
+    const candidate = edge.fromSide ? directions[edge.fromSide]
+      : directions[directions[edge.toSide]?.opposite];
+    if (!candidate || (edge.toSide && candidate.opposite !== edge.toSide)) return null;
     if (direction && candidate !== direction) return null;
     direction = candidate;
   }

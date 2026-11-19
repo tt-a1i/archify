@@ -86,11 +86,48 @@ test('compact vertical chains retain authored distances and report gaps that for
   assert.deepEqual(warning.evidence, {
     requiredGapPx: 28,
     connections: [
-      { from: 'build', to: 'review', gapPx: 20 },
-      { from: 'review', to: 'publish', gapPx: 16 },
+      { from: 'build', to: 'review', gapPx: 20, requiredGapPx: 38 },
+      { from: 'review', to: 'publish', gapPx: 16, requiredGapPx: 28 },
     ],
   });
   assert.match(warning.supportedFixes[0], /omit yOffset from every node/);
+});
+
+test('reported manual gaps keep labeled arrowheads and unlabeled stems visible', () => {
+  const document = workflow();
+  setOffsets(document);
+  for (const edge of document.edges) edge.id = `${edge.from}-${edge.to}`;
+  const initial = compile(document);
+  const warning = initial.receipt.diagnostics.find(entry => entry.code === 'workflow/vertical-stack-clearance');
+  const nodes = new Map(initial.receipt.nodes.map(node => [node.id, node]));
+  const offsets = new Map([['build', 0]]);
+  for (const gap of warning.evidence.connections) {
+    const from = nodes.get(gap.from);
+    const to = nodes.get(gap.to);
+    offsets.set(gap.to, offsets.get(gap.from) + from.height / 2 + gap.requiredGapPx + to.height / 2);
+    assert.ok(warning.supportedFixes[1].includes(`${gap.from} -> ${gap.to}: ${gap.requiredGapPx}px`));
+  }
+  for (const node of document.nodes) node.yOffset = offsets.get(node.id);
+  const { receipt, svg } = compile(document);
+  assert.ok(!receipt.diagnostics.some(entry => entry.code === 'workflow/vertical-stack-clearance'));
+  for (const edge of receipt.edges) {
+    assert.equal(edge.points.length, 2);
+    const [start, end] = edge.points;
+    const path = [...svg.matchAll(/<path\b[^>]+>/g)].map(match => match[0])
+      .find(tag => tag.includes(`data-edge-id="${edge.id}"`));
+    assert.ok(path, `rendered path for ${edge.from} -> ${edge.to}`);
+    const markerId = path.match(/marker-end="url\(#([^)]*)\)"/)[1];
+    const marker = [...svg.matchAll(/<marker\b[^>]*>/g)].map(match => match[0])
+      .find(tag => tag.includes(`id="${markerId}"`));
+    const headStart = end[1] - numericAttribute(marker, 'refX') * numericAttribute(path, 'stroke-width');
+    if (edge.from === 'build') {
+      const label = svg.match(/<g\b[^>]*data-edge-id="build-review"[^>]*>\s*(<rect[^>]+>)/)[1];
+      assert.ok(headStart - numericAttribute(label, 'y') - numericAttribute(label, 'height') >= 1);
+      assert.ok(numericAttribute(label, 'y') - start[1] >= 8);
+    } else {
+      assert.ok(headStart - start[1] >= 8);
+    }
+  }
 });
 
 test('an explicit canvas retains lane-centered placement and supplied dimensions', () => {

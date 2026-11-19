@@ -228,8 +228,9 @@ If the chain already has increasing `yOffset` values, the compiler fits
 the lane to the stack and preserves the distances between steps. For
 `workflow/vertical-stack-clearance`, the reported border-to-border gaps are
 too short for straight arrows. Omit every `yOffset` to let the compiler
-measure spacing, or adjust the offsets to leave at least 28px after accounting
-for each node's height. Branching workflows and workflows with explicit canvas
+measure spacing, or adjust the offsets to leave each connection's reported
+`requiredGapPx` between node borders after accounting for each node's height.
+Labeled connections can need more space to keep the arrowhead clear of the label. Branching workflows and workflows with explicit canvas
 or route controls retain their established placement behavior.
 
 An implicit readable-v2 vertical stack whose measured lane height exceeds the

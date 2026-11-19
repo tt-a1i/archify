@@ -2961,7 +2961,7 @@ function validateWorkflow() {
         const to = nodes.get(edge.to);
         const gapPx = to.y - (from.y + from.height);
         if (gapPx < HARD_ROUTE_RHYTHM.direct) {
-          shortStackGaps.push({ from: from.id, to: to.id, gapPx });
+          shortStackGaps.push({ from: from.id, to: to.id, gapPx, requiredGapPx: automaticStackGap(edge) });
         }
       }
       if (routed.points.length === 2) {
@@ -2983,7 +2983,7 @@ function validateWorkflow() {
       evidence: { requiredGapPx, connections: shortStackGaps },
       supportedFixes: [
         'If spacing is flexible, omit yOffset from every node so the compiler places the steps in edge order with room for straight arrows.',
-        `To control the spacing yourself, increase the reported gaps to at least ${requiredGapPx}px between node borders and revalidate.`,
+        `To control the spacing yourself, increase each reported border-to-border gap to its requiredGapPx (${shortStackGaps.map(gap => `${gap.from} -> ${gap.to}: ${gap.requiredGapPx}px`).join('; ')}) and revalidate.`,
       ],
     });
   }

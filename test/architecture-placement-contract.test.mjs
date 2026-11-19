@@ -132,22 +132,31 @@ test('architecture straight chains honor explicit sides around pinned endpoints'
     ['top', 'bottom', 1, -1], ['bottom', 'top', 1, 1],
   ];
   for (const [fromSide, toSide, axis, sign] of directions) {
-    for (const pinned of ['a', 'b']) {
+    for (const pinned of [null, 'a', 'b']) {
       spec.components = ['a', 'b'].map(id => ({
         id, type: 'backend', label: id, size: [120, 60], ...(id === pinned ? { pos: pin } : {}),
       }));
-      spec.connections = [{ from: 'a', to: 'b', route: 'straight', fromSide, toSide }];
-      fs.writeFileSync(input, JSON.stringify(spec));
-      const report = run(['inspect', 'architecture', input], 0);
-      const fixed = report.components.find(card => card.id === pinned);
-      assert.deepEqual([fixed.x, fixed.y], pin);
-      const [route] = report.connections;
-      assert.equal(route.points.length, 2);
-      const [start, end] = route.points;
-      assert.equal(start[1 - axis], end[1 - axis]);
-      assert.ok((end[axis] - start[axis]) * sign > 0, `${pinned} pinned, ${fromSide}: ${JSON.stringify(route)}`);
+      for (const sides of [{ fromSide, toSide }, { fromSide }, { toSide }]) {
+        spec.connections = [{ from: 'a', to: 'b', route: 'straight', ...sides }];
+        fs.writeFileSync(input, JSON.stringify(spec));
+        const report = run(['inspect', 'architecture', input], 0);
+        if (pinned) {
+          const fixed = report.components.find(card => card.id === pinned);
+          assert.deepEqual([fixed.x, fixed.y], pin);
+        }
+        const [route] = report.connections;
+        assert.equal(route.points.length, 2);
+        const [start, end] = route.points;
+        assert.equal(start[1 - axis], end[1 - axis]);
+        assert.ok((end[axis] - start[axis]) * sign > 0, `${pinned} pinned, ${JSON.stringify(sides)}: ${JSON.stringify(route)}`);
+      }
     }
   }
+
+  spec.connections = [{ from: 'a', to: 'b', route: 'straight', fromSide: 'left', toSide: 'left' }];
+  fs.writeFileSync(input, JSON.stringify(spec));
+  const conflictingSides = run(['inspect', 'architecture', input], 1);
+  assert.ok(conflictingSides.diagnostics.some(issue => issue.code === 'clean-flow/endpoint-side-direction'));
 
   spec.components = [
     { id: 'a', type: 'backend', label: 'A', size: [120, 60], pos: [800, 200] },

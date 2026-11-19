@@ -606,16 +606,28 @@ function validateArchitecture() {
       });
       problems.push(message);
     }
-    const estLabelW = textUnits(c.label) * 6.6;
-    if (estLabelW > c.width + 8) {
-      const message = `Label "${c.label}" (~${Math.round(estLabelW)}px) is wider than component "${c.id}" (${c.width}px) — shorten the label or widen size.`;
+    const inferredSize = auto && !c.size;
+    const estLabelW = inferredSize ? minimumNodeTextWidth(c.label, 8) : textUnits(c.label) * 6.6;
+    const labelAvailableW = inferredSize ? availableNodeTextWidth(brandLabelFitWidth(c, c.width)) : c.width + 8;
+    if (estLabelW > labelAvailableW) {
+      const minimumExplicitWidth = Math.ceil(Math.max(
+        textUnits(c.label) * 6.6 - 8,
+        minimumNodeTextWidth(c.label, 8) + (c.width - brandLabelFitWidth(c, c.width)) + nodeTextFit.horizontalPadding,
+      ));
+      const message = inferredSize
+        ? `Label "${c.label}" needs ~${Math.ceil(estLabelW)}px at the 8px legible minimum, but component "${c.id}" provides ${labelAvailableW}px — shorten the label or provide a wider size.`
+        : `Label "${c.label}" (~${Math.round(estLabelW)}px) is wider than component "${c.id}" (${c.width}px) — shorten the label or widen size.`;
       diagnostics.push({
         code: 'architecture/component-label-overflow', severity: 'error', message,
         subject: { diagramType: 'architecture', nodeId: c.id },
-        evidence: { text: c.label, estimatedWidthPx: Math.round(estLabelW), availableWidthPx: c.width },
+        evidence: inferredSize
+          ? { text: c.label, minimumFontPx: 8, requiredWidthPx: Math.ceil(estLabelW), availableWidthPx: labelAvailableW }
+          : { text: c.label, estimatedWidthPx: Math.round(estLabelW), availableWidthPx: c.width },
         supportedFixes: [
           `shorten component "${c.id}" label "${c.label}" while preserving its meaning`,
-          `or widen component "${c.id}" to at least ${Math.ceil(estLabelW - 8)}px`,
+          inferredSize
+            ? `or set component "${c.id}" size to [${minimumExplicitWidth}, ${c.height}]`
+            : `or widen component "${c.id}" to at least ${Math.ceil(estLabelW - 8)}px`,
         ],
       });
       problems.push(message);

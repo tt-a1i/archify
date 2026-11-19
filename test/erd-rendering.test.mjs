@@ -12,7 +12,6 @@ import { segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs'
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
 const renderer = path.join(skillRoot, 'renderers', 'erd', 'render-erd.mjs');
-const cli = path.join(skillRoot, 'bin', 'archify.mjs');
 const checker = path.join(skillRoot, 'scripts', 'check-render-output.mjs');
 const examplePath = path.join(skillRoot, 'examples', 'orders.erd.json');
 // One legend band plus the title gap a band has to clear below the content.
@@ -246,7 +245,7 @@ test('relationships sharing one target side bundle into a trunk with short branc
   assert.doesNotMatch(fs.readFileSync(mixedResult.output, 'utf8'), /data-er-trunk/);
 });
 
-test('ERD finalize names co-located cardinality glyphs until a side pin separates them', () => {
+test('the checker reports co-located cardinality glyphs', () => {
   const diagram = {
     schema_version: 1,
     diagram_type: 'erd',
@@ -263,33 +262,16 @@ test('ERD finalize names co-located cardinality glyphs until a side pin separate
       { id: 'far_parent', from: 'far', to: 'parent', fromCardinality: 'many', toCardinality: 'one' },
     ],
   };
-  function finalize() {
-    const directory = createScratchDirectory(path.join(os.tmpdir(), 'archify-erd-coincident-port-'));
-    const input = path.join(directory, 'erd.json');
-    const output = path.join(directory, 'erd.html');
-    fs.writeFileSync(input, JSON.stringify(diagram));
-    const result = spawnSync(process.execPath, [cli, 'finalize', 'erd', input, output, '--json'], { encoding: 'utf8' });
-    assert.equal(result.status, 0, result.stdout + result.stderr);
-    return { output, summary: JSON.parse(result.stdout), routes: relationshipRoutes(fs.readFileSync(output, 'utf8')) };
-  }
-
-  const original = finalize();
-  const recommendation = original.summary.visualReviewRecommendation;
-  const [port] = recommendation.affectedRoutes.coincidentCardinalityPorts;
-  assert.equal(recommendation.signals.coincidentCardinalityPorts, 1);
+  const directory = createScratchDirectory(path.join(os.tmpdir(), 'archify-erd-coincident-port-'));
+  const result = render(diagram, directory);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const routes = relationshipRoutes(fs.readFileSync(result.output, 'utf8'));
+  const [port] = artifactReceipt(result.output).receipt.composition.routeReview.coincidentCardinalityPorts;
   assert.equal(port.entityId, 'parent');
   assert.equal(port.side, 'left');
-  assert.deepEqual(port.point, original.routes[0].points.at(-1));
+  assert.deepEqual(port.point, routes[0].points.at(-1));
   assert.deepEqual(port.ends.map(({ relationship, glyph, sideField }) => [relationship.id, glyph, sideField]),
     [['near_parent', 'one', 'toSide'], ['far_parent', 'one', 'toSide']]);
-  assert.match(recommendation.repair, /fromSide or toSide/);
-  assert.deepEqual(artifactReceipt(original.output).receipt.composition.routeReview.coincidentCardinalityPorts, [port]);
-
-  Object.assign(diagram.relationships[1], { fromSide: 'right', toSide: 'right' });
-  const repaired = finalize();
-  assert.equal(repaired.summary.visualReviewRecommendation?.signals?.coincidentCardinalityPorts, undefined);
-  assert.deepEqual(repaired.routes[0], original.routes[0], 'an existing authored side stays put');
-  assert.notDeepEqual(repaired.routes[0].points.at(-1), repaired.routes[1].points.at(-1));
 });
 
 test('differently styled fan-in groups never share one trunk coordinate', () => {

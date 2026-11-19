@@ -415,11 +415,17 @@ function idealPositions(root, allowParallel, viewBox) {
 
 // Search the intended column first and then obstacle sides. Within a column,
 // one sweep in each direction finds the nearest gap between occupied intervals.
-function nearestFreePosition(x, y, minX, minY, obstacles) {
-  const columns = new Set([x]);
+function nearestFreePosition(x, y, minX, minY, obstacles, maxX = Infinity, maxY = Infinity) {
+  if (maxX < minX || maxY < minY) return undefined;
+  const startY = Math.min(y, maxY);
+  const columns = new Set([Math.min(x, maxX)]);
+  if (Number.isFinite(maxX)) {
+    columns.add(minX);
+    columns.add(maxX);
+  }
   for (const { left, right } of obstacles) {
-    if (Number.isFinite(left) && left >= minX) columns.add(left);
-    if (Number.isFinite(right) && right >= minX) columns.add(right);
+    if (Number.isFinite(left) && left >= minX && left <= maxX) columns.add(left);
+    if (Number.isFinite(right) && right >= minX && right <= maxX) columns.add(right);
   }
   const intervals = [...obstacles].sort((a, b) => a.top - b.top);
   let closest;
@@ -428,8 +434,8 @@ function nearestFreePosition(x, y, minX, minY, obstacles) {
     const dx = Math.abs(column - x);
     if (dx >= distance) break;
     const blocked = intervals.filter((box) => column > box.left && column < box.right);
-    let below = y;
-    let above = y;
+    let below = startY;
+    let above = startY;
     for (const box of blocked) if (below > box.top && below < box.bottom) below = box.bottom;
     // Upper ends, rather than lower ends, order the upward sweep when the
     // forbidden intervals overlap or contain each other.
@@ -437,7 +443,7 @@ function nearestFreePosition(x, y, minX, minY, obstacles) {
     for (const box of blocked) if (above > box.top && above < box.bottom) above = box.top;
     for (const row of [below, above]) {
       const drift = dx + Math.abs(row - y);
-      if (Number.isFinite(row) && row >= minY && drift < distance) {
+      if (Number.isFinite(row) && row >= minY && row <= maxY && drift < distance) {
         closest = [column, row];
         distance = drift;
       }
@@ -446,7 +452,7 @@ function nearestFreePosition(x, y, minX, minY, obstacles) {
   return closest;
 }
 
-function avoidPinnedComponents(byId, connections, boundaries) {
+function avoidPinnedComponents(byId, connections, boundaries, viewBox) {
   const items = [...byId.values()];
   const pinned = items.filter((item) => item.pin);
   const fixedRoutes = connections.filter((edge) => asArray(edge?.via).length
@@ -577,8 +583,13 @@ function avoidPinnedComponents(byId, connections, boundaries) {
         });
       }
     }
-    [item.x, item.y] = nearestFreePosition(x, y, minX, minY, obstacles)
-      ?? nearestFreePosition(x, y, minX, minY, basic) ?? [x, y];
+    // Prefer a clear slot on the authored canvas. Retain the unbounded
+    // fallback so genuinely impossible constraints still reach validation.
+    const bounded = viewBox ? [viewBox[0] - item.width, viewBox[1] - item.height] : [];
+    [item.x, item.y] = nearestFreePosition(x, y, minX, minY, obstacles, ...bounded)
+      ?? nearestFreePosition(x, y, minX, minY, basic, ...bounded)
+      ?? (viewBox ? nearestFreePosition(x, y, minX, minY, obstacles) : undefined)
+      ?? (viewBox ? nearestFreePosition(x, y, minX, minY, basic) : undefined) ?? [x, y];
     place(item, item.x, item.y);
   }
 }
@@ -602,6 +613,6 @@ export function automaticComponentPositions(arch, defaultSize = [120, 60]) {
       && (!edge?.route || edge.route === 'auto'));
   const viewBox = isPoint(arch.meta?.viewBox) ? arch.meta.viewBox : undefined;
   idealPositions(root, allowParallel, viewBox);
-  avoidPinnedComponents(byId, connections, boundaries);
+  avoidPinnedComponents(byId, connections, boundaries, viewBox);
   return new Map([...byId].map(([id, item]) => [id, item.pin ?? [item.x, item.y]]));
 }
