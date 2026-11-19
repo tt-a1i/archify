@@ -1,5 +1,6 @@
 import { asArray, properSegmentIntersection, segmentIntersectsRect } from '../shared/geometry.mjs';
 import { textUnits } from '../shared/utils.mjs';
+import { placeFrameAttachments } from './frame-attachment-placement.mjs';
 import { layOutParallelPaths } from './parallel-path-placement.mjs';
 import { connectionLabelBoxAt, createArchitectureRouter } from './routing.mjs';
 import { straightChainPlacementDirection } from './straight-chain-placement.mjs';
@@ -394,7 +395,9 @@ function idealPositions(root, allowParallel, viewBox) {
     const layout = fitSiblingLayout(group.children, group.edges, allowParallel, viewBox);
     group.parallel = layout.parallel;
     group.vertical = layout.vertical;
-    const { width, height } = placeParallelPeer(group) ?? layout;
+    const parallelPeer = placeParallelPeer(group);
+    if (allowParallel && !parallelPeer) placeFrameAttachments(group, layout);
+    const { width, height } = parallelPeer ?? layout;
     group.width = Math.max(width + group.pad * 2, group.titleWidth);
     group.leftInset = (group.width - width) / 2;
     group.height = height + group.topPad + (group === root ? 0 : 50);

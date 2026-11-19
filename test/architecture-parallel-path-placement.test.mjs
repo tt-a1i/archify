@@ -23,8 +23,14 @@ function routeSegments(points) {
   return points.slice(1).map((point, index) => [points[index], point]);
 }
 
-test('a hub can send work along two branches with a clear shared return path', () => {
-  const arch = topology(parallelBranches);
+const oneLoop = [
+  ['shell', 'cli'], ['cli', 'git'], ['cli', 'artifacts'], ['cli', 'worker'],
+  ['cli', 'preview'], ['preview', 'cache'], ['browser', 'preview'], ['host', 'agent'],
+  ['agent', 'cache'], ['agent', 'git'], ['hooks', 'cli'],
+];
+
+function assertCrossingFreePlacement(relationships) {
+  const arch = topology(relationships);
   const positions = automaticComponentPositions(arch);
   assert.deepEqual(positions, automaticComponentPositions(arch));
   const boxes = new Map(arch.components.map(({ id, size: [width, height] }) => {
@@ -43,6 +49,14 @@ test('a hub can send work along two branches with a clear shared return path', (
         `routes ${index} and ${index + offset + 1} cross`);
     }
   }
+}
+
+test('a hub can send work along two branches with a clear shared return path', () => {
+  assertCrossingFreePlacement(parallelBranches);
+});
+
+test('a simple loop keeps leaf approaches clear of other routes', () => {
+  assertCrossingFreePlacement(oneLoop);
 });
 
 test('placement keeps a fixed card while arranging the rest of a shared-branch diagram', () => {
@@ -55,6 +69,8 @@ test('placement keeps a fixed card while arranging the rest of a shared-branch d
 
 test('parallel-path placement leaves separate cycles and larger islands to the ordinary layout', () => {
   const cases = [
+    // Ordinary diamonds remain together in their ranked layout.
+    [[0, 1], [0, 2], [1, 3], [2, 3]],
     // The bridge between the cycles does not yield three shared paths.
     [[0, 1], [1, 2], [2, 0], [2, 3], [3, 4], [4, 5], [5, 3]],
     // A shared path pattern with a long attached chain exceeds the work limit.

@@ -40,6 +40,10 @@ fact has supporting source evidence.
    actor, operation, and target at their call sites; deployment and trust
    relationships use the corresponding configuration or enforcement evidence. Distinguish the controller requesting
    an operation from the runtime that executes it and the store receiving bytes.
+   When the reader asks who decides the outcome, follow a check result back to its
+   caller. Show who runs the check, who uses it to select or accept the result,
+   and when the result is recorded. Preserve any condition that reuses a prior
+   check if drawing an unconditional step would change the answer.
    For a file or database edge, the source must identify its actual reader or
    writer; a responsibility statement such as “maintains tasks” does not prove
    direct I/O. Keep these facts with the source locations while reading, without
