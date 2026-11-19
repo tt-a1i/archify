@@ -2,11 +2,21 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { once } from 'node:events';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { analyzeRepository } from '../archify/modules/code-analysis/overlay/page.mjs';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 const chrome=process.env.ARCHIFY_CHROME?findChrome():null;
+
+async function closeBrowser(browser) {
+  if (browser.child.exitCode === null && browser.child.signalCode === null) {
+    const exit = once(browser.child, 'exit', { signal: AbortSignal.timeout(5_000) }).catch(() => {});
+    await browser.cdp.send('Browser.close').catch(() => {});
+    await exit;
+  }
+  await browser.close();
+}
 
 test('native PR view keeps comparison chart visible and shares localized source/task interactions',{skip:chrome?false:'Set ARCHIFY_CHROME for PR browser acceptance.'},async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-pr-browser-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
@@ -20,7 +30,7 @@ test('native PR view keeps comparison chart visible and shares localized source/
     fs.mkdirSync(path.join(root,'other'));fs.writeFileSync(path.join(root,'other/helper.mjs'),'export const helper=1;\n');
   }
   const baseSHA='a'.repeat(40),headSHA='b'.repeat(40);
-  const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());
+  const browser=new ChromeVisualBrowser(chrome);t.after(()=>closeBrowser(browser));
   const session=await browser.sessionPromise,send=(m,p={})=>browser.cdp.send(m,p,session);
   await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__atlasTexts=[];window.__atlasGlyphs={};const original=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(value,x,y){const text=String(value);window.__atlasTexts.push(text);if(['+','−','◇'].includes(text)){const p=this.getTransform().transformPoint({x,y});window.__atlasGlyphs[text]={x:p.x,y:p.y};}return original.apply(this,arguments);};`});
   const run=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});assert.equal(r.exceptionDetails,undefined,r.exceptionDetails?.exception?.description);return r.result?.value;};
@@ -91,4 +101,97 @@ test('native PR view keeps comparison chart visible and shares localized source/
   assert.equal(await run("!!JSON.parse(document.getElementById('bauify-analysis').textContent).pullRequest"),false);
   assert.deepEqual(await run('Object.keys(window.__atlasGlyphs)'),[]);
   assert.equal(await run("window.__atlasTexts.some(t=>/^[+−][0-9]/.test(t))"),false);
+});
+
+test('Atlas Files opens pinned renamed and removed sources and downloads only the selected PR context', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME for PR browser acceptance.',
+  timeout: 180_000,
+}, async t => {
+  const evidence = process.env.ARCHIFY_PR_FILES_EVIDENCE;
+  const external = process.env.ARCHIFY_PR_FILES_REAL_REPORT;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-pr-files-'));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(async () => {
+    await closeBrowser(browser);
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  });
+  const baseSHA = 'a'.repeat(40), headSHA = 'b'.repeat(40);
+  let report = external;
+  if (!report) {
+    const base = path.join(dir, 'base'), head = path.join(dir, 'head'), out = path.join(dir, 'report');
+    for (const root of [base, head]) fs.mkdirSync(root);
+    fs.writeFileSync(path.join(base, 'old.ts'), 'export const priorMarker = 1;\n');
+    fs.writeFileSync(path.join(head, 'new.ts'), 'export const nextMarker = 2;\n');
+    fs.writeFileSync(path.join(base, 'gone.ts'), 'export const onlyBase = 3;\n');
+    fs.writeFileSync(path.join(head, 'private.ts'), 'export const unrelatedMarker = 4;\n');
+    const previous = path.join(out, 'base');
+    const source = { root: '.', sourceKind: 'git-tree', baseRevision: baseSHA, revision: baseSHA };
+    analyzeRepository({ root: base, out: previous, language: 'ts', source });
+    const result = analyzeRepository({
+      root: head, out, language: 'ts', source: { ...source, revision: headSHA }, previous: path.join(previous, 'findings.json'),
+      pullRequest: { pr: { simulation: true, title: 'File review', repository: 'example/project', mergeBaseSHA: baseSHA, headSHA, baseSHA },
+        scope: '.', changedFiles: [{ path: 'new.ts', previousPath: 'old.ts', status: 'renamed' },
+          { path: 'gone.ts', status: 'removed' }, { path: 'README.md', status: 'modified' }],
+        manifests: { base: { skipped: [] }, head: { skipped: [] } }, sourceRoot: head, baseSourceRoot: base },
+    });
+    report = result.overlay.html;
+  }
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const read = async expression => {
+    const result = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result.value;
+  };
+  const literal = JSON.stringify;
+  const click = async selector => {
+    const point = await read('(() => {const b=document.querySelector(' + literal(selector) + ');if(!b)throw Error("Control missing");' +
+      'b.scrollIntoView({block:"nearest"});const r=b.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;' +
+      'if(!b.contains(document.elementFromPoint(x,y)))throw Error("Control obstructed: "+b.textContent);return {x,y};})()');
+    for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, ...point, button: 'left', clickCount: 1 });
+  };
+  const image = async name => {
+    if (evidence) fs.writeFileSync(path.join(evidence, name + '.png'), Buffer.from((await send('Page.captureScreenshot', { format: 'png' })).data, 'base64'));
+  };
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: dir });
+  await send('Page.navigate', { url: pathToFileURL(report).href });
+  await loaded;
+  await click('#atlas-tab-files');
+  const query = '#bauify-atlas .atlas-file-query';
+  assert.equal(await read('document.activeElement.matches(' + literal(query) + ')'), true);
+  await send('Input.insertText', { text: external ? 'hydrateFragment.ts' : 'old.ts' });
+  assert.equal(await read('document.querySelectorAll("[data-changed-file]").length'), 1);
+  await click('[data-changed-file]');
+  const expected = external ? await read('JSON.parse(document.getElementById("bauify-analysis").textContent).pullRequest') : { baseSHA, headSHA };
+  await image('lens-files-selected');
+  await click('[data-atlas-change-source="base"]');
+  assert.equal(await read('document.querySelector(".pr-source-pin").textContent'), expected.baseSHA);
+  if (!external) assert.match(await read('document.querySelector("#bauify-code h3").textContent'), /old\.ts/u);
+  await click('[data-pr-side="head"]');
+  assert.equal(await read('document.querySelector(".pr-source-pin").textContent'), expected.headSHA);
+  if (!external) assert.match(await read('document.querySelector("#bauify-code pre").textContent'), /nextMarker/u);
+  await image('lens-files-pinned-head');
+  await click('.source-back');
+  assert.equal(await read('document.querySelector("[data-changed-file]").getAttribute("aria-current")'), 'true');
+  await click('.atlas-change-download');
+  const downloaded = path.join(dir, 'pr-file-review.md');
+  for (let i = 0; !fs.existsSync(downloaded) && i < 100; i++) await new Promise(resolve => setTimeout(resolve, 100));
+  const markdown = fs.readFileSync(downloaded, 'utf8');
+  assert.ok(markdown.includes(expected.baseSHA) && markdown.includes(expected.headSHA));
+  if (!external) {
+    assert.match(markdown, /old\.ts/u);
+    assert.match(markdown, /new\.ts/u);
+    assert.doesNotMatch(markdown, /Marker|gone\.ts|README/u);
+    for (const [term, enabled] of [['gone', true], ['README', false]]) {
+      await read('document.querySelector(' + literal(query) + ').value = ' + literal(term) + '; document.querySelector(' + literal(query) + ').dispatchEvent(new Event("input"))');
+      await click('[data-changed-file]');
+      assert.equal(await read('document.querySelector("[data-atlas-change-source=base]").disabled'), !enabled);
+      assert.equal(await read('document.querySelector("[data-atlas-change-source=head]").disabled'), true);
+    }
+  }
+  if (evidence) fs.copyFileSync(downloaded, path.join(evidence, 'pr-file-review.md'));
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
+  assert.equal(await read('document.documentElement.scrollWidth > innerWidth'), false);
 });

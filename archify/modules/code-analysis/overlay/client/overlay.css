@@ -510,3 +510,4 @@ html[data-bauify-context="pr"] #bauify-reader .comparison-banner.positive { bord
 #bauify-reader .pr-review .pr-impact-record .quick-handoff { margin-left: 0; }
 #bauify-reader .pr-impact-coverage { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .pr-impact-forms { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.6 ui-monospace,monospace; }
+.pr-source-pin { display: block; overflow-wrap: anywhere; }

@@ -13,6 +13,13 @@ The native workbench shows head findings, source evidence, review decisions and 
 
 Capture snapshots remain under the chosen output directory so live tasks and review decisions can verify the pinned head even if the local checkout changes. Review acceptance uses the configured baseline and existing service authorization. Offline tasks stay labeled as captured evidence; verify the intended checkout and source revision before editing.
 
+In a PR report, Atlas **Files** opens the captured changed-file list. Select
+**All captured files** to browse the repository listing. Search matches both
+paths of a rename. Select a changed file to open its merge-base or PR-head
+source at the exact saved commit. A source control is disabled when its side
+was absent or its contents were outside capture. **Download .md** records the
+selected file's paths, their availability and both commits, without source text.
+
 PR priorities use a bounded impact layer over the saved facts and graph, not the whole head's existing hotspots. It compares changed dependency edges and module fan-in/out, reads exact definition fingerprints only in changed source files, and reuses the existing incoming-reference reader to locate direct callers/importers, including unchanged source files. A same-metric body change remains a reading signal; position-only movement does not become an impact. Existing constraints appear only as context attached to a changed dependency or coupling witness. Rule-report evidence updates alone are not promoted to increased risk.
 
 This layer performs no new extraction or repository traversal. Reading is bounded to 32 changed files, 4 MiB of paired source, 80 changed definitions and 160 result records; each reference preview is bounded. Unsupported models, parse errors, excluded roles and exhausted budgets remain explicit unknowns. This is direct static orientation, not runtime tracing, behavior equivalence or complete transitive impact. Full head findings remain separately available as background. The PR brief copies change evidence and its coverage rather than unrelated whole-head recommendations.

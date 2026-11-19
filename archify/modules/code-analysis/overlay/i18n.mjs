@@ -9,6 +9,19 @@ export function createTranslator(messages = {}) {
   };
 }
 const ZH_CN = {
+  "File scope": "文件范围",
+  "Changed files · {count}": "变更文件 · {count}",
+  "All captured files": "所有已捕获文件",
+  "No changed files match.": "没有匹配的变更文件。",
+  "Open merge-base source": "查看合并基点源码",
+  "Open PR head source": "查看 PR 当前源码",
+  "PR file review context": "PR 文件审阅上下文",
+  "Status: ": "状态：",
+  "renamed": "重命名",
+  "copied": "复制",
+  "Source was not captured": "源码未捕获",
+  "File absent on this side": "此版本无该文件",
+  "This context identifies the saved file and commits. Verify the cited source before drawing conclusions.": "这份上下文标识已保存的文件和提交。请先核对引用的源码再下结论。",
   "Verify a previous task": "核验上一次导出的任务",
   "Run project checks separately. This receipt compares captured analyses and records your reported check results.": "请单独运行项目检查。回执对比两次分析，并记录你报告的检查结果。",
   "Download the task JSON before editing, then re-analyze using the same output directory.": "请先下载任务 JSON，改动后使用同一输出目录重新分析。",
