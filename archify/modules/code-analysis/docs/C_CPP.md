@@ -79,7 +79,10 @@ and unsupported file-loading flags such as precompiled/module state. Use an
 Dependency and time-trace output options are dropped before parsing.
 The resulting facts do not establish that the project builds.
 The default C/C++ input set includes `.h`, `.hh`, `.hpp`, `.hxx`, `.inc`,
-`.ipp`, `.inl`, `.tcc`, `.tpp` and `.def` includes. Files excluded by the analysis
+`.ipp`, `.inl`, `.tcc`, `.tpp` and `.def` includes. These defaults apply only
+to the C and C++ adapters. A custom `include` list that differs from the
+shared defaults continues to select exactly the patterns it specifies.
+Files excluded by the analysis
 configuration are not decoded or counted toward the source-byte budget. An
 active include of an excluded project file stops extraction with an explicit
 diagnostic. UTF-8 validation applies to translation units with a compile

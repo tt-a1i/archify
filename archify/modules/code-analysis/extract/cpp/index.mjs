@@ -15,6 +15,8 @@ export const CALL_MODEL = 'cpp-source-direct-v1';
 const C = /\.c$/;
 const CPP = /\.(?:cc|cpp|cxx|C)$/;
 const INPUT = /\.(?:c|cc|cpp|cxx|C|h|hh|hpp|hxx|inc|ipp|inl|tcc|tpp|def)$/;
+const DEFAULT_INCLUDE = JSON.parse(fs.readFileSync(new URL('../../config/defaults.json', import.meta.url), 'utf8')).include;
+const CPP_INCLUDE = ['**/*.{c,cc,cpp,cxx,C,h,hh,hpp,hxx,inc,ipp,inl,tcc,tpp,def}'];
 const script = fileURLToPath(new URL('./extract.py', import.meta.url));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const inside = (root, file) => {
@@ -22,8 +24,14 @@ const inside = (root, file) => {
   return relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
 };
 
-export const countC = (root, config) => listFiles(root, config).filter(file => C.test(file)).length;
-export const countSources = (root, config) => listFiles(root, config).filter(file => CPP.test(file)).length;
+function cppInclude(include) {
+  // Keep the shared defaults stable for existing comparison receipts.
+  return include?.length === DEFAULT_INCLUDE.length && DEFAULT_INCLUDE.every((glob, index) => glob === include[index])
+    ? CPP_INCLUDE : include;
+}
+
+export const countC = (root, config) => listFiles(root, { ...config, include: cppInclude(config.include) }).filter(file => C.test(file)).length;
+export const countSources = (root, config) => listFiles(root, { ...config, include: cppInclude(config.include) }).filter(file => CPP.test(file)).length;
 export const hasCompilationDatabase = config => typeof config.cpp?.compileCommands === 'string' && config.cpp.compileCommands.length > 0;
 export const detect = (root, config) => hasCompilationDatabase(config) && countSources(root, config) > 0;
 export const extract = (root, config, options) => extractFor(id, root, config, options);
@@ -64,7 +72,7 @@ export function extractFor(language, root, config, { onCapture } = {}) {
     subject: { file: databasePath }, supportedFixes: ['point config.cpp.compileCommands at compile_commands.json'],
   });
   const databaseRel = inside(root, databasePath) ? toPosix(path.relative(root, databasePath)) : null;
-  const include = matcher(config.include), exclude = matcher(config.exclude || []);
+  const include = matcher(cppInclude(config.include)), exclude = matcher(config.exclude || []);
   const excluded = file => {
     if (exclude(file)) return true;
     for (let slash = file.indexOf('/'); slash !== -1; slash = file.indexOf('/', slash + 1)) {

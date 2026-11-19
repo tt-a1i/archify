@@ -350,5 +350,6 @@ test('C/C++ only participates in automatic language selection with a configured 
   fs.writeFileSync(path.join(root, 'app.ts'), 'export const app = 1;\n');
   assert.equal(selectAdapter(root, config).id, 'ts');
   assert.deepEqual(otherLanguageFiles(root, config, 'ts'), [{ adapter: 'c', files: 1 }, { adapter: 'cpp', files: 1 }]);
+  assert.deepEqual(otherLanguageFiles(root, mergeConfig(config, { include: ['**/*.ts'] }), 'ts'), []);
   assert.throws(() => selectAdapter(root, configured), error => error.diagnostics?.[0]?.code === 'extract/adapter-ambiguous');
 });
