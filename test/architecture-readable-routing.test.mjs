@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRouter } from '../archify/renderers/architecture/routing.mjs';
+import { createArchitectureRouter, createRouter } from '../archify/renderers/architecture/routing.mjs';
 import { properSegmentIntersection, routeBudgetMetrics } from '../archify/renderers/shared/geometry.mjs';
 
 function fixture() {
@@ -120,4 +120,27 @@ test('an alternate-side feedback port uses the near free slot without detouring 
       assert.equal(JSON.stringify({ boxes: [...boxes], connections }), input);
     }
   }
+});
+
+test('a facing link straightens once a crossing moves to the lower return corridor', () => {
+  const boxes = new Map([
+    ['worktree', 40, 364, 120, 60],
+    ['sessions', 244, 364, 120, 60],
+    ['integration', 448, 364, 160, 76],
+    ['agents', 244, 506, 120, 60],
+    ['sdk', 448, 506, 120, 60],
+    ['repo', 652, 506, 120, 60],
+  ].map(([id, x, y, width, height]) => [id, { id, x, y, width, height, cx: x + width / 2, cy: y + height / 2 }]));
+  const connections = [
+    { from: 'sessions', to: 'agents', label: 'node-pty spawn' },
+    { from: 'integration', to: 'sdk', label: 'session host' },
+    { from: 'worktree', to: 'repo', label: 'git worktree add' },
+  ];
+  const router = createArchitectureRouter(boxes, connections);
+  const routes = connections.map((conn) => router.pathFor(conn).points);
+
+  assert.deepEqual(routes[1], [[528, 440], [528, 506]]);
+  assert.equal(crossings(routes), 0);
+  assert.equal(routes[0].length, 2, 'the neighboring link stays straight');
+  assert.ok(routes[2].some(([, y]) => y > 566), 'the return uses the corridor below the boxes');
 });
