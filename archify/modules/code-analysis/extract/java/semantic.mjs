@@ -9,7 +9,7 @@ const HEADER = 'file\tline\tcolumn\tendLine\tendColumn\tkind\towner\tmethod\ttar
 const position = call => [call.file, call.line, call.column, call.endLine, call.endColumn].join(':');
 
 function readBindings(file, callers) {
-  const [header, ...lines] = fs.readFileSync(file, 'utf8').trimEnd().split('\n');
+  const [header, ...lines] = fs.readFileSync(file, 'utf8').trimEnd().split(/\r?\n/);
   if (header !== HEADER) throw new Error('invalid-output');
   const bindings = new Map();
   for (const line of lines) {

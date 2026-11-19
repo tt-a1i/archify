@@ -34,7 +34,7 @@ function inputDigest() {
 const digest = inputDigest();
 assert.equal(digest, manifest.inputSha256, 'source snapshot differs from the fixed query manifest');
 
-const [header, ...data] = fs.readFileSync(bindingsFile, 'utf8').trimEnd().split('\n');
+const [header, ...data] = fs.readFileSync(bindingsFile, 'utf8').trimEnd().split(/\r?\n/);
 assert.equal(header, 'file\tline\tcolumn\tendLine\tendColumn\tkind\towner\tmethod\ttargetFile\ttargetLine\ttargetColumn\ttext');
 const rows = data.map(line => {
   const [file, lineNumber, column, endLine, endColumn, kind, owner, method, targetFile, targetLine, targetColumn, text] = line.split('\t');
