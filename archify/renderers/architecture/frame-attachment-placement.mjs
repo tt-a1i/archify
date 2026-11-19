@@ -1,13 +1,70 @@
+const attachmentGap = 40;
+
+function placeLeavesByAttachment(frames, links, layout, adjustedPeers, axes) {
+  const [across, span, inset, along, depth] = axes;
+  const ranks = new Map();
+  for (const [item, attachments] of links) {
+    if (item.children || attachments.length !== 1) continue;
+    const [{ member, peer, target }] = attachments;
+    if (!frames.includes(peer) || adjustedPeers.has(peer) || member !== item || target.parent !== peer) continue;
+    if (!ranks.has(peer)) ranks.set(peer, new Map());
+    const key = `${item[along]}:${item[depth]}:${item[span]}`;
+    const byRank = ranks.get(peer);
+    if (!byRank.has(key)) byRank.set(key, []);
+    const desired = peer[across] + peer[inset] + target[across] + (target[span] - item[span]) / 2;
+    byRank.get(key).push({ item, desired });
+  }
+
+  // Keep the rank and card sizes. Allocate its existing slots in the same
+  // order as the real attachment points, then translate the rank as a unit.
+  const sameSizeRanks = Array.from(ranks.values(), (byRank) => [...byRank.values()]).flat();
+  for (const leaves of sameSizeRanks) {
+    if (leaves.length < 2 || leaves.every(({ desired }) => desired === leaves[0].desired)) continue;
+    const byPosition = leaves.sort((a, b) => a.item[across] - b.item[across]);
+    const slots = byPosition.map(({ item }) => item[across]);
+    const ordered = [...byPosition].sort((a, b) => a.desired - b.desired);
+    const [{ item }] = ordered;
+    const items = new Set(ordered.map((leaf) => leaf.item));
+    const blockers = [...links.keys()].filter((other) => !items.has(other)
+      && other[along] < item[along] + item[depth] + attachmentGap
+      && other[along] + other[depth] + attachmentGap > item[along]);
+
+    const lower = -slots[0];
+    const upper = layout[span] - slots.at(-1) - item[span];
+    const candidates = [0, lower, upper, ...ordered.map(({ desired }, i) => desired - slots[i])];
+    for (const other of blockers) {
+      for (const slot of slots) {
+        candidates.push(other[across] - attachmentGap - item[span] - slot, other[across] + other[span] + attachmentGap - slot);
+      }
+    }
+    const initial = byPosition.reduce((sum, leaf, index) => sum + Math.abs(leaf.desired - slots[index]), 0);
+    let bestOffset = 0;
+    let bestCost = Infinity;
+    for (const offset of candidates) {
+      if (offset < lower || offset > upper || slots.some((slot) => blockers.some((other) =>
+        slot + offset + item[span] + attachmentGap > other[across] && slot + offset < other[across] + other[span] + attachmentGap))) continue;
+      const cost = ordered.reduce((sum, leaf, index) => sum + Math.abs(leaf.desired - slots[index] - offset), 0);
+      if (cost < bestCost || (cost === bestCost && Math.abs(offset) < Math.abs(bestOffset))) {
+        bestCost = cost;
+        bestOffset = offset;
+      }
+    }
+    if (bestCost >= initial) continue;
+    for (const [index, leaf] of ordered.entries()) leaf.item[across] = slots[index] + bestOffset;
+  }
+}
+
 // The parent layout measures frames as boxes. The original endpoints let
 // a shallow peer face the part of a frame it actually connects to.
 export function placeFrameAttachments(group, layout) {
   if (group.children.length > 24 || group.edges.length > 36) return;
   const frames = group.children.filter((item) => item.children && item.children.length <= 64);
-  if (frames.length < 2) return;
+  if (!frames.length) return;
 
-  const [across, span, inset, along, depth] = layout.vertical
+  const axes = layout.vertical
     ? ['x', 'width', 'leftInset', 'y', 'height']
     : ['y', 'height', 'topPad', 'x', 'width'];
+  const [across, span, inset, along, depth] = axes;
   const links = new Map(group.children.map((item) => [item, []]));
   for (const edge of group.edges) {
     const { from, to, originalFrom, originalTo, variant } = edge;
@@ -40,6 +97,7 @@ export function placeFrameAttachments(group, layout) {
     for (const item of frame.children) item[across] = near + far - item[across] - item[span];
     adjustedPeers.add(peer);
   }
+  placeLeavesByAttachment(frames, links, layout, adjustedPeers, axes);
   if (!adjustedPeers.size) return;
 
   const isolated = [];
@@ -57,23 +115,22 @@ export function placeFrameAttachments(group, layout) {
 
   // Keep each isolated peer on its rank. Move it only to an open slot with
   // enough room for routes, and keep the strongest flow nearest its endpoint.
-  const gap = 40;
   const limit = layout[span];
   for (const { item, desired } of isolated) {
     const blockers = group.children.filter((other) => other !== item
-      && other[along] < item[along] + item[depth] + gap
-      && other[along] + other[depth] + gap > item[along]);
+      && other[along] < item[along] + item[depth] + attachmentGap
+      && other[along] + other[depth] + attachmentGap > item[along]);
     const clamped = Math.min(Math.max(0, desired), limit - item[span]);
     const slots = [clamped, ...blockers.flatMap((other) => [
-      other[across] - item[span] - gap, other[across] + other[span] + gap,
+      other[across] - item[span] - attachmentGap, other[across] + other[span] + attachmentGap,
     ])];
     let best = item[across];
     for (const position of slots) {
       if (position < 0 || position + item[span] > limit ||
         Math.abs(position - desired) >= Math.abs(best - desired)) continue;
-      if (blockers.every((other) => position + item[span] + gap <= other[across]
-        || position >= other[across] + other[span] + gap)) best = position;
+      if (blockers.every((other) => position + item[span] + attachmentGap <= other[across]
+        || position >= other[across] + other[span] + attachmentGap)) best = position;
     }
-    if (Math.abs(item[across] - desired) > Math.abs(best - desired) + gap) item[across] = best;
+    if (Math.abs(item[across] - desired) > Math.abs(best - desired) + attachmentGap) item[across] = best;
   }
 }

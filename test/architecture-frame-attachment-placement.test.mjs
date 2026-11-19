@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
+import { placeFrameAttachments } from '../archify/renderers/architecture/frame-attachment-placement.mjs';
 import { rectsOverlap } from '../archify/renderers/shared/geometry.mjs';
 
 test('automatic frame placement faces the request and return endpoints across the frame gap', () => {
@@ -38,4 +39,30 @@ test('automatic frame placement faces the request and return endpoints across th
   const [application, worker] = boundaries.map(frameFor);
   assert.ok(!rectsOverlap(application, worker));
   assert.ok(!rectsOverlap(application, boxFor('client')));
+});
+
+test('interchangeable peripheral cards follow their frame endpoints without crowding a rank neighbor', () => {
+  const frame = { x: 0, y: 200, width: 500, height: 150, leftInset: 40 };
+  const card = (x, y) => ({ x, y, width: 100, height: 60 });
+  const leftMember = { ...card(40, 20), parent: frame };
+  const rightMember = { ...card(350, 20), parent: frame };
+  frame.children = [leftMember, rightMember];
+  const leftLeaf = card(370, 30);
+  const rightLeaf = card(45, 30);
+  const blocker = { ...card(190, 30), width: 60 };
+  const attachment = (leaf, member) => ({
+    from: leaf, to: frame, originalFrom: leaf, originalTo: member,
+  });
+
+  placeFrameAttachments({
+    children: [leftLeaf, rightLeaf, blocker, frame],
+    edges: [attachment(leftLeaf, leftMember), attachment(rightLeaf, rightMember)],
+  }, { vertical: true, width: 520 });
+
+  assert.ok(leftLeaf.x + leftLeaf.width + 40 <= blocker.x);
+  assert.ok(rightLeaf.x >= blocker.x + blocker.width + 40);
+  assert.equal(leftLeaf.y, rightLeaf.y);
+  assert.equal(leftLeaf.y, 30);
+  assert.equal(blocker.x, 190);
+  assert.ok(Math.abs(leftLeaf.x - 80) < 35 && Math.abs(rightLeaf.x - 390) < 25);
 });
