@@ -53,6 +53,25 @@
             "toolTags": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
           }
         },
+        "cppBuildScope": {
+          "type": "object", "additionalProperties": false,
+          "required": ["databaseSha256", "sysroot", "libclang", "commands", "excludedFiles"],
+          "properties": {
+            "databaseSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "sysroot": { "type": "string" },
+            "libclang": { "type": "string" },
+            "commands": { "type": "array", "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["file", "commandSha256", "status"],
+              "properties": {
+                "file": { "type": "string" },
+                "commandSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                "status": { "enum": ["parsed", "parse-error"] }
+              }
+            } },
+            "excludedFiles": { "type": "array", "items": { "type": "string" } }
+          }
+        },
         "duplicates": {
           "type": "object", "additionalProperties": false,
           "required": ["engine", "settings", "coverage"],

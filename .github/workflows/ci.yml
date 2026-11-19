@@ -91,12 +91,19 @@ jobs:
       - name: Install Code Analysis duplicate detector
         if: matrix.shard == 1
         run: npm install --prefix "$RUNNER_TEMP/archify-jscpd" --ignore-scripts --no-audit --no-fund jscpd@5.4.3
+      - name: Install Code Analysis C/C++ parser
+        if: matrix.shard == 1
+        run: |
+          python3 -m venv "$RUNNER_TEMP/archify-clang"
+          "$RUNNER_TEMP/archify-clang/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --no-deps libclang==18.1.1
       # The root runner enumerates only test/; the module suite lives with the module.
       - name: Code Analysis module suite
         if: matrix.shard == 1
         run: npm --prefix archify run test:code-analysis
         env:
           ARCHIFY_TEST_JSCPD: ${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd
+          ARCHIFY_CPP_PYTHON: ${{ runner.temp }}/archify-clang/bin/python
+          ARCHIFY_CPP_REQUIRED: '1'
       - name: Run a complete regression shard
         run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2
 
