@@ -18,7 +18,7 @@ import {
   validatePlanAgainstParts,
   validatePortableSourcePath,
 } from './choreography-plan.mjs';
-import { writeStoryOutput } from './output.mjs';
+import { publishStorySvgOutputs, writeStoryOutput } from './output.mjs';
 import { buildStoryStageHtml } from './story-stage-html.mjs';
 import { compileStorySvg, createCompiledStoryTheme } from './story-svg.mjs';
 import { BAKE_PRESETS, BAKE_THEMES, authoredPreset, bakeSvg, extractCanonicalSvg, loadViewerStyles } from './svg-bake.mjs';
@@ -654,62 +654,60 @@ async function runStorySvgCommand(spec, opts) {
     outputArg, themes, theme, stillCount: bundle.plan.stills?.length || 0, stillIndex,
   }))]));
   const destinations = [...Object.values(outPaths), ...[...stillPaths.values()].flat()];
-  const siblingPaths = requestedOutput => destinations.filter(file => file !== requestedOutput);
-  for (const requestedOutput of destinations) {
-    const { outputPath } = resolveOutputPath({
-      requestedOutput, requiredExtension: '.svg', inputPaths: allInputPaths, otherOutputPaths: siblingPaths(requestedOutput),
-      inputDescription: 'the story choreography or view input',
-    });
+  const outputGuards = destinations.map((requestedOutput, index) => ({
+    requestedOutput,
+    requiredExtension: '.svg',
+    inputPaths: allInputPaths,
+    otherOutputPaths: destinations.filter((_, sibling) => sibling !== index),
+    inputDescription: 'the story choreography or view input',
+  }));
+  const guardsByPath = new Map();
+  const outputPaths = new Map(outputGuards.map(guard => {
+    const { outputPath } = resolveOutputPath(guard);
     const existing = fs.statSync(outputPath, { throwIfNoEntry: false });
     if (existing && !existing.isFile()) {
       failChoreography('output/invalid-target', 'output', 'Story SVG output must target a regular file.', {
         subject: { output: outputPath }, supportedFixes: ['choose a filename that does not already name a directory or another special file'],
       });
     }
-  }
+    guardsByPath.set(outputPath, guard);
+    return [guard.requestedOutput, outputPath];
+  }));
   const outputs = [];
   const stills = [];
   let meta = null;
 
-  for (const theme of themes) {
-    const compiledTheme = createCompiledStoryTheme({
-      plan: bundle.plan,
-      bakedViews: bundle.bakedViews,
-      viewTypes: bundle.viewTypes,
-      theme,
-      preset: bundle.resolvedPreset,
-      styles: bundle.styles,
-    });
-    const animated = compiledTheme.renderAnimatedSvg();
-    meta = compiledTheme.meta;
-    const safeOut = writeValidatedStoryFile({
-      requestedOutput: outPaths[theme],
-      requiredExtension: '.svg',
-      inputPaths: allInputPaths,
-      content: animated.svg,
-      otherOutputPaths: siblingPaths(outPaths[theme]),
-    });
-    outputs.push({ theme, path: safeOut, bytes: Buffer.byteLength(animated.svg, 'utf8'), sha256: sha256(animated.svg) });
-
-    for (const [si, atTime] of stillTimes.entries()) {
-      const stillCompiled = compiledTheme.renderStillSvg(atTime);
-      const rawStillPath = stillPaths.get(theme)[si];
-      const safeStill = writeValidatedStoryFile({
-        requestedOutput: rawStillPath,
-        requiredExtension: '.svg',
-        inputPaths: allInputPaths,
-        content: stillCompiled.svg,
-        otherOutputPaths: siblingPaths(rawStillPath),
-      });
-      stills.push({
-        time: atTime ?? Math.max(0, bundle.plan.duration - 0.5),
+  const validateOutput = file => resolveOutputPath(guardsByPath.get(file));
+  publishStorySvgOutputs([...outputPaths.values()], validateOutput, publish => {
+    for (const theme of themes) {
+      const compiledTheme = createCompiledStoryTheme({
+        plan: bundle.plan,
+        bakedViews: bundle.bakedViews,
+        viewTypes: bundle.viewTypes,
         theme,
-        path: safeStill,
-        bytes: Buffer.byteLength(stillCompiled.svg, 'utf8'),
-        sha256: sha256(stillCompiled.svg),
+        preset: bundle.resolvedPreset,
+        styles: bundle.styles,
       });
+      const animated = compiledTheme.renderAnimatedSvg();
+      meta = compiledTheme.meta;
+      const safeOut = outputPaths.get(outPaths[theme]);
+      publish(safeOut, animated.svg);
+      outputs.push({ theme, path: safeOut, bytes: Buffer.byteLength(animated.svg, 'utf8'), sha256: sha256(animated.svg) });
+
+      for (const [si, atTime] of stillTimes.entries()) {
+        const stillCompiled = compiledTheme.renderStillSvg(atTime);
+        const safeStill = outputPaths.get(stillPaths.get(theme)[si]);
+        publish(safeStill, stillCompiled.svg);
+        stills.push({
+          time: atTime ?? Math.max(0, bundle.plan.duration - 0.5),
+          theme,
+          path: safeStill,
+          bytes: Buffer.byteLength(stillCompiled.svg, 'utf8'),
+          sha256: sha256(stillCompiled.svg),
+        });
+      }
     }
-  }
+  });
 
   const result = {
     ok: true,

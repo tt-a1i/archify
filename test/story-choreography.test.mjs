@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import { fromStoryBriefToChoreography, normalizeChoreographySpec } from '../archify/story/choreography-plan.mjs';
 import { compileStoryStillSvg, compileStorySvg, createCompiledStoryTheme } from '../archify/story/story-svg.mjs';
@@ -17,8 +17,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..', 'archify');
 const cli = path.join(skillRoot, 'bin', 'archify.mjs');
 
-function run(args, cwd = skillRoot, extraEnv = {}) {
-  return spawnSync(process.execPath, [cli, ...args], {
+function run(args, cwd = skillRoot, extraEnv = {}, nodeArgs = []) {
+  return spawnSync(process.execPath, [...nodeArgs, cli, ...args], {
     cwd,
     encoding: 'utf8',
     maxBuffer: 16 * 1024 * 1024,
@@ -225,8 +225,7 @@ test('standalone multi-view component choreography validates, compiles dual-them
   assert.match(html, /data-stage-theme="dark"/);
 });
 
-test('3-positional story svg and story stage bridge existing native HTML and version-2 briefs', () => {
-  const dir = scratch();
+function writeLegacyStoryBrief(dir) {
   const htmlPath = path.join(skillRoot, 'examples', 'workflow-agent-tool-call-rendered.html');
   const briefPath = path.join(dir, 'brief.json');
   const scanRes = run(['story', 'scan', htmlPath, '--json'], dir);
@@ -248,7 +247,12 @@ test('3-positional story svg and story stage bridge existing native HTML and ver
       }],
     }],
   }, null, 2));
+  return { htmlPath, briefPath };
+}
 
+test('3-positional story svg and story stage bridge existing native HTML and version-2 briefs', () => {
+  const dir = scratch();
+  const { htmlPath, briefPath } = writeLegacyStoryBrief(dir);
   const outSvg = path.join(dir, 'single.svg');
   const svgRes = run(['story', 'svg', htmlPath, briefPath, outSvg, '--json'], dir);
   assert.equal(svgRes.status, 0, svgRes.stdout + svgRes.stderr);
@@ -282,6 +286,99 @@ test('3-positional story svg and story stage bridge existing native HTML and ver
   assert.equal(limit.subject.path, '/steps');
   assert.equal(limit.evidence.limit, 16);
   assert.equal(fs.existsSync(longOut), false);
+});
+
+test('story SVG restores the output pair and keeps recovery copies when restoration fails through an alias', () => {
+  const dir = scratch();
+  const { htmlPath, briefPath } = writeLegacyStoryBrief(dir);
+  const physical = path.join(dir, 'physical');
+  const alias = path.join(dir, 'alias');
+  fs.mkdirSync(physical);
+  fs.symlinkSync(physical, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const animated = path.join(alias, 'story.svg');
+  const still = path.join(alias, 'story.still.svg');
+  const stillDestination = path.join(fs.realpathSync(path.dirname(still)), path.basename(still));
+  const trace = path.join(dir, 'faults.txt');
+  const hook = path.join(dir, 'fault.mjs');
+  fs.writeFileSync(hook, `import fs from 'node:fs';
+import path from 'node:path';
+const link = fs.linkSync;
+const open = fs.openSync;
+const destination = ${JSON.stringify(stillDestination)};
+const trace = ${JSON.stringify(trace)};
+const mode = process.env.ARCHIFY_TEST_STORY_FAULT;
+let publicationFailed = false;
+let restorationFailed = false;
+function fail(stage) {
+  fs.appendFileSync(trace, stage + '\\n');
+  throw Object.assign(new Error('injected ' + stage + ' failure'), { code: 'EIO' });
+}
+fs.linkSync = function(from, to, ...args) {
+  if (path.resolve(to) === destination) {
+    if (!publicationFailed) {
+      publicationFailed = true;
+      fail('publication');
+    }
+    if (mode === 'current-restore' && !restorationFailed) {
+      restorationFailed = true;
+      fail('current restoration');
+    }
+  }
+  return link.call(this, from, to, ...args);
+};
+fs.openSync = function(file, flags, ...args) {
+  if (mode === 'pair-restore' && publicationFailed
+      && flags === 'wx' && /^\\.archify-story-[a-f0-9-]+\\.tmp$/.test(path.basename(String(file)))) {
+    fail('restoration');
+  }
+  return open.call(this, file, flags, ...args);
+};`);
+
+  const runFaulted = (mode, faults, format = ['--json']) => {
+    fs.writeFileSync(trace, '');
+    const result = run(['story', 'svg', htmlPath, briefPath, animated, ...format], dir,
+      { ARCHIFY_TEST_STORY_FAULT: mode }, ['--import', pathToFileURL(hook).href]);
+    assert.equal(result.status, 1, result.stderr + result.stdout);
+    assert.deepEqual(fs.readFileSync(trace, 'utf8').trim().split('\n'), faults);
+    return result;
+  };
+
+  fs.writeFileSync(still, 'previous still');
+  const absent = JSON.parse(runFaulted('publish-only', ['publication']).stdout).diagnostics[0];
+  assert.equal(fs.existsSync(animated), false, 'do not leave half of a new pair');
+  assert.equal(absent.code, 'story/svg-publication');
+  assert.equal(absent.evidence.restoration, 'complete');
+  assert.equal(fs.readFileSync(still, 'utf8'), 'previous still');
+
+  fs.writeFileSync(animated, 'previous animation');
+  const restored = JSON.parse(runFaulted('publish-only', ['publication']).stdout).diagnostics[0];
+  assert.equal(restored.evidence.restoration, 'complete');
+  assert.equal(fs.readFileSync(animated, 'utf8'), 'previous animation');
+  assert.equal(fs.readFileSync(still, 'utf8'), 'previous still');
+  assert.deepEqual(fs.readdirSync(physical).sort(), ['story.still.svg', 'story.svg']);
+
+  const incomplete = JSON.parse(runFaulted('pair-restore', ['publication', 'restoration']).stdout).diagnostics[0];
+  assert.equal(incomplete.code, 'story/svg-publication');
+  assert.equal(incomplete.evidence.restoration, 'incomplete');
+  assert.match(incomplete.message, /restoration failure/);
+  assert.ok(fs.statSync(incomplete.evidence.recoveryDirectory).isDirectory());
+  assert.deepEqual(incomplete.evidence.recoveryFiles.map(file => fs.readFileSync(file, 'utf8')).sort(),
+    ['previous animation', 'previous still']);
+  assert.equal(fs.readFileSync(still, 'utf8'), 'previous still');
+  fs.writeFileSync(animated, 'previous animation');
+  const plain = runFaulted('pair-restore', ['publication', 'restoration'], []);
+  assert.match(plain.stderr, /Recovery incomplete/);
+  assert.match(plain.stderr, /recovery directory:/);
+
+  fs.writeFileSync(animated, 'previous animation');
+  const failedMember = JSON.parse(runFaulted('current-restore', ['publication', 'current restoration']).stdout).diagnostics[0];
+  assert.equal(failedMember.code, 'story/svg-publication');
+  assert.equal(failedMember.evidence.restoration, 'incomplete');
+  assert.match(failedMember.message, /Previous output could not be verified/);
+  assert.equal(fs.readFileSync(animated, 'utf8'), 'previous animation');
+  assert.equal(fs.existsSync(still), false);
+  assert.deepEqual(failedMember.evidence.recoveryFiles.map(file => fs.readFileSync(file, 'utf8')).sort(),
+    ['previous animation', 'previous still']);
 });
 
 test('choreography resolves pinned repository source lines via --repo-root and rejects invalid paths/ranges/motion', (t) => {
