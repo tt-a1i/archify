@@ -8,6 +8,7 @@ from calls import events, source_range
 
 FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef)
 SCOPES = (*FUNCTIONS, ast.Lambda, ast.Module)
+COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
 TYPE_ALIAS = getattr(ast, "TypeAlias", ())
 
 
@@ -51,6 +52,24 @@ class Source:
 
     def scope(self, node):
         return next((n for n in self.ancestors(node) if isinstance(n, SCOPES)), self.tree)
+
+    def comprehension_binding(self, expr):
+        path = receiver_path(expr)
+        if not path:
+            return None
+        child, in_iterable = expr, False
+        for parent in self.ancestors(expr):
+            if isinstance(parent, SCOPES):
+                break
+            if isinstance(parent, COMPREHENSIONS):
+                # Only the first iterable is evaluated in the enclosing scope.
+                if not (in_iterable and child is parent.generators[0]):
+                    targets, _ = events(loop.target for loop in parent.generators)
+                    if path[0] in targets:
+                        return parent
+            in_iterable = isinstance(parent, ast.comprehension) and child is parent.iter
+            child = parent
+        return None
 
     def before(self, node, scope):
         for parent in self.ancestors(node):
@@ -172,15 +191,18 @@ def typing_subscription(expr, source, *types):
 
 
 class ReceiverTypes:
-    def __init__(self, source, lookup_class, lookup_function):
+    def __init__(self, source, lookup_class, lookup_function, lookup_callback):
         self.source = source
         self.lookup_class = lookup_class
         self.lookup_function = lookup_function
+        self.lookup_callback = lookup_callback
 
     def annotation(self, source, node, scope, depth=0):
         if depth > 4 or node is None:
             return None
         head = node.value if isinstance(node, ast.Subscript) else node
+        if source.comprehension_binding(head):
+            return None
         name = head.id if isinstance(head, ast.Name) else head.value if isinstance(head, ast.Constant) and isinstance(head.value, str) else None
         declared = source.local_type(name, scope) if name else None
         if isinstance(declared, TYPE_ALIAS):
@@ -209,11 +231,11 @@ class ReceiverTypes:
         return self.annotation(self.source, annotation, scope)
 
     def narrowed(self, expr, scope, use):
-        if narrowed := self.comprehension_type(expr, scope, use):
-            return narrowed
+        if comp := self.source.comprehension_binding(expr):
+            return self.comprehension_type(expr, scope, use, comp)
         previous = use
         for parent in self.source.ancestors(use):
-            if parent is scope or isinstance(parent, (ast.Lambda, ast.GeneratorExp, ast.ListComp)):
+            if parent is scope or isinstance(parent, (ast.Lambda, *COMPREHENSIONS)):
                 break
             if isinstance(parent, ast.If) and previous in parent.body:
                 if candidate := self.guard(parent.test, expr, scope):
@@ -228,11 +250,11 @@ class ReceiverTypes:
                         return candidate
         return None
 
-    def comprehension_type(self, expr, scope, use):
-        if not isinstance(expr, ast.Name) or not isinstance(scope, FUNCTIONS):
+    def comprehension_type(self, expr, scope, use, comp):
+        if not (isinstance(expr, ast.Name) and isinstance(scope, FUNCTIONS)
+                and isinstance(comp, (ast.ListComp, ast.GeneratorExp))):
             return None
-        comp = next((n for n in self.source.ancestors(use) if isinstance(n, (ast.ListComp, ast.GeneratorExp))), None)
-        if (not comp or len(comp.generators) != 1 or use not in ast.walk(comp.elt)
+        if (len(comp.generators) != 1 or use not in ast.walk(comp.elt)
                 or receiver_path(comp.generators[0].target) != (expr.id,)):
             return None
         loop = comp.generators[0]
@@ -280,18 +302,13 @@ class ReceiverTypes:
         if index is None:
             return None
         if isinstance(scope, ast.Lambda):
-            call = self.source.parents.get(scope)
-            if isinstance(call, ast.Call) and scope in call.args and isinstance(call.func, ast.Attribute):
-                if declared := self.lookup_function(self.source, call):
-                    source, member = declared
-                    position = call.args.index(scope) + 1
-                    if (member.lineno, member.name) in source.owners and position < len(args(member)):
-                        annotation = args(member)[position].annotation
-                        if isinstance(annotation, ast.Name) and source.module_binding(annotation.id, source.scope(member)):
-                            annotation = source.assignments.get(annotation.id, annotation)
-                        signature = typing_subscription(annotation, source, "Callable")
-                        if signature and isinstance(signature[0], ast.List) and index < len(signature[0].elts):
-                            return self.annotation(source, signature[0].elts[index], source.tree)
+            if declared := self.lookup_callback(self.source, scope):
+                source, member, annotation = declared
+                if isinstance(annotation, ast.Name) and source.module_binding(annotation.id, source.scope(member)):
+                    annotation = source.assignments.get(annotation.id, annotation)
+                signature = typing_subscription(annotation, source, "Callable")
+                if signature and isinstance(signature[0], ast.List) and index < len(signature[0].elts):
+                    return self.annotation(source, signature[0].elts[index], source.tree)
             return None
         return self.annotation(self.source, params[index].annotation, self.source.scope(scope)) or self.implicit_self(expr, scope)
 
@@ -357,6 +374,8 @@ class ReceiverTypes:
         if depth > 5:
             return None
         if isinstance(expr, ast.Name):
+            if self.source.comprehension_binding(expr):
+                return None
             return self.parameter(expr, scope) or self.local_assignment(expr, scope, use, depth)
         if isinstance(expr, ast.Attribute) and (owner := self.instance(expr.value, scope, use, depth + 1)):
             source, cls, _ = owner
@@ -364,7 +383,8 @@ class ReceiverTypes:
                 constructor, stmt = field
                 if isinstance(stmt, ast.AnnAssign):
                     return self.annotation(source, stmt.annotation, source.scope(constructor))
-                return ReceiverTypes(source, self.lookup_class, self.lookup_function).instance(stmt.value, constructor, stmt, depth + 1)
+                return ReceiverTypes(source, self.lookup_class, self.lookup_function, self.lookup_callback).instance(
+                    stmt.value, constructor, stmt, depth + 1)
         if isinstance(expr, ast.Call):
             if direct := self.annotation(self.source, expr.func, scope):
                 return direct

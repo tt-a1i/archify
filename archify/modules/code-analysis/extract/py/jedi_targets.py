@@ -15,7 +15,7 @@ import parso
 
 from calls import source_lines
 from platform_view import PLATFORMS, platform_view
-from receiver_types import ReceiverTypes, Source
+from receiver_types import ReceiverTypes, Source, args
 
 
 def definition_anchors(file, tokens, functions):
@@ -166,7 +166,7 @@ def resolve_queries(root, search, inputs, anchors, environment, views):
                 call["_jedi"] = selected[point]
 
 
-def resolve_receiver_types(root, search, inputs, environment, views):
+def resolve_receiver_types(root, search, inputs, anchors, environment, views):
     project = jedi.Project(str(root), sys_path=list(map(str, search)), smart_sys_path=False,
                            load_unsafe_extensions=False)
     sources = {root / record["path"]: Source(tree, record) for record, _, _, tree in inputs}
@@ -212,17 +212,20 @@ def resolve_receiver_types(root, search, inputs, environment, views):
                 return origin, cls
         return None
 
-    def lookup_class(source, expr, scope):
-        if captured := captured_import(source, expr, scope):
-            return captured
-        path = root / source.record["path"]
+    def script_for(source):
         if source not in scripts:
+            path = root / source.record["path"]
             code = views.get(source.record["path"], source.record["sourceText"])
             script = jedi.Script(code, path=str(path), project=project, environment=environment)
             tokens = {t.end: t for t in tokens_by_source[source] if t.type == tokenize.NAME}
             lines, _ = source_lines(source.record["sourceText"])
             scripts[source] = script, tokens, lines, blocked_lines(script, source.record["functions"])
-        script, tokens, lines, blocked = scripts[source]
+        return scripts[source]
+
+    def lookup_class(source, expr, scope):
+        if captured := captured_import(source, expr, scope):
+            return captured
+        script, tokens, lines, blocked = script_for(source)
         point = callee_point(expr, lines, tokens)
         if point is None or blocked is None or point[0] in blocked:
             return None
@@ -232,8 +235,55 @@ def resolve_receiver_types(root, search, inputs, environment, views):
                 return origin, cls
         return None
 
+    def lookup_callback(source, argument):
+        call = source.parents.get(argument)
+        if not (isinstance(call, ast.Call) and argument in call.args and isinstance(call.func, ast.Attribute)):
+            return None
+        position = call.args.index(argument)
+        if any(isinstance(arg, ast.Starred) for arg in call.args[:position]):
+            return None
+        declared = lookup_function(source, call)
+        if not declared:
+            return None
+        origin, member = declared
+        if (member.lineno, member.name) not in origin.owners:
+            return None
+        script, _, lines, blocked = script_for(source)
+        if blocked is None or argument.lineno in blocked:
+            return None
+        column = len(lines[argument.lineno - 1].encode("utf-8")[:argument.col_offset].decode("utf-8"))
+        signatures = script.get_signatures(argument.lineno, column)
+        if len(signatures) != 1:
+            return None
+        signature = signatures[0]
+        # Use the parameters visible at this call and verify their captured origin.
+        if (signature.index != position or position >= len(signature.params)
+                or exact_target(anchors, [signature]) != source.targets[call]["_jedi"]):
+            return None
+        name = signature.params[position].name
+        return next(((origin, member, param.annotation) for param in args(member)
+                     if param.arg == name and param.annotation is not None), None)
+
+    # Validate Jedi's receiver binding before using its targets as type evidence.
     for record, _, queries, _ in inputs:
-        evidence = ReceiverTypes(sources[root / record["path"]], lookup_class, lookup_function)
+        source = sources[root / record["path"]]
+        for call, callee in queries:
+            if not call.get("_jedi") or not isinstance(callee, ast.Attribute):
+                continue
+            receiver = callee.value
+            while isinstance(receiver, ast.Attribute):
+                receiver = receiver.value
+            if not isinstance(receiver, ast.Name) or not (comp := source.comprehension_binding(receiver)):
+                continue
+            script, tokens, lines, _ = script_for(source)
+            slots = {callee_point(node, lines, tokens) for loop in comp.generators for node in ast.walk(loop.target)
+                     if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store) and node.id == receiver.id}
+            names = script.goto(*callee_point(receiver, lines, tokens))
+            if any(name.module_path != script.path or (name.line, name.column) not in slots for name in names):
+                del call["_jedi"]
+
+    for record, _, queries, _ in inputs:
+        evidence = ReceiverTypes(sources[root / record["path"]], lookup_class, lookup_function, lookup_callback)
         for call, callee in queries:
             if not isinstance(callee, ast.Attribute):
                 continue
@@ -275,5 +325,5 @@ def add_targets(sources, inputs, profile, stubs, dependencies):
             write_snapshot(library, dependencies)
             search = [root, root / "src", *(root / relative for relative in extra_paths), stdlib, stdlib / "lib-dynload", library]
             resolve_queries(root, search, inputs, anchors, environment, views)
-        resolve_receiver_types(root, search, inputs, environment, views)
+        resolve_receiver_types(root, search, inputs, anchors, environment, views)
     return {"jedi": jedi.__version__, "parso": parso.__version__, "platform": platform if views else None}

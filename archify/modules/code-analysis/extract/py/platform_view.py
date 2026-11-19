@@ -56,12 +56,26 @@ def platform_view(text, tree, platform):
     edits = []
 
     def edit(first, last, replacement):
-        start = offsets[first.lineno - 1] + len(lines[first.lineno - 1].encode("utf-8")[:first.col_offset].decode("utf-8"))
+        line = first.lineno
+        if decorators := getattr(first, "decorator_list", ()):
+            # The decorator expression can start after its @, even on a later line.
+            line = decorators[0].lineno
+            while not lines[line - 1].lstrip(" \t\f").startswith("@"):
+                line -= 1
+            column = lines[line - 1].index("@")
+        else:
+            column = len(lines[line - 1].encode("utf-8")[:first.col_offset].decode("utf-8"))
+        start = offsets[line - 1] + column
         stop = offsets[last.end_lineno - 1] + len(lines[last.end_lineno - 1].encode("utf-8")[:last.end_col_offset].decode("utf-8"))
         span = text[start:stop]
+        multiline_test = isinstance(first, ast.expr) and first.lineno != first.end_lineno
+        if multiline_test:
+            replacement = "(" + replacement
         if len(span.splitlines()[0]) < len(replacement):
             return False
         spacer = "".join(c if c in "\r\n" else " " for c in span[len(replacement):])
+        if multiline_test:
+            spacer = spacer[:-1] + ")"
         edits.append((start, stop, replacement + spacer))
         return True
 
@@ -87,6 +101,13 @@ def platform_view(text, tree, platform):
                     constants[name] = evaluated
 
     visit(tree.body)
+    if not edits:
+        return text
+    rewritten = text
     for start, stop, replacement in sorted(edits, reverse=True):
-        text = text[:start] + replacement + text[stop:]
-    return text
+        rewritten = rewritten[:start] + replacement + rewritten[stop:]
+    try:
+        ast.parse(rewritten)
+    except SyntaxError:
+        return text
+    return rewritten
