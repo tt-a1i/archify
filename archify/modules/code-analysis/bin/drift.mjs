@@ -75,8 +75,10 @@ async function run([repoArg, ...args]) {
   const ir = irInput.doc;
   if (!ir || ir.diagram_type !== 'architecture') fail('drift/ir-invalid', 'Select a valid authored Architecture IR.');
   const irSha256 = driftDigest(irInput.bytes);
+  let originalInputs = null;
   if (options.has('--from-report')) {
-    validateDriftFollowup(readDriftInput(options.get('--from-report'), 'original', driftReportMaxBytes), pins, ir.meta?.repository?.revision, irSha256);
+    originalInputs = validateDriftFollowup(readDriftInput(options.get('--from-report'), 'original', driftReportMaxBytes),
+      pins, ir.meta?.repository?.revision, irSha256);
   } else if (ir.meta?.repository) {
     const revision = ir.meta.repository.revision;
     if (revision !== pins.base && revision !== pins.head) fail('drift/ir-pin-mismatch', 'The authored IR pins a different Git revision.', {
@@ -105,6 +107,11 @@ async function run([repoArg, ...args]) {
     const { renderDriftOverlay } = await import('../overlay/drift.mjs');
     checkDriftMapping(ir, map);
     const config = custom ? mergeConfig(loadConfig(null), custom) : loadConfig(null);
+    const configSha256 = driftDigest(stableJson(config));
+    const mapSha256 = driftDigest(stableJson(map));
+    if (originalInputs && (originalInputs.configSha256 !== configSha256 || originalInputs.mapSha256 !== mapSha256)) {
+      fail('drift-verification/mismatched-followup', 'Reuse the original component mapping and effective analysis configuration for this follow-up.');
+    }
     const captures = {};
     for (const [side, oid] of Object.entries(pins)) {
       const root = path.join(scratch, side);
@@ -128,7 +135,7 @@ async function run([repoArg, ...args]) {
       captures[side] = { facts, omitted, resolutionInputs, graph: buildGraph(facts, config) };
     }
     const result = compareArchitectureDrift({ ...captures, ir: { ...ir, connections: ir.connections || [] }, map, pins, locale, inputs: {
-      irSha256, configSha256: driftDigest(stableJson(config)), mapSha256: driftDigest(stableJson(map)),
+      irSha256, configSha256, mapSha256,
       analyzer: captures.head.facts.repository.adapter, adapterRevision: captures.head.facts.repository.adapterRevision,
     } });
     const json = stableJson(result);

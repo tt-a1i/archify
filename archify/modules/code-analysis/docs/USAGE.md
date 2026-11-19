@@ -129,8 +129,9 @@ For a newly observed undeclared relationship, download its Markdown and
 **Download verification task .json**. Keep the original report JSON alongside
 the task. After the prospective change is committed, run `drift` again using
 the first report's head as the new base and the same IR, mapping and config.
-Pass `--from-report original/architecture-drift.json` to bind this capture to
-the original report and keep an IR that pins the original base revision.
+Pass `--from-report original/architecture-drift.json` to check the starting
+commit, IR, mapping and configuration against that report. This also lets
+you reuse an IR that pins the original base revision.
 
 ```sh
 node bin/archify.mjs code-analysis verify-drift original/architecture-drift.json \

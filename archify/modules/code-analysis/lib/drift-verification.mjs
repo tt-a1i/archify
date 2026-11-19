@@ -1,8 +1,8 @@
-import { driftDigest } from './architecture-drift.mjs';
+import { DRIFT_EVIDENCE_LIMIT, driftDigest } from './architecture-drift.mjs';
 import { fail } from '../core/index.mjs';
 
 const hash = /^[a-f0-9]{64}$/u;
-const oid = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u;
+const oid = /^[a-f0-9]{40}$/u;
 const reportKind = 'archify-drift-task';
 const checksKind = 'archify-drift-project-checks';
 const identityKeys = ['irSha256', 'mapSha256', 'configSha256', 'analyzer', 'adapterRevision'];
@@ -32,6 +32,7 @@ export function validateDriftFollowup(input, pins, originalIrRevision, irSha256)
       || (originalIrRevision && ![doc.pins.base, doc.pins.head].includes(originalIrRevision))) {
     fail('drift-verification/mismatched-followup', 'Use the saved original report, start from its head commit and retain the exact Architecture IR.');
   }
+  return doc.inputs;
 }
 
 function edgeOf(doc, pair) {
@@ -39,11 +40,17 @@ function edgeOf(doc, pair) {
   return edges.length === 1 ? edges[0] : null;
 }
 
+function validCapture(capture) {
+  return Number.isSafeInteger(capture?.count) && capture.count >= 0
+    && Array.isArray(capture.locations) && capture.locations.length === Math.min(capture.count, DRIFT_EVIDENCE_LIMIT)
+    && capture.locations.every(loc => typeof loc?.path === 'string' && loc.path.length > 0
+      && Number.isSafeInteger(loc.line) && loc.line > 0 && typeof loc.target === 'string' && loc.target.length > 0
+      && typeof loc.text === 'string');
+}
+
 function matchingEvidence(a, b) {
-  const sites = capture => Array.isArray(capture?.locations)
-    ? capture.locations.map(loc => [loc?.path, loc?.line, loc?.target, loc?.text]) : null;
-  const oldSites = sites(a), newSites = sites(b);
-  return a?.count > 0 && a.count === b?.count && oldSites?.length > 0 && JSON.stringify(oldSites) === JSON.stringify(newSites);
+  const sites = capture => capture.locations.map(loc => [loc.path, loc.line, loc.target, loc.text]);
+  return a.count === b.count && JSON.stringify(sites(a)) === JSON.stringify(sites(b));
 }
 
 function readChecks(reported, template) {
@@ -71,12 +78,14 @@ export function verifyDriftTask(originalInput, followupInput, task, reported) {
   const followup = reportContext(followupInput, 'follow-up');
   const pair = task?.pair;
   if (task?.schemaVersion !== 1 || task.kind !== reportKind || original.reportSha256 !== task.reportSha256
-      || !Array.isArray(pair) || pair.length !== 2 || pair.some(id => typeof id !== 'string' || !id || id.length > 256)
+      || !Array.isArray(pair) || pair.length !== 2 || pair.some(id => typeof id !== 'string' || !id)
       || task.id !== taskId(original.reportSha256, pair)) {
     fail('drift-verification/invalid-task', 'Export the selected relationship task from the original drift report.');
   }
   const selected = edgeOf(original.doc, pair);
-  if (selected?.state !== 'new-undeclared' || !(selected.head?.count > 0)) {
+  if (selected?.state !== 'new-undeclared' || selected.declared !== false
+      || !Array.isArray(selected.reasons) || selected.reasons.length !== 0
+      || !validCapture(selected.base) || selected.base.count !== 0 || !validCapture(selected.head) || selected.head.count === 0) {
     fail('drift-verification/invalid-task', 'The original report must show a newly observed undeclared relationship.');
   }
   if (followup.doc.pins.base !== original.doc.pins.head
@@ -88,7 +97,9 @@ export function verifyDriftTask(originalInput, followupInput, task, reported) {
   const observed = edgeOf(followup.doc, pair);
   let outcome = 'inconclusive';
   let reasons = ['original-observation-not-reproduced'];
-  if (matchingEvidence(selected.head, observed?.base)) {
+  if (observed && (observed.declared !== selected.declared || !validCapture(observed.base) || !validCapture(observed.head))) {
+    reasons = ['unexpected-followup-observation'];
+  } else if (observed && matchingEvidence(selected.head, observed.base)) {
     reasons = observed.reasons;
     if (Array.isArray(reasons) && reasons.length === 0) {
       if (observed.state === 'not-observed-at-head' && observed.head?.count === 0) outcome = 'not-observed-at-head';

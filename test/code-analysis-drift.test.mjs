@@ -67,6 +67,13 @@ test('verify-drift binds the downloaded pair and distinguishes removal from an a
   const removed = f.analyze({ b: f.head, h: f.commit(), output: 'removed', extra: ['--from-report', report(original)] });
   assert.equal(removed.p.status, 0, removed.p.stdout);
   assert.deepEqual(verify(removed).value.analysis, { outcome: 'not-observed-at-head', reasons: [] });
+  const contradictory = { out: path.join(f.dir, 'contradictory') };
+  fs.mkdirSync(contradictory.out);
+  const badReport = structuredClone(removed.result);
+  const stale = badReport.edges.find(edge => edge.from === 'app' && edge.to === 'db');
+  stale.head.locations = stale.base.locations;
+  fs.writeFileSync(report(contradictory), JSON.stringify(badReport));
+  assert.deepEqual(verify(contradictory).value.analysis, { outcome: 'inconclusive', reasons: ['unexpected-followup-observation'] });
   const template = verify(removed, '--checks-template').value;
   fs.writeFileSync(checksFile, JSON.stringify({ ...template, checks: [{ name: 'Unit tests', status: 'passed' }] }));
   assert.deepEqual(verify(removed, '--checks', checksFile).value.projectChecks, {
@@ -77,6 +84,11 @@ test('verify-drift binds the downloaded pair and distinguishes removal from an a
   const retained = f.analyze({ b: f.head, h: f.commit(), output: 'still-observed' });
   assert.equal(retained.p.status, 0, retained.p.stdout);
   assert.equal(verify(retained).value.analysis.outcome, 'still-observed');
+  f.write('src/app/additional.ts', 'export const broken = ;\n');
+  const partial = f.analyze({ b: f.head, h: f.commit(), output: 'partial' });
+  assert.equal(partial.p.status, 0, partial.p.stdout);
+  assert.ok(partial.result.edges.find(edge => edge.from === 'app' && edge.to === 'db').head.count > 0);
+  assert.deepEqual(verify(partial).value.analysis, { outcome: 'inconclusive', reasons: ['affected-parse-errors'] });
 
   f.write('src/app/main.ts', 'export const broken = ;\n');
   const broken = f.analyze({ b: f.head, h: f.commit(), output: 'broken' });
@@ -87,6 +99,14 @@ test('verify-drift binds the downloaded pair and distinguishes removal from an a
   assert.equal(verify(original).value.diagnostics[0].code, 'drift-verification/mismatched-followup');
   fs.writeFileSync(taskFile, JSON.stringify({ ...task, pair: ['app', 'ui'] }));
   assert.equal(verify(removed).value.diagnostics[0].code, 'drift-verification/invalid-task');
+
+  const config = path.join(f.dir, 'changed-config.json');
+  fs.writeFileSync(config, JSON.stringify({ exclude: ['**/unrelated/**'] }));
+  const wrongConfig = f.analyze({ b: f.head, h: removed.result.pins.head, output: 'different-config',
+    extra: ['--from-report', report(original), '--config', config] });
+  assert.equal(wrongConfig.p.status, 2, wrongConfig.p.stdout);
+  assert.equal(wrongConfig.result.diagnostics[0].code, 'drift-verification/mismatched-followup');
+  assert.equal(fs.existsSync(wrongConfig.out), false);
 });
 
 test('rejects a noncommit pin, an unrelated IR pin and an existing destination without writing', t => {
