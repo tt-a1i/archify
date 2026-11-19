@@ -83,7 +83,7 @@ For an everyday subject, keep the same diagram modes and semantic types, then na
 
 Read Mermaid for topology and meaning, then author fresh Archify JSON; do not mechanically render Mermaid styling.
 
-- `flowchart` / `graph` → `workflow`, or `architecture` for a component map.
+- `flowchart` / `graph` → `workflow`, or `architecture` for a component map. For the architecture component-map path, `node bin/archify.mjs import flowchart <input.mmd> <output.json> --json` deterministically imports the documented subset; see `references/mermaid-flowchart-import.md` for the supported syntax, target-mode selection, and diagnostic codes.
 - `sequenceDiagram` → `sequence`; participants become semantic participants and arrows become messages.
 - `stateDiagram` → `lifecycle`; states and transitions retain meaning, not Mermaid style.
 - `erDiagram` → `erd`; entity and relationship names, keys, and cardinality retain meaning, not Mermaid style.
