@@ -269,11 +269,32 @@ test('wide frozen native previews keep every node visible at 1280 and reclaim th
   const colors=()=>pageValue(browser,`(function(){const background=e=>{for(let p=e;p;p=p.parentElement){const color=getComputedStyle(p).backgroundColor;if(color!=='rgba(0, 0, 0, 0)'&&color!=='transparent')return color;}return 'transparent';};return {body:getComputedStyle(document.body).backgroundColor,previews:Array.from(document.querySelectorAll('.diagram-preview')).map(e=>({background:background(e),edge:getComputedStyle(e.querySelector('text.t-edge-default')).fill}))};})()`);
   const darkColors=await colors();assert.equal(dark.fontReadiness.status,'loaded');assert.deepEqual(dark.consoleErrors,[]);
   await browser.resetPage();const printed=await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme:'dark',themeControl:'system',javascript:false,media:'print',keyboard:false});const printColors=await colors();assert.equal(printed.fontReadiness.status,'loaded');assert.deepEqual(printed.consoleErrors,[]);assert.notEqual(printColors.body,darkColors.body);assert.equal(printColors.body,'rgb(255, 255, 255)');assert.ok(printColors.previews.every(p=>p.background==='rgb(255, 255, 255)'),JSON.stringify(printColors));assert.ok(darkColors.previews.every((p,i)=>p.background!==printColors.previews[i].background&&p.edge!==printColors.previews[i].edge),JSON.stringify({darkColors,printColors}));
-  const oversized=structuredClone(doc);oversized.meta.id='oversized-native';oversized.panels.at(-1).blocks=oversized.panels.at(-1).blocks.slice(0,1);oversized.panels.at(-1).blocks[0].spec.components.at(-1).pos=[1200,40];
-  const oversizedPrepared=await prepareExplainerDiagrams(oversized,{baseDir:dir,sourcePath:path.join(dir,'oversized.json'),quality:'showcase'}),hugeFile=artifact('oversized-native',renderExplainer(oversized,{sourceText:JSON.stringify(oversized),preparedDiagrams:oversizedPrepared,preparedSources:{sources:{example:{title:'Example'}}}}));
-  const huge=await inspectExplainerBrowser(browser,{artifactPath:hugeFile,width:1440,height:900,theme:'light'});assert.equal(huge.nativeText[0].fit,'insufficient');assert.equal(parseFloat(huge.nativeText[0].minWidth),0);assert.ok(huge.nativeText[0].scrollWidth<=huge.nativeText[0].clientWidth+1);assert.ok(huge.interactionFailures.some(e=>e.name==='diagram-fit'&&e.measurement.requiredWidth>e.measurement.clientWidth),'An actually overwide graph must fail with measured fit evidence');assert.ok(huge.interactionFailures.some(e=>e.name==='diagram-text'));
-  await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:hugeFile,width:1280,theme:'light',keyboard:false});
-  assert.deepEqual(await pageValue(browser,"Array.from(document.querySelectorAll('.panel')).filter(p=>p.scrollHeight>p.offsetHeight+1).map(p=>p.id)"),[],'a fit notice shown after planning must not clip its panel');
+  const threshold=structuredClone(doc);threshold.meta.id='threshold-native';threshold.panels.at(-1).blocks=threshold.panels.at(-1).blocks.slice(0,1);
+  // At 1440 the text floor rises faster than the panel widens.
+  threshold.panels.at(-1).blocks[0].spec.components.at(-1).pos=[1475,40];
+  const thresholdPrepared=await prepareExplainerDiagrams(threshold,{baseDir:dir,sourcePath:path.join(dir,'threshold.json'),quality:'showcase'}),thresholdFile=artifact('threshold-native',renderExplainer(threshold,{sourceText:JSON.stringify(threshold),preparedDiagrams:thresholdPrepared,preparedSources:{sources:{example:{title:'Example'}}}}));
+  const measured=await inspectExplainerBrowser(browser,{artifactPath:thresholdFile,width:1440,height:900,theme:'light'});
+  assert.ok(measured.interactionFailures.some(e=>e.name==='diagram-fit'&&e.measurement.requiredWidth>e.measurement.clientWidth),'An actually overwide graph must fail with measured fit evidence');
+  assert.ok(measured.interactionFailures.some(e=>e.name==='diagram-text'));
+  const assertThreshold=async(expected)=>{
+   const [entry]=await inspectNativePreviewLayout(browser);
+   assert.equal(entry.fit,expected,JSON.stringify(entry));
+   assert.equal(parseFloat(entry.minWidth),0);
+   assert.ok(entry.scrollWidth<=entry.clientWidth+1,JSON.stringify(entry));
+   assert.deepEqual(entry.nodes.map(n=>n.id).sort(),['api','browser','postgres']);
+   assert.deepEqual(entry.outsidePreview,[],JSON.stringify(entry));
+   const warning=expected==='insufficient';
+   assert.equal(entry.minimum<entry.minimumText,warning,JSON.stringify(entry));
+   assert.equal(await pageValue(browser,"document.querySelector('.diagram-fit-status').hidden"),!warning);
+   assert.deepEqual(await pageValue(browser,"Array.from(document.querySelectorAll('.panel')).filter(p=>p.scrollHeight>p.offsetHeight+1).map(p=>p.id)"),[],'a fit notice shown after planning must not clip its panel');
+  };
+  await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:thresholdFile,width:1280,theme:'light',keyboard:false});
+  await assertThreshold('fit');
+  for(const [width,expected] of [[1440,'insufficient'],[1280,'fit']]){
+   await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);
+   await pageValue(browser,'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+   await assertThreshold(expected);
+  }
   const corrupted=artifact('responsive-retained-floor',html.replace('</style>','\n.diagram-preview>svg{min-width:1321px!important}\n</style>'));await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:corrupted,width:1280,theme:'light',keyboard:false});assert.ok((await inspectNativePreviewLayout(browser)).some(e=>e.outsidePreview.length>0),'A retained desktop floor must be detected through actual clipped node bounds');
   const embedded=Object.fromEntries(Object.entries(unpackPageBundle(await pageValue(browser,"JSON.parse(document.querySelector('#archify-explainer-prepared').textContent)")).preparedDiagrams.diagrams).map(([id,c])=>[id,{html:c.html,sha256:c.sha256,bytes:c.bytes}]));
   for(const [id,c]of Object.entries(embedded)){assert.equal(hash(c.html),frozen[id].sha256);assert.equal(Buffer.byteLength(c.html),frozen[id].bytes);assert.equal(c.sha256,frozen[id].sha256);assert.equal(c.bytes,frozen[id].bytes);}
