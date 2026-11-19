@@ -32,7 +32,7 @@ test('Python BOM decoding keeps fresh entry and imported target coordinates alig
 
 test('Python call inventory, direct alias targets, async definition and known zero', t => {
   const args = fixture(t, { 'entry.py': 'from helper import work as alias\ndef local(): pass\nasync def task(): pass\ndef chosen():\n    local()\n    alias()\n    task()\n    obj.method()\n    factory()()\n', 'helper.py': 'def work(): pass\n' });
-  assert.equal(args.facts.callModel, 'python-lexical-v2'); assert.equal(args.facts.repository.adapterRevision, 10);
+  assert.equal(args.facts.callModel, 'python-source-v3'); assert.equal(args.facts.repository.adapterRevision, 17);
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
   const calls = selected(args); assert.equal(calls.coverage, 'available'); assert.equal(calls.total, 6);
   assert.deepEqual(calls.records.map(r => r.fact.resolution), ['same-file-function', 'imported-function', 'same-file-function', ...Array(3).fill('unresolved')]);
@@ -216,7 +216,7 @@ test('Python external from-import calls stay unresolved and normal check succeed
   const run = spawnSync(process.execPath, [cli, 'code-analysis', 'check', args.root, '--language', 'py', '--out', output, '--fail-on', 'never', '--json'], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stdout + run.stderr);
   const captured = JSON.parse(fs.readFileSync(path.join(output, 'raw-facts.json'), 'utf8'));
-  assert.equal(captured.calls[0].resolution, 'unresolved'); assert.equal(captured.callModel, 'python-lexical-v2');
+  assert.equal(captured.calls[0].resolution, 'unresolved'); assert.equal(captured.callModel, 'python-source-v3');
 });
 
 test('Python captured package and namespace module direct imports use the analyzed directories', t => {
@@ -230,8 +230,6 @@ test('Python captured package and namespace module direct imports use the analyz
 
 test('Python generic class bases and keywords use unsupported annotation scope while decorators stay outer', t => {
   const args = fixture(t, { 'entry.py': 'def helper(): return object\n@helper()\nclass Generic[helper](helper(), metaclass=helper()): pass\nclass Ordinary(helper(), metaclass=helper()): pass\n' });
-  const [, major, minor] = /^python@(\d+)\.(\d+)/.exec(args.facts.repository.adapter);
-  if (+major === 3 && +minor < 12) return t.skip('type parameter syntax requires Python 3.12+');
   assert.deepEqual(args.facts.parse_errors || [], []);
   assert.equal(args.facts.calls.length, 5);
   assert.deepEqual(args.facts.calls.map(call => call.resolution), ['same-file-function', 'unresolved', 'unresolved', 'same-file-function', 'same-file-function']);
