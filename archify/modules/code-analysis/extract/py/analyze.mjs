@@ -1247,7 +1247,7 @@ var ExceptNode;
   ExceptNode2.create = create;
 })(ExceptNode || (ExceptNode = {}));
 var FunctionNode;
-((FunctionNode3) => {
+((FunctionNode4) => {
   function create(defToken, name, suite, typeParams) {
     const node = {
       start: defToken.start,
@@ -1275,7 +1275,7 @@ var FunctionNode;
     extendRange(node, suite);
     return node;
   }
-  FunctionNode3.create = create;
+  FunctionNode4.create = create;
 })(FunctionNode || (FunctionNode = {}));
 var ParameterNode;
 ((ParameterNode3) => {
@@ -1791,7 +1791,7 @@ var TupleNode;
 })(TupleNode || (TupleNode = {}));
 var CallNode;
 ((CallNode2) => {
-  function create(leftExpr, args, trailingComma) {
+  function create(leftExpr, args) {
     const node = {
       start: leftExpr.start,
       length: leftExpr.length,
@@ -1800,8 +1800,7 @@ var CallNode;
       parent: void 0,
       d: {
         leftExpr,
-        args,
-        trailingComma
+        args
       }
     };
     leftExpr.parent = node;
@@ -2105,8 +2104,7 @@ var DictionaryNode;
       id: _nextNodeId++,
       parent: void 0,
       d: {
-        items: [],
-        trailingCommaToken: void 0
+        items: []
       }
     };
     return node;
@@ -2292,8 +2290,7 @@ var ImportFromNode;
       d: {
         module,
         imports: [],
-        isWildcardImport: false,
-        usesParens: false
+        isWildcardImport: false
       }
     };
     module.parent = node;
@@ -9121,8 +9118,6 @@ var Parser = class _Parser {
     } else {
       node = this._parseImportStatement();
     }
-    node.d.isLazy = true;
-    node.d.lazyToken = lazyToken;
     extendRange(node, lazyToken);
     if (node.nodeType === 25 /* ImportFrom */ && node.d.isWildcardImport) {
       this._addSyntaxError(LocMessage.lazyImportWildcardIllegal(), node.d.wildcardToken ?? lazyToken);
@@ -10849,9 +10844,6 @@ var Parser = class _Parser {
     const possibleInputToken = this._peekToken();
     if (!this._consumeTokenIfKeyword(21 /* Import */)) {
       this._addSyntaxError(LocMessage.expectedImport(), this._peekToken());
-      if (!modName.d.hasTrailingDot) {
-        importFromNode.d.missingImport = true;
-      }
     } else {
       extendRange(importFromNode, possibleInputToken);
       const possibleStarToken = this._peekToken();
@@ -10895,7 +10887,6 @@ var Parser = class _Parser {
           this._addSyntaxError(LocMessage.expectedImportSymbols(), this._peekToken());
         }
         if (inParen) {
-          importFromNode.d.usesParens = true;
           const nextToken = this._peekToken();
           if (!this._consumeTokenIfType(14 /* CloseParenthesis */)) {
             this._addSyntaxError(LocMessage.expectedCloseParen(), openParenToken);
@@ -10991,7 +10982,6 @@ var Parser = class _Parser {
       if (!identifier) {
         if (!allowJustDots || moduleNameNode.d.leadingDots === 0 || moduleNameNode.d.nameParts.length > 0) {
           this._addSyntaxError(LocMessage.expectedModuleName(), this._peekToken());
-          moduleNameNode.d.hasTrailingDot = true;
         }
         break;
       }
@@ -11658,11 +11648,7 @@ var Parser = class _Parser {
         const wasParsingTypeAnnotation = this._isParsingTypeAnnotation;
         this._isParsingTypeAnnotation = false;
         const argListResult = this._parseArgList();
-        const callNode = CallNode.create(
-          atomExpression,
-          argListResult.args,
-          argListResult.trailingComma
-        );
+        const callNode = CallNode.create(atomExpression, argListResult.args);
         if (argListResult.args.length > 1 || argListResult.trailingComma) {
           argListResult.args.forEach((arg) => {
             if (arg.d.valueExpr.nodeType === 11 /* Comprehension */) {
@@ -12351,7 +12337,6 @@ var Parser = class _Parser {
     }
     const dictionaryAtom = DictionaryNode.create(startBrace);
     if (trailingCommaToken) {
-      dictionaryAtom.d.trailingCommaToken = trailingCommaToken;
       extendRange(dictionaryAtom, trailingCommaToken);
     }
     if (closeCurlyBrace) {
@@ -13446,12 +13431,10 @@ function bindModule(tree) {
     if (node.nodeType === 11 /* Comprehension */) {
       const first = d.forIfNodes[0];
       visit(first.d.iterableExpr, scope, isAnnotation, inClass);
-      const nodes = [first.d.targetExpr, ...d.forIfNodes.slice(1), d.expr];
       let parent = scope;
       while (parent.kind === "class" && parent.parent) parent = parent.parent;
-      const own = create(node, "function", nodes, parent);
-      for (const name of bindingNames(first.d.targetExpr)) own.bind({ name, node: first, at: first.start, kind: "parameter", conditional: false, loaderConditional: false });
-      for (const value of nodes) visit(value, own, isAnnotation, inClass);
+      const own = create(node, "function", [...d.forIfNodes, d.expr], parent);
+      for (const value of [first.d.targetExpr, ...d.forIfNodes.slice(1), d.expr]) visit(value, own, isAnnotation, inClass);
       return;
     }
     if (node.nodeType === 54 /* TypeAnnotation */) {
@@ -13700,6 +13683,32 @@ function reachingBindings(scope, name, at) {
   };
   const possibleStores = (state, node) => ({ ...state, values: [.../* @__PURE__ */ new Set([...state.values, ...events.filter((event) => event.node.start >= node.start && event.at <= endOf(node))])] });
   const opaqueStores = (state, node, limit, includeRoot = false) => events.some((event) => (includeRoot || event.node !== node) && event.node.start >= node.start && event.at <= Math.min(limit, endOf(node))) ? { values: [void 0], guards: [] } : state;
+  const confirmed = (state, test, positive) => {
+    const after = opaqueStores(state, test, endOf(test), true);
+    return after === state ? guarded(state, test, positive) : after;
+  };
+  const beforeTest = (state, test, limit) => {
+    while (test.nodeType === 7 /* BinaryOperation */ && [36 /* And */, 37 /* Or */].includes(test.d.operator)) {
+      const { leftExpr, rightExpr, operator } = test.d;
+      if (limit < rightExpr.start) test = leftExpr;
+      else {
+        state = confirmed(state, leftExpr, operator === 36 /* And */);
+        test = rightExpr;
+      }
+    }
+    return state;
+  };
+  if (scope.node.nodeType === 11 /* Comprehension */) {
+    const { expr, forIfNodes } = scope.node.d;
+    const resultExpression = at >= expr.start && at < endOf(expr);
+    let state = initial;
+    for (const clause of forIfNodes) {
+      if (!resultExpression && at < endOf(clause))
+        return clause.nodeType === 13 /* ComprehensionIf */ ? beforeTest(state, clause.d.testExpr, at) : state;
+      state = clause.nodeType === 13 /* ComprehensionIf */ ? confirmed(state, clause.d.testExpr, true) : assigned(state, clause);
+    }
+    return state;
+  }
   const scan = (nodes, input, limit) => {
     let state = input;
     for (const node of nodes) {
@@ -13708,10 +13717,12 @@ function reachingBindings(scope, name, at) {
       const d = node.d, inside = limit <= endOf(node);
       if (node.nodeType === 47 /* StatementList */ || node.nodeType === 50 /* Suite */) {
         state = scan(body(node), state, limit);
+      } else if (node.nodeType === 2 /* Assert */) {
+        if (inside) return beforeTest(state, d.testExpr, limit);
+        state = confirmed(state, d.testExpr, true);
       } else if (node.nodeType === 22 /* If */) {
-        if (inside && limit <= endOf(d.testExpr)) return state;
-        state = opaqueStores(state, d.testExpr, limit, true);
-        const yes = guarded(state, d.testExpr, true), no = guarded(state, d.testExpr, false);
+        if (inside && limit <= endOf(d.testExpr)) return beforeTest(state, d.testExpr, limit);
+        const yes = confirmed(state, d.testExpr, true), no = confirmed(state, d.testExpr, false);
         if (inside) return limit >= d.ifSuite.start && limit <= endOf(d.ifSuite) ? scan(body(d.ifSuite), yes, limit) : d.elseSuite ? scan([d.elseSuite], no, limit) : no;
         state = merge([scan(body(d.ifSuite), yes, Infinity), d.elseSuite ? scan([d.elseSuite], no, Infinity) : no]);
       } else if (node.nodeType === 29 /* For */ || node.nodeType === 57 /* While */) {
@@ -13732,16 +13743,24 @@ function reachingBindings(scope, name, at) {
       } else if (node.nodeType === 53 /* Try */) {
         if (inside && limit <= endOf(d.trySuite)) return scan(body(d.trySuite), state, limit);
         const interrupted = possibleStores(state, d.trySuite);
-        const branches = [scan(body(d.trySuite), state, Infinity)];
+        const success = scan(body(d.trySuite), state, Infinity);
+        if (inside && d.elseSuite && limit >= d.elseSuite.start && limit <= endOf(d.elseSuite))
+          return success && scan(body(d.elseSuite), success, limit);
+        const branches = [success && d.elseSuite ? scan(body(d.elseSuite), success, Infinity) : success];
         for (const handler of d.exceptClauses) {
           if (inside && limit >= handler.start && limit <= endOf(handler)) return scan(body(handler.d.exceptSuite), assigned(interrupted, handler), limit);
           branches.push(scan(body(handler.d.exceptSuite), assigned(interrupted, handler), Infinity));
         }
         state = merge(branches);
-        if (state && d.elseSuite) state = merge([state, scan(body(d.elseSuite), state, inside ? limit : Infinity)]);
         if (d.finallySuite) state = scan(body(d.finallySuite), merge([state, interrupted]), inside ? limit : Infinity);
       } else if ([31 /* Function */, 10 /* Class */, 33 /* Lambda */].includes(node.nodeType)) {
         if (!inside) state = assigned(state, node);
+      } else if (node.nodeType === 3 /* Assignment */ && !inside) {
+        state = opaqueStores(state, node, limit);
+        for (let target = node; ; target = target.d.rightExpr) {
+          state = assigned(state, target);
+          if (target.d.rightExpr.nodeType !== 3 /* Assignment */) break;
+        }
       } else {
         state = opaqueStores(state, node, limit);
         if (!inside) state = assigned(state, node);
@@ -13755,6 +13774,7 @@ function reachingBindings(scope, name, at) {
 }
 
 // extract/py/source.ts
+var callableDecorators = ["contextmanager", "asynccontextmanager", "cache", "lru_cache", "singledispatch"];
 function resolveSourceCalls(analyses, locate, declarations = []) {
   const captured = new Set(analyses.map((analysis) => analysis.record.path));
   const files = new Map([...analyses, ...declarations].filter((analysis) => analysis.tree).map((analysis) => [analysis.record.path, analysis]));
@@ -13762,11 +13782,12 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
   const same = (a, b, depth = 0) => {
     if (!a || !b) return a === b;
     if (a.kind !== b.kind || depth > 16) return false;
+    if (a.kind === "scalar" && b.kind === "scalar") return a.type === b.type && a.literal === b.literal;
     if (a.kind === "class" && b.kind === "class" && a.instance !== b.instance) return false;
     if ("file" in a && "file" in b) return a.file === b.file && ("node" in a && "node" in b ? a.node === b.node && a.args.size === b.args.size && [...a.args].every(([name, value]) => same(value, b.args.get(name), depth + 1)) : a.kind === "module");
     if ("items" in a && "items" in b) return a.items.length === b.items.length && a.items.every((value, i) => same(value, b.items[i], depth + 1));
     if (a.kind === "mapping" && b.kind === "mapping") return same(a.key, b.key, depth + 1) && same(a.value, b.value, depth + 1);
-    if (a.kind === "sequence" && b.kind === "sequence") return Boolean(a.async) === Boolean(b.async) && Boolean(a.generator) === Boolean(b.generator) && same(a.item, b.item, depth + 1) && same(a.send, b.send, depth + 1);
+    if (a.kind === "sequence" && b.kind === "sequence") return Boolean(a.async) === Boolean(b.async) && Boolean(a.generator) === Boolean(b.generator) && Boolean(a.mutable) === Boolean(b.mutable) && same(a.item, b.item, depth + 1) && same(a.send, b.send, depth + 1);
     if (a.kind === "context" && b.kind === "context") return Boolean(a.async) === Boolean(b.async) && same(a.item, b.item, depth + 1);
     if ("item" in a && "item" in b) return same(a.item, b.item, depth + 1);
     return a.kind === "none" || a.kind === "unknown";
@@ -13777,7 +13798,14 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       if (!items.some((other) => same(item, other))) items.push(item);
     return items.length === 1 ? items[0] : items.length ? { kind: "union", items } : void 0;
   };
-  const scopeOf = (file, node) => file.bindings.nodeScopes.get(node) || file.bindings.module;
+  const scopeOf = (file, node) => {
+    for (let current = node; current; current = current.parent) {
+      const scope = file.bindings.nodeScopes.get(current);
+      if (scope) return scope;
+    }
+    return file.bindings.module;
+  };
+  const emptyList = (node) => node.nodeType === 34 /* List */ && !node.d.items.length;
   const typeBinding = (file, scope, name) => {
     const ordinary = scope.unique(name);
     if (ordinary) return ordinary;
@@ -13792,20 +13820,53 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     return true;
   };
   const activeFields = [];
+  const reachingValue = (scope, name, at) => {
+    const { values } = reachingBindings(scope, name, at);
+    return values.length === 1 ? values[0] : void 0;
+  };
+  function localCallable(scope, name, at) {
+    for (let block = scope; block?.kind === "function"; block = block.parent) {
+      if (block.declarations.has(name) || block.events.has("*")) return;
+      if (!block.events.has(name)) continue;
+      const value = block.unique(name);
+      if (value?.kind === "function" && value.at <= at) return value;
+      const writes = block.events.get(name);
+      if (block === scope && writes.length === 1 && ["function", "import"].includes(writes[0].kind) && writes[0].conditional && reachingValue(block, name, at) === writes[0]) return writes[0];
+      return;
+    }
+  }
+  function nullableFunction(file, scope, name, at) {
+    for (let block = scope; block; block = block.parent) {
+      if (block.declarations.has(name) || block.events.has("*") || file.bindings.mutable.has(name)) return;
+      const values = block.events.get(name);
+      if (!values) continue;
+      if (block.kind !== "module" || values.length < 2 || values.some((value) => !value.conditional)) return;
+      const functions = values.filter((value) => value.kind === "function" && !value.node.d.decorators.length);
+      if (functions.length === 1 && (scope.kind !== "module" || reachingBindings(block, name, at).values.includes(functions[0])) && values.every((value) => value === functions[0] || value.expr?.nodeType === 14 /* Constant */ && value.expr.d.constType === 27 /* None */))
+        return { kind: "function", file, node: functions[0].node, args: /* @__PURE__ */ new Map() };
+      return;
+    }
+  }
   const symbol = (file, scope, name, at, seen, substitutions, types = false, importsLeft = 2, origin = scope) => {
     if (substitutions.has(name)) return substitutions.get(name);
-    if (scope.declarations.has(name) || scope.events.has("*") || file.bindings.mutable.has(name) || name === "__class__") return;
+    if (scope.declarations.has(name) || file.bindings.mutable.has(name) || name === "__class__") return;
+    const wildcard = scope.events.get("*")?.at(-1);
+    if (wildcard && scope.kind !== "module") return;
     const values = scope.events.get(name)?.filter((value) => !value.attributeWrite);
     if (values?.length) {
-      const value = types ? typeBinding(file, scope, name) : scope.unique(name);
-      if (scope.kind === "function" && scope === origin && values.every((value2) => ["value", "parameter"].includes(value2.kind))) {
+      const local = scope.kind === "function" && scope === origin;
+      const value = types ? typeBinding(file, scope, name) : scope.unique(name) ?? (local && values.length === 1 ? reachingValue(scope, name, at) : void 0);
+      if (wildcard && (!value || value.conditional || value.at <= wildcard.at)) return;
+      if (scope.kind === "function" && values.every((value2) => ["value", "parameter"].includes(value2.kind))) {
+        if (!local && values.some((value2) => value2.at > at)) return;
+        if (values.some((value2) => value2.annotation && standard(file, scopeOf(file, value2.annotation), value2.annotation, true) === "typing.Any")) return;
         return union(reachingBindings(scope, name, at).values.map((value2) => value2 && bindingShape(file, scope, value2, at, seen, substitutions)));
       }
-      if (!value) return;
+      if (!value) return !types && scope.kind === "module" ? overloadGroup(file, scope, values) ?? platformDeclaration(file, scope, values, at) : void 0;
       if (value.kind === "class") return !value.node.d.decorators.length || knownDecorators(file, value.node, ["dataclass"]) ? classOf(file, value.node) : void 0;
       if (value.kind === "function") {
         if (scope.kind !== "module" && value.at > at) return;
-        if (!value.node.d.decorators.length || knownDecorators(file, value.node, ["contextmanager", "asynccontextmanager"]) || signatureDecorators(file, value.node, seen))
+        if (!value.node.d.decorators.length || knownDecorators(file, value.node, callableDecorators) || signatureDecorators(file, value.node, seen))
           return { kind: "function", file, node: value.node, args: substitutions };
         return;
       }
@@ -13828,18 +13889,20 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     const next = /* @__PURE__ */ new Set([...seen, value.node]);
     if (value.annotation) return annotation(file, scopeOf(file, value.annotation), value.annotation, value.at, next, substitutions);
     if (value.kind === "parameter") {
+      if (scope.node.nodeType === 33 /* Lambda */)
+        return callbackParameter(file, scope, value.node, at, next, substitutions);
       const method = scope.node;
       const parameters = method.d.params || [];
       if (parameters[0] === value.node) {
         let owner = method.parent;
         while (owner && ![31 /* Function */, 10 /* Class */].includes(owner.nodeType)) owner = owner.parent;
-        if (owner?.nodeType === 10 /* Class */ && (!method.d.decorators.length || knownDecorators(file, method, ["property", "classmethod", "contextmanager", "asynccontextmanager"]) || propertyAccessor(file, method) || signatureDecorators(file, method, seen)))
+        if (owner?.nodeType === 10 /* Class */ && (!method.d.decorators.length || knownDecorators(file, method, ["property", "cached_property", "classmethod", "contextmanager", "asynccontextmanager"]) || abstractMethod(file, method) || propertyAccessor(file, method) || signatureDecorators(file, method, seen)))
           return classOf(file, owner, !knownDecorators(file, method, ["classmethod"]));
       }
       return;
     }
     if (!value.expr) return;
-    let shape = expression(file, scope, value.expr, value.expr.start, next, substitutions);
+    let shape = expression(file, scopeOf(file, value.expr), value.expr, value.expr.start, next, substitutions);
     if (value.source === "iteration") shape = element(shape, Boolean(value.async));
     if (value.source === "context") {
       if (shape?.kind === "class") {
@@ -13859,7 +13922,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
         if (!current.events.has(name)) continue;
         const value = types ? typeBinding(file, current, name) : current.unique(name);
         if (!value || current.kind !== "module" && value.at > node.start || value.level || !value.module) return;
-        if (/^(?:typing|collections|contextlib|builtins|dataclasses)(?:\.|$)/.test(value.module) && (locate(file.record.path, value.module, 0) || current.events.get(name)?.some((event) => event.attributeWrite))) return;
+        if (/^(?:typing|typing_extensions|collections|contextlib|contextvars|weakref|builtins|dataclasses|functools|abc|werkzeug|sys)(?:\.|$)/.test(value.module) && (locate(file.record.path, value.module, 0) || current.events.get(name)?.some((event) => event.attributeWrite))) return;
         if (value.kind === "import") return `${value.module}.${value.imported}`;
         if (value.kind === "module") return value.imported === "*" ? value.module : value.imported;
         return;
@@ -13893,8 +13956,70 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     return decorators2.length > 0 && decorators2.every((decorator) => {
       const expr = decorator.d.expr;
       const full = standard(file, scopeOf(file, node), expr), name = full?.split(".").at(-1);
-      return Boolean(name && allowed.includes(name) && [`builtins.classmethod`, `builtins.staticmethod`, `builtins.property`, "contextlib.contextmanager", "contextlib.asynccontextmanager", "dataclasses.dataclass"].includes(full));
+      return Boolean(name && allowed.includes(name) && [
+        "builtins.classmethod",
+        "builtins.staticmethod",
+        "builtins.property",
+        "contextlib.contextmanager",
+        "contextlib.asynccontextmanager",
+        "dataclasses.dataclass",
+        "functools.cache",
+        "functools.lru_cache",
+        "functools.singledispatch",
+        "functools.cached_property",
+        "abc.abstractmethod",
+        "werkzeug.utils.cached_property"
+      ].includes(full));
     });
+  }
+  function abstractMethod(file, node) {
+    return node.d.decorators.length === 1 && knownDecorators(file, node, ["abstractmethod"]);
+  }
+  function overloadGroup(file, scope, bindings) {
+    if (bindings.length < 3 || bindings.some((binding) => binding.conditional || binding.kind !== "function")) return;
+    const declarations2 = bindings.map((binding) => binding.node);
+    const node = declarations2.pop();
+    if (node.d.decorators.length || node.d.isAsync || declarations2.some((declaration) => declaration.d.isAsync || declaration.d.decorators.length !== 1 || !["typing.overload", "typing_extensions.overload"].includes(
+      standard(file, scope, declaration.d.decorators[0].d.expr)
+    ))) return;
+    return { kind: "function", file, node, args: /* @__PURE__ */ new Map(), overloads: declarations2 };
+  }
+  function platformGuard(file, scope, test) {
+    const platform = (node) => {
+      const alias = nameOf(node.nodeType === 35 /* MemberAccess */ ? node.d.leftExpr : node);
+      const imported = alias && scope.unique(alias);
+      return imported && imported.at < node.start && standard(file, scope, node) === "sys.platform";
+    };
+    const clause = (node) => {
+      if (node.nodeType === 38 /* Name */) {
+        const binding = scope.unique(node.d.value);
+        if (!binding?.expr || binding.at > node.start || file.bindings.mutable.has(node.d.value)) return false;
+        node = binding.expr;
+      }
+      if (node.nodeType === 7 /* BinaryOperation */)
+        return [12 /* Equals */, 28 /* NotEquals */].includes(node.d.operator) && platform(node.d.leftExpr) && literalString(node.d.rightExpr) !== null;
+      if (node.nodeType !== 9 /* Call */ || node.d.leftExpr.nodeType !== 35 /* MemberAccess */ || node.d.leftExpr.d.member.d.value !== "startswith") return false;
+      const [part] = node.d.args;
+      return node.d.args.length === 1 && part.d.argCategory === 0 /* Simple */ && !part.d.name && platform(node.d.leftExpr.d.leftExpr) && literalString(part.d.valueExpr) !== null;
+    };
+    return test.nodeType === 7 /* BinaryOperation */ && test.d.operator === 36 /* And */ ? clause(test.d.leftExpr) && clause(test.d.rightExpr) : clause(test);
+  }
+  function platformDeclaration(file, scope, bindings, at) {
+    if (bindings.length !== 2 || bindings.some((binding) => binding.kind !== "function" || !binding.conditional)) return;
+    const [first, last] = bindings.map((binding) => binding.node);
+    const branch = first.parent?.parent;
+    if (branch?.nodeType !== 22 /* If */ || branch.parent !== scope.node || branch.d.ifSuite !== first.parent || branch.d.elseSuite !== last.parent || endOf(branch) >= at || !platformGuard(file, scope, branch.d.testExpr)) return;
+    const text = (node) => file.record.sourceText.slice(node.start, endOf(node));
+    if ([first, last].some((fn) => fn.d.isAsync || fn.d.params.length || fn.d.typeParams || !fn.d.returnAnnotation || fn.d.decorators.length && (fn.d.decorators.length !== 1 || !knownDecorators(file, fn, ["contextmanager"])))) return;
+    if (first.d.decorators.length !== last.d.decorators.length || text(first.d.returnAnnotation) !== text(last.d.returnAnnotation)) return;
+    return { kind: "function", file, node: last, args: /* @__PURE__ */ new Map(), platformAlternative: true };
+  }
+  function scalarLiteral(node) {
+    const text = literalString(node);
+    if (text !== null) return { kind: "scalar", type: "str", literal: text };
+    if (node?.nodeType === 14 /* Constant */ && [34 /* True */, 15 /* False */].includes(node.d.constType))
+      return { kind: "scalar", type: "bool", literal: node.d.constType === 34 /* True */ };
+    return;
   }
   function typeVariable(file, scope, name, fn) {
     const generic = fn && typeParameters(fn).find((param) => param.d.name.d.value === name);
@@ -13952,6 +14077,9 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     if (node.nodeType === 27 /* Index */) {
       const type = standard(file, scope, node.d.leftExpr, true), short = type?.split(".").at(-1);
       const args = () => node.d.items.map((item) => annotation(file, scope, item.d.valueExpr, at, seen, substitutions));
+      if (["typing.Literal", "typing_extensions.Literal"].includes(type) && node.d.items.length === 1)
+        return scalarLiteral(node.d.items[0].d.valueExpr);
+      if (type === "contextvars.ContextVar" && node.d.items.length === 1) return { kind: "contextVar", item: args()[0] };
       if (type === "typing.Type" || type === "builtins.type") {
         if (node.d.items.length !== 1) return;
         const value2 = args()[0];
@@ -13965,7 +14093,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
         if (short === "Annotated") return args()[0];
         if (["list", "List", "Sequence", "MutableSequence", "Iterable", "Iterator", "Generator", "AsyncIterable", "AsyncIterator", "AsyncGenerator", "set", "Set", "frozenset", "FrozenSet"].includes(short)) {
           const values = args();
-          return { kind: "sequence", item: values[0], send: short.endsWith("Generator") ? values[1] : void 0, generator: short.endsWith("Generator"), async: short.startsWith("Async") };
+          return { kind: "sequence", item: values[0], send: short.endsWith("Generator") ? values[1] : void 0, generator: short.endsWith("Generator"), async: short.startsWith("Async"), mutable: ["list", "List", "MutableSequence"].includes(short) };
         }
         if (["dict", "Dict", "Mapping", "MutableMapping"].includes(short)) {
           const values = args();
@@ -13992,7 +14120,9 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       const variable = typeVariable(file, scope, node.d.value);
       if (variable) return variable.bound && !seen.has(variable.node) ? annotation(file, variable.scope, variable.bound, at, /* @__PURE__ */ new Set([...seen, variable.node]), substitutions) : void 0;
     }
-    if (standard(file, scope, node, true) === "typing.Self") {
+    const qualified = standard(file, scope, node, true);
+    if (qualified === "builtins.str" || qualified === "builtins.bool") return { kind: "scalar", type: qualified === "builtins.str" ? "str" : "bool" };
+    if (["typing.Self", "typing_extensions.Self"].includes(qualified)) {
       let owner = scope.node;
       while (owner && owner.nodeType !== 10 /* Class */) owner = owner.parent;
       return owner && classOf(file, owner, true);
@@ -14002,13 +14132,15 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
   }
   function bases(owner, seen) {
     const out = [];
+    const scope = scopeOf(owner.file, owner.node);
     for (const arg of owner.node.d.arguments || []) {
       if (arg.d.name) return;
       let expr = arg.d.valueExpr;
       if (expr.nodeType === 27 /* Index */) expr = expr.d.leftExpr;
-      const base = expression(owner.file, scopeOf(owner.file, owner.node), expr, owner.node.start, seen, owner.args);
+      if (["typing.Generic", "abc.ABC"].includes(standard(owner.file, scope, expr, true))) continue;
+      const base = expression(owner.file, scope, expr, owner.node.start, seen, owner.args);
       if (base?.kind === "class") out.push(base);
-      else if (!(expr.nodeType === 38 /* Name */ && expr.d.value === "object" && !owner.file.bindings.module.events.has("object"))) return;
+      else return;
     }
     return out;
   }
@@ -14032,10 +14164,10 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     }
     return result;
   }
-  function member(owner, name, at, seen, skipOwn = false) {
-    if (name.startsWith("__") && !name.endsWith("__")) return;
+  function member(owner, name, at, seen, lookup, skipOwn = false, lineage = /* @__PURE__ */ new Set()) {
+    if (name.startsWith("__") && !name.endsWith("__") || lineage.has(owner.node) || lineage.size > 32) return;
     if (!skipOwn) {
-      const own = fileMember(owner, name, at, seen);
+      const own = fileMember(owner, name, at, seen, lookup);
       if (own.present) return own.value;
     }
     const arguments_ = owner.node.d.arguments || [];
@@ -14044,19 +14176,21 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       if (expr.nodeType === 27 /* Index */) expr = expr.d.leftExpr;
       const base = expression(owner.file, scopeOf(owner.file, owner.node), expr, owner.node.start, seen, owner.args);
       if (base?.kind === "class") {
-        const value = fileMember({ ...base, instance: owner.instance }, name, at, seen);
+        if (arguments_.length === 1)
+          return member({ ...base, instance: owner.instance }, name, at, seen, lookup, false, /* @__PURE__ */ new Set([...lineage, owner.node]));
+        const value = fileMember({ ...base, instance: owner.instance }, name, at, seen, lookup);
         if (value.present) return value.value;
       }
     }
     const hierarchy = mro(owner);
     if (!hierarchy) return;
     for (const base of hierarchy.slice(1)) {
-      const value = fileMember({ ...base, instance: owner.instance }, name, at, seen);
+      const value = fileMember({ ...base, instance: owner.instance }, name, at, seen, lookup);
       if (value.present) return value.value;
     }
     return;
   }
-  function fileMember(owner, name, at, seen) {
+  function fileMember(owner, name, at, seen, lookup) {
     const active = activeFields.find((field) => field.name === name && same(field.owner, owner));
     if (active) return { present: true, value: active.value };
     if (activeFields.length > 32) return { present: true };
@@ -14090,16 +14224,20 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     if (!value) return { present: true };
     if (value.kind === "function") {
       const decorators2 = value.node.d.decorators;
-      if (decorators2.length && !knownDecorators(file, value.node, ["property", "classmethod", "staticmethod", "contextmanager", "asynccontextmanager"]) && !signatureDecorators(file, value.node, seen)) return { present: true };
+      if (decorators2.length && !knownDecorators(file, value.node, ["property", "cached_property", "classmethod", "staticmethod", "contextmanager", "asynccontextmanager"]) && !abstractMethod(file, value.node) && !signatureDecorators(file, value.node, seen)) return { present: true };
       const fn = { kind: "function", file, node: value.node, args: owner.args, receiver: owner };
-      if (knownDecorators(file, value.node, ["property"])) return { present: true, value: owner.instance ? returns(fn, at, seen) : void 0 };
+      if (knownDecorators(file, value.node, ["property", "cached_property"])) {
+        return { present: true, value: owner.instance ? lookup === "callee" ? fn : returns(fn, at, seen) : void 0 };
+      }
       return { present: true, value: fn };
     }
     return { present: true, value: value.annotation ? annotation(file, scope, value.annotation, at, seen, owner.args) : value.expr ? expression(file, scope, value.expr, at, seen, owner.args) : void 0 };
   }
-  function inferTypeArguments(fn, scope, args, shapeOf) {
+  const callParameters = (fn) => {
     const boundReceiver = fn.receiver && !knownDecorators(fn.file, fn.node, ["staticmethod"]) && (fn.receiver.instance || knownDecorators(fn.file, fn.node, ["classmethod"]));
-    const params = fn.node.d.params.slice(boundReceiver ? 1 : 0);
+    return fn.node.d.params.slice(boundReceiver ? 1 : 0);
+  };
+  function bindArguments(params, args) {
     if (params.some((param) => !param.d.name || param.d.category !== 0 /* Simple */)) return;
     const supplied = /* @__PURE__ */ new Map();
     let position = 0;
@@ -14110,6 +14248,39 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       supplied.set(index, arg.d.valueExpr);
     }
     if (params.some((param, index) => !supplied.has(index) && !param.d.defaultValue)) return;
+    return supplied;
+  }
+  function callbackParameter(file, scope, parameter, at, seen, substitutions) {
+    const lambda = scope.node;
+    if (lambda.nodeType !== 33 /* Lambda */ || lambda.d.params.some((param) => !param.d.name || param.d.category !== 0 /* Simple */)) return;
+    const argument = lambda.parent, call = argument?.parent;
+    if (argument?.nodeType !== 1 /* Argument */ || argument.d.valueExpr !== lambda || call?.nodeType !== 9 /* Call */) return;
+    const fn = expression(file, scopeOf(file, call), call.d.leftExpr, call.start, seen, substitutions);
+    if (fn?.kind !== "function" || fn.overloads) return;
+    const params = callParameters(fn);
+    const index = [...bindArguments(params, call.d.args) || []].find(([, supplied]) => supplied === lambda)?.[0];
+    if (index === void 0) return;
+    let expected = params[index].d.annotation;
+    let declaredIn = scopeOf(fn.file, fn.node);
+    if (expected?.nodeType === 38 /* Name */ && !fn.file.bindings.mutable.has(expected.d.value)) {
+      const name = expected.d.value;
+      for (let current = declaredIn; current; current = current.parent) {
+        if (current.events.has("*") || current.declarations.has(name)) return;
+        if (!current.events.has(name)) continue;
+        expected = current.unique(name)?.expr;
+        declaredIn = current;
+        break;
+      }
+    }
+    if (expected?.nodeType !== 27 /* Index */ || expected.d.items.length !== 2 || !["typing.Callable", "collections.abc.Callable"].includes(standard(fn.file, declaredIn, expected.d.leftExpr, true))) return;
+    const types = expected.d.items[0].d.valueExpr;
+    if (types.nodeType !== 34 /* List */ || types.d.items.length !== lambda.d.params.length) return;
+    const position = lambda.d.params.findIndex((param) => param === parameter);
+    return annotation(fn.file, declaredIn, types.d.items[position], at, seen, fn.args);
+  }
+  function inferTypeArguments(fn, scope, args, shapeOf) {
+    const params = callParameters(fn), supplied = bindArguments(params, args);
+    if (!supplied) return;
     const substitutions = /* @__PURE__ */ new Map();
     for (const [index, argument] of supplied) {
       const type = params[index].d.annotation;
@@ -14126,10 +14297,26 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     }
     return substitutions;
   }
+  function overloadReturn(fn, scope, args, shapeOf, at, seen) {
+    for (const declaration of fn.overloads) {
+      const params = declaration.d.params, supplied = bindArguments(params, args);
+      if (!supplied) continue;
+      const matches = params.map((param, index) => {
+        const expected = annotation(fn.file, scope, param.d.annotation, at, seen, fn.args);
+        const actual = supplied.has(index) ? shapeOf(supplied.get(index)) : scalarLiteral(param.d.defaultValue);
+        if (expected?.kind !== "scalar" || actual?.kind !== "scalar") return;
+        return expected.type === actual.type && (expected.literal === void 0 || expected.literal === actual.literal);
+      });
+      if (matches.includes(false)) continue;
+      if (matches.includes(void 0)) return;
+      return annotation(fn.file, scope, declaration.d.returnAnnotation, at, seen, fn.args);
+    }
+  }
   function returns(fn, at, seen, args = [], shapeOf) {
     const d = fn.node.d;
-    if (!d.returnAnnotation) return;
     const scope = scopeOf(fn.file, fn.node), substitutions = new Map(fn.args);
+    if (fn.overloads) return shapeOf && overloadReturn(fn, scope, args, shapeOf, at, seen);
+    if (!d.returnAnnotation) return;
     if (shapeOf && args.length) {
       for (const [name, values] of inferTypeArguments(fn, scope, args, shapeOf) || []) substitutions.set(name, union(values));
     }
@@ -14151,30 +14338,49 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
     const path = reference(node);
     if (!path || scope.kind !== "function") return value;
     const name = path.split(".")[0];
-    const guards = reachingBindings(scope, name, at).guards;
-    for (const guard of guards) {
+    const guards = [];
+    for (let child = node, parent = node.parent; parent && scopeOf(file, parent) === scope; child = parent, parent = parent.parent) {
+      if (parent.nodeType !== 51 /* Ternary */ || child === parent.d.testExpr) continue;
+      const test = parent.d.testExpr;
+      if (test.nodeType === 7 /* BinaryOperation */ && [39 /* Is */, 40 /* IsNot */].includes(test.d.operator) && test.d.rightExpr.nodeType === 14 /* Constant */ && test.d.rightExpr.d.constType === 27 /* None */)
+        guards.push({ test, positive: child === parent.d.ifExpr });
+    }
+    guards.push(...[...reachingBindings(scope, name, at).guards].reverse());
+    while (guards.length) {
+      const guard = guards.pop();
       let test = guard.test, positive = guard.positive;
       while (test.nodeType === 55 /* UnaryOperation */ && test.d.operator === 38 /* Not */) {
         positive = !positive;
         test = test.d.expr;
       }
       if (path.includes(".") && (scope.events.get(name) || []).some((event) => event.attributeWrite === path.split(".")[1] && event.at > endOf(guard.test) && event.at <= at)) continue;
+      if (test.nodeType === 7 /* BinaryOperation */ && test.d.operator === (positive ? 36 /* And */ : 37 /* Or */)) {
+        guards.push({ test: test.d.rightExpr, positive }, { test: test.d.leftExpr, positive });
+        continue;
+      }
       if (test.nodeType === 9 /* Call */ && nameOf(test.d.leftExpr) === "isinstance" && unshadowed(scope, "isinstance") && test.d.args.length === 2 && test.d.args.every((arg) => !arg.d.name && arg.d.argCategory === 0) && reference(test.d.args[0].d.valueExpr) === path) {
+        if (!positive && value?.kind === "union" && standard(file, scope, test.d.args[1].d.valueExpr) === "builtins.str") {
+          value = union(value.items.filter((item) => item.kind !== "scalar" || item.type !== "str"));
+          continue;
+        }
         const type = expression(file, scope, test.d.args[1].d.valueExpr, test.start, seen, substitutions);
         if (type?.kind === "class" && !type.instance) {
           const instance = { ...type, instance: true };
-          if (positive) value = instance;
-          else if (value?.kind === "union") value = union(value.items.filter((item) => !same(item, instance)));
+          if (positive) {
+            const items = (value?.kind === "union" ? value.items : [value]).filter((item) => item?.kind !== "none");
+            value = items.length ? union(items.map((item) => item?.kind === "class" && item.instance && (item.node === type.node || mro(item)?.some((base) => base.node === type.node)) ? item : instance)) : instance;
+          } else if (value?.kind === "union") value = union(value.items.filter((item) => !same(item, instance)));
         }
       }
       if (test.nodeType === 7 /* BinaryOperation */ && [39 /* Is */, 40 /* IsNot */].includes(test.d.operator) && reference(test.d.leftExpr) === path && test.d.rightExpr.nodeType === 14 /* Constant */ && test.d.rightExpr.d.constType === 27 /* None */) {
         const isNone = positive === (test.d.operator === 39 /* Is */);
         if (value?.kind === "union") value = union(value.items.filter((item) => item.kind === "none" === isNone));
       }
+      if (positive && reference(test) === path && value?.kind === "union") value = union(value.items.filter((item) => item.kind !== "none"));
     }
     return value;
   }
-  function expression(file, scope, node, at, seen, substitutions, types = false) {
+  function expression(file, scope, node, at, seen, substitutions, types = false, lookup) {
     if (seen.has(node) || seen.size > 64) return;
     seen = /* @__PURE__ */ new Set([...seen, node]);
     const d = node.d;
@@ -14183,9 +14389,29 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       return types ? value : narrowed(file, scope, node, at, value, seen, substitutions);
     }
     if (node.nodeType === 14 /* Constant */ && d.constType === 27 /* None */) return { kind: "none" };
+    if (node.nodeType === 48 /* StringList */ || node.nodeType === 14 /* Constant */) return scalarLiteral(node);
+    if (node.nodeType === 3 /* Assignment */) return expression(file, scope, node.d.rightExpr, at, seen, substitutions);
     if (node.nodeType === 52 /* Tuple */) return { kind: "tuple", items: d.items.map((item) => expression(file, scope, item, at, seen, substitutions)) };
-    if (node.nodeType === 34 /* List */) return { kind: "sequence", item: union(d.items.map((item) => expression(file, scope, item, at, seen, substitutions))) };
-    if (node.nodeType === 51 /* Ternary */) return union([expression(file, scope, d.ifExpr, at, seen, substitutions), expression(file, scope, d.elseExpr, at, seen, substitutions)]);
+    if (node.nodeType === 34 /* List */) {
+      if (node.d.items.length === 1 && node.d.items[0].nodeType === 11 /* Comprehension */)
+        return expression(file, scope, node.d.items[0], at, seen, substitutions);
+      return { kind: "sequence", mutable: true, item: union(d.items.map((item) => expression(file, scope, item, at, seen, substitutions))) };
+    }
+    if (node.nodeType === 11 /* Comprehension */ && (node.d.isGenerator || node.parent?.nodeType === 34 /* List */)) {
+      const item = node.d.expr;
+      return { kind: "sequence", mutable: !node.d.isGenerator, item: expression(file, scopeOf(file, item), item, item.start, seen, substitutions) };
+    }
+    if (node.nodeType === 51 /* Ternary */) {
+      const yes = expression(file, scope, node.d.ifExpr, at, seen, substitutions);
+      const no = expression(file, scope, node.d.elseExpr, at, seen, substitutions);
+      if (emptyList(node.d.ifExpr) && no?.kind === "sequence" && no.mutable) return no;
+      if (emptyList(node.d.elseExpr) && yes?.kind === "sequence" && yes.mutable) return yes;
+      return union([yes, no]);
+    }
+    if (node.nodeType === 7 /* BinaryOperation */ && node.d.operator === 37 /* Or */ && emptyList(node.d.rightExpr)) {
+      const left = expression(file, scope, node.d.leftExpr, at, seen, substitutions);
+      if (left?.kind === "sequence" && left.mutable) return left;
+    }
     if (node.nodeType === 6 /* Await */) {
       const value = expression(file, scope, d.expr, at, seen, substitutions);
       return value?.kind === "awaitable" ? value.item : void 0;
@@ -14196,11 +14422,12 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       return result?.kind === "sequence" ? result.send : void 0;
     }
     if (node.nodeType === 27 /* Index */) {
+      if (d.items.length !== 1 || d.trailingComma) return;
       const value = expression(file, scope, d.leftExpr, at, seen, substitutions);
       if (d.items.some((item) => item.d.valueExpr.nodeType === 46 /* Slice */)) return value?.kind === "sequence" ? value : void 0;
       if (value?.kind === "mapping") return value.value;
       if (value?.kind === "sequence" && !value.async) return value.item;
-      if (value?.kind === "tuple" && d.items.length === 1 && d.items[0].d.valueExpr.nodeType === 40 /* Number */) return value.items[Number(d.items[0].d.valueExpr.d.value)];
+      if (value?.kind === "tuple" && d.items[0].d.valueExpr.nodeType === 40 /* Number */) return value.items[Number(d.items[0].d.valueExpr.d.value)];
       return;
     }
     if (node.nodeType === 35 /* MemberAccess */) {
@@ -14209,7 +14436,7 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
         const first = scope.node.d.params[0];
         if (owner.kind !== "class" || !first?.d.name) return;
         const receiver = symbol(file, scope, first.d.name.d.value, at, seen, substitutions);
-        return receiver?.kind === "class" && receiver.node === owner.node ? member(receiver, d.member.d.value, at, seen, true) : void 0;
+        return receiver?.kind === "class" && receiver.node === owner.node ? member(receiver, d.member.d.value, at, seen, lookup, true) : void 0;
       }
       const left = expression(file, scope, d.leftExpr, at, seen, substitutions, types);
       if (left?.kind === "module") {
@@ -14218,30 +14445,66 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
         const target = locate(left.file.record.path, "", 1, d.member.d.value), other = target && files.get(target.file);
         return target?.module && other ? { kind: "module", file: other } : void 0;
       }
-      const value = left?.kind === "class" ? d.member.d.value === "__class__" && left.instance ? { ...left, instance: false } : member(left, d.member.d.value, at, seen) : void 0;
+      const declaration = (owner) => owner?.kind === "class" ? d.member.d.value === "__class__" && owner.instance ? { ...owner, instance: false } : member(owner, d.member.d.value, at, seen, lookup) : void 0;
+      let value = declaration(left);
+      if (left?.kind === "union") {
+        const candidates = left.items.map(declaration);
+        if (candidates.every((candidate) => same(candidate, candidates[0]))) value = candidates[0];
+        else if (!lookup && candidates.every((candidate) => candidate?.kind === "function")) value = union(candidates);
+      }
       return types ? value : narrowed(file, scope, node, at, value, seen, substitutions);
     }
     if (node.nodeType === 9 /* Call */) {
       const builtin = standard(file, scope, d.leftExpr);
       const first = d.args[0]?.d.valueExpr;
-      if (first && d.args.every((arg) => arg.d.argCategory === 0 && !arg.d.name) && (d.args.length === 1 || builtin === "builtins.next" && d.args.length === 2) && ["builtins.next", "builtins.iter", "builtins.aiter", "builtins.reversed", "builtins.list", "builtins.tuple", "builtins.sorted", "builtins.dict"].includes(builtin)) {
+      const positional = d.args.every((arg) => arg.d.argCategory === 0 /* Simple */ && !arg.d.name);
+      if (first && builtin === "typing.cast" && positional && d.args.length === 2)
+        return annotation(file, scope, first, at, seen, substitutions);
+      if (first && positional && builtin === "weakref.ref" && d.args.length === 1)
+        return { kind: "weakRef", item: expression(file, scope, first, at, seen, substitutions) };
+      if (first && positional && builtin === "builtins.enumerate" && d.args.length <= 2) {
+        const item = element(expression(file, scope, first, at, seen, substitutions));
+        return { kind: "sequence", item: { kind: "tuple", items: [void 0, item] } };
+      }
+      if (first && positional && builtin === "builtins.map" && d.args.length === 2) {
+        const factory = expression(file, scope, first, at, seen, substitutions);
+        if (factory?.kind === "class" && !factory.instance)
+          return { kind: "sequence", item: { ...factory, instance: true } };
+      }
+      if (first && positional && (d.args.length === 1 || builtin === "builtins.next" && d.args.length === 2) && ["builtins.next", "builtins.iter", "builtins.aiter", "builtins.reversed", "builtins.list", "builtins.tuple", "builtins.sorted", "builtins.dict", "builtins.frozenset"].includes(builtin)) {
         const input = expression(file, scope, first, at, seen, substitutions);
         if (builtin === "builtins.next") return d.args.length === 1 ? element(input) : union([element(input), expression(file, scope, d.args[1].d.valueExpr, at, seen, substitutions)]);
         if (builtin === "builtins.dict") {
           const item = element(input);
           return item?.kind === "tuple" ? { kind: "mapping", key: item.items[0], value: item.items[1] } : input?.kind === "mapping" ? input : void 0;
         }
-        return { kind: "sequence", item: element(input, builtin === "builtins.aiter"), async: builtin === "builtins.aiter" };
+        return { kind: "sequence", item: element(input, builtin === "builtins.aiter"), async: builtin === "builtins.aiter", mutable: builtin === "builtins.list" || builtin === "builtins.sorted" };
       }
       if (d.leftExpr.nodeType === 35 /* MemberAccess */) {
         const left = expression(file, scope, d.leftExpr.d.leftExpr, at, seen, substitutions), name = d.leftExpr.d.member.d.value;
+        if (left?.kind === "scalar" && left.type === "str" && name === "partition" && positional && d.args.length === 1) {
+          const separator = expression(file, scope, first, at, seen, substitutions);
+          if (separator?.kind !== "scalar" || separator.type !== "str") return;
+          const part = { kind: "scalar", type: "str" };
+          return { kind: "tuple", items: [part, part, part] };
+        }
+        if (left?.kind === "contextVar" && name === "get" && positional && d.args.length <= 1)
+          return first ? union([left.item, expression(file, scope, first, at, seen, substitutions)]) : left.item;
+        if (left?.kind === "mapping" && name === "get" && positional && first && d.args.length <= 2)
+          return union([left.value, d.args[1] ? expression(file, scope, d.args[1].d.valueExpr, at, seen, substitutions) : { kind: "none" }]);
+        if (left?.kind === "sequence" && left.mutable && name === "pop" && positional && d.args.length <= 1) return left.item;
         if (left?.kind === "sequence" && left.generator && name === "send" && !left.async) return left.item;
         if (left?.kind === "sequence" && left.generator && name === "asend" && left.async) return { kind: "awaitable", item: left.item };
         if (left?.kind === "mapping" && !d.args.length && ["items", "keys", "values"].includes(name)) return { kind: "sequence", item: name === "items" ? { kind: "tuple", items: [left.key, left.value] } : name === "keys" ? left.key : left.value };
       }
       const callee = expression(file, scope, d.leftExpr, at, seen, substitutions);
+      if (callee?.kind === "weakRef" && !d.args.length) {
+        return node.parent?.nodeType === 35 /* MemberAccess */ && node.parent.d.leftExpr === node ? callee.item : union([callee.item, { kind: "none" }]);
+      }
       if (callee?.kind === "class" && !callee.instance) return { ...callee, instance: true };
-      if (callee?.kind === "function") return returns(callee, at, seen, d.args, (argument) => expression(file, scope, argument, at, seen, substitutions));
+      const result = (fn) => returns(fn, at, seen, d.args, (argument) => expression(file, scope, argument, at, seen, substitutions));
+      if (callee?.kind === "function") return result(callee);
+      if (callee?.kind === "union" && callee.items.every((item) => item.kind === "function")) return union(callee.items.map(result));
     }
     return;
   }
@@ -14256,18 +14519,22 @@ function resolveSourceCalls(analyses, locate, declarations = []) {
       if (callee.nodeType !== 35 /* MemberAccess */ && callee.nodeType !== 38 /* Name */) continue;
       const scope = scopeOf(file, node);
       let requireDecorator = false;
+      let ordinaryBinding = false;
+      let known;
       if (callee.nodeType === 38 /* Name */) {
         const name = callee.d.value;
         if (file.bindings.privateCalls.has(node) && name.startsWith("__") && !name.endsWith("__")) continue;
-        requireDecorator = scope.kind !== "function" || scope.unique(name)?.kind !== "function";
+        known = nullableFunction(file, scope, name, node.start);
+        requireDecorator = !known && !localCallable(scope, name, node.start);
         if (requireDecorator) {
           const value = file.bindings.lookup(scope, name, node.start);
-          if (!value || !["function", "import"].includes(value.kind)) continue;
+          ordinaryBinding = Boolean(value && ["function", "import"].includes(value.kind));
+          if (!ordinaryBinding && !scope.events.has(name) && !file.bindings.module.events.has(name)) continue;
         }
       }
-      const target = expression(file, scope, callee, node.start, /* @__PURE__ */ new Set(), /* @__PURE__ */ new Map());
-      if (target?.kind !== "function" || !captured.has(target.file.record.path)) continue;
-      if (requireDecorator && !knownDecorators(target.file, target.node, ["contextmanager", "asynccontextmanager"]) && !signatureDecorators(target.file, target.node, /* @__PURE__ */ new Set())) continue;
+      const target = known ?? expression(file, scope, callee, node.start, /* @__PURE__ */ new Set(), /* @__PURE__ */ new Map(), false, "callee");
+      if (target?.kind !== "function" || target.overloads || !captured.has(target.file.record.path)) continue;
+      if (requireDecorator && !target.platformAlternative && (!ordinaryBinding || !knownDecorators(target.file, target.node, callableDecorators) && !signatureDecorators(target.file, target.node, /* @__PURE__ */ new Set()))) continue;
       const fn = target.file.measured?.byNode.get(target.node);
       if (!fn) continue;
       fact.resolution = "python-source-declaration";

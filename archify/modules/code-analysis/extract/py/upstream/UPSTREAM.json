@@ -110,14 +110,14 @@
       "path": "parser/parseNodes.ts",
       "source": "packages/pyright-internal/src/parser/parseNodes.ts",
       "sha256": "3b5ce95ff4914c29bb3ccb3473fc36b9b227df33f58e9cac080df38996f0e8e1",
-      "localSha256": "9159134b7b26b4c2033c1bb23b0d13a65b7a8c2277037c3eeb69aeea8cbf9d6f",
+      "localSha256": "d45a34d163aa6bd67ecaf5dab1c06ac5c1dc5bd9cb5dea481d45bd7229da4961",
       "modified": true
     },
     {
       "path": "parser/parser.ts",
       "source": "packages/pyright-internal/src/parser/parser.ts",
       "sha256": "16458a9e6036128413b58d1e5ab46dcd943118aa01712c6b82f23cf5f7edd65d",
-      "localSha256": "0de9145a5d29695c97a3203a2640e117750416b8a9cd06af76fa48c9b4ee881f",
+      "localSha256": "816369cb38995c1757cbed20be31dbf42a0feb331808b10dbc40113093e4ba03",
       "modified": true
     },
     {
@@ -160,6 +160,7 @@
     "All relative TypeScript imports use .js specifiers for Node ESM and Archify self-analysis.",
     "parser/parser.ts: arithmetic-chain depth limit raised from 256 to 4096; Archify traverses such chains iteratively and does not run the recursive type evaluator.",
     "Parser and tokenizer return syntax nodes, tokens and line ranges. Parsing drops profiling, Notebook and stub-specific modes, editor formatting statistics, diagnostic suppression metadata, duplicate import and file indexes, and unused AST ownership and string-annotation tables. Syntax diagnostics and type-comment parsing are retained.",
+    "Call and dictionary punctuation markers, lazy-import flags and import completion state are omitted from the returned nodes.",
     "common helpers retain parser-required assertions, ranges, diagnostic messages and token utilities. Editor APIs and type-checker diagnostics are excluded.",
     "localization/localize.ts and strings.ts retain only referenced English parser diagnostics; environment locale lookup and other analyzer/editor strings are excluded. strings.ts is the filtered JSON data expressed as a TypeScript constant.",
     "parser/stringVersionChecks.ts adapts only pre-3.12 f-string syntax checks from checker.ts visitStringList, using the parser diagnostic sink instead of a type evaluator.",

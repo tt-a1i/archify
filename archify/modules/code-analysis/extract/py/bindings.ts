@@ -146,12 +146,10 @@ export function bindModule(tree: Node) {
         if (node.nodeType === K.Comprehension) {
             const first = d.forIfNodes[0];
             visit(first.d.iterableExpr, scope, isAnnotation, inClass);
-            const nodes: Node[] = [first.d.targetExpr, ...d.forIfNodes.slice(1), d.expr];
             let parent = scope;
             while (parent.kind === 'class' && parent.parent) parent = parent.parent;
-            const own = create(node, 'function', nodes, parent);
-            for (const name of bindingNames(first.d.targetExpr)) own.bind({ name, node: first, at: first.start, kind: 'parameter', conditional: false, loaderConditional: false });
-            for (const value of nodes) visit(value, own, isAnnotation, inClass);
+            const own = create(node, 'function', [...d.forIfNodes, d.expr], parent);
+            for (const value of [first.d.targetExpr, ...d.forIfNodes.slice(1), d.expr]) visit(value, own, isAnnotation, inClass);
             return;
         }
         if (node.nodeType === K.TypeAnnotation) { visit(d.valueExpr, scope, isAnnotation, inClass); visit(d.annotation, scope, true, inClass); return; }

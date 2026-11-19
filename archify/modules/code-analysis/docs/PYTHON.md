@@ -53,8 +53,8 @@ flowchart LR
 | Functions and metrics | Qualified names, exact ranges, owned decorator extent, McCabe complexity, nesting and deepest line |
 | Call inventory | Every syntactic source call in a parse-valid file, including nested bodies/defaults; unresolved sites remain inventoried |
 | Direct targets | Unique undecorated module functions, unique preceding function-local from-imports and one explicit reexport |
-| Additional declaration targets | Captured module members; receiver annotations, `self`/`cls`, constructed receivers and declared returns; source inheritance/C3 and zero-argument `super`; PEP 695 substitution and bound legacy TypeVars; fields/property accessor groups; qualified contextlib decorators; bounded local reaching definitions, typed iteration, generator send, awaited/context-manager results and early-exit narrowing |
-| Type and dependency signatures | Stable `TYPE_CHECKING` imports in annotations, callable-preserving `F -> F` decorator contracts, `type[T]` factory returns and explicit dependency declarations |
+| Additional declaration targets | Captured module members, receiver annotations, `self`/`cls`, constructed receivers and declared returns. Source inheritance/C3, zero-argument `super`, properties and selected decorators. Bounded local flow includes assertions, short-circuit guards, typed comprehensions and reaching imports. |
+| Type and dependency signatures | Stable `TYPE_CHECKING` imports, callable-preserving decorators, PEP 695 parameters, bound legacy TypeVars, `type[T]` factories and explicit dependency declarations. Matching simple string and boolean overloads supply return types. A declared `Callable` can type an immediate lambda argument. |
 | Source correctness | One-based UTF-16/end-exclusive positions, decoded-slice hashes, BOM/PEP 263 decoding, independent entry/target freshness |
 | Parse failure | File-local errors, no functions/calls attributed to that file; empty inventory cannot claim known-zero coverage |
 
@@ -84,6 +84,12 @@ unique target. Loops include carried stores. Exception paths and context-manager
 suppression retain uncertainty. Standard container/generator/context protocols
 require recognized imports or actual builtin names, rather than spelling alone.
 These rules follow declarations and signatures; they do not execute target code.
+
+Two module-level, parameterless definitions may provide one navigation anchor
+when they share a return annotation and occupy opposite branches of a verified
+`sys.platform` check. The later definition follows Pyright's `All` platform
+navigation for this case. A union of receivers supplies a target only when
+every possible receiver leads to the same captured declaration.
 
 Source inheritance uses C3 when the captured hierarchy is complete. A declaration
 directly in the first captured base can be selected before inspecting its
@@ -135,14 +141,23 @@ Full Pyright provides the development reference for these gaps.
 
 ## Model and history
 
-Revision **13** emits `python-source-v3`, with adapter identity
+Revision **16** emits `python-source-v3`, with adapter identity
 `pyright-parser@1.1.414/python-3.14` (or the chosen syntax target). New targets use
 `python-source-declaration` and must match a captured function definition start.
 Revision 11's `python-source-v1` retains its receiver/signature scope. Revision 12
 adds bounded local flow and protocol shapes, property accessors, bound TypeVars,
 qualified contextlib decorators and source `super` declarations. Revision 13
 adds type-only annotation imports, typed decorator contracts and generic factory
-returns with explicit dependency inputs. Existing
+returns with explicit dependency inputs. Revision 14 follows explicit `typing.cast`
+annotations and `functools.cache` declarations when their import bindings can be
+verified. Sequence navigation requires a scalar index. Revision 15 extends
+function navigation for bounded flow, typed callback parameters, simple overload
+returns, known descriptors and paired platform definitions. Revision 16 follows
+successful `try` bindings into `else`, later local declarations after wildcard
+imports, and verified cache and single-dispatch decorators. It keeps typed
+elements across empty-list fallbacks, preserves shared return types across
+distinct methods, and can navigate a property used at a callsite. A written
+`Any` remains unknown until a supported type guard supplies more evidence. Existing
 `same-file-function` and `imported-function` evidence retains its meaning. The
 reader continues to accept historical `python-source-v1/v2`, `python-lexical-v1/v2` and
 `python@...` captures without expanding their saved coverage. Changing the

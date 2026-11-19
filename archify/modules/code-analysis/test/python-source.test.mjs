@@ -64,6 +64,19 @@ test('Python target selection is recorded and invalid configuration fails before
   for (const value of ['3.15', '2.7', 3.14, 'latest']) assert.throws(() => extractFacts(current.root, { language: 'py', config: mergeConfig(loadConfig(), { python: { targetVersion: value } }) }), error => error.diagnostics[0].code === 'extract/python-target-version');
 });
 
+test('Python parser matches upstream version gates and unterminated continuation diagnostics', () => {
+  // Adapted from Pyright 1.1.414 parser.test.ts: FinallyExit1,
+  // TrailingBackslashCRAtEOF, and the Python 3.14 lazy import cases.
+  const returning = 'def work():\n    try: pass\n    finally: return 1\n';
+  assert.equal(parsePython(returning, '3.13').errors.length, 0);
+  assert.equal(parsePython(returning, '3.14').errors.length, 1);
+  const trailing = parsePython('"""Comment"""\n\n\\\r');
+  assert.ok(trailing.errors.some(error => /unexpected EOF/i.test(error.message)));
+  for (const statement of ['lazy import json', 'lazy from json import loads']) {
+    assert.equal(parsePython(statement + '\n', '3.14').errors.length, 1);
+  }
+});
+
 test('Python type comments are not executable calls and byte loader arguments remain opaque', t => {
   const { facts } = fixture(t, { 'entry.py': `import importlib
 value = 1 # type: helper()
@@ -96,6 +109,35 @@ def outer(isinstance):
         if isinstance(value, Item): value.work()
 ` });
   assert.ok(facts.calls.every(call => call.resolution === 'unresolved'));
+});
+
+test('Python uses explicit casts and callable-preserving cache declarations with verified imports', t => {
+  const text = `from typing import cast as checked
+from functools import cache
+from cached import work
+class Worker:
+    def run(self): pass
+@cache
+def local(): pass
+def chosen(value):
+    receiver = checked(Worker, value)
+    receiver.run()  # site: cast
+    work()  # site: imported-cache
+    local()  # site: local-cache
+def shadowed(checked, value):
+    receiver = checked(Worker, value)
+    receiver.run()  # site: shadowed-cast
+`;
+  const cached = 'from functools import cache\n@cache\ndef work(): pass\n';
+  const { facts } = fixture(t, { 'entry.py': text, 'cached.py': cached });
+  assert.deepEqual(markedTargets(facts, text), {
+    cast: 'Worker.run', 'imported-cache': 'work', 'local-cache': 'local', 'shadowed-cast': null,
+  });
+  const shadowed = fixture(t, { 'entry.py': text, 'cached.py': cached,
+    'functools.py': 'def cache(function): return 0\n' });
+  assert.deepEqual(markedTargets(shadowed.facts, text), {
+    cast: 'Worker.run', 'imported-cache': null, 'local-cache': null, 'shadowed-cast': null,
+  });
 });
 
 test('Python member declarations follow receiver annotations, C3 order and declaration modules', t => {
@@ -203,6 +245,415 @@ class Child(Base, OtherExternal):
         yield
 ` });
   assert.equal(targetName(facts, facts.calls[0]), 'Base.work');
+});
+
+test('Python resolves typed comprehension targets and keeps dominating assert and short-circuit guards', t => {
+  // Pyright 1.1.414: comprehension4.py and typeNarrowingAssert1.py.
+  const text = `class Work:
+    def run(self): pass
+class Special(Work):
+    def run(self): pass
+def chosen(items: list[Work], optional: Work | None):
+    assert optional is not None
+    optional.run() # site: asserted
+    [item.run() for item in items] # site: typed-element
+    filtered = [item for item in items if isinstance(item, Special)]
+    for item in filtered:
+        item.run() # site: filtered-element
+def guard(optional: Work | None):
+    if optional is not None and optional.run(): # site: right-and
+        optional.run() # site: and-body
+    if optional is None or optional.run(): # site: right-or
+        optional.run() # site: or-body
+def nested(items: list[tuple[Work, Special]]):
+    [right.run() for left, right in items] # site: unpacked-element
+def shadowed(item: Work, values):
+    [item.run() for item in values] # site: shadowed
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    asserted: 'Work.run', 'typed-element': 'Work.run', 'filtered-element': 'Special.run',
+    'right-and': 'Work.run', 'and-body': 'Work.run', 'right-or': 'Work.run', 'or-body': null,
+    'unpacked-element': 'Special.run', shadowed: null,
+  });
+});
+
+test('Python follows standard abstract and cached property declarations and captured base chains', t => {
+  const text = `from abc import ABC, abstractmethod
+from functools import cached_property
+from typing import Generic, TypeVar
+T = TypeVar('T')
+class Root(Generic[T], ABC):
+    @abstractmethod
+    def abstract(self): pass
+    def work(self): pass
+class Middle(Root[int]): pass
+class Concrete(Middle):
+    @cached_property
+    def value(self):
+        self.work() # site: cached-self
+    def use(self):
+        self.abstract() # site: abstract-method
+        super().work() # super declaration
+def chosen(value: Concrete):
+    value.work() # site: base-chain
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    'cached-self': 'Root.work', 'abstract-method': 'Root.abstract', 'base-chain': 'Root.work',
+  });
+  const superLine = text.split('\n').findIndex(line => line.includes('# super declaration')) + 1;
+  assert.deepEqual(facts.calls.filter(call => call.line === superLine).map(call => targetName(facts, call)), [undefined, 'Root.work']);
+});
+
+test('Python follows declarations visible in a branch and stable enclosing functions', t => {
+  const text = `def chosen(enabled):
+    if enabled:
+        from provider import work
+        work() # site: branch-import
+    work() # site: maybe-import
+    def local(): pass
+    def invoke():
+        local() # site: captured-function
+    [local() for i in range(1)]
+def shadowed(enabled):
+    def local(): pass
+    def invoke(local):
+        local() # site: shadowed-function
+def rebound(enabled):
+    if enabled:
+        from provider import work
+        work() # site: later-rebinding
+        work = foreign
+try:
+    import optional_extension
+except ImportError:
+    optional = None
+else:
+    def optional(): pass
+def checked():
+    optional() # site: only-callable
+def reassigned(): pass
+reassigned = None
+def disabled():
+    reassigned() # site: definitely-none
+`;
+  const { facts } = fixture(t, { 'entry.py': text, 'provider.py': 'def work(): pass\n' });
+  assert.deepEqual(markedTargets(facts, text), {
+    'branch-import': 'work', 'maybe-import': null, 'captured-function': 'chosen.<locals>.local',
+    'shadowed-function': null, 'later-rebinding': null, 'only-callable': 'optional', 'definitely-none': null,
+  });
+});
+
+test('Python carries standard context, mapping, and iteration element types to source methods', t => {
+  const text = `from contextvars import ContextVar
+from typing_extensions import Self
+from weakref import ref
+class Work:
+    def run(self): pass
+    def __enter__(self) -> Self: return self
+    def __exit__(self, a, b, c): pass
+    def copy(self) -> Work: return self
+current: ContextVar[Work] = ContextVar('current')
+def chosen(items: list[Work], mapping: dict[str, Work]):
+    with Work() as entry:
+        entry.run() # site: self-backport
+    for _, obj in enumerate(items):
+        obj.run() # site: enumerated
+    item = mapping.get('name')
+    if item:
+        item.run() # site: mapping-get
+    item = current.get(None)
+    if item is None: return
+    item = item.copy()
+    def invoke():
+        item.run() # site: captured-context
+    recent = items.pop()
+    recent.run() # site: popped-item
+def referenced(work: Work):
+    weak = ref(work)
+    candidate = weak()
+    candidate.run() # site: expired-reference
+    if candidate is not None:
+        candidate.run() # site: live-reference
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    'self-backport': 'Work.run', enumerated: 'Work.run', 'mapping-get': 'Work.run',
+    'captured-context': 'Work.run', 'popped-item': 'Work.run', 'expired-reference': null, 'live-reference': 'Work.run',
+  });
+});
+
+test('Python uses matching module overload signatures for receiver types', t => {
+  // Pyright 1.1.414 overloadCall6.py distinguishes literals and ambiguous arguments.
+  const text = `from provider import select, shell_type
+import provider
+def chosen(instruction: str, flag: bool, unknown):
+    current = select()
+    current.run() # site: default-overload
+    current = provider.select(quiet=False)
+    current.run() # site: keyword-overload
+    current = select(True)
+    current.run() # site: literal-overload
+    current = select(flag)
+    current.run() # site: broad-overload
+    current = select(unknown)
+    current.run() # site: unknown-overload
+    shell, _, _ = instruction.partition('_')
+    factory = shell_type(shell)
+    if factory is None: return
+    shell_object = factory()
+    shell_object.run() # site: string-partition
+    invalid, _, _ = instruction.partition(None)
+    other = shell_type(invalid)
+    if other is None: return
+    result = other()
+    result.run() # site: invalid-partition
+`;
+  const provider = `from typing import Literal, overload
+class Work:
+    def run(self): pass
+class Special(Work):
+    def run(self): pass
+@overload
+def select(quiet: Literal[False] = False) -> Work: ...
+@overload
+def select(quiet: Literal[True]) -> Special: ...
+@overload
+def select(quiet: bool) -> Work | None: ...
+def select(quiet: bool = False) -> Work | None:
+    return Work()
+@overload
+def shell_type(name: Literal['special']) -> type[Special]: ...
+@overload
+def shell_type(name: str) -> type[Work] | None: ...
+def shell_type(name: str) -> type[Work] | None:
+    return Work
+`;
+  const { facts } = fixture(t, { 'entry.py': text, 'provider.py': provider });
+  assert.deepEqual(markedTargets(facts, text), {
+    'default-overload': 'Work.run', 'keyword-overload': 'Work.run', 'literal-overload': 'Special.run',
+    'broad-overload': null, 'unknown-overload': null, 'string-partition': 'Work.run', 'invalid-partition': null,
+  });
+  assert.ok(facts.calls.filter(call => call.line === 4 && call.file === 'entry.py').every(call => !call.target));
+});
+
+test('Python uses a verified descriptor and the declaration of an immediate callback parameter', t => {
+  // Pyright 1.1.414 lambda13.py exercises parameter types supplied by a Callable.
+  const text = `from typing import Callable
+from werkzeug.utils import cached_property
+class Result:
+    def build(self): pass
+Callback = Callable[["Result"], None]
+class Owner:
+    @cached_property
+    def result(self):
+        self.make() # site: property-receiver
+    def make(self): pass
+    def record(self, callback: Callback): pass
+    def chosen(self, unknown):
+        self.record(
+            lambda value: value.build() # site: contextual-callback
+        )
+        self.record(callback=
+            lambda value: value.build() # site: keyword-callback
+        )
+        unknown(
+            lambda value: value.build() # site: unknown-callback
+        )
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  const expected = { 'property-receiver': 'Owner.make', 'contextual-callback': 'Result.build',
+    'keyword-callback': 'Result.build', 'unknown-callback': null };
+  assert.deepEqual(markedTargets(facts, text), expected);
+  const shadowed = fixture(t, { 'entry.py': text, 'werkzeug/utils.py': 'def cached_property(function): return None\n' });
+  assert.deepEqual(markedTargets(shadowed.facts, text), { ...expected, 'property-receiver': null });
+});
+
+test('Python navigation can use the later same-signature platform declaration', t => {
+  const text = `from provider import encode, opaque, different
+def chosen():
+    from provider import open_terminal as terminal
+    terminal() # site: platform-equality
+    encode() # site: platform-prefix
+    opaque() # site: arbitrary-condition
+    different() # site: different-signature
+`;
+  const provider = `import sys as system
+from contextlib import contextmanager
+ON_WINDOWS = system.platform.startswith('win')
+if system.platform == 'win32':
+    @contextmanager
+    def open_terminal() -> Iterator[int]: yield -1
+else:
+    @contextmanager
+    def open_terminal() -> Iterator[int]: yield 1
+if system.platform.startswith('win') and ON_WINDOWS:
+    def encode() -> str: return 'windows'
+else:
+    def encode() -> str: return 'default'
+if feature_enabled:
+    def opaque() -> str: return 'one'
+else:
+    def opaque() -> str: return 'two'
+if system.platform == 'win32':
+    def different() -> int: return 1
+else:
+    def different() -> str: return 'two'
+`;
+  const { facts } = fixture(t, { 'entry.py': text, 'provider.py': provider });
+  assert.deepEqual(markedTargets(facts, text), {
+    'platform-equality': 'open_terminal', 'platform-prefix': 'encode', 'arbitrary-condition': null, 'different-signature': null,
+  });
+  assert.deepEqual(facts.calls.filter(call => call.file === 'entry.py').map(call => call.target?.line), [9, 13, undefined, undefined]);
+  const shadowed = fixture(t, { 'entry.py': text, 'provider.py': provider.replace('import sys as system', 'from other import system') });
+  assert.ok(Object.values(markedTargets(shadowed.facts, text)).every(target => target === null));
+});
+
+test('Python isinstance assertions preserve typed subclasses that override the same method', t => {
+  const text = `class Base:
+    def run(self): pass
+    def common(self): pass
+class Child(Base):
+    def run(self): pass
+def chosen(value: Base | Child, specific: Child):
+    assert isinstance(value, Base)
+    value.run() # site: two-declarations
+    value.common() # site: shared-declaration
+    assert isinstance(specific, Base)
+    specific.run() # site: more-specific
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    'two-declarations': null, 'shared-declaration': 'Base.common', 'more-specific': 'Child.run',
+  });
+});
+
+test('Python follows verified cache and dispatch decorators to their declared function', t => {
+  const text = `from functools import lru_cache as cache, singledispatch
+@cache
+def cached(): pass
+@singledispatch
+def dispatched(item): pass
+@dispatched.register
+def registered(item: str): pass
+def chosen(item):
+    cached() # site: cached
+    dispatched(item) # site: dispatch-declaration
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), { cached: 'cached', 'dispatch-declaration': 'dispatched' });
+  const shadowed = fixture(t, { 'entry.py': text, 'functools.py': '' });
+  assert.deepEqual(markedTargets(shadowed.facts, text), { cached: null, 'dispatch-declaration': null });
+});
+
+test('Python follows later declarations after wildcard imports and success-only try bindings', t => {
+  const text = `from provider import Work, Overridden
+def chosen():
+    try:
+        value = Work()
+    except Exception:
+        value = Overridden()
+    else:
+        value.run() # site: succeeded
+    original = Overridden()
+    original.run() # site: earlier-than-wildcard
+def local(manager):
+    with manager:
+        def nested(): pass
+        nested() # site: reached-in-with
+    nested() # site: maybe-unbound
+`;
+  const provider = `class Overridden:
+    def run(self): pass
+from foreign import *
+class Work:
+    def run(self): pass
+`;
+  const { facts } = fixture(t, { 'entry.py': text, 'provider.py': provider });
+  assert.deepEqual(markedTargets(facts, text), {
+    succeeded: 'Work.run', 'earlier-than-wildcard': null,
+    'reached-in-with': 'local.<locals>.nested', 'maybe-unbound': null,
+  });
+});
+
+test('Python keeps iterable element declarations across empty fallbacks and constructor mapping', t => {
+  const text = `from collections.abc import Iterable, Sequence
+class Work:
+    def __init__(self, name: str = ''): pass
+    def run(self): pass
+class Batch:
+    def __init__(self, items: Sequence[Work] | None):
+        self.items = [] if items is None else list(items)
+    @property
+    def picks(self) -> list[Work]:
+        return self.items
+    def chosen(self):
+        for item in self.items:
+            item.run() # site: typed-conditional-list
+        for choice in self.picks or []:
+            choice.run() # site: empty-list-fallback
+def from_input(items: str | Iterable[Work]):
+    if isinstance(items, str):
+        result = frozenset(map(Work, [items]))
+    else:
+        result = frozenset(items)
+    for item in result:
+        item.run() # site: typed-frozenset
+def replaced(items: Sequence[Work] | None, opaque):
+    alternate = [] if items is None else opaque
+    for item in alternate:
+        item.run() # site: unknown-fallback
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    'typed-conditional-list': 'Work.run', 'empty-list-fallback': 'Work.run',
+    'typed-frozenset': 'Work.run', 'unknown-fallback': null,
+  });
+});
+
+test('Python follows property anchors and the shared return type of distinct method declarations', t => {
+  const text = `from collections.abc import Callable
+class Work:
+    def run(self): pass
+class First:
+    def path(self) -> Work: return Work()
+class Second:
+    def path(self) -> Work: return Work()
+class View:
+    @property
+    def callback(self) -> Callable[[], None]: return lambda: None
+    @property
+    def work(self) -> Work: return Work()
+    def chosen(self, source: First | Second):
+        self.callback() # site: property-declaration
+        worker = self.work
+        worker.run() # site: property-value
+        selected = source.path() # site: two-methods
+        selected.run() # site: same-return
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), {
+    'property-declaration': 'View.callback', 'property-value': 'Work.run',
+    'two-methods': null, 'same-return': 'Work.run',
+  });
+});
+
+test('Python keeps a written Any declaration until a supported type guard', t => {
+  const text = `from typing import Any, cast
+class Work:
+    def run(self): pass
+def chosen(arg: str):
+    value: Any = arg
+    value = cast(Work, value)
+    value.run() # site: written-any
+    other = cast(Work, arg)
+    other.run() # site: cast-inference
+    if isinstance(value, Work):
+        value.run() # site: guarded
+`;
+  const { facts } = fixture(t, { 'entry.py': text });
+  assert.deepEqual(markedTargets(facts, text), { 'written-any': null, 'cast-inference': 'Work.run', guarded: 'Work.run' });
 });
 
 test('Python source declaration model still reads historical lexical captures without expanding them', t => {
@@ -358,6 +809,8 @@ async def opened() -> AsyncIterator[Item]: yield Item()
 def chosen(items: list[Item], gen: Iterator[Item], ctx, item: Item):
     sliced = items[1:]
     sliced.work() # site: slice-is-container
+    indexed = items[0,]
+    indexed.work() # site: tuple-is-not-scalar-index
     value = next(gen, Other())
     value.work() # site: default-conflict
     invalid = items.send(None)

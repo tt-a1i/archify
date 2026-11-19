@@ -2,6 +2,7 @@
 // never choose a convenient assignment. Unknown and zero-iteration paths remain
 // explicit; loops include carried stores and exceptions may interrupt any store.
 import { ParseNode as Node, ParseNodeType as K } from './upstream/parser/parseNodes.js';
+import { OperatorType as Op } from './upstream/parser/tokenizerTypes.js';
 import { Binding, Scope } from './bindings.js';
 import { body, endOf } from './facts.js';
 
@@ -25,6 +26,29 @@ export function reachingBindings(scope: Scope, name: string, at: number): State 
     const possibleStores = (state: State, node: Node): State => ({ ...state, values: [...new Set([...state.values, ...events.filter(event => event.node.start >= node.start && event.at <= endOf(node))])] });
     const opaqueStores = (state: State, node: Node, limit: number, includeRoot = false): State => events.some(event => (includeRoot || event.node !== node) && event.node.start >= node.start && event.at <= Math.min(limit, endOf(node)))
         ? { values: [undefined], guards: [] } : state;
+    const confirmed = (state: State, test: Node, positive: boolean) => {
+        const after = opaqueStores(state, test, endOf(test), true);
+        return after === state ? guarded(state, test, positive) : after;
+    };
+    const beforeTest = (state: State, test: Node, limit: number) => {
+        while (test.nodeType === K.BinaryOperation && [Op.And, Op.Or].includes(test.d.operator)) {
+            const { leftExpr, rightExpr, operator } = test.d;
+            if (limit < rightExpr.start) test = leftExpr;
+            else { state = confirmed(state, leftExpr, operator === Op.And); test = rightExpr; }
+        }
+        return state;
+    };
+    if (scope.node.nodeType === K.Comprehension) {
+        const { expr, forIfNodes } = scope.node.d;
+        const resultExpression = at >= expr.start && at < endOf(expr);
+        let state = initial;
+        for (const clause of forIfNodes) {
+            if (!resultExpression && at < endOf(clause))
+                return clause.nodeType === K.ComprehensionIf ? beforeTest(state, clause.d.testExpr, at) : state;
+            state = clause.nodeType === K.ComprehensionIf ? confirmed(state, clause.d.testExpr, true) : assigned(state, clause);
+        }
+        return state;
+    }
     const scan = (nodes: Node[], input: State, limit: number): State | undefined => {
         let state: State | undefined = input;
         for (const node of nodes) {
@@ -33,10 +57,12 @@ export function reachingBindings(scope: Scope, name: string, at: number): State 
             const d = node.d as any, inside = limit <= endOf(node);
             if (node.nodeType === K.StatementList || node.nodeType === K.Suite) {
                 state = scan(body(node), state, limit);
+            } else if (node.nodeType === K.Assert) {
+                if (inside) return beforeTest(state, d.testExpr, limit);
+                state = confirmed(state, d.testExpr, true);
             } else if (node.nodeType === K.If) {
-                if (inside && limit <= endOf(d.testExpr)) return state;
-                state = opaqueStores(state, d.testExpr, limit, true);
-                const yes = guarded(state, d.testExpr, true), no = guarded(state, d.testExpr, false);
+                if (inside && limit <= endOf(d.testExpr)) return beforeTest(state, d.testExpr, limit);
+                const yes = confirmed(state, d.testExpr, true), no = confirmed(state, d.testExpr, false);
                 if (inside) return limit >= d.ifSuite.start && limit <= endOf(d.ifSuite) ? scan(body(d.ifSuite), yes, limit)
                     : d.elseSuite ? scan([d.elseSuite], no, limit) : no;
                 state = merge([scan(body(d.ifSuite), yes, Infinity), d.elseSuite ? scan([d.elseSuite], no, Infinity) : no]);
@@ -58,16 +84,24 @@ export function reachingBindings(scope: Scope, name: string, at: number): State 
             } else if (node.nodeType === K.Try) {
                 if (inside && limit <= endOf(d.trySuite)) return scan(body(d.trySuite), state, limit);
                 const interrupted = possibleStores(state, d.trySuite);
-                const branches = [scan(body(d.trySuite), state, Infinity)];
+                const success = scan(body(d.trySuite), state, Infinity);
+                if (inside && d.elseSuite && limit >= d.elseSuite.start && limit <= endOf(d.elseSuite))
+                    return success && scan(body(d.elseSuite), success, limit);
+                const branches = [success && d.elseSuite ? scan(body(d.elseSuite), success, Infinity) : success];
                 for (const handler of d.exceptClauses) {
                     if (inside && limit >= handler.start && limit <= endOf(handler)) return scan(body(handler.d.exceptSuite), assigned(interrupted, handler), limit);
                     branches.push(scan(body(handler.d.exceptSuite), assigned(interrupted, handler), Infinity));
                 }
                 state = merge(branches);
-                if (state && d.elseSuite) state = merge([state, scan(body(d.elseSuite), state, inside ? limit : Infinity)]);
                 if (d.finallySuite) state = scan(body(d.finallySuite), merge([state, interrupted])!, inside ? limit : Infinity);
             } else if ([K.Function, K.Class, K.Lambda].includes(node.nodeType)) {
                 if (!inside) state = assigned(state, node);
+            } else if (node.nodeType === K.Assignment && !inside) {
+                state = opaqueStores(state, node, limit);
+                for (let target = node; ; target = target.d.rightExpr) {
+                    state = assigned(state, target);
+                    if (target.d.rightExpr.nodeType !== K.Assignment) break;
+                }
             } else {
                 state = opaqueStores(state, node, limit);
                 if (!inside) state = assigned(state, node);

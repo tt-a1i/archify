@@ -1389,12 +1389,11 @@ export interface CallNode extends ParseNodeBase<ParseNodeType.Call> {
     d: {
         leftExpr: ExpressionNode;
         args: ArgumentNode[];
-        trailingComma: boolean;
     };
 }
 
 export namespace CallNode {
-    export function create(leftExpr: ExpressionNode, args: ArgumentNode[], trailingComma: boolean) {
+    export function create(leftExpr: ExpressionNode, args: ArgumentNode[]) {
         const node: CallNode = {
             start: leftExpr.start,
             length: leftExpr.length,
@@ -1404,7 +1403,6 @@ export namespace CallNode {
             d: {
                 leftExpr,
                 args,
-                trailingComma,
             },
         };
 
@@ -1832,7 +1830,6 @@ export namespace StringListNode {
 export interface DictionaryNode extends ParseNodeBase<ParseNodeType.Dictionary> {
     d: {
         items: DictionaryEntryNode[];
-        trailingCommaToken: Token | undefined;
     };
 }
 
@@ -1846,7 +1843,6 @@ export namespace DictionaryNode {
             parent: undefined,
             d: {
                 items: [],
-                trailingCommaToken: undefined,
             },
         };
 
@@ -2031,8 +2027,6 @@ export namespace PassNode {
 export interface ImportNode extends ParseNodeBase<ParseNodeType.Import> {
     d: {
         list: ImportAsNode[];
-        isLazy?: boolean;
-        lazyToken?: KeywordToken;
     };
 }
 
@@ -2055,9 +2049,6 @@ export interface ModuleNameNode extends ParseNodeBase<ParseNodeType.ModuleName> 
     d: {
         leadingDots: number;
         nameParts: NameNode[];
-
-        // This is an error condition used only for type completion.
-        hasTrailingDot?: boolean;
     };
 }
 
@@ -2108,11 +2099,7 @@ export interface ImportFromNode extends ParseNodeBase<ParseNodeType.ImportFrom> 
         module: ModuleNameNode;
         imports: ImportFromAsNode[];
         isWildcardImport: boolean;
-        usesParens: boolean;
         wildcardToken?: Token;
-        missingImport?: boolean;
-        isLazy?: boolean;
-        lazyToken?: KeywordToken;
     };
 }
 
@@ -2128,7 +2115,6 @@ export namespace ImportFromNode {
                 module,
                 imports: [],
                 isWildcardImport: false,
-                usesParens: false,
             },
         };
 

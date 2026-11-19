@@ -400,8 +400,6 @@ export class Parser {
             node = this._parseImportStatement();
         }
 
-        node.d.isLazy = true;
-        node.d.lazyToken = lazyToken as KeywordToken;
         extendRange(node, lazyToken);
 
         // PEP 810 disallows wildcard imports with 'lazy'.
@@ -2525,9 +2523,6 @@ export class Parser {
         const possibleInputToken = this._peekToken();
         if (!this._consumeTokenIfKeyword(KeywordType.Import)) {
             this._addSyntaxError(LocMessage.expectedImport(), this._peekToken());
-            if (!modName.d.hasTrailingDot) {
-                importFromNode.d.missingImport = true;
-            }
         } else {
             extendRange(importFromNode, possibleInputToken);
 
@@ -2581,8 +2576,6 @@ export class Parser {
                 }
 
                 if (inParen) {
-                    importFromNode.d.usesParens = true;
-
                     const nextToken = this._peekToken();
                     if (!this._consumeTokenIfType(TokenType.CloseParenthesis)) {
                         this._addSyntaxError(LocMessage.expectedCloseParen(), openParenToken);
@@ -2697,7 +2690,6 @@ export class Parser {
             if (!identifier) {
                 if (!allowJustDots || moduleNameNode.d.leadingDots === 0 || moduleNameNode.d.nameParts.length > 0) {
                     this._addSyntaxError(LocMessage.expectedModuleName(), this._peekToken());
-                    moduleNameNode.d.hasTrailingDot = true;
                 }
                 break;
             }
@@ -3517,11 +3509,7 @@ export class Parser {
                 this._isParsingTypeAnnotation = false;
 
                 const argListResult = this._parseArgList();
-                const callNode = CallNode.create(
-                    atomExpression,
-                    argListResult.args,
-                    argListResult.trailingComma
-                );
+                const callNode = CallNode.create(atomExpression, argListResult.args);
 
                 if (argListResult.args.length > 1 || argListResult.trailingComma) {
                     argListResult.args.forEach((arg) => {
@@ -4346,7 +4334,6 @@ export class Parser {
         const dictionaryAtom = DictionaryNode.create(startBrace);
 
         if (trailingCommaToken) {
-            dictionaryAtom.d.trailingCommaToken = trailingCommaToken;
             extendRange(dictionaryAtom, trailingCommaToken);
         }
 

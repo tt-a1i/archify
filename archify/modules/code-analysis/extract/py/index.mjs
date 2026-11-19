@@ -10,7 +10,7 @@ import { captureDeclarations } from './declarations.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 13;
+export const REVISION = 16;
 
 const PY_EXT = /\.py$/;
 
