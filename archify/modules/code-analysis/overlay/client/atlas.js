@@ -717,18 +717,25 @@
         var captured = changedSource(change, snapshot);
         var diff = captured && captured.source.changes;
         if (captured && window.__archifyShowSource) {
-          window.__archifyShowSource(captured.file, diff && (diff.modified[0] || diff.added[0]), snapshot, pair, action);
+          var selectedChange = changedSelection;
+          window.__archifyShowSource(captured.file, diff && (diff.modified[0] || diff.added[0]), snapshot, pair, function () {
+            if (changedSelection === selectedChange) {
+              side.querySelector('[data-atlas-change-source="' + snapshot + '"]')?.focus({ preventScroll: true });
+            }
+          });
         }
       } else {
         var literal = function (text) {
           return String(text).replace(/[\u0000-\u001f\u007f-\u009f\u2028-\u202e\u2066-\u2069]/gu, ' ')
             .replace(/[&<>\\\x60*_[\]{}()#!|~]/gu, function (c) { return '&#' + c.codePointAt(0) + ';'; });
         };
-        var markdown = '# ' + tr('PR file review context') + '\n\n' + tr('Status: ') + literal(change.status) + '\n\n' +
+        var prefix = pr.scope && pr.scope !== '.' ? pr.scope + '/' : '';
+        var markdown = '# ' + tr('PR file review context') + '\n\n' +
+          tr('Repository: ') + literal(pr.repository) + '\n' + tr('Status: ') + literal(change.status) + '\n\n' +
           ['base', 'head'].map(function (side) {
             var pin = side === 'base' ? pr.baseSHA : pr.headSHA;
             return '- ' + tr(side === 'base' ? 'Merge-base' : 'PR head') + ' ' + pin + ' · ' +
-              (pair[side] ? literal(pair[side]) + (changedSource(change, side) ? '' : ' (' + tr('Source was not captured') + ')') : tr('File absent on this side'));
+              (pair[side] ? literal(prefix + pair[side]) + (changedSource(change, side) ? '' : ' (' + tr('Source was not captured') + ')') : tr('File absent on this side'));
           }).join('\n') + '\n\n' + tr('This context identifies the saved file and commits. Verify the cited source before drawing conclusions.') + '\n';
         downloadMarkdown(markdown, 'pr-file-review.md');
       }

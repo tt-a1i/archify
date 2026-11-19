@@ -131,7 +131,7 @@ test('Atlas Files opens pinned renamed and removed sources and downloads only th
     const result = analyzeRepository({
       root: head, out, language: 'ts', source: { ...source, revision: headSHA }, previous: path.join(previous, 'findings.json'),
       pullRequest: { pr: { simulation: true, title: 'File review', repository: 'example/project', mergeBaseSHA: baseSHA, headSHA, baseSHA },
-        scope: '.', changedFiles: [{ path: 'new.ts', previousPath: 'old.ts', status: 'renamed' },
+        scope: 'packages/widget', changedFiles: [{ path: 'new.ts', previousPath: 'old.ts', status: 'renamed' },
           { path: 'gone.ts', status: 'removed' }, { path: 'README.md', status: 'modified' }],
         manifests: { base: { skipped: [] }, head: { skipped: [] } }, sourceRoot: head, baseSourceRoot: base },
     });
@@ -176,14 +176,25 @@ test('Atlas Files opens pinned renamed and removed sources and downloads only th
   await image('lens-files-pinned-head');
   await click('.source-back');
   assert.equal(await read('document.querySelector("[data-changed-file]").getAttribute("aria-current")'), 'true');
+  assert.equal(await read('document.activeElement.dataset.atlasChangeSource'), 'base');
+  await click('[data-atlas-change-source="head"]');
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  assert.equal(await read('document.getElementById("bauify-code").hidden'), true);
+  assert.equal(await read('document.querySelector("[data-changed-file]").getAttribute("aria-current")'), 'true');
+  assert.equal(await read('document.activeElement.dataset.atlasChangeSource'), 'head');
   await click('.atlas-change-download');
   const downloaded = path.join(dir, 'pr-file-review.md');
   for (let i = 0; !fs.existsSync(downloaded) && i < 100; i++) await new Promise(resolve => setTimeout(resolve, 100));
   const markdown = fs.readFileSync(downloaded, 'utf8');
   assert.ok(markdown.includes(expected.baseSHA) && markdown.includes(expected.headSHA));
-  if (!external) {
-    assert.match(markdown, /old\.ts/u);
-    assert.match(markdown, /new\.ts/u);
+  if (external) {
+    assert.match(markdown, /Repository: vuejs\/core/u);
+    assert.match(markdown, /packages\/runtime-vapor\/src\/dom\/hydrateFragment\.ts/u);
+  } else {
+    assert.match(markdown, /Repository: example\/project/u);
+    assert.match(markdown, /packages\/widget\/old\.ts/u);
+    assert.match(markdown, /packages\/widget\/new\.ts/u);
     assert.doesNotMatch(markdown, /Marker|gone\.ts|README/u);
     for (const [term, enabled] of [['gone', true], ['README', false]]) {
       await read('document.querySelector(' + literal(query) + ').value = ' + literal(term) + '; document.querySelector(' + literal(query) + ').dispatchEvent(new Event("input"))');

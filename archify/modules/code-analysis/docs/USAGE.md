@@ -18,7 +18,8 @@ In a PR report, Atlas **Files** opens the captured changed-file list. Select
 paths of a rename. Select a changed file to open its merge-base or PR-head
 source at the exact saved commit. A source control is disabled when its side
 was absent or its contents were outside capture. **Download .md** records the
-selected file's paths, their availability and both commits, without source text.
+repository, both commits and the selected file's repository-relative paths
+and availability, without source text.
 
 PR priorities use a bounded impact layer over the saved facts and graph, not the whole head's existing hotspots. It compares changed dependency edges and module fan-in/out, reads exact definition fingerprints only in changed source files, and reuses the existing incoming-reference reader to locate direct callers/importers, including unchanged source files. A same-metric body change remains a reading signal; position-only movement does not become an impact. Existing constraints appear only as context attached to a changed dependency or coupling witness. Rule-report evidence updates alone are not promoted to increased risk.
 

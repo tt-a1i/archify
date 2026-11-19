@@ -16,6 +16,7 @@ const ZH_CN = {
   "Open merge-base source": "查看合并基点源码",
   "Open PR head source": "查看 PR 当前源码",
   "PR file review context": "PR 文件审阅上下文",
+  "Repository: ": "仓库：",
   "Status: ": "状态：",
   "renamed": "重命名",
   "copied": "复制",
