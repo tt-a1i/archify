@@ -467,8 +467,11 @@
   /* ══ Agent command switcher ══ */
   const agentCommand = $('agent-command');
   const agentTabs = [...document.querySelectorAll('.agent-tabs button')];
+  let agentRevision = 0;
   function selectAgent(tab, focus) {
+    agentRevision++;
     agentTabs.forEach(t => { const on = t === tab; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; });
+    $('agent-copy-status').textContent = '';
     agentCommand.textContent = `npx -y skills@latest add https://archify.si --skill archify --agent ${tab.dataset.agent} --global --copy --yes`;
     if (focus) tab.focus();
   }
@@ -483,14 +486,22 @@
   });
 
   /* ══ Copy buttons ══ */
-  document.querySelectorAll('.cmd-copy').forEach(button => button.addEventListener('click', async () => {
-    const text = button.dataset.copyText || $(button.dataset.copyFrom).textContent;
-    try { await navigator.clipboard.writeText(text); } catch (_) { return; }
-    const label = button.querySelector('.cmd-copy-label');
-    button.classList.add('is-copied');
-    label.textContent = LANGS[lang].copied;
-    setTimeout(() => { button.classList.remove('is-copied'); label.textContent = LANGS[lang].copy; }, 1600);
-  }));
+  document.querySelectorAll('.cmd-copy').forEach(button => {
+    let attempt = 0;
+    const status = $(button.getAttribute('aria-describedby'));
+    const fallbackText = button.dataset.copyText ? $('hero-copy-fallback') : null;
+    const sourceText = () => button.dataset.copyText || $(button.dataset.copyFrom).textContent;
+    button.addEventListener('click', async () => {
+      const current = ++attempt, text = sourceText(), revision = agentRevision;
+      status.textContent = '';
+      if (fallbackText) fallbackText.hidden = true;
+      const isCurrent = () => current === attempt && (!button.dataset.copyFrom || revision === agentRevision) && text === sourceText();
+      const ok = await ArchifyClipboard.copy(text, isCurrent);
+      if (!isCurrent()) return;
+      if (fallbackText) fallbackText.hidden = ok;
+      status.textContent = LANGS[lang][ok ? 'copySuccess' : 'copyFailure'];
+    });
+  });
 
   /* ══ Demo lightbox — zero network cost until the trigger is pressed ══ */
   const DEMO_SRC = 'https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87';
