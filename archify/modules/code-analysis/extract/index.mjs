@@ -3,12 +3,14 @@ import * as pyAdapter from './py/index.mjs';
 import * as javaAdapter from './java/index.mjs';
 import * as goAdapter from './go/index.mjs';
 import * as rustAdapter from './rust/index.mjs';
+import * as cAdapter from './c/index.mjs';
+import * as cppAdapter from './cpp/index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './shared/diagnostics.mjs';
 import { JAVA_BUILD_MARKERS } from './shared/files.mjs';
 
-const ADAPTERS = [tsAdapter, pyAdapter, javaAdapter, goAdapter, rustAdapter];
+const ADAPTERS = [tsAdapter, pyAdapter, javaAdapter, goAdapter, rustAdapter, cAdapter, cppAdapter];
 
 export function selectAdapter(root, config, requested) {
   const supported = ADAPTERS.map((a) => a.id);
@@ -23,7 +25,7 @@ export function selectAdapter(root, config, requested) {
   const matched = ADAPTERS.filter((a) => a.detect(root, config));
   if (!matched.length) fail('extract/adapter-undetected', 'No language adapter matched the analyzed directory.', {
     subject: { root }, evidence: { supported },
-    supportedFixes: ['point at a directory containing JS/TS, Python, Java, Go or Rust sources', 'pass --language explicitly'],
+    supportedFixes: ['point at a directory containing supported source files', 'pass --language explicitly'],
   });
   // A JS/TS or Python tree that also holds Java sources (an Android folder,
   // a build helper) keeps the language it was analyzed in before Java
@@ -32,7 +34,10 @@ export function selectAdapter(root, config, requested) {
   // project, so a stray script there does not silently replace the Java
   // analysis.
   const javaProject = [...JAVA_BUILD_MARKERS, 'settings.gradle', 'settings.gradle.kts'].some((name) => fs.existsSync(path.join(root, name)));
-  const detected = matched.length > 1 && !javaProject ? matched.filter((a) => a !== javaAdapter) : matched;
+  const withoutJava = matched.length > 1 && !javaProject ? matched.filter((a) => a !== javaAdapter) : matched;
+  // A C++ translation-unit selection also covers C translation units from the
+  // same compilation database; a mixed C/C++ project is one adapter choice.
+  const detected = withoutJava.includes(cppAdapter) ? withoutJava.filter((a) => a !== cAdapter) : withoutJava;
   if (detected.length > 1) {
     const counts = detected
       .map((a) => ({ adapter: a.id, files: a.countSources(root, config) }))
@@ -52,7 +57,7 @@ export function selectAdapter(root, config, requested) {
 // beside JS/TS or Python), say how
 // many files were left out so a clean result is not read as covering them.
 export function otherLanguageFiles(root, config, selectedId) {
-  return ADAPTERS.filter((a) => a.id !== selectedId)
+  return ADAPTERS.filter((a) => a.id !== selectedId && !(selectedId === 'cpp' && a.id === 'c'))
     .map((a) => ({ adapter: a.id, files: a.countSources(root, config) }))
     .filter((x) => x.files > 0);
 }

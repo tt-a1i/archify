@@ -31,20 +31,22 @@ function normalize(value, root) {
 }
 
 export function changeEntryLanguage(entry) {
-  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go or .rs source file with --entry.');
+  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative supported source file with --entry.');
   if (/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry)) return 'ts';
   if (/\.py$/.test(entry)) return 'py';
   if (/\.java$/.test(entry)) return 'java';
   if (/\.go$/.test(entry)) return 'go';
   if (/\.rs$/.test(entry)) return 'rust';
-  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go or .rs source file with --entry.');
+  if (/\.c$/.test(entry)) return 'c';
+  if (/\.(?:cc|cpp|cxx|C)$/.test(entry)) return 'cpp';
+  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go, .rs, .c, .cc, .cpp, .cxx or .C source file with --entry.');
 }
 
 export function captureChangeSide(root, config, language = 'ts') {
   root = path.resolve(root);
   let resolution;
   const { facts } = extractFacts(root, { language, config, onCapture: input => { resolution = input; } });
-  if (!['ts', 'go', 'rust', 'java'].includes(language)) resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
+  if (!['ts', 'go', 'rust', 'java', 'c', 'cpp'].includes(language)) resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
   return { root, facts, resolution, language, configDigest: digest(JSON.stringify(config)) };
 }
 
@@ -77,7 +79,7 @@ function inspectSide(capture, side) {
     unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
     ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
     ...(evidence ? { interfaceEvidence: evidence } : {}),
-    resolution: ['ts', 'go', 'rust', 'java'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
+    resolution: ['ts', 'go', 'rust', 'java', 'c', 'cpp'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
   };
   const references = new Map(), calls = new Map(), interfaceReferences = new Map(), externalInterfaceReferences = new Map();
   (facts.calls || []).forEach((fact, factIndex) => {
@@ -134,9 +136,10 @@ function inspectSide(capture, side) {
   for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2'].includes(facts.callModel))
-    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5'].includes(facts.callModel))
+    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5', 'java-static-lexical-v6'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(facts.callModel))
-    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12', 'rust-source-direct-v13', 'rust-source-direct-v14'].includes(facts.callModel));
+    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2', 'rust-source-direct-v3', 'rust-source-direct-v4', 'rust-source-direct-v5', 'rust-source-direct-v6', 'rust-source-direct-v7', 'rust-source-direct-v8', 'rust-source-direct-v9', 'rust-source-direct-v10', 'rust-source-direct-v11', 'rust-source-direct-v12', 'rust-source-direct-v13', 'rust-source-direct-v14', 'rust-source-direct-v15'].includes(facts.callModel))
+    || (['c', 'cpp'].includes(facts.repository.language) && /^libclang@/.test(facts.repository.adapter) && facts.callModel === 'cpp-source-direct-v1');
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings,
     interfaceReferences, externalInterfaceReferences, interfaceEdges, interfaceMethods, externalInterfaceMethods, interfaceEvidence: evidence, hasInterfaceEvidence };
 }
@@ -157,7 +160,7 @@ function definitions(side, file) {
   if (!captured || captured.status !== 'valid') return { coverage: captured?.status || 'not-captured', records: [] };
   if (side.facts.repository.language !== 'ts') {
     const result = [], unavailable = [];
-    const kinds = side.facts.repository.language === 'rust' ? ['RustItemFn'] : side.facts.repository.language === 'go' ? ['FuncDecl', 'InterfaceMethod'] : side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
+    const kinds = side.facts.repository.language === 'rust' ? ['RustItemFn'] : side.facts.repository.language === 'go' ? ['FuncDecl', 'InterfaceMethod'] : side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['c', 'cpp'].includes(side.facts.repository.language) ? ['ClangFunction'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
     for (const fn of side.facts.functions.filter(fn => fn.file === file)) {
       const metadata = fn.definition;
       const slice = rangeText(captured.sourceText, metadata?.sourceRange, side.facts.repository.language);
@@ -409,7 +412,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const expectedConfig = digest(JSON.stringify(config));
   for (const capture of [base, head]) {
     const repo = capture.facts.repository;
-    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^go-parser@/.test(repo.adapter) : language === 'rust' ? /^rust-syn@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
+    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^go-parser@/.test(repo.adapter) : language === 'rust' ? /^rust-syn@/.test(repo.adapter) : ['c', 'cpp'].includes(language) ? /^libclang@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
     if (capture.language !== language || repo.language !== language || !producerMatches || capture.configDigest !== expectedConfig) fail('task/capture-mismatch', 'Both captures must use the entry language, matching producers and the same analysis configuration.');
   }
   if (base.facts.repository.adapter !== head.facts.repository.adapter || base.facts.repository.adapterRevision !== head.facts.repository.adapterRevision || base.facts.callModel !== head.facts.callModel) fail('task/capture-mismatch', 'Paired capture producers, revisions and call models must match.');

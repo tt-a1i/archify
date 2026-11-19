@@ -73,6 +73,7 @@
                 "line": { "type": "integer", "minimum": 1 },
                 "deferred": { "const": true },
                 "to": { "type": "string" },
+                "contexts": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
                 "lazy": { "const": true },
                 "typeOnly": { "const": true },
                 "conditional": { "const": true },

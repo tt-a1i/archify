@@ -170,6 +170,7 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
       unknown: (unresolved.unknown || 0) + (unresolved.opaque || 0),
       outside: unresolved.outside || 0,
       parseErrors: (facts.parse_errors || []).length,
+      ...(['c', 'cpp'].includes(facts.repository?.language) ? { notCompiled: facts.languageScope?.excludedFiles?.length || 0 } : {}),
       excluded: graph.excluded?.files || 0,
     },
   };
