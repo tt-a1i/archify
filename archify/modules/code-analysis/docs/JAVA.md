@@ -244,9 +244,9 @@ candidates among different-arity siblings (v3), and qualifier lookups from calle
 with closed captured ordinary-class ancestry (v4). Captured ancestors must have
 no inherited field or member-type blocker for the qualifier; this is not general
 inheritance or overload/type inference.
-Revision 12 removes the name-only rejection of a unique local static method
-that overloads an inherited `Object` method name; the same fixed-arity and
-source-only limits still apply.
+A unique local static method can overload an inherited `Object` method name
+when the argument count rules out the inherited signature. If the arity also
+matches an `Object` method, the lexical target stays unknown.
 
 Java v5 additionally admits these inherited-context static calls across Maven
 project roots when captured POMs establish a unique **direct** project dependency.

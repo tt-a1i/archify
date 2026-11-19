@@ -4,6 +4,12 @@ import { createHash } from 'node:crypto';
 
 export const CALL_MODEL = 'java-static-lexical-v5';
 
+const OBJECT_METHOD_ARITIES = new Map([
+  ['clone', [0]], ['equals', [1]], ['finalize', [0]], ['getClass', [0]],
+  ['hashCode', [0]], ['notify', [0]], ['notifyAll', [0]], ['toString', [0]],
+  ['wait', [0, 1, 2]],
+]);
+
 // Fixed argument count can distinguish siblings, but never argument types.
 // A varargs sibling needs applicability phases this source model does not run.
 function fixedArity(methods, arity) {
@@ -105,8 +111,11 @@ export function collectFunctionsAndCalls(unit) {
       if (anonymous || types.length !== 1 || owner.name !== 'normalClassDeclaration'
         || owner.children.classExtends || owner.children.classImplements
         || method?.name !== 'methodDeclaration' || !measured.has(method)) return;
+      const arity = invocation.children.argumentList?.[0]?.children.expression?.length || 0;
+      // Argument count alone cannot distinguish a local overload from Object.
+      if (OBJECT_METHOD_ARITIES.get(name)?.includes(arity)) return;
       const methods = staticMethods.filter(candidate => candidate.ownerOffset === owner.location.startOffset && candidate.name === name);
-      const { method: target, ambiguous } = fixedArity(methods, invocation.children.argumentList?.[0]?.children.expression?.length || 0);
+      const { method: target, ambiguous } = fixedArity(methods, arity);
       if (ambiguous) { call.reason = 'ambiguous-binding'; return; }
       if (!target?.record || !target.static) return;
       const record = target.record;
