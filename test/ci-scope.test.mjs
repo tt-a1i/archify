@@ -208,3 +208,59 @@ test('canonical Node cannot pass full CI with failed, cancelled or skipped regre
     }
   }
 });
+
+test('only explicit reader assets narrow module ownership; process and output paths remain full', () => {
+  for (const [source, owner] of [
+    ['archify/modules/code-analysis/overlay/client/atlas.js', 'code-analysis'],
+    ['archify/explainer/reader.css', 'explainer'],
+    ['archify/story/story.js', 'story'],
+  ]) {
+    const plan = classifyPaths([source, 'archify.zip']);
+    assert.equal(plan.scope, 'core');
+    assert.deepEqual(plan.owners, [owner]);
+    assert.ok(plan.generated && plan.browser && plan.package);
+    assert.equal(plan.windows, false);
+    assert.equal(plan.codeAnalysis, owner === 'code-analysis');
+    const owned = `test/${owner}.test.mjs`;
+    const browser = `test/${owner}-browser.test.mjs`;
+    assert.deepEqual(selectAffectedTests(plan.owners, [], [owned, browser, 'test/cli.test.mjs']), [browser, owned].sort());
+  }
+  for (const source of ['archify/modules/code-analysis/cli.mjs', 'archify/modules/code-analysis/package.json',
+    'archify/explainer/prepare.mjs', 'archify/explainer/sources.mjs', 'archify/story/output.mjs',
+    'archify/story/cli.mjs', 'archify/story/story-webm.js', 'archify/story/native-motion.css', 'archify/modules/code-analysis/overlay/client/new.js', 'archify/renderers/shared/output-path.mjs']) {
+    const plan = classifyPaths([source]);
+    assert.equal(plan.scope, 'full', source);
+    assert.ok(plan.windows && plan.webm && plan.codeAnalysis, source);
+  }
+});
+
+test('deleted or renamed known assets force complete comparison coverage', () => {
+  for (const removed of ['archify/explainer/reader.css\0', 'archify/renderers/tree/old.mjs\0', 'test/deleted.test.mjs\0']) {
+    const plan = comparisonPlan({ event: 'pull_request', base: 'a'.repeat(40) }, args => {
+      assert.ok(args.includes('--diff-filter=DR'));
+      return removed;
+    });
+    assert.equal(plan.scope, 'full');
+    assert.equal(plan.windows, true);
+  }
+});
+
+test('canonical check requires the selected parallel module job and preserves local suite coverage', () => {
+  assert.ok(workflow.jobs['canonical-test'].needs.includes('code-analysis'));
+  const module = workflow.jobs['code-analysis'];
+  assert.equal(module.if, "needs.scope.outputs.codeAnalysis == 'true'");
+  assert.ok(module.steps.some(step => step.run?.includes('jscpd@5.4.3')));
+  assert.equal(module.steps.find(step => step.name === 'Code Analysis module suite').env.ARCHIFY_TEST_JSCPD,
+    '${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd');
+  const shard = workflow.jobs['full-regression'].steps.find(step => step.name === 'Run a complete regression shard');
+  assert.equal(shard.env.ARCHIFY_CODE_ANALYSIS_EXTERNAL, '1');
+  assert.ok(!workflow.jobs['full-regression'].steps.some(step => step.run === 'npm --prefix archify run test:code-analysis'));
+  const step = workflow.jobs['canonical-test'].steps.find(step => step.name === 'Require selected Code Analysis module suite');
+  for (const selected of ['true', 'false', '', 'unknown']) {
+    for (const result of ['success', 'failure', 'cancelled', 'skipped', '']) {
+      const run = spawnSync('bash', ['-e', '-c', step.run], { env: { ...process.env, SELECTED: selected, MODULE_RESULT: result } });
+      assert.equal(run.status, (selected === 'true' && result === 'success') || (selected === 'false' && result === 'skipped') ? 0 : 1,
+        `${selected}/${result}`);
+    }
+  }
+});

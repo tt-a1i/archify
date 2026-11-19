@@ -42,7 +42,9 @@ test('Code Analysis exposes the workbench, checks, task and verification command
   }
 
 });
-test('Code Analysis regression suite', () => {
+// Complete local/release runs still include the module suite. CI assigns it to
+// a parallel job whose result is required by the canonical check.
+test('Code Analysis regression suite', { skip: process.env.ARCHIFY_CODE_ANALYSIS_EXTERNAL === '1' }, () => {
   const tests = fs.readdirSync(path.join(moduleRoot, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join(moduleRoot, 'test', f));
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;

@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       scope: ${{ steps.classify.outputs.scope }}
+      codeAnalysis: ${{ steps.classify.outputs.codeAnalysis }}
       website: ${{ steps.classify.outputs.website }}
       generated: ${{ steps.classify.outputs.generated }}
       browser: ${{ steps.classify.outputs.browser }}
@@ -88,17 +89,33 @@ jobs:
       - name: Verify community Hermes adapter
         if: matrix.shard == 2
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
+      - name: Run a complete regression shard
+        run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2
+        env:
+          # The parallel module job owns these tests; retain the public CLI bridge.
+          ARCHIFY_CODE_ANALYSIS_EXTERNAL: '1'
+
+  code-analysis:
+    needs: scope
+    if: needs.scope.outputs.codeAnalysis == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            archify/package-lock.json
+      - name: Install regression dependencies
+        run: npm ci && npm --prefix archify ci
       - name: Install Code Analysis duplicate detector
-        if: matrix.shard == 1
         run: npm install --prefix "$RUNNER_TEMP/archify-jscpd" --ignore-scripts --no-audit --no-fund jscpd@5.4.3
-      # The root runner enumerates only test/; the module suite lives with the module.
       - name: Code Analysis module suite
-        if: matrix.shard == 1
         run: npm --prefix archify run test:code-analysis
         env:
           ARCHIFY_TEST_JSCPD: ${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd
-      - name: Run a complete regression shard
-        run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2
 
   test:
     needs: scope
@@ -136,7 +153,7 @@ jobs:
 
   canonical-test:
     name: test (22)
-    needs: [scope, full-regression]
+    needs: [scope, full-regression, code-analysis]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
@@ -157,6 +174,16 @@ jobs:
         run: |
           case "$CI_SCOPE:$REGRESSION_RESULT" in
             full:success|core:skipped|docs:skipped) ;;
+            *) exit 1 ;;
+          esac
+      - name: Require selected Code Analysis module suite
+        env:
+          SELECTED: ${{ needs.scope.outputs.codeAnalysis }}
+          MODULE_RESULT: ${{ needs.code-analysis.result }}
+        shell: bash
+        run: |
+          case "$SELECTED:$MODULE_RESULT" in
+            true:success|false:skipped) ;;
             *) exit 1 ;;
           esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -182,6 +209,7 @@ jobs:
         if: needs.scope.outputs.scope == 'core'
         run: npm run test:affected
         env:
+          ARCHIFY_CODE_ANALYSIS_EXTERNAL: ${{ needs.scope.outputs.codeAnalysis == 'true' && '1' || '' }}
           CI_TEST_OWNERS: ${{ needs.scope.outputs.owners }}
           CI_CHANGED_TESTS: ${{ needs.scope.outputs.changedTests }}
 
@@ -224,6 +252,9 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+          CI_BROWSER_SCOPE: ${{ needs.scope.outputs.scope }}
+          CI_TEST_OWNERS: ${{ needs.scope.outputs.owners }}
+          CI_CHANGED_TESTS: ${{ needs.scope.outputs.changedTests }}
 
   webm-decode:
     needs: scope

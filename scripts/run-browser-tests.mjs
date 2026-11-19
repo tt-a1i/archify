@@ -8,12 +8,14 @@ import { fileURLToPath } from 'node:url';
 import { findChrome } from '../archify/bin/visual-check.mjs';
 import { testRunnerOptions } from './test-runner-options.mjs';
 
-import { browserTestFiles as testFiles } from './browser-test-inventory.mjs';
+import { browserTestFiles, selectBrowserTests } from './browser-test-inventory.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 let options;
 try {
+  const testFiles = process.env.CI_BROWSER_SCOPE === undefined ? browserTestFiles
+    : selectBrowserTests(process.env.CI_BROWSER_SCOPE, JSON.parse(process.env.CI_TEST_OWNERS || '[]'), JSON.parse(process.env.CI_CHANGED_TESTS || '[]'));
   if (new Set(testFiles).size !== testFiles.length) throw new Error('Browser inventory contains duplicate files');
   options = testRunnerOptions(process.argv.slice(2), {
     repoRoot, testFiles: testFiles.map(file => path.join('test', file)), allowShards: true,

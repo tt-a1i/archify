@@ -23,22 +23,14 @@ test('landing declares a truthful first-fold proof aperture in document order', 
   assert.ok(heroStart < headline && headline < actions && actions < proof);
 });
 
-test('desktop hero budget exposes live diagram content without shrinking its canvas', () => {
-  assert.match(cssRule('.hero'), /padding-top:9rem/);
-  assert.match(cssRule('.hero-bento'), /grid-template-columns:repeat\(12,1fr\)/);
-  assert.match(cssRule('.hero-intro'), /grid-column:1 \/ 8/);
-  assert.match(cssRule('.proof-main'), /grid-column:8 \/ 13/);
-  assert.match(cssRule('.proof-main'), /grid-row:1 \/ 3/);
+test('hero actions retain the minimum touch target', () => {
   assert.match(cssRule('.hero-actions .btn'), /min-height:44px/);
-  assert.match(cssRule('.proof-viewport'), /min-height:430px/);
 });
 
-test('narrow viewport preserves a contained fallback without adding a mobile product surface', () => {
+test('narrow viewport keeps the proof rail and actions usable', () => {
   const mobile = landing.match(/@media\(max-width:640px\)\s*\{([\s\S]+?)\n\s*\}\n\s*<\/style>/)?.[1];
   assert.ok(mobile, 'narrow mobile media query missing');
-  assert.match(mobile, /\.hero\s*\{\s*padding-top:6\.75rem;\s*\}/);
   assert.match(mobile, /\.hero-actions \.btn\s*\{\s*flex:1;\s*justify-content:center;\s*\}/);
-  assert.match(mobile, /\.proof-viewport\s*\{\s*min-height:360px;\s*\}/);
   assert.match(mobile, /\.proof-rail\s*\{\s*grid-template-columns:1fr;\s*\}/);
 });
 

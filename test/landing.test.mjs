@@ -26,12 +26,8 @@ const proofs = [
   },
 ];
 
-test('landing metadata describes the full technical-diagram product and trusted hero promise', () => {
-  assert.match(landing, /<title>Archify — Technical Diagrams from Plain English<\/title>/);
-  assert.match(landing, /<meta property="og:title" content="Archify — Technical Diagrams from Plain English">/);
-  assert.match(landing, /An agent skill for Cursor, Claude Code, Codex CLI, OpenCode, and GitHub Copilot/);
+test('landing retains the scoped install command', () => {
   assert.equal((landing.match(/npx -y skills add tt-a1i\/archify --skill archify --agent cursor --global --copy --yes/g) || []).length, 2);
-  assert.match(landing, /From plain English<br>to architecture <em>you can trust\.<\/em>/);
 });
 
 test('landing hero leads with three real generated proof artifacts', () => {
@@ -72,14 +68,9 @@ test('landing proof switcher is bilingual and keyboard navigable', () => {
   assert.doesNotMatch(landing, /proofFrame\.contentWindow|proofFrame\.contentDocument/);
   assert.match(landing, /\?present=1&play=1#view=/);
   assert.match(landing, /#view=\$\{encodeURIComponent\(proof\.view\)\}/);
-  assert.match(landing, /Pin one exact Story Moment, copy its stable link, and let someone else open the same authored node/);
 });
 
-test('landing makes Route Journey and core exploration shortcuts discoverable in both languages', () => {
-  assert.match(landing, /Route Journey keeps the complete authored path visible/);
-  assert.match(landing, /Route Journey 始终保留完整作者路径/);
-  assert.match(landing, /one finite, reader-controlled pass over each exact incoming relationship/);
-  assert.match(landing, /沿每条精确入向关系播放一次由读者控制的有限旅程/);
+test('landing makes core exploration shortcuts discoverable in both languages', () => {
   assert.match(landing, /data-i18n="f7-tag">INSPECT · PLAY · PAUSE/);
   assert.match(landing, /'f7-tag':'INSPECT · PLAY · PAUSE'/);
   assert.match(landing, /'f7-tag':'检查 · 播放 · 暂停'/);

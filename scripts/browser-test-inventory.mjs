@@ -58,3 +58,22 @@ export const browserTestFiles = [
   // Benchmark observers and real export integration require this explicit Chrome lane.
   'diagram-quality-e2e-browser.test.mjs',
 ];
+
+// Only these independent reader assets have narrowed source ownership. Keep
+// every generic/mixed suite: filenames alone do not prove renderer isolation.
+export function selectBrowserTests(scope, owners, changed) {
+  if (!['core', 'full', 'docs'].includes(scope) || !Array.isArray(owners) || !Array.isArray(changed)) {
+    throw new Error('Invalid browser CI selection');
+  }
+  const moduleOwners = ['code-analysis', 'explainer', 'story'];
+  const allowed = [...moduleOwners, 'renderer', 'viewer', 'authoring', 'schema', 'site', 'artifact', 'delta', 'readme',
+    'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall'];
+  if (owners.some(owner => !allowed.includes(owner))) throw new Error('Unknown browser CI owner');
+  if (changed.some(file => !/^test\/[^/]+\.test\.mjs$/.test(file))) throw new Error('Invalid changed browser test path');
+  if (scope !== 'core' || !owners.length || owners.some(owner => !moduleOwners.includes(owner))) return browserTestFiles;
+  return browserTestFiles.filter(file => {
+    // path-contract-allow: portable-logical-path -- Inventory basenames identify test owners, not native filesystem containment.
+    const owner = moduleOwners.find(owner => file === `${owner}-browser.test.mjs` || file.startsWith(`${owner}-`));
+    return !owner || owners.includes(owner) || changed.includes(`test/${file}`);
+  });
+}
