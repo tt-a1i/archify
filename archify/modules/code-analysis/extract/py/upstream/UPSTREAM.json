@@ -1,0 +1,169 @@
+{
+  "repository": "https://github.com/microsoft/pyright",
+  "version": "1.1.414",
+  "commit": "a28cce4077d87b80bead12de809f79845e39c8ba",
+  "license": {
+    "source": "LICENSE.txt",
+    "sha256": "f7c936bc43f132b08497ac952e9376cbc102e5eedb4bf6ec902ea8442bd9c68d"
+  },
+  "hashMeaning": "sha256 is the original upstream file; localSha256 is the reviewed transplanted file.",
+  "files": [
+    {
+      "path": "common/charCodes.ts",
+      "source": "packages/pyright-internal/src/common/charCodes.ts",
+      "sha256": "0d0fa5ae0ea7eb1c2a9b312d3a41486e209ec0d75f2edc53f1e3bd8f237cd32d",
+      "localSha256": "0d0fa5ae0ea7eb1c2a9b312d3a41486e209ec0d75f2edc53f1e3bd8f237cd32d",
+      "modified": false
+    },
+    {
+      "path": "common/collectionUtils.ts",
+      "source": "packages/pyright-internal/src/common/collectionUtils.ts",
+      "sha256": "6a5a92d464bd0097e4230d5589efa61a683c3721a36b2c65008244502a4ade83",
+      "localSha256": "19c886e3f6f7c011f00feeefa5fa7a5e4408447a9dbc731efb560f7eb7840f74",
+      "modified": true
+    },
+    {
+      "path": "common/core.ts",
+      "source": "packages/pyright-internal/src/common/core.ts",
+      "sha256": "806f5abb7534423c1d9939feb18554b6fb95807df4436702cda1214f5afa9190",
+      "localSha256": "b74066687270ec969c76d2c5ab2dcbb92d6e06cd23826fed8a4c7303688dd2dd",
+      "modified": true
+    },
+    {
+      "path": "common/debug.ts",
+      "source": "packages/pyright-internal/src/common/debug.ts",
+      "sha256": "7cbaf910f43f5fc7398461a32294d187bef7458bbd1e6fa4595b701278f36a36",
+      "localSha256": "a99ba4aaa2236bbcadfcf45e4522d11548d55ecd4b28425fdf63d21de8e6d85c",
+      "modified": true
+    },
+    {
+      "path": "common/diagnostic.ts",
+      "source": "packages/pyright-internal/src/common/diagnostic.ts",
+      "sha256": "73c3587a8e07fab9b50a01213aa66d7eb51a498fc5798326e5f76604a994e8f4",
+      "localSha256": "c974c96716b673e41c15176eee156b1670027c458cc8e8704a51d3021dfee3e4",
+      "modified": true
+    },
+    {
+      "path": "common/diagnosticSink.ts",
+      "source": "packages/pyright-internal/src/common/diagnosticSink.ts",
+      "sha256": "439abe39f80da9c839cbcf705c658abaaf00ec83c7807c47b710b2cec9529941",
+      "localSha256": "7fc6d211e1181e5122b2fc180cf2ba5fd99b1e25377d7ab48e0b7df7991845fc",
+      "modified": true
+    },
+    {
+      "path": "common/positionUtils.ts",
+      "source": "packages/pyright-internal/src/common/positionUtils.ts",
+      "sha256": "2758a017efd6eaba651646e6bd9c22d3e349d0b1d01675919af548e79931b53a",
+      "localSha256": "eb900cab9680e9d8d343c85bb360f027638988d0c2ffd12fc24c527da46dfafa",
+      "modified": true
+    },
+    {
+      "path": "common/pythonVersion.ts",
+      "source": "packages/pyright-internal/src/common/pythonVersion.ts",
+      "sha256": "02672f6f50862ba5fcf520450f648069e79a298a47f20da53a3632953b92ecc9",
+      "localSha256": "02672f6f50862ba5fcf520450f648069e79a298a47f20da53a3632953b92ecc9",
+      "modified": false
+    },
+    {
+      "path": "common/textRange.ts",
+      "source": "packages/pyright-internal/src/common/textRange.ts",
+      "sha256": "8370d8a0012385884e1d591b231e6573510d323cd6dc9cfa553080b17f5270b7",
+      "localSha256": "5b657871a6da5dabeb2e96f758c145e604be3fbed0cb79db9f6f0046b0dfd5bc",
+      "modified": true
+    },
+    {
+      "path": "common/textRangeCollection.ts",
+      "source": "packages/pyright-internal/src/common/textRangeCollection.ts",
+      "sha256": "6d30c04171f713d100a0021586fd94f85891d150f6e884e0e45be47f9236596b",
+      "localSha256": "8a217f02e7d912f3d6238550546bc585b245d0fe6ae714675282cf787d0bfce2",
+      "modified": true
+    },
+    {
+      "path": "localization/localize.ts",
+      "source": "packages/pyright-internal/src/localization/localize.ts",
+      "sha256": "e6c4e68b188ab5a983c5bf4c595a783fc36204343369f02104c67bc1cb4bfa55",
+      "localSha256": "e7ab3c56d74286c3dbcddb932494cf7090152e7302744592232bb1405465772c",
+      "modified": true
+    },
+    {
+      "path": "localization/strings.ts",
+      "source": "packages/pyright-internal/src/localization/package.nls.en-us.json",
+      "sha256": "71a83bc9eb70d4a977776b59cdcac2e2a1abf680c9cf11b618b0cf719277293f",
+      "localSha256": "6df8082405f7dc6e918d5c272b024e2dddf49179ff1167f65c3ac7b40bd609fc",
+      "modified": true
+    },
+    {
+      "path": "parser/characterStream.ts",
+      "source": "packages/pyright-internal/src/parser/characterStream.ts",
+      "sha256": "9b711690dce026855e5a164748c3415d6f462291ebda44a4cc8f1e98da6edf81",
+      "localSha256": "d49c7f7e958d81587e690ded1f17f99af5d465524191ad6a61c273eb8139fd3a",
+      "modified": true
+    },
+    {
+      "path": "parser/characters.ts",
+      "source": "packages/pyright-internal/src/parser/characters.ts",
+      "sha256": "8e3da0b85e87d9124d8197379b2c8518bb4a6ecc5c90c585b336bebf7ae6fef4",
+      "localSha256": "9ae4ff3fee19f442aff3956a6e38be9045ad47dc1bd59b6a8f41db8998513b74",
+      "modified": true
+    },
+    {
+      "path": "parser/parseNodes.ts",
+      "source": "packages/pyright-internal/src/parser/parseNodes.ts",
+      "sha256": "3b5ce95ff4914c29bb3ccb3473fc36b9b227df33f58e9cac080df38996f0e8e1",
+      "localSha256": "d45a34d163aa6bd67ecaf5dab1c06ac5c1dc5bd9cb5dea481d45bd7229da4961",
+      "modified": true
+    },
+    {
+      "path": "parser/parser.ts",
+      "source": "packages/pyright-internal/src/parser/parser.ts",
+      "sha256": "16458a9e6036128413b58d1e5ab46dcd943118aa01712c6b82f23cf5f7edd65d",
+      "localSha256": "816369cb38995c1757cbed20be31dbf42a0feb331808b10dbc40113093e4ba03",
+      "modified": true
+    },
+    {
+      "path": "parser/stringTokenUtils.ts",
+      "source": "packages/pyright-internal/src/parser/stringTokenUtils.ts",
+      "sha256": "7e82eb75f942b4fddf54be117f4442f5aa38db3a00d564f56eda246be1259970",
+      "localSha256": "b644709cc0ea9a98c6a2f3210739982af91dd57af6089ce45e867821ef5b516f",
+      "modified": true
+    },
+    {
+      "path": "parser/stringVersionChecks.ts",
+      "source": "packages/pyright-internal/src/analyzer/checker.ts",
+      "sha256": "e751cf2b875ba51650a93fd853979cbd749d387d833e4c55e227835566f5618c",
+      "localSha256": "0bc9ed91108aa8213ca5da71d281589845b84e0a445cc718e3a961235154e76f",
+      "modified": true
+    },
+    {
+      "path": "parser/tokenizer.ts",
+      "source": "packages/pyright-internal/src/parser/tokenizer.ts",
+      "sha256": "88615f5176da37c38293980cb2b1390b03b6554c66bd32cce1651e9adff6943f",
+      "localSha256": "9a8b7a546cec31f4a212f035f75a6d4dff4fda467c55f16a18efcdfb62912f3e",
+      "modified": true
+    },
+    {
+      "path": "parser/tokenizerTypes.ts",
+      "source": "packages/pyright-internal/src/parser/tokenizerTypes.ts",
+      "sha256": "8040a1dcc897332b7aff6956cbf102252535eeb1beaba51c2383fdee6a8ccd76",
+      "localSha256": "933e77bb52390a1c580011fb257708b3255203c147ae765a0b8a4f5dcfdec1b4",
+      "modified": true
+    },
+    {
+      "path": "parser/unicode.ts",
+      "source": "packages/pyright-internal/src/parser/unicode.ts",
+      "sha256": "85b7cf0b512a6ff2c2d926a48ded6a8198e5a18cb236dfd5651a7be1bc526f76",
+      "localSha256": "85b7cf0b512a6ff2c2d926a48ded6a8198e5a18cb236dfd5651a7be1bc526f76",
+      "modified": false
+    }
+  ],
+  "modifications": [
+    "All relative TypeScript imports use .js specifiers for Node ESM and Archify self-analysis.",
+    "parser/parser.ts: arithmetic-chain depth limit raised from 256 to 4096; Archify traverses such chains iteratively and does not run the recursive type evaluator.",
+    "Parser and tokenizer return syntax nodes, tokens and line ranges. Parsing drops profiling, Notebook and stub-specific modes, editor formatting statistics, diagnostic suppression metadata, duplicate import and file indexes, and unused AST ownership and string-annotation tables. Syntax diagnostics and type-comment parsing are retained.",
+    "Call and dictionary punctuation markers, lazy-import flags and import completion state are omitted from the returned nodes.",
+    "common helpers retain parser-required assertions, ranges, diagnostic messages and token utilities. Editor APIs and type-checker diagnostics are excluded.",
+    "localization/localize.ts and strings.ts retain only referenced English parser diagnostics; environment locale lookup and other analyzer/editor strings are excluded. strings.ts is the filtered JSON data expressed as a TypeScript constant.",
+    "parser/stringVersionChecks.ts adapts only pre-3.12 f-string syntax checks from checker.ts visitStringList, using the parser diagnostic sink instead of a type evaluator.",
+    "No upstream CLI, LSP, Program, binder, type evaluator, typeshed or target-code execution is included."
+  ]
+}

@@ -56,11 +56,15 @@ function callModelVersions(data) {
   for (let version = 1; version <= latest; version += 1) {
     if (data.callModel === `${prefix}-v${version}`) versions[language] = version;
   }
+  if (language === 'py' && data.callModel === 'python-source-v1') versions.py = 3;
+  if (language === 'py' && data.callModel === 'python-source-v2') versions.py = 4;
+  if (language === 'py' && data.callModel === 'python-source-v3') versions.py = 5;
   return versions;
 }
 
 // A call resolution that only a given language's model version can produce.
 const RESOLUTION_MODELS = new Map([
+  ['python-source-declaration', ['py', 3, 'requires the Python source declaration model']],
   ['java-qualified-static-method', ['java', 2, 'requires the Java v2 source model']],
   ['java-compiler-source-method', ['java', 6, 'requires the Java v6 compiler binding model']],
   ['rust-inherent-source-candidate', ['rust', 2, 'requires the Rust v2 inherent source-candidate model']],
@@ -85,6 +89,13 @@ function rawFactsErrors(data, report) {
   recordedFileErrors(data, files, add);
 
   const model = callModelVersions(data);
+  if (data.languageScope?.language === 'py') {
+    if (model.py < 5) add('/languageScope', 'requires the Python v3 source model');
+    report.unique(data.languageScope.declarations, 'module', '/languageScope/declarations');
+    for (const [index, input] of data.languageScope.declarations.entries()) {
+      report.unique(input.files, 'file', `/languageScope/declarations/${index}/files`);
+    }
+  }
   if (model.go >= 3 && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
   if (model.java >= 6 && (!data.languageScope?.semantic || !Array.isArray(data.methodDeclarations))) add('/languageScope/semantic', 'requires recorded Java v6 semantic scope and method declarations');
   const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
@@ -336,7 +347,7 @@ function callTargetErrors(call, at, context) {
 function importedTargetErrors(call, at, targetFile, context) {
   const { add, model, brokenFiles, staticImports, forwardingModel } = context;
   const direct = staticImports.get(call.file)?.has(targetFile);
-  let forwarded = model.py === 2 && [...(staticImports.get(call.file) || [])].some((via) => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
+  let forwarded = model.py >= 2 && [...(staticImports.get(call.file) || [])].some((via) => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
   if (call.via && forwardingModel) {
     forwarded = followsForwardingPath(call, targetFile, context);
     if (!forwarded) add(`${at}/via`, 'must follow an acyclic recorded value import/export path at captured source points');
