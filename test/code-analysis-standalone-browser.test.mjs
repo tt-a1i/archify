@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
@@ -14,7 +15,11 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
   let browser;
   t.after(async () => {
     if (browser) {
-      await browser.cdp.send('Browser.close').catch(() => {});
+      if (browser.child.exitCode === null && browser.child.signalCode === null) {
+        const exit = once(browser.child, 'exit', { signal: AbortSignal.timeout(5_000) }).catch(() => {});
+        await browser.cdp.send('Browser.close').catch(() => {});
+        await exit;
+      }
       await browser.close();
     }
     fs.rmSync(dir,{recursive:true,force:true,maxRetries:5,retryDelay:100});
