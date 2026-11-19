@@ -87,7 +87,7 @@ test('overview: coverage names what was analyzed, left out, and switched off', (
   const run = { rules: ['coupling/import-cycle', 'coupling/cycle', 'coupling/hub'], suppressed: ['coupling/hub', 'not/a-rule'], exclude: ['**/venv/**'], otherLanguages: [{ adapter: 'ts', files: 7 }] };
   const c = buildOverview({ findings: [], graph, facts, unmapped: [{ id: 'd' }], run }).coverage;
   assert.equal(c.language, 'py');
-  assert.deepEqual(c.files, { analyzed: 2, excludedByRole: 2, excludedRoles: ['test'], excludePatterns: ['**/venv/**'], parseErrors: ['b/y.py'] });
+  assert.deepEqual(c.files, { analyzed: 1, excludedByRole: 2, excludedRoles: ['test'], excludePatterns: ['**/venv/**'], parseErrors: ['b/y.py'] });
   assert.deepEqual(c.otherLanguages, [{ adapter: 'ts', files: 7 }]);
   assert.deepEqual(c.rules, { run: ['coupling/import-cycle', 'coupling/cycle'], suppressed: ['coupling/hub'] });
   assert.deepEqual(c.unmappedModules, ['d']);

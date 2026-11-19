@@ -178,17 +178,21 @@ function groupsOf(ranked) {
 
 function coverageOf({ graph, facts, unmapped, ambiguousModules, run }) {
   const excludedRoles = new Set(graph?.excluded?.roles || []);
+  const parseErrors = (facts?.parse_errors || []).map((error) => error.path).sort(compareText);
+  const failedPaths = new Set(parseErrors);
+  // Some extractors retain failed files for recovered facts and source navigation.
+  const analyzedPaths = facts?.files.filter((file) => !excludedRoles.has(file.role) && !failedPaths.has(file.path)).map((file) => file.path);
   const rules = run.rules || [];
   return {
     language: graph?.repository?.language ?? null,
     adapter: graph?.repository?.adapter ?? null,
     files: {
-      analyzed: facts ? facts.files.filter((f) => !excludedRoles.has(f.role)).length : null,
+      analyzed: analyzedPaths?.length ?? null,
       excludedByRole: graph?.excluded?.files ?? 0,
       excludedRoles: [...excludedRoles].sort(compareText),
       // Files matching these patterns are never enumerated, so they are named, not counted.
       excludePatterns: run.exclude || [],
-      parseErrors: facts?.parse_errors ? facts.parse_errors.map((e) => e.path).sort(compareText) : [],
+      parseErrors,
       ...(['c', 'cpp'].includes(facts?.repository?.language) ? {
         notCompiled: facts.languageScope?.excludedFiles?.length || 0,
         translationUnits: facts.languageScope?.build?.units?.length || 0,
@@ -200,7 +204,7 @@ function coverageOf({ graph, facts, unmapped, ambiguousModules, run }) {
     unmappedModules: unmapped.map((m) => m.id),
     ...(ambiguousModules.length ? { ambiguousModules } : {}),
     // Declared layers and how many analyzed files each one matched; null when no boundaries are configured.
-    boundaries: run.boundaries && facts ? layerCounts(run.boundaries, facts.files.filter((f) => !excludedRoles.has(f.role)).map((f) => f.path)) : null,
+    boundaries: run.boundaries && analyzedPaths ? layerCounts(run.boundaries, analyzedPaths) : null,
     // Files the duplicate detector analyzed out of those selected for it; null when it did not run.
     duplicates: duplicateCoverage(run.duplicates),
     ...(run.external?.length ? { external: run.external } : {}),
