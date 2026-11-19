@@ -78,7 +78,7 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 
 **不需要绑定代码库：**从描述开始即可。也可以让 Agent 阅读仓库，生成有源码依据的架构图。
 
-[按 Agent 选择安装方式](https://archify.si/zh/start?agent=cursor&type=architecture) · [安装细节与更新检查](#快速开始)
+[按 Agent 选择安装方式](https://archify.si/zh/start?agent=cursor&type=architecture) · [安装细节与更新检查](#快速开始) · [用 Agent 画图并检查结果](https://archify.si/zh/agent-diagrams)
 
 ## 问一个问题，得到一页讲清楚的答案
 

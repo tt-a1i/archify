@@ -333,6 +333,7 @@ function resolvePlan({ root, segments }, side, depth) {
 
   let current;
   let currentStat;
+  let currentMethod = 'native-realpath';
   try {
     current = fs.realpathSync.native(root);
   } catch (error) {
@@ -392,6 +393,7 @@ function resolvePlan({ root, segments }, side, depth) {
       try {
         current = fs.realpathSync.native(hostPath().dirname(current));
         currentStat = statBigInt(current);
+        currentMethod = 'native-realpath';
       } catch (error) {
         return {
           ok: false,
@@ -429,6 +431,7 @@ function resolvePlan({ root, segments }, side, depth) {
           ancestor: {
             realPath: current,
             stat: currentStat,
+            method: currentMethod,
           },
           unresolved,
         };
@@ -477,8 +480,28 @@ function resolvePlan({ root, segments }, side, depth) {
     }
 
     try {
-      current = fs.realpathSync.native(candidate);
+      try {
+        current = fs.realpathSync.native(candidate);
+      } catch (error) {
+        if (process.platform !== 'win32' || error?.code !== 'EPERM'
+          || !segments.slice(index + 1).some((remaining) => remaining !== '.')
+          || !candidateStat.isDirectory()) throw error;
+        // Restricted Windows sandboxes can deny native realpath on a readable
+        // ancestor. JS resolution must still prove the same non-link directory.
+        const resolved = fs.realpathSync(candidate);
+        const resolvedStat = fs.lstatSync(resolved, { bigint: true });
+        if (!resolvedStat.isDirectory() || resolvedStat.isSymbolicLink()
+          || !hasStableIdentity(candidateStat) || !hasStableIdentity(resolvedStat)
+          || candidateStat.dev !== resolvedStat.dev || candidateStat.ino !== resolvedStat.ino) {
+          return { ok: false, failure: unknown('ancestor-identity-indeterminate', { side, segmentIndex: index }) };
+        }
+        current = resolved;
+        currentStat = resolvedStat;
+        currentMethod = 'js-realpath';
+        continue;
+      }
       currentStat = statBigInt(current);
+      currentMethod = 'native-realpath';
     } catch (error) {
       return {
         ok: false,
@@ -585,7 +608,7 @@ export function resolvePhysicalLocation(targetPath) {
     },
     reason: {
       code: 'future-physical-ancestor',
-      method: 'native-realpath',
+      method: resolution.ancestor.method,
     },
   };
 }

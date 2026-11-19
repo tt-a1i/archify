@@ -57,9 +57,15 @@ jobs:
           CI_EVENT_NAME: ${{ github.event_name }}
           CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI_REF: ${{ github.ref }}
-      - name: Check README content for documentation-only changes
+      - name: Install documentation check dependencies
+        if: steps.classify.outputs.scope == 'docs' && (contains(fromJSON(steps.classify.outputs.owners), 'readme') || contains(fromJSON(steps.classify.outputs.owners), 'changelog'))
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check affected documentation contracts
         if: steps.classify.outputs.scope == 'docs'
-        run: node --test test/readme-showcase.test.mjs
+        run: npm run test:affected
+        env:
+          CI_TEST_OWNERS: ${{ steps.classify.outputs.owners }}
+          CI_CHANGED_TESTS: ${{ steps.classify.outputs.changedTests }}
 
   full-regression:
     needs: scope
