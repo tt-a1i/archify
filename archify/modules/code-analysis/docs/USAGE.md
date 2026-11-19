@@ -34,7 +34,7 @@ Language extraction has its own prerequisites:
 | Adapter | Required tools and source scope |
 | --- | --- |
 | `ts` | Node.js and the module's installed TypeScript parser dependencies. |
-| `py` | Python 3; `BAUIFY_PYTHON` can select the interpreter. |
+| `py` | Node only; transplanted Pyright parser, Python 3.14 syntax by default. Set `python.targetVersion` to 3.8–3.14. |
 | `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
 | `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
@@ -166,7 +166,7 @@ root (or repository-relative paths with that root prefix); a pinned source alway
 names a path relative to the Git top level. Use a concrete file with line numbers
 when the claim needs source-level evidence.
 - `ruleCounts` shows how findings divide by rule, so a dominant rule is visible before reading every finding.
-- `coverage` lists parse failures, role-excluded source counts (`analyzedFiles`, `excludedByRole`, `excludedRoleCounts`) when test or generated files were excluded from the module graph and rules, and other languages left out.
+- `coverage` lists parse failures and languages left out. When there are parse failures or role exclusions, `analyzedFiles` counts successfully parsed files in the graph and rule scope. The top-level `files` count can include failed files retained by an extractor for source navigation or partial facts. Role exclusions also report `excludedByRole` and `excludedRoleCounts`. Coverage does not change the finding gate.
 
 For each lead you keep, run its `task` command (or `archify code-analysis task out/first-look --finding <id> --root /path/to/repo --format json`) to get source excerpts, facts, suggestions, acceptance and evidence digests. Then read the cited source before changing code. A finding is static evidence, not a proven defect: a complexity warning says the function is harder to read and test, not that it must be split, and a coupling signal may be an intentional design. If the branching or dependency is inherent, record that and leave the code as it is.
 

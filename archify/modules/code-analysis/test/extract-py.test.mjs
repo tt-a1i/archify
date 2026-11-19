@@ -32,7 +32,7 @@ test('py: fixture yields hand-verified files, imports, unresolved counts, and pa
   const core = facts.symbols.filter((s) => s.file === 'app/core.py');
   assert.deepEqual(core.map((s) => [s.name, s.kind, s.line]), [['os', 'import', 1], ['clean', 'import', 2], ['x', 'import', 3], ['run', 'function', 6]]);
   assert.ok(!facts.symbols.some((s) => s.file === 'broken.py'), 'unparsable files contribute no symbols');
-  assert.match(facts.repository.adapter, /^python@3\.\d+\.\d+$/);
+  assert.equal(facts.repository.adapter, 'pyright-parser@1.1.414/python-3.14');
 });
 
 test('py: a `from pkg import sub` edge lands on the submodule, not only the package', (t) => {

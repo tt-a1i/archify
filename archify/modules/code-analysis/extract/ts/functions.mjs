@@ -20,6 +20,7 @@
 // not lost (`<callback of server.on("request")>`). Only callbacks with the same
 // call and literal get a `#2`, `#3` suffix in source order.
 // Overload signatures and other bodiless declarations are skipped.
+import { createHash } from 'node:crypto';
 import ts from 'typescript';
 
 const LOGICAL = new Set([
@@ -81,11 +82,20 @@ function isFunctionWithBody(node) {
 
 function record(fn, source, file, name, qualname) {
   const m = measure(fn, source);
+  const start = source.getLineAndCharacterOfPosition(fn.getStart(source));
+  const end = source.getLineAndCharacterOfPosition(fn.getEnd());
   return {
     file, name, qualname,
-    line: lineOf(source, fn.getStart(source)),
-    endLine: lineOf(source, fn.getEnd()),
+    line: start.line + 1,
+    endLine: end.line + 1,
     complexity: m.complexity, nesting: m.nesting, deepestLine: m.deepestLine,
+    // One-based UTF-16 columns, with the end exclusive. This locates the captured
+    // implementation; it does not prove which function executes at runtime.
+    sourceRange: {
+      line: start.line + 1, column: start.character + 1,
+      endLine: end.line + 1, endColumn: end.character + 1,
+      sha256: createHash('sha256').update(source.text.slice(fn.getStart(source), fn.getEnd())).digest('hex'),
+    },
   };
 }
 
