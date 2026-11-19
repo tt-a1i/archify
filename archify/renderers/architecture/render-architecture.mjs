@@ -1057,9 +1057,26 @@ function renderConnectionPath(conn, index) {
 function renderConnectionLabel(conn, index) {
   const box = connectionLabelBox(conn);
   if (!box) return '';
+  const label = conn.label;
+  const mono = /^[!-~·]+(?: [!-~·]+)*$/u.test(label);
+  const availableWidth = box.width - 4;
+  const preferredSize = 10;
+  // Fit the bundled monospace glyphs to the existing mask. Keep CJK glyphs at
+  // their natural proportions and leave other fallback text at its old size.
+  let fontSize = mono ? preferredSize : 8;
+  if (!mono && /^[ -~·←↑→↓、。！？：「」，“”\p{Unified_Ideograph}\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3]+$/u.test(label)) {
+    // East Asian fallback glyphs typically use a full em. Leave extra room
+    // for platform font differences and round the fitted size down.
+    const widthInEms = [...label].reduce((sum, glyph) => sum + (glyph.codePointAt(0) <= 0xff ? 0.6 : 1.1), 0);
+    fontSize = Math.max(8, Math.min(preferredSize, Math.floor(10 * availableWidth / widthInEms) / 10));
+  }
+  const weight = fontSize > 8 ? ' font-weight="500"' : '';
+  const fit = mono && minimumNodeTextWidth(label, preferredSize) > availableWidth
+    ? ` textLength="${availableWidth}" lengthAdjust="spacingAndGlyphs"`
+    : '';
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="${fontSize}"${weight}${fit} text-anchor="middle">${esc(label)}</text>
         </g>`;
 }
 

@@ -142,15 +142,15 @@ test('a first-screen fit never pushes relationship labels below the 6px floor', 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-edge-floor-'));
   const input = path.join(dir, 'input.json');
   const output = path.join(dir, 'output.html');
-  // Titles only, 8px relationship labels: without the edge floor the titles'
-  // 7.5px target alone would project the labels to about 5.5px.
+  // Give the three nodes enough vertical space to exercise readable scrolling
+  // and keep the relationship labels legible in the resulting tall diagram.
   fs.writeFileSync(input, JSON.stringify({
     schema_version: 1, diagram_type: 'architecture',
     meta: { title: 'Tall request path', output: 'output.html', quality_profile: 'showcase' },
     components: [
       { id: 'client', type: 'frontend', label: 'Client', pos: [40, 40], size: [140, 60] },
-      { id: 'api', type: 'backend', label: 'API', pos: [40, 480], size: [140, 60] },
-      { id: 'db', type: 'database', label: 'Store', pos: [40, 920], size: [140, 60] },
+      { id: 'api', type: 'backend', label: 'API', pos: [40, 580], size: [140, 60] },
+      { id: 'db', type: 'database', label: 'Store', pos: [40, 1120], size: [140, 60] },
     ],
     connections: [{ from: 'client', to: 'api', label: 'request' }, { from: 'api', to: 'db', label: 'persist' }],
   }));
