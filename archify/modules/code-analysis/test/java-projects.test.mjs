@@ -50,12 +50,173 @@ test('main/test roles, dependency kind/version, missing parent and conditional d
   assert.equal(facts.calls[0].resolution,'unresolved');assert.equal(facts.calls[0].reason,'java-inherited-build-scope');
  }
 });
+test('main source cannot inherit a qualifier from the same Maven module test source set',t=>{
+ const args=fixture(t,{main:true});
+ const previous=path.join(args.root,'api/src/test/java/q/Parent.java');
+ const local=path.join(args.root,'caller/src/test/java/q/Parent.java');
+ fs.mkdirSync(path.dirname(local),{recursive:true});fs.renameSync(previous,local);
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].resolution,'unresolved');
+ assert.equal(facts.calls[0].reason,'java-inherited-build-scope');
+});
+test('main source cannot navigate to a static method in the same Maven module test source set',t=>{
+ const args=fixture(t,{main:true});
+ const original=path.join(args.root,'api/src/main/java/p/Api.java');
+ const mainTarget=path.join(args.root,'caller/src/main/java/p/Api.java');
+ const testTarget=path.join(args.root,'caller/src/test/java/p/Api.java');
+ fs.mkdirSync(path.dirname(mainTarget),{recursive:true});fs.renameSync(original,mainTarget);
+ const caller=path.join(args.root,'caller/src/main/java/q/Calls.java');
+ fs.writeFileSync(caller,fs.readFileSync(caller,'utf8').replace('extends Parent ',''));
+ let {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].target.file,'caller/src/main/java/p/Api.java');
+ assert.ok(facts.imports.some(imp=>imp.from==='caller/src/main/java/q/Calls.java'&&imp.to==='caller/src/main/java/p/Api.java'));
+ fs.mkdirSync(path.dirname(testTarget),{recursive:true});fs.copyFileSync(mainTarget,testTarget);
+ ({facts}=extractFacts(args.root,{language:'java',config:args.config}));
+ assert.equal(facts.calls[0].resolution,'unresolved');
+ assert.ok(!facts.imports.some(imp=>imp.from==='caller/src/main/java/q/Calls.java'&&imp.resolved&&imp.to?.endsWith('/p/Api.java')));
+ fs.rmSync(mainTarget);
+ ({facts}=extractFacts(args.root,{language:'java',config:args.config}));
+ assert.equal(facts.calls[0].resolution,'unresolved');
+ assert.equal(facts.calls[0].target,undefined);
+ assert.ok(!facts.imports.some(imp=>imp.from==='caller/src/main/java/q/Calls.java'&&imp.resolved&&imp.to==='caller/src/test/java/p/Api.java'));
+ const testCaller=path.join(args.root,'caller/src/test/java/q/Calls.java');
+ fs.mkdirSync(path.dirname(testCaller),{recursive:true});fs.renameSync(caller,testCaller);fs.renameSync(testTarget,mainTarget);
+ ({facts}=extractFacts(args.root,{language:'java',config:args.config}));
+ assert.equal(facts.calls[0].target.file,'caller/src/main/java/p/Api.java');
+ assert.ok(facts.imports.some(imp=>imp.from==='caller/src/test/java/q/Calls.java'&&imp.to==='caller/src/main/java/p/Api.java'));
+});
+test('a compile-scoped test-jar can expose another Maven module test source to main',t=>{
+ const args=fixture(t,{main:true,jar:false});
+ const caller=path.join(args.root,'caller/pom.xml');
+ fs.writeFileSync(caller,fs.readFileSync(caller,'utf8').replace('<type>test-jar</type><scope>test</scope>',
+  '<type>test-jar</type><scope>compile</scope>'));
+ const parent=path.join(args.root,'caller/src/main/java/q/Parent.java');
+ fs.mkdirSync(path.dirname(parent),{recursive:true});
+ fs.renameSync(path.join(args.root,'api/src/test/java/q/Parent.java'),parent);
+ const target=path.join(args.root,'api/src/test/java/p/Api.java');
+ fs.mkdirSync(path.dirname(target),{recursive:true});
+ fs.renameSync(path.join(args.root,'api/src/main/java/p/Api.java'),target);
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].target.file,'api/src/test/java/p/Api.java');
+ assert.ok(facts.imports.some(imp=>imp.from===args.entry&&imp.to==='api/src/test/java/p/Api.java'));
+});
+test('test and runtime dependencies expose main targets to test sources but not main sources',t=>{
+ for(const scope of ['test','runtime'])for(const main of [false,true]){
+  const args=fixture(t,{main,jar:false,testJar:false});
+  const previous=path.join(args.root,'api/src/test/java/q/Parent.java');
+  const local=path.join(args.root,'caller/src/'+(main?'main':'test')+'/java/q/Parent.java');
+  fs.mkdirSync(path.dirname(local),{recursive:true});fs.renameSync(previous,local);
+  const caller=path.join(args.root,'caller/pom.xml');
+  fs.writeFileSync(caller,fs.readFileSync(caller,'utf8').replace('</dependencies>',
+   '<dependency><groupId>p</groupId><artifactId>api</artifactId><version>1</version><scope>'+scope+'</scope></dependency></dependencies>'));
+  const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+  assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+  const call=facts.calls[0];
+  assert.equal(call.resolution,main?'unresolved':'java-qualified-static-method');
+  if(main)assert.equal(call.reason,'java-inherited-build-scope');
+  else assert.equal(call.target.file,'api/src/main/java/p/Api.java');
+ }
+});
+test('same artifactId with distinct group or version stays distinct while duplicate reactor coordinates deny navigation',t=>{
+ const args=fixture(t),other=path.join(args.root,'other/pom.xml');
+ fs.writeFileSync(other,fs.readFileSync(other,'utf8').replace('<artifactId>other</artifactId>',
+  '<groupId>q</groupId><artifactId>api</artifactId>'));
+ let {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].target.file,'api/src/main/java/p/Api.java');
+ assert.ok(facts.languageScope.projects.some(project=>project.groupId==='q'&&project.artifactId==='api'));
+ fs.writeFileSync(other,fs.readFileSync(other,'utf8').replace('<groupId>q</groupId><artifactId>api</artifactId>',
+  '<artifactId>api</artifactId><version>2</version>'));
+ ({facts}=extractFacts(args.root,{language:'java',config:args.config}));
+ assert.equal(facts.calls[0].target.file,'api/src/main/java/p/Api.java');
+ assert.ok(facts.languageScope.projects.some(project=>project.groupId==='p'&&project.artifactId==='api'&&project.version==='2'));
+ fs.writeFileSync(other,fs.readFileSync(other,'utf8').replace('<version>2</version>',''));
+ ({facts}=extractFacts(args.root,{language:'java',config:args.config}));
+ assert.equal(facts.calls[0].resolution,'unresolved');
+ assert.equal(facts.calls[0].reason,'java-inherited-build-scope');
+});
+test('a Maven archetype template POM is not a project or resolution input',t=>{
+ const args=fixture(t),template=path.join(args.root,'caller/src/main/resources/archetype-resources/pom.xml');
+ fs.mkdirSync(path.dirname(template),{recursive:true});
+ fs.writeFileSync(template,'<project'+ns+'><groupId>template</groupId><artifactId>template</artifactId><version>1</version></project>');
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].target.file,'api/src/main/java/p/Api.java');
+ assert.ok(!facts.packageMarkers.includes('caller/src/main/resources/archetype-resources/pom.xml'));
+ assert.ok(!facts.languageScope.projects.some(project=>project.file==='caller/src/main/resources/archetype-resources/pom.xml'));
+ assert.ok(!facts.languageScope.metadata.some(input=>input.file==='caller/src/main/resources/archetype-resources/pom.xml'));
+ fs.appendFileSync(template,'\n<!-- changed template -->');
+ const question=buildQuestion({...args,facts,symbol:'Calls.go()',question:'Is this source call still navigable?'});
+ assert.equal(question.calls.records[0].targetNavigation.status,'valid');
+});
+test('an invalid sibling Maven project does not suppress a valid direct source route',t=>{
+ const args=fixture(t);
+ fs.writeFileSync(path.join(args.root,'other/pom.xml'),'<project><broken></project>');
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].target.file,'api/src/main/java/p/Api.java');
+ assert.ok(facts.languageScope.unknowns.some(problem=>problem.file==='other/pom.xml'
+  && problem.reason==='unsupported-or-invalid-pom'));
+ assert.ok(!facts.languageScope.projects.some(project=>project.file==='other/pom.xml'));
+});
 test('reactor co-location without a dependency does not select sibling source, while inherited dependency management resolves project version',t=>{
  const args=fixture(t);const caller=path.join(args.root,'caller/pom.xml');
  let pom=fs.readFileSync(caller,'utf8');pom=pom.replace('<version>1</version></dependency>','</dependency>');fs.writeFileSync(caller,pom);
  let result=extractFacts(args.root,{language:'java',config:args.config});assert.ok(result.facts.calls[0].target);
  fs.writeFileSync(caller,pom.replace(/<dependencies>.*<\/dependencies>/,''));
  result=extractFacts(args.root,{language:'java',config:args.config});assert.equal(result.facts.calls[0].resolution,'unresolved');
+});
+test('property-expanded child dependency management overrides the parent route',t=>{
+ const args=fixture(t),caller=path.join(args.root,'caller/pom.xml');
+ let pom=fs.readFileSync(caller,'utf8');
+ pom=pom.replace('<artifactId>caller</artifactId>',
+  '<artifactId>caller</artifactId><dependencyManagement><dependencies><dependency><groupId>${project.groupId}</groupId><artifactId>api</artifactId><version>2</version></dependency></dependencies></dependencyManagement>');
+ pom=pom.replace('<artifactId>api</artifactId><version>1</version></dependency>','<artifactId>api</artifactId></dependency>');
+ fs.writeFileSync(caller,pom);
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].resolution,'unresolved');
+ assert.equal(facts.calls[0].reason,'java-inherited-build-scope');
+});
+test('property-expanded child direct dependency overrides the parent route',t=>{
+ const args=fixture(t),parentFile=path.join(args.root,'parent-pom.xml'),callerFile=path.join(args.root,'caller/pom.xml');
+ fs.writeFileSync(parentFile,fs.readFileSync(parentFile,'utf8').replace('</project>',
+  '<dependencies><dependency><groupId>p</groupId><artifactId>api</artifactId><version>1</version></dependency></dependencies></project>'));
+ let caller=fs.readFileSync(callerFile,'utf8');
+ caller=caller.replace('<groupId>p</groupId><artifactId>api</artifactId><version>1</version></dependency>',
+  '<groupId>${project.groupId}</groupId><artifactId>api</artifactId><version>2</version></dependency>');
+ fs.writeFileSync(callerFile,caller);
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].resolution,'unresolved');
+ assert.equal(facts.calls[0].reason,'java-inherited-build-scope');
+});
+test('child raw override does not re-expand discarded parent dependency fields',t=>{
+ const args=fixture(t),parentFile=path.join(args.root,'parent-pom.xml'),callerFile=path.join(args.root,'caller/pom.xml');
+ fs.writeFileSync(parentFile,fs.readFileSync(parentFile,'utf8').replace('</project>',
+  '<properties><alias>1</alias></properties><dependencies><dependency><groupId>p</groupId><artifactId>api</artifactId><version>${alias}</version></dependency></dependencies></project>'));
+ fs.writeFileSync(callerFile,fs.readFileSync(callerFile,'utf8').replace('<artifactId>caller</artifactId>',
+  '<artifactId>caller</artifactId><properties><alias>${unknown}</alias></properties>'));
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].resolution,'java-qualified-static-method');
+ assert.equal(facts.calls[0].target.file,'api/src/main/java/p/Api.java');
+});
+test('property-expanded imported BOM management cannot grant a source route',t=>{
+ const args=fixture(t),callerFile=path.join(args.root,'caller/pom.xml');
+ fs.writeFileSync(callerFile,fs.readFileSync(callerFile,'utf8').replace('<artifactId>caller</artifactId>',
+  '<artifactId>caller</artifactId><properties><bomType>pom</bomType><bomScope>import</bomScope></properties><dependencyManagement><dependencies><dependency><groupId>p</groupId><artifactId>other</artifactId><version>1</version><type>${bomType}</type><scope>${bomScope}</scope></dependency></dependencies></dependencyManagement>'));
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].resolution,'unresolved');
+ assert.equal(facts.calls[0].reason,'java-inherited-build-scope');
+});
+test('inherited dependency keys that collide after child interpolation cannot grant a route',t=>{
+ const args=fixture(t),rootFile=path.join(args.root,'pom.xml'),parentFile=path.join(args.root,'parent-pom.xml'),callerFile=path.join(args.root,'caller/pom.xml');
+ fs.writeFileSync(rootFile,fs.readFileSync(rootFile,'utf8').replace('<artifactId>api</artifactId><version>1</version>',
+  '<artifactId>api</artifactId><version>2</version>'));
+ fs.writeFileSync(parentFile,fs.readFileSync(parentFile,'utf8').replace('</project>',
+  '<properties><alias>q</alias></properties><dependencyManagement><dependencies><dependency><groupId>${alias}</groupId><artifactId>api</artifactId><version>1</version></dependency></dependencies></dependencyManagement></project>'));
+ let caller=fs.readFileSync(callerFile,'utf8');
+ caller=caller.replace('<artifactId>caller</artifactId>','<artifactId>caller</artifactId><properties><alias>p</alias></properties>');
+ caller=caller.replace('<artifactId>api</artifactId><version>1</version></dependency>','<artifactId>api</artifactId></dependency>');
+ fs.writeFileSync(callerFile,caller);
+ const {facts}=extractFacts(args.root,{language:'java',config:args.config});
+ assert.equal(facts.calls[0].resolution,'unresolved');
+ assert.equal(facts.calls[0].reason,'java-inherited-build-scope');
 });
 test('paired declared dependency references keep BOM metadata fresh and disable navigation after a parent input changes',t=>{
  const args=fixture(t);const pom=path.join(args.root,'parent-pom.xml');fs.writeFileSync(pom,'\uFEFF'+fs.readFileSync(pom,'utf8'));

@@ -531,6 +531,30 @@ jobs:
       - name: Install Code Analysis task-command test dependencies
         if: needs.scope.outputs.windows == 'true'
         run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
+      - name: Verify Java source bindings and Maven evidence on Windows
+        if: needs.scope.outputs.windows == 'true' && matrix.node-version == 22
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          if (!$env:JAVA_HOME_17_X64) { throw 'The Windows runner must provide JDK 17.' }
+          $env:ARCHIFY_JAVA = Join-Path $env:JAVA_HOME_17_X64 'bin/java.exe'
+          & $env:ARCHIFY_JAVA -version
+          $module = 'archify/modules/code-analysis'
+          node --test --test-reporter=tap "$module/test/java-semantic.test.mjs" | Tee-Object -Variable semanticResults
+          if ($semanticResults -notcontains '# skipped 0') { throw 'Java semantic tests must run without skips.' }
+
+          $benchmark = 'benchmarks/java-binding-probe'
+          $fixture = "$benchmark/fixture"
+          $output = Join-Path $env:RUNNER_TEMP 'archify-java-binding'
+          New-Item -ItemType Directory -Path $output | Out-Null
+          & $env:ARCHIFY_JAVA "$module/extract/java/SourceBindings.java" $fixture 'api/src/main/java,app/src/main/java' "$output/maven.tsv" 8
+          node "$module/test/run-extract.mjs" $fixture --language java --out "$output/maven-facts.json"
+          node "$benchmark/compare.mjs" $fixture "$output/maven-facts.json" "$output/maven.tsv" "$benchmark/maven-queries.json" > "$output/maven.json"
+          git diff --no-index --exit-code -- "$benchmark/results/maven.json" "$output/maven.json"
+          node "$module/test/run-extract.mjs" $fixture --language java --config "$benchmark/semantic-config.json" --out "$output/maven-enhanced-facts.json"
+          node "$benchmark/compare.mjs" $fixture "$output/maven-enhanced-facts.json" "$output/maven.tsv" "$benchmark/maven-queries.json" --enhanced > "$output/maven-enhanced.json"
+          git diff --no-index --exit-code -- "$benchmark/results/maven-enhanced.json" "$output/maven-enhanced.json"
+          Write-Output 'Both Maven reports match the committed target positions.'
       - name: Execute generated task commands in native cmd.exe
         if: needs.scope.outputs.windows == 'true'
         run: node --test archify/modules/code-analysis/test/task-command-shell.test.mjs

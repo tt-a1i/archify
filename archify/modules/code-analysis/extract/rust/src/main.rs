@@ -134,6 +134,9 @@ struct TraitMethod {
     line: usize,
     column: usize,
     qualname: String,
+    start: usize,
+    end: usize,
+    state: State,
 }
 #[derive(Clone)]
 struct DefaultMethod {
@@ -216,6 +219,7 @@ struct Function {
     signature: Scope,
     param_shapes: Vec<Option<Shape>>,
     closure_params: Vec<(usize, Vec<Shape>)>,
+    return_type: Option<Type>,
     self_type: Option<TypeHint>,
     self_args: Option<Vec<TypeHint>>,
     default_method: Option<DefaultMethod>,
@@ -895,6 +899,10 @@ impl Analysis {
             signature: self.signature_scope(module, &f.sig, &generic_set),
             param_shapes,
             closure_params,
+            return_type: match &f.sig.output {
+                ReturnType::Type(_, ty) if f.sig.asyncness.is_none() => Some((**ty).clone()),
+                _ => None,
+            },
             self_type: None,
             self_args: None,
             default_method: None,
@@ -1134,8 +1142,8 @@ impl Analysis {
                                 continue;
                             }
                             let method_name = m.sig.ident.to_string();
-                            let (mline, mcolumn) =
-                                self.point(&file, self.bytes(&file, m.sig.ident.span()).0);
+                            let (start, end) = self.bytes(&file, m.sig.ident.span());
+                            let (mline, mcolumn) = self.point(&file, start);
                             methods.insert(
                                 method_name.clone(),
                                 TraitMethod {
@@ -1144,12 +1152,15 @@ impl Analysis {
                                     line: mline,
                                     column: mcolumn,
                                     qualname: format!("{qualname}::{method_name}"),
+                                    start,
+                                    end,
+                                    state: method_state,
                                 },
                             );
-                            if let Some(hint) =
-                                return_hint(&m.sig.output, &trait_generic_set)
-                            {
-                                returns.insert(method_name.clone(), hint);
+                            if method_state == 1 {
+                                if let Some(hint) = return_hint(&m.sig, &trait_generic_set) {
+                                    returns.insert(method_name.clone(), hint);
+                                }
                             }
                             // A default body is one source body regardless of how many
                             // types implement the trait. Register it once for scanning;
@@ -1475,7 +1486,7 @@ impl Analysis {
                                         .type_params()
                                         .map(|param| param.ident.to_string()),
                                 );
-                                let returns = return_hint(&item.sig.output, &method_generics);
+                                let returns = return_hint(&item.sig, &method_generics);
                                 for param in im_generics.type_params() {
                                     let name = param.ident.to_string();
                                     for bound in &param.bounds {
@@ -1554,7 +1565,7 @@ impl Analysis {
                             }
                         }
                     }
-                    if selected == 1 {
+                    if selected >= 0 {
                         if let Some((trait_path, absolute)) = &trait_ref {
                             let plain = im_generics.params.is_empty()
                                 && im_generics.where_clause.is_none()
@@ -1567,7 +1578,7 @@ impl Analysis {
                                 absolute: *absolute,
                                 self_path: self_path.clone(),
                                 has_methods: impl_methods,
-                                complete: impl_complete,
+                                complete: impl_complete && selected == 1,
                                 plain,
                             });
                         }
@@ -2167,16 +2178,15 @@ impl Analysis {
                 let mut names = Vec::new();
                 pattern_names(&p.pat, &mut names);
                 scope.values.extend(names.iter().cloned());
+                let bindings = whole_binding_names(&p.pat).unwrap_or_default();
                 if let Some(hint) = type_hint(&p.ty, &generics) {
-                    for name in names.iter().cloned() {
+                    for name in bindings.iter().cloned() {
                         scope.local_types.insert(name, hint.clone());
                     }
                 }
                 if let Some(shape) = self.type_shape(&p.ty, &generics, module) {
-                    if let Some(bindings) = whole_binding_names(&p.pat) {
-                        for name in bindings {
-                            scope.local_shapes.insert(name, shape.clone());
-                        }
+                    for name in bindings {
+                        scope.local_shapes.insert(name, shape.clone());
                     }
                 }
             }
@@ -2388,8 +2398,11 @@ fn type_hint(ty: &Type, generics: &BTreeSet<String>) -> Option<TypeHint> {
         _ => None,
     }
 }
-fn return_hint(output: &ReturnType, generics: &BTreeSet<String>) -> Option<TypeHint> {
-    match output {
+fn return_hint(sig: &Signature, generics: &BTreeSet<String>) -> Option<TypeHint> {
+    if sig.asyncness.is_some() {
+        return None;
+    }
+    match &sig.output {
         ReturnType::Type(_, ty) => type_hint(ty, generics),
         ReturnType::Default => None,
     }
@@ -2519,27 +2532,6 @@ fn unify_shape(pattern: &Shape, actual: &Shape, subs: &mut BTreeMap<String, Shap
             } if actual_path.last() == path.last() => same_args(args, actual_args, subs),
             _ => false,
         },
-    }
-}
-fn type_hint_from_expr(expr: &Expr) -> Option<TypeHint> {    match expr {
-        Expr::Reference(r) => type_hint_from_expr(&r.expr),
-        Expr::Paren(p) => type_hint_from_expr(&p.expr),
-        Expr::Struct(s) => Some(TypeHint::Nominal(
-            path_parts(&s.path),
-            s.path.leading_colon.is_some(),
-        )),
-        Expr::Call(c) => {
-            let Expr::Path(p) = c.func.as_ref() else {
-                return None;
-            };
-            if p.qself.is_some() || p.path.segments.len() < 2 {
-                return None;
-            }
-            let mut parts = path_parts(&p.path);
-            parts.pop();
-            Some(TypeHint::Nominal(parts, p.path.leading_colon.is_some()))
-        }
-        _ => None,
     }
 }
 fn builtin_variant(name: &str, variant: &str) -> Option<(Vec<String>, Vec<TypeHint>)> {
@@ -2816,10 +2808,23 @@ impl Scanner<'_> {
         }
         None
     }
-    fn local_hint(&self, name: &str) -> Option<TypeHint> {
+    fn local_scope(&self, name: &str) -> Option<&Scope> {
         for scope in self.scopes.iter().rev() {
-            if let Some(hint) = scope.local_types.get(name) {
-                return Some(hint.clone());
+            if scope.values.contains(name)
+                || scope.local_types.contains_key(name)
+                || scope.local_shapes.contains_key(name)
+            {
+                return Some(scope);
+            }
+            // Inner imports can hide outer locals. An unrelated glob does not.
+            if scope.uses.contains_key(name) || scope.uncertain_glob
+                || scope.globs.iter().any(|glob| {
+                    let mut full = glob.clone();
+                    full.push(name.to_string());
+                    self.a.resolve(self.function.module, &full, false, true, 0).is_some()
+                })
+            {
+                return None;
             }
         }
         None
@@ -2861,10 +2866,77 @@ impl Scanner<'_> {
         let (module, name) = self.resolve_nominal(&owner, path.leading_colon.is_some())?;
         Some((module, name, variant))
     }
+    fn call_return_hint(&self, call: &ExprCall) -> Option<TypeHint> {
+        let mut callee = call.func.as_ref();
+        while let Expr::Paren(paren) = callee {
+            callee = &paren.expr;
+        }
+        let Expr::Path(path) = callee else {
+            return None;
+        };
+        let binding = self.resolve_call_path(path)?;
+        let plain_inherent = matches!(binding, Binding::Inherent(_));
+        let (index, inherent) = match binding {
+            Binding::Function(index) => (index, false),
+            Binding::Inherent(index) | Binding::SpecializedInherent(index)
+            | Binding::LifetimeInherent(index) => (index, true),
+            _ => return None,
+        };
+        if inherent
+            && path
+                .path
+                .segments
+                .iter()
+                .any(|segment| !matches!(segment.arguments, PathArguments::None))
+        {
+            return None;
+        }
+        let function = &self.a.functions[index];
+        if function.state != 1 {
+            return None;
+        }
+        let ty = function.return_type.as_ref()?;
+        let shape = if matches!(ty, Type::Path(p) if p.qself.is_none() && p.path.is_ident("Self")) {
+            if !plain_inherent {
+                return None;
+            }
+            let TypeHint::Nominal(parts, absolute) = function.self_type.as_ref()? else {
+                return None;
+            };
+            self.a.shape_base(function.module, parts, *absolute)
+        } else {
+            let generics = function.generics.iter().cloned().collect();
+            self.a.type_shape(ty, &generics, function.module)?
+        };
+        let Shape::Local { module, name, args } = &shape else {
+            return None;
+        };
+        // The current method selector has nominal identity, not generic
+        // arguments. Erasing a specialization can choose another impl's method.
+        if !args.is_empty()
+            || self
+                .a
+                .nominal_parameters
+                .contains_key(&(*module, name.clone()))
+            || !matches!(self.a.lookup(*module, name, 0), Some(Binding::Nominal(m, n)) if m == *module && n == *name)
+        {
+            return None;
+        }
+        self.shape_hint(&shape)
+    }
     fn receiver_hint(&self, expr: &Expr) -> Option<TypeHint> {
         match expr {
             Expr::Path(p) if p.qself.is_none() && p.path.segments.len() == 1 => {
-                self.local_hint(&p.path.segments[0].ident.to_string())
+                let name = p.path.segments[0].ident.to_string();
+                self.local_scope(&name)
+                    .and_then(|scope| scope.local_types.get(&name).cloned())
+                    .or_else(|| {
+                        let shape = self.expr_shape(expr)?;
+                        match &shape {
+                            Shape::Local { args, .. } if args.is_empty() => self.shape_hint(&shape),
+                            _ => None,
+                        }
+                    })
             }
             Expr::Reference(r) => self.receiver_hint(&r.expr),
             Expr::Paren(p) => self.receiver_hint(&p.expr),
@@ -2935,17 +3007,7 @@ impl Scanner<'_> {
                 path_parts(&s.path),
                 s.path.leading_colon.is_some(),
             )),
-            Expr::Call(c) => {
-                let Expr::Path(p) = c.func.as_ref() else {
-                    return None;
-                };
-                if p.qself.is_some() || p.path.segments.is_empty() {
-                    return None;
-                }
-                let mut parts = path_parts(&p.path);
-                parts.pop();
-                Some(TypeHint::Nominal(parts, p.path.leading_colon.is_some()))
-            }
+            Expr::Call(c) => self.call_return_hint(c),
             Expr::MethodCall(m) => {
                 let method = m.method.to_string();
                 if !["as_ref", "deref", "borrow"].contains(&method.as_str()) {
@@ -3070,23 +3132,18 @@ impl Scanner<'_> {
                     if name == "self" {
                         return self.self_shape();
                     }
-                    for scope in self.scopes.iter().rev() {
-                        if let Some(shape) = scope.local_shapes.get(&name) {
-                            return Some(shape.clone());
-                        }
-                        if scope.values.contains(&name) {
-                            return None;
-                        }
+                    if let Some(scope) = self.local_scope(&name) {
+                        return scope.local_shapes.get(&name).cloned();
                     }
                 }
-                // A unit struct (or another value path) is a nominal
-                // constructor, not a local binding.
-                let shape = self.a.shape_base(
-                    self.function.module,
-                    &path_parts(&p.path),
-                    p.path.leading_colon.is_some(),
-                );
-                matches!(shape, Shape::Local { .. }).then_some(shape)
+                // Reuse lexical path resolution for unit-struct values, imports
+                // and globs rather than guessing an item in the function module.
+                match self.resolve_call_path(p)? {
+                    Binding::Nominal(module, name) | Binding::Fields(module, name) => {
+                        Some(Shape::Local { module, name, args: Vec::new() })
+                    }
+                    _ => None,
+                }
             }
             Expr::Field(f) => self.field_shape(f),
             Expr::Struct(s) => Some(self.a.shape_base(
@@ -3209,17 +3266,71 @@ impl Scanner<'_> {
             self.closure_types.insert(start, shapes);
         }
     }
+    fn trait_in_scope(&self, declaration: usize) -> bool {
+        let module = self.function.module;
+        let name = &self.a.traits[declaration].name;
+        let aliases = self.a.modules[module].use_lines.keys()
+            .chain(self.scopes.iter().flat_map(|scope| scope.uses.keys()));
+        std::iter::once(name).chain(aliases).any(|name| {
+            let parts = std::slice::from_ref(name);
+            for scope in self.scopes.iter().rev() {
+                if scope.uncertain_glob || scope.types.contains(name) {
+                    return false;
+                }
+                if let Some((path, absolute)) = scope.uses.get(name) {
+                    return matches!(self.a.resolve(module, path, *absolute, true, 0),
+                        Some(Binding::Trait(index)) if index == declaration);
+                }
+                let mut found = scope.globs.iter().filter_map(|glob| {
+                    let mut path = glob.clone();
+                    path.extend_from_slice(parts);
+                    self.a.resolve(module, &path, false, true, 0)
+                });
+                if let Some(binding) = found.next() {
+                    return found.next().is_none()
+                        && matches!(binding, Binding::Trait(index) if index == declaration);
+                }
+            }
+            matches!(self.a.resolve(module, parts, false, false, 0),
+                Some(Binding::Trait(index)) if index == declaration)
+        })
+    }
+    fn nominal_trait_owners(&self, module: usize, name: &str, method: &str) -> Vec<(&TraitImplOwner, usize)> {
+        self.a.trait_impl_owners.iter().filter_map(|owner| {
+            let (parts, absolute) = owner.self_path.as_ref()?;
+            let resolved = match self.a.resolve(owner.module, parts, *absolute, false, 0) {
+                Some(Binding::Nominal(target_module, target_name))
+                | Some(Binding::Fields(target_module, target_name)) => (target_module, target_name),
+                _ => return None,
+            };
+            if resolved.0 != module || resolved.1 != name {
+                return None;
+            }
+            let Some(Binding::Trait(declaration)) = self.a.resolve(
+                owner.module, &owner.trait_path, owner.absolute, true, 0,
+            ) else {
+                return None;
+            };
+            self.a.traits[declaration].methods.contains_key(method).then_some((owner, declaration))
+        }).collect()
+    }
     fn unique_trait_impl(&self, module: usize, name: &str, method: &str) -> Option<usize> {
+        let owners = self.nominal_trait_owners(module, name, method);
+        let [(_, declaration)] = owners.as_slice() else {
+            return None;
+        };
         if self
             .a
             .inherent
             .contains_key(&(module, name.to_string(), method.to_string()))
+            || !self.trait_in_scope(*declaration)
         {
             return None;
         }
         let mut functions = BTreeSet::new();
         for edge in &self.a.trait_impls {
             if edge.state >= 0
+                && edge.trait_decl == *declaration
                 && edge.self_module == Some(module)
                 && edge.self_name.as_deref() == Some(name)
                 && edge.method == method
@@ -3234,44 +3345,17 @@ impl Scanner<'_> {
         }
     }
     fn inherited_trait_default(&self, module: usize, name: &str, method: &str) -> Option<usize> {
-        let mut found = Vec::new();
-        for owner in &self.a.trait_impl_owners {
-            if !owner.plain || !owner.complete || owner.has_methods.contains(method) {
-                continue;
-            }
-            let Some((parts, absolute)) = &owner.self_path else {
-                continue;
-            };
-            let resolved = match self.a.resolve(owner.module, parts, *absolute, false, 0) {
-                Some(Binding::Nominal(target_module, target_name))
-                | Some(Binding::Fields(target_module, target_name)) => (target_module, target_name),
-                _ => continue,
-            };
-            if resolved != (module, name.to_string()) {
-                continue;
-            }
-            let declaration = match self.a.resolve(
-                owner.module,
-                &owner.trait_path,
-                owner.absolute,
-                true,
-                0,
-            ) {
-                Some(Binding::Trait(index)) => index,
-                _ => continue,
-            };
-            if self.a.traits[declaration].methods.contains_key(method) {
-                found.push(declaration);
-            }
+        let owners = self.nominal_trait_owners(module, name, method);
+        if owners.len() != 1 {
+            return None;
         }
-        if found.len() == 1 {
-            found.pop()
-        } else {
-            None
-        }
+        let (owner, declaration) = owners[0];
+        (owner.plain && owner.complete && !owner.has_methods.contains(method)
+            && self.trait_in_scope(declaration)).then_some(declaration)
     }
     fn trait_target(&mut self, span: Span, decl: usize, method: &str, resolution: &str) {
-        if self.state == 0 {
+        let target = self.a.traits[decl].methods[method].clone();
+        if self.state == 0 || target.state != 1 {
             self.call(span, None, "rust-cfg-unselected");
             return;
         }
@@ -3279,7 +3363,6 @@ impl Scanner<'_> {
         let (a, b) = self.a.bytes(&file, span);
         let mut r = self.a.range(&file, a, b);
         r["file"] = json!(file);
-        let target = self.a.traits[decl].methods[method].clone();
         r["resolution"] = json!(resolution);
         r["target"] = json!({"file":target.file,"name":target.name,"line":target.line,"column":target.column});
         self.annotate_context(&mut r);
@@ -3367,6 +3450,26 @@ impl Scanner<'_> {
         if let Some(decl) = self.bound_trait(&parts[0], &method) {
             self.trait_target(span, decl, &method, "rust-trait-method-candidate");
             return true;
+        }
+        let mut qualifier = path.clone();
+        qualifier.path.segments.pop();
+        if let Some(Binding::Nominal(module, name) | Binding::Fields(module, name)) =
+            self.resolve_call_path(&qualifier)
+        {
+            if let Some(index) = self.unique_trait_impl(module, &name, &method) {
+                self.impl_target(span, index, "rust-trait-impl");
+                return true;
+            }
+            if !self
+                .a
+                .inherent
+                .contains_key(&(module, name.clone(), method.clone()))
+            {
+                if let Some(decl) = self.inherited_trait_default(module, &name, &method) {
+                    self.trait_target(span, decl, &method, "rust-trait-method-candidate");
+                    return true;
+                }
+            }
         }
         false
     }
@@ -3639,7 +3742,7 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
                 local
                     .init
                     .as_ref()
-                    .and_then(|init| type_hint_from_expr(&init.expr))
+                    .and_then(|init| self.receiver_hint(&init.expr))
             });
             let generics: BTreeSet<String> = self
                 .scopes
@@ -3663,10 +3766,11 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
                 let scope = self.scopes.last_mut().unwrap();
                 scope.values.insert(name.clone());
                 scope.local_shapes.remove(&name);
-                if let Some(hint) = &hint {
-                    scope.local_types.insert(name.clone(), hint.clone());
-                }
+                scope.local_types.remove(&name);
                 if shaped.contains(&name) {
+                    if let Some(hint) = &hint {
+                        scope.local_types.insert(name.clone(), hint.clone());
+                    }
                     if let Some(shape) = &shape {
                         scope.local_shapes.insert(name, shape.clone());
                     }
@@ -4391,7 +4495,12 @@ fn main() {
         .map(|decl| {
             json!({
                 "declaration": {"file":decl.file,"name":decl.name,"qualname":decl.qualname,"line":decl.line,"column":decl.column},
-                "methods": decl.methods.values().map(|m| json!({"file":m.file,"name":m.name,"qualname":m.qualname,"line":m.line,"column":m.column})).collect::<Vec<_>>()
+                "methods": decl.methods.values().map(|m| {
+                    let mut range = a.range(&m.file, m.start, m.end);
+                    range["_start"] = json!(m.start);
+                    range["_end"] = json!(m.end);
+                    json!({"file":m.file,"name":m.name,"qualname":m.qualname,"line":m.line,"column":m.column,"sourceRange":range})
+                }).collect::<Vec<_>>()
             })
         })
         .collect();
