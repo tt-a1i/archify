@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { fail } from '../core/index.mjs';
 import { resolveMapping } from './diagram-mapping.mjs';
 
-const EVIDENCE_LIMIT = 8;
+export const DRIFT_EVIDENCE_LIMIT = 8;
 const order = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const pair = (a, b) => JSON.stringify([a, b]);
 const staticImport = imp => ['static', 'export', 'require'].includes(imp.kind) && !imp.typeOnly && !imp.lazy && !imp.conditional;
@@ -65,7 +65,7 @@ function project({ facts, graph, omitted }, ir, map) {
       const evidence = location(imp);
       if (!evidence) { uncertain.add(key); continue; }
       record.count++;
-      if (record.locations.length < EVIDENCE_LIMIT) record.locations.push(evidence);
+      if (record.locations.length < DRIFT_EVIDENCE_LIMIT) record.locations.push(evidence);
       edges.set(key, record);
     }
   }
@@ -98,11 +98,11 @@ export function compareArchitectureDrift({ base, head, ir, map, pins, inputs, lo
     const reasons = [];
     if (adapterChanged) reasons.push('adapter-changed');
     if (left.uncertain.has(key) || right.uncertain.has(key)) reasons.push('unverified-edge-evidence');
+    if ([left, right].some(side => side.relevantErrors.some(file => side.owner(file).some(id => id === from || id === to)))) reasons.push('affected-parse-errors');
     if (!before.count || !after.count) {
       if ([left, right].some(side => side.ambiguity.some(m => m.components.includes(from) || m.components.includes(to)))) reasons.push('ambiguous-ownership');
       if ([left, right].some(side => !side.components.has(from) || !side.components.has(to))) reasons.push('component-not-mapped-on-both-sides');
       if (differs(left.unresolved.get(from), right.unresolved.get(from))) reasons.push('unresolved-imports-changed');
-      if ([left, right].some(side => side.relevantErrors.some(file => side.owner(file).some(id => id === from || id === to)))) reasons.push('affected-parse-errors');
       if (movedLink) reasons.push('skipped-tree-entries-changed');
       if (resolutionChanged) reasons.push('resolution-inputs-changed');
     }

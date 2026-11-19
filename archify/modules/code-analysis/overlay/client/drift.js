@@ -222,6 +222,10 @@
       detail.append(group);
     }
     detail.append(button(tr('Download .md', '下载 .md'), () => download(edge)));
+    if (edge.task) {
+      detail.append(button(tr('Download verification task .json', '下载验证任务 .json'), () =>
+        save(JSON.stringify(edge.task, null, 2) + '\n', edge.task.id + '.json', 'application/json')));
+    }
   }
   function showSource(edge, side, loc, reference) {
     sourceReturn = reference;
@@ -248,12 +252,21 @@
       '- ' + tr('Effective config SHA-256', '配置 SHA-256') + ': ' + data.inputs.configSha256,
       '- ' + tr('Analyzer', '分析器') + ': ' + data.inputs.analyzer + ' / ' + data.inputs.adapterRevision, '', limit];
     if (edge.reasons.length) out.push('', edge.reasons.map(r => reasons[r] || r).join(' · '));
+    if (edge.task) out.push('', '## ' + tr('Follow-up', '变更后复核'), '',
+      tr('Task', '任务') + ': ' + edge.task.id,
+      tr('Use the separately downloaded verification task JSON. Capture from this report’s head to a new Git commit with the same IR, mapping and configuration. Pass `--from-report original/architecture-drift.json` to the capture, then run:',
+        '使用另行下载的验证任务 JSON，以此报告的当前版本为基线，使用相同的 IR、映射和配置生成到新提交的报告。生成时传入 `--from-report original/architecture-drift.json`，然后运行：'),
+      '', '```sh', 'archify code-analysis verify-drift original/architecture-drift.json --task ' + edge.task.id +
+        '.json --after follow-up/architecture-drift.json', '```');
     for (const side of ['base', 'head']) {
       out.push('', '### ' + sideName(side), '', counts(side));
       for (const loc of edge[side].locations) out.push('- ' + literal(loc.path) + ':' + loc.line + ' → ' + literal(loc.target));
       if (edge[side].count > edge[side].locations.length) out.push(tr('Evidence list truncated.', '证据列表已截断。'));
     }
-    const url = URL.createObjectURL(new Blob([out.join('\n') + '\n'], { type: 'text/markdown;charset=utf-8' }));
+    save(out.join('\n') + '\n', filename, 'text/markdown;charset=utf-8');
+  }
+  function save(body, filename, mime) {
+    const url = URL.createObjectURL(new Blob([body], { type: mime }));
     const link = element('a');
     link.href = url;
     link.download = filename;

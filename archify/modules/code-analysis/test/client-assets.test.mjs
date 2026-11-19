@@ -14,7 +14,11 @@ test('client assets: analysis and drift pages inline their respective browser co
   const analysis = ['atlas.css', 'atlas.js', 'overlay.css', 'overlay.js', 'verification.js'];
   assert.deepEqual(names, [...analysis, ...drift].sort());
   const { html } = buildOverlay({ graph: { modules: [], edges: [], repository: { language: 'ts' }, excluded: {}, unresolved: {} } });
-  const driftHtml = renderDriftOverlay('<html><body><div class="toolbar"></div><svg data-node-id="fixture"></svg></body></html>', {});
+  const driftHtml = renderDriftOverlay(
+    '<html><body><div class="toolbar"></div><svg data-node-id="fixture"></svg></body></html>',
+    { edges: [] },
+    'a'.repeat(64),
+  );
   for (const name of names) assert.equal(clientAsset(name), '\n' + fs.readFileSync(new URL(name, dir), 'utf8'));
   assert.ok(html.includes(clientAsset('verification.js')), 'the offline report carries its receipt client');
   for (const name of drift) {

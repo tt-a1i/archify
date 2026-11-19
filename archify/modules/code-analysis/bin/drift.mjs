@@ -7,13 +7,15 @@ import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
 import { ensureDependencies } from './serve.mjs';
 import { assertDriftPin, captureDriftTree, driftRepository } from '../lib/drift-capture.mjs';
+import { driftReportMaxBytes, readDriftInput } from '../lib/drift-input.mjs';
+import { validateDriftFollowup } from '../lib/drift-verification.mjs';
+import { driftDigest } from '../lib/architecture-drift.mjs';
 import { containedBy } from '../../../renderers/shared/path-semantics.mjs';
 import { resolveNativeOutputDirectory } from '../../../renderers/shared/output-path.mjs';
 import { createOwnedTempDirectory } from '../../../renderers/shared/owned-temp-directory.mjs';
 
-const usage = 'Usage: archify code-analysis drift <git-repo> --base <full-sha> --head <full-sha> --ir <architecture.json> --out <new-directory> [--map file] [--config file] [--locale en|zh-CN] [--json]';
-const allowed = new Set(['--base', '--head', '--ir', '--out', '--map', '--config', '--locale']);
-const maxInput = 4 * 1024 * 1024;
+const usage = 'Usage: archify code-analysis drift <git-repo> --base <full-sha> --head <full-sha> --ir <architecture.json> --out <new-directory> [--map file] [--config file] [--from-report <original-drift.json>] [--locale en|zh-CN] [--json]';
+const allowed = new Set(['--base', '--head', '--ir', '--out', '--map', '--config', '--locale', '--from-report']);
 const archify = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
 
 function parse(repo, args) {
@@ -30,23 +32,6 @@ function parse(repo, args) {
   if (['--base', '--head', '--ir', '--out'].some(k => !options.has(k)) ||
       (options.has('--locale') && !['en', 'zh-CN'].includes(options.get('--locale')))) invalid();
   return options;
-}
-
-function input(inputPath, name) {
-  let fd;
-  const invalid = () => fail('drift/input-invalid', 'Select a readable JSON file no larger than 4 MiB.', { subject: { input: name } });
-  try {
-    if (!fs.statSync(inputPath).isFile()) invalid();
-    fd = fs.openSync(inputPath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
-    const stat = fs.fstatSync(fd);
-    if (!stat.isFile() || stat.size > maxInput) invalid();
-    const buffer = Buffer.alloc(stat.size + 1);
-    if (fs.readSync(fd, buffer, 0, buffer.length) !== stat.size) invalid();
-    return { bytes: buffer.subarray(0, stat.size), doc: JSON.parse(buffer.toString('utf8', 0, stat.size)) };
-  } catch (error) {
-    if (error instanceof DiagnosticError) throw error;
-    invalid();
-  } finally { if (fd !== undefined) fs.closeSync(fd); }
 }
 
 function outputPath(raw, repo) {
@@ -82,14 +67,19 @@ async function run([repoArg, ...args]) {
   const pins = { base: options.get('--base'), head: options.get('--head') };
   for (const [side, oid] of Object.entries(pins)) assertDriftPin(repo, oid, side);
   const out = outputPath(options.get('--out'), repo);
-  const irInput = input(options.get('--ir'), 'ir');
-  const map = options.has('--map') ? input(options.get('--map'), 'map').doc : null;
-  const custom = options.has('--config') ? input(options.get('--config'), 'config').doc : null;
+  const irInput = readDriftInput(options.get('--ir'), 'ir');
+  const map = options.has('--map') ? readDriftInput(options.get('--map'), 'map').doc : null;
+  const custom = options.has('--config') ? readDriftInput(options.get('--config'), 'config').doc : null;
   if (options.has('--config') && (!custom || typeof custom !== 'object' || Array.isArray(custom))) fail('drift/config-invalid', 'Select an analysis configuration object.');
   if (options.has('--map') && map === null) fail('drift/map-invalid', 'Select an overlay map object.');
   const ir = irInput.doc;
   if (!ir || ir.diagram_type !== 'architecture') fail('drift/ir-invalid', 'Select a valid authored Architecture IR.');
-  if (ir.meta?.repository) {
+  const irSha256 = driftDigest(irInput.bytes);
+  let originalInputs = null;
+  if (options.has('--from-report')) {
+    originalInputs = validateDriftFollowup(readDriftInput(options.get('--from-report'), 'original', driftReportMaxBytes),
+      pins, ir.meta?.repository?.revision, irSha256);
+  } else if (ir.meta?.repository) {
     const revision = ir.meta.repository.revision;
     if (revision !== pins.base && revision !== pins.head) fail('drift/ir-pin-mismatch', 'The authored IR pins a different Git revision.', {
       supportedFixes: ['use the intended Architecture IR and its corresponding base or head capture'],
@@ -113,10 +103,15 @@ async function run([repoArg, ...args]) {
     }
     await ensureDependencies();
     const { extractFacts, buildGraph, loadConfig, mergeConfig, stableJson } = await import('../lib/analysis.mjs');
-    const { compareArchitectureDrift, checkDriftMapping, driftDigest } = await import('../lib/architecture-drift.mjs');
+    const { compareArchitectureDrift, checkDriftMapping } = await import('../lib/architecture-drift.mjs');
     const { renderDriftOverlay } = await import('../overlay/drift.mjs');
     checkDriftMapping(ir, map);
     const config = custom ? mergeConfig(loadConfig(null), custom) : loadConfig(null);
+    const configSha256 = driftDigest(stableJson(config));
+    const mapSha256 = driftDigest(stableJson(map));
+    if (originalInputs && (originalInputs.configSha256 !== configSha256 || originalInputs.mapSha256 !== mapSha256)) {
+      fail('drift-verification/mismatched-followup', 'Reuse the original component mapping and effective analysis configuration for this follow-up.');
+    }
     const captures = {};
     for (const [side, oid] of Object.entries(pins)) {
       const root = path.join(scratch, side);
@@ -140,10 +135,11 @@ async function run([repoArg, ...args]) {
       captures[side] = { facts, omitted, resolutionInputs, graph: buildGraph(facts, config) };
     }
     const result = compareArchitectureDrift({ ...captures, ir: { ...ir, connections: ir.connections || [] }, map, pins, locale, inputs: {
-      irSha256: driftDigest(irInput.bytes), configSha256: driftDigest(stableJson(config)), mapSha256: driftDigest(stableJson(map)),
+      irSha256, configSha256, mapSha256,
       analyzer: captures.head.facts.repository.adapter, adapterRevision: captures.head.facts.repository.adapterRevision,
     } });
-    output = { result, json: stableJson(result), html: renderDriftOverlay(fs.readFileSync(delivered, 'utf8'), result) };
+    const json = stableJson(result);
+    output = { result, json, html: renderDriftOverlay(fs.readFileSync(delivered, 'utf8'), result, driftDigest(json)) };
   } finally { await temp.cleanup(); }
   publish(out, output.json, output.html);
   if (options.has('--json')) process.stdout.write(output.json);
