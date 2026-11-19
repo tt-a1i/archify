@@ -17,6 +17,10 @@ test('occupied wide-node centers retain distinct clear automatic ports', () => {
   const end = source.indexOf('\nfunction automaticEndpointRepairs(', start);
   assert.ok(start >= 0 && end > start);
   const selector = source.slice(start, end);
+  const strokeWidthStart = source.indexOf('function workflowEdgeStrokeWidth(');
+  const strokeWidthEnd = source.indexOf('\n}', strokeWidthStart) + 2;
+  assert.ok(strokeWidthStart >= 0 && strokeWidthEnd > strokeWidthStart);
+  const strokeWidth = source.slice(strokeWidthStart, strokeWidthEnd);
   for (const [coordinate, width, neighbours = [], edgeWidth = 1.4, side = 'bottom'] of [[0, 128], [1.5e17, 128], [-1.5e17, 128],
     [5e17, 104], [-5e17, 104], [2 ** 1000, 2 ** 951],
     [1e30, 1e16, [1e30 - 2 ** 47, 1e30 + 2 ** 47]],
@@ -36,7 +40,7 @@ test('occupied wide-node centers retain distinct clear automatic ports', () => {
       ]))]]),
       edge, node, center, side, counterpart: axis ? { cx: 100, cy: coordinate } : { cx: coordinate, cy: 100 },
     };
-    const ports = vm.runInNewContext(`${selector}\nautomaticPortCandidates(edge, node, side, center, counterpart)`, context, { timeout: 1000 });
+    const ports = vm.runInNewContext(`${strokeWidth}\n${selector}\nautomaticPortCandidates(edge, node, side, center, counterpart)`, context, { timeout: 1000 });
     assert.equal(ports.length, 2, `center ${coordinate} lost available ports`);
     assert.ok(ports.every(point => occupied.every(position => Math.abs(point[axis] - position) >= Math.max(16, 3.5 * (edgeWidth + 1.4)) - 0.0001)),
       `center ${coordinate} reused the occupied center: ${JSON.stringify(ports)}`);
