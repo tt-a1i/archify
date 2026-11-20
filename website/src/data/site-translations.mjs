@@ -18,6 +18,7 @@ export const indexCopy = {
       'hero-h1':'<span class="l">Ask in plain words.</span><span class="l">Get answers <em>you can trust.</em></span>',
       'hero-sub':'A leave plan, a P99 spike, a first HTTPS visit, or a whole codebase — your AI agent answers with an explorable map, or a one-page answer that puts the conclusion first and cites its sources. Either way it is one HTML file, validated before it ships.',
       'hero-cta':'Get started','hero-stars':'stars on GitHub','copy':'Copy','copied':'Copied',
+      'copySuccess':'Copied to clipboard.','copyFailure':'Copy failed. Select the text manually.',
       'demo-watch':'Watch the 35s demo','demo-title':'Archify 35-second demo','demo-close':'Close demo',
       'tour-title':'Live artifact tour',
       'proof-live':'Live','proof-open':'Open artifact',
@@ -43,6 +44,7 @@ export const indexCopy = {
       'timeline-k':'Timeline','timeline-h':'What happened, and when?',
       'waterfall-k':'Waterfall','waterfall-h':'Where did the time go?',
       'types-more':'Browse the full proof gallery','types-more-sub':'Live artifacts · every preset · every type',
+      'types-more-case':'Read the source-backed MCO case',
       'arch-h':'What is it made of?',
       'wf-h':'What happens next?',
       'seq-h':'Who says what, in what order?',
@@ -97,6 +99,7 @@ export const indexCopy = {
       'hero-h1':'<span class="l">用大白话问清楚，</span><span class="l">得到<em>可信的图和答案。</em></span>',
       'hero-sub':'年假怎么排、P99 为什么暴涨、第一次打开 HTTPS 网站发生了什么，或者一整个代码仓库——你的 AI Agent 会给你一张可以点开探索的图，或者一页结论在前、标注出处的解答。都是一个 HTML 文件，交付前已经校验过。',
       'hero-cta':'开始使用','hero-stars':'GitHub Star','copy':'复制','copied':'已复制',
+      'copySuccess':'已复制到剪贴板。','copyFailure':'复制失败，请手动选择文本。',
       'demo-watch':'观看 35 秒演示','demo-title':'Archify 35 秒演示','demo-close':'关闭演示',
       'tour-title':'实时成品导览',
       'proof-live':'实时','proof-open':'打开完整成品',
@@ -122,6 +125,7 @@ export const indexCopy = {
       'timeline-k':'时间线','timeline-h':'什么时候发生了什么？',
       'waterfall-k':'瀑布图','waterfall-h':'时间都花在哪了？',
       'types-more':'浏览完整作品集','types-more-sub':'实时成品 · 全部预设 · 全部图型',
+      'types-more-case':'阅读有源码依据的 MCO 案例',
       'arch-h':'它由什么组成？',
       'wf-h':'下一步做什么？',
       'seq-h':'谁先谁后，怎么来回？',
@@ -161,12 +165,12 @@ export const indexCopy = {
 export const guideCopy = {
         en: {
           navGuide:'Guide',navProof:'Proof Lab',navStart:'Get started',navCommunity:'Community',navInstall:'Install Skill',versionLabel:'Scenario guide / development / v[[ARCHIFY_VERSION]]',eyebrow:'Question-first diagramming', headline:'Choose the question.<br>Get the <em>right diagram.</em>', lede:'Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.',
-          metricRecipes:'real-world<br>recipes',metricModes:'diagram modes<br>with recipes',metricRuntime:'runtime<br>dependencies',chooserTitle:'What must the diagram explain?',chooserBody:'Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.',placeholder:'Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.',recommend:'Recommend a recipe →',clear:'Clear',libraryEyebrow:'Recipe library',libraryTitle:'13 small, opinionated starting points.',libraryBody:'Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.',footerLeft:'Generated from the same recipe source as the Archify CLI.',all:'All recipes',recommended:'Recommended recipe',use:'Use when',avoid:'Avoid when',must:'Evidence to include',presentation:'Presentation',prompt:'Copy-ready prompt',copyPrompt:'Copy prompt',copied:'Copied',alternatives:'Other possible fits:',confidence:'confidence',open:'Open recipe',proofReady:'Verified proof',proofLink:'Open verified example ↗',
+          metricRecipes:'real-world<br>recipes',metricModes:'diagram modes<br>with recipes',metricRuntime:'runtime<br>dependencies',chooserTitle:'What must the diagram explain?',chooserBody:'Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.',placeholder:'Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.',recommend:'Recommend a recipe →',clear:'Clear',libraryEyebrow:'Recipe library',libraryTitle:'13 small, opinionated starting points.',libraryBody:'Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.',footerLeft:'Generated from the same recipe source as the Archify CLI.',all:'All recipes',recommended:'Recommended recipe',use:'Use when',avoid:'Avoid when',must:'Evidence to include',presentation:'Presentation',prompt:'Copy-ready prompt',copyPrompt:'Copy prompt',copied:'Copied',copySuccess:'Copied to clipboard.',copyFailure:'Copy failed. Select the text manually.',alternatives:'Other possible fits:',confidence:'confidence',open:'Open recipe',proofReady:'Verified proof',proofLink:'Open verified example ↗',
           samples:[['API + cache miss','Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.'],['Kafka + DLQ','Map Kafka topics, ordered processors, consumer groups, replay, state stores, and the dead-letter queue.'],['Incident response','Show how responders detect, triage, mitigate, escalate, communicate, and verify recovery.']]
         },
         zh: {
           navGuide:'场景指南',navProof:'验证作品集',navStart:'开始使用',navCommunity:'社区包',navInstall:'安装技能',versionLabel:'场景指南 / 开发版 / v[[ARCHIFY_VERSION]]',eyebrow:'先问题，后图表',headline:'先选对问题，<br>再得到<em>对的图。</em>',lede:'描述受众真正需要理解的内容。Archify 会推荐一个有边界的视觉配方，同时给出证据清单、禁用条件和可复制提示词。',
-          metricRecipes:'个真实场景<br>配方',metricModes:'种图表模式<br>有入门配方',metricRuntime:'个运行时<br>依赖',chooserTitle:'这张图必须解释什么？',chooserBody:'写清场景，不要只写图表类型。系统事实越具体，推荐越可靠。',placeholder:'例如：展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。',recommend:'推荐配方 →',clear:'清空',libraryEyebrow:'配方库',libraryTitle:'13 个小而专的起点。',libraryBody:'每个配方只回答一个技术问题。清晰的边界让图更易读、可评审，也不会掩盖证据缺口。',footerLeft:'网页与 Archify CLI 使用同一份配方数据生成。',all:'全部配方',recommended:'推荐配方',use:'适合',avoid:'不要这样用',must:'必须包含的证据',presentation:'表现建议',prompt:'可直接复制的提示词',copyPrompt:'复制提示词',copied:'已复制',alternatives:'其他可能：',confidence:'置信度',open:'打开配方',proofReady:'已验证成品',proofLink:'打开验证成品 ↗',
+          metricRecipes:'个真实场景<br>配方',metricModes:'种图表模式<br>有入门配方',metricRuntime:'个运行时<br>依赖',chooserTitle:'这张图必须解释什么？',chooserBody:'写清场景，不要只写图表类型。系统事实越具体，推荐越可靠。',placeholder:'例如：展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。',recommend:'推荐配方 →',clear:'清空',libraryEyebrow:'配方库',libraryTitle:'13 个小而专的起点。',libraryBody:'每个配方只回答一个技术问题。清晰的边界让图更易读、可评审，也不会掩盖证据缺口。',footerLeft:'网页与 Archify CLI 使用同一份配方数据生成。',all:'全部配方',recommended:'推荐配方',use:'适合',avoid:'不要这样用',must:'必须包含的证据',presentation:'表现建议',prompt:'可直接复制的提示词',copyPrompt:'复制提示词',copied:'已复制',copySuccess:'已复制到剪贴板。',copyFailure:'复制失败，请手动选择文本。',alternatives:'其他可能：',confidence:'置信度',open:'打开配方',proofReady:'已验证成品',proofLink:'打开验证成品 ↗',
           samples:[['API + 缓存未命中','展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。'],['Kafka + 死信','梳理 Kafka Topic、有序处理器、消费者组、重放、状态存储和死信队列。'],['事故处置','展示响应者如何发现、分诊、缓解、升级、沟通并验证恢复。']]
         }
       };

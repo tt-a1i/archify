@@ -7,8 +7,8 @@
   "fps": 10,
   "frameCount": 54,
   "durationSeconds": 5.4,
-  "bytes": 820389,
-  "sha256": "cc08b3cd04c83894bc8834e39f938fa59ff5ffeccd8dbfd8df94adf080921d5a",
+  "bytes": 823489,
+  "sha256": "3992479ab6c1c591c071ba430a0ab2825f8ff6136f1784b72947b3dc151c77a3",
   "scenes": [
     {
       "id": "signal-flow",
@@ -22,7 +22,7 @@
     {
       "id": "blueprint",
       "artifact": "docs/gallery/artifacts/production-deployment.architecture.html",
-      "artifactSha256": "c089e2482533d14a0fd7b45c2080f74bd41785c6e964f88a7ec512117a5b0aff",
+      "artifactSha256": "94110ef09e247396fbc39b7409f94afe7d0790ae6fc0fa72be089d06821cd327",
       "hash": "#lens=backend~database",
       "eyebrow": "ARCHITECTURE · BLUEPRINT",
       "title": "Production Deployment",
