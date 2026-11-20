@@ -33,14 +33,16 @@ function metadata(content) {
 function extractArchive(destination) {
   fs.mkdirSync(destination, { recursive: true });
   const archive = path.join(repoRoot, 'archify.zip');
+  // Avoid loading the PowerShell 7 Archive module in Windows PowerShell 5.1
+  // when the test process inherits PSModulePath from a pwsh parent.
   const result = process.platform === 'win32'
     ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      'Expand-Archive -LiteralPath $env:ARCHIFY_TEST_ARCHIVE -DestinationPath $env:ARCHIFY_TEST_EXTRACT'], {
+      "$ErrorActionPreference = 'Stop'; Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory($env:ARCHIFY_TEST_ARCHIVE, $env:ARCHIFY_TEST_EXTRACT)"], {
       encoding: 'utf8',
       env: { ...process.env, ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination },
     })
     : spawnSync('unzip', ['-q', archive, '-d', destination], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.error?.message || result.stderr);
+  assert.equal(result.status, 0, result.error?.message || `${result.stdout}\n${result.stderr}`);
 }
 
 test('distributed ZIP carries the same valid Skill frontmatter as source', (t) => {
