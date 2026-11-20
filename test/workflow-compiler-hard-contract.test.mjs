@@ -214,10 +214,34 @@ test('readable-v2 evaluates automatic endpoint sides against the complete labele
 
   const result = compileWorkflow({ workflow: document, qualityProfile: 'standard' });
   assert.equal(result.ok, true, JSON.stringify(result.diagnostics, null, 2));
-  assert.deepEqual(result.receipt.viewBox, [768, 404]);
   assert.deepEqual(result.receipt.edges[0].points, [
     [94, 145], [94, 166], [214, 166], [214, 217],
   ]);
+  const [width, height] = result.receipt.viewBox;
+  const label = result.receipt.labels[0];
+  const right = Math.max(label.x + label.width / 2, ...result.receipt.nodes.map(node => node.x + node.width));
+  const bottom = Math.max(...result.receipt.nodes.map(node => node.y + node.height));
+  assert.ok(right < width && width - right <= 40, 'the last node and label fit without unused ranks');
+  assert.ok(bottom < height && height - bottom <= 55, 'a hidden legend leaves only a footer margin');
+
+  // A long heading or a phase that uses a later empty rank can need the
+  // original width even though the same nodes and edge all fit on the left.
+  const longHeading = clone(document);
+  longHeading.lanes[0].label = 'Preparation, editing, verification, and delivery '.repeat(4);
+  const titled = compileWorkflow({ workflow: longHeading });
+  assert.equal(titled.ok, true, JSON.stringify(titled.diagnostics));
+  assert.ok(titled.receipt.viewBox[0] > width + 150);
+
+  const laterPhase = { ...document, phases: [{ id: 'later', fromCol: 4, toCol: 5, label: 'Later' }] };
+  const phased = compileWorkflow({ workflow: laterPhase });
+  assert.equal(phased.ok, true, JSON.stringify(phased.diagnostics));
+  assert.ok(phased.receipt.viewBox[0] > phased.receipt.columns[5] + 40);
+
+  const authored = { ...document, meta: { ...document.meta, viewBox: [900, 500] } };
+  const fixed = compileWorkflow({ workflow: authored });
+  assert.equal(fixed.ok, true, JSON.stringify(fixed.diagnostics));
+  assert.deepEqual(fixed.receipt.viewBox, [900, 500]);
+  assert.deepEqual(fixed.receipt.edges, result.receipt.edges);
 });
 
 test('readable-v2 retries automatic endpoint sides against already planned routes', () => {

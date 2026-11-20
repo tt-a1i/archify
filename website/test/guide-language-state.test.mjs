@@ -55,13 +55,13 @@ test('guide language navigation preserves a draft, filter and selected recipe on
   const translated = page({ language: 'zh', href: 'https://archify.si/zh/guide', target: 'https://archify.si/guide', storage: original.storage });
   assert.equal(translated.element('scenario').value, draft);
   assert.match(translated.element('filters').innerHTML, /class="filter active"[^>]*data-filter="workflow"/);
-  assert.match(translated.element('result').innerHTML, /<h3>workflow 配方<\/h3>/);
+  assert.match(translated.element('result').innerHTML, /<h3[^>]*>workflow 配方<\/h3>/);
   assert.equal(translated.element('result').classList.contains('visible'), true);
   assert.equal(original.storage.has(key), false, 'restore consumes the record');
   translated.element('language').dispatch('click', click);
   const back = page({ storage: original.storage });
   assert.equal(back.element('scenario').value, draft);
-  assert.match(back.element('result').innerHTML, /<h3>workflow recipe<\/h3>/);
+  assert.match(back.element('result').innerHTML, /<h3[^>]*>workflow recipe<\/h3>/);
   assert.equal(original.storage.has(key), false);
 });
 
