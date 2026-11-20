@@ -1,0 +1,51 @@
+{
+  "scope": "Synthetic deliberate fixture, not a production failure",
+  "python": "3.13.16",
+  "nodes": [
+    {
+      "id": "leaf",
+      "type": "ValueError",
+      "message": "leaf-marker"
+    },
+    {
+      "id": "inner",
+      "type": "ExceptionGroup",
+      "message": "inner-marker (1 sub-exception)"
+    },
+    {
+      "id": "outer",
+      "type": "ExceptionGroup",
+      "message": "outer-marker (1 sub-exception)"
+    }
+  ],
+  "edges": [
+    {
+      "from": "inner",
+      "to": "leaf",
+      "kind": "contains"
+    },
+    {
+      "from": "inner",
+      "to": "outer",
+      "kind": "caused-by"
+    },
+    {
+      "from": "outer",
+      "to": "inner",
+      "kind": "contains"
+    }
+  ],
+  "identity_checks": {
+    "outer_child_is_inner": true,
+    "inner_child_is_leaf": true,
+    "inner_cause_is_outer": true,
+    "three_distinct_objects": true
+  },
+  "traceback": "  | ExceptionGroup: outer-marker (1 sub-exception)\n  +-+---------------- 1 ----------------\n    | Exception Group Traceback (most recent call last):\n    |   File \"fixture.py\", line 18, in construct\n    |     raise inner from outer\n    | ExceptionGroup: inner-marker (1 sub-exception)\n    +-+---------------- 1 ----------------\n      | Traceback (most recent call last):\n      |   File \"fixture.py\", line 12, in construct\n      |     raise ValueError(\"leaf-marker\")\n      | ValueError: leaf-marker\n      +------------------------------------\n\nThe above exception was the direct cause of the following exception:\n\n  + Exception Group Traceback (most recent call last):\n  |   File \"fixture.py\", line 18, in construct\n  |     raise inner from outer\n  | ExceptionGroup: inner-marker (1 sub-exception)\n  +-+---------------- 1 ----------------\n    | Traceback (most recent call last):\n    |   File \"fixture.py\", line 12, in construct\n    |     raise ValueError(\"leaf-marker\")\n    | ValueError: leaf-marker\n    +------------------------------------\n",
+  "printed_exception_lines": {
+    "leaf": 2,
+    "inner": 2,
+    "outer": 1
+  },
+  "traceback_path_policy": "Exact fixture absolute filename replaced with fixture.py; raw remains local"
+}

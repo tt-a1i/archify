@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Synthetic exception fixture: three objects, repeated text",
+    "locale": "en",
+    "output": "experiments/exception-identity/exception-identity.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Exception object"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "leaf",
+      "type": "backend",
+      "label": "leaf \u00b7 ValueError",
+      "sublabel": "leaf-marker \u00b7 1 object \u00b7 prints 2x",
+      "pos": [
+        460,
+        280
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "explanation": "One live object in a deliberate Python fixture. The symbol is not a memory address or a cross-run ID."
+    },
+    {
+      "id": "inner",
+      "type": "backend",
+      "label": "inner \u00b7 ExceptionGroup",
+      "sublabel": "inner-marker \u00b7 1 object \u00b7 prints 2x",
+      "pos": [
+        460,
+        40
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "explanation": "One live object in a deliberate Python fixture. The symbol is not a memory address or a cross-run ID."
+    },
+    {
+      "id": "outer",
+      "type": "backend",
+      "label": "outer \u00b7 ExceptionGroup",
+      "sublabel": "outer-marker \u00b7 1 object \u00b7 prints 1x",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "explanation": "One live object in a deliberate Python fixture. The symbol is not a memory address or a cross-run ID."
+    }
+  ],
+  "connections": [
+    {
+      "id": "inner-contains-leaf",
+      "from": "inner",
+      "to": "leaf",
+      "label": "contains"
+    },
+    {
+      "id": "inner-caused-by-outer",
+      "from": "inner",
+      "to": "outer",
+      "label": "caused-by"
+    },
+    {
+      "id": "outer-contains-inner",
+      "from": "outer",
+      "to": "inner",
+      "label": "contains"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Read the arrows",
+      "items": [
+        "contains: parent.exceptions holds the child",
+        "caused-by: source.__cause__ points to target"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Same identity, two printed places",
+      "items": [
+        "inner and leaf each print twice in this run",
+        "outer contains the same inner that is raised",
+        "Repeated text does not count objects or runs"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Deliberate synthetic fixture",
+      "items": [
+        "Python 3.13.16 stdlib; 3 live objects",
+        "Not a production failure or a call-time graph",
+        "No locals, log import, or traceback parser"
+      ]
+    }
+  ]
+}
