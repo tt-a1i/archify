@@ -188,6 +188,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #94a3b8;
       --arrow-emphasis: #34d399;
+      --edge-label: var(--arrow);
 
       /* Opaque mask color used behind semi-transparent component fills
          so the arrows drawn underneath are properly hidden. */
@@ -231,6 +232,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #64748b;
       --arrow-emphasis: #059669;
+      --edge-label: var(--text-muted);
 
       --mask: #ffffff;
 
@@ -291,6 +293,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a5b4c7;
       --arrow: #7890ad;
       --arrow-emphasis: #2dd4bf;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 16, 30, 0.86);
       --toolbar-border: #29415f;
       --toolbar-menu-bg: #07101e;
@@ -326,6 +329,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #607a8c;
       --arrow: #7b97aa;
       --arrow-emphasis: #0d9488;
+      --edge-label: var(--text-muted);
     }
 
     /* ==========================================================
@@ -362,6 +366,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a7cad9;
       --arrow: #78a3b7;
       --arrow-emphasis: #64dfc1;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 28, 45, 0.92);
       --toolbar-border: #34799a;
       --toolbar-text: #d8f3ff;
@@ -397,6 +402,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #506f7e;
       --arrow: #6d93a5;
       --arrow-emphasis: #087f69;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(247, 252, 254, 0.94);
       --toolbar-border: #8ab5c5;
       --toolbar-text: #294f61;
@@ -439,6 +445,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #b8ad99;
       --arrow: #948978;
       --arrow-emphasis: #dd6b3d;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(35, 31, 24, 0.92);
       --toolbar-border: #625a4a;
       --toolbar-text: #eee5d5;
@@ -476,6 +483,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #746b5e;
       --arrow: #8a806f;
       --arrow-emphasis: #bb4c23;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(251, 248, 241, 0.94);
       --toolbar-border: #c4b9a6;
       --toolbar-text: #40392f;
@@ -832,6 +840,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
+    /* A Viewer an explainer page opens keeps its tools and the preset's look; the page names the
+       diagram, so the standalone badges stay off, as the embedded plate does. */
+    html[data-hosted="explainer"][data-preset] .header-row::after,
+    html[data-hosted="explainer"][data-preset="editorial"] .diagram-container::after { display: none; }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
@@ -3224,6 +3236,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         --lane-stroke: #cbd5e1;
         --arrow: #94a3b8;
         --arrow-emphasis: #059669;
+        --edge-label: var(--text-muted);
         --frontend-fill:    rgba(34, 211, 238, 0.15);
         --frontend-stroke:  #0891b2;
         --backend-fill:     rgba(52, 211, 153, 0.18);
@@ -4291,8 +4304,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
-    /* Relationship labels share the exact color token used by their path. */
-    .t-edge-default  { fill: var(--arrow); }
+    /* Colored relationship labels share the exact color token used by their path.
+       Default labels use --edge-label so light palettes can keep a quiet stroke
+       while the text stays readable on the label mask. */
+    .t-edge-default  { fill: var(--edge-label); }
     .t-edge-emphasis { fill: var(--arrow-emphasis); }
     .t-edge-security { fill: var(--security-stroke); }
     .t-edge-dashed   { fill: var(--database-stroke); }
@@ -4305,7 +4320,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.4px) 0 0 / 20px 20px,
         var(--panel);
     }
-    html[data-preset="classic"] .diagram-container > svg .c-grid { stroke: transparent; }
+    svg[data-preset="classic"] .c-grid { stroke: transparent; }
     html[data-preset="classic"][data-theme="light"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
       --ambient-node-base-filter: drop-shadow(0 1px 1px rgba(17, 24, 39, 0.05)) drop-shadow(0 6px 12px rgba(17, 24, 39, 0.06));
       filter: var(--ambient-node-base-filter);
@@ -5484,8 +5499,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="96" y="311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Callers</text>
-        <text data-detail="context" x="96" y="327" class="t-muted" font-size="9" text-anchor="middle">human · coding agent</text>
+          <text data-node-label="" data-detail-anchor="" x="96" y="311" class="t-primary" font-size="14" font-weight="600" text-anchor="middle">Callers</text>
+        <text data-detail="context" x="96" y="327" class="t-muted" font-size="10.3" text-anchor="middle">human · coding agent</text>
         </g>
 
         <g id="node-entry" data-node-id="entry" data-node-label="Entry Surfaces" tabindex="0" role="button" aria-label="Focus Entry Surfaces, npm · Python CLI · MCP, MCO local package / Python runtime" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="npm · Python CLI · MCP" data-node-tag="bin/mco.js · mco" data-node-context="MCO local package / Python runtime">
@@ -5498,7 +5513,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="285" y="311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Entry Surfaces</text>
+          <text data-node-label="" data-detail-anchor="" x="285" y="311" class="t-primary" font-size="12.1" font-weight="600" text-anchor="middle">Entry Surfaces</text>
         <text data-detail="context" x="285" y="327" class="t-muted" font-size="9" text-anchor="middle">npm · Python CLI · MCP</text>
         <text data-detail="fine" x="285" y="338" class="t-frontend" font-size="7" text-anchor="middle">bin/mco.js · mco</text>
         </g>
@@ -5510,7 +5525,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(416 286) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="485" y="311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Command Router</text>
+          <text data-node-label="" data-detail-anchor="" x="485" y="311" class="t-primary" font-size="12.1" font-weight="600" text-anchor="middle">Command Router</text>
         <text data-detail="context" x="485" y="327" class="t-muted" font-size="9" text-anchor="middle">run · review · doctor</text>
         <text data-detail="fine" x="485" y="338" class="t-backend" font-size="7" text-anchor="middle">runtime.cli</text>
         </g>
@@ -5523,7 +5538,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="689" y="311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Config + Policy</text>
+          <text data-node-label="" data-detail-anchor="" x="689" y="311" class="t-primary" font-size="12.2" font-weight="600" text-anchor="middle">Config + Policy</text>
         <text data-detail="context" x="689" y="327" class="t-muted" font-size="9" text-anchor="middle">scope · permissions · risk</text>
         <text data-detail="fine" x="689" y="338" class="t-security" font-size="7" text-anchor="middle">read_only · write · yolo</text>
         </g>
@@ -5547,7 +5562,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(1046 286) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1119" y="311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Adapter Registry</text>
+          <text data-node-label="" data-detail-anchor="" x="1119" y="311" class="t-primary" font-size="11.4" font-weight="600" text-anchor="middle">Adapter Registry</text>
         <text data-detail="context" x="1119" y="327" class="t-muted" font-size="8.9" text-anchor="middle">detect · run · poll · cancel</text>
         <text data-detail="fine" x="1119" y="338" class="t-backend" font-size="7" text-anchor="middle">ProviderAdapter contract</text>
         </g>
@@ -5562,7 +5577,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1323" y="311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Transport Layer</text>
+          <text data-node-label="" data-detail-anchor="" x="1323" y="311" class="t-primary" font-size="13.1" font-weight="600" text-anchor="middle">Transport Layer</text>
         <text data-detail="context" x="1323" y="327" class="t-muted" font-size="9" text-anchor="middle">shim stdout · ACP JSON-RPC</text>
         <text data-detail="fine" x="1323" y="338" class="t-messagebus" font-size="7" text-anchor="middle">decode_transport</text>
         </g>
@@ -5575,7 +5590,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1548" y="311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Provider CLIs</text>
+          <text data-node-label="" data-detail-anchor="" x="1548" y="311" class="t-primary" font-size="14" font-weight="600" text-anchor="middle">Provider CLIs</text>
         <text data-detail="context" x="1548" y="327" class="t-muted" font-size="9" text-anchor="middle">Claude · Codex · Pi · 7 more</text>
         <text data-detail="fine" x="1548" y="338" class="t-external" font-size="7" text-anchor="middle">native auth + sandbox</text>
         </g>
@@ -5587,7 +5602,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(411 506) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="485" y="531" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Session Daemon</text>
+          <text data-node-label="" data-detail-anchor="" x="485" y="531" class="t-primary" font-size="13.3" font-weight="600" text-anchor="middle">Session Daemon</text>
         <text data-detail="context" x="485" y="547" class="t-muted" font-size="9" text-anchor="middle">detached worker + socket</text>
         <text data-detail="fine" x="485" y="558" class="t-backend" font-size="7" text-anchor="middle">queue · retry · cancel</text>
         </g>
@@ -5600,7 +5615,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="715" y="531" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Session State</text>
+          <text data-node-label="" data-detail-anchor="" x="715" y="531" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Session State</text>
         <text data-detail="context" x="715" y="547" class="t-muted" font-size="9" text-anchor="middle">.mco/sessions</text>
         <text data-detail="fine" x="715" y="558" class="t-database" font-size="7" text-anchor="middle">state · history · logs</text>
         </g>
@@ -5626,7 +5641,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1548" y="531" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Output Consumers</text>
+          <text data-node-label="" data-detail-anchor="" x="1548" y="531" class="t-primary" font-size="13.3" font-weight="600" text-anchor="middle">Output Consumers</text>
         <text data-detail="context" x="1548" y="547" class="t-muted" font-size="9" text-anchor="middle">terminal · agent · CI</text>
         <text data-detail="fine" x="1548" y="558" class="t-external" font-size="7" text-anchor="middle">text · JSON · JSONL</text>
         </g>
@@ -5634,38 +5649,38 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="callers" data-edge-to="entry" data-edge-label="task + selected agents" data-edge-key="0" data-edge-id="submit">
           <rect x="128.2" y="234" width="115.6" height="14" rx="3" class="c-mask"/>
-          <text x="186" y="244" class="t-edge-emphasis" font-size="8" text-anchor="middle">task + selected agents</text>
+          <text x="186" y="244" class="t-edge-emphasis" font-size="10" font-weight="500" textLength="111.6" lengthAdjust="spacingAndGlyphs" text-anchor="middle">task + selected agents</text>
         </g>
 
 
         <g data-detail="context" data-edge-from="policy" data-edge-to="invocation" data-edge-label="validated scope" data-edge-key="3" data-edge-id="authorize">
           <rect x="753" y="234" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="794" y="244" class="t-edge-security" font-size="8" text-anchor="middle">validated scope</text>
+          <text x="794" y="244" class="t-edge-security" font-size="10" font-weight="500" textLength="78" lengthAdjust="spacingAndGlyphs" text-anchor="middle">validated scope</text>
         </g>
 
         <g data-detail="context" data-edge-from="adapters" data-edge-to="transport" data-edge-label="provider contract" data-edge-key="5" data-edge-id="adapt">
           <rect x="1173.2" y="266" width="91.6" height="14" rx="3" class="c-mask"/>
-          <text x="1219" y="276" class="t-edge-emphasis" font-size="8" text-anchor="middle">provider contract</text>
+          <text x="1219" y="276" class="t-edge-emphasis" font-size="10" font-weight="500" textLength="87.6" lengthAdjust="spacingAndGlyphs" text-anchor="middle">provider contract</text>
         </g>
         <g data-detail="context" data-edge-from="transport" data-edge-to="providers" data-edge-label="native CLI" data-edge-key="6" data-edge-id="execute">
           <rect x="1404" y="293" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="1433" y="303" class="t-edge-emphasis" font-size="8" text-anchor="middle">native CLI</text>
+          <text x="1433" y="303" class="t-edge-emphasis" font-size="10" font-weight="500" textLength="54" lengthAdjust="spacingAndGlyphs" text-anchor="middle">native CLI</text>
         </g>
         <g data-detail="context" data-edge-from="router" data-edge-to="session" data-edge-label="start · send · resume" data-edge-key="7" data-edge-id="session_start">
           <rect x="434.6" y="420" width="110.8" height="14" rx="3" class="c-mask"/>
-          <text x="490" y="430" class="t-edge-dashed" font-size="8" text-anchor="middle">start · send · resume</text>
+          <text x="490" y="430" class="t-edge-dashed" font-size="10" font-weight="500" textLength="106.8" lengthAdjust="spacingAndGlyphs" text-anchor="middle">start · send · resume</text>
         </g>
         <g data-detail="context" data-edge-from="session" data-edge-to="session_state" data-edge-label="socket + history" data-edge-key="8" data-edge-id="session_persist">
           <rect x="561.6" y="486" width="86.8" height="14" rx="3" class="c-mask"/>
-          <text x="605" y="496" class="t-edge-dashed" font-size="8" text-anchor="middle">socket + history</text>
+          <text x="605" y="496" class="t-edge-dashed" font-size="10" font-weight="500" textLength="82.8" lengthAdjust="spacingAndGlyphs" text-anchor="middle">socket + history</text>
         </g>
         <g data-detail="context" data-edge-from="transport" data-edge-to="artifacts" data-edge-label="decode + persist" data-edge-key="9" data-edge-id="persist_answers">
           <rect x="1279.6" y="420" width="86.8" height="14" rx="3" class="c-mask"/>
-          <text x="1323" y="430" class="t-edge-dashed" font-size="8" text-anchor="middle">decode + persist</text>
+          <text x="1323" y="430" class="t-edge-dashed" font-size="10" font-weight="500" textLength="82.8" lengthAdjust="spacingAndGlyphs" text-anchor="middle">decode + persist</text>
         </g>
         <g data-detail="context" data-edge-from="artifacts" data-edge-to="outputs" data-edge-label="raw evidence" data-edge-key="10" data-edge-id="publish_outputs">
           <rect x="1399.2" y="570" width="67.6" height="14" rx="3" class="c-mask"/>
-          <text x="1433" y="580" class="t-edge-emphasis" font-size="8" text-anchor="middle">raw evidence</text>
+          <text x="1433" y="580" class="t-edge-emphasis" font-size="10" font-weight="500" textLength="63.599999999999994" lengthAdjust="spacingAndGlyphs" text-anchor="middle">raw evidence</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
@@ -6282,10 +6297,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function diagramFilename() {
-        var title = (document.title || 'diagram')
-          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
-          .replace(/\s+Diagram$/i, '')
-          .trim();
+        // Prefer the authored heading: the document title may carry a
+        // locale-specific page decoration ("Diagram", "Diagrama", ...).
+        // Without a heading, keep the complete document title; suffix-like
+        // words in either source are authored text and are not stripped.
+        var heading = document.querySelector('.header h1');
+        var title = (heading && heading.textContent || '').trim() ||
+          (document.title || '').trim();
         // A mark is kept only while attached to a letter or number base;
         // a detached mark (the variation selector after an emoji, say)
         // would otherwise survive as an invisible filename.
@@ -11301,7 +11319,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+        // Body and stage padding already bound the actual viewport. The
+        // optional bottom gap may yield to the source-text floor; otherwise
+        // a late header reflow can select an enlarged, scrolling diagram
+        // even though its original size still fits the screen.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth + SAFE_BOTTOM_GAP * ratio, maxWidth) >=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading && !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;

@@ -102,6 +102,72 @@ test('tree: three or more sibling leaves going down become one stacked list', ()
   assert.ok(!report.nodes.find((node) => node.id === 'r_shared').stacked);
 });
 
+test('tree: an automatic downward tree reuses space across generations', () => {
+  const diagram = {
+    schema_version: 1,
+    diagram_type: 'tree',
+    meta: { title: 'Dispatch outcomes', quality_profile: 'showcase' },
+    layout: { direction: 'down', gapX: 34 },
+    nodes: [
+      { id: 'root', label: 'Dispatch' },
+      { id: 'cancel', label: 'Cancel', parent: 'root' },
+      { id: 'user', label: 'User canceled', parent: 'cancel' },
+      { id: 'system', label: 'System canceled', parent: 'cancel' },
+      { id: 'run', label: 'Run', parent: 'root' },
+      { id: 'worker', label: 'Choose worker', parent: 'run' },
+      { id: 'attempt', label: 'Run attempt', parent: 'worker' },
+      { id: 'done', label: 'Done', parent: 'attempt' },
+      { id: 'retry', label: 'Retry', parent: 'attempt' },
+    ],
+  };
+  const report = layoutOf(diagram);
+  const authored = layoutOf({ ...diagram, meta: { ...diagram.meta, viewBox: [1200, 900] } });
+  const widthOf = ({ nodes }) => Math.max(...nodes.map(({ x, width }) => x + width)) - Math.min(...nodes.map(({ x }) => x));
+  assert.ok(widthOf(report) < widthOf(authored), 'terminal branches should not reserve space on deeper rows');
+  assert.deepEqual(report.nodes.map(({ id, parent, y, height }) => ({ id, parent, y, height })),
+    authored.nodes.map(({ id, parent, y, height }) => ({ id, parent, y, height })));
+  for (const row of [1, 2, 4]) {
+    const rowNodes = report.nodes.filter(({ depth }) => depth === row);
+    for (let index = 1; index < rowNodes.length; index++) {
+      const previous = rowNodes[index - 1];
+      assert.ok(rowNodes[index].x - (previous.x + previous.width) >= diagram.layout.gapX - 1);
+    }
+  }
+  const result = run(diagram);
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(spawnSync(process.execPath, [checker, result.output], { encoding: 'utf8' }).stdout);
+  assert.equal(receipt.ok, true, JSON.stringify(receipt.checks.filter((entry) => !entry.ok)));
+  assert.equal(receipt.composition.summary.warnings, 0);
+});
+
+test('tree: tall rightward automatic layout starts with the root and preserves an authored canvas', () => {
+  const diagram = {
+    schema_version: 1,
+    diagram_type: 'tree',
+    meta: { title: 'Repository structure' },
+    layout: { direction: 'right', gapY: 26 },
+    nodes: [
+      { id: 'root', label: 'Repository' },
+      ...Array.from({ length: 16 }, (_, index) => ({ id: 'module_' + index, label: 'Module ' + index, parent: 'root' })),
+    ],
+  };
+  const report = layoutOf(diagram);
+  const [root, first] = report.nodes;
+  assert.equal(report.direction, 'right');
+  assert.ok(first.x > root.x + root.width);
+  assert.ok(root.y + root.height <= report.nodes[2].y, 'root should appear beside the first child');
+  assert.equal(report.nodes.length, diagram.nodes.length);
+  assert.deepEqual(report.edges.map(({ from, to }) => ({ from, to })),
+    diagram.nodes.slice(1).map(({ id, parent }) => ({ from: parent, to: id })));
+  const compact = layoutOf({ ...diagram, nodes: diagram.nodes.slice(0, 3) });
+  const authored = layoutOf({ ...diagram, meta: { ...diagram.meta, viewBox: [800, 1600] } });
+  assert.deepEqual(authored.viewBox, [800, 1600]);
+  const center = ({ y, height }) => y + height / 2;
+  for (const layout of [compact, authored]) {
+    assert.ok(Math.abs(center(layout.nodes[0]) - (center(layout.nodes[1]) + center(layout.nodes.at(-1))) / 2) <= 1);
+  }
+});
+
 test('tree: every descendant and link carries its ancestors, and toggles count what they hide', () => {
   const result = run(small);
   const html = fs.readFileSync(result.output, 'utf8');

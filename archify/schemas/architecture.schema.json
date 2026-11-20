@@ -5,6 +5,29 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "diagram_type", "meta", "components"],
+  "if": {
+    "required": ["layout"],
+    "properties": {
+      "layout": {
+        "type": "object",
+        "required": ["mode"],
+        "properties": { "mode": { "const": "auto" } }
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "layout": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "mode": true }
+      },
+      "components": {
+        "type": "array",
+        "items": { "type": "object", "properties": { "row": false, "col": false } }
+      }
+    }
+  },
   "properties": {
     "schema_version": { "const": 1 },
     "diagram_type": { "const": "architecture" },
@@ -61,7 +84,7 @@
       "additionalProperties": false,
       "required": ["mode"],
       "properties": {
-        "mode": { "enum": ["grid"] },
+        "mode": { "enum": ["grid", "auto"] },
         "origin": { "$ref": "common.schema.json#/$defs/point" },
         "cols": { "type": "integer", "minimum": 1, "maximum": 12 },
         "gapX": { "type": "number", "minimum": 0 },
