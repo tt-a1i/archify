@@ -3,6 +3,7 @@
   var tr = window.__archifyMakeAnalysisTranslator(data.ui && data.ui.messages || {});
   var locale = data.ui && data.ui.locale || 'en';
   var root = document.documentElement;
+  if (data.pullRequest) root.setAttribute('data-bauify-context', 'pr'); else root.removeAttribute('data-bauify-context');
   var standalone = data.ui && data.ui.mode === 'standalone';
   var toolbar = document.querySelector('.toolbar');
   var svg = standalone ? null : document.querySelector('svg');
@@ -433,12 +434,13 @@
     return (compact ? '' : nextStepHtml(f)) + '<div class="finding ' + esc(f.severity) + '">' + ev + ("<details class=\"technical\">" + "<summary>" + tr("Rule details and alternatives") + "</summary>" + "<b>") + esc(f.code) + '</b> · ' + esc(tr(f.severity)) + (f.id ? ' · ' + esc(f.id) : '') + '<p>' + esc(f.message) + '</p>' + fixes + '</details></div>';
   }
   // Source excerpt for one file:line, from the windows embedded at overlay time.
-  function showCode(file, line, why, tone, full, rangeStart, rangeEnd, match) {
+  function showCode(file, line, why, tone, full, rangeStart, rangeEnd, match, snapshot) {
     readerPage(tr("Source"));
-    var snip = (data.snippets || {})[file];
+    var snip = snapshot === 'base' ? (data.pullRequest.beforeSources || {})[file] : (data.snippets || {})[file];
     line = Number.isInteger(line) && line > 0 ? line : null;
     var sourceParent = detail.hidden ? tr("Component") : tr("Problem");
     var h = ("<div class=\"grip\">" + "<button class=\"close\" aria-label=\"" + tr("Close") + "\">" + "×" + "</button>" + "<button type=\"button\" class=\"source-back back\">" + "← ") + sourceParent + ("</button>" + "<div class=\"k\">" + tr("Source · ")) + (line ? tr("line ") + line : (full ? tr("full file") : tr("file preview")) + tr(" · no specific finding line")) + '</div><h3>' + esc(file) + '</h3></div>';
+    if (data.pullRequest) h += '<div class="pr-source-sides"><button type="button" data-pr-side="base"' + (!data.pullRequest.beforeSources[file] ? ' disabled' : '') + '>' + esc(tr('Merge-base')) + ' ' + esc(data.pullRequest.baseSHA.slice(0,8)) + '</button><button type="button" data-pr-side="head"' + (!data.snippets[file] ? ' disabled' : '') + '>' + esc(tr('PR head')) + ' ' + esc(data.pullRequest.headSHA.slice(0,8)) + '</button><span>' + esc(tr(snapshot === 'base' ? 'Showing merge-base source' : 'Showing PR head source')) + '</span></div>';
     if (why) h += '<div class="why">' + esc(why) + '</div>';
     if (!snip) {
       h += ("<div class=\"why\" style=\"margin-top:10px\">" + tr("Source is unavailable in this report. Re-analyze with the local service, or read this file in your editor.") + "</div>");
@@ -447,7 +449,7 @@
       var added = new Set(changes ? changes.added : []), modified = new Set(changes ? changes.modified : []);
       var deleted = new Map((changes ? changes.deleted : []).map(function (item) { return [item.after, item.count]; }));
       if (changes && changes.status !== 'unavailable') {
-        h += ("<div class=\"diff-legend\">" + tr("Captured changes vs base commit ")) + esc((data.repository && data.repository.baseRevision || '').slice(0, 7)) + tr(" (staged + unstaged)");
+        h += '<div class="diff-legend">' + (data.pullRequest ? esc(tr('Captured PR changes vs merge-base {sha}', { sha: data.pullRequest.baseSHA.slice(0,8) })) : tr('Captured changes vs base commit ') + esc((data.repository && data.repository.baseRevision || '').slice(0,7)) + tr(' (staged + unstaged)'));
         if (changes.status === 'unchanged') h += tr(" · No changes");
         else h += (" · " + "<span class=\"added\">" + tr("+ Added") + "</span>" + " · " + "<span class=\"modified\">" + tr("~ Modified") + "</span>" + " · " + "<span class=\"deleted\">" + tr("− Deleted") + "</span>");
         if (changes.status === 'added') h += tr(" · New file");
@@ -474,8 +476,9 @@
     codePane.innerHTML = h;
     codePane.hidden = false;
     document.documentElement.setAttribute('data-bauify-source', 'on');
+    if (data.pullRequest) codePane.querySelectorAll('[data-pr-side]').forEach(function(button) { button.addEventListener('click', function() { showCode(file, null, why, tone, full, null, null, null, button.getAttribute('data-pr-side')); }); });
     var sourceToggle = codePane.querySelector('.source-toggle');
-    if (sourceToggle) sourceToggle.addEventListener('click', function () { showCode(file, line, why, tone, !full, rangeStart, rangeEnd, match); });
+    if (sourceToggle) sourceToggle.addEventListener('click', function () { showCode(file, line, why, tone, !full, rangeStart, rangeEnd, match, snapshot); });
     var backToSourceParent = function () { codePane.hidden = true; document.documentElement.removeAttribute('data-bauify-source'); readerPage(sourceParent); var active = detail.querySelector('.ref.active'); if (active) active.focus({ preventScroll: true }); detail.querySelectorAll('.ref.active').forEach(function (x) { x.classList.remove('active'); }); };
     codePane.querySelector('.close').addEventListener('click', backToSourceParent);
     codePane.querySelector('.source-back').addEventListener('click', backToSourceParent);
@@ -519,7 +522,7 @@
   }
   // --- overview: project-level reading, built from data.overview ------------
   var GROUPS = { 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'complexity/function': tr("Complex functions"), 'redundancy/duplicate-block': tr("Duplicate code") };
-  var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust' };
+  var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust', c: 'C', cpp: 'C++' };
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function plural(n, word) {
     if (locale === 'zh-CN') {
@@ -677,6 +680,7 @@
     lines.push((LANGS[c.language] || c.language || tr("Unknown language")) + (files.analyzed !== null && files.analyzed !== undefined ? ' · ' + plural(files.analyzed, 'file') + tr(" analyzed") : '') +
       (files.excludedByRole ? ' · ' + files.excludedByRole + ' ' + (files.excludedRoles || []).map(function (role) { return locale === 'zh-CN' ? tr(role) : role; }).join('/') + tr(" files left out") : ''));
     (c.otherLanguages || []).forEach(function (x) { lines.push(tr("Not analyzed: ") + plural(x.files, (LANGS[x.adapter] || x.adapter) + tr(" file")) + tr(" (one language per run)")); });
+    if (files.translationUnits !== undefined) lines.push(plural(files.translationUnits, 'translation unit') + tr(' in the compilation database') + (files.notCompiled ? ' · ' + plural(files.notCompiled, 'source file') + tr(' without a command') : ''));
     var pe = files.parseErrors || [];
     if (pe.length) lines.push(plural(pe.length, 'file') + tr(" could not be parsed: ") + pe.slice(0, 3).join(', ') + (pe.length > 3 ? ' …' : ''));
     var u = c.unresolved || {}, unresolved = (u.unknown || 0) + (u.opaque || 0);
@@ -693,9 +697,9 @@
       lines.push(tr("Boundaries: ") + plural(b.layers.length, 'layer') + ', ' + plural(b.rules, 'rule') + tr(" from the analysis config"));
       b.layers.filter(function (l) { return !l.files; }).forEach(function (l) { lines.push(tr("Layer \"") + l.name + tr("\" matches no analyzed file; check its globs")); });
     }
-    var missing = [['complexity/', 'complexity'], ['redundancy/', 'duplication'], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
+    var missing = [['complexity/', tr("complexity")], ['redundancy/', tr("duplication")], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push(tr("Not checked: ") + missing.join(', '));
-    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
+    var incomplete = (c.otherLanguages || []).length || files.notCompiled || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
     return ("<details class=\"coverage\">" + "<summary>" + tr("Analysis scope")) + ' · ' + esc(LANGS[c.language] || c.language || tr("Unknown")) + (incomplete ? tr(" · incomplete") : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
   }
   // Duplicate detection reports its own file coverage: files it skipped (vendored,
@@ -717,9 +721,10 @@
       var gone = c.notDetected || c.fixed || [];
       var comparable = c.comparable === true;
       var title = comparable ? gone.length || c.new.length ? tr('{gone} no longer detected · {added} new', { gone: gone.length, added: c.new.length }) : tr('No detected changes') : tr('Not directly comparable');
-      h += '<section class="comparison-banner ' + (comparable && !c.new.length && gone.length ? 'positive' : '') + '" role="status" aria-live="polite"><span>' + esc(tr('Compared with previous analysis')) + '</span><b>' + esc(title) + '</b>';
+      h += '<section class="comparison-banner ' + (comparable && !c.new.length && gone.length ? 'positive' : '') + '" role="status" aria-live="polite"><span>' + esc(tr(data.pullRequest ? 'Compared with PR merge-base' : 'Compared with previous analysis')) + '</span><b>' + esc(title) + '</b>';
       if (c.evidenceChanged.length) h += '<span>' + esc(tr('{changed} with changed evidence', { changed: c.evidenceChanged.length })) + '</span>';
       h += '<p>' + esc(comparable ? tr('No longer detected does not prove a fix; verify source changes and project tests.') : c.comparable === false ? tr('Configuration, grouping, model or coverage changed. Missing findings do not establish a fix.') : tr('Comparison context is unavailable. Missing findings do not establish a fix.')) + '</p>';
+      if(data.pullRequest) h += '<p>' + esc(tr('This compares rule reports. Changed evidence is not a finding of increased risk; PR-attributed effects are below.')) + '</p>';
       if (!comparable && (c.reasons || []).length) h += '<details><summary>' + esc(tr('Comparison details')) + '</summary><p class="ev">' + esc(c.reasons.map(function (r) { return typeof r === 'string' ? tr(r) : tr(r && (r.message || r.code) || ''); }).join(' ')) + '</p></details>';
       h += '</section>';
       if (gone.length) h += ("<details>" + "<summary>" + tr("No longer detected · ")) + gone.length + '</summary><div class="ev">' + gone.map(function (f) { return '<div>' + esc(GROUPS[f.code] || f.code) + ': ' + esc(f.message) + (f.likelyCause ? ' · ' + esc(f.likelyCause) : '') + '</div>'; }).join('') + '</div></details>';
@@ -731,6 +736,69 @@
     }
     return h;
   }
+  function prReviewPriorities() {
+    var impact = data.pullRequest.impact;
+    var sections = [
+      { key: 'architecture', title: 'Architecture assessment', scope: 'Changed dependencies and existing users reached from the changed code.' },
+      { key: 'complexity', title: 'Complexity assessment', scope: 'Before/after function measurements and changed source; text changes alone do not prove behavior changes.' }
+    ];
+    var h = '<div class="pr-review">';
+    sections.forEach(function(section) {
+      var list = impact ? impact.records.filter(function(r) { return r.category===section.key; }) : [];
+      var count = impact ? impact.categories[section.key].total : 0;
+      var summary = !impact ? tr('Change-attributed impact is unavailable in this saved report') : count ? tr('{count} PR-related changes', { count: count }) : tr('No impact established within the captured scope');
+      h += '<section class="pr-assessment" data-assessment="' + section.key + '" aria-label="' + esc(tr(section.title)) + '"><header><h5>' + esc(tr(section.title)) + '</h5><span class="pr-origin">' + esc(tr('Automatic detection')) + '</span></header><p class="pr-assessment-summary">' + esc(summary) + '</p><p class="pr-assessment-scope">' + esc(tr(section.scope)) + '</p>';
+      list.slice(0,3).forEach(function(record) { h += prImpactCard(record,impact.records.indexOf(record)); });
+      if(list.length>3) {
+        h += '<details class="pr-impact-more"><summary>' + esc(tr('More PR-related changes · {count}',{count:list.length-3})) + '</summary>';
+        list.slice(3).forEach(function(record) { h += prImpactCard(record,impact.records.indexOf(record)); });h += '</details>';
+      }
+      h += '</section>';
+    });
+    if(impact) {
+      h += '<p class="pr-assessment-scope pr-impact-coverage">' + esc(tr('Read {count} changed files; reused saved facts and direct references.',{count:impact.coverage.work.parsedFiles})) + ' ' + esc(tr('Known static references are not runtime or complete transitive impact.')) + '</p>';
+      if(impact.status==='partial') h += '<p class="pr-assessment-scope">' + esc(tr('Some changed regions were outside the language, parsing or reading budget; unobserved impact remains unknown.')) + '</p>';
+      if(impact.comparison.comparable!==true) h += '<p class="pr-assessment-scope">' + esc(tr('Analysis contexts differ; observed measurement or binding differences are not fully attributable to source changes.')) + '</p>';
+    }
+    return h + '</div>';
+  }
+  function prImpactCard(record,index) {
+    var labels={'dependency-added':'Dependency added','dependency-removed':'Dependency removed','dependency-changed':'Dependency form changed','structural-measures':'Existing structural measurements changed','module-coupling':'Existing module coupling changed','module-added':'Module added','module-removed':'Module removed','known-users':'Existing users of changed code','known-importers':'Existing importers of changed source','file-source':'File source changed · behavior to review','function-metrics':'Function measurements changed','definition-text':'Function source changed · behavior to review','definition-added':'Definition added','definition-removed':'Definition removed','structural-finding-added':'New structural finding observed in this PR'};
+    var finding=record.findingId&&findingById[record.findingId];
+    var subject=record.kind==='structural-finding-added'&&finding?findingTitle(finding):record.module||record.kind==='structural-measures'&&record.path||record.name&&record.name+'()'||record.path||record.from+' → '+record.to;
+    var h='<article class="priority-card pr-impact-record" data-impact-record="'+index+'"><h6>'+esc(tr(labels[record.kind]||record.kind))+'</h6><p class="pr-impact-subject">'+esc(subject)+'</p>';
+    if(record.kind==='structural-measures') {
+      var fields={'reach.dependents':'Transitively dependent modules','reach.direct':'Directly dependent modules','reach.dependencies':'Outgoing dependency modules','reach.modules':'Other modules in scope','reach.share':'Dependency reach share','size.lines':'Module source lines','size.total':'Total source lines','size.share':'Source size share',lines:'Source lines',fileLines:'File lines',loc:'Source lines'};
+      h+='<p class="pr-impact-measures">'+record.changes.slice(0,3).map(function(change){return esc(tr(fields[change.field]||change.field))+' '+esc(change.before==null?'?':change.before)+' → '+esc(change.after==null?'?':change.after);}).join(' · ')+'</p>';
+    }
+    if(record.kind==='function-metrics') h+='<p class="pr-impact-measures">'+esc(tr('Complexity {before} → {after}',{before:record.before.complexity,after:record.after.complexity}))+' · '+esc(tr('Nesting {before} → {after}',{before:record.before.nesting,after:record.after.nesting}))+' · '+esc(tr('Lines {before} → {after}',{before:record.before.length,after:record.after.length}))+'</p>';
+    if(record.kind==='module-coupling') h+='<p class="pr-impact-measures">'+esc(tr('Fan-in {before} → {after}',{before:record.before.fanIn,after:record.after.fanIn}))+' · '+esc(tr('Fan-out {before} → {after}',{before:record.before.fanOut,after:record.after.fanOut}))+'</p>';
+    if(record.kind==='known-users') h+='<p class="pr-impact-measures">'+esc(record.callers.coverage==='available'?tr('{count} known static callsites',{count:record.callers.total}):tr('Callsite coverage unavailable'))+' · '+esc(tr('{count} file import sites',{count:record.importers}))+(record.unchangedCallers?' · '+esc(tr('{count} callsites in unchanged files',{count:record.unchangedCallers})):'')+'</p>';
+    if(record.kind==='known-importers') h+='<p class="pr-impact-measures">'+esc(tr('{count} file import sites',{count:record.importers}))+'</p>';
+    if(record.kind!=='known-users'&&record.callers&&record.callers.coverage!=='available') h+='<p class="pr-assessment-scope">'+esc(tr('Callsite coverage unavailable'))+'</p>';
+    var primary=record.locations.findIndex(function(loc){return loc.side==='head';});if(primary<0)primary=0;
+    var at=record.locations[primary];
+    if(at)h+='<button type="button" class="text-action pr-impact-path" data-impact-location="'+index+':'+primary+'">'+esc(at.file+':'+at.line)+' · '+esc(tr(at.side==='base'?'Merge-base':'PR head'))+'</button>';
+    h+='<details class="pr-impact-evidence"><summary>'+esc(tr('Change evidence and affected references'))+'</summary>';
+    if(record.kind==='dependency-changed') h+='<pre class="pr-impact-forms">'+esc(JSON.stringify({base:record.before.forms,head:record.after.forms},null,2))+'</pre>';
+    if(record.kind==='structural-measures') h+='<p class="pr-assessment-scope">'+esc(tr('These are existing rule measurements from both snapshots; the cause of an individual edge is not established.'))+'</p>';
+    record.locations.forEach(function(loc,i){h+='<button type="button" class="text-action" data-impact-location="'+index+':'+i+'">'+esc(tr(loc.side==='base'?'Merge-base':'PR head'))+' · '+esc(loc.file+':'+loc.line)+(loc.relation?' · '+esc(tr(loc.relation==='bound-call'?'Bound source call':'File import')):'')+(loc.unchanged?' · '+esc(tr('unchanged file')):'')+'</button>';});
+    (record.contexts||[]).forEach(function(context){h+='<p class="pr-assessment-scope">'+esc(tr('Related existing constraint'))+' · <button type="button" class="text-action" data-finding="'+esc(context.id)+'">'+esc(GROUPS[context.code]||context.code)+'</button></p>';});
+    h+='</details>';
+    if(finding)h+=quickHandoff(finding,true)+taskHtml(finding);
+    return h+'</article>';
+  }
+  function verificationHtml() {
+    var title = '<details class="verify-change"><summary>' + esc(tr('Verify a previous task')) + '</summary>';
+    if (!data.verification) return title + '<p class="ev">' + esc(tr('Download the task JSON before editing, then re-analyze using the same output directory.')) + '</p></details>';
+    return title + '<p class="ev">' + esc(tr('Run project checks separately. This receipt compares captured analyses and records your reported check results.')) + '</p>'
+      + '<form><label>' + esc(tr('Task JSON from the previous run')) + '<input type="file" accept=".json,application/json" class="verify-task" required></label>'
+      + '<label>' + esc(tr('Project check results JSON (optional)')) + '<input type="file" accept=".json,application/json" class="verify-checks"></label>'
+      + '<div class="task-actions"><button type="submit">' + esc(tr('Preview verification')) + '</button></div></form>'
+      + '<p class="verify-status ev" role="status"></p><div class="verify-preview" aria-live="polite"></div><div class="task-actions">'
+      + '<button type="button" class="verify-template" disabled>' + esc(tr('Download checks template')) + '</button>'
+      + '<button type="button" class="verify-download" disabled>' + esc(tr('Download verification JSON')) + '</button></div></details>';
+  }
   function renderOverview() {
     var o = data.overview;
     if (!o) { overview.innerHTML = '<h3>' + esc(tr('Architecture check')) + '</h3>' + legend(); return; }
@@ -738,17 +806,23 @@
     var live = typeof window.__archifyReanalyze === 'function';
     var h = '<div class="workbench-header"><h3>' + (errors ? '<i class="bauify-red"></i>' : '') + esc(tr('Architecture check')) + '</h3>' +
       (live ? iconButton('refresh', tr('Re-analyze'), ' bauify-reanalyze') : '<span class="snapshot-label" tabindex="0" role="img" aria-label="' + esc(tr('Offline snapshot')) + '" data-analysis-tip="' + esc(tr('Offline snapshot')) + '">' + uiIcon('snapshot') + '</span>') + '</div>';
+    if (data.pullRequest) {
+      var pr = data.pullRequest;
+      h += '<p class="pr-context"><b>' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', { number: pr.number })) + '</b> · ' + esc(pr.title) + '</p><p class="ev">' + esc(pr.scope) + ' · <code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code></p><p class="ev">' + esc(tr('The atlas shows PR head. Existing findings are not automatically caused by this PR.')) + '</p>';
+    }
     h += reviewHtml(o.review);
     var rules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
     var fileCycles = data.findings.filter(function (f) { return f.code === 'coupling/import-cycle'; }).length;
     var moduleCycles = data.findings.filter(function (f) { return f.code === 'coupling/cycle'; }).length;
     var boundaryViolations = data.findings.filter(function (f) { return f.code === 'architecture/boundary'; }).length;
+    if (data.pullRequest) h += '<details class="pr-head-checks"><summary>' + esc(tr('PR head checks · {errors} error-level findings', { errors: errors })) + '</summary>';
     h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><div class="health-primary ' + (errors ? 'attention' : 'positive') + '"><b>' + fmt(o.counts.findings) + '</b><span>' + esc(tr('findings')) + '</span><i>' + esc(!rules.length ? tr('No checks ran') : errors ? tr('{count} errors', { count: errors }) : tr('No errors')) + '</i></div>';
     h += '<div class="health-facts"><span>' + esc(tr('Import cycles')) + '<b>' + (rules.indexOf('coupling/import-cycle') !== -1 ? fmt(fileCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Module cycles')) + '<b>' + (rules.indexOf('coupling/cycle') !== -1 ? fmt(moduleCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Boundary violations')) + '<b>' + (!o.coverage.boundaries || !o.coverage.boundaries.rules ? tr('Not configured') : rules.indexOf('architecture/boundary') !== -1 ? fmt(boundaryViolations) : tr('Not checked')) + '</b></span></div>';
     if (o.counts.acceptedErrors) h += '<p class="scope-line">' + esc(tr('{open} open · {accepted} accepted error-level findings', { open: o.counts.error, accepted: o.counts.acceptedErrors })) + '</p>';
     // A thin ring is still a finding, not an all-clear: say what each ring weight means.
     if (svg) h += '<p class="halo-legend" aria-label="' + esc(tr('Diagram rings')) + '"><span><i class="heavy"></i>' + esc(tr('Concentrated')) + '</span><span><i class="thin"></i>' + esc(tr('Has findings')) + '</span><span><i class="dashed"></i>' + esc(tr('Not analyzed')) + '</span></p>';
     h += '</section>';
+    if (data.pullRequest) h += '</details>';
     h += '<p class="brief-status ev" role="status" aria-live="polite"></p>';
     h += '<details class="architecture-brief-preview" hidden><summary>' + esc(tr('Copy manually')) + '</summary><textarea readonly spellcheck="false" aria-label="' + esc(tr('Architecture brief')) + '"></textarea></details>';
     var offline = '';
@@ -758,13 +832,14 @@
       else offline += '<p class="ev">' + esc(tr('This report has no saved start command. Ask your AI to prepare a fresh analysis from the original repository and architecture JSON.')) + '</p>';
       offline += '</details>';
     }
-    h += '<div class="section-heading"><h4>' + esc(tr(o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4>' + iconButton('copy', tr('Copy architecture brief'), ' brief-copy') + '</div>';
-    if (o.priorities.length) {
+    h += '<div class="section-heading' + (data.pullRequest ? ' pr-review-heading' : '') + '"><h4>' + esc(tr(data.pullRequest ? 'PR review priorities' : o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4>' + iconButton('copy', tr(data.pullRequest ? 'Copy PR impact brief' : 'Copy architecture brief'), ' brief-copy') + '</div>';
+    if (data.pullRequest) h += prReviewPriorities();
+    else if (o.priorities.length) {
       o.priorities.forEach(function (id, i) { h += priorityCard(id, i + 1); });
     } else h += '<p class="ev">' + esc(tr('No open findings within the checks that ran. Accepted findings and coverage remain below.')) + '</p>';
-    h += offline;
+    h += verificationHtml() + offline;
     var architecture = o.investigation && o.investigation.architecture;
-    if (architecture && architecture.structuralSignals.length) {
+    if (!data.pullRequest && architecture && architecture.structuralSignals.length) {
       h += '<details class="structural-signals"><summary>' + esc(tr('Additional structural signals')) + ' · ' + architecture.structuralSignals.length + '</summary>';
       architecture.structuralSignals.forEach(function (signal) { h += findingRow(signal.id); });
       h += '</details>';
@@ -774,7 +849,7 @@
       var externalCount = data.findings.filter(function (f) { return f.external; }).length;
       h += '<div class="external-entry"><button type="button" class="external-findings"><b>' + esc(tr('External diagnostics')) + ' · ' + externalCount + '</b><span>' + plural(sources.length, 'source') + '</span></button><button type="button" class="text-action overview-sources">' + esc(tr('Sources & coverage')) + '</button></div>';
     }
-    h += '<div class="overview-secondary"><button type="button" class="browse-findings" aria-label="' + esc(tr('Browse findings')) + '" data-analysis-tip="' + esc(tr('Browse findings')) + '">' + uiIcon('filter') + esc(tr('Filter')) + '</button><p class="ev counts">' + esc(tr('{warnings} warnings · {info} reference signals · {accepted} accepted', { warnings: o.counts.warning, info: o.counts.info, accepted: o.counts.accepted || 0 })) + '</p>';
+    h += (data.pullRequest ? '<p class="ev">' + esc(tr('Whole-head background, including existing findings')) + '</p>' : '') + '<div class="overview-secondary"><button type="button" class="browse-findings" aria-label="' + esc(tr('Browse findings')) + '" data-analysis-tip="' + esc(tr('Browse findings')) + '">' + uiIcon('filter') + esc(tr('Filter')) + '</button><p class="ev counts">' + esc(tr('{warnings} warnings · {info} reference signals · {accepted} accepted', { warnings: o.counts.warning, info: o.counts.info, accepted: o.counts.accepted || 0 })) + '</p>';
     if (o.groups.length) {
       h += '<details class="all-finding-groups"><summary>' + esc(tr('All findings')) + ' · ' + o.counts.findings + '</summary>';
       o.groups.forEach(function (g) { h += '<details><summary><i class="bauify-' + toneOf(g.severity) + '"></i>' + esc(GROUPS[g.code] || g.code) + ' · ' + g.count + '</summary>' + g.ids.map(function (id) { return findingRow(id); }).join('') + '</details>'; });
@@ -788,11 +863,21 @@
     if (!standalone) h += '<details><summary>' + esc(tr('Colour key')) + '</summary>' + legend() + '</details>';
     h += '</div>';
     overview.innerHTML = h;
+    overview.querySelectorAll('[data-impact-location]').forEach(function(button){button.addEventListener('click',function(){var indices=button.getAttribute('data-impact-location').split(':').map(Number),loc=data.pullRequest.impact.records[indices[0]].locations[indices[1]];showCode(loc.file,loc.line,tr('Captured PR source; inspect changes against the merge-base.'),'info',false,null,null,null,loc.side);});});
+    window.__archifyWireVerification(overview, data.verification, tr);
     overview.querySelector('.browse-findings').addEventListener('click', function () { showFindings('all'); });
     var externalButton = overview.querySelector('.external-findings'); if (externalButton) externalButton.addEventListener('click', function () { showFindings('external'); });
     var sourceButton = overview.querySelector('.overview-sources'); if (sourceButton) sourceButton.addEventListener('click', showSources);
     var brief = overview.querySelector('.architecture-brief-preview');
-    overview.querySelector('.brief-copy').addEventListener('click', function () { copyText(data.architectureBrief || '', overview.querySelector('.brief-status'), brief.querySelector('textarea'), tr('Copied architecture brief. Ask your coding AI to verify the cited source before editing.'), brief); });
+    overview.querySelector('.brief-copy').addEventListener('click', function () {
+      var content=data.architectureBrief||'',message='Copied architecture brief. Ask your coding AI to verify the cited source before editing.';
+      if(data.pullRequest){
+        var p=data.pullRequest,i=p.impact,ids=i?i.categories.architecture.priorities.concat(i.categories.complexity.priorities):[];
+        content=JSON.stringify({repository:p.repository,scope:p.scope,base:p.baseSHA,head:p.headSHA,impact:i?{basis:i.basis,total:i.total,comparison:i.comparison,records:i.records.filter(function(r){return ids.indexOf(r.id)!==-1;}),coverage:i.coverage}:null},null,2);
+        message='Copied PR impact evidence. Verify the cited source and coverage before review.';
+      }
+      copyText(content,overview.querySelector('.brief-status'),brief.querySelector('textarea'),tr(message),brief);
+    });
     var startCopy = overview.querySelector('.start-copy');
     if (startCopy) startCopy.addEventListener('click', function () { copyText(data.ui.resume.command, overview.querySelector('.start-status'), overview.querySelector('.start-command'), tr('Copied start command.')); });
     var again = overview.querySelector('.bauify-reanalyze');
@@ -877,7 +962,7 @@
     }).join('');
   }
   function taskHtml(f) {
-    return '<details class="ai-task" data-task-id="' + esc(f.id) + ("\">" + "<summary>" + tr("Task preview and download") + "</summary>" + "<p class=\"ev\">" + tr("Review the brief, then give it to your coding AI. Exporting does not modify code.") + "</p>" + "<p class=\"task-status ev\" role=\"status\" aria-live=\"polite\">" + tr("Open to prepare the task.") + "</p>" + "<div class=\"task-actions\">" + "<button type=\"button\" class=\"task-copy\" disabled>" + tr("Copy AI task") + "</button>" + "<button type=\"button\" class=\"task-download\" disabled>" + tr("Download .md") + "</button>" + "<button type=\"button\" class=\"task-refresh\">" + tr("Check again") + "</button>" + "</div>" + "<label class=\"ev\">" + tr("Task preview · select text to copy manually") + "<textarea class=\"task-preview\" readonly spellcheck=\"false\" aria-label=\"" + tr("AI task preview") + "\">" + "</textarea>" + "</label>" + "</details>");
+    return '<details class="ai-task" data-task-id="' + esc(f.id) + ("\">" + "<summary>" + tr("Task preview and download") + "</summary>" + "<p class=\"ev\">" + tr("Review the brief, then give it to your coding AI. Exporting does not modify code.") + "</p>" + "<p class=\"task-status ev\" role=\"status\" aria-live=\"polite\">" + tr("Open to prepare the task.") + "</p>" + "<div class=\"task-actions\">" + "<button type=\"button\" class=\"task-copy\" disabled>" + tr("Copy AI task") + "</button>" + "<button type=\"button\" class=\"task-download\" disabled>" + tr("Download .md") + "</button>" + "<button type=\"button\" class=\"task-json\" disabled>" + esc(tr("Download task JSON")) + "</button>" + "<button type=\"button\" class=\"task-refresh\">" + tr("Check again") + "</button>" + "</div>" + "<label class=\"ev\">" + tr("Task preview · select text to copy manually") + "<textarea class=\"task-preview\" readonly spellcheck=\"false\" aria-label=\"" + tr("AI task preview") + "\">" + "</textarea>" + "</label>" + "</details>");
   }
   function externalEvidence(f) {
     var locations = f.external.locations || [];
@@ -946,6 +1031,7 @@
       var id = box.getAttribute('data-task-id'), payload = null, busy = false;
       var status = box.querySelector('.task-status'), preview = box.querySelector('.task-preview');
       var copy = box.querySelector('.task-copy'), download = box.querySelector('.task-download'), refresh = box.querySelector('.task-refresh');
+      var downloadJson = box.querySelector('.task-json');
       var quick = container.querySelector('[data-handoff-id="' + id + '"]');
       var quickCopy = quick && quick.querySelector('.quick-copy');
       var say = function (text, previewOnly) { status.textContent = text; if (quick) quick.querySelector('.handoff-status').textContent = previewOnly ? '' : text; };
@@ -956,7 +1042,7 @@
       };
       var prepare = async function () {
         if (busy) return null;
-        busy = true; copy.disabled = download.disabled = refresh.disabled = true;
+        busy = true; copy.disabled = download.disabled = downloadJson.disabled = refresh.disabled = true;
         if (quickCopy) quickCopy.disabled = true;
         say(tr("Preparing task and checking available evidence…"), true);
         try {
@@ -978,7 +1064,7 @@
           payload = null; preview.value = '';
           say(tr("Could not prepare task: ") + error.message + tr(" Re-analyze if this page shows an older result, then retry."));
           return null;
-        } finally { busy = false; copy.disabled = download.disabled = !payload; refresh.disabled = false; if (quickCopy) quickCopy.disabled = false; }
+        } finally { busy = false; copy.disabled = download.disabled = downloadJson.disabled = !payload; refresh.disabled = false; if (quickCopy) quickCopy.disabled = false; }
       };
       box.addEventListener('toggle', function () { if (box.open && !payload && !busy) prepare(); });
       refresh.addEventListener('click', prepare);
@@ -993,6 +1079,9 @@
       };
       copy.addEventListener('click', copyTask);
       if (quickCopy) quickCopy.addEventListener('click', copyTask);
+      downloadJson.addEventListener('click', function () {
+        if (payload) window.__archifyDownloadJson(payload.task, payload.task.taskId + '.json');
+      });
       download.addEventListener('click', async function () {
         var p = await prepare(); if (!p || !box.isConnected) return;
         var url = URL.createObjectURL(new Blob([p.markdown], { type: 'text/markdown;charset=utf-8' }));
@@ -1282,6 +1371,7 @@
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.
+  window.__archifyShowSource = function(file, line, snapshot) { setOn(true); showCode(file, line, tr('Captured PR source; inspect changes against the merge-base.'), 'info', false, null, null, null, snapshot); };
   window.__archifyShowFinding = function (id, parent) {
     if (!findingById[id]) return;
     if (root.getAttribute('data-bauify') !== 'on') setOn(true);

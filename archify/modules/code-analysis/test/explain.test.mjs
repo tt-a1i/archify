@@ -25,7 +25,7 @@ function setup(t, { language = 'ts', entry = 'entry.mjs', symbol = 'entry', sour
 }
 
 const SAVED_LANGUAGES = [
-  { language: 'py', entry: 'entry.py', symbol: 'chosen', adapter: /^python@/, startLine: 4, endLine: 5, dependency: 'dep.py',
+  { language: 'py', entry: 'entry.py', symbol: 'chosen', adapter: /^pyright-parser@/, startLine: 4, endLine: 5, dependency: 'dep.py',
     sources: { 'entry.py': Buffer.from("# coding: latin-1\nfrom dep import value\n\ndef chosen():\n    return 'café' + value\n", 'latin1'), 'dep.py': "value = '!'\n" } },
   { language: 'java', entry: 'Entry.java', symbol: 'Entry.chosen()', adapter: /^java-parser@/, startLine: 3, endLine: 3, dependency: 'p/Dep.java',
     sources: { 'Entry.java': 'import p.Dep;\nclass Entry {\n  static Dep chosen() { return null; }\n}\n', 'p/Dep.java': 'package p; public class Dep {}\n' } },

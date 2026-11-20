@@ -1,24 +1,18 @@
-// Python adapter: the standard-library `ast` script in extract.py reports raw
-// import statements; this module lists files, runs the script, and resolves
-// specifiers against the analyzed tree with the same external / outside /
-// unknown policy as the TypeScript adapter.
-import { spawnSync } from 'node:child_process';
+// Python source analysis using the transplanted Pyright parser. Target source
+// is captured once and never imported or executed.
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { fail } from '../shared/diagnostics.mjs';
+import { analyzeFile, resolveSourceCalls } from './analyze.mjs';
 import { classifyRole, listFiles, snapshotSources } from '../shared/files.mjs';
 import { describeRepository } from '../shared/git.mjs';
+import { captureDeclarations } from './declarations.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 10;
+export const REVISION = 17;
 
-const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'extract.py');
 const PY_EXT = /\.py$/;
-const CANDIDATES = process.env.BAUIFY_PYTHON
-  ? [[process.env.BAUIFY_PYTHON, []]]
-  : [['python3', []], ['python', []], ['py', ['-3']]];
 
 export function detect(root, config) {
   return listFiles(root, config).some((f) => PY_EXT.test(f));
@@ -28,32 +22,11 @@ export function countSources(root, config) {
   return listFiles(root, config).filter((f) => PY_EXT.test(f)).length;
 }
 
-export function runPython(request, candidates = CANDIDATES, spawn = spawnSync) {
-  const input = JSON.stringify(request);
-  const attempts = [];
-  for (const [command, args] of candidates) {
-    const probe = spawn(command, [...args, '-c', 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)'], { encoding: 'utf8', timeout: 5000 });
-    if (probe.error || probe.status !== 0) {
-      attempts.push(`${command}: incompatible or unavailable Python 3.8+ (${probe.error?.code || probe.status})`);
-      continue;
-    }
-    const result = spawn(command, [...args, SCRIPT], { input, encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, maxBuffer: 256 * 1024 * 1024 });
-    if (result.error) { attempts.push(`${command}: ${result.error.code || result.error.message}`); continue; }
-    if (result.status !== 0) fail('extract/python-failed', 'The Python extractor exited with an error.', {
-      subject: { command, script: SCRIPT },
-      evidence: { exitCode: result.status, stderr: result.stderr.trim().split('\n').slice(-5) },
-      supportedFixes: ['run the command manually to inspect the traceback', 'report it with the evidence'],
-    });
-    return { command, output: JSON.parse(result.stdout) };
-  }
-  fail('extract/python-unavailable', 'No Python 3 interpreter could be started.', {
-    subject: { tried: candidates.map(([c]) => c) },
-    evidence: { attempts },
-    supportedFixes: ['install Python 3.8+ and put it on PATH', 'set BAUIFY_PYTHON to the interpreter path'],
-  });
-}
-
 export function extract(root, config) {
+  const targetVersion = config.python?.targetVersion ?? '3.14';
+  if (typeof targetVersion !== 'string' || !/^3\.(?:[8-9]|1[0-4])$/.test(targetVersion)) fail('extract/python-target-version', 'python.targetVersion must be a supported Python version from 3.8 through 3.14.', {
+    subject: { setting: 'python.targetVersion' }, evidence: { value: targetVersion }, supportedFixes: ['choose a string such as "3.12" or "3.14"'],
+  });
   const absRoot = path.resolve(root);
   const { contents: snapshot, packageMarkers } = snapshotSources(absRoot, config, f => PY_EXT.test(f));
   const files = [...snapshot.keys()];
@@ -63,10 +36,20 @@ export function extract(root, config) {
     const parts = file.split('/');
     for (let i = 1; i < parts.length; i += 1) directories.add(parts.slice(0, i).join('/'));
   }
-  const { command, output } = runPython({ files, sources: Object.fromEntries([...snapshot].map(([rel, bytes]) => [rel, bytes.toString('base64')])) });
+  const analyses = [...snapshot].map(([file, bytes]) => analyzeFile(file, bytes, targetVersion));
+  const dependencies = captureDeclarations(fs.realpathSync(absRoot), config.python?.declarations, targetVersion, fileSet);
+  const records = analyses.map(analysis => analysis.record);
+  resolveSourceCalls(analyses, (from, module, level, name) => {
+    if (level && dependencies.origins.has(from)) return dependencies.locate(from, module, level, name);
+    const edges = resolveDeclaredImport({ module, level, names: name ? [name] : ['*'] }, from, fileSet, directories);
+    if (edges.length !== 1) return;
+    const edge = edges[0];
+    if (edge.to) return { file: edge.to, module: !name || !edge.names?.includes(name) };
+    if (edge.reason === 'external') return dependencies.locate(from, module, level, name);
+  }, dependencies.analyses);
 
   const calls = [];
-  const parsedFiles = new Map(output.files.filter(record => !record.error).map(record => [record.path, record]));
+  const parsedFiles = new Map(records.filter(record => !record.error).map(record => [record.path, record]));
   // Reuse captured import resolution for one explicit reexport. No project
   // import or arbitrary chain traversal; ambiguous/rebound bindings are absent.
   const importedDefinition = (from, binding, reexports = 1) => {
@@ -86,7 +69,7 @@ export function extract(root, config) {
   const fileRecords = [];
   const symbols = [];
   const functions = [];
-  for (const record of output.files) {
+  for (const record of records) {
     fileRecords.push({ path: record.path, loc: record.loc, role: classifyRole(record.path, config.roles), sourceText: record.sourceText });
     for (const b of record.symbols || []) symbols.push({ file: record.path, name: b.name, kind: b.kind, line: b.line });
     for (const fn of record.functions || []) functions.push({ file: record.path, ...fn });
@@ -130,13 +113,14 @@ export function extract(root, config) {
   const repo = describeRepository(absRoot);
   const facts = {
     schema_version: 1,
-    repository: { ...repo, language: 'py', adapter: `python@${output.python}`, adapterRevision: REVISION },
+    repository: { ...repo, language: 'py', adapter: `pyright-parser@1.1.414/python-${targetVersion}`, adapterRevision: REVISION },
     files: fileRecords,
     packageMarkers,
     imports,
     symbols: symbols.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.name, b.name)),
     functions: functions.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.qualname, b.qualname)),
-    callModel: 'python-lexical-v2',
+    callModel: 'python-source-v3',
+    ...(dependencies.scope.declarations.length ? { languageScope: dependencies.scope } : {}),
     calls,
     unresolved,
   };

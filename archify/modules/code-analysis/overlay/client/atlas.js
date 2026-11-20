@@ -2,13 +2,16 @@
   var source = document.getElementById('bauify-atlas-data');
   if (!source) return;
   var atlas = JSON.parse(source.textContent);
-  var ui = JSON.parse(document.getElementById('bauify-analysis').textContent).ui || {};
+  var analysis = JSON.parse(document.getElementById('bauify-analysis').textContent), ui = analysis.ui || {}, pr = analysis.pullRequest;
   var tr = window.__archifyMakeAnalysisTranslator(ui.messages || {});
   var root = document.documentElement;
   var standalone = ui.mode === 'standalone';
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
   var NAMES = { 'complexity/function': tr("Complex functions"), 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'redundancy/duplicate-block': tr("Duplicate code") };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
+  var prFiles = pr ? new Map(F.map(function(f,i){return[f[0],i];})) : null, prFunctions = pr ? new Map() : null;
+  var prMarkerHits = [], prModuleChanges = pr ? new Map((pr.moduleChanges || []).map(function(m){return[m.id,m];})) : null;
+  if (pr) FN.forEach(function(fn,i){prFunctions.set(JSON.stringify([F[fn[0]][0],fn[1]]),i);});
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function icon(name) {
@@ -47,7 +50,8 @@
   panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', tr("Code analysis atlas"));
   panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '<span>' + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', tr('file dependencies')) + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
     '<div class="atlas-controls"><button type="button" class="atlas-expand" aria-pressed="true"></button><button type="button" class="atlas-clear">' + esc(tr('Clear selection')) + '</button></div></nav>' +
-    '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div><div class="atlas-help"></div></div><aside class="atlas-side"><section class="atlas-selection"></section><section class="atlas-stats"><div class="k">' + esc(tr('Totals')) + '</div><div class="stats">' +
+    '<div class="atlas-tabs" role="tablist" aria-label="' + esc(tr('Atlas view')) + '"><button type="button" class="atlas-tab" id="atlas-tab-map" role="tab" aria-selected="true" tabindex="0" aria-controls="atlas-map-panel" data-analysis-tip="' + esc(tr('Relationships and findings')) + '">' + esc(tr('Map')) + '</button><button type="button" class="atlas-tab" id="atlas-tab-files" role="tab" aria-selected="false" tabindex="-1" aria-controls="atlas-files-panel" data-analysis-tip="' + esc(tr('Search captured files')) + '">' + esc(tr('Files')) + '</button></div>' +
+    '<div class="atlas-body"><nav class="atlas-files-pane" id="atlas-files-panel" role="tabpanel" aria-labelledby="atlas-tab-files" hidden><input class="atlas-file-query" type="search" aria-label="' + esc(tr('Find a captured file')) + '"><div class="atlas-file-list"></div></nav><div class="atlas-stage" id="atlas-map-panel" role="tabpanel" aria-labelledby="atlas-tab-map"><canvas role="img"></canvas><div class="atlas-tip" hidden></div><div class="atlas-help"></div></div><aside class="atlas-side"><section class="atlas-selection"></section><section class="atlas-stats"><div class="k">' + esc(tr('Totals')) + '</div><div class="stats">' +
     [[F.length, tr('files')], [E.length, tr('file dependencies')], [FN.length, tr('functions')], [M.length, tr('modules')]].map(function (stat) { return '<div class="stat"><b>' + fmt(stat[0]) + '</b><span>' + stat[1] + '</span></div>'; }).join('') +
     '</div></section><div class="atlas-side-content"></div></aside></div>';
   // The diagram view opens on the analysed diagram. Tabs above it page between the
@@ -77,15 +81,74 @@
     }
   }
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
+  var filePane = panel.querySelector('.atlas-files-pane'), fileQuery = panel.querySelector('.atlas-file-query'), fileList = panel.querySelector('.atlas-file-list');
+  function renderFiles() {
+    var wanted = fileQuery.value.trim().toLowerCase();
+    fileList.innerHTML = F.map(function (file, index) {
+      if (wanted && file[0].toLowerCase().indexOf(wanted) < 0) return '';
+      return '<button type="button" data-file="' + index + '"' + (index === state.file ? ' aria-current="true"' : '') + '>' + esc(file[0]) + '</button>';
+    }).join('') || '<p role="status">' + esc(tr('No captured files match.')) + '</p>';
+  }
+  function fileMarkdown(index) {
+    var file = F[index];
+    var names = fnsByFile[index].map(function (i) { return tr('{name} (line {line})', { name: FN[i][1], line: FN[i][2] }); });
+    return '# ' + file[0] + '\n\n' + tr('Module: ') + M[file[1]].label + '\n\n' + tr('Captured functions:') + '\n' + (names.length ? names.map(function (name) { return '- ' + name; }).join('\n') : tr('none')) + '\n\n' + tr('This is navigation context from the saved analysis, not fresh source or tool verification.') + '\n' + tr('Source content and complete diagnostic/task evidence are not included.');
+  }
+  function showTab(files, focusSearch) {
+    filePane.hidden = !files;
+    stage.hidden = files;
+    panel.querySelector('#atlas-tab-map').setAttribute('aria-selected', files ? 'false' : 'true');
+    panel.querySelector('#atlas-tab-files').setAttribute('aria-selected', files ? 'true' : 'false');
+    panel.querySelector('#atlas-tab-map').tabIndex = files ? -1 : 0;
+    panel.querySelector('#atlas-tab-files').tabIndex = files ? 0 : -1;
+    if (files) { renderFiles(); if (focusSearch) fileQuery.focus(); }
+    else draw('fade');
+  }
+  panel.querySelector('#atlas-tab-map').addEventListener('click', function () { showTab(false); });
+  panel.querySelector('#atlas-tab-files').addEventListener('click', function () { showTab(true, true); });
+  panel.querySelector('.atlas-tabs').addEventListener('keydown', function (event) {
+    var tabs = Array.from(panel.querySelectorAll('.atlas-tab')), index = tabs.indexOf(event.target), next;
+    if (index < 0) return;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') next = (index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = tabs.length - 1;
+    else return;
+    event.preventDefault(); showTab(next === 1); tabs[next].focus();
+  });
+  fileQuery.addEventListener('input', renderFiles);
+  fileList.addEventListener('click', function (event) {
+    var button = event.target.closest('button[data-file]');
+    if (!button) return;
+    var index = Number(button.dataset.file);
+    select(F[index][1], -1, undefined, index);
+    fileList.querySelector('[data-file="' + index + '"]').focus({ preventScroll: true });
+  });
   canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 
   // ---- state ----
-  var state = { focusModule: -1, finding: -1, hover: null };
+  var state = { focusModule: -1, finding: -1, file: -1, hover: null };
   var expansionEnabled = true, focusZoom = 1;
   var geometryKey = '', geometryTarget = null, geometryFrom = null, geometryPending = false;
-  var LABEL_FONT = '11px ui-monospace, Menlo, Consolas, monospace';
+  var LABEL_FONT = (pr ? '600 12px ' : '11px ') + 'ui-monospace, Menlo, Consolas, monospace';
+  var PR_BRIEF_FONT = '11px system-ui, -apple-system, "Segoe UI", sans-serif';
   // Long module names are cut on the circle (the tooltip and side panel keep them whole).
   function shortLabel(label) { return label.length > 20 ? '…' + label.slice(-19) : label; }
+  function prModuleRows(mi) {
+    var change=pr&&prModuleChanges.get(M[mi].id);if(!change)return [];
+    return ['files','functions'].map(function(kind) {
+      var counts=change[kind],text=[['added','+'],['removed','−'],['modified','◇']].filter(function(item){return counts[item[0]];}).map(function(item){return item[1]+counts[item[0]];}).join(' ');
+      return text?tr(kind==='files'?'Files: {counts}':'Functions: {counts}',{counts:text}):'';
+    }).filter(Boolean);
+  }
+  function prModuleBrief(mi) {
+    var change=prModuleChanges.get(M[mi].id);if(!change)return '';
+    return ['files','functions'].map(function(kind){
+      var counts=change[kind],changes=[counts.added?'+'+counts.added:'',counts.removed?'−'+counts.removed:''].filter(Boolean).join('/');
+      if(!changes)return '';
+      var many=Math.max(counts.added,counts.removed)>1;
+      return tr(kind==='files'?(many?'{changes} files':'{changes} file'):(many?'{changes} fns':'{changes} fn'),{changes:changes});
+    }).filter(Boolean).join(' · ') || '◇';
+  }
   // Many curves add up: fainter strokes for denser graphs keep strands readable.
   function density(n, most) { return Math.max(0.05, Math.min(most, 8 / Math.sqrt(Math.max(n, 1)))); }
   var geo = null, marks = [];
@@ -108,8 +171,12 @@
     if (key === geometryKey && geometryTarget) { if (!anim.focus) geo = geometryTarget; return; }
     var old = geo, size = Math.max(200, Math.min(w, h));
     var measure = canvas.getContext('2d'); measure.font = LABEL_FONT;
-    var longest = M.reduce(function (n, m) { return Math.max(n, measure.measureText(shortLabel(m.label)).width); }, 0);
-    var R = Math.max(40, Math.min(size * 0.34, (size / 2 - Math.min(longest, size * 0.22) - 12) / 1.53));
+    var longest = M.reduce(function(n,m,mi) {
+      measure.font=LABEL_FONT;var width=measure.measureText(shortLabel(m.label)).width;
+      if(pr) {var brief=prModuleBrief(mi);measure.font=PR_BRIEF_FONT;if(brief)width=Math.max(width,measure.measureText(brief).width);}
+      return Math.max(n,width);
+    },0);
+    var R = Math.max(40, Math.min(size * 0.34, (size / 2 - Math.min(longest, size * (pr ? 0.24 : 0.22)) - 12) / 1.53));
     // Reuse the PR prototype's partition: selected files gain angular space;
     // all other sectors compress within the same circle, without overlap.
     var weights = F.map(function (f, i) { return selected < 0 ? 1 : f[1] === selected ? (2 + Math.min(fnsByFile[i].length, 45) / 12) * focusZoom : 0.55; });
@@ -173,6 +240,7 @@
     if (finding == null) finding = state.finding;
     var sel = { modules: {}, files: {}, edges: null, fns: {}, tone: null, any: false, arcs: {}, entries: {} };
     if (state.focusModule !== -1 && finding === -1) { sel.modules[state.focusModule] = true; sel.any = true; }
+    if (state.file !== -1 && finding === -1) { sel.files[state.file] = true; sel.anchor = state.file; sel.any = true; sel.tone = TONE.info; fnsByFile[state.file].forEach(function (i) { sel.fns[i] = true; }); }
     var f = FD[finding];
     if (f) {
       sel.any = true; sel.tone = TONE[f.severity] || TONE.info;
@@ -199,7 +267,7 @@
   var anim = { focus: 0, reveal: 0, fade: 0, flow: 0, flowFor: -1, raf: 0, timer: 0 };
   var motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   function draw(how, bounds) {
-    if (panel.hidden) return;
+    if (panel.hidden || stage.hidden) return;
     bounds = bounds || stage.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
     var still = motion.matches, old = geo;
@@ -235,7 +303,7 @@
   // Frames come from requestAnimationFrame; a timer backs it up where frames are
   // throttled (a page not in view), so time-based motion still reaches its end.
   function schedule() {
-    if (anim.raf) return;
+    if (anim.raf || panel.hidden || stage.hidden) return;
     anim.raf = requestAnimationFrame(tick);
     anim.timer = setTimeout(tick, 40);
   }
@@ -244,7 +312,7 @@
     var now = performance.now();
     cancelAnimationFrame(anim.raf); clearTimeout(anim.timer);
     anim.raf = 0; anim.timer = 0;
-    if (panel.hidden) return;
+    if (panel.hidden || stage.hidden) return;
     var busy = present(now);
     markMotion();
     if (busy) schedule();
@@ -372,12 +440,21 @@
       ctx.strokeStyle = hue(mi, t, on ? 1 : 0.25); ctx.lineWidth = hub ? 5 : 2; ctx.lineCap = 'butt'; ctx.stroke();
       var a = mid(mi), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label);
       // A module too narrow for its own label is named only when selected or hovered.
-      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || sel.modules[mi] || state.focusModule === mi;
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= (pr ? 16 : 12) || sel.modules[mi] || state.focusModule === mi;
       if (!named) return;
       ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(flip ? a + Math.PI : a);
       ctx.textAlign = flip ? 'right' : 'left'; ctx.fillStyle = hue(mi, t, on ? 1 : 0.35);
-      ctx.fillText(shortLabel(m.label), 0, 0); ctx.restore();
+      ctx.fillText(shortLabel(m.label), 0, 0);
+      if(pr&&((geo.span[mi][1]-geo.span[mi][0])*geo.arc>=32||sel.modules[mi])) {
+        var brief=prModuleBrief(mi);
+        ctx.font=PR_BRIEF_FONT;
+        var room=Math.min(geo.w,geo.h)/2-geo.label-12;
+        if(ctx.measureText(brief).width>room+1)brief=room>=ctx.measureText('◇').width?'◇':'';
+        if(brief!=='◇'){ctx.fillStyle=hue(mi,t,on?0.85:0.3);ctx.fillText(brief,0,16);}
+      }
+      ctx.restore();
     });
+    if (pr) drawPRMarks(ctx,sel);
     ctx.lineCap = 'round';
   }
   function drawHover(ctx, t) {
@@ -399,6 +476,7 @@
   // unreported functions), and stays aligned during animation and resizing.
   function hit(x, y) {
     if (!geo) return null;
+    if(pr) for(var marker=prMarkerHits.length-1;marker>=0;marker--) {var p=prMarkerHits[marker];if(Math.hypot(x-p.x,y-p.y)<=6)return {type:'pr-change',index:p.index};}
     var best = null, bestDistance = 4;
     marks.forEach(function (mark) {
       var dx = mark.p1[0] - mark.p0[0], dy = mark.p1[1] - mark.p0[1];
@@ -420,16 +498,17 @@
       var along = dx * Math.cos(mid(mi)) + dy * Math.sin(mid(mi));
       var across = -dx * Math.sin(mid(mi)) + dy * Math.cos(mid(mi));
       var labelStart = geo.label;
-      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || state.focusModule === mi || selected.modules[mi];
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= (pr ? 16 : 12) || state.focusModule === mi || selected.modules[mi];
       if (named && Math.abs(across) <= 7 && along >= labelStart - 4 && along <= labelStart + measure.measureText(shortLabel(M[mi].label)).width + 4) return { type: 'module', index: mi };
     }
     return null;
   }
   function tipText(h) {
-    if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + (hubOf[h.index] != null ? tr(" · reported hub") : '') + ("<br>" + tr("Click to focus its dependencies.")); }
+    if(h.type==='pr-change') {var change=pr.changes[h.index],a=change.before,b=change.after;return '<b>'+esc(change.name||change.path||change.from+' → '+change.to)+'</b>'+esc(tr(change.status))+(change.kind==='function'&&a&&b?'<br>'+esc(tr('Complexity {before} → {after}',{before:a.complexity,after:b.complexity})):'');}
+    if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + (hubOf[h.index] != null ? tr(" · reported hub") : '') + (pr?prModuleRows(h.index).map(function(text){return '<br>'+esc(text);}).join(''):'') + ("<br>" + tr("Click to focus its dependencies.")); }
     if (h.type === 'file') { var f = F[h.index]; return '<b>' + esc(f[0]) + '</b>' + esc(M[f[1]].label) + ' · ' + plural(f[2], 'line') + ' · ' + plural(fnsByFile[h.index].length, 'function'); }
     var fn = FN[h.index], fd = fn[6] !== -1 ? FD[fn[6]] : null;
-    return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + ("<br>" + tr("complexity ")) + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? ("<br>" + tr("Reported (")) + esc(fd.severity) + tr("). Click to select.") : '');
+    return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + esc(functionColumns(fn)) + ("<br>" + tr("complexity ")) + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? ("<br>" + tr("Reported (")) + esc(fd.severity) + tr("). Click to select.") : ("<br>" + tr("Captured source position, not a runtime call.")));
   }
   canvas.addEventListener('mousemove', function (e) {
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
@@ -446,7 +525,8 @@
   canvas.addEventListener('click', function (e) {
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
     if (!h) { select(-1, -1); return; }
-    if (h.type === 'module') select(state.focusModule === h.index ? -1 : h.index, -1);
+    if (h.type === 'pr-change') showPRChange(h.index);
+    else if (h.type === 'module') select(state.focusModule === h.index ? -1 : h.index, -1);
     else if (h.type === 'function' && FN[h.index][6] !== -1) selectFinding(FN[h.index][6]);
     else select(F[h.type === 'function' ? FN[h.index][0] : h.index][1], -1);
   });
@@ -474,17 +554,20 @@
     var owner = modules.length && modules.every(function (mi) { return mi === modules[0]; }) ? modules[0] : -1;
     select(owner, index);
   }
-  function select(module, finding, saved) {
+  function select(module, finding, saved, file) {
     updateGeometry(performance.now(), motion.matches);
     var view = saved ? saved.view : sideView();
     if (saved) focusZoom = saved.zoom;
     else if (module !== state.focusModule) focusZoom = 1;
+    state.file = Number.isInteger(file) && file >= 0 && file < F.length ? file : -1;
+    if (state.file !== -1) { module = F[state.file][1]; finding = -1; }
     state.focusModule = module; state.finding = finding;
     state.hover = null; tip.hidden = true;
     root.setAttribute('data-bauify-atlas-focus', module === -1 ? '' : M[module].id);
     root.setAttribute('data-bauify-atlas-finding', finding === -1 ? '' : FD[finding].id);
     panel.querySelector('.atlas-clear').disabled = module === -1 && finding === -1;
-    renderSide(view, !saved); draw('fade');
+    if (!filePane.hidden) renderFiles();
+    renderSide(view, !saved); if (!stage.hidden) draw('fade');
   }
   function sideView() {
     var modules = side.querySelector('.module-list');
@@ -495,11 +578,16 @@
     };
   }
   function findingTitle(f) { return window.__archifyAnalysisFindingTitle ? window.__archifyAnalysisFindingTitle(f.id) : f.title; }
+  function functionColumns(fn) {
+    var range = fn[7];
+    if (!range) return '';
+    return ':' + range.column + '-' + range.endLine + ':' + range.endColumn;
+  }
   function selectedCard() {
     var f = FD[state.finding];
     if (f) {
       var what = '';
-      if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + tr(" · complexity ") + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + tr(". Curves: dependencies of its file."); }
+      if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + functionColumns(fn) + tr(" · complexity ") + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + tr(". Curves: dependencies of its file. The position locates captured source, not a runtime call."); }
       if (f.kind === 'cycle') what = tr("Path: ") + f.path.map(function (x) { return F[x][0].split('/').pop(); }).join(' → ') + tr(" → back");
       if (f.kind === 'modules') what = f.modules.map(function (x) { return M[x].label; }).join(', ');
       if (f.kind === 'module' || f.kind === 'area') what = tr("fan-in") + " " + M[f.module].fanIn + tr(" · fan-out ") + M[f.module].fanOut;
@@ -512,6 +600,11 @@
       return '<div class="selected"><h4>' + esc(findingTitle(f)) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(tr(f.severity)) + '</span>' + (f.accepted ? tr(" · accepted in baseline") : '') + ' · ' + esc(what) + '</p>' +
         '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view')) + '</button></div>';
     }
+    if (state.file !== -1) {
+      var picked = F[state.file];
+      var markdown = fileMarkdown(state.file);
+      return '<div class="selected"><h4>' + esc(picked[0]) + '</h4><p>' + esc(tr("Module ")) + esc(M[picked[1]].label) + '</p><textarea class="atlas-file-markdown" readonly aria-label="' + esc(tr("Captured file Markdown")) + '">' + esc(markdown) + '</textarea><button type="button" class="atlas-file-download">' + esc(tr("Download .md")) + '</button></div>';
+    }
     if (state.focusModule !== -1) {
       var m = M[state.focusModule], files = F.filter(function (x) { return x[1] === state.focusModule; }).length;
       var fns = FN.filter(function (fn) { return F[fn[0]][1] === state.focusModule; });
@@ -523,12 +616,85 @@
     }
     return '<div class="note">' + tr("Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.") + '</div>';
   }
+  side.addEventListener('click', function (event) {
+    if (!event.target.classList.contains('atlas-file-download') || state.file === -1) return;
+    var markdown = fileMarkdown(state.file);
+    var blob = new Blob([markdown], { type: 'text/markdown' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = F[state.file][0].split('/').pop().replace(/\.[^.]+$/, '') + '.md';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+  function prSummary() {
+    var h = '<section class="pr-summary"><div class="k">' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', {number:pr.number})) + '</div>';
+    h += '<p class="note"><code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code> · ' + esc(pr.scope) + '</p><dl class="pr-totals">';
+    [['files','files'],['dependencies','file dependencies'],['functions','functions'],['modules','modules']].forEach(function(item) {
+      h += '<div><dt>' + esc(tr(item[1])) + '</dt><dd>' + fmt(pr.before[item[0]]) + ' → <b>' + fmt(pr.after[item[0]]) + '</b></dd></div>';
+    });
+    h += '</dl><div class="k">' + esc(tr('Complexity distribution · function counts')) + '</div><p class="note">' + esc(tr('Grey: merge-base · green: PR head')) + '</p><div class="pr-distribution" role="img" aria-label="' + esc(tr('Complexity distribution · function counts')) + '">';
+    var d=pr.distribution, max=Math.max.apply(Math,d.before.concat(d.after,1));
+    d.labels.forEach(function(label,i) { h += '<div class="pr-band"><span>' + esc(label) + '</span><span class="pr-tracks"><i style="width:' + 100*d.before[i]/max + '%"></i><b style="width:' + 100*d.after[i]/max + '%"></b></span><span>' + d.before[i] + ' → ' + d.after[i] + '</span></div>'; });
+    h += '</div><p class="note">' + esc(tr('Green +: added · amber ◇: changed · red dashed curve: removed dependency. Removed objects remain in the change list.')) + '</p><p class="note">' + esc(tr('Grey dashed spikes: merge-base complexity · red −: removed function. Click a marker for source; hover a module for counts.')) + '</p>';
+    h += '<details class="pr-changes"><summary>' + esc(tr('PR changes · {count}',{count:pr.changes.length})) + '</summary>';
+    pr.changes.forEach(function(change,i) {
+      var label=change.kind==='edge'?change.from+' → '+change.to:change.kind==='function'?change.name+'() · '+change.path:change.path;
+      var metrics=change.kind==='function'&&change.before&&change.after?' · '+tr('complexity ')+change.before.complexity+' → '+change.after.complexity:'';
+      h += '<button type="button" class="row" data-pr-change="' + i + '"><i class="pr-mark-' + change.status + '"></i><span class="t" title="' + esc(label) + '">' + esc(label) + '</span><span class="n">' + esc(tr(change.status)) + '</span></button>' + (metrics?'<p class="note">'+esc(metrics)+'</p>':'');
+    });
+    h += '</details>';
+    if(pr.ambiguousFunctions) h += '<p class="note">' + esc(tr('{count} function names are ambiguous; no before/after identity is inferred.',{count:pr.ambiguousFunctions})) + '</p>';
+    if(pr.omitted.base.length||pr.omitted.head.length) h += '<p class="note">' + esc(tr('Source capture omitted {base} base and {head} head entries (symlinks or submodules).',{base:pr.omitted.base.length,head:pr.omitted.head.length})) + '</p>';
+    return h + '</section>';
+  }
+  function drawPRMarks(ctx, sel) {
+    prMarkerHits=[];
+    var t=theme();
+    ctx.save();ctx.font='bold 10px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    pr.changes.forEach(function(change,index) {
+      var fi=prFiles.get(change.path), tone=change.status==='added'?'#34d399':change.status==='removed'?'#fb7185':'#fbbf24';
+      ctx.strokeStyle=tone;ctx.fillStyle=tone;ctx.globalAlpha=!sel.any||fi!=null&&inSel(sel,fi)?1:.35;
+      var p;
+      if(change.kind==='edge') {
+        var a=prFiles.get(change.from),b=prFiles.get(change.to);if(a==null||b==null)return;
+        ctx.setLineDash(change.status==='removed'?[4,4]:[]);ctx.lineWidth=1.5;ctx.beginPath();curve(ctx,a,b);ctx.stroke();ctx.setLineDash([]);
+        p=along(curvePoints(a,b),0.5);
+      } else {
+        if(fi==null||change.kind==='file'&&change.status==='removed')return;
+        var angle=geo.ang[fi],radius=geo.R-7;
+        if(change.kind==='function') {
+        var fn=prFunctions.get(JSON.stringify([change.path,change.name]));
+        if(change.status!=='removed'&&fn==null)return;
+        angle=fn==null?geo.ang[fi]:fnAngle(fn);
+        radius=geo.spike0+spikeLen((change.after||change.before).complexity)+8;
+        if(change.before) {
+          var start=pt(angle,geo.spike0),old=pt(angle,geo.spike0+spikeLen(change.before.complexity)),dx=-Math.sin(angle)*2,dy=Math.cos(angle)*2;
+          ctx.strokeStyle=change.status==='removed'?tone:t.muted;ctx.lineWidth=1.2;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(start[0]+dx,start[1]+dy);ctx.lineTo(old[0]+dx,old[1]+dy);ctx.stroke();ctx.setLineDash([]);
+        }
+        }
+        p=pt(angle,radius);
+      }
+      if(prMarkerHits.some(function(other){return Math.hypot(p[0]-other.x,p[1]-other.y)<10;}))return;
+      ctx.fillStyle=t.bg;ctx.beginPath();ctx.arc(p[0],p[1],5.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=tone;
+      ctx.fillText(change.status==='added'?'+':change.status==='removed'?'−':'◇',p[0],p[1]);
+      prMarkerHits.push({x:p[0],y:p[1],index:index});
+    });
+    ctx.restore();
+  }
+  function showPRChange(index) {
+    var change=pr.changes[index],path=change.path||change.from,file=prFiles.get(path);
+    if(file!=null)select(F[file][1],-1);
+    var loc=change.after&&typeof change.after==='object'?change.after:change.before&&typeof change.before==='object'?change.before:null;
+    var diff=analysis.snippets[path]&&analysis.snippets[path].changes,line=loc&&loc.line||(change.status==='removed'?null:diff&&(diff.modified[0]||diff.added[0]))||null;
+    if(window.__archifyShowSource)window.__archifyShowSource(path,line,change.status==='removed'?'base':'head');
+  }
   function renderSide(view, openSelected) {
     view = view || sideView();
     var focus = document.activeElement, row = side.contains(focus) && ['data-finding', 'data-module'].find(function (name) { return focus.hasAttribute(name); });
     var selected = side.querySelector('.atlas-selection'), card = selectedCard();
     selected.innerHTML = '<div class="k">' + esc(tr('Selection')) + '</div>' + card;
-    var h = '';
+    side.querySelector('.atlas-stats').hidden = Boolean(pr);
+    var h = pr ? prSummary() : '';
     var groups = {};
     FD.forEach(function (f, i) { (groups[f.code] = groups[f.code] || []).push(i); });
     var codes = Object.keys(groups).sort();
@@ -541,7 +707,7 @@
         return '<button type="button" class="row' + (i === state.finding ? ' active' : '') + (f.accepted ? ' accepted' : '') + '" data-finding="' + i + '"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><span class="t" title="' + esc(findingTitle(f)) + '">' + esc(findingTitle(f)) + '</span><span class="n">' + esc(tr(f.severity)) + '</span></button>';
       }).join('') + '</details>';
     });
-    if (atlas.measured && FN.length) {
+    if (!pr && atlas.measured && FN.length) {
       var counts = []; for (var c = 0; c < 20; c++) counts.push(0);
       FN.forEach(function (fn) { counts[Math.max(1, Math.min(fn[3], 20)) - 1]++; });
       var max = Math.max.apply(Math, counts);
@@ -555,7 +721,7 @@
     };
     h += '<div class="k">' + tr('Modules by coupling · fan-in / fan-out') + '</div><div class="module-list">' + order.map(moduleRow).join('') + '</div>';
     var cov = atlas.coverage, total = Math.max(cov.records, 1);
-    var breakdown = fmt(cov.resolved) + tr(' resolved · ') + fmt(cov.external) + tr(' external · ') + fmt(cov.unknown) + tr(' unresolved') + (cov.outside ? ' · ' + fmt(cov.outside) + tr(' outside the analyzed scope') : '') + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(' failed to parse') : '');
+    var breakdown = fmt(cov.resolved) + tr(' resolved · ') + fmt(cov.external) + tr(' external · ') + fmt(cov.unknown) + tr(' unresolved') + (cov.outside ? ' · ' + fmt(cov.outside) + tr(' outside the analyzed scope') : '') + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(' failed to parse') : '') + (cov.notCompiled ? ' · ' + plural(cov.notCompiled, 'source file') + tr(' without a command') : '');
     h += '<div class="k">' + tr('Dependency records · ') + fmt(cov.records) + '</div><div class="bar" tabindex="0" role="img" aria-label="' + esc(breakdown) + '" data-analysis-tip="' + esc(breakdown + tr('. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.')) + '">' +
       [[cov.resolved, '#34D399'], [cov.external, '#64748B'], [cov.unknown, '#FBBF24'], [cov.outside, '#94A3B8']].map(function (part) { return '<span style="width:' + (100 * (part[0] || 0) / total) + '%;background:' + part[1] + '"></span>'; }).join('') + '</div>' +
       '<div class="note">' + esc(breakdown + tr('. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.')) + '</div>';
@@ -564,6 +730,9 @@
     side.querySelector('.module-list').scrollTop = view.modules;
     side.scrollTop = view.scroll;
     if (row) side.querySelector('[' + row + '="' + focus.getAttribute(row) + '"]').focus({ preventScroll: true });
+    side.querySelectorAll('[data-pr-change]').forEach(function (button) { button.addEventListener('click', function () {
+      showPRChange(Number(button.getAttribute('data-pr-change')));
+    }); });
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     var ev = side.querySelector('.atlas-evidence');
@@ -630,8 +799,8 @@
       var index = FD.findIndex(function (f) { return f.id === id; });
       if (index < 0) select(-1, -1); else selectFinding(index);
     },
-    saveSelection: function () { return { module: state.focusModule, finding: state.finding, zoom: focusZoom, view: sideView() }; },
-    restoreSelection: function (saved) { select(saved.module, saved.finding, saved); }
+    saveSelection: function () { return { module: state.focusModule, finding: state.finding, file: state.file, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() }; },
+    restoreSelection: function (saved) { fileQuery.value = saved.query || ''; select(saved.module, saved.finding, saved, saved.file); showTab(saved.tab === 'files'); }
   };
   if (standalone) open();
   new MutationObserver(function () {
@@ -644,7 +813,7 @@
     else if (!panel.hidden) { renderSide(); draw(); }
   }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   function redrawIfResized() {
-    if (panel.hidden) return;
+    if (panel.hidden || stage.hidden) return;
     var bounds = stage.getBoundingClientRect();
     if (!geo || bounds.width !== geo.w || bounds.height !== geo.h || (window.devicePixelRatio || 1) !== geo.dpr) draw();
   }

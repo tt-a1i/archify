@@ -1,5 +1,24 @@
 # Code Analysis Quick Start
 
+An explicitly requested GitHub PR uses the same workbench:
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo --pr https://github.com/OWNER/REPO/pull/42 --out out/pr-42 --locale zh-CN
+node bin/archify.mjs start /path/to/repo --pr 42 --repository OWNER/REPO --out out/pr-42
+```
+
+`--scope` selects a repository-relative directory (default: the supplied local subdirectory). PR mode captures the merge-base and head as immutable Git blobs and runs the existing analyzer on both with one captured configuration and language adapter. `--language` and `--locale` retain their normal meanings. The local checkout and index are not changed; repository code, hooks and package scripts are not executed.
+
+The native workbench shows head findings, source evidence, review decisions and AI tasks. Its comparison stays against the PR merge-base; refreshing recaptures the requested PR. Failed runs preserve the last successful result. Atlas keeps before/after counts and the complexity distribution visible. Green `+` and amber `◇` mark added and changed captured objects; red dashed curves mark removed dependencies whose endpoints remain in head. Removed objects stay in the change list and open base source through the shared source pane. Source-side buttons switch between captured base and head text. Ambiguous function names are not paired. Source changes do not establish changed runtime behavior or a confirmed defect; an existing head finding is not automatically introduced by the PR. External reports retain the original binding, coverage and comparison limits; this workflow does not run an AI reviewer.
+
+Capture snapshots remain under the chosen output directory so live tasks and review decisions can verify the pinned head even if the local checkout changes. Review acceptance uses the configured baseline and existing service authorization. Offline tasks stay labeled as captured evidence; verify the intended checkout and source revision before editing.
+
+PR priorities use a bounded impact layer over the saved facts and graph, not the whole head's existing hotspots. It compares changed dependency edges and module fan-in/out, reads exact definition fingerprints only in changed source files, and reuses the existing incoming-reference reader to locate direct callers/importers, including unchanged source files. A same-metric body change remains a reading signal; position-only movement does not become an impact. Existing constraints appear only as context attached to a changed dependency or coupling witness. Rule-report evidence updates alone are not promoted to increased risk.
+
+This layer performs no new extraction or repository traversal. Reading is bounded to 32 changed files, 4 MiB of paired source, 80 changed definitions and 160 result records; each reference preview is bounded. Unsupported models, parse errors, excluded roles and exhausted budgets remain explicit unknowns. This is direct static orientation, not runtime tracing, behavior equivalence or complete transitive impact. Full head findings remain separately available as background. The PR brief copies change evidence and its coverage rather than unrelated whole-head recommendations.
+
+In PR mode, short file/function addition and removal counts follow the original module labels, with detailed counts available on hover. Change badges (+/−/◇) open the captured source; grey dashed spikes show merge-base complexity alongside the current spikes. Removed functions can be marked against a surviving file; deleted files/modules remain in the change list. These annotations do not appear in ordinary repository analysis. A same-metric source edit can have a change badge without implying increased complexity or changed behavior.
+
 From the `archify/` package directory inside the Archify repository:
 
 ```sh
@@ -21,8 +40,8 @@ The source panel marks captured changes against the base commit: green gutters f
 
 If the architecture JSON changes or becomes unavailable after startup, the analysis request is rejected and the page asks you to regenerate the diagram. Restart with the updated JSON and open the new URL. The server never rewrites your input JSON or silently combines a new architecture with the previous diagram.
 
-JavaScript, TypeScript, Python, Java, Go and Rust use five adapters. Select one
-with `--language ts|py|java|go|rust`; `ts` covers both JavaScript and TypeScript.
+JavaScript, TypeScript, Python, Java, Go, Rust, C and C++ are selectable. Select one
+with `--language ts|py|java|go|rust|c|cpp`; `ts` covers both JavaScript and TypeScript.
 Each run uses one adapter; the [language reference](LANGUAGE-REFERENCE.md) has example commands and limits. A JS/TS or Python tree that also holds `.java` files
 keeps its language unless its root has a Maven/Gradle build file (see the
 [upgrade note](JAVA.md)). Choose explicitly for a mixed-language root. Add
@@ -34,10 +53,11 @@ Language extraction has its own prerequisites:
 | Adapter | Required tools and source scope |
 | --- | --- |
 | `ts` | Node.js and the module's installed TypeScript parser dependencies. |
-| `py` | Python 3; `BAUIFY_PYTHON` can select the interpreter. |
+| `py` | Node only; transplanted Pyright parser, Python 3.14 syntax by default. Set `python.targetVersion` to 3.8–3.14. |
 | `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
 | `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
+| `c`, `cpp` | An existing `compile_commands.json`, Python clang bindings and libclang; see [C/C++ scope and tooling](C_CPP.md). |
 
 The Go and Rust adapters compile Archify's source helper, not the target
 project. Rust's first use may fetch the helper's locked dependencies; cached
@@ -68,9 +88,94 @@ Deliver the analysis HTML with one or two scoped conclusions; tasks may be given
 
 The reader follows explicit `--locale`, then `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen summarizes error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran; a rule that did not run is labelled as unchecked. Information-level signals remain available through finding filters. Select a priority card title to see its measurements and source location directly in the finding. The copy icon on the card copies the AI task without opening the finding; a check mark confirms success briefly without adding a status message. The **Copy architecture brief** icon shares the bounded hotspot and structural orientation with the headless receipt; its order is not inferred business importance.
 
-Atlas shows the four repository totals in the right sidebar. Hover or focus an icon for its meaning. The complexity distribution and scrollable module list are visible without expanding anything. **Coverage and reading guide** contains the dependency records and legend. When you leave a finding in the standalone report, Atlas returns to the previous selection and zoom. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
+Atlas shows the relationship map and the four labelled repository totals in the right sidebar. **Map** and **Files** are short tabs. Map stays selected by default. Files replaces the map with a searchable captured-file list; it does not add a third column or a lower scrolling region. Hover a tab for its explanation, or use Left/Right and Home/End while a tab is focused. Choosing a file replaces the current finding and highlights its owner module when you return to Map; choosing a module/finding or clearing the selection replaces the file. The right panel previews and downloads its path, module and captured function names/lines as Markdown. This is navigation context from the saved analysis, without source content or complete diagnostic/task evidence; use a finding's source evidence and task actions for those. No fresh source or external-tool verification is implied. The complexity distribution, the scrollable module list, the dependency records and the legend are visible without expanding anything. When you leave a finding in the standalone report, Atlas restores the previous selection, zoom, tab and search. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
 
 After edits, the prominent comparison reports **no longer detected**, **new** and changed evidence. Missing findings do not prove fixes. Configuration, grouping, model or coverage changes make results non-comparable and show the reason. Verify source changes and project tests before claiming an improvement.
+
+## Verify a previous task after edits
+
+1. Open a finding's **Task preview and download**, then click **Download task JSON** before editing. Use the Markdown or copy action to hand the task to a developer or coding agent.
+2. Make the change, run the project's checks separately, and **Re-analyze** in the live workbench, or run `prepare` again with the same output directory. Keep the immediately previous capture; running analysis again rotates the pair.
+3. Under **Verify a previous task**, select the task JSON and preview the analysis observations. To record your project checks, download the checks template, enter short check names and their statuses (`passed`, `failed`, `skipped`, or `not-run`), then load it and preview again. **Download verification JSON** exports the combined receipt. The prepared HTML works offline; these files are read in the browser and never sent to the local service.
+
+The receipt distinguishes observed finding changes from checks reported by the user. It does not run tests, verify their execution, or prove a fix. New findings are counted for the captured scope, not attributed to the task. Limited comparisons, missing evidence and unchanged imported reports are marked inconclusive where applicable. Refresh external reports with their original tools and settings before re-analysis; different bytes alone still do not prove the tool ran against the captured source. Do not put commands, logs or secrets into check names.
+
+For the same flow headlessly, point `verify-change` at the `analysis/` directory from `prepare` or `serve`. It reads the adjacent `analysis.previous/` capture. Example from the package directory:
+
+```sh
+node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks-template > checks.json
+# Edit checks.json to record the checks and results you actually ran.
+node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks checks.json > verification.json
+```
+
+Omit `--checks` to record only analysis observations. Use the original task JSON: its ID must match the selected findings. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 returns a JSON error on stdout with `status: "error"` and `diagnostics` instead of a receipt. `task --verify` remains a separate current-source evidence check.
+
+
+## Review architecture drift between two commits
+
+Use `drift` when a code change may invalidate an existing Architecture diagram.
+It compares observed directed component pairs under the **same** authored IR
+and component mapping. Unlike `check --ir`, it says which relationship was
+already observed and which is newly observed in the selected head.
+
+```sh
+node bin/archify.mjs code-analysis drift /path/to/local/repo \
+  --base BASE_FULL_SHA --head HEAD_FULL_SHA --ir architecture.json \
+  --map overlay-map.json --out /path/to/new-review-directory --json
+```
+
+Use two full local Git commit SHAs and a fresh output directory outside the
+source repository (with an existing parent). `--map` is optional and uses the
+same component-to-module mapping as `check --ir`. `--config` supplies one
+Code Analysis configuration for both pins. Use `--locale en` or
+`--locale zh-CN` to choose the review language. An authored IR with repository
+evidence must pin either compared commit and pass the ordinary Architecture
+delivery checks.
+
+Open `architecture-drift.html` offline and choose **Architecture drift**.
+Select a relationship to see its direction on the diagram and its evidence in
+the side panel. Source buttons open the captured import line and identify the
+exact commit; the panel never reads the current working tree. **Download .md**
+saves the selected relationship, both pins, source paths and line numbers, and
+coverage limits, without copying the source text. `architecture-drift.json`
+contains the same comparison used by the page. `--json` also prints it to
+stdout. Exit 0 means the comparison was produced, even when it reports an
+undeclared relationship or inconclusive evidence. Errors exit 2 with
+structured diagnostics. Existing `check` gates and ordinary render output
+are unchanged.
+
+For a newly observed undeclared relationship, download its Markdown and
+**Download verification task .json**. Keep the original report JSON alongside
+the task. After the prospective change is committed, run `drift` again using
+the first report's head as the new base and the same IR, mapping and config.
+Pass `--from-report original/architecture-drift.json` to check the starting
+commit, IR, mapping and configuration against that report. This also lets
+you reuse an IR that pins the original base revision.
+
+```sh
+node bin/archify.mjs code-analysis verify-drift original/architecture-drift.json \
+  --task DRIFT-<id>.json --after follow-up/architecture-drift.json
+```
+
+The verification receipt reports `not-observed-at-head`, `still-observed`, or
+`inconclusive` for that pair. If the starting observation cannot be reproduced
+or the relevant source does not parse, the outcome is inconclusive. The task
+is tied to the original report bytes. Save those bytes without reformatting.
+The verifier accepts saved drift reports up to 32 MiB each.
+Add `--checks-template` to generate a template, and then pass the completed
+template with `--checks <checks.json>` to record project checks. The command
+records these results as reported, without running or verifying the checks.
+
+The first version covers resolved module-scope static JS/TS imports, exports
+and requires, excluding type-only, conditional and deferred references. It
+uses committed files only. It does not check out refs, run project scripts,
+load local dependency configuration outside the capture, or fetch missing
+objects. Symlinks and submodules are omitted and disclosed. A link change,
+conflicting ownership, missing component coverage, affected parse errors, or a
+change in resolution inputs can make a relationship inconclusive. A new
+import site on an existing pair is still an existing relationship. Unmapped
+and unresolved source is outside the report; even a report with no added
+relationship does not establish full-coverage alignment or runtime behavior.
 
 ## First look at an unfamiliar repository
 
@@ -102,7 +207,7 @@ root (or repository-relative paths with that root prefix); a pinned source alway
 names a path relative to the Git top level. Use a concrete file with line numbers
 when the claim needs source-level evidence.
 - `ruleCounts` shows how findings divide by rule, so a dominant rule is visible before reading every finding.
-- `coverage` lists parse failures, role-excluded source counts (`analyzedFiles`, `excludedByRole`, `excludedRoleCounts`) when test or generated files were excluded from the module graph and rules, and other languages left out.
+- `coverage` lists parse failures and languages left out. When there are parse failures or role exclusions, `analyzedFiles` counts successfully parsed files in the graph and rule scope. The top-level `files` count can include failed files retained by an extractor for source navigation or partial facts. Role exclusions also report `excludedByRole` and `excludedRoleCounts`. Coverage does not change the finding gate.
 
 For each lead you keep, run its `task` command (or `archify code-analysis task out/first-look --finding <id> --root /path/to/repo --format json`) to get source excerpts, facts, suggestions, acceptance and evidence digests. Then read the cited source before changing code. A finding is static evidence, not a proven defect: a complexity warning says the function is harder to read and test, not that it must be split, and a coupling signal may be an intentional design. If the branching or dependency is inherent, record that and leave the code as it is.
 
@@ -500,3 +605,12 @@ the locked helper dependencies are required. Saved and paired questions retain
 the captured source profile, cfg/features, omitted regions and bounded call
 model; a source binding does not establish compilation or runtime dispatch.
 See [Rust support](RUST.md) for setup, profile settings and limitations.
+
+### C and C++ source investigation
+
+Use `--language c` or `--language cpp` with `config.cpp.compileCommands` set to
+an existing compilation database. C++ selection also covers C translation
+units. Active includes, source function ranges and conservative same-unit
+direct calls carry translation-unit contexts. A saved header question requires
+`--context <translation-unit>`; a paired question accepts a translation-unit
+source entry. See [C/C++ support](C_CPP.md) for setup and limits.

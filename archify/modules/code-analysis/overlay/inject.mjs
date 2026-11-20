@@ -36,7 +36,11 @@ import { buildOverview } from './overview.mjs';
 import { buildTaskPayloads } from '../lib/task.mjs';
 import { reviewTargetDigest } from '../lib/review.mjs';
 import { buildAtlas, buildAtlas3dDetail, ATLAS_CSS, ATLAS_JS, ATLAS3D_CSS, ATLAS3D_JS, threeJs } from './atlas.mjs';
+import { createTaskId } from '../lib/task-id.mjs';
+import { evaluateVerification } from '../lib/verification.mjs';
 import { clientAsset } from './client-assets.mjs';
+import { resolveMapping } from '../lib/diagram-mapping.mjs';
+
 
 export function alignDiagram({ ir, graph, map = null, facts = null, findings = [], run = {} }) {
   const modules = new Map(graph.modules.map((m) => [m.id, m]));
@@ -115,7 +119,7 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
 }
 
 export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
-  if (!ir) html = standaloneShell({ locale: run.locale, title: path.basename(sourceRoot || graph.repository.root || 'Repository') });
+  if (!ir) html = standaloneShell({ locale: run.locale, title: run.pullRequest ? run.pullRequest.repository + ' · ' + (run.pullRequest.simulation ? createTranslator(messagesFor(run.locale))('PR analysis · local simulation') : '#' + run.pullRequest.number) : path.basename(sourceRoot || graph.repository.root || 'Repository') });
   if (ir && (!html.includes('data-node-id=') || !html.includes('class="toolbar"'))) {
     fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
       evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
@@ -128,6 +132,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     generator: 'bauify',
     ui: { mode: ir ? 'diagram' : 'standalone', locale: analysisLocale(run.locale || ir?.meta?.locale), messages: messagesFor(run.locale || ir?.meta?.locale), resume: run.resume || null, openByDefault: run.openAnalysis === true },
     repository: graph.repository,
+    pullRequest: run.pullRequest || null,
     unresolved: graph.unresolved,
     excluded: graph.excluded,
     totals: { modules: graph.modules.length, edges: graph.edges.length, files: facts ? facts.files.length : null, findings: findings.length },
@@ -137,9 +142,10 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     unmapped,
     ambiguousModules,
     findings: listed,
+    verification: run.verification || null,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
     overview: buildOverview({ findings: listed, graph, facts, unmapped: ir ? unmapped : [], ambiguousModules, run, diagram: Boolean(ir) }),
-    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts, findingsDocument?.externalEvidence) : {},
+    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id))), { fileList: [...(run.pullRequest?.changedFiles || []).map(file => ({ path: file.path })), ...(run.pullRequest?.impact?.records || []).flatMap(record => record.locations.map(item => ({ path: item.file })))] }), facts, findingsDocument?.externalEvidence, run.pullRequest?.sourceGitRoot) : {},
   };
 
   payload.architectureBrief = architectureHandoff({ overview: payload.overview, repository: graph.repository, locale: run.locale || ir?.meta?.locale, diagram: Boolean(ir) });
@@ -346,81 +352,6 @@ function indexFiles(graph, facts) {
 
 // Sources are filesystem paths. Module paths may instead be Go import paths,
 // Rust crate identities or configured group names, so use captured file ownership.
-function normalizeRelPath(rawPath, repoRoot) {
-  if (typeof rawPath !== 'string' || !rawPath) return null;
-  const norm = rawPath.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '').replace(/\/+$/, '');
-  const rootPrefix = repoRoot && repoRoot !== '.' ? repoRoot.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '').replace(/\/+$/, '') : '';
-  if (!norm || norm === '.') return '';
-  if (rootPrefix && norm === rootPrefix) return '';
-  return rootPrefix && norm.startsWith(`${rootPrefix}/`) ? norm.slice(rootPrefix.length + 1) : norm;
-}
-
-export function resolveMapping(ir, graph, map) {
-  const result = new Map();
-  const files = new Map(graph.modules.map((m) => [m.id, []]));
-  const fileModules = new Map(Object.entries(graph.fileModules || {}));
-  for (const [file, id] of fileModules) files.get(id)?.push(file);
-  // Historical graph exports lack fileModules; retain their entry-file anchors
-  // and directory-path fallback when exact ownership is unavailable.
-  for (const m of graph.modules) if (!files.get(m.id).length) {
-    files.set(m.id, m.entry || []);
-    for (const file of m.entry || []) fileModules.set(file, m.id);
-  }
-  const prefixes = [];
-  const seenPrefix = new Set();
-  const addPrefix = (cid, prefix) => {
-    const key = `${cid}\0${prefix}`;
-    if (seenPrefix.has(key)) return;
-    seenPrefix.add(key);
-    prefixes.push({ cid, prefix, depth: prefix ? prefix.split('/').length : 0 });
-  };
-  for (const c of ir.components) {
-    if (map && Array.isArray(map[c.id])) { result.set(c.id, [...new Set(map[c.id])]); continue; }
-    const ids = new Set();
-    for (const s of c.sources || []) {
-      const rel = normalizeRelPath(s?.path, graph.repository?.root);
-      if (rel === null) continue;
-      let id = fileModules.get(rel);
-      if (!id && !graph.fileModules && rel) {
-        const byDepth = [...graph.modules].sort((a, b) => b.path.split('/').length - a.path.split('/').length);
-        const exact = byDepth.find((m) => m.path === rel);
-        const hasChildren = byDepth.some((m) => m.path.startsWith(`${rel}/`));
-        const enclosing = hasChildren ? null : byDepth.find((m) => m.path && rel.startsWith(`${m.path}/`));
-        id = (exact || enclosing)?.id;
-      }
-      if (id) ids.add(id);
-      else addPrefix(c.id, rel);
-    }
-    // A component with no sources whose id is a module id (the bridge IR, or an IR that reuses
-    // module ids on purpose) maps to that module.
-    if (!ids.size && !(c.sources || []).length && graph.modules.some((m) => m.id === c.id)) ids.add(c.id);
-    for (const id of ids) {
-      const p = graph.modules.find((m) => m.id === id);
-      if (p?.path && files.get(id).some((file) => file.startsWith(`${p.path}/`))) addPrefix(c.id, p.path);
-    }
-    result.set(c.id, [...ids]);
-  }
-  // A file anchor or explicit map claims its whole module. Other modules follow
-  // the most specific directory for each captured file. A split module or tied
-  // prefixes retain every owner, so component order cannot decide the result.
-  const claimed = new Set([...result.values()].flat());
-  prefixes.sort((a, b) => b.depth - a.depth);
-  for (const m of graph.modules) {
-    if (claimed.has(m.id)) continue;
-    const owners = new Set();
-    for (const file of files.get(m.id)) {
-      const matches = prefixes.filter(({ prefix }) => !prefix || file.startsWith(`${prefix}/`));
-      for (const match of matches) {
-        if (match.depth !== matches[0].depth) break;
-        owners.add(match.cid);
-      }
-    }
-    for (const cid of owners) result.get(cid).push(m.id);
-  }
-  for (const ids of result.values()) ids.sort();
-  return result;
-}
-
 function aggregate(edges, side, owner, owners) {
   const acc = new Map();
   for (const e of edges) {
@@ -438,7 +369,7 @@ function aggregate(edges, side, owner, owners) {
 // partial-init proof), captured by the extractor, so the
 // page can show the cited line with the whole file around it to scroll
 // through. Include listed component files as well as cited evidence files.
-function collectSnippets(findings, sourceRoot, components, facts, externalEvidence = []) {
+function collectSnippets(findings, sourceRoot, components, facts, externalEvidence = [], gitRoot = null) {
   const captured = new Map([...externalEvidence, ...(facts?.files || [])].filter(f => typeof f.sourceText === 'string').map(f => [f.path, f.sourceText]));
   const wanted = new Set(components.flatMap((c) => (c.fileList || []).map((f) => f.path)));
   for (const f of findings) {
@@ -454,7 +385,7 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
   for (const file of [...wanted].sort()) {
     let text = captured.get(file);
     // New working-tree facts must never fall back to mutable source files.
-    if (text === undefined && facts?.repository?.sourceKind === 'working-tree') continue;
+    if (text === undefined && ['working-tree', 'git-tree'].includes(facts?.repository?.sourceKind)) continue;
     if (text === undefined) {
       try {
         const root = fs.realpathSync(sourceRoot);
@@ -468,11 +399,14 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
     if (lines.length && lines[lines.length - 1] === '') lines.pop();
     out[file] = { total: lines.length, lines };
   }
-  const changes = sourceChanges(sourceRoot, facts?.repository, new Map([...wanted].filter(file => captured.has(file)).map(file => [file, captured.get(file)])));
+  const changes = sourceChanges(gitRoot || sourceRoot, facts?.repository, new Map([...wanted].filter(file => captured.has(file)).map(file => [file, captured.get(file)])));
   for (const [file, change] of changes) if (out[file]) out[file].changes = change;
   return out;
 }
 
 const CSS = clientAsset('overlay.css');
 
-const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\n` + clientAsset('overlay.js');
+const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\n`
+  + `window.__archifyCreateVerificationTaskId = ${createTaskId.toString()};\n`
+  + `window.__archifyEvaluateVerification = ${evaluateVerification.toString()};\n`
+  + clientAsset('verification.js') + clientAsset('overlay.js');

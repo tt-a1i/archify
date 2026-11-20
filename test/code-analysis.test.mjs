@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'a
 const cli = path.join(root, 'bin/archify.mjs');
 const moduleRoot = path.join(root, 'modules/code-analysis');
 const run = args => spawnSync(process.execPath, [cli, 'code-analysis', ...args], { encoding: 'utf8' });
-test('Code Analysis exposes prepare, serve, check and task through the Archify CLI', () => {
+test('Code Analysis exposes the workbench, checks, task and verification commands through the Archify CLI', () => {
   const publicHelp = spawnSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
   assert.equal(publicHelp.status, 0);
   assert.match(publicHelp.stdout.replace(/\s+/g, ' '), /start <repo-root> \[--ir <architecture.json>\] \[--locale/);
@@ -26,9 +26,19 @@ test('Code Analysis exposes prepare, serve, check and task through the Archify C
   const taskHelp = run(['task', '--help']);
   assert.equal(taskHelp.status, 0, taskHelp.stderr);
   assert.match(taskHelp.stdout, /archify code-analysis task/);
+  const verifyHelp = run(['verify-change', '--help']);
+  assert.equal(verifyHelp.status, 0, verifyHelp.stderr);
+  assert.match(verifyHelp.stdout, /archify code-analysis verify-change <analysis-dir> --task <task.json>/);
   const other = run(['extract', path.join(moduleRoot, 'test/fixtures/ts-basic')]);
   assert.notEqual(other.status, 0);
-  assert.match(other.stderr, /commands: prepare, serve, check, task, import-review/);
+  const operationList = other.stderr.match(/^archify code-analysis commands: (.+)\.$/m);
+  assert.ok(operationList, other.stderr);
+  for (const operation of ['prepare', 'serve', 'check', 'task', 'verify-change', 'import-review', 'drift', 'verify-drift']) {
+    assert.ok(operationList[1].split(', ').includes(operation), operation);
+  }
+  const driftHelp = run(['drift', '--help']);
+  assert.equal(driftHelp.status, 0, driftHelp.stderr);
+  assert.match(driftHelp.stdout, /code-analysis drift <git-repo> --base <full-sha> --head <full-sha>/);
   const missing = run(['serve', path.join(moduleRoot, 'test/fixtures/ts-basic')]);
   assert.equal(missing.status, 2);
   assert.match(missing.stderr, /requires --out/);

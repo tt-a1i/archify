@@ -331,6 +331,13 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .overview-secondary { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .overview-secondary .counts { font-size: 12px; margin: 8px 0 12px; }
 #bauify-reader .overview-secondary .count.total { font-size: inherit; }
+#bauify-reader .verify-change { margin: 12px 0; padding: 12px; border: 1px solid var(--panel-border); border-radius: 8px; overflow-wrap: anywhere; }
+#bauify-reader .verify-change > summary { font-weight: 600; cursor: pointer; }
+#bauify-reader .verify-change label { display: block; margin: 10px 0; }
+#bauify-reader .verify-change input { display: block; width: 100%; margin: 4px 0; font: inherit; }
+#bauify-reader .verify-change button { min-height: 36px; }
+#bauify-reader .verify-preview ul { padding-inline-start: 20px; }
+#bauify-reader .verify-status:empty { display: none; }
 #bauify-reader .comparison-banner { padding: 11px 12px; margin: 10px 0 12px; border: 1px solid var(--panel-border); border-left: 3px solid var(--text-muted); border-radius: 8px; }
 #bauify-reader .comparison-banner.positive { border-left-color: var(--backend-stroke, #159f88); }
 #bauify-reader .comparison-banner > span { display: block; font-size: 11px; color: var(--text-muted); }
@@ -344,6 +351,7 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 /* Quiet icon controls leave the graph and the finding titles as the reading focus. */
 #bauify-reader .icon-button { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; padding: 0; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text); font: inherit; cursor: pointer; }
 #bauify-reader .icon-button:hover { border-color: var(--panel-border); background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text); }
+#bauify-reader .icon-button .ui-icon { display: block; flex: none; }
 #bauify-reader .ui-icon { display: block; flex: none; width: 18px; min-width: 0; height: 18px; }
 .analysis-tooltip, #bauify-atlas .atlas-tip { box-sizing: border-box; padding: 6px 9px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; background: linear-gradient(var(--panel, #0f172a), var(--panel, #0f172a)), var(--bg, #020617); color: var(--text, #f8fafc); font: 12px/1.45 system-ui, sans-serif; text-align: left; box-shadow: 0 4px 12px rgba(0,0,0,.24); overflow-wrap: anywhere; pointer-events: none; }
 .analysis-tooltip { position: fixed; z-index: 1000; max-width: min(264px, calc(100vw - 16px)); }
@@ -477,3 +485,49 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-detail.reviewing .review-primary-actions { display: none; }
 @media (max-width: 600px) { #bauify-reader .finding-filters select, #bauify-reader .review-primary-actions button, #bauify-reader .review-actions button, #bauify-reader .finding-pagination button { min-height: 44px; } }
 @media (max-width: 400px) { #bauify-reader .finding-filters.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* PR source navigation shares the existing source pane. */
+#bauify-code .pr-source-sides { display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0;font-size:11px; }
+#bauify-code .pr-source-sides span { color:var(--text-muted,#94a3b8); }
+/* PR priorities use the workbench's existing surfaces, controls and colours. */
+html[data-bauify-context="pr"] #bauify-reader .pr-context { font-size: 13px; line-height: 1.55; margin: 12px 0 8px; }
+html[data-bauify-context="pr"] #bauify-reader .pr-context + .ev { font-size: 11px; margin: 6px 0; }
+html[data-bauify-context="pr"] #bauify-reader .workbench-steps { margin: 10px 0 14px; }
+html[data-bauify-context="pr"] #bauify-reader .comparison-banner { border: 0; border-left: 2px solid var(--panel-border); border-radius: 0; padding: 3px 0 3px 12px; margin: 14px 0; }
+html[data-bauify-context="pr"] #bauify-reader .comparison-banner.positive { border-left-color: var(--backend-stroke); }
+#bauify-reader .pr-head-checks { margin: 12px 0 16px; }
+#bauify-reader .pr-head-checks > summary { font-size: 12px; color: var(--text-muted); padding: 4px 0; }
+#bauify-reader .pr-head-checks .health-summary { margin-top: 8px; }
+#bauify-reader .pr-review-heading { margin-top: 20px; margin-bottom: 0; }
+#bauify-reader .pr-review-heading .brief-copy { border-color: var(--panel-border); }
+#bauify-reader .pr-assessment { border-top: 1px solid var(--panel-border); padding: 16px 0 8px; margin-top: 12px; }
+#bauify-reader .pr-assessment > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+#bauify-reader .pr-assessment h5 { font-size: 14px; line-height: 1.4; font-weight: 600; margin: 0; }
+#bauify-reader .pr-origin { flex: none; padding: 1px 6px; border: 1px solid var(--panel-border); border-radius: 5px; color: var(--text-muted); font-size: 11px; line-height: 19px; font-weight: 400; }
+#bauify-reader .pr-assessment-summary { margin: 10px 0 5px; font-size: 14px; line-height: 1.6; font-weight: 600; }
+#bauify-reader .pr-assessment-scope { margin: 4px 0; color: var(--text-muted); font-size: 12px; line-height: 1.65; }
+#bauify-reader .pr-assessment-count { margin: 8px 0; color: var(--text-muted); font-size: 11px; }
+#bauify-reader .pr-review .priority-card { display: block; margin: 10px 0 0; padding: 12px 0 4px; border: 0; border-top: 1px solid var(--panel-border); border-radius: 0; }
+#bauify-reader .pr-review .priority-card .bauify-item { background: none; border-radius: 5px; padding: 3px 0; gap: 0 3px; }
+#bauify-reader .pr-review .priority-card .bauify-item:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }
+#bauify-reader .pr-review .bauify-item > b { line-height: 1.5; }
+#bauify-reader .pr-review .bauify-item .n { border: 0; margin-right: 4px; }
+#bauify-reader .pr-review .bauify-item .what, #bauify-reader .pr-review .bauify-item .where { grid-column: 2 / -1; font-size: 12px; }
+#bauify-reader .pr-review .bauify-item .where { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; }
+#bauify-reader .pr-review .bauify-item .badge-new, #bauify-reader .pr-review .bauify-item .badge-accepted { grid-column: 2 / -1; }
+#bauify-reader .pr-review .badge-new { color: var(--backend-stroke); background: color-mix(in srgb, var(--backend-stroke) 9%, transparent); }
+#bauify-reader .pr-review .priority-card .quick-handoff { margin: 7px 0 0 27px; }
+#bauify-reader .pr-review .quick-handoff .task-actions .quick-copy { padding: 3px 0; min-height: 28px; border: 0; border-radius: 0; background: none; color: var(--backend-stroke, #159f88); font-size: 12px; text-align: left; }
+#bauify-reader .pr-review .quick-copy:hover { text-decoration: underline; text-underline-offset: 3px; }
+#bauify-reader .pr-review .quick-copy:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 3px; }
+@media (max-width: 600px) { #bauify-reader .pr-review .quick-handoff .task-actions .quick-copy { min-height: 44px; } }
+#bauify-reader .pr-impact-record h6 { margin: 0; font: 600 12px/1.5 system-ui,sans-serif; color: var(--text-muted); }
+#bauify-reader .pr-impact-subject { margin: 5px 0; font: 600 13px/1.5 ui-monospace,Menlo,monospace; overflow-wrap: anywhere; }
+#bauify-reader .pr-impact-measures { margin: 5px 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+#bauify-reader .pr-impact-path { font: 11px/1.6 ui-monospace,Menlo,monospace; }
+#bauify-reader .pr-impact-evidence { margin: 6px 0; font-size: 12px; }
+#bauify-reader .pr-impact-evidence .text-action { display: block; max-width: 100%; overflow-wrap: anywhere; }
+#bauify-reader .pr-impact-evidence .pr-assessment-scope .text-action { display: inline; }
+#bauify-reader .pr-review .pr-impact-record .quick-handoff.compact { display: block; margin: 7px 0 0; }
+#bauify-reader .pr-review .pr-impact-record .quick-copy { width: 32px; height: 32px; border: 1px solid var(--panel-border); border-radius: 7px; }
+#bauify-reader .pr-impact-coverage { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--panel-border); }
+#bauify-reader .pr-impact-forms { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.6 ui-monospace,monospace; }

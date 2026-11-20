@@ -62,7 +62,30 @@ html:not([data-analysis-mode="standalone"]) #bauify-atlas { position: relative; 
 #bauify-atlas .legend { display: grid; gap: 4px; font-size: 11px; color: var(--text-muted, #94a3b8); }
 #bauify-atlas .legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
 #bauify-atlas .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+#bauify-atlas .atlas-tabs { display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: 1px solid var(--panel-border, #1e293b); }
+#bauify-atlas .atlas-tab { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; padding: 6px 10px; }
+#bauify-atlas .atlas-tab[aria-selected="true"] { border-bottom-color: var(--backend-stroke, #34D399); color: var(--text, #f8fafc); }
+#bauify-atlas .atlas-files-pane { flex: 1; min-width: 0; overflow: auto; background: var(--panel, #0f172a); padding: 12px; box-sizing: border-box; }
+#bauify-atlas .atlas-files-pane[hidden], #bauify-atlas .atlas-stage[hidden] { display: none; }
+#bauify-atlas .atlas-file-query { width: 100%; box-sizing: border-box; margin: 0 0 8px; padding: 6px 8px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
+#bauify-atlas .atlas-file-list button { display: block; width: 100%; margin: 0 0 4px; padding: 4px 6px; border: 0; background: transparent; color: inherit; text-align: left; }
+#bauify-atlas .atlas-file-list button[aria-current="true"] { background: color-mix(in srgb, var(--text, #f8fafc) 8%, transparent); }
+#bauify-atlas .atlas-file-markdown { display: block; width: 100%; min-height: 7em; box-sizing: border-box; margin: 8px 0; }
+#bauify-atlas .atlas-side-content > .pr-summary > .k:first-child { margin-top: 2px; }
+#bauify-atlas .pr-summary { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--panel-border,#1e293b); }
+#bauify-atlas .pr-totals { margin: 10px 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+#bauify-atlas .pr-totals dt { font-size: 11px; color: var(--text-muted,#94a3b8); }
+#bauify-atlas .pr-totals dd { margin: 0; font: 13px/1.8 ui-monospace,monospace; }
+#bauify-atlas .pr-band { display: grid; grid-template-columns: 36px minmax(30px,1fr) 77px; gap: 8px; align-items: center; margin: 9px 0; font: 10px ui-monospace,monospace; }
+#bauify-atlas .pr-band>span:last-child { text-align: right; color: var(--text-muted,#94a3b8); }
+#bauify-atlas .pr-tracks { display: grid; gap: 3px; }
+#bauify-atlas .pr-tracks i,#bauify-atlas .pr-tracks b { display: block; height: 4px; border-radius: 2px; background: #94a3b8; }
+#bauify-atlas .pr-tracks b { background: #10b981; }
+#bauify-atlas .pr-mark-added { background:#34d399; }
+#bauify-atlas .pr-mark-modified { background:#fbbf24; }
+#bauify-atlas .pr-mark-removed { background:#fb7185; }
 @media (max-width: 900px) {
+  #bauify-atlas .atlas-files-pane { flex: none; height: min(100vw, 50vh); }
   #bauify-atlas .atlas-body { flex-direction: column; overflow: auto; }
   #bauify-atlas .atlas-stage { flex: none; height: min(100vw, 70vh); }
   #bauify-atlas .atlas-side { width: auto; border-left: 0; border-top: 1px solid var(--panel-border, #1e293b); overflow: visible; }

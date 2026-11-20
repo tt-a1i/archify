@@ -19,9 +19,9 @@ export function baselineCommand(cli, root, { language = null, config = null, bas
 
 // Resume an offline report using the same captured IR and analysis settings.
 // Opening a report never executes this command; the user can copy it explicitly.
-export function analysisStartCommand(cli, root, { ir, out, locale, language, config, map, baseline, quality } = {}, platform = process.platform) {
+export function analysisStartCommand(cli, root, { ir, out, locale, language, config, map, baseline, quality, pr, repository, scope } = {}, platform = process.platform) {
   return nodeCommand([cli, 'start', root, ...(ir ? ['--ir', ir] : []), '--out', out,
-    ...Object.entries({ locale, language, config, map, baseline, quality }).flatMap(([key, value]) => value ? [`--${key}`, value] : []),
+    ...Object.entries({ locale, language, config, map, baseline, quality, pr, repository, scope }).flatMap(([key, value]) => value ? [`--${key}`, value] : []),
   ], platform);
 }
 
