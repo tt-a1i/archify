@@ -145,7 +145,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     verification: run.verification || null,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
     overview: buildOverview({ findings: listed, graph, facts, unmapped: ir ? unmapped : [], ambiguousModules, run, diagram: Boolean(ir) }),
-    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id))), { fileList: [...(run.pullRequest?.changedFiles || []).map(file => ({ path: file.path })), ...(run.pullRequest?.impact?.records || []).flatMap(record => record.locations.map(item => ({ path: item.file })))] }), facts, findingsDocument?.externalEvidence, run.pullRequest?.sourceGitRoot) : {},
+    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id))), { fileList: [...(run.pullRequest?.changedFiles || []).map(file => ({ path: file.path })), ...(run.pullRequest?.impact?.records || []).flatMap(record => record.locations.map(item => ({ path: item.file })))] }), facts, findingsDocument?.externalEvidence, run.pullRequest) : {},
   };
 
   payload.architectureBrief = architectureHandoff({ overview: payload.overview, repository: graph.repository, locale: run.locale || ir?.meta?.locale, diagram: Boolean(ir) });
@@ -364,7 +364,7 @@ function aggregate(edges, side, owner, owners) {
 // partial-init proof), captured by the extractor, so the
 // page can show the cited line with the whole file around it to scroll
 // through. Include listed component files as well as cited evidence files.
-function collectSnippets(findings, sourceRoot, components, facts, externalEvidence = [], gitRoot = null) {
+function collectSnippets(findings, sourceRoot, components, facts, externalEvidence = [], pullRequest = null) {
   const captured = new Map([...externalEvidence, ...(facts?.files || [])].filter(f => typeof f.sourceText === 'string').map(f => [f.path, f.sourceText]));
   const wanted = new Set(components.flatMap((c) => (c.fileList || []).map((f) => f.path)));
   for (const f of findings) {
@@ -394,7 +394,11 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
     if (lines.length && lines[lines.length - 1] === '') lines.pop();
     out[file] = { total: lines.length, lines };
   }
-  const changes = sourceChanges(gitRoot || sourceRoot, facts?.repository, new Map([...wanted].filter(file => captured.has(file)).map(file => [file, captured.get(file)])));
+  const previousPaths = new Map((pullRequest?.changedFiles || [])
+    .filter(file => file.status === 'renamed' && file.previousPath)
+    .map(file => [file.path, file.previousPath]));
+  const changes = sourceChanges(pullRequest?.sourceGitRoot || sourceRoot, facts?.repository,
+    new Map([...wanted].filter(file => captured.has(file)).map(file => [file, captured.get(file)])), previousPaths);
   for (const [file, change] of changes) if (out[file]) out[file].changes = change;
   return out;
 }
