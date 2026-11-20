@@ -1,0 +1,100 @@
+{
+  "recordedAt": "2026-10-27T00:08:15.273696+00:00",
+  "implementationReviewedRevision": "05f2f2436cfc327f0cb5267787158ed56eaa7b15",
+  "artifacts": [
+    {
+      "path": "final/review.html",
+      "sha256": "4cc2274999e58b9f75b717c053528a85964e3545b3cb0a8fe638b8cdf246dff1"
+    },
+    {
+      "path": "draft-1/review.html",
+      "sha256": "97ccdee5dcbf6b467fcd725e2ac12e36c0a1efcb9d91aee476162f4fcbdccb98"
+    }
+  ],
+  "browser": "Ego Lite, existing TaskSpace4/p1; CSS viewport set through CDP per round; deviceScaleFactor1",
+  "observations": [
+    "Desktop 1440x900 light and dark first viewport: published historical fixture,6 selected records,78 us endpoint gap only,queue_duration=0 and both endpoints readable.",
+    "Actual step-through Start/Next reached 2/2, highlighted record 2082; End exited. Source citation moved to #source-raw footer.",
+    "Fresh full Tab traversal without focus injection reached two source links at 31/32 and Archify footer 33; 34 returned BODY. These rows vertically visible; footer screenshot includes focus ring.",
+    "Mobile 390x844 dark: document scrollWidth 390. Main answer readable; two-node preview includes existing open-interactive-diagram size warning.",
+    "Final 12 keyboard-traversal diagnostics remain failed. This observation does not replace the automated result, human AT testing or comprehension evidence."
+  ],
+  "images": [
+    {
+      "path": "draft-1-light.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "f2f3506db9a5c104ecbfd4a6b404855cb20b653ce6ebad04e0d60c7eefc724fa",
+      "bytes": 162465,
+      "inspectedBy": "root via view_image",
+      "artifact": "draft-1/review.html",
+      "artifactSha256": "97ccdee5dcbf6b467fcd725e2ac12e36c0a1efcb9d91aee476162f4fcbdccb98"
+    },
+    {
+      "path": "final-dark.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "9a4b0347ca7def98ca6c00cecfd32759743e5b5c2f4dfb47529f4ca588a80d77",
+      "bytes": 162194,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/review.html",
+      "artifactSha256": "4cc2274999e58b9f75b717c053528a85964e3545b3cb0a8fe638b8cdf246dff1"
+    },
+    {
+      "path": "final-light.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "721bd26295a16d014a887734a231679f10c78d0138a6b98504f5de7780c01b38",
+      "bytes": 162210,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/review.html",
+      "artifactSha256": "4cc2274999e58b9f75b717c053528a85964e3545b3cb0a8fe638b8cdf246dff1"
+    },
+    {
+      "path": "footer-tab.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "9856f930a668cddb45f0d3f2268d7e7dfcf71a8351b4c174ae90f7105552ca3a",
+      "bytes": 69191,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/review.html",
+      "artifactSha256": "4cc2274999e58b9f75b717c053528a85964e3545b3cb0a8fe638b8cdf246dff1"
+    },
+    {
+      "path": "mobile-dark.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "7756bf0aa4104e7e6756323de147481f5c4582104df96dff0ada5e213971084a",
+      "bytes": 92172,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/review.html",
+      "artifactSha256": "4cc2274999e58b9f75b717c053528a85964e3545b3cb0a8fe638b8cdf246dff1"
+    },
+    {
+      "path": "raw-source.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "6979036979e28e90e544251766a869a48db7b98fb87f3db2516f6e4e54db3755",
+      "bytes": 68536,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/review.html",
+      "artifactSha256": "4cc2274999e58b9f75b717c053528a85964e3545b3cb0a8fe638b8cdf246dff1"
+    },
+    {
+      "path": "step-2.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "1c89d61476351f41664715753b9dcf40e0c20c74685f1a5bd6a656bb7443d51e",
+      "bytes": 161023,
+      "inspectedBy": "root via view_image",
+      "artifact": "final/review.html",
+      "artifactSha256": "4cc2274999e58b9f75b717c053528a85964e3545b3cb0a8fe638b8cdf246dff1"
+    }
+  ],
+  "keyboardEvidence": "tab-traversal.json",
+  "limitations": [
+    "agent-operated browser observations, not human acceptance",
+    "no speed or comprehension improvement measured",
+    "screenshots do not override failed gates"
+  ]
+}
