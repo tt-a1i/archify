@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { once } from 'node:events';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { analyzeRepository } from '../archify/modules/code-analysis/overlay/page.mjs';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
@@ -114,12 +115,19 @@ test('native PR view keeps comparison chart visible and shares localized source/
   assert.equal(await run("window.__atlasTexts.some(t=>/^[+−][0-9]/.test(t))"),false);
 });
 
-test('Atlas Files opens pinned renamed and removed sources and downloads only the selected PR context', {
+const filesBrowserOptions = {
   skip: chrome ? false : 'Set ARCHIFY_CHROME for PR browser acceptance.',
   timeout: 180_000,
-}, async t => {
-  const evidence = process.env.ARCHIFY_PR_FILES_EVIDENCE;
-  const external = process.env.ARCHIFY_PR_FILES_REAL_REPORT;
+};
+
+test('Atlas Files opens pinned renamed and removed sources and downloads only the selected PR context',
+  filesBrowserOptions, t => checkPinnedFiles(t, false));
+test('Authored diagram Atlas Files shows pinned source and restores Files on Back or Escape',
+  filesBrowserOptions, t => checkPinnedFiles(t, true));
+
+async function checkPinnedFiles(t, diagram) {
+  const evidence = diagram ? undefined : process.env.ARCHIFY_PR_FILES_EVIDENCE;
+  const external = diagram ? undefined : process.env.ARCHIFY_PR_FILES_REAL_REPORT;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-pr-files-'));
   const browser = new ChromeVisualBrowser(chrome);
   t.after(async () => {
@@ -138,8 +146,22 @@ test('Atlas Files opens pinned renamed and removed sources and downloads only th
     const previous = path.join(out, 'base');
     const source = { root: '.', sourceKind: 'git-tree', baseRevision: baseSHA, revision: baseSHA };
     analyzeRepository({ root: base, out: previous, language: 'ts', source });
+    let authored = {};
+    if (diagram) {
+      const ir = path.join(dir, 'architecture.json'), html = path.join(dir, 'architecture.html');
+      fs.writeFileSync(ir, JSON.stringify({
+        schema_version: 1, diagram_type: 'architecture',
+        meta: { title: 'Pinned file review', output: 'architecture.html', locale: 'en' },
+        components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }],
+        connections: [],
+      }));
+      const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
+      const rendered = spawnSync(process.execPath, [cli, 'render', 'architecture', ir, html], { encoding: 'utf8' });
+      assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+      authored = { ir, html, openAnalysis: true };
+    }
     const result = analyzeRepository({
-      root: head, out, language: 'ts', source: { ...source, revision: headSHA }, previous: path.join(previous, 'findings.json'),
+      ...authored, root: head, out, language: 'ts', source: { ...source, revision: headSHA }, previous: path.join(previous, 'findings.json'),
       pullRequest: { pr: { simulation: true, title: 'File review', repository: 'example/project', mergeBaseSHA: baseSHA, headSHA, baseSHA },
         scope: 'packages/widget', changedFiles: [{ path: 'new.ts', previousPath: 'old.ts', status: 'renamed' },
           { path: 'gone.ts', status: 'removed' }, { path: 'README.md', status: 'modified' }],
@@ -169,6 +191,7 @@ test('Atlas Files opens pinned renamed and removed sources and downloads only th
   await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: dir });
   await send('Page.navigate', { url: pathToFileURL(report).href });
   await loaded;
+  if (diagram) await click('.reader-atlas');
   await click('#atlas-tab-files');
   const query = '#bauify-atlas .atlas-file-query';
   assert.equal(await read('document.activeElement.matches(' + literal(query) + ')'), true);
@@ -176,23 +199,36 @@ test('Atlas Files opens pinned renamed and removed sources and downloads only th
   assert.equal(await read('document.querySelectorAll("[data-changed-file]").length'), 1);
   await click('[data-changed-file]');
   const expected = external ? await read('JSON.parse(document.getElementById("bauify-analysis").textContent).pullRequest') : { baseSHA, headSHA };
+  const assertSourceVisible = async () => {
+    assert.equal(await read('document.getElementById("bauify-code").getClientRects().length > 0'), true, 'pinned source must be visible');
+    assert.equal(await read('document.getElementById("bauify-atlas").hidden'), diagram);
+  };
+  const assertFilesRestored = async side => {
+    assert.equal(await read('document.getElementById("bauify-code").hidden'), true);
+    assert.equal(await read('document.getElementById("bauify-atlas").hidden'), false);
+    assert.equal(await read('document.getElementById("atlas-tab-files").getAttribute("aria-selected")'), 'true');
+    assert.equal(await read('document.querySelector(".atlas-file-scope").value'), 'changed');
+    assert.equal(await read('document.querySelector(' + literal(query) + ').value'), external ? 'hydrateFragment.ts' : 'old.ts');
+    assert.equal(await read('document.querySelector("[data-changed-file]").getAttribute("aria-current")'), 'true');
+    assert.equal(await read('document.activeElement.dataset.atlasChangeSource'), side);
+  };
   await image('lens-files-selected');
   await click('[data-atlas-change-source="base"]');
+  await assertSourceVisible();
   assert.equal(await read('document.querySelector(".pr-source-pin").textContent'), expected.baseSHA);
   if (!external) assert.match(await read('document.querySelector("#bauify-code h3").textContent'), /old\.ts/u);
   await click('[data-pr-side="head"]');
+  await assertSourceVisible();
   assert.equal(await read('document.querySelector(".pr-source-pin").textContent'), expected.headSHA);
   if (!external) assert.match(await read('document.querySelector("#bauify-code pre").textContent'), /nextMarker/u);
   await image('lens-files-pinned-head');
   await click('.source-back');
-  assert.equal(await read('document.querySelector("[data-changed-file]").getAttribute("aria-current")'), 'true');
-  assert.equal(await read('document.activeElement.dataset.atlasChangeSource'), 'base');
+  await assertFilesRestored('base');
   await click('[data-atlas-change-source="head"]');
+  await assertSourceVisible();
   await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
   await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-  assert.equal(await read('document.getElementById("bauify-code").hidden'), true);
-  assert.equal(await read('document.querySelector("[data-changed-file]").getAttribute("aria-current")'), 'true');
-  assert.equal(await read('document.activeElement.dataset.atlasChangeSource'), 'head');
+  await assertFilesRestored('head');
   await click('.atlas-change-download');
   const downloaded = path.join(dir, 'pr-file-review.md');
   for (let i = 0; !fs.existsSync(downloaded) && i < 100; i++) await new Promise(resolve => setTimeout(resolve, 100));
@@ -216,4 +252,4 @@ test('Atlas Files opens pinned renamed and removed sources and downloads only th
   if (evidence) fs.copyFileSync(downloaded, path.join(evidence, 'pr-file-review.md'));
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   assert.equal(await read('document.documentElement.scrollWidth > innerWidth'), false);
-});
+}

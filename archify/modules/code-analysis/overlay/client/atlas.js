@@ -723,7 +723,15 @@
         var diff = captured && captured.source.changes;
         if (captured && window.__archifyShowSource) {
           var selectedChange = changedSelection;
+          var previousScroll = side.scrollTop;
+          // Diagram-backed Atlas hides the reader. Keep the Files state in
+          // place while the reader is temporarily visible for pinned source.
+          if (!standalone) close();
           window.__archifyShowSource(captured.file, diff && (diff.modified[0] || diff.added[0]), snapshot, pair, function () {
+            if (!standalone) {
+              open();
+              side.scrollTop = previousScroll;
+            }
             if (changedSelection === selectedChange) {
               side.querySelector('[data-atlas-change-source="' + snapshot + '"]')?.focus({ preventScroll: true });
             }
