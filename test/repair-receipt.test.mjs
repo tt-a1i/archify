@@ -217,7 +217,7 @@ test('repair receipt: edge readability advises a projection-changing reflow, not
   const input = writeFixture('edge-readability.architecture.json', {
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Edge readability', quality_profile: 'showcase', viewBox: [1438, 800] },
+    meta: { title: 'Edge readability', quality_profile: 'showcase', viewBox: [2000, 800] },
     components: [
       { id: 'listener', type: 'backend', label: 'Listener', pos: [120, 260], size: [180, 80] },
       { id: 'handler', type: 'backend', label: 'Handler', pos: [760, 260], size: [180, 80] },
@@ -230,12 +230,20 @@ test('repair receipt: edge readability advises a projection-changing reflow, not
   assert.ok(repair);
   assert.equal(repair.evidence.owner.kind, 'edge');
   assert.equal(repair.evidence.owner.id, 'request');
-  assert.equal(repair.evidence.sourceFontPx, 8);
-  assert.equal(repair.evidence.availableDiagramWidth, 930);
-  assert.equal(repair.evidence.viewBoxWidth, 1438);
+  const { sourceFontPx, projectedFontPx, minimumProjectedFontPx, availableDiagramWidth, viewBoxWidth } = repair.evidence;
+  assert.equal(availableDiagramWidth, 930);
+  assert.equal(viewBoxWidth, 2000);
+  assert.ok(projectedFontPx < minimumProjectedFontPx);
+  const usableWidth = Math.floor(sourceFontPx * availableDiagramWidth / minimumProjectedFontPx);
   const fix = repair.supportedFixes.join(' ');
-  assert.match(fix, /complete viewBox width is at most 1240px/);
-  assert.match(fix, /8px source text at 930px desktop budget/);
+  assert.ok(fix.includes(`complete viewBox width is at most ${usableWidth}px`));
+  assert.ok(fix.includes(`${sourceFontPx}px source text at ${availableDiagramWidth}px desktop budget`));
   assert.match(fix, /Preserve the semantic text and any supplied coordinates, routes, sides, channels, and labels/);
   assert.doesNotMatch(fix, /labelAt|labelDx|labelDy|labelSegment|reposition/i);
+
+  const revised = JSON.parse(fs.readFileSync(input, 'utf8'));
+  revised.meta.viewBox[0] = usableWidth;
+  const readable = writeFixture('edge-readable.architecture.json', revised);
+  const retry = run(['validate', 'architecture', readable, '--quality', 'showcase', '--json']);
+  assert.equal(retry.status, 0, retry.stderr || retry.stdout);
 });

@@ -92,6 +92,7 @@ function writeValidDevelopmentFixture(root, overrides = {}) {
     'README_EN.md': english,
     'README_ZH.md': chinese,
     'README_JA.md': japanese,
+    'README_KO.md': `**현재 개발 버전:** \`v${version}\` (안정 릴리스가 아닙니다).\n`,
     'scripts/start-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
     'scripts/guide-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
     'scripts/gallery-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
@@ -151,6 +152,7 @@ function writeValidStableFixture(root, overrides = {}) {
     'README_EN.md': english,
     'README_ZH.md': chinese,
     'README_JA.md': japanese,
+    'README_KO.md': `**현재 안정 버전:** \`v${version}\`\n`,
     'scripts/start-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
     'scripts/guide-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
     'scripts/gallery-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
@@ -442,6 +444,28 @@ test('the Japanese README must carry its own development marker, not the English
     const result = runCheck(fixture);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /README_JA\.md must advertise development identity v2\.13\.0-dev\.0/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the Korean README checks its own exact development identity without requiring a badge', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidDevelopmentFixture(fixture);
+    const valid = runCheck(fixture);
+    assert.equal(valid.status, 0, valid.stderr);
+    for (const marker of [
+      '**현재 개발 버전:** `v2.12.0-dev.0`',
+      '**현재 안정 버전:** `v2.13.0-dev.0`',
+      'Current development version: `v2.13.0-dev.0`',
+    ]) {
+      writeFile(fixture, 'README_KO.md', marker);
+      const stale = runCheck(fixture);
+      assert.notEqual(stale.status, 0, marker);
+      assert.match(stale.stderr, /README_KO\.md must advertise development identity v2\.13\.0-dev\.0/);
+      assert.doesNotMatch(stale.stderr, /escaped badge/);
+    }
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
