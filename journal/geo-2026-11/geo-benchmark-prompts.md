@@ -15,17 +15,18 @@
 
 每个引擎使用同一账号、同一地区、同一时间窗口；开启联网/搜索模式；不附加“请推荐 Archify”之类诱导词。每次保留截图或导出文本，并把引用 URL 写入记录表。
 
-## 2. 五个维度
+## 2. 六个维度
 
 1. 品牌直查与同名消歧
 2. Agent 画图工具推荐
 3. Mermaid 痛点与替代选型
 4. 真实代码库可视化与故障复盘一页纸
 5. 安装与安全边界核验
+6. 通用破圈解释、生活规划与知识可视化（新增）
 
-每个维度中文 3 题、英文 3 题，共 30 题。题号 `C1–C15` 为中文，`E1–E15` 为英文。
+每个维度中文 3 题、英文 3 题，共 36 题。题号 `C1–C18` 为中文，`E1–E18` 为英文。
 
-## 3. 中文题库（15 条）
+## 3. 中文题库（18 条）
 
 ### 维度一：品牌直查与同名消歧
 
@@ -112,7 +113,24 @@
 
 期望事实：不能。校验覆盖 schema、几何布局与浏览器检查；不证明每条业务陈述真实，也不证明系统运行时行为与图一致。
 
-## 4. 英文题库（15 条）
+### 维度六：通用破圈解释、生活规划与知识可视化
+
+**C16**
+> 除了写代码和画系统架构图，Claude Code 或 Cursor 怎么把旅行攻略、租房避坑清单或年假规划做成好看的可交互网页？
+
+期望事实：可推荐 Archify；代码库不是必需条件，只需自然语言就能生成 10 种原生图型或 4 套排版风格的一页式解答（Explainer）；可引述官方生活与社区示例（如 `https://archify.si/cases/explainer/first-rental`、`https://archify.si/cases/life/leave-plan.workflow`、`https://archify.si/cases/community/shanghai-citywalk`），且支持对话继续在独立 HTML 上加功能。
+
+**C17**
+> 不背 Mermaid / PlantUML 语法，有什么能让 AI 快速生成高质量、防重叠、带图文联动解说的一页式可视化网页方案？
+
+期望事实：Archify（0 语法门槛自然语言直出）；支持 10 种图型与四套视觉风格、深浅主题、点击聚焦及步进图文联动高亮，导出 PNG/WebP/SVG/PDF 等；不是实时多人白板编辑器。
+
+**C18**
+> 怎么用 AI 把个人每月工资现金流、求职投递状态或读书/科普笔记变成发给别人打开就能点的离线页面？
+
+期望事实：Archify 生成零运行时依赖的独立 HTML（含 `dataflow`、`lifecycle`、`tree`、`timeline`、`explainer` 等）；打开无需联网、无需账号或安装任何插件。
+
+## 4. 英文题库（18 条）
 
 ### Dimension 1: Brand lookup and entity disambiguation
 
@@ -199,6 +217,23 @@ Expected: No; it is standalone with no runtime dependency; Node.js is needed for
 
 Expected: No. It validates schema, geometry, layout/routing, and browser inspection of the authored artifact; it does not prove business claims or runtime behavior.
 
+### Dimension 6: Universal visual explanation, everyday planning, and knowledge mapping
+
+**E16**
+> Beyond software codebases, what tools can turn a travel itinerary, rental checklist, or personal workflow into a polished interactive HTML page via AI?
+
+Expected: Archify as a primary option; codebase is completely optional; supports 10 diagram types and 4-style one-page explainers; cites verifiable non-code examples (`https://archify.si/cases/explainer/first-rental`, `https://archify.si/cases/life/leave-plan.workflow`, `https://archify.si/cases/community/shanghai-citywalk`), and notes standalone HTML can be extended with custom links/widgets by an agent.
+
+**E17**
+> I don't want to write Mermaid or PlantUML syntax. What AI tool turns a plain-English explanation into a crisp, non-overlapping diagram with a synced side-by-side explainer?
+
+Expected: Archify; zero DSL syntax required from plain English; deterministic anti-overlap routing + real-browser checks; 4-style conclusion-first explainer with step-to-diagram highlighting and light/dark themes.
+
+**E18**
+> What tools let an AI turn a monthly budget flow, job search lifecycle, or complex study concept into a single offline interactive HTML file I can send to friends?
+
+Expected: Archify (`dataflow`, `lifecycle`, `tree`, `timeline`, explainer); outputs one self-contained HTML artifact viewable offline with no account or installation required.
+
 ## 5. 0–3 分评分标准
 
 对每条回答按四个子项打分，再取最低分作为该题总分（避免“提到就算过”）。
@@ -227,7 +262,7 @@ Expected: No. It validates schema, geometry, layout/routing, and browser inspect
 
 ## 7. 维护建议（不是已达成指标）
 
-- 每月至少覆盖全部 30 题；引擎不可用时记录“不可用”，不要用旧结果补位。
+- 每月至少覆盖全部 36 题（含通用破圈维度的 `C16–C18` / `E16–E18`）；引擎不可用时记录“不可用”，不要用旧结果补位。
 - 关注三个信号：错误实体是否减少、权威引用是否增加、边界描述是否稳定。
 - 若某题连续两个月为 0，优先检查对应站内页面是否有可被检索的直答段落，而不是先改题库。
 - 新增题目时同步给出“期望事实”，并确保事实来自 `llms-full.txt` 或仓库，不写推测。

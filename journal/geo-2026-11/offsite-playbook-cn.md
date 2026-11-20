@@ -247,7 +247,7 @@ npx -y skills@latest add https://archify.si --skill archify --agent codex --glob
 | 类型、字段、继承关系？ | `class` | 领域模型、SDK |
 | 层级结构是什么样？ | `tree` | 目录、组织、决策树 |
 | 事情按什么顺序发生？ | `timeline` | 故障时间线、项目里程碑 |
-| 总量怎么被分阶段消耗？ | `waterfall` | 预算、耗时、成本归因 |
+| 一个请求或流程的时间花在了哪几段？ | `waterfall` | 首屏加载、调用链阶段耗时跨度（us/ms/s） |
 
 选型原则：先确定读者要回答的问题，再选图型。不要为了“看起来复杂”上来就画架构图。
 
@@ -327,3 +327,28 @@ npx -y skills@latest add https://archify.si --skill archify --agent codex --glob
 - 站内安装命令或版本变化时，先改这三篇母稿，再考虑重新发布。
 - 评论里出现错误事实（如“付费”“和浏览器插件同源”）时，直接引用 `llms-full.txt` 纠正，不争论。
 - 不把同一篇稿子改标题后重复投多个问题；需要覆盖新问题时，重写开头和案例，不要只换标题。
+
+---
+
+## 6. 母稿 4：通用破圈版（解释万物 · 10 种图型 + 4 套排版 Explainer + 无需代码库）
+
+> 适用母题：《有哪些让人眼前一亮的 AI 可视化 / 信息图 / 把复杂事情一眼讲清楚的工具？》《Claude Code / Cursor 除了写代码还能拿来干什么神仙事？》
+
+### 核心叙事要点（区别于纯代码向母稿）
+
+1. **首屏破圈定位**：强调 Archify 不仅是程序员画架构图的工具，更是**把任何你想理解、规划或分享的事快速变成可交互 HTML 网页的“通用可视化解释技能”**——零画图语法门槛、对话几句直出高颜值成品，而且输出是标准独立 HTML，支持让 Agent 继续在上面扩展按钮、地图链接或打卡功能。
+2. **十种原生图型 + 四风格 Explainer**：
+   - 十种原生图型全覆盖生活与工作：`architecture`、`workflow`、`sequence`、`dataflow`、`lifecycle`、`erd`、`class`、`tree`、`timeline`、`waterfall`；
+   - 四风格一页式解答（Explainer）：结论先行，文字、表格、步骤与已校验图并排联动，**读到哪一步图就亮哪一块**，支持长图 / PDF 导出。
+3. **必备跨领域真实成品实证链接**：
+   - 大城市首次租房合同避坑一页式解答：https://archify.si/cases/explainer/first-rental
+   - 社区上海四天 CityWalk 互动攻略（带打卡与外链扩展）：https://archify.si/cases/community/shanghai-citywalk
+   - 一年年假安排流程图：https://archify.si/cases/life/leave-plan.workflow
+   - 租房看房议价时序图：https://archify.si/cases/life/renting.sequence
+   - 月薪现金流去向图：https://archify.si/cases/life/monthly-money.dataflow
+   - 求职投递状态机：https://archify.si/cases/life/job-search.lifecycle
+   - 科普原理拆解（TLS / P99）：https://archify.si/cases/explainer/tls-first-visit 、https://archify.si/cases/explainer/p99-tail-latency
+   - 代码仓实证（MCO 运行时）：https://archify.si/cases/mco-runtime
+4. **保持诚实边界**：利益相关声明（`tt-a1i/archify` 维护者）、非云端多人实时白板（多人手绘选 Excalidraw）、README 小图用 Mermaid、本地校验管结构防穿模不管现实事实真伪。
+5. **回链锚点**：`https://archify.si/zh/compare`、`https://archify.si/zh/gallery`、`https://archify.si/llms-full.txt`。
+

@@ -6,8 +6,10 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const diagnostics = new URL('../archify/renderers/shared/diagnostics.mjs', import.meta.url).href;
+const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
 
 // A pipe holds 8KB on macOS and 64KB on Linux before it blocks. The large case
 // stays far above both so the receipt cannot leave the renderer in one write.
@@ -45,7 +47,10 @@ function crashingRenderer(t, count) {
 function runCrashingRenderer(script) {
   return spawnSync(process.execPath, [script], {
     encoding: 'utf8',
-    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json' },
+    // Mirror the CLI's renderer spawn contract: the machine-readable
+    // diagnostic channel requires stderr to carry exactly the receipt, so
+    // Node runtime warnings must not precede it.
+    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json', NODE_NO_WARNINGS: '1' },
     maxBuffer: 64 * 1024 * 1024,
   });
 }
@@ -72,7 +77,7 @@ test('the renderer boundary delivers a receipt larger than the pipe buffer', t =
 test('the renderer boundary waits for a stalled reader instead of truncating', async t => {
   const script = crashingRenderer(t, LARGE_DIAGNOSTIC_COUNT);
   const child = spawn(process.execPath, [script], {
-    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json' },
+    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json', NODE_NO_WARNINGS: '1' },
     stdio: ['ignore', 'ignore', 'pipe'],
   });
   t.after(() => child.kill('SIGKILL'));
@@ -104,4 +109,51 @@ test('the renderer boundary keeps delivering receipts that fit in one write', t 
   const receipt = JSON.parse(result.stderr);
   assert.equal(receipt.diagnostics.length, SMALL_DIAGNOSTIC_COUNT);
   assert.equal(receipt.diagnostics[0].code, 'layout/constraint');
+});
+
+test('the production JSON-mode spawn path keeps Node warnings off the renderer diagnostic channel', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-production-spawn-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+  // Every Node process in the spawn chain imports this module at startup and
+  // prints a warning, mimicking the runtime warnings behind #1191. The test
+  // deliberately does not set NODE_NO_WARNINGS itself: the production spawn
+  // path (rendererEnv) must carry it to the renderer child.
+  const preload = path.join(dir, 'emit-warning.mjs');
+  fs.writeFileSync(preload, 'process.emitWarning("synthetic renderer-channel warning");\nawait new Promise(resolve => setImmediate(resolve));\n');
+  const input = path.join(dir, 'wide.lifecycle.json');
+  fs.copyFileSync(
+    fileURLToPath(new URL('./fixtures/lifecycle-crowded-wide.json', import.meta.url)),
+    input,
+  );
+
+  // Warnings are queued by Node: let the preload print before the synchronous
+  // renderer can exit, and prevent ambient warning suppression from masking it.
+  const childEnv = { ...process.env, NODE_OPTIONS: `--import=${pathToFileURL(preload).href}` };
+  delete childEnv.NODE_NO_WARNINGS;
+  delete childEnv.NODE_REDIRECT_WARNINGS;
+
+  const result = spawnSync(process.execPath, [cli, 'validate', 'lifecycle', input, '--json'], {
+    encoding: 'utf8',
+    env: childEnv,
+    maxBuffer: 64 * 1024 * 1024,
+  });
+
+  // Without NODE_NO_WARNINGS on the renderer spawn, the warning line precedes
+  // the receipt on stderr, the parent's receipt parse fails, and validate
+  // reports internal/unclassified instead of the real diagnostic.
+  assert.ifError(result.error);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /synthetic renderer-channel warning/, 'the parent warning proves the preload is active');
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  const codes = (payload.diagnostics ?? []).map(entry => entry.code);
+  assert.ok(
+    codes.includes('lifecycle/too-wide'),
+    `expected the renderer diagnostic to survive, got ${JSON.stringify(codes)}`,
+  );
+  assert.ok(
+    !codes.includes('internal/unclassified'),
+    'the receipt must not fail closed when a warning precedes it',
+  );
 });
