@@ -161,10 +161,10 @@
     // ------------------------------------------------------------------ layout
     const rand = (seed) => { let t = (seed + 0x6d2b79f5) >>> 0; return () => { t = (t + 0x6d2b79f5) >>> 0; let r = Math.imul(t ^ (t >>> 15), 1 | t); r ^= r + Math.imul(r ^ (r >>> 7), 61 | r); return ((r ^ (r >>> 14)) >>> 0) / 4294967296; }; };
     const gauss = (r) => { const u = Math.max(1e-6, r()), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
-    const TRUNK_H = 1.7, LAYER_H = 0.82;
+    const TRUNK_H = 1.7, LAYER_H = 0.8;
     const layerY = (r) => (r === 0 ? 0 : TRUNK_H + 0.25 + (r - 1) * LAYER_H);
-    const crownR = (r) => [0, 1.12, 0.86, 0.5, 0.35, 0.25][Math.min(r, 5)];
-    const blobR = (m) => 0.15 + 0.0034 * Math.sqrt(locOf[m]);
+    const crownR = (r) => [0, 1.2, 1.6, 1.55, 1.25, 0.9][Math.min(r, 5)];
+    const blobR = (m) => 0.3 + 0.0068 * Math.sqrt(locOf[m]);
     const node = M.map(() => null);
     node[trunk] = new THREE.Vector3(0, TRUNK_H, 0);
     const weight = (m) => Math.sqrt(locOf[m] + 400) + children[m].reduce((s, c) => s + weight(c), 0);
@@ -179,7 +179,7 @@
         const span = (a1 - a0) * weight(c) / total, mid = a + span / 2;
         const r = rand(c * 7919 + 13);
         const radius = crownR(rank[c]) * (0.86 + 0.28 * r());
-        const y = layerY(rank[c]) + (k % 2 ? 0.22 : -0.08) + (r() - 0.5) * 0.18;
+        const y = layerY(rank[c]) + (k % 2 ? 0.35 : -0.13) + (r() - 0.5) * 0.29;
         node[c] = new THREE.Vector3(Math.cos(mid) * radius, y, Math.sin(mid) * radius);
         place(c, a, a + span);
         a += span;
@@ -249,7 +249,7 @@
         const t = n === 1 ? 0 : (k + 0.5) / n, phi = Math.acos(1 - 2 * t), th = k * 2.39996;
         const d = n === 1 ? 0 : R * 0.62 * Math.cbrt((k + 1) / n);
         const c = new THREE.Vector3(node[m].x + d * Math.sin(phi) * Math.cos(th), node[m].y + d * Math.cos(phi) * 0.8, node[m].z + d * Math.sin(phi) * Math.sin(th));
-        blossom(fi, c, 0.06 + 0.0021 * Math.sqrt(F[fi][2]), m, fi * 31 + 7);
+        blossom(fi, c, 0.1 + 0.0036 * Math.sqrt(F[fi][2]), m, fi * 31 + 7);
       });
     });
     // Branches: a stream of particles from the parent to each module, thicker for more file dependencies.
@@ -318,7 +318,7 @@
 
     // Threads: every dependency between modules that is not a branch.
     const threadGeom = new THREE.BufferGeometry();
-    const threadMat = new THREE.LineBasicMaterial({ color: 0xc9b8ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+    const threadMat = new THREE.LineBasicMaterial({ color: 0xc9b8ff, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false });
     const threads = [];
     for (const [k, w] of pairCount) {
       const [a, b] = k.split('>').map(Number);
@@ -357,7 +357,7 @@
     const box = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(half * 2, boxSize.y, half * 2)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.42 }));
     box.position.set(0, boxCenter.y, 0); scene.add(box);
     const axis = new THREE.BufferGeometry(); axis.setAttribute('position', new THREE.Float32BufferAttribute([0, bounds.min.y, 0, 0, bounds.max.y, 0], 3));
-    scene.add(new THREE.LineSegments(axis, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.32 })));
+    scene.add(new THREE.LineSegments(axis, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 })));
     // Layer ticks go on whichever vertical edge of the box is at the viewer's left.
     const corners = [[-half, -half], [half, -half], [half, half], [-half, half]];
     const tickGeom = new THREE.BufferGeometry();
@@ -365,7 +365,7 @@
     let tickCorner = -1;
 
     // ------------------------------------------------------------------ camera
-    const cam = { theta: 0.65, phi: 1.36, dist: Math.max(boxSize.y, half * 2) * 1.92, target: new THREE.Vector3(0, boxCenter.y * 0.9, 0) };
+    const cam = { theta: 0.65, phi: 1.36, dist: Math.hypot(boxSize.y, half * 2 * Math.SQRT2) * 1.55, target: new THREE.Vector3(0, boxCenter.y * 0.9, 0) };
     const home = { theta: cam.theta, phi: cam.phi, dist: cam.dist, target: cam.target.clone() };
     function updateCamera() {
       cam.phi = Math.min(1.62, Math.max(0.35, cam.phi));
@@ -444,7 +444,7 @@
       for (let i = 0; i < mark.length; i += 1) mark[i] = (files.has(aFile[i]) || mods.has(aMod[i])) ? 1 : 0;
       markAttr.needsUpdate = true;
       selGeom.setAttribute('position', curveLines(lines, 0.05)); selLines.visible = lines.length > 0;
-      threadMat.opacity = any ? 0.07 : 0.22;
+      threadMat.opacity = any ? 0.03 : 0.08;
       const fi = state.fn !== -1 ? state.fn : f && f.kind === 'function' ? f.fn : -1;
       ring.visible = fi != null && fi !== -1 && !!fnPos[fi];
       if (ring.visible) { ringGeom.getAttribute('position').setXYZ(0, fnPos[fi].x, fnPos[fi].y, fnPos[fi].z); ringGeom.getAttribute('position').needsUpdate = true; }
