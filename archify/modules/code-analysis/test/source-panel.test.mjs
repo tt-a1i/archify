@@ -60,7 +60,7 @@ test('source links preserve distinct finding lines and never invent line one', (
   assert.match(render({incoming:[],outgoing:[{evidence:[{file:'hub.py',line:28}]}]},'hub.py'),/data-line="28"/);
   const start=script.indexOf('  function showCode('),end=script.indexOf('  function showDetail(',start);
   let pane={hidden:true,innerHTML:'',querySelector:()=>({addEventListener(){},scrollIntoView(){}})};
-  const show=new Function('tr','codePane','data','detail','function readerPage(){} const document={documentElement:{setAttribute(){},removeAttribute(){}}}; function esc(x){return x} '+script.slice(start,end)+';return showCode;')(createTranslator(),pane,{snippets:{'worker.py':{lines:Array.from({length:100},(_,i)=>'code '+(i+1))}}},{});
+  const show=new Function('tr','codePane','data','detail','findingReturn','function readerPage(){} const document={documentElement:{setAttribute(){},removeAttribute(){}}}; function esc(x){return x} '+script.slice(start,end)+';return showCode;')(createTranslator(),pane,{snippets:{'worker.py':{lines:Array.from({length:100},(_,i)=>'code '+(i+1))}}},{},null);
   show('worker.py',47,'','amber');
   assert.match(pane.innerHTML,/Source · line 47/);
   assert.match(pane.innerHTML,/<span class="ln hit amber"><i>47<\/i>code 47/);

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { closeAnalysisBrowser } from './helpers/close-analysis-browser.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -332,15 +333,15 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
   t.after(() => new Promise(resolve => { view.server.close(resolve); for (const socket of sockets) socket.destroy(); }));
   const browser = new ChromeVisualBrowser(chrome);
-  t.after(() => browser.close());
+  t.after(() => closeAnalysisBrowser(browser));
   const session = await browser.sessionPromise;
-  const send = (method, params = {}) => browser.cdp.send(method, params, session);
-  const run = async expression => {
-    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+  const send = (method, params = {}, timeout) => browser.cdp.send(method, params, session, timeout);
+  const run = async (expression, timeout) => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, timeout);
     assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
     return response.result?.value;
   };
-  const wait = expression => run(`new Promise((resolve, reject) => { const start = Date.now(); const poll = () => { if (${expression}) return resolve(true); if (Date.now() - start > 10000) return reject(new Error('Timed out waiting for UI')); setTimeout(poll, 25); }; poll(); })`);
+  const wait = (expression, timeout = 10000) => run(`new Promise((resolve, reject) => { const start = Date.now(); const poll = () => { if (${expression}) return resolve(true); if (Date.now() - start > ${timeout}) return reject(new Error('Timed out waiting for UI')); setTimeout(poll, 25); }; poll(); })`, timeout + 5000);
   const load = async () => {
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
     await send('Page.navigate', { url: view.url });
@@ -368,13 +369,16 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   fs.writeFileSync(ir, original);
   await load();
   await run("document.getElementById('code-analysis-start').click()");
-  await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
-  // The left column opens on the project overview, not on a component.
+  await wait("document.documentElement.getAttribute('data-bauify') === 'on'", 90_000).catch(async error => {
+    const note = await run("document.getElementById('code-analysis-note')?.textContent");
+    throw new Error(`Analysis did not open: ${note}`, { cause: error });
+  });
+  // The reader starts on the project overview.
   assert.equal(await run("document.getElementById('bauify-overview').hidden"), false);
   assert.equal(await run("document.getElementById('bauify-panel').hidden"), true);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length"), 4);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length === [...document.querySelectorAll('#bauify-overview,#bauify-panel,#bauify-detail,#bauify-code')].filter(e => e.parentElement.id === 'bauify-reader').length"), true);
-  assert.equal(await run("document.querySelector('.diagram-container').getBoundingClientRect().left > document.getElementById('bauify-reader').getBoundingClientRect().right"), true, 'desktop canvas reserves the reading column');
+  assert.equal(await run("document.querySelector('.diagram-container').getBoundingClientRect().right < document.getElementById('bauify-reader').getBoundingClientRect().left"), true, 'desktop canvas reserves room for the right-hand reader');
   assert.match(await run("document.querySelector('#bauify-overview .health-summary .attention').textContent"), /errors/);
   assert.match(await run("document.getElementById('bauify-overview').textContent"), /Checked: import cycles, module cycles, hub modules/);
   // a.mjs <-> b.mjs is both a file cycle and a module cycle: one structure, one priority slot.

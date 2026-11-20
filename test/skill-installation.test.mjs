@@ -34,11 +34,7 @@ function extractArchive(destination) {
   fs.mkdirSync(destination, { recursive: true });
   const archive = path.join(repoRoot, 'archify.zip');
   const result = process.platform === 'win32'
-    ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      'Expand-Archive -LiteralPath $env:ARCHIFY_TEST_ARCHIVE -DestinationPath $env:ARCHIFY_TEST_EXTRACT'], {
-      encoding: 'utf8',
-      env: { ...process.env, ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination },
-    })
+    ? spawnSync('tar.exe', ['-xf', archive, '-C', destination], { encoding: 'utf8' })
     : spawnSync('unzip', ['-q', archive, '-d', destination], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.error?.message || result.stderr);
 }
