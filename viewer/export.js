@@ -857,15 +857,31 @@
             return Number.isFinite(value) ? value : fallback;
           }
 
+          var sequenceTiming = root.getAttribute('data-motion-choreography') === 'sequence'
+            && Archify.motionGovernor && Archify.motionGovernor.sequenceTiming;
           var edges = Array.prototype.slice.call(root.querySelectorAll('[data-animate="edge"]')).map(function (element, index) {
             var computed = getComputedStyle(element);
+            var timing = sequenceTiming && sequenceTiming(element);
+            if (sequenceTiming && !timing) return null;
             return {
               points: samplesFor(element),
               color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
               width: Math.max(1.5, parseFloat(computed.strokeWidth) || 1.5),
-              delay: Math.min(12, authoredStep(element, index)) * 0.16
+              delay: timing ? timing.depart : Math.min(12, authoredStep(element, index)) * 0.16,
+              travel: timing ? timing.travel : 1.75
             };
-          }).filter(function (edge) { return edge.points.length > 1; });
+          }).filter(function (edge) { return edge && edge.points.length > 1; });
+          if (sequenceTiming && edges.length) {
+            // Fit the complete Live sequence into the requested recording, with a final hold.
+            var span = edges.reduce(function (end, edge) { return Math.max(end, edge.delay + edge.travel); }, 0);
+            var recording = duration / 1000;
+            var finalHold = Math.min(0.25, recording / 4);
+            var timeScale = Math.min(1, (recording - finalHold) / span);
+            edges.forEach(function (edge) {
+              edge.delay *= timeScale;
+              edge.travel *= timeScale;
+            });
+          }
 
           var nodes = Array.prototype.slice.call(root.querySelectorAll('[data-node-id][data-animate="node"]')).map(function (element, index) {
             var box;
@@ -918,8 +934,7 @@
           ctx.translate(-motionScene.x, -motionScene.y);
 
           motionScene.edges.forEach(function (edge) {
-            var duration = 1.75;
-            var progress = (elapsed - edge.delay) / duration;
+            var progress = (elapsed - edge.delay) / edge.travel;
             if (progress < 0 || progress > 1) return;
             var head = Math.max(0, Math.min(1, progress));
             var tail = Math.max(0, head - 0.24);

@@ -276,6 +276,41 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     }
   });
 
+  await t.test('WebM plays all Sequence messages one at a time in Live order', async () => {
+    await load('sequence');
+    const result = await run(`(async () => {
+      const edges = [...document.querySelectorAll('path[data-animate="edge"]')];
+      edges.sort((a, b) => Number(a.style.getPropertyValue('--step')) - Number(b.style.getPropertyValue('--step')));
+      const rows = edges.map(edge => edge.getPointAtLength(edge.getTotalLength() / 2).y);
+      const frames = [];
+      const ctx = CanvasRenderingContext2D.prototype;
+      const clearRect = ctx.clearRect, arc = ctx.arc;
+      ctx.clearRect = function (...args) {
+        frames.push([]);
+        return clearRect.apply(this, args);
+      };
+      ctx.arc = function (...args) {
+        if (args[2] === 4.8) {
+          const row = rows.findIndex(y => Math.abs(y - args[1]) < 1);
+          frames.at(-1).push(row);
+        }
+        return arc.apply(this, args);
+      };
+      try {
+        const video = await Archify.motion.recordWebm();
+        return { type: video.type, bytes: video.size, rows: rows.length, frames: frames.filter(frame => frame.length) };
+      } finally {
+        ctx.clearRect = clearRect;
+        ctx.arc = arc;
+      }
+    })()`);
+    assert.match(result.type, /^video\/webm/);
+    assert.ok(result.bytes > 0);
+    assert.ok(result.rows > 7, 'the fixture reaches the previously compressed part of the recording');
+    assert.ok(result.frames.every(frame => frame.length === 1), 'at most one message comet may be visible');
+    assert.deepEqual([...new Set(result.frames.flat())], Array.from({ length: result.rows }, (_, index) => index));
+  });
+
   await t.test('settled Live node glow preserves Classic card depth across themes', async () => {
     const samples=[];
     for (const theme of ['dark', 'light']) {

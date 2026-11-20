@@ -49,6 +49,7 @@
       // plans the timeline and per-element keyframes; viewer.css owns looks.
       var SVG_NS = 'http://www.w3.org/2000/svg';
       var choreography = svg ? (svg.getAttribute('data-motion-choreography') || 'relay') : 'relay';
+      var sequenceTiming = new WeakMap();
       var RELAY = {
         speed: 280,
         minTravel: 0.42,
@@ -389,6 +390,7 @@
           }
           var record = {
             index: records.length,
+            shape: shape,
             len: len,
             from: shape.getAttribute('data-edge-from') || shape.getAttribute('data-composition-edge-from') || '',
             to: shape.getAttribute('data-edge-to') || shape.getAttribute('data-composition-edge-to') || '',
@@ -488,6 +490,11 @@
             record.ripple.style.setProperty('--flow-name', 'archify-relay-ripple');
           }
         });
+        if (choreography === 'sequence') {
+          active.forEach(function (record) {
+            sequenceTiming.set(record.shape, { depart: record.depart, travel: record.travel });
+          });
+        }
         var shapes = nodeShapes();
         Object.keys(windows).forEach(function (id) {
           (shapes[id] || []).forEach(function (shape) {
@@ -712,6 +719,7 @@
 
       return {
         capable: true,
+        sequenceTiming: function (shape) { return sequenceTiming.get(shape); },
         pause: function () { return setPaused(true); },
         resume: function () { return setPaused(false); },
         toggle: function () { return setPaused(!readerPaused); },
