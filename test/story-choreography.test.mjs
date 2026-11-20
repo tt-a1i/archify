@@ -6,7 +6,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
+import { captureAtomicOutput } from '../archify/renderers/shared/atomic-output.mjs';
 import { fromStoryBriefToChoreography, normalizeChoreographySpec } from '../archify/story/choreography-plan.mjs';
+import { writeStoryOutput } from '../archify/story/output.mjs';
 import { compileStoryStillSvg, compileStorySvg, createCompiledStoryTheme } from '../archify/story/story-svg.mjs';
 import { assertCamoSafeSvg, bakeSvg, extractCanonicalSvg, loadViewerStyles } from '../archify/story/svg-bake.mjs';
 import { git } from './helpers/repository-evidence-fixture.mjs';
@@ -288,6 +290,58 @@ test('3-positional story svg and story stage bridge existing native HTML and ver
   assert.equal(fs.existsSync(longOut), false);
 });
 
+test('story SVG preserves invalid node diagnostics in the default dual-theme export', () => {
+  const dir = scratch();
+  multiViewFixtures(dir);
+  const specPath = path.join(dir, 'invalid-focus.json');
+  fs.writeFileSync(specPath, JSON.stringify({
+    schema_version: 1,
+    title: 'Invalid focus',
+    views: [{ id: 'arch', type: 'architecture', input: 'arch1.json' }],
+    steps: [{ view: 'arch', title: 'Focus a node', body: 'Find the referenced node.', focus: ['missing'] }],
+  }));
+
+  const stem = path.join(dir, 'walkthrough');
+  const lightSvg = stem + '-light.svg';
+  const previous = '<svg xmlns="http://www.w3.org/2000/svg"/>';
+  fs.writeFileSync(lightSvg, previous);
+  const originalFiles = fs.readdirSync(dir).sort();
+  const args = ['story', 'svg', specPath, stem, '--json'];
+  const light = run([...args, '--theme', 'light'], dir);
+  assert.equal(light.status, 1, light.stdout + light.stderr);
+  const expected = JSON.parse(light.stdout).diagnostics;
+  assert.equal(expected[0].code, 'story/unknown-node');
+  assert.equal(expected[0].subject.view, 'arch');
+  assert.equal(expected[0].subject.node, 'missing');
+
+  const both = run(args, dir);
+  assert.equal(both.status, 1, both.stdout + both.stderr);
+  assert.deepEqual(JSON.parse(both.stdout).diagnostics, expected);
+  assert.equal(fs.readFileSync(lightSvg, 'utf8'), previous);
+  assert.deepEqual(fs.readdirSync(dir).sort(), originalFiles);
+});
+
+test('a Story recovery write requires the captured parent identity before staging', () => {
+  const dir = scratch();
+  const first = path.join(dir, 'first');
+  const second = path.join(dir, 'second');
+  fs.mkdirSync(first);
+  fs.mkdirSync(second);
+  const target = path.join(second, 'story.svg');
+  const original = captureAtomicOutput(path.join(first, 'story.svg'));
+  const current = captureAtomicOutput(target);
+  assert.equal(original.status, 'captured');
+  assert.equal(current.status, 'captured');
+  const { parentDevice, parentInode } = original.snapshot.slot;
+  const expectedSnapshot = {
+    ...current.snapshot,
+    slot: { ...current.snapshot.slot, parentDevice, parentInode },
+  };
+  assert.throws(() => writeStoryOutput(target, '<svg/>', undefined, { createOnly: true, expectedSnapshot }),
+    /write-slot-changed/);
+  assert.deepEqual(fs.readdirSync(second), []);
+});
+
 test('story SVG restores the output pair and keeps recovery copies when restoration fails through an alias', () => {
   const dir = scratch();
   const { htmlPath, briefPath } = writeLegacyStoryBrief(dir);
@@ -337,10 +391,20 @@ fs.openSync = function(file, flags, ...args) {
   const runFaulted = (mode, faults, format = ['--json']) => {
     fs.writeFileSync(trace, '');
     const result = run(['story', 'svg', htmlPath, briefPath, animated, ...format], dir,
-      { ARCHIFY_TEST_STORY_FAULT: mode }, ['--import', pathToFileURL(hook).href]);
+      { ARCHIFY_TEST_STORY_FAULT: mode, TMPDIR: dir, TEMP: dir, TMP: dir }, ['--import', pathToFileURL(hook).href]);
     assert.equal(result.status, 1, result.stderr + result.stdout);
     assert.deepEqual(fs.readFileSync(trace, 'utf8').trim().split('\n'), faults);
     return result;
+  };
+
+  const assertRecoveryCopies = (diagnostic, outputs) => {
+    const { recoveryDirectory, recoveryFiles } = diagnostic.evidence;
+    assert.ok(fs.statSync(recoveryDirectory).isDirectory());
+    assert.deepEqual(recoveryFiles.map(({ backup, requestedPath, target }) => [
+      requestedPath, target, fs.readFileSync(backup, 'utf8'),
+    ]), outputs.map(([output, content]) => [
+      output, path.join(fs.realpathSync(physical), path.basename(output)), content,
+    ]));
   };
 
   fs.writeFileSync(still, 'previous still');
@@ -350,25 +414,34 @@ fs.openSync = function(file, flags, ...args) {
   assert.equal(absent.evidence.restoration, 'complete');
   assert.equal(fs.readFileSync(still, 'utf8'), 'previous still');
 
-  fs.writeFileSync(animated, 'previous animation');
+  const alternateSpelling = path.join(physical, 'Story.svg');
+  fs.writeFileSync(alternateSpelling, 'previous animation');
+  if (!fs.existsSync(animated)) fs.renameSync(alternateSpelling, animated);
   const restored = JSON.parse(runFaulted('publish-only', ['publication']).stdout).diagnostics[0];
   assert.equal(restored.evidence.restoration, 'complete');
   assert.equal(fs.readFileSync(animated, 'utf8'), 'previous animation');
   assert.equal(fs.readFileSync(still, 'utf8'), 'previous still');
-  assert.deepEqual(fs.readdirSync(physical).sort(), ['story.still.svg', 'story.svg']);
+  assert.deepEqual(fs.readdirSync(physical).map(file => file.toLowerCase()).sort(), ['story.still.svg', 'story.svg']);
+
+  fs.unlinkSync(animated);
+  const onlyStill = JSON.parse(runFaulted('current-restore', ['publication', 'current restoration']).stdout).diagnostics[0];
+  assert.equal(onlyStill.evidence.restoration, 'incomplete');
+  assertRecoveryCopies(onlyStill, [[still, 'previous still']]);
+  assert.equal(fs.existsSync(animated), false);
+  fs.writeFileSync(animated, 'previous animation');
+  fs.writeFileSync(still, 'previous still');
 
   const incomplete = JSON.parse(runFaulted('pair-restore', ['publication', 'restoration']).stdout).diagnostics[0];
   assert.equal(incomplete.code, 'story/svg-publication');
   assert.equal(incomplete.evidence.restoration, 'incomplete');
   assert.match(incomplete.message, /restoration failure/);
-  assert.ok(fs.statSync(incomplete.evidence.recoveryDirectory).isDirectory());
-  assert.deepEqual(incomplete.evidence.recoveryFiles.map(file => fs.readFileSync(file, 'utf8')).sort(),
-    ['previous animation', 'previous still']);
+  assertRecoveryCopies(incomplete, [[animated, 'previous animation'], [still, 'previous still']]);
   assert.equal(fs.readFileSync(still, 'utf8'), 'previous still');
   fs.writeFileSync(animated, 'previous animation');
   const plain = runFaulted('pair-restore', ['publication', 'restoration'], []);
   assert.match(plain.stderr, /Recovery incomplete/);
-  assert.match(plain.stderr, /recovery directory:/);
+  assert.match(plain.stderr, /Recovery directory "/);
+  assert.ok(plain.stderr.includes(`for "${still}" (resolved target "${stillDestination}")`));
 
   fs.writeFileSync(animated, 'previous animation');
   const failedMember = JSON.parse(runFaulted('current-restore', ['publication', 'current restoration']).stdout).diagnostics[0];
@@ -377,8 +450,7 @@ fs.openSync = function(file, flags, ...args) {
   assert.match(failedMember.message, /Previous output could not be verified/);
   assert.equal(fs.readFileSync(animated, 'utf8'), 'previous animation');
   assert.equal(fs.existsSync(still), false);
-  assert.deepEqual(failedMember.evidence.recoveryFiles.map(file => fs.readFileSync(file, 'utf8')).sort(),
-    ['previous animation', 'previous still']);
+  assertRecoveryCopies(failedMember, [[animated, 'previous animation'], [still, 'previous still']]);
 });
 
 test('choreography resolves pinned repository source lines via --repo-root and rejects invalid paths/ranges/motion', (t) => {

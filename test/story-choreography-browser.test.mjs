@@ -463,6 +463,7 @@ test('choreography preserves revisits, successive labels, parallel travel, initi
     for (let i = 0; i < state.sharedBox.length; i++) assert.ok(Math.abs(state.sharedBox[i]-state.nativeBox[i]) < 0.1, JSON.stringify(state));
     assert.ok(state.labels.includes('Reviewed API'), JSON.stringify(state));
     assert.ok(state.labels.includes('2 → 6'), JSON.stringify(state));
+    assert.ok(!state.labels.includes('2'), JSON.stringify(state));
   });
 
   await t.test('sampled stills match eased animated frames between keyframes', async () => {
