@@ -1,0 +1,13 @@
+{
+  "project": "controlled two-module Maven reactor",
+  "sourceDirectories": ["api/src/main/java", "app/src/main/java"],
+  "metadataFiles": ["pom.xml", "api/pom.xml", "app/pom.xml"],
+  "inputSha256": "48b64820a60ceeea2a14325688dfc02603dd0d89f0ca71b3506c5c36d635f490",
+  "jsPathPrefix": "",
+  "queries": [
+    {"id":"cross-module-static","file":"app/src/main/java/probe/app/App.java","line":7,"column":9,"endLine":7,"endColumn":25,"jdkTarget":"api/src/main/java/probe/api/Api.java:5","jsStatus":"known"},
+    {"id":"cross-module-instance","file":"app/src/main/java/probe/app/App.java","line":8,"column":9,"endLine":8,"endColumn":33,"jdkTarget":"api/src/main/java/probe/api/Api.java:6","jsStatus":"unresolved"},
+    {"id":"cross-module-factory","file":"app/src/main/java/probe/app/App.java","line":9,"column":9,"endLine":9,"endColumn":21,"jdkTarget":"api/src/main/java/probe/api/Api.java:4","jsStatus":"known"},
+    {"id":"cross-module-factory-instance","file":"app/src/main/java/probe/app/App.java","line":9,"column":9,"endLine":9,"endColumn":36,"jdkTarget":"api/src/main/java/probe/api/Api.java:6","jsStatus":"unresolved"}
+  ]
+}

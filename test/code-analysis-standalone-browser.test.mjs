@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
@@ -10,7 +11,19 @@ const chrome=process.env.ARCHIFY_CHROME?findChrome():null;
 const cli=fileURLToPath(new URL('../archify/bin/archify.mjs',import.meta.url));
 
 test('standalone workbench keeps Atlas alongside evidence, both locales/themes and narrow task access',{skip:chrome?false:'Set ARCHIFY_CHROME for standalone browser acceptance.'},async t=>{
-  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-standalone-browser-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-standalone-browser-'));
+  let browser;
+  t.after(async () => {
+    if (browser) {
+      if (browser.child.exitCode === null && browser.child.signalCode === null) {
+        const exit = once(browser.child, 'exit', { signal: AbortSignal.timeout(5_000) }).catch(() => {});
+        await browser.cdp.send('Browser.close').catch(() => {});
+        await exit;
+      }
+      await browser.close();
+    }
+    fs.rmSync(dir,{recursive:true,force:true,maxRetries:5,retryDelay:100});
+  });
   const root=path.join(dir,'repo');fs.mkdirSync(root);
   // A many-module cycle reproduces the real Hive location-list overflow.
   for(let i=0;i<22;i++){
@@ -19,7 +32,7 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     fs.writeFileSync(path.join(folder,'../package.json'),JSON.stringify({name:module}));
     fs.writeFileSync(path.join(folder,'index.ts'),`import { f as dep } from '../../${next}/src/index';export function f(){return dep();}\n`);
   }
-  const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());
+  browser=new ChromeVisualBrowser(chrome);
   const session=await browser.sessionPromise;
   const send=(method,params={})=>browser.cdp.send(method,params,session);
   const run=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});assert.equal(r.exceptionDetails,undefined,r.exceptionDetails?.exception?.description);return r.result?.value;};
@@ -133,7 +146,55 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     assert.equal(await run(selectedFinding), id, 'returning from source keeps the detail selected');
     await click(`${details} .back`);
     assert.equal(await run(selectedFinding), '', 'returning to the overview restores no selection');
+
+    // Selecting a captured file replaces a prior finding, and module/clear
+    // selections replace that file. Protect the actual browser transitions.
+    await click(priority);
+    const cycle = atlas.findings.find(f => f.kind === 'cycle');
+    await run('window.__archifyAtlas.focusFinding(' + JSON.stringify(cycle.id) + ')');
+    await wait("document.documentElement.getAttribute('data-bauify-atlas-flow') === 'on'", 'cycle animation did not start');
+    await click('#atlas-tab-files');
+    assert.equal(await run(`new Promise(resolve => {
+      const original = CanvasRenderingContext2D.prototype.drawImage;
+      const canvas = document.querySelector('#bauify-atlas canvas'); let paints = 0;
+      CanvasRenderingContext2D.prototype.drawImage = function (...args) { if (this.canvas === canvas) paints++; return original.apply(this, args); };
+      setTimeout(() => { CanvasRenderingContext2D.prototype.drawImage = original; resolve(paints); }, 160);
+    })`), 0, 'Files does not keep repainting the hidden cycle');
+    assert.equal(await run("document.querySelector('#atlas-tab-files').textContent"),locale==='zh-CN'?'文件':'Files');
+    await click('.atlas-file-query');
+    await send('Input.insertText',{text:atlas.files[0][0]});
+    await click('.atlas-file-list [data-file="0"]');
+    const exported=await run("document.querySelector('.atlas-file-markdown')?.value");
+    assert.ok(exported?.startsWith('# '+atlas.files[0][0]),'a file replaces the previously selected finding');
+    assert.equal(await run(selectedFinding),'');
+    assert.equal(await run(selectedModule),atlas.modules[atlas.files[0][1]].id);
+    const downloadDir=path.join(dir,'downloads-'+locale);fs.mkdirSync(downloadDir);
+    await browser.cdp.send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloadDir});
+    await click('.atlas-file-download');
+    const downloaded=path.join(downloadDir,'index.md'),deadline=Date.now()+5000;
+    while(!fs.existsSync(downloaded)&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,25));
+    assert.equal(fs.readFileSync(downloaded,'utf8'),exported,'actual Markdown download matches the preview');
+    await run('window.__fileSelection = window.__archifyAtlas.saveSelection()');
+    await click('#atlas-tab-map');
+    await wait(canvasSized,'Map did not resize after Files');
+    await click(list+' [data-module="1"]');
+    assert.equal(await run("!!document.querySelector('.atlas-file-markdown')"),false,'module selection replaces a file');
+    await click('.atlas-clear');
+    assert.equal(await run("document.querySelector('.atlas-selection').hidden"),true,'clear removes file selection');
+    await run('window.__archifyAtlas.restoreSelection(window.__fileSelection)');
+    assert.equal(await run("!document.querySelector('#atlas-files-panel').hidden"),true);
+    assert.equal(await run("document.querySelector('.atlas-file-query').value"),atlas.files[0][0]);
+    assert.equal(await run("document.querySelector('.atlas-file-markdown').value"),exported);
+    await run("document.querySelector('#atlas-tab-files').focus()");
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:'ArrowLeft',code:'ArrowLeft'});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key:'ArrowLeft',code:'ArrowLeft'});
+    assert.equal(await run("document.activeElement.id"),'atlas-tab-map');
+    assert.equal(await run("document.querySelector('#atlas-tab-map').tabIndex"),0);
+    assert.equal(await run("document.querySelector('#atlas-tab-files').tabIndex"),-1);
+    assert.equal(await run("document.querySelector('#atlas-files-panel').hidden"),true);
+    await click('.atlas-clear');
     assert.equal(await run("document.querySelector('.atlas-selection').hidden"), true);
+    await click(`${details} .back`);
 
     const wheel = async (selector, deltaY) => send('Input.dispatchMouseEvent', { type: 'mouseWheel', ...await point(selector), deltaX: 0, deltaY });
     await wheel(list, 2000);
@@ -190,6 +251,13 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     assert.ok(await run("document.querySelector('.analysis-reader-shell').getBoundingClientRect().height") <= 36);
     await click('.reader-restore');
     assert.equal(await run("document.documentElement.scrollWidth"), 390);
+    await click('#atlas-tab-files');
+    assert.equal(await run(`(() => {
+      const pane = document.querySelector('.atlas-files-pane').getBoundingClientRect();
+      const query = document.querySelector('.atlas-file-query').getBoundingClientRect();
+      const row = document.querySelector('.atlas-file-list [data-file]').getBoundingClientRect();
+      return query.top >= pane.top && row.bottom <= pane.bottom;
+    })()`), true, 'narrow Files keeps the search and first result visible together');
     await motion('no-preference');
   }
 });

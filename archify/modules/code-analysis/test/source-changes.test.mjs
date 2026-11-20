@@ -47,6 +47,12 @@ test('source markers compare captured text with HEAD, including staged edits and
   assert.deepEqual(changes.get('new.py').added, [1]);
   assert.equal(changes.get('new.py').status, 'added');
   assert.deepEqual(changes.get('new-empty.py').added, []);
+  const renamed = sourceChanges(root, { ...repository, sourceKind: 'git-tree' }, new Map([
+    ['only-renamed.py', base['crlf.py']], ['renamed-and-edited.py', captured.get('modified.py')], ['missing-original.py', 'text\n'],
+  ]), new Map([['only-renamed.py', 'crlf.py'], ['renamed-and-edited.py', 'modified.py'], ['missing-original.py', 'not-captured.py']]));
+  assert.deepEqual(renamed.get('only-renamed.py'), { status: 'unchanged', added: [], modified: [], deleted: [] });
+  assert.deepEqual(renamed.get('renamed-and-edited.py'), { status: 'modified', added: [], modified: [2], deleted: [] });
+  assert.equal(renamed.get('missing-original.py').status, 'unavailable');
   assert.equal(sourceChanges(root, { ...repository, baseRevision: 'f'.repeat(40) }, captured).get('new.py').status, 'unavailable');
   assert.equal(sourceChanges(root, { sourceKind: 'working-tree', baseRevision: null }, captured).get('new.py').status, 'unavailable');
 });

@@ -9,7 +9,7 @@ import { DiagnosticError, fail, receipt } from '../core/index.mjs';
 import { baselineCommand, taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
-  archify code-analysis check <repo-root> [--language ts|py|java|go|rust] [--config file.json]
+  archify code-analysis check <repo-root> [--language ts|py|java|go|rust|c|cpp] [--config file.json]
                               [--ir architecture.json [--map overlay-map.json]]
                               [--baseline baseline.json] [--compare findings.json] [--out dir]
                               [--fail-on error|warning|info|never] [--new-only]
@@ -199,8 +199,10 @@ export async function runCheck(argv) {
       // without opening the output directory. The gate below does not read it.
       coverage: {
         parseErrors: overview.coverage.files.parseErrors,
-        ...(overview.coverage.files.excludedByRole ? {
+        ...(overview.coverage.files.parseErrors.length || overview.coverage.files.excludedByRole ? {
           analyzedFiles: overview.coverage.files.analyzed,
+        } : {}),
+        ...(overview.coverage.files.excludedByRole ? {
           excludedByRole: overview.coverage.files.excludedByRole,
           excludedRoleCounts: countExcludedRoles(facts.files, graph.excluded?.roles),
         } : {}),
@@ -244,7 +246,12 @@ export function formatText(r) {
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
   if (c.acceptedErrors) lines.push(`  ${c.acceptedErrors} accepted error${c.acceptedErrors === 1 ? ' is' : 's are'} still present: the baseline keeps ${c.acceptedErrors === 1 ? 'it' : 'them'} from failing this run, the finding${c.acceptedErrors === 1 ? '' : 's'} remain${c.acceptedErrors === 1 ? 's' : ''}.`);
-  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
+  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust', c: 'C', cpp: 'C++' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
+  if (['c', 'cpp'].includes(r.coverage?.languageScope?.language)) {
+    const scope = r.coverage.languageScope;
+    lines.push(`  Compilation database: ${scope.build.units.length} translation units · ${scope.excludedFiles.length} source files without commands · ${r.coverage.parseErrors.length} parse failures`);
+    lines.push('  Active includes, source definitions and bounded same-unit calls; inspect coverage.languageScope for configuration and exclusions.');
+  }
   if (r.coverage?.languageScope?.language === 'go') {
     const scope = r.coverage.languageScope;
     lines.push(`  Go module: ${scope.module} · ${scope.build.goos}/${scope.build.goarch} · cgo disabled · tests ${scope.build.tests ? 'included' : 'excluded'} · tags ${scope.build.tags.join(', ') || '(none)'}`);
@@ -259,9 +266,10 @@ export function formatText(r) {
     lines.push('  Source profile only; inspect coverage.languageScope for cfg/features, omissions and unknown dispatch.');
   }
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
-  if (uncovered.excludedByRole) {
+  if (uncovered.analyzedFiles !== undefined) {
+    const scope = `  Graph/rule scope: ${uncovered.analyzedFiles} source file${uncovered.analyzedFiles === 1 ? '' : 's'} analyzed`;
     const breakdown = Object.entries(uncovered.excludedRoleCounts || {}).map(([role, count]) => `${count} ${formatTerminalText(role)}`).join(', ');
-    lines.push(`  Graph/rule scope: ${uncovered.analyzedFiles} source file${uncovered.analyzedFiles === 1 ? '' : 's'} analyzed, ${uncovered.excludedByRole} excluded by role${breakdown ? ` (${breakdown})` : ''}`);
+    lines.push(uncovered.excludedByRole ? `${scope}, ${uncovered.excludedByRole} excluded by role${breakdown ? ` (${breakdown})` : ''}` : scope);
   }
   if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.map(formatTerminalText).join(', ')}`);
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);

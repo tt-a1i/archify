@@ -15,7 +15,7 @@ export const USAGE = `Usage:
                              [--root <repo-root>] [--command <cmd> …]
                              [--format md|json] [--out <file>] [--require-valid]
   archify code-analysis task [<analysis-dir>] --question <text> --entry <file>
-                             --root <repo-root> [--function <name>] [--format md|json] [--out file]
+                             --root <repo-root> [--function <name>] [--context <translation-unit>] [--format md|json] [--out file]
   archify code-analysis task --question <text> --base-root <base> --root <head>
                              --entry <file> [--config file.json] [--format md|json] [--out file]
   archify code-analysis task --verify <task.json> --root <repo-root>
@@ -39,11 +39,11 @@ analysis. It needs no finding. Missing facts remain explicit; changed/unverifiab
 entry facts or entry parse errors exit 1. Read docs/FUNCTION-ANALYSIS.md and complete the analysis.
 importers/callers reverse the captured resolved edges with origin freshness and
 total/included/omitted counts. They are bounded source references, not complete runtime impact.
-Single-entry Python/Java/Go/Rust questions require a saved analysis directory with matching
-captured .py/.java/.go/.rs source and matching producer/call-model metadata; unsupported historical models keep unavailable coverage.
-With --base-root, question mode freshly captures both roots in the entry language (JS/TS, .py, .java, .go or .rs) with one analysis
+Single-entry Python/Java/Go/Rust/C/C++ questions require a saved analysis directory with matching
+captured source and producer/call-model metadata; C/C++ header entries also need --context.
+With --base-root, question mode freshly captures both roots in the entry language (JS/TS, .py, .java, .go, .rs, .c or .cpp) with one analysis
 config (defaults or --config). It requires --entry and accepts no analysis directory
-or --function. Both captures use the same adapter/config. Python/Java/Go/Rust compare captured
+or --function. Both captures use the same adapter/config. Python/Java/Go/Rust/C/C++ compare captured
 full named definition headers/bodies; missing metadata is partial. Rust records captured Cargo metadata, selected crate/cfg/features and excluded scopes.
 Go records module,
 build scope and incomplete source typing; it does not build the project. Captured declaration entries disclose unsupported definition analysis.
@@ -56,7 +56,7 @@ Output: Markdown by default, the JSON task with --format json; to --out or stdou
 Exit codes: 0 prepared/written, 1 incomplete question orientation or invalid evidence
 with --require-valid, 2 usage or input error.`;
 
-const VALUE = ['--finding', '--root', '--command', '--format', '--out', '--verify', '--question', '--entry', '--function', '--base-root', '--config'];
+const VALUE = ['--finding', '--root', '--command', '--format', '--out', '--verify', '--question', '--entry', '--function', '--context', '--base-root', '--config'];
 const FLAGS = ['--require-valid', '--json'];
 const REPEATABLE = ['--finding', '--command'];
 
@@ -76,8 +76,8 @@ export function parseTaskArgs(argv) {
   if (options['--question'] !== undefined) {
     if (!options['--root'] || !options['--entry']) usage('--question needs --root and --entry.');
     if (options['--verify'] || options['--finding'].length || options['--command'].length || options['--require-valid']) usage('Question mode is separate from finding/verify/command/require-valid options.');
-  } else if (options['--entry'] || options['--function']) {
-    usage('--entry and --function require --question.');
+  } else if (options['--entry'] || options['--function'] || options['--context']) {
+    usage('--entry, --function and --context require --question.');
   } else if (options['--verify']) {
     if (dir || options['--finding'].length) usage('--verify takes a task file, not an analysis directory or --finding.');
     if (!options['--root']) usage('--verify needs --root <repo-root> to compare with.');
@@ -86,6 +86,7 @@ export function parseTaskArgs(argv) {
     if (!options['--finding'].length) usage('task requires at least one --finding <id>.');
   }
   if (options['--base-root'] && (options['--question'] === undefined || dir || options['--function'])) usage('--base-root needs --question and does not accept an analysis directory or --function.');
+  if (options['--base-root'] && options['--context']) usage('--context is supported for saved C/C++ questions only.');
   if (options['--config'] && !options['--base-root']) usage('--config is supported only for fresh paired questions with --base-root.');
   if (options['--require-valid'] && !options['--root']) usage('--require-valid needs --root to check against.');
   return { dir, options };
@@ -106,7 +107,7 @@ export async function runTask(argv, { now = new Date() } = {}) {
     const { buildQuestion, renderQuestionMarkdown } = await import('../lib/explain.mjs');
     const file = dir ? path.join(path.resolve(dir), 'raw-facts.json') : null;
     const facts = file && fs.existsSync(file) ? readJson(file, 'raw-facts.json') : null;
-    const brief = buildQuestion({ question: options['--question'], entry: options['--entry'], symbol: options['--function'], root, facts, factsPath: file });
+    const brief = buildQuestion({ question: options['--question'], entry: options['--entry'], symbol: options['--function'], context: options['--context'], root, facts, factsPath: file });
     const body = options['--format'] === 'json' ? stableJson(brief) : renderQuestionMarkdown(brief);
     const out = options['--out'] ? path.resolve(options['--out']) : null;
     if (out) {

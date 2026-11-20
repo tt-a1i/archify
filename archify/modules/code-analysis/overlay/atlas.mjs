@@ -149,7 +149,8 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
   const functions = (facts.functions || [])
     .filter((fn) => fileIndex.has(fn.file))
     .map((fn) => [fileIndex.get(fn.file), fn.qualname || fn.name, fn.line, fn.complexity, fn.nesting ?? 0, (fn.endLine ?? fn.line) - fn.line + 1,
-      functionFinding.has(`${fn.file}\u0000${fn.qualname}`) ? functionFinding.get(`${fn.file}\u0000${fn.qualname}`) : -1])
+      functionFinding.has(`${fn.file}\u0000${fn.qualname}`) ? functionFinding.get(`${fn.file}\u0000${fn.qualname}`) : -1,
+      fn.sourceRange ? { column: fn.sourceRange.column, endLine: fn.sourceRange.endLine, endColumn: fn.sourceRange.endColumn } : null])
     .sort((a, b) => a[0] - b[0] || a[2] - b[2] || compareText(a[1], b[1]));
   for (const [i, fn] of functions.entries()) if (fn[6] !== -1) listed[fn[6]].fn = i;
 
@@ -169,6 +170,7 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
       unknown: (unresolved.unknown || 0) + (unresolved.opaque || 0),
       outside: unresolved.outside || 0,
       parseErrors: (facts.parse_errors || []).length,
+      ...(['c', 'cpp'].includes(facts.repository?.language) ? { notCompiled: facts.languageScope?.excludedFiles?.length || 0 } : {}),
       excluded: graph.excluded?.files || 0,
     },
   };

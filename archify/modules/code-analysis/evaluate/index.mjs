@@ -52,6 +52,7 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
   // settings and coverage. It must not change the internal analyzer's context.
   const { schema_version: _ignored, external: _external, ...settings } = config || {};
   const goBuild = graph?.repository?.language === 'go' ? facts?.languageScope?.build : null;
+  const cppBuild = ['c', 'cpp'].includes(graph?.repository?.language) ? facts?.languageScope?.build : null;
   return {
     analyzer: { name: PACKAGE.name, version: PACKAGE.version },
     language: graph?.repository?.language ?? null,
@@ -68,6 +69,11 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
       tags: [...new Set(goBuild.tags || [])].sort(compareText),
       releaseTags: [...new Set(goBuild.releaseTags || [])].sort(compareText),
       toolTags: [...new Set(goBuild.toolTags || [])].sort(compareText),
+    } } : {}),
+    ...(cppBuild ? { cppBuildScope: {
+      databaseSha256: cppBuild.databaseSha256, sysroot: cppBuild.sysroot, libclang: cppBuild.libclang,
+      commands: cppBuild.units.map(unit => ({ file: unit.file, commandSha256: unit.commandSha256, status: unit.status })),
+      excludedFiles: facts.languageScope.excludedFiles.map(item => item.file),
     } } : {}),
     coverage: {
       files: facts ? facts.files.filter((f) => !excludedRoles.has(f.role)).length : null,

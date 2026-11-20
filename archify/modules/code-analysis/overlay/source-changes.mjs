@@ -60,9 +60,9 @@ function batchMarkers(report, changed) {
 
 // Compare captured source text, never the current index or mutable working files.
 // Batch-read literal Git objects so a large diagram does not spawn Git per file.
-export function sourceChanges(root, repository, sources) {
+export function sourceChanges(root, repository, sources, previousPaths = new Map()) {
   const result = new Map([...sources.keys()].map(file => [file, empty('unavailable')]));
-  if (repository?.sourceKind !== 'working-tree' || !/^[a-f0-9]{40}$/.test(repository.baseRevision || '')) return result;
+  if (!['working-tree', 'git-tree'].includes(repository?.sourceKind) || !/^[a-f0-9]{40}$/.test(repository.baseRevision || '')) return result;
   const tree = git(root, ['ls-tree', '-rz', '--full-tree', repository.baseRevision]);
   if (tree.error || tree.status !== 0) return result;
   const entries = new Map();
@@ -72,9 +72,12 @@ export function sourceChanges(root, repository, sources) {
   }
   const wanted = [];
   for (const [file, text] of sources) {
-    const fullPath = repository.root && repository.root !== '.' ? `${repository.root}/${file}` : file;
+    const previousPath = previousPaths.get(file);
+    const basePath = previousPath ?? file;
+    const fullPath = repository.root && repository.root !== '.' ? `${repository.root}/${basePath}` : basePath;
     const entry = entries.get(fullPath);
     if (!entry) {
+      if (previousPath !== undefined) continue;
       const lines = normalize(text).split('\n');
       if (lines.at(-1) === '') lines.pop();
       result.set(file, { ...empty('added'), added: lines.map((_, i) => i + 1) });
