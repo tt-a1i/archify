@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
-// Run only test-authored Python fixtures, using the same minimum version as the adapter.
+// Run only test-authored Python runtime experiments. Product extraction is Node-only.
 export function runPythonFixture(root, code, commands = process.env.BAUIFY_PYTHON ? [[process.env.BAUIFY_PYTHON]] : [['python3'], ['python'], ['py', '-3']], spawn = spawnSync) {
   for (const [command, ...args] of commands) {
     const probe = spawn(command, [...args, '-c', 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)'], { cwd: root, encoding: 'utf8', timeout: 10000 });

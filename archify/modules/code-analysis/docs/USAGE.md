@@ -61,7 +61,7 @@ Language extraction has its own prerequisites:
 | Adapter | Required tools and source scope |
 | --- | --- |
 | `ts` | Node.js and the module's installed TypeScript parser dependencies. |
-| `py` | Python 3; `BAUIFY_PYTHON` can select the interpreter. |
+| `py` | Node only; transplanted Pyright parser, Python 3.14 syntax by default. Set `python.targetVersion` to 3.8–3.14. |
 | `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
 | `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
@@ -118,6 +118,73 @@ node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis -
 
 Omit `--checks` to record only analysis observations. Use the original task JSON: its ID must match the selected findings. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 returns a JSON error on stdout with `status: "error"` and `diagnostics` instead of a receipt. `task --verify` remains a separate current-source evidence check.
 
+
+## Review architecture drift between two commits
+
+Use `drift` when a code change may invalidate an existing Architecture diagram.
+It compares observed directed component pairs under the **same** authored IR
+and component mapping. Unlike `check --ir`, it says which relationship was
+already observed and which is newly observed in the selected head.
+
+```sh
+node bin/archify.mjs code-analysis drift /path/to/local/repo \
+  --base BASE_FULL_SHA --head HEAD_FULL_SHA --ir architecture.json \
+  --map overlay-map.json --out /path/to/new-review-directory --json
+```
+
+Use two full local Git commit SHAs and a fresh output directory outside the
+source repository (with an existing parent). `--map` is optional and uses the
+same component-to-module mapping as `check --ir`. `--config` supplies one
+Code Analysis configuration for both pins. Use `--locale en` or
+`--locale zh-CN` to choose the review language. An authored IR with repository
+evidence must pin either compared commit and pass the ordinary Architecture
+delivery checks.
+
+Open `architecture-drift.html` offline and choose **Architecture drift**.
+Select a relationship to see its direction on the diagram and its evidence in
+the side panel. Source buttons open the captured import line and identify the
+exact commit; the panel never reads the current working tree. **Download .md**
+saves the selected relationship, both pins, source paths and line numbers, and
+coverage limits, without copying the source text. `architecture-drift.json`
+contains the same comparison used by the page. `--json` also prints it to
+stdout. Exit 0 means the comparison was produced, even when it reports an
+undeclared relationship or inconclusive evidence. Errors exit 2 with
+structured diagnostics. Existing `check` gates and ordinary render output
+are unchanged.
+
+For a newly observed undeclared relationship, download its Markdown and
+**Download verification task .json**. Keep the original report JSON alongside
+the task. After the prospective change is committed, run `drift` again using
+the first report's head as the new base and the same IR, mapping and config.
+Pass `--from-report original/architecture-drift.json` to check the starting
+commit, IR, mapping and configuration against that report. This also lets
+you reuse an IR that pins the original base revision.
+
+```sh
+node bin/archify.mjs code-analysis verify-drift original/architecture-drift.json \
+  --task DRIFT-<id>.json --after follow-up/architecture-drift.json
+```
+
+The verification receipt reports `not-observed-at-head`, `still-observed`, or
+`inconclusive` for that pair. If the starting observation cannot be reproduced
+or the relevant source does not parse, the outcome is inconclusive. The task
+is tied to the original report bytes. Save those bytes without reformatting.
+The verifier accepts saved drift reports up to 32 MiB each.
+Add `--checks-template` to generate a template, and then pass the completed
+template with `--checks <checks.json>` to record project checks. The command
+records these results as reported, without running or verifying the checks.
+
+The first version covers resolved module-scope static JS/TS imports, exports
+and requires, excluding type-only, conditional and deferred references. It
+uses committed files only. It does not check out refs, run project scripts,
+load local dependency configuration outside the capture, or fetch missing
+objects. Symlinks and submodules are omitted and disclosed. A link change,
+conflicting ownership, missing component coverage, affected parse errors, or a
+change in resolution inputs can make a relationship inconclusive. A new
+import site on an existing pair is still an existing relationship. Unmapped
+and unresolved source is outside the report; even a report with no added
+relationship does not establish full-coverage alignment or runtime behavior.
+
 ## First look at an unfamiliar repository
 
 Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-map.json]` to verify diagram-to-code component mapping and undeclared component-level imports alongside the headless check) and write the artifacts to a directory:
@@ -148,7 +215,7 @@ root (or repository-relative paths with that root prefix); a pinned source alway
 names a path relative to the Git top level. Use a concrete file with line numbers
 when the claim needs source-level evidence.
 - `ruleCounts` shows how findings divide by rule, so a dominant rule is visible before reading every finding.
-- `coverage` lists parse failures, role-excluded source counts (`analyzedFiles`, `excludedByRole`, `excludedRoleCounts`) when test or generated files were excluded from the module graph and rules, and other languages left out.
+- `coverage` lists parse failures and languages left out. When there are parse failures or role exclusions, `analyzedFiles` counts successfully parsed files in the graph and rule scope. The top-level `files` count can include failed files retained by an extractor for source navigation or partial facts. Role exclusions also report `excludedByRole` and `excludedRoleCounts`. Coverage does not change the finding gate.
 
 For each lead you keep, run its `task` command (or `archify code-analysis task out/first-look --finding <id> --root /path/to/repo --format json`) to get source excerpts, facts, suggestions, acceptance and evidence digests. Then read the cited source before changing code. A finding is static evidence, not a proven defect: a complexity warning says the function is harder to read and test, not that it must be split, and a coupling signal may be an intentional design. If the branching or dependency is inherent, record that and leave the code as it is.
 

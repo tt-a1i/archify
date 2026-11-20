@@ -49,6 +49,7 @@ export const browserTestFiles = [
   'explainer-browser.test.mjs',
   'code-analysis-browser.test.mjs',
   'code-analysis-boundary-browser.test.mjs',
+  'code-analysis-drift-browser.test.mjs',
   'code-analysis-complexity-browser.test.mjs',
   'code-analysis-review-browser.test.mjs',
   'code-analysis-task-browser.test.mjs',

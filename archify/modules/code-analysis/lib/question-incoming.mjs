@@ -35,10 +35,9 @@ export function questionIncoming({ facts, inspect, entry, symbol, selectedFuncti
     ] };
   const unavailable = reason => ({ ...base, reason });
   if (facts && index?.facts !== facts) index = indexIncoming(facts);
-  const inContext = ({ fact }) => !context || fact.contexts?.includes(context);
   const entryReason = !facts ? 'facts-not-captured' : sourceStatus(entry) !== 'valid' ? `entry-${sourceStatus(entry)}` : null;
   const importers = entryReason ? unavailable(entryReason) : bounded(base,
-    (index.imports.get(entry.file) || []).filter(inContext).sort(order),
+    (index.imports.get(entry.file) || []).filter(record => !context || record.fact.contexts?.includes(context)).sort(order),
     record => {
       const origin = inspect(record.fact.from), status = sourceStatus(origin);
       return { ...record, origin, navigation: { status, location: status === 'valid' ? { file: record.fact.from, line: record.fact.line } : null } };
@@ -47,8 +46,8 @@ export function questionIncoming({ facts, inspect, entry, symbol, selectedFuncti
   if (!reason && symbol && (!selectedFunction || !calls.selection.range)) reason = 'function-range-unavailable';
   if (reason) return { importers, callers: unavailable(reason) };
   const target = symbol ? { name: selectedFunction.name, line: calls.selection.range.line, column: calls.selection.range.column } : null;
-  const targets = target ? index.definitions.get(JSON.stringify([entry.file, target.name, target.line, target.column])) : index.files.get(entry.file);
-  const matches = (targets || []).filter(inContext).sort(order);
+  const matches = (target ? index.definitions.get(JSON.stringify([entry.file,target.name,target.line,target.column])) || [] : index.files.get(entry.file) || [])
+    .filter(record => !context || record.fact.contexts?.includes(context)).sort(order);
   const callers = bounded({ ...base, provenance: calls.provenance, bindingCoverage: calls.bindingCoverage,
     selection: { file: entry.file, kind: symbol ? 'exact-function-declaration' : 'entry-file-bound-targets', target } }, matches, record => {
     const origin = inspect(record.fact.file);

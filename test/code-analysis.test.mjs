@@ -31,7 +31,14 @@ test('Code Analysis exposes the workbench, checks, task and verification command
   assert.match(verifyHelp.stdout, /archify code-analysis verify-change <analysis-dir> --task <task.json>/);
   const other = run(['extract', path.join(moduleRoot, 'test/fixtures/ts-basic')]);
   assert.notEqual(other.status, 0);
-  assert.match(other.stderr, /commands: prepare, serve, check, task, verify-change, import-review/);
+  const operationList = other.stderr.match(/^archify code-analysis commands: (.+)\.$/m);
+  assert.ok(operationList, other.stderr);
+  for (const operation of ['prepare', 'serve', 'check', 'task', 'verify-change', 'import-review', 'drift', 'verify-drift']) {
+    assert.ok(operationList[1].split(', ').includes(operation), operation);
+  }
+  const driftHelp = run(['drift', '--help']);
+  assert.equal(driftHelp.status, 0, driftHelp.stderr);
+  assert.match(driftHelp.stdout, /code-analysis drift <git-repo> --base <full-sha> --head <full-sha>/);
   const missing = run(['serve', path.join(moduleRoot, 'test/fixtures/ts-basic')]);
   assert.equal(missing.status, 2);
   assert.match(missing.stderr, /requires --out/);

@@ -744,18 +744,6 @@
     }
     return h;
   }
-  function verificationHtml() {
-    var title = '<details class="verify-change"><summary>' + esc(tr('Verify a previous task')) + '</summary>';
-    if (!data.verification) return title + '<p class="ev">' + esc(tr('Download the task JSON before editing, then re-analyze using the same output directory.')) + '</p></details>';
-    return title + '<p class="ev">' + esc(tr('Run project checks separately. This receipt compares captured analyses and records your reported check results.')) + '</p>'
-      + '<form><label>' + esc(tr('Task JSON from the previous run')) + '<input type="file" accept=".json,application/json" class="verify-task" required></label>'
-      + '<label>' + esc(tr('Project check results JSON (optional)')) + '<input type="file" accept=".json,application/json" class="verify-checks"></label>'
-      + '<div class="task-actions"><button type="submit">' + esc(tr('Preview verification')) + '</button></div></form>'
-      + '<p class="verify-status ev" role="status"></p><div class="verify-preview" aria-live="polite"></div><div class="task-actions">'
-      + '<button type="button" class="verify-template" disabled>' + esc(tr('Download checks template')) + '</button>'
-      + '<button type="button" class="verify-download" disabled>' + esc(tr('Download verification JSON')) + '</button></div></details>';
-  }
-
   function prReviewPriorities() {
     var impact = data.pullRequest.impact;
     var sections = [
@@ -808,6 +796,17 @@
     if(finding)h+=quickHandoff(finding,true)+taskHtml(finding);
     return h+'</article>';
   }
+  function verificationHtml() {
+    var title = '<details class="verify-change"><summary>' + esc(tr('Verify a previous task')) + '</summary>';
+    if (!data.verification) return title + '<p class="ev">' + esc(tr('Download the task JSON before editing, then re-analyze using the same output directory.')) + '</p></details>';
+    return title + '<p class="ev">' + esc(tr('Run project checks separately. This receipt compares captured analyses and records your reported check results.')) + '</p>'
+      + '<form><label>' + esc(tr('Task JSON from the previous run')) + '<input type="file" accept=".json,application/json" class="verify-task" required></label>'
+      + '<label>' + esc(tr('Project check results JSON (optional)')) + '<input type="file" accept=".json,application/json" class="verify-checks"></label>'
+      + '<div class="task-actions"><button type="submit">' + esc(tr('Preview verification')) + '</button></div></form>'
+      + '<p class="verify-status ev" role="status"></p><div class="verify-preview" aria-live="polite"></div><div class="task-actions">'
+      + '<button type="button" class="verify-template" disabled>' + esc(tr('Download checks template')) + '</button>'
+      + '<button type="button" class="verify-download" disabled>' + esc(tr('Download verification JSON')) + '</button></div></details>';
+  }
   function renderOverview() {
     var o = data.overview;
     if (!o) { overview.innerHTML = '<h3>' + esc(tr('Architecture check')) + '</h3>' + legend(); return; }
@@ -839,7 +838,7 @@
       else offline += '<p class="ev">' + esc(tr('This report has no saved start command. Ask your AI to prepare a fresh analysis from the original repository and architecture JSON.')) + '</p>';
       offline += '</details>';
     }
-    h += '<div class="section-heading"><h4>' + esc(tr(data.pullRequest ? 'PR review priorities' : o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4>' + iconButton('copy', tr(data.pullRequest ? 'Copy PR impact brief' : 'Copy architecture brief'), ' brief-copy') + '</div>';
+    h += '<div class="section-heading' + (data.pullRequest ? ' pr-review-heading' : '') + '"><h4>' + esc(tr(data.pullRequest ? 'PR review priorities' : o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4>' + iconButton('copy', tr(data.pullRequest ? 'Copy PR impact brief' : 'Copy architecture brief'), ' brief-copy') + '</div>';
     if (data.pullRequest) h += prReviewPriorities();
     else if (o.priorities.length) {
       o.priorities.forEach(function (id, i) { h += priorityCard(id, i + 1); });
@@ -856,7 +855,7 @@
       var externalCount = data.findings.filter(function (f) { return f.external; }).length;
       h += '<div class="external-entry"><button type="button" class="external-findings"><b>' + esc(tr('External diagnostics')) + ' · ' + externalCount + '</b><span>' + plural(sources.length, 'source') + '</span></button><button type="button" class="text-action overview-sources">' + esc(tr('Sources & coverage')) + '</button></div>';
     }
-    h += '<div class="overview-secondary">' + (data.pullRequest ? '<p class="ev">' + esc(tr('Whole-head background, including existing findings')) + '</p>' : '') + '<button type="button" class="browse-findings" aria-label="' + esc(tr('Browse findings')) + '" data-analysis-tip="' + esc(tr('Browse findings')) + '">' + uiIcon('filter') + esc(tr('Filter')) + '</button><p class="ev counts">' + esc(tr('{warnings} warnings · {info} reference signals · {accepted} accepted', { warnings: o.counts.warning, info: o.counts.info, accepted: o.counts.accepted || 0 })) + '</p>';
+    h += (data.pullRequest ? '<p class="ev">' + esc(tr('Whole-head background, including existing findings')) + '</p>' : '') + '<div class="overview-secondary"><button type="button" class="browse-findings" aria-label="' + esc(tr('Browse findings')) + '" data-analysis-tip="' + esc(tr('Browse findings')) + '">' + uiIcon('filter') + esc(tr('Filter')) + '</button><p class="ev counts">' + esc(tr('{warnings} warnings · {info} reference signals · {accepted} accepted', { warnings: o.counts.warning, info: o.counts.info, accepted: o.counts.accepted || 0 })) + '</p>';
     if (o.groups.length) {
       h += '<details class="all-finding-groups"><summary>' + esc(tr('All findings')) + ' · ' + o.counts.findings + '</summary>';
       o.groups.forEach(function (g) { h += '<details><summary><i class="bauify-' + toneOf(g.severity) + '"></i>' + esc(GROUPS[g.code] || g.code) + ' · ' + g.count + '</summary>' + g.ids.map(function (id) { return findingRow(id); }).join('') + '</details>'; });
@@ -870,8 +869,8 @@
     if (!standalone) h += '<details><summary>' + esc(tr('Colour key')) + '</summary>' + legend() + '</details>';
     h += '</div>';
     overview.innerHTML = h;
-    window.__archifyWireVerification(overview, data.verification, tr);
     overview.querySelectorAll('[data-impact-location]').forEach(function(button){button.addEventListener('click',function(){var indices=button.getAttribute('data-impact-location').split(':').map(Number),loc=data.pullRequest.impact.records[indices[0]].locations[indices[1]];showCode(loc.file,loc.line,tr('Captured PR source; inspect changes against the merge-base.'),'info',false,null,null,null,loc.side);});});
+    window.__archifyWireVerification(overview, data.verification, tr);
     overview.querySelector('.browse-findings').addEventListener('click', function () { showFindings('all'); });
     var externalButton = overview.querySelector('.external-findings'); if (externalButton) externalButton.addEventListener('click', function () { showFindings('external'); });
     var sourceButton = overview.querySelector('.overview-sources'); if (sourceButton) sourceButton.addEventListener('click', showSources);

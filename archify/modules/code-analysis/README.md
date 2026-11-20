@@ -21,7 +21,7 @@ Bauify (commit 4bb811c) and maintained here. It reads source dependencies
 (JavaScript, TypeScript, Python, Java, Go and Rust), folds files into modules, checks import cycles, coupling,
 function complexity and configured architecture boundaries, and presents a standalone workbench with Atlas. An optional authored architecture diagram remains unchanged and can be aligned with the same analysis.
 
-It has three entry points that share the same pipeline:
+Its review workflows share the same extraction and graph pipeline:
 
 - **A prepared investigation** (`prepare`): `code-analysis prepare <repo-root> --out out/analysis [--locale zh-CN] [--ir architecture.json]` creates `analysis/repo.analysis.html` with captured AI tasks, opens on the overview and exits. The reader follows `--locale`, then optional `meta.locale` (`zh-CN` or English fallback); no server stays running. See [Agent entry and investigation](docs/USAGE.md#agent-entry-and-investigation) for natural Skill delivery and restarting for comparison after edits.
 
@@ -39,6 +39,7 @@ It has three entry points that share the same pipeline:
   optional `--ir` / `--map` to verify diagram-to-code component mapping and
   undeclared component imports headlessly), with a baseline, a comparison with the
   previous run, and an exit code.
+- **Review architecture drift** (`drift`): compare two local Git commits against one authored diagram. Review newly observed component imports, open pinned evidence, and download an edge-specific Markdown handoff. See [architecture drift review](docs/USAGE.md#review-architecture-drift-between-two-commits).
 
 `archify code-analysis task` turns findings of a finished run into an AI
 optimization task (JSON or Markdown) and checks its evidence against the current
@@ -101,8 +102,9 @@ restart. The previous run is kept in `analysis.previous/` and compared with.
 The local process exists because a standalone HTML cannot run the source
 extractors. It listens only on loopback and accepts analysis requests
 only from its own page; browser requests cannot select repository or output
-paths. Python analysis requires Python 3; `BAUIFY_PYTHON` can select its
-executable. The analyzed code is never executed.
+paths. Python analysis runs in Node using a transplanted Pyright parser and
+Archify's source declaration analysis. No Python executable is needed. The
+analyzed code is never executed. See [Python support](docs/PYTHON.md).
 
 Java analysis runs in Node.js without a JDK. It extracts source dependencies and
 method/constructor complexity; it does not build the project or resolve Maven,
