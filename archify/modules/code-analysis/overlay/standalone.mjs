@@ -19,6 +19,7 @@ export function standaloneShell({ locale = 'en', title = 'Repository' } = {}) {
 .reader-restore{position:absolute;inset:0;display:grid;place-items:center;padding:0;border:0;background:none;z-index:1}
 .reader-restore[hidden]{display:none}
 .reader-restore span{width:3px;height:36px;border-radius:2px;background:var(--text-muted);opacity:.6}
+.reader-restore b{display:none}
 .reader-restore:hover span,.reader-restore:focus-visible span{background:var(--backend-stroke);opacity:1}
 .reader-restore:focus-visible{outline-offset:-2px}
 html[data-analysis-mode="standalone"] #bauify-reader{position:relative;inset:auto;width:var(--analysis-reader-width);height:100%;max-width:none;max-height:none;margin:0;transition:opacity 220ms ease,transform 320ms cubic-bezier(.22,.68,.20,1),visibility 0ms}
@@ -32,11 +33,12 @@ html[data-analysis-mode="standalone"] #btn-bauify{display:none}
   .analysis-reader-shell{margin-bottom:16px}
   html[data-analysis-mode="standalone"] #bauify-reader{width:100%;height:min(66vh,600px)}
   html[data-analysis-mode="standalone"] #bauify-reader.collapsed{display:none}
-  .reader-restore{position:relative;width:36px;height:28px}
-  .reader-restore span{width:24px;height:3px}
+  .reader-restore{position:relative;display:inline-flex;gap:8px;height:36px;padding:4px 12px;border:1px solid var(--panel-border);background:var(--panel)}
+  .reader-restore span{width:12px;height:2px}
+  .reader-restore b{display:block;font-weight:600}
   .analysis-stage{height:85vh;min-height:560px}
   html[data-analysis-mode="standalone"] #bauify-atlas .atlas-body{flex-direction:column;overflow:auto}
-  html[data-analysis-mode="standalone"] #bauify-atlas .atlas-stage{height:min(100vw,70vh);flex:none}
+  html[data-analysis-mode="standalone"] #bauify-atlas .atlas-stage{height:var(--atlas-stage-height,min(100vw,70vh));flex:none}
   html[data-analysis-mode="standalone"] #bauify-atlas .atlas-side{width:auto;border-left:0;border-top:1px solid var(--panel-border);overflow:visible}
 }
 @media(prefers-reduced-motion:reduce){.container,html[data-analysis-mode="standalone"] #bauify-reader,html[data-analysis-mode="standalone"] #bauify-reader.collapsed{transition:none}}

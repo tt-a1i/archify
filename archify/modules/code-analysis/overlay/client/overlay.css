@@ -163,6 +163,7 @@ html[data-bauify-focus="on"] #bauify-layer rect:not(.focus) { opacity: .12; anim
 #bauify-reader { position: fixed; left: 16px; top: var(--bauify-reader-top, 76px); bottom: 16px; width: 420px; z-index: 62; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--panel-border, #1e293b); border-radius: 12px; background: linear-gradient(var(--panel, #0f172a), var(--panel, #0f172a)), var(--bg, #0b1220); color: var(--text, #f8fafc); font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
 #bauify-reader[hidden] { display: none; }
 #bauify-reader > .reader-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--panel-border, #1e293b); }
+#bauify-reader .reader-actions { display: flex; flex: none; gap: 4px; }
 #bauify-reader .reader-path { font-size: 12px; color: var(--text-muted, #94a3b8); }
 #bauify-reader .reader-nav button, #bauify-reader .locate { border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; padding: 4px 8px; background: none; color: var(--text, #f8fafc); cursor: pointer; font: inherit; font-size: 12px; }
 #bauify-reader .back { border: 0; padding: 0; background: none; color: var(--backend-stroke, #159f88); cursor: pointer; font: inherit; }
@@ -191,7 +192,6 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
   #bauify-reader { position: relative; left: auto; top: auto; bottom: auto; width: auto; margin: 16px 0; height: min(66vh, 600px); min-height: 280px; }
   #bauify-reader.collapsed { height: auto; min-height: 0; width: auto; max-width: none; }
   #bauify-reader > .reader-nav { gap: 8px; padding: 10px 12px; }
-  #bauify-reader .reader-actions { display: flex; flex: none; gap: 5px; }
 }
 @media print { #bauify-reader { display: none; } }
 #bauify-reader button:focus-visible, #bauify-reader summary:focus-visible, #bauify-reader textarea:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 3px; }
@@ -300,6 +300,8 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
   html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
   html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: calc(min(760px, 54vw) + 24px); }
   #bauify-reader { transition: width .16s ease; }
+  /* Keep source navigation under the pointer as soon as the reader opens. */
+  html[data-bauify-source="on"] #bauify-reader { transition: none; }
 }
 @media (prefers-reduced-motion: reduce) { #bauify-reader { transition: none; } }
 /* The page's own reader rail sits beside the analysis column, not under it. */
@@ -365,6 +367,10 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .priority-card:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }
 #bauify-reader .priority-card .bauify-item .n { box-sizing: border-box; min-width: 20px; margin: 0; }
 #bauify-reader .priority-card .bauify-item b { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 15px; line-height: 1.5; }
+@media (max-width: 600px) {
+  #bauify-reader .priority-card .bauify-item { grid-template-rows: minmax(var(--priority-action-size), auto) auto; }
+  #bauify-reader .priority-card .bauify-item b { white-space: normal; overflow-wrap: anywhere; }
+}
 #bauify-reader .priority-card .badge-new, #bauify-reader .priority-card .badge-accepted { grid-column: 2; margin: 4px 0 0; }
 #bauify-reader .priority-level, #bauify-reader .priority-card .quick-copy { display: grid; place-items: center; box-sizing: border-box; width: var(--priority-action-size); height: var(--priority-action-size); padding: 0; }
 #bauify-reader .priority-level { grid-area: 1 / 2; border: 1px solid var(--level-border); border-radius: 50%; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1; }
@@ -401,8 +407,8 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .text-action { padding: 3px 0; border: 0; background: none; color: var(--backend-stroke, #159f88); cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
 #bauify-reader .text-action:hover { text-decoration: underline; text-underline-offset: 3px; }
 #bauify-reader .browse-findings, #bauify-reader .finding-pagination button, #bauify-reader .review-primary-actions button, #bauify-reader .review-actions button { padding: 7px 11px; color: var(--text); background: none; border: 1px solid var(--panel-border); border-radius: 6px; font: inherit; font-size: 12px; cursor: pointer; }
-#bauify-reader .browse-findings { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 13px; }
-#bauify-reader .browse-findings .ui-icon { display: block; width: 15px; height: 15px; flex: none; }
+#bauify-reader .browse-findings { display: inline-grid; grid-template-columns: 15px max-content; align-items: center; gap: 6px; margin-top: 12px; font-size: 13px; }
+#bauify-reader .browse-findings .ui-icon { display: block; width: 15px; height: 15px; }
 #bauify-reader button:disabled { cursor: default; opacity: .55; }
 #bauify-reader .external-entry { display: flex; align-items: center; gap: 12px; margin: 14px 0; padding: 12px 0; border-block: 1px solid var(--panel-border); }
 #bauify-reader .external-findings { flex: 1; padding: 0; border: 0; color: var(--text); background: none; text-align: left; font: inherit; font-size: 13px; cursor: pointer; }
@@ -511,3 +517,54 @@ html[data-bauify-context="pr"] #bauify-reader .comparison-banner.positive { bord
 #bauify-reader .pr-review .pr-impact-record .quick-copy { width: 32px; height: 32px; border: 1px solid var(--panel-border); border-radius: 7px; }
 #bauify-reader .pr-impact-coverage { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .pr-impact-forms { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.6 ui-monospace,monospace; }
+/* Diagram diagnosis and the source reader share one workspace. */
+html[data-bauify-layout="diagnostics"][data-bauify="on"] path[data-edge-id],
+html[data-bauify-layout="diagnostics"][data-bauify="on"] text[data-edge-label-for],
+html[data-bauify-layout="diagnostics"][data-bauify="on"] .edge-label { opacity: .88; }
+html[data-bauify-layout="diagnostics"][data-bauify="on"]:not([data-bauify-focus="on"]) g[data-node-id] { opacity: .84; }
+html[data-bauify-layout="diagnostics"][data-bauify="on"]:not([data-bauify-focus="on"]) g[data-node-id].bauify-mapped { opacity: 1; }
+.bauify-diagram-brief {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px;
+  margin-top: 16px; padding: 11px 13px; border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--backend-stroke, #159f88); border-radius: 8px;
+  background: var(--panel, #fff); color: var(--text, #101828);
+  font: 13px/1.45 system-ui, sans-serif;
+}
+.bauify-diagram-brief[hidden], html[data-bauify-view="atlas"] .bauify-diagram-brief { display: none; }
+.diagram-brief-copy { display: grid; gap: 3px; flex: 0 0 auto; }
+.diagram-brief-actions span { color: var(--text-muted, #475569); font-size: 11px; }
+.diagram-brief-actions { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.diagram-brief-actions button, .diagram-pairs button, .diagram-evidence button {
+  font: inherit; color: inherit; text-align: left; cursor: pointer; min-height: 34px;
+  border: 1px solid var(--panel-border); border-radius: 6px; background: transparent;
+  padding: 6px 9px; overflow-wrap: anywhere;
+}
+.diagram-brief-actions button:hover, .diagram-pairs button:hover, .diagram-evidence button:hover,
+.diagram-pairs button[aria-pressed="true"] { background: color-mix(in srgb, var(--backend-stroke, #159f88) 10%, transparent); }
+.diagram-brief-actions button:focus-visible, .diagram-pairs button:focus-visible, .diagram-evidence button:focus-visible {
+  outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 2px;
+}
+.diagram-brief-actions span { display: block; }
+.diagram-pairs { display: grid; gap: 5px; margin: 12px 0; }
+.diagram-pairs button { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.diagram-pairs button b, .diagram-evidence small { color: var(--text-muted); font-size: 11px; }
+.diagram-evidence li { margin-block: 8px; overflow-wrap: anywhere; }
+.diagram-evidence small { display: block; }
+#bauify-layer .bauify-observed-edge, #bauify-layer .bauify-observed-arrow {
+  fill: none; stroke: #c06b22; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round;
+}
+#bauify-layer .bauify-observed-edge { stroke-dasharray: 6 4; }
+@media (min-width: 1001px) {
+  #bauify-reader .diagram-locate { display: none; }
+  html[data-bauify-layout="diagnostics"] #bauify-reader { left: auto; right: 16px; width: 360px; }
+  html[data-bauify-layout="diagnostics"] #bauify-reader.collapsed { width: auto; }
+  html[data-bauify-layout="diagnostics"][data-bauify="on"]:not([data-bauify-reader-collapsed]) :is(.diagram-container, .reader-rail, .bauify-diagram-brief) {
+    margin-left: 0; margin-right: 384px;
+  }
+}
+@media (min-width: 1181px) {
+  html[data-bauify-layout="diagnostics"][data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
+  html[data-bauify-layout="diagnostics"][data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) :is(.diagram-container, .reader-rail, .bauify-diagram-brief) {
+    margin-left: 0; margin-right: calc(min(760px, 54vw) + 24px);
+  }
+}

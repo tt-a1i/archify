@@ -126,7 +126,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
       supportedFixes: ['pass the HTML written by `archify deliver architecture`'],
     });
   }
-  const { components, edges, unmapped, listed, mapped, ambiguousModules } = alignDiagram({ ir, graph, map, facts, findings, run });
+  const { components, edges, undeclaredEdges, unmapped, listed, mapped, ambiguousModules } = alignDiagram({ ir, graph, map, facts, findings, run });
 
   const payload = {
     generator: 'bauify',
@@ -139,6 +139,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     hasFileFacts: Boolean(facts),
     components,
     edges,
+    ...(ir ? { undeclaredEdges } : {}),
     unmapped,
     ambiguousModules,
     findings: listed,

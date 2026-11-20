@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { closeAnalysisBrowser } from './helpers/close-analysis-browser.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -27,9 +28,9 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   const ir = { schema_version: 1, diagram_type: 'architecture', meta: { title: 'Source evidence', output: 'architecture.html', locale: 'en' },
     components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] };
   const out = path.join(dir, 'out');
-  const prepare = locale => {
+  const prepare = (locale, extra = []) => {
     ir.meta.locale = locale; fs.writeFileSync(irPath, JSON.stringify(ir));
-    const prepared = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', root, '--ir', irPath, '--out', out, '--language', 'ts', '--config', config], { encoding: 'utf8' });
+    const prepared = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', root, '--ir', irPath, '--out', out, '--language', 'ts', '--config', config, ...extra], { encoding: 'utf8' });
     assert.equal(prepared.status, 0, prepared.stdout + prepared.stderr);
     return JSON.parse(prepared.stdout);
   };
@@ -44,7 +45,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.ok(fs.existsSync(first.html));
   assert.ok(!fs.readFileSync(first.diagram, 'utf8').includes('id="bauify-analysis"'), 'the original diagram is not overlaid');
 
-  const browser = new ChromeVisualBrowser(chrome); t.after(() => browser.close());
+  const browser = new ChromeVisualBrowser(chrome); t.after(() => closeAnalysisBrowser(browser));
   const session = await browser.sessionPromise;
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   const run = async expression => {
@@ -277,4 +278,30 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await open(fallback.html);
   assert.equal(await run("document.getElementById('btn-bauify').textContent"), 'Code Analysis');
   assert.equal(await run("document.querySelector('#bauify-reader').lang"), 'en');
+
+  ir.components.push({ id: 'beta', type: 'backend', label: 'Beta', pos: [340, 160], size: [170, 64] });
+  const mapPath = path.join(dir, 'map.json');
+  const moduleFor = name => graph.modules.find(module => module.path.split('/').pop() === name).id;
+  fs.writeFileSync(mapPath, JSON.stringify({ app: [moduleFor('alpha')], beta: [moduleFor('beta')] }));
+  const mapped = prepare('en', ['--map', mapPath]);
+  await open(mapped.html);
+  const click = selector => run(`document.querySelector(${JSON.stringify(selector)}).click()`);
+  const observedCount = () => run("document.querySelectorAll('.bauify-observed-edge').length");
+  assert.equal(await observedCount(), 0, 'the authored canvas does not show unselected imports');
+  await click('[data-diagram-action="relationships"]');
+  assert.equal(await observedCount(), 0, 'opening the list leaves the canvas unchanged');
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('[data-diagram-pair] span'), pair => pair.textContent)"), ['App → Beta']);
+  await click('[data-diagram-pair="0"]');
+  assert.equal(await observedCount(), 1, 'only the chosen direction is drawn');
+  await click('[data-diagram-source]');
+  assert.match(await run("document.querySelector('#bauify-code .ln.hit').textContent"), /import/);
+  const escape = () => send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await escape();
+  assert.equal(await run("document.activeElement.matches('[data-diagram-source]')"), true);
+  await click('[data-diagram-action="finding"]');
+  await click('.finding-atlas');
+  const selection = await run("document.querySelector('.atlas-evidence').dataset.id");
+  await click('.atlas-evidence');
+  await escape();
+  assert.equal(await run("document.activeElement.dataset.id"), selection, 'Escape returns focus to the same Atlas finding');
 });

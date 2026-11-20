@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { closeAnalysisBrowser } from './helpers/close-analysis-browser.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -14,8 +15,7 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
   let browser;
   t.after(async () => {
     if (browser) {
-      await browser.cdp.send('Browser.close').catch(() => {});
-      await browser.close();
+      await closeAnalysisBrowser(browser);
     }
     fs.rmSync(dir,{recursive:true,force:true,maxRetries:5,retryDelay:100});
   });
@@ -79,6 +79,12 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     await run('document.fonts.ready');
     await wait(canvasSized, 'Atlas did not size its canvas');
     const atlas = await run("JSON.parse(document.getElementById('bauify-atlas-data').textContent)");
+    assert.equal(await run("document.querySelectorAll('.atlas-plot-legend span').length"), 3);
+    await click('.atlas-insight-module');
+    assert.ok(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"));
+    await click('.atlas-insight-cycle');
+    assert.ok(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"));
+    await click('.atlas-clear');
     assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stats b'), b => b.textContent)"), [atlas.files.length, atlas.edges.length, atlas.functions.length, atlas.modules.length].map(n => n.toLocaleString('en-US')));
     assert.equal(await run("document.querySelector('.atlas-title').textContent"), locale === 'zh-CN' ? '整仓星图' : 'Atlas');
     assert.equal(await run("document.querySelector('.atlas-stats h3').textContent"), locale === 'zh-CN' ? '本次统计' : 'Totals');

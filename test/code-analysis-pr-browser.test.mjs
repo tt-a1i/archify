@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { closeAnalysisBrowser } from './helpers/close-analysis-browser.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -20,7 +21,7 @@ test('native PR view keeps comparison chart visible and shares localized source/
     fs.mkdirSync(path.join(root,'other'));fs.writeFileSync(path.join(root,'other/helper.mjs'),'export const helper=1;\n');
   }
   const baseSHA='a'.repeat(40),headSHA='b'.repeat(40);
-  const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());
+  const browser=new ChromeVisualBrowser(chrome);t.after(()=>closeAnalysisBrowser(browser));
   const session=await browser.sessionPromise,send=(m,p={})=>browser.cdp.send(m,p,session);
   await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__atlasTexts=[];window.__atlasGlyphs={};const original=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(value,x,y){const text=String(value);window.__atlasTexts.push(text);if(['+','−','◇'].includes(text)){const p=this.getTransform().transformPoint({x,y});window.__atlasGlyphs[text]={x:p.x,y:p.y};}return original.apply(this,arguments);};`});
   const run=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});assert.equal(r.exceptionDetails,undefined,r.exceptionDetails?.exception?.description);return r.result?.value;};
