@@ -25,9 +25,6 @@
     };
     return '<svg class="atlas-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[name] + '</svg>';
   }
-  function iconButton(kind, label, extraClass, attributes) {
-    return '<button type="button" class="atlas-icon-button atlas-' + kind + (extraClass || '') + '" aria-label="' + esc(label) + '" data-analysis-tip="' + esc(label) + '"' + (attributes || '') + '>' + icon(kind) + '</button>';
-  }
   function plural(n, one, many) {
     if (ui.locale === 'zh-CN') return fmt(n) + ({ file: ' 个文件', module: ' 个模块', function: ' 个函数', import: ' 条导入', 'file dependency': ' 条文件依赖', dependency: ' 条依赖', line: ' 行', 'internal file': ' 个内部文件', more: ' 项其他文件' }[one] || ' ' + tr(one));
     return fmt(n) + ' ' + (n === 1 ? one : many || one + 's');
@@ -48,13 +45,11 @@
   var panel = document.createElement('section');
   panel.lang = ui.locale || 'en';
   panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', tr("Code analysis atlas"));
-  var totals = [[F.length, 'files', 'file'], [E.length, 'dependencies', 'file dependency'], [FN.length, 'functions', 'function'], [M.length, 'modules', 'module']];
-  panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '</div>' +
-    '<div class="atlas-controls">' + iconButton('expand', tr('Disable sector zoom'), '', ' aria-pressed="true"') + iconButton('clear', tr('Clear selection')) + '</div></nav>' +
-    '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div><aside class="atlas-side"><section class="atlas-selection" hidden></section><section class="atlas-stats"><h3 class="k">' + esc(tr('Totals')) + '</h3><div class="stats">' + totals.map(function (stat) {
-      var label = plural(stat[0], stat[2], stat[2] === 'file dependency' ? 'file dependencies' : null);
-      return '<div class="stat" tabindex="0" role="img" aria-label="' + esc(label) + '" data-analysis-tip="' + esc(tr(stat[2] === 'file dependency' ? 'file dependencies' : stat[1])) + '">' + icon(stat[1]) + '<b>' + fmt(stat[0]) + '</b></div>';
-    }).join('') + '</div></section><div class="atlas-side-content"></div></aside></div>';
+  panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '<span>' + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', tr('file dependencies')) + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
+    '<div class="atlas-controls"><button type="button" class="atlas-expand" aria-pressed="true"></button><button type="button" class="atlas-clear">' + esc(tr('Clear selection')) + '</button></div></nav>' +
+    '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div><div class="atlas-help"></div></div><aside class="atlas-side"><section class="atlas-selection"></section><section class="atlas-stats"><div class="k">' + esc(tr('Totals')) + '</div><div class="stats">' +
+    [[F.length, tr('files')], [E.length, tr('file dependencies')], [FN.length, tr('functions')], [M.length, tr('modules')]].map(function (stat) { return '<div class="stat"><b>' + fmt(stat[0]) + '</b><span>' + stat[1] + '</span></div>'; }).join('') +
+    '</div></section><div class="atlas-side-content"></div></aside></div>';
   // The diagram view opens on the analysed diagram. Tabs above it page between the
   // diagram and the same run as the Atlas or as Atlas 3D, one at a time.
   var views = null, panel3d = null, has3d = !!document.getElementById('bauify-three');
@@ -97,10 +92,7 @@
 
   // ---- colours: module hues spaced around the wheel, lightness by theme ----
   function cssVar(name, fallback) { var v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fallback; }
-  // Below a diagram the Atlas is a dark case in either page theme (atlas.css resets
-  // the page colours inside it); the standalone page follows its own theme.
   function theme() {
-    if (!standalone) return { dark: true, bg: '#0b1220', text: '#f8fafc', muted: '#94a3b8', grid: '#1e293b' };
     var dark = (root.getAttribute('data-theme') || '') !== 'light';
     return { dark: dark, bg: cssVar('--bg', dark ? '#0b1220' : '#ffffff'), text: cssVar('--text', dark ? '#f8fafc' : '#0f172a'), muted: cssVar('--text-muted', dark ? '#94a3b8' : '#475569'), grid: cssVar('--panel-border', dark ? '#1e293b' : '#e2e8f0') };
   }
@@ -487,7 +479,6 @@
     var view = saved ? saved.view : sideView();
     if (saved) focusZoom = saved.zoom;
     else if (module !== state.focusModule) focusZoom = 1;
-    if (!saved && (module !== state.focusModule || finding !== state.finding)) view.moduleDetails = false;
     state.focusModule = module; state.finding = finding;
     state.hover = null; tip.hidden = true;
     root.setAttribute('data-bauify-atlas-focus', module === -1 ? '' : M[module].id);
@@ -500,9 +491,7 @@
     return {
       scroll: side.scrollTop,
       modules: modules ? modules.scrollTop : 0,
-      groups: new Set(Array.from(side.querySelectorAll('details[data-group][open]'), function (group) { return group.dataset.group; })),
-      coverage: !!side.querySelector('.atlas-metrics[open]'),
-      moduleDetails: !!side.querySelector('.selected-details[open]')
+      groups: new Set(Array.from(side.querySelectorAll('details[data-group][open]'), function (group) { return group.dataset.group; }))
     };
   }
   function findingTitle(f) { return window.__archifyAnalysisFindingTitle ? window.__archifyAnalysisFindingTitle(f.id) : f.title; }
@@ -520,7 +509,8 @@
         var reachedIn = {}; f.edges.forEach(function (e) { reachedIn[e[1]] = true; });
         what = plural(f.edges.length, 'import') + tr(" from other modules reach ") + plural(Object.keys(reachedIn).length, 'internal file') + tr(" of ") + M[f.module].label + (f.entries && f.entries.length ? tr("; ringed: its entry point ") + f.entries.map(function (x) { return F[x][0].split('/').pop(); }).join(', ') : tr("; it has no entry file")) + '.';
       }
-      return '<div class="selected"><div class="selected-heading"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><h4>' + esc(findingTitle(f)) + '</h4>' + iconButton('evidence', tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view'), ' atlas-evidence', ' data-id="' + esc(f.id) + '"') + '</div><p>' + esc(what) + (f.accepted ? tr(" · accepted in baseline") : '') + '</p></div>';
+      return '<div class="selected"><h4>' + esc(findingTitle(f)) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(tr(f.severity)) + '</span>' + (f.accepted ? tr(" · accepted in baseline") : '') + ' · ' + esc(what) + '</p>' +
+        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view')) + '</button></div>';
     }
     if (state.focusModule !== -1) {
       var m = M[state.focusModule], files = F.filter(function (x) { return x[1] === state.focusModule; }).length;
@@ -529,18 +519,15 @@
       var surfaceText = used.length
         ? tr("Imported from outside through ") + fmt(used.length) + tr(" of its ") + plural(files, 'file') + tr(", by ") + plural(Object.keys(sf.consumers).length, 'module') + tr(" (marked inside the rim): ") + used.slice(0, 4).map(function (k) { return F[k][0].split('/').pop() + ' ' + Object.keys(sf.files[k]).length; }).join(', ') + (used.length > 4 ? tr(" and ") + plural(used.length - 4, 'more', 'more') : '') + '.'
         : tr("No other module imports it.");
-      return '<div class="selected"><h4>' + esc(m.label) + '</h4><p>' + plural(files, 'file') + ' · ' + plural(fns.length, 'function') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + '</p><details class="selected-details"><summary>' + tr('Module details') + '</summary><p>' + tr("Coloured curves: dependencies inside it and its ") + plural(edgesByModule[state.focusModule].out, 'dependency', 'dependencies') + tr(" on other modules. Neutral curves: ") + plural(edgesByModule[state.focusModule].in, 'dependency', 'dependencies') + (tr(" of other modules on it.") + "<br>") + esc(surfaceText) + '</p></details></div>';
+      return '<div class="selected"><h4>' + esc(m.label) + '</h4><p>' + plural(files, 'file') + ' · ' + plural(fns.length, 'function') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + '<br>' + tr("Coloured curves: dependencies inside it and its ") + plural(edgesByModule[state.focusModule].out, 'dependency', 'dependencies') + tr(" on other modules. Neutral curves: ") + plural(edgesByModule[state.focusModule].in, 'dependency', 'dependencies') + (tr(" of other modules on it.") + "<br>") + esc(surfaceText) + '</p></div>';
     }
-    return '';
+    return '<div class="note">' + tr("Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.") + '</div>';
   }
   function renderSide(view, openSelected) {
     view = view || sideView();
     var focus = document.activeElement, row = side.contains(focus) && ['data-finding', 'data-module'].find(function (name) { return focus.hasAttribute(name); });
     var selected = side.querySelector('.atlas-selection'), card = selectedCard();
-    selected.hidden = !card;
-    selected.innerHTML = card ? '<h3 class="k">' + esc(tr('Selection')) + '</h3>' + card : '';
-    var moduleDetails = selected.querySelector('.selected-details');
-    if (moduleDetails) moduleDetails.open = view.moduleDetails;
+    selected.innerHTML = '<div class="k">' + esc(tr('Selection')) + '</div>' + card;
     var h = '';
     var groups = {};
     FD.forEach(function (f, i) { (groups[f.code] = groups[f.code] || []).push(i); });
@@ -558,22 +545,21 @@
       var counts = []; for (var c = 0; c < 20; c++) counts.push(0);
       FN.forEach(function (fn) { counts[Math.max(1, Math.min(fn[3], 20)) - 1]++; });
       var max = Math.max.apply(Math, counts);
-      var scale = tr('Cyclomatic complexity · square-root scale');
-      h += '<section class="atlas-metric"><h3 class="k"><span tabindex="0" data-analysis-tip="' + esc(scale) + '" aria-label="' + esc(scale) + '">' + tr('Function complexity') + '</span></h3><div class="hist" role="img" aria-label="' + esc(tr('Function counts by complexity 1 to 20 or more: ') + counts.join(', ')) + '">' + counts.map(function (n, i) {
-        return '<div class="' + (i >= 14 ? 'hot' : '') + '" data-analysis-tip="' + esc((i === 19 ? '20+' : i + 1) + ': ' + plural(n, 'function')) + '" style="height:' + (n ? Math.max(2, Math.round(100 * Math.sqrt(n / max))) : 0) + '%"></div>';
-      }).join('') + '</div><div class="axis"><span>1</span><span>15</span><span>20+</span></div></section>';
+      h += '<div class="k">' + tr('Cyclomatic complexity · √ scale') + '</div><div class="hist" role="img" aria-label="' + esc(tr('Function counts by complexity 1 to 20 or more: ') + counts.join(', ')) + '">' + counts.map(function (n, i) {
+        return '<div class="' + (i >= 14 ? 'hot' : '') + '" title="' + esc((i === 19 ? '20+' : i + 1) + ': ' + plural(n, 'function')) + '" style="height:' + (n ? Math.max(2, Math.round(100 * Math.sqrt(n / max))) : 0) + '%"></div>';
+      }).join('') + '</div><div class="axis"><span>1</span><span>15</span><span>20+</span></div>';
     }
     var order = M.map(function (m, i) { return i; }).sort(function (a, b) { return (M[b].fanIn + M[b].fanOut) - (M[a].fanIn + M[a].fanOut) || (M[a].label < M[b].label ? -1 : 1); });
     var moduleRow = function (i) {
       return '<button type="button" class="row' + (i === state.focusModule ? ' active' : '') + '" data-module="' + i + '"><i style="background:' + hue(i, theme()) + '"></i><span class="t">' + esc(M[i].label) + (hubOf[i] != null ? tr(" · hub") : '') + '</span><span class="n">' + M[i].fanIn + ' / ' + M[i].fanOut + '</span></button>';
     };
-    h += '<section class="atlas-metric"><h3 class="k" id="atlas-module-heading">' + tr('Module coupling · in / out') + '</h3><div class="module-list" role="region" aria-labelledby="atlas-module-heading" tabindex="0">' + order.map(moduleRow).join('') + '</div></section>';
-    h += '<details class="atlas-metrics"' + (view.coverage ? ' open' : '') + '><summary>' + tr('Coverage and reading guide') + '</summary>';
+    h += '<div class="k">' + tr('Modules by coupling · fan-in / fan-out') + '</div><div class="module-list">' + order.map(moduleRow).join('') + '</div>';
     var cov = atlas.coverage, total = Math.max(cov.records, 1);
     var breakdown = fmt(cov.resolved) + tr(' resolved · ') + fmt(cov.external) + tr(' external · ') + fmt(cov.unknown) + tr(' unresolved') + (cov.outside ? ' · ' + fmt(cov.outside) + tr(' outside the analyzed scope') : '') + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(' failed to parse') : '');
     h += '<div class="k">' + tr('Dependency records · ') + fmt(cov.records) + '</div><div class="bar" tabindex="0" role="img" aria-label="' + esc(breakdown) + '" data-analysis-tip="' + esc(breakdown + tr('. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.')) + '">' +
-      [[cov.resolved, '#34D399'], [cov.external, '#64748B'], [cov.unknown, '#FBBF24'], [cov.outside, '#94A3B8']].map(function (part) { return '<span style="width:' + (100 * (part[0] || 0) / total) + '%;background:' + part[1] + '"></span>'; }).join('') + '</div>';
-    h += ("<div class=\"k\">" + tr("Reading the atlas") + "</div>" + "<div class=\"legend\">" + "<span>" + "<i style=\"background:") + hue(0, theme()) + ("\">" + "</i>" + tr("outer arc: module (thick: reported hub)") + "</span>" + "<span>" + "<i style=\"background:") + theme().muted + ("\">" + "</i>" + tr("tick: file · spike: function, length = complexity") + "</span>" + "<span>" + "<i style=\"background:#FBBF24;height:8px;width:8px;border-radius:50%\">" + "</i>" + tr("dot: reported function, severity colour") + "</span>" + "<span>" + "<i style=\"background:") + hue(3, theme(), 0.6) + ("\">" + "</i>" + tr("curve: file dependency, coloured by the importing module") + "</span>" + "<span>" + "<i style=\"background:") + theme().text + ("\">" + "</i>" + tr("mark inside the rim: a focused module's file that other modules import") + "</span>" + "</div>") + '</details>';
+      [[cov.resolved, '#34D399'], [cov.external, '#64748B'], [cov.unknown, '#FBBF24'], [cov.outside, '#94A3B8']].map(function (part) { return '<span style="width:' + (100 * (part[0] || 0) / total) + '%;background:' + part[1] + '"></span>'; }).join('') + '</div>' +
+      '<div class="note">' + esc(breakdown + tr('. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.')) + '</div>';
+    h += ("<div class=\"k\">" + tr("Reading the atlas") + "</div>" + "<div class=\"legend\">" + "<span>" + "<i style=\"background:") + hue(0, theme()) + ("\">" + "</i>" + tr("outer arc: module (thick: reported hub)") + "</span>" + "<span>" + "<i style=\"background:") + theme().muted + ("\">" + "</i>" + tr("tick: file · spike: function, length = complexity") + "</span>" + "<span>" + "<i style=\"background:#FBBF24;height:8px;width:8px;border-radius:50%\">" + "</i>" + tr("dot: reported function, severity colour") + "</span>" + "<span>" + "<i style=\"background:") + hue(3, theme(), 0.6) + ("\">" + "</i>" + tr("curve: file dependency, coloured by the importing module") + "</span>" + "<span>" + "<i style=\"background:") + theme().text + ("\">" + "</i>" + tr("mark inside the rim: a focused module's file that other modules import") + "</span>" + "</div>");
     side.querySelector('.atlas-side-content').innerHTML = h;
     side.querySelector('.module-list').scrollTop = view.modules;
     side.scrollTop = view.scroll;
@@ -581,7 +567,6 @@
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     var ev = side.querySelector('.atlas-evidence');
-    // The reading column stays beside the diagram, so evidence opens there and the Atlas stays put.
     if (ev) ev.addEventListener('click', function () { if (window.__archifyShowFinding) window.__archifyShowFinding(ev.getAttribute('data-id')); });
   }
 
@@ -603,13 +588,18 @@
   function showView(kind) {
     if (!views) return;
     var next = kind === 'diagram' ? '' : kind || '';
+    // Set first: the layout (summary column hidden, full width) must settle before a view draws.
+    if (next) root.setAttribute('data-bauify-views', next); else root.removeAttribute('data-bauify-views');
     if (next !== 'atlas') close();
     if (panel3d) panel3d.hidden = next !== 'atlas3d';
     if (next === 'atlas') open();
     if (next === 'atlas3d' && window.__archifyAtlas3d) { var view = window.__archifyAtlas3d.mount(panel3d); if (view && view.refresh) view.refresh(); }
-    if (next) root.setAttribute('data-bauify-views', next); else root.removeAttribute('data-bauify-views');
     views.querySelectorAll('.views-option').forEach(function (button) { button.setAttribute('aria-pressed', String(button.getAttribute('data-view') === (next || 'diagram'))); });
   }
+  // Evidence opens in the summary column, which only shows beside the diagram, so
+  // opening it from the Atlas or Atlas 3D pages back to the diagram first.
+  var showFinding = window.__archifyShowFinding;
+  if (views && showFinding) window.__archifyShowFinding = function () { if (root.hasAttribute('data-bauify-views')) showView(''); return showFinding.apply(this, arguments); };
   if (views) {
     views.querySelectorAll('.views-option').forEach(function (button) { button.addEventListener('click', function () { showView(button.getAttribute('data-view')); }); });
     views.hidden = root.getAttribute('data-bauify') !== 'on';
@@ -617,10 +607,11 @@
   panel.querySelector('.atlas-clear').addEventListener('click', function () { select(-1, -1); });
   document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { e.preventDefault(); select(-1, -1); } });
   function updateExpansionControl() {
-    var button = panel.querySelector('.atlas-expand'), label = tr(expansionEnabled ? 'Disable sector zoom' : 'Enable sector zoom');
-    button.setAttribute('aria-label', label);
+    var button = panel.querySelector('.atlas-expand');
+    button.textContent = tr(expansionEnabled ? 'Disable sector zoom' : 'Enable sector zoom');
     button.setAttribute('aria-pressed', String(expansionEnabled));
-    button.dataset.analysisTip = label + ' · ' + tr(expansionEnabled ? 'Highlight without zooming; keep the current selection.' : 'Zoom the selected module with the mouse wheel.');
+    button.title = tr(expansionEnabled ? 'Highlight without zooming; keep the current selection.' : 'Zoom the selected module with the mouse wheel.');
+    panel.querySelector('.atlas-help').textContent = tr(expansionEnabled ? 'Select a module, then scroll to adjust zoom.' : 'Click a module to highlight its dependencies.') + ' · ' + tr('Blank space / Esc clears selection.');
     root.setAttribute('data-bauify-atlas-expansion', expansionEnabled ? 'on' : 'off');
   }
   panel.querySelector('.atlas-expand').addEventListener('click', function () {
@@ -650,8 +641,7 @@
       if (!on && root.hasAttribute('data-bauify-views')) showView('');
     }
     if (!on && !panel.hidden) close();
-    // Below a diagram the Atlas keeps its dark case, so only the standalone page redraws for a theme change.
-    else if (!panel.hidden && standalone) { renderSide(); draw(); }
+    else if (!panel.hidden) { renderSide(); draw(); }
   }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   function redrawIfResized() {
     if (panel.hidden) return;

@@ -174,9 +174,8 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.deepEqual(await run("Array.from(document.querySelectorAll('.views-option b'), b => b.textContent)"), ['模块分析', '整仓星图', 'Atlas 3D 模型'], 'zh-CN names the three tabs above the diagram');
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
   assert.match(await run("document.querySelector('.atlas-side').textContent"), /高复杂度函数/);
-  assert.equal(await run("document.querySelector('.atlas-stats h3').textContent"), '本次统计');
-  assert.equal(await run("document.querySelector('.atlas-title').textContent"), '整仓星图');
-  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metrics').open"), false);
+  assert.equal(await run("document.querySelector('.atlas-stats .k').textContent"), '本次统计');
+  assert.equal(await run("document.querySelector('.atlas-title').firstChild.textContent"), '整仓星图');
   await run("document.querySelector('.views-option[data-view=diagram]').click()");
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');

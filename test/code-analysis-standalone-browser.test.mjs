@@ -72,19 +72,16 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     await wait(canvasSized, 'Atlas did not size its canvas');
     const atlas = await run("JSON.parse(document.getElementById('bauify-atlas-data').textContent)");
     assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stats b'), b => b.textContent)"), [atlas.files.length, atlas.edges.length, atlas.functions.length, atlas.modules.length].map(n => n.toLocaleString('en-US')));
-    assert.equal(await run("document.querySelector('.atlas-title').textContent"), locale === 'zh-CN' ? '整仓星图' : 'Atlas');
-    assert.equal(await run("document.querySelector('.atlas-stats h3').textContent"), locale === 'zh-CN' ? '本次统计' : 'Totals');
-    assert.equal(await run("document.querySelector('.atlas-selection').hidden && !document.querySelector('.atlas-empty')"), true);
+    assert.equal(await run("document.querySelector('.atlas-title').firstChild.textContent"), locale === 'zh-CN' ? '整仓星图' : 'Atlas');
+    assert.equal(await run("document.querySelector('.atlas-stats .k').textContent"), locale === 'zh-CN' ? '本次统计' : 'Totals');
+    assert.equal(await run("!!document.querySelector('.atlas-selection .note') && !document.querySelector('.atlas-selection .selected')"), true, 'with nothing selected the selection shows how to start');
     assert.equal(await run("!document.querySelector('.atlas-side .module-page,.atlas-side .atlas-more-modules')"), true);
-    await hover('.atlas-stats .stat');
-    assert.equal(await run("document.querySelector('.analysis-tooltip:not([hidden])').textContent"), locale === 'zh-CN' ? '文件' : 'files');
+    assert.equal(await run("document.querySelector('.atlas-stats .stat span').textContent"), locale === 'zh-CN' ? '文件' : 'files');
     await hover('.priority-card .priority-level');
     assert.match(await run("document.querySelector('.analysis-tooltip:not([hidden])').textContent"), locale === 'zh-CN' ? /^(错误|提醒|参考):/ : /^(error|warning|info):/);
-    await hover('.atlas-expand');
     await click('.atlas-expand');
     assert.equal(await run("document.querySelector('.atlas-expand').getAttribute('aria-pressed')"), 'false');
-    assert.equal(await run("document.querySelector('.atlas-expand').getAttribute('aria-label')"), locale === 'zh-CN' ? '开启扇区缩放' : 'Enable sector zoom');
-    assert.match(await run("document.querySelector('.analysis-tooltip:not([hidden])').textContent"), locale === 'zh-CN' ? /^开启扇区缩放/ : /^Enable sector zoom/);
+    assert.equal(await run("document.querySelector('.atlas-expand').textContent"), locale === 'zh-CN' ? '开启扇区缩放' : 'Enable sector zoom');
     await click('.atlas-expand');
     for (const theme of ['light', 'dark']) for (const [width, height] of [[1440, 900], [390, 844]]) {
       await viewport(width, height);
@@ -133,7 +130,7 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     assert.equal(await run(selectedFinding), id, 'returning from source keeps the detail selected');
     await click(`${details} .back`);
     assert.equal(await run(selectedFinding), '', 'returning to the overview restores no selection');
-    assert.equal(await run("document.querySelector('.atlas-selection').hidden"), true);
+    assert.equal(await run("!document.querySelector('.atlas-selection .selected')"), true);
 
     const wheel = async (selector, deltaY) => send('Input.dispatchMouseEvent', { type: 'mouseWheel', ...await point(selector), deltaX: 0, deltaY });
     await wheel(list, 2000);
@@ -151,8 +148,8 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     await wait(drawSettled, 'sector zoom did not settle');
     const sector = () => run(`atlasArcs[${moduleIndex}].end - atlasArcs[${moduleIndex}].start`);
     const zoom = await sector();
-    await run("const group = document.querySelector('.atlas-side details[data-group]'); group.open = true; document.querySelector('.atlas-side .selected-details').open = true");
-    const readSide = () => run(`({ scroll: document.querySelector('.atlas-side').scrollTop, modules: document.querySelector('${list}').scrollTop, groups: Array.from(document.querySelectorAll('.atlas-side details[data-group][open]'), e => e.dataset.group), moduleDetails: !!document.querySelector('.selected-details[open]') })`);
+    await run("const group = document.querySelector('.atlas-side details[data-group]'); group.open = true");
+    const readSide = () => run(`({ scroll: document.querySelector('.atlas-side').scrollTop, modules: document.querySelector('${list}').scrollTop, groups: Array.from(document.querySelectorAll('.atlas-side details[data-group][open]'), e => e.dataset.group) })`);
     const sideBefore = await readSide();
     await click(priority);
     assert.equal(await run(selectedFinding), id);

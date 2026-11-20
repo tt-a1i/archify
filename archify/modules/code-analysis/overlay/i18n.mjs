@@ -112,6 +112,7 @@ const ZH_CN = {
   "Atlas": "整仓星图",
   "More views of this analysis": "更多视图",
   "Module diagram": "模块分析",
+  "Cyclomatic complexity · √ scale": "圈复杂度分布 · 平方根刻度",
   "The analysed diagram with its finding rings": "带发现标记的架构图",
   "Atlas 3D": "Atlas 3D 模型",
   "The modules as a tree, grown by dependency layer": "把模块画成一棵树，按依赖层级生长",
