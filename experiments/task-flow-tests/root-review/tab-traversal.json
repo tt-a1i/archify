@@ -1,0 +1,667 @@
+{
+  "viewport": [
+    1440,
+    900
+  ],
+  "mechanism": "real keyboard Tab through ego-browser, no focus injection",
+  "steps": [
+    {
+      "step": 1,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "跳至正文",
+      "href": "#board",
+      "rect": {
+        "x": 12,
+        "y": 8,
+        "w": 82,
+        "h": 40.9375
+      }
+    },
+    {
+      "step": 2,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "系统",
+      "href": null,
+      "rect": {
+        "x": 1023,
+        "y": 41.546875,
+        "w": 45,
+        "h": 24
+      }
+    },
+    {
+      "step": 3,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "浅色",
+      "href": null,
+      "rect": {
+        "x": 1070,
+        "y": 41.546875,
+        "w": 45,
+        "h": 24
+      }
+    },
+    {
+      "step": 4,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "深色",
+      "href": null,
+      "rect": {
+        "x": 1117,
+        "y": 41.546875,
+        "w": 45,
+        "h": 24
+      }
+    },
+    {
+      "step": 5,
+      "tag": "BUTTON",
+      "id": "",
+      "label": "样式",
+      "text": "简洁",
+      "href": null,
+      "rect": {
+        "x": 1173,
+        "y": 38.546875,
+        "w": 89,
+        "h": 30
+      }
+    },
+    {
+      "step": 6,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "导出",
+      "href": null,
+      "rect": {
+        "x": 1270,
+        "y": 38.546875,
+        "w": 90,
+        "h": 30
+      }
+    },
+    {
+      "step": 7,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "追问",
+      "href": null,
+      "rect": {
+        "x": 1295,
+        "y": 107.328125,
+        "w": 44,
+        "h": 22
+      }
+    },
+    {
+      "step": 8,
+      "tag": "A",
+      "id": "",
+      "label": "沿同一张图比较路径与测试声明",
+      "text": "1",
+      "href": "#paths",
+      "rect": {
+        "x": 101,
+        "y": 353.328125,
+        "w": 22,
+        "h": 22
+      }
+    },
+    {
+      "step": 9,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "追问",
+      "href": null,
+      "rect": {
+        "x": 1295,
+        "y": 353.328125,
+        "w": 44,
+        "h": 22
+      }
+    },
+    {
+      "step": 10,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "打开交互图",
+      "href": null,
+      "rect": {
+        "x": 1236.5,
+        "y": 403.5625,
+        "w": 104.5,
+        "h": 28
+      }
+    },
+    {
+      "step": 11,
+      "tag": "g",
+      "id": "preview-change-path-node-guard",
+      "label": "新增：交付条件",
+      "text": "新增：交付条件 · 作者声明 · 非运行轨迹 · 架构组件\n          \n          \n          \n            \n          \n   ",
+      "href": null,
+      "rect": {
+        "x": 476.8143310546875,
+        "y": 449.7279357910156,
+        "w": 326.61767578125,
+        "h": 122.48165893554688
+      }
+    },
+    {
+      "step": 12,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "阅读这段 ↗",
+      "href": "#why-guard",
+      "rect": {
+        "x": 467.8125,
+        "y": 706.203125,
+        "w": 60.5859375,
+        "h": 20.6328125
+      }
+    },
+    {
+      "step": 13,
+      "tag": "g",
+      "id": "preview-change-path-node-report",
+      "label": "报告展示缺测原因",
+      "text": "报告展示缺测原因 · 作者声明 · 非运行轨迹 · 架构组件\n          \n          \n          \n            \n          \n  ",
+      "href": null,
+      "rect": {
+        "x": 1007.5679931640625,
+        "y": 449.7279357910156,
+        "w": 326.61767578125,
+        "h": 122.48165893554688
+      }
+    },
+    {
+      "step": 14,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "阅读这段 ↗",
+      "href": "#why-report",
+      "rect": {
+        "x": 923,
+        "y": 706.203125,
+        "w": 60.5859375,
+        "h": 20.6328125
+      }
+    },
+    {
+      "step": 15,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "▶ 逐步看",
+      "href": null,
+      "rect": {
+        "x": 97,
+        "y": 608.328125,
+        "w": 74.9609375,
+        "h": 28
+      }
+    },
+    {
+      "step": 16,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "新增：交付条件 ↗",
+      "href": "#change-path",
+      "rect": {
+        "x": 133,
+        "y": 649.328125,
+        "w": 116.28125,
+        "h": 17
+      }
+    },
+    {
+      "step": 17,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "回归测试：缺失产物",
+      "href": "#source-regression",
+      "rect": {
+        "x": 244.6875,
+        "y": 695.796875,
+        "w": 121.5,
+        "h": 16
+      }
+    },
+    {
+      "step": 18,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "报告展示缺测原因 ↗",
+      "href": "#change-path",
+      "rect": {
+        "x": 133,
+        "y": 778.6171875,
+        "w": 130.78125,
+        "h": 17
+      }
+    },
+    {
+      "step": 19,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "▶ 逐步看",
+      "href": null,
+      "rect": {
+        "x": 97,
+        "y": 436.109375,
+        "w": 74.9609375,
+        "h": 28
+      }
+    },
+    {
+      "step": 20,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "新增：交付条件 ↗",
+      "href": "#change-path",
+      "rect": {
+        "x": 133,
+        "y": 477.109375,
+        "w": 116.28125,
+        "h": 17
+      }
+    },
+    {
+      "step": 21,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "报告展示缺测原因 ↗",
+      "href": "#change-path",
+      "rect": {
+        "x": 133,
+        "y": 561.8515625,
+        "w": 130.78125,
+        "h": 17
+      }
+    },
+    {
+      "step": 22,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "回归测试：缺失产物",
+      "href": "#source-regression",
+      "rect": {
+        "x": 271,
+        "y": 647.09375,
+        "w": 130.5,
+        "h": 17
+      }
+    },
+    {
+      "step": 23,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "▶ 逐步看",
+      "href": null,
+      "rect": {
+        "x": 97,
+        "y": 775.34375,
+        "w": 74.9609375,
+        "h": 28
+      }
+    },
+    {
+      "step": 24,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "新增：交付条件 ↗",
+      "href": "#change-path",
+      "rect": {
+        "x": 133,
+        "y": 816.34375,
+        "w": 116.28125,
+        "h": 17
+      }
+    },
+    {
+      "step": 25,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "报告展示缺测原因 ↗",
+      "href": "#change-path",
+      "rect": {
+        "x": 133,
+        "y": 441.5859375,
+        "w": 130.78125,
+        "h": 17
+      }
+    },
+    {
+      "step": 26,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "回归测试：缺失产物",
+      "href": "#source-regression",
+      "rect": {
+        "x": 271,
+        "y": 526.828125,
+        "w": 130.5,
+        "h": 17
+      }
+    },
+    {
+      "step": 27,
+      "tag": "A",
+      "id": "",
+      "label": "新增：交付条件",
+      "text": "2",
+      "href": "#node-guard",
+      "rect": {
+        "x": 101,
+        "y": 620.828125,
+        "w": 22,
+        "h": 22
+      }
+    },
+    {
+      "step": 28,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "追问",
+      "href": null,
+      "rect": {
+        "x": 1295,
+        "y": 620.828125,
+        "w": 44,
+        "h": 22
+      }
+    },
+    {
+      "step": 29,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "1",
+      "href": "#source-ref-guard",
+      "rect": {
+        "x": 189,
+        "y": 716.671875,
+        "w": 8.6953125,
+        "h": 11.5
+      }
+    },
+    {
+      "step": 30,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "打开原文 ↗",
+      "href": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/comparison.mjs#L137-L139",
+      "rect": {
+        "x": 180,
+        "y": 822.65625,
+        "w": 60.5859375,
+        "h": 20.6328125
+      }
+    },
+    {
+      "step": 31,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "复制",
+      "href": null,
+      "rect": {
+        "x": 1302,
+        "y": 763.25,
+        "w": 24,
+        "h": 18
+      }
+    },
+    {
+      "step": 32,
+      "tag": "A",
+      "id": "",
+      "label": "报告展示缺测原因",
+      "text": "3",
+      "href": "#node-report",
+      "rect": {
+        "x": 101,
+        "y": 438.828125,
+        "w": 22,
+        "h": 22
+      }
+    },
+    {
+      "step": 33,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "追问",
+      "href": null,
+      "rect": {
+        "x": 1295,
+        "y": 438.828125,
+        "w": 44,
+        "h": 22
+      }
+    },
+    {
+      "step": 34,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "2",
+      "href": "#source-ref-report",
+      "rect": {
+        "x": 189,
+        "y": 534.671875,
+        "w": 8.6953125,
+        "h": 11.5
+      }
+    },
+    {
+      "step": 35,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "打开原文 ↗",
+      "href": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/score-report.mjs#L55-L55",
+      "rect": {
+        "x": 180,
+        "y": 640.65625,
+        "w": 60.5859375,
+        "h": 20.6328125
+      }
+    },
+    {
+      "step": 36,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "复制",
+      "href": null,
+      "rect": {
+        "x": 1302,
+        "y": 581.25,
+        "w": 24,
+        "h": 18
+      }
+    },
+    {
+      "step": 37,
+      "tag": "PRE",
+      "id": "",
+      "label": null,
+      "text": "const defects={evidenceMissing:evidence.missing??[],semanticMeasurements:row.semanticMeasu",
+      "href": null,
+      "rect": {
+        "x": 102,
+        "y": 607.5703125,
+        "w": 1236,
+        "h": 45.25
+      }
+    },
+    {
+      "step": 38,
+      "tag": "A",
+      "id": "",
+      "label": "回归测试：缺失产物",
+      "text": "4",
+      "href": "#node-regression",
+      "rect": {
+        "x": 101,
+        "y": 705.828125,
+        "w": 22,
+        "h": 22
+      }
+    },
+    {
+      "step": 39,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "追问",
+      "href": null,
+      "rect": {
+        "x": 1295,
+        "y": 705.828125,
+        "w": 44,
+        "h": 22
+      }
+    },
+    {
+      "step": 40,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "3",
+      "href": "#source-ref-regression",
+      "rect": {
+        "x": 189,
+        "y": 801.671875,
+        "w": 8.6953125,
+        "h": 11.5
+      }
+    },
+    {
+      "step": 41,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "打开原文 ↗",
+      "href": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/test/diagram-quality-comparison.test.mjs#L85-L95",
+      "rect": {
+        "x": 180,
+        "y": 760.15625,
+        "w": 60.5859375,
+        "h": 20.6328125
+      }
+    },
+    {
+      "step": 42,
+      "tag": "BUTTON",
+      "id": "",
+      "label": null,
+      "text": "复制",
+      "href": null,
+      "rect": {
+        "x": 1302,
+        "y": 848.25,
+        "w": 24,
+        "h": 18
+      }
+    },
+    {
+      "step": 43,
+      "tag": "PRE",
+      "id": "",
+      "label": null,
+      "text": "test('stored ratings with a missing artifact do not abort the comparison or gain human cre",
+      "href": null,
+      "rect": {
+        "x": 102,
+        "y": 642.0703125,
+        "w": 1236,
+        "h": 257.75
+      }
+    },
+    {
+      "step": 44,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "新增：交付条件 · benchmarks/diagram-quality/comparison.mjs:137–139",
+      "href": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/comparison.mjs#L137-L139",
+      "rect": {
+        "x": 104,
+        "y": 743.2265625,
+        "w": 414.8828125,
+        "h": 14.5
+      }
+    },
+    {
+      "step": 45,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "报告展示缺测原因 · benchmarks/diagram-quality/score-report.mjs:55–55",
+      "href": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/score-report.mjs#L55-L55",
+      "rect": {
+        "x": 750,
+        "y": 743.2265625,
+        "w": 421.7890625,
+        "h": 14.5
+      }
+    },
+    {
+      "step": 46,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "回归测试：缺失产物 · test/diagram-quality-comparison.test.mjs:85–95",
+      "href": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/test/diagram-quality-comparison.test.mjs#L85-L95",
+      "rect": {
+        "x": 104,
+        "y": 770.7265625,
+        "w": 408.2890625,
+        "h": 14.5
+      }
+    },
+    {
+      "step": 47,
+      "tag": "A",
+      "id": "",
+      "label": null,
+      "text": "Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "href": "https://github.com/tt-a1i/archify",
+      "rect": {
+        "x": 80,
+        "y": 835.7265625,
+        "w": 352.5,
+        "h": 32.4453125
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "retrievedAt": "2026-10-29T14:54:41.407Z",
+  "api": "https://api.github.com/repos/tt-a1i/archify/pulls/1121",
+  "number": 1121,
+  "state": "open",
+  "draft": true,
+  "head": "784a8377210298707357f28ad6ae391c874fe8e1",
+  "base": "e837dc4cb83042d2b6c596e039692e25ec62c2da",
+  "url": "https://github.com/tt-a1i/archify/pull/1121",
+  "scope": "read only; no PR creation/comment/body change"
+}

@@ -1,0 +1,320 @@
+{
+  "description": "Archive copies substitute machine paths with ARCHIVED_RUNTIME or ARCHIVED_WORKSPACE; unchanged files retain original bytes. HTML is unwrapped with path-only substitutions.",
+  "files": [
+    {
+      "original": "SHA256SUMS",
+      "archive": "evidence/SHA256SUMS",
+      "originalSha256": "fc2aa3f351652f9cf16531494faa1e2df39a977492ac596ea27f22fabf9ba893",
+      "archiveSha256": "fc2aa3f351652f9cf16531494faa1e2df39a977492ac596ea27f22fabf9ba893",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "THIRD_PARTY_LICENSES.txt",
+      "archive": "evidence/THIRD_PARTY_LICENSES.txt",
+      "originalSha256": "b8a10d7920f85b963a9e2aa8eac336ef368cef82244fc0f3a47060faa8a45eff",
+      "archiveSha256": "b8a10d7920f85b963a9e2aa8eac336ef368cef82244fc0f3a47060faa8a45eff",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "binary-build-info.txt",
+      "archive": "evidence/binary-build-info.txt",
+      "originalSha256": "132c17fd8b2b3f115124159325a0ab361e87e1bfdebb3590ff143e96f1966781",
+      "archiveSha256": "132c17fd8b2b3f115124159325a0ab361e87e1bfdebb3590ff143e96f1966781",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "binary-schema.json",
+      "archive": "evidence/binary-schema.json",
+      "originalSha256": "b19ad1e7eaad4626b2725af8abae676c23f6b09d9a9effe8c368332ea17a1afa",
+      "archiveSha256": "b19ad1e7eaad4626b2725af8abae676c23f6b09d9a9effe8c368332ea17a1afa",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "release.json",
+      "archive": "evidence/release.json",
+      "originalSha256": "d48b897083aec3b205166dca64bbddad798968697c8ab4c7966a34ebc3138535",
+      "archiveSha256": "d48b897083aec3b205166dca64bbddad798968697c8ab4c7966a34ebc3138535",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "tag.json",
+      "archive": "evidence/tag.json",
+      "originalSha256": "a9bf18e05a659871540fb009adf542f897d48131624cfa46c327c6c55e187385",
+      "archiveSha256": "a9bf18e05a659871540fb009adf542f897d48131624cfa46c327c6c55e187385",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "version.txt",
+      "archive": "evidence/version.txt",
+      "originalSha256": "7567cb993dbedaec54b82c9f2ce49696f20cc9bc5fe25a1045dea5e13670824b",
+      "archiveSha256": "7567cb993dbedaec54b82c9f2ce49696f20cc9bc5fe25a1045dea5e13670824b",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run-native.py",
+      "archive": "evidence/run-native.py",
+      "originalSha256": "8aa631a919bf0b14840a485a26758588feea42ddf6d3c6ad469f1dc6409d4366",
+      "archiveSha256": "1a05c8e7f921e80253f1cded13be5fcbf4c58344e73dda97bab0aeff633b452b",
+      "pathSubstitutions": true
+    },
+    {
+      "original": "run-final.py",
+      "archive": "evidence/run-final.py",
+      "originalSha256": "ccd08c1b6acec379666e69fd75a00e7ef6d1c2ece9117fad9b2aae5896e46b5b",
+      "archiveSha256": "c71538bff42db62e14bb310bfaa59c649d00261c2c2220572a9e967e31941147",
+      "pathSubstitutions": true
+    },
+    {
+      "original": "browser-flows-graph.log",
+      "archive": "evidence/browser-flows-graph.log",
+      "originalSha256": "cb17236e7baeff6a17d98925932b248f9a3ac7aa3f6cbd83dc3f01d7b49c0afc",
+      "archiveSha256": "cb17236e7baeff6a17d98925932b248f9a3ac7aa3f6cbd83dc3f01d7b49c0afc",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "browser-inspector-canvas.log",
+      "archive": "evidence/browser-inspector-canvas.log",
+      "originalSha256": "8d1e1ae6c156936a6835e137acfd0db564cdf96fee03675e852b7d02a644f84d",
+      "archiveSha256": "8d1e1ae6c156936a6835e137acfd0db564cdf96fee03675e852b7d02a644f84d",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "browser-inspector-dom.json",
+      "archive": "evidence/browser-inspector-dom.json",
+      "originalSha256": "f2954195c6f7b6f554c8099548f3fe52b37a9941cca6d48b80a1d1bf53e694e6",
+      "archiveSha256": "f2954195c6f7b6f554c8099548f3fe52b37a9941cca6d48b80a1d1bf53e694e6",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "browser-inspector.log",
+      "archive": "evidence/browser-inspector.log",
+      "originalSha256": "6456798c6d93bb2259cc98a3349a29e17d54b9c0a4ef310cfb2c5daf1e72229c",
+      "archiveSha256": "6456798c6d93bb2259cc98a3349a29e17d54b9c0a4ef310cfb2c5daf1e72229c",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/checkout.stderr",
+      "archive": "evidence/run/checkout.stderr",
+      "originalSha256": "880abb78fe978788ec7b96f7ac73ce44748e34120e55b0d38f58d98d868e4bbb",
+      "archiveSha256": "880abb78fe978788ec7b96f7ac73ce44748e34120e55b0d38f58d98d868e4bbb",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/checkout.stdout",
+      "archive": "evidence/run/checkout.stdout",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/clone.stderr",
+      "archive": "evidence/run/clone.stderr",
+      "originalSha256": "1766d0044537f75bc931f11e6458f989162149d257c2e76ac089b740f620f2cc",
+      "archiveSha256": "1766d0044537f75bc931f11e6458f989162149d257c2e76ac089b740f620f2cc",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/clone.stdout",
+      "archive": "evidence/run/clone.stdout",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/commands.json",
+      "archive": "evidence/run/commands.json",
+      "originalSha256": "51e4ec8bcfcc0945055fd3c607d16cdf6d5dc220ce709433cf84b97ba6ccadf8",
+      "archiveSha256": "389e41cac2a6f66a51cb0fdf5741a6cafb138019445f771d5b55b9930e89b27a",
+      "pathSubstitutions": true
+    },
+    {
+      "original": "run/head.stderr",
+      "archive": "evidence/run/head.stderr",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/head.stdout",
+      "archive": "evidence/run/head.stdout",
+      "originalSha256": "246e3a77527f2459db7062a3808dff1f3129ba214a4c0dacc87bd2cbb15dd778",
+      "archiveSha256": "246e3a77527f2459db7062a3808dff1f3129ba214a4c0dacc87bd2cbb15dd778",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/identity.json",
+      "archive": "evidence/run/identity.json",
+      "originalSha256": "c4ddc4b2ab3c1ca60a209ada2c881a9959685fe36c79dfa14e8066332404b511",
+      "archiveSha256": "c4ddc4b2ab3c1ca60a209ada2c881a9959685fe36c79dfa14e8066332404b511",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/shared-review-invalid-range-validate.stderr",
+      "archive": "evidence/run/shared-review-invalid-range-validate.stderr",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/shared-review-invalid-range-validate.stdout",
+      "archive": "evidence/run/shared-review-invalid-range-validate.stdout",
+      "originalSha256": "e7f9419a06e93377162294fbb2ead59d68a1e8f448dd95518776165b308e5ac9",
+      "archiveSha256": "e7f9419a06e93377162294fbb2ead59d68a1e8f448dd95518776165b308e5ac9",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/shared-review-invalid-range.json",
+      "archive": "evidence/run/shared-review-invalid-range.json",
+      "originalSha256": "8a69a9ec5b01646ca0d3d397bef450797259a3806a55a5a85183ff7b1c11c47b",
+      "archiveSha256": "8a69a9ec5b01646ca0d3d397bef450797259a3806a55a5a85183ff7b1c11c47b",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/shared-review-open.stderr",
+      "archive": "evidence/run/shared-review-open.stderr",
+      "originalSha256": "f8a9998dda49248ec00ca4ed0fe9763d193fac592c55883caa54b244f49d6e06",
+      "archiveSha256": "f8a9998dda49248ec00ca4ed0fe9763d193fac592c55883caa54b244f49d6e06",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/shared-review-open.stdout",
+      "archive": "evidence/run/shared-review-open.stdout",
+      "originalSha256": "8838ee0a0e8793691a33ef6a22143e3bdc3409b38223403f4e0d955975c654d1",
+      "archiveSha256": "646b0a0ab5e653501600c5e05d110210f201259609570f933cc49e67d827640f",
+      "pathSubstitutions": true
+    },
+    {
+      "original": "run/shared-review-validate.stderr",
+      "archive": "evidence/run/shared-review-validate.stderr",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/shared-review-validate.stdout",
+      "archive": "evidence/run/shared-review-validate.stdout",
+      "originalSha256": "1ed9d0563d9f91d3bb4a3319dad4f5c61291c4f97f112d224ca91b69f30d155d",
+      "archiveSha256": "1ed9d0563d9f91d3bb4a3319dad4f5c61291c4f97f112d224ca91b69f30d155d",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/shared-review.json",
+      "archive": "evidence/run/shared-review.json",
+      "originalSha256": "a46c44921b9093977852c8878de827ca14563b1c020c9bba27a1761f9cccbc4c",
+      "archiveSha256": "a46c44921b9093977852c8878de827ca14563b1c020c9bba27a1761f9cccbc4c",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/status-after.stderr",
+      "archive": "evidence/run/status-after.stderr",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/status-after.stdout",
+      "archive": "evidence/run/status-after.stdout",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/status-before.stderr",
+      "archive": "evidence/run/status-before.stderr",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/status-before.stdout",
+      "archive": "evidence/run/status-before.stdout",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "run/native.html",
+      "archive": "native/initial.html",
+      "originalSha256": "78a65f207ae2a8fc335b668dd1e57a85c201f1dbd42c7647243760d788a4902a",
+      "archiveSha256": "13860d94643c8a5772b5cf893053a90aaae8dead97bb8d6652c6a64f35388cfd",
+      "pathSubstitutions": true
+    },
+    {
+      "original": "final-run/commands.json",
+      "archive": "evidence/final-run/commands.json",
+      "originalSha256": "d00d5aa181b5e96405b958f3105fa20f14c19b800c02edb7ebf7d3724b2507c8",
+      "archiveSha256": "4a2ccd3f4c2f05cb6f97c0e246431c1cf8791c61fd82502c38bd972aa018d300",
+      "pathSubstitutions": true
+    },
+    {
+      "original": "final-run/repository-status.txt",
+      "archive": "evidence/final-run/repository-status.txt",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "final-run/shared-review-invalid-range-validate.stderr",
+      "archive": "evidence/final-run/shared-review-invalid-range-validate.stderr",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "final-run/shared-review-invalid-range-validate.stdout",
+      "archive": "evidence/final-run/shared-review-invalid-range-validate.stdout",
+      "originalSha256": "ca35a2bd95d58b272e7352fcaf23d22ef25c8eab8a21b73d59933a514ca70050",
+      "archiveSha256": "ca35a2bd95d58b272e7352fcaf23d22ef25c8eab8a21b73d59933a514ca70050",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "final-run/shared-review-invalid-range.json",
+      "archive": "evidence/final-run/shared-review-invalid-range.json",
+      "originalSha256": "fa5d415f3eef9230574beaba7783032beb2dfd6c95f5ad9bae11bcac1047ff2d",
+      "archiveSha256": "fa5d415f3eef9230574beaba7783032beb2dfd6c95f5ad9bae11bcac1047ff2d",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "final-run/shared-review-open.stderr",
+      "archive": "evidence/final-run/shared-review-open.stderr",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "final-run/shared-review-open.stdout",
+      "archive": "evidence/final-run/shared-review-open.stdout",
+      "originalSha256": "76d7b528c35b7f0cbfaeb9f1c44ff95794ad260b9c6f15a3b8b006e85837f72c",
+      "archiveSha256": "0611f9421b1525a55ebbeeaf6bcbd557ffca33421b13d2a15ec52001774a6ae7",
+      "pathSubstitutions": true
+    },
+    {
+      "original": "final-run/shared-review-validate.stderr",
+      "archive": "evidence/final-run/shared-review-validate.stderr",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "final-run/shared-review-validate.stdout",
+      "archive": "evidence/final-run/shared-review-validate.stdout",
+      "originalSha256": "e401e1a1cd119352215ee1b3ced3b3c3784272255861b056e48f938cdadb41d5",
+      "archiveSha256": "e401e1a1cd119352215ee1b3ced3b3c3784272255861b056e48f938cdadb41d5",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "final-run/shared-review.json",
+      "archive": "evidence/final-run/shared-review.json",
+      "originalSha256": "0236edc9d5d01560486cf6edb1670c4df6756806978fb331bf4a31ab218bb987",
+      "archiveSha256": "0236edc9d5d01560486cf6edb1670c4df6756806978fb331bf4a31ab218bb987",
+      "pathSubstitutions": false
+    },
+    {
+      "original": "final-run/native.html",
+      "archive": "native/final.html",
+      "originalSha256": "457ac8023576e8c24006b9270f0c9cfb2ee78ae9174d3ebcb1b63ef0847e0c79",
+      "archiveSha256": "b941588f968f3ad6094ca5691472e5c28bb432a8e0c26257294a1a83f13c653a",
+      "pathSubstitutions": true
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "commit": "a3fa21767bfaeb3077fdda08bddb7249366caa93",
+  "files": [
+    {
+      "path": "source/LICENSE",
+      "gitBlob": "c4448d89fd60f6da82d9261458246d5c9c016cc5",
+      "bytes": 1075,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/LICENSE",
+      "sha256": "1e9de46e2feb8e0b134d0f5eef807be1971e22c3c004ccf29e1b6131e55f916e"
+    },
+    {
+      "path": "source/internal/render/assets/app.css",
+      "gitBlob": "1c2e1874a57462012abfb2a79cc2da5678b4debf",
+      "bytes": 47470,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/assets/app.css",
+      "sha256": "29760f104339c3e448fc522e6796699c5f32ef02fb7c2d9bcf2517d95e38147d"
+    },
+    {
+      "path": "source/internal/render/assets/app.js",
+      "gitBlob": "bd3933b0eeb698f15372f1460b9937b964259fb6",
+      "bytes": 139132,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/assets/app.js",
+      "sha256": "a7e491033a6c89f755930c4d6b628165d7dbb5dc699511633094994acae99865"
+    },
+    {
+      "path": "source/internal/render/assets/index.html",
+      "gitBlob": "2ea0b6571570f4d3b72293a41ba5f018feec3dcf",
+      "bytes": 726,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/assets/index.html",
+      "sha256": "3965f61bc66abe55645c0a46e1ae0676ef1a797886cffa492f481b8e167e6e87"
+    },
+    {
+      "path": "source/internal/render/assets/vendor/LICENSES.txt",
+      "gitBlob": "43ff31c0dce4d5aebf08a28478823ba9f0bc8df5",
+      "bytes": 16711,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/assets/vendor/LICENSES.txt",
+      "sha256": "b8a10d7920f85b963a9e2aa8eac336ef368cef82244fc0f3a47060faa8a45eff"
+    },
+    {
+      "path": "source/internal/render/assets/vendor/cytoscape-elk.js",
+      "gitBlob": "c003983cb6687d7a84b0007b8a32b5ff2eb81694",
+      "bytes": 11301,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/assets/vendor/cytoscape-elk.js",
+      "sha256": "25acbb9dea9b0dc6fef0e79b697547ee56e579f0e1c22ae4353131e72c7e140a"
+    },
+    {
+      "path": "source/internal/render/assets/vendor/cytoscape.min.js",
+      "gitBlob": "c1364fdec9699afad463b34cf6174b4d10067e4f",
+      "bytes": 434037,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/assets/vendor/cytoscape.min.js",
+      "sha256": "f55947f3daa3bae53209d4b885c195c157f595c225e508a6b382598d9452d6e2"
+    },
+    {
+      "path": "source/internal/render/assets/vendor/elk.bundled.js",
+      "gitBlob": "b8af0f1b98d5b45ec58d780da5facdf6b4d897e8",
+      "bytes": 1627496,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/assets/vendor/elk.bundled.js",
+      "sha256": "cbf61b0182e9085d36dcd5b392f57cc816273169ac40bde80b52b808444c5cf8"
+    },
+    {
+      "path": "source/internal/render/data.go",
+      "gitBlob": "65fe2debc258f5f696223aeb12fe6ed343eda402",
+      "bytes": 24603,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/data.go",
+      "sha256": "2cee531de306f2ddce4caa513bfe82d6ebdcb876455e6d5ee2b875e28b0b3357"
+    },
+    {
+      "path": "source/internal/render/html.go",
+      "gitBlob": "c15b3bf2b70810fff8e0d53d1c2750731c250e19",
+      "bytes": 1945,
+      "url": "https://raw.githubusercontent.com/gtindo/task-view/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/render/html.go",
+      "sha256": "dba3b15370dbfb4a0f01ae1090dc8c325a8966917d92e00eab0d18c91d7ebb3d"
+    }
+  ]
+}

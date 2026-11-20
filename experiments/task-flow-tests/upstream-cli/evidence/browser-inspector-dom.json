@@ -1,0 +1,195 @@
+{
+  "url": "http://127.0.0.1:8881/native.html#view=graph&focus=flow%3Adelivered&sel=node%3Aguard",
+  "viewport": {
+    "width": 1512,
+    "height": 762
+  },
+  "tables": [
+    {
+      "class": "code",
+      "rows": [
+        [
+          {
+            "text": "134",
+            "html": "134"
+          },
+          {
+            "text": "134",
+            "html": "134"
+          },
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "    receipt.reviewImage={hash:preview.hash,path:preview.path};evidence.previewPath=preview.path;",
+            "html": "    receipt.reviewImage={hash:preview.hash,path:preview.path};evidence.previewPath=preview.path;"
+          }
+        ],
+        [
+          {
+            "text": "135",
+            "html": "135"
+          },
+          {
+            "text": "135",
+            "html": "135"
+          },
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "   }else evidence.missing.push('PNG preview unavailable; inspect original artifact');",
+            "html": "   }else evidence.missing.push('PNG preview unavailable; inspect original artifact');"
+          }
+        ],
+        [
+          {
+            "text": "136",
+            "html": "136"
+          },
+          {
+            "text": "136",
+            "html": "136"
+          },
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "   // Existing ratings are tied to original artifact bytes; an explicit newer import wins.",
+            "html": "   // Existing ratings are tied to original artifact bytes; an explicit newer import wins."
+          }
+        ],
+        [
+          {
+            "text": "137",
+            "html": "137"
+          },
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "−",
+            "html": "−"
+          },
+          {
+            "text": "   for(const review of original.human?.reviews??[])receipt=attachHumanReview(receipt,review);",
+            "html": "   for(const review of original.human?.reviews??[])receipt=attachHumanReview(receipt,review);"
+          }
+        ],
+        [
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "137",
+            "html": "137"
+          },
+          {
+            "text": "+",
+            "html": "+"
+          },
+          {
+            "text": "   const storedReviews=original.human?.reviews??[];",
+            "html": "   const storedReviews=original.human?.reviews??[];"
+          }
+        ],
+        [
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "138",
+            "html": "138"
+          },
+          {
+            "text": "+",
+            "html": "+"
+          },
+          {
+            "text": "   if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review);",
+            "html": "   if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review);"
+          }
+        ],
+        [
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "139",
+            "html": "139"
+          },
+          {
+            "text": "+",
+            "html": "+"
+          },
+          {
+            "text": "   else if(storedReviews.length)evidence.missing.push('stored human reviews not bound: final artifact unavailable');",
+            "html": "   else if(storedReviews.length)evidence.missing.push('stored human reviews not bound: final artifact unavailable');"
+          }
+        ],
+        [
+          {
+            "text": "138",
+            "html": "138"
+          },
+          {
+            "text": "140",
+            "html": "140"
+          },
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "   for(const [i,review] of reviews.entries())if(review.taskId===receipt.taskId&&review.artifactHash===receipt.artifactHash){receipt=attachHumanReview(receipt,review);usedReviews.add(i);}",
+            "html": "   for(const [i,review] of reviews.entries())if(review.taskId===receipt.taskId&amp;&amp;review.artifactHash===receipt.artifactHash){receipt=attachHumanReview(receipt,review);usedReviews.add(i);}"
+          }
+        ],
+        [
+          {
+            "text": "139",
+            "html": "139"
+          },
+          {
+            "text": "141",
+            "html": "141"
+          },
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "   const row=scoreRun({task,receipt});",
+            "html": "   const row=scoreRun({task,receipt});"
+          }
+        ],
+        [
+          {
+            "text": "140",
+            "html": "140"
+          },
+          {
+            "text": "142",
+            "html": "142"
+          },
+          {
+            "text": "",
+            "html": ""
+          },
+          {
+            "text": "   Object.assign(row,{revision:entry.revision,evidence,delivery:receipt.delivery,repairCount:evidence.historyComplete?evidence.candidates.slice(1).filter((c,i)=>c.documentHash!==evidence.candidates[i].documentHash).length:null,semanticMeasurements:{nodes:receipt.objective.semantic.nodes??null,edges:receipt.objective.semantic.edges??null},semanticDefects:receipt.objective.semantic.violations,sourceEvidence:original.sourceEvidence??null});",
+            "html": "   Object.assign(row,{revision:entry.revision,evidence,delivery:receipt.delivery,repairCount:evidence.historyComplete?evidence.candidates.slice(1).filter((c,i)=&gt;c.documentHash!==evidence.candidates[i].documentHash).length:null,semanticMeasurements:{nodes:receipt.objective.semantic.nodes??null,edges:receipt.objective.semantic.edges??null},semanticDefects:receipt.objective.semantic.violations,sou"
+          }
+        ]
+      ]
+    }
+  ],
+  "text": "task-view\n/\narchify\n/\nshared-review.json\n5\nverified\n0\ncontradicted\n0\nunresolved\n9\nagent statements\n0\nerrors\n3\nwarnings\n0/5\nread\nSUMMARY\nAGENT SAYS\n\n历史评分绑定与缺失产物报告的作者声明式审阅；未执行历史代码或测试。\n\nREPOSITORIES\n1\narchify\nchanged\n3 files\n+15\n−2\n../run/repository\ned62bfefa\nfix(benchmarks): preserve reports when reviewed artifacts are missing\nde004edf4\nbase · fix(benchmarks): retain malformed candidates as failed evidence\nFINDINGS\n3\nOther warnings\n3\nChanged tests\n1\nAGENT NOTES\n10\n路径和关联均由实验作者声明，未经历史提交作者确认；路径不表示真实运行轨迹。\n全局 tests 边只表示代码级测试关联，不表示测试执行、通过或分支覆盖。\n历史 mapping 的 reference-matches 和 range-accounted 是此前记录，未在本输入中作为当前验证结果。\n路径 missing：缺产物且存在历史评分的源码阅读；未执行历史代码；条件不是 delivered 且存在历史评分，追加未绑定原因。；报告对象把 evidence.missing 暴露为 evidenceMissing。\n路径 missing 的作者声明：测试 regression 关联步骤 guard；测试源码移除产物，断言 delivery 为 unverified、human 为 null，并检查缺失原因。\n路径 delivered：已交付分支的源码阅读；未执行历史代码；条件为 delivered，遍历 storedReviews 并绑定评分。；报告对象仍列出 evidenceMissing，缺失数组可以为空。\n路径 delivered：作者未声明步骤测试关联；这不表示没有测试。\n路径 omitted-link：人为遗漏关联的合成对照；Git 映射与源码未变；与缺产物路径相同，但作者没有给出测试关联。；没有声明关联，不表示不存在测试，也不表示代码有缺陷。\n路径 omitted-link：作者未声明步骤测试关联；这不表示没有测试。\n边原始标签：before-guard → guard「声明：替换」；regression → guard「声明：测试关联」（转为 tests）；guard → report「声明：缺测呈现」；before-report → report「声明：替换」。这些边不是调用关系。\nGenerated 2026/10/29 22:28:21 · task-view 1.2.0\nFlows\n3\nGraph\n5\nDiff map\n3\nClaims\n0\n产物已交付：沿用历史评分\nCollapse all\nUnchanged (0)\nTests (1)\n→\n↓\n新增：交付条件\ncode · comparison.mjs:137–139\n+1\n回归测试：缺失产物\ntest · diagram-quality-comparison.test.mjs:85–95\n报告展示缺测原因\ncode · score-report.mjs:55\n+1\nREFERENCE STATUS\nVerified\nContradicted\nUnresolved\nAgent statement\nCHANGE\nAdded\nModified\nDeleted\nUnchanged\nEDGES\nVerified site\nNo reference\n新增：交付条件\nguard · code\nModified\nVerified\nMark read\narchify\n›\nbenchmarks/diagram-quality/comparison.mjs:137–139\nrange\ned62bfe\nCode\nAgent's account\nTests 1\nRelations 2\nbenchmarks/diagram-quality/comparison.mjs:137–139\nDiff\nAfter\ned62bfe\nplain text\n134\t134\t\t    receipt.reviewImage={hash:preview.hash,path:preview.path};evidence.previewPath=preview.path;\n135\t135\t\t   }else evidence.missing.push('PNG preview unavailable; inspect original artifact');\n136\t136\t\t   // Existing ratings are tied to original artifact bytes; an explicit newer import wins.\n137\t\t−\t   for(const review of original.human?.reviews??[])receipt=attachHumanReview(receipt,review);\n\t137\t+\t   const storedReviews=original.human?.reviews??[];\n\t138\t+\t   if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review);\n\t139\t+\t   else if(storedReviews.length)evidence.missing.push('stored human reviews not bound: final artifact unavailable');\n138\t140\t\t   for(const [i,review] of reviews.entries())if(review.taskId===receipt.taskId&&review.artifactHash===receipt.artifactHash){receipt=attachHumanReview(receipt,review);usedReviews.add(i);}\n139\t141\t\t   const row=scoreRun({task,receipt});\n140\t142\t\t   Object.assign(row,{revision:entry.revision,evidence,delivery:receipt.delivery,repairCount:evidence.historyComplete?evidence.candidates.slice(1).filter((c,i)=>c.documentHash!==evidence.candidates[i].documentHash).length:null,semanticMeasurements:{nodes:receipt.objective.semantic.nodes??null,edges:receipt.objective.semantic.edges??null},semanticDefects:receipt.objective.semantic.violations,sourceEvidence:original.sourceEvidence??null});\n新增：交付条件\nModified code · archify benchmarks/diagram-quality/comparison.mjs:137–139"
+}

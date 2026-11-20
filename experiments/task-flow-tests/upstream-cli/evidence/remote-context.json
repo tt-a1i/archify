@@ -1,0 +1,17 @@
+{
+  "remoteHeadCount": 336,
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "taskFlowHeadBefore": "7b2a7ba3c976fc132379c79fa4182dbcdb6b0671",
+  "upstreamMain": "a3fa21767bfaeb3077fdda08bddb7249366caa93",
+  "existingPr": {
+    "url": "https://github.com/tt-a1i/archify/pull/1121",
+    "state": "open",
+    "draft": true,
+    "title": "experiment: read authored behavior paths with explicit test associations",
+    "head": "7b2a7ba3c976fc132379c79fa4182dbcdb6b0671",
+    "headRef": "codex/lab-task-flow-tests",
+    "base": "e837dc4cb83042d2b6c596e039692e25ec62c2da",
+    "baseRef": "dev"
+  },
+  "scope": "Snapshot before extending the existing branch; no new PR or existing PR comments/body edits."
+}

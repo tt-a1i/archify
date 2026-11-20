@@ -1,0 +1,24 @@
+{
+  "node_id": "TA_kwDOVVQxCdoAKDhlY2QyNjhmY2IzNGE1OTM3NTgzMzVkMjVjOTFiNDcyNjRhMzIyMzc",
+  "sha": "8ecd268fcb34a593758335d25c91b47264a32237",
+  "url": "https://api.github.com/repos/gtindo/task-view/git/tags/8ecd268fcb34a593758335d25c91b47264a32237",
+  "tagger": {
+    "name": "gtindo",
+    "email": "gtyletindo@gmail.com",
+    "date": "2026-10-27T18:37:26Z"
+  },
+  "object": {
+    "sha": "a3fa21767bfaeb3077fdda08bddb7249366caa93",
+    "type": "commit",
+    "url": "https://api.github.com/repos/gtindo/task-view/git/commits/a3fa21767bfaeb3077fdda08bddb7249366caa93"
+  },
+  "tag": "v1.2.0",
+  "message": "task-view 1.2.0\n",
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

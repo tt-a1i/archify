@@ -1,0 +1,12 @@
+{
+  "kind": "exact-reused-mapping-provenance",
+  "repository": "https://github.com/tt-a1i/archify",
+  "commit": "dcedd53856b82d3e403a9651dca0e15840496942",
+  "path": "experiments/task-review-map/output/complete/mapping.json",
+  "gitBlob": "a8a09a38b98f375fee629fa40e0c723a3a7ef73a",
+  "sha256": "e04fea9bb1b29fce4926311c6101ad12d8d8d98efaa5eb2f0659a4828557b4cf",
+  "bytes": 11153,
+  "comparedBase": "de004edf47228b6134fd3d29ef91cd5e010c867b",
+  "comparedHead": "ed62bfefaf490e831259261fdc12f985267590fb",
+  "reuseBoundary": "Original referenceMatches and excerpt bytes are reused; no Git adapter or historical tests are run in this experiment."
+}

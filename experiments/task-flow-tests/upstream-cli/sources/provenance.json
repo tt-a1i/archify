@@ -1,0 +1,61 @@
+{
+  "commit": "a3fa21767bfaeb3077fdda08bddb7249366caa93",
+  "files": [
+    {
+      "path": ".github/workflows/release.yml",
+      "url": "https://github.com/gtindo/task-view/blob/a3fa21767bfaeb3077fdda08bddb7249366caa93/.github/workflows/release.yml",
+      "gitBlobSha1": "fbdcf3b3681aca81bdb654e7ddf5ff9aec49ed88",
+      "sha256": "2ec22c93a5539d161245f684d767bf6235950008ac740b972d3087466469a5fc",
+      "bytes": 1115
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://github.com/gtindo/task-view/blob/a3fa21767bfaeb3077fdda08bddb7249366caa93/LICENSE",
+      "gitBlobSha1": "c4448d89fd60f6da82d9261458246d5c9c016cc5",
+      "sha256": "1e9de46e2feb8e0b134d0f5eef807be1971e22c3c004ccf29e1b6131e55f916e",
+      "bytes": 1075
+    },
+    {
+      "path": "cmd/task-view/main.go",
+      "url": "https://github.com/gtindo/task-view/blob/a3fa21767bfaeb3077fdda08bddb7249366caa93/cmd/task-view/main.go",
+      "gitBlobSha1": "f8c6a89cd86d3fc3a43f17988201c6bfe8f9079e",
+      "sha256": "9020cbc1dbb630dc9f73a3183bcf09ed691d8e31dea1869b98c6a790ecc5732f",
+      "bytes": 12026
+    },
+    {
+      "path": "docs/TASK_REVIEW.md",
+      "url": "https://github.com/gtindo/task-view/blob/a3fa21767bfaeb3077fdda08bddb7249366caa93/docs/TASK_REVIEW.md",
+      "gitBlobSha1": "2a67fccd6a3cc072a5738aedd95ae4a6e82c96f8",
+      "sha256": "a8837e1bd9079adc5b393c38b2a3d19911197dfcb2b8e0709a464f1edb67f454",
+      "bytes": 10003
+    },
+    {
+      "path": "internal/engine/diff.go",
+      "url": "https://github.com/gtindo/task-view/blob/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/engine/diff.go",
+      "gitBlobSha1": "072373b8b6b6a30b2236fa859d210cc3f90ab9ee",
+      "sha256": "9de3563b4b94b35f4fbd77675b499113e3d29bd992f1d846544df21dc96da871",
+      "bytes": 7585
+    },
+    {
+      "path": "internal/engine/refs.go",
+      "url": "https://github.com/gtindo/task-view/blob/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/engine/refs.go",
+      "gitBlobSha1": "9ca24c16eb54da089e471ac23906e972e2bbf79c",
+      "sha256": "49c5aa169da5bb51448c1d825e5a48e1bf88a79def9c3ccad116925fd0a6f37a",
+      "bytes": 17970
+    },
+    {
+      "path": "internal/review/schema.json",
+      "url": "https://github.com/gtindo/task-view/blob/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/review/schema.json",
+      "gitBlobSha1": "164876224fa4e0340ffc5025609d5e9dee15ebcc",
+      "sha256": "b19ad1e7eaad4626b2725af8abae676c23f6b09d9a9effe8c368332ea17a1afa",
+      "bytes": 6239
+    },
+    {
+      "path": "internal/review/types.go",
+      "url": "https://github.com/gtindo/task-view/blob/a3fa21767bfaeb3077fdda08bddb7249366caa93/internal/review/types.go",
+      "gitBlobSha1": "5dd34d477d6717dabf0b0ce47e98a5a8562c578d",
+      "sha256": "ee3b87c1bb55dc8cfc37ac096c183ed2375dd98b41dec215494432946a3ff3fe",
+      "bytes": 5135
+    }
+  ]
+}

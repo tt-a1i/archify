@@ -1,0 +1,18 @@
+task-view-darwin-arm64: go1.26.3
+	path	github.com/gtindo/task-view/cmd/task-view
+	mod	github.com/gtindo/task-view	v1.2.0	
+	dep	github.com/alecthomas/chroma/v2	v2.27.0	h1:FodwmyOBgJULFYmDqibcp9pvfDLWdtPRh9v/r5BXYZs=
+	dep	github.com/dlclark/regexp2/v2	v2.2.1	h1:mf4KkFUj0gJuarK8P+LgiS+Lit7m9N1yAwEfPbee7R0=
+	dep	github.com/santhosh-tekuri/jsonschema/v6	v6.0.3	h1:1EYB5IzjZawrrnELUi78f9fPu57HuXjmddZPjrls/28=
+	dep	golang.org/x/text	v0.14.0	h1:ScX5w1eTa3QqT8oi6+ziP7dTV1S2+ALU0bI+0zXKWiQ=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-trimpath=true
+	build	CGO_ENABLED=0
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+	build	vcs=git
+	build	vcs.revision=a3fa21767bfaeb3077fdda08bddb7249366caa93
+	build	vcs.time=2026-10-27T18:36:15Z
+	build	vcs.modified=false

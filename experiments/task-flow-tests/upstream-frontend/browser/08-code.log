@@ -1,0 +1,227 @@
+[p1 "task-view 研究夹具 · shared" | space "Archify research 20261026"(3): 1 managed, 0 untracked — p1* "task-view 研究夹具 · shared"]
+root
+  container
+    container
+      button [ref=791]
+        svg_root
+      container
+        svg_root
+        text "task-view"
+      container
+        text "/"
+        text "/"
+        text "研究夹具·未校验 / shared"
+      container
+        button [ref=792]
+          svg_root
+          text "0"
+          text "verified"
+        button [ref=793]
+          svg_root
+          text "0"
+          text "contradicted"
+        button [ref=794]
+          svg_root
+          text "0"
+          text "unresolved"
+        button [ref=795]
+          svg_root
+          text "9"
+          text "agent statements"
+        button [ref=796]
+          svg_root
+          text "0"
+          text "errors"
+        button [ref=797]
+          svg_root
+          text "1"
+          text "warning"
+        container
+          svg_root
+          text "0/5"
+          text "read"
+      button [ref=798]
+        svg_root
+    container
+      container [ref=799]
+        container
+          heading
+            svg_root
+            text "SUMMARY"
+          container
+            container
+              svg_root
+              text "AGENT SAYS"
+            paragraph
+              text "研究夹具 · 未运行上游校验器/历史测试。比较代码节点关联与路径声明。"
+        heading
+          svg_root
+          text "REPOSITORIES"
+          text "0"
+        container
+          heading
+            svg_root
+            text "FINDINGS"
+            text "1"
+          button [ref=800]
+            svg_root
+            text "Other warnings"
+            text "1"
+        container
+          heading
+            svg_root
+            text "AGENT NOTES"
+            text "5"
+          unordered_list
+            list_item
+              text "研究夹具：只运行固定上游前端。没有运行 Go、schema/Git 校验或历史测试。0 verified 不表示引用不存在；0 errors 不表示校验成功。"
+            list_item
+              text "所有节点和边均标为 Agent statement。归档映射的旧 reference-matches 结果未作为本轮 verified 导入。"
+            list_item
+              text "missing：缺产物且存在历史评分的源码阅读；未执行历史代码；步骤说明：条件不是 delivered 且存在历史评分，追加未绑定原因。 / 报告对象把 evidence.miss..."
+            list_item
+              text "delivered：已交付分支的源码阅读；未执行历史代码；步骤说明：条件为 delivered，遍历 storedReviews 并绑定评分。 / 报告对象仍列出 evidenceMissing，缺失数组..."
+            list_item
+              text "omitted-link：人为遗漏关联的合成对照；Git 映射与源码未变；步骤说明：与缺产物路径相同，但作者没有给出测试关联。 / 没有声明关联，不表示不存在�..."
+      splitter
+      container
+        container
+          button [ref=801]
+            svg_root
+            text "Flows"
+            text "3"
+          button [ref=802]
+            svg_root
+            text "Graph"
+            text "5"
+          button [ref=803]
+            svg_root
+            text "Diff map"
+            text "0"
+          button [ref=804]
+            svg_root
+            text "Claims"
+            text "0"
+        container
+          container
+            container
+              svg_root
+              heading
+                button [ref=805]
+                  text "缺少产物：记录评分未绑定"
+              text "missing"
+              container
+                text "0/2 steps read"
+                button [ref=806]
+                  svg_root
+                  text "Mark reviewed"
+            container
+              svg_root
+              button [ref=807]
+                svg_root
+                container
+                  text "新增：交付条件"
+                  text "code · comparison.mjs:137–139"
+              button [ref=808]
+                svg_root
+                container
+                  text "报告展示缺测原因"
+                  text "code · score-report.mjs:55"
+              text "depends_on"
+          container
+            container
+              svg_root
+              heading
+                button [ref=809]
+                  text "产物已交付：沿用历史评分"
+              text "delivered"
+              container
+                text "0/2 steps read"
+                button [ref=810]
+                  svg_root
+                  text "Mark reviewed"
+            container
+              svg_root
+              button [ref=811]
+                svg_root
+                container
+                  text "新增：交付条件"
+                  text "code · comparison.mjs:137–139"
+              button [ref=812]
+                svg_root
+                container
+                  text "报告展示缺测原因"
+                  text "code · score-report.mjs:55"
+              text "depends_on"
+          container
+            container
+              svg_root
+              heading
+                button [ref=813]
+                  text "对照：移除测试关联声明"
+              text "omitted-link"
+              container
+                text "0/2 steps read"
+                button [ref=814]
+                  svg_root
+                  text "Mark reviewed"
+            container
+              svg_root
+              button [ref=815]
+                svg_root
+                container
+                  text "新增：交付条件"
+                  text "code · comparison.mjs:137–139"
+              button [ref=816]
+                svg_root
+                container
+                  text "报告展示缺测原因"
+                  text "code · score-report.mjs:55"
+              text "depends_on"
+      container
+        splitter
+        container
+          svg_root
+          container
+            heading
+              text "新增：交付条件"
+            text "guard · code"
+            container
+              text "Modified"
+              container
+                svg_root
+                text "Agent statement"
+          button [ref=817]
+            svg_root
+            text "Mark read"
+        container
+          container
+            svg_root
+            text "This node has no reference. Its existence and change state are the agent's word."
+          container
+            text "archify"
+            text "›"
+            text "benchmarks/diagram-quality/comparison.mjs:137–139"
+            text "range"
+          tablist
+            tab [ref=818]
+              text "Code"
+            tab [ref=819]
+              text "Agent's account"
+            tab [ref=820]
+              text "Tests 1"
+            tab [ref=821]
+              text "Relations 2"
+          container
+            container
+              svg_root
+              text "benchmarks/diagram-quality/comparison.mjs:137–139"
+              text "ed62bfe"
+              text "plain text"
+            text "归档片段；不是本轮 Git 校验或完整文件。"
+  text "新增：交付条件"
+  text "Modified code · archify benchmarks/diagram-quality/comparison.mjs:137–139"
+  text "No reference: the agent's word"
+
+[ { text: 'Tests 1', classes: '', role: 'tab' } ]
+

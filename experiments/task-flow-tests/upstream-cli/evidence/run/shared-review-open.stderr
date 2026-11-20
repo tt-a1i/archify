@@ -1,0 +1,31 @@
+✗ shared-review.json — exit 1: 2 errors, 6 warnings
+  verified 3 · contradicted 0 · unresolved 2 · agent statements 9
+
+errors
+  bad_at                 /nodes/0/ref  archify benchmarks/diagram-quality/comparison.mjs:137
+    at de004edf47 is not one of repo "archify"'s listed commits
+    hint: set `at` to a full SHA from the repo's commits (not WORKTREE), or remove it
+  bad_at                 /nodes/3/ref  archify benchmarks/diagram-quality/score-report.mjs:55
+    at de004edf47 is not one of repo "archify"'s listed commits
+    hint: set `at` to a full SHA from the repo's commits (not WORKTREE), or remove it
+
+warnings
+  unmentioned_hunk       archify benchmarks/diagram-quality/comparison.mjs:137-139
+    changed lines not covered by any node
+    hint: add a node with a range covering lines 137-139, or explain in notes
+  unmentioned_hunk       archify benchmarks/diagram-quality/score-report.mjs:55
+    changed lines not covered by any node
+    hint: add a node with a range covering line 55, or explain in notes
+  unmentioned_hunk       archify test/diagram-quality-comparison.test.mjs:85-95
+    changed lines not covered by any node
+    hint: add a node with a range covering lines 85-95, or explain in notes
+  no_language            /nodes/0/ref  archify benchmarks/diagram-quality/comparison.mjs
+    benchmarks/diagram-quality/comparison.mjs matches no language; it is shown as plain text
+    hint: add a glob for it to repo "archify"'s `languages`, or set `language` on the ref
+  no_language            /nodes/2/ref  archify test/diagram-quality-comparison.test.mjs
+    test/diagram-quality-comparison.test.mjs matches no language; it is shown as plain text
+    hint: add a glob for it to repo "archify"'s `languages`, or set `language` on the ref
+  no_language            /nodes/3/ref  archify benchmarks/diagram-quality/score-report.mjs
+    benchmarks/diagram-quality/score-report.mjs matches no language; it is shown as plain text
+    hint: add a glob for it to repo "archify"'s `languages`, or set `language` on the ref
+
