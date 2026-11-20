@@ -67,7 +67,6 @@ html[data-bauify="on"] .guided-views, html[data-bauify="on"] [class*="story"], h
 #bauify-panel .ev div, #bauify-detail .ev div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #bauify-panel .close, #bauify-detail .close { position: sticky; float: right; top: 0; margin: -4px -6px 0 0; top: 8px; background: none; border: 0; color: var(--text-muted, #94a3b8); font-size: 16px; cursor: pointer; }
 #bauify-panel .warn { color: var(--text-muted, #94a3b8); font-style: italic; }
-#btn-bauify[aria-pressed="true"] { outline: 1px solid var(--backend-stroke, #34D399); }
 #bauify-panel details { margin-top: 6px; }
 #bauify-panel summary { cursor: pointer; color: var(--text-muted, #94a3b8); font-size: 11px; }
 #bauify-panel table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 11px; }

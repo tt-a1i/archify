@@ -473,6 +473,6 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
   return out;
 }
 
-const CSS = clientAsset('overlay.css');
+const CSS = clientAsset('overlay.css') + clientAsset('entry.css');
 
 const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\n` + clientAsset('overlay.js');

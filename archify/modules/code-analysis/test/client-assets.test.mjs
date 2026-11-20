@@ -8,7 +8,7 @@ const dir = new URL('../overlay/client/', import.meta.url);
 const names = fs.readdirSync(dir).sort();
 
 test('client assets: the page inlines exactly the files in overlay/client', () => {
-  assert.deepEqual(names, ['atlas.css', 'atlas.js', 'atlas3d.css', 'atlas3d.js', 'overlay.css', 'overlay.js']);
+  assert.deepEqual(names, ['atlas.css', 'atlas.js', 'atlas3d.css', 'atlas3d.js', 'entry.css', 'overlay.css', 'overlay.js']);
   for (const name of names) assert.equal(clientAsset(name), `\n${fs.readFileSync(new URL(name, dir), 'utf8')}`);
 });
 

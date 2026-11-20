@@ -13,7 +13,16 @@
   var btn = externalToggle || document.createElement('button');
   if (!externalToggle) btn.id = 'btn-bauify'; btn.type = 'button'; btn.setAttribute('aria-pressed', 'false');
   btn.title = tr("Show or hide the code analysis layer (C)"); btn.textContent = tr("Code Analysis");
-  if (!externalToggle) toolbar.appendChild(btn);
+  if (!externalToggle) {
+    // Same capsule as the launcher it replaces (entry.css), placed before Export.
+    var entryIcon = document.createElement('span'); entryIcon.className = 'analysis-entry-icon'; entryIcon.setAttribute('aria-hidden', 'true');
+    btn.className = 'analysis-entry'; btn.prepend(entryIcon);
+    var entryFindings = data.findings || [];
+    if (entryFindings.length) btn.setAttribute('data-count', String(entryFindings.length));
+    if (entryFindings.some(function (f) { return f.severity === 'error'; })) btn.setAttribute('data-tone', 'error');
+    btn.setAttribute('aria-keyshortcuts', 'C');
+    toolbar.insertBefore(btn, toolbar.querySelector('.export-wrap'));
+  }
 
   var reader = document.createElement('aside');
   reader.lang = locale;
