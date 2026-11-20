@@ -8,6 +8,8 @@ If the main and secondary chains already read clearly, repair the isolated defec
 
 The receipt's `directCorridorBlockers`, when present, names nodes between an edge's aligned endpoints. This is geometric evidence, not proof that the edge is the main path or a new validation failure. Trace the reader's actual main path first. When a listed blocker interrupts that path, reposition the connected group instead of adding another detour.
 
+For an automatically arranged diagram, `validate architecture <candidate.json> --layout-json` shows the positions the renderer chose. When the actual image shows a problem, use these positions to identify the affected branch. A supplied `pos` in auto mode anchors that component while the others can still move.
+
 ## One coherent repair
 
 1. Trace the affected relationships and their endpoints in the JSON. Before choosing coordinates, write the reader’s main path as an ordered list of existing edges, then identify shared state and real feedback cycles. Every neighboring pair in that main path must have the relationship being explained; place other components on branches beside their actual owner. Use `validate architecture <candidate.json> --layout-json --repo-root <root>` once if the compact receipt and screenshot do not reveal the needed route or label geometry; omit `--repo-root` only for a design without repository evidence. Do not guess repeated waypoint coordinates.
