@@ -1,0 +1,23 @@
+{
+  "project": "commons-lang production sources",
+  "sourceDirectories": ["src/main/java"],
+  "metadataFiles": [],
+  "inputSha256": "3c944bb4f3abc8821c41099c929c40780672bfa98cb276b9bb12d5456b419f81",
+  "jsPathPrefix": "src/main/java/",
+  "queries": [
+    {"id":"same-file-static-control","file":"src/main/java/org/apache/commons/lang3/AnnotationUtils.java","line":113,"column":18,"endLine":113,"endColumn":38,"jdkTarget":"src/main/java/org/apache/commons/lang3/AnnotationUtils.java:224","jsStatus":"known"},
+    {"id":"external-jdk-control","file":"src/main/java/org/apache/commons/lang3/AnnotationUtils.java","line":145,"column":13,"endLine":145,"endColumn":41,"jdkTarget":null,"jsStatus":"unresolved"},
+    {"id":"overload-static-cross-file","file":"src/main/java/org/apache/commons/lang3/AnnotationUtils.java","line":233,"column":9,"endLine":233,"endColumn":80,"jdkTarget":"src/main/java/org/apache/commons/lang3/Validate.java:1106","jsStatus":"unresolved"},
+    {"id":"static-cross-file-control","file":"src/main/java/org/apache/commons/lang3/AnnotationUtils.java","line":294,"column":13,"endLine":294,"endColumn":39,"jdkTarget":"src/main/java/org/apache/commons/lang3/ObjectUtils.java:925","jsStatus":"known"},
+    {"id":"instance-cross-package","file":"src/main/java/org/apache/commons/lang3/AnnotationUtils.java","line":401,"column":17,"endLine":401,"endColumn":74,"jdkTarget":"src/main/java/org/apache/commons/lang3/builder/ToStringBuilder.java:890","jsStatus":"unresolved"},
+    {"id":"interface-method-cross-package","file":"src/main/java/org/apache/commons/lang3/AppendableJoiner.java","line":188,"column":17,"endLine":188,"endColumn":57,"jdkTarget":"src/main/java/org/apache/commons/lang3/function/FailableBiConsumer.java:58","jsStatus":"unresolved"},
+    {"id":"fluent-instance-first","file":"src/main/java/org/apache/commons/lang3/ArrayUtils.java","line":2205,"column":16,"endLine":2205,"endColumn":51,"jdkTarget":"src/main/java/org/apache/commons/lang3/builder/HashCodeBuilder.java:850","jsStatus":"unresolved"},
+    {"id":"fluent-instance-second","file":"src/main/java/org/apache/commons/lang3/ArrayUtils.java","line":2205,"column":16,"endLine":2205,"endColumn":64,"jdkTarget":"src/main/java/org/apache/commons/lang3/builder/HashCodeBuilder.java:1008","jsStatus":"unresolved"},
+    {"id":"jdk-then-project-chain","file":"src/main/java/org/apache/commons/lang3/ArrayUtils.java","line":2209,"column":9,"endLine":2209,"endColumn":78,"jdkTarget":"src/main/java/org/apache/commons/lang3/mutable/MutableInt.java:276","jsStatus":"unresolved"},
+    {"id":"generic-static-cross-package","file":"src/main/java/org/apache/commons/lang3/ArchUtils.java","line":64,"column":9,"endLine":64,"endColumn":25,"jdkTarget":"src/main/java/org/apache/commons/lang3/stream/Streams.java:735","jsStatus":"unresolved"},
+    {"id":"instance-same-file","file":"src/main/java/org/apache/commons/lang3/BitField.java","line":114,"column":33,"endLine":114,"endColumn":42,"jdkTarget":"src/main/java/org/apache/commons/lang3/BitField.java:248","jsStatus":"unresolved"},
+    {"id":"enum-instance-method","file":"src/main/java/org/apache/commons/lang3/concurrent/AbstractCircuitBreaker.java","line":117,"column":33,"endLine":117,"endColumn":57,"jdkTarget":"src/main/java/org/apache/commons/lang3/concurrent/AbstractCircuitBreaker.java:67","jsStatus":"unresolved"},
+    {"id":"same-file-static-guard","file":"src/main/java/org/apache/commons/lang3/math/Fraction.java","line":179,"column":53,"endLine":179,"endColumn":85,"jdkTarget":"src/main/java/org/apache/commons/lang3/math/Fraction.java:430","jsStatus":"unresolved"},
+    {"id":"static-cross-package-control","file":"src/main/java/org/apache/commons/lang3/math/NumberUtils.java","line":188,"column":13,"endLine":188,"endColumn":37,"jdkTarget":"src/main/java/org/apache/commons/lang3/StringUtils.java:3607","jsStatus":"known"}
+  ]
+}

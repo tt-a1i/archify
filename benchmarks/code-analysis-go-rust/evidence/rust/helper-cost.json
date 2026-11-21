@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "--manifest-path",
+    "<WORKSPACE>/work/archify/archify/modules/code-analysis/extract/rust/Cargo.toml"
+  ],
+  "exit": 0,
+  "seconds": 9.896793582942337,
+  "cargoHomeBytes": 7375348,
+  "targetBytes": 99915222,
+  "toolchainInstallationMeasured": false,
+  "note": "Fresh isolated dependency cache; existing installed compiler. No project source was built."
+}

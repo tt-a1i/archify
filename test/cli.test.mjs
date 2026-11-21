@@ -247,7 +247,18 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.match(result.stdout, /\[ok\] Standalone schema validators/);
   assert.match(result.stdout, /\[ok\] architecture renderer, schema, and example/);
   assert.match(result.stdout, /\[ok\] lifecycle renderer, schema, and example/);
+  assert.match(result.stdout, /\[ok\] Story runtime and playback assets/);
   assert.match(result.stdout, /Archify is ready\./);
+});
+
+test('cli: doctor detects a missing Story container runtime', () => {
+  const installedRoot = path.join(tmp, 'missing-story-container');
+  copyInstalledSkill(installedRoot);
+  fs.unlinkSync(path.join(installedRoot, 'story/story-container.js'));
+  const result = spawnSync(process.execPath, [path.join(installedRoot, 'bin/archify.mjs'), 'doctor'], { cwd: installedRoot, encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /\[missing\] Story runtime and playback assets/);
+  assert.match(result.stderr, /Archify is not ready: 1 required file missing\./);
 });
 
 test('cli: doctor identifies an incomplete installation', () => {
@@ -4576,9 +4587,32 @@ test('cli: validate rejects unknown flags, layout-json assignment typos, and ext
   }
 });
 
+test('cli: validate --layout-json keeps one contract across all native diagram types', () => {
+  const examples = {
+    architecture: 'web-app.architecture.json',
+    workflow: 'agent-tool-call.workflow.json',
+    sequence: 'cache-miss-request.sequence.json',
+    dataflow: 'event-stream.dataflow.json',
+    lifecycle: 'agent-run.lifecycle.json',
+    erd: 'orders.erd.json',
+    class: 'payments.class.json',
+    tree: 'payment-platform.tree.json',
+    timeline: 'payment-incident.timeline.json',
+    waterfall: 'checkout-request.waterfall.json',
+  };
+  for (const [type, file] of Object.entries(examples)) {
+    const result = run(['validate', type, path.join(skillRoot, 'examples', file), '--layout-json', '--json']);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    assert.equal(result.stderr, '', type);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.ok, true, type);
+    assert.equal(report.diagram_type, type);
+    assert.equal(report.viewBox.length, 2, `${type} layout report should expose viewBox`);
+  }
+});
+
 test('cli: validate, deliver, and inspect keep argument failures machine-readable with --json', () => {
   const workflow = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
-  const sequence = path.join(skillRoot, 'examples/cache-miss-request.sequence.json');
   const architecture = path.join(skillRoot, 'examples/web-app.architecture.json');
   const cases = [
     {
@@ -4632,12 +4666,6 @@ test('cli: validate, deliver, and inspect keep argument failures machine-readabl
       command: 'validate',
       code: 'cli/missing-option-value',
       subject: { option: '--repo-root' },
-    },
-    {
-      args: ['validate', 'sequence', sequence, '--layout-json', '--json'],
-      command: 'validate',
-      code: 'cli/unsupported-option',
-      subject: { option: '--layout-json', type: 'sequence' },
     },
     {
       args: ['deliver', '--json', 'workflow', workflow, '--bogus'],

@@ -121,6 +121,8 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --glo
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
+선택형 PR 컴패니언 Skill(저장소 소스 설치 전용, 기본 설치는 계속 `archify`만): `archify`를 설치한 뒤 `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes`를 실행하면 PR 변경 워크스루를 추가할 수 있습니다. 문서, 잠금 파일, 포맷팅 같은 작은 변경에는 조용히 있고 실질적인 diff에만 다이어그램을 제안합니다. 에이전트 전역 규칙 파일에 `[archify pr: on-demand]`를 추가하면 제안을 완전히 끌 수 있습니다.
+
 <details>
 <summary>다른 설치 방법과 업데이트 확인 동작</summary>
 
