@@ -359,11 +359,14 @@ function readPathEdgeIdentity(node) {
     && (attr(node.parentNode, 'data-edge-from') !== undefined || attr(node.parentNode, 'data-edge-id') !== undefined)
     ? node.parentNode
     : null;
-  const from = attr(node, 'data-edge-from') ?? attr(node, 'data-composition-edge-from') ?? (parentGroup && attr(parentGroup, 'data-edge-from'));
-  const to = attr(node, 'data-edge-to') ?? attr(node, 'data-composition-edge-to') ?? (parentGroup && attr(parentGroup, 'data-edge-to'));
-  const explicitId = attr(node, 'data-edge-id') ?? attr(node, 'data-composition-edge-id') ?? (parentGroup && attr(parentGroup, 'data-edge-id'));
-  const edgeKey = attr(node, 'data-edge-key') ?? (parentGroup && attr(parentGroup, 'data-edge-key'));
-  if (!explicitId && from === undefined && to === undefined) return null;
+  // Paths outside an edge group (lifelines, node icons, legend swatches) carry no edge identity.
+  // `parentGroup && ...` yields null rather than undefined, so normalize before the identity check.
+  const fromParent = (name) => (parentGroup ? attr(parentGroup, name) : undefined);
+  const from = attr(node, 'data-edge-from') ?? attr(node, 'data-composition-edge-from') ?? fromParent('data-edge-from');
+  const to = attr(node, 'data-edge-to') ?? attr(node, 'data-composition-edge-to') ?? fromParent('data-edge-to');
+  const explicitId = attr(node, 'data-edge-id') ?? attr(node, 'data-composition-edge-id') ?? fromParent('data-edge-id');
+  const edgeKey = attr(node, 'data-edge-key') ?? fromParent('data-edge-key');
+  if (!explicitId && (from === undefined || to === undefined)) return null;
   return {
     canonicalId: explicitId || `${from}~${to}`,
     d,

@@ -847,3 +847,204 @@ test('createCompiledStoryTheme matches compileStorySvg/compileStoryStillSvg byte
     }
   }
 });
+
+test('a code detail keeps its step narration in frame and only recedes unrelated context', () => {
+  const dir = scratch();
+  multiViewFixtures(dir);
+  const seqHtml = path.join(dir, 'seq2.html');
+  const rendered = run(['render', 'sequence', path.join(dir, 'seq2.json'), seqHtml], dir);
+  assert.equal(rendered.status, 0, rendered.stderr);
+  const styles = loadViewerStyles();
+  const baked = bakeSvg(extractCanonicalSvg(fs.readFileSync(seqHtml, 'utf8')), { theme: 'light', preset: 'classic', styles });
+  const bakedViews = new Map([['seq', new Map([['light', baked]])]]);
+  const plan = normalizeChoreographySpec({
+    schema_version: 1,
+    views: [{ id: 'seq', type: 'sequence', input: 'seq2.json' }],
+    steps: [{
+      view: 'seq', duration: 6, title: 'Publish', body: 'The gateway enqueues the job.',
+      focus: { nodes: ['queue'], area: 'left' },
+      trace: { edges: ['m_pub'], travel: 1 },
+      detail: { nodes: ['queue'], title: 'enqueueJob()', path: 'gateway.mjs', lines: [1, 2, 3], highlight: [2] },
+    }],
+  }, { declaredViews: ['seq'], baseDir: dir });
+  const compiled = createCompiledStoryTheme({ plan, bakedViews, viewTypes: new Map([['seq', 'sequence']]), theme: 'light', preset: 'classic', styles });
+  const animated = compiled.renderAnimatedSvg().svg;
+  assert.ok(!animated.includes('data-story-edge-id="null~null"'), 'Lifelines and icons must not share a synthetic edge identity');
+
+  const css = animated.slice(animated.indexOf('<style>'), animated.indexOf('</style>'));
+  assert.ok(!css.includes('[data-node-id="gateway"]'), 'A trace endpoint outside detail.nodes stays visible');
+  assert.ok(!css.includes('[data-edge-id="m_pub"]'), 'The traced message stays visible under the code panel');
+  assert.ok(css.includes('[data-node-id="worker"]') && css.includes('[data-edge-id="m_run"]'), 'Unrelated context still recedes');
+
+  const still = compiled.renderStillSvg(4).svg;
+  const camera = /#camera-seq\{[^}]*transform:translate\(([-\d.]+)px,\s*([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(still)
+    || /id="camera-seq" style="transform:translate\(([-\d.]+)px,([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(still);
+  assert.ok(camera, 'still exposes the camera transform');
+  const [tx, scale] = [Number(camera[1]), Number(camera[3])];
+  const gatewayRect = /data-node-id="gateway"[\s\S]*?<rect[^>]*\bx="([\d.]+)"/.exec(baked);
+  const left = tx + Number(gatewayRect[1]) * scale;
+  assert.ok(left >= 18 && left < 506, `trace source stays left of the code panel: ${left}`);
+});
+
+test('opensView preserves reduced-motion overview framing and holds hop-0 camera before multi-hop follow', () => {
+  const dir = scratch();
+  multiViewFixtures(dir);
+  const wideChain = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Wide Chain', output: 'wide.html' },
+    components: [
+      { id: 'n1', type: 'frontend', label: 'Stage 1', pos: [40, 120], size: [180, 70] },
+      { id: 'n2', type: 'backend', label: 'Stage 2', pos: [320, 120], size: [180, 70] },
+      { id: 'n3', type: 'backend', label: 'Stage 3', pos: [600, 120], size: [180, 70] },
+      { id: 'n4', type: 'backend', label: 'Stage 4', pos: [880, 120], size: [180, 70] },
+      { id: 'n5', type: 'database', label: 'Stage 5', pos: [1160, 120], size: [180, 70] },
+    ],
+    connections: [
+      { id: 'e12', from: 'n1', to: 'n2', label: 'step 1' },
+      { id: 'e23', from: 'n2', to: 'n3', label: 'step 2' },
+      { id: 'e34', from: 'n3', to: 'n4', label: 'step 3' },
+      { id: 'e45', from: 'n4', to: 'n5', label: 'step 4' },
+    ],
+  };
+  fs.writeFileSync(path.join(dir, 'wide.json'), `${JSON.stringify(wideChain, null, 2)}\n`);
+  const archHtml = path.join(dir, 'arch1.html');
+  const wideHtml = path.join(dir, 'wide.html');
+  assert.equal(run(['render', 'architecture', path.join(dir, 'arch1.json'), archHtml], dir).status, 0);
+  assert.equal(run(['render', 'architecture', path.join(dir, 'wide.json'), wideHtml], dir).status, 0);
+
+  const styles = loadViewerStyles();
+  const bakedArch = bakeSvg(extractCanonicalSvg(fs.readFileSync(archHtml, 'utf8')), { theme: 'light', preset: 'classic', styles });
+  const bakedWide = bakeSvg(extractCanonicalSvg(fs.readFileSync(wideHtml, 'utf8')), { theme: 'light', preset: 'classic', styles });
+  const bakedViews = new Map([
+    ['arch', new Map([['light', bakedArch]])],
+    ['wide', new Map([['light', bakedWide]])],
+  ]);
+  const viewTypes = new Map([['arch', 'architecture'], ['wide', 'architecture']]);
+
+  const plan = normalizeChoreographySpec({
+    schema_version: 1,
+    views: [
+      { id: 'arch', type: 'architecture', input: 'arch1.json' },
+      { id: 'wide', type: 'architecture', input: 'wide.json' },
+    ],
+    steps: [
+      { view: 'arch', duration: 5, title: 'Intro', body: 'Overview.' },
+      {
+        view: 'wide', duration: 7, title: 'Walk chain', body: 'Follow wide chain next to code.',
+        focus: { nodes: ['n1', 'n2', 'n3', 'n4', 'n5'], area: 'left' },
+        trace: { edges: ['e12', 'e23', 'e34', 'e45'], travel: 0.9 },
+        detail: { nodes: ['n4', 'n5'], title: 'finish()', path: 'gateway.mjs', lines: [1, 2, 3], highlight: [2] },
+      },
+    ],
+  }, { declaredViews: ['arch', 'wide'], baseDir: dir });
+
+  const compiled = createCompiledStoryTheme({ plan, bakedViews, viewTypes, theme: 'light', preset: 'classic', styles });
+  const animated = compiled.renderAnimatedSvg().svg;
+
+  // 1. prefers-reduced-motion hides the code panel, so it must use the full overview camera (wider scale than 0.5 left-crop).
+  const rmBlock = /@media\(prefers-reduced-motion:reduce\)\{[\s\S]*?#camera-wide\{transform:translate\(([-\d.]+)px,\s*([-\d.]+)px\) scale\(([-\d.]+)\)!important\}/.exec(animated);
+  assert.ok(rmBlock, 'reduced-motion rule defines #camera-wide transform');
+  const rmScale = Number(rmBlock[3]);
+  assert.ok(rmScale > 0.55, `reduced-motion uses overview framing instead of 0.5 left-crop (got ${rmScale})`);
+
+  // 2. When wide opens at t=5 with multi-hop follow, camera must stay at hop-0 camera at t=0 and t=5 (no early drift).
+  const stillAt0 = compiled.renderStillSvg(0).svg;
+  const stillAtEnter = compiled.renderStillSvg(5).svg;
+  const parseCam = (svg) => {
+    const m = /#camera-wide\{[^}]*transform:translate\(([-\d.]+)px,\s*([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(svg)
+      || /id="camera-wide" style="transform:translate\(([-\d.]+)px,([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(svg);
+    assert.ok(m, 'still exposes #camera-wide transform');
+    return { x: Number(m[1]), y: Number(m[2]), scale: Number(m[3]) };
+  };
+  const cam0 = parseCam(stillAt0);
+  const camEnter = parseCam(stillAtEnter);
+  assert.equal(camEnter.x, cam0.x, `wide camera must hold hop-0 x until step entry (t=0: ${cam0.x}, t=5: ${camEnter.x})`);
+  assert.equal(camEnter.y, cam0.y, `wide camera must hold hop-0 y until step entry (t=0: ${cam0.y}, t=5: ${camEnter.y})`);
+  const camLate = parseCam(compiled.renderStillSvg(11).svg);
+  assert.ok(camLate.x < camEnter.x - 100, `multi-hop follow pans rightward along the wide chain (${camEnter.x} -> ${camLate.x})`);
+});
+
+test('camera framing respects timed focus ops, wide targets, detail backdrop, delayed entrance and single edge dim', () => {
+  const dir = scratch();
+  multiViewFixtures(dir);
+  const wideArch = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Wide Architecture', output: 'wide-arch.html' },
+    components: [
+      { id: 'api', type: 'frontend', label: 'API', pos: [60, 120], size: [160, 70] },
+      { id: 'mid', type: 'backend', label: 'Middle', pos: [1340, 120], size: [160, 70] },
+      { id: 'worker', type: 'backend', label: 'Worker', pos: [2620, 120], size: [160, 70] },
+    ],
+    connections: [
+      { id: 'e_am', from: 'api', to: 'mid', label: 'dispatch' },
+      { id: 'e_mw', from: 'mid', to: 'worker', label: 'finish' },
+    ],
+  };
+  fs.writeFileSync(path.join(dir, 'wide-arch.json'), `${JSON.stringify(wideArch, null, 2)}\n`);
+  const wideHtml = path.join(dir, 'wide-arch.html');
+  assert.equal(run(['render', 'architecture', path.join(dir, 'wide-arch.json'), wideHtml], dir).status, 0);
+  const styles = loadViewerStyles();
+  const baked = bakeSvg(extractCanonicalSvg(fs.readFileSync(wideHtml, 'utf8')), { theme: 'light', preset: 'classic', styles });
+  const bakedViews = new Map([['arch', new Map([['light', baked]])]]);
+  const viewTypes = new Map([['arch', 'architecture']]);
+  const parseCam = (svg) => {
+    const m = /#camera-arch\{[^}]*transform:translate\(([-\d.]+)px,\s*([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(svg)
+      || /id="camera-arch" style="transform:translate\(([-\d.]+)px,([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(svg);
+    assert.ok(m, 'still exposes #camera-arch transform');
+    return { x: Number(m[1]), y: Number(m[2]), scale: Number(m[3]) };
+  };
+
+  // 1. Separately timed top-level focus ops pan between targets; explicit at=0.1 holds overview at t=0.
+  const timedPlan = normalizeChoreographySpec({
+    schema_version: 1,
+    views: [{ id: 'arch', type: 'architecture', input: 'wide-arch.json' }],
+    stages: [{ view: 'arch', start: 0, end: 8 }],
+    steps: [{ view: 'arch', at: 0, duration: 8, title: 'Pan', body: 'API then worker.' }],
+    focus: [
+      { view: 'arch', nodes: ['api'], at: 0.1, area: 'center' },
+      { view: 'arch', nodes: ['worker'], at: 4.0, area: 'center' },
+    ],
+  }, { declaredViews: ['arch'], baseDir: dir });
+  const timed = createCompiledStoryTheme({ plan: timedPlan, bakedViews, viewTypes, theme: 'light', preset: 'classic', styles });
+  const camT0 = parseCam(timed.renderStillSvg(0).svg);
+  const camT25 = parseCam(timed.renderStillSvg(2.5).svg);
+  const camT6 = parseCam(timed.renderStillSvg(6).svg);
+  assert.ok(camT0.scale < 0.5, `explicit focus at=0.1 holds overview at t=0 (got scale=${camT0.scale})`);
+  assert.ok(camT25.scale > 1.0, `focus at=0.1 zooms onto API by t=2.5 (got scale=${camT25.scale})`);
+  assert.ok(Math.abs(camT6.x - camT25.x) > 500, `second focus at=4 pans from API to worker (${camT25.x} -> ${camT6.x})`);
+
+  // 2. Widely separated targets without a sequential trace fit both nodes even alongside a detail panel.
+  const widePlan = normalizeChoreographySpec({
+    schema_version: 1,
+    views: [{ id: 'arch', type: 'architecture', input: 'wide-arch.json' }],
+    steps: [{
+      view: 'arch', duration: 6, title: 'Both ends', body: 'Keep both endpoints visible beside code.',
+      focus: ['api', 'worker'],
+      detail: { nodes: ['api'], title: 'handle()', path: 'gateway.mjs', lines: [1, 2, 3], highlight: [2] },
+    }],
+  }, { declaredViews: ['arch'], baseDir: dir });
+  const wideCompiled = createCompiledStoryTheme({ plan: widePlan, bakedViews, viewTypes, theme: 'light', preset: 'classic', styles });
+  const camWide = parseCam(wideCompiled.renderStillSvg(3).svg);
+  assert.ok(camWide.x + 60 * camWide.scale >= 18, `left endpoint stays on-screen: ${camWide.x + 60 * camWide.scale}`);
+  assert.ok(camWide.x + (2620 + 160) * camWide.scale <= 506, `right endpoint stays clear of code backdrop: ${camWide.x + 2780 * camWide.scale}`);
+
+  // 3. Explicit focus.area="center" paired with a code detail keeps focused nodes clear of the x=506 code backdrop,
+  //    and unrelated edges are dimmed once via :not(...) instead of compounding on wrapper + nested path.
+  const centerDetailPlan = normalizeChoreographySpec({
+    schema_version: 1,
+    views: [{ id: 'arch', type: 'architecture', input: 'wide-arch.json' }],
+    steps: [{
+      view: 'arch', duration: 6, title: 'Detail', body: 'Focus API alongside code.',
+      focus: { nodes: ['api'], area: 'center' },
+      detail: { nodes: ['api'], title: 'handle()', path: 'gateway.mjs', lines: [1, 2, 3], highlight: [2] },
+    }],
+  }, { declaredViews: ['arch'], baseDir: dir });
+  const cdCompiled = createCompiledStoryTheme({ plan: centerDetailPlan, bakedViews, viewTypes, theme: 'light', preset: 'classic', styles });
+  const camCd = parseCam(cdCompiled.renderStillSvg(3).svg);
+  const apiRight = camCd.x + (60 + 160) * camCd.scale;
+  assert.ok(apiRight <= 506, `focused node stays clear of x=506 code backdrop: right=${apiRight}`);
+  const cdSvg = cdCompiled.renderAnimatedSvg().svg;
+  assert.ok(cdSvg.includes(':not([data-edge-id="e_mw"] *)'), 'edge dim selector excludes nested descendants to avoid double dimming');
+});

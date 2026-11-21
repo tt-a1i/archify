@@ -154,7 +154,7 @@ function normalizeStepBeat(step, index, viewId, t0, tEnd, buckets) {
   if (step.focus) {
     const nodes = Array.isArray(step.focus) ? step.focus : step.focus.nodes;
     const area = Array.isArray(step.focus) ? (step.detail ? 'left' : 'center') : (step.focus.area || (step.detail ? 'left' : 'center'));
-    buckets.focus.push({ view: viewId, nodes, at: roundTime(t0 + 0.15), area });
+    buckets.focus.push({ view: viewId, nodes, at: roundTime(t0 + 0.15), area, fromStep: true });
   }
   if (step.trace) {
     const travel = step.trace.travel ?? 1.4;

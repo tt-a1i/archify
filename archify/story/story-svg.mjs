@@ -18,8 +18,8 @@ export const CANVAS_HEIGHT = 560;
 export const CAPTION_BAND_BOTTOM = 104;
 const VIEWPORT = { x: 18, y: 112, width: 924, height: 432 };
 const PLOT = { x: 38, y: 124, w: 884, h: 400 };
-const LEFT_PLOT = { x: 40, y: 152, w: 422, h: 332 };
-const CENTER_FOCUS = { x: 200, y: 150, w: 560, h: 360 };
+const LEFT_PLOT = { x: 28, y: 140, w: 440, h: 370 };
+const DETAIL_CONTEXT_OPACITY = 0.16;
 const CODE_X = 530;
 const CODE_Y = 144;
 const CODE_DIVIDER_X = 506;
@@ -320,7 +320,11 @@ function buildDetailMarkup(detail, detailIndex, totalDetails, timeline, duration
   const panelId = totalDetails === 1 ? 'story-source-detail' : `story-source-detail-${detailIndex}`;
   const hlPrefix = totalDetails === 1 ? 'story-source-hl' : `story-source-hl-${detailIndex}`;
 
-  let content = `<line x1="${CODE_DIVIDER_X}" x2="${CODE_DIVIDER_X}" y1="125" y2="528" stroke="${palette.line}" stroke-width="1"/>`;
+  const backdropId = `${panelId}-backdrop`;
+  let content = `<defs><linearGradient id="${backdropId}" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="${palette.bg}" stop-opacity="0"/><stop offset="1" stop-color="${palette.bg}" stop-opacity="1"/></linearGradient></defs>`;
+  content += `<rect x="${CODE_DIVIDER_X - 34}" y="${VIEWPORT.y}" width="34" height="${VIEWPORT.height}" fill="url(#${backdropId})"/>`;
+  content += `<rect x="${CODE_DIVIDER_X}" y="${VIEWPORT.y}" width="${CANVAS_WIDTH - CODE_DIVIDER_X}" height="${VIEWPORT.height}" fill="${palette.bg}"/>`;
+  content += `<line x1="${CODE_DIVIDER_X}" x2="${CODE_DIVIDER_X}" y1="125" y2="528" stroke="${palette.line}" stroke-width="1"/>`;
   content += `<text x="${CODE_X}" y="${CODE_Y}" font-size="${fitFontSize(detail.title, CODE_WIDTH, 15, 11)}" fill="${palette.text}" font-weight="600">${escapeXml(detail.title)}</text>`;
   if (detail.note) {
     content += `<text x="${CODE_X}" y="${CODE_Y + 25}" font-size="${fitFontSize(detail.note, CODE_WIDTH, 11.5, 9)}" fill="${palette.muted}">${escapeXml(detail.note)}</text>`;
@@ -434,7 +438,9 @@ function attachStoryMetrics(plan, parts, timeline, duration, palette) {
     const part = parts[item.view];
     const node = part.nodes.find((n) => n.id === item.node);
     const x = node.x + node.width * (item.slot === 'left' ? 0.25 : item.slot === 'right' ? 0.75 : 0.5);
-    const y = node.y + node.height + 24;
+    // Sequence participants own the lifeline below their head, so their metric sits above the head instead.
+    const above = part.type === 'sequence';
+    const y = above ? node.y - 50 : node.y + node.height + 24;
     const prefix = `story-measure-${item.id || `${item.view}-${item.node}-${mi}`}`;
     const afterColor = item.tone === 'neutral' ? palette.text : palette.accent;
     const valueText = `${item.before} → ${item.after}`;
@@ -451,7 +457,9 @@ function attachStoryMetrics(plan, parts, timeline, duration, palette) {
     const metricHalfW = Math.max(textUnits(item.label) * 11, textUnits(valueText) * 20, textUnits(String(item.before)) * 20) / 2 + 10;
     const minX = Math.min(node.x, x - metricHalfW);
     const maxX = Math.max(node.x + node.width, x + metricHalfW);
-    const extraBox = { x: minX, y: node.y, width: maxX - minX, height: node.height + 64 };
+    const extraBox = above
+      ? { x: minX, y: y - 14, width: maxX - minX, height: node.y + node.height - (y - 14) }
+      : { x: minX, y: node.y, width: maxX - minX, height: node.height + 64 };
     part.contentBox = boundsOf([part.contentBox, extraBox]);
     part.extraBoxes.push({ id: item.node, ...extraBox });
   }
@@ -526,6 +534,97 @@ function applyStageOpacityTracks(plan, incomingTr, outgoingTr, timeline, duratio
   return stageOpacity;
 }
 
+// The step window (same view) that contains a beat starting at `at`.
+function stepWindowAt(plan, view, at) {
+  const step = plan.steps.find((s) => s.view === view && at >= s.at - 0.01 && at < s.tEnd);
+  return step ? { start: step.at, end: step.tEnd } : { start: at, end: at + 0.01 };
+}
+
+const inWindow = (t, win) => t >= win.start - 0.01 && t < win.end;
+
+// Bounding box of an absolute-coordinate edge path; null when the path uses commands we cannot bound cheaply.
+function pathBounds(d) {
+  if (!d || /[a-zHVAhva]/.test(d.replace(/e[-+]?\d/gi, ''))) return null;
+  const nums = (d.match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number);
+  if (nums.length < 4 || nums.length % 2) return null;
+  const xs = nums.filter((_, i) => i % 2 === 0);
+  const ys = nums.filter((_, i) => i % 2 === 1);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  return { x: minX, y: minY, width: Math.max(1, Math.max(...xs) - minX), height: Math.max(1, Math.max(...ys) - minY) };
+}
+
+// Visual box of a node for camera framing. Sequence participants own their lifeline below the head box.
+function nodeFrameBox(part, node) {
+  const box = { x: node.x, y: node.y - 12, width: node.width, height: node.height + 12 };
+  if (part.type === 'sequence' && part.contentBox) {
+    box.height = Math.max(box.height, part.contentBox.y + part.contentBox.height - box.y);
+  }
+  return box;
+}
+
+// Edges and nodes that a step actively narrates: focused nodes, detail nodes, traced edges and their endpoints.
+function stepNarration(plan, part, view, win, { includeFocus = true } = {}) {
+  const nodes = new Set();
+  const edges = new Set();
+  const edgeBoxes = [];
+  const hops = [];
+  if (includeFocus) {
+    for (const f of plan.focus) if (f.view === view && inWindow(f.at, win)) f.nodes.forEach((n) => nodes.add(n));
+  }
+  for (const d of plan.details) {
+    if (d.view === view && d.start < win.end && d.end > win.start) d.nodes.forEach((n) => nodes.add(n));
+  }
+  for (const trace of plan.traces) {
+    if (trace.view !== view || !inWindow(trace.times[0], win)) continue;
+    for (const [i, edgeId] of trace.edges.entries()) {
+      const route = part.paths.get(edgeId);
+      if (!route) continue;
+      edges.add(route.id);
+      if (route.from != null) nodes.add(route.from);
+      if (route.to != null) nodes.add(route.to);
+      const box = pathBounds(route.d);
+      if (box) edgeBoxes.push(box);
+      const ends = [route.from, route.to].map((id) => part.nodes.find((n) => n.id === id)).filter((n) => n && Number.isFinite(n.x));
+      const hopBoxes = [...(box ? [box] : []), ...ends.map((n) => ({ x: n.x, y: n.y, width: n.width, height: n.height }))];
+      if (hopBoxes.length) hops.push({ t: trace.times[i], travel: trace.travel ?? 1.4, box: boundsOf(hopBoxes) });
+    }
+  }
+  hops.sort((a, b) => a.t - b.t);
+  return { nodes, edges, edgeBoxes, hops };
+}
+
+// Below this scale native labels stop being readable at 960px; the camera crops instead of shrinking further.
+const MIN_FOCUS_SCALE = 0.5;
+const MAX_FOCUS_SCALE = 1.55;
+
+function focusCamera(selection, anchor, area) {
+  const pad = 14;
+  const fit = fitCamera(selection, area, MAX_FOCUS_SCALE);
+  if (fit.scale >= MIN_FOCUS_SCALE) return fit;
+  const scale = MIN_FOCUS_SCALE;
+  // Only crop at the readable-scale floor when the anchor itself fits in the viewport;
+  // otherwise cropping around the midpoint can push every authored target off-screen.
+  if (anchor.width + pad * 2 > area.w / scale || anchor.height + pad * 2 > area.h / scale) {
+    return fit;
+  }
+  const axis = (start, size, anchorStart, anchorSize, areaSize) => {
+    const visible = areaSize / scale;
+    const lo = start - pad + visible / 2;
+    const hi = start + size + pad - visible / 2;
+    const wanted = anchorStart + anchorSize / 2;
+    return lo > hi ? start + size / 2 : Math.min(hi, Math.max(lo, wanted));
+  };
+  const cx = axis(selection.x, selection.width, anchor.x, anchor.width, area.w);
+  const cy = axis(selection.y, selection.height, anchor.y, anchor.height, area.h);
+  return { scale, x: area.x + area.w / 2 - cx * scale, y: area.y + area.h / 2 - cy * scale };
+}
+
+function viewEntranceAt(plan, view) {
+  const stage = plan.stages.find((s) => s.view === view);
+  return stage?.windows?.[0]?.start ?? stage?.start ?? 0;
+}
+
 function applyFocusCameraTracks(plan, parts, cameras, timeline, duration) {
   const cameraMoves = Object.fromEntries(plan.stages.map((s) => [s.view, [{ t: 0, camera: cameras[s.view] }]]));
   const autoDetailFocus = plan.details
@@ -538,21 +637,78 @@ function applyFocusCameraTracks(plan, parts, cameras, timeline, duration) {
 
   for (const op of focusOps) {
     const part = parts[op.view];
-    const selected = [];
-    for (const nodeId of op.nodes) {
+    const win = stepWindowAt(plan, op.view, op.at);
+    // Keep separately timed focus operations within the same step independent of each other.
+    const stepOps = focusOps.filter((other) => other.view === op.view && inWindow(other.at, win));
+    const opIndex = stepOps.indexOf(op);
+    const opWin = stepOps.length > 1
+      ? {
+          start: opIndex === 0 ? win.start : op.at,
+          end: opIndex < stepOps.length - 1 ? stepOps[opIndex + 1].at : win.end,
+        }
+      : win;
+    const narration = stepNarration(plan, part, op.view, opWin, { includeFocus: false });
+    const selected = [...narration.edgeBoxes];
+    const frameNode = (nodeId) => {
       const node = part.nodes.find((n) => n.id === nodeId);
-      selected.push({ x: node.x, y: node.y - 12, width: node.width, height: node.height + 12 });
+      if (!node || !Number.isFinite(node.x)) return;
+      selected.push(nodeFrameBox(part, node));
       for (const extra of part.extraBoxes.filter((b) => b.id === nodeId)) selected.push(extra);
+    };
+    op.nodes.forEach(frameNode);
+    // Trace endpoints and active detail nodes of this beat stay in frame, not other timed focus ops.
+    narration.nodes.forEach(frameNode);
+    const selection = boundsOf(selected);
+    const activeDetails = plan.details.filter((d) => d.view === op.view && d.start < opWin.end && d.end > opWin.start);
+    const detailNodes = activeDetails.flatMap((d) => d.nodes);
+    const anchorBoxes = detailNodes.map((id) => part.nodes.find((n) => n.id === id)).filter(Boolean).map((n) => nodeFrameBox(part, n));
+    const anchor = anchorBoxes.length ? boundsOf(anchorBoxes) : selection;
+    // When a code panel is active during this beat, frame inside LEFT_PLOT so the opaque code
+    // backdrop never covers focused nodes or labels (even if focus.area was explicitly "center").
+    const area = (op.area === 'left' || activeDetails.length > 0) ? LEFT_PLOT : PLOT;
+    // When the selection cannot fit at a readable scale AND a sequential trace walks it hop by hop,
+    // crop at MIN_FOCUS_SCALE to follow the trace and settle on the anchor. Without a sequential
+    // trace, cropping would permanently hide explicit focus targets, so fit the entire selection.
+    const fitSelection = fitCamera(selection, area, MAX_FOCUS_SCALE);
+    const cropped = fitSelection.scale < MIN_FOCUS_SCALE;
+    const sequential = narration.hops.length > 1 && narration.hops.every((h, i) => i === 0 || h.t - narration.hops[i - 1].t >= 0.5);
+    let nextCamera = sequential ? focusCamera(selection, anchor, area) : fitSelection;
+    if (area !== LEFT_PLOT) {
+      // Focusing nearly the whole view would only crop its edges; keep the overview framing instead.
+      const overview = fitCamera(part.contentBox, PLOT, 1.5);
+      const spansView = selection.width >= part.contentBox.width * 0.75 || selection.height >= part.contentBox.height * 0.75;
+      if (spansView && nextCamera.scale <= overview.scale * 1.15) nextCamera = overview;
     }
-    const targetArea = op.area === 'left' ? LEFT_PLOT : CENTER_FOCUS;
-    const nextCamera = fitCamera(boundsOf(selected), targetArea, 1.55);
+    const follow = cropped && sequential
+      ? narration.hops.filter((h) => h.t < opWin.end).map((h) => ({ t: h.t, camera: focusCamera(selection, h.box, area), travel: h.travel }))
+      : [];
+    const firstCamera = follow.length ? follow[0].camera : nextCamera;
     const prevCamera = cameraMoves[op.view].at(-1).camera;
     const panEnd = Math.min(duration, op.at + 1.45);
-    if (op.at === 0 && cameraMoves[op.view].length === 1) {
-      cameraMoves[op.view][0] = { t: 0, camera: nextCamera };
-      cameras[op.view] = nextCamera;
+    // A view's entrance focus frames it directly instead of panning while fading in;
+    // explicit top-level focus times after entrance keep their scheduled pan from the overview.
+    const entranceAt = viewEntranceAt(plan, op.view);
+    const opensView = cameraMoves[op.view].length === 1
+      && (op.at <= entranceAt || ((op.fromStep || op.kind === 'detail') && op.at <= entranceAt + 0.2));
+    const moves = cameraMoves[op.view];
+    if (opensView) {
+      moves[0] = { t: 0, camera: firstCamera };
+      cameras[op.view] = firstCamera;
     } else {
-      cameraMoves[op.view].push({ t: op.at, camera: prevCamera }, { t: panEnd, camera: nextCamera });
+      moves.push({ t: op.at, camera: prevCamera }, { t: panEnd, camera: firstCamera });
+    }
+    if (follow.length) {
+      const settleBy = Math.min(duration, opWin.end - 0.2);
+      if (opensView) {
+        const holdAt = Math.min(settleBy, follow[0].t);
+        if (holdAt > moves.at(-1).t + 0.25) moves.push({ t: holdAt, camera: firstCamera });
+      }
+      for (const hop of follow.slice(1)) {
+        const t = Math.min(settleBy, hop.t + hop.travel * 0.6);
+        if (t > moves.at(-1).t + 0.25) moves.push({ t, camera: hop.camera });
+      }
+      const settleAt = Math.min(settleBy, moves.at(-1).t + 1.1);
+      if (settleAt > moves.at(-1).t + 0.25) moves.push({ t: settleAt, camera: nextCamera });
     }
   }
   for (const [viewId, points] of Object.entries(cameraMoves)) {
@@ -777,14 +933,18 @@ function buildDetailOverlays(plan, parts, hiddenByView, timeline, duration, pale
   let detailMarkup = '';
   for (const [di, detail] of plan.details.entries()) {
     const part = parts[detail.view];
-    const focused = new Set(detail.nodes);
+    // Keep everything the step narrates (focus, detail, traced edges and their endpoints) and only
+    // recede the remaining context, so a code panel never hides the path its own trace is walking.
+    const narration = stepNarration(plan, part, detail.view, stepWindowAt(plan, detail.view, detail.start));
+    const focused = narration.nodes;
     const hidden = hiddenByView.get(detail.view) || new Set();
     const fadeOutAt = Math.min(duration, detail.start + 0.95);
     const fadeBackAt = detail.end < duration ? detail.end : null;
+    const dim = `opacity:${DETAIL_CONTEXT_OPACITY}`;
     const addDetailFade = (selector) => {
-      const pts = [{ t: 0, styleText: 'opacity:1' }, { t: detail.start, styleText: 'opacity:1' }, { t: fadeOutAt, styleText: 'opacity:0' }];
-      if (fadeBackAt !== null) pts.push({ t: fadeBackAt, styleText: 'opacity:0' }, { t: Math.min(duration, fadeBackAt + 0.6), styleText: 'opacity:1' }, { t: duration, styleText: 'opacity:1' });
-      else pts.push({ t: duration, styleText: 'opacity:0' });
+      const pts = [{ t: 0, styleText: 'opacity:1' }, { t: detail.start, styleText: 'opacity:1' }, { t: fadeOutAt, styleText: dim }];
+      if (fadeBackAt !== null) pts.push({ t: fadeBackAt, styleText: dim }, { t: Math.min(duration, fadeBackAt + 0.6), styleText: 'opacity:1' }, { t: duration, styleText: 'opacity:1' });
+      else pts.push({ t: duration, styleText: dim });
       timeline.add(selector, 'opacity', pts);
     };
     for (const node of part.nodes) {
@@ -795,9 +955,16 @@ function buildDetailOverlays(plan, parts, hiddenByView, timeline, duration, pale
     for (const route of part.paths.values()) {
       if (seenEdgeIds.has(route.id)) continue;
       seenEdgeIds.add(route.id);
+      if (narration.edges.has(route.id)) continue;
       if (focused.has(route.from) && focused.has(route.to)) continue;
       const ek = escapeCssAttr(route.id);
-      addDetailFade(`#view-${detail.view} [data-story-edge-wrap="${ek}"], #view-${detail.view} [data-edge-id="${ek}"], #view-${detail.view} [data-story-edge-id="${ek}"]`);
+      // Exclude nested descendants carrying the same edge attributes so opacity dims each edge once.
+      const notNestedEdge = `:not([data-story-edge-wrap="${ek}"] *):not([data-edge-id="${ek}"] *):not([data-story-edge-id="${ek}"] *)`;
+      addDetailFade(
+        `#view-${detail.view} [data-story-edge-wrap="${ek}"]${notNestedEdge}, `
+        + `#view-${detail.view} [data-edge-id="${ek}"]${notNestedEdge}, `
+        + `#view-${detail.view} [data-story-edge-id="${ek}"]${notNestedEdge}`,
+      );
     }
     addDetailFade(`#view-${detail.view} text.t-dim, #view-${detail.view} [data-graph-role="structural-frame"], #view-${detail.view} [data-domain-band]`);
     detailMarkup += buildDetailMarkup(detail, di, plan.details.length, timeline, duration, palette);
@@ -991,6 +1158,7 @@ export function createCompiledStoryTheme({
 
   attachStoryMetrics(plan, parts, timeline, duration, palette);
   const cameras = computeInitialCameras(plan, parts);
+  const overviewCameras = { ...cameras };
   const incomingTr = new Map(plan.transitions.map((tr) => [tr.to, tr]));
   const outgoingTr = new Map(plan.transitions.map((tr) => [tr.from, tr]));
   const stageOpacity = applyStageOpacityTracks(plan, incomingTr, outgoingTr, timeline, duration);
@@ -1024,7 +1192,7 @@ export function createCompiledStoryTheme({
     renderAnimatedSvg() {
       if (!cachedAnimatedCss) {
         cachedAnimatedCss = timeline.emitCss();
-        if (reducedMotionFallback) cachedAnimatedCss.push(buildReducedMotionRule(plan, cameras));
+        if (reducedMotionFallback) cachedAnimatedCss.push(buildReducedMotionRule(plan, overviewCameras));
       }
       return assembleStorySvgMarkup({ ...baseMarkup, timelineCss: cachedAnimatedCss, stillAt: null });
     },
