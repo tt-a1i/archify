@@ -27,6 +27,9 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.equal(ci.jobs.test.name, undefined);
   assert.equal(ci.jobs.test.needs, 'scope', 'short compatibility checks must not wait for complete regression');
   const canonical = ci.jobs['canonical-test'];
+  for (const id of ['canonical-test', 'webm-decode', 'webm-artifact', 'zip-freshness', 'published-update-manifest']) {
+    assert.equal(ci.jobs[id].strategy, undefined, `${id} must keep a single stable check name`);
+  }
   assert.equal(canonical.name, 'test (22)');
   assert.deepEqual(canonical.needs, ['scope', 'full-regression']);
   assert.ok(canonical.steps.some(step => step.with?.['node-version'] === 22));

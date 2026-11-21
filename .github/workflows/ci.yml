@@ -153,10 +153,6 @@ jobs:
     needs: [scope, full-regression]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [pages, cloudflare]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
@@ -250,10 +246,6 @@ jobs:
     needs: scope
     if: always() && !cancelled()
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [pages, cloudflare]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
@@ -321,10 +313,6 @@ jobs:
     needs: [scope, browser-regression, webm-decode]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [pages, cloudflare]
     steps:
       - name: Require every browser and WebM gate to succeed
         env:
@@ -343,10 +331,6 @@ jobs:
     needs: scope
     if: always() && !cancelled()
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [pages, cloudflare]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
@@ -376,10 +360,6 @@ jobs:
     needs: scope
     if: always() && !cancelled()
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [pages, cloudflare]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
