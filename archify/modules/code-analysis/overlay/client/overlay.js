@@ -434,13 +434,24 @@
     return (compact ? '' : nextStepHtml(f)) + '<div class="finding ' + esc(f.severity) + '">' + ev + ("<details class=\"technical\">" + "<summary>" + tr("Rule details and alternatives") + "</summary>" + "<b>") + esc(f.code) + '</b> · ' + esc(tr(f.severity)) + (f.id ? ' · ' + esc(f.id) : '') + '<p>' + esc(f.message) + '</p>' + fixes + '</details></div>';
   }
   // Source excerpt for one file:line, from the windows embedded at overlay time.
-  function showCode(file, line, why, tone, full, rangeStart, rangeEnd, match, snapshot) {
+  function showCode(file, line, why, tone, full, rangeStart, rangeEnd, match, snapshot, sourcePair, returnFocus) {
     readerPage(tr("Source"));
-    var snip = snapshot === 'base' ? (data.pullRequest.beforeSources || {})[file] : (data.snippets || {})[file];
+    function captured(sources, sourceFile) {
+      return sourceFile && Object.hasOwn(sources || {}, sourceFile) ? sources[sourceFile] : null;
+    }
+    var pr = data.pullRequest;
+    var before = pr && (sourcePair ? sourcePair.base : file), after = sourcePair ? sourcePair.head : file;
+    var snip = snapshot === 'base' ? captured(pr && pr.beforeSources, file) : captured(data.snippets, file);
     line = Number.isInteger(line) && line > 0 ? line : null;
-    var sourceParent = detail.hidden ? tr("Component") : tr("Problem");
+    var sourceParent = sourcePair ? tr("Files") : detail.hidden ? tr("Component") : tr("Problem");
     var h = ("<div class=\"grip\">" + "<button class=\"close\" aria-label=\"" + tr("Close") + "\">" + "×" + "</button>" + "<button type=\"button\" class=\"source-back back\">" + "← ") + sourceParent + ("</button>" + "<div class=\"k\">" + tr("Source · ")) + (line ? tr("line ") + line : (full ? tr("full file") : tr("file preview")) + tr(" · no specific finding line")) + '</div><h3>' + esc(file) + '</h3></div>';
-    if (data.pullRequest) h += '<div class="pr-source-sides"><button type="button" data-pr-side="base"' + (!data.pullRequest.beforeSources[file] ? ' disabled' : '') + '>' + esc(tr('Merge-base')) + ' ' + esc(data.pullRequest.baseSHA.slice(0,8)) + '</button><button type="button" data-pr-side="head"' + (!data.snippets[file] ? ' disabled' : '') + '>' + esc(tr('PR head')) + ' ' + esc(data.pullRequest.headSHA.slice(0,8)) + '</button><span>' + esc(tr(snapshot === 'base' ? 'Showing merge-base source' : 'Showing PR head source')) + '</span></div>';
+    if (pr) h += '<div class="pr-source-sides">' +
+      '<button type="button" data-pr-side="base" aria-pressed="' + (snapshot === 'base') + '"' +
+      (!captured(pr.beforeSources, before) ? ' disabled' : '') + '>' + esc(tr('Merge-base')) + ' ' + esc(pr.baseSHA.slice(0, 8)) + '</button>' +
+      '<button type="button" data-pr-side="head" aria-pressed="' + (snapshot !== 'base') + '"' +
+      (!captured(data.snippets, after) ? ' disabled' : '') + '>' + esc(tr('PR head')) + ' ' + esc(pr.headSHA.slice(0, 8)) + '</button>' +
+      '<span>' + esc(tr(snapshot === 'base' ? 'Showing merge-base source' : 'Showing PR head source')) + '</span>' +
+      (sourcePair ? '<code class="pr-source-pin">' + esc(snapshot === 'base' ? pr.baseSHA : pr.headSHA) + '</code>' : '') + '</div>';
     if (why) h += '<div class="why">' + esc(why) + '</div>';
     if (!snip) {
       h += ("<div class=\"why\" style=\"margin-top:10px\">" + tr("Source is unavailable in this report. Re-analyze with the local service, or read this file in your editor.") + "</div>");
@@ -476,12 +487,33 @@
     codePane.innerHTML = h;
     codePane.hidden = false;
     document.documentElement.setAttribute('data-bauify-source', 'on');
-    if (data.pullRequest) codePane.querySelectorAll('[data-pr-side]').forEach(function(button) { button.addEventListener('click', function() { showCode(file, null, why, tone, full, null, null, null, button.getAttribute('data-pr-side')); }); });
+    if (pr) codePane.querySelectorAll('[data-pr-side]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var target = button.dataset.prSide;
+        showCode(target === 'base' ? before : after, null, why, tone, full, null, null, null, target, sourcePair, returnFocus);
+        if (sourcePair) codePane.querySelector('[data-pr-side="' + target + '"]').focus();
+      });
+    });
     var sourceToggle = codePane.querySelector('.source-toggle');
-    if (sourceToggle) sourceToggle.addEventListener('click', function () { showCode(file, line, why, tone, !full, rangeStart, rangeEnd, match, snapshot); });
-    var backToSourceParent = function () { codePane.hidden = true; document.documentElement.removeAttribute('data-bauify-source'); readerPage(sourceParent); var active = detail.querySelector('.ref.active'); if (active) active.focus({ preventScroll: true }); detail.querySelectorAll('.ref.active').forEach(function (x) { x.classList.remove('active'); }); };
+    if (sourceToggle) sourceToggle.addEventListener('click', function () { showCode(file, line, why, tone, !full, rangeStart, rangeEnd, match, snapshot, sourcePair, returnFocus); });
+    var backToSourceParent = function () {
+      codePane.hidden = true;
+      document.documentElement.removeAttribute('data-bauify-source');
+      readerPage(sourceParent);
+      var active = detail.querySelector('.ref.active');
+      if (active) active.focus({ preventScroll: true });
+      detail.querySelectorAll('.ref.active').forEach(function (x) { x.classList.remove('active'); });
+      returnFocus?.();
+    };
     codePane.querySelector('.close').addEventListener('click', backToSourceParent);
     codePane.querySelector('.source-back').addEventListener('click', backToSourceParent);
+    codePane.onkeydown = sourcePair ? function (event) {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      backToSourceParent();
+    } : null;
+    if (sourcePair) codePane.querySelector('.source-back').focus();
     var hit = codePane.querySelector('.ln.hit');
     if (hit) codePane.scrollTop = Math.max(0, hit.offsetTop - codePane.offsetTop - codePane.clientHeight / 2);
   }
@@ -1371,7 +1403,10 @@
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.
-  window.__archifyShowSource = function(file, line, snapshot) { setOn(true); showCode(file, line, tr('Captured PR source; inspect changes against the merge-base.'), 'info', false, null, null, null, snapshot); };
+  window.__archifyShowSource = function (file, line, snapshot, sourcePair, returnFocus) {
+    setOn(true);
+    showCode(file, line, tr('Captured PR source; inspect changes against the merge-base.'), 'info', false, null, null, null, snapshot, sourcePair, returnFocus);
+  };
   window.__archifyShowFinding = function (id, parent) {
     if (!findingById[id]) return;
     if (root.getAttribute('data-bauify') !== 'on') setOn(true);
