@@ -70,6 +70,11 @@ html:not([data-analysis-mode="standalone"]) #bauify-atlas { position: relative; 
 #bauify-atlas .atlas-file-query { width: 100%; box-sizing: border-box; margin: 0 0 8px; padding: 6px 8px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
 #bauify-atlas .atlas-file-list button { display: block; width: 100%; margin: 0 0 4px; padding: 4px 6px; border: 0; background: transparent; color: inherit; text-align: left; }
 #bauify-atlas .atlas-file-list button[aria-current="true"] { background: color-mix(in srgb, var(--text, #f8fafc) 8%, transparent); }
+#bauify-atlas .atlas-file-scope { margin: 0 0 8px; max-width: 100%; padding: 6px 8px; border: 1px solid var(--panel-border); border-radius: 6px; background: var(--panel); color: var(--text); font: inherit; }
+#bauify-atlas .atlas-file-list .atlas-change-file { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; overflow-wrap: anywhere; }
+#bauify-atlas .atlas-change-file small { color: var(--text-muted, #94a3b8); }
+#bauify-atlas .atlas-change-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#bauify-atlas.atlas-pr .atlas-stats { display: none; }
 #bauify-atlas .atlas-file-markdown { display: block; width: 100%; min-height: 7em; box-sizing: border-box; margin: 8px 0; }
 #bauify-atlas .atlas-side-content > .pr-summary > .k:first-child { margin-top: 2px; }
 #bauify-atlas .pr-summary { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--panel-border,#1e293b); }

@@ -35,12 +35,18 @@ function extractArchive(destination) {
   const archive = path.join(repoRoot, 'archify.zip');
   const result = process.platform === 'win32'
     ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      'Expand-Archive -LiteralPath $env:ARCHIFY_TEST_ARCHIVE -DestinationPath $env:ARCHIFY_TEST_EXTRACT'], {
+      "$ErrorActionPreference = 'Stop'; Expand-Archive -LiteralPath $env:ARCHIFY_TEST_ARCHIVE -DestinationPath $env:ARCHIFY_TEST_EXTRACT"], {
       encoding: 'utf8',
       env: { ...process.env, ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination },
     })
     : spawnSync('unzip', ['-q', archive, '-d', destination], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.error?.message || result.stderr);
+  // Expand-Archive deletes what it expanded when it stops early; report what it said.
+  const entries = fs.existsSync(destination) ? fs.readdirSync(destination, { recursive: true }) : [];
+  assert.ok(fs.existsSync(path.join(destination, 'archify', 'SKILL.md')),
+    `archive did not expand (${entries.length} entries): ${entries.slice(0, 5).join(', ')}
+${result.stdout}
+${result.stderr}`);
 }
 
 test('distributed ZIP carries the same valid Skill frontmatter as source', (t) => {

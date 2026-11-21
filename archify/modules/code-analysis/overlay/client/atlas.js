@@ -11,6 +11,8 @@
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
   var prFiles = pr ? new Map(F.map(function(f,i){return[f[0],i];})) : null, prFunctions = pr ? new Map() : null;
   var prMarkerHits = [], prModuleChanges = pr ? new Map((pr.moduleChanges || []).map(function(m){return[m.id,m];})) : null;
+  var changedFiles = pr ? (pr.changedFiles || []) : [];
+  var changedSelection = null;
   if (pr) FN.forEach(function(fn,i){prFunctions.set(JSON.stringify([F[fn[0]][0],fn[1]]),i);});
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
@@ -51,11 +53,12 @@
   // Below a diagram the Atlas is a page of its own: the map fills one card, the
   // controls float on it, and the side panel slides in only when something is
   // selected. The standalone analysis keeps the side panel beside the map.
+  if (pr) panel.classList.add('atlas-pr');
   var PAGE = !standalone;
   var statsHtml = '<div class="stats">' + [[F.length, tr('files')], [E.length, tr('file dependencies')], [FN.length, tr('functions')], [M.length, tr('modules')]].map(function (stat) { return '<div class="stat"><b>' + fmt(stat[0]) + '</b><span>' + stat[1] + '</span></div>'; }).join('') + '</div>';
   var tabsHtml = '<div class="atlas-tabs" role="tablist" aria-label="' + esc(tr('Atlas view')) + '"><button type="button" class="atlas-tab" id="atlas-tab-map" role="tab" aria-selected="true" tabindex="0" aria-controls="atlas-map-panel" data-analysis-tip="' + esc(tr('Relationships and findings')) + '">' + esc(tr('Map')) + '</button><button type="button" class="atlas-tab" id="atlas-tab-files" role="tab" aria-selected="false" tabindex="-1" aria-controls="atlas-files-panel" data-analysis-tip="' + esc(tr('Search captured files')) + '">' + esc(tr('Files')) + '</button></div>';
   if (PAGE) {
-    panel.className = 'atlas-page';
+    panel.classList.add('atlas-page');
     panel.innerHTML = '<div class="atlas-body"><div class="atlas-stage" id="atlas-map-panel" role="tabpanel" aria-labelledby="atlas-tab-map"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div>' +
       '<nav class="atlas-files-pane" id="atlas-files-panel" role="tabpanel" aria-labelledby="atlas-tab-files" hidden><input class="atlas-file-query" type="search" aria-label="' + esc(tr('Find a captured file')) + '"><div class="atlas-file-list"></div></nav>' +
       '<div class="atlas-float atlas-tl"><div class="atlas-search"><input class="atlas-q" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="atlas-sug" aria-autocomplete="list" placeholder="' + esc(tr('Search modules, files or functions')) + '" aria-label="' + esc(tr('Search modules, files or functions')) + '"><kbd aria-hidden="true">/</kbd><div class="atlas-sug" id="atlas-sug" role="listbox" hidden></div></div>' + tabsHtml + '</div>' +
@@ -100,8 +103,40 @@
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
   var scroller = PAGE ? side.querySelector('.atlas-fly-body') : side, homeOpen = false, wantHome = false;
   var filePane = panel.querySelector('.atlas-files-pane'), fileQuery = panel.querySelector('.atlas-file-query'), fileList = panel.querySelector('.atlas-file-list');
+  var fileScope = null;
+  if (pr && changedFiles.length) {
+    fileScope = document.createElement('select');
+    fileScope.className = 'atlas-file-scope';
+    fileScope.setAttribute('aria-label', tr('File scope'));
+    fileScope.add(new Option(tr('Changed files · {count}', { count: changedFiles.length }), 'changed'));
+    fileScope.add(new Option(tr('All captured files'), 'all'));
+    fileScope.addEventListener('change', renderFiles);
+    fileQuery.before(fileScope);
+  }
+  function changedPath(change, side) {
+    if (side === 'base') return change.previousPath || (change.status === 'added' ? null : change.path);
+    return change.status === 'removed' ? null : change.path;
+  }
+  function changedSource(change, side) {
+    var file = changedPath(change, side);
+    var sources = side === 'base' ? pr.beforeSources : analysis.snippets;
+    return file && Object.hasOwn(sources || {}, file) ? { file: file, source: sources[file] } : null;
+  }
+  function changedLabel(change) {
+    return change.previousPath && change.previousPath !== change.path ? change.previousPath + ' → ' + change.path : change.path;
+  }
   function renderFiles() {
     var wanted = fileQuery.value.trim().toLowerCase();
+    if (fileScope && fileScope.value === 'changed') {
+      fileList.innerHTML = changedFiles.map(function (change, index) {
+        var label = changedLabel(change);
+        if (wanted && label.toLowerCase().indexOf(wanted) < 0) return '';
+        return '<button type="button" class="atlas-change-file" data-changed-file="' + index + '"' +
+          (index === changedSelection ? ' aria-current="true"' : '') + '><span>' + esc(label) +
+          '</span><small>' + esc(tr(change.status)) + '</small></button>';
+      }).join('') || '<p role="status">' + esc(tr('No changed files match.')) + '</p>';
+      return;
+    }
     fileList.innerHTML = F.map(function (file, index) {
       if (wanted && file[0].toLowerCase().indexOf(wanted) < 0) return '';
       return '<button type="button" data-file="' + index + '"' + (index === state.file ? ' aria-current="true"' : '') + '>' + esc(file[0]) + '</button>';
@@ -135,6 +170,14 @@
   });
   fileQuery.addEventListener('input', renderFiles);
   fileList.addEventListener('click', function (event) {
+    var changed = event.target.closest('button[data-changed-file]');
+    if (changed) {
+      var selected = Number(changed.dataset.changedFile);
+      var head = prFiles.get(changedFiles[selected].path);
+      select(head == null ? -1 : F[head][1], -1, undefined, head, selected);
+      fileList.querySelector('[data-changed-file="' + selected + '"]').focus({ preventScroll: true });
+      return;
+    }
     var button = event.target.closest('button[data-file]');
     if (!button) return;
     var index = Number(button.dataset.file);
@@ -573,12 +616,13 @@
     var owner = modules.length && modules.every(function (mi) { return mi === modules[0]; }) ? modules[0] : -1;
     select(owner, index);
   }
-  function select(module, finding, saved, file) {
+  function select(module, finding, saved, file, changeIndex) {
     updateGeometry(performance.now(), motion.matches);
     var view = saved ? saved.view : sideView();
     if (saved) focusZoom = saved.zoom;
     else if (module !== state.focusModule) focusZoom = 1;
     state.file = Number.isInteger(file) && file >= 0 && file < F.length ? file : -1;
+    changedSelection = Number.isInteger(changeIndex) && changedFiles[changeIndex] ? changeIndex : null;
     if (state.file !== -1) { module = F[state.file][1]; finding = -1; }
     state.focusModule = module; state.finding = finding;
     state.hover = null; tip.hidden = true;
@@ -586,7 +630,7 @@
     homeOpen = wantHome && module === -1 && finding === -1 && state.file === -1; wantHome = false;
     root.setAttribute('data-bauify-atlas-focus', module === -1 ? '' : M[module].id);
     root.setAttribute('data-bauify-atlas-finding', finding === -1 ? '' : FD[finding].id);
-    panel.querySelector('.atlas-clear').disabled = module === -1 && finding === -1;
+    panel.querySelector('.atlas-clear').disabled = module === -1 && finding === -1 && changedSelection === null;
     if (!filePane.hidden) renderFiles();
     renderSide(view, !saved); if (!stage.hidden) draw('fade');
   }
@@ -619,6 +663,15 @@
       return what;
   }
   function selectedCard() {
+    if (changedSelection !== null) {
+      var change = changedFiles[changedSelection];
+      return '<div class="selected"><h4>' + esc(changedLabel(change)) + '</h4><p>' + esc(tr(change.status)) +
+        '</p><div class="atlas-change-actions">' + ['base', 'head'].map(function (snapshot) {
+          var label = tr(snapshot === 'base' ? 'Open merge-base source' : 'Open PR head source');
+          return '<button type="button" data-atlas-change-source="' + snapshot + '"' +
+            (changedSource(change, snapshot) ? '' : ' disabled') + '>' + esc(label) + '</button>';
+        }).join('') + '<button type="button" class="atlas-change-download">' + esc(tr('Download .md')) + '</button></div></div>';
+    }
     var f = FD[state.finding];
     if (f) {
       var what = findingWhat(f);
@@ -641,16 +694,6 @@
     }
     return '<div class="note">' + tr("Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.") + '</div>';
   }
-  side.addEventListener('click', function (event) {
-    if (!event.target.classList.contains('atlas-file-download') || state.file === -1) return;
-    var markdown = fileMarkdown(state.file);
-    var blob = new Blob([markdown], { type: 'text/markdown' });
-    var link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = F[state.file][0].split('/').pop().replace(/\.[^.]+$/, '') + '.md';
-    link.click();
-    URL.revokeObjectURL(link.href);
-  });
   function prSummary() {
     var h = '<section class="pr-summary"><div class="k">' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', {number:pr.number})) + '</div>';
     h += '<p class="note"><code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code> · ' + esc(pr.scope) + '</p><dl class="pr-totals">';
@@ -712,6 +755,59 @@
     var loc=change.after&&typeof change.after==='object'?change.after:change.before&&typeof change.before==='object'?change.before:null;
     var diff=analysis.snippets[path]&&analysis.snippets[path].changes,line=loc&&loc.line||(change.status==='removed'?null:diff&&(diff.modified[0]||diff.added[0]))||null;
     if(window.__archifyShowSource)window.__archifyShowSource(path,line,change.status==='removed'?'base':'head');
+  }
+  side.addEventListener('click', function (event) {
+    var action = event.target.closest('[data-atlas-change-source], .atlas-change-download');
+    if (action && changedSelection !== null) {
+      var change = changedFiles[changedSelection];
+      var pair = { base: changedPath(change, 'base'), head: changedPath(change, 'head') };
+      var snapshot = action.dataset.atlasChangeSource;
+      if (snapshot) {
+        var captured = changedSource(change, snapshot);
+        var diff = captured && captured.source.changes;
+        if (captured && window.__archifyShowSource) {
+          var selectedChange = changedSelection;
+          var previousScroll = side.scrollTop;
+          // The Atlas tab hides the reader. Page back to the diagram while the
+          // pinned source is read, keeping the Files state for the return.
+          if (!standalone) showView('');
+          window.__archifyShowSource(captured.file, diff && (diff.modified[0] || diff.added[0]), snapshot, pair, function () {
+            if (!standalone) {
+              showView('atlas');
+              side.scrollTop = previousScroll;
+            }
+            if (changedSelection === selectedChange) {
+              side.querySelector('[data-atlas-change-source="' + snapshot + '"]')?.focus({ preventScroll: true });
+            }
+          });
+        }
+      } else {
+        var literal = function (text) {
+          return String(text).replace(/[\u0000-\u001f\u007f-\u009f\u2028-\u202e\u2066-\u2069]/gu, ' ')
+            .replace(/[&<>\\\x60*_[\]{}()#!|~]/gu, function (c) { return '&#' + c.codePointAt(0) + ';'; });
+        };
+        var prefix = pr.scope && pr.scope !== '.' ? pr.scope + '/' : '';
+        var markdown = '# ' + tr('PR file review context') + '\n\n' +
+          tr('Repository: ') + literal(pr.repository) + '\n' + tr('Status: ') + literal(change.status) + '\n\n' +
+          ['base', 'head'].map(function (side) {
+            var pin = side === 'base' ? pr.baseSHA : pr.headSHA;
+            return '- ' + tr(side === 'base' ? 'Merge-base' : 'PR head') + ' ' + pin + ' · ' +
+              (pair[side] ? literal(prefix + pair[side]) + (changedSource(change, side) ? '' : ' (' + tr('Source was not captured') + ')') : tr('File absent on this side'));
+          }).join('\n') + '\n\n' + tr('This context identifies the saved file and commits. Verify the cited source before drawing conclusions.') + '\n';
+        downloadMarkdown(markdown, 'pr-file-review.md');
+      }
+      return;
+    }
+    if (!event.target.classList.contains('atlas-file-download') || state.file === -1) return;
+    downloadMarkdown(fileMarkdown(state.file), F[state.file][0].split('/').pop().replace(/\.[^.]+$/, '') + '.md');
+  });
+  function downloadMarkdown(markdown, name) {
+    var blob = new Blob([markdown], { type: 'text/markdown' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = name;
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
   }
   function listsHtml(view, openSelected) {
     var h = pr ? prSummary() : '';
@@ -858,12 +954,16 @@
     if (mode === 'module' || mode === 'finding' || mode === 'file') if (state.focusModule !== -1) parts.push(['module:' + state.focusModule, M[state.focusModule].label]);
     if (mode === 'finding') parts.push(['', findingTitle(FD[state.finding])]);
     if (mode === 'file') parts.push(['', F[state.file][0].split('/').pop()]);
+    if (mode === 'change') parts.push(['', changedLabel(changedFiles[changedSelection]).split('/').pop()]);
     return parts.map(function (p, i) { var last = i === parts.length - 1; return '<button type="button"' + (last ? ' aria-current="page"' : ' data-go="' + p[0] + '"') + '>' + esc(p[1]) + '</button>'; }).join('<span aria-hidden="true">›</span>');
   }
   function renderPage() {
     var mode = state.finding !== -1 ? 'finding' : state.file !== -1 ? 'file' : state.focusModule !== -1 ? 'module' : homeOpen ? 'home' : 'closed';
+    // A PR changed file picked in the Files tab leads its page with the merge-base / PR head source actions.
+    var change = changedSelection !== null && mode !== 'finding' ? selectedCard() : '';
+    if (change && mode !== 'file') mode = 'change';
     panel.setAttribute('data-fly', mode);
-    side.querySelector('.atlas-selection').innerHTML = mode === 'finding' ? findingPanel(state.finding) : mode === 'file' ? filePanel(state.file) : mode === 'module' ? modulePanel(state.focusModule) : mode === 'home' ? '<p class="atlas-kick">' + esc(tr('Atlas')) + '</p><div class="selected"><h4>' + esc(tr('All findings')) + '</h4></div><p class="atlas-sub">' + esc(plural(FD.length, 'finding') + ' · ' + plural(M.length, 'module')) + '</p>' : '';
+    side.querySelector('.atlas-selection').innerHTML = change + (mode === 'finding' ? findingPanel(state.finding) : mode === 'file' ? filePanel(state.file) : mode === 'module' ? modulePanel(state.focusModule) : mode === 'home' ? '<p class="atlas-kick">' + esc(tr('Atlas')) + '</p><div class="selected"><h4>' + esc(tr('All findings')) + '</h4></div><p class="atlas-sub">' + esc(plural(FD.length, 'finding') + ' · ' + plural(M.length, 'module')) + '</p>' : '');
     side.querySelector('.atlas-crumbs').innerHTML = mode === 'closed' ? '' : crumbs(mode);
     var pill = panel.querySelector('.atlas-focus'), focusText = '';
     if (mode === 'module') focusText = tr('Focus {name} · its dependencies are lit', { name: M[state.focusModule].label });
@@ -987,6 +1087,8 @@
     if (next) root.setAttribute('data-bauify-views', next); else root.removeAttribute('data-bauify-views');
     if (next !== 'atlas') close();
     if (panel3d) panel3d.hidden = next !== 'atlas3d';
+    // The Atlas reads best on dark colours: choosing it switches the page theme, as the theme button would.
+    if (next === 'atlas' && root.getAttribute('data-theme') === 'light' && window.Archify && Archify.theme) Archify.theme.toggle();
     if (next === 'atlas') open();
     if (next === 'atlas3d' && window.__archifyAtlas3d) { var view = window.__archifyAtlas3d.mount(panel3d); if (view && view.refresh) view.refresh(); }
     views.querySelectorAll('.views-option').forEach(function (button) { button.setAttribute('aria-pressed', String(button.getAttribute('data-view') === (next || 'diagram'))); });
@@ -1038,8 +1140,13 @@
       var index = M.findIndex(function (m) { return m.id === id; });
       select(index, -1);
     },
-    saveSelection: function () { return { module: state.focusModule, finding: state.finding, file: state.file, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() }; },
-    restoreSelection: function (saved) { fileQuery.value = saved.query || ''; select(saved.module, saved.finding, saved, saved.file); showTab(saved.tab === 'files'); }
+    saveSelection: function () { return { module: state.focusModule, finding: state.finding, file: state.file, changedFile: changedSelection, scope: fileScope?.value, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() }; },
+    restoreSelection: function (saved) {
+      fileQuery.value = saved.query || '';
+      if (fileScope && saved.scope) fileScope.value = saved.scope;
+      select(saved.module, saved.finding, saved, saved.file, saved.changedFile);
+      showTab(saved.tab === 'files');
+    }
   };
   if (standalone) open();
   new MutationObserver(function () {
@@ -1049,7 +1156,8 @@
       if (!on && root.hasAttribute('data-bauify-views')) showView('');
     }
     if (!on && !panel.hidden) close();
-    else if (!panel.hidden) { renderFirst(); renderSide(); draw(); }
+    // A theme switch made by opening the Atlas must not cut its reveal short.
+    else if (!panel.hidden) { renderFirst(); renderSide(); draw(anim.reveal ? 'reveal' : undefined); }
   }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   function redrawIfResized() {
     if (panel.hidden || stage.hidden) return;
