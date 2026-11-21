@@ -74,7 +74,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, analysis]
+        shard: [1, 2, 3, 4]
+        include:
+          - shard: analysis-1
+            module-shard: 1
+          - shard: analysis-2
+            module-shard: 2
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -95,23 +100,28 @@ jobs:
         if: matrix.shard == 2
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
       - name: Install Code Analysis duplicate detector
-        if: matrix.shard == 'analysis'
+        if: matrix.module-shard
         run: npm install --prefix "$RUNNER_TEMP/archify-jscpd" --ignore-scripts --no-audit --no-fund jscpd@5.4.3
       - name: Install Code Analysis C/C++ parser
-        if: matrix.shard == 'analysis'
+        if: matrix.module-shard
         run: |
           python3 -m venv "$RUNNER_TEMP/archify-clang"
           "$RUNNER_TEMP/archify-clang/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --no-deps libclang==18.1.1
       # The root runner enumerates only test/; the module suite lives with the module.
+      - name: Verify generated Code Analysis Python parser
+        if: matrix.module-shard == 1
+        run: npm run check:python
+        working-directory: archify/modules/code-analysis
       - name: Code Analysis module suite
-        if: matrix.shard == 'analysis'
-        run: npm --prefix archify run test:code-analysis
+        if: matrix.module-shard
+        run: node --test --test-shard=${{ matrix.module-shard }}/2 test/*.test.mjs
+        working-directory: archify/modules/code-analysis
         env:
           ARCHIFY_TEST_JSCPD: ${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd
           ARCHIFY_CPP_PYTHON: ${{ runner.temp }}/archify-clang/bin/python
           ARCHIFY_CPP_REQUIRED: '1'
       - name: Run a complete regression shard
-        if: matrix.shard != 'analysis'
+        if: '!matrix.module-shard'
         run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4
 
   test:

@@ -187,8 +187,8 @@ repeat an unchanged complete run locally just because CI is also running it.
 
 For full CI, Node 22 runs the root suite across four shards with
 `node scripts/run-tests.mjs --shard=1/4` through `--shard=4/4`. One shard also runs
-generated checks and the Hermes adapter contract. A parallel job runs the Code
-Analysis module suite once with its external tools. The existing `test (22)`
+generated checks and the Hermes adapter contract. Two parallel jobs share the
+Code Analysis module suite and provision its external tools. The existing `test (22)`
 check requires every job in the matrix to succeed. Other scopes do not
 start these shards. Node 18, 20 and 24 compatibility checks start after scope
 classification, without waiting for the complete regression shards.
