@@ -556,18 +556,187 @@ html[data-bauify-focus="on"] .bauify-insights > :not(.focus):not(defs) { opacity
 html[data-bauify-spot="off"] g[data-node-id] { opacity: .3; }
 html[data-bauify-spot="off"] #bauify-layer > :not(.bauify-insights), html[data-bauify-spot="off"] .bauify-insights > :not(.off-diagram):not(defs) { opacity: .14; }
 
-/* The verdict line above the diagram. */
-#bauify-verdict { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin: 0 0 14px; padding: 11px 14px; border: 1px solid color-mix(in srgb, var(--halo-amber, #F59E0B) 38%, var(--panel-border, #1e293b)); border-radius: 12px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--halo-amber, #F59E0B) 10%, var(--panel, #0f172a)), var(--panel, #0f172a) 70%); color: var(--text, #f8fafc); font-size: 13.5px; }
-#bauify-verdict p { margin: 0; font-weight: 600; line-height: 1.45; }
-#bauify-verdict .verdict-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-#bauify-verdict .verdict-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 4px 11px; border: 1px solid var(--panel-border, #1e293b); border-radius: 999px; background: var(--bg, #0b1220); color: var(--text, #f8fafc); font: inherit; font-size: 12.5px; cursor: pointer; }
-#bauify-verdict .verdict-chip:hover { border-color: color-mix(in srgb, var(--text, #f8fafc) 45%, transparent); }
-#bauify-verdict .verdict-chip[aria-pressed="true"] { border-color: var(--text, #f8fafc); box-shadow: inset 0 0 0 1px var(--text, #f8fafc); }
-#bauify-verdict .verdict-chip:focus-visible { outline: 2px solid var(--frontend-stroke, #22d3ee); outline-offset: 2px; }
-#bauify-verdict i { width: 7px; height: 7px; border-radius: 50%; }
-#bauify-verdict i.amber { background: var(--halo-amber, #F59E0B); } #bauify-verdict i.red { background: var(--halo-red, #F43F5E); } #bauify-verdict i.grey { background: var(--halo-grey, #94A3B8); }
-#bauify-verdict { --halo-red: #F43F5E; --halo-amber: #F59E0B; --halo-grey: #94A3B8; }
-html[data-bauify-views] #bauify-verdict { display: none; }
-@media (min-width: 1001px) { html[data-bauify="on"]:not([data-bauify-reader-collapsed]) #bauify-verdict { margin-right: 444px; } }
-html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) #bauify-verdict { margin-right: calc(min(760px, 54vw) + 24px); }
+/* ---- The reader as an inspector: "Start here" home and component heads ---- */
+#bauify-reader { --lead-amber: #F59E0B; --lead-red: #F43F5E; --lead-grey: #94A3B8; border-radius: 18px; border-color: color-mix(in srgb, var(--panel-border, #1e293b) 80%, transparent);
+  background: radial-gradient(120% 50% at 100% 0%, color-mix(in srgb, var(--lead-amber) 9%, transparent), transparent 60%), linear-gradient(var(--panel, #0f172a), var(--panel, #0f172a)), var(--bg, #0b1220);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text, #f8fafc) 6%, transparent) inset, 0 30px 70px -30px rgba(2, 6, 23, .45); }
+#bauify-reader > .reader-nav { border-bottom-color: transparent; padding: 12px 16px 4px; }
+#bauify-reader .reader-path { font-size: 11.5px; letter-spacing: .04em; color: var(--text-muted, #94a3b8); }
+#bauify-reader .start-here { margin: 2px 0 18px; }
+#bauify-reader .start-kicker { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 11.5px; letter-spacing: .06em; color: var(--text-muted, #94a3b8); }
+#bauify-reader .start-kicker::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--lead-amber); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lead-amber) 18%, transparent); animation: start-pulse 2.4s ease-in-out infinite; }
+@keyframes start-pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--lead-amber) 4%, transparent); } }
+#bauify-reader .start-line { margin: 10px 0 14px; font-size: 19px; line-height: 1.45; font-weight: 650; letter-spacing: -.01em; color: var(--text, #f8fafc); text-wrap: pretty; }
+#bauify-reader .start-line em { font-style: normal; color: var(--lead-amber); background: linear-gradient(transparent 62%, color-mix(in srgb, var(--lead-amber) 20%, transparent) 0); }
+#bauify-reader .lead-list { display: grid; gap: 8px; }
+#bauify-reader .lead-card { --tone: var(--lead-grey); position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; width: 100%; padding: 13px 14px 13px 18px; overflow: hidden;
+  border: 1px solid var(--panel-border, #1e293b); border-radius: 14px; background: color-mix(in srgb, var(--text, #f8fafc) 2.5%, transparent); color: var(--text, #f8fafc); font: inherit; text-align: left; cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, background-color .18s ease, box-shadow .18s ease; }
+#bauify-reader .lead-card.amber { --tone: var(--lead-amber); } #bauify-reader .lead-card.red { --tone: var(--lead-red); }
+#bauify-reader .lead-card::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 3px 3px 0; background: var(--tone); box-shadow: 0 0 12px var(--tone); }
+#bauify-reader .lead-card:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--tone) 45%, var(--panel-border, #1e293b)); box-shadow: 0 12px 26px -18px color-mix(in srgb, var(--tone) 70%, transparent); }
+#bauify-reader .lead-card[aria-pressed="true"] { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 9%, transparent); }
+#bauify-reader .lead-card:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; }
+#bauify-reader .lead-text { min-width: 0; }
+#bauify-reader .lead-text b { display: block; font-size: 14px; line-height: 1.4; font-weight: 600; }
+#bauify-reader .lead-text small { display: block; margin-top: 3px; color: var(--text-muted, #94a3b8); font-size: 12px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bauify-reader .lead-text em { display: inline-block; margin-top: 6px; font-style: normal; font-size: 11.5px; font-weight: 500; color: var(--tone); opacity: .75; transition: opacity .18s, transform .18s; }
+#bauify-reader .lead-card:hover .lead-text em { opacity: 1; transform: translateX(2px); }
+#bauify-reader .lead-value { text-align: right; }
+#bauify-reader .lead-value b { display: block; font-size: 24px; line-height: 1; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--tone); letter-spacing: -.02em; }
+#bauify-reader .lead-value small { display: block; margin-top: 4px; font-size: 11px; color: var(--text-muted, #94a3b8); }
+@media (prefers-reduced-motion: reduce) { #bauify-reader .start-kicker::before { animation: none; } #bauify-reader .lead-card, #bauify-reader .lead-text em { transition: none; } }
+/* Below the start section the totals read as a quiet footnote, not a second headline. */
+#bauify-reader .start-here ~ .health-summary { margin-top: 4px; padding: 12px 14px; background: none; }
+#bauify-reader .start-here ~ .health-summary .health-primary > b { font-size: 18px; }
+#bauify-reader .start-here ~ .health-summary .health-primary > span { font-size: 13px; color: var(--text-muted, #94a3b8); }
+#bauify-reader .start-here ~ .health-summary .health-facts { margin-top: 10px; padding-top: 10px; }
+#bauify-reader .start-here ~ .health-summary .health-facts b { font-size: 14px; }
+
+/* Component inspector head */
+#bauify-panel .insp-head { --insp-c: var(--text-muted, #94a3b8); margin: 4px 0 14px; padding-bottom: 16px; border-bottom: 1px solid var(--panel-border, #1e293b); font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", sans-serif; }
+#bauify-panel .insp-kicker { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 11.5px; letter-spacing: .04em; color: var(--text-muted, #94a3b8); }
+#bauify-panel .insp-kicker i { width: 8px; height: 8px; border-radius: 50%; background: var(--insp-c); box-shadow: 0 0 10px var(--insp-c); }
+#bauify-panel .insp-kicker b { color: #F59E0B; font-weight: 600; }
+#bauify-panel .insp-head h3 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0 0; font-size: 23px; line-height: 1.25; letter-spacing: -.01em; }
+#bauify-panel .insp-head h3 .badge { margin: 0; }
+#bauify-panel .insp-sub { margin: 4px 0 0; color: var(--text-muted, #94a3b8); font: 12px ui-monospace, Menlo, Consolas, monospace; }
+#bauify-panel .insp-lead { margin: 12px 0 0; font-size: 14px; line-height: 1.65; color: var(--text, #f8fafc); }
+#bauify-panel .insp-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+#bauify-panel .insp-stats span { padding: 10px 12px; border: 1px solid var(--panel-border, #1e293b); border-radius: 11px; background: color-mix(in srgb, var(--text, #f8fafc) 2.5%, transparent); color: var(--text-muted, #94a3b8); font-size: 11.5px; }
+#bauify-panel .insp-stats b { display: block; margin-bottom: 2px; color: var(--text, #f8fafc); font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; }
+#bauify-panel .insp-bar { display: flex; gap: 2px; height: 4px; margin-top: 10px; border-radius: 2px; overflow: hidden; background: color-mix(in srgb, var(--text, #f8fafc) 8%, transparent); }
+#bauify-panel .insp-bar .error { background: #F43F5E; } #bauify-panel .insp-bar .warning { background: #F59E0B; } #bauify-panel .insp-bar .info { background: color-mix(in srgb, #3B82F6 65%, transparent); }
+#bauify-panel .insp-mods { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+#bauify-panel .insp-mods code { padding: 3px 8px; border: 1px solid var(--panel-border, #1e293b); border-radius: 7px; font-size: 11px; color: var(--text, #f8fafc); }
+#bauify-panel .insp-rel-title { margin: 14px 0 4px; font-size: 11.5px; letter-spacing: .06em; color: var(--text-muted, #94a3b8); }
+#bauify-panel .insp-rel { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; margin: 0 -8px; border: 0; border-radius: 8px; background: none; color: var(--text, #f8fafc); font: 13px system-ui, -apple-system, "PingFang SC", sans-serif; text-align: left; cursor: pointer; box-sizing: content-box; }
+#bauify-panel .insp-rel:hover { background: color-mix(in srgb, var(--text, #f8fafc) 5%, transparent); }
+#bauify-panel .insp-rel i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+#bauify-panel .insp-rel span { margin-left: auto; color: var(--text-muted, #94a3b8); font-size: 11.5px; }
+#bauify-panel .insp-rel span b { color: #F43F5E; font-weight: 600; }
+#bauify-panel .insp-checks { margin: 0 0 4px; }
+/* Narrow screens: the reader is short, so the start section becomes one swipeable
+   row and the first task stays on the first screen. */
+@media (max-width: 1000px) {
+  #bauify-reader .start-here { margin-bottom: 10px; }
+  #bauify-reader .start-line { margin: 6px 0 10px; font-size: 15px; }
+  #bauify-reader .lead-list { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; margin: 0 -4px; padding-inline: 4px; }
+  #bauify-reader .lead-card { flex: 0 0 232px; scroll-snap-align: start; padding: 10px 12px 10px 15px; gap: 10px; }
+  #bauify-reader .lead-text b { font-size: 13px; }
+  #bauify-reader .lead-text small, #bauify-reader .lead-text em { display: none; }
+  #bauify-reader .lead-value b { font-size: 19px; }
+  #bauify-reader .start-here ~ .health-summary { padding: 8px 10px; }
+}
+/* Quiet by default: what a "Start here" card is about appears on the diagram only
+   while that card is pressed. Badges, rings and health bars always stay. */
+#bauify-underlay path.code-undeclared, #bauify-layer .pin.undeclared-weight,
+#bauify-layer .pin.unmapped-tag, #bauify-layer .off-diagram, #bauify-layer .pin.node-meta, #bauify-layer .pin.edge-weight { opacity: 0; transition: opacity .3s ease; }
+html[data-bauify-spot="undeclared"] #bauify-underlay path.code-undeclared, html[data-bauify-spot="undeclared"] #bauify-layer .pin.undeclared-weight,
+html[data-bauify-spot="unmapped"] #bauify-layer .pin.unmapped-tag, html[data-bauify-spot="off"] #bauify-layer .off-diagram,
+html[data-bauify-spot="top"] #bauify-layer .pin.node-meta.focus, html[data-bauify-spot="top"] #bauify-layer .pin.edge-weight.focus { opacity: 1; }
+
+/* ---- Frame: the view switch, the canvas and the reader read as one workspace ---- */
+html[data-bauify="on"]:not([data-analysis-mode="standalone"]) #bauify-views { margin-top: 18px; }
+html[data-bauify="on"] #bauify-views .views-options { display: inline-flex; flex-wrap: nowrap; gap: 2px; padding: 4px; border: 1px solid var(--panel-border, #1e293b); border-radius: 13px;
+  background: color-mix(in srgb, var(--text, #f8fafc) 3.5%, var(--panel, #0f172a)); box-shadow: inset 0 1px 2px rgba(15, 23, 42, .05); }
+html[data-bauify="on"] #bauify-views .views-option { position: relative; gap: 7px; min-height: 34px; padding: 6px 14px 6px 11px; border: 0; border-radius: 9px; background: none; color: var(--text-muted, #94a3b8);
+  transition: color .16s ease, background-color .16s ease, box-shadow .16s ease; }
+html[data-bauify="on"] #bauify-views .views-option:hover { color: var(--text, #f8fafc); background: color-mix(in srgb, var(--text, #f8fafc) 5%, transparent); }
+html[data-bauify="on"] #bauify-views .views-option[aria-pressed="true"] { color: var(--text, #f8fafc); background: var(--panel, #0f172a);
+  box-shadow: 0 0 0 1px var(--panel-border, #1e293b), 0 1px 2px rgba(15, 23, 42, .08), 0 4px 12px -6px rgba(15, 23, 42, .18); }
+html[data-bauify="on"] #bauify-views .views-option .atlas-icon { width: 16px; height: 16px; color: inherit; opacity: .8; }
+html[data-bauify="on"] #bauify-views .views-option[aria-pressed="true"] .atlas-icon { color: var(--backend-stroke, #34D399); opacity: 1; }
+html[data-bauify="on"] #bauify-views .views-copy b { font-size: 13px; font-weight: 600; letter-spacing: .01em; }
+@media (min-width: 1001px) {
+  html[data-bauify="on"]:not([data-analysis-mode="standalone"]) .diagram-container { margin-top: 12px; }
+  /* The node index repeats the diagram; analysis has its own list in the reader. */
+  html[data-bauify="on"]:not([data-analysis-mode="standalone"]) #reader-rail { display: none; }
+}
+/* The reader is the canvas's sibling: same radius, border and shadow. */
+html:not([data-analysis-mode="standalone"]) #bauify-reader { border-radius: 16px; border-color: var(--panel-border, #1e293b);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 16px 40px -20px rgba(15, 23, 42, .18); }
+#bauify-reader .reader-path { display: flex; align-items: center; gap: 6px; min-width: 0; }
+#bauify-reader .reader-path .crumb-root { padding: 2px 6px; margin-left: -6px; border: 0; border-radius: 6px; background: none; color: var(--text-muted, #94a3b8); font: inherit; letter-spacing: inherit; cursor: pointer; }
+#bauify-reader .reader-path .crumb-root:hover { color: var(--text, #f8fafc); background: color-mix(in srgb, var(--text, #f8fafc) 6%, transparent); }
+#bauify-reader .reader-path span { color: color-mix(in srgb, var(--text-muted, #94a3b8) 60%, transparent); }
+#bauify-reader .reader-path b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text, #f8fafc); font-weight: 600; }
+/* The breadcrumb is the way back; the panel's own back and close stay for keyboard and scripts only. */
+#bauify-reader #bauify-panel > .back, #bauify-reader #bauify-panel > .close { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#bauify-reader #bauify-panel > .back:focus-visible { position: static; width: auto; height: auto; clip: auto; }
+
+/* Checks on a component page: the same rows as the inspector head. */
+#bauify-panel .insp-checks { margin: 18px 0 2px; font-size: 12px; color: var(--text-muted, #94a3b8); }
+#bauify-panel > .k { margin: 14px 0 6px; font: 600 11.5px system-ui, -apple-system, "PingFang SC", sans-serif; letter-spacing: .06em; text-transform: none; color: var(--text-muted, #94a3b8); }
+#bauify-panel .ind { grid-template-columns: 8px minmax(0, 1fr); gap: 12px; padding: 11px 10px; margin: 0 -10px; border-top: 0; border-radius: 10px; font: 13px/1.55 system-ui, -apple-system, "PingFang SC", sans-serif; }
+#bauify-panel .ind + .ind { box-shadow: inset 0 1px 0 color-mix(in srgb, var(--panel-border, #1e293b) 70%, transparent); }
+#bauify-panel .ind.link:hover, #bauify-panel .ind.active { box-shadow: none; }
+#bauify-panel .ind i { width: 7px; height: 7px; margin-top: 7px; box-shadow: 0 0 8px currentColor; }
+#bauify-panel .ind i.red { color: #FB7185; } #bauify-panel .ind i.amber { color: #FBBF24; } #bauify-panel .ind i.blue { color: #60A5FA; } #bauify-panel .ind i.green { color: #34D399; } #bauify-panel .ind i.neutral { color: #64748B; }
+#bauify-panel .ind b { display: flex; align-items: baseline; gap: 8px; font-size: 13.5px; font-weight: 600; }
+#bauify-panel .ind .more { margin-left: auto; font-weight: 500; font-size: 11.5px; color: var(--text-muted, #94a3b8); white-space: nowrap; }
+#bauify-panel .ind.link:hover .more { color: var(--backend-stroke, #34D399); }
+#bauify-panel .ind span.v { margin-top: 2px; font-size: 12.5px; line-height: 1.6; }
+#bauify-panel .ind.quiet b { font-weight: 500; color: var(--text-muted, #94a3b8); }
+/* The canvas runs to the same bottom edge as the reader, with the diagram centred in it. */
+@media (min-width: 1001px) {
+  html[data-bauify="on"]:not([data-analysis-mode="standalone"]):not([data-bauify-views]) .diagram-container {
+    height: max(360px, calc(100vh - var(--bauify-reader-top, 76px) - 72px)); display: flex; flex-direction: column; justify-content: center; }
+}
+
+/* ---- App bar: the view switch sits beside the name; each view brings its own header ---- */
+html[data-bauify-frame="lifted"] #bauify-views { margin: 0; }
+html[data-bauify-frame="lifted"] #bauify-views .views-options { position: absolute; left: var(--views-x); top: var(--views-y); z-index: 101; margin: 0; }
+html[data-bauify-frame="lifted"] #bauify-views .views-thumb { position: absolute; left: 4px; top: 4px; bottom: 4px; width: 0; border-radius: 9px; background: var(--panel, #0f172a); pointer-events: none;
+  box-shadow: 0 0 0 1px var(--panel-border, #1e293b), 0 1px 2px rgba(15, 23, 42, .08), 0 6px 14px -8px rgba(15, 23, 42, .3); transition: transform .38s cubic-bezier(.3, .8, .25, 1), width .38s cubic-bezier(.3, .8, .25, 1); }
+html[data-bauify-frame="lifted"] #bauify-views .views-option { z-index: 1; }
+html[data-bauify-frame="lifted"] #bauify-views .views-option[aria-pressed="true"] { background: none; box-shadow: none; }
+html[data-bauify-frame="lifted"] .diagram-container, html[data-bauify-frame="lifted"] #bauify-views .views-panels > section { margin-top: 18px !important; }
+@media (min-width: 1001px) {
+  html[data-bauify="on"][data-bauify-frame="lifted"]:not([data-analysis-mode="standalone"]):not([data-bauify-views]) .diagram-container { height: max(360px, calc(100vh - var(--bauify-card-top, 160px) - 16px)); }
+}
+/* Controls that only act on the drawn diagram step aside while another view is open. */
+html[data-bauify-frame="lifted"][data-bauify-views] .toolbar .preset-wrap, html[data-bauify-frame="lifted"][data-bauify-views] .toolbar #btn-motion,
+html[data-bauify-frame="lifted"][data-bauify-views] .toolbar #btn-present, html[data-bauify-frame="lifted"][data-bauify-views] .toolbar .export-wrap { display: none; }
+/* A view arrives instead of being swapped in. Opacity only: geometry stays put, so the frame can
+   measure and align cards while one is still arriving. */
+@keyframes bauify-view-in { from { opacity: 0; } }
+html[data-bauify="on"] .diagram-container, html[data-bauify="on"] #bauify-views .views-panels > section { animation: bauify-view-in .45s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  html[data-bauify="on"] .diagram-container, html[data-bauify="on"] #bauify-views .views-panels > section { animation: none; }
+  html[data-bauify-frame="lifted"] #bauify-views .views-thumb { transition: none; }
+}
+
+/* ---- Atlas and Atlas 3D are pages: they fill the window under the app bar ---- */
+.header .view-subtitle { display: none; }
+html[data-bauify-frame="lifted"][data-bauify-views] .header .subtitle:not(.view-subtitle) { display: none; }
+html[data-bauify-frame="lifted"][data-bauify-views] .header .view-subtitle { display: block; font-variant-numeric: tabular-nums; }
+@media (min-width: 1001px) {
+  /* Still in the page flow (no overlay): full window width through negative margins, down to the bottom edge. */
+  html[data-bauify-frame="lifted"][data-bauify-views] #bauify-views .views-panels > section:not([hidden]) {
+    width: 100vw; margin: 0 0 0 calc(50% - 50vw) !important; height: calc(100vh - var(--bauify-card-top, 120px)) !important; box-sizing: border-box;
+    border: 0; border-top: 1px solid var(--panel-border, #1e293b); border-radius: 0; box-shadow: none; }
+  html[data-bauify-frame="lifted"][data-bauify-views] body { overflow: hidden; }
+}
+/* In Atlas 3D the whole page takes the model's dark, app bar included, so it reads as one page. */
+html[data-bauify-frame="lifted"][data-bauify-views="atlas3d"] { --bg: #0c0a0e; --panel: #17131a; --panel-border: #2b2530; --text: #f4ecef; --text-muted: #a99ca4; color-scheme: dark; }
+html[data-bauify-frame="lifted"][data-bauify-views="atlas3d"] body { background: #0c0a0e; }
+html[data-bauify-frame="lifted"][data-bauify-views="atlas3d"] .header h1 { color: #f4ecef; }
+html[data-bauify-frame="lifted"][data-bauify-views="atlas3d"] #bauify-views .views-panels > #bauify-atlas3d { border-top-color: rgba(255, 255, 255, .06); }
+
+/* ---- Atlas as a page: its header bands become floating pills on the canvas ---- */
+@media (min-width: 1001px) {
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-tabs, html[data-bauify-frame="lifted"] #bauify-atlas .atlas-nav {
+    position: absolute; top: 14px; z-index: 4; display: flex; gap: 2px; padding: 4px; border: 1px solid var(--panel-border, #1e293b); border-radius: 13px;
+    background: color-mix(in srgb, var(--panel, #fff) 85%, transparent); backdrop-filter: blur(12px); box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 10px 24px -16px rgba(15, 23, 42, .25); }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-tabs { left: 16px; }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-nav { right: calc(392px + 16px); justify-content: flex-end; }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-title { display: none; }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-tab, html[data-bauify-frame="lifted"] #bauify-atlas .atlas-controls button { height: 30px; padding: 0 12px; border: 0; border-radius: 9px; background: none; color: var(--text-muted, #64748b); font-size: 12.5px; font-weight: 500; }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-tab[aria-selected="true"] { color: var(--text, #0f172a); background: var(--panel, #fff); box-shadow: 0 0 0 1px var(--panel-border, #e5e7eb), 0 1px 2px rgba(15, 23, 42, .06); }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-controls button:hover:not(:disabled), html[data-bauify-frame="lifted"] #bauify-atlas .atlas-tab:hover { color: var(--text, #0f172a); background: color-mix(in srgb, var(--text, #0f172a) 5%, transparent); }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-controls { gap: 2px; }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-stage { background: radial-gradient(60% 60% at 50% 50%, var(--panel, #fff) 0%, color-mix(in srgb, var(--panel, #fff) 45%, var(--bg, #f4f5f7)) 55%, var(--bg, #f4f5f7) 100%); }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-help { left: 18px; bottom: 14px; font-size: 11.5px; }
+  html[data-bauify-frame="lifted"] #bauify-atlas .atlas-files-pane { padding-top: 64px; }
+}
