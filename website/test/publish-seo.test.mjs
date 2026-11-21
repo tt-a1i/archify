@@ -64,7 +64,16 @@ for (const name of ['cloudflare', 'github']) test(`${name}: published discovery 
     publishSeo(root, { name });
     assert.equal(fs.readFileSync(path.join(root, `gallery/artifacts/${CASES[0].output}`), 'utf8'), once, 'repeat build is idempotent');
     for (const [index, entry] of PUBLISHED_CASES.entries()) assert.deepEqual(fs.readFileSync(path.join(root, entry.artifact)), casesOnce[index], `${entry.artifact}: repeat publication is idempotent`);
-    assert.equal(fs.readFileSync(path.join(root, 'robots.txt'), 'utf8'), 'User-agent: *\nAllow: /\n\nSitemap: https://archify.si/sitemap.xml\n');
+    const robots = fs.readFileSync(path.join(root, 'robots.txt'), 'utf8');
+    assert.equal(robots, 'User-agent: *\nAllow: /\nDisallow: /panels/\nDisallow: /answer/\nDisallow: /answer$\nDisallow: /meta/\nDisallow: /meta$\nDisallow: /sources/\n\nSitemap: https://archify.si/sitemap.xml\n');
+    const disallowRules = [...robots.matchAll(/^Disallow:\s*(\S+)/gm)].map(match => match[1]);
+    const isBlocked = urlPath => disallowRules.some(rule => (rule.endsWith('$') ? urlPath === rule.slice(0, -1) : urlPath.startsWith(rule)));
+    for (const blocked of ['/panels/1/blocks/0', '/answer', '/answer/reasons/0', '/meta', '/meta/title', '/sources/rfc8446']) {
+      assert.equal(isBlocked(blocked), true, `expected robots.txt to block ${blocked}`);
+    }
+    for (const allowed of ['/gallery/sources/agent-run.lifecycle.json', '/cases/explainer/first-rental']) {
+      assert.equal(isBlocked(allowed), false, `expected robots.txt to keep ${allowed} crawlable`);
+    }
     assert.equal(fs.existsSync(path.join(root, '_headers')), name === 'cloudflare');
     if (name === 'cloudflare') assert.equal(fs.readFileSync(path.join(root, '_headers'), 'utf8'), '/*.json\n  X-Robots-Tag: noindex\n/*.archify.md\n  X-Robots-Tag: noindex\n');
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
