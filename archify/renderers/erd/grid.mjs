@@ -1,3 +1,7 @@
+import { isChangeMarked } from '../shared/change-marks.mjs';
+import { nodeTextFit } from '../shared/text-fit.mjs';
+import { textUnits } from '../shared/utils.mjs';
+
 /** Banded grid placement for the ER IR. Not auto-layout: column widths and row
  *  band heights are measured from the boxes the author declares, so the same
  *  spec always produces the same coordinates. */
@@ -33,12 +37,53 @@ export function erGridLayout(er) {
   return { ...DEFAULT_ER_GRID, ...raw };
 }
 
+const KEY_BADGE_W = 22;
+const KEY_BADGE_GAP = 3;
+const KEY_BADGE_INSET = 2;
+const KEY_ROLE_GAP = 5;
+const KEY_WIDTH = 30;
+const PAD_X = 12;
+const ROW_FONT = 11;
+const TYPE_FONT = 10.5;
+const DIFF_GUTTER = 18;
+
+function rowKeyColumnWidth(attrs) {
+  let widest = 0;
+  for (const attr of attrs) {
+    const key = attr?.key;
+    const roles = !key ? [] : [...new Set(typeof key === 'string' ? [key] : Array.isArray(key) ? key : [])];
+    if (!roles.length) continue;
+    const w = roles.length * KEY_BADGE_W + (roles.length - 1) * KEY_BADGE_GAP - KEY_BADGE_INSET;
+    if (w > widest) widest = w;
+  }
+  return Math.max(KEY_WIDTH, widest ? widest + KEY_ROLE_GAP : 0);
+}
+
 // An entity may omit `width` and inherit the grid's default. Both the layout and
 // the placement validator must resolve that the same way: reading `entity.width`
 // directly turned the documented default into NaN and reported a placement
-// failure for a box the schema accepts.
+// failure for a box the schema accepts. When diff marks or previousType widen a
+// table past the base grid width, expand omitted widths to match row demand.
 export function resolvedEntityWidth(entity, grid) {
-  return Number.isFinite(entity?.width) ? entity.width : (grid?.entityW ?? DEFAULT_ER_GRID.entityW);
+  if (Number.isFinite(entity?.width)) return entity.width;
+  const baseWidth = grid?.entityW ?? DEFAULT_ER_GRID.entityW;
+  const attrs = Array.isArray(entity?.attributes) ? entity.attributes : [];
+  const hasMarkedAttr = attrs.some(isChangeMarked);
+  const hasTypeChange = attrs.some((attr) => Boolean(attr?.previousType && attr?.type));
+  if (!hasMarkedAttr && !hasTypeChange) return baseWidth;
+  const diffGutter = hasMarkedAttr ? DIFF_GUTTER : 0;
+  const keyCol = rowKeyColumnWidth(attrs);
+  let maxNeeded = 0;
+  for (const attr of attrs) {
+    const typeText = attr?.type
+      ? (attr.previousType ? `${attr.previousType} \u2192 ${attr.type}` : attr.type)
+      : '';
+    const nameUnits = textUnits(attr?.name || '') * nodeTextFit.widthFactor;
+    const typeUnits = typeText ? textUnits(typeText) * nodeTextFit.widthFactor : 0;
+    const needed = nameUnits * ROW_FONT + (typeUnits ? typeUnits * TYPE_FONT + 8 : 0);
+    if (needed > maxNeeded) maxNeeded = needed;
+  }
+  return Math.max(baseWidth, Math.ceil(maxNeeded + PAD_X * 2 + diffGutter + keyCol));
 }
 
 // One header band plus one band per declared column. An entity with no columns

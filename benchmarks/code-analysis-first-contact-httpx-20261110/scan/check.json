@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "status": "failed",
+  "command": "check",
+  "root": "/private/tmp/first-contact-httpx",
+  "out": "/private/tmp/httpx-scan",
+  "language": "py",
+  "files": 60,
+  "rules": [
+    "coupling/import-cycle",
+    "coupling/cycle",
+    "coupling/hub",
+    "coupling/internal-leak",
+    "complexity/function"
+  ],
+  "verdict": "attention",
+  "counts": {
+    "findings": 8,
+    "error": 0,
+    "warning": 1,
+    "info": 7,
+    "accepted": 0,
+    "offDiagram": 8
+  },
+  "gate": {
+    "failOn": "warning",
+    "newOnly": false,
+    "failing": [
+      {
+        "id": "COMP-c96d5a89f434",
+        "code": "complexity/function",
+        "severity": "warning",
+        "where": "httpx/_urlparse.py:151",
+        "message": "urlparse in httpx/_urlparse.py has cyclomatic complexity 39 (133 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect."
+      }
+    ]
+  },
+  "review": {
+    "baseline": null,
+    "comparison": null
+  },
+  "comparisonReasons": [],
+  "staleBaseline": [],
+  "priorities": [
+    "COMP-c96d5a89f434",
+    "COUP-1c4b02649d1e",
+    "COMP-af208f4d9024"
+  ],
+  "ruleCounts": [
+    {
+      "code": "complexity/function",
+      "severity": "warning",
+      "count": 4
+    },
+    {
+      "code": "coupling/internal-leak",
+      "severity": "info",
+      "count": 2
+    },
+    {
+      "code": "coupling/cycle",
+      "severity": "info",
+      "count": 1
+    },
+    {
+      "code": "coupling/import-cycle",
+      "severity": "info",
+      "count": 1
+    }
+  ],
+  "investigation": {
+    "leads": [
+      {
+        "id": "COMP-c96d5a89f434",
+        "code": "complexity/function",
+        "severity": "warning",
+        "message": "urlparse in httpx/_urlparse.py has cyclomatic complexity 39 (133 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+        "where": "httpx/_urlparse.py:151",
+        "symbol": "urlparse",
+        "impact": {
+          "modules": 1,
+          "size": 39,
+          "fanIn": 1,
+          "files": 18
+        },
+        "task": "node /private/tmp/archify-investigation-20261110/archify/bin/archify.mjs code-analysis task /private/tmp/httpx-scan --finding COMP-c96d5a89f434 --root /private/tmp/first-contact-httpx --format json"
+      },
+      {
+        "id": "COUP-1c4b02649d1e",
+        "code": "coupling/cycle",
+        "severity": "info",
+        "message": "2 modules depend on each other at package level: httpx → httpx/_transports → httpx. See coupling/import-cycle for whether any file actually cycles.",
+        "where": "httpx/__init__.py:39",
+        "symbol": null,
+        "impact": {
+          "modules": 2,
+          "size": 0,
+          "fanIn": 2,
+          "files": 24
+        },
+        "task": "node /private/tmp/archify-investigation-20261110/archify/bin/archify.mjs code-analysis task /private/tmp/httpx-scan --finding COUP-1c4b02649d1e --root /private/tmp/first-contact-httpx --format json"
+      },
+      {
+        "id": "COMP-af208f4d9024",
+        "code": "complexity/function",
+        "severity": "info",
+        "message": "main in httpx/_main.py has nesting depth 5 (60 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+        "where": "httpx/_main.py:450",
+        "symbol": "main",
+        "impact": {
+          "modules": 1,
+          "size": 10,
+          "fanIn": 1,
+          "files": 18
+        },
+        "task": "node /private/tmp/archify-investigation-20261110/archify/bin/archify.mjs code-analysis task /private/tmp/httpx-scan --finding COMP-af208f4d9024 --root /private/tmp/first-contact-httpx --format json"
+      }
+    ],
+    "drillDown": "node /private/tmp/archify-investigation-20261110/archify/bin/archify.mjs code-analysis task /private/tmp/httpx-scan --finding <id> --root /private/tmp/first-contact-httpx --format json"
+  },
+  "coverage": {
+    "parseErrors": [],
+    "otherLanguages": []
+  }
+}

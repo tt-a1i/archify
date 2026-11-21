@@ -1,0 +1,14 @@
+[
+  {
+    "case": "external-file",
+    "expectedFile": "right.rs",
+    "exit": 0,
+    "stderr": "warning: function `check` is never used\n --> work/rust-controls/module-paths/external-file/foo.rs:1:43\n  |\n1 | #[path=\"right.rs\"] pub mod picked; pub fn check(){let _:crate::Marker=picked::run();}\n  |                                           ^^^^^\n  |\n  = note: `#[warn(dead_code)]` on by default\n\nwarning: function `run` is never used\n --> work/rust-controls/module-paths/external-file/right.rs:1:8\n  |\n1 | pub fn run()->crate::Marker { crate::Marker }\n  |        ^^^\n\nwarning: 2 warnings emitted\n\n"
+  },
+  {
+    "case": "inline-in-external-file",
+    "expectedFile": "foo/inside/right.rs",
+    "exit": 0,
+    "stderr": "warning: function `check` is never used\n --> work/rust-controls/module-paths/inline-in-external-file/foo.rs:1:56\n  |\n1 | mod inside { #[path=\"right.rs\"] pub mod picked; pub fn check(){let _:crate::Marker=picked::run();} }\n  |                                                        ^^^^^\n  |\n  = note: `#[warn(dead_code)]` on by default\n\nwarning: function `run` is never used\n --> work/rust-controls/module-paths/inline-in-external-file/foo/inside/right.rs:1:8\n  |\n1 | pub fn run()->crate::Marker { crate::Marker }\n  |        ^^^\n\nwarning: 2 warnings emitted\n\n"
+  }
+]

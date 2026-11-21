@@ -482,5 +482,22 @@
   "legend.waterfall.ok": "Terminé",
   "legend.waterfall.error": "Erreur",
   "legend.waterfall.cancelled": "Annulé",
-  "legend.waterfall.incomplete": "Incomplet (fin non enregistrée)"
+  "legend.waterfall.incomplete": "Incomplet (fin non enregistrée)",
+  "viewer.passport.payload": "Charge utile",
+  "viewer.passport.payload.role.request": "Requête",
+  "viewer.passport.payload.role.response": "Réponse",
+  "viewer.passport.payload.role.flow": "Flux",
+  "viewer.passport.payload.diff": "{added} ajoutés · {removed} supprimés · {modified} modifiés · {unchanged} inchangés",
+  "viewer.passport.payload.unchanged": "{count} champs inchangés",
+  "viewer.passport.payload.sample": "Charge utile d’exemple (lecture seule)",
+  "viewer.passport.payload.after": "Charge utile après ce changement (lecture seule)",
+  "viewer.passport.payload.before": "Charge utile avant ce changement (lecture seule)",
+  "viewer.passport.payload.field.added": "Ajouté {path} : {after}",
+  "viewer.passport.payload.field.removed": "Supprimé {path} : {before}",
+  "viewer.passport.payload.field.modified": "Modifié {path} : {before} → {after}",
+  "viewer.passport.payload.field.unchanged": "{path} : {after}",
+  "legend.change.added": "+ Ajouté",
+  "legend.change.modified": "~ Modifié",
+  "legend.change.removed": "− Supprimé",
+  "legend.change.unchanged": "Inchangé"
 }
