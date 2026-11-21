@@ -58,6 +58,12 @@ html:not([data-analysis-mode="standalone"]) #bauify-atlas { position: relative; 
 #bauify-atlas .hist div { flex: 1 1 0; min-height: 1px; border-radius: 2px 2px 0 0; background: var(--text-muted, #94a3b8); opacity: .75; }
 #bauify-atlas .hist div.hot { background: #FBBF24; opacity: 1; }
 #bauify-atlas .axis { display: flex; justify-content: space-between; color: var(--text-muted, #94a3b8); font: 10px ui-monospace, Menlo, Consolas, monospace; margin-top: 3px; }
+#bauify-atlas .atlas-imports { margin-block: 12px; font-size: 12px; }
+#bauify-atlas .atlas-imports label { display: grid; gap: 4px; color: var(--atlas-muted, var(--text-muted)); }
+#bauify-atlas .atlas-imports select { box-sizing: border-box; min-width: 0; width: 100%; padding: 6px; border: 1px solid var(--atlas-line, var(--panel-border)); border-radius: 6px; background: var(--atlas-solid, var(--panel)); color: var(--atlas-ink, var(--text)); }
+#bauify-atlas .atlas-import-paths { margin: 8px 0 0; }
+#bauify-atlas .atlas-import-paths dt { color: var(--atlas-muted, var(--text-muted)); }
+#bauify-atlas .atlas-import-paths dd { margin: 2px 0 8px; overflow-wrap: anywhere; font-family: var(--atlas-mono, monospace); }
 #bauify-atlas .note { color: var(--text-muted, #94a3b8); font-size: 11px; margin-top: 6px; }
 #bauify-atlas .legend { display: grid; gap: 4px; font-size: 11px; color: var(--text-muted, #94a3b8); }
 #bauify-atlas .legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
