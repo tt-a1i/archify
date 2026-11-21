@@ -1561,8 +1561,8 @@
       "edgeCount": 5,
       "artifactBytes": 913520,
       "artifactSha256": "2488d0a3905153fdebe7440c6ce4dac78209d3306c5152c5f57d4c7a83ec485b",
-      "sourceBytes": 7321,
-      "sourceSha256": "1777a374647084466f4d7ce3a968004be6ab70ac9cf82459b96bed7c556cdfdd",
+      "sourceBytes": 6551,
+      "sourceSha256": "1eb16fc39b94b399d6bcd791863e10e0b2261cc08f2d0df7ee1002f31cc709c8",
       "checks": [
         {
           "name": "single_svg",

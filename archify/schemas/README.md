@@ -56,8 +56,8 @@ at least a 16px gutter between participant cards, which turns a
 wide canvas into column distance and label room rather than empty space on the
 right. Lane order, IDs, and message semantics are unchanged either way.
 
-`meta.views` is retired. The schemas still accept the old guided-view shape so
-existing files keep validating, but renderers ignore it; do not author it.
+`meta.views` is retired. The schemas reject it as an unknown `meta` field, so
+files that still contain it fail validation. Remove the field before validating or rendering.
 
 ### Legend presentation contract
 
@@ -182,7 +182,6 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
   extend this list locally with `return`)
 - `legendMode` and `legendEntry` — the shared strict mode and label/visibility
   override shapes used by each renderer-owned key map
-- `guidedViews` — the retired `meta.views` shape, still accepted and ignored
 - `cards` — the summary-card blocks rendered below the SVG
 - `drilldowns` / `href` / `parentHref` — cross-HTML navigation. Targets are
   same-directory `*.html` files (optional `?` / `#`). `href` on a node is sugar
