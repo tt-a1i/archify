@@ -28,12 +28,12 @@ export function loadViewerStyles(templateFile = templatePath) {
   if (!fontBlock) throw new Error(`svg-bake: ${templateFile} has no <style id="archify-fonts"> block`);
   const css = blocks.filter((block) => block !== fontBlock).map((block) => block[2]).join('\n');
   const rules = parseStylesheet(css);
-  let presetMenu;
+  let toolbar;
   const styles = {
     fontCss: fontBlock[2].trim(),
     rules,
-    get presetMenu() {
-      return presetMenu ??= extractViewerPresetMenu(html, css, rules);
+    get toolbar() {
+      return toolbar ??= extractViewerToolbar(html, css, rules);
     },
   };
   templateStyleCache.set(templateFile, styles);
@@ -142,31 +142,45 @@ function splitTopLevel(text, separator) {
   return parts.map((part) => part.trim()).filter(Boolean);
 }
 
-function extractViewerPresetMenu(html, css, rules) {
-  const start = html.indexOf('<div class="preset-wrap">');
-  const fragment = parse(html.slice(start), { sourceCodeLocationInfo: true });
+function extractViewerToolbar(html, css, rules) {
+  const start = html.indexOf('<div class="toolbar"');
+  const source = html.slice(start);
+  const fragment = parse(source, { sourceCodeLocationInfo: true });
   const body = fragment.childNodes.find(node => node.tagName === 'html')?.childNodes.find(node => node.tagName === 'body');
-  const wrap = body?.childNodes.find(node => node.attrs?.some(attr => attr.name === 'class' && attr.value === 'preset-wrap'));
-  const end = wrap?.sourceCodeLocation?.endOffset;
+  const child = (node, name, value) => node?.childNodes.find(child => child.attrs?.some(attr => attr.name === name && attr.value === value));
+  const toolbar = child(body, 'class', 'toolbar');
+  const tools = child(toolbar, 'class', 'toolbar-group');
+  const exportWrap = child(toolbar, 'class', 'export-wrap');
+  const theme = child(tools, 'id', 'btn-theme');
+  const preset = child(tools, 'class', 'preset-wrap');
+  const exportButton = child(exportWrap, 'id', 'btn-export');
+  const exportHeader = child(child(exportWrap, 'id', 'export-menu'), 'class', 'export-menu-header');
   const keyframes = css.indexOf('@keyframes toolbar-menu-in');
-  if (start === -1 || !end || keyframes === -1) throw new Error('svg-bake: Viewer preset menu is missing');
+  if (![theme, preset, exportButton, exportHeader].every(node => node?.sourceCodeLocation) || keyframes === -1) {
+    throw new Error('svg-bake: Viewer toolbar is missing');
+  }
 
-  // Keep the Viewer's menu, trigger, and tools capsule rules in cascade order.
-  // Stage supplies the toolbar's page position and its own control layout.
-  const menuSelectors = /(?:\.preset-(?:wrap|menu|option|control-mark)\b|\.toolbar-(?:group|icon|chevron)\b|#(?:btn-preset|preset-label)\b|^\.toolbar button\b)/;
-  const menuCss = [];
+  // Keep the rules in Viewer cascade order. Stage positions the toolbar in
+  // its header and supplies its own set of export actions.
+  const toolbarSelectors = /(?:\.toolbar\b|\.preset-(?:wrap|menu|option|control-mark)\b|\.export-(?:wrap|menu|item)\b|#(?:theme-icon|theme-label|btn-theme|btn-preset|preset-label|btn-export)\b)/;
+  const unrelatedControls = /#(?:btn-motion|btn-present|present-icon|present-label)\b/;
+  const toolbarCss = [];
   for (const { selector, declarations, media } of rules) {
-    const selectors = splitTopLevel(selector, ',').filter(part => menuSelectors.test(part));
+    const selectors = splitTopLevel(selector, ',').filter(part => toolbarSelectors.test(part) && !unrelatedControls.test(part));
     if (!selectors.length) continue;
     const body = declarations.map(({ property, value, important }) => `${property}:${value}${important ? '!important' : ''};`).join('');
     const rule = `${selectors.join(',')}{${body}}`;
-    menuCss.push(media ? `${media}{${rule}}` : rule);
+    toolbarCss.push(media ? `${media}{${rule}}` : rule);
   }
   const keyframesEnd = findBlockEnd(css, css.indexOf('{', keyframes));
-  menuCss.push(css.slice(keyframes, keyframesEnd + 1));
+  toolbarCss.push(css.slice(keyframes, keyframesEnd + 1));
+  const markup = ({ sourceCodeLocation: { startOffset, endOffset } }) => source.slice(startOffset, endOffset);
   return {
-    markup: html.slice(start, start + end),
-    css: menuCss.join('\n'),
+    theme: markup(theme),
+    preset: markup(preset),
+    exportButton: markup(exportButton),
+    exportHeader: markup(exportHeader),
+    css: toolbarCss.join('\n'),
   };
 }
 
