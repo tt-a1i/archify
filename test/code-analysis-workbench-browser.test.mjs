@@ -283,6 +283,9 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   const mapPath = path.join(dir, 'map.json');
   const moduleFor = name => graph.modules.find(module => module.path.split('/').pop() === name).id;
   fs.writeFileSync(mapPath, JSON.stringify({ app: [moduleFor('alpha')], beta: [moduleFor('beta')] }));
+  fs.appendFileSync(path.join(root, 'src/alpha/a.ts'), "import { helper } from '../beta/helper'; export const extra = helper();\n");
+  fs.writeFileSync(path.join(root, 'src/beta/helper.ts'), 'export function helper() { return 2; }\n');
+  fs.writeFileSync(path.join(root, 'src/alpha/isolated.ts'), 'export function isolated(x: boolean) { return x ? 1 : 2; }\n');
   const mapped = prepare('en', ['--map', mapPath]);
   await open(mapped.html);
   const click = selector => run(`document.querySelector(${JSON.stringify(selector)}).click()`);
@@ -304,4 +307,56 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await click('.atlas-evidence');
   await escape();
   assert.equal(await run("document.activeElement.dataset.id"), selection, 'Escape returns focus to the same Atlas finding');
+
+  const focusFunction = file => run(`(() => {
+    const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+    const finding = atlas.findings.find(item => item.kind === 'function' && atlas.files[atlas.functions[item.fn][0]][0] === ${JSON.stringify(file)});
+    window.__archifyAtlas.focusFinding(finding.id);
+  })()`);
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await run(`(() => {
+    window.__endpointLabels = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
+      if (/^[①②]/u.test(text)) window.__endpointLabels.push(text);
+      return original.call(this, text, ...args);
+    };
+  })()`);
+  await focusFunction('src/alpha/a.ts');
+  const paths = () => run("Array.from(document.querySelectorAll('.atlas-edge-paths dd'), item => item.textContent)");
+  assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/b.ts']);
+  assert.deepEqual(await run("[...new Set(window.__endpointLabels)]"), ['① a.ts', '② b.ts']);
+  await run(`(() => {
+    const picker = document.querySelector('.atlas-edge-picker select');
+    picker.selectedIndex = [...picker.options].findIndex(option => option.textContent.includes('helper.ts'));
+    picker.dispatchEvent(new Event('change'));
+  })()`);
+  assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/helper.ts']);
+  assert.ok(await run("window.__endpointLabels.includes('② helper.ts')"));
+
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
+  await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+  assert.equal(await run("window.__endpointLabels.includes('①') && window.__endpointLabels.includes('②')"), true);
+  assert.equal(await run(`(() => {
+    const paths = document.querySelector('.atlas-edge-paths');
+    paths.scrollIntoView({ block: 'center' });
+    return [...paths.querySelectorAll('dd')].every(item => {
+      const r = item.getBoundingClientRect();
+      return r.width > 0 && r.top >= 0 && r.bottom <= innerHeight && r.right <= innerWidth && item.scrollWidth <= item.clientWidth;
+    });
+  })()`), true, 'both full paths fit the narrow viewport after scrolling');
+  await focusFunction('src/alpha/isolated.ts');
+  assert.equal(await run("document.querySelector('.atlas-plot-selection').textContent"), 'No captured dependencies for the selected file');
+  assert.equal(await run("document.querySelector('.atlas-edge-picker')"), null);
+
+  const withoutSource = buildOverlay({ ir, graph: read('module-graph.json'), map: JSON.parse(fs.readFileSync(mapPath, 'utf8')),
+    facts: read('raw-facts.json'), html: fs.readFileSync(mapped.diagram, 'utf8'), run: { openAnalysis: true } });
+  const missing = path.join(dir, 'missing-source.html');
+  fs.writeFileSync(missing, withoutSource.html);
+  await open(missing);
+  await click('[data-diagram-action="relationships"]');
+  await click('[data-diagram-pair="0"]');
+  assert.equal(await observedCount(), 1, 'the relationship remains visible without source');
+  assert.match(await run("document.querySelector('.diagram-evidence li span').textContent"), /src\/alpha\/a\.ts:\d+ · Source was not captured/);
+  assert.equal(await run("document.querySelector('[data-diagram-source]')"), null, 'unavailable source locations are labels');
 });
