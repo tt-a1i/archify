@@ -245,6 +245,8 @@ Or, only if you want all five agents:
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
+Optional PR companion (repository-source installs only; the default install stays `archify`): after installing `archify`, `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` adds PR change walkthroughs. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs; add `[archify pr: on-demand]` to your agent's global rules file to disable even those offers.
+
 <details>
 <summary>More installation options and update-check details</summary>
 
@@ -537,6 +539,8 @@ Scan the QR code below with Alipay, or save it and open it in Alipay to scan.
 </details>
 
 Using Archify, sharing it, reporting bugs, and contributing improvements are also ways to help.
+
+[Code Analysis: setup and usage](archify/modules/code-analysis/docs/USAGE.md).
 
 ## Contributors
 

@@ -292,6 +292,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     </div>
 
     <!-- ARCHIFY:EXPLANATIONS_DATA -->
+    <!-- ARCHIFY:PAYLOADS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
     <!-- Main Diagram -->
@@ -540,6 +541,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
                 </button>
               </div>
               <small class="semantic-passport-reach-status" id="focus-reach-status" hidden aria-live="polite"></small>
+            </div>
+            <div class="semantic-passport-payload" id="focus-payload" hidden role="group" aria-labelledby="focus-payload-title">
+              <div class="semantic-passport-payload-head">
+                <span class="semantic-passport-payload-label" id="focus-payload-title">{{i18n:viewer.passport.payload}}</span>
+                <span class="semantic-passport-payload-role" id="focus-payload-role" hidden></span>
+                <code class="semantic-passport-payload-type" id="focus-payload-type" hidden></code>
+              </div>
+              <p class="semantic-passport-payload-summary" id="focus-payload-summary" hidden></p>
+              <small class="semantic-passport-payload-status" id="focus-payload-status" hidden></small>
+              <div class="semantic-passport-payload-body" id="focus-payload-body" tabindex="0" aria-labelledby="focus-payload-title"></div>
             </div>
           </div>
           <div class="relationship-lens-actions">
@@ -1011,6 +1022,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           return typeof value === 'string' && value.trim() ? value : null;
         },
         count: function () { return payload ? Object.keys(payload).length : 0; }
+      };
+    })();
+    /* Message and flow payloads are reader-only review context keyed by the
+       relationship's data-edge-id. They live in one JSON block outside the SVG
+       so canonical exports never carry them. */
+    Archify.payloads = (function () {
+      var element = document.getElementById('archify-payloads-data');
+      var payloads = null;
+      if (element) {
+        try {
+          var parsed = JSON.parse(element.textContent || 'null');
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) payloads = parsed;
+        } catch (_) {}
+      }
+      return {
+        edge: function (id) {
+          var value = payloads && id && Object.prototype.hasOwnProperty.call(payloads, id) ? payloads[id] : null;
+          return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+        },
+        count: function () { return payloads ? Object.keys(payloads).length : 0; }
       };
     })();
     /* Verified repository evidence is emitted only after the renderer checks

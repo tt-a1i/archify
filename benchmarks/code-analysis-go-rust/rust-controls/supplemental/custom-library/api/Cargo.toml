@@ -1,0 +1,6 @@
+[package]
+name="real-api"
+version="0.1.0"
+edition="2021"
+[lib]
+name="actual_api"

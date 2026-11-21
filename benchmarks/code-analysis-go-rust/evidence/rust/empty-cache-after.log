@@ -1,0 +1,18 @@
+✔ Rust crate paths, module use aliases and block-use hoisting navigate to exact definitions (19091.142042ms)
+✔ Rust editions preserve root vs local use namespaces and value names do not shadow modules (1191.793875ms)
+✔ Rust lexical values, patterns, generic/trait methods and macros keep unsupported dispatch unknown (456.054833ms)
+✔ Rust cfg profile, unknown build flags and path attributes preserve target boundaries (894.739416ms)
+✔ Rust workspace dependency aliases point to the actual library crate rather than adjacent files (490.762709ms)
+✔ Rust UTF16/source hashes, fresh paired references and metadata changes reuse investigation evidence (1590.923459ms)
+✔ Rust unknown conditional imports and duplicate block aliases never select an arbitrary target (539.600209ms)
+✔ Rust cfg_attr path selection and opaque attribute macros do not invent expanded targets (1009.690125ms)
+✔ Rust structural source cycles do not claim runtime partial initialization or force a load-order fix (558.621084ms)
+✔ Rust custom library names and explicit extern self aliases preserve crate boundaries (530.040125ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26664.880292

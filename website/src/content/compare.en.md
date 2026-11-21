@@ -1,6 +1,6 @@
-# Archify vs Mermaid, Excalidraw, and PlantUML
+# Archify vs Mermaid, Excalidraw, PlantUML & D2 (Mermaid Alternatives for AI Coding Agents)
 
-**Short answer:** use Mermaid when a tiny diagram must sit inside a Markdown code block, Excalidraw when several people need live freehand whiteboarding, and PlantUML or D2 when diagrams are text files in a classic CI pipeline. Choose **Archify** when you want an AI coding agent to turn **anything you want to understand, plan, or share** — an everyday life decision, a travel route, a complex concept, a tangled Mermaid draft, or a codebase — quickly and without diagram syntax into a polished, layout-checked interactive HTML diagram (**10 diagram types**) or a **4-style, conclusion-first one-page explainer**.
+**Short answer:** use Mermaid when a tiny diagram must sit inside a Markdown code block, Excalidraw when several people need live freehand whiteboarding, and PlantUML, D2, or LikeC4 when architecture models stay as text files in a classic CI pipeline. Choose **Archify** as a **Mermaid alternative for AI coding agents** (Claude Code, Cursor, Codex, OpenCode, or GitHub Copilot) when you want an agent to turn **anything you want to understand, plan, or share** — an everyday life decision, a travel route, a complex concept, a tangled Mermaid draft, or a codebase — quickly and without diagram syntax into a polished, layout-checked interactive HTML diagram (**10 diagram types**) or a **4-style, conclusion-first one-page explainer**.
 
 <span id="answer" class="section-anchor" aria-hidden="true"></span>
 
@@ -32,10 +32,11 @@ The table describes default strengths, not rigid limits. Skilled authors can pol
 ## When another tool fits better
 
 - **Use Mermaid** when the diagram is small, must render natively inside GitHub READMEs or docs Markdown, and should stay editable as a few lines of inline text.
-- **Use Excalidraw** when real-time collaborative whiteboarding, rough hand-drawn sketching, or mouse drag-and-drop brainstorming is the primary goal.
+- **Use Excalidraw (including Excalidraw via MCP)** when real-time collaborative whiteboarding, rough hand-drawn sketching in chat, or mouse drag-and-drop brainstorming is the primary goal.
 - **Use PlantUML or D2** when your team already maintains diagrams as plain text in Git, wants line-by-line DSL diffs in review, or needs deep formal UML notation beyond Archify's `class` and `sequence` modes.
+- **Use LikeC4** when your team wants a dedicated C4-style architecture-as-code DSL maintained as structured model files across a repository.
 - **Use a BI or observability tool** when you need live metrics, telemetry dashboards, or real-time trace streaming. Archify produces an authored artifact, not a live monitor.
-- **Use a hosted collaboration service** when several users need simultaneous cloud editing and role permissions. Archify is not a hosted SaaS editor.
+- **Use a hosted collaboration service such as Eraser.io** when several users need simultaneous cloud editing, shared workspaces, and role permissions. Archify is not a hosted SaaS editor.
 
 Archify also does not promise lossless parsing of every Mermaid construct, automatic discovery of arbitrary systems without guidance, or proof that claims match runtime reality. Validation guarantees a clean, non-overlapping, browser-verified deliverable — human review still owns factual accuracy.
 

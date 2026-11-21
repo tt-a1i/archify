@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "module-graph.schema.json",
+  "title": "Bauify module graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "repository", "grouping", "excluded", "modules", "edges", "unresolved"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "repository": { "type": "object" },
+    "grouping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["depth", "packageBoundaries", "groups"],
+      "properties": {
+        "depth": { "type": "integer", "minimum": 1 },
+        "packageBoundaries": { "type": "boolean" },
+        "groups": { "type": "array", "items": { "type": "string" } },
+        "java": { "enum": ["build-modules", "packages"], "description": "Java default grouping: Maven/Gradle modules, or the first package level of a single-module build. Absent when modules.depth is configured, modules.packageBoundaries is false, or no analyzed file below the root is left to it after modules.groups." },
+        "typescript": { "enum": ["nested-source-roots-v1", "nested-source-roots-v2"], "description": "Default JS/TS grouping splits <app>/src at its first child. v2 chooses the innermost src when roots repeat; v1 used the first. A single root src/* and explicit groups/depth retain their previous policy. Optional for historical graphs." }
+      }
+    },
+    "excluded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roles", "files"],
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "files": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "path", "files", "loc", "fanIn", "fanOut", "instability", "entry"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "label": { "type": "string", "minLength": 1 },
+          "path": { "type": "string" },
+          "files": { "type": "integer", "minimum": 1 },
+          "loc": { "type": "integer", "minimum": 0 },
+          "fanIn": { "type": "integer", "minimum": 0 },
+          "fanOut": { "type": "integer", "minimum": 0 },
+          "instability": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "entry": { "type": "array", "minItems": 1, "maxItems": 3, "items": { "type": "string" } }
+        }
+      }
+    },
+    "fileModules": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Exact file-to-module ownership from graph construction, including explicit groups and root files." },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to", "weight", "kinds", "evidence"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "weight": { "type": "integer", "minimum": 1 },
+          "kinds": { "type": "object", "minProperties": 1, "not": { "required": ["eager"], "maxProperties": 1 }, "properties": { "eager": { "type": "integer", "minimum": 0 } }, "additionalProperties": { "type": "integer", "minimum": 1 } },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["file", "line", "to"],
+              "properties": {
+                "file": { "type": "string" },
+                "line": { "type": "integer", "minimum": 1 },
+                "deferred": { "const": true },
+                "to": { "type": "string" },
+                "contexts": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+                "lazy": { "const": true },
+                "typeOnly": { "const": true },
+                "conditional": { "const": true },
+                "implicit": { "const": true }
+              }
+            }
+          }
+        }
+      }
+    },
+    "unresolved": { "type": "object" }
+  }
+}

@@ -1,0 +1,731 @@
+{
+  "schema_version": 1,
+  "repository": {
+    "revision": null,
+    "baseRevision": null,
+    "sourceKind": "working-tree",
+    "root": ".",
+    "url": null,
+    "language": "py",
+    "adapter": "pyright-parser@1.1.414/python-3.14",
+    "adapterRevision": 17,
+    "snapshotId": "f1c9bfd491749465032c6b9299dd131d39314bfd3bf4c6874ec3f06bfa494ad2"
+  },
+  "files": [
+    {
+      "path": "app/__init__.py",
+      "loc": 0,
+      "role": "source",
+      "sourceText": ""
+    },
+    {
+      "path": "app/a.py",
+      "loc": 10,
+      "role": "source",
+      "sourceText": "\"\"\"Settings shared by the request handlers.\"\"\"\nfrom app.b import Handler\n\nDEFAULT_TIMEOUT = 30\n\n\nclass Config:\n    def __init__(self, timeout=DEFAULT_TIMEOUT):\n        self.timeout = timeout\n        self.handler = Handler(self)\n"
+    },
+    {
+      "path": "app/b.py",
+      "loc": 10,
+      "role": "source",
+      "sourceText": "\"\"\"Request handler that reads its limits from the config.\"\"\"\nfrom app.a import DEFAULT_TIMEOUT\n\n\nclass Handler:\n    def __init__(self, config):\n        self.config = config\n\n    def limit(self):\n        return self.config.timeout or DEFAULT_TIMEOUT\n"
+    },
+    {
+      "path": "app/engine.py",
+      "loc": 42,
+      "role": "source",
+      "sourceText": "\"\"\"Routes an incoming message to a handler.\"\"\"\n\n\ndef route(message, user, flags):\n    if not message:\n        return None\n    kind = message.get(\"kind\")\n    if kind == \"text\":\n        if user.get(\"muted\"):\n            return \"drop\"\n        if flags.get(\"translate\") and message.get(\"lang\") != user.get(\"lang\"):\n            return \"translate\"\n        return \"text\"\n    elif kind == \"image\":\n        if message.get(\"size\", 0) > 10_000_000:\n            return \"too-large\"\n        for tag in message.get(\"tags\", []):\n            if tag == \"nsfw\" and not user.get(\"adult\"):\n                return \"blocked\"\n        return \"image\"\n    elif kind == \"command\":\n        name = message.get(\"name\")\n        if name == \"help\":\n            return \"help\"\n        elif name == \"stop\" or name == \"quit\":\n            return \"stop\"\n        elif name == \"retry\":\n            while flags.get(\"busy\"):\n                flags[\"busy\"] = False\n            return \"retry\"\n        return \"unknown-command\"\n    elif kind == \"event\":\n        try:\n            code = int(message.get(\"code\"))\n        except (TypeError, ValueError):\n            return \"bad-event\"\n        return \"event\" if code > 0 else \"noop\"\n    return \"unsupported\"\n\n\ndef describe(result):\n    return result or \"none\"\n"
+    },
+    {
+      "path": "domain/__init__.py",
+      "loc": 0,
+      "role": "source",
+      "sourceText": ""
+    },
+    {
+      "path": "domain/model.py",
+      "loc": 9,
+      "role": "source",
+      "sourceText": "\"\"\"Order model.\"\"\"\n\n\nclass Order:\n    def __init__(self, items):\n        self.items = list(items)\n\n    def total(self):\n        return sum(item[\"price\"] for item in self.items)\n"
+    },
+    {
+      "path": "domain/order.py",
+      "loc": 8,
+      "role": "source",
+      "sourceText": "\"\"\"Order checkout.\"\"\"\nfrom domain.model import Order\nfrom ui.view import format_price\n\n\ndef checkout(items):\n    order = Order(items)\n    return format_price(order.total())\n"
+    },
+    {
+      "path": "ui/__init__.py",
+      "loc": 0,
+      "role": "source",
+      "sourceText": ""
+    },
+    {
+      "path": "ui/view.py",
+      "loc": 10,
+      "role": "source",
+      "sourceText": "\"\"\"Formatting helpers for the order screen.\"\"\"\nfrom domain.model import Order\n\n\ndef format_price(value):\n    return f\"${value:,.2f}\"\n\n\ndef render(items):\n    return format_price(Order(items).total())\n"
+    }
+  ],
+  "packageMarkers": [
+    "app/__init__.py",
+    "domain/__init__.py",
+    "ui/__init__.py"
+  ],
+  "imports": [
+    {
+      "from": "app/a.py",
+      "specifier": "app.b",
+      "kind": "static",
+      "line": 2,
+      "resolved": true,
+      "names": [
+        "Handler"
+      ],
+      "to": "app/b.py"
+    },
+    {
+      "from": "app/b.py",
+      "specifier": "app.a",
+      "kind": "static",
+      "line": 2,
+      "resolved": true,
+      "names": [
+        "DEFAULT_TIMEOUT"
+      ],
+      "to": "app/a.py"
+    },
+    {
+      "from": "domain/order.py",
+      "specifier": "domain.model",
+      "kind": "static",
+      "line": 2,
+      "resolved": true,
+      "names": [
+        "Order"
+      ],
+      "to": "domain/model.py"
+    },
+    {
+      "from": "domain/order.py",
+      "specifier": "ui.view",
+      "kind": "static",
+      "line": 3,
+      "resolved": true,
+      "names": [
+        "*"
+      ],
+      "implicit": true,
+      "to": "ui/__init__.py"
+    },
+    {
+      "from": "domain/order.py",
+      "specifier": "ui.view",
+      "kind": "static",
+      "line": 3,
+      "resolved": true,
+      "names": [
+        "format_price"
+      ],
+      "to": "ui/view.py"
+    },
+    {
+      "from": "ui/view.py",
+      "specifier": "domain.model",
+      "kind": "static",
+      "line": 2,
+      "resolved": true,
+      "names": [
+        "*"
+      ],
+      "implicit": true,
+      "to": "domain/__init__.py"
+    },
+    {
+      "from": "ui/view.py",
+      "specifier": "domain.model",
+      "kind": "static",
+      "line": 2,
+      "resolved": true,
+      "names": [
+        "Order"
+      ],
+      "to": "domain/model.py"
+    }
+  ],
+  "symbols": [
+    {
+      "file": "app/a.py",
+      "name": "Handler",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "file": "app/a.py",
+      "name": "DEFAULT_TIMEOUT",
+      "kind": "variable",
+      "line": 4
+    },
+    {
+      "file": "app/a.py",
+      "name": "Config",
+      "kind": "class",
+      "line": 7
+    },
+    {
+      "file": "app/b.py",
+      "name": "DEFAULT_TIMEOUT",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "file": "app/b.py",
+      "name": "Handler",
+      "kind": "class",
+      "line": 5
+    },
+    {
+      "file": "app/engine.py",
+      "name": "route",
+      "kind": "function",
+      "line": 4
+    },
+    {
+      "file": "app/engine.py",
+      "name": "describe",
+      "kind": "function",
+      "line": 41
+    },
+    {
+      "file": "domain/model.py",
+      "name": "Order",
+      "kind": "class",
+      "line": 4
+    },
+    {
+      "file": "domain/order.py",
+      "name": "Order",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "file": "domain/order.py",
+      "name": "format_price",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "file": "domain/order.py",
+      "name": "checkout",
+      "kind": "function",
+      "line": 6
+    },
+    {
+      "file": "ui/view.py",
+      "name": "Order",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "file": "ui/view.py",
+      "name": "format_price",
+      "kind": "function",
+      "line": 5
+    },
+    {
+      "file": "ui/view.py",
+      "name": "render",
+      "kind": "function",
+      "line": 9
+    }
+  ],
+  "functions": [
+    {
+      "file": "app/a.py",
+      "name": "__init__",
+      "qualname": "Config.__init__",
+      "line": 8,
+      "endLine": 10,
+      "sourceRange": {
+        "line": 8,
+        "column": 5,
+        "endLine": 10,
+        "endColumn": 37,
+        "sha256": "fe0257bb26eab1b73b0b10aaa97c51a64072e37d36d0e12be002d5011c0ed3ff"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 8,
+          "column": 5,
+          "endLine": 10,
+          "endColumn": 37,
+          "sha256": "fe0257bb26eab1b73b0b10aaa97c51a64072e37d36d0e12be002d5011c0ed3ff"
+        }
+      },
+      "complexity": 1,
+      "nesting": 0,
+      "deepestLine": 8
+    },
+    {
+      "file": "app/b.py",
+      "name": "__init__",
+      "qualname": "Handler.__init__",
+      "line": 6,
+      "endLine": 7,
+      "sourceRange": {
+        "line": 6,
+        "column": 5,
+        "endLine": 7,
+        "endColumn": 29,
+        "sha256": "c203a0217d1c1950415c427f1cb9c7d6085761d3f21b90b6d7c6e63a0643abbd"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 6,
+          "column": 5,
+          "endLine": 7,
+          "endColumn": 29,
+          "sha256": "c203a0217d1c1950415c427f1cb9c7d6085761d3f21b90b6d7c6e63a0643abbd"
+        }
+      },
+      "complexity": 1,
+      "nesting": 0,
+      "deepestLine": 6
+    },
+    {
+      "file": "app/b.py",
+      "name": "limit",
+      "qualname": "Handler.limit",
+      "line": 9,
+      "endLine": 10,
+      "sourceRange": {
+        "line": 9,
+        "column": 5,
+        "endLine": 10,
+        "endColumn": 54,
+        "sha256": "2681a96a75d72ed5491ddbfaac2a208f5bd25b686bb979944f178cb7423e6aee"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 9,
+          "column": 5,
+          "endLine": 10,
+          "endColumn": 54,
+          "sha256": "2681a96a75d72ed5491ddbfaac2a208f5bd25b686bb979944f178cb7423e6aee"
+        }
+      },
+      "complexity": 2,
+      "nesting": 0,
+      "deepestLine": 9
+    },
+    {
+      "file": "app/engine.py",
+      "name": "route",
+      "qualname": "route",
+      "line": 4,
+      "endLine": 38,
+      "sourceRange": {
+        "line": 4,
+        "column": 1,
+        "endLine": 38,
+        "endColumn": 25,
+        "sha256": "7e17c80aab6fb73cbc7e97cd4ca9e09213312eb456eccfd4bf7db26f1ce4fdcb"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 4,
+          "column": 1,
+          "endLine": 38,
+          "endColumn": 25,
+          "sha256": "7e17c80aab6fb73cbc7e97cd4ca9e09213312eb456eccfd4bf7db26f1ce4fdcb"
+        }
+      },
+      "complexity": 20,
+      "nesting": 3,
+      "deepestLine": 18
+    },
+    {
+      "file": "app/engine.py",
+      "name": "describe",
+      "qualname": "describe",
+      "line": 41,
+      "endLine": 42,
+      "sourceRange": {
+        "line": 41,
+        "column": 1,
+        "endLine": 42,
+        "endColumn": 28,
+        "sha256": "bf874d649fd43a0d1f567beff6639e07276624d581093c3b81900e7ccc2b9e0e"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 41,
+          "column": 1,
+          "endLine": 42,
+          "endColumn": 28,
+          "sha256": "bf874d649fd43a0d1f567beff6639e07276624d581093c3b81900e7ccc2b9e0e"
+        }
+      },
+      "complexity": 2,
+      "nesting": 0,
+      "deepestLine": 41
+    },
+    {
+      "file": "domain/model.py",
+      "name": "__init__",
+      "qualname": "Order.__init__",
+      "line": 5,
+      "endLine": 6,
+      "sourceRange": {
+        "line": 5,
+        "column": 5,
+        "endLine": 6,
+        "endColumn": 33,
+        "sha256": "1bae05cf9bb443fa024a23debae16dd8c500b7cffb9414c189d902cb7b9beb70"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 5,
+          "column": 5,
+          "endLine": 6,
+          "endColumn": 33,
+          "sha256": "1bae05cf9bb443fa024a23debae16dd8c500b7cffb9414c189d902cb7b9beb70"
+        }
+      },
+      "complexity": 1,
+      "nesting": 0,
+      "deepestLine": 5
+    },
+    {
+      "file": "domain/model.py",
+      "name": "total",
+      "qualname": "Order.total",
+      "line": 8,
+      "endLine": 9,
+      "sourceRange": {
+        "line": 8,
+        "column": 5,
+        "endLine": 9,
+        "endColumn": 57,
+        "sha256": "5ba538ddcb2676375cea1a58c64bf822de670da650e50154b3e031a696d4f60d"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 8,
+          "column": 5,
+          "endLine": 9,
+          "endColumn": 57,
+          "sha256": "5ba538ddcb2676375cea1a58c64bf822de670da650e50154b3e031a696d4f60d"
+        }
+      },
+      "complexity": 2,
+      "nesting": 0,
+      "deepestLine": 8
+    },
+    {
+      "file": "domain/order.py",
+      "name": "checkout",
+      "qualname": "checkout",
+      "line": 6,
+      "endLine": 8,
+      "sourceRange": {
+        "line": 6,
+        "column": 1,
+        "endLine": 8,
+        "endColumn": 39,
+        "sha256": "8e4a3b6197dade9b8f20e4b2e70edb2f85c4556c659a661b710159ab0f128db7"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 6,
+          "column": 1,
+          "endLine": 8,
+          "endColumn": 39,
+          "sha256": "8e4a3b6197dade9b8f20e4b2e70edb2f85c4556c659a661b710159ab0f128db7"
+        }
+      },
+      "complexity": 1,
+      "nesting": 0,
+      "deepestLine": 6
+    },
+    {
+      "file": "ui/view.py",
+      "name": "format_price",
+      "qualname": "format_price",
+      "line": 5,
+      "endLine": 6,
+      "sourceRange": {
+        "line": 5,
+        "column": 1,
+        "endLine": 6,
+        "endColumn": 28,
+        "sha256": "82eeb15c0baf69f5b48e82ebd4b6a140c5b7c8728097f7c928545db7d8c8c190"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 5,
+          "column": 1,
+          "endLine": 6,
+          "endColumn": 28,
+          "sha256": "82eeb15c0baf69f5b48e82ebd4b6a140c5b7c8728097f7c928545db7d8c8c190"
+        }
+      },
+      "complexity": 1,
+      "nesting": 0,
+      "deepestLine": 5
+    },
+    {
+      "file": "ui/view.py",
+      "name": "render",
+      "qualname": "render",
+      "line": 9,
+      "endLine": 10,
+      "sourceRange": {
+        "line": 9,
+        "column": 1,
+        "endLine": 10,
+        "endColumn": 46,
+        "sha256": "f3d79eeda3b6a4050b3e3ec164ef47fbcf01467fc219155a16dd237e99671608"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 9,
+          "column": 1,
+          "endLine": 10,
+          "endColumn": 46,
+          "sha256": "f3d79eeda3b6a4050b3e3ec164ef47fbcf01467fc219155a16dd237e99671608"
+        }
+      },
+      "complexity": 1,
+      "nesting": 0,
+      "deepestLine": 9
+    }
+  ],
+  "callModel": "python-source-v3",
+  "calls": [
+    {
+      "file": "app/a.py",
+      "line": 10,
+      "column": 24,
+      "endLine": 10,
+      "endColumn": 37,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 7,
+      "column": 12,
+      "endLine": 7,
+      "endColumn": 31,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 9,
+      "column": 12,
+      "endLine": 9,
+      "endColumn": 29,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 11,
+      "column": 12,
+      "endLine": 11,
+      "endColumn": 34,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 11,
+      "column": 39,
+      "endLine": 11,
+      "endColumn": 58,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 11,
+      "column": 62,
+      "endLine": 11,
+      "endColumn": 78,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 15,
+      "column": 12,
+      "endLine": 15,
+      "endColumn": 34,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 17,
+      "column": 20,
+      "endLine": 17,
+      "endColumn": 43,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 18,
+      "column": 38,
+      "endLine": 18,
+      "endColumn": 55,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 22,
+      "column": 16,
+      "endLine": 22,
+      "endColumn": 35,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 28,
+      "column": 19,
+      "endLine": 28,
+      "endColumn": 36,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 34,
+      "column": 20,
+      "endLine": 34,
+      "endColumn": 44,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 34,
+      "column": 24,
+      "endLine": 34,
+      "endColumn": 43,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "domain/model.py",
+      "line": 6,
+      "column": 22,
+      "endLine": 6,
+      "endColumn": 33,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "domain/model.py",
+      "line": 9,
+      "column": 16,
+      "endLine": 9,
+      "endColumn": 57,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "domain/order.py",
+      "line": 7,
+      "column": 13,
+      "endLine": 7,
+      "endColumn": 25,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "domain/order.py",
+      "line": 8,
+      "column": 12,
+      "endLine": 8,
+      "endColumn": 39,
+      "resolution": "imported-function",
+      "target": {
+        "file": "ui/view.py",
+        "name": "format_price",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "file": "domain/order.py",
+      "line": 8,
+      "column": 25,
+      "endLine": 8,
+      "endColumn": 38,
+      "resolution": "python-source-declaration",
+      "target": {
+        "file": "domain/model.py",
+        "name": "total",
+        "line": 8,
+        "column": 5
+      }
+    },
+    {
+      "file": "ui/view.py",
+      "line": 10,
+      "column": 12,
+      "endLine": 10,
+      "endColumn": 46,
+      "resolution": "same-file-function",
+      "target": {
+        "name": "format_price",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "file": "ui/view.py",
+      "line": 10,
+      "column": 25,
+      "endLine": 10,
+      "endColumn": 37,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "ui/view.py",
+      "line": 10,
+      "column": 25,
+      "endLine": 10,
+      "endColumn": 45,
+      "resolution": "python-source-declaration",
+      "target": {
+        "file": "domain/model.py",
+        "name": "total",
+        "line": 8,
+        "column": 5
+      }
+    }
+  ],
+  "unresolved": {
+    "external": 0,
+    "outside": 0,
+    "unknown": 0,
+    "opaque": 0
+  }
+}
