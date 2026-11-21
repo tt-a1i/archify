@@ -506,6 +506,10 @@ jobs:
         with:
           chrome-version: stable
           install-dependencies: true
+      - name: Install Chinese font coverage for website screenshots
+        run: |
+          sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
+          fc-match 'sans-serif:lang=zh-cn'
       - name: Verify built website navigation and language continuity
         run: npm run test:browser
         working-directory: website
@@ -528,6 +532,13 @@ jobs:
           ARCHIFY_SITE_INTEGRATION: '1'
           ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Upload homepage visual evidence
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: website-homepage-evidence
+          path: website/.browser-evidence
+          if-no-files-found: warn
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: website-dist
