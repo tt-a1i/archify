@@ -154,6 +154,8 @@
           "label"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },
@@ -193,6 +195,9 @@
                 "name"
               ],
               "properties": {
+                "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+                "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
+                "previousType": { "type": "string", "minLength": 1 },
                 "name": {
                   "type": "string",
                   "minLength": 1
@@ -276,6 +281,8 @@
           "toCardinality"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Checkout platform — ledger rollout",
+    "output": "examples/checkout-ledger-architecture.html",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "edge", "type": "cloud", "label": "Edge Gateway", "sublabel": "TLS + routing", "pos": [40, 250], "size": [130, 60] },
+    { "id": "checkout", "type": "backend", "label": "Checkout API", "sublabel": "writes ledger_ref", "pos": [260, 250], "size": [140, 60], "change": "modified", "emphasis": true },
+    { "id": "ledger", "type": "backend", "label": "Ledger service", "sublabel": "append-only", "pos": [500, 110], "size": [140, 60], "change": "added" },
+    { "id": "audit", "type": "backend", "label": "Audit service", "sublabel": "sync hop", "pos": [500, 390], "size": [140, 60], "change": "removed" },
+    { "id": "orders", "type": "database", "label": "Orders", "sublabel": "PostgreSQL", "pos": [500, 250], "size": [140, 60] },
+    { "id": "ledger-db", "type": "database", "label": "Ledger entries", "sublabel": "PostgreSQL", "pos": [740, 110], "size": [140, 60], "change": "added" },
+    { "id": "audit-db", "type": "database", "label": "Audit log", "sublabel": "PostgreSQL", "pos": [740, 390], "size": [140, 60], "change": "removed" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Production region", "wraps": ["checkout", "ledger", "audit", "orders", "ledger-db", "audit-db"] }
+  ],
+  "connections": [
+    { "id": "edge-checkout", "from": "edge", "to": "checkout", "label": "HTTPS" },
+    { "id": "checkout-orders", "from": "checkout", "to": "orders", "label": "SQL tx" },
+    { "id": "checkout-ledger", "from": "checkout", "to": "ledger", "label": "append entry", "variant": "emphasis", "fromSide": "top", "toSide": "left", "change": "added" },
+    { "id": "checkout-audit", "from": "checkout", "to": "audit", "label": "log event", "fromSide": "bottom", "toSide": "left", "change": "removed" },
+    { "id": "ledger-store", "from": "ledger", "to": "ledger-db", "label": "insert", "change": "added" },
+    { "id": "audit-store", "from": "audit", "to": "audit-db", "label": "insert", "change": "removed" }
+  ]
+}

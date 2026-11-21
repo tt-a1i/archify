@@ -25,6 +25,7 @@ import { DiagnosticError, fail } from '../core/index.mjs';
 import { analysisStartCommand } from '../lib/task-command.mjs';
 import { standaloneShell } from '../overlay/standalone.mjs';
 import { withInstallLock } from '../lib/install-lock.mjs';
+import { clientAsset } from '../overlay/client-assets.mjs';
 import { preparePullRequest } from '../lib/pull-request.mjs';
 
 const execute = promisify(execFile);
@@ -214,7 +215,7 @@ export async function startAnalysisView(argv, dependencies = {}) {
   const session = await prepareAnalysisSession(argv);
   const { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile } = session;
   const token = randomBytes(24).toString('hex');
-  const page = (delivered ? fs.readFileSync(delivered, 'utf8') : standaloneShell({ locale, title: path.basename(root) })).replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)}, ${JSON.stringify(messagesFor(locale))}, ${createTranslator.toString()}, ${!ir})</script></body>`);
+  const page = (delivered ? fs.readFileSync(delivered, 'utf8') : standaloneShell({ locale, title: path.basename(root) })).replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)}, ${JSON.stringify(messagesFor(locale))}, ${createTranslator.toString()}, ${!ir}, ${JSON.stringify(clientAsset('entry.css'))})</script></body>`);
   let pending = null, result = null, origin, reviewing = false;
   const analysisDir = path.join(out, 'analysis');
   const runAnalysis = () => runSessionAnalysis(session, dependencies);
@@ -343,14 +344,21 @@ export async function startAnalysisView(argv, dependencies = {}) {
 // Runs in the page. One toolbar button: click → analysis runs → the analysis
 // layer is added to this page and switched on. From then on the layer's own
 // toggle (the same button, now owned by the layer) shows or hides it.
-function client(token, messages, makeTranslator, standalone) {
+function client(token, messages, makeTranslator, standalone, entryCss) {
   var tr = makeTranslator(messages);
   var toolbar = document.querySelector('.toolbar');
   if (!toolbar) return;
   var button = document.createElement('button');
-  button.id = 'code-analysis-start'; button.type = 'button'; button.textContent = tr("Code Analysis");
+  button.id = 'code-analysis-start'; button.type = 'button'; button.className = 'analysis-entry';
   button.title = tr("Analyze the repository and show the result on this diagram");
-  toolbar.appendChild(button);
+  // Icon + label in its own capsule before Export (overlay/client/entry.css).
+  var entryStyle = document.createElement('style'); entryStyle.id = 'code-analysis-entry-style'; entryStyle.textContent = entryCss;
+  document.head.appendChild(entryStyle);
+  var entryLabel = document.createElement('span');
+  var setLabel = function (text) { entryLabel.textContent = text; };
+  button.innerHTML = '<span class="analysis-entry-icon" aria-hidden="true"></span>'; button.appendChild(entryLabel);
+  setLabel(tr("Code Analysis"));
+  toolbar.insertBefore(button, toolbar.querySelector('.export-wrap'));
   var note = document.createElement('div');
   note.id = 'code-analysis-note'; note.setAttribute('role', 'status');
   note.style.cssText = 'position:fixed;z-index:59;width:max-content;max-width:min(420px,calc(100vw - 16px));box-sizing:border-box;overflow-wrap:anywhere;padding:8px 12px;border-radius:8px;background:var(--panel,#0f172a);color:var(--text-muted,#94a3b8);border:1px solid var(--panel-border,#1e293b);font:12px ui-monospace,Menlo,Consolas,monospace;display:none';
@@ -420,13 +428,13 @@ function client(token, messages, makeTranslator, standalone) {
     location.replace(location.pathname + '?analysis=open');
   };
   button.addEventListener('click', async function () {
-    button.disabled = true; button.textContent = tr("Analyzing…"); say(tr("Reading the repository — imports, modules, rules."));
+    button.disabled = true; button.setAttribute('aria-busy', 'true'); setLabel(tr("Analyzing…")); say(tr("Reading the repository — imports, modules, rules."));
     try {
       var response = await fetch('/analyze', { method: 'POST', headers: { 'X-Analysis-Token': token } });
       if (!response.ok) {
         var body = await response.json();
         if (response.status === 409 && body.diagnostics?.[0]?.code === 'analysis/architecture-changed') {
-          button.disabled = true; button.textContent = tr("Code Analysis");
+          button.disabled = true; button.removeAttribute('aria-busy'); setLabel(tr("Code Analysis"));
           say(tr("Architecture has changed. Please regenerate the diagram."));
           return;
         }
@@ -435,8 +443,9 @@ function client(token, messages, makeTranslator, standalone) {
       var parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
       var required = ['bauify-analysis', 'bauify-style', 'bauify-script'];
       for (var i = 0; i < required.length; i++) if (!parsed.getElementById(required[i])) throw new Error(tr("analysis result is incomplete"));
-      // In document order; the Atlas parts are present only when raw facts were available.
-      var ids = ['bauify-analysis', 'bauify-atlas-data', 'bauify-style', 'bauify-script', 'bauify-atlas-style', 'bauify-atlas-script'].filter(function (id) { return parsed.getElementById(id); });
+      // In document order; the Atlas parts are present only when raw facts were available,
+      // the Atlas 3D parts only below a diagram. three.js arrives as inert text/plain.
+      var ids = ['bauify-analysis', 'bauify-atlas-data', 'bauify-style', 'bauify-script', 'bauify-atlas3d-data', 'bauify-three', 'bauify-atlas-style', 'bauify-atlas-script', 'bauify-atlas3d-style', 'bauify-atlas3d-script'].filter(function (id) { return parsed.getElementById(id); });
       // Hand over to the layer: it adds its own toggle to the toolbar, so this button retires.
       button.remove(); say('');
       window.removeEventListener('resize', reposition);
@@ -446,7 +455,7 @@ function client(token, messages, makeTranslator, standalone) {
       if (toolbarObserver) toolbarObserver.disconnect();
       for (var j = 0; j < ids.length; j++) {
         var original = parsed.getElementById(ids[j]), element = document.createElement(original.tagName);
-        element.id = ids[j]; if (original.getAttribute('type') === 'application/json') element.type = 'application/json';
+        element.id = ids[j]; if (original.getAttribute('type')) element.type = original.getAttribute('type');
         element.textContent = original.textContent; document.body.appendChild(element);
       }
       var toggle = document.getElementById('btn-bauify');
@@ -455,7 +464,7 @@ function client(token, messages, makeTranslator, standalone) {
       if (selectedFinding && window.__archifyShowFinding) window.__archifyShowFinding(selectedFinding, params.get('from') === 'findings' ? 'findings' : 'summary');
       if (location.search) history.replaceState(null, '', location.pathname);
     } catch (error) {
-      button.disabled = false; button.textContent = tr("Code Analysis");
+      button.disabled = false; button.removeAttribute('aria-busy'); setLabel(tr("Code Analysis"));
       say(tr("Analysis failed: ") + error.message + tr(" — click Code Analysis to retry."));
     }
   });

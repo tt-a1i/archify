@@ -50,7 +50,7 @@ test('overlay: components map to modules through their sources; descendants foll
   assert.deepEqual(lib.modules.map((m) => m.id), ['src-lib']);
   assert.deepEqual(app.outgoing.map((e) => [e.component, e.weight]), [['lib', 3]]);
   assert.deepEqual(lib.incoming.map((e) => [e.component, e.weight]), [['app', 3]]);
-  assert.deepEqual(p.edges, [{ from: 'app', to: 'lib', weight: 3, evidence: [{ file: 'src/index.mjs', line: 2, to: 'src/lib/helper.mjs' }] }]);
+  assert.deepEqual(p.edges, [{ from: 'app', to: 'lib', weight: 3, declared: false, evidence: [{ file: 'src/index.mjs', line: 2, to: 'src/lib/helper.mjs' }] }]);
   assert.deepEqual(p.unmapped.map((m) => m.id), ['tools']);
   assert.equal(result.mapped, 2);
 });

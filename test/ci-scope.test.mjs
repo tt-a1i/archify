@@ -12,6 +12,7 @@ const workflow = parse(fs.readFileSync(new URL('../.github/workflows/ci.yml', im
 
 test('owned changes add their real gates without requiring every unrelated lane', () => {
   assert.equal(classifyPaths(['README.md', 'docs/assets/community/qq.svg']).scope, 'docs');
+  assert.equal(classifyPaths(['README_JA.md']).scope, 'docs');
   const render = classifyPaths(['archify/renderers/workflow/render-workflow.mjs']);
   assert.equal(render.scope, 'core');
   assert.deepEqual(render.owners, ['workflow']);
@@ -34,6 +35,45 @@ test('owned changes add their real gates without requiring every unrelated lane'
   assert.ok(classifyPaths(['docs/skill-updates/archify/stable.json']).manifest);
 });
 
+test('five README languages and changelog use documentation checks and preserve mixed product gates', () => {
+  const readmes = ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md', 'README_KO.md'];
+  const available = ['readme-showcase', 'readme-support', 'cursor-onboarding', 'llms-txt', 'skill-metadata',
+    'preview-contract', 'community-proof-intake', 'real-repository-proof', 'workflow-compiler']
+    .map(name => `test/${name}.test.mjs`);
+  for (const file of readmes) {
+    const plan = classifyPaths([file]);
+    assert.equal(plan.scope, 'docs', file);
+    assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice(0, -1).sort());
+    for (const gate of ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website']) assert.equal(plan[gate], false, `${file}: ${gate}`);
+  }
+  assert.deepEqual(selectAffectedTests(classifyPaths(['CONTRIBUTING.md']).owners, [], available), ['test/community-proof-intake.test.mjs']);
+  assert.deepEqual(selectAffectedTests(classifyPaths(['docs/assets/community/qq.svg']).owners, [], available), ['test/readme-showcase.test.mjs']);
+  const changelog = classifyPaths(['CHANGELOG.md']);
+  assert.equal(changelog.scope, 'docs');
+  assert.deepEqual(selectAffectedTests(changelog.owners, [], available), []);
+  assert.equal(classifyPaths([...readmes, 'CHANGELOG.md']).scope, 'docs');
+  const mixed = classifyPaths(['README_KO.md', 'CHANGELOG.md', 'archify/renderers/workflow/render-workflow.mjs']);
+  assert.equal(mixed.scope, 'core');
+  assert.ok(mixed.generated && mixed.browser && mixed.package);
+  assert.deepEqual(selectAffectedTests(mixed.owners, [], available), available.slice().sort());
+  assert.equal(classifyPaths(['README_JA.md', 'test/readme-support.test.mjs']).scope, 'core');
+  for (const file of ['README_FR.md', 'CHANGELOG_ZH.md', 'archify/README.md']) assert.equal(classifyPaths([file]).scope, 'full', file);
+});
+
+test('documentation workflow installs parser dependencies and runs the affected contracts', () => {
+  const steps = workflow.jobs.scope.steps;
+  const install = steps.findIndex(step => step.name === 'Install documentation check dependencies');
+  const check = steps.findIndex(step => step.name === 'Check affected documentation contracts');
+  assert.ok(install >= 0 && check > install);
+  assert.match(steps[install].if, /scope == 'docs'/);
+  assert.match(steps[install].if, /'readme'/);
+  assert.match(steps[install].if, /'changelog'/);
+  assert.match(steps[install].run, /^npm ci\b/);
+  assert.equal(steps[check].if, "steps.classify.outputs.scope == 'docs'");
+  assert.equal(steps[check].run, 'npm run test:affected');
+  assert.equal(steps[check].env.CI_TEST_OWNERS, '${{ steps.classify.outputs.owners }}');
+});
+
 test('Windows evidence replacement fixtures retain their native host gate', () => {
   const plan = classifyPaths(['test/repository-evidence-replacement.test.mjs']);
   assert.equal(plan.scope, 'core');
@@ -41,6 +81,14 @@ test('Windows evidence replacement fixtures retain their native host gate', () =
   assert.deepEqual(plan.changedTests, ['test/repository-evidence-replacement.test.mjs']);
   assert.equal(plan.browser, false);
   assert.equal(plan.package, false);
+});
+
+test('Story filesystem and process owners retain full regression and Windows gates', () => {
+  for (const file of ['output.mjs', 'tool.mjs', 'cli.mjs', 'choreography-plan.mjs']) {
+    const plan = classifyPaths([`archify/story/${file}`]);
+    assert.equal(plan.scope, 'full', file);
+    assert.equal(plan.windows, true, file);
+  }
 });
 
 test('recipe, schema and shared renderer owners include their real source consumers', () => {
@@ -56,6 +104,12 @@ test('recipe, schema and shared renderer owners include their real source consum
   const schema = classifyPaths(['archify/schemas/workflow.schema.json']);
   assert.equal(schema.scope, 'core');
   assert.ok(selectAffectedTests(schema.owners, [], available).includes('test/generate-validators.test.mjs'));
+  const storySchema = classifyPaths(['archify/schemas/story-choreography.schema.json']);
+  assert.equal(storySchema.scope, 'core');
+  assert.ok(storySchema.owners.includes('schema') && storySchema.generated && storySchema.browser && storySchema.package);
+  const storyMod = classifyPaths(['archify/story/story-svg.mjs']);
+  assert.equal(storyMod.scope, 'core');
+  assert.ok(storyMod.owners.includes('viewer') && storyMod.generated && storyMod.browser && storyMod.webm && storyMod.package);
 });
 
 test('shared SVG parser changes retain the public checker suite without selecting unrelated tests', () => {
@@ -69,6 +123,60 @@ test('shared SVG parser changes retain the public checker suite without selectin
 
   const prose = classifyPaths(['README.md']);
   assert.deepEqual(selectAffectedTests(prose.owners, prose.changedTests, available), ['test/readme-showcase.test.mjs']);
+});
+
+test('review export and PR pack changes retain their offline, export and sandbox suites', () => {
+  const available = ['test/pr-pack.test.mjs', 'test/pr-attach.test.mjs', 'test/pr-attach-gitlab.test.mjs', 'test/svg-bake.test.mjs',
+    'test/svg-export-img-browser.test.mjs', 'test/change-marks.test.mjs', 'test/cli.test.mjs', 'test/workflow-compiler.test.mjs'];
+  for (const source of ['archify/renderers/shared/svg-export.mjs', 'archify/pr/attach.mjs']) {
+    const plan = classifyPaths([source, 'archify.zip']);
+    assert.equal(plan.scope, 'core', source);
+    assert.deepEqual(plan.owners, ['pr']);
+    assert.ok(plan.browser && plan.package, source);
+    assert.equal(plan.generated, false);
+    assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice(0, 6).sort());
+  }
+  const marks = classifyPaths(['archify/renderers/shared/change-marks.mjs']);
+  assert.deepEqual(marks.owners, ['renderer']);
+  assert.ok(marks.generated && marks.browser && marks.package);
+  assert.ok(selectAffectedTests(marks.owners, [], available).includes('test/change-marks.test.mjs'));
+  const guide = classifyPaths(['archify/references/pr-review.md']);
+  assert.deepEqual(guide.owners, ['authoring']);
+  assert.ok(guide.generated && guide.package);
+  assert.equal(guide.website, false);
+});
+
+test('the shared SVG baker runs both PR export and Story regression gates', () => {
+  const plan = classifyPaths(['archify/renderers/shared/svg-bake.mjs', 'archify.zip']);
+  assert.equal(plan.scope, 'core');
+  assert.deepEqual(plan.owners, ['pr', 'viewer']);
+  assert.ok(plan.generated && plan.browser && plan.webm && plan.package);
+  const affected = ['test/pr-pack.test.mjs', 'test/svg-bake.test.mjs', 'test/story-choreography.test.mjs',
+    'test/story-choreography-browser.test.mjs'];
+  assert.deepEqual(selectAffectedTests(plan.owners, [], [...affected, 'test/cli.test.mjs']), affected.sort());
+});
+
+test('companion PR skill changes keep PR authoring suites without packaging or browser gates', () => {
+  const available = ['test/skill-metadata.test.mjs', 'test/skill-installation.test.mjs',
+    'test/pr-pack.test.mjs', 'test/pr-attach.test.mjs', 'test/cli.test.mjs'];
+  for (const source of ['archify-pr/SKILL.md', 'archify-pr/bin/archify-pr.mjs',
+    'archify-pr/references/pr-workflow.md', 'archify-pr/LICENSE']) {
+    const plan = classifyPaths([source]);
+    assert.equal(plan.scope, 'core', source);
+    assert.deepEqual(plan.owners, ['pr', 'authoring'], source);
+    assert.ok(plan.generated, source);
+    assert.equal(plan.browser, false);
+    assert.equal(plan.webm, false);
+    assert.equal(plan.package, false);
+    assert.equal(plan.website, false);
+    assert.deepEqual(plan.changedTests, []);
+    const selected = selectAffectedTests(plan.owners, [], available);
+    for (const test of ['test/skill-metadata.test.mjs', 'test/skill-installation.test.mjs',
+      'test/pr-pack.test.mjs', 'test/pr-attach.test.mjs']) {
+      assert.ok(selected.includes(test), `${source}: ${test}`);
+    }
+    assert.ok(!selected.includes('test/cli.test.mjs'), source);
+  }
 });
 
 test('Architecture grid changes retain explicit placement regression coverage', () => {
@@ -183,7 +291,7 @@ test('required jobs fail when classification fails or returns an unknown scope',
   for (const name of ['test', 'canonical-test', 'browser-regression', 'webm-decode', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability']) {
     const step = workflow.jobs[name].steps.find(step => step.name === 'Require successful scope checks');
     assert.ok(step, name);
-    for (const [result, scope, status] of [['success', 'core', 0], ['success', 'full', 0], ['failure', 'core', 1], ['success', '', 1], ['success', 'unknown', 1]]) {
+    for (const [result, scope, status] of [['success', 'docs', 0], ['failure', 'docs', 1], ['success', 'core', 0], ['success', 'full', 0], ['failure', 'core', 1], ['success', '', 1], ['success', 'unknown', 1]]) {
       const run = spawnSync('bash', ['-e', '-c', step.run], { env: { ...process.env, SCOPE_RESULT: result, CI_SCOPE: scope } });
       assert.equal(run.status, status, `${name}: ${result}/${scope}`);
     }

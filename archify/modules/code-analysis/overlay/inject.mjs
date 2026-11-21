@@ -35,7 +35,7 @@ import { sourceChanges } from './source-changes.mjs';
 import { buildOverview } from './overview.mjs';
 import { buildTaskPayloads } from '../lib/task.mjs';
 import { reviewTargetDigest } from '../lib/review.mjs';
-import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
+import { buildAtlas, buildAtlas3dDetail, ATLAS_CSS, ATLAS_JS, ATLAS3D_CSS, ATLAS3D_JS, threeJs } from './atlas.mjs';
 import { createTaskId } from '../lib/task-id.mjs';
 import { evaluateVerification } from '../lib/verification.mjs';
 import { clientAsset } from './client-assets.mjs';
@@ -101,7 +101,9 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
   }
   const edges = [...edgeMap.values()].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.to < b.to ? -1 : 1));
   const declared = new Set((ir?.connections || []).filter((c) => c && typeof c.from === 'string' && typeof c.to === 'string').map((c) => `${c.from}>${c.to}`));
-  const undeclaredEdges = edges.filter((e) => !declared.has(`${e.from}>${e.to}`));
+  // Whether the diagram draws each code-level edge: the analysis page marks the ones it does not.
+  for (const e of edges) e.declared = declared.has(`${e.from}>${e.to}`);
+  const undeclaredEdges = edges.filter((e) => !e.declared);
   const unmapped = graph.modules.filter((m) => !claimed.has(m.id)).map((m) => ({ id: m.id, label: m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: (fileIndex.get(m.id) || []).map((f) => ({ ...f, module: m.id })) }));
   const fileModule = facts
     ? new Map([...fileIndex].flatMap(([id, list]) => list.map((f) => [f.path, id])))
@@ -154,7 +156,12 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
   const atlas = buildAtlas({ graph, facts, findings, review: run.review });
   // Its data precedes the Classic script, which offers the Atlas button only when the data is present.
   const atlasData = atlas ? `<script type="application/json" id="bauify-atlas-data">${scriptSafeJson(atlas)}</script>\n` : '';
-  const atlasView = atlas ? `<style id="bauify-atlas-style">${ATLAS_CSS}</style>\n<script id="bauify-atlas-script">${ATLAS_JS}</script>\n` : '';
+  // Below a diagram, Atlas 3D is the second option: its detail and three.js (inert
+  // text, run on first open) precede the Atlas script, which offers the option only when they are present.
+  const atlas3d = atlas && ir
+    ? `<script type="application/json" id="bauify-atlas3d-data">${scriptSafeJson(buildAtlas3dDetail({ findings, document: findingsDocument }))}</script>\n<script type="text/plain" id="bauify-three">${threeJs()}</script>\n`
+    : '';
+  const atlasView = atlas ? `${atlas3d}<style id="bauify-atlas-style">${ATLAS_CSS}</style>\n<script id="bauify-atlas-script">${ATLAS_JS}</script>\n${atlas3d ? `<style id="bauify-atlas3d-style">${ATLAS3D_CSS}</style>\n<script id="bauify-atlas3d-script">${ATLAS3D_JS}</script>\n` : ''}` : '';
   const injection = `\n<!-- bauify overlay: authored diagram untouched; analysis layer below -->\n<script type="application/json" id="bauify-analysis">${scriptSafeJson(payload)}</script>\n${atlasData}<style id="bauify-style">${CSS}</style>\n<script id="bauify-script">${JS}</script>\n${atlasView}`;
   const idx = html.lastIndexOf('</body>');
   const out = idx === -1 ? html + injection : html.slice(0, idx) + injection + html.slice(idx);
@@ -403,7 +410,7 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
   return out;
 }
 
-const CSS = clientAsset('overlay.css');
+const CSS = clientAsset('overlay.css') + clientAsset('entry.css');
 
 const JS = `window.__archifyMakeAnalysisTranslator = ${createTranslator.toString()};\n`
   + `window.__archifyCreateVerificationTaskId = ${createTaskId.toString()};\n`

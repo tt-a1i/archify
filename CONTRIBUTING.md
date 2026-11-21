@@ -118,7 +118,16 @@ Renderer and Viewer changes also run the real browser gate and generated-output
 checks. Filesystem, process, dependency, build, and workflow changes retain the
 full regression and relevant Windows/package gates. New or modified test files
 are executed; test helpers and fixtures take the conservative full path.
-Repository prose and website-only changes use their own checks.
+Repository prose and website-only changes use their own checks. Changes limited
+to the five root README languages, `CHANGELOG.md`, repository policy Markdown,
+and community badge assets use the documentation path. It installs root check dependencies only for README/changelog changes, verifies release identity for README/changelog changes, and
+runs existing README contracts and the website's README entry-point check when
+README content changes. Policy-only changes reuse the intake/process contract;
+community badge changes retain the README showcase checks. Neither requires
+dependency installation. README and changelog files are not website build inputs.
+Mixed product changes retain those documentation checks alongside product gates;
+changed tests still run through the core path. Unknown README language names and
+other Markdown paths do not automatically qualify for this fast path.
 
 Unknown paths, an empty comparison, and an unavailable development-push base
 select full coverage. An invalid PR comparison fails classification. Required
@@ -168,7 +177,7 @@ the pattern as well. Check the reported pass/skip counts for the intended cases.
 | `npm test` / `npm run test:core` | Ten diagram types run through the public CLI, frozen v1 inputs remain usable, delivery receipts bind the actual files, and failed delivery preserves the previous artifact. No browser or perceptual acceptance is implied. |
 | `npm run test:focus -- test/<name>.test.mjs` | Only the selected behavior or regression. |
 | `npm run test:generated` | Viewer, brand marks, validators, release identity, and checked-in examples match their authoritative sources. Freshness does not establish visual quality. |
-| `npm run test:full` | Generated checks followed by every discovered Node test file, including the detailed process, filesystem, installation, and failure matrices. |
+| `npm run test:full` | Generated checks, the Code Analysis module suite, and every discovered root Node test file, including the detailed process, filesystem, installation, and failure matrices. |
 
 The Node 18, 20, and 24 compatibility lanes run the same core product smoke via
 `test:compat`. Detailed fault-injection matrices run on canonical Node 22 when
@@ -176,11 +185,11 @@ their responsibility is affected and in complete verification. The separate
 browser, WebM, Windows, and package gates retain their distinct claims. Do not
 repeat an unchanged complete run locally just because CI is also running it.
 
-For full CI, Node 22 runs every discovered test file across two independent
-machines using `node scripts/run-tests.mjs --shard=1/2` and `--shard=2/2`.
-One shard also runs generated checks and the Hermes adapter contract once,
-using the same installed dependencies. The existing `test (22)` check requires
-both shards to succeed without reinstalling dependencies afterward. Other scopes do not
+For full CI, Node 22 runs the root suite across four shards with
+`node scripts/run-tests.mjs --shard=1/4` through `--shard=4/4`. One shard also runs
+generated checks and the Hermes adapter contract. Two parallel jobs share the
+Code Analysis module suite and provision its external tools. The existing `test (22)`
+check requires every job in the matrix to succeed. Other scopes do not
 start these shards. Node 18, 20 and 24 compatibility checks start after scope
 classification, without waiting for the complete regression shards.
 `--list --shard=1/2` shows the selected files; shards cannot
@@ -240,10 +249,10 @@ suites there so both workflows keep the same coverage. `npm run test:full`
 retains optional browser skips. Real WebM decoding and site-language integration
 remain in the separate `npm run test:webm` gate used by both workflows.
 
-PR CI divides the maintained browser inventory into two disjoint file shards
-with `npm run test:browser -- --shard=1/2` and `--shard=2/2`. Both run alongside
-the independent WebM gate; the required `webm-artifact` check succeeds only
-after both browser shards, WebM, and scope checks succeed. Tag releases and an
+PR CI divides the maintained browser inventory into four disjoint file shards
+with `npm run test:browser -- --shard=1/4` through `--shard=4/4`. They run alongside
+the independent WebM gate. The required `webm-artifact` check succeeds after
+every browser shard, WebM, and scope check succeeds. Tag releases and an
 unqualified `npm run test:browser` still run the complete browser inventory.
 `--list --shard=1/2` lists a shard without requiring Chrome. Shards cannot be
 combined with explicit files or test-name filtering; every maintained file runs

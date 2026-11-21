@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parse } from 'yaml';
 
@@ -25,8 +27,6 @@ test('Cloudflare publishes only the checked artifact at the current main SHA', (
   assert.equal(download.with.path, 'website/dist-cloudflare');
   assert.ok(steps.indexOf(gate) > steps.indexOf(download));
   assert.ok(steps.indexOf(deployment) > steps.indexOf(gate));
-  assert.match(gate.run, /current_main.*gh api/);
-  assert.match(gate.run, /"\$current_main" == "\$GITHUB_SHA"/);
   assert.equal(deployment.if, "steps.deployment-head.outputs.current == 'true'");
   assert.match(deployment.with.command, /^pages deploy website\/dist-cloudflare /);
   assert.match(deployment.with.command, /--branch=main --commit-hash=\$\{\{ github.sha \}\}/);
@@ -40,9 +40,32 @@ test('Cloudflare publishes only the checked artifact at the current main SHA', (
   assert.equal(browser.env.ARCHIFY_SITE_BASE, '');
   assert.equal(browser.env.ARCHIFY_SITE_INTEGRATION, '1');
   assert.equal(browser.run, 'npm run test:browser');
+  assert.deepEqual(workflow.jobs.website.strategy.matrix.target, ['pages', 'cloudflare']);
   const upload = workflow.jobs.website.steps.find(step => step.with?.name === download.with.name);
+  assert.equal(upload.if, "matrix.target == 'cloudflare'");
   assert.equal(upload.with.path, download.with.path);
   assert.equal(upload.with['if-no-files-found'], 'error');
+});
+
+test('Cloudflare marks only the current main commit as deployable', t => {
+  const gate = cloudflare.steps.find(step => step.id === 'deployment-head');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-deployment-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const output = path.join(root, 'output');
+  const script = `gh() {
+    [[ "$1" == api && "$2" == repos/example/project/git/ref/heads/main && "$3" == --jq && "$4" == .object.sha ]] || return 1
+    echo "$MAIN_SHA"
+  }
+  ${gate.run}`;
+  for (const [main, expected] of [['candidate', 'true'], ['newer', 'false']]) {
+    fs.writeFileSync(output, '');
+    const run = spawnSync('bash', ['-e', '-c', script], {
+      encoding: 'utf8',
+      env: { ...process.env, GITHUB_REPOSITORY: 'example/project', GITHUB_SHA: 'candidate', MAIN_SHA: main, GITHUB_OUTPUT: output },
+    });
+    assert.equal(run.status, 0, run.stderr);
+    assert.equal(fs.readFileSync(output, 'utf8').trim(), `current=${expected}`);
+  }
 });
 
 test('Cloudflare destination rejects invalid values without evaluating them as shell code', () => {

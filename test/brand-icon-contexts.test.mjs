@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { captureBrandReference } from '../archify/renderers/shared/brand-marks.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
 const cli = path.join(skillRoot, 'bin/archify.mjs');
@@ -79,13 +80,27 @@ async function fixture(t, markup, { byteChunks = false, contentType = 'text/html
   return data;
 }
 
-async function capture(data, paths = ['/active.png'], expectedDigest = digest) {
+async function checkDiscovery(data, paths = ['/active.png'], expectedDigest = digest) {
+  const previous = process.env.ARCHIFY_BRAND_ALLOW_PRIVATE;
+  process.env.ARCHIFY_BRAND_ALLOW_PRIVATE = '1';
+  try {
+    const { brand, resolved } = await captureBrandReference(data.url);
+    assert.deepEqual(data.requests, ['/studio', ...paths]);
+    assert.deepEqual(brand, { url: data.url, sha256: expectedDigest });
+    assert.equal(resolved.status, 'captured');
+  } finally {
+    if (previous === undefined) delete process.env.ARCHIFY_BRAND_ALLOW_PRIVATE;
+    else process.env.ARCHIFY_BRAND_ALLOW_PRIVATE = previous;
+  }
+}
+
+async function captureWithCli(data) {
   const result = await run(['brands', 'capture', data.url, '--json']);
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const receipt = JSON.parse(result.stdout);
-  assert.deepEqual(data.requests, ['/studio', ...paths]);
+  assert.deepEqual(data.requests, ['/studio', '/active.png']);
   assert.equal(receipt.ok, true);
-  assert.deepEqual(receipt.brand, { url: data.url, sha256: expectedDigest });
+  assert.deepEqual(receipt.brand, { url: data.url, sha256: digest });
   assert.equal(receipt.evidence.status, 'captured');
   return receipt.brand;
 }
@@ -106,21 +121,21 @@ for (const [name, prefix] of [
   ['lookalike rel attribute', '<link data-rel="icon" href="/inactive.png">'],
 ]) {
   test(`capture ignores icon declarations in ${name}`, async (t) => {
-    await capture(await fixture(t, prefix + activeLink));
+    await checkDiscovery(await fixture(t, prefix + activeLink));
   });
 }
 
 for (const contentType of ['text/html', 'Text/Html; charset=utf-8']) {
   test(`capture ignores a higher-ranked noscript icon for ${contentType}`, async (t) => {
     const markup = noscriptLink + '<link rel="icon" href="/active.png" />';
-    await capture(await fixture(t, markup, { contentType }));
+    await checkDiscovery(await fixture(t, markup, { contentType }));
   });
 }
 
 for (const contentType of ['application/xhtml+xml', 'Application/XHTML+XML; charset=utf-8; profile="text/html"']) {
   test(`capture preserves noscript icon discovery for ${contentType}`, async (t) => {
     const markup = noscriptLink + '<link rel="icon" href="/active.png" />';
-    await capture(await fixture(t, markup, { contentType }), ['/inactive.png'], inactiveDigest);
+    await checkDiscovery(await fixture(t, markup, { contentType }), ['/inactive.png'], inactiveDigest);
   });
 }
 
@@ -131,18 +146,18 @@ for (const [name, prefix] of [
   for (const [fallback, fallbackIcon] of [['different', inactiveIcon], ['missing', null]]) {
     test(`capture reads icons after an empty XHTML ${name} with a ${fallback} favicon`, async (t) => {
       const markup = prefix + '<link rel="icon" href="/active.png" />';
-      await capture(await fixture(t, markup, { contentType: 'application/xhtml+xml', fallbackIcon }));
+      await checkDiscovery(await fixture(t, markup, { contentType: 'application/xhtml+xml', fallbackIcon }));
     });
   }
 
   test(`empty-element syntax does not close an HTML ${name}`, async (t) => {
     const markup = prefix + activeLink;
-    await capture(await fixture(t, markup, { fallbackIcon: inactiveIcon }), ['/favicon.ico'], inactiveDigest);
+    await checkDiscovery(await fixture(t, markup, { fallbackIcon: inactiveIcon }), ['/favicon.ico'], inactiveDigest);
   });
 
   test(`an empty XHTML ${name} survives one-byte response chunks`, { timeout: 20000 }, async (t) => {
     const markup = prefix + '<link rel="icon" href="/active.png" />';
-    await capture(await fixture(t, markup, {
+    await checkDiscovery(await fixture(t, markup, {
       byteChunks: true,
       contentType: 'Application/XHTML+XML; charset=utf-8; profile="text/html"',
       fallbackIcon: inactiveIcon,
@@ -153,7 +168,7 @@ for (const [name, prefix] of [
 test('an empty XHTML template does not change the enclosing template depth', async (t) => {
   const markup = '<template><template /><link rel="icon" href="/inactive.png" /></template>'
     + '<link rel="icon" href="/active.png" />';
-  await capture(await fixture(t, markup, { contentType: 'application/xhtml+xml', fallbackIcon: inactiveIcon }));
+  await checkDiscovery(await fixture(t, markup, { contentType: 'application/xhtml+xml', fallbackIcon: inactiveIcon }));
 });
 
 for (const [name, markup] of [
@@ -167,7 +182,7 @@ for (const [name, markup] of [
   ['existing size ranking', '<link rel="icon" sizes="16x16" href="/inactive.png"><link rel="icon" sizes="32x32" href="/active.png">'],
 ]) {
   test(`capture reads complete link attributes: ${name}`, async (t) => {
-    await capture(await fixture(t, markup));
+    await checkDiscovery(await fixture(t, markup));
   });
 }
 
@@ -188,7 +203,7 @@ test('old noscript pins fail closed until explicitly recaptured', { timeout: 450
   assert.equal(fs.readFileSync(input, 'utf8'), original, 'validation must not rewrite an existing pin');
 
   data.requests.length = 0;
-  const recaptured = await capture(data);
+  const recaptured = await captureWithCli(data);
   assert.equal(fs.readFileSync(input, 'utf8'), original, 'capture must not rewrite authored diagrams');
   diagram.components[0].brand = recaptured;
   fs.writeFileSync(input, JSON.stringify(diagram));
@@ -201,13 +216,13 @@ test('old noscript pins fail closed until explicitly recaptured', { timeout: 450
 
 test('inactive declarations do not consume the five icon candidate slots', async (t) => {
   const removed = Array.from({ length: 5 }, (_, index) => `<link rel="icon" href="/missing-${index}.png">`).join('');
-  await capture(await fixture(t, `<!-- ${removed} -->${activeLink}`));
+  await checkDiscovery(await fixture(t, `<!-- ${removed} -->${activeLink}`));
 });
 
 test('active declarations retain the five-candidate limit and favicon fallback', async (t) => {
   const paths = Array.from({ length: 5 }, (_, index) => `/missing-${index}.png`);
   const markup = paths.map((href) => `<link rel="icon" href="${href}">`).join('') + activeLink;
-  await capture(await fixture(t, markup), [...paths, '/favicon.ico']);
+  await checkDiscovery(await fixture(t, markup), [...paths, '/favicon.ico']);
 });
 
 for (const [name, markup] of [
@@ -217,7 +232,7 @@ for (const [name, markup] of [
   ['unclosed template', `<template>${inactiveLink}`],
 ]) {
   test(`capture uses the favicon fallback for an ${name}`, async (t) => {
-    await capture(await fixture(t, markup), ['/favicon.ico']);
+    await checkDiscovery(await fixture(t, markup), ['/favicon.ico']);
   });
 }
 
@@ -231,7 +246,7 @@ for (const [name, prefix] of [
     // Keep each response short enough for the real request deadline, including
     // hosts with coarse timer resolution. Do not relax the capture timeout.
     const markup = prefix + '<LiNk title="图 > icon" REL=icon HREF="/active.png?a=1&amp;b=2">';
-    await capture(await fixture(t, markup, { byteChunks: true }), ['/active.png?a=1&b=2']);
+    await checkDiscovery(await fixture(t, markup, { byteChunks: true }), ['/active.png?a=1&b=2']);
   });
 }
 
@@ -246,7 +261,7 @@ for (const [type, example, collection] of [
     const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-brand-context-'));
     t.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
     const data = await fixture(t, activeLink);
-    const brand = await capture(data);
+    const brand = await captureWithCli(data);
     const diagram = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', example), 'utf8'));
     diagram[collection][0].brand = brand;
     const input = path.join(temporary, 'diagram.json');

@@ -11,7 +11,7 @@ const names = fs.readdirSync(dir).sort();
 
 test('client assets: analysis and drift pages inline their respective browser code', () => {
   const drift = ['drift.css', 'drift.js'];
-  const analysis = ['atlas.css', 'atlas.js', 'overlay.css', 'overlay.js', 'verification.js'];
+  const analysis = ['atlas.css', 'atlas.js', 'atlas3d.css', 'atlas3d.js', 'entry.css', 'overlay.css', 'overlay.js', 'verification.js'];
   assert.deepEqual(names, [...analysis, ...drift].sort());
   const { html } = buildOverlay({ graph: { modules: [], edges: [], repository: { language: 'ts' }, excluded: {}, unresolved: {} } });
   const driftHtml = renderDriftOverlay(
@@ -42,4 +42,10 @@ test('client assets: nothing can close the tag they are inlined in', () => {
     assert.doesNotMatch(source, /<\/(script|style)/i, name);
     assert.doesNotMatch(source, /\r/, `${name} must use LF line endings so the page bytes match on every platform`);
   }
+});
+
+test('client assets: the embedded three.js cannot close or escape its inert script element', () => {
+  const three = fs.readFileSync(new URL('../overlay/vendor/three.min.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(three, /<\/script|<!--|<script/i);
+  assert.match(fs.readFileSync(new URL('../overlay/vendor/THREE-LICENSE.txt', import.meta.url), 'utf8'), /The MIT License/);
 });

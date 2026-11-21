@@ -1,0 +1,43 @@
+/* The Code Analysis entry in the diagram toolbar: the launcher before a run
+   (#code-analysis-start, bin/serve.mjs) and the layer toggle after it
+   (#btn-bauify, overlay.js). It sits before Export, drawn as its own capsule
+   like the tool group, so Export stays the one primary action at the end. */
+.toolbar .analysis-entry { padding-inline: 0.75rem 0.8rem; color: var(--text); }
+.toolbar .analysis-entry::before {
+  inset: 0.25rem 0;
+  border: 1px solid color-mix(in srgb, var(--panel-border) 85%, transparent);
+  border-radius: 0.6875rem;
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px -14px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(12px);
+}
+.toolbar .analysis-entry:hover::before { background: color-mix(in srgb, var(--text) 6%, var(--panel)); }
+.toolbar .analysis-entry[aria-pressed="true"]::before {
+  border-color: color-mix(in srgb, var(--backend-stroke, #34D399) 55%, transparent);
+  background: color-mix(in srgb, var(--backend-stroke, #34D399) 14%, var(--panel));
+}
+.toolbar .analysis-entry:disabled { cursor: default; color: var(--text-muted); }
+.toolbar .analysis-entry[aria-busy="true"] { cursor: progress; }
+.analysis-entry-icon {
+  width: 0.95rem; height: 0.95rem; flex: 0 0 auto; background: currentColor;
+  -webkit-mask: var(--analysis-entry-icon) center / contain no-repeat;
+  mask: var(--analysis-entry-icon) center / contain no-repeat;
+  --analysis-entry-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h4l3-8 4 16 3-8h4'/%3E%3C/svg%3E");
+}
+.analysis-entry[aria-pressed="true"] .analysis-entry-icon { color: var(--backend-stroke, #34D399); }
+.analysis-entry[aria-busy="true"] .analysis-entry-icon {
+  --analysis-entry-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 3a9 9 0 1 0 9 9'/%3E%3C/svg%3E");
+  animation: analysis-entry-spin 0.9s linear infinite;
+}
+@keyframes analysis-entry-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .analysis-entry[aria-busy="true"] .analysis-entry-icon { animation: none; } }
+/* The finding count is generated content, so the button's text stays its label. */
+.analysis-entry[data-count]::after {
+  content: attr(data-count);
+  min-width: 1.25rem; padding: 0.0625rem 0.375rem; box-sizing: border-box;
+  border-radius: 999px; text-align: center;
+  font-size: 0.6875rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1rem;
+  color: var(--text-muted); background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+.analysis-entry[aria-pressed="true"][data-count]::after { color: var(--text); background: color-mix(in srgb, var(--backend-stroke, #34D399) 22%, transparent); }
+.analysis-entry[data-tone="error"][data-count]::after { color: #fff; background: #E11D48; }
