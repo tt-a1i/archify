@@ -293,6 +293,8 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   fs.appendFileSync(path.join(root, 'src/alpha/a.ts'), "import { helper } from '../beta/helper'; export const extra = helper();\n");
   fs.writeFileSync(path.join(root, 'src/beta/helper.ts'), 'export function helper() { return 2; }\n');
   fs.writeFileSync(path.join(root, 'src/alpha/isolated.ts'), 'export function isolated(x: boolean) { return x ? 1 : 2; }\n');
+  fs.mkdirSync(path.join(root, 'src/outside'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src/outside/config.ts'), 'export const mode = "standalone";\n');
   const map = { app: [graph.modules.find(module => module.path.endsWith('/alpha')).id] };
   ir.components.push({ id: 'beta', type: 'backend', label: 'Beta', pos: [340, 160], size: [170, 64] });
   map.beta = [graph.modules.find(module => module.path.endsWith('/beta')).id];
@@ -320,11 +322,10 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   const paths = () => run("Array.from(document.querySelectorAll('.atlas-import-paths dd'), item => item.textContent)");
   assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/b.ts'], 'the selected import lists both full paths in order');
   assert.deepEqual(await run("[...new Set(window.__importLabels)]"), ['①', '②']);
-  await run(`(() => {
-    const picker = document.querySelector('.atlas-imports select');
-    picker.selectedIndex = [...picker.options].findIndex(option => option.textContent.includes('helper.ts'));
-    picker.dispatchEvent(new Event('change'));
-  })()`);
+  await run("document.querySelector('.atlas-imports select').focus()");
+  for (const type of ['keyDown', 'keyUp']) {
+    await send('Input.dispatchKeyEvent', { type, key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 });
+  }
   assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/helper.ts']);
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
@@ -350,4 +351,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await click('#bauify-stage [data-go="code"]');
   assert.match(await run("document.querySelector('#bauify-panel .fly-ev').textContent"), /src\/alpha\/a\.ts.*Source was not captured/s);
   assert.equal(await run("Boolean(document.querySelector('#bauify-panel button.fly-ev'))"), false);
+  await click('#bauify-stage [data-go^="off:"]');
+  assert.match(await run("document.querySelector('#bauify-panel .fly-ev').textContent"), /src\/outside\/config\.ts.*Source was not captured/s);
+  assert.equal(await run("Boolean(document.querySelector('#bauify-panel button.fly-ev'))"), false, 'the off-diagram file list does not offer unusable source buttons');
 });
