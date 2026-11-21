@@ -159,6 +159,7 @@ a verified migration-to-v2 repair; v1 never falls through to adaptive layout.
 | Implicit viewBox | intrinsic content bounds plus contract padding |
 | Explicit viewBox | containment capacity; too-small input reports exact `requiredViewBox` and contributors |
 | Lane measurement | A same-column vertical stack (two or more distinct `yOffset` values) opts an implicit, unpinned workflow into per-lane measurement. Explicit `meta.viewBox`, `via`, `labelAt`, `channelX`, or `channelY`, and workflows without a stack retain shared-height v2 geometry for compatibility. |
+| Automatic vertical chain | In one lane and column, a single directed chain with no canvas or route controls can omit every `yOffset`. Layout follows edge order and measures each gap. |
 
 Unpinned v2 drafts reserve 32px between overlapping same-lane nodes for routes,
 and omitted node widths may grow from 92px to 200px to fit their text. Documents
@@ -183,9 +184,26 @@ growth with a legal channel instead of widening every downstream rank. Measured
 multi-row legends participate in intrinsic height and explicit viewBox
 capacity.
 
-The Issue #250 shape already has a v2 representation without an authored lane
-size. Keep the three stages in one grouped lane, omit `meta.viewBox`, and center
-their offsets around zero:
+For an implicit horizontal workflow with multiple lanes and unused trailing
+columns, the compiler can fit the lane frames and canvas to the measured scene
+after routing. Nodes, routes, labels, and legend placement keep their positions.
+An outside-right route or a wide lane heading can preserve the full width.
+
+### Vertical workflows
+
+For a top-to-bottom chain, place every step in the same lane and column and
+link consecutive steps with directed edges. Omit all `yOffset` values, the
+canvas size and route controls. The compiler follows the edges, measures
+each node's height and leaves space for the arrow shafts, arrowheads and edge
+labels. A group can enclose the chain when the steps run inside a shared
+container.
+
+Use `col: 0` for the default centered stack. In a chain with no phase headers
+and groups confined to that column, the lane fits the node and label widths
+and allows the legend to wrap. The compiler keeps the established width when
+centering around a long heading or legend would make the canvas wider. A
+higher `col` retains the authored rank.
+Short authored gaps that require a labeled detour retain the full routing width.
 
 ```json
 {
@@ -193,18 +211,27 @@ their offsets around zero:
   "diagram_type": "workflow",
   "meta": { "title": "stack", "output": "stack.html" },
   "lanes": [{ "id": "cage", "label": "one cage" }],
-  "groups": [{ "id": "g", "label": "cage", "lane": "cage", "fromCol": 1, "toCol": 3 }],
+  "groups": [{ "id": "g", "label": "cage", "lane": "cage", "fromCol": 0, "toCol": 0 }],
   "nodes": [
-    { "id": "a", "lane": "cage", "col": 2, "type": "security", "label": "stageA", "yOffset": -90 },
-    { "id": "b", "lane": "cage", "col": 2, "type": "security", "label": "stageB", "yOffset": 0 },
-    { "id": "c", "lane": "cage", "col": 2, "type": "security", "label": "stageC", "yOffset": 90 }
+    { "id": "a", "lane": "cage", "col": 0, "type": "security", "label": "Stage A" },
+    { "id": "b", "lane": "cage", "col": 0, "type": "security", "label": "Stage B", "tag": "check" },
+    { "id": "c", "lane": "cage", "col": 0, "type": "security", "label": "Stage C" }
   ],
   "edges": [
-    { "from": "a", "to": "b", "fromSide": "bottom", "toSide": "top" },
-    { "from": "b", "to": "c", "fromSide": "bottom", "toSide": "top" }
+    { "from": "a", "to": "b" },
+    { "from": "b", "to": "c" }
   ]
 }
 ```
+
+If the chain already has increasing `yOffset` values, the compiler fits
+the lane to the stack and preserves the distances between steps. For
+`workflow/vertical-stack-clearance`, the reported border-to-border gaps are
+too short for straight arrows. Omit every `yOffset` to let the compiler
+measure spacing, or adjust the offsets to leave each connection's reported
+`requiredGapPx` between node borders after accounting for each node's height.
+Labeled connections can need more space to keep the arrowhead clear of the label. Branching workflows and workflows with explicit canvas
+or route controls retain their established placement behavior.
 
 An implicit readable-v2 vertical stack whose measured lane height exceeds the
 104px baseline declares `data-reader-fit="width-first"`, as does any implicit
@@ -236,7 +263,7 @@ at the active quality profile.
 - Use lanes for ownership or runtime boundaries.
 - Use phase headers for high-level story beats such as Intake, Plan, Execute, and Report.
 - Use groups for parallel checks, branch handling, or bounded work within a lane; every group must contain at least one node.
-- For sequential stages stacked inside one container, use one v2 lane and one group, keep the stages in one column, and omit `meta.viewBox`. `yOffset` is relative to the center of the lane's content area, so center a three-stage stack with `-90 / 0 / 90` rather than `0 / 90 / 180`. With compiler-owned routes and canvas, the compiler expands only that lane.
+- For sequential stages stacked inside one container, use the [vertical workflow recipe](#vertical-workflows). In other layouts, `yOffset` is relative to the center of the lane's content area.
 - Use `lane.variant: "exception"` for human wait, denial, retry, fallback, and failure lanes instead of mixing those paths into the happy path.
 - Set `mainPath` when the diagram has a clear happy path; the renderer validates that consecutive ids have matching edges and move left-to-right.
 - Place nodes with lane IDs and `col` indexes in `0..5`, not raw SVG coordinates.

@@ -374,10 +374,11 @@
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        // Browser geometry can round the final SVG and page by one CSS pixel.
-        // Include that vertical allowance (expressed as width) so rounding
-        // alone does not switch a compact Sequence to authored scrolling.
-        var sequenceFits = automaticSequence && Math.min(desiredWidth + ratio, maxWidth) >=
+        // Body and stage padding already bound the actual viewport. The
+        // optional bottom gap may yield to the source-text floor; otherwise
+        // a late header reflow can select an enlarged, scrolling diagram
+        // even though its original size still fits the screen.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth + SAFE_BOTTOM_GAP * ratio, maxWidth) >=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading && !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;

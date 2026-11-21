@@ -16,7 +16,7 @@ the matching row. The current viewer has enough semantic identity and existing
 chrome to remove that detour without becoming an editor
 ([relationship renderer contract](../archify/renderers/shared/cli.mjs),
 [current Relationship Lens](../archify/assets/template.html),
-[current relationship tests](../archify/test/relationship-lens.test.mjs)).
+[current relationship tests](../test/relationship-lens.test.mjs)).
 
 Round 34 should make the authored line itself a forgiving, accessible entry point:
 
@@ -66,7 +66,7 @@ and attribute emission; it does not alter the visible geometry
 regression suite verifies that each source relationship receives one unique key
 across architecture, workflow, sequence, dataflow, and lifecycle output, even
 when more than one SVG element represents the same relationship
-([relationship renderer tests](../archify/test/relationship-lens.test.mjs)).
+([relationship renderer tests](../test/relationship-lens.test.mjs)).
 
 The Round 34 audit artifact contains 11 unique authored relationships and zero
 focusable/direct edge targets. Nodes are already focusable buttons, so this is a
@@ -92,7 +92,7 @@ edge and both endpoints; row activation follows the neighbor. The list supports
 `ArrowUp`, `ArrowDown`, `Home`, and `End`, and its touch layout keeps the active
 row visible
 ([Relationship Lens implementation](../archify/assets/template.html),
-[Relationship Lens tests](../archify/test/relationship-lens.test.mjs)).
+[Relationship Lens tests](../test/relationship-lens.test.mjs)).
 
 The gap is consequently not “invent an edge inspector.” It is “let the line open
 the inspector state Archify already has.” Reusing the existing panel is important
@@ -109,7 +109,7 @@ finite pulse overlay. Reduced motion and embed suppress the pulse. Canonical SVG
 export removes preview attributes and runtime overlays, while CSS changes only
 opacity, filter, and stroke emphasis rather than coordinates or transforms
 ([preview and pulse implementation](../archify/assets/template.html),
-[export-clean regression tests](../archify/test/relationship-lens.test.mjs),
+[export-clean regression tests](../test/export-cleanup-browser.test.mjs),
 [pulse regression tests](../archify/test/relationship-pulse.test.mjs)).
 
 The Motion Governor already recognizes `data-relationship-preview-active` as the

@@ -38,6 +38,28 @@ function rewrite(input, diagram) {
   fs.writeFileSync(input, JSON.stringify(diagram, null, 2));
 }
 
+test('explicit showcase quality diagnoses unreadable card height and gives an executable repair', t => {
+  const { cwd, input, diagram } = setup(t, [
+    { id: 'short', type: 'backend', label: 'UI', sublabel: 'API', tag: 'R', pos: [30, 70], size: [84, 16] },
+  ]);
+  delete diagram.meta.quality_profile;
+  rewrite(input, diagram);
+  const standard = spawnSync(process.execPath, [cli, 'render', 'architecture', input, path.join(cwd, 'standard.html'), '--quality', 'standard'], { cwd, encoding: 'utf8' });
+  assert.equal(standard.status, 0, standard.stdout + standard.stderr);
+  const result = spawnSync(process.execPath, [cli, 'validate', 'architecture', input, '--json', '--quality', 'showcase'], { cwd, encoding: 'utf8' });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  const diagnostic = receipt.diagnostics.find(item => item.code === 'architecture/component-text-height');
+  assert.equal(diagnostic?.subject.nodeId, 'short');
+  assert.equal(diagnostic.evidence.bounds.height, 16);
+  const fix = diagnostic.supportedFixes[0].match(/size to \[(84), (\d+)\]/);
+  assert.ok(fix, diagnostic.supportedFixes[0]);
+  diagram.components[0].size = fix.slice(1).map(Number);
+  rewrite(input, diagram);
+  const delivered = spawnSync(process.execPath, [cli, 'deliver', 'architecture', input, path.join(cwd, 'fixed.html'), '--json', '--quality', 'showcase'], { cwd, encoding: 'utf8' });
+  assert.equal(delivered.status, 0, delivered.stdout + delivered.stderr);
+});
+
 const handPlacedFixture = () => [
   { id: 'left', type: 'backend', label: 'Left', pos: [40, 40], size: [200, 80] },
   { id: 'right', type: 'backend', label: 'Right', pos: [244, 40], size: [200, 80] },
@@ -272,4 +294,43 @@ test('a component taller than the canvas gets a repair that also shrinks its hei
   diagram.components[0].size = [120, 800 - Number(shrink[1])];
   rewrite(input, diagram);
   assert.equal(validate(input, cwd).ok, true);
+});
+
+test('inferred cards accept titles that fit at the rendered font and reject oversized titles', t => {
+  const label = 'a'.repeat(41);
+  const { cwd, input, diagram } = setup(t, [{ id: 'card', type: 'backend', label }]);
+  diagram.layout = { mode: 'auto' };
+  delete diagram.meta.viewBox;
+  rewrite(input, diagram);
+  const output = path.join(cwd, 'auto.html');
+  const render = spawnSync(process.execPath, [cli, 'render', 'architecture', input, output], { cwd, encoding: 'utf8' });
+  assert.equal(render.status, 0, render.stdout + render.stderr);
+  const html = fs.readFileSync(output, 'utf8');
+  const title = html.match(/<text data-node-label=""[^>]*font-size="([\d.]+)"[^>]*>(a+)<\/text>/);
+  assert.ok(title, 'the full title is rendered');
+  assert.equal(title[2], label);
+  assert.ok(Number(title[1]) >= 8, 'title stays at or above the legible minimum');
+
+  for (const brand of [undefined, 'github']) {
+    diagram.components[0].label = 'a'.repeat(60);
+    diagram.components[0].brand = brand;
+    delete diagram.components[0].size;
+    rewrite(input, diagram);
+    const oversized = validate(input, cwd);
+    const diagnostic = oversized.diagnostics.find(d => d.code === 'architecture/component-label-overflow');
+    assert.ok(diagnostic, 'an oversized inferred title is rejected');
+    const suggestedSize = diagnostic.supportedFixes[1].match(/size to \[(\d+), (\d+)\]/);
+    assert.ok(suggestedSize, diagnostic.supportedFixes[1]);
+    diagram.components[0].size = suggestedSize.slice(1).map(Number);
+    rewrite(input, diagram);
+    const repaired = validate(input, cwd);
+    assert.equal(repaired.ok, true, JSON.stringify(repaired.diagnostics));
+  }
+
+  delete diagram.components[0].brand;
+  diagram.components[0].label = label;
+  diagram.components[0].size = [256, 60];
+  rewrite(input, diagram);
+  const authored = validate(input, cwd);
+  assert.ok(authored.diagnostics.some(d => d.code === 'architecture/component-label-overflow'), 'authored sizes retain the existing validation contract');
 });
