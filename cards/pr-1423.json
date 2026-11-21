@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1423,
+  "author": "tt-a1i",
+  "title": "fix(seo): block explainer JSON pointer 404s and ship GEO v3 supersession and compare updates",
+  "mergedAt": "2026-11-21T00:50:00Z",
+  "mergeCommit": "8509a3d63e763b4d454ea9aafa1f939545fcb1ea",
+  "url": "https://github.com/tt-a1i/archify/pull/1423"
+}
