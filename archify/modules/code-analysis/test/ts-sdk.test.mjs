@@ -65,6 +65,38 @@ test('a source subtree resolves the installed SDK from its ancestor project', t 
   assert.equal(facts.languageScope.sdk.source, 'project');
 });
 
+test('pinned-tree capture uses the bundled SDK and frozen resolution inputs', t => {
+  const parent = project(t);
+  const sdk = installedSdk(parent);
+  fs.writeFileSync(path.join(parent, 'base.json'),
+    JSON.stringify({ compilerOptions: { paths: { '#target': ['./tree/target.js'] } } }));
+  const root = path.join(parent, 'tree');
+  fs.mkdirSync(root);
+  fs.writeFileSync(path.join(root, 'jsconfig.json'), JSON.stringify({ extends: '../base.json' }));
+  fs.writeFileSync(path.join(root, 'main.js'), 'import { target } from "#target"; target();');
+  fs.writeFileSync(path.join(root, 'target.js'), 'export function target() {}');
+  const settings = { ...config, typescript: { sdk, requireProjectSdk: true } };
+  const live = extract(root, settings);
+  assert.equal(live.repository.adapter, 'typescript@5.9.71');
+  assert.equal(live.imports[0].to, 'target.js');
+
+  assert.throws(() => extract(root, settings, { capturedOnly: true }),
+    error => error.diagnostics?.[0].code === 'extract/tsconfig-invalid'
+      && error.diagnostics[0].evidence.errors.some(message => message.includes('base.json')));
+
+  fs.writeFileSync(path.join(root, 'jsconfig.json'), JSON.stringify({ compilerOptions: { paths: { '#target': ['./target.js'] } } }));
+  let capture;
+  const pinned = extract(root, settings, { capturedOnly: true, onCapture: value => { capture = value; } });
+  assert.equal(pinned.repository.adapter, `typescript@${ts.version}`);
+  assert.equal(pinned.languageScope.sdk.source, 'bundled');
+  assert.equal(pinned.repository.sourceKind, 'working-tree');
+  assert.equal(pinned.repository.root, '.');
+  assert.equal(pinned.imports[0].to, 'target.js');
+  assert.equal(pinned.calls[0].resolution, 'imported-function');
+  assert.ok(capture.reads.has(path.join(root, 'jsconfig.json')));
+  assert.equal(capture.reads.get(path.join(parent, 'base.json')), undefined);
+});
+
 test('a changed SDK version at the same installation path is reloaded on the next capture', t => {
   const root = project(t);
   installedSdk(root, '5.9.71');

@@ -43,6 +43,8 @@
       "**/karma.conf.*"
     ],
     "generated": [
+      "**/extract/py/upstream/**",
+      "**/extract/py/analyze.mjs",
       "**/generated-*",
       "**/*.generated.*",
       "**/vendor/**",

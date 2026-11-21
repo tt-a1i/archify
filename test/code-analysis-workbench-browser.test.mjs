@@ -33,6 +33,11 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
     assert.equal(prepared.status, 0, prepared.stdout + prepared.stderr);
     return JSON.parse(prepared.stdout);
   };
+  const command = (...args) => {
+    const result = spawnSync(process.execPath, [cli, 'code-analysis', ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr + result.stdout);
+    return JSON.parse(result.stdout);
+  };
   const first = prepare('en');
   assert.equal(first.status, 'ok');
   assert.match(first.resume.command, / start /);
@@ -59,6 +64,11 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.match(await run("document.querySelector('.health-summary').textContent"), /errors/);
   assert.equal(await run("document.querySelectorAll('.priority-card button button').length"), 0);
   const assertFirstCopyVisible = async locale => {
+    // The diagram opens with its start-here card; the reader flies out from its "all findings" link.
+    if (await run("document.getElementById('bauify-reader').classList.contains('fly-closed')")) {
+      await run("document.querySelector('#bauify-stage .first-all').click()");
+      await run('new Promise(resolve=>setTimeout(resolve,600))');
+    }
     const visibility = await run(`(() => {
       const button=document.querySelector('.priority-card .quick-copy').getBoundingClientRect();
       const reader=document.getElementById('bauify-reader').getBoundingClientRect();
@@ -93,6 +103,11 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   // adding history banners or performing another analysis.
   const initialRead = file => JSON.parse(fs.readFileSync(path.join(out,'analysis',file)));
   const initialFindings=initialRead('findings.json');
+  const cycleId = initialFindings.diagnostics.find(f => f.code === 'coupling/import-cycle').id;
+  const analysisDir = path.join(out, 'analysis');
+  const taskFile = path.join(dir, 'task.json');
+  const task = command('task', analysisDir, '--finding', cycleId, '--format', 'json');
+  fs.writeFileSync(taskFile, JSON.stringify(task));
   const initialZh=path.join(dir,'initial-zh.html');
   fs.writeFileSync(initialZh,buildOverlay({ir:{...ir,meta:{...ir.meta,locale:'zh-CN'}},graph:initialRead('module-graph.json'),facts:initialRead('raw-facts.json'),findings:initialFindings.diagnostics,findingsDocument:initialFindings,sourceRoot:root,html:fs.readFileSync(first.diagram,'utf8'),run:{openAnalysis:true,rules:initialFindings.rules}}).html);
   for (const [locale,file] of [['en',first.html],['zh-CN',initialZh]]) {
@@ -122,15 +137,15 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       assert.equal(await run("document.querySelector('.priority-card .quick-copy').getAttribute('aria-label')"),'复制任务给 AI');
       assert.equal(await run("document.querySelector('.priority-card .quick-copy svg rect').getAttribute('width')"),'11');
       assert.equal(await run("(()=>{const d=JSON.parse(document.getElementById('bauify-analysis').textContent);return d.tasks[d.overview.priorities[0]].task.evidence.reason;})()"),'Built from the analysis snapshot; not yet compared with the current working tree.','UI localization preserves the canonical exported evidence');
-      await run("document.querySelector('.reader-atlas').click()");
+      await run("document.querySelector('.views-option[data-view=atlas]').click()");
       const selectedCycleText = await run(`(() => {
         const idx = JSON.parse(document.getElementById('bauify-atlas-data').textContent).findings.findIndex(f => f.code === 'coupling/cycle');
         document.querySelector('#bauify-atlas [data-finding="' + idx + '"]').click();
-        return document.querySelector('#bauify-atlas .selected').textContent;
+        return document.querySelector('#bauify-atlas .atlas-selection').textContent;
       })()`);
       assert.match(selectedCycleText, /alpha/, 'zh-CN Atlas selects module-cycle findings and lists affected modules');
       assert.match(selectedCycleText, /beta/, 'zh-CN Atlas lists both cycle modules');
-      await run("document.querySelector('.atlas-classic').click()");
+      await run("document.querySelector('.views-option[data-view=diagram]').click()");
     }
   }
   await open(first.html);
@@ -166,6 +181,62 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.ok((await run("document.querySelector('.comparison-banner').textContent")).includes(`本轮未再检出 ${sourceComparison.notDetected.length} 项 · 新增 ${sourceComparison.new.length} 项`));
   assert.match(await run("document.querySelector('.comparison-banner').textContent"), /不代表已证实修复/);
   assert.match(await run("document.querySelector('.health-summary').textContent"), /无错误级/);
+
+  const template = command('verify-change', analysisDir, '--task', taskFile, '--checks-template');
+  const checks = path.join(dir, 'checks.json');
+  fs.writeFileSync(checks, JSON.stringify({ ...template, checks: [{ name: '<img id="check-injection">', status: 'failed' }] }));
+  const expectedReceipt = command('verify-change', analysisDir, '--task', taskFile, '--checks', checks);
+  assert.equal(expectedReceipt.taskId, task.taskId);
+  assert.equal(expectedReceipt.analysis.selected[0].outcome, 'not-detected');
+  const choose = async (selector, file) => {
+    const { root } = await send('DOM.getDocument');
+    const { nodeId } = await send('DOM.querySelector', { nodeId: root.nodeId, selector });
+    await send('DOM.setFileInputFiles', { nodeId, files: [file] });
+  };
+  const submit = async () => {
+    const point = await run("(()=>{const b=document.querySelector('.verify-change button[type=submit]'); b.scrollIntoView({block:'center'});const r=b.getBoundingClientRect();const x=r.x+r.width/2,y=r.y+r.height/2;return {x,y,hit:document.elementFromPoint(x,y)===b};})()");
+    assert.equal(point.hit, true, 'the receipt submit button accepts normal pointer input');
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+    await run("new Promise((resolve,reject)=>{const deadline=Date.now()+3000;const poll=()=>document.querySelector('.verify-preview').textContent||document.querySelector('.verify-status').textContent?resolve():Date.now()>deadline?reject(new Error('receipt did not finish')):setTimeout(poll,20);poll();})");
+  };
+  // The receipt form lives in the reader, which starts closed beside the diagram; opening it renders the overview.
+  if (await run("document.getElementById('bauify-reader').classList.contains('fly-closed')")) {
+    await run("document.querySelector('#bauify-stage .first-all').click()");
+    await run('new Promise(resolve=>setTimeout(resolve,600))');
+  }
+  await run("document.querySelector('.verify-change summary').click()");
+  const wrongTask = path.join(dir, 'wrong-task-id.json');
+  const otherId = task.taskId.slice(0, -1) + (task.taskId.endsWith('0') ? '1' : '0');
+  fs.writeFileSync(wrongTask, JSON.stringify({ ...task, taskId: otherId }));
+  const rejected = spawnSync(process.execPath, [cli, 'code-analysis', 'verify-change', analysisDir, '--task', wrongTask], { encoding: 'utf8' });
+  assert.equal(rejected.status, 2, rejected.stdout + rejected.stderr);
+  assert.equal(JSON.parse(rejected.stdout).diagnostics[0].code, 'verification/wrong-task-id');
+  await choose('.verify-task', wrongTask);
+  await submit();
+  assert.match(await run("document.querySelector('.verify-status').textContent"), /任务 ID 与所选发现不匹配/);
+  assert.equal(await run("document.querySelector('.verify-download').disabled"), true);
+  await choose('.verify-task', taskFile);
+  await submit();
+  assert.match(await run("document.querySelector('.verify-preview').textContent"), /未再检出.*没有报告项目检查结果/s);
+  await choose('.verify-checks', checks);
+  await submit();
+  assert.match(await run("document.querySelector('.verify-preview').textContent"), /Archify 没有运行或独立核验这些检查。.*<img id="check-injection"> · 失败/s);
+  assert.equal(await run("Boolean(document.getElementById('check-injection'))"), false);
+  const downloads = path.join(dir, 'downloads');
+  fs.mkdirSync(downloads);
+  await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads });
+  await run("document.querySelector('.verify-download').click()");
+  const downloaded = path.join(downloads, task.taskId + '.verification.json');
+  for (let tries = 0; !fs.existsSync(downloaded) && tries < 60; tries++) await new Promise(resolve => setTimeout(resolve, 50));
+  assert.deepEqual(JSON.parse(fs.readFileSync(downloaded, 'utf8')), expectedReceipt);
+  const stale = path.join(dir, 'stale-checks.json');
+  fs.writeFileSync(stale, JSON.stringify({ ...template, after: { ...template.after, analysisSha256: '0'.repeat(64) } }));
+  await choose('.verify-checks', stale);
+  await submit();
+  assert.match(await run("document.querySelector('.verify-status').textContent"), /快照对不匹配/);
+  assert.equal(await run("document.querySelector('.verify-download').disabled"), true);
+  await run("document.querySelector('.verify-change summary').click()");
   await run("document.querySelector('.browse-findings').click();const search=document.querySelector('.finding-search');search.value='复杂';search.dispatchEvent(new Event('input'));");
   assert.ok(await run("document.querySelectorAll('.finding-list [data-finding]').length > 0"), 'Chinese search matches the visible localized title');
   await run("document.querySelector('.findings-back').click()");
@@ -173,13 +244,14 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.equal(await run("document.querySelector('#bauify-detail .quick-copy').getAttribute('aria-label')"), '复制任务给 AI');
   assert.equal(await run("Boolean(document.querySelector('#bauify-detail .finding.warning'))"), true, 'zh-CN detail keeps canonical severity CSS class');
   assert.match(await run("document.querySelector('#bauify-detail').textContent"), /源码证据/);
-  await run("document.querySelector('#bauify-detail .back').click();document.querySelector('.reader-atlas').click()");
-  assert.equal(await run("document.querySelector('.atlas-classic').getAttribute('aria-label')"), '架构图视图');
+  await run("document.querySelector('#bauify-detail .back').click()");
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('.views-option b'), b => b.textContent)"), ['模块分析', '整仓星图', 'Atlas 3D 模型'], 'zh-CN names the three tabs above the diagram');
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
   assert.match(await run("document.querySelector('.atlas-side').textContent"), /高复杂度函数/);
-  assert.equal(await run("document.querySelector('.atlas-stats h3').textContent"), '本次统计');
-  assert.equal(await run("document.querySelector('.atlas-title').textContent"), '整仓星图');
-  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metrics').open"), false);
-  await run("document.querySelector('.atlas-classic').click()");
+  assert.equal(await run("document.querySelector('.atlas-stats').getAttribute('aria-label')"), '本次统计');
+  assert.equal(await run("document.querySelector('.atlas-q').placeholder"), '搜索模块、文件或函数');
+  assert.match(await run("document.querySelector('.atlas-first').textContent"), /先看这里/);
+  await run("document.querySelector('.views-option[data-view=diagram]').click()");
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
   const narrow = await run(`(() => { const r=document.getElementById('bauify-reader').getBoundingClientRect(),d=document.querySelector('.diagram-container').getBoundingClientRect(); return { width:innerWidth, readerWidth:r.width, separate:d.top>=r.bottom, overflow:document.documentElement.scrollWidth>innerWidth }; })()`);
@@ -210,7 +282,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.match(await run("document.querySelector('.comparison-banner').textContent"), /不能直接比较/);
   assert.equal(await run("document.querySelector('.comparison-banner').classList.contains('positive')"), false);
   assert.equal(await run("Boolean(document.querySelector('#bauify-overview .bauify-item.accepted'))"), true, 'zh-CN overview keeps canonical accepted CSS class');
-  await run("document.querySelector('.reader-atlas').click()");
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
   assert.equal(await run("Boolean(document.querySelector('#bauify-atlas .row.accepted'))"), true, 'zh-CN Atlas keeps canonical accepted CSS class');
   const fallback = prepare('fr');
   await open(fallback.html);

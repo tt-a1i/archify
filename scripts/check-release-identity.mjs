@@ -83,15 +83,17 @@ const readmeMarkers = {
   en: { development: 'Current development version:', stable: 'Current stable version:' },
   zh: { development: '当前开发版本：', stable: '当前稳定版本：' },
   ja: { development: '現在の開発版:', stable: '現在の安定版:' },
+  ko: { development: '현재 개발 버전:', stable: '현재 안정 버전:' },
 };
 
-function checkReadme(relativePath, source, version, language, isDevelopment) {
+function checkReadme(relativePath, source, version, language, isDevelopment, requireBadge = true) {
   const badge = `/badge/version-${shieldEscape(version)}-`;
   const markerLabel = readmeMarkers[language][isDevelopment ? 'development' : 'stable'];
   const identity = isDevelopment ? 'development' : 'stable';
   const hasMarker = source.split('\n').some((line) => line.includes(markerLabel) && line.includes(`\`v${version}\``));
-  if (!source.includes(badge) || !hasMarker) {
-    fail(`${relativePath} must advertise ${identity} identity v${version} with an exact escaped badge and explicit ${identity} marker.`);
+  if ((requireBadge && !source.includes(badge)) || !hasMarker) {
+    const badgeRequirement = requireBadge ? 'an exact escaped badge and ' : '';
+    fail(`${relativePath} must advertise ${identity} identity v${version} with ${badgeRequirement}explicit ${identity} marker.`);
   }
 }
 
@@ -223,6 +225,17 @@ if (hasSupportedVersion) {
     fail(`archify/SKILL.md metadata version ${skillVersion || '(missing)'} must map to package ${version} as ${expectedSkillVersion}.`);
   }
 
+  // The companion PR Skill is optional in reduced checkouts, but when it ships
+  // it must track the same minor identity as the core Skill.
+  const companionSkillPath = 'archify-pr/SKILL.md';
+  if (fs.existsSync(path.join(repoRoot, companionSkillPath))) {
+    const companionVersion = read(companionSkillPath)
+      .match(/^\s*version:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1];
+    if (companionVersion !== expectedSkillVersion) {
+      fail(`${companionSkillPath} metadata version ${companionVersion || '(missing)'} must map to package ${version} as ${expectedSkillVersion}.`);
+    }
+  }
+
   const rendererTemplate = read('archify/assets/template.html');
   const generatorVersions = [...rendererTemplate.matchAll(/<meta\s+name="generator"\s+content="archify\s+([^"]+)"\s*\/?>/g)]
     .map((match) => match[1]);
@@ -234,10 +247,13 @@ if (hasSupportedVersion) {
   const englishMirror = read('README_EN.md');
   const chinese = read('README_ZH.md');
   const japanese = read('README_JA.md');
+  const korean = read('README_KO.md');
   checkReadme('README.md', english, version, 'en', isDevelopment);
   checkReadme('README_EN.md', englishMirror, version, 'en', isDevelopment);
   checkReadme('README_ZH.md', chinese, version, 'zh', isDevelopment);
   checkReadme('README_JA.md', japanese, version, 'ja', isDevelopment);
+  // The Korean README uses a plain-text release marker rather than a version badge.
+  checkReadme('README_KO.md', korean, version, 'ko', isDevelopment, false);
   for (const [path, content] of [['README.md', english], ['README_EN.md', englishMirror], ['README_ZH.md', chinese], ['README_JA.md', japanese]]) {
     checkNoRavenSwitcher(path, content);
   }

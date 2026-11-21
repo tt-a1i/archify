@@ -19,6 +19,7 @@
 // dependency records draw no curve, so a missing curve is not proof of absent
 // coupling; the side panel states the unresolved counts. Source text stays in
 // the Classic view, which the Atlas links to for any finding's evidence.
+import fs from 'node:fs';
 import { clientAsset } from './client-assets.mjs';
 
 const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
@@ -149,7 +150,8 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
   const functions = (facts.functions || [])
     .filter((fn) => fileIndex.has(fn.file))
     .map((fn) => [fileIndex.get(fn.file), fn.qualname || fn.name, fn.line, fn.complexity, fn.nesting ?? 0, (fn.endLine ?? fn.line) - fn.line + 1,
-      functionFinding.has(`${fn.file}\u0000${fn.qualname}`) ? functionFinding.get(`${fn.file}\u0000${fn.qualname}`) : -1])
+      functionFinding.has(`${fn.file}\u0000${fn.qualname}`) ? functionFinding.get(`${fn.file}\u0000${fn.qualname}`) : -1,
+      fn.sourceRange ? { column: fn.sourceRange.column, endLine: fn.sourceRange.endLine, endColumn: fn.sourceRange.endColumn } : null])
     .sort((a, b) => a[0] - b[0] || a[2] - b[2] || compareText(a[1], b[1]));
   for (const [i, fn] of functions.entries()) if (fn[6] !== -1) listed[fn[6]].fn = i;
 
@@ -169,6 +171,7 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
       unknown: (unresolved.unknown || 0) + (unresolved.opaque || 0),
       outside: unresolved.outside || 0,
       parseErrors: (facts.parse_errors || []).length,
+      ...(['c', 'cpp'].includes(facts.repository?.language) ? { notCompiled: facts.languageScope?.excludedFiles?.length || 0 } : {}),
       excluded: graph.excluded?.files || 0,
     },
   };
@@ -177,3 +180,25 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
 export const ATLAS_CSS = clientAsset('atlas.css');
 
 export const ATLAS_JS = clientAsset('atlas.js');
+
+// Atlas 3D draws the same payload as a tree. Besides it, its side panel quotes
+// each finding's own message and first suggested fix, and checks the drawing
+// against the run's totals; nothing else is added.
+export function buildAtlas3dDetail({ findings = [], document: findingsDocument = null }) {
+  return {
+    detail: Object.fromEntries(findings.map((f) => [f.id, { message: f.message || '', fix: (f.supportedFixes || [])[0] || null }])),
+    run: { summary: findingsDocument?.summary ?? null },
+  };
+}
+
+export const ATLAS3D_CSS = clientAsset('atlas3d.css');
+
+export const ATLAS3D_JS = clientAsset('atlas3d.js');
+
+// three.js r128 (MIT, vendor/THREE-LICENSE.txt), embedded as inert text: atlas3d.js
+// runs it the first time Atlas 3D opens. Read on first use only.
+let threeSource = null;
+export function threeJs() {
+  if (threeSource === null) threeSource = fs.readFileSync(new URL('./vendor/three.min.js', import.meta.url), 'utf8');
+  return threeSource;
+}

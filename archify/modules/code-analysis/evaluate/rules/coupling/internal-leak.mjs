@@ -36,7 +36,7 @@ const ENTRY_FILE = /^(index\.(?:[cm]?[jt]sx?)|__init__\.py)$/;
 const VENDORED = /(^|\/)(vendor|vendored|third_party|third-party)\//;
 
 export function enabled(config, facts) {
-  return Boolean(facts && Array.isArray(facts.imports)) && facts.repository?.language !== 'java';
+  return Boolean(facts && Array.isArray(facts.imports)) && !['java', 'c', 'cpp'].includes(facts.repository?.language);
 }
 
 export function options(config) {

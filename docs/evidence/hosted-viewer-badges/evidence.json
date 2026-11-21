@@ -1,0 +1,35 @@
+{
+  "capturedAt": "2026-11-06T12:00:11.609Z",
+  "route": "Fixed-input hosted Viewer presentation comparison",
+  "base": "63c9263e84bd3993cab8e09b3d69888857858635",
+  "candidateSource": "bd5b9f321056c79d7adc27540592bc72afd3d81c",
+  "conditions": {
+    "viewport": [1440, 900],
+    "theme": "light",
+    "preset": "editorial",
+    "openStep": "Read cache",
+    "readyWaitMs": 800,
+    "node": "22.23.3",
+    "chrome": "Google Chrome on macOS",
+    "sameInput": true
+  },
+  "files": {
+    "explainer.json": "10b97b676dc26670acf6c977987e7364d4d0034cbfa09e643fe2b4c28a7bed09",
+    "after.1440x900.light.png": "cc6d81deb76c7d68947314e88514c7a1dfd9b3f1a756ba2746b9be4543148889",
+    "before.1440x900.light.png": "e712500329e11be1cca3da8a1cf186465e60ebeb5d7eaeac723e85b239040a57"
+  },
+  "browser": {
+    "baseBadgeDisplay": ["block", "block"],
+    "candidateBadgeDisplay": ["none", "none"],
+    "consoleErrors": [],
+    "nativeProfilesRemoved": true
+  },
+  "pixelComparison": {
+    "size": [1440, 900],
+    "changedPixels": 3271,
+    "bounds": [340, 93, 1300, 165],
+    "inputEqual": true
+  },
+  "humanReview": "Pending accountable contributor confirmation",
+  "scopeAgreement": "Pending maintainer decision in issue #1195"
+}

@@ -19,7 +19,7 @@ Bauify is a Node.js command-line program. The `.mjs` extension means the files a
 
 ```js
 // extract/py/index.mjs
-import { spawnSync } from 'node:child_process';   // a Node built-in, with the node: prefix
+import path from 'node:path';                   // a Node built-in, with the node: prefix
 import { fail } from '../shared/diagnostics.mjs';  // a file in this repository; the extension is mandatory
 export const id = 'py';
 export function extract(root, config) { … }
@@ -32,7 +32,7 @@ export function extract(root, config) { … }
 ### Where it bites
 
 - Relative imports in ESM **must include the extension**: `'./files.mjs'`, not `'./files'`.
-- There is no `__dirname` in ESM. To find the directory of the current file use `fileURLToPath(import.meta.url)`; the top of `extract/py/index.mjs` does exactly that to locate `extract.py`.
+- There is no `__dirname` in ESM. To find the directory of the current file use `fileURLToPath(import.meta.url)`; `scripts/build-python.mjs` uses it for the build entrypoint.
 - `import()` with parentheses is a **dynamic import**: it returns a Promise and its argument can be any expression. This comes back in the "opaque" section below.
 
 ---
@@ -131,6 +131,8 @@ Calls across selected SDK groups remain unresolved. For a shared target, its cal
 
 The snapshot host uses the selected TypeScript package's `matchFiles` helper to apply TypeScript config globs to captured paths. `matchFiles` is exported by the validated versions but is not part of their public declaration API, so version upgrades must retain the project tests. JS implementation lookup uses the public `resolveModuleName` API with a captured host limited to JS candidates.
 
+Architecture drift and pull request analysis use the bundled SDK for materialized Git trees. They resolve projects using only inputs in each pinned tree, so local SDK settings and installed dependencies do not affect the result.
+
 ### Module resolution
 
 `program.getModeForUsageLocation` determines the resolution mode of each literal import from its syntax, file/package format and compiler options, including explicit type-only `resolution-mode` attributes. That mode is passed to `ts.resolveModuleName` with the captured snapshot host, so supported package `imports` and `exports` maps select the appropriate `import` or `require` condition. In NodeNext mode, dynamic `import()` uses the import condition even inside a CommonJS file; a TypeScript static import emitted as `require` uses the require condition.
@@ -147,7 +149,7 @@ The selector supports nested conditions/arrays and literal relative JavaScript e
 
 `js-ts-lexical-v6` also follows a top-level `const { name } = require('./file')` binding to a unique top-level function declaration exported through static `module.exports.name`, `exports.name`, or `module.exports = { name }`. The require must resolve to a captured member of the caller Program; a static self-require is valid. Repeated/dynamic exports, escaped module objects, writes to the callable binding and direct eval leave calls unresolved. A namespace require of the target also blocks attribution. A visible loader alias, dynamic require, cache access or module-loader escape blocks CommonJS attribution throughout the captured caller Program because it can bypass recorded static edges. This conservative rule also rejects read-only cache use; no interprocedural proof of cache effects is attempted. The target's recorded require edge and source freshness are checked before use. Revision 28 fixes shared-member coverage within this existing model; it does not add member dispatch or reinterpret old captures.
 
-Revision 23 stores each measured JS/TS function's exact UTF-16 source range, hash and syntax kind. Fresh source questions use these captured spans, so a project SDK's function boundaries are not silently recomputed with Archify's bundled version. Historical captures without these fields keep their previous conservative reparse path.
+Revision 23 stores each measured JS/TS function's exact UTF-16 source range and hash. Project SDK captures also record the syntax kind. Fresh source questions use these captured spans, and paired change questions can use the recorded syntax kind to avoid reparsing with a different SDK. Historical captures without syntax kinds keep the conservative reparse path for paired change questions.
 
 Revision 27 decodes UTF-16LE/BE BOM sources and configs consistently with TypeScript. UTF-8 source BOMs retain the historical capture representation; source questions use the same decoding and UTF-16 positions. Adapter AST walks use explicit stacks so valid long binary expressions supported by TypeScript do not overflow an adapter recursion. See the executable [alignment ledger](TS-UPSTREAM-LEDGER.md) for tested boundaries.
 
@@ -164,39 +166,31 @@ The adapter reuses its TypeScript Program and traversal for import edges, functi
 
 ---
 
-## 4. extract/py: Python's standard-library `ast` in a subprocess
+## 4. extract/py: a transplanted Pyright parser in Node
 
 ### What it is
 
-Python ships an `ast` module that does what the TS parser does: `ast.parse(source)` gives the tree, `ast.walk(tree)` traverses it. `extract/py/extract.py` uses only the standard library; nothing needs to be pip-installed.
+The Python adapter now runs entirely in Node. `extract/py/upstream` contains the
+required MIT-licensed tokenizer, parser, source positions and parser diagnostics
+from Pyright 1.1.414. Its exact commit, original file hashes and modifications
+are recorded in `UPSTREAM.json`. `syntax.ts` selects Python 3.8–3.14 syntax
+independently of the host Python installation; the default is 3.14.
 
-```python
-for node in ast.walk(tree):
-    if isinstance(node, ast.Import):          # import a.b as c
-        …
-    elif isinstance(node, ast.ImportFrom):    # from ..pkg import x, y
-        level = node.level                    # number of leading dots: 0 absolute, 1 this package, 2 the parent
-        module = node.module or ""            # None for `from . import x`
-```
+### Syntax, binding and source declarations
 
-The script also records two things the rules need later: whether an import sits inside a function body (`lazy`, decided by the line ranges of every `def`), and every name bound at module scope with the line where it becomes bound (`symbols`: functions, classes, assignments, import aliases; it walks into top-level `if` / `try` / `with` blocks but not into function or class bodies).
+`bindings.ts` collects lexical binding events before lookup. `collect.ts` and
+`facts.ts` retain import timing/type-only guards, module symbols, function ranges,
+call inventory, McCabe complexity and nesting. `source.ts` follows bounded
+receiver/signature types to captured declarations, with explicit unknowns for
+unsupported or ambiguous forms. The existing captured-tree package/namespace
+import resolver remains in `index.mjs`.
 
-### Subprocess and inter-process communication
-
-Node cannot run Python code directly, so `extract/py/index.mjs` starts a Python process with `child_process.spawnSync`, writes the file list as JSON to its **stdin**, and reads JSON back from its **stdout**:
-
-```js
-const result = spawnSync('python3', [SCRIPT], { input: JSON.stringify(request), encoding: 'utf8' });
-const output = JSON.parse(result.stdout);
-```
-
-`spawnSync` is synchronous: Node waits for Python to finish. For a command-line tool that is the simplest option; no concurrency to manage.
-
-The interpreter is usually `python` on Windows and `python3` on Linux / macOS, and Windows also has the `py -3` launcher. The code tries the three in order and reports `extract/python-unavailable` only when all fail; `BAUIFY_PYTHON` names an interpreter explicitly.
-
-### Why resolution happens on the Node side
-
-The Python script only emits raw import statements; turning `from utils import logger` into `utils/logger.py` happens in Node. That way the definitions of external / outside / unknown / opaque exist once, and the two languages cannot drift apart.
+`npm run build:python` bundles this slice to the checked-in `analyze.mjs` using
+esbuild. `npm run check:python` checks that bundle and type-checks the sources;
+the module test command runs it automatically. Production requires neither
+Python, esbuild nor the complete Pyright npm package. See [Python scope and
+provenance](PYTHON.md) for the feature contract, reference comparison and update
+procedure.
 
 ### Python import semantics (the part newcomers find hardest)
 
@@ -579,7 +573,8 @@ Most tests call the library directly (`extractFacts`, `buildGraph`, `evaluateGra
 
 ### Python call capture
 
-Python adapter revision 7 adds `python-lexical-v1`, source-contained Call records
+Python adapter revision 13 emits the Node-only `python-source-v3` declaration
+model. See [Python support](PYTHON.md). Historical revision 7 adds `python-lexical-v1`, source-contained Call records
 and optional exact `functions[].sourceRange` proof. UTF-8 byte offsets from the
 AST are converted to UTF-16 columns against decoded source. Ranges exclude
 preceding decorators; their hashes retain actual interior line endings. Old

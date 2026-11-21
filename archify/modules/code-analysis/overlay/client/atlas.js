@@ -2,33 +2,36 @@
   var source = document.getElementById('bauify-atlas-data');
   if (!source) return;
   var atlas = JSON.parse(source.textContent);
-  var ui = JSON.parse(document.getElementById('bauify-analysis').textContent).ui || {};
+  var analysis = JSON.parse(document.getElementById('bauify-analysis').textContent), ui = analysis.ui || {}, pr = analysis.pullRequest;
   var tr = window.__archifyMakeAnalysisTranslator(ui.messages || {});
   var root = document.documentElement;
   var standalone = ui.mode === 'standalone';
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
   var NAMES = { 'complexity/function': tr("Complex functions"), 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'redundancy/duplicate-block': tr("Duplicate code") };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
+  var prFiles = pr ? new Map(F.map(function(f,i){return[f[0],i];})) : null, prFunctions = pr ? new Map() : null;
+  var prMarkerHits = [], prModuleChanges = pr ? new Map((pr.moduleChanges || []).map(function(m){return[m.id,m];})) : null;
+  var changedFiles = pr ? (pr.changedFiles || []) : [];
+  var changedSelection = null;
+  if (pr) FN.forEach(function(fn,i){prFunctions.set(JSON.stringify([F[fn[0]][0],fn[1]]),i);});
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function icon(name) {
     var paths = {
       expand: '<path d="M8 3H3v5M3 3l6 6M16 21h5v-5M21 21l-6-6M21 8V3h-5M21 3l-6 6M3 16v5h5M3 21l6-6"></path>',
       clear: '<circle cx="12" cy="12" r="8"></circle><path d="m9 9 6 6M15 9l-6 6"></path>',
-      classic: '<path d="M4 5h16v12H4zM8 21h8M12 17v4M8 9l3 3-3 3M14 15h3"></path>',
       evidence: '<path d="M6 2h8l4 4v16H6zM14 2v5h5M9 12h6M9 16h4"></path>',
       files: '<path d="M5 3h9l4 4v14H5zM14 3v5h5M8 13h7M8 17h5"></path>',
       dependencies: '<circle cx="6" cy="7" r="2.5"></circle><circle cx="18" cy="17" r="2.5"></circle><path d="M7.9 9.4 15.6 14.6M6 9.5V13a3 3 0 0 0 3 3h6.5"></path>',
       functions: '<path d="M5 3h14v18H5zM9 8l-2 4 2 4M15 8l2 4-2 4M13 7l-2 10"></path>',
-      modules: '<rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect><path d="M11 7h5a2 2 0 0 1 2 2v4M13 17H8a2 2 0 0 1-2-2v-4"></path>'
+      modules: '<rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect><path d="M11 7h5a2 2 0 0 1 2 2v4M13 17H8a2 2 0 0 1-2-2v-4"></path>',
+      atlas: '<circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M9 10.5c2-1.5 4-1.5 6 0"></path>',
+      tree: '<path d="M12 22V11M12 15l-4-3M12 13l4-3M12 11 9 7M12 11l3-4"></path><circle cx="8" cy="12" r="1.6"></circle><circle cx="16" cy="10" r="1.6"></circle><circle cx="9" cy="6.5" r="1.6"></circle><circle cx="15" cy="6.5" r="1.6"></circle><path d="M6 22h12"></path>'
     };
     return '<svg class="atlas-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[name] + '</svg>';
   }
-  function iconButton(kind, label, extraClass, attributes) {
-    return '<button type="button" class="atlas-icon-button atlas-' + kind + (extraClass || '') + '" aria-label="' + esc(label) + '" data-analysis-tip="' + esc(label) + '"' + (attributes || '') + '>' + icon(kind) + '</button>';
-  }
   function plural(n, one, many) {
-    if (ui.locale === 'zh-CN') return fmt(n) + ({ file: ' 个文件', module: ' 个模块', function: ' 个函数', import: ' 条导入', 'file dependency': ' 条文件依赖', dependency: ' 条依赖', line: ' 行', 'internal file': ' 个内部文件', more: ' 项其他文件' }[one] || ' ' + tr(one));
+    if (ui.locale === 'zh-CN') return fmt(n) + ({ file: ' 个文件', module: ' 个模块', function: ' 个函数', import: ' 条导入', 'file dependency': ' 条文件依赖', dependency: ' 条依赖', line: ' 行', 'internal file': ' 个内部文件', more: ' 项其他文件', finding: ' 项发现' }[one] || ' ' + tr(one));
     return fmt(n) + ' ' + (n === 1 ? one : many || one + 's');
   }
   var fnsByFile = F.map(function () { return []; }), fnSlot = [];
@@ -47,24 +50,166 @@
   var panel = document.createElement('section');
   panel.lang = ui.locale || 'en';
   panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', tr("Code analysis atlas"));
-  var totals = [[F.length, 'files', 'file'], [E.length, 'dependencies', 'file dependency'], [FN.length, 'functions', 'function'], [M.length, 'modules', 'module']];
-  panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '</div>' +
-    '<div class="atlas-controls">' + iconButton('expand', tr('Disable sector zoom'), '', ' aria-pressed="true"') + iconButton('clear', tr('Clear selection')) + (standalone ? '' : iconButton('classic', tr('Classic view'))) + '</div></nav>' +
-    '<div class="atlas-body"><div class="atlas-stage"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div><aside class="atlas-side"><section class="atlas-selection" hidden></section><section class="atlas-stats"><h3 class="k">' + esc(tr('Totals')) + '</h3><div class="stats">' + totals.map(function (stat) {
-      var label = plural(stat[0], stat[2], stat[2] === 'file dependency' ? 'file dependencies' : null);
-      return '<div class="stat" tabindex="0" role="img" aria-label="' + esc(label) + '" data-analysis-tip="' + esc(tr(stat[2] === 'file dependency' ? 'file dependencies' : stat[1])) + '">' + icon(stat[1]) + '<b>' + fmt(stat[0]) + '</b></div>';
-    }).join('') + '</div></section><div class="atlas-side-content"></div></aside></div>';
-  (standalone ? document.querySelector('.analysis-stage') : document.body).appendChild(panel);
+  // Below a diagram the Atlas is a page of its own: the map fills one card, the
+  // controls float on it, and the side panel slides in only when something is
+  // selected. The standalone analysis keeps the side panel beside the map.
+  if (pr) panel.classList.add('atlas-pr');
+  var PAGE = !standalone;
+  var statsHtml = '<div class="stats">' + [[F.length, tr('files')], [E.length, tr('file dependencies')], [FN.length, tr('functions')], [M.length, tr('modules')]].map(function (stat) { return '<div class="stat"><b>' + fmt(stat[0]) + '</b><span>' + stat[1] + '</span></div>'; }).join('') + '</div>';
+  var tabsHtml = '<div class="atlas-tabs" role="tablist" aria-label="' + esc(tr('Atlas view')) + '"><button type="button" class="atlas-tab" id="atlas-tab-map" role="tab" aria-selected="true" tabindex="0" aria-controls="atlas-map-panel" data-analysis-tip="' + esc(tr('Relationships and findings')) + '">' + esc(tr('Map')) + '</button><button type="button" class="atlas-tab" id="atlas-tab-files" role="tab" aria-selected="false" tabindex="-1" aria-controls="atlas-files-panel" data-analysis-tip="' + esc(tr('Search captured files')) + '">' + esc(tr('Files')) + '</button></div>';
+  if (PAGE) {
+    panel.classList.add('atlas-page');
+    panel.innerHTML = '<div class="atlas-body"><div class="atlas-stage" id="atlas-map-panel" role="tabpanel" aria-labelledby="atlas-tab-map"><canvas role="img"></canvas><div class="atlas-tip" hidden></div></div>' +
+      '<nav class="atlas-files-pane" id="atlas-files-panel" role="tabpanel" aria-labelledby="atlas-tab-files" hidden><input class="atlas-file-query" type="search" aria-label="' + esc(tr('Find a captured file')) + '"><div class="atlas-file-list"></div></nav>' +
+      '<div class="atlas-float atlas-tl"><div class="atlas-search"><input class="atlas-q" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="atlas-sug" aria-autocomplete="list" placeholder="' + esc(tr('Search modules, files or functions')) + '" aria-label="' + esc(tr('Search modules, files or functions')) + '"><kbd aria-hidden="true">/</kbd><div class="atlas-sug" id="atlas-sug" role="listbox" hidden></div></div>' + tabsHtml + '</div>' +
+      '<div class="atlas-float atlas-tr atlas-controls"><button type="button" class="atlas-expand" aria-pressed="true"></button><button type="button" class="atlas-clear">' + esc(tr('Clear selection')) + '</button></div>' +
+      '<div class="atlas-focus" hidden><i></i><span></span><button type="button" class="atlas-focus-x" aria-label="' + esc(tr('Clear selection')) + '">×</button></div>' +
+      '<section class="atlas-float atlas-first" aria-label="' + esc(tr('Start here')) + '"></section>' +
+      '<div class="atlas-float atlas-legend" aria-hidden="true"><span><i style="background:' + TONE.warning + '"></i>' + esc(tr('warning')) + '</span><span><i style="background:' + TONE.info + '"></i>' + esc(tr('info')) + '</span><span><i class="calm"></i>' + esc(tr('no finding')) + '</span><span>' + esc(tr('spike length = complexity')) + '</span><span><i class="curve"></i>' + esc(tr('curve = file dependency')) + '</span></div>' +
+      '<section class="atlas-float atlas-stats" aria-label="' + esc(tr('Totals')) + '">' + statsHtml + '</section><div class="atlas-help"></div>' +
+      '<aside class="atlas-side" aria-label="' + esc(tr('Atlas details')) + '"><div class="atlas-fly-head"><nav class="atlas-crumbs" aria-label="' + esc(tr('Atlas navigation')) + '"></nav><button type="button" class="atlas-fly-x" aria-label="' + esc(tr('Close')) + '">×</button></div>' +
+      '<div class="atlas-fly-body"><section class="atlas-selection"></section><div class="atlas-side-content"></div></div></aside></div>';
+  } else panel.innerHTML = '<nav class="atlas-nav" aria-label="' + esc(tr('Atlas navigation')) + '"><div class="atlas-title">' + esc(tr('Atlas')) + '<span>' + esc(plural(F.length, 'file') + ' · ' + plural(E.length, 'file dependency', tr('file dependencies')) + ' · ' + plural(FN.length, 'function')) + '</span></div>' +
+    '<div class="atlas-controls"><button type="button" class="atlas-expand" aria-pressed="true"></button><button type="button" class="atlas-clear">' + esc(tr('Clear selection')) + '</button></div></nav>' +
+    tabsHtml +
+    '<div class="atlas-body"><nav class="atlas-files-pane" id="atlas-files-panel" role="tabpanel" aria-labelledby="atlas-tab-files" hidden><input class="atlas-file-query" type="search" aria-label="' + esc(tr('Find a captured file')) + '"><div class="atlas-file-list"></div></nav><div class="atlas-stage" id="atlas-map-panel" role="tabpanel" aria-labelledby="atlas-tab-map"><canvas role="img"></canvas><div class="atlas-tip" hidden></div><div class="atlas-help"></div></div><aside class="atlas-side"><section class="atlas-selection"></section><section class="atlas-stats"><div class="k">' + esc(tr('Totals')) + '</div>' + statsHtml +
+    '</section><div class="atlas-side-content"></div></aside></div>';
+  // The diagram view opens on the analysed diagram. Tabs above it page between the
+  // diagram and the same run as the Atlas or as Atlas 3D, one at a time.
+  var views = null, panel3d = null, has3d = !!document.getElementById('bauify-three');
+  if (standalone) document.querySelector('.analysis-stage').appendChild(panel);
+  else {
+    var option = function (kind, title, text) {
+      var selected = kind === 'diagram';
+      return '<button type="button" class="views-option" data-view="' + kind + '" aria-pressed="' + selected + '" title="' + esc(text) + '">' + icon({ diagram: 'modules', atlas: 'atlas', atlas3d: 'tree' }[kind]) +
+        '<span class="views-copy"><b>' + esc(title) + '</b></span></button>';
+    };
+    views = document.createElement('section');
+    views.id = 'bauify-views'; views.lang = ui.locale || 'en'; views.hidden = true;
+    views.setAttribute('aria-label', tr('More views of this analysis'));
+    views.innerHTML = '<div class="views-options" role="group" aria-label="' + esc(tr('More views of this analysis')) + '">' +
+      option('diagram', tr('Module diagram'), tr('The analysed diagram with its finding rings')) +
+      option('atlas', tr('Atlas'), tr('Whole-repository view of files, dependencies and functions')) +
+      (has3d ? option('atlas3d', tr('Atlas 3D'), tr('The modules as a tree, grown by dependency layer')) : '') + '</div><div class="views-panels"></div>';
+    var diagram = document.querySelector('.diagram-container');
+    if (diagram) diagram.before(views); else document.body.appendChild(views);
+    views.querySelector('.views-panels').appendChild(panel);
+    if (has3d) {
+      panel3d = document.createElement('section');
+      panel3d.id = 'bauify-atlas3d'; panel3d.hidden = true; panel3d.setAttribute('aria-label', tr('Atlas 3D'));
+      views.querySelector('.views-panels').appendChild(panel3d);
+    }
+  }
   var stage = panel.querySelector('.atlas-stage'), canvas = panel.querySelector('canvas'), tip = panel.querySelector('.atlas-tip'), side = panel.querySelector('.atlas-side');
+  var scroller = PAGE ? side.querySelector('.atlas-fly-body') : side, homeOpen = false, wantHome = false;
+  var filePane = panel.querySelector('.atlas-files-pane'), fileQuery = panel.querySelector('.atlas-file-query'), fileList = panel.querySelector('.atlas-file-list');
+  var fileScope = null;
+  if (pr && changedFiles.length) {
+    fileScope = document.createElement('select');
+    fileScope.className = 'atlas-file-scope';
+    fileScope.setAttribute('aria-label', tr('File scope'));
+    fileScope.add(new Option(tr('Changed files · {count}', { count: changedFiles.length }), 'changed'));
+    fileScope.add(new Option(tr('All captured files'), 'all'));
+    fileScope.addEventListener('change', renderFiles);
+    fileQuery.before(fileScope);
+  }
+  function changedPath(change, side) {
+    if (side === 'base') return change.previousPath || (change.status === 'added' ? null : change.path);
+    return change.status === 'removed' ? null : change.path;
+  }
+  function changedSource(change, side) {
+    var file = changedPath(change, side);
+    var sources = side === 'base' ? pr.beforeSources : analysis.snippets;
+    return file && Object.hasOwn(sources || {}, file) ? { file: file, source: sources[file] } : null;
+  }
+  function changedLabel(change) {
+    return change.previousPath && change.previousPath !== change.path ? change.previousPath + ' → ' + change.path : change.path;
+  }
+  function renderFiles() {
+    var wanted = fileQuery.value.trim().toLowerCase();
+    if (fileScope && fileScope.value === 'changed') {
+      fileList.innerHTML = changedFiles.map(function (change, index) {
+        var label = changedLabel(change);
+        if (wanted && label.toLowerCase().indexOf(wanted) < 0) return '';
+        return '<button type="button" class="atlas-change-file" data-changed-file="' + index + '"' +
+          (index === changedSelection ? ' aria-current="true"' : '') + '><span>' + esc(label) +
+          '</span><small>' + esc(tr(change.status)) + '</small></button>';
+      }).join('') || '<p role="status">' + esc(tr('No changed files match.')) + '</p>';
+      return;
+    }
+    fileList.innerHTML = F.map(function (file, index) {
+      if (wanted && file[0].toLowerCase().indexOf(wanted) < 0) return '';
+      return '<button type="button" data-file="' + index + '"' + (index === state.file ? ' aria-current="true"' : '') + '>' + esc(file[0]) + '</button>';
+    }).join('') || '<p role="status">' + esc(tr('No captured files match.')) + '</p>';
+  }
+  function fileMarkdown(index) {
+    var file = F[index];
+    var names = fnsByFile[index].map(function (i) { return tr('{name} (line {line})', { name: FN[i][1], line: FN[i][2] }); });
+    return '# ' + file[0] + '\n\n' + tr('Module: ') + M[file[1]].label + '\n\n' + tr('Captured functions:') + '\n' + (names.length ? names.map(function (name) { return '- ' + name; }).join('\n') : tr('none')) + '\n\n' + tr('This is navigation context from the saved analysis, not fresh source or tool verification.') + '\n' + tr('Source content and complete diagnostic/task evidence are not included.');
+  }
+  function showTab(files, focusSearch) {
+    filePane.hidden = !files;
+    stage.hidden = files;
+    panel.querySelector('#atlas-tab-map').setAttribute('aria-selected', files ? 'false' : 'true');
+    panel.querySelector('#atlas-tab-files').setAttribute('aria-selected', files ? 'true' : 'false');
+    panel.querySelector('#atlas-tab-map').tabIndex = files ? -1 : 0;
+    panel.querySelector('#atlas-tab-files').tabIndex = files ? 0 : -1;
+    if (files) { renderFiles(); if (focusSearch) fileQuery.focus(); }
+    else draw('fade');
+  }
+  panel.querySelector('#atlas-tab-map').addEventListener('click', function () { showTab(false); });
+  panel.querySelector('#atlas-tab-files').addEventListener('click', function () { showTab(true, true); });
+  panel.querySelector('.atlas-tabs').addEventListener('keydown', function (event) {
+    var tabs = Array.from(panel.querySelectorAll('.atlas-tab')), index = tabs.indexOf(event.target), next;
+    if (index < 0) return;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') next = (index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = tabs.length - 1;
+    else return;
+    event.preventDefault(); showTab(next === 1); tabs[next].focus();
+  });
+  fileQuery.addEventListener('input', renderFiles);
+  fileList.addEventListener('click', function (event) {
+    var changed = event.target.closest('button[data-changed-file]');
+    if (changed) {
+      var selected = Number(changed.dataset.changedFile);
+      var head = prFiles.get(changedFiles[selected].path);
+      select(head == null ? -1 : F[head][1], -1, undefined, head, selected);
+      fileList.querySelector('[data-changed-file="' + selected + '"]').focus({ preventScroll: true });
+      return;
+    }
+    var button = event.target.closest('button[data-file]');
+    if (!button) return;
+    var index = Number(button.dataset.file);
+    select(F[index][1], -1, undefined, index);
+    fileList.querySelector('[data-file="' + index + '"]').focus({ preventScroll: true });
+  });
   canvas.setAttribute('aria-label', tr("Dependency atlas: ") + plural(M.length, 'module') + tr(" around a circle, ") + plural(F.length, 'file') + tr(" grouped by module, ") + plural(E.length, 'file dependency', tr("file dependencies")) + tr(" drawn between them, and ") + plural(FN.length, 'function') + tr(" as spikes whose length is their complexity. The side panel lists the same findings and modules."));
 
   // ---- state ----
-  var state = { focusModule: -1, finding: -1, hover: null };
+  var state = { focusModule: -1, finding: -1, file: -1, hover: null };
   var expansionEnabled = true, focusZoom = 1;
   var geometryKey = '', geometryTarget = null, geometryFrom = null, geometryPending = false;
-  var LABEL_FONT = '11px ui-monospace, Menlo, Consolas, monospace';
+  var LABEL_FONT = (pr ? '600 12px ' : '11px ') + 'ui-monospace, Menlo, Consolas, monospace';
+  var PR_BRIEF_FONT = '11px system-ui, -apple-system, "Segoe UI", sans-serif';
   // Long module names are cut on the circle (the tooltip and side panel keep them whole).
   function shortLabel(label) { return label.length > 20 ? '…' + label.slice(-19) : label; }
+  function prModuleRows(mi) {
+    var change=pr&&prModuleChanges.get(M[mi].id);if(!change)return [];
+    return ['files','functions'].map(function(kind) {
+      var counts=change[kind],text=[['added','+'],['removed','−'],['modified','◇']].filter(function(item){return counts[item[0]];}).map(function(item){return item[1]+counts[item[0]];}).join(' ');
+      return text?tr(kind==='files'?'Files: {counts}':'Functions: {counts}',{counts:text}):'';
+    }).filter(Boolean);
+  }
+  function prModuleBrief(mi) {
+    var change=prModuleChanges.get(M[mi].id);if(!change)return '';
+    return ['files','functions'].map(function(kind){
+      var counts=change[kind],changes=[counts.added?'+'+counts.added:'',counts.removed?'−'+counts.removed:''].filter(Boolean).join('/');
+      if(!changes)return '';
+      var many=Math.max(counts.added,counts.removed)>1;
+      return tr(kind==='files'?(many?'{changes} files':'{changes} file'):(many?'{changes} fns':'{changes} fn'),{changes:changes});
+    }).filter(Boolean).join(' · ') || '◇';
+  }
   // Many curves add up: fainter strokes for denser graphs keep strands readable.
   function density(n, most) { return Math.max(0.05, Math.min(most, 8 / Math.sqrt(Math.max(n, 1)))); }
   var geo = null, marks = [];
@@ -87,8 +232,12 @@
     if (key === geometryKey && geometryTarget) { if (!anim.focus) geo = geometryTarget; return; }
     var old = geo, size = Math.max(200, Math.min(w, h));
     var measure = canvas.getContext('2d'); measure.font = LABEL_FONT;
-    var longest = M.reduce(function (n, m) { return Math.max(n, measure.measureText(shortLabel(m.label)).width); }, 0);
-    var R = Math.max(40, Math.min(size * 0.34, (size / 2 - Math.min(longest, size * 0.22) - 12) / 1.53));
+    var longest = M.reduce(function(n,m,mi) {
+      measure.font=LABEL_FONT;var width=measure.measureText(shortLabel(m.label)).width;
+      if(pr) {var brief=prModuleBrief(mi);measure.font=PR_BRIEF_FONT;if(brief)width=Math.max(width,measure.measureText(brief).width);}
+      return Math.max(n,width);
+    },0);
+    var R = Math.max(40, Math.min(size * 0.34, (size / 2 - Math.min(longest, size * (pr ? 0.24 : 0.22)) - 12) / 1.53));
     // Reuse the PR prototype's partition: selected files gain angular space;
     // all other sectors compress within the same circle, without overlap.
     var weights = F.map(function (f, i) { return selected < 0 ? 1 : f[1] === selected ? (2 + Math.min(fnsByFile[i].length, 45) / 12) * focusZoom : 0.55; });
@@ -152,6 +301,7 @@
     if (finding == null) finding = state.finding;
     var sel = { modules: {}, files: {}, edges: null, fns: {}, tone: null, any: false, arcs: {}, entries: {} };
     if (state.focusModule !== -1 && finding === -1) { sel.modules[state.focusModule] = true; sel.any = true; }
+    if (state.file !== -1 && finding === -1) { sel.files[state.file] = true; sel.anchor = state.file; sel.any = true; sel.tone = TONE.info; fnsByFile[state.file].forEach(function (i) { sel.fns[i] = true; }); }
     var f = FD[finding];
     if (f) {
       sel.any = true; sel.tone = TONE[f.severity] || TONE.info;
@@ -178,7 +328,7 @@
   var anim = { focus: 0, reveal: 0, fade: 0, flow: 0, flowFor: -1, raf: 0, timer: 0 };
   var motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   function draw(how, bounds) {
-    if (panel.hidden) return;
+    if (panel.hidden || stage.hidden) return;
     bounds = bounds || stage.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
     var still = motion.matches, old = geo;
@@ -214,7 +364,7 @@
   // Frames come from requestAnimationFrame; a timer backs it up where frames are
   // throttled (a page not in view), so time-based motion still reaches its end.
   function schedule() {
-    if (anim.raf) return;
+    if (anim.raf || panel.hidden || stage.hidden) return;
     anim.raf = requestAnimationFrame(tick);
     anim.timer = setTimeout(tick, 40);
   }
@@ -223,7 +373,7 @@
     var now = performance.now();
     cancelAnimationFrame(anim.raf); clearTimeout(anim.timer);
     anim.raf = 0; anim.timer = 0;
-    if (panel.hidden) return;
+    if (panel.hidden || stage.hidden) return;
     var busy = present(now);
     markMotion();
     if (busy) schedule();
@@ -351,12 +501,21 @@
       ctx.strokeStyle = hue(mi, t, on ? 1 : 0.25); ctx.lineWidth = hub ? 5 : 2; ctx.lineCap = 'butt'; ctx.stroke();
       var a = mid(mi), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label);
       // A module too narrow for its own label is named only when selected or hovered.
-      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || sel.modules[mi] || state.focusModule === mi;
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= (pr ? 16 : 12) || sel.modules[mi] || state.focusModule === mi;
       if (!named) return;
       ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(flip ? a + Math.PI : a);
       ctx.textAlign = flip ? 'right' : 'left'; ctx.fillStyle = hue(mi, t, on ? 1 : 0.35);
-      ctx.fillText(shortLabel(m.label), 0, 0); ctx.restore();
+      ctx.fillText(shortLabel(m.label), 0, 0);
+      if(pr&&((geo.span[mi][1]-geo.span[mi][0])*geo.arc>=32||sel.modules[mi])) {
+        var brief=prModuleBrief(mi);
+        ctx.font=PR_BRIEF_FONT;
+        var room=Math.min(geo.w,geo.h)/2-geo.label-12;
+        if(ctx.measureText(brief).width>room+1)brief=room>=ctx.measureText('◇').width?'◇':'';
+        if(brief!=='◇'){ctx.fillStyle=hue(mi,t,on?0.85:0.3);ctx.fillText(brief,0,16);}
+      }
+      ctx.restore();
     });
+    if (pr) drawPRMarks(ctx,sel);
     ctx.lineCap = 'round';
   }
   function drawHover(ctx, t) {
@@ -378,6 +537,7 @@
   // unreported functions), and stays aligned during animation and resizing.
   function hit(x, y) {
     if (!geo) return null;
+    if(pr) for(var marker=prMarkerHits.length-1;marker>=0;marker--) {var p=prMarkerHits[marker];if(Math.hypot(x-p.x,y-p.y)<=6)return {type:'pr-change',index:p.index};}
     var best = null, bestDistance = 4;
     marks.forEach(function (mark) {
       var dx = mark.p1[0] - mark.p0[0], dy = mark.p1[1] - mark.p0[1];
@@ -399,16 +559,17 @@
       var along = dx * Math.cos(mid(mi)) + dy * Math.sin(mid(mi));
       var across = -dx * Math.sin(mid(mi)) + dy * Math.cos(mid(mi));
       var labelStart = geo.label;
-      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || state.focusModule === mi || selected.modules[mi];
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= (pr ? 16 : 12) || state.focusModule === mi || selected.modules[mi];
       if (named && Math.abs(across) <= 7 && along >= labelStart - 4 && along <= labelStart + measure.measureText(shortLabel(M[mi].label)).width + 4) return { type: 'module', index: mi };
     }
     return null;
   }
   function tipText(h) {
-    if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + (hubOf[h.index] != null ? tr(" · reported hub") : '') + ("<br>" + tr("Click to focus its dependencies.")); }
+    if(h.type==='pr-change') {var change=pr.changes[h.index],a=change.before,b=change.after;return '<b>'+esc(change.name||change.path||change.from+' → '+change.to)+'</b>'+esc(tr(change.status))+(change.kind==='function'&&a&&b?'<br>'+esc(tr('Complexity {before} → {after}',{before:a.complexity,after:b.complexity})):'');}
+    if (h.type === 'module') { var m = M[h.index], c = F.filter(function (f) { return f[1] === h.index; }).length; return '<b>' + esc(m.label) + '</b>' + (m.path && m.path !== m.label ? esc(m.path) + '<br>' : '') + plural(c, 'file') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + (hubOf[h.index] != null ? tr(" · reported hub") : '') + (pr?prModuleRows(h.index).map(function(text){return '<br>'+esc(text);}).join(''):'') + ("<br>" + tr("Click to focus its dependencies.")); }
     if (h.type === 'file') { var f = F[h.index]; return '<b>' + esc(f[0]) + '</b>' + esc(M[f[1]].label) + ' · ' + plural(f[2], 'line') + ' · ' + plural(fnsByFile[h.index].length, 'function'); }
     var fn = FN[h.index], fd = fn[6] !== -1 ? FD[fn[6]] : null;
-    return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + ("<br>" + tr("complexity ")) + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? ("<br>" + tr("Reported (")) + esc(fd.severity) + tr("). Click to select.") : '');
+    return '<b>' + esc(fn[1]) + '</b>' + esc(F[fn[0]][0]) + ':' + fn[2] + esc(functionColumns(fn)) + ("<br>" + tr("complexity ")) + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + (fd ? ("<br>" + tr("Reported (")) + esc(fd.severity) + tr("). Click to select.") : ("<br>" + tr("Captured source position, not a runtime call.")));
   }
   canvas.addEventListener('mousemove', function (e) {
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
@@ -417,15 +578,17 @@
     if (!h) { tip.hidden = true; return; }
     if (!same || tip.hidden) tip.innerHTML = tipText(h);
     tip.hidden = false;
-    var x = e.clientX - b.left + 14, y = e.clientY - b.top + 14;
-    tip.style.left = Math.max(8, Math.min(x, b.width - tip.offsetWidth - 8)) + 'px';
-    tip.style.top = Math.max(8, Math.min(y, b.height - tip.offsetHeight - 8)) + 'px';
+    // The tip lives in the stage; the canvas may be shifted aside for the open panel.
+    var s = stage.getBoundingClientRect(), x = e.clientX - s.left + 14, y = e.clientY - s.top + 14;
+    tip.style.left = Math.max(8, Math.min(x, s.width - tip.offsetWidth - 8)) + 'px';
+    tip.style.top = Math.max(8, Math.min(y, s.height - tip.offsetHeight - 8)) + 'px';
   });
   canvas.addEventListener('mouseleave', function () { tip.hidden = true; if (state.hover) { state.hover = null; schedule(); } });
   canvas.addEventListener('click', function (e) {
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
     if (!h) { select(-1, -1); return; }
-    if (h.type === 'module') select(state.focusModule === h.index ? -1 : h.index, -1);
+    if (h.type === 'pr-change') showPRChange(h.index);
+    else if (h.type === 'module') select(state.focusModule === h.index ? -1 : h.index, -1);
     else if (h.type === 'function' && FN[h.index][6] !== -1) selectFinding(FN[h.index][6]);
     else select(F[h.type === 'function' ? FN[h.index][0] : h.index][1], -1);
   });
@@ -453,35 +616,41 @@
     var owner = modules.length && modules.every(function (mi) { return mi === modules[0]; }) ? modules[0] : -1;
     select(owner, index);
   }
-  function select(module, finding, saved) {
+  function select(module, finding, saved, file, changeIndex) {
     updateGeometry(performance.now(), motion.matches);
     var view = saved ? saved.view : sideView();
     if (saved) focusZoom = saved.zoom;
     else if (module !== state.focusModule) focusZoom = 1;
-    if (!saved && (module !== state.focusModule || finding !== state.finding)) view.moduleDetails = false;
+    state.file = Number.isInteger(file) && file >= 0 && file < F.length ? file : -1;
+    changedSelection = Number.isInteger(changeIndex) && changedFiles[changeIndex] ? changeIndex : null;
+    if (state.file !== -1) { module = F[state.file][1]; finding = -1; }
     state.focusModule = module; state.finding = finding;
     state.hover = null; tip.hidden = true;
+    // The page's panel shows "all findings" only when asked; clearing closes it.
+    homeOpen = wantHome && module === -1 && finding === -1 && state.file === -1; wantHome = false;
     root.setAttribute('data-bauify-atlas-focus', module === -1 ? '' : M[module].id);
     root.setAttribute('data-bauify-atlas-finding', finding === -1 ? '' : FD[finding].id);
-    panel.querySelector('.atlas-clear').disabled = module === -1 && finding === -1;
-    renderSide(view, !saved); draw('fade');
+    panel.querySelector('.atlas-clear').disabled = module === -1 && finding === -1 && changedSelection === null;
+    if (!filePane.hidden) renderFiles();
+    renderSide(view, !saved); if (!stage.hidden) draw('fade');
   }
   function sideView() {
     var modules = side.querySelector('.module-list');
     return {
-      scroll: side.scrollTop,
+      scroll: scroller.scrollTop,
       modules: modules ? modules.scrollTop : 0,
-      groups: new Set(Array.from(side.querySelectorAll('details[data-group][open]'), function (group) { return group.dataset.group; })),
-      coverage: !!side.querySelector('.atlas-metrics[open]'),
-      moduleDetails: !!side.querySelector('.selected-details[open]')
+      groups: new Set(Array.from(side.querySelectorAll('details[data-group][open]'), function (group) { return group.dataset.group; }))
     };
   }
   function findingTitle(f) { return window.__archifyAnalysisFindingTitle ? window.__archifyAnalysisFindingTitle(f.id) : f.title; }
-  function selectedCard() {
-    var f = FD[state.finding];
-    if (f) {
+  function functionColumns(fn) {
+    var range = fn[7];
+    if (!range) return '';
+    return ':' + range.column + '-' + range.endLine + ':' + range.endColumn;
+  }
+  function findingWhat(f) {
       var what = '';
-      if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + tr(" · complexity ") + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + tr(". Curves: dependencies of its file."); }
+      if (f.kind === 'function' && f.fn != null) { var fn = FN[f.fn]; what = F[fn[0]][0] + ':' + fn[2] + functionColumns(fn) + tr(" · complexity ") + fn[3] + tr(" · nesting ") + fn[4] + ' · ' + plural(fn[5], 'line') + tr(". Curves: dependencies of its file. The position locates captured source, not a runtime call."); }
       if (f.kind === 'cycle') what = tr("Path: ") + f.path.map(function (x) { return F[x][0].split('/').pop(); }).join(' → ') + tr(" → back");
       if (f.kind === 'modules') what = f.modules.map(function (x) { return M[x].label; }).join(', ');
       if (f.kind === 'module' || f.kind === 'area') what = tr("fan-in") + " " + M[f.module].fanIn + tr(" · fan-out ") + M[f.module].fanOut;
@@ -491,7 +660,28 @@
         var reachedIn = {}; f.edges.forEach(function (e) { reachedIn[e[1]] = true; });
         what = plural(f.edges.length, 'import') + tr(" from other modules reach ") + plural(Object.keys(reachedIn).length, 'internal file') + tr(" of ") + M[f.module].label + (f.entries && f.entries.length ? tr("; ringed: its entry point ") + f.entries.map(function (x) { return F[x][0].split('/').pop(); }).join(', ') : tr("; it has no entry file")) + '.';
       }
-      return '<div class="selected"><div class="selected-heading"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><h4>' + esc(findingTitle(f)) + '</h4>' + iconButton('evidence', tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view'), ' atlas-evidence', ' data-id="' + esc(f.id) + '"') + '</div><p>' + esc(what) + (f.accepted ? tr(" · accepted in baseline") : '') + '</p></div>';
+      return what;
+  }
+  function selectedCard() {
+    if (changedSelection !== null) {
+      var change = changedFiles[changedSelection];
+      return '<div class="selected"><h4>' + esc(changedLabel(change)) + '</h4><p>' + esc(tr(change.status)) +
+        '</p><div class="atlas-change-actions">' + ['base', 'head'].map(function (snapshot) {
+          var label = tr(snapshot === 'base' ? 'Open merge-base source' : 'Open PR head source');
+          return '<button type="button" data-atlas-change-source="' + snapshot + '"' +
+            (changedSource(change, snapshot) ? '' : ' disabled') + '>' + esc(label) + '</button>';
+        }).join('') + '<button type="button" class="atlas-change-download">' + esc(tr('Download .md')) + '</button></div></div>';
+    }
+    var f = FD[state.finding];
+    if (f) {
+      var what = findingWhat(f);
+      return '<div class="selected"><h4>' + esc(findingTitle(f)) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(tr(f.severity)) + '</span>' + (f.accepted ? tr(" · accepted in baseline") : '') + ' · ' + esc(what) + '</p>' +
+        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view')) + '</button></div>';
+    }
+    if (state.file !== -1) {
+      var picked = F[state.file];
+      var markdown = fileMarkdown(state.file);
+      return '<div class="selected"><h4>' + esc(picked[0]) + '</h4><p>' + esc(tr("Module ")) + esc(M[picked[1]].label) + '</p><textarea class="atlas-file-markdown" readonly aria-label="' + esc(tr("Captured file Markdown")) + '">' + esc(markdown) + '</textarea><button type="button" class="atlas-file-download">' + esc(tr("Download .md")) + '</button></div>';
     }
     if (state.focusModule !== -1) {
       var m = M[state.focusModule], files = F.filter(function (x) { return x[1] === state.focusModule; }).length;
@@ -500,19 +690,127 @@
       var surfaceText = used.length
         ? tr("Imported from outside through ") + fmt(used.length) + tr(" of its ") + plural(files, 'file') + tr(", by ") + plural(Object.keys(sf.consumers).length, 'module') + tr(" (marked inside the rim): ") + used.slice(0, 4).map(function (k) { return F[k][0].split('/').pop() + ' ' + Object.keys(sf.files[k]).length; }).join(', ') + (used.length > 4 ? tr(" and ") + plural(used.length - 4, 'more', 'more') : '') + '.'
         : tr("No other module imports it.");
-      return '<div class="selected"><h4>' + esc(m.label) + '</h4><p>' + plural(files, 'file') + ' · ' + plural(fns.length, 'function') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + '</p><details class="selected-details"><summary>' + tr('Module details') + '</summary><p>' + tr("Coloured curves: dependencies inside it and its ") + plural(edgesByModule[state.focusModule].out, 'dependency', 'dependencies') + tr(" on other modules. Neutral curves: ") + plural(edgesByModule[state.focusModule].in, 'dependency', 'dependencies') + (tr(" of other modules on it.") + "<br>") + esc(surfaceText) + '</p></details></div>';
+      return '<div class="selected"><h4>' + esc(m.label) + '</h4><p>' + plural(files, 'file') + ' · ' + plural(fns.length, 'function') + tr(" · fan-in ") + m.fanIn + tr(" · fan-out ") + m.fanOut + '<br>' + tr("Coloured curves: dependencies inside it and its ") + plural(edgesByModule[state.focusModule].out, 'dependency', 'dependencies') + tr(" on other modules. Neutral curves: ") + plural(edgesByModule[state.focusModule].in, 'dependency', 'dependencies') + (tr(" of other modules on it.") + "<br>") + esc(surfaceText) + '</p></div>';
     }
-    return '';
+    return '<div class="note">' + tr("Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.") + '</div>';
   }
-  function renderSide(view, openSelected) {
-    view = view || sideView();
-    var focus = document.activeElement, row = side.contains(focus) && ['data-finding', 'data-module'].find(function (name) { return focus.hasAttribute(name); });
-    var selected = side.querySelector('.atlas-selection'), card = selectedCard();
-    selected.hidden = !card;
-    selected.innerHTML = card ? '<h3 class="k">' + esc(tr('Selection')) + '</h3>' + card : '';
-    var moduleDetails = selected.querySelector('.selected-details');
-    if (moduleDetails) moduleDetails.open = view.moduleDetails;
-    var h = '';
+  function prSummary() {
+    var h = '<section class="pr-summary"><div class="k">' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', {number:pr.number})) + '</div>';
+    h += '<p class="note"><code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code> · ' + esc(pr.scope) + '</p><dl class="pr-totals">';
+    [['files','files'],['dependencies','file dependencies'],['functions','functions'],['modules','modules']].forEach(function(item) {
+      h += '<div><dt>' + esc(tr(item[1])) + '</dt><dd>' + fmt(pr.before[item[0]]) + ' → <b>' + fmt(pr.after[item[0]]) + '</b></dd></div>';
+    });
+    h += '</dl><div class="k">' + esc(tr('Complexity distribution · function counts')) + '</div><p class="note">' + esc(tr('Grey: merge-base · green: PR head')) + '</p><div class="pr-distribution" role="img" aria-label="' + esc(tr('Complexity distribution · function counts')) + '">';
+    var d=pr.distribution, max=Math.max.apply(Math,d.before.concat(d.after,1));
+    d.labels.forEach(function(label,i) { h += '<div class="pr-band"><span>' + esc(label) + '</span><span class="pr-tracks"><i style="width:' + 100*d.before[i]/max + '%"></i><b style="width:' + 100*d.after[i]/max + '%"></b></span><span>' + d.before[i] + ' → ' + d.after[i] + '</span></div>'; });
+    h += '</div><p class="note">' + esc(tr('Green +: added · amber ◇: changed · red dashed curve: removed dependency. Removed objects remain in the change list.')) + '</p><p class="note">' + esc(tr('Grey dashed spikes: merge-base complexity · red −: removed function. Click a marker for source; hover a module for counts.')) + '</p>';
+    h += '<details class="pr-changes"><summary>' + esc(tr('PR changes · {count}',{count:pr.changes.length})) + '</summary>';
+    pr.changes.forEach(function(change,i) {
+      var label=change.kind==='edge'?change.from+' → '+change.to:change.kind==='function'?change.name+'() · '+change.path:change.path;
+      var metrics=change.kind==='function'&&change.before&&change.after?' · '+tr('complexity ')+change.before.complexity+' → '+change.after.complexity:'';
+      h += '<button type="button" class="row" data-pr-change="' + i + '"><i class="pr-mark-' + change.status + '"></i><span class="t" title="' + esc(label) + '">' + esc(label) + '</span><span class="n">' + esc(tr(change.status)) + '</span></button>' + (metrics?'<p class="note">'+esc(metrics)+'</p>':'');
+    });
+    h += '</details>';
+    if(pr.ambiguousFunctions) h += '<p class="note">' + esc(tr('{count} function names are ambiguous; no before/after identity is inferred.',{count:pr.ambiguousFunctions})) + '</p>';
+    if(pr.omitted.base.length||pr.omitted.head.length) h += '<p class="note">' + esc(tr('Source capture omitted {base} base and {head} head entries (symlinks or submodules).',{base:pr.omitted.base.length,head:pr.omitted.head.length})) + '</p>';
+    return h + '</section>';
+  }
+  function drawPRMarks(ctx, sel) {
+    prMarkerHits=[];
+    var t=theme();
+    ctx.save();ctx.font='bold 10px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    pr.changes.forEach(function(change,index) {
+      var fi=prFiles.get(change.path), tone=change.status==='added'?'#34d399':change.status==='removed'?'#fb7185':'#fbbf24';
+      ctx.strokeStyle=tone;ctx.fillStyle=tone;ctx.globalAlpha=!sel.any||fi!=null&&inSel(sel,fi)?1:.35;
+      var p;
+      if(change.kind==='edge') {
+        var a=prFiles.get(change.from),b=prFiles.get(change.to);if(a==null||b==null)return;
+        ctx.setLineDash(change.status==='removed'?[4,4]:[]);ctx.lineWidth=1.5;ctx.beginPath();curve(ctx,a,b);ctx.stroke();ctx.setLineDash([]);
+        p=along(curvePoints(a,b),0.5);
+      } else {
+        if(fi==null||change.kind==='file'&&change.status==='removed')return;
+        var angle=geo.ang[fi],radius=geo.R-7;
+        if(change.kind==='function') {
+        var fn=prFunctions.get(JSON.stringify([change.path,change.name]));
+        if(change.status!=='removed'&&fn==null)return;
+        angle=fn==null?geo.ang[fi]:fnAngle(fn);
+        radius=geo.spike0+spikeLen((change.after||change.before).complexity)+8;
+        if(change.before) {
+          var start=pt(angle,geo.spike0),old=pt(angle,geo.spike0+spikeLen(change.before.complexity)),dx=-Math.sin(angle)*2,dy=Math.cos(angle)*2;
+          ctx.strokeStyle=change.status==='removed'?tone:t.muted;ctx.lineWidth=1.2;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(start[0]+dx,start[1]+dy);ctx.lineTo(old[0]+dx,old[1]+dy);ctx.stroke();ctx.setLineDash([]);
+        }
+        }
+        p=pt(angle,radius);
+      }
+      if(prMarkerHits.some(function(other){return Math.hypot(p[0]-other.x,p[1]-other.y)<10;}))return;
+      ctx.fillStyle=t.bg;ctx.beginPath();ctx.arc(p[0],p[1],5.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=tone;
+      ctx.fillText(change.status==='added'?'+':change.status==='removed'?'−':'◇',p[0],p[1]);
+      prMarkerHits.push({x:p[0],y:p[1],index:index});
+    });
+    ctx.restore();
+  }
+  function showPRChange(index) {
+    var change=pr.changes[index],path=change.path||change.from,file=prFiles.get(path);
+    if(file!=null)select(F[file][1],-1);
+    var loc=change.after&&typeof change.after==='object'?change.after:change.before&&typeof change.before==='object'?change.before:null;
+    var diff=analysis.snippets[path]&&analysis.snippets[path].changes,line=loc&&loc.line||(change.status==='removed'?null:diff&&(diff.modified[0]||diff.added[0]))||null;
+    if(window.__archifyShowSource)window.__archifyShowSource(path,line,change.status==='removed'?'base':'head');
+  }
+  side.addEventListener('click', function (event) {
+    var action = event.target.closest('[data-atlas-change-source], .atlas-change-download');
+    if (action && changedSelection !== null) {
+      var change = changedFiles[changedSelection];
+      var pair = { base: changedPath(change, 'base'), head: changedPath(change, 'head') };
+      var snapshot = action.dataset.atlasChangeSource;
+      if (snapshot) {
+        var captured = changedSource(change, snapshot);
+        var diff = captured && captured.source.changes;
+        if (captured && window.__archifyShowSource) {
+          var selectedChange = changedSelection;
+          var previousScroll = side.scrollTop;
+          // The Atlas tab hides the reader. Page back to the diagram while the
+          // pinned source is read, keeping the Files state for the return.
+          if (!standalone) showView('');
+          window.__archifyShowSource(captured.file, diff && (diff.modified[0] || diff.added[0]), snapshot, pair, function () {
+            if (!standalone) {
+              showView('atlas');
+              side.scrollTop = previousScroll;
+            }
+            if (changedSelection === selectedChange) {
+              side.querySelector('[data-atlas-change-source="' + snapshot + '"]')?.focus({ preventScroll: true });
+            }
+          });
+        }
+      } else {
+        var literal = function (text) {
+          return String(text).replace(/[\u0000-\u001f\u007f-\u009f\u2028-\u202e\u2066-\u2069]/gu, ' ')
+            .replace(/[&<>\\\x60*_[\]{}()#!|~]/gu, function (c) { return '&#' + c.codePointAt(0) + ';'; });
+        };
+        var prefix = pr.scope && pr.scope !== '.' ? pr.scope + '/' : '';
+        var markdown = '# ' + tr('PR file review context') + '\n\n' +
+          tr('Repository: ') + literal(pr.repository) + '\n' + tr('Status: ') + literal(change.status) + '\n\n' +
+          ['base', 'head'].map(function (side) {
+            var pin = side === 'base' ? pr.baseSHA : pr.headSHA;
+            return '- ' + tr(side === 'base' ? 'Merge-base' : 'PR head') + ' ' + pin + ' · ' +
+              (pair[side] ? literal(prefix + pair[side]) + (changedSource(change, side) ? '' : ' (' + tr('Source was not captured') + ')') : tr('File absent on this side'));
+          }).join('\n') + '\n\n' + tr('This context identifies the saved file and commits. Verify the cited source before drawing conclusions.') + '\n';
+        downloadMarkdown(markdown, 'pr-file-review.md');
+      }
+      return;
+    }
+    if (!event.target.classList.contains('atlas-file-download') || state.file === -1) return;
+    downloadMarkdown(fileMarkdown(state.file), F[state.file][0].split('/').pop().replace(/\.[^.]+$/, '') + '.md');
+  });
+  function downloadMarkdown(markdown, name) {
+    var blob = new Blob([markdown], { type: 'text/markdown' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = name;
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+  }
+  function listsHtml(view, openSelected) {
+    var h = pr ? prSummary() : '';
     var groups = {};
     FD.forEach(function (f, i) { (groups[f.code] = groups[f.code] || []).push(i); });
     var codes = Object.keys(groups).sort();
@@ -525,59 +823,301 @@
         return '<button type="button" class="row' + (i === state.finding ? ' active' : '') + (f.accepted ? ' accepted' : '') + '" data-finding="' + i + '"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><span class="t" title="' + esc(findingTitle(f)) + '">' + esc(findingTitle(f)) + '</span><span class="n">' + esc(tr(f.severity)) + '</span></button>';
       }).join('') + '</details>';
     });
-    if (atlas.measured && FN.length) {
+    if (!pr && atlas.measured && FN.length) {
       var counts = []; for (var c = 0; c < 20; c++) counts.push(0);
       FN.forEach(function (fn) { counts[Math.max(1, Math.min(fn[3], 20)) - 1]++; });
       var max = Math.max.apply(Math, counts);
-      var scale = tr('Cyclomatic complexity · square-root scale');
-      h += '<section class="atlas-metric"><h3 class="k"><span tabindex="0" data-analysis-tip="' + esc(scale) + '" aria-label="' + esc(scale) + '">' + tr('Function complexity') + '</span></h3><div class="hist" role="img" aria-label="' + esc(tr('Function counts by complexity 1 to 20 or more: ') + counts.join(', ')) + '">' + counts.map(function (n, i) {
-        return '<div class="' + (i >= 14 ? 'hot' : '') + '" data-analysis-tip="' + esc((i === 19 ? '20+' : i + 1) + ': ' + plural(n, 'function')) + '" style="height:' + (n ? Math.max(2, Math.round(100 * Math.sqrt(n / max))) : 0) + '%"></div>';
-      }).join('') + '</div><div class="axis"><span>1</span><span>15</span><span>20+</span></div></section>';
+      h += '<div class="k">' + tr('Cyclomatic complexity · √ scale') + '</div><div class="hist" role="img" aria-label="' + esc(tr('Function counts by complexity 1 to 20 or more: ') + counts.join(', ')) + '">' + counts.map(function (n, i) {
+        return '<div class="' + (i >= 14 ? 'hot' : '') + '" title="' + esc((i === 19 ? '20+' : i + 1) + ': ' + plural(n, 'function')) + '" style="height:' + (n ? Math.max(2, Math.round(100 * Math.sqrt(n / max))) : 0) + '%"></div>';
+      }).join('') + '</div><div class="axis"><span>1</span><span>15</span><span>20+</span></div>';
     }
     var order = M.map(function (m, i) { return i; }).sort(function (a, b) { return (M[b].fanIn + M[b].fanOut) - (M[a].fanIn + M[a].fanOut) || (M[a].label < M[b].label ? -1 : 1); });
     var moduleRow = function (i) {
       return '<button type="button" class="row' + (i === state.focusModule ? ' active' : '') + '" data-module="' + i + '"><i style="background:' + hue(i, theme()) + '"></i><span class="t">' + esc(M[i].label) + (hubOf[i] != null ? tr(" · hub") : '') + '</span><span class="n">' + M[i].fanIn + ' / ' + M[i].fanOut + '</span></button>';
     };
-    h += '<section class="atlas-metric"><h3 class="k" id="atlas-module-heading">' + tr('Module coupling · in / out') + '</h3><div class="module-list" role="region" aria-labelledby="atlas-module-heading" tabindex="0">' + order.map(moduleRow).join('') + '</div></section>';
-    h += '<details class="atlas-metrics"' + (view.coverage ? ' open' : '') + '><summary>' + tr('Coverage and reading guide') + '</summary>';
+    h += '<div class="k">' + tr('Modules by coupling · fan-in / fan-out') + '</div><div class="module-list">' + order.map(moduleRow).join('') + '</div>';
     var cov = atlas.coverage, total = Math.max(cov.records, 1);
-    var breakdown = fmt(cov.resolved) + tr(' resolved · ') + fmt(cov.external) + tr(' external · ') + fmt(cov.unknown) + tr(' unresolved') + (cov.outside ? ' · ' + fmt(cov.outside) + tr(' outside the analyzed scope') : '') + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(' failed to parse') : '');
+    var breakdown = fmt(cov.resolved) + tr(' resolved · ') + fmt(cov.external) + tr(' external · ') + fmt(cov.unknown) + tr(' unresolved') + (cov.outside ? ' · ' + fmt(cov.outside) + tr(' outside the analyzed scope') : '') + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(' failed to parse') : '') + (cov.notCompiled ? ' · ' + plural(cov.notCompiled, 'source file') + tr(' without a command') : '');
     h += '<div class="k">' + tr('Dependency records · ') + fmt(cov.records) + '</div><div class="bar" tabindex="0" role="img" aria-label="' + esc(breakdown) + '" data-analysis-tip="' + esc(breakdown + tr('. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.')) + '">' +
-      [[cov.resolved, '#34D399'], [cov.external, '#64748B'], [cov.unknown, '#FBBF24'], [cov.outside, '#94A3B8']].map(function (part) { return '<span style="width:' + (100 * (part[0] || 0) / total) + '%;background:' + part[1] + '"></span>'; }).join('') + '</div>';
-    h += ("<div class=\"k\">" + tr("Reading the atlas") + "</div>" + "<div class=\"legend\">" + "<span>" + "<i style=\"background:") + hue(0, theme()) + ("\">" + "</i>" + tr("outer arc: module (thick: reported hub)") + "</span>" + "<span>" + "<i style=\"background:") + theme().muted + ("\">" + "</i>" + tr("tick: file · spike: function, length = complexity") + "</span>" + "<span>" + "<i style=\"background:#FBBF24;height:8px;width:8px;border-radius:50%\">" + "</i>" + tr("dot: reported function, severity colour") + "</span>" + "<span>" + "<i style=\"background:") + hue(3, theme(), 0.6) + ("\">" + "</i>" + tr("curve: file dependency, coloured by the importing module") + "</span>" + "<span>" + "<i style=\"background:") + theme().text + ("\">" + "</i>" + tr("mark inside the rim: a focused module's file that other modules import") + "</span>" + "</div>") + '</details>';
-    side.querySelector('.atlas-side-content').innerHTML = h;
+      [[cov.resolved, '#34D399'], [cov.external, '#64748B'], [cov.unknown, '#FBBF24'], [cov.outside, '#94A3B8']].map(function (part) { return '<span style="width:' + (100 * (part[0] || 0) / total) + '%;background:' + part[1] + '"></span>'; }).join('') + '</div>' +
+      '<div class="note">' + esc(breakdown + tr('. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.')) + '</div>';
+    h += ("<div class=\"k\">" + tr("Reading the atlas") + "</div>" + "<div class=\"legend\">" + "<span>" + "<i style=\"background:") + hue(0, theme()) + ("\">" + "</i>" + tr("outer arc: module (thick: reported hub)") + "</span>" + "<span>" + "<i style=\"background:") + theme().muted + ("\">" + "</i>" + tr("tick: file · spike: function, length = complexity") + "</span>" + "<span>" + "<i style=\"background:#FBBF24;height:8px;width:8px;border-radius:50%\">" + "</i>" + tr("dot: reported function, severity colour") + "</span>" + "<span>" + "<i style=\"background:") + hue(3, theme(), 0.6) + ("\">" + "</i>" + tr("curve: file dependency, coloured by the importing module") + "</span>" + "<span>" + "<i style=\"background:") + theme().text + ("\">" + "</i>" + tr("mark inside the rim: a focused module's file that other modules import") + "</span>" + "</div>");
+    return h;
+  }
+  function renderSide(view, openSelected) {
+    view = view || sideView();
+    var focus = document.activeElement, row = side.contains(focus) && ['data-finding', 'data-module'].find(function (name) { return focus.hasAttribute(name); });
+    if (PAGE) renderPage();
+    else {
+      side.querySelector('.atlas-selection').innerHTML = '<div class="k">' + esc(tr('Selection')) + '</div>' + selectedCard();
+      side.querySelector('.atlas-stats').hidden = Boolean(pr);
+    }
+    side.querySelector('.atlas-side-content').innerHTML = listsHtml(view, openSelected);
     side.querySelector('.module-list').scrollTop = view.modules;
-    side.scrollTop = view.scroll;
-    if (row) side.querySelector('[' + row + '="' + focus.getAttribute(row) + '"]').focus({ preventScroll: true });
-    side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
-    side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
+    scroller.scrollTop = PAGE && !openSelected ? view.scroll : PAGE ? 0 : view.scroll;
+    if (row) { var again = side.querySelector('[' + row + '="' + focus.getAttribute(row) + '"]'); if (again) again.focus({ preventScroll: true }); }
+    if (!PAGE) {
+      side.querySelectorAll('[data-pr-change]').forEach(function (button) { button.addEventListener('click', function () {
+        showPRChange(Number(button.getAttribute('data-pr-change')));
+      }); });
+      side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
+      side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
+    }
     var ev = side.querySelector('.atlas-evidence');
-    if (ev) ev.addEventListener('click', function () { var id = ev.getAttribute('data-id'); if (!standalone) close(); if (window.__archifyShowFinding) window.__archifyShowFinding(id); });
+    if (ev) ev.addEventListener('click', function () { if (window.__archifyShowFinding) window.__archifyShowFinding(ev.getAttribute('data-id')); });
+  }
+
+  // ---- the page: panel content, start card, focus pill, search ----
+  var compOf = {};
+  (analysis.components || []).forEach(function (c) { (c.modules || []).forEach(function (m) { if (!compOf[m.id]) compOf[m.id] = c; }); });
+  var findingInfo = {}; (analysis.findings || []).forEach(function (f) { findingInfo[f.id] = f; });
+  var modFiles = M.map(function () { return []; }), modLoc = M.map(function () { return 0; });
+  F.forEach(function (f, i) { modFiles[f[1]].push(i); modLoc[f[1]] += f[2] || 0; });
+  var modFindings = M.map(function () { return []; }), fileFindings = F.map(function () { return []; });
+  var openFinding = function (f) { return !f.accepted || f.severity === 'error'; };
+  FD.forEach(function (f, i) {
+    var sel = selection(i), mods = {};
+    Object.keys(sel.modules).concat(Object.keys(sel.arcs)).forEach(function (k) { mods[k] = true; });
+    Object.keys(sel.files).forEach(function (k) { mods[F[k][1]] = true; fileFindings[k].push(i); });
+    Object.keys(mods).forEach(function (k) { modFindings[k].push(i); });
+  });
+  var modOpen = modFindings.map(function (list) { return list.filter(function (i) { return openFinding(FD[i]); }).length; });
+  var pairs = M.map(function () { return {}; });
+  E.forEach(function (e) { var a = F[e[0]][1], b = F[e[1]][1]; if (a !== b) pairs[a][b] = (pairs[a][b] || 0) + 1; });
+  var argmax = function (n, score) { var best = -1, top = -Infinity; for (var i = 0; i < n; i++) { var s = score(i); if (s > top) { top = s; best = i; } } return best; };
+  var busiest = argmax(M.length, function (i) { return modOpen[i] * 1e6 + modLoc[i]; });
+  var trunk = argmax(M.length, function (i) { return M[i].fanIn * 1e6 + modLoc[i]; });
+  var reportedFns = FN.map(function (fn, i) { return i; }).filter(function (i) { return FN[i][6] !== -1; });
+  var topFn = (reportedFns.length ? reportedFns : FN.map(function (fn, i) { return i; })).reduce(function (best, i) { return best === -1 || FN[i][3] > FN[best][3] ? i : best; }, -1);
+  var SEV = { error: 0, warning: 1, info: 2 };
+  function fnComplexity(i) { var f = FD[i]; return f.fn != null ? FN[f.fn][3] : 0; }
+  function sevRank(list) { return list.slice().sort(function (a, b) { return (SEV[FD[a].severity] - SEV[FD[b].severity]) || fnComplexity(b) - fnComplexity(a) || (FD[a].title < FD[b].title ? -1 : 1); }); }
+  function tiles(list) { return '<div class="atlas-tiles">' + list.map(function (t) { return '<div><b>' + t[0] + '</b><span>' + esc(t[1]) + '</span></div>'; }).join('') + '</div>'; }
+  function sevBar(list) {
+    var n = { error: 0, warning: 0, info: 0 }; list.forEach(function (i) { if (openFinding(FD[i])) n[FD[i].severity] = (n[FD[i].severity] || 0) + 1; });
+    return '<div class="atlas-sevbar" aria-hidden="true"><i style="flex:' + n.error + ';background:' + TONE.error + '"></i><i style="flex:' + n.warning + ';background:' + TONE.warning + '"></i><i style="flex:' + n.info + ';background:' + TONE.info + '"></i></div>';
+  }
+  function head(title, note) { return '<h5 class="atlas-h">' + esc(title) + (note ? '<small>' + esc(note) + '</small>' : '') + '</h5>'; }
+  function relRows(list) {
+    return list.map(function (x) { return '<button type="button" class="atlas-rel" data-module="' + x[0] + '"><i style="background:' + hue(x[0], theme()) + '"></i><span>' + esc(M[x[0]].label) + '</span><em>' + esc(plural(x[1], 'import')) + '</em></button>'; }).join('');
+  }
+  function findingRows(list) {
+    return list.map(function (i) {
+      var f = FD[i], file = f.fn != null ? F[FN[f.fn][0]][0] : f.file != null ? F[f.file][0] : '';
+      return '<button type="button" class="atlas-find' + (i === state.finding ? ' active' : '') + (f.accepted ? ' accepted' : '') + '" data-finding="' + i + '" data-preview="' + (f.fn != null ? 'function:' + f.fn : '') + '"><i style="background:' + (TONE[f.severity] || TONE.info) + '"></i><b>' + esc(findingTitle(f)) + '</b><em>' + (f.fn != null ? esc(tr('complexity ')) + FN[f.fn][3] : esc(tr(f.severity))) + '</em>' + (file ? '<small>' + esc(file.split('/').pop()) + (f.fn != null ? ':' + FN[f.fn][2] : '') + '</small>' : '') + '</button>';
+    }).join('');
+  }
+  function modulePanel(mi) {
+    var m = M[mi], comp = compOf[m.id], list = sevRank(modFindings[mi]);
+    var outs = Object.keys(pairs[mi]).map(function (b) { return [Number(b), pairs[mi][b]]; }).sort(function (a, b) { return b[1] - a[1]; });
+    var ins = M.map(function (x, a) { return [a, pairs[a][mi] || 0]; }).filter(function (x) { return x[1]; }).sort(function (a, b) { return b[1] - a[1]; });
+    var files = modFiles[mi].filter(function (i) { return fileFindings[i].length; }).sort(function (a, b) { return fileFindings[b].length - fileFindings[a].length || F[b][2] - F[a][2]; });
+    var role = mi === trunk ? tr('Trunk · the most depended-on module') : tr('Used by {in} · uses {out}', { in: m.fanIn, out: m.fanOut });
+    var h = '<p class="atlas-kick"><i style="background:' + hue(mi, theme()) + '"></i>' + esc(tr('Source module')) + ' · ' + esc(role) + (mi === busiest && modOpen[mi] ? ' · <b>' + esc(tr('most findings')) + '</b>' : '') + '</p>' +
+      '<div class="selected"><h4>' + esc(m.label) + '</h4></div><p class="atlas-sub">' + esc(m.path || '.') + ' · ' + (comp ? esc(tr('“{name}” on the diagram', { name: comp.label })) : '<span class="atlas-off">' + esc(tr('Not on the diagram')) + '</span>') + '</p>' +
+      tiles([[fmt(modFiles[mi].length), tr('files')], [fmt(modLoc[mi]), tr('lines')], [fmt(modOpen[mi]), tr('open findings')]]) + sevBar(list);
+    if (outs.length) h += head(tr('Depends on'), plural(outs.length, 'module')) + relRows(outs);
+    if (ins.length) h += head(tr('Used by'), plural(ins.length, 'module')) + relRows(ins);
+    if (files.length) h += head(tr('Files with the most findings'), tr('{n} of {total}', { n: Math.min(files.length, 4), total: plural(modFiles[mi].length, 'file') })) + files.slice(0, 4).map(function (i) { return '<button type="button" class="atlas-rel" data-file="' + i + '"><i style="background:' + TONE.warning + '"></i><span class="mono">' + esc(F[i][0].split('/').pop()) + '</span><em>' + esc(tr('{n} · {lines}', { n: fileFindings[i].length, lines: plural(F[i][2], 'line') })) + '</em></button>'; }).join('');
+    if (list.length) h += head(tr('Look at these first'), tr('by severity and complexity')) + findingRows(list.slice(0, 5)) + (list.length > 5 ? '<p class="note">' + esc(tr('{n} more in All findings.', { n: list.length - 5 })) + '</p>' : '');
+    var sf = surface[mi], used = Object.keys(sf.files).length;
+    h += '<p class="note">' + esc(used ? tr('Other modules import {n} of its files; they are marked inside the rim.', { n: used }) : tr('No other module imports it.')) + '</p>';
+    h += '<div class="atlas-acts"><button type="button" class="primary" data-act="copy-module">' + esc(tr('Copy for AI')) + '</button>' + (comp && !standalone ? '<button type="button" data-act="diagram" data-component="' + esc(comp.id) + '">' + esc(tr('Show on the diagram')) + '</button>' : '') + '</div>';
+    return h;
+  }
+  function findingPanel(index) {
+    var f = FD[index], info = findingInfo[f.id] || {}, owner = state.focusModule;
+    var h = '<p class="atlas-kick"><span class="atlas-pill" style="--tone:' + (TONE[f.severity] || TONE.info) + '">' + esc(tr(f.severity)) + '</span>' + esc(NAMES[f.code] || f.code) + (f.accepted ? ' · ' + esc(tr('accepted in baseline')) : '') + '</p>' +
+      '<div class="selected"><h4 class="mono">' + esc(findingTitle(f)) + '</h4></div>';
+    if (f.kind === 'function' && f.fn != null) {
+      var fn = FN[f.fn];
+      h += '<p class="atlas-loc"><span>' + esc(F[fn[0]][0]) + '</span><em>:' + fn[2] + esc(functionColumns(fn)) + '</em></p>' + tiles([[fn[3], tr('complexity')], [fn[4], tr('nesting')], [fmt(fn[5]), tr('lines')]]);
+    } else h += '<p class="atlas-loc"><span>' + esc(findingWhat(f)) + '</span></p>';
+    if (info.message) h += '<p class="atlas-msg">' + esc(info.message) + '</p>';
+    var fix = (info.supportedFixes || [])[0];
+    if (fix) h += head(tr('First step')) + '<p class="atlas-fix">' + esc(fix) + '</p>';
+    if (owner !== -1) h += head(tr('Module')) + '<button type="button" class="atlas-rel" data-module="' + owner + '" data-keep="1"><i style="background:' + hue(owner, theme()) + '"></i><span>' + esc(M[owner].label) + '</span><em>' + esc(tr('{n} open', { n: modOpen[owner] })) + ' ›</em></button>';
+    h += '<div class="atlas-acts"><button type="button" class="primary atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view')) + '</button></div>';
+    return h;
+  }
+  function filePanel(fi) {
+    var file = F[fi], fns = fnsByFile[fi].slice().sort(function (a, b) { return FN[b][3] - FN[a][3]; });
+    var h = '<p class="atlas-kick"><i style="background:' + hue(file[1], theme()) + '"></i>' + esc(tr('File')) + ' · ' + esc(M[file[1]].label) + '</p><div class="selected"><h4 class="mono">' + esc(file[0]) + '</h4></div>' +
+      tiles([[fmt(file[2]), tr('lines')], [fmt(fns.length), tr('functions')], [fmt(fileFindings[fi].length), tr('Findings')]]);
+    if (fns.length) h += head(tr('Most complex functions')) + fns.slice(0, 6).map(function (i) { var fd = FN[i][6]; return '<button type="button" class="atlas-rel"' + (fd !== -1 ? ' data-finding="' + fd + '"' : ' disabled') + ' data-preview="function:' + i + '"><i style="background:' + (fd !== -1 ? TONE[FD[fd].severity] || TONE.info : 'var(--atlas-calm)') + '"></i><span class="mono">' + esc(FN[i][1]) + '</span><em>' + esc(tr('complexity ')) + FN[i][3] + '</em></button>'; }).join('');
+    h += head(tr('Captured file Markdown')) + '<textarea class="atlas-file-markdown" readonly aria-label="' + esc(tr("Captured file Markdown")) + '">' + esc(fileMarkdown(fi)) + '</textarea>';
+    h += '<div class="atlas-acts"><button type="button" class="primary atlas-file-download">' + esc(tr("Download .md")) + '</button><button type="button" data-module="' + file[1] + '" data-keep="1">' + esc(tr('Open its module')) + '</button></div>';
+    return h;
+  }
+  function crumbs(mode) {
+    var parts = [['home', tr('All')]];
+    if (mode === 'module' || mode === 'finding' || mode === 'file') if (state.focusModule !== -1) parts.push(['module:' + state.focusModule, M[state.focusModule].label]);
+    if (mode === 'finding') parts.push(['', findingTitle(FD[state.finding])]);
+    if (mode === 'file') parts.push(['', F[state.file][0].split('/').pop()]);
+    if (mode === 'change') parts.push(['', changedLabel(changedFiles[changedSelection]).split('/').pop()]);
+    return parts.map(function (p, i) { var last = i === parts.length - 1; return '<button type="button"' + (last ? ' aria-current="page"' : ' data-go="' + p[0] + '"') + '>' + esc(p[1]) + '</button>'; }).join('<span aria-hidden="true">›</span>');
+  }
+  function renderPage() {
+    var mode = state.finding !== -1 ? 'finding' : state.file !== -1 ? 'file' : state.focusModule !== -1 ? 'module' : homeOpen ? 'home' : 'closed';
+    // A PR changed file picked in the Files tab leads its page with the merge-base / PR head source actions.
+    var change = changedSelection !== null && mode !== 'finding' ? selectedCard() : '';
+    if (change && mode !== 'file') mode = 'change';
+    panel.setAttribute('data-fly', mode);
+    side.querySelector('.atlas-selection').innerHTML = change + (mode === 'finding' ? findingPanel(state.finding) : mode === 'file' ? filePanel(state.file) : mode === 'module' ? modulePanel(state.focusModule) : mode === 'home' ? '<p class="atlas-kick">' + esc(tr('Atlas')) + '</p><div class="selected"><h4>' + esc(tr('All findings')) + '</h4></div><p class="atlas-sub">' + esc(plural(FD.length, 'finding') + ' · ' + plural(M.length, 'module')) + '</p>' : '');
+    side.querySelector('.atlas-crumbs').innerHTML = mode === 'closed' ? '' : crumbs(mode);
+    var pill = panel.querySelector('.atlas-focus'), focusText = '';
+    if (mode === 'module') focusText = tr('Focus {name} · its dependencies are lit', { name: M[state.focusModule].label });
+    if (mode === 'finding') focusText = tr('Located {name}', { name: findingTitle(FD[state.finding]) });
+    if (mode === 'file') focusText = tr('File {name}', { name: F[state.file][0] });
+    pill.hidden = !focusText;
+    pill.querySelector('span').textContent = focusText;
+    pill.querySelector('i').style.background = state.focusModule !== -1 ? hue(state.focusModule, theme()) : 'transparent';
+  }
+  function renderFirst() {
+    if (!PAGE) return;
+    var card = panel.querySelector('.atlas-first'), rows = [];
+    if (busiest !== -1 && modOpen[busiest]) rows.push(['module:' + busiest, 'module:' + busiest, TONE.warning, tr('{name} has the most findings', { name: M[busiest].label }), plural(modFiles[busiest].length, 'file') + ' · ' + plural(modLoc[busiest], 'line'), modOpen[busiest]]);
+    if (trunk !== -1 && M[trunk].fanIn) rows.push(['module:' + trunk, 'module:' + trunk, hue(trunk, theme()), tr('{name} is the trunk', { name: M[trunk].label }), tr('{n} modules depend on it; changes here reach furthest', { n: M[trunk].fanIn }), M[trunk].fanIn]);
+    if (topFn !== -1) rows.push(['fn:' + topFn, 'function:' + topFn, TONE.error, tr('The most complex function'), FN[topFn][1], FN[topFn][3]]);
+    card.innerHTML = '<h3>' + esc(tr('Start here')) + '<button type="button" class="atlas-first-x">' + esc(tr('Hide')) + '</button></h3><p>' + esc(tr('Across {files}, the three things most worth a look', { files: plural(F.length, 'file') })) + '</p>' +
+      rows.map(function (r) { return '<button type="button" class="atlas-lead" data-go="' + r[0] + '" data-preview="' + r[1] + '"><i style="background:' + r[2] + '"></i><span><b>' + esc(r[3]) + '</b><small' + (r[0].indexOf('fn:') === 0 ? ' class="mono"' : '') + '>' + esc(r[4]) + '</small></span><em>' + fmt(r[5]) + '</em></button>'; }).join('') +
+      '<button type="button" class="atlas-all" data-go="home">' + esc(tr('All {n} findings', { n: fmt(FD.length) })) + ' →</button>';
+  }
+  function go(target) {
+    if (!target) return;
+    var p = target.split(':'), i = Number(p[1]);
+    if (p[0] === 'home') { wantHome = true; select(-1, -1); }
+    else if (p[0] === 'module') select(i, -1);
+    else if (p[0] === 'file') select(F[i][1], -1, undefined, i);
+    else if (p[0] === 'fn') { if (FN[i][6] !== -1) selectFinding(FN[i][6]); else select(F[FN[i][0]][1], -1, undefined, FN[i][0]); }
+  }
+  function moduleMarkdown(mi) {
+    var m = M[mi], list = sevRank(modFindings[mi]).slice(0, 5);
+    return '# ' + m.label + '\n\n' + tr('Path: ') + (m.path || '.') + '\n' + plural(modFiles[mi].length, 'file') + ' · ' + plural(modLoc[mi], 'line') + ' · ' + tr('{n} open', { n: modOpen[mi] }) + '\n\n' +
+      list.map(function (i, k) { var f = FD[i], info = findingInfo[f.id] || {}; return (k + 1) + '. ' + findingTitle(f) + ' (' + tr(f.severity) + ')' + (info.message ? '\n   ' + info.message : '') + ((info.supportedFixes || [])[0] ? '\n   ' + tr('First step: {fix}', { fix: info.supportedFixes[0] }) : ''); }).join('\n') +
+      '\n\n' + tr('This is navigation context from the saved analysis, not fresh source or tool verification.');
+  }
+  function preview(value) {
+    var p = value ? value.split(':') : null, next = p && p[1] !== '' ? { type: p[0], index: Number(p[1]) } : null;
+    if (next && next.type === 'module' && expansionEnabled && state.focusModule !== -1) next = null;
+    var same = next && state.hover && next.type === state.hover.type && next.index === state.hover.index;
+    if (same || (!next && !state.hover)) return;
+    state.hover = next; schedule();
+  }
+  if (PAGE) {
+    panel.addEventListener('click', function (event) {
+      var t = event.target.closest('button, [data-go]'); if (!t || !panel.contains(t)) return;
+      if (t.classList.contains('atlas-first-x')) { panel.classList.add('first-hidden'); return; }
+      if (t.classList.contains('atlas-fly-x') || t.classList.contains('atlas-focus-x')) { select(-1, -1); return; }
+      if (t.hasAttribute('data-go')) { preview(null); closeSuggestions(); go(t.getAttribute('data-go')); return; }
+      if (t.hasAttribute('data-pr-change')) { showPRChange(Number(t.getAttribute('data-pr-change'))); return; }
+      if (t.hasAttribute('data-finding')) { var fi = Number(t.getAttribute('data-finding')); preview(null); selectFinding(state.finding === fi ? -1 : fi); return; }
+      if (t.hasAttribute('data-file')) { var file = Number(t.getAttribute('data-file')); select(F[file][1], -1, undefined, file); return; }
+      if (t.hasAttribute('data-module')) {
+        var mi = Number(t.getAttribute('data-module'));
+        select(state.focusModule === mi && !t.hasAttribute('data-keep') && state.finding === -1 && state.file === -1 ? -1 : mi, -1); return;
+      }
+      var act = t.getAttribute('data-act');
+      if (act === 'copy-module' && state.focusModule !== -1) {
+        var text = moduleMarkdown(state.focusModule), done = function () { t.textContent = tr('Copied'); setTimeout(function () { if (t.isConnected) t.textContent = tr('Copy for AI'); }, 1600); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () {}); else done();
+      }
+      if (act === 'diagram') {
+        var id = t.getAttribute('data-component');
+        showView('');
+        var node = document.querySelector('.diagram-container g[data-node-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+        if (node) node.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      }
+    });
+    panel.addEventListener('mouseover', function (event) { var p = event.target.closest('[data-preview]'); if (p && panel.contains(p)) preview(p.getAttribute('data-preview')); });
+    panel.addEventListener('mouseout', function (event) { var p = event.target.closest('[data-preview]'); if (p && !p.contains(event.relatedTarget)) preview(null); });
+  }
+  // Search: modules, files and functions, one list; Enter opens the first.
+  var query = PAGE ? panel.querySelector('.atlas-q') : null, suggestions = PAGE ? panel.querySelector('.atlas-sug') : null, sugIndex = 0;
+  function closeSuggestions() { if (!suggestions) return; suggestions.hidden = true; query.setAttribute('aria-expanded', 'false'); }
+  function renderSuggestions() {
+    var wanted = query.value.trim().toLowerCase();
+    if (!wanted) { closeSuggestions(); return; }
+    var has = function (s) { return String(s).toLowerCase().indexOf(wanted) !== -1; };
+    var out = [];
+    M.forEach(function (m, i) { if (out.length < 3 && (has(m.label) || has(m.path || ''))) out.push(['module:' + i, hue(i, theme()), m.label, tr('module · {n} open', { n: modOpen[i] })]); });
+    F.forEach(function (f, i) { if (out.length < 6 && has(f[0])) out.push(['file:' + i, 'var(--atlas-calm)', f[0].split('/').pop(), f[0]]); });
+    FN.map(function (fn, i) { return i; }).filter(function (i) { return has(FN[i][1]); }).sort(function (a, b) { return FN[b][3] - FN[a][3]; }).slice(0, Math.max(0, 8 - out.length)).forEach(function (i) { out.push(['fn:' + i, FN[i][6] !== -1 ? TONE[FD[FN[i][6]].severity] || TONE.info : 'var(--atlas-calm)', FN[i][1], tr('function · complexity {n}', { n: FN[i][3] })]); });
+    sugIndex = 0;
+    suggestions.innerHTML = out.length ? out.map(function (o, k) { return '<button type="button" role="option" id="atlas-sug-' + k + '" aria-selected="' + (k === 0) + '" data-go="' + o[0] + '"><i style="background:' + o[1] + '"></i><b>' + esc(o[2]) + '</b><span>' + esc(o[3]) + '</span></button>'; }).join('') : '<p role="status">' + esc(tr('Nothing matches.')) + '</p>';
+    suggestions.hidden = false; query.setAttribute('aria-expanded', 'true');
+  }
+  if (query) {
+    query.addEventListener('input', renderSuggestions);
+    query.addEventListener('focus', function () { if (query.value.trim()) renderSuggestions(); });
+    query.addEventListener('blur', function () { setTimeout(function () { if (document.activeElement !== query) closeSuggestions(); }, 150); });
+    query.addEventListener('keydown', function (event) {
+      var options = Array.from(suggestions.querySelectorAll('[role=option]'));
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        if (!options.length) return; event.preventDefault();
+        sugIndex = (sugIndex + (event.key === 'ArrowDown' ? 1 : options.length - 1)) % options.length;
+        options.forEach(function (o, k) { o.setAttribute('aria-selected', String(k === sugIndex)); });
+        query.setAttribute('aria-activedescendant', options[sugIndex].id);
+      } else if (event.key === 'Enter' && options[sugIndex]) { event.preventDefault(); var target = options[sugIndex].getAttribute('data-go'); query.value = ''; closeSuggestions(); go(target); }
+      else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); query.value = ''; closeSuggestions(); query.blur(); }
+    });
+    suggestions.addEventListener('mousedown', function (event) { event.preventDefault(); });
+    suggestions.addEventListener('click', function () { query.value = ''; query.blur(); });
   }
 
   // ---- open / close ----
   function open() {
     if (root.getAttribute('data-bauify') !== 'on') return;
-    panel.hidden = false; root.setAttribute('data-bauify-view', 'atlas');
-    renderSide(); draw(state.finding !== -1 || state.focusModule !== -1 ? 'fade' : 'reveal');
-    if (!standalone) panel.querySelector('.atlas-classic').focus({ preventScroll: true });
+    panel.hidden = false;
+    renderFirst(); renderSide(); draw(state.finding !== -1 || state.focusModule !== -1 ? 'fade' : 'reveal');
   }
   function close() {
     if (standalone) return;
-    panel.hidden = true; root.removeAttribute('data-bauify-view'); tip.hidden = true;
+    panel.hidden = true; tip.hidden = true;
     if (anim.raf) { cancelAnimationFrame(anim.raf); clearTimeout(anim.timer); }
     geometryPending = false; updateGeometry(performance.now(), true);
     anim.raf = 0; anim.timer = 0; anim.reveal = 0; anim.fade = 0; anim.flow = 0; anim.flowFor = -1;
     markMotion();
   }
-  if (!standalone) panel.querySelector('.atlas-classic').addEventListener('click', close);
+  // One view at a time; the diagram is the default page ('' or 'diagram').
+  function showView(kind) {
+    if (!views) return;
+    var next = kind === 'diagram' ? '' : kind || '';
+    // Set first: the layout (summary column hidden, full width) must settle before a view draws.
+    if (next) root.setAttribute('data-bauify-views', next); else root.removeAttribute('data-bauify-views');
+    if (next !== 'atlas') close();
+    if (panel3d) panel3d.hidden = next !== 'atlas3d';
+    // The Atlas reads best on dark colours: choosing it switches the page theme, as the theme button would.
+    if (next === 'atlas' && root.getAttribute('data-theme') === 'light' && window.Archify && Archify.theme) Archify.theme.toggle();
+    if (next === 'atlas') open();
+    if (next === 'atlas3d' && window.__archifyAtlas3d) { var view = window.__archifyAtlas3d.mount(panel3d); if (view && view.refresh) view.refresh(); }
+    views.querySelectorAll('.views-option').forEach(function (button) { button.setAttribute('aria-pressed', String(button.getAttribute('data-view') === (next || 'diagram'))); });
+  }
+  // Evidence opens in the summary column, which only shows beside the diagram, so
+  // opening it from the Atlas or Atlas 3D pages back to the diagram first.
+  var showFinding = window.__archifyShowFinding;
+  if (views && showFinding) window.__archifyShowFinding = function () { if (root.hasAttribute('data-bauify-views')) showView(''); return showFinding.apply(this, arguments); };
+  if (views) {
+    views.querySelectorAll('.views-option').forEach(function (button) { button.addEventListener('click', function () { showView(button.getAttribute('data-view')); }); });
+    views.hidden = root.getAttribute('data-bauify') !== 'on';
+  }
   panel.querySelector('.atlas-clear').addEventListener('click', function () { select(-1, -1); });
-  document.addEventListener('keydown', function (e) { if (!panel.hidden && e.key === 'Escape') { e.preventDefault(); select(-1, -1); } });
+  document.addEventListener('keydown', function (e) {
+    if (panel.hidden) return;
+    var t = e.target, typing = t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(t.tagName || '') !== -1);
+    if (PAGE && e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey && !stage.hidden) { e.preventDefault(); query.focus(); return; }
+    if (e.key !== 'Escape' || e.defaultPrevented) return;
+    e.preventDefault();
+    // On the page, Esc steps back: a finding to its module, anything else to the map.
+    if (PAGE && state.finding !== -1 && state.focusModule !== -1) select(state.focusModule, -1);
+    else select(-1, -1);
+  });
   function updateExpansionControl() {
-    var button = panel.querySelector('.atlas-expand'), label = tr(expansionEnabled ? 'Disable sector zoom' : 'Enable sector zoom');
-    button.setAttribute('aria-label', label);
+    var button = panel.querySelector('.atlas-expand');
+    button.textContent = tr(expansionEnabled ? 'Disable sector zoom' : 'Enable sector zoom');
     button.setAttribute('aria-pressed', String(expansionEnabled));
-    button.dataset.analysisTip = label + ' · ' + tr(expansionEnabled ? 'Highlight without zooming; keep the current selection.' : 'Zoom the selected module with the mouse wheel.');
+    button.title = tr(expansionEnabled ? 'Highlight without zooming; keep the current selection.' : 'Zoom the selected module with the mouse wheel.');
+    panel.querySelector('.atlas-help').textContent = tr(expansionEnabled ? 'Select a module, then scroll to adjust zoom.' : 'Click a module to highlight its dependencies.') + ' · ' + tr('Blank space / Esc clears selection.');
     root.setAttribute('data-bauify-atlas-expansion', expansionEnabled ? 'on' : 'off');
   }
   panel.querySelector('.atlas-expand').addEventListener('click', function () {
@@ -591,17 +1131,36 @@
   window.__archifyAtlas = {
     open: open,
     close: close,
+    showView: showView,
     focusFinding: function (id) {
       var index = FD.findIndex(function (f) { return f.id === id; });
       if (index < 0) select(-1, -1); else selectFinding(index);
     },
-    saveSelection: function () { return { module: state.focusModule, finding: state.finding, zoom: focusZoom, view: sideView() }; },
-    restoreSelection: function (saved) { select(saved.module, saved.finding, saved); }
+    focusModule: function (id) {
+      var index = M.findIndex(function (m) { return m.id === id; });
+      select(index, -1);
+    },
+    saveSelection: function () { return { module: state.focusModule, finding: state.finding, file: state.file, changedFile: changedSelection, scope: fileScope?.value, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() }; },
+    restoreSelection: function (saved) {
+      fileQuery.value = saved.query || '';
+      if (fileScope && saved.scope) fileScope.value = saved.scope;
+      select(saved.module, saved.finding, saved, saved.file, saved.changedFile);
+      showTab(saved.tab === 'files');
+    }
   };
   if (standalone) open();
-  new MutationObserver(function () { if (root.getAttribute('data-bauify') !== 'on' && !panel.hidden) close(); else if (!panel.hidden) { renderSide(); draw(); } }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
+  new MutationObserver(function () {
+    var on = root.getAttribute('data-bauify') === 'on';
+    if (views) {
+      views.hidden = !on;
+      if (!on && root.hasAttribute('data-bauify-views')) showView('');
+    }
+    if (!on && !panel.hidden) close();
+    // A theme switch made by opening the Atlas must not cut its reveal short.
+    else if (!panel.hidden) { renderFirst(); renderSide(); draw(anim.reveal ? 'reveal' : undefined); }
+  }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   function redrawIfResized() {
-    if (panel.hidden) return;
+    if (panel.hidden || stage.hidden) return;
     var bounds = stage.getBoundingClientRect();
     if (!geo || bounds.width !== geo.w || bounds.height !== geo.h || (window.devicePixelRatio || 1) !== geo.dpr) draw();
   }

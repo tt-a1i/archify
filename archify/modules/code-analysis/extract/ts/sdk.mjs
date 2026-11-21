@@ -69,7 +69,11 @@ function loadSdk(root, source) {
 const bundled = { ts: bundledTs, packagePath: null, version: bundledTs.version,
   source: 'bundled', status: 'fallback', limitations: [] };
 
-export function selectTypeScripts(root, snapshot, config, selected) {
+export function selectTypeScripts(root, snapshot, config, selected, { capturedOnly }) {
+  const sourceFiles = snapshot.names.filter(selected);
+  // Pinned-tree analysis must not load an SDK from the live filesystem.
+  if (capturedOnly) return [{ sdk: bundled, files: sourceFiles }];
+
   const settings = config.typescript === undefined ? {} : config.typescript;
   if (settings === null || typeof settings !== 'object' || Array.isArray(settings)
     || (settings.sdk !== undefined && typeof settings.sdk !== 'string')
@@ -80,7 +84,6 @@ export function selectTypeScripts(root, snapshot, config, selected) {
   }
   const sdkPath = settings.sdk === undefined ? 'auto' : settings.sdk;
   if (!sdkPath.trim()) fail('extract/typescript-settings-invalid', 'The TypeScript SDK path must not be empty.', { subject: { option: 'typescript.sdk' } });
-  const sourceFiles = snapshot.names.filter(selected);
   if (sdkPath !== 'auto') {
     const explicitRoot = path.resolve(root, sdkPath);
     return [{ sdk: loadSdk(explicitRoot, 'explicit'), files: sourceFiles }];

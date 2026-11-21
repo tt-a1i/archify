@@ -35,17 +35,17 @@ export function countSources(root, config) {
   return listFiles(root, config).filter((f) => SOURCE_EXT.test(f)).length;
 }
 
-export function extract(root, config, options = {}) {
+export function extract(root, config, { onCapture, capturedOnly = false } = {}) {
   const absRoot = path.resolve(root);
   const include = matcher(config.include), exclude = matcher(config.exclude);
   const selected = file => SOURCE_EXT.test(file) && include(file) && !exclude(file)
     && !file.split('/').slice(0, -1).some((_, i, parts) => exclude(`${parts.slice(0, i + 1).join('/')}/`));
   const snapshot = snapshotTree(absRoot, file => selected(file) || file.endsWith('.json'));
-  const segments = selectTypeScripts(absRoot, snapshot, config, selected).map(({ sdk, files }) => {
+  const segments = selectTypeScripts(absRoot, snapshot, config, selected, { capturedOnly }).map(({ sdk, files }) => {
     const engine = createExtractor(sdk.ts);
-    return { sdk, engine, prepared: engine.prepare(absRoot, files, snapshot) };
+    return { sdk, engine, prepared: engine.prepare(absRoot, files, snapshot, { capturedOnly }) };
   });
-  if (config.typescript?.requireProjectSdk) {
+  if (!capturedOnly && config.typescript?.requireProjectSdk) {
     const missing = segments.find(segment => segment.prepared.projects.length && segment.sdk.status === 'fallback');
     if (missing) fail('extract/typescript-sdk-required', 'A captured project has no installed TypeScript SDK.', {
       subject: { root: absRoot, file: missing.prepared.projects[0].files[0] },
@@ -55,7 +55,7 @@ export function extract(root, config, options = {}) {
   const fileSet = new Set(segments.flatMap(segment => segment.prepared.projects.flatMap(project => project.files)));
   const results = segments.map(segment => {
     const facts = segment.engine.run(absRoot, config, { snapshot, sdk: segment.sdk, prepared: segment.prepared,
-      fileSet });
+      fileSet, capturedOnly });
     return { ...segment, facts };
   });
   for (const { prepared } of segments) prepared.inputs.assertUnchanged();
@@ -64,7 +64,7 @@ export function extract(root, config, options = {}) {
     if (reads.has(file) && reads.get(file) !== value) fail('extract/source-changed', 'A TypeScript resolution input changed between project captures.', { subject: { file } });
     reads.set(file, value);
   }
-  options.onCapture?.({ options: results.length === 1 ? (results[0].prepared.projects.length === 1
+  onCapture?.({ options: results.length === 1 ? (results[0].prepared.projects.length === 1
     ? results[0].prepared.projects[0].options
     : results[0].prepared.projects.map(project => ({ config: project.config, options: project.options })))
     : results.flatMap(({ sdk, prepared }) => prepared.projects.map(project => ({ config: project.config, sdkVersion: sdk.version, options: project.options }))), reads });
@@ -111,8 +111,8 @@ const COMPILER_OPTIONS = {
   allowImportingTsExtensions: true,
 };
 
-function prepare(root, files, snapshot) {
-  const inputs = snapshotHost(root, snapshot);
+function prepare(root, files, snapshot, { capturedOnly }) {
+  const inputs = snapshotHost(root, snapshot, { capturedOnly });
   return { inputs, ...configuredProjects(root, files, inputs, snapshot) };
 }
 
@@ -137,7 +137,7 @@ function sourceProgram(root, files, options, inputs, snapshot) {
   return ts.createProgram(files.map(file => path.join(root, file)), programOptions, host);
 }
 
-function run(root, config, { snapshot, sdk, prepared, fileSet } = {}) {
+function run(root, config, { snapshot, sdk, prepared, fileSet, capturedOnly }) {
   const absRoot = path.resolve(root);
   const { inputs, projects } = prepared;
   const imports = [];
@@ -229,7 +229,9 @@ function run(root, config, { snapshot, sdk, prepared, fileSet } = {}) {
   inputs.assertUnchanged();
   // Markers come from the frozen inventory, like every other resolution input.
   const packageMarkers = packageMarkersIn(snapshot.names, config);
-  const repo = describeRepository(absRoot);
+  const repo = capturedOnly
+    ? { revision: null, baseRevision: null, sourceKind: 'working-tree', root: '.', url: null }
+    : describeRepository(absRoot);
   return {
     schema_version: 1,
     repository: { ...repo, language: 'ts', adapter: `typescript@${ts.version}`, adapterRevision: REVISION },

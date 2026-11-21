@@ -3,6 +3,7 @@
   var tr = window.__archifyMakeAnalysisTranslator(data.ui && data.ui.messages || {});
   var locale = data.ui && data.ui.locale || 'en';
   var root = document.documentElement;
+  if (data.pullRequest) root.setAttribute('data-bauify-context', 'pr'); else root.removeAttribute('data-bauify-context');
   var standalone = data.ui && data.ui.mode === 'standalone';
   var toolbar = document.querySelector('.toolbar');
   var svg = standalone ? null : document.querySelector('svg');
@@ -13,14 +14,27 @@
   var btn = externalToggle || document.createElement('button');
   if (!externalToggle) btn.id = 'btn-bauify'; btn.type = 'button'; btn.setAttribute('aria-pressed', 'false');
   btn.title = tr("Show or hide the code analysis layer (C)"); btn.textContent = tr("Code Analysis");
-  if (!externalToggle) toolbar.appendChild(btn);
+  if (!externalToggle) {
+    // Same capsule as the launcher it replaces (entry.css), placed before Export.
+    var entryIcon = document.createElement('span'); entryIcon.className = 'analysis-entry-icon'; entryIcon.setAttribute('aria-hidden', 'true');
+    btn.className = 'analysis-entry'; btn.prepend(entryIcon);
+    var entryFindings = data.findings || [];
+    if (entryFindings.length) btn.setAttribute('data-count', String(entryFindings.length));
+    if (entryFindings.some(function (f) { return f.severity === 'error'; })) btn.setAttribute('data-tone', 'error');
+    btn.setAttribute('aria-keyshortcuts', 'C');
+    toolbar.insertBefore(btn, toolbar.querySelector('.export-wrap'));
+  }
 
   var reader = document.createElement('aside');
   reader.lang = locale;
   reader.id = 'bauify-reader'; reader.hidden = true; reader.setAttribute('aria-label', tr("Code analysis reader"));
+  // The Atlas and Atlas 3D open below the diagram (atlas.js), not from this column.
   reader.innerHTML = '<nav class="reader-nav" aria-label="' + esc(tr('Analysis navigation')) + '"><span class="reader-path">' + esc(tr('Analysis / Overview')) + '</span><span class="reader-actions">' +
-    (!standalone && document.getElementById('bauify-atlas-data') ? iconButton('atlas', tr('Whole-repository view of files, dependencies and functions'), ' reader-atlas') : '') +
-    iconButton(standalone ? 'collapse' : 'panel', tr('Hide analysis'), ' reader-toggle', ' aria-expanded="true" aria-controls="bauify-reader"') + '</span></nav>';
+    iconButton(standalone ? 'collapse' : 'close', tr(standalone ? 'Hide analysis' : 'Close panel'), ' reader-toggle', ' aria-expanded="true" aria-controls="bauify-reader"') + '</span></nav>';
+  // In diagram mode the reader is a fly-out over the diagram's right edge: closed
+  // until something is picked, closed again with its ✕ or Esc.
+  var flyMode = !standalone, flyOpen = false;
+  if (flyMode) { root.setAttribute('data-bauify-flymode', 'on'); reader.classList.add('fly-closed'); }
   var diagramContainer = document.querySelector(standalone ? '.analysis-stage' : '.diagram-container');
   var restoreButton, readerToggle = reader.querySelector('.reader-toggle');
   if (standalone) {
@@ -39,9 +53,9 @@
       check: '<path d="m5 12 4 4L19 6"></path>',
       filter: '<path d="M4 5h16l-6 7v5l-4 2v-7z"></path>',
       refresh: '<path d="M20 6v5h-5M4 18v-5h5M6.1 9a7 7 0 0 1 11.5-2.6L20 9M4 15l2.4 2.6A7 7 0 0 0 17.9 15"></path>',
-      atlas: '<circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>',
-      panel: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16"></path>',
-      collapse: '<path d="M6 5v14M15 8l-4 4 4 4"></path>',
+      panel: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path>',
+      collapse: '<path d="M18 5v14M9 8l4 4-4 4"></path>',
+      close: '<path d="M6 6l12 12M18 6 6 18"></path>',
       snapshot: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h4"></path>'
     };
     return '<svg class="ui-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[name] + '</svg>';
@@ -87,22 +101,41 @@
     }
   }
   readerToggle.addEventListener('click', function () {
+    if (flyMode) { setFly(false); return; }
     setReaderCollapsed(!readerCollapsed);
     if (!readerCollapsed) return;
     if (restoreButton) restoreButton.focus({ preventScroll: true });
     else if (window.innerWidth <= 1000 && diagramContainer) diagramContainer.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
-  var atlasButton = reader.querySelector('.reader-atlas');
-  if (atlasButton) atlasButton.addEventListener('click', function () { if (window.__archifyAtlas) window.__archifyAtlas.open(); });
   function readerPage(name) {
     reader.hidden = false;
     reader.querySelector('.reader-path').textContent = tr("Analysis / ") + name;
     setReaderCollapsed(false);
+    setFly(true);
+  }
+  function setFly(open) {
+    if (!flyMode) return;
+    if (!open && pick) { pick = null; paintStage(); }
+    if (open === flyOpen) return;
+    flyOpen = open;
+    reader.classList.toggle('fly-closed', !open);
+    reader.inert = !open;
+    readerToggle.setAttribute('aria-expanded', String(open));
+    if (open) root.setAttribute('data-bauify-fly', 'open'); else root.removeAttribute('data-bauify-fly');
+    positionReader();
   }
   function positionReader() {
     var bar = toolbar.getBoundingClientRect();
     var header = document.querySelector('.header');
     root.style.setProperty('--bauify-reader-top', Math.max(76, Math.ceil(Math.max(bar.bottom, header ? header.getBoundingClientRect().bottom : 0) + 12)) + 'px');
+    if (!flyMode) return;
+    // The fly-out rides on the visible canvas: the diagram, or the Atlas page that replaced it.
+    var stageBox = [diagramContainer, document.getElementById('bauify-atlas'), document.getElementById('bauify-atlas3d')].filter(function (el) { return el && !el.hidden && el.getClientRects().length && el.getBoundingClientRect().height > 80; })[0];
+    var r = stageBox ? stageBox.getBoundingClientRect() : { top: 76, bottom: innerHeight - 16, right: document.documentElement.clientWidth - 16 };
+    var top = Math.max(r.top, 8) + 12, bottom = Math.max(8, innerHeight - Math.min(r.bottom, innerHeight - 8)) + 12;
+    root.style.setProperty('--bauify-fly-top', Math.round(top) + 'px');
+    root.style.setProperty('--bauify-fly-bottom', Math.round(bottom) + 'px');
+    root.style.setProperty('--bauify-fly-right', Math.round(Math.max(8, document.documentElement.clientWidth - r.right) + 12) + 'px');
   }
 
   var panel = document.createElement('section');
@@ -184,18 +217,23 @@
       var status = c.indicators.status, isFocus = focused.indexOf(c.id) !== -1;
       var quiet = status in most && counts[c.id] * 2 < most[status];
       ring.setAttribute('class', status + (quiet ? ' quiet' : '') + (isFocus ? ' focus' : ''));
+      ring.setAttribute('data-node', c.id);
       var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
       title.textContent = c.label + ': ' + c.indicators.items.map(function (i) { return tr(i.label) + ' — ' + indicatorValue(c, i); }).join('; ');
       ring.appendChild(title);
       layer.appendChild(ring);
     });
-    // Count badges sit above every ring, at the top-right corner of the node.
+    // Count badges sit above every ring, anchored at the top-right corner of the node.
+    // Every red badge and the highest amber count are filled, so the busiest component reads first.
+    // Reference-level (blue) counts stay outlined however few components carry them.
     data.components.forEach(function (c) {
       var b = nodeBox(c.id), n = counts[c.id]; if (!b || !n) return;
+      var status = c.indicators.status, top = status === 'red' || (status === 'amber' && n === most.amber);
       var label = String(n), w = 14 + label.length * 6.5, h = 16;
       var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      g.setAttribute('class', 'count ' + c.indicators.status + (focused.indexOf(c.id) !== -1 ? ' focus' : ''));
-      g.setAttribute('transform', 'translate(' + (b.x + b.w - w + 6) + ' ' + (b.y - h / 2 - 2) + ')');
+      g.setAttribute('class', 'count ' + status + (top ? ' top' : '') + (focused.indexOf(c.id) !== -1 ? ' focus' : ''));
+      g.setAttribute('data-anchor', (b.x + b.w + 6) + ' ' + (b.y - 2) + ' ' + w + ' ' + h);
+      g.setAttribute('data-node', c.id);
       var pill = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       pill.setAttribute('width', w); pill.setAttribute('height', h); pill.setAttribute('rx', h / 2); pill.setAttribute('ry', h / 2);
       var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -204,6 +242,36 @@
       layer.appendChild(g);
     });
     svg.appendChild(layer);
+    if (chips) svg.appendChild(chips);
+    scaleBadges();
+    paintStage();
+  }
+  // Badges are drawn in diagram units, so a wide diagram fitted to a narrow column
+  // shrinks them below legibility. Counter-scale them against the fit and camera
+  // zoom so they stay about 16px tall on screen (never smaller than authored, at most 4x).
+  function screenScale() {
+    var box = svg.viewBox && svg.viewBox.baseVal, camera = window.Archify && Archify.view;
+    if (!box || !box.width || !svg.clientWidth) return 1;
+    return svg.clientWidth / box.width * (camera && camera.state ? camera.state().scale || 1 : 1);
+  }
+  function scaleBadges() {
+    if (!layer) return;
+    var inverse = 1 / screenScale(), k = Math.min(4, Math.max(1, inverse));
+    // Ring glows read --halo-k so their radius is screen pixels at any fit or zoom.
+    layer.style.setProperty('--halo-k', Math.min(8, inverse).toFixed(3));
+    layer.querySelectorAll('g.count[data-anchor]').forEach(function (g) {
+      var a = g.getAttribute('data-anchor').split(' ').map(Number);
+      g.setAttribute('transform', 'translate(' + (a[0] - a[2] * k) + ' ' + (a[1] - a[3] * k / 2) + ') scale(' + k + ')');
+    });
+    svg.querySelectorAll('#bauify-chips g[data-center]').forEach(function (g) {
+      var a = g.getAttribute('data-center').split(' ').map(Number);
+      g.setAttribute('transform', 'translate(' + (a[0] - a[2] * k / 2) + ' ' + (a[1] - a[3] * k / 2) + ') scale(' + k + ')');
+    });
+  }
+  if (svg) {
+    var badgeFrame = 0, rescale = function () { cancelAnimationFrame(badgeFrame); badgeFrame = requestAnimationFrame(scaleBadges); };
+    new MutationObserver(rescale).observe(svg, { attributes: true, attributeFilter: ['style', 'viewBox'] });
+    if (window.ResizeObserver) new ResizeObserver(rescale).observe(svg);
   }
   var focused = [];
   function setFocus(ids) {
@@ -227,7 +295,7 @@
     return camera.centerAt(x, y, { scale: camera.state ? camera.state().scale : 1, instant: true });
   }
   function showOverview() {
-    overviewMode = 'summary';
+    overviewMode = 'summary'; clearPick();
     readerPage(tr("Overview"));
     root.removeAttribute('data-bauify-source');
     panel.hidden = true; detail.hidden = true; codePane.hidden = true; setFocus([]);
@@ -292,9 +360,13 @@
     root.removeAttribute('data-bauify-source');
     var c = byId[id]; if (!c) return;
     overview.hidden = true; setFocus([]);
+    if (flyMode && !(pick && pick.kind === 'node' && pick.id === id)) { pick = { kind: 'node', id: id }; paintStage(); }
     var h = ("<button class=\"close\" aria-label=\"" + tr("Close") + "\">" + "×" + "</button>" + "<button type=\"button\" class=\"back\">" + tr("← Overview") + "</button>");
+    if (flyMode) h += componentKicker(c);
     h += ("<div class=\"k\">" + tr("Bauify · code analysis") + "</div>" + "<h3>") + esc(c.label) + '<span class="badge ' + c.indicators.status + '">' + tr(LEVELS[c.indicators.status].name) + '</span></h3>';
+    if (flyMode && nodeSublabel(id)) h += '<p class="fly-sub">' + esc(nodeSublabel(id)) + '</p>';
     h += '<div class="ev">' + esc(indicatorSummary(c.indicators)) + '</div>';
+    if (flyMode) h += componentBody(c);
     if (c.indicators.items.length) {
       h += ("<div class=\"k\">" + tr("Indicators · click one for its findings and a diagram") + "</div>");
       c.indicators.items.forEach(function (i) {
@@ -339,6 +411,7 @@
     detail.hidden = true; codePane.hidden = true;
     panel.querySelector('.close').addEventListener('click', showOverview);
     panel.querySelector('.back').addEventListener('click', showOverview);
+    wireFlyRows(panel);
     panel.querySelectorAll('.ind.link').forEach(function (el) {
       var open = function () { panel.querySelectorAll('.ind.active').forEach(function (x) { x.classList.remove('active'); }); el.classList.add('active'); showDetail(c, el.getAttribute('data-ind')); };
       el.addEventListener('click', open);
@@ -409,12 +482,24 @@
     return (compact ? '' : nextStepHtml(f)) + '<div class="finding ' + esc(f.severity) + '">' + ev + ("<details class=\"technical\">" + "<summary>" + tr("Rule details and alternatives") + "</summary>" + "<b>") + esc(f.code) + '</b> · ' + esc(tr(f.severity)) + (f.id ? ' · ' + esc(f.id) : '') + '<p>' + esc(f.message) + '</p>' + fixes + '</details></div>';
   }
   // Source excerpt for one file:line, from the windows embedded at overlay time.
-  function showCode(file, line, why, tone, full, rangeStart, rangeEnd, match) {
+  function showCode(file, line, why, tone, full, rangeStart, rangeEnd, match, snapshot, sourcePair, returnFocus) {
     readerPage(tr("Source"));
-    var snip = (data.snippets || {})[file];
+    function captured(sources, sourceFile) {
+      return sourceFile && Object.hasOwn(sources || {}, sourceFile) ? sources[sourceFile] : null;
+    }
+    var pr = data.pullRequest;
+    var before = pr && (sourcePair ? sourcePair.base : file), after = sourcePair ? sourcePair.head : file;
+    var snip = snapshot === 'base' ? captured(pr && pr.beforeSources, file) : captured(data.snippets, file);
     line = Number.isInteger(line) && line > 0 ? line : null;
-    var sourceParent = detail.hidden ? tr("Component") : tr("Problem");
+    var sourceParent = sourcePair ? tr("Files") : detail.hidden ? tr("Component") : tr("Problem");
     var h = ("<div class=\"grip\">" + "<button class=\"close\" aria-label=\"" + tr("Close") + "\">" + "×" + "</button>" + "<button type=\"button\" class=\"source-back back\">" + "← ") + sourceParent + ("</button>" + "<div class=\"k\">" + tr("Source · ")) + (line ? tr("line ") + line : (full ? tr("full file") : tr("file preview")) + tr(" · no specific finding line")) + '</div><h3>' + esc(file) + '</h3></div>';
+    if (pr) h += '<div class="pr-source-sides">' +
+      '<button type="button" data-pr-side="base" aria-pressed="' + (snapshot === 'base') + '"' +
+      (!captured(pr.beforeSources, before) ? ' disabled' : '') + '>' + esc(tr('Merge-base')) + ' ' + esc(pr.baseSHA.slice(0, 8)) + '</button>' +
+      '<button type="button" data-pr-side="head" aria-pressed="' + (snapshot !== 'base') + '"' +
+      (!captured(data.snippets, after) ? ' disabled' : '') + '>' + esc(tr('PR head')) + ' ' + esc(pr.headSHA.slice(0, 8)) + '</button>' +
+      '<span>' + esc(tr(snapshot === 'base' ? 'Showing merge-base source' : 'Showing PR head source')) + '</span>' +
+      (sourcePair ? '<code class="pr-source-pin">' + esc(snapshot === 'base' ? pr.baseSHA : pr.headSHA) + '</code>' : '') + '</div>';
     if (why) h += '<div class="why">' + esc(why) + '</div>';
     if (!snip) {
       h += ("<div class=\"why\" style=\"margin-top:10px\">" + tr("Source is unavailable in this report. Re-analyze with the local service, or read this file in your editor.") + "</div>");
@@ -423,7 +508,7 @@
       var added = new Set(changes ? changes.added : []), modified = new Set(changes ? changes.modified : []);
       var deleted = new Map((changes ? changes.deleted : []).map(function (item) { return [item.after, item.count]; }));
       if (changes && changes.status !== 'unavailable') {
-        h += ("<div class=\"diff-legend\">" + tr("Captured changes vs base commit ")) + esc((data.repository && data.repository.baseRevision || '').slice(0, 7)) + tr(" (staged + unstaged)");
+        h += '<div class="diff-legend">' + (data.pullRequest ? esc(tr('Captured PR changes vs merge-base {sha}', { sha: data.pullRequest.baseSHA.slice(0,8) })) : tr('Captured changes vs base commit ') + esc((data.repository && data.repository.baseRevision || '').slice(0,7)) + tr(' (staged + unstaged)'));
         if (changes.status === 'unchanged') h += tr(" · No changes");
         else h += (" · " + "<span class=\"added\">" + tr("+ Added") + "</span>" + " · " + "<span class=\"modified\">" + tr("~ Modified") + "</span>" + " · " + "<span class=\"deleted\">" + tr("− Deleted") + "</span>");
         if (changes.status === 'added') h += tr(" · New file");
@@ -450,11 +535,33 @@
     codePane.innerHTML = h;
     codePane.hidden = false;
     document.documentElement.setAttribute('data-bauify-source', 'on');
+    if (pr) codePane.querySelectorAll('[data-pr-side]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var target = button.dataset.prSide;
+        showCode(target === 'base' ? before : after, null, why, tone, full, null, null, null, target, sourcePair, returnFocus);
+        if (sourcePair) codePane.querySelector('[data-pr-side="' + target + '"]').focus();
+      });
+    });
     var sourceToggle = codePane.querySelector('.source-toggle');
-    if (sourceToggle) sourceToggle.addEventListener('click', function () { showCode(file, line, why, tone, !full, rangeStart, rangeEnd, match); });
-    var backToSourceParent = function () { codePane.hidden = true; document.documentElement.removeAttribute('data-bauify-source'); readerPage(sourceParent); var active = detail.querySelector('.ref.active'); if (active) active.focus({ preventScroll: true }); detail.querySelectorAll('.ref.active').forEach(function (x) { x.classList.remove('active'); }); };
+    if (sourceToggle) sourceToggle.addEventListener('click', function () { showCode(file, line, why, tone, !full, rangeStart, rangeEnd, match, snapshot, sourcePair, returnFocus); });
+    var backToSourceParent = function () {
+      codePane.hidden = true;
+      document.documentElement.removeAttribute('data-bauify-source');
+      readerPage(sourceParent);
+      var active = detail.querySelector('.ref.active');
+      if (active) active.focus({ preventScroll: true });
+      detail.querySelectorAll('.ref.active').forEach(function (x) { x.classList.remove('active'); });
+      returnFocus?.();
+    };
     codePane.querySelector('.close').addEventListener('click', backToSourceParent);
     codePane.querySelector('.source-back').addEventListener('click', backToSourceParent);
+    codePane.onkeydown = sourcePair ? function (event) {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      backToSourceParent();
+    } : null;
+    if (sourcePair) codePane.querySelector('.source-back').focus();
     var hit = codePane.querySelector('.ln.hit');
     if (hit) codePane.scrollTop = Math.max(0, hit.offsetTop - codePane.offsetTop - codePane.clientHeight / 2);
   }
@@ -495,7 +602,7 @@
   }
   // --- overview: project-level reading, built from data.overview ------------
   var GROUPS = { 'coupling/import-cycle': tr("Import cycles"), 'coupling/cycle': tr("Module cycles"), 'coupling/hub': tr("Hub modules"), 'coupling/concentration': tr("Concentration"), 'coupling/internal-leak': tr("Internal imports"), 'architecture/boundary': tr("Boundary violations"), 'complexity/function': tr("Complex functions"), 'redundancy/duplicate-block': tr("Duplicate code") };
-  var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust' };
+  var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust', c: 'C', cpp: 'C++' };
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function plural(n, word) {
     if (locale === 'zh-CN') {
@@ -588,7 +695,7 @@
   }
   function showFindings(source) {
     if (typeof source === 'string') { filters.source = source; filters.category = 'all'; filters.severity = 'all'; filters.status = 'open'; filters.unverified = false; filters.search = ''; filters.page = 0; listScroll = 0; }
-    overviewMode = 'findings'; readerPage(tr("Findings")); root.removeAttribute('data-bauify-source');
+    overviewMode = 'findings'; clearPick(); readerPage(tr("Findings")); root.removeAttribute('data-bauify-source');
     panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
     renderFindingList(); overview.scrollTop = listScroll;
   }
@@ -653,6 +760,7 @@
     lines.push((LANGS[c.language] || c.language || tr("Unknown language")) + (files.analyzed !== null && files.analyzed !== undefined ? ' · ' + plural(files.analyzed, 'file') + tr(" analyzed") : '') +
       (files.excludedByRole ? ' · ' + files.excludedByRole + ' ' + (files.excludedRoles || []).map(function (role) { return locale === 'zh-CN' ? tr(role) : role; }).join('/') + tr(" files left out") : ''));
     (c.otherLanguages || []).forEach(function (x) { lines.push(tr("Not analyzed: ") + plural(x.files, (LANGS[x.adapter] || x.adapter) + tr(" file")) + tr(" (one language per run)")); });
+    if (files.translationUnits !== undefined) lines.push(plural(files.translationUnits, 'translation unit') + tr(' in the compilation database') + (files.notCompiled ? ' · ' + plural(files.notCompiled, 'source file') + tr(' without a command') : ''));
     var pe = files.parseErrors || [];
     if (pe.length) lines.push(plural(pe.length, 'file') + tr(" could not be parsed: ") + pe.slice(0, 3).join(', ') + (pe.length > 3 ? ' …' : ''));
     var u = c.unresolved || {}, unresolved = (u.unknown || 0) + (u.opaque || 0);
@@ -671,7 +779,7 @@
     }
     var missing = [['complexity/', tr("complexity")], ['redundancy/', tr("duplication")], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push(tr("Not checked: ") + missing.join(', '));
-    var incomplete = (c.otherLanguages || []).length || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
+    var incomplete = (c.otherLanguages || []).length || files.notCompiled || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
     return ("<details class=\"coverage\">" + "<summary>" + tr("Analysis scope")) + ' · ' + esc(LANGS[c.language] || c.language || tr("Unknown")) + (incomplete ? tr(" · incomplete") : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
   }
   // Duplicate detection reports its own file coverage: files it skipped (vendored,
@@ -693,9 +801,10 @@
       var gone = c.notDetected || c.fixed || [];
       var comparable = c.comparable === true;
       var title = comparable ? gone.length || c.new.length ? tr('{gone} no longer detected · {added} new', { gone: gone.length, added: c.new.length }) : tr('No detected changes') : tr('Not directly comparable');
-      h += '<section class="comparison-banner ' + (comparable && !c.new.length && gone.length ? 'positive' : '') + '" role="status" aria-live="polite"><span>' + esc(tr('Compared with previous analysis')) + '</span><b>' + esc(title) + '</b>';
+      h += '<section class="comparison-banner ' + (comparable && !c.new.length && gone.length ? 'positive' : '') + '" role="status" aria-live="polite"><span>' + esc(tr(data.pullRequest ? 'Compared with PR merge-base' : 'Compared with previous analysis')) + '</span><b>' + esc(title) + '</b>';
       if (c.evidenceChanged.length) h += '<span>' + esc(tr('{changed} with changed evidence', { changed: c.evidenceChanged.length })) + '</span>';
       h += '<p>' + esc(comparable ? tr('No longer detected does not prove a fix; verify source changes and project tests.') : c.comparable === false ? tr('Configuration, grouping, model or coverage changed. Missing findings do not establish a fix.') : tr('Comparison context is unavailable. Missing findings do not establish a fix.')) + '</p>';
+      if(data.pullRequest) h += '<p>' + esc(tr('This compares rule reports. Changed evidence is not a finding of increased risk; PR-attributed effects are below.')) + '</p>';
       if (!comparable && (c.reasons || []).length) h += '<details><summary>' + esc(tr('Comparison details')) + '</summary><p class="ev">' + esc(c.reasons.map(function (r) { return typeof r === 'string' ? tr(r) : tr(r && (r.message || r.code) || ''); }).join(' ')) + '</p></details>';
       h += '</section>';
       if (gone.length) h += ("<details>" + "<summary>" + tr("No longer detected · ")) + gone.length + '</summary><div class="ev">' + gone.map(function (f) { return '<div>' + esc(GROUPS[f.code] || f.code) + ': ' + esc(f.message) + (f.likelyCause ? ' · ' + esc(f.likelyCause) : '') + '</div>'; }).join('') + '</div></details>';
@@ -707,6 +816,69 @@
     }
     return h;
   }
+  function prReviewPriorities() {
+    var impact = data.pullRequest.impact;
+    var sections = [
+      { key: 'architecture', title: 'Architecture assessment', scope: 'Changed dependencies and existing users reached from the changed code.' },
+      { key: 'complexity', title: 'Complexity assessment', scope: 'Before/after function measurements and changed source; text changes alone do not prove behavior changes.' }
+    ];
+    var h = '<div class="pr-review">';
+    sections.forEach(function(section) {
+      var list = impact ? impact.records.filter(function(r) { return r.category===section.key; }) : [];
+      var count = impact ? impact.categories[section.key].total : 0;
+      var summary = !impact ? tr('Change-attributed impact is unavailable in this saved report') : count ? tr('{count} PR-related changes', { count: count }) : tr('No impact established within the captured scope');
+      h += '<section class="pr-assessment" data-assessment="' + section.key + '" aria-label="' + esc(tr(section.title)) + '"><header><h5>' + esc(tr(section.title)) + '</h5><span class="pr-origin">' + esc(tr('Automatic detection')) + '</span></header><p class="pr-assessment-summary">' + esc(summary) + '</p><p class="pr-assessment-scope">' + esc(tr(section.scope)) + '</p>';
+      list.slice(0,3).forEach(function(record) { h += prImpactCard(record,impact.records.indexOf(record)); });
+      if(list.length>3) {
+        h += '<details class="pr-impact-more"><summary>' + esc(tr('More PR-related changes · {count}',{count:list.length-3})) + '</summary>';
+        list.slice(3).forEach(function(record) { h += prImpactCard(record,impact.records.indexOf(record)); });h += '</details>';
+      }
+      h += '</section>';
+    });
+    if(impact) {
+      h += '<p class="pr-assessment-scope pr-impact-coverage">' + esc(tr('Read {count} changed files; reused saved facts and direct references.',{count:impact.coverage.work.parsedFiles})) + ' ' + esc(tr('Known static references are not runtime or complete transitive impact.')) + '</p>';
+      if(impact.status==='partial') h += '<p class="pr-assessment-scope">' + esc(tr('Some changed regions were outside the language, parsing or reading budget; unobserved impact remains unknown.')) + '</p>';
+      if(impact.comparison.comparable!==true) h += '<p class="pr-assessment-scope">' + esc(tr('Analysis contexts differ; observed measurement or binding differences are not fully attributable to source changes.')) + '</p>';
+    }
+    return h + '</div>';
+  }
+  function prImpactCard(record,index) {
+    var labels={'dependency-added':'Dependency added','dependency-removed':'Dependency removed','dependency-changed':'Dependency form changed','structural-measures':'Existing structural measurements changed','module-coupling':'Existing module coupling changed','module-added':'Module added','module-removed':'Module removed','known-users':'Existing users of changed code','known-importers':'Existing importers of changed source','file-source':'File source changed · behavior to review','function-metrics':'Function measurements changed','definition-text':'Function source changed · behavior to review','definition-added':'Definition added','definition-removed':'Definition removed','structural-finding-added':'New structural finding observed in this PR'};
+    var finding=record.findingId&&findingById[record.findingId];
+    var subject=record.kind==='structural-finding-added'&&finding?findingTitle(finding):record.module||record.kind==='structural-measures'&&record.path||record.name&&record.name+'()'||record.path||record.from+' → '+record.to;
+    var h='<article class="priority-card pr-impact-record" data-impact-record="'+index+'"><h6>'+esc(tr(labels[record.kind]||record.kind))+'</h6><p class="pr-impact-subject">'+esc(subject)+'</p>';
+    if(record.kind==='structural-measures') {
+      var fields={'reach.dependents':'Transitively dependent modules','reach.direct':'Directly dependent modules','reach.dependencies':'Outgoing dependency modules','reach.modules':'Other modules in scope','reach.share':'Dependency reach share','size.lines':'Module source lines','size.total':'Total source lines','size.share':'Source size share',lines:'Source lines',fileLines:'File lines',loc:'Source lines'};
+      h+='<p class="pr-impact-measures">'+record.changes.slice(0,3).map(function(change){return esc(tr(fields[change.field]||change.field))+' '+esc(change.before==null?'?':change.before)+' → '+esc(change.after==null?'?':change.after);}).join(' · ')+'</p>';
+    }
+    if(record.kind==='function-metrics') h+='<p class="pr-impact-measures">'+esc(tr('Complexity {before} → {after}',{before:record.before.complexity,after:record.after.complexity}))+' · '+esc(tr('Nesting {before} → {after}',{before:record.before.nesting,after:record.after.nesting}))+' · '+esc(tr('Lines {before} → {after}',{before:record.before.length,after:record.after.length}))+'</p>';
+    if(record.kind==='module-coupling') h+='<p class="pr-impact-measures">'+esc(tr('Fan-in {before} → {after}',{before:record.before.fanIn,after:record.after.fanIn}))+' · '+esc(tr('Fan-out {before} → {after}',{before:record.before.fanOut,after:record.after.fanOut}))+'</p>';
+    if(record.kind==='known-users') h+='<p class="pr-impact-measures">'+esc(record.callers.coverage==='available'?tr('{count} known static callsites',{count:record.callers.total}):tr('Callsite coverage unavailable'))+' · '+esc(tr('{count} file import sites',{count:record.importers}))+(record.unchangedCallers?' · '+esc(tr('{count} callsites in unchanged files',{count:record.unchangedCallers})):'')+'</p>';
+    if(record.kind==='known-importers') h+='<p class="pr-impact-measures">'+esc(tr('{count} file import sites',{count:record.importers}))+'</p>';
+    if(record.kind!=='known-users'&&record.callers&&record.callers.coverage!=='available') h+='<p class="pr-assessment-scope">'+esc(tr('Callsite coverage unavailable'))+'</p>';
+    var primary=record.locations.findIndex(function(loc){return loc.side==='head';});if(primary<0)primary=0;
+    var at=record.locations[primary];
+    if(at)h+='<button type="button" class="text-action pr-impact-path" data-impact-location="'+index+':'+primary+'">'+esc(at.file+':'+at.line)+' · '+esc(tr(at.side==='base'?'Merge-base':'PR head'))+'</button>';
+    h+='<details class="pr-impact-evidence"><summary>'+esc(tr('Change evidence and affected references'))+'</summary>';
+    if(record.kind==='dependency-changed') h+='<pre class="pr-impact-forms">'+esc(JSON.stringify({base:record.before.forms,head:record.after.forms},null,2))+'</pre>';
+    if(record.kind==='structural-measures') h+='<p class="pr-assessment-scope">'+esc(tr('These are existing rule measurements from both snapshots; the cause of an individual edge is not established.'))+'</p>';
+    record.locations.forEach(function(loc,i){h+='<button type="button" class="text-action" data-impact-location="'+index+':'+i+'">'+esc(tr(loc.side==='base'?'Merge-base':'PR head'))+' · '+esc(loc.file+':'+loc.line)+(loc.relation?' · '+esc(tr(loc.relation==='bound-call'?'Bound source call':'File import')):'')+(loc.unchanged?' · '+esc(tr('unchanged file')):'')+'</button>';});
+    (record.contexts||[]).forEach(function(context){h+='<p class="pr-assessment-scope">'+esc(tr('Related existing constraint'))+' · <button type="button" class="text-action" data-finding="'+esc(context.id)+'">'+esc(GROUPS[context.code]||context.code)+'</button></p>';});
+    h+='</details>';
+    if(finding)h+=quickHandoff(finding,true)+taskHtml(finding);
+    return h+'</article>';
+  }
+  function verificationHtml() {
+    var title = '<details class="verify-change"><summary>' + esc(tr('Verify a previous task')) + '</summary>';
+    if (!data.verification) return title + '<p class="ev">' + esc(tr('Download the task JSON before editing, then re-analyze using the same output directory.')) + '</p></details>';
+    return title + '<p class="ev">' + esc(tr('Run project checks separately. This receipt compares captured analyses and records your reported check results.')) + '</p>'
+      + '<form><label>' + esc(tr('Task JSON from the previous run')) + '<input type="file" accept=".json,application/json" class="verify-task" required></label>'
+      + '<label>' + esc(tr('Project check results JSON (optional)')) + '<input type="file" accept=".json,application/json" class="verify-checks"></label>'
+      + '<div class="task-actions"><button type="submit">' + esc(tr('Preview verification')) + '</button></div></form>'
+      + '<p class="verify-status ev" role="status"></p><div class="verify-preview" aria-live="polite"></div><div class="task-actions">'
+      + '<button type="button" class="verify-template" disabled>' + esc(tr('Download checks template')) + '</button>'
+      + '<button type="button" class="verify-download" disabled>' + esc(tr('Download verification JSON')) + '</button></div></details>';
+  }
   function renderOverview() {
     var o = data.overview;
     if (!o) { overview.innerHTML = '<h3>' + esc(tr('Architecture check')) + '</h3>' + legend(); return; }
@@ -714,15 +886,23 @@
     var live = typeof window.__archifyReanalyze === 'function';
     var h = '<div class="workbench-header"><h3>' + (errors ? '<i class="bauify-red"></i>' : '') + esc(tr('Architecture check')) + '</h3>' +
       (live ? iconButton('refresh', tr('Re-analyze'), ' bauify-reanalyze') : '<span class="snapshot-label" tabindex="0" role="img" aria-label="' + esc(tr('Offline snapshot')) + '" data-analysis-tip="' + esc(tr('Offline snapshot')) + '">' + uiIcon('snapshot') + '</span>') + '</div>';
+    if (data.pullRequest) {
+      var pr = data.pullRequest;
+      h += '<p class="pr-context"><b>' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', { number: pr.number })) + '</b> · ' + esc(pr.title) + '</p><p class="ev">' + esc(pr.scope) + ' · <code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code></p><p class="ev">' + esc(tr('The atlas shows PR head. Existing findings are not automatically caused by this PR.')) + '</p>';
+    }
     h += reviewHtml(o.review);
     var rules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
     var fileCycles = data.findings.filter(function (f) { return f.code === 'coupling/import-cycle'; }).length;
     var moduleCycles = data.findings.filter(function (f) { return f.code === 'coupling/cycle'; }).length;
     var boundaryViolations = data.findings.filter(function (f) { return f.code === 'architecture/boundary'; }).length;
+    if (data.pullRequest) h += '<details class="pr-head-checks"><summary>' + esc(tr('PR head checks · {errors} error-level findings', { errors: errors })) + '</summary>';
     h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><div class="health-primary ' + (errors ? 'attention' : 'positive') + '"><b>' + fmt(o.counts.findings) + '</b><span>' + esc(tr('findings')) + '</span><i>' + esc(!rules.length ? tr('No checks ran') : errors ? tr('{count} errors', { count: errors }) : tr('No errors')) + '</i></div>';
     h += '<div class="health-facts"><span>' + esc(tr('Import cycles')) + '<b>' + (rules.indexOf('coupling/import-cycle') !== -1 ? fmt(fileCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Module cycles')) + '<b>' + (rules.indexOf('coupling/cycle') !== -1 ? fmt(moduleCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Boundary violations')) + '<b>' + (!o.coverage.boundaries || !o.coverage.boundaries.rules ? tr('Not configured') : rules.indexOf('architecture/boundary') !== -1 ? fmt(boundaryViolations) : tr('Not checked')) + '</b></span></div>';
     if (o.counts.acceptedErrors) h += '<p class="scope-line">' + esc(tr('{open} open · {accepted} accepted error-level findings', { open: o.counts.error, accepted: o.counts.acceptedErrors })) + '</p>';
+    // A thin ring is still a finding, not an all-clear: say what each ring weight means.
+    if (svg) h += '<p class="halo-legend" aria-label="' + esc(tr('Diagram rings')) + '"><span><i class="heavy"></i>' + esc(tr('Concentrated')) + '</span><span><i class="thin"></i>' + esc(tr('Has findings')) + '</span><span><i class="dashed"></i>' + esc(tr('Not analyzed')) + '</span></p>';
     h += '</section>';
+    if (data.pullRequest) h += '</details>';
     h += '<p class="brief-status ev" role="status" aria-live="polite"></p>';
     h += '<details class="architecture-brief-preview" hidden><summary>' + esc(tr('Copy manually')) + '</summary><textarea readonly spellcheck="false" aria-label="' + esc(tr('Architecture brief')) + '"></textarea></details>';
     var offline = '';
@@ -732,13 +912,14 @@
       else offline += '<p class="ev">' + esc(tr('This report has no saved start command. Ask your AI to prepare a fresh analysis from the original repository and architecture JSON.')) + '</p>';
       offline += '</details>';
     }
-    h += '<div class="section-heading"><h4>' + esc(tr(o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4>' + iconButton('copy', tr('Copy architecture brief'), ' brief-copy') + '</div>';
-    if (o.priorities.length) {
+    h += '<div class="section-heading' + (data.pullRequest ? ' pr-review-heading' : '') + '"><h4>' + esc(tr(data.pullRequest ? 'PR review priorities' : o.priorities.length ? 'Look at first' : 'Architecture brief')) + '</h4>' + iconButton('copy', tr(data.pullRequest ? 'Copy PR impact brief' : 'Copy architecture brief'), ' brief-copy') + '</div>';
+    if (data.pullRequest) h += prReviewPriorities();
+    else if (o.priorities.length) {
       o.priorities.forEach(function (id, i) { h += priorityCard(id, i + 1); });
     } else h += '<p class="ev">' + esc(tr('No open findings within the checks that ran. Accepted findings and coverage remain below.')) + '</p>';
-    h += offline;
+    h += verificationHtml() + offline;
     var architecture = o.investigation && o.investigation.architecture;
-    if (architecture && architecture.structuralSignals.length) {
+    if (!data.pullRequest && architecture && architecture.structuralSignals.length) {
       h += '<details class="structural-signals"><summary>' + esc(tr('Additional structural signals')) + ' · ' + architecture.structuralSignals.length + '</summary>';
       architecture.structuralSignals.forEach(function (signal) { h += findingRow(signal.id); });
       h += '</details>';
@@ -748,7 +929,7 @@
       var externalCount = data.findings.filter(function (f) { return f.external; }).length;
       h += '<div class="external-entry"><button type="button" class="external-findings"><b>' + esc(tr('External diagnostics')) + ' · ' + externalCount + '</b><span>' + plural(sources.length, 'source') + '</span></button><button type="button" class="text-action overview-sources">' + esc(tr('Sources & coverage')) + '</button></div>';
     }
-    h += '<div class="overview-secondary"><button type="button" class="browse-findings" aria-label="' + esc(tr('Browse findings')) + '" data-analysis-tip="' + esc(tr('Browse findings')) + '">' + uiIcon('filter') + esc(tr('Filter')) + '</button><p class="ev counts">' + esc(tr('{warnings} warnings · {info} reference signals · {accepted} accepted', { warnings: o.counts.warning, info: o.counts.info, accepted: o.counts.accepted || 0 })) + '</p>';
+    h += (data.pullRequest ? '<p class="ev">' + esc(tr('Whole-head background, including existing findings')) + '</p>' : '') + '<div class="overview-secondary"><button type="button" class="browse-findings" aria-label="' + esc(tr('Browse findings')) + '" data-analysis-tip="' + esc(tr('Browse findings')) + '">' + uiIcon('filter') + esc(tr('Filter')) + '</button><p class="ev counts">' + esc(tr('{warnings} warnings · {info} reference signals · {accepted} accepted', { warnings: o.counts.warning, info: o.counts.info, accepted: o.counts.accepted || 0 })) + '</p>';
     if (o.groups.length) {
       h += '<details class="all-finding-groups"><summary>' + esc(tr('All findings')) + ' · ' + o.counts.findings + '</summary>';
       o.groups.forEach(function (g) { h += '<details><summary><i class="bauify-' + toneOf(g.severity) + '"></i>' + esc(GROUPS[g.code] || g.code) + ' · ' + g.count + '</summary>' + g.ids.map(function (id) { return findingRow(id); }).join('') + '</details>'; });
@@ -762,11 +943,21 @@
     if (!standalone) h += '<details><summary>' + esc(tr('Colour key')) + '</summary>' + legend() + '</details>';
     h += '</div>';
     overview.innerHTML = h;
+    overview.querySelectorAll('[data-impact-location]').forEach(function(button){button.addEventListener('click',function(){var indices=button.getAttribute('data-impact-location').split(':').map(Number),loc=data.pullRequest.impact.records[indices[0]].locations[indices[1]];showCode(loc.file,loc.line,tr('Captured PR source; inspect changes against the merge-base.'),'info',false,null,null,null,loc.side);});});
+    window.__archifyWireVerification(overview, data.verification, tr);
     overview.querySelector('.browse-findings').addEventListener('click', function () { showFindings('all'); });
     var externalButton = overview.querySelector('.external-findings'); if (externalButton) externalButton.addEventListener('click', function () { showFindings('external'); });
     var sourceButton = overview.querySelector('.overview-sources'); if (sourceButton) sourceButton.addEventListener('click', showSources);
     var brief = overview.querySelector('.architecture-brief-preview');
-    overview.querySelector('.brief-copy').addEventListener('click', function () { copyText(data.architectureBrief || '', overview.querySelector('.brief-status'), brief.querySelector('textarea'), tr('Copied architecture brief. Ask your coding AI to verify the cited source before editing.'), brief); });
+    overview.querySelector('.brief-copy').addEventListener('click', function () {
+      var content=data.architectureBrief||'',message='Copied architecture brief. Ask your coding AI to verify the cited source before editing.';
+      if(data.pullRequest){
+        var p=data.pullRequest,i=p.impact,ids=i?i.categories.architecture.priorities.concat(i.categories.complexity.priorities):[];
+        content=JSON.stringify({repository:p.repository,scope:p.scope,base:p.baseSHA,head:p.headSHA,impact:i?{basis:i.basis,total:i.total,comparison:i.comparison,records:i.records.filter(function(r){return ids.indexOf(r.id)!==-1;}),coverage:i.coverage}:null},null,2);
+        message='Copied PR impact evidence. Verify the cited source and coverage before review.';
+      }
+      copyText(content,overview.querySelector('.brief-status'),brief.querySelector('textarea'),tr(message),brief);
+    });
     var startCopy = overview.querySelector('.start-copy');
     if (startCopy) startCopy.addEventListener('click', function () { copyText(data.ui.resume.command, overview.querySelector('.start-status'), overview.querySelector('.start-command'), tr('Copied start command.')); });
     var again = overview.querySelector('.bauify-reanalyze');
@@ -851,7 +1042,7 @@
     }).join('');
   }
   function taskHtml(f) {
-    return '<details class="ai-task" data-task-id="' + esc(f.id) + ("\">" + "<summary>" + tr("Task preview and download") + "</summary>" + "<p class=\"ev\">" + tr("Review the brief, then give it to your coding AI. Exporting does not modify code.") + "</p>" + "<p class=\"task-status ev\" role=\"status\" aria-live=\"polite\">" + tr("Open to prepare the task.") + "</p>" + "<div class=\"task-actions\">" + "<button type=\"button\" class=\"task-copy\" disabled>" + tr("Copy AI task") + "</button>" + "<button type=\"button\" class=\"task-download\" disabled>" + tr("Download .md") + "</button>" + "<button type=\"button\" class=\"task-refresh\">" + tr("Check again") + "</button>" + "</div>" + "<label class=\"ev\">" + tr("Task preview · select text to copy manually") + "<textarea class=\"task-preview\" readonly spellcheck=\"false\" aria-label=\"" + tr("AI task preview") + "\">" + "</textarea>" + "</label>" + "</details>");
+    return '<details class="ai-task" data-task-id="' + esc(f.id) + ("\">" + "<summary>" + tr("Task preview and download") + "</summary>" + "<p class=\"ev\">" + tr("Review the brief, then give it to your coding AI. Exporting does not modify code.") + "</p>" + "<p class=\"task-status ev\" role=\"status\" aria-live=\"polite\">" + tr("Open to prepare the task.") + "</p>" + "<div class=\"task-actions\">" + "<button type=\"button\" class=\"task-copy\" disabled>" + tr("Copy AI task") + "</button>" + "<button type=\"button\" class=\"task-download\" disabled>" + tr("Download .md") + "</button>" + "<button type=\"button\" class=\"task-json\" disabled>" + esc(tr("Download task JSON")) + "</button>" + "<button type=\"button\" class=\"task-refresh\">" + tr("Check again") + "</button>" + "</div>" + "<label class=\"ev\">" + tr("Task preview · select text to copy manually") + "<textarea class=\"task-preview\" readonly spellcheck=\"false\" aria-label=\"" + tr("AI task preview") + "\">" + "</textarea>" + "</label>" + "</details>");
   }
   function externalEvidence(f) {
     var locations = f.external.locations || [];
@@ -920,6 +1111,7 @@
       var id = box.getAttribute('data-task-id'), payload = null, busy = false;
       var status = box.querySelector('.task-status'), preview = box.querySelector('.task-preview');
       var copy = box.querySelector('.task-copy'), download = box.querySelector('.task-download'), refresh = box.querySelector('.task-refresh');
+      var downloadJson = box.querySelector('.task-json');
       var quick = container.querySelector('[data-handoff-id="' + id + '"]');
       var quickCopy = quick && quick.querySelector('.quick-copy');
       var say = function (text, previewOnly) { status.textContent = text; if (quick) quick.querySelector('.handoff-status').textContent = previewOnly ? '' : text; };
@@ -930,7 +1122,7 @@
       };
       var prepare = async function () {
         if (busy) return null;
-        busy = true; copy.disabled = download.disabled = refresh.disabled = true;
+        busy = true; copy.disabled = download.disabled = downloadJson.disabled = refresh.disabled = true;
         if (quickCopy) quickCopy.disabled = true;
         say(tr("Preparing task and checking available evidence…"), true);
         try {
@@ -952,7 +1144,7 @@
           payload = null; preview.value = '';
           say(tr("Could not prepare task: ") + error.message + tr(" Re-analyze if this page shows an older result, then retry."));
           return null;
-        } finally { busy = false; copy.disabled = download.disabled = !payload; refresh.disabled = false; if (quickCopy) quickCopy.disabled = false; }
+        } finally { busy = false; copy.disabled = download.disabled = downloadJson.disabled = !payload; refresh.disabled = false; if (quickCopy) quickCopy.disabled = false; }
       };
       box.addEventListener('toggle', function () { if (box.open && !payload && !busy) prepare(); });
       refresh.addEventListener('click', prepare);
@@ -967,6 +1159,9 @@
       };
       copy.addEventListener('click', copyTask);
       if (quickCopy) quickCopy.addEventListener('click', copyTask);
+      downloadJson.addEventListener('click', function () {
+        if (payload) window.__archifyDownloadJson(payload.task, payload.task.taskId + '.json');
+      });
       download.addEventListener('click', async function () {
         var p = await prepare(); if (!p || !box.isConnected) return;
         var url = URL.createObjectURL(new Blob([p.markdown], { type: 'text/markdown;charset=utf-8' }));
@@ -983,7 +1178,7 @@
       var opener = document.activeElement;
       findingReturn = { parent: parent, atlas: window.__archifyAtlas && window.__archifyAtlas.saveSelection(), opener: overview.contains(opener) && opener.getAttribute('data-finding') };
     }
-    readerPage(tr("Finding")); detail.classList.remove('reviewing');
+    clearPick(); readerPage(tr("Finding")); detail.classList.remove('reviewing');
     root.removeAttribute('data-bauify-source');
     overview.hidden = true; panel.hidden = true;
     var e = entryById[id];
@@ -1237,6 +1432,250 @@
     svg += '</svg>';
     return svg + ("<div class=\"caption\">" + tr("Fan-in / fan-out summed over the modules mapped to this component (each counts modules, not import statements). High fan-in says \"change carefully\"; high fan-out says \"changes elsewhere reach me\".") + "</div>");
   }
+  // --- diagram page: canvas controls, code dependencies, focus and the fly-out pages ---
+  var pick = null, depth = 1, beacon = false, codeDeps = false, stage = null, edgeGroup = null, chips = null, decorated = [];
+  var codeEdgeByKey = {}; (data.edges || []).forEach(function (e) { codeEdgeByKey[e.from + '>' + e.to] = e; });
+  var undeclared = (data.edges || []).filter(function (e) { return e.declared === false && byId[e.from] && byId[e.to]; }).sort(function (a, b) { return b.weight - a.weight; });
+  var maxEdgeWeight = Math.max.apply(Math, (data.edges || []).map(function (e) { return e.weight; }).concat([1]));
+  var openCache = {};
+  // Open findings of a component, all levels: what its panel and the "start here" card count.
+  function openOf(c) {
+    if (openCache[c.id]) return openCache[c.id];
+    var list = allFindings(c).filter(function (f) { var r = f.review || {}; return !(r.status === 'accepted' && f.severity !== 'error'); });
+    var o = { list: list, e: 0, w: 0, i: 0 };
+    list.forEach(function (f) { if (f.severity === 'error') o.e++; else if (f.severity === 'warning') o.w++; else o.i++; });
+    return (openCache[c.id] = o);
+  }
+  function topComponent() { return data.components.filter(function (c) { return c.modules.length && openOf(c).list.length; }).sort(function (a, b) { return openOf(b).list.length - openOf(a).list.length; })[0] || null; }
+  function compLabel(id) { return byId[id] ? byId[id].label : id; }
+  function nodeSublabel(id) { var g = svg && svg.querySelector('g[data-node-id="' + id + '"]'); return g ? g.getAttribute('data-node-sublabel') || '' : ''; }
+  function fmtK(n) { return n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n); }
+  function sevRank(f) { return f.severity === 'error' ? 0 : f.severity === 'warning' ? 1 : 2; }
+  function complexityOf(f) { return f.evidence && typeof f.evidence.complexity === 'number' ? f.evidence.complexity : 0; }
+  function svgEl(tag, attrs, parent) { var e = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.keys(attrs).forEach(function (k) { if (attrs[k] != null) e.setAttribute(k, attrs[k]); }); if (parent) parent.appendChild(e); return e; }
+  function textWidth(text) { return Array.from(text).reduce(function (n, ch) { return n + (ch.charCodeAt(0) > 255 ? 10.5 : 6.2); }, 0); }
+  function edgeWidth(w) { return (1.6 + 3.4 * Math.sqrt(w / maxEdgeWeight)).toFixed(2); }
+  function firstRow(go, tone, title, sub, n) { return '<button type="button" class="first-row" data-go="' + esc(go) + '"><i class="bar ' + tone + '"></i><span><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span><em>' + fmt(n) + '</em></button>'; }
+  function buildStage() {
+    if (stage || !svg || !flyMode || !diagramContainer) return;
+    stage = document.createElement('div'); stage.id = 'bauify-stage'; stage.className = 'no-print'; stage.lang = locale;
+    var top = topComponent(), off = (data.unmapped || []).slice().sort(function (a, b) { return b.files - a.files || b.loc - a.loc; })[0];
+    var rows = '';
+    if (top) rows += firstRow('component:' + top.id, 'amber', tr('{name} has the most open findings', { name: top.label }), tr('{files} files · {loc} lines', { files: fmt(top.files), loc: fmtK(top.loc) }), openOf(top).list.length);
+    if (undeclared.length) rows += firstRow('code', 'red', tr('Code dependencies not drawn on the diagram'), tr('Largest: {from} → {to}', { from: compLabel(undeclared[0].from), to: compLabel(undeclared[0].to) }), undeclared.length);
+    if (off) rows += firstRow('off:' + off.id, 'grey', tr('Code with no place on the diagram'), tr('{name} · {files} files', { name: off.label, files: fmt(off.files) }), off.files);
+    if (!rows) rows = '<p class="first-empty">' + esc(tr('Nothing stands out: no open findings, and the diagram matches the code dependencies.')) + '</p>';
+    var total = (data.findings || []).length;
+    stage.innerHTML =
+      '<div class="stage-tools">' +
+        '<div class="stage-seg" role="group" aria-label="' + esc(tr('Highlight')) + '"><button type="button" data-beacon="all" aria-pressed="true">' + esc(tr('All')) + '</button><button type="button" data-beacon="issues" aria-pressed="false"><i class="dot amber"></i>' + esc(tr('Only with findings')) + '</button></div>' +
+        (undeclared.length ? '<div class="stage-seg"><button type="button" class="stage-code" aria-pressed="false"><i class="dot red"></i>' + esc(tr('Show code dependencies')) + '<em>' + undeclared.length + '</em></button></div>' : '') +
+      '</div>' +
+      '<div class="stage-depth" hidden><span class="depth-label"></span><div class="stage-seg" role="group" aria-label="' + esc(tr('Neighbourhood')) + '"><button type="button" data-depth="1" aria-pressed="true">' + esc(tr('1 hop')) + '</button><button type="button" data-depth="2" aria-pressed="false">' + esc(tr('2 hops')) + '</button><button type="button" data-depth="99" aria-pressed="false">' + esc(tr('All')) + '</button></div><button type="button" class="depth-clear" aria-label="' + esc(tr('Clear focus')) + '">×</button></div>' +
+      '<section class="stage-first" aria-label="' + esc(tr('Start here')) + '"><header><h3 title="' + esc(tr('What stands out after checking this diagram against the code')) + '">' + esc(tr('Start here')) + '</h3><button type="button" class="first-toggle" aria-expanded="true">' + esc(tr('Collapse')) + '</button></header><div class="first-body">' + rows +
+      (total ? '<button type="button" class="first-all">' + esc(tr('All {count} findings', { count: fmt(total) })) + ' →</button>' : '') +
+      '<p class="stage-legend"><span><i class="ring amber"></i>' + esc(tr('Has findings')) + '</span><span><i class="ring green"></i>' + esc(tr('No findings')) + '</span><span><i class="ring grey"></i>' + esc(tr('No source mapped')) + '</span><span><i class="chip">n</i>' + esc(tr('Open findings')) + '</span><span><i class="line thick"></i>' + esc(tr('Thicker: more imports')) + '</span>' + (undeclared.length ? '<span><i class="line dash"></i>' + esc(tr('Not drawn')) + '</span>' : '') + '</p></div></section>';
+    diagramContainer.appendChild(stage);
+    // The canvas pans on pointer drags and zooms on wheel: keep those off the controls.
+    ['pointerdown', 'mousedown', 'touchstart', 'wheel', 'dblclick'].forEach(function (type) { stage.addEventListener(type, function (event) { event.stopPropagation(); }, { passive: true }); });
+    stage.addEventListener('click', function (event) {
+      event.stopPropagation();
+      var t = event.target.closest('button'); if (!t) return;
+      if (t.dataset.beacon) setBeacon(t.dataset.beacon === 'issues');
+      else if (t.classList.contains('stage-code')) setCodeDeps(!codeDeps);
+      else if (t.dataset.depth) { depth = Number(t.dataset.depth); paintStage(); }
+      else if (t.classList.contains('depth-clear')) setFly(false);
+      else if (t.classList.contains('first-toggle')) {
+        var first = stage.querySelector('.stage-first'), collapsed = !first.classList.contains('collapsed');
+        first.classList.toggle('collapsed', collapsed); t.setAttribute('aria-expanded', String(!collapsed)); t.textContent = tr(collapsed ? 'Expand' : 'Collapse');
+      } else if (t.classList.contains('first-all')) showOverview();
+      else if (t.dataset.go) {
+        var go = t.dataset.go;
+        if (go === 'code') { setCodeDeps(true); showEdge(undeclared[0].from, undeclared[0].to); }
+        else if (go.indexOf('component:') === 0) show(go.slice(10));
+        else if (go.indexOf('off:') === 0) showOff(go.slice(4));
+      }
+    });
+  }
+  function setBeacon(on) {
+    beacon = on;
+    if (on) root.setAttribute('data-bauify-beacon', 'on'); else root.removeAttribute('data-bauify-beacon');
+    if (stage) stage.querySelectorAll('[data-beacon]').forEach(function (b) { b.setAttribute('aria-pressed', String((b.dataset.beacon === 'issues') === on)); });
+    paintStage();
+  }
+  function setCodeDeps(on) {
+    codeDeps = on;
+    if (on) root.setAttribute('data-bauify-code', 'on'); else root.removeAttribute('data-bauify-code');
+    var b = stage && stage.querySelector('.stage-code'); if (b) b.setAttribute('aria-pressed', String(on));
+    paintStage();
+  }
+  function clearEdges() {
+    if (edgeGroup) edgeGroup.remove(); if (chips) chips.remove(); edgeGroup = chips = null;
+    decorated.forEach(function (p) { p.classList.remove('bauify-coded', 'bauify-uncoded', 'bauify-away', 'bauify-calm', 'bauify-lit'); p.style.removeProperty('--bauify-w'); });
+    decorated = [];
+  }
+  function chip(from, to, text, cls, mid) {
+    var w = 12 + textWidth(text), h = 16;
+    var g = svgEl('g', { class: 'bauify-chip ' + cls, 'data-from': from, 'data-to': to, 'data-center': mid[0] + ' ' + mid[1] + ' ' + w + ' ' + h }, chips);
+    svgEl('rect', { width: w, height: h, rx: h / 2, ry: h / 2 }, g);
+    svgEl('text', { x: w / 2, y: h / 2 }, g).textContent = text;
+  }
+  // Diagram edges backed by imports get thicker by weight; code dependencies the
+  // diagram does not draw become dashed arcs below the nodes (shown on request).
+  function drawEdges() {
+    clearEdges();
+    if (!svg || !flyMode) return;
+    var firstNode = svg.querySelector('g[data-node-id]'); if (!firstNode) return;
+    edgeGroup = svgEl('g', { id: 'bauify-edges' }); firstNode.parentNode.insertBefore(edgeGroup, firstNode);
+    var marker = svgEl('marker', { id: 'bauify-undrawn-head', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto-start-reverse' }, svgEl('defs', {}, edgeGroup));
+    svgEl('path', { d: 'M0,0 L10,5 L0,10 z' }, marker);
+    chips = svgEl('g', { id: 'bauify-chips' }, svg);
+    svg.querySelectorAll('path[data-edge-from][data-edge-to]').forEach(function (path) {
+      var from = path.getAttribute('data-edge-from'), to = path.getAttribute('data-edge-to'), e = codeEdgeByKey[from + '>' + to];
+      path.classList.add(e ? 'bauify-coded' : 'bauify-uncoded');
+      decorated.push(path);
+      if (!e) return;
+      path.style.setProperty('--bauify-w', edgeWidth(e.weight) + 'px');
+      var hit = svgEl('path', { d: path.getAttribute('d'), class: 'bauify-hit', 'data-from': from, 'data-to': to }, edgeGroup);
+      hit.dataset.analysisTip = compLabel(from) + ' → ' + compLabel(to) + ' · ' + tr('{count} imports', { count: e.weight });
+      var length = path.getTotalLength ? path.getTotalLength() : 0, point = length ? path.getPointAtLength(length / 2) : null;
+      if (point) chip(from, to, tr('{count} imports', { count: e.weight }), 'coded', [point.x, point.y]);
+    });
+    undeclared.forEach(function (e, i) {
+      var a = nodeBox(e.from), b = nodeBox(e.to); if (!a || !b) return;
+      var dir = b.cx >= a.cx ? 1 : -1, x0 = a.cx + 14 * dir, x1 = b.cx - 14 * dir, y0 = a.y + a.h + 6, y1 = b.y + b.h + 6, low = Math.max(y0, y1), c = low + 70 + i * 22;
+      var d = 'M' + x0 + ',' + y0 + ' C' + x0 + ',' + c + ' ' + x1 + ',' + c + ' ' + x1 + ',' + y1;
+      svgEl('path', { d: d, class: 'bauify-undrawn', 'data-from': e.from, 'data-to': e.to, style: '--bauify-w:' + edgeWidth(e.weight) + 'px', 'marker-end': 'url(#bauify-undrawn-head)' }, edgeGroup);
+      var hit = svgEl('path', { d: d, class: 'bauify-hit undrawn', 'data-from': e.from, 'data-to': e.to }, edgeGroup);
+      hit.dataset.analysisTip = compLabel(e.from) + ' → ' + compLabel(e.to) + ' · ' + tr('{count} imports', { count: e.weight }) + ' · ' + tr('not drawn');
+      chip(e.from, e.to, '+' + e.weight, 'undrawn', [(x0 + x1) / 2, (y0 + y1) / 8 + 0.75 * c]);
+    });
+    edgeGroup.addEventListener('click', function (event) { var hit = event.target.closest('.bauify-hit'); if (!hit) return; event.stopPropagation(); showEdge(hit.getAttribute('data-from'), hit.getAttribute('data-to')); });
+    var hover = function (on) { return function (event) { var hit = event.target.closest('.bauify-hit'); if (!hit) return; chips.querySelectorAll('[data-from="' + hit.getAttribute('data-from') + '"][data-to="' + hit.getAttribute('data-to') + '"]').forEach(function (g) { g.classList.toggle('bauify-hover', on); }); }; };
+    edgeGroup.addEventListener('mouseover', hover(true)); edgeGroup.addEventListener('mouseout', hover(false));
+    scaleBadges();
+  }
+  function neighbourhood(id, limit) {
+    var adj = {}, add = function (a, b) { (adj[a] = adj[a] || []).push(b); (adj[b] = adj[b] || []).push(a); };
+    decorated.forEach(function (p) { add(p.getAttribute('data-edge-from'), p.getAttribute('data-edge-to')); });
+    if (codeDeps) undeclared.forEach(function (e) { add(e.from, e.to); });
+    var seen = {}; seen[id] = 0; var queue = [id];
+    while (queue.length) { var x = queue.shift(); if (seen[x] >= limit) continue; (adj[x] || []).forEach(function (y) { if (seen[y] == null) { seen[y] = seen[x] + 1; queue.push(y); } }); }
+    return seen;
+  }
+  // One pass over everything the page dims or lights: the beacon, the picked
+  // component's neighbourhood, or the picked edge and its two ends.
+  function paintStage() {
+    if (!svg || !flyMode) return;
+    var keep = null;
+    if (pick && pick.kind === 'node') keep = neighbourhood(pick.id, depth);
+    if (pick && pick.kind === 'edge') { keep = {}; keep[pick.from] = 0; keep[pick.to] = 0; }
+    if (keep) root.setAttribute('data-bauify-pick', pick.kind); else root.removeAttribute('data-bauify-pick');
+    var calm = function (id) { var c = byId[id]; return !c || !openOf(c).list.length; };
+    var away = function (id) { return !!keep && keep[id] == null; };
+    var edgeOn = function (from, to) { return !!keep && keep[from] != null && keep[to] != null && (pick.kind !== 'edge' || (pick.from === from && pick.to === to)); };
+    svg.querySelectorAll('g[data-node-id]').forEach(function (g) { var id = g.getAttribute('data-node-id'); g.classList.toggle('bauify-away', away(id)); g.classList.toggle('bauify-calm', calm(id)); g.classList.toggle('bauify-picked', !!pick && pick.kind === 'node' && pick.id === id); });
+    if (layer) layer.querySelectorAll('[data-node]').forEach(function (el) { var id = el.getAttribute('data-node'); el.classList.toggle('bauify-away', away(id)); el.classList.toggle('bauify-calm', calm(id)); });
+    decorated.forEach(function (p) { var a = p.getAttribute('data-edge-from'), b = p.getAttribute('data-edge-to'); p.classList.toggle('bauify-away', !!keep && !edgeOn(a, b)); p.classList.toggle('bauify-lit', edgeOn(a, b)); p.classList.toggle('bauify-calm', calm(a) || calm(b)); });
+    [edgeGroup, chips].forEach(function (group) { if (group) group.querySelectorAll('[data-from]').forEach(function (el) { var a = el.getAttribute('data-from'), b = el.getAttribute('data-to'); el.classList.toggle('bauify-away', !!keep && !edgeOn(a, b)); el.classList.toggle('bauify-lit', edgeOn(a, b)); el.classList.toggle('bauify-calm', calm(a) || calm(b)); }); });
+    if (!stage) return;
+    var pill = stage.querySelector('.stage-depth');
+    pill.hidden = !(pick && pick.kind === 'node');
+    if (!pill.hidden) {
+      pill.querySelector('.depth-label').textContent = tr('Focus {name}', { name: compLabel(pick.id) });
+      pill.querySelectorAll('[data-depth]').forEach(function (b) { b.setAttribute('aria-pressed', String(Number(b.dataset.depth) === depth)); });
+    }
+  }
+  function clearPick() { if (pick) { pick = null; paintStage(); } }
+  function componentKicker(c) {
+    var top = topComponent();
+    return '<p class="fly-kick"><i class="dot ' + (c.modules.length ? c.indicators.status : 'grey') + '"></i>' + esc(tr('Architecture component')) + (top && top.id === c.id ? ' · <b>' + esc(tr('most open findings')) + '</b>' : '') + '</p>';
+  }
+  function componentBody(c) {
+    var h = '';
+    if (!c.modules.length) return h;
+    var o = openOf(c);
+    h += '<div class="fly-nums"><div><b>' + fmt(c.files) + '</b><span>' + esc(tr('files')) + '</span></div><div><b>' + fmtK(c.loc) + '</b><span>' + esc(tr('lines')) + '</span></div><div><b>' + fmt(o.list.length) + '</b><span>' + esc(tr('open')) + '</span></div></div>';
+    if (o.list.length) h += '<div class="fly-sev" aria-hidden="true"><i class="red" style="flex:' + o.e + '"></i><i class="amber" style="flex:' + o.w + '"></i><i class="blue" style="flex:' + o.i + '"></i></div>';
+    h += '<h4 class="fly-h">' + esc(tr('Source')) + '<small>' + esc(plural(c.modules.length, 'module')) + '</small></h4><div class="fly-chips">' + c.modules.slice(0, 6).map(function (m) { return '<code>' + esc(m.label) + '</code>'; }).join('') + (c.modules.length > 6 ? '<code>+' + (c.modules.length - 6) + '</code>' : '') + '</div>';
+    var rel = function (list, outgoing) {
+      return list.slice().sort(function (a, b) { return b.weight - a.weight; }).map(function (e) {
+        if (!e.component) return '<div class="fly-rel off"><i class="dot grey"></i><span>' + esc(modLabel(e.module)) + '</span><em>' + esc(tr('{count} imports', { count: e.weight })) + ' · ' + esc(tr('not on this diagram')) + '</em></div>';
+        var key = outgoing ? c.id + '>' + e.component : e.component + '>' + c.id, code = codeEdgeByKey[key];
+        return '<button type="button" class="fly-rel" data-edge="' + esc(key) + '"><i class="dot ' + (byId[e.component] ? byId[e.component].indicators.status : 'grey') + '"></i><span>' + esc(compLabel(e.component)) + '</span><em>' + esc(tr('{count} imports', { count: e.weight })) + (code && code.declared === false ? ' · <b>' + esc(tr('not drawn')) + '</b>' : '') + '</em></button>';
+      }).join('');
+    };
+    if (c.outgoing.length) h += '<h4 class="fly-h">' + esc(tr('Depends on')) + '<small>' + esc(tr('click one for the files')) + '</small></h4>' + rel(c.outgoing, true);
+    if (c.incoming.length) h += '<h4 class="fly-h">' + esc(tr('Used by')) + '</h4>' + rel(c.incoming, false);
+    var top = o.list.slice().sort(function (a, b) { return sevRank(a) - sevRank(b) || complexityOf(b) - complexityOf(a); }).slice(0, 4);
+    if (top.length) h += '<h4 class="fly-h">' + esc(tr('Look at these first')) + '<small>' + esc(tr('by severity and complexity')) + '</small></h4>' + top.map(flyFinding).join('');
+    return h;
+  }
+  function flyFinding(f) { return '<button type="button" class="fly-find ' + toneOf(f.severity) + '" data-finding="' + esc(f.id) + '"><i></i><b>' + esc(findingTitle(f)) + '</b><small>' + esc(findingLocation(f) || findingWhat(f)) + '</small></button>'; }
+  function wireFlyRows(container) {
+    container.querySelectorAll('.fly-rel[data-edge]').forEach(function (b) { b.addEventListener('click', function () { var k = b.getAttribute('data-edge').split('>'); showEdge(k[0], k[1]); }); });
+    container.querySelectorAll('.fly-find[data-finding]').forEach(function (b) { b.addEventListener('click', function () { showFinding(b.getAttribute('data-finding')); }); });
+  }
+  function flyClose(back) { return '<button class="close" aria-label="' + esc(tr("Close")) + '">×</button><button type="button" class="back">← ' + esc(back) + '</button>'; }
+  // A dependency between two components: whether the diagram draws it, and the imports behind it.
+  function showEdge(from, to) {
+    var e = codeEdgeByKey[from + '>' + to], undrawn = !!e && e.declared === false;
+    readerPage(tr('Dependency')); root.removeAttribute('data-bauify-source');
+    overview.hidden = true; detail.hidden = true; codePane.hidden = true; setFocus([]);
+    pick = { kind: 'edge', from: from, to: to }; paintStage();
+    var h = flyClose(byId[from] ? compLabel(from) : tr('Overview'));
+    h += '<p class="fly-kick">' + esc(tr('Dependency')) + ' <span class="fly-pill ' + (!e ? 'grey' : undrawn ? 'red' : 'green') + '">' + esc(tr(!e ? 'no imports found' : undrawn ? 'not drawn' : 'on the diagram')) + '</span></p>';
+    h += '<h3 class="fly-edge-title">' + esc(compLabel(from)) + ' <span>→</span> ' + esc(compLabel(to)) + '</h3>';
+    if (e) {
+      var files = {}; e.evidence.forEach(function (v) { files[v.file] = true; });
+      h += '<div class="fly-nums two"><div><b>' + fmt(e.weight) + '</b><span>' + esc(tr('imports')) + '</span></div><div><b>' + Object.keys(files).length + (e.evidence.length < e.weight ? '+' : '') + '</b><span>' + esc(tr('source files')) + '</span></div></div>';
+      h += '<p class="fly-note' + (undrawn ? ' attention' : '') + '">' + esc(undrawn ? tr('{from} imports {to} in the code, but the diagram draws no line between them. Add it to the diagram, or treat it as coupling that should not exist.', { from: compLabel(from), to: compLabel(to) }) : tr('The diagram draws this dependency and the code confirms it.')) + '</p>';
+      h += '<h4 class="fly-h">' + esc(tr('Which files cause it')) + '<small>' + esc(e.evidence.length < e.weight ? tr('first {count}', { count: e.evidence.length }) : tr('all')) + '</small></h4>';
+      h += e.evidence.map(function (v) { return '<button type="button" class="fly-ev" data-file="' + esc(v.file) + '" data-line="' + (v.line || '') + '"><span>' + esc(v.file) + '</span><em>:' + (v.line || '?') + '</em><small>→ ' + esc(v.to) + '</small></button>'; }).join('');
+      h += '<div class="fly-acts"><button type="button" class="fly-copy">' + esc(tr('Copy for AI')) + '</button></div><p class="fly-status ev" role="status" aria-live="polite"></p>';
+    } else h += '<p class="fly-note">' + esc(tr('The diagram draws this relationship, but no import between these components was found. It may come from configuration, runtime calls or an external system, or the diagram over-states it.')) + '</p>';
+    panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
+    panel.querySelector('.close').addEventListener('click', showOverview);
+    panel.querySelector('.back').addEventListener('click', function () { if (byId[from]) show(from); else showOverview(); });
+    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), tr('Import from {from} to {to}.', { from: compLabel(from), to: compLabel(to) }), undrawn ? 'red' : 'info'); }); });
+    var copy = panel.querySelector('.fly-copy');
+    if (copy) copy.addEventListener('click', function () {
+      var text = tr('{from} → {to}: {count} imports in the code', { from: compLabel(from), to: compLabel(to), count: e.weight }) + (undrawn ? tr(', not drawn on the architecture diagram') : '') + '.\n' + e.evidence.map(function (v) { return '- ' + v.file + ':' + (v.line || '?') + ' → ' + v.to; }).join('\n');
+      var status = panel.querySelector('.fly-status');
+      (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { status.textContent = tr('Copied'); }, function () { status.textContent = tr('Automatic copy unavailable. Select the text below to copy it manually.'); var area = document.createElement('textarea'); area.readOnly = true; area.className = 'task-preview'; area.value = text; status.after(area); area.select(); });
+    });
+    var heading = panel.querySelector('h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
+  }
+  // A module no component on the diagram owns.
+  function showOff(id) {
+    var m = moduleInfo[id]; if (!m) return;
+    readerPage(tr('Not on the diagram')); root.removeAttribute('data-bauify-source');
+    overview.hidden = true; detail.hidden = true; codePane.hidden = true; clearPick(); setFocus([]);
+    var fs = data.findings.filter(function (f) { return (f.moduleIds || []).indexOf(id) !== -1; });
+    var files = (m.fileList || []).slice().sort(function (a, b) { return (b.loc || 0) - (a.loc || 0); });
+    var h = flyClose(tr('Overview'));
+    h += '<p class="fly-kick"><i class="dot grey"></i>' + esc(tr('Code not on the diagram')) + '</p><h3>' + esc(m.label) + '</h3>' + (m.path && m.path !== m.label ? '<p class="fly-sub">' + esc(m.path) + '</p>' : '');
+    h += '<div class="fly-nums"><div><b>' + fmt(m.files) + '</b><span>' + esc(tr('files')) + '</span></div><div><b>' + fmtK(m.loc) + '</b><span>' + esc(tr('lines')) + '</span></div><div><b>' + fmt(fs.length) + '</b><span>' + esc(tr('findings')) + '</span></div></div>';
+    h += '<p class="fly-note">' + esc(tr('This code is in the repository, but no component on the architecture diagram owns it. If it is part of the product, the diagram needs a node for it; if it is tooling, it can be left out of the analysis.')) + '</p>';
+    if (fs.length) h += '<h4 class="fly-h">' + esc(tr('Look at these first')) + '<small>' + esc(tr('by severity and complexity')) + '</small></h4>' + fs.slice().sort(function (a, b) { return sevRank(a) - sevRank(b) || complexityOf(b) - complexityOf(a); }).slice(0, 5).map(flyFinding).join('');
+    if (files.length) h += '<h4 class="fly-h">' + esc(tr('Largest files')) + '<small>' + esc(plural(files.length, 'file')) + '</small></h4>' + files.slice(0, 5).map(function (f) { return '<button type="button" class="fly-ev" data-file="' + esc(f.path) + '"><span>' + esc(f.path) + '</span><em>' + esc(plural(f.loc || 0, 'line')) + '</em></button>'; }).join('');
+    panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
+    panel.querySelector('.close').addEventListener('click', showOverview);
+    panel.querySelector('.back').addEventListener('click', showOverview);
+    wireFlyRows(panel);
+    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), null, '', 'info'); }); });
+  }
+  if (flyMode) {
+    var flyFrame = 0;
+    window.addEventListener('scroll', function () { if (!flyOpen) return; cancelAnimationFrame(flyFrame); flyFrame = requestAnimationFrame(positionReader); }, { passive: true });
+    new MutationObserver(function () { if (flyOpen) positionReader(); }).observe(root, { attributes: true, attributeFilter: ['data-bauify-views'] });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape' || event.defaultPrevented || !flyOpen) return;
+      var t = event.target;
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(t.tagName || '') !== -1)) return;
+      setFly(false);
+    });
+  }
   function setOn(on) {
     reader.hidden = !on;
     if (!on) {
@@ -1252,10 +1691,16 @@
       data.components.forEach(function (c) { var g = svg.querySelector('g[data-node-id="' + c.id + '"]'); if (g) g.classList.toggle('bauify-mapped', c.modules.length > 0); });
       drawLayer();
       showOverview();
-    } else { setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
+      if (flyMode && svg) { buildStage(); drawEdges(); paintStage(); }
+      setFly(false);
+    } else { setFly(false); if (stage) { setBeacon(false); setCodeDeps(false); } clearEdges(); setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.
+  window.__archifyShowSource = function (file, line, snapshot, sourcePair, returnFocus) {
+    setOn(true);
+    showCode(file, line, tr('Captured PR source; inspect changes against the merge-base.'), 'info', false, null, null, null, snapshot, sourcePair, returnFocus);
+  };
   window.__archifyShowFinding = function (id, parent) {
     if (!findingById[id]) return;
     if (root.getAttribute('data-bauify') !== 'on') setOn(true);

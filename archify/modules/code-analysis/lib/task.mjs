@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import { fail } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { summarizeModule } from './module-summary.mjs';
+import { taskIdOf } from './task-id.mjs';
 
 export const TASK_SCHEMA_VERSION = 1;
 export const KIND = 'archify-code-analysis-task';
@@ -379,7 +380,7 @@ function sourceOf(findings, facts) {
     configDigest: findings.analysis?.configDigest ?? null,
     analyzer: findings.analysis?.analyzer ?? null,
     // Context only: the analyzed text is the working tree, which may differ from HEAD.
-    gitHead: repo.baseRevision ?? repo.revision ?? null,
+    gitHead: repo.sourceKind === 'git-tree' ? repo.revision : repo.baseRevision ?? repo.revision ?? null,
   };
 }
 
@@ -435,11 +436,6 @@ function titleOf(selected, language) {
     return `Address ${d.code}`;
   };
   return selected.length === 1 ? one(selected[0]) : `${one(selected[0])} and ${selected.length - 1} related finding${selected.length === 2 ? '' : 's'}`;
-}
-
-function taskIdOf(selected) {
-  const identity = selected.map((d) => [d.id, d.evidenceDigest?.sha256 || null, ...(d.external ? [d.external.reviewDigest] : [])]).sort((a, b) => compareText(a[0], b[0]));
-  return `TASK-${sha256(JSON.stringify(identity)).slice(0, 12)}`;
 }
 
 // ---- Markdown ----------------------------------------------------------
@@ -576,7 +572,7 @@ export function renderTaskMarkdown(task) {
   const s = task.source;
   line(`- Language: ${s.language ?? 'unknown'} (${s.adapter ?? 'unknown adapter'}), analyzed root: \`${s.root ?? '?'}\`, source: ${s.sourceKind ?? '?'}`);
   line(`- Snapshot: \`${s.snapshotId ?? 'unknown'}\`${s.configDigest ? `, config \`${s.configDigest.slice(0, 12)}\`` : ''}${s.analyzer ? `, analyzer ${s.analyzer.name} ${s.analyzer.version}` : ''}`);
-  if (s.gitHead) line(`- Git HEAD at analysis (context only; the working tree was analyzed): \`${s.gitHead}\``);
+  if (s.gitHead) line(s.sourceKind === 'git-tree' ? `- Pinned source commit: \`${s.gitHead}\`. Verify this revision in the intended checkout before editing; existing findings are not automatically PR regressions.` : `- Git HEAD at analysis (context only; the working tree was analyzed): \`${s.gitHead}\``);
   return `${out.join('\n')}\n`;
 }
 

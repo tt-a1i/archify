@@ -38,16 +38,36 @@ test('check: the summary shows a parse failure and a language that was not analy
   assert.equal(json.status, 0, json.stdout + json.stderr);
   const receipt = JSON.parse(json.stdout);
   assert.deepEqual(receipt.coverage.parseErrors, ['src/broken.py']);
+  assert.equal(receipt.coverage.analyzedFiles, 1);
   assert.deepEqual(receipt.coverage.otherLanguages, [{ adapter: 'java', files: 1 }]);
 
   const overview = JSON.parse(fs.readFileSync(path.join(out, 'overview.json'), 'utf8'));
   assert.deepEqual(receipt.coverage.parseErrors, overview.coverage.files.parseErrors);
+  assert.equal(receipt.coverage.analyzedFiles, overview.coverage.files.analyzed);
   assert.deepEqual(receipt.coverage.otherLanguages, overview.coverage.otherLanguages);
 
   const text = check(root, ['--language', 'py']);
   assert.equal(text.status, 0, text.stdout + text.stderr);
   assert.match(text.stdout, /Not analyzed, parse failed: src\/broken\.py/);
   assert.match(text.stdout, /Not analyzed, other language: 1 java/);
+});
+
+test('check: a retained TypeScript source with only recovery facts is excluded from analyzed coverage', (t) => {
+  const root = fixture(t, { 'src/broken.ts': 'export const broken = ;\n' });
+  const out = path.join(root, 'out');
+  const args = ['--language', 'ts', '--out', out];
+  const result = check(root, [...args, '--json']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  const overview = JSON.parse(fs.readFileSync(path.join(out, 'overview.json'), 'utf8'));
+  assert.equal(receipt.files, 1, 'the source is still captured');
+  assert.equal(receipt.verdict, 'none-found');
+  const { languageScope, ...coverage } = receipt.coverage;
+  assert.deepEqual(coverage, { parseErrors: ['src/broken.ts'], analyzedFiles: 0, otherLanguages: [] });
+  assert.equal(languageScope.language, 'ts');
+  assert.deepEqual(languageScope.projects.flatMap(project => project.files), ['src/broken.ts']);
+  assert.equal(overview.coverage.files.analyzed, 0);
+  assert.match(formatText(receipt), /Graph\/rule scope: 0 source files analyzed/);
 });
 
 test('check: a clean run says nothing about coverage and the gate is unchanged', (t) => {
@@ -89,6 +109,7 @@ test('check: threshold errors stay errors and partial coverage does not change t
     assert.ok(receipt.counts.warning > 0, 'the valid zero threshold still reports the function');
     assert.deepEqual(receipt.coverage, {
       parseErrors: ['src/broken.py'],
+      analyzedFiles: 1,
       otherLanguages: [{ adapter: 'java', files: 1 }],
     });
   }
