@@ -323,10 +323,11 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   git('add', '.'); git('commit', '-qm', 'Browser fixture');
   fs.writeFileSync(path.join(root, 'a.mjs'), "import './b.mjs';\n// Saved but not committed.\n");
   const ir = path.join(scratch, 'input.json');
-  const original = JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Analysis browser regression', output: 'architecture.html' }, components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] });
+  // app -> lib is drawn; the code also imports lib -> app, which the diagram does not draw.
+  const original = JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Analysis browser regression', output: 'architecture.html' }, components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }, { id: 'lib', type: 'backend', label: 'Lib', pos: [320, 40], size: [170, 64] }], connections: [{ from: 'app', to: 'lib' }] });
   fs.writeFileSync(ir, original);
   const map = path.join(scratch, 'map.json');
-  fs.writeFileSync(map, JSON.stringify({ app: ['a', 'b'] }));
+  fs.writeFileSync(map, JSON.stringify({ app: ['a'], lib: ['b'] }));
   const view = await startAnalysisView([root, '--ir', ir, '--map', map, '--out', path.join(scratch, 'view'), '--language', 'ts']);
   const sockets = new Set();
   view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
@@ -369,8 +370,10 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   await load();
   await run("document.getElementById('code-analysis-start').click()");
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
-  // The reading column opens on the project overview, not on a component.
+  // The reader is a fly-out over the diagram: it starts closed, with the project overview as its home.
   assert.equal(await run("document.getElementById('bauify-overview').hidden"), false);
+  assert.deepEqual(await run("[document.getElementById('bauify-reader').classList.contains('fly-closed'), document.getElementById('bauify-reader').inert, document.documentElement.hasAttribute('data-bauify-fly')]"), [true, true, false]);
+  await wait("getComputedStyle(document.getElementById('bauify-reader')).visibility === 'hidden'");
   // Diagram rings and counts are sized in screen pixels, so a diagram fitted to a narrow column still shows them.
   const halo = await run(`(() => { const svg = document.querySelector('.diagram-container svg'), layer = document.getElementById('bauify-layer');
     const rings = [...layer.querySelectorAll(':scope > rect')], badges = [...layer.querySelectorAll('g.count')];
@@ -385,13 +388,41 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   assert.equal(await run("document.getElementById('bauify-panel').hidden"), true);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length"), 4);
   assert.equal(await run("document.querySelectorAll('#bauify-reader > section').length === [...document.querySelectorAll('#bauify-overview,#bauify-panel,#bauify-detail,#bauify-code')].filter(e => e.parentElement.id === 'bauify-reader').length"), true);
-  assert.equal(await run("document.querySelector('.diagram-container').getBoundingClientRect().right < document.getElementById('bauify-reader').getBoundingClientRect().left"), true, 'desktop canvas reserves the reading column on the right');
+  // The diagram card carries the page: the start-here card, the highlight controls and the code-dependency toggle.
+  assert.deepEqual(await run(`(() => { const s = document.getElementById('bauify-stage'); return { inCanvas: s.parentElement === document.querySelector('.diagram-container'), rows: [...s.querySelectorAll('.first-row')].map(r => r.dataset.go), code: s.querySelector('.stage-code em').textContent, all: /All \\d+ findings/.test(s.querySelector('.first-all').textContent) }; })()`),
+    { inCanvas: true, rows: ['component:app', 'code'], code: '1', all: true });
+  // Drawn edges backed by imports get thicker; the undrawn one is a dashed arc that appears on request.
+  assert.deepEqual(await run(`(() => { const p = document.querySelector('path[data-edge-from=app][data-edge-to=lib]'), arc = document.querySelector('#bauify-edges .bauify-undrawn');
+    return { coded: p.classList.contains('bauify-coded'), width: parseFloat(getComputedStyle(p).strokeWidth) > 1.6, arc: arc.dataset.from + '>' + arc.dataset.to, hidden: getComputedStyle(arc).opacity === '0' }; })()`), { coded: true, width: true, arc: 'lib>app', hidden: true });
+  await run("document.querySelector('#bauify-stage .stage-code').click()");
+  await wait("getComputedStyle(document.querySelector('#bauify-edges .bauify-undrawn')).opacity !== '0'");
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-code')"), 'on');
+  await run("document.querySelector('#bauify-stage [data-go=code]').click()");
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-fly')"), 'open');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-pick')"), 'edge');
+  assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /Lib → App/);
+  assert.equal(await run("document.querySelector('#bauify-panel .fly-pill').textContent"), 'not drawn');
+  assert.equal(await run("document.querySelector('#bauify-panel .fly-ev').dataset.file"), 'b.mjs');
+  await run("document.querySelector('#bauify-panel .fly-ev').click()");
+  assert.equal(await run("document.getElementById('bauify-code').hidden"), false);
+  await run("document.querySelector('#bauify-code .source-back').click()");
+  await run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
+  assert.deepEqual(await run("[document.documentElement.hasAttribute('data-bauify-fly'), document.documentElement.hasAttribute('data-bauify-pick')]"), [false, false], 'Esc closes the fly-out and clears the pick');
+  await run("document.querySelector('#bauify-stage .stage-code').click()");
+  // Beacon: components without open findings step back.
+  await run("document.querySelector('#bauify-stage [data-beacon=issues]').click()");
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-beacon')"), 'on');
+  await run("document.querySelector('#bauify-stage [data-beacon=all]').click()");
+  assert.equal(await run("document.documentElement.hasAttribute('data-bauify-beacon')"), false);
+  assert.equal(await run("parseFloat(getComputedStyle(document.querySelector('.diagram-container')).marginRight)"), 0, 'the diagram keeps the full width; the reader flies over it');
   assert.match(await run("document.querySelector('#bauify-overview .health-summary .attention').textContent"), /errors/);
   assert.match(await run("document.getElementById('bauify-overview').textContent"), /Checked: import cycles, module cycles, hub modules/);
   // a.mjs <-> b.mjs is both a file cycle and a module cycle: one structure, one priority slot.
   assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 1);
   await run("document.querySelector('#bauify-overview .priority-card .bauify-item').click()");
   assert.equal(await run("document.getElementById('bauify-detail').hidden"), false);
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-fly')"), 'open', 'opening a finding opens the fly-out');
+  await wait(`(() => { const r = document.getElementById('bauify-reader').getBoundingClientRect(), c = document.querySelector('.diagram-container').getBoundingClientRect(); return r.right <= c.right - 11 && r.left > c.left && r.top >= c.top + 11; })()`);
   // A source view must cover the detail on narrow screens, not remain a
   // 300px strip because a later base CSS rule overrides its media query.
   await run("document.querySelector('#bauify-detail .source-file, #bauify-detail .ref').click()");
@@ -422,11 +453,12 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   await run("document.querySelector('#bauify-detail .close').click()");
   assert.equal(await run("document.documentElement.hasAttribute('data-bauify-focus')"), false);
   await run("document.querySelector('#bauify-reader .reader-toggle').click()");
-  assert.equal(await run("document.getElementById('bauify-reader').classList.contains('collapsed')"), true);
-  await run("document.querySelector('#bauify-reader .reader-toggle').click()");
-  assert.equal(await run("document.getElementById('bauify-reader').classList.contains('collapsed')"), false);
+  assert.deepEqual(await run("[document.getElementById('bauify-reader').classList.contains('fly-closed'), document.querySelector('#bauify-reader .reader-toggle').getAttribute('aria-expanded')]"), [true, 'false'], 'the close button folds the fly-out away');
   fs.writeFileSync(path.join(root, 'a.mjs'), '// edited after extraction\n');
   await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click', { bubbles: true }))");
+  assert.deepEqual(await run("[document.documentElement.getAttribute('data-bauify-fly'), document.documentElement.getAttribute('data-bauify-pick'), document.querySelector('#bauify-stage .stage-depth').hidden, document.querySelector('#bauify-stage .depth-label').textContent]"), ['open', 'node', false, 'Focus App'], 'a node click opens its panel and focuses its neighbourhood');
+  assert.deepEqual(await run("[...document.querySelectorAll('#bauify-panel .fly-nums span')].map(s => s.textContent)"), ['files', 'lines', 'open']);
+  assert.match(await run("document.querySelector('#bauify-panel .fly-rel[data-edge=\"lib>app\"]').textContent"), /not drawn/);
   assert.match(await run("document.getElementById('bauify-panel').textContent"), /Working tree/);
   await run("document.querySelector('#bauify-panel .ind.link').click()");
   assert.equal(await run("document.getElementById('bauify-detail').hidden"), false);
@@ -544,9 +576,11 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   const clickPoint = point => run(`(() => { const c=document.querySelector('#bauify-atlas canvas'),b=c.getBoundingClientRect();c.dispatchEvent(new MouseEvent('click',{clientX:b.left+${point.x},clientY:b.top+${point.y}}));})()`);
   assert.equal(await wheel(-180), false, 'overview leaves page scrolling available');
 
-  assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stats b'), b => b.textContent)"), [atlas.files.length, atlas.edges.length, atlas.functions.length, atlas.modules.length].map(n => n.toLocaleString('en-US')));
-  assert.equal(await run("document.querySelector('.atlas-nav .atlas-title').firstChild.textContent"), 'Atlas');
-  assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stat span'), s => s.textContent)"), ['files', 'file dependencies', 'functions', 'modules'], 'each total is labelled');
+  // Below a diagram the Atlas is a page: totals float on the map, and the panel stays closed until something is selected.
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('#bauify-atlas .atlas-stats .stats b'), b => b.textContent)"), [atlas.files.length, atlas.edges.length, atlas.functions.length, atlas.modules.length].map(n => n.toLocaleString('en-US')));
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('#bauify-atlas .atlas-stats .stat span'), s => s.textContent)"), ['files', 'file dependencies', 'functions', 'modules'], 'each total is labelled');
+  assert.deepEqual(await run("[document.getElementById('bauify-atlas').classList.contains('atlas-page'), document.getElementById('bauify-atlas').getAttribute('data-fly'), getComputedStyle(document.querySelector('#bauify-atlas .atlas-side')).visibility, document.querySelector('#bauify-atlas .atlas-focus').hidden]"), [true, 'closed', 'hidden', true], 'the panel opens only for a selection');
+  assert.ok(await run("document.querySelectorAll('#bauify-atlas .atlas-first .atlas-lead').length") >= 2, 'the start card names where to look first');
   assert.equal(await run("document.querySelector('#bauify-atlas .hist') !== null"), true, 'complexity distribution stays visible');
   assert.equal(await run("document.querySelector('#bauify-atlas .module-list [data-module]') !== null"), true, 'coupled modules stay visible');
   assert.equal(await run("document.querySelector('#bauify-atlas .atlas-expand').textContent"), 'Disable sector zoom');
@@ -555,6 +589,7 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   const focused = await run("document.documentElement.getAttribute('data-bauify-atlas-focus')");
   assert.ok(atlas.modules.some(m => m.id === focused), 'a module is focused');
   assert.match(await run("document.querySelector('#bauify-atlas .selected h4').textContent"), new RegExp(atlas.modules.find(m => m.id === focused).label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.deepEqual(await run("[document.getElementById('bauify-atlas').getAttribute('data-fly'), getComputedStyle(document.querySelector('#bauify-atlas .atlas-side')).visibility, document.querySelector('#bauify-atlas .atlas-focus').hidden]"), ['module', 'visible', false], 'a module opens the panel and the focus pill');
 
   await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'sector zoom did not settle');
   const first = atlas.modules.findIndex(m => m.id === focused), second = first === 0 ? 1 : 0;
@@ -595,6 +630,16 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await run(`document.querySelector('#bauify-atlas [data-module="${first}"]').click();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))`);
   assert.deepEqual(await run('atlasArcs'), resting, 'Escape restores the circle');
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+
+  // Search finds modules, files and functions; Enter opens the first match, Esc closes the panel.
+  const wanted = atlas.modules[first].label;
+  await run(`(() => { const q = document.querySelector('#bauify-atlas .atlas-q'); q.focus(); q.value = ${JSON.stringify(wanted)}; q.dispatchEvent(new Event('input')); })()`);
+  assert.ok(await run("document.querySelectorAll('#atlas-sug [role=option]').length") > 0, 'search lists matches');
+  await run("document.querySelector('#bauify-atlas .atlas-q').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))");
+  const found = await run("document.documentElement.getAttribute('data-bauify-atlas-focus')");
+  assert.ok(atlas.modules.some(m => m.id === found && m.label.includes(wanted)), 'Enter selects the first match');
+  await run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }))");
+  assert.deepEqual(await run("[document.documentElement.getAttribute('data-bauify-atlas-focus'), document.getElementById('bauify-atlas').getAttribute('data-fly')]"), ['', 'closed']);
 
   // A selected import cycle gets a light that travels around it: the canvas keeps changing.
   const canvasSum = "(() => { const c = document.querySelector('#bauify-atlas canvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 16) n += d[i] + d[i + 1] + d[i + 2] + d[i + 3]; return n; })()";
@@ -637,6 +682,11 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id, 'tip and body retain the selected function after zoom');
     assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), owner);
   }
+  // Esc steps back from a finding to its module; selecting the finding again shows its panel.
+  await run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }))");
+  assert.deepEqual(await run("[document.documentElement.getAttribute('data-bauify-atlas-finding'), document.documentElement.getAttribute('data-bauify-atlas-focus'), document.getElementById('bauify-atlas').getAttribute('data-fly')]"), ['', owner, 'module']);
+  await run(`document.querySelector('#bauify-atlas [data-finding="${complex}"]').click()`);
+  assert.equal(await run("document.getElementById('bauify-atlas').getAttribute('data-fly')"), 'finding');
   // Evidence pages back to the diagram and opens in the summary column.
   await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
   await until("!document.getElementById('bauify-detail').hidden", 'finding did not open in the reading column');

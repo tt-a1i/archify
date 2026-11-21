@@ -49,19 +49,26 @@
     const extra = document.getElementById('bauify-atlas3d-data');
     const more = extra ? JSON.parse(extra.textContent) : {};
     A.detail = more.detail || {}; A.run = more.run || { summary: null };
-    host.innerHTML = `<div class="a3d" lang="${esc(ui.locale || 'en')}">
+    // The model fills the card; controls, the start card and the legend float on
+    // it, the right rail is the layer directory, and a selection opens a panel
+    // in its place. The scene itself is unchanged.
+    host.innerHTML = `<div class="a3d" lang="${esc(ui.locale || 'en')}" data-fly="closed">
       <section class="a3d-main">
         <div class="a3d-stage"><div class="a3d-labels"></div><div class="a3d-tip" hidden></div></div>
-        <div class="a3d-legend">
+        <div class="a3d-float a3d-tl"><div class="a3d-seg"><button type="button" class="a3d-home">${esc(tr('Reset view'))}</button><button type="button" class="a3d-reset" disabled>${esc(tr('Clear selection'))}</button></div></div>
+        <div class="a3d-focus" hidden><span></span><button type="button" class="a3d-focus-x" aria-label="${esc(tr('Clear selection'))}">×</button></div>
+        <section class="a3d-float a3d-first" aria-label="${esc(tr('Start here'))}" hidden></section>
+        <div class="a3d-float a3d-legend">
           <span><i style="background:var(--a3d-plain)"></i>${esc(tr('function, nothing reported'))}</span>
           <span><i style="background:var(--a3d-info)"></i>${esc(tr('info finding'))}</span>
           <span><i style="background:var(--a3d-warning)"></i>${esc(tr('warning finding'))}</span>
-          <span>${esc(tr('point size: complexity · haze: lines of code (1 speck per 4 lines)'))}</span>
-          <span>${esc(tr('height: dependency layer · branch: strongest dependency toward the trunk'))}</span>
+          <span title="${esc(tr('point size: complexity · haze: lines of code (1 speck per 4 lines)'))}">${esc(tr('bigger point = more complex'))}</span>
+          <span title="${esc(tr('height: dependency layer · branch: strongest dependency toward the trunk'))}">${esc(tr('height = dependency layer'))}</span>
           <span><i class="thread"></i>${esc(tr('thread: other dependency between modules'))}</span>
         </div>
+        <p class="a3d-hint">${esc(tr('Drag to turn · scroll to zoom · double-click to reset · a click selects, the camera stays'))}</p>
       </section>
-      <aside class="a3d-side" aria-live="polite"></aside>
+      <aside class="a3d-side" aria-live="polite"><div class="a3d-dir"></div><div class="a3d-fly"><div class="a3d-fly-head"><button type="button" class="a3d-back">← ${esc(tr('Layers'))}</button><span></span><button type="button" class="a3d-fly-x" aria-label="${esc(tr('Close'))}">×</button></div><div class="a3d-fly-body"></div></div></aside>
     </div>`;
     const stageEl = host.querySelector('.a3d-stage');
     const THREE = webgl() ? loadThree() : null;
@@ -462,37 +469,71 @@
     }
 
     // ------------------------------------------------------------- side panel
-    const side = host.querySelector('.a3d-side');
+    const side = host.querySelector('.a3d-side'), dir = side.querySelector('.a3d-dir'), flyBody = side.querySelector('.a3d-fly-body'), shell = host.querySelector('.a3d');
     const tone = { warning: 'var(--a3d-warning)', error: 'var(--a3d-warning)', info: 'var(--a3d-info)' };
-    function selectionCard() {
-      const f = FD[state.finding];
-      if (f) {
-        const d = A.detail[f.id] || {};
-        let where = '';
-        if (f.kind === 'function' && f.fn != null) { const fn = FN[f.fn]; where = `${F[fn[0]][0]}:${fn[2]} · ${tr('complexity {n}', { n: fn[3] })} · ${tr('nesting {n}', { n: fn[4] })} · ${plural(fn[5], 'line')}`; }
-        if (f.kind === 'edges') where = f.module != null ? tr('{imports} drawn as bright threads into {module}', { imports: plural(f.edges.length, 'import'), module: M[f.module].label }) : tr('{imports} drawn as bright threads', { imports: plural(f.edges.length, 'import') });
-        return `<div class="a3d-card"><div class="a3d-card-k" style="color:${tone[f.severity] || 'inherit'}">${esc(tr(f.severity))} · ${esc(NAMES[f.code] || f.code)}</div><h4>${esc(f.title)}</h4>
-          ${d.message ? `<p>${esc(d.message)}</p>` : ''}${where ? `<p class="a3d-mono">${esc(where)}</p>` : ''}${d.fix ? `<p class="a3d-muted">${esc(tr('First step: {fix}', { fix: d.fix }))}</p>` : ''}
-          ${window.__archifyShowFinding ? `<button type="button" class="a3d-btn a3d-evidence" data-id="${esc(f.id)}">${esc(tr('Open evidence in the analysis panel'))}</button>` : ''}</div>`;
-      }
-      if (state.file !== -1) {
-        const fi = state.file, fns = fnsOf[fi].slice().sort((a, b) => FN[b][3] - FN[a][3]);
-        return `<div class="a3d-card"><div class="a3d-card-k">${esc(tr('File · {module}', { module: M[F[fi][1]].label }))}</div><h4 class="a3d-mono">${esc(F[fi][0])}</h4>
-          <p class="a3d-muted">${plural(F[fi][2], 'line')} · ${plural(fns.length, 'function')} · ${esc(tr('{n} reported', { n: fns.filter((i) => FN[i][6] !== -1).length }))}</p>
-          <div class="a3d-list">${fns.slice(0, 8).map((i) => `<button type="button" class="a3d-row${state.fn === i ? ' active' : ''}" data-fn="${i}"><i style="background:${FN[i][6] !== -1 ? tone[FD[FN[i][6]].severity] : 'var(--a3d-plain)'}"></i><span class="t">${esc(FN[i][1])}</span><span class="n">${FN[i][3]}</span></button>`).join('')}</div>
-          ${fns.length > 8 ? `<p class="a3d-muted">${esc(tr('and {more}', { more: plural(fns.length - 8, 'more function') }))}</p>` : ''}</div>`;
-      }
-      if (state.module !== -1) {
-        const m = state.module, s = surface[m];
-        const deps = out[m].slice().sort((a, b) => b[1] - a[1]);
-        const where = (m === trunk ? tr('Core · trunk') + ' · ' : parent[m] === -1 ? tr('On the ground') + ' · ' : '') + tr('dependency layer {n}', { n: layer[m] }) + (inCycle(m) ? ' · ' + tr('in a cycle of {n} modules', { n: compSize[comp[m]] }) : '');
-        return `<div class="a3d-card"><div class="a3d-card-k">${esc(where)}</div><h4>${esc(M[m].label)}</h4>
-          <p class="a3d-muted">${esc(M[m].path || '.')} · ${plural(filesOf[m].length, 'file')} · ${plural(filesOf[m].reduce((t, fi) => t + fnsOf[fi].length, 0), 'function')} · ${plural(locOf[m], 'line')}</p>
-          <p>${esc(tr('Fan-in {in} · fan-out {out} · {reach} depend on it directly or through others.', { in: M[m].fanIn, out: M[m].fanOut, reach: plural(reach[m], 'module') }))}</p>
-          <p>${deps.length ? esc(tr('Depends on {list}.', { list: deps.map(([b, w]) => `${M[b].label} (${w}${isBranch(m, b) ? ', ' + tr('branch') : ''})`).join(', ') })) : esc(tr('Imports nothing in-tree.'))}</p>
-          <p>${s.size ? esc(tr('Other modules import {n} of its {files}; those imports are drawn as bright threads.', { n: fmt(s.size), files: plural(filesOf[m].length, 'file') })) : esc(tr('No other module imports it.'))}</p></div>`;
-      }
-      return `<div class="a3d-card a3d-muted">${esc(tr('Drag to turn the model, scroll to zoom, double-click to reset. Click a blossom for its file, a label for its module, or a finding below.'))}</div>`;
+    const sev = { error: 0, warning: 1, info: 2 };
+    const analysis = JSON.parse(document.getElementById('bauify-analysis').textContent);
+    const compOf = {}; (analysis.components || []).forEach((c) => (c.modules || []).forEach((m) => { if (!compOf[m.id]) compOf[m.id] = c; }));
+    // Which modules and files a finding touches: the same projection the marks use.
+    const findingsOfModule = M.map(() => []), findingsOfFile = F.map(() => []);
+    FD.forEach((f, i) => {
+      const files = new Set(), mods = new Set();
+      if (f.kind === 'function' && f.fn != null) files.add(FN[f.fn][0]);
+      if (f.kind === 'edges') f.edges.forEach(([a, b]) => { files.add(a); files.add(b); });
+      if (f.kind === 'edges' && f.module != null) mods.add(f.module);
+      if (f.kind === 'cycle') f.path.forEach((x) => files.add(x));
+      if (f.kind === 'module' || f.kind === 'area') mods.add(f.module);
+      if (f.kind === 'modules') f.modules.forEach((x) => mods.add(x));
+      if (f.kind === 'file') (f.files || [f.file]).forEach((x) => { if (x != null) files.add(x); });
+      files.forEach((x) => { findingsOfFile[x].push(i); mods.add(F[x][1]); });
+      mods.forEach((x) => findingsOfModule[x].push(i));
+    });
+    const isOpen = (i) => !FD[i].accepted || FD[i].severity === 'error';
+    const openOf = M.map((_, m) => findingsOfModule[m].filter(isOpen).length);
+    const ranked = (list) => list.slice().sort((a, b) => (sev[FD[a].severity] - sev[FD[b].severity]) || (FD[b].fn != null ? FN[FD[b].fn][3] : 0) - (FD[a].fn != null ? FN[FD[a].fn][3] : 0) || (FD[a].title < FD[b].title ? -1 : 1));
+    const layerName = (r) => (cycles ? (r === 0 ? tr('Level 0 · trunk and ground') : tr('Level {n}', { n: r })) : (r === 0 ? tr('Layer {n} · foundations', { n: layer[trunk] }) : tr('Layer {n}', { n: layer[trunk] + r })));
+    const dot = (m) => (m === trunk ? 'var(--a3d-core)' : 'var(--a3d-plain)');
+    const tiles = (list) => `<div class="a3d-tiles">${list.map(([v, k]) => `<div><b>${v}</b><span>${esc(k)}</span></div>`).join('')}</div>`;
+    const head = (title, note) => `<h5 class="a3d-h">${esc(title)}${note ? `<small>${esc(note)}</small>` : ''}</h5>`;
+    const findingRows = (list) => list.map((i) => { const f = FD[i], file = f.fn != null ? F[FN[f.fn][0]][0] : ''; return `<button type="button" class="a3d-find${i === state.finding ? ' active' : ''}" data-finding="${i}"><i style="background:${tone[f.severity] || 'var(--a3d-plain)'}"></i><b>${esc(f.title)}</b><em>${f.fn != null ? esc(tr('complexity {n}', { n: FN[f.fn][3] })) : esc(tr(f.severity))}</em>${file ? `<small>${esc(file.split('/').pop())}:${FN[f.fn][2]}</small>` : ''}</button>`; }).join('');
+    function modulePanel(m) {
+      const comp = compOf[M[m].id], list = ranked(findingsOfModule[m]), s = surface[m];
+      const deps = out[m].slice().sort((a, b) => b[1] - a[1]), users = inn[m].slice().sort((a, b) => b[1] - a[1]);
+      const files = filesOf[m].filter((fi) => findingsOfFile[fi].length).sort((a, b) => findingsOfFile[b].length - findingsOfFile[a].length || F[b][2] - F[a][2]);
+      const n = { error: 0, warning: 0, info: 0 }; list.filter(isOpen).forEach((i) => { n[FD[i].severity] += 1; });
+      const role = (m === trunk ? tr('Core · trunk') + ' · ' : parent[m] === -1 ? tr('On the ground') + ' · ' : '') + tr('dependency layer {n}', { n: layer[m] }) + (inCycle(m) ? ' · ' + tr('in a cycle of {n} modules', { n: compSize[comp[m]] }) : '');
+      const rel = (rows, mark) => rows.map(([b, w]) => `<button type="button" class="a3d-rel" data-module="${b}"><i style="background:${dot(b)}"></i><span>${esc(M[b].label)}${mark && mark(b) ? `<u>${esc(tr('branch'))}</u>` : ''}</span><em>${esc(plural(w, 'import'))}</em></button>`).join('');
+      let h = `<p class="a3d-kick"><i style="background:${dot(m)}"></i>${esc(role)}</p><h4 class="a3d-title">${esc(M[m].label)}</h4>
+        <p class="a3d-sub">${esc(M[m].path || '.')} · ${comp ? esc(tr('“{name}” on the diagram', { name: comp.label })) : `<span class="a3d-off">${esc(tr('Not on the diagram'))}</span>`}</p>
+        ${tiles([[fmt(filesOf[m].length), tr('files')], [fmt(locOf[m]), tr('lines')], [fmt(openOf[m]), tr('open findings')]])}
+        <div class="a3d-sevbar"><i style="flex:${n.error};background:var(--a3d-warning)"></i><i style="flex:${n.warning};background:var(--a3d-warning);opacity:.75"></i><i style="flex:${n.info};background:var(--a3d-info)"></i></div>`;
+      if (deps.length) h += head(tr('Depends on'), plural(deps.length, 'module')) + rel(deps, (b) => isBranch(m, b));
+      if (users.length) h += head(tr('Used by'), plural(users.length, 'module')) + rel(users, (a) => isBranch(a, m));
+      if (files.length) h += head(tr('Files with the most findings'), tr('{n} of {total}', { n: Math.min(files.length, 4), total: plural(filesOf[m].length, 'file') })) + files.slice(0, 4).map((fi) => `<button type="button" class="a3d-rel" data-file="${fi}"><i style="background:var(--a3d-warning)"></i><span class="a3d-mono">${esc(F[fi][0].split('/').pop())}</span><em>${esc(tr('{n} · {lines}', { n: findingsOfFile[fi].length, lines: plural(F[fi][2], 'line') }))}</em></button>`).join('');
+      if (list.length) h += head(tr('Look at these first'), tr('by severity and complexity')) + findingRows(list.slice(0, 5));
+      h += `<p class="a3d-note">${s.size ? esc(tr('Other modules import {n} of its {files}; those imports are drawn as bright threads.', { n: fmt(s.size), files: plural(filesOf[m].length, 'file') })) : esc(tr('No other module imports it.'))}</p>`;
+      h += `<div class="a3d-acts"><button type="button" class="primary" data-go-atlas="${esc(M[m].id)}">${esc(tr('Show in the Atlas'))}</button>${comp ? `<button type="button" data-diagram="${esc(comp.id)}">${esc(tr('Show on the diagram'))}</button>` : ''}</div>`;
+      return h;
+    }
+    function findingPanel(i) {
+      const f = FD[i], d = A.detail[f.id] || {};
+      let h = `<p class="a3d-kick"><span class="a3d-pill" style="--tone:${tone[f.severity] || 'var(--a3d-plain)'}">${esc(tr(f.severity))}</span>${esc(NAMES[f.code] || f.code)}</p><h4 class="a3d-title a3d-mono">${esc(f.title)}</h4>`;
+      if (f.kind === 'function' && f.fn != null) { const fn = FN[f.fn]; h += `<p class="a3d-loc"><span>${esc(F[fn[0]][0])}</span><em>:${fn[2]}</em></p>${tiles([[fn[3], tr('complexity')], [fn[4], tr('nesting')], [fmt(fn[5]), tr('lines')]])}`; }
+      if (f.kind === 'edges') h += `<p class="a3d-loc"><span>${esc(f.module != null ? tr('{imports} drawn as bright threads into {module}', { imports: plural(f.edges.length, 'import'), module: M[f.module].label }) : tr('{imports} drawn as bright threads', { imports: plural(f.edges.length, 'import') }))}</span></p>`;
+      if (d.message) h += `<p class="a3d-msg">${esc(d.message)}</p>`;
+      if (d.fix) h += head(tr('First step')) + `<p class="a3d-fix">${esc(d.fix)}</p>`;
+      const owner = f.fn != null ? F[FN[f.fn][0]][1] : f.module != null ? f.module : -1;
+      if (owner !== -1) h += head(tr('Module')) + `<button type="button" class="a3d-rel" data-module="${owner}"><i style="background:${dot(owner)}"></i><span>${esc(M[owner].label)}</span><em>${esc(tr('{n} open', { n: openOf[owner] }))} ›</em></button>`;
+      h += `<div class="a3d-acts">${window.__archifyShowFinding ? `<button type="button" class="primary a3d-evidence" data-id="${esc(f.id)}">${esc(tr('Open evidence in the analysis panel'))}</button>` : ''}<button type="button" data-go-finding="${esc(f.id)}">${esc(tr('Show in the Atlas'))}</button></div>`;
+      return h;
+    }
+    function filePanel(fi) {
+      const fns = fnsOf[fi].slice().sort((a, b) => FN[b][3] - FN[a][3]);
+      return `<p class="a3d-kick"><i style="background:${dot(F[fi][1])}"></i>${esc(tr('File · {module}', { module: M[F[fi][1]].label }))}</p><h4 class="a3d-title a3d-mono">${esc(F[fi][0])}</h4>
+        ${tiles([[fmt(F[fi][2]), tr('lines')], [fmt(fns.length), tr('functions')], [fmt(fns.filter((i) => FN[i][6] !== -1).length), tr('reported')]])}
+        ${fns.length ? head(tr('Most complex functions')) : ''}${fns.slice(0, 8).map((i) => `<button type="button" class="a3d-rel${state.fn === i ? ' active' : ''}" data-fn="${i}"><i style="background:${FN[i][6] !== -1 ? tone[FD[FN[i][6]].severity] : 'var(--a3d-plain)'}"></i><span class="a3d-mono">${esc(FN[i][1])}</span><em>${esc(tr('complexity {n}', { n: FN[i][3] }))}</em></button>`).join('')}
+        ${fns.length > 8 ? `<p class="a3d-note">${esc(tr('and {more}', { more: plural(fns.length - 8, 'more function') }))}</p>` : ''}
+        <div class="a3d-acts"><button type="button" class="primary" data-module="${F[fi][1]}">${esc(tr('Open its module'))}</button></div>`;
     }
     const bigCycles = compSize.filter((n) => n > 1);
     const cycleNote = cycles ? `<p class="a3d-muted">${esc(bigCycles.length === 1 ? tr('{n} modules form one dependency cycle, so dependency layers do not order them. Height there is the number of branches from where the cycle meets the tree; the branches and threads are still their real dependencies.', { n: bigCycles[0] }) : tr('{n} module cycles, so dependency layers do not order them. Height there is the number of branches from where a cycle meets the tree; the branches and threads are still their real dependencies.', { n: bigCycles.length }))}</p>` : '';
@@ -502,31 +543,87 @@
     const summary = A.run.summary;
     const runFindings = summary ? summary.errors + summary.warnings + summary.info : FD.length;
     const consistent = drawnFiles === F.length && drawnFns === FN.length && branchDeps + threadDeps === crossDeps && runFindings === FD.length;
-    function renderSide() {
+    // The rail: dependency layers from the top of the tree down, each with its modules.
+    function directory() {
       const groups = {}; FD.forEach((f, i) => (groups[f.code] = groups[f.code] || []).push(i));
-      const seq = M.map((_, i) => i).sort((a, b) => (M[b].fanIn + M[b].fanOut) - (M[a].fanIn + M[a].fanOut) || (M[a].label < M[b].label ? -1 : 1));
-      const sev = { error: 0, warning: 1, info: 2 };
-      side.innerHTML = `
-        <div class="a3d-side-head"><h3 class="a3d-k">${esc(tr('Selection'))}</h3><button type="button" class="a3d-reset">${esc(tr('Clear selection'))}</button></div>${selectionCard()}
-        <h3 class="a3d-k">${esc(tr('Same data as the Atlas'))}</h3>
-        <div class="a3d-check ${consistent ? 'ok' : 'bad'}">${esc(consistent ? tr('Every file, function and finding of the run is in the model.') : tr('The model does not account for every item of the run.'))}
+      const rows = [];
+      for (let r = maxRank; r >= 0; r -= 1) {
+        const mods = M.map((_, i) => i).filter((i) => rank[i] === r).sort((a, b) => (b === trunk) - (a === trunk) || openOf[b] - openOf[a] || (M[a].label < M[b].label ? -1 : 1));
+        if (!mods.length) continue;
+        rows.push(`<div class="a3d-layer-row" data-rank="${r}"><div class="t"><span>${esc(layerName(r))}</span><em>${esc(tr('{n} open', { n: mods.reduce((t, i) => t + openOf[i], 0) }))}</em></div><div class="a3d-chips">${mods.map((i) => `<button type="button" data-module="${i}" class="${i === trunk ? 'core' : ''}"><i class="${openOf[i] ? 'hot' : ''}"></i>${esc(M[i].label)}</button>`).join('')}</div></div>`);
+      }
+      return `<h3 class="a3d-rail-k">${esc(tr('Dependency layers'))}<small>${esc(tr('click a module to select it'))}</small></h3>${rows.join('')}
+        <details class="a3d-more"><summary>${esc(tr('Findings · {n}', { n: fmt(FD.length) }))}</summary>${Object.keys(groups).sort().map((code) => {
+          const list = ranked(groups[code]);
+          return `<details${list.includes(state.finding) ? ' open' : ''}><summary>${esc(NAMES[code] || code)} · ${list.length}</summary>${list.slice(0, 40).map((i) => `<button type="button" class="a3d-row${i === state.finding ? ' active' : ''}" data-finding="${i}"><i style="background:${tone[FD[i].severity] || 'var(--a3d-plain)'}"></i><span class="t">${esc(FD[i].title)}</span><span class="n">${FD[i].fn != null ? FN[FD[i].fn][3] : esc(tr(FD[i].severity))}</span></button>`).join('')}${list.length > 40 ? `<p class="a3d-muted">${esc(tr('{n} more, smaller ones in the Atlas.', { n: list.length - 40 }))}</p>` : ''}</details>`;
+        }).join('')}</details>
+        <details class="a3d-more"><summary>${esc(tr('Same data as the Atlas'))} ${consistent ? '✓' : '!'}</summary><div class="a3d-check ${consistent ? 'ok' : 'bad'}">${esc(consistent ? tr('Every file, function and finding of the run is in the model.') : tr('The model does not account for every item of the run.'))}
           <dl><dt>${esc(tr('Files'))}</dt><dd>${fmt(drawnFiles)} / ${fmt(F.length)}</dd><dt>${esc(tr('Functions'))}</dt><dd>${fmt(drawnFns)} / ${fmt(FN.length)}</dd>
           <dt>${esc(tr('File dependencies'))}</dt><dd>${esc(tr('{total}: {branchDeps} in {branches}, {threadDeps} in {threads}, {inside} inside modules (not drawn)', { total: fmt(E.length), branchDeps: fmt(branchDeps), branches: plural(branches.length, 'branch', 'branches'), threadDeps: fmt(threadDeps), threads: plural(threads.length, 'thread'), inside: fmt(insideDeps) }))}</dd>
-          <dt>${esc(tr('Findings'))}</dt><dd>${fmt(FD.length)} / ${fmt(runFindings)}</dd></dl>${cycleNote}</div>
-        <h3 class="a3d-k">${esc(tr('Findings · {n}', { n: fmt(FD.length) }))}</h3>
-        ${Object.keys(groups).sort().map((code) => {
-          const list = groups[code].slice().sort((a, b) => (sev[FD[a].severity] - sev[FD[b].severity]) || (FD[a].fn != null && FD[b].fn != null ? FN[FD[b].fn][3] - FN[FD[a].fn][3] : FD[a].title < FD[b].title ? -1 : 1));
-          return `<details${list.includes(state.finding) ? ' open' : ''}><summary>${esc(NAMES[code] || code)} · ${list.length}</summary>${list.slice(0, 40).map((i) => `<button type="button" class="a3d-row${i === state.finding ? ' active' : ''}" data-finding="${i}"><i style="background:${tone[FD[i].severity] || 'var(--a3d-plain)'}"></i><span class="t">${esc(FD[i].title)}</span><span class="n">${FD[i].fn != null ? FN[FD[i].fn][3] : esc(tr(FD[i].severity))}</span></button>`).join('')}${list.length > 40 ? `<p class="a3d-muted">${esc(tr('{n} more, smaller ones in the Atlas.', { n: list.length - 40 }))}</p>` : ''}</details>`;
-        }).join('')}
-        <h3 class="a3d-k">${esc(tr('Modules by coupling · fan-in / fan-out'))}</h3>
-        <div class="a3d-modules">${seq.map((i) => `<button type="button" class="a3d-row${i === state.module ? ' active' : ''}" data-module="${i}"><i style="background:${i === trunk ? 'var(--a3d-core)' : 'var(--a3d-plain)'}"></i><span class="t">${esc(M[i].label)}${i === trunk ? esc(tr(' · trunk')) : ''}</span><span class="n">${M[i].fanIn} / ${M[i].fanOut}</span></button>`).join('')}</div>`;
-      side.querySelectorAll('[data-finding]').forEach((b) => b.addEventListener('click', () => select({ type: 'finding', index: Number(b.dataset.finding) })));
-      side.querySelectorAll('[data-module]').forEach((b) => b.addEventListener('click', () => select({ type: 'module', index: Number(b.dataset.module) })));
-      side.querySelectorAll('[data-fn]').forEach((b) => b.addEventListener('click', () => select({ type: 'function', index: Number(b.dataset.fn) })));
-      side.querySelector('.a3d-reset').addEventListener('click', () => select({}));
-      const ev = side.querySelector('.a3d-evidence');
-      if (ev) ev.addEventListener('click', () => window.__archifyShowFinding(ev.dataset.id));
+          <dt>${esc(tr('Findings'))}</dt><dd>${fmt(FD.length)} / ${fmt(runFindings)}</dd></dl>${cycleNote}</div></details>`;
     }
+    // Start here: the busiest module, the trunk and the most complex function.
+    const busiest = M.map((_, i) => i).sort((a, b) => openOf[b] - openOf[a] || locOf[b] - locOf[a])[0];
+    const reportedFns = FN.map((_, i) => i).filter((i) => FN[i][6] !== -1);
+    const topFn = (reportedFns.length ? reportedFns : FN.map((_, i) => i)).reduce((best, i) => (best === -1 || FN[i][3] > FN[best][3] ? i : best), -1);
+    function renderFirst() {
+      const card = host.querySelector('.a3d-first'), rows = [];
+      if (busiest != null && openOf[busiest]) rows.push([`module:${busiest}`, 'var(--a3d-warning)', tr('{name} has the most findings', { name: M[busiest].label }), `${plural(filesOf[busiest].length, 'file')} · ${plural(locOf[busiest], 'line')}`, openOf[busiest]]);
+      rows.push([`module:${trunk}`, 'var(--a3d-core)', tr('{name} is the trunk', { name: M[trunk].label }), tr('{n} modules depend on it; changes here reach furthest', { n: reach[trunk] }), reach[trunk]]);
+      if (topFn !== -1) rows.push([`function:${topFn}`, 'var(--a3d-info)', tr('The most complex function'), FN[topFn][1], FN[topFn][3]]);
+      card.innerHTML = `<h3>${esc(tr('Start here'))}<button type="button" class="a3d-first-x">${esc(tr('Hide'))}</button></h3><p>${esc(tr('Across {files}, the three things most worth a look', { files: plural(F.length, 'file') }))}</p>` +
+        rows.map(([go, color, title, sub, n]) => `<button type="button" class="a3d-lead" data-go="${go}"><i style="background:${color}"></i><span><b>${esc(title)}</b><small${go.startsWith('function:') ? ' class="a3d-mono"' : ''}>${esc(sub)}</small></span><em>${fmt(n)}</em></button>`).join('');
+      card.hidden = false;
+    }
+    function renderSide() {
+      const mode = state.finding !== -1 ? 'finding' : state.file !== -1 ? 'file' : state.module !== -1 ? 'module' : 'closed';
+      shell.setAttribute('data-fly', mode);
+      host.querySelector('.a3d-reset').disabled = mode === 'closed';
+      dir.innerHTML = directory();
+      flyBody.innerHTML = mode === 'finding' ? findingPanel(state.finding) : mode === 'file' ? filePanel(state.file) : mode === 'module' ? modulePanel(state.module) : '';
+      flyBody.scrollTop = 0;
+      side.querySelector('.a3d-fly-head span').textContent = { finding: tr('Finding'), file: tr('File'), module: tr('Source module') }[mode] || '';
+      const pill = host.querySelector('.a3d-focus'), m = state.module !== -1 ? state.module : state.file !== -1 ? F[state.file][1] : -1;
+      let text = '';
+      if (mode === 'module') text = tr('Selected {name} · {layer}', { name: M[m].label, layer: layerName(rank[m]) });
+      if (mode === 'file') text = tr('File {name}', { name: F[state.file][0] });
+      if (mode === 'finding') text = tr('Located {name}', { name: FD[state.finding].title });
+      pill.hidden = !text; pill.querySelector('span').textContent = text;
+    }
+    // One click handler for the floating controls, the rail and the panel.
+    const lit = (on, mods, r) => { labels.forEach((el, i) => el.classList.toggle('lit', on && mods.includes(i))); layerLabels.forEach(([el, k]) => el.classList.toggle('lit', on && k === r)); };
+    host.querySelector('.a3d-main').parentElement.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b || !host.contains(b) || b.classList.contains('a3d-lbl')) return;
+      if (b.classList.contains('a3d-first-x')) { shell.classList.add('first-hidden'); return; }
+      if (b.classList.contains('a3d-reset') || b.classList.contains('a3d-focus-x') || b.classList.contains('a3d-fly-x') || b.classList.contains('a3d-back')) { select({}); return; }
+      if (b.classList.contains('a3d-home')) { canvas.dispatchEvent(new MouseEvent('dblclick')); return; }
+      if (b.hasAttribute('data-go')) { const [type, index] = b.dataset.go.split(':'); lit(false, []); select({ type, index: Number(index) }); return; }
+      if (b.hasAttribute('data-finding')) { select({ type: 'finding', index: Number(b.dataset.finding) }); return; }
+      if (b.hasAttribute('data-fn')) { select({ type: 'function', index: Number(b.dataset.fn) }); return; }
+      if (b.hasAttribute('data-file')) { select({ type: 'file', index: Number(b.dataset.file) }); return; }
+      if (b.hasAttribute('data-module')) { lit(false, []); select({ type: 'module', index: Number(b.dataset.module) }); return; }
+      if (b.classList.contains('a3d-evidence')) { window.__archifyShowFinding(b.dataset.id); return; }
+      const atlas = window.__archifyAtlas;
+      if (b.hasAttribute('data-go-atlas') && atlas) { atlas.showView('atlas'); if (atlas.focusModule) atlas.focusModule(b.dataset.goAtlas); return; }
+      if (b.hasAttribute('data-go-finding') && atlas) { atlas.showView('atlas'); atlas.focusFinding(b.dataset.goFinding); return; }
+      if (b.hasAttribute('data-diagram')) {
+        if (atlas) atlas.showView('');
+        const node = document.querySelector(`.diagram-container g[data-node-id="${window.CSS && CSS.escape ? CSS.escape(b.dataset.diagram) : b.dataset.diagram}"]`);
+        if (node) node.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      }
+    });
+    // Hovering the rail or the start card lights the labels it names.
+    side.addEventListener('mouseover', (e) => {
+      const chip = e.target.closest('[data-module]'), row = e.target.closest('.a3d-layer-row');
+      if (chip && dir.contains(chip)) lit(true, [Number(chip.dataset.module)], -1);
+      else if (row) lit(true, M.map((_, i) => i).filter((i) => rank[i] === Number(row.dataset.rank)), Number(row.dataset.rank));
+    });
+    side.addEventListener('mouseleave', () => lit(false, []));
+    host.querySelector('.a3d-first').addEventListener('mouseover', (e) => { const b = e.target.closest('[data-go]'); if (!b) return; const [type, index] = b.dataset.go.split(':'); const m = type === 'module' ? Number(index) : F[FN[Number(index)][0]][1]; lit(true, [m], -1); });
+    host.querySelector('.a3d-first').addEventListener('mouseleave', () => lit(false, []));
+    host.addEventListener('keydown', (e) => { if (e.key === 'Escape' && shell.getAttribute('data-fly') !== 'closed') { e.preventDefault(); select({}); } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !e.defaultPrevented && host.getClientRects().length && shell.getAttribute('data-fly') !== 'closed') select({}); });
+    renderFirst();
 
     // ------------------------------------------------------------ interaction
     const tip = host.querySelector('.a3d-tip');

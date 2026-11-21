@@ -101,7 +101,9 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
   }
   const edges = [...edgeMap.values()].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.to < b.to ? -1 : 1));
   const declared = new Set((ir?.connections || []).filter((c) => c && typeof c.from === 'string' && typeof c.to === 'string').map((c) => `${c.from}>${c.to}`));
-  const undeclaredEdges = edges.filter((e) => !declared.has(`${e.from}>${e.to}`));
+  // Whether the diagram draws each code-level edge: the analysis page marks the ones it does not.
+  for (const e of edges) e.declared = declared.has(`${e.from}>${e.to}`);
+  const undeclaredEdges = edges.filter((e) => !e.declared);
   const unmapped = graph.modules.filter((m) => !claimed.has(m.id)).map((m) => ({ id: m.id, label: m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: (fileIndex.get(m.id) || []).map((f) => ({ ...f, module: m.id })) }));
   const fileModule = facts
     ? new Map([...fileIndex].flatMap(([id, list]) => list.map((f) => [f.path, id])))

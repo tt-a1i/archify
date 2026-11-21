@@ -30,7 +30,11 @@
   reader.id = 'bauify-reader'; reader.hidden = true; reader.setAttribute('aria-label', tr("Code analysis reader"));
   // The Atlas and Atlas 3D open below the diagram (atlas.js), not from this column.
   reader.innerHTML = '<nav class="reader-nav" aria-label="' + esc(tr('Analysis navigation')) + '"><span class="reader-path">' + esc(tr('Analysis / Overview')) + '</span><span class="reader-actions">' +
-    iconButton(standalone ? 'collapse' : 'panel', tr('Hide analysis'), ' reader-toggle', ' aria-expanded="true" aria-controls="bauify-reader"') + '</span></nav>';
+    iconButton(standalone ? 'collapse' : 'close', tr(standalone ? 'Hide analysis' : 'Close panel'), ' reader-toggle', ' aria-expanded="true" aria-controls="bauify-reader"') + '</span></nav>';
+  // In diagram mode the reader is a fly-out over the diagram's right edge: closed
+  // until something is picked, closed again with its ✕ or Esc.
+  var flyMode = !standalone, flyOpen = false;
+  if (flyMode) { root.setAttribute('data-bauify-flymode', 'on'); reader.classList.add('fly-closed'); }
   var diagramContainer = document.querySelector(standalone ? '.analysis-stage' : '.diagram-container');
   var restoreButton, readerToggle = reader.querySelector('.reader-toggle');
   if (standalone) {
@@ -51,6 +55,7 @@
       refresh: '<path d="M20 6v5h-5M4 18v-5h5M6.1 9a7 7 0 0 1 11.5-2.6L20 9M4 15l2.4 2.6A7 7 0 0 0 17.9 15"></path>',
       panel: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path>',
       collapse: '<path d="M18 5v14M9 8l4 4-4 4"></path>',
+      close: '<path d="M6 6l12 12M18 6 6 18"></path>',
       snapshot: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h4"></path>'
     };
     return '<svg class="ui-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[name] + '</svg>';
@@ -96,6 +101,7 @@
     }
   }
   readerToggle.addEventListener('click', function () {
+    if (flyMode) { setFly(false); return; }
     setReaderCollapsed(!readerCollapsed);
     if (!readerCollapsed) return;
     if (restoreButton) restoreButton.focus({ preventScroll: true });
@@ -105,11 +111,31 @@
     reader.hidden = false;
     reader.querySelector('.reader-path').textContent = tr("Analysis / ") + name;
     setReaderCollapsed(false);
+    setFly(true);
+  }
+  function setFly(open) {
+    if (!flyMode) return;
+    if (!open && pick) { pick = null; paintStage(); }
+    if (open === flyOpen) return;
+    flyOpen = open;
+    reader.classList.toggle('fly-closed', !open);
+    reader.inert = !open;
+    readerToggle.setAttribute('aria-expanded', String(open));
+    if (open) root.setAttribute('data-bauify-fly', 'open'); else root.removeAttribute('data-bauify-fly');
+    positionReader();
   }
   function positionReader() {
     var bar = toolbar.getBoundingClientRect();
     var header = document.querySelector('.header');
     root.style.setProperty('--bauify-reader-top', Math.max(76, Math.ceil(Math.max(bar.bottom, header ? header.getBoundingClientRect().bottom : 0) + 12)) + 'px');
+    if (!flyMode) return;
+    // The fly-out rides on the visible canvas: the diagram, or the Atlas page that replaced it.
+    var stageBox = [diagramContainer, document.getElementById('bauify-atlas'), document.getElementById('bauify-atlas3d')].filter(function (el) { return el && !el.hidden && el.getClientRects().length && el.getBoundingClientRect().height > 80; })[0];
+    var r = stageBox ? stageBox.getBoundingClientRect() : { top: 76, bottom: innerHeight - 16, right: document.documentElement.clientWidth - 16 };
+    var top = Math.max(r.top, 8) + 12, bottom = Math.max(8, innerHeight - Math.min(r.bottom, innerHeight - 8)) + 12;
+    root.style.setProperty('--bauify-fly-top', Math.round(top) + 'px');
+    root.style.setProperty('--bauify-fly-bottom', Math.round(bottom) + 'px');
+    root.style.setProperty('--bauify-fly-right', Math.round(Math.max(8, document.documentElement.clientWidth - r.right) + 12) + 'px');
   }
 
   var panel = document.createElement('section');
@@ -191,6 +217,7 @@
       var status = c.indicators.status, isFocus = focused.indexOf(c.id) !== -1;
       var quiet = status in most && counts[c.id] * 2 < most[status];
       ring.setAttribute('class', status + (quiet ? ' quiet' : '') + (isFocus ? ' focus' : ''));
+      ring.setAttribute('data-node', c.id);
       var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
       title.textContent = c.label + ': ' + c.indicators.items.map(function (i) { return tr(i.label) + ' — ' + indicatorValue(c, i); }).join('; ');
       ring.appendChild(title);
@@ -206,6 +233,7 @@
       var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.setAttribute('class', 'count ' + status + (top ? ' top' : '') + (focused.indexOf(c.id) !== -1 ? ' focus' : ''));
       g.setAttribute('data-anchor', (b.x + b.w + 6) + ' ' + (b.y - 2) + ' ' + w + ' ' + h);
+      g.setAttribute('data-node', c.id);
       var pill = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       pill.setAttribute('width', w); pill.setAttribute('height', h); pill.setAttribute('rx', h / 2); pill.setAttribute('ry', h / 2);
       var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -214,7 +242,9 @@
       layer.appendChild(g);
     });
     svg.appendChild(layer);
+    if (chips) svg.appendChild(chips);
     scaleBadges();
+    paintStage();
   }
   // Badges are drawn in diagram units, so a wide diagram fitted to a narrow column
   // shrinks them below legibility. Counter-scale them against the fit and camera
@@ -232,6 +262,10 @@
     layer.querySelectorAll('g.count[data-anchor]').forEach(function (g) {
       var a = g.getAttribute('data-anchor').split(' ').map(Number);
       g.setAttribute('transform', 'translate(' + (a[0] - a[2] * k) + ' ' + (a[1] - a[3] * k / 2) + ') scale(' + k + ')');
+    });
+    svg.querySelectorAll('#bauify-chips g[data-center]').forEach(function (g) {
+      var a = g.getAttribute('data-center').split(' ').map(Number);
+      g.setAttribute('transform', 'translate(' + (a[0] - a[2] * k / 2) + ' ' + (a[1] - a[3] * k / 2) + ') scale(' + k + ')');
     });
   }
   if (svg) {
@@ -261,7 +295,7 @@
     return camera.centerAt(x, y, { scale: camera.state ? camera.state().scale : 1, instant: true });
   }
   function showOverview() {
-    overviewMode = 'summary';
+    overviewMode = 'summary'; clearPick();
     readerPage(tr("Overview"));
     root.removeAttribute('data-bauify-source');
     panel.hidden = true; detail.hidden = true; codePane.hidden = true; setFocus([]);
@@ -326,9 +360,13 @@
     root.removeAttribute('data-bauify-source');
     var c = byId[id]; if (!c) return;
     overview.hidden = true; setFocus([]);
+    if (flyMode && !(pick && pick.kind === 'node' && pick.id === id)) { pick = { kind: 'node', id: id }; paintStage(); }
     var h = ("<button class=\"close\" aria-label=\"" + tr("Close") + "\">" + "×" + "</button>" + "<button type=\"button\" class=\"back\">" + tr("← Overview") + "</button>");
+    if (flyMode) h += componentKicker(c);
     h += ("<div class=\"k\">" + tr("Bauify · code analysis") + "</div>" + "<h3>") + esc(c.label) + '<span class="badge ' + c.indicators.status + '">' + tr(LEVELS[c.indicators.status].name) + '</span></h3>';
+    if (flyMode && nodeSublabel(id)) h += '<p class="fly-sub">' + esc(nodeSublabel(id)) + '</p>';
     h += '<div class="ev">' + esc(indicatorSummary(c.indicators)) + '</div>';
+    if (flyMode) h += componentBody(c);
     if (c.indicators.items.length) {
       h += ("<div class=\"k\">" + tr("Indicators · click one for its findings and a diagram") + "</div>");
       c.indicators.items.forEach(function (i) {
@@ -373,6 +411,7 @@
     detail.hidden = true; codePane.hidden = true;
     panel.querySelector('.close').addEventListener('click', showOverview);
     panel.querySelector('.back').addEventListener('click', showOverview);
+    wireFlyRows(panel);
     panel.querySelectorAll('.ind.link').forEach(function (el) {
       var open = function () { panel.querySelectorAll('.ind.active').forEach(function (x) { x.classList.remove('active'); }); el.classList.add('active'); showDetail(c, el.getAttribute('data-ind')); };
       el.addEventListener('click', open);
@@ -624,7 +663,7 @@
   }
   function showFindings(source) {
     if (typeof source === 'string') { filters.source = source; filters.category = 'all'; filters.severity = 'all'; filters.status = 'open'; filters.unverified = false; filters.search = ''; filters.page = 0; listScroll = 0; }
-    overviewMode = 'findings'; readerPage(tr("Findings")); root.removeAttribute('data-bauify-source');
+    overviewMode = 'findings'; clearPick(); readerPage(tr("Findings")); root.removeAttribute('data-bauify-source');
     panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
     renderFindingList(); overview.scrollTop = listScroll;
   }
@@ -1107,7 +1146,7 @@
       var opener = document.activeElement;
       findingReturn = { parent: parent, atlas: window.__archifyAtlas && window.__archifyAtlas.saveSelection(), opener: overview.contains(opener) && opener.getAttribute('data-finding') };
     }
-    readerPage(tr("Finding")); detail.classList.remove('reviewing');
+    clearPick(); readerPage(tr("Finding")); detail.classList.remove('reviewing');
     root.removeAttribute('data-bauify-source');
     overview.hidden = true; panel.hidden = true;
     var e = entryById[id];
@@ -1361,6 +1400,250 @@
     svg += '</svg>';
     return svg + ("<div class=\"caption\">" + tr("Fan-in / fan-out summed over the modules mapped to this component (each counts modules, not import statements). High fan-in says \"change carefully\"; high fan-out says \"changes elsewhere reach me\".") + "</div>");
   }
+  // --- diagram page: canvas controls, code dependencies, focus and the fly-out pages ---
+  var pick = null, depth = 1, beacon = false, codeDeps = false, stage = null, edgeGroup = null, chips = null, decorated = [];
+  var codeEdgeByKey = {}; (data.edges || []).forEach(function (e) { codeEdgeByKey[e.from + '>' + e.to] = e; });
+  var undeclared = (data.edges || []).filter(function (e) { return e.declared === false && byId[e.from] && byId[e.to]; }).sort(function (a, b) { return b.weight - a.weight; });
+  var maxEdgeWeight = Math.max.apply(Math, (data.edges || []).map(function (e) { return e.weight; }).concat([1]));
+  var openCache = {};
+  // Open findings of a component, all levels: what its panel and the "start here" card count.
+  function openOf(c) {
+    if (openCache[c.id]) return openCache[c.id];
+    var list = allFindings(c).filter(function (f) { var r = f.review || {}; return !(r.status === 'accepted' && f.severity !== 'error'); });
+    var o = { list: list, e: 0, w: 0, i: 0 };
+    list.forEach(function (f) { if (f.severity === 'error') o.e++; else if (f.severity === 'warning') o.w++; else o.i++; });
+    return (openCache[c.id] = o);
+  }
+  function topComponent() { return data.components.filter(function (c) { return c.modules.length && openOf(c).list.length; }).sort(function (a, b) { return openOf(b).list.length - openOf(a).list.length; })[0] || null; }
+  function compLabel(id) { return byId[id] ? byId[id].label : id; }
+  function nodeSublabel(id) { var g = svg && svg.querySelector('g[data-node-id="' + id + '"]'); return g ? g.getAttribute('data-node-sublabel') || '' : ''; }
+  function fmtK(n) { return n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n); }
+  function sevRank(f) { return f.severity === 'error' ? 0 : f.severity === 'warning' ? 1 : 2; }
+  function complexityOf(f) { return f.evidence && typeof f.evidence.complexity === 'number' ? f.evidence.complexity : 0; }
+  function svgEl(tag, attrs, parent) { var e = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.keys(attrs).forEach(function (k) { if (attrs[k] != null) e.setAttribute(k, attrs[k]); }); if (parent) parent.appendChild(e); return e; }
+  function textWidth(text) { return Array.from(text).reduce(function (n, ch) { return n + (ch.charCodeAt(0) > 255 ? 10.5 : 6.2); }, 0); }
+  function edgeWidth(w) { return (1.6 + 3.4 * Math.sqrt(w / maxEdgeWeight)).toFixed(2); }
+  function firstRow(go, tone, title, sub, n) { return '<button type="button" class="first-row" data-go="' + esc(go) + '"><i class="bar ' + tone + '"></i><span><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span><em>' + fmt(n) + '</em></button>'; }
+  function buildStage() {
+    if (stage || !svg || !flyMode || !diagramContainer) return;
+    stage = document.createElement('div'); stage.id = 'bauify-stage'; stage.className = 'no-print'; stage.lang = locale;
+    var top = topComponent(), off = (data.unmapped || []).slice().sort(function (a, b) { return b.files - a.files || b.loc - a.loc; })[0];
+    var rows = '';
+    if (top) rows += firstRow('component:' + top.id, 'amber', tr('{name} has the most open findings', { name: top.label }), tr('{files} files · {loc} lines', { files: fmt(top.files), loc: fmtK(top.loc) }), openOf(top).list.length);
+    if (undeclared.length) rows += firstRow('code', 'red', tr('Code dependencies not drawn on the diagram'), tr('Largest: {from} → {to}', { from: compLabel(undeclared[0].from), to: compLabel(undeclared[0].to) }), undeclared.length);
+    if (off) rows += firstRow('off:' + off.id, 'grey', tr('Code with no place on the diagram'), tr('{name} · {files} files', { name: off.label, files: fmt(off.files) }), off.files);
+    if (!rows) rows = '<p class="first-empty">' + esc(tr('Nothing stands out: no open findings, and the diagram matches the code dependencies.')) + '</p>';
+    var total = (data.findings || []).length;
+    stage.innerHTML =
+      '<div class="stage-tools">' +
+        '<div class="stage-seg" role="group" aria-label="' + esc(tr('Highlight')) + '"><button type="button" data-beacon="all" aria-pressed="true">' + esc(tr('All')) + '</button><button type="button" data-beacon="issues" aria-pressed="false"><i class="dot amber"></i>' + esc(tr('Only with findings')) + '</button></div>' +
+        (undeclared.length ? '<div class="stage-seg"><button type="button" class="stage-code" aria-pressed="false"><i class="dot red"></i>' + esc(tr('Show code dependencies')) + '<em>' + undeclared.length + '</em></button></div>' : '') +
+      '</div>' +
+      '<div class="stage-depth" hidden><span class="depth-label"></span><div class="stage-seg" role="group" aria-label="' + esc(tr('Neighbourhood')) + '"><button type="button" data-depth="1" aria-pressed="true">' + esc(tr('1 hop')) + '</button><button type="button" data-depth="2" aria-pressed="false">' + esc(tr('2 hops')) + '</button><button type="button" data-depth="99" aria-pressed="false">' + esc(tr('All')) + '</button></div><button type="button" class="depth-clear" aria-label="' + esc(tr('Clear focus')) + '">×</button></div>' +
+      '<section class="stage-first" aria-label="' + esc(tr('Start here')) + '"><header><h3 title="' + esc(tr('What stands out after checking this diagram against the code')) + '">' + esc(tr('Start here')) + '</h3><button type="button" class="first-toggle" aria-expanded="true">' + esc(tr('Collapse')) + '</button></header><div class="first-body">' + rows +
+      (total ? '<button type="button" class="first-all">' + esc(tr('All {count} findings', { count: fmt(total) })) + ' →</button>' : '') +
+      '<p class="stage-legend"><span><i class="ring amber"></i>' + esc(tr('Has findings')) + '</span><span><i class="ring green"></i>' + esc(tr('No findings')) + '</span><span><i class="ring grey"></i>' + esc(tr('No source mapped')) + '</span><span><i class="chip">n</i>' + esc(tr('Open findings')) + '</span><span><i class="line thick"></i>' + esc(tr('Thicker: more imports')) + '</span>' + (undeclared.length ? '<span><i class="line dash"></i>' + esc(tr('Not drawn')) + '</span>' : '') + '</p></div></section>';
+    diagramContainer.appendChild(stage);
+    // The canvas pans on pointer drags and zooms on wheel: keep those off the controls.
+    ['pointerdown', 'mousedown', 'touchstart', 'wheel', 'dblclick'].forEach(function (type) { stage.addEventListener(type, function (event) { event.stopPropagation(); }, { passive: true }); });
+    stage.addEventListener('click', function (event) {
+      event.stopPropagation();
+      var t = event.target.closest('button'); if (!t) return;
+      if (t.dataset.beacon) setBeacon(t.dataset.beacon === 'issues');
+      else if (t.classList.contains('stage-code')) setCodeDeps(!codeDeps);
+      else if (t.dataset.depth) { depth = Number(t.dataset.depth); paintStage(); }
+      else if (t.classList.contains('depth-clear')) setFly(false);
+      else if (t.classList.contains('first-toggle')) {
+        var first = stage.querySelector('.stage-first'), collapsed = !first.classList.contains('collapsed');
+        first.classList.toggle('collapsed', collapsed); t.setAttribute('aria-expanded', String(!collapsed)); t.textContent = tr(collapsed ? 'Expand' : 'Collapse');
+      } else if (t.classList.contains('first-all')) showOverview();
+      else if (t.dataset.go) {
+        var go = t.dataset.go;
+        if (go === 'code') { setCodeDeps(true); showEdge(undeclared[0].from, undeclared[0].to); }
+        else if (go.indexOf('component:') === 0) show(go.slice(10));
+        else if (go.indexOf('off:') === 0) showOff(go.slice(4));
+      }
+    });
+  }
+  function setBeacon(on) {
+    beacon = on;
+    if (on) root.setAttribute('data-bauify-beacon', 'on'); else root.removeAttribute('data-bauify-beacon');
+    if (stage) stage.querySelectorAll('[data-beacon]').forEach(function (b) { b.setAttribute('aria-pressed', String((b.dataset.beacon === 'issues') === on)); });
+    paintStage();
+  }
+  function setCodeDeps(on) {
+    codeDeps = on;
+    if (on) root.setAttribute('data-bauify-code', 'on'); else root.removeAttribute('data-bauify-code');
+    var b = stage && stage.querySelector('.stage-code'); if (b) b.setAttribute('aria-pressed', String(on));
+    paintStage();
+  }
+  function clearEdges() {
+    if (edgeGroup) edgeGroup.remove(); if (chips) chips.remove(); edgeGroup = chips = null;
+    decorated.forEach(function (p) { p.classList.remove('bauify-coded', 'bauify-uncoded', 'bauify-away', 'bauify-calm', 'bauify-lit'); p.style.removeProperty('--bauify-w'); });
+    decorated = [];
+  }
+  function chip(from, to, text, cls, mid) {
+    var w = 12 + textWidth(text), h = 16;
+    var g = svgEl('g', { class: 'bauify-chip ' + cls, 'data-from': from, 'data-to': to, 'data-center': mid[0] + ' ' + mid[1] + ' ' + w + ' ' + h }, chips);
+    svgEl('rect', { width: w, height: h, rx: h / 2, ry: h / 2 }, g);
+    svgEl('text', { x: w / 2, y: h / 2 }, g).textContent = text;
+  }
+  // Diagram edges backed by imports get thicker by weight; code dependencies the
+  // diagram does not draw become dashed arcs below the nodes (shown on request).
+  function drawEdges() {
+    clearEdges();
+    if (!svg || !flyMode) return;
+    var firstNode = svg.querySelector('g[data-node-id]'); if (!firstNode) return;
+    edgeGroup = svgEl('g', { id: 'bauify-edges' }); firstNode.parentNode.insertBefore(edgeGroup, firstNode);
+    var marker = svgEl('marker', { id: 'bauify-undrawn-head', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto-start-reverse' }, svgEl('defs', {}, edgeGroup));
+    svgEl('path', { d: 'M0,0 L10,5 L0,10 z' }, marker);
+    chips = svgEl('g', { id: 'bauify-chips' }, svg);
+    svg.querySelectorAll('path[data-edge-from][data-edge-to]').forEach(function (path) {
+      var from = path.getAttribute('data-edge-from'), to = path.getAttribute('data-edge-to'), e = codeEdgeByKey[from + '>' + to];
+      path.classList.add(e ? 'bauify-coded' : 'bauify-uncoded');
+      decorated.push(path);
+      if (!e) return;
+      path.style.setProperty('--bauify-w', edgeWidth(e.weight) + 'px');
+      var hit = svgEl('path', { d: path.getAttribute('d'), class: 'bauify-hit', 'data-from': from, 'data-to': to }, edgeGroup);
+      hit.dataset.analysisTip = compLabel(from) + ' → ' + compLabel(to) + ' · ' + tr('{count} imports', { count: e.weight });
+      var length = path.getTotalLength ? path.getTotalLength() : 0, point = length ? path.getPointAtLength(length / 2) : null;
+      if (point) chip(from, to, tr('{count} imports', { count: e.weight }), 'coded', [point.x, point.y]);
+    });
+    undeclared.forEach(function (e, i) {
+      var a = nodeBox(e.from), b = nodeBox(e.to); if (!a || !b) return;
+      var dir = b.cx >= a.cx ? 1 : -1, x0 = a.cx + 14 * dir, x1 = b.cx - 14 * dir, y0 = a.y + a.h + 6, y1 = b.y + b.h + 6, low = Math.max(y0, y1), c = low + 70 + i * 22;
+      var d = 'M' + x0 + ',' + y0 + ' C' + x0 + ',' + c + ' ' + x1 + ',' + c + ' ' + x1 + ',' + y1;
+      svgEl('path', { d: d, class: 'bauify-undrawn', 'data-from': e.from, 'data-to': e.to, style: '--bauify-w:' + edgeWidth(e.weight) + 'px', 'marker-end': 'url(#bauify-undrawn-head)' }, edgeGroup);
+      var hit = svgEl('path', { d: d, class: 'bauify-hit undrawn', 'data-from': e.from, 'data-to': e.to }, edgeGroup);
+      hit.dataset.analysisTip = compLabel(e.from) + ' → ' + compLabel(e.to) + ' · ' + tr('{count} imports', { count: e.weight }) + ' · ' + tr('not drawn');
+      chip(e.from, e.to, '+' + e.weight, 'undrawn', [(x0 + x1) / 2, (y0 + y1) / 8 + 0.75 * c]);
+    });
+    edgeGroup.addEventListener('click', function (event) { var hit = event.target.closest('.bauify-hit'); if (!hit) return; event.stopPropagation(); showEdge(hit.getAttribute('data-from'), hit.getAttribute('data-to')); });
+    var hover = function (on) { return function (event) { var hit = event.target.closest('.bauify-hit'); if (!hit) return; chips.querySelectorAll('[data-from="' + hit.getAttribute('data-from') + '"][data-to="' + hit.getAttribute('data-to') + '"]').forEach(function (g) { g.classList.toggle('bauify-hover', on); }); }; };
+    edgeGroup.addEventListener('mouseover', hover(true)); edgeGroup.addEventListener('mouseout', hover(false));
+    scaleBadges();
+  }
+  function neighbourhood(id, limit) {
+    var adj = {}, add = function (a, b) { (adj[a] = adj[a] || []).push(b); (adj[b] = adj[b] || []).push(a); };
+    decorated.forEach(function (p) { add(p.getAttribute('data-edge-from'), p.getAttribute('data-edge-to')); });
+    if (codeDeps) undeclared.forEach(function (e) { add(e.from, e.to); });
+    var seen = {}; seen[id] = 0; var queue = [id];
+    while (queue.length) { var x = queue.shift(); if (seen[x] >= limit) continue; (adj[x] || []).forEach(function (y) { if (seen[y] == null) { seen[y] = seen[x] + 1; queue.push(y); } }); }
+    return seen;
+  }
+  // One pass over everything the page dims or lights: the beacon, the picked
+  // component's neighbourhood, or the picked edge and its two ends.
+  function paintStage() {
+    if (!svg || !flyMode) return;
+    var keep = null;
+    if (pick && pick.kind === 'node') keep = neighbourhood(pick.id, depth);
+    if (pick && pick.kind === 'edge') { keep = {}; keep[pick.from] = 0; keep[pick.to] = 0; }
+    if (keep) root.setAttribute('data-bauify-pick', pick.kind); else root.removeAttribute('data-bauify-pick');
+    var calm = function (id) { var c = byId[id]; return !c || !openOf(c).list.length; };
+    var away = function (id) { return !!keep && keep[id] == null; };
+    var edgeOn = function (from, to) { return !!keep && keep[from] != null && keep[to] != null && (pick.kind !== 'edge' || (pick.from === from && pick.to === to)); };
+    svg.querySelectorAll('g[data-node-id]').forEach(function (g) { var id = g.getAttribute('data-node-id'); g.classList.toggle('bauify-away', away(id)); g.classList.toggle('bauify-calm', calm(id)); g.classList.toggle('bauify-picked', !!pick && pick.kind === 'node' && pick.id === id); });
+    if (layer) layer.querySelectorAll('[data-node]').forEach(function (el) { var id = el.getAttribute('data-node'); el.classList.toggle('bauify-away', away(id)); el.classList.toggle('bauify-calm', calm(id)); });
+    decorated.forEach(function (p) { var a = p.getAttribute('data-edge-from'), b = p.getAttribute('data-edge-to'); p.classList.toggle('bauify-away', !!keep && !edgeOn(a, b)); p.classList.toggle('bauify-lit', edgeOn(a, b)); p.classList.toggle('bauify-calm', calm(a) || calm(b)); });
+    [edgeGroup, chips].forEach(function (group) { if (group) group.querySelectorAll('[data-from]').forEach(function (el) { var a = el.getAttribute('data-from'), b = el.getAttribute('data-to'); el.classList.toggle('bauify-away', !!keep && !edgeOn(a, b)); el.classList.toggle('bauify-lit', edgeOn(a, b)); el.classList.toggle('bauify-calm', calm(a) || calm(b)); }); });
+    if (!stage) return;
+    var pill = stage.querySelector('.stage-depth');
+    pill.hidden = !(pick && pick.kind === 'node');
+    if (!pill.hidden) {
+      pill.querySelector('.depth-label').textContent = tr('Focus {name}', { name: compLabel(pick.id) });
+      pill.querySelectorAll('[data-depth]').forEach(function (b) { b.setAttribute('aria-pressed', String(Number(b.dataset.depth) === depth)); });
+    }
+  }
+  function clearPick() { if (pick) { pick = null; paintStage(); } }
+  function componentKicker(c) {
+    var top = topComponent();
+    return '<p class="fly-kick"><i class="dot ' + (c.modules.length ? c.indicators.status : 'grey') + '"></i>' + esc(tr('Architecture component')) + (top && top.id === c.id ? ' · <b>' + esc(tr('most open findings')) + '</b>' : '') + '</p>';
+  }
+  function componentBody(c) {
+    var h = '';
+    if (!c.modules.length) return h;
+    var o = openOf(c);
+    h += '<div class="fly-nums"><div><b>' + fmt(c.files) + '</b><span>' + esc(tr('files')) + '</span></div><div><b>' + fmtK(c.loc) + '</b><span>' + esc(tr('lines')) + '</span></div><div><b>' + fmt(o.list.length) + '</b><span>' + esc(tr('open')) + '</span></div></div>';
+    if (o.list.length) h += '<div class="fly-sev" aria-hidden="true"><i class="red" style="flex:' + o.e + '"></i><i class="amber" style="flex:' + o.w + '"></i><i class="blue" style="flex:' + o.i + '"></i></div>';
+    h += '<h4 class="fly-h">' + esc(tr('Source')) + '<small>' + esc(plural(c.modules.length, 'module')) + '</small></h4><div class="fly-chips">' + c.modules.slice(0, 6).map(function (m) { return '<code>' + esc(m.label) + '</code>'; }).join('') + (c.modules.length > 6 ? '<code>+' + (c.modules.length - 6) + '</code>' : '') + '</div>';
+    var rel = function (list, outgoing) {
+      return list.slice().sort(function (a, b) { return b.weight - a.weight; }).map(function (e) {
+        if (!e.component) return '<div class="fly-rel off"><i class="dot grey"></i><span>' + esc(modLabel(e.module)) + '</span><em>' + esc(tr('{count} imports', { count: e.weight })) + ' · ' + esc(tr('not on this diagram')) + '</em></div>';
+        var key = outgoing ? c.id + '>' + e.component : e.component + '>' + c.id, code = codeEdgeByKey[key];
+        return '<button type="button" class="fly-rel" data-edge="' + esc(key) + '"><i class="dot ' + (byId[e.component] ? byId[e.component].indicators.status : 'grey') + '"></i><span>' + esc(compLabel(e.component)) + '</span><em>' + esc(tr('{count} imports', { count: e.weight })) + (code && code.declared === false ? ' · <b>' + esc(tr('not drawn')) + '</b>' : '') + '</em></button>';
+      }).join('');
+    };
+    if (c.outgoing.length) h += '<h4 class="fly-h">' + esc(tr('Depends on')) + '<small>' + esc(tr('click one for the files')) + '</small></h4>' + rel(c.outgoing, true);
+    if (c.incoming.length) h += '<h4 class="fly-h">' + esc(tr('Used by')) + '</h4>' + rel(c.incoming, false);
+    var top = o.list.slice().sort(function (a, b) { return sevRank(a) - sevRank(b) || complexityOf(b) - complexityOf(a); }).slice(0, 4);
+    if (top.length) h += '<h4 class="fly-h">' + esc(tr('Look at these first')) + '<small>' + esc(tr('by severity and complexity')) + '</small></h4>' + top.map(flyFinding).join('');
+    return h;
+  }
+  function flyFinding(f) { return '<button type="button" class="fly-find ' + toneOf(f.severity) + '" data-finding="' + esc(f.id) + '"><i></i><b>' + esc(findingTitle(f)) + '</b><small>' + esc(findingLocation(f) || findingWhat(f)) + '</small></button>'; }
+  function wireFlyRows(container) {
+    container.querySelectorAll('.fly-rel[data-edge]').forEach(function (b) { b.addEventListener('click', function () { var k = b.getAttribute('data-edge').split('>'); showEdge(k[0], k[1]); }); });
+    container.querySelectorAll('.fly-find[data-finding]').forEach(function (b) { b.addEventListener('click', function () { showFinding(b.getAttribute('data-finding')); }); });
+  }
+  function flyClose(back) { return '<button class="close" aria-label="' + esc(tr("Close")) + '">×</button><button type="button" class="back">← ' + esc(back) + '</button>'; }
+  // A dependency between two components: whether the diagram draws it, and the imports behind it.
+  function showEdge(from, to) {
+    var e = codeEdgeByKey[from + '>' + to], undrawn = !!e && e.declared === false;
+    readerPage(tr('Dependency')); root.removeAttribute('data-bauify-source');
+    overview.hidden = true; detail.hidden = true; codePane.hidden = true; setFocus([]);
+    pick = { kind: 'edge', from: from, to: to }; paintStage();
+    var h = flyClose(byId[from] ? compLabel(from) : tr('Overview'));
+    h += '<p class="fly-kick">' + esc(tr('Dependency')) + ' <span class="fly-pill ' + (!e ? 'grey' : undrawn ? 'red' : 'green') + '">' + esc(tr(!e ? 'no imports found' : undrawn ? 'not drawn' : 'on the diagram')) + '</span></p>';
+    h += '<h3 class="fly-edge-title">' + esc(compLabel(from)) + ' <span>→</span> ' + esc(compLabel(to)) + '</h3>';
+    if (e) {
+      var files = {}; e.evidence.forEach(function (v) { files[v.file] = true; });
+      h += '<div class="fly-nums two"><div><b>' + fmt(e.weight) + '</b><span>' + esc(tr('imports')) + '</span></div><div><b>' + Object.keys(files).length + (e.evidence.length < e.weight ? '+' : '') + '</b><span>' + esc(tr('source files')) + '</span></div></div>';
+      h += '<p class="fly-note' + (undrawn ? ' attention' : '') + '">' + esc(undrawn ? tr('{from} imports {to} in the code, but the diagram draws no line between them. Add it to the diagram, or treat it as coupling that should not exist.', { from: compLabel(from), to: compLabel(to) }) : tr('The diagram draws this dependency and the code confirms it.')) + '</p>';
+      h += '<h4 class="fly-h">' + esc(tr('Which files cause it')) + '<small>' + esc(e.evidence.length < e.weight ? tr('first {count}', { count: e.evidence.length }) : tr('all')) + '</small></h4>';
+      h += e.evidence.map(function (v) { return '<button type="button" class="fly-ev" data-file="' + esc(v.file) + '" data-line="' + (v.line || '') + '"><span>' + esc(v.file) + '</span><em>:' + (v.line || '?') + '</em><small>→ ' + esc(v.to) + '</small></button>'; }).join('');
+      h += '<div class="fly-acts"><button type="button" class="fly-copy">' + esc(tr('Copy for AI')) + '</button></div><p class="fly-status ev" role="status" aria-live="polite"></p>';
+    } else h += '<p class="fly-note">' + esc(tr('The diagram draws this relationship, but no import between these components was found. It may come from configuration, runtime calls or an external system, or the diagram over-states it.')) + '</p>';
+    panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
+    panel.querySelector('.close').addEventListener('click', showOverview);
+    panel.querySelector('.back').addEventListener('click', function () { if (byId[from]) show(from); else showOverview(); });
+    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), tr('Import from {from} to {to}.', { from: compLabel(from), to: compLabel(to) }), undrawn ? 'red' : 'info'); }); });
+    var copy = panel.querySelector('.fly-copy');
+    if (copy) copy.addEventListener('click', function () {
+      var text = tr('{from} → {to}: {count} imports in the code', { from: compLabel(from), to: compLabel(to), count: e.weight }) + (undrawn ? tr(', not drawn on the architecture diagram') : '') + '.\n' + e.evidence.map(function (v) { return '- ' + v.file + ':' + (v.line || '?') + ' → ' + v.to; }).join('\n');
+      var status = panel.querySelector('.fly-status');
+      (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { status.textContent = tr('Copied'); }, function () { status.textContent = tr('Automatic copy unavailable. Select the text below to copy it manually.'); var area = document.createElement('textarea'); area.readOnly = true; area.className = 'task-preview'; area.value = text; status.after(area); area.select(); });
+    });
+    var heading = panel.querySelector('h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
+  }
+  // A module no component on the diagram owns.
+  function showOff(id) {
+    var m = moduleInfo[id]; if (!m) return;
+    readerPage(tr('Not on the diagram')); root.removeAttribute('data-bauify-source');
+    overview.hidden = true; detail.hidden = true; codePane.hidden = true; clearPick(); setFocus([]);
+    var fs = data.findings.filter(function (f) { return (f.moduleIds || []).indexOf(id) !== -1; });
+    var files = (m.fileList || []).slice().sort(function (a, b) { return (b.loc || 0) - (a.loc || 0); });
+    var h = flyClose(tr('Overview'));
+    h += '<p class="fly-kick"><i class="dot grey"></i>' + esc(tr('Code not on the diagram')) + '</p><h3>' + esc(m.label) + '</h3>' + (m.path && m.path !== m.label ? '<p class="fly-sub">' + esc(m.path) + '</p>' : '');
+    h += '<div class="fly-nums"><div><b>' + fmt(m.files) + '</b><span>' + esc(tr('files')) + '</span></div><div><b>' + fmtK(m.loc) + '</b><span>' + esc(tr('lines')) + '</span></div><div><b>' + fmt(fs.length) + '</b><span>' + esc(tr('findings')) + '</span></div></div>';
+    h += '<p class="fly-note">' + esc(tr('This code is in the repository, but no component on the architecture diagram owns it. If it is part of the product, the diagram needs a node for it; if it is tooling, it can be left out of the analysis.')) + '</p>';
+    if (fs.length) h += '<h4 class="fly-h">' + esc(tr('Look at these first')) + '<small>' + esc(tr('by severity and complexity')) + '</small></h4>' + fs.slice().sort(function (a, b) { return sevRank(a) - sevRank(b) || complexityOf(b) - complexityOf(a); }).slice(0, 5).map(flyFinding).join('');
+    if (files.length) h += '<h4 class="fly-h">' + esc(tr('Largest files')) + '<small>' + esc(plural(files.length, 'file')) + '</small></h4>' + files.slice(0, 5).map(function (f) { return '<button type="button" class="fly-ev" data-file="' + esc(f.path) + '"><span>' + esc(f.path) + '</span><em>' + esc(plural(f.loc || 0, 'line')) + '</em></button>'; }).join('');
+    panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
+    panel.querySelector('.close').addEventListener('click', showOverview);
+    panel.querySelector('.back').addEventListener('click', showOverview);
+    wireFlyRows(panel);
+    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), null, '', 'info'); }); });
+  }
+  if (flyMode) {
+    var flyFrame = 0;
+    window.addEventListener('scroll', function () { if (!flyOpen) return; cancelAnimationFrame(flyFrame); flyFrame = requestAnimationFrame(positionReader); }, { passive: true });
+    new MutationObserver(function () { if (flyOpen) positionReader(); }).observe(root, { attributes: true, attributeFilter: ['data-bauify-views'] });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape' || event.defaultPrevented || !flyOpen) return;
+      var t = event.target;
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(t.tagName || '') !== -1)) return;
+      setFly(false);
+    });
+  }
   function setOn(on) {
     reader.hidden = !on;
     if (!on) {
@@ -1376,7 +1659,9 @@
       data.components.forEach(function (c) { var g = svg.querySelector('g[data-node-id="' + c.id + '"]'); if (g) g.classList.toggle('bauify-mapped', c.modules.length > 0); });
       drawLayer();
       showOverview();
-    } else { setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
+      if (flyMode && svg) { buildStage(); drawEdges(); paintStage(); }
+      setFly(false);
+    } else { setFly(false); if (stage) { setBeacon(false); setCodeDeps(false); } clearEdges(); setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.

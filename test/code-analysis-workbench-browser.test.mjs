@@ -64,6 +64,11 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.match(await run("document.querySelector('.health-summary').textContent"), /errors/);
   assert.equal(await run("document.querySelectorAll('.priority-card button button').length"), 0);
   const assertFirstCopyVisible = async locale => {
+    // The diagram opens with its start-here card; the reader flies out from its "all findings" link.
+    if (await run("document.getElementById('bauify-reader').classList.contains('fly-closed')")) {
+      await run("document.querySelector('#bauify-stage .first-all').click()");
+      await run('new Promise(resolve=>setTimeout(resolve,600))');
+    }
     const visibility = await run(`(() => {
       const button=document.querySelector('.priority-card .quick-copy').getBoundingClientRect();
       const reader=document.getElementById('bauify-reader').getBoundingClientRect();
@@ -136,7 +141,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
       const selectedCycleText = await run(`(() => {
         const idx = JSON.parse(document.getElementById('bauify-atlas-data').textContent).findings.findIndex(f => f.code === 'coupling/cycle');
         document.querySelector('#bauify-atlas [data-finding="' + idx + '"]').click();
-        return document.querySelector('#bauify-atlas .selected').textContent;
+        return document.querySelector('#bauify-atlas .atlas-selection').textContent;
       })()`);
       assert.match(selectedCycleText, /alpha/, 'zh-CN Atlas selects module-cycle findings and lists affected modules');
       assert.match(selectedCycleText, /beta/, 'zh-CN Atlas lists both cycle modules');
@@ -195,6 +200,11 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
     await run("new Promise((resolve,reject)=>{const deadline=Date.now()+3000;const poll=()=>document.querySelector('.verify-preview').textContent||document.querySelector('.verify-status').textContent?resolve():Date.now()>deadline?reject(new Error('receipt did not finish')):setTimeout(poll,20);poll();})");
   };
+  // The receipt form lives in the reader, which starts closed beside the diagram; opening it renders the overview.
+  if (await run("document.getElementById('bauify-reader').classList.contains('fly-closed')")) {
+    await run("document.querySelector('#bauify-stage .first-all').click()");
+    await run('new Promise(resolve=>setTimeout(resolve,600))');
+  }
   await run("document.querySelector('.verify-change summary').click()");
   const wrongTask = path.join(dir, 'wrong-task-id.json');
   const otherId = task.taskId.slice(0, -1) + (task.taskId.endsWith('0') ? '1' : '0');
@@ -238,8 +248,9 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.deepEqual(await run("Array.from(document.querySelectorAll('.views-option b'), b => b.textContent)"), ['模块分析', '整仓星图', 'Atlas 3D 模型'], 'zh-CN names the three tabs above the diagram');
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
   assert.match(await run("document.querySelector('.atlas-side').textContent"), /高复杂度函数/);
-  assert.equal(await run("document.querySelector('.atlas-stats .k').textContent"), '本次统计');
-  assert.equal(await run("document.querySelector('.atlas-title').firstChild.textContent"), '整仓星图');
+  assert.equal(await run("document.querySelector('.atlas-stats').getAttribute('aria-label')"), '本次统计');
+  assert.equal(await run("document.querySelector('.atlas-q').placeholder"), '搜索模块、文件或函数');
+  assert.match(await run("document.querySelector('.atlas-first').textContent"), /先看这里/);
   await run("document.querySelector('.views-option[data-view=diagram]').click()");
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
