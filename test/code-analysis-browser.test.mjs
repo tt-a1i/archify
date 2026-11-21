@@ -554,26 +554,35 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     for (let i = 3; i < d.length; i += 4 * 7) if (d[i]) n++; return n; })()`);
   assert.ok(painted > 500, `atlas canvas is painted (${painted} sampled pixels)`);
 
-  // Observe rendered geometry, so this protects fixed radii and aligned
-  // pointer targets without exposing implementation-only animation state.
+  // Observe the actual Canvas strokes, rather than exposing animation internals
+  // or freezing a particular radius. Module arcs are the non-full-circle strokes.
   await run(`(() => {
     window.atlasArcs = []; window.atlasDots = []; window.atlasSegments = [];
-    const p = CanvasRenderingContext2D.prototype;
-    const clear = p.clearRect, begin = p.beginPath, arc = p.arc, stroke = p.stroke, fill = p.fill, move = p.moveTo, line = p.lineTo;
-    p.clearRect = function (...args) { if (!this.canvas.isConnected) { atlasArcs = []; atlasDots = []; atlasSegments = []; } return clear.apply(this, args); };
-    p.beginPath = function (...args) { this.testArc = null; this.testDot = null; this.testSegment = null; return begin.apply(this, args); };
-    p.arc = function (x,y,r,start,end,...rest) { if (end-start < 2*Math.PI-.001) this.testArc = {x,y,r,start,end}; if (r===3 || r===5) this.testDot = {x,y}; return arc.call(this,x,y,r,start,end,...rest); };
-    p.moveTo = function (x,y) { this.testStart = {x,y}; return move.call(this,x,y); };
-    p.lineTo = function (x,y) { if (this.testStart) this.testSegment = {x:(x+this.testStart.x)/2,y:(y+this.testStart.y)/2,end:{x,y}}; return line.call(this,x,y); };
-    p.stroke = function (...args) { if (!this.canvas.isConnected) { if (this.testArc) atlasArcs.push({...this.testArc,alpha:this.globalAlpha}); if (this.testSegment) atlasSegments.push(this.testSegment); } return stroke.apply(this,args); };
-    p.fill = function (...args) { if (!this.canvas.isConnected && this.testDot) atlasDots.push(this.testDot); return fill.apply(this,args); };
+    const proto = CanvasRenderingContext2D.prototype;
+    const clear = proto.clearRect, arc = proto.arc, begin = proto.beginPath, stroke = proto.stroke, fill = proto.fill, move = proto.moveTo, line = proto.lineTo;
+    const strokeAlpha = style => { const parts = String(style).split(','), alpha = parts.length === 4 ? Number.parseFloat(parts[3]) : 1; return Number.isFinite(alpha) ? alpha : 1; };
+    proto.clearRect = function (...args) { if (!this.canvas.isConnected) { window.atlasArcs = []; window.atlasDots = []; window.atlasSegments = []; } return clear.apply(this, args); };
+    proto.beginPath = function (...args) { this.testArc = null; this.testDot = null; this.testSegment = null; return begin.apply(this, args); };
+    proto.arc = function (x, y, r, start, end, ...rest) {
+      if (end - start < Math.PI * 2 - 0.001) this.testArc = { x, y, r, start, end };
+      if (r === 3 || r === 5) this.testDot = { x, y };
+      return arc.call(this, x, y, r, start, end, ...rest);
+    };
+    proto.moveTo = function (x, y) { this.testStart = { x, y }; return move.call(this, x, y); };
+    proto.lineTo = function (x, y) { if (this.testStart) this.testSegment = { x: (x + this.testStart.x) / 2, y: (y + this.testStart.y) / 2, end: { x, y } }; return line.call(this, x, y); };
+    proto.stroke = function (...args) {
+      if (this.testSegment && !this.canvas.isConnected) window.atlasSegments.push(this.testSegment);
+      if (this.testArc && !this.canvas.isConnected) window.atlasArcs.push({ ...this.testArc, alpha: this.globalAlpha * strokeAlpha(this.strokeStyle) });
+      return stroke.apply(this, args);
+    };
+    proto.fill = function (...args) { if (this.testDot && !this.canvas.isConnected) window.atlasDots.push(this.testDot); return fill.apply(this, args); };
     window.__archifyAtlas.focusFinding('');
   })()`);
-  await until(`atlasArcs.length === ${atlas.modules.length}`, 'module geometry was not painted');
-  const resting = await run('atlasArcs');
+  await until(`window.atlasArcs.length === ${atlas.modules.length}`, 'module strokes not captured');
+  const resting = await run('window.atlasArcs');
   const width = arc => arc.end - arc.start;
-  const wheel = (deltaY, ctrlKey = false) => run(`(() => { const e = new WheelEvent('wheel', {deltaY:${deltaY},ctrlKey:${ctrlKey},cancelable:true});document.querySelector('#bauify-atlas canvas').dispatchEvent(e);return e.defaultPrevented;})()`);
-  const clickPoint = point => run(`(() => { const c=document.querySelector('#bauify-atlas canvas'),b=c.getBoundingClientRect();c.dispatchEvent(new MouseEvent('click',{clientX:b.left+${point.x},clientY:b.top+${point.y}}));})()`);
+  const wheel = (deltaY, ctrlKey = false) => run(`(() => { const e = new WheelEvent('wheel', {deltaY:${deltaY},ctrlKey:${ctrlKey},cancelable:true}); document.querySelector('#bauify-atlas canvas').dispatchEvent(e); return e.defaultPrevented; })()`);
+  const clickPoint = point => run(`(() => { const c = document.querySelector('#bauify-atlas canvas'), b = c.getBoundingClientRect(); c.dispatchEvent(new MouseEvent('click', { clientX: b.left + ${point.x}, clientY: b.top + ${point.y} })); })()`);
   assert.equal(await wheel(-180), false, 'overview leaves page scrolling available');
 
   // Below a diagram the Atlas is a page: totals float on the map, and the panel stays closed until something is selected.
@@ -591,44 +600,39 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.match(await run("document.querySelector('#bauify-atlas .selected h4').textContent"), new RegExp(atlas.modules.find(m => m.id === focused).label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.deepEqual(await run("[document.getElementById('bauify-atlas').getAttribute('data-fly'), getComputedStyle(document.querySelector('#bauify-atlas .atlas-side')).visibility, document.querySelector('#bauify-atlas .atlas-focus').hidden]"), ['module', 'visible', false], 'a module opens the panel and the focus pill');
 
-  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'sector zoom did not settle');
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'focus did not settle');
   const first = atlas.modules.findIndex(m => m.id === focused), second = first === 0 ? 1 : 0;
-  const expanded = await run('atlasArcs');
-  assert.equal(expanded[first].r, resting[first].r, 'zoom never floats the selected module out of the circle');
-  assert.ok(width(expanded[first]) > width(resting[first]), 'selected sector gains angular space');
-  assert.equal(expanded[second].r, resting[second].r, 'the circle radius stays fixed for surrounding sectors');
-  assert.ok(width(expanded[second]) < width(resting[second]), 'surrounding sectors shrink to make space');
-  const assertPartition = arcs => {
-    for (let i = 1; i < arcs.length; i++) assert.ok(arcs[i].start >= arcs[i - 1].end - 1e-9, 'sectors do not overlap');
-    assert.ok(arcs.at(-1).end - arcs[0].start <= 2 * Math.PI + 1e-9, 'all sectors remain within one circle');
-  };
-  assertPartition(expanded);
-  assert.equal(await wheel(-180, true), false, 'Ctrl-wheel remains available to the browser');
-  assert.equal(await wheel(-180), true);
-  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'wheel zoom did not settle');
-  const zoomed = await run('atlasArcs');
-  assert.ok(width(zoomed[first]) > width(expanded[first]));
-  assert.equal(zoomed[first].r, resting[first].r);
-  assert.ok(width(zoomed[second]) < width(expanded[second]), 'wheel zoom compresses surrounding sectors further');
-  assertPartition(zoomed);
-  const arc = zoomed[first], mid = (arc.start + arc.end) / 2;
-  await clickPoint({ x: arc.x + arc.r * Math.cos(mid), y: arc.y + arc.r * Math.sin(mid) });
-  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'arc reset did not settle');
-  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), '', 'clicking the selected arc clears it');
-  assert.deepEqual(await run('atlasArcs'), resting);
+  const expanded = await run('window.atlasArcs');
+  assert.ok(expanded[first].r > resting[first].r, 'selected module moves out');
+  assert.equal(expanded[second].r, resting[second].r, 'background module stays in place');
+  assert.ok(expanded[second].alpha < expanded[first].alpha, 'background module dims: ' + JSON.stringify({ selected: expanded[first], background: expanded[second] }));
+  // Sample both arcs within the SAME page task so protocol latency cannot
+  // turn a correct intermediate frame into a flaky endpoint assertion.
+  const switching = await run(`new Promise(resolve => {
+    document.querySelector('#bauify-atlas [data-module="${second}"]').click();
+    const sample = () => {
+      const a = window.atlasArcs;
+      if (a[${first}].r < ${expanded[first].r} && a[${second}].r > ${resting[second].r}) return resolve(a);
+      requestAnimationFrame(sample);
+    }; requestAnimationFrame(sample);
+  })`);
+  assert.ok(switching[first].r > resting[first].r, 'old module retracts instead of snapping back');
+  assert.ok(switching[second].r < expanded[first].r, 'new module expands while the old one retracts');
+  // Interrupt the transition, then cancel it; all modules must return home.
+  await run(`document.querySelector('#bauify-atlas [data-module="${first}"]').click(); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`);
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'cancel did not settle');
+  assert.deepEqual(await run('window.atlasArcs'), resting, 'cancel restores geometry and opacity');
 
+  // Hit testing must follow expanded geometry, including with reduced motion.
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
-  await run(`document.querySelector('#bauify-atlas [data-module="${first}"]').click();document.querySelector('#bauify-atlas .atlas-expand').click()`);
-  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), focused, 'zoom mode and selection remain independent');
-  assert.deepEqual(await run('atlasArcs'), resting);
-  assert.equal(await wheel(-180), false, 'zoom disabled leaves scrolling available');
-  await run(`document.querySelector('#bauify-atlas [data-module="${second}"]').click();document.querySelector('#bauify-atlas .atlas-expand').click()`);
-  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), atlas.modules[second].id);
-  assert.ok(width((await run('atlasArcs'))[second]) > width(resting[second]));
-  await clickPoint({ x: 10, y: 10 });
-  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), '', 'blank space clears selection');
-  await run(`document.querySelector('#bauify-atlas [data-module="${first}"]').click();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))`);
-  assert.deepEqual(await run('atlasArcs'), resting, 'Escape restores the circle');
+  await run(`document.querySelector('#bauify-atlas [data-module="${second}"]').click()`);
+  assert.equal(await run("document.documentElement.hasAttribute('data-bauify-atlas-animating')"), false);
+  await run(`(() => {
+    const a = window.atlasArcs[${second}], angle = (a.start + a.end) / 2;
+    const canvas = document.querySelector('#bauify-atlas canvas'), b = canvas.getBoundingClientRect();
+    canvas.dispatchEvent(new MouseEvent('click', { clientX: b.left + a.x + a.r * Math.cos(angle), clientY: b.top + a.y + a.r * Math.sin(angle) }));
+  })()`);
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), '', 'clicking the expanded arc clears that module');
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
 
   // Search finds modules, files and functions; Enter opens the first match, Esc closes the panel.
@@ -640,12 +644,71 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.ok(atlas.modules.some(m => m.id === found && m.label.includes(wanted)), 'Enter selects the first match');
   await run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }))");
   assert.deepEqual(await run("[document.documentElement.getAttribute('data-bauify-atlas-focus'), document.getElementById('bauify-atlas').getAttribute('data-fly')]"), ['', 'closed']);
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'search escape did not settle');
+
+  // Expansion is a reading context: inspecting a spike must not collapse it.
+  const inspected = atlas.findings.findIndex(f => f.kind === 'function');
+  const inspectedFn = atlas.functions[atlas.findings[inspected].fn];
+  const inspectedModule = atlas.files[inspectedFn[0]][1];
+  await run(`document.querySelector('#bauify-atlas [data-module="${inspectedModule}"]').click()`);
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'inspection focus did not settle');
+  const inspectionRadius = (await run('window.atlasArcs'))[inspectedModule].r;
+  const clickSpike = async (fn, points = 'atlasDots') => run(`(() => {
+    const c = document.querySelector('#bauify-atlas canvas'), b = c.getBoundingClientRect();
+    for (const dot of window[${JSON.stringify(points)}]) {
+      const pos = { clientX: b.left + dot.x, clientY: b.top + dot.y };
+      c.dispatchEvent(new MouseEvent('mousemove', pos));
+      const tip = document.querySelector('#bauify-atlas .atlas-tip');
+      if (!tip.hidden && tip.textContent.includes(${JSON.stringify(fn[1])}) && tip.textContent.includes(${JSON.stringify(atlas.files[fn[0]][0])})) {
+        c.dispatchEvent(new MouseEvent('click', pos)); return true;
+      }
+    }
+    return false;
+  })()`);
+  const clicked = await clickSpike(inspectedFn);
+  assert.equal(clicked, true, 'a rendered spike opens its finding');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[inspected].id);
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), atlas.modules[inspectedModule].id, 'spike inspection retains the expanded module');
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'inspection did not settle');
+  assert.equal((await run('window.atlasArcs'))[inspectedModule].r, inspectionRadius);
+  await run(`document.querySelector('#bauify-atlas [data-finding="${inspected}"]').click()`);
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), atlas.modules[inspectedModule].id, 'clearing a finding retains the reading context');
+  const otherModule = inspectedModule === 0 ? 1 : 0;
+  await run(`document.querySelector('#bauify-atlas [data-module="${otherModule}"]').click()`);
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'other module did not settle');
+  assert.equal(await clickSpike(inspectedFn), true, 'background spike is clickable');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), atlas.modules[inspectedModule].id, 'background spike switches to its owning module');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[inspected].id);
+  // Sidebar selection has the same ownership rule, without requiring a canvas click.
+  await run(`document.querySelector('#bauify-atlas [data-module="${otherModule}"]').click(); document.querySelector('#bauify-atlas [data-finding="${inspected}"]').click()`);
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), atlas.modules[inspectedModule].id);
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'sidebar selection did not settle');
+  const unreported = atlas.functions.find(fn => fn[6] === -1 && atlas.files[fn[0]][1] === inspectedModule);
+  assert.ok(unreported, 'fixture includes an unreported function');
+  assert.equal(await clickSpike(unreported, 'atlasSegments'), true, 'unreported spike body is clickable');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), atlas.modules[inspectedModule].id);
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), '', 'unreported function clears stale finding');
+  // Resize and theme changes repaint the hit geometry without losing context.
+  const oldCenter = (await run('window.atlasArcs'))[inspectedModule].x;
+  await send('Emulation.setDeviceMetricsOverride', { width: 1100, height: 760, deviceScaleFactor: 1, mobile: false });
+  await run("document.documentElement.setAttribute('data-theme', 'light')");
+  await until(`window.atlasArcs[${inspectedModule}].x !== ${oldCenter}`, 'resize did not repaint the atlas');
+  assert.equal(await clickSpike(inspectedFn), true, 'resized spike remains clickable');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), atlas.modules[inspectedModule].id);
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'resized inspection did not settle');
+  // True blank space clears both states, rather than hitting an invisible arc band.
+  await run(`(() => { const c = document.querySelector('#bauify-atlas canvas'), b = c.getBoundingClientRect(); c.dispatchEvent(new MouseEvent('click', { clientX: b.left + 5, clientY: b.top + 5 })); })()`);
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), '');
+  await run("document.querySelector('#bauify-atlas .atlas-clear').click()");
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'inspection clear did not settle');
 
   // A selected import cycle gets a light that travels around it: the canvas keeps changing.
   const canvasSum = "(() => { const c = document.querySelector('#bauify-atlas canvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 16) n += d[i] + d[i + 1] + d[i + 2] + d[i + 3]; return n; })()";
   const cycle = atlas.findings.findIndex(f => f.kind === 'cycle');
   assert.notEqual(cycle, -1, 'the fixture reports an import cycle');
-  await run(`document.querySelector('#bauify-atlas [data-finding="${cycle}"]').click()`);
+  await run(`document.querySelector('#bauify-atlas [data-module="${inspectedModule}"]').click(); document.querySelector('#bauify-atlas [data-finding="${cycle}"]').click()`);
+  const cycleModules = [...new Set(atlas.findings[cycle].files.map(i => atlas.files[i][1]))];
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), cycleModules.length === 1 ? atlas.modules[cycleModules[0]].id : '', 'multi-module findings use the overview');
   await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'the selection cross-fade did not finish');
   assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-flow')"), 'on');
   const before = await run(canvasSum);
@@ -723,4 +786,87 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await run("document.getElementById('btn-bauify').click()");
   await until("document.getElementById('bauify-atlas').hidden && document.getElementById('bauify-views').hidden", 'the views stayed open after Code Analysis was turned off');
   assert.equal(await run("document.documentElement.getAttribute('data-bauify-views')"), null);
+});
+
+test('Code Analysis Atlas keeps complexity spike lengths when a focused module is constrained', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  await ensureDependencies();
+  const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
+  const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-spike-scale-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const modulePath = 'extremely_long_module_name_for_constrained_labels';
+  const file = `${modulePath}/scales.ts`;
+  const repository = { revision: null, baseRevision: null, sourceKind: 'working-tree', root: '.',
+    url: null, language: 'ts', adapter: 'typescript@5.9.3', adapterRevision: 22, snapshotId: 'd'.repeat(64) };
+  const functions = [
+    { file, name: 'complex_23', qualname: 'complex_23', line: 1, endLine: 20, complexity: 23, nesting: 3, deepestLine: 5 },
+    { file, name: 'complex_26', qualname: 'complex_26', line: 30, endLine: 55, complexity: 26, nesting: 4, deepestLine: 35 },
+  ];
+  const facts = { schema_version: 1, repository, files: [{ path: file, loc: 55, role: 'source', sourceText: 'export const scale = true;\n' }],
+    packageMarkers: [], imports: [], symbols: [], calls: [], functions, unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 } };
+  const graph = buildGraph(facts, { modules: { groups: { [modulePath]: ['**'] }, excludeRoles: [] } });
+  const diagnostics = functions.map(fn => ({
+    id: `CX-${fn.complexity}`, code: 'complexity/function', dimension: 'complexity', severity: 'warning', confidence: 1,
+    message: `${fn.name} is complex.`, subject: { file, function: fn.qualname, line: fn.line, endLine: fn.endLine },
+    evidence: { complexity: fn.complexity, nesting: fn.nesting, length: fn.endLine - fn.line + 1 }, supportedFixes: [],
+  }));
+  const { html } = buildOverlay({ ir: null, graph, facts, findings: diagnostics, sourceRoot: scratch,
+    run: { rules: ['complexity/function'], openAnalysis: true } });
+  const htmlPath = path.join(scratch, 'atlas-scale.html');
+  fs.writeFileSync(htmlPath, html);
+
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const run = async expression => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    return response.result?.value;
+  };
+  const until = (condition, what) => run(`new Promise((resolve, reject) => { const deadline = Date.now() + 10000; const poll = () => {
+    if (${condition}) return resolve(true);
+    if (Date.now() > deadline) return reject(new Error(${JSON.stringify(what)}));
+    setTimeout(poll, 25);
+  }; poll(); })`);
+  await send('Emulation.setDeviceMetricsOverride', { width: 800, height: 800, deviceScaleFactor: 1, mobile: false });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(htmlPath).href });
+  await loaded;
+  await run('document.fonts.ready');
+  await until("document.documentElement.getAttribute('data-bauify') === 'on'", 'analysis did not open');
+  await until("!document.getElementById('bauify-atlas').hidden", 'atlas did not open');
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'the opening reveal did not finish');
+
+  await run(`(() => {
+    window.atlasDots = []; window.atlasSegments = [];
+    const proto = CanvasRenderingContext2D.prototype;
+    const clear = proto.clearRect, arc = proto.arc, begin = proto.beginPath, stroke = proto.stroke, fill = proto.fill, move = proto.moveTo, line = proto.lineTo;
+    proto.clearRect = function (...args) { if (!this.canvas.isConnected) { window.atlasDots = []; window.atlasSegments = []; } return clear.apply(this, args); };
+    proto.beginPath = function (...args) { this.testDot = null; this.testSegment = null; return begin.apply(this, args); };
+    proto.arc = function (x, y, r, start, end, ...rest) { if (r === 3 || r === 5) this.testDot = { x, y }; return arc.call(this, x, y, r, start, end, ...rest); };
+    proto.moveTo = function (x, y) { this.testStart = { x, y }; return move.call(this, x, y); };
+    proto.lineTo = function (x, y) { if (this.testStart) this.testSegment = { start: this.testStart, end: { x, y } }; return line.call(this, x, y); };
+    proto.stroke = function (...args) { if (this.testSegment && !this.canvas.isConnected) window.atlasSegments.push(this.testSegment); return stroke.apply(this, args); };
+    proto.fill = function (...args) { if (this.testDot && !this.canvas.isConnected) window.atlasDots.push(this.testDot); return fill.apply(this, args); };
+    document.getElementById('btn-theme').click();
+  })()`);
+  await until("window.atlasDots.length === 2", 'reported function tips were not captured');
+  await run("document.querySelector('#bauify-atlas [data-module=\"0\"]').click()");
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'module focus did not settle');
+
+  const lengths = await run(`(() => {
+    const segments = window.atlasSegments;
+    return window.atlasDots.map(dot => {
+      const body = segments.find(segment => Math.hypot(segment.end.x - dot.x, segment.end.y - dot.y) < 0.01);
+      return body && Math.hypot(body.end.x - body.start.x, body.end.y - body.start.y);
+    }).sort((a, b) => a - b);
+  })()`);
+  assert.ok(lengths.every(length => length > 0), `both spike bodies are drawn: ${JSON.stringify(lengths)}`);
+  const encoded = complexity => 0.06 + 0.94 * Math.min(complexity, 26) / 26;
+  const expectedRatio = encoded(23) / encoded(26);
+  assert.ok(Math.abs(lengths[0] / lengths[1] - expectedRatio) < 0.01,
+    `focused spikes retain their complexity ratio (${JSON.stringify({ lengths, expectedRatio })})`);
 });
