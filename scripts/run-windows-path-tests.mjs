@@ -17,9 +17,13 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const skillRoot = path.join(repoRoot, 'archify');
 const cli = path.join(skillRoot, 'bin', 'archify.mjs');
 const options = process.argv.slice(2);
+const profiles = ['--smoke', '--controlled', '--contracts-1', '--contracts-2', '--portability'];
 for (const option of options) {
-  if (!['--smoke', '--list'].includes(option)) throw new Error(`Unknown Windows test option: ${option}`);
+  if (option !== '--list' && !profiles.includes(option)) throw new Error(`Unknown Windows test option: ${option}`);
 }
+const selected = options.filter(option => profiles.includes(option));
+if (selected.length > 1) throw new Error('Select one Windows test profile');
+const profile = selected[0];
 
 function commandFailure(label, result) {
   return [
@@ -603,26 +607,26 @@ const portabilityPattern = [
   'doctor identifies an incomplete installation',
 ].join('|');
 
-// Both lanes exercise controlled NTFS/UNC/8.3 paths below. Only the canonical
-// lane repeats the detailed fault matrices; the other runs public CLI contracts.
-const groups = options.includes('--smoke') ? [
-  ['--test', '--test-concurrency=1', 'test/core-smoke.test.mjs'],
-] : [
-  // Each file owns temporary fixtures and runs in a separate Node process.
-  // Bound this at two files; keep the browser/watcher portability group serial.
-  ['--test', '--test-concurrency=2', ...fullSuites],
-  [
-    '--test',
-    '--test-concurrency=1',
-    `--test-name-pattern=${portabilityPattern}`,
-    ...portabilitySuites,
-  ],
-];
+// File suites own their fixtures. Browser/watcher cases still execute serially.
+const contractTests = files => ['--test', '--test-concurrency=2', ...files];
+const portabilityTests = ['--test', '--test-concurrency=1', `--test-name-pattern=${portabilityPattern}`, ...portabilitySuites];
+const smokeTests = ['--test', '--test-concurrency=1', 'test/core-smoke.test.mjs'];
+const groups = {
+  '--smoke': [smokeTests],
+  '--controlled': [],
+  '--contracts-1': [contractTests(fullSuites.filter((_, index) => index % 2 === 0))],
+  '--contracts-2': [contractTests(fullSuites.filter((_, index) => index % 2 === 1))],
+  '--portability': [portabilityTests],
+}[profile] ?? [contractTests(fullSuites), portabilityTests];
+const controlledPaths = !profile || profile === '--controlled' || profile === '--smoke';
 
 if (options.includes('--list')) {
-  console.log(JSON.stringify({ controlledPaths: true, groups }));
+  console.log(JSON.stringify({ controlledPaths, groups }));
 } else {
-  await runControlledWindowsPathE2E();
+  if (profile === '--controlled') {
+    assert.equal(process.env.ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS, '1', 'The controlled profile requires native Windows path fixtures');
+  }
+  if (controlledPaths) await runControlledWindowsPathE2E();
 
   for (const args of groups) {
     const result = spawnSync(process.execPath, args, {

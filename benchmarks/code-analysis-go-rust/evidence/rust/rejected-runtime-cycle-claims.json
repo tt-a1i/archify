@@ -1,0 +1,689 @@
+{
+  "stage": "initial candidate integration, not shared baseline",
+  "reason": "Rust compile-time source imports were incorrectly described with JS/Python partial initialization language",
+  "findings": [
+    {
+      "id": "COUP-c2de07888d3f",
+      "code": "coupling/import-cycle",
+      "dimension": "coupling",
+      "confidence": 0.7,
+      "severity": "warning",
+      "message": "3 files form a module-scope import cycle: regex-automata/src/dfa/dense.rs \u2192 regex-automata/src/dfa/determinize.rs \u2192 regex-automata/src/dfa/dense.rs. Load-time behavior is not verified; accesses to partially initialized modules may depend on import order.",
+      "subject": {
+        "files": [
+          "regex-automata/src/dfa/dense.rs",
+          "regex-automata/src/dfa/determinize.rs",
+          "regex-automata/src/dfa/sparse.rs"
+        ]
+      },
+      "evidence": {
+        "kind": "eager",
+        "risk": {
+          "loading": "potential-at-import",
+          "coupling": "present",
+          "loadingNote": "module-scope dependency cycle; execution and attribute reads are not fully modeled"
+        },
+        "path": [
+          "regex-automata/src/dfa/dense.rs",
+          "regex-automata/src/dfa/determinize.rs"
+        ],
+        "pathImports": [
+          {
+            "file": "regex-automata/src/dfa/dense.rs",
+            "to": "regex-automata/src/dfa/determinize.rs",
+            "line": 22,
+            "deferred": false
+          },
+          {
+            "file": "regex-automata/src/dfa/determinize.rs",
+            "to": "regex-automata/src/dfa/dense.rs",
+            "line": 3,
+            "deferred": false
+          }
+        ],
+        "imports": [
+          {
+            "file": "regex-automata/src/dfa/dense.rs",
+            "line": 22,
+            "to": "regex-automata/src/dfa/determinize.rs",
+            "names": [
+              "determinize"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-automata/src/dfa/dense.rs",
+            "line": 22,
+            "to": "regex-automata/src/dfa/sparse.rs",
+            "names": [
+              "sparse"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-automata/src/dfa/determinize.rs",
+            "line": 3,
+            "to": "regex-automata/src/dfa/dense.rs",
+            "names": [
+              "dense"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-automata/src/dfa/sparse.rs",
+            "line": 47,
+            "to": "regex-automata/src/dfa/dense.rs",
+            "names": [
+              "dense"
+            ],
+            "kind": "static"
+          }
+        ],
+        "lazyImports": 0,
+        "totalImports": 4,
+        "threshold": null
+      },
+      "supportedFixes": [
+        "prefer `import module` + attribute access at call time over `from module import name` inside the cycle",
+        "move the shared definitions into a new module both sides import",
+        "turn one direction into a function-scope import if the dependency is only needed at call time"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "regex-automata/src/dfa/dense.rs",
+          "regex-automata/src/dfa/determinize.rs",
+          "regex-automata/src/dfa/sparse.rs"
+        ],
+        "sha256": "54a77b6951697556b1ae1c34218f57c9ce9d5e1db1cfb189ca1e46b47601798c"
+      }
+    },
+    {
+      "id": "COUP-d8f9851210f6",
+      "code": "coupling/import-cycle",
+      "dimension": "coupling",
+      "confidence": 0.7,
+      "severity": "warning",
+      "message": "4 files form a module-scope import cycle: regex-automata/src/nfa/thompson/backtrack.rs \u2192 regex-automata/src/nfa/thompson/mod.rs \u2192 regex-automata/src/nfa/thompson/backtrack.rs. Load-time behavior is not verified; accesses to partially initialized modules may depend on import order.",
+      "subject": {
+        "files": [
+          "regex-automata/src/nfa/thompson/backtrack.rs",
+          "regex-automata/src/nfa/thompson/literal_trie.rs",
+          "regex-automata/src/nfa/thompson/mod.rs",
+          "regex-automata/src/nfa/thompson/pikevm.rs"
+        ]
+      },
+      "evidence": {
+        "kind": "eager",
+        "risk": {
+          "loading": "potential-at-import",
+          "coupling": "present",
+          "loadingNote": "module-scope dependency cycle; execution and attribute reads are not fully modeled"
+        },
+        "path": [
+          "regex-automata/src/nfa/thompson/backtrack.rs",
+          "regex-automata/src/nfa/thompson/mod.rs"
+        ],
+        "pathImports": [
+          {
+            "file": "regex-automata/src/nfa/thompson/backtrack.rs",
+            "to": "regex-automata/src/nfa/thompson/mod.rs",
+            "line": 15,
+            "deferred": false
+          },
+          {
+            "file": "regex-automata/src/nfa/thompson/mod.rs",
+            "to": "regex-automata/src/nfa/thompson/backtrack.rs",
+            "line": 57,
+            "deferred": false
+          }
+        ],
+        "imports": [
+          {
+            "file": "regex-automata/src/nfa/thompson/backtrack.rs",
+            "line": 15,
+            "to": "regex-automata/src/nfa/thompson/mod.rs",
+            "names": [
+              "thompson"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-automata/src/nfa/thompson/literal_trie.rs",
+            "line": 5,
+            "to": "regex-automata/src/nfa/thompson/mod.rs",
+            "names": [
+              "thompson"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-automata/src/nfa/thompson/mod.rs",
+            "line": 57,
+            "to": "regex-automata/src/nfa/thompson/backtrack.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-automata/src/nfa/thompson/mod.rs",
+            "line": 63,
+            "to": "regex-automata/src/nfa/thompson/literal_trie.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-automata/src/nfa/thompson/mod.rs",
+            "line": 68,
+            "to": "regex-automata/src/nfa/thompson/pikevm.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-automata/src/nfa/thompson/pikevm.rs",
+            "line": 13,
+            "to": "regex-automata/src/nfa/thompson/mod.rs",
+            "names": [
+              "thompson"
+            ],
+            "kind": "static"
+          }
+        ],
+        "lazyImports": 0,
+        "totalImports": 6,
+        "threshold": null
+      },
+      "supportedFixes": [
+        "prefer `import module` + attribute access at call time over `from module import name` inside the cycle",
+        "move the shared definitions into a new module both sides import",
+        "turn one direction into a function-scope import if the dependency is only needed at call time"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "regex-automata/src/nfa/thompson/backtrack.rs",
+          "regex-automata/src/nfa/thompson/literal_trie.rs",
+          "regex-automata/src/nfa/thompson/mod.rs",
+          "regex-automata/src/nfa/thompson/pikevm.rs"
+        ],
+        "sha256": "288c53821e0f29521313a278ff7dcffb7a68829b01d5eb2b7169fa09e47eef9e"
+      }
+    },
+    {
+      "id": "COUP-b7c3f456114f",
+      "code": "coupling/import-cycle",
+      "dimension": "coupling",
+      "confidence": 0.7,
+      "severity": "warning",
+      "message": "12 files form a module-scope import cycle: regex-cli/args/api.rs \u2192 regex-cli/args/mod.rs \u2192 regex-cli/args/api.rs. Load-time behavior is not verified; accesses to partially initialized modules may depend on import order.",
+      "subject": {
+        "files": [
+          "regex-cli/args/api.rs",
+          "regex-cli/args/backtrack.rs",
+          "regex-cli/args/dfa.rs",
+          "regex-cli/args/hybrid.rs",
+          "regex-cli/args/input.rs",
+          "regex-cli/args/lite.rs",
+          "regex-cli/args/meta.rs",
+          "regex-cli/args/mod.rs",
+          "regex-cli/args/onepass.rs",
+          "regex-cli/args/pikevm.rs",
+          "regex-cli/args/syntax.rs",
+          "regex-cli/args/thompson.rs"
+        ]
+      },
+      "evidence": {
+        "kind": "eager",
+        "risk": {
+          "loading": "potential-at-import",
+          "coupling": "present",
+          "loadingNote": "module-scope dependency cycle; execution and attribute reads are not fully modeled"
+        },
+        "path": [
+          "regex-cli/args/api.rs",
+          "regex-cli/args/mod.rs"
+        ],
+        "pathImports": [
+          {
+            "file": "regex-cli/args/api.rs",
+            "to": "regex-cli/args/mod.rs",
+            "line": 7,
+            "deferred": false
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "to": "regex-cli/args/api.rs",
+            "line": 11,
+            "deferred": false
+          }
+        ],
+        "imports": [
+          {
+            "file": "regex-cli/args/api.rs",
+            "line": 7,
+            "to": "regex-cli/args/mod.rs",
+            "names": [
+              "args"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/backtrack.rs",
+            "line": 7,
+            "to": "regex-cli/args/mod.rs",
+            "names": [
+              "args"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/dfa.rs",
+            "line": 11,
+            "to": "regex-cli/args/mod.rs",
+            "names": [
+              "args"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/hybrid.rs",
+            "line": 7,
+            "to": "regex-cli/args/mod.rs",
+            "names": [
+              "args"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/input.rs",
+            "line": 5,
+            "to": "regex-cli/args/mod.rs",
+            "names": [
+              "args"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/lite.rs",
+            "line": 7,
+            "to": "regex-cli/args/mod.rs",
+            "names": [
+              "args"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/meta.rs",
+            "line": 10,
+            "to": "regex-cli/args/mod.rs",
+            "names": [
+              "args"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 11,
+            "to": "regex-cli/args/api.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 12,
+            "to": "regex-cli/args/backtrack.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 14,
+            "to": "regex-cli/args/dfa.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 17,
+            "to": "regex-cli/args/hybrid.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 18,
+            "to": "regex-cli/args/input.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 19,
+            "to": "regex-cli/args/lite.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 20,
+            "to": "regex-cli/args/meta.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 21,
+            "to": "regex-cli/args/onepass.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-cli/args/mod.rs",
+            "line": 24,
+            "to": "regex-cli/args/pikevm.rs",
+            "kind": "static"
+          }
+        ],
+        "lazyImports": 0,
+        "totalImports": 22,
+        "threshold": null
+      },
+      "supportedFixes": [
+        "prefer `import module` + attribute access at call time over `from module import name` inside the cycle",
+        "move the shared definitions into a new module both sides import",
+        "turn one direction into a function-scope import if the dependency is only needed at call time"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "regex-cli/args/api.rs",
+          "regex-cli/args/backtrack.rs",
+          "regex-cli/args/dfa.rs",
+          "regex-cli/args/hybrid.rs",
+          "regex-cli/args/input.rs",
+          "regex-cli/args/lite.rs",
+          "regex-cli/args/meta.rs",
+          "regex-cli/args/mod.rs",
+          "regex-cli/args/onepass.rs",
+          "regex-cli/args/pikevm.rs",
+          "regex-cli/args/syntax.rs",
+          "regex-cli/args/thompson.rs"
+        ],
+        "sha256": "5b9638b66dced95717d463af510c1188ab5fb110162f574c415cc4ab92989872"
+      }
+    },
+    {
+      "id": "COUP-bcc47905e0e0",
+      "code": "coupling/import-cycle",
+      "dimension": "coupling",
+      "confidence": 0.7,
+      "severity": "warning",
+      "message": "2 files form a module-scope import cycle: regex-lite/src/hir/mod.rs \u2192 regex-lite/src/hir/parse.rs \u2192 regex-lite/src/hir/mod.rs. Load-time behavior is not verified; accesses to partially initialized modules may depend on import order.",
+      "subject": {
+        "files": [
+          "regex-lite/src/hir/mod.rs",
+          "regex-lite/src/hir/parse.rs"
+        ]
+      },
+      "evidence": {
+        "kind": "eager",
+        "risk": {
+          "loading": "potential-at-import",
+          "coupling": "present",
+          "loadingNote": "module-scope dependency cycle; execution and attribute reads are not fully modeled"
+        },
+        "path": [
+          "regex-lite/src/hir/mod.rs",
+          "regex-lite/src/hir/parse.rs"
+        ],
+        "pathImports": [
+          {
+            "file": "regex-lite/src/hir/mod.rs",
+            "to": "regex-lite/src/hir/parse.rs",
+            "line": 5,
+            "deferred": false
+          },
+          {
+            "file": "regex-lite/src/hir/parse.rs",
+            "to": "regex-lite/src/hir/mod.rs",
+            "line": 10,
+            "deferred": false
+          }
+        ],
+        "imports": [
+          {
+            "file": "regex-lite/src/hir/mod.rs",
+            "line": 5,
+            "to": "regex-lite/src/hir/parse.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-lite/src/hir/parse.rs",
+            "line": 10,
+            "to": "regex-lite/src/hir/mod.rs",
+            "names": [
+              "hir"
+            ],
+            "kind": "static"
+          }
+        ],
+        "lazyImports": 0,
+        "totalImports": 2,
+        "threshold": null
+      },
+      "supportedFixes": [
+        "prefer `import module` + attribute access at call time over `from module import name` inside the cycle",
+        "move the shared definitions into a new module both sides import",
+        "turn one direction into a function-scope import if the dependency is only needed at call time"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "regex-lite/src/hir/mod.rs",
+          "regex-lite/src/hir/parse.rs"
+        ],
+        "sha256": "874b1f124300cbfa512868d58c8a0679ded1187290ce18f1cf7ea4c26b59e40c"
+      }
+    },
+    {
+      "id": "COUP-23ce85721a7e",
+      "code": "coupling/import-cycle",
+      "dimension": "coupling",
+      "confidence": 0.7,
+      "severity": "warning",
+      "message": "14 files form a module-scope import cycle: regex-syntax/src/ast/mod.rs \u2192 regex-syntax/src/ast/parse.rs \u2192 regex-syntax/src/ast/mod.rs. Load-time behavior is not verified; accesses to partially initialized modules may depend on import order.",
+      "subject": {
+        "files": [
+          "regex-syntax/src/ast/mod.rs",
+          "regex-syntax/src/ast/parse.rs",
+          "regex-syntax/src/ast/print.rs",
+          "regex-syntax/src/ast/visitor.rs",
+          "regex-syntax/src/error.rs",
+          "regex-syntax/src/hir/interval.rs",
+          "regex-syntax/src/hir/literal.rs",
+          "regex-syntax/src/hir/mod.rs",
+          "regex-syntax/src/hir/print.rs",
+          "regex-syntax/src/hir/translate.rs",
+          "regex-syntax/src/hir/visitor.rs",
+          "regex-syntax/src/lib.rs",
+          "regex-syntax/src/parser.rs",
+          "regex-syntax/src/unicode.rs"
+        ]
+      },
+      "evidence": {
+        "kind": "eager",
+        "risk": {
+          "loading": "potential-at-import",
+          "coupling": "present",
+          "loadingNote": "module-scope dependency cycle; execution and attribute reads are not fully modeled"
+        },
+        "path": [
+          "regex-syntax/src/ast/mod.rs",
+          "regex-syntax/src/ast/parse.rs"
+        ],
+        "pathImports": [
+          {
+            "file": "regex-syntax/src/ast/mod.rs",
+            "to": "regex-syntax/src/ast/parse.rs",
+            "line": 11,
+            "deferred": false
+          },
+          {
+            "file": "regex-syntax/src/ast/parse.rs",
+            "to": "regex-syntax/src/ast/mod.rs",
+            "line": 18,
+            "deferred": false
+          }
+        ],
+        "imports": [
+          {
+            "file": "regex-syntax/src/ast/mod.rs",
+            "line": 9,
+            "to": "regex-syntax/src/ast/visitor.rs",
+            "names": [
+              "visit"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/mod.rs",
+            "line": 11,
+            "to": "regex-syntax/src/ast/parse.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/mod.rs",
+            "line": 12,
+            "to": "regex-syntax/src/ast/print.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/mod.rs",
+            "line": 13,
+            "to": "regex-syntax/src/ast/visitor.rs",
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/parse.rs",
+            "line": 18,
+            "to": "regex-syntax/src/ast/mod.rs",
+            "names": [
+              "ast"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/parse.rs",
+            "line": 18,
+            "to": "regex-syntax/src/lib.rs",
+            "names": [
+              "is_escapeable_character"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/parse.rs",
+            "line": 18,
+            "to": "regex-syntax/src/lib.rs",
+            "names": [
+              "is_meta_character"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/print.rs",
+            "line": 7,
+            "to": "regex-syntax/src/ast/mod.rs",
+            "names": [
+              "ast"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/print.rs",
+            "line": 7,
+            "to": "regex-syntax/src/ast/visitor.rs",
+            "names": [
+              "visitor"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/ast/visitor.rs",
+            "line": 3,
+            "to": "regex-syntax/src/ast/mod.rs",
+            "names": [
+              "ast"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/error.rs",
+            "line": 8,
+            "to": "regex-syntax/src/ast/mod.rs",
+            "names": [
+              "ast"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/error.rs",
+            "line": 8,
+            "to": "regex-syntax/src/hir/mod.rs",
+            "names": [
+              "hir"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/hir/interval.rs",
+            "line": 5,
+            "to": "regex-syntax/src/unicode.rs",
+            "names": [
+              "unicode"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/hir/literal.rs",
+            "line": 58,
+            "to": "regex-syntax/src/hir/mod.rs",
+            "names": [
+              "hir"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/hir/mod.rs",
+            "line": 30,
+            "to": "regex-syntax/src/unicode.rs",
+            "names": [
+              "unicode"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "regex-syntax/src/hir/mod.rs",
+            "line": 36,
+            "to": "regex-syntax/src/hir/visitor.rs",
+            "names": [
+              "visit"
+            ],
+            "kind": "static"
+          }
+        ],
+        "lazyImports": 0,
+        "totalImports": 38,
+        "threshold": null
+      },
+      "supportedFixes": [
+        "prefer `import module` + attribute access at call time over `from module import name` inside the cycle",
+        "move the shared definitions into a new module both sides import",
+        "turn one direction into a function-scope import if the dependency is only needed at call time"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "regex-syntax/src/ast/mod.rs",
+          "regex-syntax/src/ast/parse.rs",
+          "regex-syntax/src/ast/print.rs",
+          "regex-syntax/src/ast/visitor.rs",
+          "regex-syntax/src/error.rs",
+          "regex-syntax/src/hir/interval.rs",
+          "regex-syntax/src/hir/literal.rs",
+          "regex-syntax/src/hir/mod.rs",
+          "regex-syntax/src/hir/print.rs",
+          "regex-syntax/src/hir/translate.rs",
+          "regex-syntax/src/hir/visitor.rs",
+          "regex-syntax/src/lib.rs",
+          "regex-syntax/src/parser.rs",
+          "regex-syntax/src/unicode.rs"
+        ],
+        "sha256": "ca9f6a45e5c4fd6e5d6feecf09206167b503a605e63b8ead0b25a2ef007724b5"
+      }
+    }
+  ]
+}

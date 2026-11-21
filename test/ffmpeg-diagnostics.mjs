@@ -25,7 +25,7 @@ export function decodeDiagnostics(stderr, { allowFlushNoise = false } = {}) {
   return { text: raw, tolerated: 0 };
 }
 
-/** WebCodecs AudioEncoder defaults to 20 ms Opus frames; story-export.js does not set frameDuration, and story-webm.js:18 writes CodecDelay without DiscardPadding. */
+/** Native Opus checks use the default 20 ms packet cadence. */
 export const OPUS_FRAME_SAMPLES = 960;
 
 /** A complete Opus track decodes within one packet-frame of its packet count. */

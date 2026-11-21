@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "POST /checkout — ledger rollout",
+    "output": "examples/checkout-ledger-sequence.html",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "web", "label": "Web", "type": "frontend" },
+    { "id": "api", "label": "Checkout API", "type": "backend", "change": "modified" },
+    { "id": "ledger", "label": "Ledger service", "type": "backend", "change": "added" },
+    { "id": "audit", "label": "Audit service", "type": "backend", "change": "removed" },
+    { "id": "db", "label": "Orders DB", "type": "database" }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "web",
+      "to": "api",
+      "y": 160,
+      "label": "POST /checkout",
+      "variant": "emphasis",
+      "change": "modified",
+      "payload": {
+        "summary": "Response gains ledger_ref; the request body is unchanged",
+        "contentType": "application/json",
+        "before": { "orderId": 8812, "status": "accepted" },
+        "after": { "orderId": 8812, "status": "accepted", "ledgerRef": "5f1c…" }
+      }
+    },
+    { "id": "persist", "from": "api", "to": "db", "y": 220, "label": "INSERT orders" },
+    {
+      "id": "append",
+      "from": "api",
+      "to": "ledger",
+      "y": 280,
+      "label": "append entry",
+      "change": "added",
+      "payload": {
+        "contentType": "application/json",
+        "sample": { "orderId": 8812, "amount": 4300, "currency": "USD" }
+      }
+    },
+    { "id": "ledger-ok", "from": "ledger", "to": "api", "y": 330, "label": "ledger_ref", "variant": "return", "change": "added" },
+    { "id": "audit-call", "from": "api", "to": "audit", "y": 390, "label": "log event", "change": "removed" },
+    { "id": "audit-ok", "from": "audit", "to": "api", "y": 440, "label": "ack", "variant": "return", "change": "removed" },
+    { "id": "respond", "from": "api", "to": "web", "y": 500, "label": "201 Created", "variant": "return", "change": "modified" }
+  ]
+}

@@ -100,6 +100,35 @@
     "variant": {
       "enum": ["default", "emphasis", "security", "dashed"]
     },
+    "changeStatus": {
+      "description": "Review-time change state for an element in a merged before/after superset. Omit for ordinary diagrams; removed elements stay at their authored position as ghosts.",
+      "enum": ["added", "modified", "removed", "unchanged"]
+    },
+    "emphasis": {
+      "description": "Heavier stroke and label weight so the element reads first without relying on color.",
+      "type": "boolean"
+    },
+    "payloadValue": {
+      "description": "A bounded JSON document carried by a message or flow: object, array, or string.",
+      "anyOf": [
+        { "type": "object", "maxProperties": 200 },
+        { "type": "array", "maxItems": 200 },
+        { "type": "string", "maxLength": 4000 }
+      ]
+    },
+    "payload": {
+      "description": "Reader-only payload shape for a message or flow. The Viewer shows it in the Semantic Passport and diffs before/after; it never enters the SVG.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "contentType": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "before": { "$ref": "#/$defs/payloadValue" },
+        "after": { "$ref": "#/$defs/payloadValue" },
+        "sample": { "$ref": "#/$defs/payloadValue" }
+      }
+    },
     "legendMode": {
       "enum": ["auto", "all", "hidden"]
     },
@@ -123,7 +152,12 @@
         },
         "provider": { "enum": ["github", "gitee", "gitlab"] },
         "link_mode": { "enum": ["web", "local-only"] },
-        "revision": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" }
+        "revision": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" },
+        "base_revision": {
+          "description": "Merge-base commit that nodes marked change: removed are verified and linked against.",
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{40}$"
+        }
       }
     },
     "sourceReferences": {

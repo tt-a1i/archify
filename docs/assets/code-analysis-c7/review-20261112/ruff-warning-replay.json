@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-12",
+  "route": "Import and Viewer replay of an existing real Ruff report; Ruff was not rerun",
+  "upstream": {
+    "repository": "https://github.com/trailofbits/skills",
+    "commit": "711af095215ad4ecde5b90cd1d0124b3f1c4ca9e",
+    "tool": "Ruff 0.17.1",
+    "scope": 191,
+    "canonicalRootCiVersion": "Ruff 0.14.13",
+    "canonicalRootCiFindings": 0
+  },
+  "candidate": {
+    "basedOn": "bdd477bb7f76dedb7975bf9ecb1b86018b3ed44d",
+    "state": "working tree with approved default-warning change",
+    "importerSha256": "0ffa7ffc297ee35a9d097beb0a7da3c2eb276cfc1a2cecb77635416d29862a15"
+  },
+  "inputs": {
+    "configChange": "Omit external.severity; all other case configuration unchanged",
+    "reportSha256": "51b921a2801f8749f27d79f9276bdd5ef62376dfeeea71be9fc30aae04fd8f5f",
+    "manifestSha256": "1d968a861c869f5a6c5b03b7f616741c5bb9db2442aaa878699fc6d69fb83feb",
+    "sameReport": true
+  },
+  "result": {
+    "before": {
+      "severityPolicy": "source",
+      "error": 77,
+      "warning": 0
+    },
+    "after": {
+      "severityPolicy": "warning",
+      "error": 0,
+      "warning": 77,
+      "originalError": 77,
+      "verifiedBinding": 77
+    },
+    "sameFindingIds": 77,
+    "sameEvidenceDigests": 77,
+    "sameLocations": 77,
+    "changedReviewDigests": 77,
+    "oldImportSettingsDigest": "f155b42e72343afe9cfa454b83b239837b4949880b49eb66d2217f338847b952",
+    "newImportSettingsDigest": "79f1d807b9a722d7a8cf96c67a779a377651f8a613bb2a31970b99e8b5b17279"
+  },
+  "browser": {
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "theme": "Light",
+    "preset": "Classic",
+    "motion": "Still",
+    "zoom": "100%",
+    "readerWidth": 420,
+    "observed": [
+      "77 findings / 77 warning in Overview",
+      "Amber component warnings",
+      "Ruff source identity and ISC004 native rule",
+      "Captured lines 371–372 match source hashes",
+      "Original level remains error in import details"
+    ],
+    "screenshots": [
+      "../overview-map.jpg",
+      "../findings-list.jpg",
+      "../finding-evidence.jpg"
+    ],
+    "review": "Main-thread Codex agent inspected screenshots; human approval not claimed"
+  },
+  "limitations": [
+    "The 77 records are upstream-tool claims, not independently established defects",
+    "This is newer-tool compatibility evidence, not a failing canonical root CI scan",
+    "No new native-tool execution occurred during this policy replay"
+  ]
+}

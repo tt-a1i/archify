@@ -53,6 +53,15 @@
         "repository": {
           "$ref": "common.schema.json#/$defs/repository"
         },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "$ref": "common.schema.json#/$defs/legendMode"
+            }
+          }
+        },
         "evidence": {
           "enum": [
             "measured",
@@ -95,6 +104,12 @@
         "properties": {
           "id": {
             "$ref": "common.schema.json#/$defs/id"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/changeStatus"
+          },
+          "emphasis": {
+            "$ref": "common.schema.json#/$defs/emphasis"
           },
           "name": {
             "type": "string",

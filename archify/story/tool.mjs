@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
-import {compileBrief,draftBrief,nativeMotions,openingModes} from './story-plan.mjs';
+import {compileBrief,draftBrief,nativeMotions,openingModes,MAX_BRIEF_EXCERPT_LINES} from './story-plan.mjs';
 import {resolveOutputPath} from '../renderers/shared/output-path.mjs';
 import {writeStoryOutput,rollbackStoryOutput} from './output.mjs';
 import {parse,serializeOuter} from './vendor/html-parser.mjs';
@@ -88,7 +88,7 @@ function excerpt(spec,anchor,facts,repoRoot){
   if(content.includes('\0'))throw Error('Code excerpts require text files.');
   const lines=content.split(/\r?\n/),first=source.line||1,last=source.endLine||lines.length;
   const from=spec.fromLine??first,to=spec.toLine??Math.min(last,from+13);
-  if(!Number.isInteger(from)||!Number.isInteger(to)||from<first||to>last||to<from||to-from>=20)throw Error('Code excerpt must fit its source range and contain at most 20 lines.');
+  if(!Number.isInteger(from)||!Number.isInteger(to)||from<first||to>last||to<from||to-from>=MAX_BRIEF_EXCERPT_LINES)throw Error(`Code excerpt must fit its source range and contain at most ${MAX_BRIEF_EXCERPT_LINES} lines.`);
   return {path:source.path,revision,line:from,endLine:to,lines:lines.slice(from-1,to).map((value,index)=>({number:from+index,text:value,emphasis:(spec.emphasis||[]).includes(from+index)}))};
 }
 
@@ -151,7 +151,7 @@ export function buildStory(file,planFile,out,{standalone=false,repoRoot}={}){
 <div class="lab"><header class="lab-head" lang="en"><b>Archify · Story Studio / Detailed walkthrough</b><nav><a data-mode="explain" aria-current="page">Detailed walkthrough</a><a href="${esc(scriptRef)}">Story brief ↗</a></nav></header>
 <main class="stage"><div class="ambient"></div><div class="mast"><div class="brand"><img src="${brandRef}" alt="">Archify<span>STORY STUDIO</span></div><div class="chapter"></div></div><div class="heading"><div class="eyebrow">${esc(plan.eyebrow)}</div><div class="headlines"><div class="headline-old" aria-hidden="true"></div><h1>${esc(plan.title)}</h1></div></div><div class="phase-rail"></div><div class="plot-safe-area" aria-hidden="true"></div><div class="viewport"><div class="art diagram-container">${serializeOuter(source.svg)}</div></div><div class="callouts"></div><div class="subtitle-wrap"><div class="subtitle"></div></div><div class="transition-light"></div></main>
 <div class="controls" lang="en"><button data-play>Play</button><button data-replay>Replay</button><input class="timeline" aria-label="Story playback position" type="range" min="0" max="30" step="0.01" value="0"><span class="clock"></span><button data-sound aria-pressed="true">Sound on</button></div><p class="notes" lang="en">Native node entrances, connections and sound share the story timeline. Space to play or pause.</p></div><div hidden><button id="btn-motion"><span id="motion-label"></span></button></div>
-<script type="application/json" id="story-data">${data}</script><script>if(new URLSearchParams(location.search).has('export'))document.body.classList.add('export');window.Archify={};function viewerText(key){return key;}</script><script>${nativeMotion}</script><script>${fs.readFileSync(path.join(here,'story-audio.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'scope-field.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story-webm.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story-export.js'),'utf8')}</script></body></html>`;
+<script type="application/json" id="story-data">${data}</script><script>if(new URLSearchParams(location.search).has('export'))document.body.classList.add('export');window.Archify={};function viewerText(key){return key;}</script><script>${nativeMotion}</script><script>${fs.readFileSync(path.join(here,'story-audio.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'scope-field.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story-container.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story-export.js'),'utf8')}</script></body></html>`;
   const html=attach?attachStory(source.html,storyHtml):storyHtml;
   writeStoryOutput(out,html,()=>resolveOutputPath(outputGuard));
   return {output:out,bytes:Buffer.byteLength(html),duration:plan.shots.reduce((sum,shot)=>sum+(plan.defaultMode==='explain'?shot.explain?.duration??shot.duration:shot.duration),0),source:facts.title,nodes:facts.nodes.length,edges:facts.edges.length,

@@ -1,0 +1,109 @@
+{
+  "requests": {
+    "revision": "0e322af87745eff34caffe4df68456ebc20d9068",
+    "tag": "v2.32.3",
+    "old": {
+      "findings": 9,
+      "warnings": 0,
+      "info": 9,
+      "priorities": [
+        "COMP-6fd43dc98e31",
+        "COMP-67a8b22fa9b7",
+        "COMP-fea11204efdb"
+      ],
+      "hasInvestigation": false
+    },
+    "new": {
+      "findings": 9,
+      "warnings": 0,
+      "info": 9,
+      "priorities": [
+        "COMP-6fd43dc98e31",
+        "COMP-67a8b22fa9b7",
+        "COMP-fea11204efdb"
+      ],
+      "ruleCounts": [
+        {
+          "code": "complexity/function",
+          "severity": "info",
+          "count": 9
+        }
+      ],
+      "leads": [
+        {
+          "id": "COMP-6fd43dc98e31",
+          "where": "src/requests/models.py:137",
+          "symbol": "RequestEncodingMixin._encode_files"
+        },
+        {
+          "id": "COMP-67a8b22fa9b7",
+          "where": "src/requests/auth.py:126",
+          "symbol": "HTTPDigestAuth.build_digest_header"
+        },
+        {
+          "id": "COMP-fea11204efdb",
+          "where": "src/requests/adapters.py:613",
+          "symbol": "HTTPAdapter.send"
+        }
+      ]
+    },
+    "session": {
+      "old": {
+        "toolUses": 20,
+        "tokens": 680356,
+        "durationMs": 74486,
+        "firstLead": "COMP-15ee04958d0f"
+      },
+      "new": {
+        "toolUses": 32,
+        "tokens": 1435353,
+        "durationMs": 121627,
+        "firstLead": "COMP-15ee04958d0f"
+      }
+    },
+    "conclusion": "both independently found the empty-string cookie bug; one-line fix + regression test validated"
+  },
+  "clap": {
+    "revision": "ec93e71255c0b833a34f50662a3fdb22f53f6ded",
+    "old": {
+      "findings": 28,
+      "warnings": 6,
+      "info": 22,
+      "priorities": [
+        "COMP-016d60856e46",
+        "COMP-6da4aa50fe24",
+        "COMP-4ebe70e7938e"
+      ],
+      "hasInvestigation": false
+    },
+    "new": {
+      "findings": 28,
+      "warnings": 6,
+      "info": 22,
+      "priorities": [
+        "COMP-016d60856e46",
+        "COMP-6da4aa50fe24",
+        "COMP-4ebe70e7938e"
+      ],
+      "ruleCounts": [
+        {
+          "code": "complexity/function",
+          "severity": "warning",
+          "count": 23
+        },
+        {
+          "code": "coupling/import-cycle",
+          "severity": "info",
+          "count": 4
+        },
+        {
+          "code": "coupling/internal-leak",
+          "severity": "info",
+          "count": 1
+        }
+      ]
+    },
+    "conclusion": "smallest 2-file cycle removed by deleting an unused import; cargo check and 83 lib tests pass; 28->27 findings",
+    "session": "not run as an independent session; the main agent verified the cycle and patch in source"
+  }
+}
