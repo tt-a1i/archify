@@ -256,6 +256,8 @@ test('standalone multi-view component choreography validates, compiles dual-them
   assert.match(html, /StoryContainer/);
   assert.match(html, /avc1\.64002a/);
   assert.equal(extractSvgs(html).direct.length, 1, 'stage shares SVG geometry and keyframes across palettes');
+  assert.match(html, /<div class="toolbar stage-toolbar" role="toolbar"[^>]*>\s*<div class="toolbar-group">\s*<button id="stage-theme"/);
+  assert.match(html, /id="stage-theme-icon" class="toolbar-icon"/);
   assert.match(html, /<div class="preset-wrap">\s*<button id="stage-preset"[^>]*aria-controls="stage-preset-menu"/);
   assert.match(html, /<div class="preset-menu" id="stage-preset-menu" role="menu"/);
   assert.match(html, /<span>视觉表达<\/span>.*<kbd>S<\/kbd>循环切换/);
@@ -263,6 +265,12 @@ test('standalone multi-view component choreography validates, compiles dual-them
   assert.match(html, /<strong>信号流<\/strong><small>突出动态流向<\/small>/);
   assert.match(html, /<strong>编辑风格<\/strong><small>适合发布与上线说明<\/small>/);
   assert.match(html, /#stage-preset\[data-preset-option="editorial"\] \.preset-control-mark\{[^}]*var\(--arrow-emphasis\)/);
+  assert.match(html, /<div class="export-wrap">\s*<button id="stage-export"[^>]*aria-controls="stage-export-menu"/);
+  assert.match(html, /<div class="export-menu" id="stage-export-menu" role="menu"/);
+  assert.match(html, /class="export-menu-header"[\s\S]*?<kbd>E<\/kbd>/);
+  assert.deepEqual([...html.matchAll(/<button id="stage-export-([^"]+)"[^>]*role="menuitem"/g)].map(match => match[1]), ['png', 'mp4', 'webm']);
+  assert.match(html, /<strong>PNG<\/strong><small class="hint">[^<]+ · 1080p<\/small>/);
+  assert.match(html, /<strong>WebM<\/strong><small class="hint">1080p · 60 fps<\/small>/);
   const styles = loadViewerStyles();
   for (const theme of BAKE_THEMES) {
     for (const preset of BAKE_PRESETS) {

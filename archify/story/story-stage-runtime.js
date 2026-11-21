@@ -22,13 +22,20 @@
   const playBtn = document.getElementById('stage-play');
   const replayBtn = document.getElementById('stage-replay');
   const themeBtn = document.getElementById('stage-theme');
+  const themeLabel = document.getElementById('stage-theme-label');
   const presetBtn = document.getElementById('stage-preset');
   const presetLabel = document.getElementById('stage-preset-label');
   const presetMenu = document.getElementById('stage-preset-menu');
   const presetOptions = presetMenu ? [...presetMenu.querySelectorAll('[data-preset-value]')] : [];
+  const exportBtn = document.getElementById('stage-export');
+  const exportMenu = document.getElementById('stage-export-menu');
   const pngBtn = document.getElementById('stage-export-png');
   const mp4Btn = document.getElementById('stage-export-mp4');
   const webmBtn = document.getElementById('stage-export-webm');
+  const exportOptions = [pngBtn, mp4Btn, webmBtn];
+  const toolbarButtons = [themeBtn, presetBtn, exportBtn].filter(Boolean);
+  const presetControl = presetBtn && { button: presetBtn, panel: presetMenu, options: presetOptions };
+  const exportControl = { button: exportBtn, panel: exportMenu, options: exportOptions };
   const range = document.getElementById('stage-range');
   const clock = document.getElementById('stage-clock');
   const statusEl = document.getElementById('stage-status');
@@ -45,6 +52,8 @@
   let playing = true;
   let currentTime = 0;
   let activeJob = null;
+  let openControl = null;
+  let savingPng = false;
 
   const activeSvg = () => switchableSvg || panes[currentTheme]?.querySelector('svg') || null;
   const allAnims = (svg) => (svg ? svg.getAnimations({ subtree: true }) : []);
@@ -78,7 +87,6 @@
     stepButtons.forEach((btn, idx) => btn.classList.toggle('is-active', idx === activeStep));
     playBtn.textContent = playing ? labels.pause : labels.play;
     playBtn.setAttribute('aria-pressed', String(playing));
-    themeBtn.textContent = currentTheme === 'dark' ? labels.themeLight : labels.themeDark;
   }
 
   function applyTime(time, shouldPlay) {
@@ -104,6 +112,11 @@
   function pause() { playing = false; applyTime(currentTime, false); }
   function seek(seconds) { applyTime(seconds, playing); }
 
+  function syncThemeButton() {
+    themeLabel.textContent = currentTheme === 'dark' ? labels.themeDark : labels.themeLight;
+    themeBtn.setAttribute('aria-pressed', String(currentTheme === 'light'));
+  }
+
   function setTheme(theme) {
     if (activeJob || !['light', 'dark'].includes(theme) || theme === currentTheme) return;
     currentTheme = theme;
@@ -114,7 +127,7 @@
       panes.dark.classList.toggle('is-active', theme === 'dark');
       applyTime(currentTime, playing);
     }
-    themeBtn.textContent = theme === 'dark' ? labels.themeLight : labels.themeDark;
+    syncThemeButton();
   }
 
   function setPreset(preset) {
@@ -131,60 +144,55 @@
     }
   }
 
-  function openPresetMenu(focusLast = false) {
-    if (activeJob || presetBtn.disabled) return;
-    presetMenu.classList.add('open');
-    presetBtn.setAttribute('aria-expanded', 'true');
-    const option = focusLast ? presetOptions.at(-1) : presetOptions.find(button => button.dataset.presetValue === currentPreset);
-    (option || presetOptions[0]).focus();
+  function availableOptions(control) {
+    return control.options.filter(button => !button.disabled && !button.hidden);
   }
 
-  function closePresetMenu(restoreFocus = false) {
-    if (!presetMenu?.classList.contains('open')) return;
-    presetMenu.classList.remove('open');
-    presetBtn.setAttribute('aria-expanded', 'false');
-    if (restoreFocus) presetBtn.focus();
+  function openMenu(control, focusLast = false) {
+    if (activeJob || control.button.disabled) return;
+    closeMenu();
+    openControl = control;
+    control.panel.classList.add('open');
+    control.button.setAttribute('aria-expanded', 'true');
+    const options = availableOptions(control);
+    const option = focusLast ? options.at(-1) : options.find(button => button.getAttribute('aria-checked') === 'true') || options[0];
+    option?.focus();
   }
 
-  function bindPresetMenu() {
-    const wrap = presetBtn.closest('.preset-wrap');
-    setPreset(currentPreset);
-    presetBtn.addEventListener('click', () => {
-      if (presetMenu.classList.contains('open')) closePresetMenu();
-      else openPresetMenu();
-    });
-    presetMenu.addEventListener('click', (event) => {
-      const option = event.target.closest('[data-preset-value]');
-      if (!option || activeJob) return;
-      setPreset(option.dataset.presetValue);
-      closePresetMenu(true);
-    });
-    document.addEventListener('click', (event) => {
-      if (!wrap.contains(event.target)) closePresetMenu();
-    });
+  function closeMenu(restoreFocus = false) {
+    if (!openControl) return;
+    const { button, panel } = openControl;
+    openControl = null;
+    panel.classList.remove('open');
+    button.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) button.focus();
+  }
+
+  function toggleMenu(control) {
+    if (openControl === control) closeMenu(true);
+    else openMenu(control);
+  }
+
+  function bindMenu(control) {
+    const { button } = control;
+    const wrap = button.parentElement;
+    button.addEventListener('click', () => toggleMenu(control));
     wrap.addEventListener('keydown', (event) => {
       const { key } = event;
-      const open = presetMenu.classList.contains('open');
-      if (key === 'Escape' && open) {
-        event.preventDefault();
-        closePresetMenu(true);
-        return;
-      }
-      if (key === 'Tab') closePresetMenu();
       if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
-      if (event.target === presetBtn) {
-        if (!open && (key === 'ArrowDown' || key === 'ArrowUp')) {
-          event.preventDefault();
-          openPresetMenu(key === 'ArrowUp');
-        }
+      if (event.target === button && (key === 'ArrowDown' || key === 'ArrowUp')) {
+        event.preventDefault();
+        openMenu(control, key === 'ArrowUp');
         return;
       }
-      const active = presetOptions.indexOf(document.activeElement);
-      const count = presetOptions.length;
+      if (openControl !== control || !control.panel.contains(event.target)) return;
+      const options = availableOptions(control);
+      const active = options.indexOf(document.activeElement);
+      const count = options.length;
       const next = { ArrowDown: (active + 1) % count, ArrowUp: (active - 1 + count) % count, Home: 0, End: count - 1 };
-      if (open && Object.hasOwn(next, key)) {
+      if (count && Object.hasOwn(next, key)) {
         event.preventDefault();
-        presetOptions[next[key]].focus();
+        options[next[key]].focus();
       }
     });
   }
@@ -412,7 +420,7 @@
     abortCheck(signal);
     const wasPlaying = playing;
     const savedTime = currentTime;
-    const controls = [themeBtn, playBtn, replayBtn, range, ...stepButtons];
+    const controls = [playBtn, replayBtn, range, ...stepButtons];
     const disabledStates = controls.map(control => control.disabled);
     let target, encoder, mux, failure, wake;
     const check = () => { abortCheck(signal); if (failure) throw failure; };
@@ -497,9 +505,10 @@
     if (activeJob) throw Error('A story export is already running.');
     const controller = new AbortController();
     activeJob = controller;
-    const presetWasDisabled = presetBtn?.disabled;
-    closePresetMenu();
-    if (presetBtn) presetBtn.disabled = true;
+    closeMenu();
+    const controls = [...toolbarButtons, ...exportOptions];
+    const disabledStates = controls.map(control => control.disabled && !(control === pngBtn && savingPng));
+    for (const control of controls) control.disabled = true;
     const abortFromCaller = () => controller.abort(callerSignal.reason);
     try {
       if (callerSignal?.aborted) abortFromCaller();
@@ -507,7 +516,7 @@
       return await run(controller.signal);
     } finally {
       activeJob = null;
-      if (presetBtn) presetBtn.disabled = presetWasDisabled;
+      controls.forEach((control, i) => { control.disabled = disabledStates[i] || (control === pngBtn && savingPng); });
       callerSignal?.removeEventListener('abort', abortFromCaller);
     }
   }
@@ -517,7 +526,6 @@
   }
 
   async function saveVideo(format, signal) {
-    mp4Btn.disabled = webmBtn.disabled = pngBtn.disabled = true;
     const prev = statusEl.textContent;
     const ext = format === 'webm' ? '.webm' : '.mp4';
     const filename = `story-${currentTheme}-1080p${ext}`;
@@ -536,29 +544,61 @@
     } catch (error) {
       try { await writer?.abort(error); } catch {}
       statusEl.textContent = error.name === 'AbortError' ? prev : (error.message || String(error));
-    } finally {
-      mp4Btn.disabled = webmBtn.disabled = pngBtn.disabled = false;
     }
   }
 
-  function runDownload(format) {
+  async function runDownload(format) {
     if (activeJob) return;
-    return withVideoExport(signal => saveVideo(format, signal));
+    await withVideoExport(signal => saveVideo(format, signal));
+    if (document.activeElement === document.body) exportBtn.focus();
   }
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) pause();
+  syncThemeButton();
   requestAnimationFrame(tick);
   playBtn.addEventListener('click', () => (playing ? pause() : play()));
   replayBtn.addEventListener('click', () => { playing = true; applyTime(0, true); });
   themeBtn.addEventListener('click', () => setTheme(currentTheme === 'dark' ? 'light' : 'dark'));
-  if (presetBtn) bindPresetMenu();
+  if (presetControl) {
+    setPreset(currentPreset);
+    bindMenu(presetControl);
+    presetMenu.addEventListener('click', (event) => {
+      const option = event.target.closest('[data-preset-value]');
+      if (!option || activeJob) return;
+      setPreset(option.dataset.presetValue);
+      closeMenu(true);
+    });
+  }
+  bindMenu(exportControl);
+  document.addEventListener('click', (event) => {
+    if (openControl && !openControl.button.parentElement.contains(event.target)) closeMenu();
+  });
   range.addEventListener('input', () => applyTime(Number(range.value), false));
   range.addEventListener('change', () => applyTime(Number(range.value), playing));
   stepButtons.forEach((btn) => btn.addEventListener('click', () => seek(Number(btn.dataset.stepAt))));
   document.addEventListener('keydown', (event) => {
     if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
+    if (event.key === 'Escape' && openControl) {
+      event.preventDefault();
+      closeMenu(true);
+      return;
+    }
+    if (event.key === 'Tab') closeMenu(true);
     const target = event.target instanceof Element ? event.target : document.activeElement;
-    if (target?.isContentEditable || target?.closest('input,textarea,button,select')) return;
+    if (target?.isContentEditable || target?.closest('input,textarea,select')) return;
+    const buttonFocused = target?.closest('button');
+    if (!activeJob && !event.shiftKey && ['e', 'E'].includes(event.key)) {
+      event.preventDefault();
+      toggleMenu(exportControl);
+      return;
+    }
+    if (!activeJob && ['t', 'T'].includes(event.key)) {
+      event.preventDefault();
+      closeMenu();
+      setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+      return;
+    }
+    if (buttonFocused) return;
     if (!activeJob && presetBtn && !presetBtn.disabled && (event.key === 's' || event.key === 'S')) {
       event.preventDefault();
       const next = (meta.presets.indexOf(currentPreset) + 1) % meta.presets.length;
@@ -570,12 +610,23 @@
     }
   });
   pngBtn.addEventListener('click', async () => {
+    if (activeJob) return;
+    closeMenu(true);
+    savingPng = true;
     pngBtn.disabled = true;
-    try { downloadBlob(await exportPNG(), `story-${currentTheme}.png`); }
-    finally { pngBtn.disabled = false; }
+    const filename = `story-${currentTheme}.png`;
+    try { downloadBlob(await exportPNG(), filename); }
+    finally {
+      savingPng = false;
+      pngBtn.disabled = Boolean(activeJob);
+    }
   });
-  mp4Btn.addEventListener('click', () => runDownload('mp4'));
-  webmBtn.addEventListener('click', () => runDownload('webm'));
+  for (const button of [mp4Btn, webmBtn]) {
+    button.addEventListener('click', () => {
+      closeMenu(true);
+      runDownload(button.dataset.format);
+    });
+  }
 
   const api = {
     play,

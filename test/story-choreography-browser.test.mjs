@@ -246,6 +246,84 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     assert.equal(menu.cycled, 'editorial');
     assert.equal(menu.wrapped, 'classic');
   });
+  await t.test('Stage Export menu shares toolbar focus and dispatches PNG, MP4, and WebM actions', async () => {
+    const result = await evalJs(`(async () => {
+      const preset = document.getElementById('stage-preset');
+      const trigger = document.getElementById('stage-export');
+      const expanded = () => [preset, trigger].map(button => button.getAttribute('aria-expanded'));
+      const key = (key, target = document.activeElement, options = {}) =>
+        target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...options }));
+      preset.click();
+      key('e', document.body);
+      const exportByKey = [...expanded(), document.activeElement.id];
+      preset.click();
+      const presetByClick = expanded();
+      trigger.click();
+      const exportByClick = expanded();
+      const navigation = ['ArrowUp', 'ArrowDown', 'End', 'Home'].map(value => {
+        key(value);
+        return document.activeElement.id;
+      });
+      key('Escape');
+      const escaped = [...expanded(), document.activeElement.id];
+      key('e', document.getElementById('stage-range'));
+      key('e', document.body, { ctrlKey: true });
+      const ignored = expanded();
+      key('e', document.body);
+      key('e');
+      const toggled = expanded();
+      trigger.click();
+      document.querySelector('h1').click();
+      const outside = expanded();
+
+      let receiveDownload;
+      const downloaded = new Promise(resolve => { receiveDownload = resolve; });
+      const originalClick = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function () {
+        if (this.download.endsWith('.png')) receiveDownload(fetch(this.href).then(response => response.blob()));
+        else originalClick.call(this);
+      };
+      let png;
+      try {
+        trigger.click();
+        document.querySelector('#stage-export-png strong').click();
+        const timeout = setTimeout(() => receiveDownload(null), 5000);
+        const blob = await downloaded;
+        clearTimeout(timeout);
+        const image = await createImageBitmap(blob);
+        png = [blob.type, image.width, image.height, ...expanded()];
+        image.close();
+      } finally {
+        HTMLAnchorElement.prototype.click = originalClick;
+      }
+      const pickers = [];
+      const originalPicker = window.showSaveFilePicker;
+      window.showSaveFilePicker = async ({ suggestedName }) => {
+        pickers.push([suggestedName.split('.').at(-1), ...expanded(), trigger.disabled]);
+        throw new DOMException('test cancellation', 'AbortError');
+      };
+      try {
+        for (const format of ['mp4', 'webm']) {
+          trigger.click();
+          document.getElementById('stage-export-' + format).click();
+          // Let the asynchronous save picker cancellation restore the toolbar.
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+      } finally {
+        window.showSaveFilePicker = originalPicker;
+      }
+      return { exportByKey, presetByClick, exportByClick, navigation, escaped, ignored, toggled, outside, png, pickers, restored: !trigger.disabled };
+    })()`);
+    assert.deepEqual(result.exportByKey, ['false', 'true', 'stage-export-png']);
+    assert.deepEqual(result.presetByClick, ['true', 'false']);
+    assert.deepEqual(result.exportByClick, ['false', 'true']);
+    assert.deepEqual(result.navigation, ['stage-export-webm', 'stage-export-png', 'stage-export-webm', 'stage-export-png']);
+    assert.deepEqual(result.escaped, ['false', 'false', 'stage-export']);
+    for (const key of ['ignored', 'toggled', 'outside']) assert.deepEqual(result[key], ['false', 'false'], key);
+    assert.deepEqual(result.png, ['image/png', 1920, 1080, 'false', 'false']);
+    assert.deepEqual(result.pickers, [['mp4', 'false', 'false', true], ['webm', 'false', 'false', true]]);
+    assert.equal(result.restored, true);
+  });
   await t.test('Stage switches all eight Viewer palettes and PNG captures the active syntax and canvas', async () => {
     const { rules } = loadViewerStyles();
     const combinations = BAKE_PRESETS.flatMap(preset => BAKE_THEMES.map(theme => {
@@ -356,7 +434,7 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     bmp.close();
     let controlsLocked = false;
     let overlappingExport;
-    const controls = [...document.querySelectorAll('#stage-theme,#stage-preset,#stage-play,#stage-replay,#stage-range,.stage-step')];
+    const controls = [...document.querySelectorAll('.stage-toolbar button:not(.preset-option),#stage-play,#stage-replay,#stage-range,.stage-step')];
     const presetButton = document.getElementById('stage-preset');
     presetButton.click();
     const presetOpenBeforeExport = presetButton.getAttribute('aria-expanded') === 'true';
@@ -366,6 +444,8 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
         document.getElementById('stage-theme').click();
         presetButton.click();
         document.body.dispatchEvent(new KeyboardEvent('keydown', {key:'s',bubbles:true}));
+        document.body.dispatchEvent(new KeyboardEvent('keydown', {key:'e',bubbles:true}));
+        controlsLocked = controlsLocked && document.getElementById('stage-export').getAttribute('aria-expanded') === 'false';
         window.ArchifyStoryStage.setTheme('dark');
         window.ArchifyStoryStage.setPreset('blueprint');
         document.getElementById('stage-replay').click();
@@ -505,6 +585,80 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     assert.equal(mp4Rec.fps, 30);
     assert.equal(fs.readFileSync(mp4Out).subarray(4, 12).toString('ascii'), 'ftypmp42');
   }
+
+  await t.test('Stage uses native Viewer toolbar paint and both menus fit at 320px and 768px', async () => {
+    const nativeHtml = path.join(dir, 'native-toolbar.html');
+    const rendered = run(['render', 'architecture', path.join(dir, 'before.json'), nativeHtml], dir);
+    assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+    const navigate = async (file, theme) => {
+      const url = pathToFileURL(file);
+      url.searchParams.set('theme', theme);
+      const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+      await send('Page.navigate', { url: url.href });
+      await loaded;
+    };
+    const paint = (theme) => evalJs(`(async () => {
+      await document.fonts.ready;
+      const stage = window.StoryStage;
+      if (stage) stage.setTheme('${theme}');
+      const themeButton = document.getElementById(stage ? 'stage-theme' : 'btn-theme');
+      const presetButton = document.getElementById(stage ? 'stage-preset' : 'btn-preset');
+      const exportButton = document.getElementById(stage ? 'stage-export' : 'btn-export');
+      exportButton.click();
+      const menu = exportButton.nextElementSibling;
+      const toolbar = exportButton.closest('.toolbar');
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await Promise.allSettled(toolbar.getAnimations({ subtree: true }).map(animation => animation.finished));
+      const style = (node, props, pseudo) => props.map(prop => getComputedStyle(node, pseudo).getPropertyValue(prop));
+      const buttonPaint = node => style(node, ['color', 'border-radius', 'border-width', 'font-size', 'font-weight', 'padding', 'height']);
+      return {
+        toolbar: style(toolbar, ['gap', 'align-items']),
+        group: style(themeButton.parentElement, ['background-color', 'border-color', 'box-shadow', 'border-radius'], '::before'),
+        theme: buttonPaint(themeButton),
+        themeTrack: style(themeButton, ['background-color', 'border-radius', 'box-shadow', 'inset'], '::before'),
+        themeThumb: style(themeButton, ['background-color', 'border-radius', 'box-shadow', 'left', 'width'], '::after'),
+        themeIcon: style(themeButton.querySelector('.toolbar-icon'), ['mask-image', 'color']),
+        preset: buttonPaint(presetButton),
+        presetMark: style(presetButton.querySelector('.preset-control-mark'), ['border-color', 'background-color', 'border-radius']),
+        export: buttonPaint(exportButton),
+        exportFill: style(exportButton, ['background-color', 'border-radius', 'box-shadow'], '::before'),
+        chevron: style(exportButton.querySelector('.toolbar-chevron'), ['mask-image', 'transform']),
+        menu: style(menu, ['background-color', 'border-color', 'box-shadow', 'border-radius', 'width', 'padding']),
+        header: style(menu.querySelector('.export-menu-header'), ['padding', 'gap', 'display', 'align-items']),
+        shortcut: style(menu.querySelector('kbd'), ['background-color', 'border-color', 'color', 'font-size']),
+        png: buttonPaint(menu.querySelector('[data-format="png"]')),
+        pngIcon: style(menu.querySelector('[data-format="png"]'), ['mask-image', 'color'], '::before'),
+        videoIcon: style(menu.querySelector('[data-format="webm"]'), ['mask-image', 'color'], '::before'),
+      };
+    })()`);
+    await send('Network.setBlockedURLs', { urls: [] });
+    for (const theme of BAKE_THEMES) {
+      await navigate(nativeHtml, theme);
+      const nativePaint = await paint(theme);
+      await navigate(stageHtml, theme);
+      assert.deepEqual(await paint(theme), nativePaint, `Classic ${theme} toolbar paint`);
+    }
+    for (const width of [320, 768]) {
+      await send('Emulation.setDeviceMetricsOverride', { width, height: 640, deviceScaleFactor: 1, mobile: false });
+      await navigate(stageHtml, 'light');
+      const boxes = await evalJs(`(() => {
+        const toolbar = document.querySelector('.stage-toolbar');
+        const box = node => {
+          const { left, right, top, bottom, width, height } = node.getBoundingClientRect();
+          return { left, right, top, bottom, width, height };
+        };
+        return [box(toolbar), ...['stage-preset', 'stage-export'].map(id => {
+          const trigger = document.getElementById(id);
+          trigger.click();
+          return box(trigger.nextElementSibling);
+        })];
+      })()`);
+      for (const box of boxes) {
+        assert.ok(box.width > 0 && box.height > 0 && box.left >= 0 && box.right <= width
+          && box.top >= 0 && box.bottom <= 640, `${width}px viewport includes ${JSON.stringify(box)}`);
+      }
+    }
+  });
 });
 
 test('choreography preserves revisits, successive labels, parallel travel, initial focus and finite playback', { skip: !chrome }, async (t) => {
