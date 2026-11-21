@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { SaxesParser } from 'saxes';
 import { parse } from 'parse5';
 import { compileExplainerDiagram, prepareExplainerDiagrams, validateExplainerDiagramTarget } from '../archify/explainer/diagrams.mjs';
+import { parseExplainer } from '../archify/explainer/parse.mjs';
 import { renderExplainer } from '../archify/explainer/render.mjs';
 import { unpackPageBundle } from '../archify/explainer/page-bundle.mjs';
 
@@ -145,6 +146,36 @@ test('explainer diagrams: structural changes decorate only explicit preview targ
   assert.equal(hash(entry.html), entry.sha256);
   await assert.rejects(prepareExplainerDiagrams(documentOf([blockOf('sequence', spec,
     { changes: [{ target: 'nonexistent', change: 'removed' }] })])), error => error.archifyDiagnostics[0].code === 'explainer/diagram-change-target');
+});
+
+test('explainer diagrams: structural changes name their targets as the preview shows them', async () => {
+  const spec = compileExplainerDiagram('sequence', rows.sequence, { id: 'request' });
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'changed-request', title: 'Changed request', locale: 'en' },
+    answer: { summary: 'The API now reads Redis.' }, sources: [], panels: [{ id: 'request', title: 'What changed?',
+      blocks: [blockOf('sequence', spec, { id: 'request', changes: [{ target: 'api', change: 'modified' }, { target: 'api-to-redis-1', change: 'added' }] })] }] };
+  const html = renderExplainer(document, { preparedDiagrams: await prepareExplainerDiagrams(document) });
+  const changes = html.match(/<dl class="changes">[\s\S]*?<\/dl>/)[0];
+  assert.match(changes, /<dd data-change-target="api"><span class="chip modified">[^<]+<\/span> API<\/dd>/);
+  assert.match(changes, /<dd data-change-target="api-to-redis-1"><span class="chip added">[^<]+<\/span> API → Redis · Read<\/dd>/);
+  assert.doesNotMatch(changes, /<code>/, 'readers see names, not authoring IDs');
+});
+
+test('explainer diagrams: a change target whose name another node or edge shares keeps its ID beside the name', async () => {
+  const sequence = compileExplainerDiagram('sequence', [...rows.sequence, 'api | redis | Read'], { id: 'repeat' });
+  const repeated = (await prepareExplainerDiagrams(documentOf([blockOf('sequence', sequence)]))).diagrams.sequence.semantic.edges
+    .filter(edge => edge.from === 'api' && edge.to === 'redis').map(edge => edge.id);
+  assert.equal(repeated.length, 2, 'the fixture repeats one message');
+  const architecture = compileExplainerDiagram('architecture', ['web | Web app | frontend', 'eu | Cache | database', 'us | Cache | database', 'web > eu | Reads', 'web > us | Reads'], { id: 'caches' });
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'repeated-names', title: 'Repeated names', locale: 'en' },
+    answer: { summary: 'One read and one cache changed.' }, sources: [], panels: [{ id: 'request', title: 'What changed?', blocks: [
+      blockOf('sequence', sequence, { id: 'repeat', changes: [{ target: repeated[1], change: 'modified' }, { target: 'client-to-api-1', change: 'added' }] }),
+      blockOf('architecture', architecture, { id: 'caches', changes: [{ target: 'us', change: 'removed' }, { target: 'web', change: 'modified' }] })] }] };
+  const html = renderExplainer(document, { preparedDiagrams: await prepareExplainerDiagrams(document) });
+  const [messages, nodes] = html.match(/<dl class="changes">[\s\S]*?<\/dl>/g);
+  assert.match(messages, new RegExp(`<dd data-change-target="${repeated[1]}"><span class="chip modified">[^<]+</span> API → Redis · Read <code>${repeated[1]}</code></dd>`));
+  assert.match(messages, /<dd data-change-target="client-to-api-1"><span class="chip added">[^<]+<\/span> Client → API · Request<\/dd>/, 'a unique message keeps its name alone');
+  assert.match(nodes, /<dd data-change-target="us"><span class="chip removed">[^<]+<\/span> Cache <code>us<\/code><\/dd>/);
+  assert.match(nodes, /<dd data-change-target="web"><span class="chip modified">[^<]+<\/span> Web app<\/dd>/, 'a unique node keeps its name alone');
 });
 
 test('explainer diagrams: rejected native causes retain author line, component and repair example', async () => {
@@ -420,4 +451,125 @@ test('automatic workflow branch labels follow locale without changing authored l
   const wrapped=compileExplainerDiagram('workflow',wrappedRows,{id:'wrapped',title:'Release bands'});
   assert.ok(wrapped.lanes.length>1);
   assert.deepEqual(compileExplainerDiagram('workflow',wrappedRows,{id:'wrapped',title:'Release bands',locale:'en'}),wrapped,'wrapped band titles stay authored');
+});
+
+test('compact diagrams support domain role naming via role <type> | <label> and localized group lenses', async () => {
+  const arch = compileExplainerDiagram('architecture', [
+    'role frontend | Draft state',
+    'role backend | Frozen state',
+    'draft | Draft | frontend',
+    'frozen | Frozen | backend',
+    'store | Store | database',
+    'draft > frozen | produce',
+    'frozen > store | snapshot',
+  ], { id: 'immer-arch', title: 'Immer state model', locale: 'zh-CN' });
+  assert.equal(arch.meta.translations['viewer.kind.frontend'], 'Draft state');
+  assert.equal(arch.meta.translations['viewer.kind.backend'], 'Frozen state');
+  assert.equal(arch.meta.legend.entries.frontend.label, 'Draft state');
+  assert.equal(arch.meta.legend.entries.backend.label, 'Frozen state');
+  assert.equal(arch.components.find(c => c.id === 'draft').icon, 'none');
+  assert.equal(arch.components.find(c => c.id === 'frozen').icon, 'none');
+  assert.equal(arch.components.find(c => c.id === 'store').icon, undefined, 'unrenamed kinds keep default icons');
+
+  const wf = compileExplainerDiagram('workflow', [
+    'role frontend | Draft state',
+    'edit | Mutate draft | frontend',
+    'guard | Valid? | frontend',
+    'commit | Commit | backend',
+    'edit > guard',
+    'guard > commit | yes',
+  ], { id: 'immer-flow', title: 'Draft validation' });
+  assert.equal(wf.nodes.find(n => n.id === 'edit').icon, 'none');
+  assert.equal(wf.nodes.find(n => n.id === 'guard').icon, 'decision', 'decision question mark icon overrides role suppression');
+  assert.equal(wf.meta.legend.entries.frontend.label, 'Draft state');
+
+  const seq = compileExplainerDiagram('sequence', [
+    'role frontend | Caller',
+    'actor caller | Caller | frontend',
+    'actor engine | Engine | backend',
+    'caller | engine | produce(base, fn)',
+  ], { id: 'immer-seq', title: 'Producer sequence' });
+  assert.equal(seq.meta.translations['viewer.kind.frontend'], 'Caller');
+  assert.equal(seq.meta.legend, undefined, 'sequence specs keep legend undefined');
+
+  const doc = {
+    schema_version: 1, diagram_type: 'explainer', meta: { id: 'role-test', title: 'Role test', locale: 'en' },
+    answer: { summary: 'Roles map kinds cleanly.' }, sources: [],
+    panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', arch), blockOf('workflow', wf), blockOf('sequence', seq)] }],
+  };
+  const archFrozen = JSON.stringify(arch);
+  const prepared = await prepareExplainerDiagrams(doc);
+  assert.equal(JSON.stringify(arch), archFrozen, 'native preparation preserves authored spec bytes');
+  assert.equal(prepared.diagrams.architecture.checks.check.ok, true);
+  assert.equal(prepared.diagrams.workflow.checks.check.ok, true);
+  assert.equal(prepared.diagrams.sequence.checks.check.ok, true);
+  assert.equal(prepared.diagrams.architecture.spec.meta.translations['viewer.lens.title'], undefined, 'frozen spec retains authored translations');
+  assert.match(prepared.diagrams.architecture.html, /Compare groups/);
+  assert.match(prepared.diagrams.workflow.html, /Compare groups/);
+  assert.match(prepared.diagrams.sequence.html, /Compare groups/);
+
+  const customLens = structuredClone(arch);
+  customLens.meta.translations['viewer.lens.title'] = 'Custom title';
+  const preparedCustom = await prepareExplainerDiagrams({ ...doc, meta: { ...doc.meta, locale: 'zh-CN' }, panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', customLens)] }] });
+  assert.match(preparedCustom.diagrams.architecture.html, /Custom title/);
+  assert.match(preparedCustom.diagrams.architecture.html, /选择一个分组以高亮对应元素。/);
+
+  const preparedZhTw = await prepareExplainerDiagrams({ ...doc, meta: { ...doc.meta, locale: 'zh-tw' }, panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', arch)] }] });
+  assert.match(preparedZhTw.diagrams.architecture.html, /比較分組/);
+  assert.match(preparedZhTw.diagrams.architecture.html, /選擇一個分組以反白對應元素。/);
+
+  const omittedLocaleMd = [
+    '# State model {#state-model}',
+    '',
+    'Draft state freezes into snapshots.',
+    '',
+    '## How do states transition? {#state-panel}',
+    '',
+    '@architecture id=omitted-locale-arch',
+    '| role frontend | Draft state |',
+    '| draft | Draft | frontend |',
+    '| store | Store | database |',
+    '| draft > store | snapshot |',
+  ].join('\n');
+  const parsedOmitted = parseExplainer(omittedLocaleMd);
+  assert.equal(parsedOmitted.document.meta.locale, undefined);
+  const preparedOmitted = await prepareExplainerDiagrams(parsedOmitted.document);
+  const omittedEntry = preparedOmitted.diagrams['omitted-locale-arch'];
+  assert.equal(omittedEntry.spec.meta.locale, undefined, 'frozen spec retains omitted locale');
+  assert.match(omittedEntry.svg, />Draft state<\/text>/, 'diagram legend displays custom role');
+  const omittedI18n = JSON.parse(omittedEntry.html.match(/<script id="archify-i18n-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  assert.equal(omittedI18n.messages['viewer.kind.frontend'], 'Draft state', 'omitted-locale Viewer registers custom role label');
+  assert.equal(omittedI18n.messages['viewer.lens.title'], '比较分组', 'omitted-locale explainer defaults Viewer lens to zh-CN');
+  assert.equal(omittedI18n.messages['viewer.lens.instruction'], '选择一个分组以高亮对应元素。');
+
+  const bracedMd = [
+    '# Braced role {#braced}',
+    '',
+    'Answer.',
+    '',
+    '@meta locale=en',
+    '',
+    '## Model {#model}',
+    '',
+    '@architecture id=braced-arch',
+    '| role frontend | State {id} |',
+    '| a | Example | frontend |',
+  ].join('\n');
+  const parsedBraced = parseExplainer(bracedMd);
+  assert.equal(parsedBraced.document, null);
+  assert.equal(parsedBraced.diagnostics[0].code, 'explainer/diagram-role');
+  assert.equal(parsedBraced.diagnostics[0].subject.line, 10);
+
+  const literalRoleNode = compileExplainerDiagram('workflow', ['role | Assign role', 'next | Done', 'role > next'], { id: 'literal-role' });
+  assert.equal(literalRoleNode.nodes[0].id, 'role');
+
+  for (const [badRows, code] of [
+    [['role bogus | Label', 'a | A'], 'explainer/diagram-role'],
+    [[`role frontend | ${'x'.repeat(81)}`, 'a | A'], 'explainer/diagram-role'],
+    [['role frontend | State {id}', 'a | A'], 'explainer/diagram-role'],
+    [['role frontend | One', 'role frontend | Two', 'a | A'], 'explainer/diagram-role-duplicate'],
+    [['role frontend | Only role'], 'explainer/diagram-rows'],
+  ]) {
+    assert.throws(() => compileExplainerDiagram('architecture', badRows), error => error.archifyDiagnostics?.some(item => item.code === code), code);
+  }
 });

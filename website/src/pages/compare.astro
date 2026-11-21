@@ -1,0 +1,32 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import Navigation from '../components/Navigation.astro';
+import { Content as English, getHeadings as englishHeadings } from '../content/compare.en.md';
+import { Content as Chinese, getHeadings as chineseHeadings } from '../content/compare.zh.md';
+import head from '../data/agent-diagrams-head.html?raw';
+import css from '../styles/agent-diagrams.css?raw';
+import { productVersion, productChannel } from '../data/product-facts';
+const { lang = 'en' } = Astro.props;
+const Content = lang === 'zh' ? Chinese : English;
+const sectionIds = ['answer', 'matrix', 'boundaries', 'workflows', 'limits'];
+const headings = (lang === 'zh' ? chineseHeadings() : englishHeadings()).filter(heading => heading.depth === 2).map((heading, index) => ({ ...heading, slug: sectionIds[index] }));
+const channel = productChannel === 'development' ? (lang === 'zh' ? '开发版' : 'development') : (lang === 'zh' ? '稳定版' : 'stable');
+---
+<SiteLayout page="compare" lang={lang} head={head} css={css}>
+  <div class="grid-bg" aria-hidden="true"></div>
+  <Navigation page="compare" />
+  <main class="agent-guide">
+    <header class="article-meta">
+      <p>{lang === 'zh' ? '工具对比 · 选择 / 迁移' : 'Tool comparison · Choose / migrate'}</p>
+      <p>{lang === 'zh' ? `Archify v${productVersion} · ${channel} · 文中描述文档能力，不是性能实测。` : `Archify v${productVersion} · ${channel} · Describes documented behavior, not measured performance.`}</p>
+    </header>
+    <div class="article-grid">
+      <nav class="article-toc" aria-label={lang === 'zh' ? '本页目录' : 'On this page'}>
+        <p>{lang === 'zh' ? '本页目录' : 'On this page'}</p>
+        <ol>{headings.map(heading => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol>
+      </nav>
+      <article class="article-body"><Content /></article>
+    </div>
+  </main>
+  <footer class="article-footer"><a href="agent-diagrams.html">{lang === 'zh' ? '阅读 Agent 画图指南 →' : 'Read the agent diagramming guide →'}</a><a href="guide.html">{lang === 'zh' ? '选择图表配方 →' : 'Choose a diagram recipe →'}</a><a href="start.html">{lang === 'zh' ? '开始安装 →' : 'Install Archify →'}</a></footer>
+</SiteLayout>

@@ -840,6 +840,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
+    /* A Viewer an explainer page opens keeps its tools and the preset's look; the page names the
+       diagram, so the standalone badges stay off, as the embedded plate does. */
+    html[data-hosted="explainer"][data-preset] .header-row::after,
+    html[data-hosted="explainer"][data-preset="editorial"] .diagram-container::after { display: none; }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
@@ -5516,8 +5520,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="100" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Users</text>
-        <text data-detail="context" x="100" y="344" class="t-muted" font-size="9" text-anchor="middle">Browser / Mobile</text>
+          <text data-node-label="" data-detail-anchor="" x="100" y="328" class="t-primary" font-size="14" font-weight="600" text-anchor="middle">Users</text>
+        <text data-detail="context" x="100" y="344" class="t-muted" font-size="10.5" text-anchor="middle">Browser / Mobile</text>
         </g>
 
         <g id="node-auth" data-node-id="auth" data-node-label="Auth Provider" tabindex="0" role="button" aria-label="Focus Auth Provider, OAuth 2.0, Architecture component" aria-pressed="false" data-node-kind="security" data-node-sublabel="OAuth 2.0" data-node-tag="JWT + PKCE" data-node-context="Architecture component">
@@ -5540,8 +5544,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(256 306) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="315" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">CloudFront</text>
-        <text data-detail="context" x="315" y="344" class="t-muted" font-size="9" text-anchor="middle">CDN</text>
+          <text data-node-label="" data-detail-anchor="" x="315" y="328" class="t-primary" font-size="13.6" font-weight="600" text-anchor="middle">CloudFront</text>
+        <text data-detail="context" x="315" y="344" class="t-muted" font-size="10.5" text-anchor="middle">CDN</text>
         </g>
 
         <g id="node-lb" data-node-id="lb" data-node-label="Load Balancer" tabindex="0" role="button" aria-label="Focus Load Balancer, HTTPS :443, AWS Region: us-west-2 › sg-api :443/:8000" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="HTTPS :443" data-node-context="AWS Region: us-west-2 › sg-api :443/:8000">
@@ -5552,7 +5556,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="525" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Load Balancer</text>
-        <text data-detail="context" x="525" y="344" class="t-muted" font-size="9" text-anchor="middle">HTTPS :443</text>
+        <text data-detail="context" x="525" y="344" class="t-muted" font-size="10.5" text-anchor="middle">HTTPS :443</text>
         </g>
 
         <g id="node-api" data-node-id="api" data-node-label="API Server" tabindex="0" role="button" aria-label="Focus API Server, FastAPI :8000, AWS Region: us-west-2 › sg-api :443/:8000" aria-pressed="false" data-node-kind="backend" data-node-sublabel="FastAPI :8000" data-node-context="AWS Region: us-west-2 › sg-api :443/:8000">
@@ -5562,8 +5566,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(676 306) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="735" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API Server</text>
-        <text data-detail="context" x="735" y="344" class="t-muted" font-size="9" text-anchor="middle">FastAPI :8000</text>
+          <text data-node-label="" data-detail-anchor="" x="735" y="328" class="t-primary" font-size="13.6" font-weight="600" text-anchor="middle">API Server</text>
+        <text data-detail="context" x="735" y="344" class="t-muted" font-size="10.5" text-anchor="middle">FastAPI :8000</text>
         </g>
 
         <g id="node-cache" data-node-id="cache" data-node-label="Redis" tabindex="0" role="button" aria-label="Focus Redis, cache :6379, AWS Region: us-west-2" aria-pressed="false" data-node-kind="database" data-node-sublabel="cache :6379" data-node-context="AWS Region: us-west-2">
@@ -5574,8 +5578,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="735" y="178" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Redis</text>
-        <text data-detail="context" x="735" y="194" class="t-muted" font-size="9" text-anchor="middle">cache :6379</text>
+          <text data-node-label="" data-detail-anchor="" x="735" y="178" class="t-primary" font-size="14" font-weight="600" text-anchor="middle">Redis</text>
+        <text data-detail="context" x="735" y="194" class="t-muted" font-size="10.5" text-anchor="middle">cache :6379</text>
         </g>
 
         <g id="node-db" data-node-id="db" data-node-label="PostgreSQL" tabindex="0" role="button" aria-label="Focus PostgreSQL, primary :5432, AWS Region: us-west-2" aria-pressed="false" data-node-kind="database" data-node-sublabel="primary :5432" data-node-context="AWS Region: us-west-2">
@@ -5586,8 +5590,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="945" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL</text>
-        <text data-detail="context" x="945" y="344" class="t-muted" font-size="9" text-anchor="middle">primary :5432</text>
+          <text data-node-label="" data-detail-anchor="" x="945" y="328" class="t-primary" font-size="13.6" font-weight="600" text-anchor="middle">PostgreSQL</text>
+        <text data-detail="context" x="945" y="344" class="t-muted" font-size="10.5" text-anchor="middle">primary :5432</text>
         </g>
 
         <g id="node-s3" data-node-id="s3" data-node-label="S3" tabindex="0" role="button" aria-label="Focus S3, static assets, AWS Region: us-west-2" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="static assets" data-node-tag="OAI protected" data-node-context="AWS Region: us-west-2">
@@ -5597,7 +5601,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(256 446) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="315" y="468" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">S3</text>
+          <text data-node-label="" data-detail-anchor="" x="315" y="468" class="t-primary" font-size="14" font-weight="600" text-anchor="middle">S3</text>
         <text data-detail="context" x="315" y="484" class="t-muted" font-size="9" text-anchor="middle">static assets</text>
         <text data-detail="fine" x="315" y="492" class="t-cloud" font-size="7" text-anchor="middle">OAI protected</text>
         </g>
@@ -5612,8 +5616,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="735" y="468" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">SQS</text>
-        <text data-detail="context" x="735" y="484" class="t-muted" font-size="9" text-anchor="middle">job queue</text>
+          <text data-node-label="" data-detail-anchor="" x="735" y="468" class="t-primary" font-size="14" font-weight="600" text-anchor="middle">SQS</text>
+        <text data-detail="context" x="735" y="484" class="t-muted" font-size="10.5" text-anchor="middle">job queue</text>
         </g>
 
         <g id="node-worker" data-node-id="worker" data-node-label="Worker" tabindex="0" role="button" aria-label="Focus Worker, async jobs, AWS Region: us-west-2" aria-pressed="false" data-node-kind="backend" data-node-sublabel="async jobs" data-node-context="AWS Region: us-west-2">
@@ -5623,36 +5627,36 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(886 446) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="945" y="468" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Worker</text>
-        <text data-detail="context" x="945" y="484" class="t-muted" font-size="9" text-anchor="middle">async jobs</text>
+          <text data-node-label="" data-detail-anchor="" x="945" y="468" class="t-primary" font-size="14" font-weight="600" text-anchor="middle">Worker</text>
+        <text data-detail="context" x="945" y="484" class="t-muted" font-size="10.5" text-anchor="middle">async jobs</text>
         </g>
 
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="users" data-edge-to="cdn" data-edge-label="HTTPS" data-edge-key="0" data-edge-id="users-to-cdn">
           <rect x="188" y="310" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="205" y="320" class="t-edge-emphasis" font-size="8" text-anchor="middle">HTTPS</text>
+          <text x="205" y="320" class="t-edge-emphasis" font-size="10" font-weight="500" text-anchor="middle">HTTPS</text>
         </g>
         <g data-detail="context" data-edge-from="auth" data-edge-to="api" data-edge-label="verify JWT" data-edge-key="1" data-edge-id="jwt-verification">
           <rect x="591" y="174" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="620" y="184" class="t-edge-security" font-size="8" text-anchor="middle">verify JWT</text>
+          <text x="620" y="184" class="t-edge-security" font-size="10" font-weight="500" textLength="54" lengthAdjust="spacingAndGlyphs" text-anchor="middle">verify JWT</text>
         </g>
 
         <g data-detail="context" data-edge-from="cdn" data-edge-to="s3" data-edge-label="static" data-edge-key="3" data-edge-id="static-assets">
           <rect x="295.6" y="398" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="315" y="408" class="t-edge-dashed" font-size="8" text-anchor="middle">static</text>
+          <text x="315" y="408" class="t-edge-dashed" font-size="10" font-weight="500" textLength="34.8" lengthAdjust="spacingAndGlyphs" text-anchor="middle">static</text>
         </g>
 
         <g data-detail="context" data-edge-from="api" data-edge-to="cache" data-edge-label="read-through" data-edge-key="5" data-edge-id="cache-read-through">
           <rect x="701.2" y="212" width="67.6" height="14" rx="3" class="c-mask"/>
-          <text x="735" y="222" class="t-edge-default" font-size="8" text-anchor="middle">read-through</text>
+          <text x="735" y="222" class="t-edge-default" font-size="10" font-weight="500" textLength="63.599999999999994" lengthAdjust="spacingAndGlyphs" text-anchor="middle">read-through</text>
         </g>
         <g data-detail="context" data-edge-from="api" data-edge-to="db" data-edge-label="SQL" data-edge-key="6" data-edge-id="api-sql">
           <rect x="825" y="310" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="840" y="320" class="t-edge-default" font-size="8" text-anchor="middle">SQL</text>
+          <text x="840" y="320" class="t-edge-default" font-size="10" font-weight="500" text-anchor="middle">SQL</text>
         </g>
         <g data-detail="context" data-edge-from="api" data-edge-to="queue" data-edge-label="enqueue" data-edge-key="7" data-edge-id="enqueue-job">
           <rect x="713.2" y="398" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="735" y="408" class="t-edge-dashed" font-size="8" text-anchor="middle">enqueue</text>
+          <text x="735" y="408" class="t-edge-dashed" font-size="10" font-weight="500" textLength="39.6" lengthAdjust="spacingAndGlyphs" text-anchor="middle">enqueue</text>
         </g>
 
 
@@ -6268,10 +6272,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function diagramFilename() {
-        var title = (document.title || 'diagram')
-          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
-          .replace(/\s+Diagram$/i, '')
-          .trim();
+        // Prefer the authored heading: the document title may carry a
+        // locale-specific page decoration ("Diagram", "Diagrama", ...).
+        // Without a heading, keep the complete document title; suffix-like
+        // words in either source are authored text and are not stripped.
+        var heading = document.querySelector('.header h1');
+        var title = (heading && heading.textContent || '').trim() ||
+          (document.title || '').trim();
         // A mark is kept only while attached to a letter or number base;
         // a detached mark (the variation selector after an emoji, say)
         // would otherwise survive as an invisible filename.
@@ -11287,10 +11294,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Compact automatic sequences fit the first screen without shrinking
         // their authored text. Longer sequences retain reading width and page
         // scroll; other width-first families keep their existing strategy.
-        // Browser geometry can round the final SVG and page by one CSS pixel.
-        // Include that vertical allowance (expressed as width) so rounding
-        // alone does not switch a compact Sequence to authored scrolling.
-        var sequenceFits = automaticSequence && Math.min(desiredWidth + ratio, maxWidth) >=
+        // Body and stage padding already bound the actual viewport. The
+        // optional bottom gap may yield to the source-text floor; otherwise
+        // a late header reflow can select an enlarged, scrolling diagram
+        // even though its original size still fits the screen.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth + SAFE_BOTTOM_GAP * ratio, maxWidth) >=
           readableWidth + (docked ? railExtra : 0);
         readingScroll = widthFirstReading && !sequenceFits;
         if (readingScroll) desiredWidth = maxWidth;

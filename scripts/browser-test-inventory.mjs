@@ -31,6 +31,7 @@ export const browserTestFiles = [
   'crossover-state-browser.test.mjs',
   'semantic-passport-move-browser.test.mjs',
   'export-browser.test.mjs',
+  'export-filename-browser.test.mjs',
   'menu-modifier-browser.test.mjs',
   'export-selection-browser.test.mjs',
   'sequence-note-export-browser.test.mjs',
@@ -59,4 +60,5 @@ export const browserTestFiles = [
   'story-browser.test.mjs',
   // Benchmark observers and real export integration require this explicit Chrome lane.
   'diagram-quality-e2e-browser.test.mjs',
+  'export-svg-delivery.test.mjs',
 ];

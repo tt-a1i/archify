@@ -59,6 +59,7 @@ export function validateSchema(diagramType, data, { sourceReferencesOnly = false
       };
       const supportedFixes = {
         additionalProperties: [`remove unsupported property ${JSON.stringify(error.params?.additionalProperty)}`],
+        'false schema': [`remove unsupported value at ${annotated.path}`],
         required: [`add required property ${JSON.stringify(error.params?.missingProperty)}`],
         type: [`use ${JSON.stringify(error.params?.type)} at ${annotated.path}`],
         enum: [`choose one of the allowed values`],
