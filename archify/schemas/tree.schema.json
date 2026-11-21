@@ -55,6 +55,15 @@
         "views": {
           "$ref": "common.schema.json#/$defs/guidedViews"
         },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "$ref": "common.schema.json#/$defs/legendMode"
+            }
+          }
+        },
         "viewBox": {
           "type": "array",
           "prefixItems": [
@@ -114,6 +123,12 @@
         "properties": {
           "id": {
             "$ref": "common.schema.json#/$defs/id"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/changeStatus"
+          },
+          "emphasis": {
+            "$ref": "common.schema.json#/$defs/emphasis"
           },
           "label": {
             "type": "string",

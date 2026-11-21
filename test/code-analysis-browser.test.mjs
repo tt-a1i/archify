@@ -695,13 +695,23 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.documentElement.getAttribute('data-bauify-views'), getComputedStyle(document.getElementById('bauify-reader')).display !== 'none']"), [true, null, true], 'evidence shows beside the diagram');
 
   // The Atlas 3D tab shows the same run in the same place, every item accounted for.
+  const hasWebGl = await run(`(() => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    context?.getExtension('WEBGL_lose_context')?.loseContext();
+    return Boolean(context);
+  })()`);
   await run("document.querySelector('.views-option[data-view=atlas3d]').click()");
-  assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views'), typeof window.THREE]"),
-    [true, false, 'atlas3d', 'object'], 'Atlas 3D replaces the Atlas below the diagram and runs three.js on first open');
-  if (await run("!!document.querySelector('#bauify-atlas3d canvas')")) {
+  assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views')]"),
+    [true, false, 'atlas3d'], 'Atlas 3D replaces the Atlas below the diagram');
+  if (hasWebGl) {
+    assert.equal(await run("typeof window.THREE"), 'object', 'three.js loads on first open');
     await until(`document.documentElement.getAttribute('data-bauify-atlas3d-drawn') === '${atlas.functions.length}'`, 'Atlas 3D did not draw');
     assert.deepEqual(await run("[window.__archifyAtlas3d.view.consistent, window.__archifyAtlas3d.view.counts.files]"), [true, atlas.files.length], 'every file, function and finding of the run is in the model');
-  } else assert.match(await run("document.querySelector('#bauify-atlas3d .a3d-fallback').textContent"), /WebGL/, 'without WebGL the view says so');
+  } else {
+    assert.equal(await run("typeof window.THREE"), 'undefined', 'three.js stays inert without WebGL');
+    assert.match(await run("document.querySelector('#bauify-atlas3d .a3d-fallback')?.textContent || ''"), /WebGL/, 'without WebGL the view says so');
+  }
   // The diagram tab pages back to the diagram.
   await run("document.querySelector('.views-option[data-view=diagram]').click()");
   assert.deepEqual(await run("[document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views'), getComputedStyle(document.querySelector('.diagram-container')).display !== 'none', Array.from(document.querySelectorAll('.views-option'), b => b.getAttribute('aria-pressed'))]"),

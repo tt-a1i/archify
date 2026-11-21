@@ -38,6 +38,12 @@
       var parentBackBtn = document.getElementById('btn-parent-back');
       var drilldownsSection = document.getElementById('focus-drilldowns');
       var drilldownsList = document.getElementById('focus-drilldowns-list');
+      var payloadSection = document.getElementById('focus-payload');
+      var payloadRole = document.getElementById('focus-payload-role');
+      var payloadType = document.getElementById('focus-payload-type');
+      var payloadSummary = document.getElementById('focus-payload-summary');
+      var payloadStatus = document.getElementById('focus-payload-status');
+      var payloadBody = document.getElementById('focus-payload-body');
       var moveBtn = document.getElementById('btn-focus-move');
       var activeIds = [];
       var hoveredRelationship = null;
@@ -387,6 +393,158 @@
       function explanationFor(id) {
         return Archify.explanations && typeof Archify.explanations.node === 'function' ? Archify.explanations.node(id) : null;
       }
+      function payloadFor(edgeId) {
+        return Archify.payloads && typeof Archify.payloads.edge === 'function' ? Archify.payloads.edge(edgeId) : null;
+      }
+      /* Flatten a payload document into leaf fields keyed by a stable path.
+         Object keys are sorted so before/after line up regardless of authored
+         order; arrays keep their index so reordering shows as a change. */
+      function flattenPayload(value, path, out) {
+        if (value && typeof value === 'object') {
+          var keys = Array.isArray(value)
+            ? value.map(function (_, index) { return index; })
+            : Object.keys(value).sort();
+          if (!keys.length) { out.push({ path: path || '$', value: Array.isArray(value) ? '[]' : '{}' }); return out; }
+          keys.forEach(function (key) {
+            var segment = Array.isArray(value) ? '[' + key + ']' : (path ? '.' : '') + key;
+            flattenPayload(value[key], path + segment, out);
+          });
+          return out;
+        }
+        out.push({ path: path || '$', value: payloadLeafText(value) });
+        return out;
+      }
+      function payloadLeafText(value) {
+        if (value === null) return 'null';
+        if (value === undefined) return 'undefined';
+        if (typeof value === 'string') return JSON.stringify(value);
+        return String(value);
+      }
+      function diffPayloadFields(before, after) {
+        var left = {};
+        var right = {};
+        var order = [];
+        flattenPayload(before, '', []).forEach(function (field) { left[field.path] = field.value; order.push(field.path); });
+        flattenPayload(after, '', []).forEach(function (field) {
+          right[field.path] = field.value;
+          if (!Object.prototype.hasOwnProperty.call(left, field.path)) order.push(field.path);
+        });
+        return order.map(function (path) {
+          var hasLeft = Object.prototype.hasOwnProperty.call(left, path);
+          var hasRight = Object.prototype.hasOwnProperty.call(right, path);
+          if (hasLeft && !hasRight) return { path: path, state: 'removed', before: left[path] };
+          if (!hasLeft && hasRight) return { path: path, state: 'added', after: right[path] };
+          if (left[path] !== right[path]) return { path: path, state: 'modified', before: left[path], after: right[path] };
+          return { path: path, state: 'unchanged', after: right[path] };
+        });
+      }
+      function payloadFieldRow(field) {
+        var row = document.createElement('div');
+        row.className = 'semantic-passport-payload-field';
+        row.setAttribute('data-diff', field.state);
+        var sign = document.createElement('span');
+        sign.className = 'semantic-passport-payload-sign';
+        sign.setAttribute('aria-hidden', 'true');
+        sign.textContent = field.state === 'added' ? '+' : field.state === 'removed' ? '-' : field.state === 'modified' ? '~' : '';
+        var path = document.createElement('code');
+        path.className = 'semantic-passport-payload-path';
+        path.textContent = field.path;
+        var value = document.createElement('span');
+        value.className = 'semantic-passport-payload-value';
+        if (field.state === 'modified') {
+          var oldValue = document.createElement('del');
+          oldValue.textContent = field.before;
+          var newValue = document.createElement('ins');
+          newValue.textContent = field.after;
+          value.appendChild(oldValue);
+          value.appendChild(document.createTextNode(' \u2192 '));
+          value.appendChild(newValue);
+        } else {
+          value.textContent = field.state === 'removed' ? field.before : field.after;
+        }
+        row.setAttribute('aria-label', viewerText('viewer.passport.payload.field.' + field.state, {
+          path: field.path,
+          before: field.before == null ? '' : field.before,
+          after: field.after == null ? '' : field.after
+        }));
+        row.appendChild(sign);
+        row.appendChild(path);
+        row.appendChild(value);
+        return row;
+      }
+      function clearPayload() {
+        if (!payloadSection) return;
+        payloadSection.hidden = true;
+        payloadSection.removeAttribute('data-payload-mode');
+        payloadRole.hidden = true;
+        payloadRole.textContent = '';
+        payloadType.hidden = true;
+        payloadType.textContent = '';
+        payloadSummary.hidden = true;
+        payloadSummary.textContent = '';
+        payloadStatus.hidden = true;
+        payloadStatus.textContent = '';
+        payloadBody.textContent = '';
+      }
+      function renderPayload(record) {
+        clearPayload();
+        if (!payloadSection || !record || !record.id) return false;
+        var payload = payloadFor(record.id);
+        if (!payload) return false;
+        var hasBefore = Object.prototype.hasOwnProperty.call(payload, 'before');
+        var hasAfter = Object.prototype.hasOwnProperty.call(payload, 'after');
+        var hasSample = Object.prototype.hasOwnProperty.call(payload, 'sample');
+        var role = payload.role === 'response' || payload.role === 'request' || payload.role === 'flow' ? payload.role : null;
+        if (role) {
+          payloadRole.textContent = viewerText('viewer.passport.payload.role.' + role);
+          payloadRole.hidden = false;
+        }
+        if (typeof payload.contentType === 'string' && payload.contentType.trim()) {
+          payloadType.textContent = payload.contentType.trim();
+          payloadType.hidden = false;
+        }
+        if (typeof payload.summary === 'string' && payload.summary.trim()) {
+          payloadSummary.textContent = payload.summary.trim();
+          payloadSummary.hidden = false;
+        }
+        var mode;
+        if (hasBefore && hasAfter) {
+          mode = 'diff';
+          var fields = diffPayloadFields(payload.before, payload.after);
+          var counts = { added: 0, removed: 0, modified: 0, unchanged: 0 };
+          var unchanged = [];
+          fields.forEach(function (field) {
+            counts[field.state] += 1;
+            if (field.state === 'unchanged') unchanged.push(field);
+            else payloadBody.appendChild(payloadFieldRow(field));
+          });
+          if (unchanged.length) {
+            var fold = document.createElement('details');
+            fold.className = 'semantic-passport-payload-unchanged';
+            var foldLabel = document.createElement('summary');
+            foldLabel.textContent = viewerText('viewer.passport.payload.unchanged', { count: unchanged.length });
+            fold.appendChild(foldLabel);
+            unchanged.forEach(function (field) { fold.appendChild(payloadFieldRow(field)); });
+            payloadBody.appendChild(fold);
+          }
+          payloadStatus.textContent = viewerText('viewer.passport.payload.diff', counts);
+          payloadStatus.hidden = false;
+        } else if (hasAfter || hasSample || hasBefore) {
+          mode = hasSample ? 'sample' : hasAfter ? 'after' : 'before';
+          var document_ = hasSample ? payload.sample : hasAfter ? payload.after : payload.before;
+          flattenPayload(document_, '', []).forEach(function (field) {
+            payloadBody.appendChild(payloadFieldRow({ path: field.path, state: 'unchanged', after: field.value }));
+          });
+          payloadStatus.textContent = viewerText('viewer.passport.payload.' + mode);
+          payloadStatus.hidden = false;
+        } else {
+          mode = 'summary';
+        }
+        payloadSection.setAttribute('data-payload-mode', mode);
+        payloadSection.hidden = false;
+        placeRelationshipLens();
+        return true;
+      }
       function compactPassportViewport() {
         return window.innerWidth <= 720 && window.innerHeight <= 480;
       }
@@ -455,6 +613,7 @@
       }
       function renderPassport(id, node) {
         closeExplanation({ restoreFocus: false });
+        clearPayload();
         if (explainBtn) explainBtn.hidden = !explanationFor(id);
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
         setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
@@ -925,6 +1084,7 @@
           pinnedRelationship = null;
           pinnedRelationshipKey = null;
           svg.removeAttribute('data-relationship-pin-active');
+          clearPayload();
         }
         chip.removeAttribute('data-relationship-previewing');
         edges().forEach(function (edge) { edge.removeAttribute('data-relationship-preview'); });
@@ -1039,6 +1199,7 @@
           label: record.label
         });
         revealPinnedRelationship(record);
+        renderPayload(record);
         if (options.updateUrl !== false && record.id) {
           try { history.replaceState(null, '', location.pathname + location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
         }
@@ -1069,6 +1230,7 @@
           target.setAttribute('data-relationship-from', record.from);
           target.setAttribute('data-relationship-to', record.to);
           if (record.id) target.setAttribute('data-relationship-id', record.id);
+          if (record.id && payloadFor(record.id)) target.setAttribute('data-relationship-payload', '');
           target.setAttribute('role', 'button');
           target.setAttribute('tabindex', index === 0 ? '0' : '-1');
           target.setAttribute('aria-pressed', 'false');

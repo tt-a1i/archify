@@ -225,6 +225,17 @@ if (hasSupportedVersion) {
     fail(`archify/SKILL.md metadata version ${skillVersion || '(missing)'} must map to package ${version} as ${expectedSkillVersion}.`);
   }
 
+  // The companion PR Skill is optional in reduced checkouts, but when it ships
+  // it must track the same minor identity as the core Skill.
+  const companionSkillPath = 'archify-pr/SKILL.md';
+  if (fs.existsSync(path.join(repoRoot, companionSkillPath))) {
+    const companionVersion = read(companionSkillPath)
+      .match(/^\s*version:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1];
+    if (companionVersion !== expectedSkillVersion) {
+      fail(`${companionSkillPath} metadata version ${companionVersion || '(missing)'} must map to package ${version} as ${expectedSkillVersion}.`);
+    }
+  }
+
   const rendererTemplate = read('archify/assets/template.html');
   const generatorVersions = [...rendererTemplate.matchAll(/<meta\s+name="generator"\s+content="archify\s+([^"]+)"\s*\/?>/g)]
     .map((match) => match[1]);

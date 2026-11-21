@@ -6,7 +6,10 @@ import { browserTestFiles } from './browser-test-inventory.mjs';
 
 const modes = 'architecture|workflow|sequence|dataflow|lifecycle|erd|class|tree|timeline|waterfall';
 const rendererPath = new RegExp(`^archify/(?:renderers/(${modes})/|schemas/(${modes})\\.schema\\.json$)`);
-const renderShared = /^(geometry|utils|i18n|route-quality|diagnostics|brand-marks|generated-validators|legend|layout-report|engineering-profiles|validator|generated-brand-marks|desktop-readability|text-fit|svg-path-analysis|automatic-labels|spatial-grid)\.mjs$/;
+const renderShared = /^(geometry|utils|i18n|route-quality|diagnostics|brand-marks|generated-validators|legend|layout-report|engineering-profiles|validator|generated-brand-marks|desktop-readability|text-fit|svg-path-analysis|automatic-labels|spatial-grid|change-marks)\.mjs$/;
+// Review export and PR pack code renders through the Viewer styles and ships in the package.
+const reviewExport = /^(archify\/renderers\/shared\/svg-(?:bake|export)\.mjs|archify\/pr\/[^/]+\.mjs)$/;
+const sharedSvgBaker = 'archify/renderers/shared/svg-bake.mjs';
 const gates = ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website'];
 const storyPresentationFiles = new Set([
   'component-stage.mjs', 'story-svg.mjs', 'svg-bake.mjs', 'story-stage-html.mjs', 'story-plan.mjs',
@@ -64,8 +67,20 @@ export function classifyPaths(paths) {
     if (name.startsWith('archify/renderers/shared/') && renderShared.test(name.slice('archify/renderers/shared/'.length))) {
       own('renderer'); plan.generated = plan.browser = plan.package = true; continue;
     }
+    if (reviewExport.test(name)) {
+      own('pr'); plan.browser = plan.package = true;
+      if (name === sharedSvgBaker) {
+        own('viewer'); plan.generated = plan.webm = true;
+      }
+      continue;
+    }
     if (/^(viewer\/|archify\/assets\/)/.test(name)) {
       own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;
+    }
+    // The companion PR Skill ships outside archify.zip, so it needs the PR
+    // authoring suites and release-identity check without packaging gates.
+    if (name.startsWith('archify-pr/')) {
+      own('pr'); own('authoring'); plan.generated = true; continue;
     }
     if (/^archify\/(SKILL\.md$|references\/|recipes\/|examples\/)/.test(name)) {
       own('authoring'); plan.generated = plan.package = true;
@@ -78,7 +93,7 @@ export function classifyPaths(paths) {
     requireFull = true;
   }
   if (requireFull) return full();
-  if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', ...modes.split('|')].includes(owner))) return full();
+  if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', 'pr', ...modes.split('|')].includes(owner))) return full();
   if (plan.owners.every(owner => ['readme', 'changelog', 'policy', 'readme-assets'].includes(owner)) && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
   return plan;
 }
