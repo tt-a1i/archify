@@ -135,6 +135,17 @@ test('a missing generated template is stale and can be regenerated', (t) => {
   assert.equal(f.run('--check').status, 0);
 });
 
+test('Finder selections resolve the live route state instead of a stale panel context', (t) => {
+  const f = fixture(t);
+  assert.equal(f.run().status, 0);
+  const generated = fs.readFileSync(f.output, 'utf8');
+  // A Node index click reaches Finder select() without the panel ever opening
+  // in route mode, so the stored context is still "focus". The generated
+  // template must re-resolve the live route state at selection time, or the
+  // click focuses the node and cancels route picking instead of choosing it.
+  assert.match(generated, /var kind = context\.kind;\n\s+if \(kind !== 'route-source' && kind !== 'route-target'\) kind = resolveContext\(\{\}\)\.kind;\n\s+var routeSelection = kind === 'route-source' \|\| kind === 'route-target';/);
+});
+
 test('the story motion runtime is generated from the same authoritative Viewer source',t=>{
   const f=fixture(t),motion=path.join(f.root,'archify/story/native-motion.js');
   generateViewer({root:f.root});
