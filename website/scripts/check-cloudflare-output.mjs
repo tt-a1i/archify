@@ -3,11 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse } from 'parse5';
+import { canonicalPath, sitePages } from '../src/data/site-urls.mjs';
 
 // Check the deployable files, not only the build configuration. Pages needs a
 // top-level 404 to disable its implicit single-page-app fallback.
 export function checkCloudflareOutput(root) {
-  const pages = ['index.html', 'gallery.html', 'guide.html', 'start.html', 'community.html', 'zh.html', 'zh/gallery.html', 'zh/guide.html', 'zh/start.html', 'zh/community.html', '404.html'];
+  const pages = [...sitePages.flatMap(page => ['en', 'zh'].map(lang => `${canonicalPath(page, lang).slice(1) || 'index'}.html`)), '404.html'];
   let fileCount = 0;
   const checkAssets = directory => {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
@@ -53,7 +54,7 @@ export function checkCloudflareOutput(root) {
   }
   const sitemap = fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8');
   const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
-  assert.ok(locations.length >= 10, 'Sitemap must include both languages');
+  assert.ok(locations.length >= sitePages.length * 2, 'Sitemap must include both languages');
   assert.equal(new Set(locations).size, locations.length, 'Duplicate sitemap URL');
   for (const location of locations) {
     const url = new URL(location);

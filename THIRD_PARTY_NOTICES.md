@@ -98,3 +98,12 @@ The line-context fingerprint algorithm is adapted from
 revision `592d162b`, copyright (c) 2020 GitHub, under the MIT License.
 The complete license is preserved in
 `modules/code-analysis/import/vendor/CODEQL-LICENSE.txt` in the packaged Skill.
+
+## Code Analysis Atlas 3D
+
+The Atlas 3D view includes the unmodified minified build of
+[three.js](https://github.com/mrdoob/three.js) r128 (`three@0.128.0` on npm,
+`build/three.min.js`), copyright 2010-2021 three.js authors, under the MIT
+License. It is embedded in the analysis page and runs only when Atlas 3D is
+opened. The complete license is preserved in
+`modules/code-analysis/overlay/vendor/THREE-LICENSE.txt` in the packaged Skill.

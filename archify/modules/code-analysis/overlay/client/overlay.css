@@ -3,18 +3,27 @@ html[data-bauify="on"] g[data-node-id] { opacity: .35; transition: opacity .15s;
 html[data-bauify="on"] g[data-node-id].bauify-mapped { opacity: 1; }
 html[data-bauify="on"] .guided-views, html[data-bauify="on"] [class*="story"], html[data-bauify="on"] [class*="chapter"] { opacity: .25; pointer-events: none; }
 #bauify-layer { pointer-events: none; }
-#bauify-layer rect { fill: none; stroke-linejoin: round; }
-/* The ring sits well outside Archify's own coloured border and is blurred into a halo, so the two never read as one outline. */
-#bauify-layer rect.red { stroke: #FB7185; stroke-width: 6; filter: blur(4px); animation: bauify-glow-red 1.3s ease-in-out infinite; }
-#bauify-layer rect.amber { stroke: #FBBF24; stroke-width: 5; opacity: .7; filter: blur(3.5px); }
-#bauify-layer rect.blue { stroke: #60A5FA; stroke-width: 4; opacity: .55; filter: blur(3px); }
-#bauify-layer rect.green { stroke: #34D399; stroke-width: 3; opacity: .45; filter: blur(2.5px); }
-#bauify-layer rect.grey { stroke: #64748B; stroke-width: 1; opacity: .35; stroke-dasharray: 4 3; }
-@keyframes bauify-glow-red {
-  0%, 100% { opacity: .25; filter: blur(3px); }
-  50% { opacity: 1; filter: blur(6px) drop-shadow(0 0 14px #FB7185); }
-}
-@media (prefers-reduced-motion: reduce) { #bauify-layer rect.red { animation: none; opacity: .9; filter: blur(4px) drop-shadow(0 0 10px #FB7185); } }
+#bauify-layer { --halo-red: #F43F5E; --halo-amber: #F59E0B; --halo-blue: #3B82F6; --halo-green: #10B981; --halo-grey: #94A3B8; }
+/* Rings sit outside Archify's own coloured border: a crisp core line plus a glow.
+   Both are sized in screen pixels, so a wide diagram fitted to a narrow column
+   keeps them: the core with non-scaling-stroke, the glow radius through
+   --halo-k (1 / on-screen scale), which overlay.js updates on fit and zoom. */
+#bauify-layer rect { fill: none; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+#bauify-layer > rect.red { stroke: var(--halo-red); stroke-width: 2.5px; animation: bauify-glow-red 1.3s ease-in-out infinite;
+  filter: drop-shadow(0 0 calc(2px * var(--halo-k, 1)) var(--halo-red)) drop-shadow(0 0 calc(14px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-red) 85%, transparent)); }
+#bauify-layer > rect.amber { stroke: var(--halo-amber); stroke-width: 2.5px;
+  filter: drop-shadow(0 0 calc(2px * var(--halo-k, 1)) var(--halo-amber)) drop-shadow(0 0 calc(12px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-amber) 80%, transparent)); }
+/* Fewer than half the highest count: present, but not where findings concentrate. */
+#bauify-layer > rect.amber.quiet { stroke-width: 1.5px; stroke-opacity: .85;
+  filter: drop-shadow(0 0 calc(4px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-amber) 45%, transparent)); }
+/* Reference-level signals never take the heavy ring: one info note must not read like a cluster of warnings. */
+#bauify-layer > rect.blue { stroke: var(--halo-blue); stroke-width: 1.5px; stroke-opacity: .85;
+  filter: drop-shadow(0 0 calc(4px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-blue) 45%, transparent)); }
+#bauify-layer > rect.green { stroke: var(--halo-green); stroke-width: 1.5px; opacity: .7;
+  filter: drop-shadow(0 0 calc(3px * var(--halo-k, 1)) color-mix(in srgb, var(--halo-green) 40%, transparent)); }
+#bauify-layer > rect.grey { stroke: var(--halo-grey); stroke-width: 1px; opacity: .7; stroke-dasharray: 3 3; }
+@keyframes bauify-glow-red { 0%, 100% { stroke-opacity: .55; opacity: .7; } 50% { stroke-opacity: 1; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #bauify-layer > rect.red { animation: none; } }
 #bauify-legend { display: grid; gap: 3px; margin-top: 4px; font-size: 11px; }
 #bauify-legend span { white-space: normal; }
 #bauify-legend i, #bauify-detail h3 i, #bauify-overview h3 i, #bauify-overview summary i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
@@ -58,7 +67,6 @@ html[data-bauify="on"] .guided-views, html[data-bauify="on"] [class*="story"], h
 #bauify-panel .ev div, #bauify-detail .ev div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #bauify-panel .close, #bauify-detail .close { position: sticky; float: right; top: 0; margin: -4px -6px 0 0; top: 8px; background: none; border: 0; color: var(--text-muted, #94a3b8); font-size: 16px; cursor: pointer; }
 #bauify-panel .warn { color: var(--text-muted, #94a3b8); font-style: italic; }
-#btn-bauify[aria-pressed="true"] { outline: 1px solid var(--backend-stroke, #34D399); }
 #bauify-panel details { margin-top: 6px; }
 #bauify-panel summary { cursor: pointer; color: var(--text-muted, #94a3b8); font-size: 11px; }
 #bauify-panel table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 11px; }
@@ -160,7 +168,7 @@ html[data-bauify-focus="on"] #bauify-layer rect:not(.focus) { opacity: .12; anim
 .bauify-item .badge-new { background: #FB7185; color: #0b1220; }
 .bauify-item .badge-accepted, #bauify-detail .badge-accepted { border: 1px solid var(--panel-border, #1e293b); color: var(--text-muted, #94a3b8); }
 /* One reading column owns the layout; the four pages retain their scroll state. */
-#bauify-reader { position: fixed; left: 16px; top: var(--bauify-reader-top, 76px); bottom: 16px; width: 420px; z-index: 62; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--panel-border, #1e293b); border-radius: 12px; background: linear-gradient(var(--panel, #0f172a), var(--panel, #0f172a)), var(--bg, #0b1220); color: var(--text, #f8fafc); font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+#bauify-reader { position: fixed; right: 16px; top: var(--bauify-reader-top, 76px); bottom: 16px; width: 420px; z-index: 62; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--panel-border, #1e293b); border-radius: 12px; background: linear-gradient(var(--panel, #0f172a), var(--panel, #0f172a)), var(--bg, #0b1220); color: var(--text, #f8fafc); font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
 #bauify-reader[hidden] { display: none; }
 #bauify-reader > .reader-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--panel-border, #1e293b); }
 #bauify-reader .reader-path { font-size: 12px; color: var(--text-muted, #94a3b8); }
@@ -182,13 +190,14 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 @media (min-width: 1001px) {
   html[data-bauify="on"] .container { width: 100%; max-width: none; }
   html[data-bauify="on"] .diagram-container { margin-top: 24px; }
-  html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
-  html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .cards { margin-left: 444px; }
+  html[data-bauify="on"]:not([data-bauify-reader-collapsed]):not([data-bauify-flymode]) .diagram-container,
+  html[data-bauify="on"]:not([data-bauify-reader-collapsed]):not([data-bauify-flymode]) #bauify-views,
+  html[data-bauify="on"]:not([data-bauify-reader-collapsed]):not([data-bauify-flymode]) .cards { margin-right: 444px; }
   html[data-bauify="on"] .guided-views { display: none; }
 }
 @media (max-width: 1000px) {
   /* In normal flow, the reader and canvas remain separately reachable. */
-  #bauify-reader { position: relative; left: auto; top: auto; bottom: auto; width: auto; margin: 16px 0; height: min(66vh, 600px); min-height: 280px; }
+  #bauify-reader { position: relative; left: auto; right: auto; top: auto; bottom: auto; width: auto; margin: 16px 0; height: min(66vh, 600px); min-height: 280px; }
   #bauify-reader.collapsed { height: auto; min-height: 0; width: auto; max-width: none; }
   #bauify-reader > .reader-nav { gap: 8px; padding: 10px 12px; }
   #bauify-reader .reader-actions { display: flex; flex: none; gap: 5px; }
@@ -271,8 +280,6 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-code pre .ln i { text-indent: 0; }
 #bauify-reader .ref, #bauify-reader .reader-nav button, #bauify-reader .locate, #bauify-reader .task-actions button { transition: border-color .16s ease, background-color .16s ease; }
 #bauify-reader .reader-nav button:hover, #bauify-reader .locate:hover { border-color: color-mix(in srgb, var(--backend-stroke, #34D399) 60%, var(--panel-border, #1e293b)); }
-/* The halo marks a component without drowning its own border when most components carry one. */
-#bauify-layer rect.amber { stroke-width: 4; opacity: .6; filter: blur(3px); }
 @media (prefers-reduced-motion: reduce) { .bauify-item, #bauify-reader .ref, #bauify-reader .reader-nav button, #bauify-reader .locate, #bauify-reader .task-actions button, #bauify-panel .ind, #bauify-overview summary { transition: none; } }
 /* Title row: number, title and severity capsule stay on one row however long the title is. */
 .bauify-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; }
@@ -284,13 +291,18 @@ html[data-bauify="on"] .cards, html[data-bauify="on"] .guided-views { display: n
 #bauify-overview .counts .count { white-space: nowrap; }
 /* Headings receive focus from script so assistive technology announces the new page; they are not in the tab order and take no focus ring. */
 #bauify-reader h3[tabindex="-1"]:focus { outline: none; }
-/* Diagram signal: a glow only where the findings concentrate, and a count on every component that has any. */
-#bauify-layer rect.amber.quiet, #bauify-layer rect.blue.quiet { stroke-width: 1.5; opacity: .8; filter: none; }
-#bauify-layer g.count rect { fill: var(--panel, #0f172a); stroke: #94a3b8; stroke-width: 1.25; opacity: 1; filter: none; animation: none; }
-#bauify-layer g.count.red rect { stroke: #FB7185; fill: color-mix(in srgb, #FB7185 14%, var(--panel, #0f172a)); }
-#bauify-layer g.count.amber rect { stroke: #FBBF24; }
-#bauify-layer g.count.blue rect { stroke: #60A5FA; }
-#bauify-layer g.count text { fill: var(--text, #f8fafc); font: 600 10px system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; text-anchor: middle; dominant-baseline: central; }
+/* Diagram signal: a heavy ring only where the findings concentrate, and a count on every component that has any.
+   overlay.js scales each badge against the diagram zoom so it stays about 16px tall on screen. */
+#bauify-layer g.count rect { fill: var(--panel, #0f172a); stroke: var(--halo-grey); stroke-width: 1px; opacity: 1; animation: none; }
+#bauify-layer g.count.red rect { stroke: var(--halo-red); }
+#bauify-layer g.count.amber rect { stroke: var(--halo-amber); }
+#bauify-layer g.count.blue rect { stroke: var(--halo-blue); }
+#bauify-layer g.count.top rect { stroke: none; }
+#bauify-layer g.count.top.red rect { fill: var(--halo-red); }
+#bauify-layer g.count.top.amber rect { fill: var(--halo-amber); }
+#bauify-layer g.count text { fill: var(--text, #f8fafc); font: 700 10px system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; text-anchor: middle; dominant-baseline: central; }
+#bauify-layer g.count.top text { fill: #111827; }
+#bauify-layer g.count.top.red text { fill: #fff; }
 html[data-bauify-focus="on"] #bauify-layer g.count:not(.focus) { opacity: .15; }
 html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-overview .counts .nw { white-space: nowrap; }
@@ -298,12 +310,13 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 @media (min-width: 1181px) {
   html[data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
   html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
-  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: calc(min(760px, 54vw) + 24px); }
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) #bauify-views,
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-right: calc(min(760px, 54vw) + 24px); }
   #bauify-reader { transition: width .16s ease; }
 }
 @media (prefers-reduced-motion: reduce) { #bauify-reader { transition: none; } }
-/* The page's own reader rail sits beside the analysis column, not under it. */
-@media (min-width: 1001px) { html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-left: 444px; } }
+/* The page's own reader rail sits beside the analysis column (on its left), not under it. */
+@media (min-width: 1001px) { html[data-bauify="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-right: 444px; } }
 /* The overview is a compact read → handoff → recheck workbench. */
 #bauify-reader .health-summary { padding: 11px 12px; background: color-mix(in srgb, var(--backend-stroke, #159f88) 6%, transparent); border: 1px solid var(--panel-border); border-radius: 9px; }
 #bauify-reader .scope-line { font-size: 12px; color: var(--text-muted); margin: 5px 0 0; }
@@ -338,6 +351,7 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .icon-button { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; padding: 0; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text); font: inherit; cursor: pointer; }
 #bauify-reader .icon-button:hover { border-color: var(--panel-border); background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text); }
 #bauify-reader .icon-button .ui-icon { display: block; flex: none; }
+#bauify-reader .ui-icon { display: block; flex: none; width: 18px; min-width: 0; height: 18px; }
 .analysis-tooltip, #bauify-atlas .atlas-tip { box-sizing: border-box; padding: 6px 9px; border: 1px solid var(--panel-border, #1e293b); border-radius: 6px; background: linear-gradient(var(--panel, #0f172a), var(--panel, #0f172a)), var(--bg, #020617); color: var(--text, #f8fafc); font: 12px/1.45 system-ui, sans-serif; text-align: left; box-shadow: 0 4px 12px rgba(0,0,0,.24); overflow-wrap: anywhere; pointer-events: none; }
 .analysis-tooltip { position: fixed; z-index: 1000; max-width: min(264px, calc(100vw - 16px)); }
 .analysis-tooltip[hidden] { display: none; }
@@ -360,6 +374,11 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .health-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .health-facts span { color: var(--text-muted); font-size: 12px; }
 #bauify-reader .health-facts b { display: block; margin-top: 5px; color: var(--text); font-size: 16px; font-variant-numeric: tabular-nums; }
+#bauify-reader .halo-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0 0; color: var(--text-muted); font-size: 12px; }
+#bauify-reader .halo-legend span { display: inline-flex; align-items: center; gap: 6px; }
+#bauify-reader .halo-legend i { box-sizing: border-box; width: 16px; height: 10px; border-radius: 3px; border: 1.5px solid #F59E0B; box-shadow: 0 0 3px color-mix(in srgb, #F59E0B 45%, transparent); }
+#bauify-reader .halo-legend i.heavy { border-width: 2px; box-shadow: 0 0 1px #F59E0B, 0 0 7px color-mix(in srgb, #F59E0B 80%, transparent); }
+#bauify-reader .halo-legend i.dashed { border: 1px dashed #94A3B8; box-shadow: none; }
 #bauify-reader .priority-card { --priority-action-size: 24px; display: grid; grid-template-columns: minmax(0, 1fr) repeat(2, var(--priority-action-size)); grid-template-rows: var(--priority-action-size) auto; align-items: start; column-gap: 8px; padding: 10px 12px; margin: 10px 0; border: 1px solid var(--panel-border); border-radius: 9px; }
 #bauify-reader .priority-card .bauify-item { grid-area: 1 / 1 / 3 / 2; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: var(--priority-action-size) auto; align-items: center; gap: 0 8px; padding: 0; margin: 0; border: 0; background: none; }
 #bauify-reader .priority-card:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }
@@ -513,4 +532,147 @@ html[data-bauify-context="pr"] #bauify-reader .comparison-banner.positive { bord
 #bauify-reader .pr-review .pr-impact-record .quick-copy { width: 32px; height: 32px; border: 1px solid var(--panel-border); border-radius: 7px; }
 #bauify-reader .pr-impact-coverage { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .pr-impact-forms { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.6 ui-monospace,monospace; }
+
+/* ---- Diagram page: the canvas is the page; the reader is a fly-out over its right edge ---- */
+html[data-bauify-flymode] {
+  --fly-surface: var(--panel, #0f172a); --fly-line: var(--panel-border, #1e293b); --fly-text: var(--text, #f8fafc); --fly-muted: var(--text-muted, #94a3b8);
+  --fly-soft: color-mix(in srgb, var(--fly-text) 4%, var(--fly-surface)); --fly-hover: color-mix(in srgb, var(--fly-text) 7%, transparent);
+  --fly-amber: #F59E0B; --fly-amber-ink: #D97706; --fly-red: #F43F5E; --fly-green: #10B981; --fly-blue: #60A5FA; --fly-grey: #94A3B8;
+}
+html[data-bauify-flymode] #bauify-reader { right: var(--bauify-fly-right, 16px); top: var(--bauify-fly-top, 76px); bottom: var(--bauify-fly-bottom, 16px); width: 392px; max-width: calc(100vw - 32px); border-radius: 16px; border-color: var(--fly-line);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 30px 60px -28px rgba(2, 6, 23, .55); transition: transform .42s cubic-bezier(.3, .8, .25, 1), opacity .25s ease, visibility 0s linear 0s; }
+html[data-bauify-flymode] #bauify-reader.fly-closed { transform: translateX(calc(100% + 32px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .36s cubic-bezier(.4, 0, .6, 1), opacity .25s ease, visibility 0s linear .36s; }
+html[data-bauify-flymode] #bauify-reader > .reader-nav { padding: 10px 10px 10px 16px; }
+html[data-bauify-flymode] #bauify-reader .reader-nav .reader-toggle { border: 0; width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border-radius: 9px; color: var(--fly-muted); }
+html[data-bauify-flymode] #bauify-reader .reader-nav .reader-toggle:hover { background: var(--fly-hover); color: var(--fly-text); }
+html[data-bauify-flymode] #bauify-panel > .close, html[data-bauify-flymode] #bauify-detail > .close, html[data-bauify-flymode] #bauify-code .close { display: none; }
+html[data-bauify-flymode][data-bauify-source="on"] #bauify-reader > #bauify-panel { display: none; }
+html[data-bauify-flymode] .diagram-container > svg { transition: translate .45s cubic-bezier(.3, .8, .25, 1); }
+@media (min-width: 1001px) {
+  html[data-bauify="on"][data-bauify-flymode] .diagram-container { min-height: max(520px, calc(100vh - 200px)); }
+  html[data-bauify-fly="open"]:not([data-bauify-views]) .diagram-container > svg { translate: -196px 0; }
+}
+@media (max-width: 1000px) {
+  html[data-bauify-flymode] #bauify-reader { position: relative; right: auto; top: auto; bottom: auto; width: auto; max-width: none; transition: none; }
+  html[data-bauify-flymode] #bauify-reader.fly-closed { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { html[data-bauify-flymode] #bauify-reader, html[data-bauify-flymode] .diagram-container > svg { transition: none !important; } }
+
+/* Component, dependency and off-diagram pages */
+#bauify-reader .fly-kick { display: flex; align-items: center; gap: 7px; margin: 10px 0 2px; font-size: 12px; color: var(--fly-muted); }
+#bauify-reader .fly-kick b { color: var(--fly-amber-ink); font-weight: 600; }
+html[data-bauify-flymode] #bauify-panel > .k:first-of-type { display: none; }
+html[data-bauify-flymode] #bauify-panel h3 { margin: 4px 0 2px; font-size: 21px; line-height: 1.3; letter-spacing: -.01em; }
+#bauify-reader .fly-edge-title span { color: var(--fly-muted); font-weight: 400; }
+#bauify-reader .fly-sub { margin: 2px 0 0; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: var(--fly-muted); }
+#bauify-reader .dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--fly-grey); }
+#bauify-reader .dot.red { background: var(--fly-red); } #bauify-reader .dot.amber { background: var(--fly-amber); } #bauify-reader .dot.blue { background: var(--fly-blue); } #bauify-reader .dot.green { background: var(--fly-green); }
+#bauify-reader .fly-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 0; }
+#bauify-reader .fly-nums.two { grid-template-columns: 1fr 1fr; }
+#bauify-reader .fly-nums div { padding: 9px 11px; border: 1px solid var(--fly-line); border-radius: 11px; background: var(--fly-soft); }
+#bauify-reader .fly-nums b { display: block; font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+#bauify-reader .fly-nums span { font-size: 11.5px; color: var(--fly-muted); }
+#bauify-reader .fly-sev { display: flex; gap: 2px; height: 4px; margin-top: 10px; border-radius: 2px; overflow: hidden; background: var(--fly-line); }
+#bauify-reader .fly-sev i.red { background: var(--fly-red); } #bauify-reader .fly-sev i.amber { background: var(--fly-amber); } #bauify-reader .fly-sev i.blue { background: var(--fly-blue); }
+#bauify-reader .fly-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 20px 0 6px; font-size: 11.5px; font-weight: 600; letter-spacing: .05em; color: var(--fly-muted); }
+#bauify-reader .fly-h small { font-weight: 400; letter-spacing: 0; opacity: .8; }
+#bauify-reader .fly-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+#bauify-reader .fly-chips code { padding: 3px 8px; border: 1px solid var(--fly-line); border-radius: 7px; font: 11px ui-monospace, "SF Mono", Menlo, monospace; }
+#bauify-reader .fly-rel, #bauify-reader .fly-find, #bauify-reader .fly-ev { display: grid; width: calc(100% + 16px); margin: 0 -8px; padding: 7px 8px; border: 0; border-radius: 9px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color .15s; }
+#bauify-reader .fly-rel { grid-template-columns: 8px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; }
+#bauify-reader .fly-rel.off { cursor: default; opacity: .75; }
+#bauify-reader .fly-rel em { font-style: normal; font-size: 11.5px; color: var(--fly-muted); font-variant-numeric: tabular-nums; }
+#bauify-reader .fly-rel em b { color: var(--fly-red); font-weight: 600; }
+#bauify-reader .fly-rel span, #bauify-reader .fly-find b, #bauify-reader .fly-ev span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bauify-reader .fly-find { grid-template-columns: 8px minmax(0, 1fr); column-gap: 10px; align-items: baseline; }
+#bauify-reader .fly-find i { width: 7px; height: 7px; border-radius: 50%; background: var(--fly-amber); }
+#bauify-reader .fly-find.red i { background: var(--fly-red); } #bauify-reader .fly-find.blue i { background: var(--fly-blue); }
+#bauify-reader .fly-find b { font: 500 12.5px ui-monospace, "SF Mono", Menlo, monospace; }
+#bauify-reader .fly-find small { grid-column: 2; font: 11px ui-monospace, "SF Mono", Menlo, monospace; color: var(--fly-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bauify-reader .fly-ev { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; margin-top: 6px; border: 1px solid var(--fly-line); background: var(--fly-soft); font: 11.5px ui-monospace, "SF Mono", Menlo, monospace; width: 100%; margin-left: 0; margin-right: 0; }
+#bauify-reader .fly-ev em { font-style: normal; color: var(--fly-muted); }
+#bauify-reader .fly-ev small { grid-column: 1 / -1; color: var(--fly-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bauify-reader .fly-rel:hover, #bauify-reader .fly-find:hover { background: var(--fly-hover); }
+#bauify-reader .fly-ev:hover { border-color: color-mix(in srgb, var(--fly-text) 22%, var(--fly-line)); }
+#bauify-reader .fly-note { margin: 12px 0 0; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--fly-line); background: var(--fly-soft); font-size: 12.5px; line-height: 1.6; }
+#bauify-reader .fly-note.attention { border-color: color-mix(in srgb, var(--fly-red) 35%, var(--fly-line)); background: color-mix(in srgb, var(--fly-red) 7%, var(--fly-surface)); }
+#bauify-reader .fly-pill { padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: color-mix(in srgb, var(--fly-grey) 16%, transparent); }
+#bauify-reader .fly-pill.red { color: var(--fly-red); background: color-mix(in srgb, var(--fly-red) 13%, transparent); }
+#bauify-reader .fly-pill.green { color: var(--fly-green); background: color-mix(in srgb, var(--fly-green) 13%, transparent); }
+#bauify-reader .fly-acts { display: flex; gap: 8px; margin-top: 16px; }
+#bauify-reader .fly-acts button { flex: 1; height: 36px; border-radius: 10px; border: 1px solid var(--fly-text); background: var(--fly-text); color: var(--bg, #0b1220); font: 600 13px system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; }
+#bauify-reader .fly-rel:focus-visible, #bauify-reader .fly-find:focus-visible, #bauify-reader .fly-ev:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 1px; }
+
+/* Canvas controls */
+#bauify-stage { position: absolute; inset: 0; z-index: 6; pointer-events: none; font: 13px/1.45 system-ui, -apple-system, "PingFang SC", "Segoe UI", sans-serif; color: var(--fly-text); }
+html:not([data-bauify="on"]) #bauify-stage, html[data-bauify-views] #bauify-stage { display: none; }
+#bauify-stage > * { pointer-events: auto; }
+#bauify-stage button { font: inherit; color: inherit; cursor: pointer; }
+#bauify-stage .stage-tools { position: absolute; top: 14px; left: 14px; display: flex; gap: 8px; }
+#bauify-stage .stage-seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--fly-line); border-radius: 11px; background: color-mix(in srgb, var(--fly-surface) 88%, transparent); backdrop-filter: blur(10px); box-shadow: 0 6px 16px -12px rgba(2, 6, 23, .45); }
+#bauify-stage .stage-seg button { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 0; border-radius: 8px; background: none; color: var(--fly-muted); font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+#bauify-stage .stage-seg button:hover { color: var(--fly-text); }
+#bauify-stage .stage-seg button[aria-pressed="true"] { background: var(--fly-text); color: var(--fly-surface); }
+#bauify-stage .stage-seg button em { font-style: normal; font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 99px; background: color-mix(in srgb, var(--fly-red) 16%, transparent); color: var(--fly-red); }
+#bauify-stage .dot { width: 7px; height: 7px; border-radius: 50%; }
+#bauify-stage .dot.amber { background: var(--fly-amber); } #bauify-stage .dot.red { background: var(--fly-red); }
+#bauify-stage .stage-depth { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 10px; padding: 4px 5px 4px 14px; border-radius: 99px; background: var(--fly-text); color: var(--fly-surface); font-size: 12.5px; box-shadow: 0 12px 26px -12px rgba(2, 6, 23, .6); white-space: nowrap; }
+#bauify-stage .stage-depth[hidden] { display: none; }
+#bauify-stage .stage-depth .stage-seg { background: color-mix(in srgb, var(--fly-surface) 12%, transparent); border-color: color-mix(in srgb, var(--fly-surface) 18%, transparent); box-shadow: none; backdrop-filter: none; }
+#bauify-stage .stage-depth .stage-seg button { height: 24px; color: color-mix(in srgb, var(--fly-surface) 70%, transparent); }
+#bauify-stage .stage-depth .stage-seg button[aria-pressed="true"] { background: var(--fly-surface); color: var(--fly-text); }
+#bauify-stage .depth-clear { width: 24px; height: 24px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--fly-surface) 16%, transparent); color: inherit; font-size: 14px; line-height: 1; }
+#bauify-stage .stage-first { position: absolute; left: 14px; bottom: 14px; width: 300px; max-height: calc(100% - 80px); overflow: auto; padding: 13px 14px 10px; border: 1px solid var(--fly-line); border-radius: 14px; background: color-mix(in srgb, var(--fly-surface) 94%, transparent); backdrop-filter: blur(12px); box-shadow: 0 16px 36px -22px rgba(2, 6, 23, .55); transition: opacity .3s, transform .3s; }
+html[data-bauify-fly="open"] #bauify-stage .stage-first { opacity: 0; transform: translateY(6px); pointer-events: none; }
+#bauify-stage .stage-first header { display: flex; justify-content: space-between; align-items: baseline; }
+#bauify-stage .stage-first h3 { margin: 0; font-size: 13px; font-weight: 650; }
+#bauify-stage .first-toggle { border: 0; background: none; padding: 0; color: var(--fly-muted) !important; font-size: 12px !important; }
+#bauify-stage .stage-first.collapsed { width: auto; padding-bottom: 12px; }
+#bauify-stage .stage-first.collapsed header { gap: 14px; }
+#bauify-stage .stage-first.collapsed .first-body { display: none; }
+#bauify-stage .first-lede { margin: 3px 0 4px; font-size: 12px; color: var(--fly-muted); }
+#bauify-stage .first-row { display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; margin-top: 4px; padding: 6px 8px 6px 0; border: 0; border-radius: 10px; background: none; text-align: left; transition: background-color .15s; }
+#bauify-stage .first-row:hover { background: var(--fly-hover); }
+#bauify-stage .first-row .bar { align-self: stretch; border-radius: 2px; background: var(--fly-grey); }
+#bauify-stage .first-row .bar.amber { background: var(--fly-amber); } #bauify-stage .first-row .bar.red { background: var(--fly-red); }
+#bauify-stage .first-row b { display: block; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+#bauify-stage .first-row small { display: block; margin-top: 1px; font-size: 11.5px; color: var(--fly-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bauify-stage .first-row em { font-style: normal; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#bauify-stage .first-empty { margin: 8px 0; font-size: 12.5px; color: var(--fly-muted); }
+#bauify-stage .first-all { display: block; margin: 4px 0 0; padding: 4px 0; border: 0; background: none; font-size: 12.5px; font-weight: 600; color: var(--backend-stroke, #10B981) !important; }
+#bauify-stage .stage-legend { display: flex; flex-wrap: wrap; gap: 5px 10px; margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--fly-line); font-size: 11px; color: var(--fly-muted); }
+#bauify-stage .stage-legend span { display: inline-flex; align-items: center; gap: 5px; }
+#bauify-stage .stage-legend .ring { width: 13px; height: 9px; border-radius: 3px; border: 2px solid var(--fly-grey); }
+#bauify-stage .stage-legend .ring.amber { border-color: var(--fly-amber); } #bauify-stage .stage-legend .ring.green { border-color: var(--fly-green); } #bauify-stage .stage-legend .ring.grey { border-style: dashed; border-width: 1.5px; }
+#bauify-stage .stage-legend .chip { font: 700 9px/13px system-ui, sans-serif; padding: 0 5px; border-radius: 99px; background: var(--fly-amber); color: #fff; font-style: normal; }
+#bauify-stage .stage-legend .line { width: 16px; height: 0; border-top: 2px solid var(--fly-muted); }
+#bauify-stage .stage-legend .line.thick { border-top-width: 4px; }
+#bauify-stage .stage-legend .line.dash { border-top: 2px dashed var(--fly-red); }
+#bauify-stage button:focus-visible { outline: 2px solid var(--backend-stroke, #159f88); outline-offset: 2px; }
+@media (max-width: 700px) { #bauify-stage .stage-first { width: auto; right: 14px; } #bauify-stage .stage-tools { flex-wrap: wrap; right: 14px; } }
+
+/* On the diagram: import weight, undrawn dependencies, beacon and focus */
+html[data-bauify="on"] path.bauify-coded { stroke-width: var(--bauify-w, 2px); transition: opacity .3s, stroke-width .2s; }
+html[data-bauify="on"] path.bauify-uncoded { opacity: .45; transition: opacity .3s; }
+#bauify-edges .bauify-undrawn { fill: none; stroke: var(--fly-red, #F43F5E); stroke-width: var(--bauify-w, 1.6px); stroke-dasharray: 6 5; opacity: 0; transition: opacity .35s; pointer-events: none; }
+#bauify-edges marker path { fill: var(--fly-red, #F43F5E); }
+html[data-bauify-code="on"] #bauify-edges .bauify-undrawn { opacity: .85; }
+#bauify-edges .bauify-hit { fill: none; stroke: transparent; stroke-width: 14px; pointer-events: stroke; cursor: pointer; }
+html:not([data-bauify-code="on"]) #bauify-edges .bauify-hit.undrawn { display: none; }
+#bauify-chips { pointer-events: none; }
+#bauify-chips .bauify-chip { opacity: 0; transition: opacity .2s; }
+#bauify-chips .bauify-chip rect { fill: var(--fly-muted, #475569); }
+#bauify-chips .bauify-chip.undrawn rect { fill: var(--fly-red, #F43F5E); }
+#bauify-chips .bauify-chip text { fill: #fff; font: 700 10px system-ui, -apple-system, "PingFang SC", sans-serif; text-anchor: middle; dominant-baseline: central; }
+#bauify-chips .bauify-chip.bauify-hover, #bauify-chips .bauify-chip.coded.bauify-lit, html[data-bauify-code="on"] #bauify-chips .bauify-chip.undrawn { opacity: 1; }
+html[data-bauify-code="on"] #bauify-chips .bauify-chip.undrawn.bauify-away { opacity: .15; }
+html[data-bauify="on"][data-bauify-beacon="on"]:not([data-bauify-pick]) g[data-node-id].bauify-calm,
+html[data-bauify="on"][data-bauify-beacon="on"]:not([data-bauify-pick]) #bauify-layer .bauify-calm,
+html[data-bauify="on"][data-bauify-beacon="on"]:not([data-bauify-pick]) path.bauify-calm { opacity: .14; }
+html[data-bauify="on"][data-bauify-pick] g[data-node-id].bauify-away,
+html[data-bauify="on"][data-bauify-pick] #bauify-layer .bauify-away,
+html[data-bauify="on"][data-bauify-pick] path.bauify-away,
+html[data-bauify="on"][data-bauify-code="on"][data-bauify-pick] #bauify-edges .bauify-undrawn.bauify-away { opacity: .12; animation: none; }
+html[data-bauify="on"][data-bauify-pick] path.bauify-coded.bauify-lit { opacity: 1; }
+html[data-bauify="on"] g[data-node-id] { transition: opacity .3s; }
 .pr-source-pin { display: block; overflow-wrap: anywhere; }

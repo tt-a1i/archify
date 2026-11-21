@@ -191,7 +191,7 @@ async function checkPinnedFiles(t, diagram) {
   await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: dir });
   await send('Page.navigate', { url: pathToFileURL(report).href });
   await loaded;
-  if (diagram) await click('.reader-atlas');
+  if (diagram) await click('#bauify-views [data-view="atlas"]');
   await click('#atlas-tab-files');
   const query = '#bauify-atlas .atlas-file-query';
   assert.equal(await read('document.activeElement.matches(' + literal(query) + ')'), true);
