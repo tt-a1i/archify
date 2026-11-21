@@ -459,5 +459,22 @@
   "legend.waterfall.ok": "Завершено",
   "legend.waterfall.error": "Ошибка",
   "legend.waterfall.cancelled": "Отменено",
-  "legend.waterfall.incomplete": "Не завершено (конец не записан)"
+  "legend.waterfall.incomplete": "Не завершено (конец не записан)",
+  "viewer.passport.payload": "Полезная нагрузка",
+  "viewer.passport.payload.role.request": "Запрос",
+  "viewer.passport.payload.role.response": "Ответ",
+  "viewer.passport.payload.role.flow": "Поток",
+  "viewer.passport.payload.diff": "{added} добавлено · {removed} удалено · {modified} изменено · {unchanged} без изменений",
+  "viewer.passport.payload.unchanged": "Полей без изменений: {count}",
+  "viewer.passport.payload.sample": "Пример полезной нагрузки (только чтение)",
+  "viewer.passport.payload.after": "Полезная нагрузка после этого изменения (только чтение)",
+  "viewer.passport.payload.before": "Полезная нагрузка до этого изменения (только чтение)",
+  "viewer.passport.payload.field.added": "Добавлено {path}: {after}",
+  "viewer.passport.payload.field.removed": "Удалено {path}: {before}",
+  "viewer.passport.payload.field.modified": "Изменено {path}: {before} → {after}",
+  "viewer.passport.payload.field.unchanged": "{path}: {after}",
+  "legend.change.added": "+ Добавлено",
+  "legend.change.modified": "~ Изменено",
+  "legend.change.removed": "− Удалено",
+  "legend.change.unchanged": "Без изменений"
 }

@@ -1,0 +1,7 @@
+node_modules/
+out/
+.DS_Store
+
+# Generated presentation material; the Markdown docs and docs/e2e/ screenshots stay tracked (README links them).
+docs/*.pptx
+docs/*.html

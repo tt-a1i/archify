@@ -12,6 +12,7 @@
     "node": ">=18"
   },
   "scripts": {
+    "start": "node bin/archify.mjs start",
     "generate:viewer": "node ../scripts/generate-viewer.mjs",
     "check:viewer": "node ../scripts/generate-viewer.mjs --check",
     "generate:brand-marks": "node scripts/generate-brand-marks.mjs",
@@ -26,6 +27,9 @@
     "test:webm": "npm --prefix .. run test:webm",
     "test:browser": "npm --prefix .. run test:browser",
     "test": "npm --prefix .. test",
+    "postinstall": "npm ci --prefix modules/code-analysis --no-audit --no-fund",
+    "code-analysis": "node bin/archify.mjs code-analysis serve",
+    "test:code-analysis": "npm test --prefix modules/code-analysis",
     "render:examples": "node scripts/render-examples.mjs ../examples"
   },
   "devDependencies": {
