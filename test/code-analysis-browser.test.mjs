@@ -507,10 +507,10 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.equal(await run("typeof window.THREE"), 'undefined', 'three.js stays inert until Atlas 3D opens');
   await run("if (document.documentElement.getAttribute('data-theme') !== 'light') Archify.theme.toggle()");
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
-  // In place of the diagram, full width with the summary column hidden, following the page theme.
+  // In place of the diagram, full width with the summary column hidden, on the dark page theme.
   assert.deepEqual(await run(`(() => { const a = document.getElementById('bauify-atlas'), r = document.getElementById('bauify-reader');
-    return [document.documentElement.getAttribute('data-theme'), getComputedStyle(a).position, getComputedStyle(r).display, getComputedStyle(document.querySelector('.diagram-container')).display, getComputedStyle(a).backgroundColor]; })()`),
-    ['light', 'relative', 'none', 'none', 'rgb(11, 18, 32)'], 'the Atlas replaces the diagram, hides the summary column and stays dark on a light page');
+    return [document.documentElement.getAttribute('data-theme'), getComputedStyle(a).position, getComputedStyle(r).display, getComputedStyle(document.querySelector('.diagram-container')).display, getComputedStyle(a).backgroundColor === getComputedStyle(document.body).backgroundColor]; })()`),
+    ['dark', 'relative', 'none', 'none', true], 'choosing the Atlas switches the page to dark, replaces the diagram and hides the summary column');
   const atlas = JSON.parse(await run("document.getElementById('bauify-atlas-data').textContent"));
   await until(`document.documentElement.getAttribute('data-bauify-atlas-drawn') === '${atlas.edges.length}'`, 'atlas did not draw');
   assert.ok(atlas.edges.length > 0 && atlas.functions.length > 0, 'the fixture has dependencies and functions to draw');

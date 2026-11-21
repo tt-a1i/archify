@@ -198,10 +198,7 @@
 
   // ---- colours: module hues spaced around the wheel, lightness by theme ----
   function cssVar(name, fallback) { var v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fallback; }
-  // Below a diagram the Atlas defaults to dark colours (atlas.css resets the page
-  // colours inside it); the standalone page follows its own theme.
   function theme() {
-    if (!standalone) return { dark: true, bg: '#0b1220', text: '#f8fafc', muted: '#94a3b8', grid: '#1e293b' };
     var dark = (root.getAttribute('data-theme') || '') !== 'light';
     return { dark: dark, bg: cssVar('--bg', dark ? '#0b1220' : '#ffffff'), text: cssVar('--text', dark ? '#f8fafc' : '#0f172a'), muted: cssVar('--text-muted', dark ? '#94a3b8' : '#475569'), grid: cssVar('--panel-border', dark ? '#1e293b' : '#e2e8f0') };
   }
@@ -860,6 +857,8 @@
     if (next) root.setAttribute('data-bauify-views', next); else root.removeAttribute('data-bauify-views');
     if (next !== 'atlas') close();
     if (panel3d) panel3d.hidden = next !== 'atlas3d';
+    // The Atlas reads best on dark colours: choosing it switches the page theme, as the theme button would.
+    if (next === 'atlas' && root.getAttribute('data-theme') === 'light' && window.Archify && Archify.theme) Archify.theme.toggle();
     if (next === 'atlas') open();
     if (next === 'atlas3d' && window.__archifyAtlas3d) { var view = window.__archifyAtlas3d.mount(panel3d); if (view && view.refresh) view.refresh(); }
     views.querySelectorAll('.views-option').forEach(function (button) { button.setAttribute('aria-pressed', String(button.getAttribute('data-view') === (next || 'diagram'))); });
@@ -914,7 +913,8 @@
       if (!on && root.hasAttribute('data-bauify-views')) showView('');
     }
     if (!on && !panel.hidden) close();
-    else if (!panel.hidden) { renderSide(); draw(); }
+    // A theme switch made by opening the Atlas must not cut its reveal short.
+    else if (!panel.hidden) { renderSide(); draw(anim.reveal ? 'reveal' : undefined); }
   }).observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-theme'] });
   function redrawIfResized() {
     if (panel.hidden || stage.hidden) return;
