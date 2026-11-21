@@ -103,78 +103,13 @@
   });
   function readerPage(name) {
     reader.hidden = false;
-    var path = reader.querySelector('.reader-path');
-    // Below the overview the path is the way back: its root returns home.
-    if (name === tr("Overview")) path.textContent = tr("Analysis / ") + name;
-    else {
-      path.innerHTML = '<button type="button" class="crumb-root">' + esc(tr('Architecture check')) + '</button><span aria-hidden="true">›</span><b>' + esc(name) + '</b>';
-      path.querySelector('.crumb-root').addEventListener('click', showOverview);
-    }
+    reader.querySelector('.reader-path').textContent = tr("Analysis / ") + name;
     setReaderCollapsed(false);
-  }
-  // ---- Frame: one app bar for every view ----
-  // The view switch rides in the title row, next to the name, so the top of the
-  // page is the same whichever view is open; each view brings its own header.
-  function frameViews() {
-    var views = document.getElementById('bauify-views'), opts = views && views.querySelector('.views-options');
-    var h1 = document.querySelector('.header-row h1');
-    if (!opts || !h1 || standalone || views.hidden || window.innerWidth <= 1000) { root.removeAttribute('data-bauify-frame'); return; }
-    if (!opts.querySelector('.views-thumb')) {
-      var thumb = document.createElement('span'); thumb.className = 'views-thumb'; thumb.setAttribute('aria-hidden', 'true'); opts.prepend(thumb);
-      new MutationObserver(moveThumb).observe(opts, { attributes: true, subtree: true, attributeFilter: ['aria-pressed'] });
-    }
-    viewSubtitle();
-    var title = h1.getBoundingClientRect(), bar = toolbar.getBoundingClientRect();
-    root.setAttribute('data-bauify-frame', 'lifted');
-    var w = opts.offsetWidth, h = opts.offsetHeight, x = title.right + 22;
-    // No room beside the name (a long title, a narrow window): keep it above the canvas.
-    if (x + w > bar.left - 16) { root.removeAttribute('data-bauify-frame'); return; }
-    root.style.setProperty('--views-x', Math.round(x + window.scrollX) + 'px');
-    root.style.setProperty('--views-y', Math.round(title.top + title.height / 2 - h / 2 + window.scrollY) + 'px');
-    // Every view's card runs from its top to the window's bottom: measure the card showing.
-    var header = document.querySelector('.header');
-    if (header && window.scrollY < 1) root.style.setProperty('--bauify-app-h', Math.round(header.getBoundingClientRect().bottom + 8) + 'px');
-    var measure = function () {
-      var open = root.getAttribute('data-bauify-views');
-      var card = open ? document.getElementById('bauify-views') : document.querySelector('.diagram-container');
-      if (!card || !card.getClientRects().length || window.scrollY >= 1) return;
-      root.style.setProperty('--bauify-card-top', Math.round(card.getBoundingClientRect().top) + 'px');
-    };
-    setTimeout(measure, 0);
-    moveThumb();
-  }
-  // The header's second line says what page is open: the diagram's own subtitle, or the view's.
-  function viewSubtitle() {
-    var sub = document.querySelector('.header .subtitle'), src = document.getElementById('bauify-atlas-data');
-    if (!sub || !src) return;
-    var line = sub.parentNode.querySelector('.view-subtitle');
-    if (!line) {
-      var A; try { A = JSON.parse(src.textContent); } catch (error) { return; }
-      line = document.createElement('p'); line.className = 'subtitle view-subtitle'; line.lang = locale;
-      // The Atlas's own title row folds into floating controls, so its totals live here.
-      line.dataset.atlas = tr('Atlas') + ' · ' + tr('{files} files · {edges} file dependencies · {functions} functions', { files: fmt(A.files.length), edges: fmt(A.edges.length), functions: fmt(A.functions.length) });
-      line.dataset.atlas3d = tr('Atlas 3D') + ' · ' + tr('{files} files · {functions} functions · {findings} findings', { files: fmt(A.files.length), functions: fmt(A.functions.length), findings: fmt(A.findings.length) }) + '  ·  ' + tr('Drag to turn · scroll to zoom · double-click to reset');
-      sub.after(line);
-    }
-    var open = root.getAttribute('data-bauify-views');
-    line.textContent = open && line.dataset[open] ? line.dataset[open] : '';
-  }
-  function moveThumb() {
-    var opts = document.querySelector('#bauify-views .views-options'), thumb = opts && opts.querySelector('.views-thumb'), on = opts && opts.querySelector('.views-option[aria-pressed="true"]');
-    if (!thumb || !on) return;
-    thumb.style.width = on.offsetWidth + 'px'; thumb.style.transform = 'translateX(' + (on.offsetLeft - 4) + 'px)';
   }
   function positionReader() {
     var bar = toolbar.getBoundingClientRect();
     var header = document.querySelector('.header');
-    var top = Math.max(76, Math.ceil(Math.max(bar.bottom, header ? header.getBoundingClientRect().bottom : 0) + 12));
-    // The rail starts level with the view switch above the diagram, when it is shown.
-    var views = document.getElementById('bauify-views');
-    if (views && !views.hidden && window.innerWidth > 1000 && window.scrollY < 1) {
-      var card = root.getAttribute('data-bauify-frame') === 'lifted' ? document.querySelector('.diagram-container') : views;
-      if (card && card.getClientRects().length) top = Math.max(top, Math.round(card.getBoundingClientRect().top));
-    }
-    root.style.setProperty('--bauify-reader-top', top + 'px');
+    root.style.setProperty('--bauify-reader-top', Math.max(76, Math.ceil(Math.max(bar.bottom, header ? header.getBoundingClientRect().bottom : 0) + 12)) + 'px');
   }
 
   var panel = document.createElement('section');
@@ -315,8 +250,7 @@
     return best ? { c: best, count: most } : null;
   }
   function drawInsights(layer) {
-    // A hidden diagram (another view is open) has no geometry to draw against.
-    if (!svg || !svg.getClientRects().length) { drawnScale = 0; return; }
+    if (!svg) return;
     var g = svgEl('g', { class: 'bauify-insights' }, layer), k = pinScale();
     drawnScale = k;
     // Weighted and undeclared edges go under the nodes, so a node box covers a line that crosses it.
@@ -351,7 +285,7 @@
       var cls = isFocus([c.id]);
       if (!c.modules.length) { pin(g, b.x + b.w, b.y - 6, tr('No source mapped'), 'unmapped-tag' + cls, 'end', 'auto'); return; }
       // Health bar: share of each level, length relative to the busiest component.
-      var open = openOf(c.findings), bh = 3 * k, y = b.y + b.h + 3 * k, inner = Math.max(0, b.w - 16), len = most ? Math.max(open.length ? 6 : 0, inner * open.length / most) : 0, x = b.x + 8;
+      var open = openOf(c.findings), bh = 3 * k, y = b.y + b.h + 3 * k, inner = b.w - 16, len = most ? Math.max(open.length ? 6 : 0, inner * open.length / most) : 0, x = b.x + 8;
       svgEl('rect', { x: x, y: y, width: inner, height: bh, rx: bh / 2, class: 'health-track' + cls }, g);
       ['error', 'warning', 'info'].forEach(function (level) {
         var n = open.filter(function (f) { return f.severity === level; }).length; if (!n) return;
@@ -375,47 +309,28 @@
     }
   }
   // One line over the diagram: what the analysis says, and where to look.
-  // ---- "Start here": the reader's home lists what the analysis says about the
-  // diagram, each line linked to the place on the diagram it is about. ----
-  function nodeColor(id) {
-    var r = svg && svg.querySelector('g[data-node-id="' + id + '"] rect');
-    var c = r && (r.getAttribute('stroke') || getComputedStyle(r).stroke);
-    return c && c !== 'none' ? c : 'var(--text-muted, #94a3b8)';
-  }
-  function repoLoc() { return data.components.reduce(function (n, c) { return n + (c.loc || 0); }, 0) + (data.unmapped || []).reduce(function (n, m) { return n + (m.loc || 0); }, 0); }
-  function leads() {
-    var list = [], top = heaviestComponent(), und = undeclaredEdges(), unm = unmappedComponents(), off = offDiagramModules();
-    if (top) list.push({ key: 'top', id: top.c.id, tone: 'amber', value: top.count, unit: tr('open'),
-      title: tr('{label} carries the most findings', { label: top.c.label }),
-      sub: tr('{files} files · {lines} lines · {share}% of the code', { files: top.c.files, lines: shortCount(top.c.loc), share: Math.round(top.c.loc / Math.max(1, repoLoc()) * 100) }), go: tr('Inspect it') });
-    if (und.length) list.push({ key: 'undeclared', tone: 'red', value: und.length, unit: tr('links'),
-      title: tr('{count} code dependencies are not drawn', { count: und.length }),
-      sub: und.slice(0, 2).map(function (e) { return (byId[e.from] || {}).label + ' → ' + (byId[e.to] || {}).label; }).join('  ·  ') + (und.length > 2 ? ' …' : ''), go: tr('Show on the diagram') });
-    if (off.length) list.push({ key: 'off', tone: 'red', value: off.reduce(function (n, m) { return n + m.files; }, 0), unit: tr('files'),
-      title: off.length === 1 ? tr('{label} is not on the diagram', { label: off[0].label }) : tr('{count} modules are not on the diagram', { count: off.length }),
-      sub: tr('{lines} lines no component claims', { lines: shortCount(off.reduce(function (n, m) { return n + m.loc; }, 0)) }), go: tr('Show on the diagram') });
-    if (unm.length) list.push({ key: 'unmapped', tone: 'grey', value: unm.length, unit: tr('components'),
-      title: tr('{count} components have no source mapped', { count: unm.length }),
-      sub: unm.map(function (c) { return c.label; }).join(' · '), go: tr('Show on the diagram') });
-    return list;
-  }
-  function startHtml() {
-    var top = heaviestComponent(), und = undeclaredEdges();
-    var line = top ? tr('{label} carries the most findings', { label: '<em>' + esc(top.c.label) + '</em>' }) + (und.length ? tr('; {count} code dependencies are not drawn on the diagram.', { count: und.length }) : tr('.')) : esc(tr('No open findings on mapped components.'));
-    var spot = root.getAttribute('data-bauify-spot');
-    return '<section class="start-here" aria-label="' + esc(tr('Start here')) + '"><p class="start-kicker">' + esc(tr('Start here')) + '</p><p class="start-line">' + line + '</p><div class="lead-list">' +
-      leads().map(function (l) {
-        return '<button type="button" class="lead-card ' + l.tone + '" data-lead="' + l.key + '" data-id="' + esc(l.id || '') + '" aria-pressed="' + String(spot === l.key) + '"><span class="lead-text"><b>' + esc(l.title) + '</b><small>' + esc(l.sub) + '</small><em>' + esc(l.go) + ' →</em></span><span class="lead-value"><b>' + fmt(l.value) + '</b><small>' + esc(l.unit) + '</small></span></button>';
-      }).join('') + '</div></section>';
-  }
-  function wireStart(container) {
-    container.querySelectorAll('.lead-card').forEach(function (card) {
-      card.addEventListener('click', function () { var k = card.dataset.lead; spotlight(root.getAttribute('data-bauify-spot') === k && k !== 'top' ? null : k, card.dataset.id); });
-    });
-  }
+  var verdict = null;
   function renderVerdict() {
-    var spot = root.getAttribute('data-bauify-spot');
-    overview.querySelectorAll('.lead-card').forEach(function (card) { card.setAttribute('aria-pressed', String(spot === card.dataset.lead)); });
+    if (standalone || !diagramContainer) return;
+    if (!verdict) {
+      verdict = document.createElement('section');
+      verdict.id = 'bauify-verdict'; verdict.lang = locale; verdict.setAttribute('aria-label', tr('Analysis on the diagram'));
+    }
+    diagramContainer.before(verdict);
+    var top = heaviestComponent(), und = undeclaredEdges(), unm = unmappedComponents(), off = offDiagramModules();
+    var line = top ? tr('{label} has the most findings ({count}).', { label: top.c.label, count: top.count }) : tr('No open findings on mapped components.');
+    if (und.length) line += ' ' + tr('{count} code dependencies are not drawn on the diagram.', { count: und.length });
+    var chips = [];
+    if (top) chips.push(['top', top.c.id, 'amber', tr('{label} · {count} findings', { label: top.c.label, count: top.count })]);
+    if (und.length) chips.push(['undeclared', '', 'red', tr('Not drawn · {count}', { count: und.length })]);
+    if (unm.length) chips.push(['unmapped', '', 'grey', tr('No source · {count}', { count: unm.length })]);
+    if (off.length) chips.push(['off', '', 'red', tr('Off the diagram · {count}', { count: off.length })]);
+    verdict.innerHTML = '<p>' + esc(line) + '</p><div class="verdict-chips">' + chips.map(function (ch) {
+      return '<button type="button" class="verdict-chip" data-spot="' + ch[0] + '" data-id="' + esc(ch[1]) + '" aria-pressed="' + String(root.getAttribute('data-bauify-spot') === ch[0]) + '"><i class="' + ch[2] + '" aria-hidden="true"></i>' + esc(ch[3]) + '</button>';
+    }).join('') + '</div>';
+    verdict.querySelectorAll('.verdict-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () { spotlight(root.getAttribute('data-bauify-spot') === chip.dataset.spot ? null : chip.dataset.spot, chip.dataset.id); });
+    });
   }
   function spotlight(kind, id) {
     if (!kind) { root.removeAttribute('data-bauify-spot'); setFocus([]); renderVerdict(); return; }
@@ -451,7 +366,7 @@
   if (svg) {
     // Shapes sized at draw time (bar height, ghost box, arc clearance) follow a
     // large change of on-screen scale, such as collapsing the reader, by redrawing.
-    var badgeFrame = 0, rescale = function () { cancelAnimationFrame(badgeFrame); badgeFrame = requestAnimationFrame(function () { if (layer && svg.getClientRects().length && (!drawnScale || Math.abs(pinScale() - drawnScale) / drawnScale > 0.1)) drawLayer(); else scaleBadges(); }); };
+    var badgeFrame = 0, rescale = function () { cancelAnimationFrame(badgeFrame); badgeFrame = requestAnimationFrame(function () { if (layer && drawnScale && Math.abs(pinScale() - drawnScale) / drawnScale > 0.1) drawLayer(); else scaleBadges(); }); };
     new MutationObserver(rescale).observe(svg, { attributes: true, attributeFilter: ['style', 'viewBox'] });
     if (window.ResizeObserver) new ResizeObserver(rescale).observe(svg);
   }
@@ -478,7 +393,6 @@
   }
   function showOverview() {
     overviewMode = 'summary';
-    root.removeAttribute('data-bauify-spot');
     readerPage(tr("Overview"));
     root.removeAttribute('data-bauify-source');
     panel.hidden = true; detail.hidden = true; codePane.hidden = true; setFocus([]);
@@ -538,38 +452,14 @@
     if (indicator.key === 'conventions' || indicator.key === 'external-review') return tr('{count} findings from {tools}', { count: findings.length, tools: [...new Set(findings.map(function (f) { return f.external.tool; }))].join(', ') });
     return findings.length ? findings.map(findingWhat).join('；') : tr(indicator.value);
   }
-  // The top of a component page: what it is, how big, what is wrong, what it touches.
-  function inspectorHead(c) {
-    var open = openOf(c.findings), by = { error: 0, warning: 0, info: 0 }; open.forEach(function (f) { by[f.severity] += 1; });
-    var top = heaviestComponent(), und = undeclaredEdges().filter(function (e) { return e.from === c.id || e.to === c.id; });
-    var g = svg && svg.querySelector('g[data-node-id="' + c.id + '"]'), sub = g && g.getAttribute('data-node-sublabel');
-    var h = '<header class="insp-head" style="--insp-c:' + esc(nodeColor(c.id)) + '"><p class="insp-kicker"><i aria-hidden="true"></i>' + esc(tr('Component')) + (top && top.c === c ? ' · <b>' + esc(tr('most findings')) + '</b>' : '') + '</p>' +
-      '<h3>' + esc(c.label) + '<span class="badge ' + c.indicators.status + '">' + tr(LEVELS[c.indicators.status].name) + '</span></h3>' + (sub ? '<p class="insp-sub">' + esc(sub) + '</p>' : '');
-    if (!c.modules.length) return h + '<p class="insp-lead">' + esc(tr('No source directory is mapped to this component, so the analysis cannot see it. Map one and it gets the same health view as the others.')) + '</p></header>';
-    h += '<p class="insp-lead">' + esc(tr('{files} files and {lines} lines ({share}% of the code); {open} open findings.', { files: c.files, lines: shortCount(c.loc), share: Math.round(c.loc / Math.max(1, repoLoc()) * 100), open: open.length })) + (und.length ? ' ' + esc(tr('{count} of its dependencies are not drawn on the diagram.', { count: und.length })) : '') + '</p>';
-    h += '<div class="insp-stats"><span><b>' + fmt(c.files) + '</b>' + esc(tr('files')) + '</span><span><b>' + shortCount(c.loc) + '</b>' + esc(tr('lines')) + '</span><span><b>' + fmt(open.length) + '</b>' + esc(tr('open')) + '</span></div>';
-    if (open.length) h += '<div class="insp-bar" role="img" aria-label="' + esc(tr('{warnings} warnings · {info} reference signals', { warnings: by.warning, info: by.info })) + '"><i class="error" style="flex:' + by.error + '"></i><i class="warning" style="flex:' + by.warning + '"></i><i class="info" style="flex:' + by.info + '"></i></div>';
-    h += '<div class="insp-mods">' + c.modules.map(function (m) { return '<code>' + esc(m.label) + '</code>'; }).join('') + '</div>';
-    var rel = function (title, list, other) {
-      if (!list.length) return '';
-      return '<p class="insp-rel-title">' + esc(title) + '</p>' + list.map(function (e) {
-        var id = e[other], drawn = drawnEdge(e.from, e.to);
-        return '<button type="button" class="insp-rel" data-component="' + esc(id) + '"><i style="background:' + esc(nodeColor(id)) + '"></i>' + esc((byId[id] || {}).label || id) + '<span>' + esc(tr('{count} imports', { count: e.weight })) + (drawn ? '' : ' · <b>' + esc(tr('not drawn')) + '</b>') + '</span></button>';
-      }).join('');
-    };
-    var edges = data.edges || [];
-    h += rel(tr('Depends on'), edges.filter(function (e) { return e.from === c.id; }), 'to');
-    h += rel(tr('Used by'), edges.filter(function (e) { return e.to === c.id; }), 'from');
-    return h + '</header>';
-  }
   function show(id) {
-    var c = byId[id]; if (!c) return;
-    readerPage(c.label);
+    readerPage(tr("Component"));
     root.removeAttribute('data-bauify-source');
+    var c = byId[id]; if (!c) return;
     overview.hidden = true; setFocus([]);
     var h = ("<button class=\"close\" aria-label=\"" + tr("Close") + "\">" + "×" + "</button>" + "<button type=\"button\" class=\"back\">" + tr("← Overview") + "</button>");
-    h += inspectorHead(c);
-    h += '<div class="ev insp-checks">' + esc(indicatorSummary(c.indicators)) + '</div>';
+    h += ("<div class=\"k\">" + tr("Bauify · code analysis") + "</div>" + "<h3>") + esc(c.label) + '<span class="badge ' + c.indicators.status + '">' + tr(LEVELS[c.indicators.status].name) + '</span></h3>';
+    h += '<div class="ev">' + esc(indicatorSummary(c.indicators)) + '</div>';
     if (c.indicators.items.length) {
       h += ("<div class=\"k\">" + tr("Indicators · click one for its findings and a diagram") + "</div>");
       c.indicators.items.forEach(function (i) {
@@ -581,7 +471,12 @@
     if (!c.modules.length) {
       h += ("<p class=\"warn\">" + tr("No source module is mapped to this component (external system, or no sources in the IR).") + "</p>");
     } else {
+      h += '<div>' + c.modules.map(function (m) { return esc(m.label); }).join(' · ') + '</div>';
       if ((c.ambiguousModules || []).length) h += ("<p class=\"warn\">" + tr("Shared module mapping: ")) + c.ambiguousModules.map(esc).join(', ') + (tr(". Component import attribution remains unresolved; inspect the module files below.") + "</p>");
+      h += '<span class="stat">' + c.files + (tr(" files") + "</span>" + "<span class=\"stat\">") + c.loc + (tr(" LOC") + "</span>");
+      var fi = c.incoming.reduce(function (n, e) { return n + e.weight; }, 0), fo = c.outgoing.reduce(function (n, e) { return n + e.weight; }, 0);
+      h += ("<span class=\"stat\">" + tr("in ")) + fi + ("</span>" + "<span class=\"stat\">" + tr("out ")) + fo + '</span>';
+      if (c.internalImports) h += ("<span class=\"stat\">" + tr("internal ")) + c.internalImports + '</span>';
       var section = function (title, list, arrow) {
         if (!list.length) return '';
         var s = '<details><summary>' + title + ' · ' + list.length + '</summary>';
@@ -609,7 +504,6 @@
     detail.hidden = true; codePane.hidden = true;
     panel.querySelector('.close').addEventListener('click', showOverview);
     panel.querySelector('.back').addEventListener('click', showOverview);
-    panel.querySelectorAll('.insp-rel[data-component]').forEach(function (b) { b.addEventListener('click', function () { var id = b.getAttribute('data-component'); show(id); setFocus([id]); }); });
     panel.querySelectorAll('.ind.link').forEach(function (el) {
       var open = function () { panel.querySelectorAll('.ind.active').forEach(function (x) { x.classList.remove('active'); }); el.classList.add('active'); showDetail(c, el.getAttribute('data-ind')); };
       el.addEventListener('click', open);
@@ -1052,7 +946,6 @@
     var live = typeof window.__archifyReanalyze === 'function';
     var h = '<div class="workbench-header"><h3>' + (errors ? '<i class="bauify-red"></i>' : '') + esc(tr('Architecture check')) + '</h3>' +
       (live ? iconButton('refresh', tr('Re-analyze'), ' bauify-reanalyze') : '<span class="snapshot-label" tabindex="0" role="img" aria-label="' + esc(tr('Offline snapshot')) + '" data-analysis-tip="' + esc(tr('Offline snapshot')) + '">' + uiIcon('snapshot') + '</span>') + '</div>';
-    if (svg && !data.pullRequest) h += startHtml();
     if (data.pullRequest) {
       var pr = data.pullRequest;
       h += '<p class="pr-context"><b>' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', { number: pr.number })) + '</b> · ' + esc(pr.title) + '</p><p class="ev">' + esc(pr.scope) + ' · <code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code></p><p class="ev">' + esc(tr('The atlas shows PR head. Existing findings are not automatically caused by this PR.')) + '</p>';
@@ -1110,7 +1003,6 @@
     if (!standalone) h += '<details><summary>' + esc(tr('Colour key')) + '</summary>' + legend() + '</details>';
     h += '</div>';
     overview.innerHTML = h;
-    wireStart(overview);
     overview.querySelectorAll('[data-impact-location]').forEach(function(button){button.addEventListener('click',function(){var indices=button.getAttribute('data-impact-location').split(':').map(Number),loc=data.pullRequest.impact.records[indices[0]].locations[indices[1]];showCode(loc.file,loc.line,tr('Captured PR source; inspect changes against the merge-base.'),'info',false,null,null,null,loc.side);});});
     window.__archifyWireVerification(overview, data.verification, tr);
     overview.querySelector('.browse-findings').addEventListener('click', function () { showFindings('all'); });
@@ -1614,9 +1506,9 @@
     if (on) {
       data.components.forEach(function (c) { var g = svg.querySelector('g[data-node-id="' + c.id + '"]'); if (g) g.classList.toggle('bauify-mapped', c.modules.length > 0); });
       drawLayer();
+      renderVerdict();
       showOverview();
-      setTimeout(function () { frameViews(); positionReader(); }, 0);
-    } else { root.removeAttribute('data-bauify-spot'); setFocus([]); if (layer) layer.remove(); layer = null; if (underlay) underlay.remove(); underlay = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
+    } else { root.removeAttribute('data-bauify-spot'); if (verdict) verdict.remove(); setFocus([]); if (layer) layer.remove(); layer = null; if (underlay) underlay.remove(); underlay = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.
@@ -1642,14 +1534,5 @@
     show(g.getAttribute('data-node-id'));
   }, true);
   if (standalone || data.ui && data.ui.openByDefault && typeof window.__archifyReanalyze !== 'function') setOn(true);
-  window.addEventListener('resize', function () { frameViews(); positionReader(); if (root.getAttribute('data-bauify') === 'on') drawLayer(); });
-  // The views arrive after this script (atlas.js); frame them once they exist, and when their visibility changes.
-  // A timer, not a frame callback: it runs after atlas.js has updated the views, even in a background tab.
-  new MutationObserver(function () { if (root.getAttribute('data-bauify') === 'on') setTimeout(function () { frameViews(); positionReader(); }, 0); else root.removeAttribute('data-bauify-frame'); })
-    .observe(root, { attributes: true, attributeFilter: ['data-bauify', 'data-bauify-views', 'data-theme', 'data-preset'] });
-  // The header settles after this script (fonts, the subtitle line): re-frame when it changes size.
-  var reframe = function () { if (root.getAttribute('data-bauify') === 'on') { frameViews(); positionReader(); } };
-  var headerEl = document.querySelector('.header');
-  if (headerEl && window.ResizeObserver) new ResizeObserver(reframe).observe(headerEl);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reframe);
+  window.addEventListener('resize', function () { positionReader(); if (root.getAttribute('data-bauify') === 'on') drawLayer(); });
 })();
