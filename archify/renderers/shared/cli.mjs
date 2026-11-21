@@ -233,7 +233,6 @@ function stageRenderedHtml(outputPath, html, mode) {
 // Common CLI tail: fill the template and write the standalone HTML file.
 export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null, diagram = null }) {
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
-  const outputGuard = outputPathGuards.get(outPath);
   const html = applyTemplate(template, {
     title: meta.title,
     subtitle: meta.subtitle,
@@ -243,7 +242,16 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     visualPreset: meta.visual_preset || 'classic',
     sourceEvidence,
     explanations: diagram ? collectExplanations(diagramType, diagram) : null,
+    payloads: diagram ? collectPayloads(diagramType, diagram) : null,
   });
+  publishOutputAtomically(outPath, html);
+  console.log(outPath);
+}
+
+// Publishes any text artifact (HTML, SVG, receipts) through the same
+// alias-safe staging and commit sequence the renderers use.
+export function publishOutputAtomically(outPath, content) {
+  const outputGuard = outputPathGuards.get(outPath);
   let candidatePath;
   let candidateIdentity;
   let candidateBinding;
@@ -255,7 +263,7 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     if (beforeStage.status !== 'match') throwAtomicOutputFailure(beforeStage, outPath);
     ({ candidatePath, identity: candidateIdentity } = stageRenderedHtml(
       outputCapture.commitPath,
-      html,
+      content,
       outputCapture.mode,
     ));
 
@@ -265,8 +273,8 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     if (outputGuard) resolveOutputPath(outputGuard);
     const candidateCapture = captureRegularFileBinding(candidatePath, {
       subject: 'candidate',
-      expectedSha256: createHash('sha256').update(html).digest('hex'),
-      expectedBytes: Buffer.byteLength(html),
+      expectedSha256: createHash('sha256').update(content).digest('hex'),
+      expectedBytes: Buffer.byteLength(content),
       expectedIdentity: candidateIdentity,
       ...(outputCapture.mode === null ? {} : { expectedMode: outputCapture.mode }),
     });
@@ -300,7 +308,6 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
       }
     }
   }
-  console.log(outPath);
 }
 
 const SEMANTIC_COLLECTIONS = {
@@ -370,6 +377,56 @@ export function validateRelationshipIds(diagramType, diagram) {
 // and workflow compiler without performing filesystem operations (see #429).
 export function validateCrossCollectionContracts(diagramType, diagram) {
   validateRelationshipIds(diagramType, diagram);
+  validatePayloadIdentity(diagramType, diagram);
+}
+
+const PAYLOAD_COLLECTIONS = { sequence: 'messages', dataflow: 'flows' };
+
+// The Viewer resolves a payload through the relationship's `data-edge-id`, so
+// a payload-bearing message or flow must carry an authored id; positional keys
+// would silently drift when authors insert or reorder relationships.
+export function validatePayloadIdentity(diagramType, diagram) {
+  const collection = PAYLOAD_COLLECTIONS[diagramType];
+  const relationships = collection && Array.isArray(diagram[collection]) ? diagram[collection] : [];
+  const problems = [];
+  const details = [];
+  relationships.forEach((relationship, index) => {
+    if (relationship?.payload === undefined) return;
+    if (relationship.id === undefined || relationship.id === null || String(relationship.id).trim() === '') {
+      const message = `/${collection}/${index}/payload requires /${collection}/${index}/id so the Viewer can resolve it`;
+      problems.push(message);
+      details.push({
+        code: 'payload/missing-id',
+        severity: 'error',
+        message,
+        subject: { diagramType, collection, index },
+        evidence: { from: relationship.from, to: relationship.to },
+        supportedFixes: [`set /${collection}/${index}/id to a stable, unique relationship id`],
+      });
+    }
+  });
+  if (problems.length) {
+    throwDiagnosticProblems('Payload identity validation failed', problems, {
+      code: 'payload/missing-id',
+      subject: { diagramType, collection },
+      diagnostics: details,
+    });
+  }
+}
+
+// Payloads are reader-only review context. They never enter the SVG; the
+// template receives them keyed by relationship id so canonical exports stay
+// clean and documents without payloads emit no block at all.
+export function collectPayloads(diagramType, diagram) {
+  const collection = PAYLOAD_COLLECTIONS[diagramType];
+  const relationships = collection && Array.isArray(diagram?.[collection]) ? diagram[collection] : [];
+  const payloads = {};
+  relationships.forEach((relationship) => {
+    if (!relationship?.payload || typeof relationship.payload !== 'object') return;
+    const role = diagramType === 'dataflow' ? 'flow' : relationship.variant === 'return' ? 'response' : 'request';
+    payloads[relationship.id] = { role, ...relationship.payload };
+  });
+  return Object.keys(payloads).length ? payloads : null;
 }
 
 // Accessible name for the generated diagram SVG.

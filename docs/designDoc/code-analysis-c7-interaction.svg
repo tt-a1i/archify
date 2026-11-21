@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1520" height="1190" viewBox="0 0 1520 1190" role="img" aria-labelledby="title desc">
+  <title id="title">C7 外部诊断导入交互图 v1</title>
+  <desc id="desc">流程从总览、来源覆盖与筛选进入诊断详情，核查证据后导出任务或填写原因接受。四个页面线框使用示例数据，保持 Archify 的单阅读栏和架构画布。</desc>
+  <defs>
+    <style>
+      text{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;fill:#202935;font-size:16px}
+      .title{font-size:30px;font-weight:650}.h{font-size:19px;font-weight:650}.small{font-size:14px;fill:#5b6674}.tiny{font-size:13px;fill:#5b6674}
+      .frame{fill:white;stroke:#aeb8c4;stroke-width:1.4}.surface{fill:#f4f6f8}.line{stroke:#d8dee5;stroke-width:1;fill:none}.flow{fill:#e8edf2;stroke:#98a5b4;stroke-width:1.2}.arrow{stroke:#7d8b9c;stroke-width:1.5;fill:none;marker-end:url(#head)}
+      .button{fill:#243e4a}.buttontext{fill:white;font-size:14px;font-weight:600}.secondary{fill:#fff;stroke:#8795a5;stroke-width:1}.good{fill:#1d6a58}.warn{fill:#906212}.danger{fill:#b5484e}.code{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+    </style>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#7d8b9c"/></marker>
+  </defs>
+  <rect width="1520" height="1190" fill="#edf1f4"/>
+  <text x="40" y="50" class="title">C7 · 外部诊断的核查与处理</text>
+  <text x="40" y="79" class="small">交互图 v1 · 基于现有单阅读栏 · 示例数据，用于评审流程与状态</text>
+  <text x="1310" y="51" class="small">Archify / Code Analysis</text>
+  <g transform="translate(40 106)">
+    <rect class="flow" width="213" height="49" rx="5"/><text x="106" y="31" text-anchor="middle">总览与筛选</text>
+    <path class="arrow" d="M213 25H244"/><rect class="flow" x="247" width="213" height="49" rx="5"/><text x="353" y="31" text-anchor="middle">核查来源与证据</text>
+    <path class="arrow" d="M460 25H491"/><rect class="flow" x="494" width="213" height="49" rx="5"/><text x="600" y="31" text-anchor="middle">复制 AI 任务</text>
+    <path class="arrow" d="M707 25H738"/><rect class="flow" x="741" width="213" height="49" rx="5"/><text x="847" y="31" text-anchor="middle">更新报告后比较</text>
+    <rect class="flow" x="988" width="412" height="49" rx="5"/><text x="1194" y="31" text-anchor="middle">或：填写原因接受 → 证据变化后复核</text>
+  </g>
+  <text x="40" y="200" class="h">总览：问题列表与来源筛选</text>
+  <text x="790" y="200" class="h">来源：检查覆盖与报告新鲜度</text>
+  <g transform="translate(40 218)">
+    <rect class="frame" width="690" height="392" rx="7"/>
+    <rect class="surface" x="1" y="1" width="688" height="41" rx="6"/>
+    <text x="17" y="27" class="small">Archify / 示例仓库</text><text x="520" y="27" class="small">Code Analysis</text>
+    <path class="line" d="M394 42V391"/>
+    <text x="20" y="75" class="h">问题总览</text><text x="300" y="75" class="small">重新分析</text>
+    <text x="20" y="106">3 项待处理 · 1 项已接受</text>
+    <rect x="20" y="121" width="353" height="36" class="surface" rx="4"/><text x="31" y="144" class="small">3 个来源 · 1 个尚未核实　查看来源 →</text>
+    <rect x="20" y="169" width="353" height="32" class="secondary" rx="4"/><text x="31" y="190" class="small">搜索文件、规则或诊断原文</text>
+    <rect x="20" y="210" width="167" height="29" class="secondary" rx="4"/><text x="31" y="230" class="small">全部来源 ▾</text>
+    <rect x="197" y="210" width="176" height="29" class="secondary" rx="4"/><text x="209" y="230" class="small">待处理 · 全部级别 ▾</text>
+    <circle cx="27" cy="263" r="4" class="danger"/><text x="41" y="269">未使用的变量</text><text x="41" y="289" class="tiny">ESLint / no-unused-vars · api.ts:24</text>
+    <path class="line" d="M20 303H373"/>
+    <circle cx="27" cy="323" r="4" class="warn"/><text x="41" y="329">未使用的导入</text><text x="41" y="349" class="tiny">Ruff / F401 · service.py:8</text>
+    <text x="20" y="378" class="small">查看已接受项（1）</text>
+    <text x="415" y="75" class="small">原架构画布保持可见</text>
+    <g fill="#f6f8fa" stroke="#9daab8"><rect x="422" y="107" width="238" height="45" rx="4"/><rect x="422" y="205" width="107" height="45" rx="4"/><rect x="552" y="205" width="108" height="45" rx="4"/><rect x="422" y="307" width="238" height="45" rx="4"/></g>
+    <text x="541" y="136" text-anchor="middle" class="small">Web API</text><text x="475" y="234" text-anchor="middle" class="small">Domain</text><text x="606" y="234" text-anchor="middle" class="small">Shared</text><text x="541" y="336" text-anchor="middle" class="small">Infrastructure</text>
+    <path class="arrow" d="M475 152V204M606 152V204M475 250V306M606 250V306"/>
+  </g>
+  <g transform="translate(790 218)">
+    <rect class="frame" width="690" height="392" rx="7"/><rect class="surface" x="1" y="1" width="688" height="41" rx="6"/>
+    <text x="20" y="27" class="small">← 返回问题列表（保留筛选）</text><text x="20" y="76" class="h">来源与覆盖</text>
+    <text x="20" y="102" class="small">没有报告、没有诊断和覆盖未知，是不同状态。</text>
+    <path class="line" d="M20 118H670"/>
+    <text x="20" y="147">ESLint · web</text><text x="237" y="147" class="good">报告与源码一致</text><text x="525" y="147" class="small">查看 2 项 →</text>
+    <text x="20" y="172" class="small">已导入 · 配置与扫描范围已记录</text>
+    <path class="line" d="M20 188H670"/>
+    <text x="20" y="216">Ruff · backend</text><text x="237" y="216" class="warn">对应关系未核实</text><text x="525" y="216" class="small">查看 1 项 →</text>
+    <text x="20" y="241" class="small">报告可阅读；缺少生成时源码与完整扫描范围</text>
+    <path class="line" d="M20 257H670"/>
+    <text x="20" y="285">CodeRabbit · PR</text><text x="237" y="285" class="warn">指向较早提交</text><text x="525" y="285" class="small">查看 1 项 →</text>
+    <text x="20" y="310" class="small">审查主张按 warning 展示；旧 diff 位置保留来源说明</text>
+    <path class="line" d="M20 328H670"/>
+    <text x="20" y="355" class="small">导入错误时保留上一轮成功结果，并指出失败来源。</text>
+    <text x="20" y="378" class="small">空报告显示“此报告无诊断”，不推断整个仓库无问题。</text>
+  </g>
+  <text x="40" y="655" class="h">详情：核查证据，再交给 AI 或接受</text>
+  <text x="790" y="655" class="h">接受：保留原因，变化后重新复核</text>
+  <g transform="translate(40 675)">
+    <rect class="frame" width="690" height="389" rx="7"/><rect class="surface" x="1" y="1" width="688" height="41" rx="6"/>
+    <text x="20" y="27" class="small">← 返回问题列表</text><text x="20" y="75" class="h">未使用的导入</text>
+    <text x="20" y="103" class="small">Ruff / F401 · 原级别：未提供 · 产品级别：warning</text>
+    <text x="20" y="135">来源原文：os imported but unused</text>
+    <text x="20" y="164" class="small">报告对应关系未核实 · 捕获的代码片段可核对</text>
+    <rect x="20" y="181" width="650" height="89" class="surface" rx="4"/>
+    <text x="33" y="205" class="code">backend/service.py:8 → 查看源码</text>
+    <text x="33" y="232" class="code">7    from pathlib import Path</text><text x="33" y="253" class="code">8    import os</text>
+    <rect x="20" y="286" width="152" height="35" class="button" rx="4"/><text x="96" y="309" text-anchor="middle" class="buttontext">复制 AI 任务</text>
+    <rect x="184" y="286" width="123" height="35" class="secondary" rx="4"/><text x="245" y="309" text-anchor="middle" class="small">接受此项</text>
+    <text x="20" y="350" class="small">任务包含原规则、当前证据和重新生成外部报告的步骤。</text>
+    <text x="20" y="375" class="small">检查源码未变化，不等于重新运行 Ruff 后仍得到同一结论。</text>
+  </g>
+  <g transform="translate(790 675)">
+    <rect class="frame" width="690" height="389" rx="7"/><rect class="surface" x="1" y="1" width="688" height="41" rx="6"/>
+    <text x="20" y="27" class="small">← 返回诊断</text><text x="20" y="75" class="h">接受此项并说明原因</text>
+    <text x="20" y="105" class="small">CodeRabbit · 这是审查主张，请先核实业务行为。</text>
+    <text x="20" y="139">接受原因（必填）</text>
+    <rect x="20" y="150" width="650" height="65" class="secondary" rx="4"/><text x="33" y="178" class="small">例如：此分支用于兼容旧客户端，暂时保留。</text>
+    <rect x="20" y="230" width="125" height="35" class="button" rx="4"/><text x="82" y="253" text-anchor="middle" class="buttontext">确认接受</text><text x="165" y="253" class="small">取消</text>
+    <text x="20" y="290" class="small">原因为空不提交；保存失败保留已填写内容。</text>
+    <path class="line" d="M20 306H670"/>
+    <text x="20" y="335" class="warn">证据变化后：已接受 · 需要重新复核</text>
+    <text x="20" y="361" class="small">显示原原因与变化说明；可撤销接受或核查后更新原因。</text>
+  </g>
+  <text x="40" y="1110" class="h">比较结果必须解释来源</text>
+  <text x="40" y="1138" class="small">新报告同等覆盖才支持“不再检测到”；缺失、损坏、范围变化或旧报告，都不能因此显示“已修复”。</text>
+  <text x="40" y="1166" class="small">评审点：入口位置、筛选维度、详情动作顺序，以及“接受原因”在阅读栏内展开的方式。</text>
+</svg>

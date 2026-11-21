@@ -459,5 +459,22 @@
   "legend.waterfall.ok": "Abgeschlossen",
   "legend.waterfall.error": "Fehler",
   "legend.waterfall.cancelled": "Abgebrochen",
-  "legend.waterfall.incomplete": "Unvollständig (kein Ende aufgezeichnet)"
+  "legend.waterfall.incomplete": "Unvollständig (kein Ende aufgezeichnet)",
+  "viewer.passport.payload": "Nutzlast",
+  "viewer.passport.payload.role.request": "Anfrage",
+  "viewer.passport.payload.role.response": "Antwort",
+  "viewer.passport.payload.role.flow": "Fluss",
+  "viewer.passport.payload.diff": "{added} hinzugefügt · {removed} entfernt · {modified} geändert · {unchanged} unverändert",
+  "viewer.passport.payload.unchanged": "{count} unveränderte Felder",
+  "viewer.passport.payload.sample": "Beispiel-Nutzlast (schreibgeschützt)",
+  "viewer.passport.payload.after": "Nutzlast nach dieser Änderung (schreibgeschützt)",
+  "viewer.passport.payload.before": "Nutzlast vor dieser Änderung (schreibgeschützt)",
+  "viewer.passport.payload.field.added": "Hinzugefügt {path}: {after}",
+  "viewer.passport.payload.field.removed": "Entfernt {path}: {before}",
+  "viewer.passport.payload.field.modified": "Geändert {path}: {before} → {after}",
+  "viewer.passport.payload.field.unchanged": "{path}: {after}",
+  "legend.change.added": "+ Hinzugefügt",
+  "legend.change.modified": "~ Geändert",
+  "legend.change.removed": "− Entfernt",
+  "legend.change.unchanged": "Unverändert"
 }

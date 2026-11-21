@@ -1,6 +1,7 @@
 const unique = values => [...new Set(values)];
 export const nativeMotions = ['relay', 'stream', 'sequence', 'walk', 'sweep', 'replay'];
 export const openingModes = ['auto', 'fit', 'scan-x', 'scan-y'];
+export const MAX_BRIEF_EXCERPT_LINES = 20;
 const required = (value, label) => {
   if (typeof value !== 'string' || !value.trim()) throw Error(label + ' needs text.');
   return value.trim();

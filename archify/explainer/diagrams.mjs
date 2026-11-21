@@ -507,7 +507,11 @@ function changesPreview(svg, changes, semantic, context) {
     byTarget.set(change.target, change.change);
   }
   return svg.replace(/<[a-zA-Z][^>]*>/g, tag => {
-    const values = attrs(tag), change = byTarget.get(values['data-node-id']) || byTarget.get(values['data-edge-id']);
+    const values = attrs(tag);
+    const edgeId = values['data-edge-from'] && values['data-edge-to']
+      ? values['data-edge-id'] || values['data-edge-key'] || `${values['data-edge-from']}~${values['data-edge-to']}`
+      : undefined;
+    const change = byTarget.get(values['data-node-id']) || (edgeId !== undefined ? byTarget.get(edgeId) : undefined);
     return change ? tag.replace(/(\/?>)$/, ` data-explainer-change="${change}"$1`) : tag;
   });
 }

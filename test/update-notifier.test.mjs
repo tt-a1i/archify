@@ -1744,7 +1744,8 @@ test('concurrent checks use one writer and leave a valid cache', async (t) => {
     return new Promise((resolve) => { releaseFetch = resolve; });
   };
 
-  const firstCheck = checkForUpdate(options(testFixture, fetchImpl));
+  // The test holds this mocked fetch open until the overlapping check finishes.
+  const firstCheck = checkForUpdate(options(testFixture, fetchImpl, { timeoutMs: 2_000 }));
   await started;
   const overlapping = await checkForUpdate(options(testFixture, fetchImpl));
   assert.deepEqual(overlapping, { status: 'silent', reason: 'check-in-progress' });

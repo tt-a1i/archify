@@ -56,6 +56,7 @@ export function redactRepositoryRemote(value) {
 
 export function repositorySourceHref(provider, url, revision, source) {
   const encodedPath = source.path.split('/').map(encodeURIComponent).join('/');
+  if (source.kind === 'directory') return repositoryTreeHref(provider, url, revision) + (source.path === '.' ? '' : `/${encodedPath}`);
   const end = source.endLine && source.endLine !== source.line
     ? `-${provider === 'github' ? 'L' : ''}${source.endLine}` : '';
   const fragment = source.line ? `#L${source.line}${end}` : '';

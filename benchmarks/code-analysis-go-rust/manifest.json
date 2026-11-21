@@ -1,0 +1,910 @@
+{
+  "schema": 1,
+  "freeze_stage": "before any analyzer run or implementation",
+  "candidate_parent": "93378351dc97768fd7e0882a50f32ecc7a34e2a6",
+  "projects": [
+    {
+      "project": "cobra",
+      "language": "go",
+      "repository": "https://github.com/spf13/cobra.git",
+      "base": "41fd44e1df83ad6acd8e14b304d5f2a2ae1d62f5",
+      "head": "e392f3204db0445f1f4ad47448b04d8c8ad04c2a",
+      "role": "design",
+      "expected_evidence": {
+        "base": [
+          {
+            "kind": "definition",
+            "file": "doc/man_docs.go",
+            "sha256": "af64ebe0ef854e4b6581040c1c21957a055bcf97e51b83c4bdf464aeaf91db82",
+            "needle": "func GenMan(",
+            "lines": [
+              104
+            ],
+            "source_context": [
+              {
+                "line": 104,
+                "text": "\n// GenMan will generate a man page for the given command and write it to\n// w. The header argument may be nil, however obviously w may not.\nfunc GenMan(cmd *cobra.Command, header *GenManHeader, w io.Writer) error {\n\tif header == nil {\n\t\theader = &GenManHeader{}\n\t}"
+              }
+            ]
+          },
+          {
+            "kind": "call",
+            "file": "doc/man_examples_test.go",
+            "sha256": "bcd1639dd410bf4bf057682fc7cca580abcd0efa7e5cd140dcc4b4d1ee066a7c",
+            "needle": "doc.GenMan(cmd, header, out)",
+            "lines": [
+              33
+            ],
+            "source_context": [
+              {
+                "line": 33,
+                "text": "\t\tSection: \"3\",\n\t}\n\tout := new(bytes.Buffer)\n\tdoc.GenMan(cmd, header, out)\n\tfmt.Print(out.String())\n}"
+              }
+            ]
+          },
+          {
+            "kind": "import",
+            "file": "doc/man_examples_test.go",
+            "sha256": "bcd1639dd410bf4bf057682fc7cca580abcd0efa7e5cd140dcc4b4d1ee066a7c",
+            "needle": "\"github.com/spf13/cobra/doc\"",
+            "lines": [
+              8
+            ],
+            "source_context": [
+              {
+                "line": 8,
+                "text": "\t\"fmt\"\n\n\t\"github.com/spf13/cobra\"\n\t\"github.com/spf13/cobra/doc\"\n)\n\nfunc ExampleGenManTree() {"
+              }
+            ]
+          },
+          {
+            "kind": "caller",
+            "file": "doc/man_examples_test.go",
+            "sha256": "bcd1639dd410bf4bf057682fc7cca580abcd0efa7e5cd140dcc4b4d1ee066a7c",
+            "needle": "func ExampleGenMan()",
+            "lines": [
+              23
+            ],
+            "source_context": [
+              {
+                "line": 23,
+                "text": "\tdoc.GenManTree(cmd, header, \"/tmp\")\n}\n\nfunc ExampleGenMan() {\n\tcmd := &cobra.Command{\n\t\tUse:   \"test\",\n\t\tShort: \"my test program\","
+              }
+            ]
+          },
+          {
+            "kind": "direct internal caller",
+            "file": "doc/man_docs.go",
+            "sha256": "af64ebe0ef854e4b6581040c1c21957a055bcf97e51b83c4bdf464aeaf91db82",
+            "needle": "return GenMan(cmd, &headerCopy, f)",
+            "lines": [
+              78
+            ],
+            "source_context": [
+              {
+                "line": 78,
+                "text": "\tdefer f.Close()\n\n\theaderCopy := *header\n\treturn GenMan(cmd, &headerCopy, f)\n}\n\n// GenManTreeOptions is the options for generating the man pages."
+              }
+            ]
+          },
+          {
+            "kind": "unknown interface dispatch",
+            "file": "doc/man_docs.go",
+            "sha256": "af64ebe0ef854e4b6581040c1c21957a055bcf97e51b83c4bdf464aeaf91db82",
+            "needle": "w.Write(md2man.Render(b))",
+            "lines": [
+              113
+            ],
+            "source_context": [
+              {
+                "line": 113,
+                "text": "\t}\n\n\tb := genMan(cmd, header)\n\t_, err := w.Write(md2man.Render(b))\n\treturn err\n}\n"
+              }
+            ]
+          }
+        ],
+        "head": [
+          {
+            "kind": "definition",
+            "file": "doc/man_docs.go",
+            "sha256": "98df4a13474b2894f2049e8e428994fef7f945cf41430e0a906602c273a1b24a",
+            "needle": "func GenMan(",
+            "lines": [
+              104
+            ],
+            "source_context": [
+              {
+                "line": 104,
+                "text": "\n// GenMan will generate a man page for the given command and write it to\n// w. The header argument may be nil, however obviously w may not.\nfunc GenMan(cmd *cobra.Command, header *GenManHeader, w io.Writer) error {\n\tif header == nil {\n\t\theader = &GenManHeader{}\n\t}"
+              }
+            ]
+          },
+          {
+            "kind": "call",
+            "file": "doc/man_examples_test.go",
+            "sha256": "bcd1639dd410bf4bf057682fc7cca580abcd0efa7e5cd140dcc4b4d1ee066a7c",
+            "needle": "doc.GenMan(cmd, header, out)",
+            "lines": [
+              33
+            ],
+            "source_context": [
+              {
+                "line": 33,
+                "text": "\t\tSection: \"3\",\n\t}\n\tout := new(bytes.Buffer)\n\tdoc.GenMan(cmd, header, out)\n\tfmt.Print(out.String())\n}"
+              }
+            ]
+          },
+          {
+            "kind": "import",
+            "file": "doc/man_examples_test.go",
+            "sha256": "bcd1639dd410bf4bf057682fc7cca580abcd0efa7e5cd140dcc4b4d1ee066a7c",
+            "needle": "\"github.com/spf13/cobra/doc\"",
+            "lines": [
+              8
+            ],
+            "source_context": [
+              {
+                "line": 8,
+                "text": "\t\"fmt\"\n\n\t\"github.com/spf13/cobra\"\n\t\"github.com/spf13/cobra/doc\"\n)\n\nfunc ExampleGenManTree() {"
+              }
+            ]
+          },
+          {
+            "kind": "caller",
+            "file": "doc/man_examples_test.go",
+            "sha256": "bcd1639dd410bf4bf057682fc7cca580abcd0efa7e5cd140dcc4b4d1ee066a7c",
+            "needle": "func ExampleGenMan()",
+            "lines": [
+              23
+            ],
+            "source_context": [
+              {
+                "line": 23,
+                "text": "\tdoc.GenManTree(cmd, header, \"/tmp\")\n}\n\nfunc ExampleGenMan() {\n\tcmd := &cobra.Command{\n\t\tUse:   \"test\",\n\t\tShort: \"my test program\","
+              }
+            ]
+          },
+          {
+            "kind": "direct internal caller",
+            "file": "doc/man_docs.go",
+            "sha256": "98df4a13474b2894f2049e8e428994fef7f945cf41430e0a906602c273a1b24a",
+            "needle": "return GenMan(cmd, &headerCopy, f)",
+            "lines": [
+              78
+            ],
+            "source_context": [
+              {
+                "line": 78,
+                "text": "\tdefer f.Close()\n\n\theaderCopy := *header\n\treturn GenMan(cmd, &headerCopy, f)\n}\n\n// GenManTreeOptions is the options for generating the man pages."
+              }
+            ]
+          },
+          {
+            "kind": "unknown interface dispatch",
+            "file": "doc/man_docs.go",
+            "sha256": "98df4a13474b2894f2049e8e428994fef7f945cf41430e0a906602c273a1b24a",
+            "needle": "w.Write(md2man.Render(b))",
+            "lines": [
+              113
+            ],
+            "source_context": [
+              {
+                "line": 113,
+                "text": "\t}\n\n\tb := genMan(cmd, header)\n\t_, err := w.Write(md2man.Render(b))\n\treturn err\n}\n"
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "go.mod": "module github.com/spf13/cobra\n\ngo 1.12\n\nrequire (\n\tgithub.com/cpuguy83/go-md2man/v2 v2.0.0\n\tgithub.com/inconshreveable/mousetrap v1.0.0\n\tgithub.com/mitchellh/go-homedir v1.1.0\n\tgithub.com/spf13/pflag v1.0.3\n\tgithub.com/spf13/viper v1.4.0\n\tgopkg.in/yaml.v2 v2.2.2\n)\n"
+      }
+    },
+    {
+      "project": "chi",
+      "language": "go",
+      "repository": "https://github.com/go-chi/chi.git",
+      "base": "67be7d9cafdaeb4e04e887ff78d09e030ee43b00",
+      "head": "71307f9b7e4e9527638bc951c42b782cd1560331",
+      "role": "reserved-review",
+      "expected_evidence": {
+        "base": [
+          {
+            "kind": "definition",
+            "file": "context.go",
+            "sha256": "ffa5a4e904074b8764842eefb8b5858685196332ad3612a77ce807074ed97370",
+            "needle": "func RouteContext(",
+            "lines": [
+              27
+            ],
+            "source_context": [
+              {
+                "line": 27,
+                "text": "\n// RouteContext returns chi's routing Context object from a\n// http.Request Context.\nfunc RouteContext(ctx context.Context) *Context {\n\tval, _ := ctx.Value(RouteCtxKey).(*Context)\n\treturn val\n}"
+              }
+            ]
+          },
+          {
+            "kind": "call",
+            "file": "middleware/strip.go",
+            "sha256": "63733b5121823a775a7e150fdceafcc5529d989253aa4fee9b2c8d2253bc0b0f",
+            "needle": "chi.RouteContext(r.Context())",
+            "lines": [
+              16,
+              43
+            ],
+            "source_context": [
+              {
+                "line": 16,
+                "text": "func StripSlashes(next http.Handler) http.Handler {\n\tfn := func(w http.ResponseWriter, r *http.Request) {\n\t\tvar path string\n\t\trctx := chi.RouteContext(r.Context())\n\t\tif rctx != nil && rctx.RoutePath != \"\" {\n\t\t\tpath = rctx.RoutePath\n\t\t} else {"
+              },
+              {
+                "line": 43,
+                "text": "func RedirectSlashes(next http.Handler) http.Handler {\n\tfn := func(w http.ResponseWriter, r *http.Request) {\n\t\tvar path string\n\t\trctx := chi.RouteContext(r.Context())\n\t\tif rctx != nil && rctx.RoutePath != \"\" {\n\t\t\tpath = rctx.RoutePath\n\t\t} else {"
+              }
+            ]
+          },
+          {
+            "kind": "import",
+            "file": "middleware/strip.go",
+            "sha256": "63733b5121823a775a7e150fdceafcc5529d989253aa4fee9b2c8d2253bc0b0f",
+            "needle": "\"github.com/go-chi/chi/v5\"",
+            "lines": [
+              7
+            ],
+            "source_context": [
+              {
+                "line": 7,
+                "text": "\t\"fmt\"\n\t\"net/http\"\n\n\t\"github.com/go-chi/chi/v5\"\n)\n\n// StripSlashes is a middleware that will match request paths with a trailing"
+              }
+            ]
+          },
+          {
+            "kind": "alias import",
+            "file": "_examples/versions/main.go",
+            "sha256": "16f5c10e86dadb44039863545041cfbc60de40271b71ea1b1ea62ca46ca2a207",
+            "needle": "v1 \"github.com/go-chi/chi/v5/_examples/versions/presenter/v1\"",
+            "lines": [
+              15
+            ],
+            "source_context": [
+              {
+                "line": 15,
+                "text": "\n\t\"github.com/go-chi/chi/v5\"\n\t\"github.com/go-chi/chi/v5/_examples/versions/data\"\n\tv1 \"github.com/go-chi/chi/v5/_examples/versions/presenter/v1\"\n\tv2 \"github.com/go-chi/chi/v5/_examples/versions/presenter/v2\"\n\tv3 \"github.com/go-chi/chi/v5/_examples/versions/presenter/v3\"\n\t\"github.com/go-chi/chi/v5/middleware\""
+              }
+            ]
+          },
+          {
+            "kind": "alias call",
+            "file": "_examples/versions/main.go",
+            "sha256": "16f5c10e86dadb44039863545041cfbc60de40271b71ea1b1ea62ca46ca2a207",
+            "needle": "v1.NewArticleResponse(article)",
+            "lines": [
+              87,
+              132
+            ],
+            "source_context": [
+              {
+                "line": 87,
+                "text": "\t\t\tapiVersion := r.Context().Value(\"api.version\").(string)\n\t\t\tswitch apiVersion {\n\t\t\tcase \"v1\":\n\t\t\t\tarticles <- v1.NewArticleResponse(article)\n\t\t\tcase \"v2\":\n\t\t\t\tarticles <- v2.NewArticleResponse(article)\n\t\t\tdefault:"
+              },
+              {
+                "line": 132,
+                "text": "\tapiVersion := r.Context().Value(\"api.version\").(string)\n\tswitch apiVersion {\n\tcase \"v1\":\n\t\tpayload = v1.NewArticleResponse(article)\n\tcase \"v2\":\n\t\tpayload = v2.NewArticleResponse(article)\n\tdefault:"
+              }
+            ]
+          },
+          {
+            "kind": "alias definition",
+            "file": "_examples/versions/presenter/v1/article.go",
+            "sha256": "6183e68da9fde3998f49f528775d302a2462427d24d7d72a1f3511501b8bd817",
+            "needle": "func NewArticleResponse(",
+            "lines": [
+              20
+            ],
+            "source_context": [
+              {
+                "line": 20,
+                "text": "\treturn nil\n}\n\nfunc NewArticleResponse(article *data.Article) *Article {\n\treturn &Article{Article: article}\n}"
+              }
+            ]
+          },
+          {
+            "kind": "unknown interface dispatch",
+            "file": "middleware/strip.go",
+            "sha256": "63733b5121823a775a7e150fdceafcc5529d989253aa4fee9b2c8d2253bc0b0f",
+            "needle": "next.ServeHTTP(w, r)",
+            "lines": [
+              30,
+              59
+            ],
+            "source_context": [
+              {
+                "line": 30,
+                "text": "\t\t\t\trctx.RoutePath = newPath\n\t\t\t}\n\t\t}\n\t\tnext.ServeHTTP(w, r)\n\t}\n\treturn http.HandlerFunc(fn)\n}"
+              },
+              {
+                "line": 59,
+                "text": "\t\t\thttp.Redirect(w, r, redirectURL, 301)\n\t\t\treturn\n\t\t}\n\t\tnext.ServeHTTP(w, r)\n\t}\n\treturn http.HandlerFunc(fn)\n}"
+              }
+            ]
+          }
+        ],
+        "head": [
+          {
+            "kind": "definition",
+            "file": "context.go",
+            "sha256": "b453c9c10998064775d2d9886a30d37f1d42a39555ef7b52847af4952fa90f56",
+            "needle": "func RouteContext(",
+            "lines": [
+              27
+            ],
+            "source_context": [
+              {
+                "line": 27,
+                "text": "\n// RouteContext returns chi's routing Context object from a\n// http.Request Context.\nfunc RouteContext(ctx context.Context) *Context {\n\tval, _ := ctx.Value(RouteCtxKey).(*Context)\n\treturn val\n}"
+              }
+            ]
+          },
+          {
+            "kind": "call",
+            "file": "middleware/strip.go",
+            "sha256": "9079c35f8ed9f113c89c304f5f9afac6dd693d6402dfd4354749d902d65c52f5",
+            "needle": "chi.RouteContext(r.Context())",
+            "lines": [
+              16,
+              43
+            ],
+            "source_context": [
+              {
+                "line": 16,
+                "text": "func StripSlashes(next http.Handler) http.Handler {\n\tfn := func(w http.ResponseWriter, r *http.Request) {\n\t\tvar path string\n\t\trctx := chi.RouteContext(r.Context())\n\t\tif rctx != nil && rctx.RoutePath != \"\" {\n\t\t\tpath = rctx.RoutePath\n\t\t} else {"
+              },
+              {
+                "line": 43,
+                "text": "func RedirectSlashes(next http.Handler) http.Handler {\n\tfn := func(w http.ResponseWriter, r *http.Request) {\n\t\tvar path string\n\t\trctx := chi.RouteContext(r.Context())\n\t\tif rctx != nil && rctx.RoutePath != \"\" {\n\t\t\tpath = rctx.RoutePath\n\t\t} else {"
+              }
+            ]
+          },
+          {
+            "kind": "import",
+            "file": "middleware/strip.go",
+            "sha256": "9079c35f8ed9f113c89c304f5f9afac6dd693d6402dfd4354749d902d65c52f5",
+            "needle": "\"github.com/go-chi/chi/v5\"",
+            "lines": [
+              7
+            ],
+            "source_context": [
+              {
+                "line": 7,
+                "text": "\t\"fmt\"\n\t\"net/http\"\n\n\t\"github.com/go-chi/chi/v5\"\n)\n\n// StripSlashes is a middleware that will match request paths with a trailing"
+              }
+            ]
+          },
+          {
+            "kind": "alias import",
+            "file": "_examples/versions/main.go",
+            "sha256": "16f5c10e86dadb44039863545041cfbc60de40271b71ea1b1ea62ca46ca2a207",
+            "needle": "v1 \"github.com/go-chi/chi/v5/_examples/versions/presenter/v1\"",
+            "lines": [
+              15
+            ],
+            "source_context": [
+              {
+                "line": 15,
+                "text": "\n\t\"github.com/go-chi/chi/v5\"\n\t\"github.com/go-chi/chi/v5/_examples/versions/data\"\n\tv1 \"github.com/go-chi/chi/v5/_examples/versions/presenter/v1\"\n\tv2 \"github.com/go-chi/chi/v5/_examples/versions/presenter/v2\"\n\tv3 \"github.com/go-chi/chi/v5/_examples/versions/presenter/v3\"\n\t\"github.com/go-chi/chi/v5/middleware\""
+              }
+            ]
+          },
+          {
+            "kind": "alias call",
+            "file": "_examples/versions/main.go",
+            "sha256": "16f5c10e86dadb44039863545041cfbc60de40271b71ea1b1ea62ca46ca2a207",
+            "needle": "v1.NewArticleResponse(article)",
+            "lines": [
+              87,
+              132
+            ],
+            "source_context": [
+              {
+                "line": 87,
+                "text": "\t\t\tapiVersion := r.Context().Value(\"api.version\").(string)\n\t\t\tswitch apiVersion {\n\t\t\tcase \"v1\":\n\t\t\t\tarticles <- v1.NewArticleResponse(article)\n\t\t\tcase \"v2\":\n\t\t\t\tarticles <- v2.NewArticleResponse(article)\n\t\t\tdefault:"
+              },
+              {
+                "line": 132,
+                "text": "\tapiVersion := r.Context().Value(\"api.version\").(string)\n\tswitch apiVersion {\n\tcase \"v1\":\n\t\tpayload = v1.NewArticleResponse(article)\n\tcase \"v2\":\n\t\tpayload = v2.NewArticleResponse(article)\n\tdefault:"
+              }
+            ]
+          },
+          {
+            "kind": "alias definition",
+            "file": "_examples/versions/presenter/v1/article.go",
+            "sha256": "6183e68da9fde3998f49f528775d302a2462427d24d7d72a1f3511501b8bd817",
+            "needle": "func NewArticleResponse(",
+            "lines": [
+              20
+            ],
+            "source_context": [
+              {
+                "line": 20,
+                "text": "\treturn nil\n}\n\nfunc NewArticleResponse(article *data.Article) *Article {\n\treturn &Article{Article: article}\n}"
+              }
+            ]
+          },
+          {
+            "kind": "unknown interface dispatch",
+            "file": "middleware/strip.go",
+            "sha256": "9079c35f8ed9f113c89c304f5f9afac6dd693d6402dfd4354749d902d65c52f5",
+            "needle": "next.ServeHTTP(w, r)",
+            "lines": [
+              30,
+              59
+            ],
+            "source_context": [
+              {
+                "line": 30,
+                "text": "\t\t\t\trctx.RoutePath = newPath\n\t\t\t}\n\t\t}\n\t\tnext.ServeHTTP(w, r)\n\t}\n\treturn http.HandlerFunc(fn)\n}"
+              },
+              {
+                "line": 59,
+                "text": "\t\t\thttp.Redirect(w, r, redirectURL, 301)\n\t\t\treturn\n\t\t}\n\t\tnext.ServeHTTP(w, r)\n\t}\n\treturn http.HandlerFunc(fn)\n}"
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "go.mod": "module github.com/go-chi/chi/v5\n\n// Chi supports the four most recent major versions of Go.\n// See https://github.com/go-chi/chi/issues/963.\ngo 1.20\n"
+      }
+    },
+    {
+      "project": "regex",
+      "language": "rust",
+      "repository": "https://github.com/rust-lang/regex.git",
+      "base": "f871a8eb1d725a8aaa56e2ceea57c24fce74b5fd",
+      "head": "9870c06e6c772daaad7ab612faab29130753e41c",
+      "role": "design",
+      "expected_evidence": {
+        "base": [
+          {
+            "kind": "changed definition",
+            "file": "regex-syntax/src/unicode.rs",
+            "sha256": "2ad48193433fefbede0837bd645f4288f6b39b1facb59dbb7d541bce7bf19109",
+            "needle": "pub fn is_word_character(",
+            "lines": [
+              400
+            ],
+            "source_context": [
+              {
+                "line": 400,
+                "text": "/// Returns true only if the given codepoint is in the `\\w` character class.\n///\n/// If the `unicode-perl` feature is not enabled, then this returns an error.\npub fn is_word_character(c: char) -> result::Result<bool, UnicodeWordError> {\n    #[cfg(not(feature = \"unicode-perl\"))]\n    fn imp(_: char) -> result::Result<bool, UnicodeWordError> {\n        Err(UnicodeWordError(()))"
+              }
+            ]
+          },
+          {
+            "kind": "explicit module call",
+            "file": "regex-syntax/src/lib.rs",
+            "sha256": "a004f65196dd5745b3112e4acc8c467b18495cecac64a58d6608b35de67371cb",
+            "needle": "unicode::is_word_character(c)",
+            "lines": [
+              252
+            ],
+            "source_context": [
+              {
+                "line": 252,
+                "text": "pub fn try_is_word_character(\n    c: char,\n) -> std::result::Result<bool, UnicodeWordError> {\n    unicode::is_word_character(c)\n}\n\n/// Returns true if and only if the given character is an ASCII word character."
+              }
+            ]
+          },
+          {
+            "kind": "workspace call",
+            "file": "src/lib.rs",
+            "sha256": "982fadba415c4c5b93f4d7d4a73a23ec88e2d96daaa03b679d14490ea0f63197",
+            "needle": "regex_syntax::escape(pattern)",
+            "lines": [],
+            "absence": "Not present in this fixed version; do not score as an omitted call."
+          },
+          {
+            "kind": "workspace definition",
+            "file": "regex-syntax/src/lib.rs",
+            "sha256": "a004f65196dd5745b3112e4acc8c467b18495cecac64a58d6608b35de67371cb",
+            "needle": "pub fn escape(",
+            "lines": [
+              178
+            ],
+            "source_context": [
+              {
+                "line": 178,
+                "text": "///\n/// The string returned may be safely used as a literal in a regular\n/// expression.\npub fn escape(text: &str) -> String {\n    let mut quoted = String::new();\n    escape_into(text, &mut quoted);\n    quoted"
+              }
+            ]
+          }
+        ],
+        "head": [
+          {
+            "kind": "changed definition",
+            "file": "regex-syntax/src/unicode.rs",
+            "sha256": "b2084dcbd4331501b9a895fd7e7575d93ff96eb661c6e6adbc8c66bb72685cde",
+            "needle": "pub fn is_word_character(",
+            "lines": [
+              463
+            ],
+            "source_context": [
+              {
+                "line": 463,
+                "text": "/// Returns true only if the given codepoint is in the `\\w` character class.\n///\n/// If the `unicode-perl` feature is not enabled, then this returns an error.\npub fn is_word_character(c: char) -> Result<bool, UnicodeWordError> {\n    #[cfg(not(feature = \"unicode-perl\"))]\n    fn imp(_: char) -> Result<bool, UnicodeWordError> {\n        Err(UnicodeWordError(()))"
+              }
+            ]
+          },
+          {
+            "kind": "explicit module call",
+            "file": "regex-syntax/src/lib.rs",
+            "sha256": "5ae457d402e49443bdb23b71353693dd3b0d263b57a6eeb9eb5b5dae5c901bdd",
+            "needle": "unicode::is_word_character(c)",
+            "lines": [
+              369
+            ],
+            "source_context": [
+              {
+                "line": 369,
+                "text": "pub fn try_is_word_character(\n    c: char,\n) -> core::result::Result<bool, UnicodeWordError> {\n    unicode::is_word_character(c)\n}\n\n/// Returns true if and only if the given character is an ASCII word character."
+              }
+            ]
+          },
+          {
+            "kind": "workspace call",
+            "file": "src/lib.rs",
+            "sha256": "1be6ce04d4fce06a7e46bc006bbf536f5a7f82d97dc71e7f7489a6d2610f790b",
+            "needle": "regex_syntax::escape(pattern)",
+            "lines": [
+              1345
+            ],
+            "source_context": [
+              {
+                "line": 1345,
+                "text": "/// The string returned may be safely used as a literal in a regular\n/// expression.\npub fn escape(pattern: &str) -> alloc::string::String {\n    regex_syntax::escape(pattern)\n}"
+              }
+            ]
+          },
+          {
+            "kind": "workspace definition",
+            "file": "regex-syntax/src/lib.rs",
+            "sha256": "5ae457d402e49443bdb23b71353693dd3b0d263b57a6eeb9eb5b5dae5c901bdd",
+            "needle": "pub fn escape(",
+            "lines": [
+              201
+            ],
+            "source_context": [
+              {
+                "line": 201,
+                "text": "///\n/// The string returned may be safely used as a literal in a regular\n/// expression.\npub fn escape(text: &str) -> String {\n    let mut quoted = String::new();\n    escape_into(text, &mut quoted);\n    quoted"
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "Cargo.toml": "[package]\nname = \"regex\"\nversion = \"1.11.1\"  #:version\nauthors = [\"The Rust Project Developers\", \"Andrew Gallant <jamslam@gmail.com>\"]\nlicense = \"MIT OR Apache-2.0\"\nreadme = \"README.md\"\nrepository = \"https://github.com/rust-lang/regex\"\ndocumentation = \"https://docs.rs/regex\"\nhomepage = \"https://github.com/rust-lang/regex\"\ndescription = \"\"\"\nAn implementation of regular expressions for Rust. This implementation uses\nfinite automata and guarantees linear time matching on all inputs.\n\"\"\"\ncategories = [\"text-processing\"]\nautotests = false\nexclude = [\"/scripts/*\", \"/.github/*\"]\nedition = \"2021\"\nrust-version = \"1.65\"\n\n[workspace]\nmembers = [\n  \"regex-automata\",\n  \"regex-capi\",\n  \"regex-cli\",\n  \"regex-lite\",\n  \"regex-syntax\",\n  \"regex-test\",\n]\n\n# Features are documented in the \"Crate features\" section of the crate docs:\n# https://docs.rs/regex/*/#crate-features\n[features]\ndefault = [\"std\", \"perf\", \"unicode\", \"regex-syntax/default\"]\n\n# ECOSYSTEM FEATURES\n\n# The 'std' feature permits the regex crate to use the standard library. This\n# is intended to support future use cases where the regex crate may be able\n# to compile without std, and instead just rely on 'core' and 'alloc' (for\n# example). Currently, this isn't supported, and removing the 'std' feature\n# will prevent regex from compiling.\nstd = [\n  \"aho-corasick?/std\",\n  \"memchr?/std\",\n  \"regex-automata/std\",\n  \"regex-syntax/std\",\n]\n# This feature enables the 'log' crate to emit messages. This is usually\n# only useful for folks working on the regex crate itself, but can be useful\n# if you're trying hard to do some performance hacking on regex patterns\n# themselves. Note that you'll need to pair this with a crate like 'env_logger'\n# to actually emit the log messages somewhere.\nlogging = [\n  \"aho-corasick?/logging\",\n  \"memchr?/logging\",\n  \"regex-automata/logging\",\n]\n# The 'use_std' feature is DEPRECATED. It will be removed in regex 2. Until\n# then, it is an alias for the 'std' feature.\nuse_std = [\"std\"]\n\n\n# PERFORMANCE FEATURES\n\n# Enables all default performance features. Note that this specifically does\n# not include perf-dfa-full, because it leads to higher compile times and\n# bigger binaries, and the runtime performance improvement is not obviously\n# worth it.\nperf = [\n  \"perf-cache\",\n  \"perf-dfa\",\n  \"perf-onepass\",\n  \"perf-backtrack\",\n  \"perf-inline\",\n  \"perf-literal\",\n]\n# Enables use of a lazy DFA when possible.\nperf-dfa = [\"regex-automata/hybrid\"]\n# Enables use of a fully compiled DFA when possible.\nperf-dfa-full = [\"regex-automata/dfa-build\", \"regex-automata/dfa-search\"]\n# Enables use of the one-pass regex matcher, which speeds up capture searches\n# even beyond the backtracker.\nperf-onepass = [\"regex-automata/dfa-onepass\"]\n# Enables use of a bounded backtracker, which speeds up capture searches.\nperf-backtrack = [\"regex-automata/nfa-backtrack\"]\n# Enables aggressive use of inlining.\nperf-inline = [\"regex-automata/perf-inline\"]\n# Enables literal optimizations.\nperf-literal = [\n  \"dep:aho-corasick\",\n  \"dep:memchr\",\n  \"regex-automata/perf-literal\",\n]\n# Enables fast caching. (If disabled, caching is still used, but is slower.)\n# Currently, this feature has no effect. It used to remove the thread_local\n# dependency and use a slower internal cache, but now the default cache has\n# been improved and thread_local is no longer a dependency at all.\nperf-cache = []\n\n\n# UNICODE DATA FEATURES\n\n# Enables all Unicode features. This expands if new Unicode features are added.\nunicode = [\n  \"unicode-age\",\n  \"unicode-bool\",\n  \"unicode-case\",\n  \"unicode-gencat\",\n  \"unicode-perl\",\n  \"unicode-script\",\n  \"unicode-segment\",\n  \"regex-automata/unicode\",\n  \"regex-syntax/unicode\",\n]\n# Enables use of the `Age` property, e.g., `\\p{Age:3.0}`.\nunicode-age = [\n  \"regex-automata/unicode-age\",\n  \"regex-syntax/unicode-age\",\n]\n# Enables use of a smattering of boolean properties, e.g., `\\p{Emoji}`.\nunicode-bool = [\n  \"regex-automata/unicode-bool\",\n  \"regex-syntax/unicode-bool\",\n]\n# Enables Unicode-aware case insensitive matching, e.g., `(?i)\u03b2`.\nunicode-case = [\n  \"regex-automata/unicode-case\",\n  \"regex-syntax/unicode-case\",\n]\n# Enables Unicode general categories, e.g., `\\p{Letter}` or `\\pL`.\nunicode-gencat = [\n  \"regex-automata/unicode-gencat\",\n  \"regex-syntax/unicode-gencat\",\n]\n# Enables Unicode-aware Perl classes corresponding to `\\w`, `\\s` and `\\d`.\nunicode-perl = [\n  \"regex-automata/unicode-perl\",\n  \"regex-automata/unicode-word-boundary\",\n  \"regex-syntax/unicode-perl\",\n]\n# Enables Unicode scripts and script extensions, e.g., `\\p{Greek}`.\nunicode-script = [\n  \"regex-automata/unicode-script\",\n  \"regex-syntax/unicode-script\",\n]\n# Enables Unicode segmentation properties, e.g., `\\p{gcb=Extend}`.\nunicode-segment = [\n  \"regex-automata/unicode-segment\",\n  \"regex-syntax/unicode-segment\",\n]\n\n\n# UNSTABLE FEATURES (requires Rust nightly)\n\n# A blanket feature that governs whether unstable features are enabled or not.\n# Unstable features are disabled by default, and typically rely on unstable\n# features in rustc itself.\nunstable = [\"pattern\"]\n\n# Enable to use the unstable pattern traits defined in std. This is enabled\n# by default if the unstable feature is enabled.\npattern = []\n\n# For very fast multi-prefix literal matching.\n[dependencies.aho-corasick]\nversion = \"1.0.0\"\noptional = true\ndefault-features = false\n\n# For skipping along search text quickly when a leading byte is known.\n[dependencies.memchr]\nversion = \"2.6.0\"\noptional = true\ndefault-features = false\n\n# For the actual regex engines.\n[dependencies.regex-automata]\npath = \"regex-automata\"\nversion = \"0.4.8\"\ndefault-features = false\nfeatures = [\"alloc\", \"syntax\", \"meta\", \"nfa-pikevm\"]\n\n# For parsing regular expressions.\n[dependencies.regex-syntax]\npath = \"regex-syntax\"\nversion = \"0.8.5\"\ndefault-features = false\n\n[dev-dependencies]\n# For examples.\nonce_cell = \"1.17.1\"\n# For property based tests.\nquickcheck = { version = \"1.0.3\", default-features = false }\n# To check README's example\ndoc-comment = \"0.3\"\n# For easy error handling in integration tests.\nanyhow = \"1.0.69\"\n# A library for testing regex engines.\nregex-test = { path = \"regex-test\", version = \"0.1.0\" }\n\n[dev-dependencies.env_logger]\n# Note that this is currently using an older version because of the dependency\n# tree explosion that happened in 0.10.\nversion = \"0.9.3\"\ndefault-features = false\nfeatures = [\"atty\", \"humantime\", \"termcolor\"]\n\n# This test suite reads a whole boatload of tests from the top-level testdata\n# directory, and then runs them against the regex crate API.\n#\n# regex-automata has its own version of them, and runs them against each\n# internal regex engine individually.\n#\n# This means that if you're seeing a failure in this test suite, you should\n# try running regex-automata's tests:\n#\n#     cargo test --manifest-path regex-automata/Cargo.toml --test integration\n#\n# That *might* give you a more targeted test failure. i.e., \"only the\n# PikeVM fails this test.\" Which gives you a narrower place to search. If\n# regex-automata's test suite passes, then the bug might be in the integration\n# of the regex crate and regex-automata. But generally speaking, a failure\n# in this test suite *should* mean there is a corresponding failure in\n# regex-automata's test suite.\n[[test]]\npath = \"tests/lib.rs\"\nname = \"integration\"\n\n[package.metadata.docs.rs]\n# We want to document all features.\nall-features = true\n# Since this crate's feature setup is pretty complicated, it is worth opting\n# into a nightly unstable option to show the features that need to be enabled\n# for public API items. To do that, we set 'docsrs', and when that's enabled,\n# we enable the 'doc_auto_cfg' feature.\n#\n# To test this locally, run:\n#\n#     RUSTDOCFLAGS=\"--cfg docsrs\" cargo +nightly doc --all-features\nrustdoc-args = [\"--cfg\", \"docsrs\"]\n\n[profile.release]\ndebug = true\n\n[profile.bench]\ndebug = true\n\n[profile.dev]\n# Running tests takes too long in debug mode, so we forcefully always build\n# with optimizations. Unfortunate, but, \u00af\\_(\u30c4)_/\u00af.\n#\n# It's counter-intuitive that this needs to be set on dev *and* test, but\n# it's because the tests that take a long time to run are run as integration\n# tests in a separate crate. The test.opt-level setting won't apply there, so\n# we need to set the opt-level across the entire build.\nopt-level = 3\ndebug = true\n\n[profile.test]\nopt-level = 3\ndebug = true\n"
+      },
+      "head_supplement": [
+        {
+          "kind": "use alias",
+          "file": "regex-automata/src/dfa/special.rs",
+          "sha256": "c2e60de5b98e68c9c45aaffbc67a08f049831a764a1ed29d1d1db0fb68efdce5",
+          "needle": "use crate::util::wire::write_state_id as write;",
+          "lines": [
+            357
+          ],
+          "source_context": [
+            {
+              "line": 357,
+              "text": "        &self,\n        dst: &mut [u8],\n    ) -> Result<usize, SerializeError> {\n        use crate::util::wire::write_state_id as write;\n\n        if dst.len() < self.write_to_len() {\n            return Err(SerializeError::buffer_too_small(\"special state ids\"));"
+            }
+          ]
+        },
+        {
+          "kind": "alias direct call",
+          "file": "regex-automata/src/dfa/special.rs",
+          "sha256": "c2e60de5b98e68c9c45aaffbc67a08f049831a764a1ed29d1d1db0fb68efdce5",
+          "needle": "write::<E>(self.max,",
+          "lines": [
+            364
+          ],
+          "source_context": [
+            {
+              "line": 364,
+              "text": "        }\n\n        let mut nwrite = 0;\n        nwrite += write::<E>(self.max, &mut dst[nwrite..]);\n        nwrite += write::<E>(self.quit_id, &mut dst[nwrite..]);\n        nwrite += write::<E>(self.min_match, &mut dst[nwrite..]);\n        nwrite += write::<E>(self.max_match, &mut dst[nwrite..]);"
+            }
+          ]
+        },
+        {
+          "kind": "alias target",
+          "file": "regex-automata/src/util/wire.rs",
+          "sha256": "ad84c82b3035b5015929e1dfd27742f5842cf88740d8bf26ca656a5f17979df2",
+          "needle": "fn write_state_id<",
+          "lines": [
+            663
+          ],
+          "source_context": [
+            {
+              "line": 663,
+              "text": "/// using the specified endianness. The given slice must have length at least\n/// `StateID::SIZE`, or else this panics. Upon success, the total number of\n/// bytes written is returned.\npub(crate) fn write_state_id<E: Endian>(\n    sid: StateID,\n    dst: &mut [u8],\n) -> usize {"
+            }
+          ]
+        },
+        {
+          "kind": "plain use",
+          "file": "regex-automata/src/util/look.rs",
+          "sha256": "fbfcaace79d0c6ad3698c9d6c025cb952f2e00cf88a48cf690d087fa73466689",
+          "needle": "use regex_syntax::try_is_word_character;",
+          "lines": [
+            1573
+          ],
+          "source_context": [
+            {
+              "line": 1573,
+              "text": "    feature = \"unicode-perl\",\n))]\nmod is_word_char {\n    use regex_syntax::try_is_word_character;\n\n    use crate::util::utf8;\n"
+            }
+          ]
+        },
+        {
+          "kind": "plain use call",
+          "file": "regex-automata/src/util/look.rs",
+          "sha256": "fbfcaace79d0c6ad3698c9d6c025cb952f2e00cf88a48cf690d087fa73466689",
+          "needle": "Some(Ok(ch)) => try_is_word_character(ch)",
+          "lines": [
+            1588,
+            1603
+          ],
+          "source_context": [
+            {
+              "line": 1588,
+              "text": "    ) -> Result<bool, super::UnicodeWordBoundaryError> {\n        Ok(match utf8::decode(&haystack[at..]) {\n            None | Some(Err(_)) => false,\n            Some(Ok(ch)) => try_is_word_character(ch).expect(\n                \"since unicode-word-boundary, syntax and unicode-perl \\\n                 are all enabled, it is expected that \\\n                 try_is_word_character succeeds\","
+            },
+            {
+              "line": 1603,
+              "text": "    ) -> Result<bool, super::UnicodeWordBoundaryError> {\n        Ok(match utf8::decode_last(&haystack[..at]) {\n            None | Some(Err(_)) => false,\n            Some(Ok(ch)) => try_is_word_character(ch).expect(\n                \"since unicode-word-boundary, syntax and unicode-perl \\\n                 are all enabled, it is expected that \\\n                 try_is_word_character succeeds\","
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "file": "regex-syntax/src/lib.rs",
+          "sha256": "5ae457d402e49443bdb23b71353693dd3b0d263b57a6eeb9eb5b5dae5c901bdd",
+          "needle": "pub fn try_is_word_character(",
+          "lines": [
+            366
+          ],
+          "source_context": [
+            {
+              "line": 366,
+              "text": "///\n/// If the `unicode-perl` feature is not enabled, then this function always\n/// returns an error.\npub fn try_is_word_character(\n    c: char,\n) -> core::result::Result<bool, UnicodeWordError> {\n    unicode::is_word_character(c)"
+            }
+          ]
+        },
+        {
+          "kind": "macro unknown",
+          "file": "regex-automata/src/dfa/special.rs",
+          "sha256": "c2e60de5b98e68c9c45aaffbc67a08f049831a764a1ed29d1d1db0fb68efdce5",
+          "needle": "assert_eq!(",
+          "lines": [
+            256,
+            373,
+            378
+          ],
+          "source_context": [
+            {
+              "line": 256,
+              "text": "            max_start,\n        };\n        special.validate()?;\n        assert_eq!(nread, special.write_to_len());\n        Ok((special, nread))\n    }\n"
+            },
+            {
+              "line": 373,
+              "text": "        nwrite += write::<E>(self.min_start, &mut dst[nwrite..]);\n        nwrite += write::<E>(self.max_start, &mut dst[nwrite..]);\n\n        assert_eq!(\n            self.write_to_len(),\n            nwrite,\n            \"expected to write certain number of bytes\","
+            },
+            {
+              "line": 378,
+              "text": "            nwrite,\n            \"expected to write certain number of bytes\",\n        );\n        assert_eq!(\n            nwrite % 8,\n            0,\n            \"expected to write multiple of 8 bytes for special states\","
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "project": "serde-json",
+      "language": "rust",
+      "repository": "https://github.com/serde-rs/json.git",
+      "base": "d2fce19685bf0e3d493a9d785665137654c79e6d",
+      "head": "4d4f53c3b7de3259b6a8a15ef4d5f4edb47af32f",
+      "role": "reserved-review",
+      "expected_evidence": {
+        "base": [
+          {
+            "kind": "changed definition",
+            "file": "src/lexical/algorithm.rs",
+            "sha256": "4fbeb1994049348d1fc388dd1a29e481f8abb8fe1e28bfebf50f3bbce5fa5fbe",
+            "needle": "fn fast_path<",
+            "lines": [
+              18
+            ],
+            "source_context": [
+              {
+                "line": 18,
+                "text": "/// Convert mantissa to exact value for a non-base2 power.\n///\n/// Returns the resulting float and if the value can be represented exactly.\npub(crate) fn fast_path<F>(mantissa: u64, exponent: i32) -> Option<F>\nwhere\n    F: Float,\n{"
+              }
+            ]
+          },
+          {
+            "kind": "wildcard import",
+            "file": "src/lexical/parse.rs",
+            "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac",
+            "needle": "use super::algorithm::*;",
+            "lines": [
+              3
+            ],
+            "source_context": [
+              {
+                "line": 3,
+                "text": "// Adapted from https://github.com/Alexhuszagh/rust-lexical.\n\nuse super::algorithm::*;\nuse super::bhcomp::*;\nuse super::digit::*;\nuse super::exponent::*;"
+              }
+            ]
+          },
+          {
+            "kind": "call",
+            "file": "src/lexical/parse.rs",
+            "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac",
+            "needle": "fast_path(mantissa, mant_exp)",
+            "lines": [
+              18
+            ],
+            "source_context": [
+              {
+                "line": 18,
+                "text": "where\n    F: Float,\n{\n    if let Some(float) = fast_path(mantissa, mant_exp) {\n        return float;\n    }\n"
+              }
+            ]
+          },
+          {
+            "kind": "caller",
+            "file": "src/lexical/parse.rs",
+            "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac",
+            "needle": "pub fn parse_concise_float<",
+            "lines": [
+              14
+            ],
+            "source_context": [
+              {
+                "line": 14,
+                "text": "\n/// Parse float for which the entire integer and fraction parts fit into a 64\n/// bit mantissa.\npub fn parse_concise_float<F>(mantissa: u64, mant_exp: i32) -> F\nwhere\n    F: Float,\n{"
+              }
+            ]
+          },
+          {
+            "kind": "feature gate",
+            "file": "src/lib.rs",
+            "sha256": "762bcee7a27c12cfb9945cf85fc7c79daf441fdbceee6003e69ed6a8a09266da",
+            "needle": "#[cfg(feature = \"float_roundtrip\")]",
+            "lines": [
+              416
+            ],
+            "source_context": [
+              {
+                "line": 416,
+                "text": "mod io;\n#[cfg(feature = \"std\")]\nmod iter;\n#[cfg(feature = \"float_roundtrip\")]\nmod lexical;\nmod number;\nmod read;"
+              }
+            ]
+          },
+          {
+            "kind": "unknown trait method",
+            "file": "src/lexical/algorithm.rs",
+            "sha256": "4fbeb1994049348d1fc388dd1a29e481f8abb8fe1e28bfebf50f3bbce5fa5fbe",
+            "needle": "F::exponent_limit()",
+            "lines": [
+              24
+            ],
+            "source_context": [
+              {
+                "line": 24,
+                "text": "{\n    // `mantissa >> (F::MANTISSA_SIZE+1) != 0` effectively checks if the\n    // value has a no bits above the hidden bit, which is what we want.\n    let (min_exp, max_exp) = F::exponent_limit();\n    let shift_exp = F::mantissa_limit();\n    let mantissa_size = F::MANTISSA_SIZE + 1;\n    if mantissa == 0 {"
+              }
+            ]
+          }
+        ],
+        "head": [
+          {
+            "kind": "changed definition",
+            "file": "src/lexical/algorithm.rs",
+            "sha256": "bd6106e5d8875c9ff1c1d57256b459a4f0992d14a0df1a5fffcd3d3cbdccee8c",
+            "needle": "fn fast_path<",
+            "lines": [
+              18
+            ],
+            "source_context": [
+              {
+                "line": 18,
+                "text": "/// Convert mantissa to exact value for a non-base2 power.\n///\n/// Returns the resulting float and if the value can be represented exactly.\npub(crate) fn fast_path<F>(mantissa: u64, exponent: i32) -> Option<F>\nwhere\n    F: Float,\n{"
+              }
+            ]
+          },
+          {
+            "kind": "wildcard import",
+            "file": "src/lexical/parse.rs",
+            "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac",
+            "needle": "use super::algorithm::*;",
+            "lines": [
+              3
+            ],
+            "source_context": [
+              {
+                "line": 3,
+                "text": "// Adapted from https://github.com/Alexhuszagh/rust-lexical.\n\nuse super::algorithm::*;\nuse super::bhcomp::*;\nuse super::digit::*;\nuse super::exponent::*;"
+              }
+            ]
+          },
+          {
+            "kind": "call",
+            "file": "src/lexical/parse.rs",
+            "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac",
+            "needle": "fast_path(mantissa, mant_exp)",
+            "lines": [
+              18
+            ],
+            "source_context": [
+              {
+                "line": 18,
+                "text": "where\n    F: Float,\n{\n    if let Some(float) = fast_path(mantissa, mant_exp) {\n        return float;\n    }\n"
+              }
+            ]
+          },
+          {
+            "kind": "caller",
+            "file": "src/lexical/parse.rs",
+            "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac",
+            "needle": "pub fn parse_concise_float<",
+            "lines": [
+              14
+            ],
+            "source_context": [
+              {
+                "line": 14,
+                "text": "\n/// Parse float for which the entire integer and fraction parts fit into a 64\n/// bit mantissa.\npub fn parse_concise_float<F>(mantissa: u64, mant_exp: i32) -> F\nwhere\n    F: Float,\n{"
+              }
+            ]
+          },
+          {
+            "kind": "feature gate",
+            "file": "src/lib.rs",
+            "sha256": "2d786fb5740ce08961a9257656b135ed745a1fa059db8ab2896c0ede1ca5f9ea",
+            "needle": "#[cfg(feature = \"float_roundtrip\")]",
+            "lines": [
+              429
+            ],
+            "source_context": [
+              {
+                "line": 429,
+                "text": "mod io;\n#[cfg(feature = \"std\")]\nmod iter;\n#[cfg(feature = \"float_roundtrip\")]\nmod lexical;\nmod number;\nmod read;"
+              }
+            ]
+          },
+          {
+            "kind": "unknown trait method",
+            "file": "src/lexical/algorithm.rs",
+            "sha256": "bd6106e5d8875c9ff1c1d57256b459a4f0992d14a0df1a5fffcd3d3cbdccee8c",
+            "needle": "F::exponent_limit()",
+            "lines": [
+              24
+            ],
+            "source_context": [
+              {
+                "line": 24,
+                "text": "{\n    // `mantissa >> (F::MANTISSA_SIZE+1) != 0` effectively checks if the\n    // value has a no bits above the hidden bit, which is what we want.\n    let (min_exp, max_exp) = F::exponent_limit();\n    let shift_exp = F::mantissa_limit();\n    let mantissa_size = F::MANTISSA_SIZE + 1;\n    if mantissa == 0 {"
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "Cargo.toml": "[package]\nname = \"serde_json\"\nversion = \"1.0.139\"\nauthors = [\"Erick Tryzelaar <erick.tryzelaar@gmail.com>\", \"David Tolnay <dtolnay@gmail.com>\"]\ncategories = [\"encoding\", \"parser-implementations\", \"no-std\"]\ndescription = \"A JSON serialization file format\"\ndocumentation = \"https://docs.rs/serde_json\"\nedition = \"2021\"\nkeywords = [\"json\", \"serde\", \"serialization\"]\nlicense = \"MIT OR Apache-2.0\"\nrepository = \"https://github.com/serde-rs/json\"\nrust-version = \"1.56\"\n\n[dependencies]\nindexmap = { version = \"2.2.3\", optional = true }\nitoa = \"1.0\"\nmemchr = { version = \"2\", default-features = false }\nryu = \"1.0\"\nserde = { version = \"1.0.194\", default-features = false }\n\n[dev-dependencies]\nautomod = \"1.0.11\"\nindoc = \"2.0.2\"\nref-cast = \"1.0.18\"\nrustversion = \"1.0.13\"\nserde = { version = \"1.0.194\", features = [\"derive\"] }\nserde_bytes = \"0.11.10\"\nserde_derive = \"1.0.166\"\nserde_stacker = \"0.1.8\"\ntrybuild = { version = \"1.0.81\", features = [\"diff\"] }\n\n[package.metadata.docs.rs]\nfeatures = [\"preserve_order\", \"raw_value\", \"unbounded_depth\"]\ntargets = [\"x86_64-unknown-linux-gnu\"]\nrustdoc-args = [\"--generate-link-to-definition\"]\n\n[package.metadata.playground]\nfeatures = [\"float_roundtrip\", \"raw_value\", \"unbounded_depth\"]\n\n\n### FEATURES #################################################################\n\n[features]\ndefault = [\"std\"]\n\nstd = [\"memchr/std\", \"serde/std\"]\n\n# Provide integration for heap-allocated collections without depending on the\n# rest of the Rust standard library.\n# NOTE: Disabling both `std` *and* `alloc` features is not supported yet.\nalloc = [\"serde/alloc\"]\n\n# Make serde_json::Map use a representation which maintains insertion order.\n# This allows data to be read into a Value and written back to a JSON string\n# while preserving the order of map keys in the input.\npreserve_order = [\"indexmap\", \"std\"]\n\n# Use sufficient precision when parsing fixed precision floats from JSON to\n# ensure that they maintain accuracy when round-tripped through JSON. This comes\n# at an approximately 2x performance cost for parsing floats compared to the\n# default best-effort precision.\n#\n# Unlike arbitrary_precision, this feature makes f64 -> JSON -> f64 produce\n# output identical to the input.\nfloat_roundtrip = []\n\n# Use an arbitrary precision number representation for serde_json::Number. This\n# allows JSON numbers of arbitrary size/precision to be read into a Number and\n# written back to a JSON string without loss of precision.\n#\n# Unlike float_roundtrip, this feature makes JSON -> serde_json::Number -> JSON\n# produce output identical to the input.\narbitrary_precision = []\n\n# Provide a RawValue type that can hold unprocessed JSON during deserialization.\nraw_value = []\n\n# Provide a method disable_recursion_limit to parse arbitrarily deep JSON\n# structures without any consideration for overflowing the stack. When using\n# this feature, you will want to provide some other way to protect against stack\n# overflows, such as by wrapping your Deserializer in the dynamically growing\n# stack adapter provided by the serde_stacker crate. Additionally you will need\n# to be careful around other recursive operations on the parsed result which may\n# overflow the stack after deserialization has completed, including, but not\n# limited to, Display and Debug and Drop impls.\nunbounded_depth = []\n"
+      }
+    }
+  ]
+}
