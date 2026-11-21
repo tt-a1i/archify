@@ -1,0 +1,97 @@
+✖ overlay: directory sources use file ownership for Go, Rust and explicit groups (1.12125ms)
+✖ overlay: shared module ownership stays ambiguous across component order and edge direction (0.719917ms)
+✖ overlay: directory claims preserve ties and splits within a folded module (0.142625ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 402.059292
+
+✖ failing tests:
+
+test at archify/modules/code-analysis/test/overlay.test.mjs:88:1
+✖ overlay: directory sources use file ownership for Go, Rust and explicit groups (1.12125ms)
+  AssertionError [ERR_ASSERTION]: example.org/project/core: ./src/core/
+  + actual - expected
+  
+  + []
+  - [
+  -   'core'
+  - ]
+  
+      at TestContext.<anonymous> (file:///Users/tsk/code/archify/work/labs-closed-loop-20261113/archify/modules/code-analysis/test/overlay.test.mjs:99:14)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'core' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at archify/modules/code-analysis/test/overlay.test.mjs:104:1
+✖ overlay: shared module ownership stays ambiguous across component order and edge direction (0.719917ms)
+  AssertionError [ERR_ASSERTION]: neither end of a projected edge may have ambiguous ownership
+  + actual - expected
+  
+  + [
+  +   {
+  +     evidence: [
+  +       {
+  +         file: 'src/index.mjs',
+  +         line: 2,
+  +         to: 'src/lib/helper.mjs'
+  +       }
+  +     ],
+  +     from: 'app',
+  +     to: 'other-lib',
+  +     weight: 3
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///Users/tsk/code/archify/work/labs-closed-loop-20261113/archify/modules/code-analysis/test/overlay.test.mjs:109:14)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { from: 'app', to: 'other-lib', weight: 3, evidence: [Array] } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at archify/modules/code-analysis/test/overlay.test.mjs:121:1
+✖ overlay: directory claims preserve ties and splits within a folded module (0.142625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   'crate'
+  - ]
+  
+      at TestContext.<anonymous> (file:///Users/tsk/code/archify/work/labs-closed-loop-20261113/archify/modules/code-analysis/test/overlay.test.mjs:134:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'crate' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -150,7 +150,7 @@ test('CI and release use the same browser command and retain WebM decoding', () 
   const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
   assert.equal(manifest.scripts['test:browser'], 'node scripts/run-browser-tests.mjs');
   for (const [workflow, browserJob, webmJob, browserCommand] of [
-    ['ci.yml', 'browser-regression', 'webm-decode', 'npm run test:browser -- --shard=${{ matrix.shard }}/2'],
+    ['ci.yml', 'browser-regression', 'webm-decode', 'npm run test:browser -- --shard=${{ matrix.shard }}/4'],
     ['release.yml', 'release', 'release', 'npm run test:browser'],
   ]) {
     const jobs = parse(fs.readFileSync(path.join(repoRoot, '.github/workflows', workflow), 'utf8')).jobs;
@@ -164,12 +164,12 @@ test('CI and release use the same browser command and retain WebM decoding', () 
 
 test('browser shards are deterministic, nonempty, disjoint and cover the full maintained inventory', (t) => {
   const full = JSON.parse(interceptedRun(t, { status: 0 }).stdout).args.filter(arg => !arg.startsWith('--'));
-  const shards = [1, 2].map(index => {
-    const result = interceptedRun(t, { status: 0 }, [`--shard=${index}/2`]);
+  const shards = [1, 2, 3, 4].map(index => {
+    const result = interceptedRun(t, { status: 0 }, [`--shard=${index}/4`]);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stderr, new RegExp(`shard ${index}/2`));
+    assert.match(result.stderr, new RegExp(`shard ${index}/4`));
     const files = JSON.parse(result.stdout).args.filter(arg => !arg.startsWith('--'));
-    assert.deepEqual(files, full.filter((_, fileIndex) => fileIndex % 2 === index - 1));
+    assert.deepEqual(files, full.filter((_, fileIndex) => fileIndex % 4 === index - 1));
     assert.ok(files.length > 0);
     return files;
   });
@@ -185,13 +185,13 @@ test('browser shard listing requires neither Chrome nor test execution', () => {
   const full = spawnSync(process.execPath, [runner, '--list'], {
     encoding: 'utf8', env: { ...process.env, ARCHIFY_CHROME: '' },
   }).stdout.trim().split('\n');
-  for (const index of [1, 2]) {
-    const result = spawnSync(process.execPath, [runner, `--shard=${index}/2`, '--list'], {
+  for (const index of [1, 2, 3, 4]) {
+    const result = spawnSync(process.execPath, [runner, `--shard=${index}/4`, '--list'], {
       encoding: 'utf8', env: { ...process.env, ARCHIFY_CHROME: '' },
     });
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stderr, '');
-    assert.deepEqual(result.stdout.trim().split('\n'), full.filter((_, fileIndex) => fileIndex % 2 === index - 1));
+    assert.deepEqual(result.stdout.trim().split('\n'), full.filter((_, fileIndex) => fileIndex % 4 === index - 1));
   }
 });
 
@@ -224,7 +224,7 @@ test('sharded browser gates retain Chrome requirements and propagate child failu
 test('CI media gates fail closed and run only for their affected responsibility', () => {
   const jobs = parse(fs.readFileSync(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8')).jobs;
   assert.equal(jobs['browser-regression'].strategy['fail-fast'], false);
-  assert.deepEqual(jobs['browser-regression'].strategy.matrix.shard, [1, 2]);
+  assert.deepEqual(jobs['browser-regression'].strategy.matrix.shard, [1, 2, 3, 4]);
   const aggregate = jobs['webm-artifact'];
   assert.deepEqual(aggregate.needs, ['scope', 'browser-regression', 'webm-decode']);
   assert.equal(aggregate.if, 'always() && !cancelled()');

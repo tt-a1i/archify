@@ -5,5 +5,10 @@ node_modules/
 .claude/
 .lore/
 /.impeccable/
+
+# Local analysis outputs and validator test scratch directories
+/archify/out/
+/out/
+/archify/.validator-check-*/
 __pycache__/
 *.py[cod]
