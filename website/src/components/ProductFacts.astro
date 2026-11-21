@@ -9,7 +9,7 @@ import { faqFacts } from '../data/faq-facts.mjs';
       <p class="facts-identity"><span data-en="This Archify is the open-source diagram skill at " data-zh="这里的 Archify 指 ">This Archify is the open-source diagram skill at </span><a href={canonicalUrl('index')}>archify.si</a><span data-en=", maintained in the " data-zh=" 上的开源画图技能，项目源码位于 ">, maintained in the </span><a href="https://github.com/tt-a1i/archify">tt-a1i/archify</a><span data-en=" repository." data-zh=" 仓库。"> repository.</span></p>
       <details class="facts-drawer" open>
         <summary class="facts-summary">
-          <span data-en="Read frequent questions, supported inputs, and scope boundaries (5)" data-zh="展开常见问题、支持输入与能力边界说明（5 项）">Read frequent questions, supported inputs, and scope boundaries (5)</span>
+          <span data-en={`Read frequent questions, supported inputs, and scope boundaries (${faqFacts.length})`} data-zh={`展开常见问题、支持输入与能力边界说明（${faqFacts.length} 项）`}>Read frequent questions, supported inputs, and scope boundaries ({faqFacts.length})</span>
           <i aria-hidden="true">+</i>
         </summary>
         <div class="facts-grid">
