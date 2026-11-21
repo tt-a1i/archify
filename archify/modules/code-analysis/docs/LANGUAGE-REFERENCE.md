@@ -22,7 +22,7 @@ runtime dependencies.
 ## Python
 
 ```sh
-BAUIFY_PYTHON=/path/to/python node archify/bin/archify.mjs code-analysis check archify/modules/code-analysis/test/fixtures/py-basic --language py --out out/py --fail-on never
+node archify/bin/archify.mjs code-analysis check archify/modules/code-analysis/test/fixtures/py-basic --language py --out out/py --fail-on never
 ```
 
 The fixture can report warnings. `--fail-on never` keeps this demonstration
@@ -31,8 +31,12 @@ The adapter records package-relative imports and measures functions. Namespace
 packages and `__init__.py` package initialization affect dependency resolution.
 The `py-basic` fixture includes malformed source and a namespace package to
 show that parse failures and unresolved imports remain visible in coverage.
-Python code is parsed by the configured interpreter; a parser error is not
-recovered by silently choosing another interpreter.
+Python code is parsed in Node by a source subset transplanted from Pyright
+1.1.414. The default language target is 3.14; set
+`{"python":{"targetVersion":"3.11"}}` in the analysis config to select an
+older syntax target (3.8–3.14). The host Python version and `BAUIFY_PYTHON` do
+not affect extraction. Full Pyright remains a test reference, not a runtime
+dependency. See [Python scope and migration](PYTHON.md).
 
 ## Java
 
@@ -75,6 +79,18 @@ dependencies; project build scripts and macros are not executed. Conditional
 compilation, unsupported paths, macros and unresolved dispatch retain explicit
 uncertainty. See [Rust support and limitations](RUST.md) for toolchain,
 workspace, call-model and source-question details.
+
+## C and C++
+
+```sh
+node archify/bin/archify.mjs code-analysis check /path/to/project --language cpp --config /path/to/analysis.config.json --out out/cpp --fail-on never
+```
+
+C and C++ require an existing compilation database, matching Python clang
+bindings and an installed libclang. The adapter captures active includes,
+source definitions and bounded direct-call navigation under each recorded
+translation-unit context. See [C/C++ support and limitations](C_CPP.md) for
+configuration, platform status, questions and unknowns.
 
 ## Evidence
 

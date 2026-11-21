@@ -507,10 +507,10 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.equal(await run("typeof window.THREE"), 'undefined', 'three.js stays inert until Atlas 3D opens');
   await run("if (document.documentElement.getAttribute('data-theme') !== 'light') Archify.theme.toggle()");
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
-  // In place, beside the reading column, and a dark case in a light page.
+  // In place of the diagram, full width with the summary column hidden, following the page theme.
   assert.deepEqual(await run(`(() => { const a = document.getElementById('bauify-atlas'), r = document.getElementById('bauify-reader');
-    return [document.documentElement.getAttribute('data-theme'), getComputedStyle(a).position, getComputedStyle(r).display !== 'none', a.getBoundingClientRect().right <= r.getBoundingClientRect().left, getComputedStyle(a).backgroundColor]; })()`),
-    ['light', 'relative', true, true, 'rgb(11, 18, 32)'], 'the Atlas opens in place below the diagram as a dark case, with the reading column still beside it');
+    return [document.documentElement.getAttribute('data-theme'), getComputedStyle(a).position, getComputedStyle(r).display, getComputedStyle(document.querySelector('.diagram-container')).display, getComputedStyle(a).backgroundColor !== 'rgb(11, 18, 32)']; })()`),
+    ['light', 'relative', 'none', 'none', true], 'the Atlas replaces the diagram, hides the summary column and follows the page theme');
   const atlas = JSON.parse(await run("document.getElementById('bauify-atlas-data').textContent"));
   await until(`document.documentElement.getAttribute('data-bauify-atlas-drawn') === '${atlas.edges.length}'`, 'atlas did not draw');
   assert.ok(atlas.edges.length > 0 && atlas.functions.length > 0, 'the fixture has dependencies and functions to draw');
@@ -545,13 +545,11 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.equal(await wheel(-180), false, 'overview leaves page scrolling available');
 
   assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stats b'), b => b.textContent)"), [atlas.files.length, atlas.edges.length, atlas.functions.length, atlas.modules.length].map(n => n.toLocaleString('en-US')));
-  assert.equal(await run("document.querySelector('.atlas-nav .atlas-title').textContent"), 'Atlas', 'totals do not repeat in the title');
-  // The delivered diagram styles every svg with width:100% and a min-width; inline icons must not inherit that.
-  assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stat'), s => { const b = s.getBoundingClientRect(), i = s.querySelector('.atlas-icon').getBoundingClientRect(), n = s.querySelector('b').getBoundingClientRect(); return [Math.round(i.width), n.right <= b.right + 1]; })"), [[18, true], [18, true], [18, true], [18, true]], 'stat icons stay 18px wide inside the diagram page and the numbers fit their card');
-  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metrics').open"), false, 'coverage and the legend are progressively disclosed');
-  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metric .hist') !== null"), true, 'complexity distribution stays visible');
-  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-metric [data-module]') !== null"), true, 'coupled modules stay visible');
-  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-expand').getAttribute('aria-label')"), 'Disable sector zoom');
+  assert.equal(await run("document.querySelector('.atlas-nav .atlas-title').firstChild.textContent"), 'Atlas');
+  assert.deepEqual(await run("Array.from(document.querySelectorAll('.atlas-side .stat span'), s => s.textContent)"), ['files', 'file dependencies', 'functions', 'modules'], 'each total is labelled');
+  assert.equal(await run("document.querySelector('#bauify-atlas .hist') !== null"), true, 'complexity distribution stays visible');
+  assert.equal(await run("document.querySelector('#bauify-atlas .module-list [data-module]') !== null"), true, 'coupled modules stay visible');
+  assert.equal(await run("document.querySelector('#bauify-atlas .atlas-expand').textContent"), 'Disable sector zoom');
   // A module from the side panel becomes the focus; the panel names it.
   await run("document.querySelector('#bauify-atlas [data-module]').click()");
   const focused = await run("document.documentElement.getAttribute('data-bauify-atlas-focus')");
@@ -639,14 +637,14 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id, 'tip and body retain the selected function after zoom');
     assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-focus')"), owner);
   }
-  // Evidence opens in the reading column beside the Atlas; the Atlas stays open.
+  // Evidence pages back to the diagram and opens in the summary column.
   await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
   await until("!document.getElementById('bauify-detail').hidden", 'finding did not open in the reading column');
   assert.match(await run("document.querySelector('#bauify-detail h3').textContent"), /is complex/);
   assert.ok(await run("!!document.querySelector('#bauify-detail pre')"), 'the reading column shows the source excerpt');
-  assert.equal(await run("document.getElementById('bauify-atlas').hidden"), false, 'the Atlas stays open beside the evidence');
+  assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.documentElement.getAttribute('data-bauify-views'), getComputedStyle(document.getElementById('bauify-reader')).display !== 'none']"), [true, null, true], 'evidence shows beside the diagram');
 
-  // The second option swaps the Atlas for Atlas 3D in the same place: the same run, every item accounted for.
+  // The Atlas 3D tab shows the same run in the same place, every item accounted for.
   await run("document.querySelector('.views-option[data-view=atlas3d]').click()");
   assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views'), typeof window.THREE]"),
     [true, false, 'atlas3d', 'object'], 'Atlas 3D replaces the Atlas below the diagram and runs three.js on first open');

@@ -252,7 +252,7 @@
   "parse_errors": [
     {
       "path": "broken.py",
-      "message": "invalid syntax (line 1)"
+      "message": "Expected function name after \"def\" (line 1); \"(\" was not closed (line 1); Statements must be separated by newlines or semicolons (line 3)"
     }
   ]
 }

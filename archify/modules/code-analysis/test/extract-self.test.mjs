@@ -63,6 +63,7 @@ test('extract: hand-verified import lists for two archify files', { skip: SKIP }
   // The two real generated files carry the generated role, and vendored bundles
   // default to generated so they are not reported as first-party complexity.
   for (const f of facts.files) if (f.path.startsWith('test/')) assert.equal(f.role, 'test', f.path);
+  for (const f of facts.files) if (f.path.includes('/extract/py/upstream/') || f.path.endsWith('/extract/py/analyze.mjs')) assert.equal(f.role, 'generated', f.path);
   const generated = facts.files.filter((f) => f.role === 'generated').map((f) => f.path);
   assert.ok(generated.includes('renderers/shared/generated-brand-marks.mjs'));
   assert.ok(generated.includes('renderers/shared/generated-validators.mjs'));

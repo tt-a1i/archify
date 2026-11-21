@@ -48,7 +48,17 @@ For the conditional-null boundary in exact in-root JavaScript package imports/se
 
 ## Python call facts
 
-`python-lexical-v1` inventories every `ast.Call` in parse-valid captured Python
+Current `python-source-v3` runs a transplanted Pyright tokenizer/parser in Node.
+Archify's binding pass, import collector, metrics and bounded source type shapes
+consume that tree. Full Pyright's Program, LSP, binder, evaluator and typeshed are
+not shipped. `python-source-declaration` extends lexical calls to captured
+receiver/signature declarations, source inheritance, bounded local flow, typed
+decorator contracts and generic factories. Explicit dependency declaration inputs
+can refine a receiver's type without adding project navigation targets. See
+[Python implementation and bounds](docs/PYTHON.md).
+
+The following `python-lexical-v1` contract describes historical captures, which
+remain readable without rebinding them. It inventories every `ast.Call` in parse-valid captured Python
 files. It conservatively binds Name calls to unique ordinary undecorated
 module-level definitions, or explicit static from-import aliases reaching such
 a direct captured definition. Function-local from-imports also bind when a single
