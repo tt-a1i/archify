@@ -586,8 +586,11 @@ jobs:
           - node-version: 22
             profile: --controlled
           - node-version: 22
-            profile: --contracts
-            suffix: ' / contracts'
+            profile: --contracts-1
+            suffix: ' / contracts 1'
+          - node-version: 22
+            profile: --contracts-2
+            suffix: ' / contracts 2'
           - node-version: 22
             profile: --portability
             suffix: ' / portability'

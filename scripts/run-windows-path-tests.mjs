@@ -17,7 +17,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const skillRoot = path.join(repoRoot, 'archify');
 const cli = path.join(skillRoot, 'bin', 'archify.mjs');
 const options = process.argv.slice(2);
-const profiles = ['--smoke', '--controlled', '--contracts', '--portability'];
+const profiles = ['--smoke', '--controlled', '--contracts-1', '--contracts-2', '--portability'];
 for (const option of options) {
   if (option !== '--list' && !profiles.includes(option)) throw new Error(`Unknown Windows test option: ${option}`);
 }
@@ -608,16 +608,17 @@ const portabilityPattern = [
 ].join('|');
 
 // File suites own their fixtures. Browser/watcher cases still execute serially.
-const contractTests = ['--test', '--test-concurrency=2', ...fullSuites];
+const contractTests = files => ['--test', '--test-concurrency=2', ...files];
 const portabilityTests = ['--test', '--test-concurrency=1', `--test-name-pattern=${portabilityPattern}`, ...portabilitySuites];
 const smokeTests = ['--test', '--test-concurrency=1', 'test/core-smoke.test.mjs'];
 const groups = {
   '--smoke': [smokeTests],
   '--controlled': [],
-  '--contracts': [contractTests],
+  '--contracts-1': [contractTests(fullSuites.filter((_, index) => index % 2 === 0))],
+  '--contracts-2': [contractTests(fullSuites.filter((_, index) => index % 2 === 1))],
   '--portability': [portabilityTests],
-}[profile] ?? [contractTests, portabilityTests];
-const controlledPaths = profile !== '--contracts' && profile !== '--portability';
+}[profile] ?? [contractTests(fullSuites), portabilityTests];
+const controlledPaths = !profile || profile === '--controlled' || profile === '--smoke';
 
 if (options.includes('--list')) {
   console.log(JSON.stringify({ controlledPaths, groups }));

@@ -1511,10 +1511,16 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
   const workflow = parse(fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8'));
   const automation = workflow.jobs['windows-test-portability'];
   const lanes = automation.strategy.matrix.include.map(lane => [lane['node-version'], lane.profile]);
-  assert.deepEqual(lanes, [[22, '--controlled'], [22, '--contracts'], [22, '--portability'], [24, '--smoke']]);
+  assert.deepEqual(lanes, [[22, '--controlled'], [22, '--contracts-1'], [22, '--contracts-2'], [22, '--portability'], [24, '--smoke']]);
   const canonical = lanes.filter(([node]) => node === 22).map(([, profile]) => list(profile));
   assert.equal(canonical.filter(lane => lane.controlledPaths).length, 1);
-  assert.deepEqual(canonical.flatMap(lane => lane.groups), complete.groups);
+  const [first, second, portability] = canonical.flatMap(lane => lane.groups);
+  const [contracts, completePortability] = complete.groups;
+  const contractFiles = [...first.slice(2), ...second.slice(2)];
+  assert.deepEqual(first.slice(0, 2), contracts.slice(0, 2));
+  assert.deepEqual(second.slice(0, 2), contracts.slice(0, 2));
+  assert.deepEqual(contractFiles.sort(), contracts.slice(2).sort());
+  assert.deepEqual(portability, completePortability);
   const invalidCombination = spawnSync(process.execPath, [runnerPath, '--list', '--controlled', '--smoke']);
   assert.notEqual(invalidCombination.status, 0);
 
