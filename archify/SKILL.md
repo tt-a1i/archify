@@ -19,7 +19,7 @@ For a native diagram of a real codebase, read [Repository authoring](references/
 
 - For drawing a system, flow, schema or history, use a native diagram and the Type router. Deliver the requested diagram through `finalize`; code analysis is a separate mode.
 - For local repository architecture health, module coupling, cycles, layer violations, large files, complexity hotspots or refactoring orientation, use Code Analysis below; the agent handles commands and no architecture JSON is required.
-- For a guided walkthrough or explanation video of a native HTML diagram, read [Story authoring](references/story-authoring.md). Use `story draft` and `story attach` to add playback and video export to its existing Viewer.
+- For a guided walkthrough, animated/static dual-theme SVG, interactive stage player, or 1080p MP4/WebM video over one or more native diagrams, read [Story authoring](references/story-authoring.md). Use `story draft`/`attach` to add playback to a native Viewer, or `story validate`/`svg`/`stage`/`video` for declarative component choreography.
 - Use `explainer` when the user asks for the answer as a page: a page, one page, an explainer, something to share (“做成一页”, “用页面讲”, “answer with a page”).
 - Explainer mode is `proactive` by default. A rules line `[archify explainer: <mode>]` in context selects another; an instruction in the conversation overrides it for that conversation.
   - `proactive` (default, no line needed): also make a page, unasked, when the answer is a complex flow or process, a diagnosis or troubleshooting result, an option comparison, trade-off or decision, a test or review report, or a plan, and needs a table, steps or several sections to be read well.
