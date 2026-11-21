@@ -288,4 +288,70 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await open(fallback.html);
   assert.equal(await run("document.getElementById('btn-bauify').textContent"), 'Code Analysis');
   assert.equal(await run("document.querySelector('#bauify-reader').lang"), 'en');
+
+  // Use the redesigned inspector with two imports and one isolated function.
+  fs.appendFileSync(path.join(root, 'src/alpha/a.ts'), "import { helper } from '../beta/helper'; export const extra = helper();\n");
+  fs.writeFileSync(path.join(root, 'src/beta/helper.ts'), 'export function helper() { return 2; }\n');
+  fs.writeFileSync(path.join(root, 'src/alpha/isolated.ts'), 'export function isolated(x: boolean) { return x ? 1 : 2; }\n');
+  fs.mkdirSync(path.join(root, 'src/outside'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src/outside/config.ts'), 'export const mode = "standalone";\n');
+  const map = { app: [graph.modules.find(module => module.path.endsWith('/alpha')).id] };
+  ir.components.push({ id: 'beta', type: 'backend', label: 'Beta', pos: [340, 160], size: [170, 64] });
+  map.beta = [graph.modules.find(module => module.path.endsWith('/beta')).id];
+  const mapPath = path.join(dir, 'map.json');
+  fs.writeFileSync(mapPath, JSON.stringify(map));
+  const mapped = prepare('en', ['--map', mapPath]);
+  await open(mapped.html);
+  const click = selector => run(`document.querySelector(${JSON.stringify(selector)}).click()`);
+  await click('.views-option[data-view=atlas]');
+  const focusFunction = file => run(`(() => {
+    const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+    const finding = atlas.findings.find(item => item.kind === 'function' && atlas.files[atlas.functions[item.fn][0]][0] === ${JSON.stringify(file)});
+    window.__archifyAtlas.focusFinding(finding.id);
+  })()`);
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await run(`(() => {
+    window.__importLabels = [];
+    const fillText = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
+      if (text === '①' || text === '②') window.__importLabels.push(text);
+      return fillText.call(this, text, ...args);
+    };
+  })()`);
+  await focusFunction('src/alpha/a.ts');
+  const paths = () => run("Array.from(document.querySelectorAll('.atlas-import-paths dd'), item => item.textContent)");
+  assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/b.ts'], 'the selected import lists both full paths in order');
+  assert.deepEqual(await run("[...new Set(window.__importLabels)]"), ['①', '②']);
+  await run("document.querySelector('.atlas-imports select').focus()");
+  for (const type of ['keyDown', 'keyUp']) {
+    await send('Input.dispatchKeyEvent', { type, key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 });
+  }
+  assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/helper.ts']);
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
+  await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+  assert.equal(await run(`(() => {
+    const paths = document.querySelector('.atlas-import-paths');
+    paths.scrollIntoView({ block: 'center' });
+    return [...paths.querySelectorAll('dd')].every(item => {
+      const r = item.getBoundingClientRect();
+      return r.width > 0 && r.top >= 0 && r.bottom <= innerHeight && r.right <= innerWidth && item.scrollWidth <= item.clientWidth;
+    });
+  })()`), true, 'both paths remain readable at 390 px');
+  await focusFunction('src/alpha/isolated.ts');
+  assert.match(await run("document.querySelector('.atlas-imports').textContent"), /No captured dependencies for the selected file/);
+  assert.equal(await run("Boolean(document.querySelector('.atlas-imports select'))"), false);
+
+  // Build the same authored report without source snippets. The captured
+  // import still points to a location, but there is no source to open.
+  const noSource = buildOverlay({ ir, graph: read('module-graph.json'), map, facts: read('raw-facts.json'),
+    html: fs.readFileSync(mapped.diagram, 'utf8'), run: { openAnalysis: true } });
+  const missing = path.join(dir, 'missing-source.html');
+  fs.writeFileSync(missing, noSource.html);
+  await open(missing);
+  await click('#bauify-stage [data-go="code"]');
+  assert.match(await run("document.querySelector('#bauify-panel .fly-ev').textContent"), /src\/alpha\/a\.ts.*Source was not captured/s);
+  assert.equal(await run("Boolean(document.querySelector('#bauify-panel button.fly-ev'))"), false);
+  await click('#bauify-stage [data-go^="off:"]');
+  assert.match(await run("document.querySelector('#bauify-panel .fly-ev').textContent"), /src\/outside\/config\.ts.*Source was not captured/s);
+  assert.equal(await run("Boolean(document.querySelector('#bauify-panel button.fly-ev'))"), false, 'the off-diagram file list does not offer unusable source buttons');
 });

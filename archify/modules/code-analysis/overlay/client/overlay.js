@@ -1618,6 +1618,14 @@
   }
   function flyClose(back) { return '<button class="close" aria-label="' + esc(tr("Close")) + '">×</button><button type="button" class="back">← ' + esc(back) + '</button>'; }
   // A dependency between two components: whether the diagram draws it, and the imports behind it.
+  function flySourceLocation(file, line, metadata, target) {
+    var content = '<span>' + esc(file) + '</span><em>' + esc(metadata) + '</em>';
+    if (target) content += '<small>→ ' + esc(target) + '</small>';
+    if (!Object.hasOwn(data.snippets || {}, file)) {
+      return '<div class="fly-ev fly-ev-unavailable">' + content + '<small>' + esc(tr('Source was not captured')) + '</small></div>';
+    }
+    return '<button type="button" class="fly-ev" data-file="' + esc(file) + '" data-line="' + (line || '') + '">' + content + '</button>';
+  }
   function showEdge(from, to) {
     var e = codeEdgeByKey[from + '>' + to], undrawn = !!e && e.declared === false;
     readerPage(tr('Dependency')); root.removeAttribute('data-bauify-source');
@@ -1631,13 +1639,13 @@
       h += '<div class="fly-nums two"><div><b>' + fmt(e.weight) + '</b><span>' + esc(tr('imports')) + '</span></div><div><b>' + Object.keys(files).length + (e.evidence.length < e.weight ? '+' : '') + '</b><span>' + esc(tr('source files')) + '</span></div></div>';
       h += '<p class="fly-note' + (undrawn ? ' attention' : '') + '">' + esc(undrawn ? tr('{from} imports {to} in the code, but the diagram draws no line between them. Add it to the diagram, or treat it as coupling that should not exist.', { from: compLabel(from), to: compLabel(to) }) : tr('The diagram draws this dependency and the code confirms it.')) + '</p>';
       h += '<h4 class="fly-h">' + esc(tr('Which files cause it')) + '<small>' + esc(e.evidence.length < e.weight ? tr('first {count}', { count: e.evidence.length }) : tr('all')) + '</small></h4>';
-      h += e.evidence.map(function (v) { return '<button type="button" class="fly-ev" data-file="' + esc(v.file) + '" data-line="' + (v.line || '') + '"><span>' + esc(v.file) + '</span><em>:' + (v.line || '?') + '</em><small>→ ' + esc(v.to) + '</small></button>'; }).join('');
+      h += e.evidence.map(function (v) { return flySourceLocation(v.file, v.line, ':' + (v.line || '?'), v.to); }).join('');
       h += '<div class="fly-acts"><button type="button" class="fly-copy">' + esc(tr('Copy for AI')) + '</button></div><p class="fly-status ev" role="status" aria-live="polite"></p>';
     } else h += '<p class="fly-note">' + esc(tr('The diagram draws this relationship, but no import between these components was found. It may come from configuration, runtime calls or an external system, or the diagram over-states it.')) + '</p>';
     panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
     panel.querySelector('.close').addEventListener('click', showOverview);
     panel.querySelector('.back').addEventListener('click', function () { if (byId[from]) show(from); else showOverview(); });
-    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), tr('Import from {from} to {to}.', { from: compLabel(from), to: compLabel(to) }), undrawn ? 'red' : 'info'); }); });
+    panel.querySelectorAll('button.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), tr('Import from {from} to {to}.', { from: compLabel(from), to: compLabel(to) }), undrawn ? 'red' : 'info'); }); });
     var copy = panel.querySelector('.fly-copy');
     if (copy) copy.addEventListener('click', function () {
       var text = tr('{from} → {to}: {count} imports in the code', { from: compLabel(from), to: compLabel(to), count: e.weight }) + (undrawn ? tr(', not drawn on the architecture diagram') : '') + '.\n' + e.evidence.map(function (v) { return '- ' + v.file + ':' + (v.line || '?') + ' → ' + v.to; }).join('\n');
@@ -1658,12 +1666,12 @@
     h += '<div class="fly-nums"><div><b>' + fmt(m.files) + '</b><span>' + esc(tr('files')) + '</span></div><div><b>' + fmtK(m.loc) + '</b><span>' + esc(tr('lines')) + '</span></div><div><b>' + fmt(fs.length) + '</b><span>' + esc(tr('findings')) + '</span></div></div>';
     h += '<p class="fly-note">' + esc(tr('This code is in the repository, but no component on the architecture diagram owns it. If it is part of the product, the diagram needs a node for it; if it is tooling, it can be left out of the analysis.')) + '</p>';
     if (fs.length) h += '<h4 class="fly-h">' + esc(tr('Look at these first')) + '<small>' + esc(tr('by severity and complexity')) + '</small></h4>' + fs.slice().sort(function (a, b) { return sevRank(a) - sevRank(b) || complexityOf(b) - complexityOf(a); }).slice(0, 5).map(flyFinding).join('');
-    if (files.length) h += '<h4 class="fly-h">' + esc(tr('Largest files')) + '<small>' + esc(plural(files.length, 'file')) + '</small></h4>' + files.slice(0, 5).map(function (f) { return '<button type="button" class="fly-ev" data-file="' + esc(f.path) + '"><span>' + esc(f.path) + '</span><em>' + esc(plural(f.loc || 0, 'line')) + '</em></button>'; }).join('');
+    if (files.length) h += '<h4 class="fly-h">' + esc(tr('Largest files')) + '<small>' + esc(plural(files.length, 'file')) + '</small></h4>' + files.slice(0, 5).map(function (f) { return flySourceLocation(f.path, null, plural(f.loc || 0, 'line')); }).join('');
     panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
     panel.querySelector('.close').addEventListener('click', showOverview);
     panel.querySelector('.back').addEventListener('click', showOverview);
     wireFlyRows(panel);
-    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), null, '', 'info'); }); });
+    panel.querySelectorAll('button.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), null, '', 'info'); }); });
   }
   if (flyMode) {
     var flyFrame = 0;
