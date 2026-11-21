@@ -153,6 +153,10 @@ jobs:
     needs: [scope, full-regression]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [pages, cloudflare]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
@@ -231,7 +235,10 @@ jobs:
           install-dependencies: true
       - name: Install browser test dependencies
         if: needs.scope.outputs.browser == 'true'
-        run: npm ci --ignore-scripts --no-audit --no-fund && npm --prefix archify ci --ignore-scripts
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm --prefix archify ci --ignore-scripts --no-audit --no-fund
+          npm --prefix archify/modules/code-analysis ci --ignore-scripts --no-audit --no-fund
       - name: Run shared browser regression gate
         if: needs.scope.outputs.browser == 'true'
         run: npm run test:browser -- --shard=${{ matrix.shard }}/4
@@ -243,6 +250,10 @@ jobs:
     needs: scope
     if: always() && !cancelled()
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [pages, cloudflare]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
@@ -310,6 +321,10 @@ jobs:
     needs: [scope, browser-regression, webm-decode]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [pages, cloudflare]
     steps:
       - name: Require every browser and WebM gate to succeed
         env:
@@ -328,6 +343,10 @@ jobs:
     needs: scope
     if: always() && !cancelled()
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [pages, cloudflare]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
@@ -357,6 +376,10 @@ jobs:
     needs: scope
     if: always() && !cancelled()
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [pages, cloudflare]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
@@ -489,6 +512,10 @@ jobs:
     needs: scope
     if: needs.scope.outputs.website == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [pages, cloudflare]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -500,6 +527,7 @@ jobs:
         run: npm ci
         working-directory: website
       - name: Typecheck and build website
+        if: matrix.target == 'pages'
         run: npm run check && npm run build && npm test
         working-directory: website
       - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
@@ -512,6 +540,7 @@ jobs:
           sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
           fc-match 'sans-serif:lang=zh-cn'
       - name: Verify built website navigation and language continuity
+        if: matrix.target == 'pages'
         run: npm run test:browser
         working-directory: website
         env:
@@ -520,11 +549,13 @@ jobs:
           ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Build and validate the Cloudflare static website
+        if: matrix.target == 'cloudflare'
         run: npm run build && node scripts/check-cloudflare-output.mjs && node --test test/deployment-target.test.mjs
         working-directory: website
         env:
           ARCHIFY_SITE_TARGET: cloudflare
       - name: Verify Cloudflare navigation and language continuity
+        if: matrix.target == 'cloudflare'
         run: npm run test:browser
         working-directory: website
         env:
@@ -537,15 +568,17 @@ jobs:
         if: always()
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: website-homepage-evidence
+          name: website-homepage-evidence${{ matrix.target == 'cloudflare' && '-cloudflare' || '' }}
           path: website/.browser-evidence
           if-no-files-found: warn
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        if: matrix.target == 'pages'
         with:
           name: website-dist
           path: website/dist
           include-hidden-files: true
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        if: matrix.target == 'cloudflare'
         with:
           name: website-cloudflare-dist
           path: website/dist-cloudflare
