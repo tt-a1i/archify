@@ -411,7 +411,7 @@ Do not set `canonical_url` to `archify.si/compare` unless publishing an identica
 
 ### Body
 
-```markdown
+````markdown
 > Maintainer disclosure: I maintain [Archify](https://archify.si) (`tt-a1i/archify`, Apache-2.0). This comparison covers real trade-offs with Mermaid, Excalidraw (including Excalidraw MCP), D2, LikeC4, and Eraser.io — including several scenarios where you should **not** pick Archify.
 
 If you use **Claude Code, Cursor, Codex CLI, OpenCode, or GitHub Copilot** to explain a system, you have probably hit the "20-node Mermaid wall":
@@ -444,7 +444,7 @@ When an agent writes freehand Mermaid or raw SVG, syntax validity and readable g
 4. **Output is a single zero-dependency HTML file.** Open it offline in any browser to focus a node, highlight upstream/downstream reach, trace shortest paths, switch light/dark themes, or export PNG/SVG/WebM/PDF (where browser and local tooling support it).
 5. **Beyond single charts: 4-style one-page explainers (`.archify.md`).** When one diagram still leaves readers asking *why*, the agent generates a conclusion-first page pairing prose, tables, steps, and synced validated diagrams side by side — reading a step lights up the matching part of the diagram.
 
-**Important boundary:** Structural and layout validation proves the rendered artifact is readable and well-formed; it does *not* verify that every claim matches runtime reality in production. Human review still owns factual accuracy.
+**Important boundary:** Automated validation checks schema structure and measured layout/routing constraints (with optional browser checks for explainers); it does not substitute for perceptual visual review, nor does it verify that every claim matches runtime reality in production. Human review still owns factual accuracy.
 
 ## Beyond codebases: live no-signup examples
 
@@ -478,6 +478,6 @@ npx -y skills@latest add https://archify.si --skill archify --agent claude-code 
 - Full tool comparison & boundaries: https://archify.si/compare
 - 10 diagram types guide: https://archify.si/guide
 - Source & Apache-2.0 license: https://github.com/tt-a1i/archify
-```
+````
 
 
