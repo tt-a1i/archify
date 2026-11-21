@@ -1,5 +1,5 @@
 // Shared by PR CI and tag releases. WebM decoding stays in test:webm.
-// Adjacent heavy suites use opposite indices for CI's two modulo shards.
+// Ordering spreads measured heavy suites across CI's four modulo shards.
 export const browserTestFiles = [
   'finalize-browser.test.mjs',
   'desktop-reader-browser.test.mjs',
@@ -13,9 +13,9 @@ export const browserTestFiles = [
   'compact-header-clearance.test.mjs',
   'architecture-reading-size-browser.test.mjs',
   'export-cleanup-browser.test.mjs',
-  'i18n-browser.test.mjs',
-  'offline-font-browser.test.mjs',
   'viewer-chrome-layout.test.mjs',
+  'offline-font-browser.test.mjs',
+  'i18n-browser.test.mjs',
   'semantic-radar.test.mjs',
   'viewer-camera-browser.test.mjs',
   'viewer-radar-scroll-browser.test.mjs',
@@ -48,7 +48,17 @@ export const browserTestFiles = [
   'toolbar-keyboard-browser.test.mjs',
   'bottom-node-index-browser.test.mjs',
   'explainer-browser.test.mjs',
+  'code-analysis-browser.test.mjs',
+  'code-analysis-boundary-browser.test.mjs',
+  'code-analysis-drift-browser.test.mjs',
+  'code-analysis-complexity-browser.test.mjs',
+  'code-analysis-review-browser.test.mjs',
+  'code-analysis-task-browser.test.mjs',
+  'code-analysis-workbench-browser.test.mjs',
+  'code-analysis-standalone-browser.test.mjs',
+  'code-analysis-pr-browser.test.mjs',
   'story-browser.test.mjs',
+  'story-choreography-browser.test.mjs',
   // Benchmark observers and real export integration require this explicit Chrome lane.
   'diagram-quality-e2e-browser.test.mjs',
   'export-svg-delivery.test.mjs',

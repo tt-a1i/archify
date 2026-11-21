@@ -1,0 +1,57 @@
+{
+  "sourceFreeze": "580b50393",
+  "sourceHead": "b37f67c49dbfa40d9e506ab4f93ae0b1d107df89",
+  "zipSha256": "1248b19f0b283d0effe91ac8446244db702e287c7064eb8f4e1947643c5ca499",
+  "units": [
+    {
+      "project": "cobra-base",
+      "sourceExit": 2,
+      "zipExit": 2,
+      "jsonEqual": true
+    },
+    {
+      "project": "cobra",
+      "sourceExit": 2,
+      "zipExit": 2,
+      "jsonEqual": true
+    },
+    {
+      "project": "chi-base",
+      "sourceExit": 2,
+      "zipExit": 2,
+      "jsonEqual": true
+    },
+    {
+      "project": "chi",
+      "sourceExit": 2,
+      "zipExit": 2,
+      "jsonEqual": true
+    },
+    {
+      "project": "regex-base",
+      "sourceExit": 2,
+      "zipExit": 2,
+      "jsonEqual": true
+    },
+    {
+      "project": "regex",
+      "sourceExit": 2,
+      "zipExit": 2,
+      "jsonEqual": true
+    },
+    {
+      "project": "serde-json-base",
+      "sourceExit": 2,
+      "zipExit": 2,
+      "jsonEqual": true
+    },
+    {
+      "project": "serde-json",
+      "sourceExit": 2,
+      "zipExit": 2,
+      "jsonEqual": true
+    }
+  ],
+  "manifestRecreatedSha256": "6278025602bf218059e238df5dfcc9b2bfc7986fc93688eb0b6b5463be0d5848",
+  "scope": "Unsupported-language baseline only; no Go/Rust target or coverage capability is established."
+}
