@@ -247,7 +247,18 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.match(result.stdout, /\[ok\] Standalone schema validators/);
   assert.match(result.stdout, /\[ok\] architecture renderer, schema, and example/);
   assert.match(result.stdout, /\[ok\] lifecycle renderer, schema, and example/);
+  assert.match(result.stdout, /\[ok\] Story runtime and playback assets/);
   assert.match(result.stdout, /Archify is ready\./);
+});
+
+test('cli: doctor detects a missing Story container runtime', () => {
+  const installedRoot = path.join(tmp, 'missing-story-container');
+  copyInstalledSkill(installedRoot);
+  fs.unlinkSync(path.join(installedRoot, 'story/story-container.js'));
+  const result = spawnSync(process.execPath, [path.join(installedRoot, 'bin/archify.mjs'), 'doctor'], { cwd: installedRoot, encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /\[missing\] Story runtime and playback assets/);
+  assert.match(result.stderr, /Archify is not ready: 1 required file missing\./);
 });
 
 test('cli: doctor identifies an incomplete installation', () => {
