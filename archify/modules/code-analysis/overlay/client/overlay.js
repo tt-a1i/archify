@@ -115,7 +115,7 @@
   panel.id = 'bauify-panel'; panel.hidden = true; panel.setAttribute('aria-label', tr("Bauify code analysis"));
   reader.appendChild(panel);
 
-  var layer = null;
+  var layer = null, underlay = null, drawnScale = 0;
   // The left column's home: the project overview. A component panel replaces it; "Overview" brings it back.
   var overview = document.createElement('section');
   overview.id = 'bauify-overview'; overview.hidden = true; overview.setAttribute('aria-label', tr("Code analysis overview"));
@@ -173,6 +173,7 @@
   function drawLayer() {
     if (!svg) return;
     if (layer) layer.remove();
+    if (underlay) underlay.remove();
     layer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     layer.id = 'bauify-layer';
     var counts = {}, most = { amber: 0, blue: 0 };
@@ -212,8 +213,132 @@
       g.appendChild(pill); g.appendChild(text);
       layer.appendChild(g);
     });
+    drawInsights(layer);
     svg.appendChild(layer);
     scaleBadges();
+  }
+  // ---- The analysis written onto the diagram ----
+  // Everything below lives in one group inside #bauify-layer (never as direct
+  // rect children: those are the status rings). Text sits in "pins" that keep a
+  // legible screen size at any fit or zoom, like the count badges.
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs, parent) {
+    var e = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs).forEach(function (k) { if (attrs[k] != null) e.setAttribute(k, attrs[k]); });
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function pinScale() { return Math.min(4, Math.max(1, 1 / screenScale())); }
+  function pin(parent, x, y, text, cls, anchor, baseline) {
+    var g = svgEl('g', { class: 'pin ' + cls, 'data-pin': x + ' ' + y }, parent);
+    var t = svgEl('text', { x: 0, y: 0, 'text-anchor': anchor || 'middle', 'dominant-baseline': baseline || 'hanging' }, g);
+    t.textContent = text;
+    return g;
+  }
+  function openOf(list) { return (list || []).filter(function (f) { return !(f.review && f.review.status === 'accepted' && f.severity !== 'error'); }); }
+  function shortCount(n) { return n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n); }
+  function drawnEdge(from, to) { return svg && svg.querySelector('path[data-edge-from="' + from + '"][data-edge-to="' + to + '"]'); }
+  // Code dependencies between components that the diagram does not draw.
+  function undeclaredEdges() { return (data.edges || []).filter(function (e) { return !drawnEdge(e.from, e.to) && nodeBox(e.from) && nodeBox(e.to); }).sort(function (a, b) { return b.weight - a.weight; }); }
+  function unmappedComponents() { return data.components.filter(function (c) { return !c.modules.length && nodeBox(c.id); }); }
+  // Analysed modules that no component claims.
+  function offDiagramModules() { return (data.unmapped || []).filter(function (m) { return m.files; }); }
+  function heaviestComponent() {
+    var best = null, most = 0;
+    data.components.forEach(function (c) { var n = openOf(c.findings).length; if (n > most) { most = n; best = c; } });
+    return best ? { c: best, count: most } : null;
+  }
+  function drawInsights(layer) {
+    if (!svg) return;
+    var g = svgEl('g', { class: 'bauify-insights' }, layer), k = pinScale();
+    drawnScale = k;
+    // Weighted and undeclared edges go under the nodes, so a node box covers a line that crosses it.
+    underlay = svgEl('g', { id: 'bauify-underlay', class: 'bauify-insights' });
+    var firstNode = svg.querySelector('g[data-node-id]');
+    if (firstNode) firstNode.parentNode.insertBefore(underlay, firstNode); else g.appendChild(underlay);
+    var under = underlay;
+    var isFocus = function (ids) { return ids.some(function (id) { return focused.indexOf(id) !== -1; }) ? ' focus' : ''; };
+    var defs = svgEl('defs', {}, under), marker = svgEl('marker', { id: 'bauify-undeclared-arrow', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse' }, defs);
+    svgEl('path', { d: 'M0,0 L10,5 L0,10 z', class: 'undeclared-head' }, marker);
+    var top = heaviestComponent(), most = top ? top.count : 0;
+    // Edges the diagram draws, weighted by the imports behind them.
+    (data.edges || []).forEach(function (e) {
+      var p = drawnEdge(e.from, e.to); if (!p) return;
+      var cls = isFocus([e.from, e.to]);
+      svgEl('path', { d: p.getAttribute('d'), class: 'code-weight' + cls, style: 'stroke-width:' + (1.5 + Math.log2(1 + e.weight) * 1.2).toFixed(2) + 'px' }, under);
+      try { var len = p.getTotalLength(), m = p.getPointAtLength(len / 2); pin(g, m.x, m.y - 4, String(e.weight), 'edge-weight' + cls, 'middle', 'auto').appendChild(svgEl('title', {})).textContent = tr('{count} imports', { count: e.weight }); } catch (error) { /* Unrendered path: no label. */ }
+    });
+    // Dependencies only the code has: arcs under the row, so they read as "not on the drawing".
+    var vb = svg.viewBox && svg.viewBox.baseVal, floor = vb && vb.height ? vb.y + vb.height - 8 : Infinity;
+    undeclaredEdges().forEach(function (e, i) {
+      var a = nodeBox(e.from), b = nodeBox(e.to), gap = 8 + 19 * k, y0 = a.y + a.h + gap, y1 = b.y + b.h + gap;
+      var dir = b.cx > a.cx ? 1 : -1, x0 = a.cx + 14 * dir, x1 = b.cx - 14 * dir;
+      var peak = Math.min(Math.max(y0, y1) + 48 + i * 14, floor), c = Math.max(y0, y1) + (peak - Math.max(y0, y1)) / 0.75;
+      var cls = ' ' + (isFocus([e.from, e.to]) ? 'focus' : '');
+      svgEl('path', { d: 'M' + x0 + ',' + y0 + ' C' + x0 + ',' + c + ' ' + x1 + ',' + c + ' ' + x1 + ',' + y1, class: 'code-undeclared' + cls, 'marker-end': 'url(#bauify-undeclared-arrow)' }, under)
+        .appendChild(svgEl('title', {})).textContent = (byId[e.from] || {}).label + ' → ' + (byId[e.to] || {}).label + ' · ' + tr('{count} imports', { count: e.weight });
+      pin(g, (x0 + x1) / 2, peak + 3, '+' + e.weight, 'undeclared-weight' + cls);
+    });
+    data.components.forEach(function (c) {
+      var b = nodeBox(c.id); if (!b) return;
+      var cls = isFocus([c.id]);
+      if (!c.modules.length) { pin(g, b.x + b.w, b.y - 6, tr('No source mapped'), 'unmapped-tag' + cls, 'end', 'auto'); return; }
+      // Health bar: share of each level, length relative to the busiest component.
+      var open = openOf(c.findings), bh = 3 * k, y = b.y + b.h + 3 * k, inner = b.w - 16, len = most ? Math.max(open.length ? 6 : 0, inner * open.length / most) : 0, x = b.x + 8;
+      svgEl('rect', { x: x, y: y, width: inner, height: bh, rx: bh / 2, class: 'health-track' + cls }, g);
+      ['error', 'warning', 'info'].forEach(function (level) {
+        var n = open.filter(function (f) { return f.severity === level; }).length; if (!n) return;
+        var w = len * n / open.length; svgEl('rect', { x: x, y: y, width: w, height: bh, rx: bh / 2, class: 'health-' + level + cls }, g); x += w;
+      });
+      pin(g, b.cx, y + bh + 3 * k, tr('{files} files · {lines} lines', { files: c.files, lines: shortCount(c.loc) }), 'node-meta' + cls);
+    });
+    // Modules no component claims: one dashed ghost in free space, if there is room.
+    var off = offDiagramModules();
+    if (off.length && vb && vb.width) {
+      var w = 210 * k, h = 52 * k, gx = vb.x + vb.width - w - 16, gy = vb.y + vb.height - h - 16;
+      var clear = !data.components.some(function (c) { var q = nodeBox(c.id); return q && q.x < gx + w + 12 && q.x + q.w > gx - 12 && q.y < gy + h + 12 && q.y + q.h > gy - 12; });
+      if (clear) {
+        var ghost = svgEl('g', { class: 'off-diagram' + (root.getAttribute('data-bauify-spot') === 'off' ? ' focus' : '') }, g);
+        svgEl('rect', { x: gx, y: gy, width: w, height: h, rx: 9 * k, class: 'off-box' }, ghost);
+        var label = off.length === 1 ? off[0].label : tr('{count} modules', { count: off.length });
+        var files = off.reduce(function (n, m) { return n + m.files; }, 0);
+        pin(ghost, gx + w / 2, gy + h / 2 - 2, label, 'off-label', 'middle', 'auto');
+        pin(ghost, gx + w / 2, gy + h / 2 + 3, tr('Not on the diagram · {files} files', { files: files }), 'off-meta');
+      }
+    }
+  }
+  // One line over the diagram: what the analysis says, and where to look.
+  var verdict = null;
+  function renderVerdict() {
+    if (standalone || !diagramContainer) return;
+    if (!verdict) {
+      verdict = document.createElement('section');
+      verdict.id = 'bauify-verdict'; verdict.lang = locale; verdict.setAttribute('aria-label', tr('Analysis on the diagram'));
+    }
+    diagramContainer.before(verdict);
+    var top = heaviestComponent(), und = undeclaredEdges(), unm = unmappedComponents(), off = offDiagramModules();
+    var line = top ? tr('{label} has the most findings ({count}).', { label: top.c.label, count: top.count }) : tr('No open findings on mapped components.');
+    if (und.length) line += ' ' + tr('{count} code dependencies are not drawn on the diagram.', { count: und.length });
+    var chips = [];
+    if (top) chips.push(['top', top.c.id, 'amber', tr('{label} · {count} findings', { label: top.c.label, count: top.count })]);
+    if (und.length) chips.push(['undeclared', '', 'red', tr('Not drawn · {count}', { count: und.length })]);
+    if (unm.length) chips.push(['unmapped', '', 'grey', tr('No source · {count}', { count: unm.length })]);
+    if (off.length) chips.push(['off', '', 'red', tr('Off the diagram · {count}', { count: off.length })]);
+    verdict.innerHTML = '<p>' + esc(line) + '</p><div class="verdict-chips">' + chips.map(function (ch) {
+      return '<button type="button" class="verdict-chip" data-spot="' + ch[0] + '" data-id="' + esc(ch[1]) + '" aria-pressed="' + String(root.getAttribute('data-bauify-spot') === ch[0]) + '"><i class="' + ch[2] + '" aria-hidden="true"></i>' + esc(ch[3]) + '</button>';
+    }).join('') + '</div>';
+    verdict.querySelectorAll('.verdict-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () { spotlight(root.getAttribute('data-bauify-spot') === chip.dataset.spot ? null : chip.dataset.spot, chip.dataset.id); });
+    });
+  }
+  function spotlight(kind, id) {
+    if (!kind) { root.removeAttribute('data-bauify-spot'); setFocus([]); renderVerdict(); return; }
+    root.setAttribute('data-bauify-spot', kind);
+    if (kind === 'top') { show(id); setFocus([id]); }
+    else if (kind === 'undeclared') setFocus(undeclaredEdges().reduce(function (ids, e) { [e.from, e.to].forEach(function (x) { if (ids.indexOf(x) === -1) ids.push(x); }); return ids; }, []));
+    else if (kind === 'unmapped') setFocus(unmappedComponents().map(function (c) { return c.id; }));
+    else { setFocus([]); drawLayer(); }
+    renderVerdict();
   }
   // Badges are drawn in diagram units, so a wide diagram fitted to a narrow column
   // shrinks them below legibility. Counter-scale them against the fit and camera
@@ -232,9 +357,15 @@
       var a = g.getAttribute('data-anchor').split(' ').map(Number);
       g.setAttribute('transform', 'translate(' + (a[0] - a[2] * k) + ' ' + (a[1] - a[3] * k / 2) + ') scale(' + k + ')');
     });
+    layer.querySelectorAll('g.pin[data-pin]').forEach(function (g) {
+      var a = g.getAttribute('data-pin').split(' ').map(Number);
+      g.setAttribute('transform', 'translate(' + a[0] + ' ' + a[1] + ') scale(' + k + ')');
+    });
   }
   if (svg) {
-    var badgeFrame = 0, rescale = function () { cancelAnimationFrame(badgeFrame); badgeFrame = requestAnimationFrame(scaleBadges); };
+    // Shapes sized at draw time (bar height, ghost box, arc clearance) follow a
+    // large change of on-screen scale, such as collapsing the reader, by redrawing.
+    var badgeFrame = 0, rescale = function () { cancelAnimationFrame(badgeFrame); badgeFrame = requestAnimationFrame(function () { if (layer && drawnScale && Math.abs(pinScale() - drawnScale) / drawnScale > 0.1) drawLayer(); else scaleBadges(); }); };
     new MutationObserver(rescale).observe(svg, { attributes: true, attributeFilter: ['style', 'viewBox'] });
     if (window.ResizeObserver) new ResizeObserver(rescale).observe(svg);
   }
@@ -1286,8 +1417,9 @@
     if (on) {
       data.components.forEach(function (c) { var g = svg.querySelector('g[data-node-id="' + c.id + '"]'); if (g) g.classList.toggle('bauify-mapped', c.modules.length > 0); });
       drawLayer();
+      renderVerdict();
       showOverview();
-    } else { setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
+    } else { root.removeAttribute('data-bauify-spot'); if (verdict) verdict.remove(); setFocus([]); if (layer) layer.remove(); layer = null; if (underlay) underlay.remove(); underlay = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.
