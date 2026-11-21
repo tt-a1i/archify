@@ -1306,10 +1306,7 @@ export function createRouter(components, connections = [], {
           if (best.rect) reservedLabels.push({ conn, rect: best.rect });
         }
       }
-      allowGridSearch = false;
-      try {
-        improveReciprocalPairs();
-        improveComplexRoutes();
+      function straightenFacingRoutes() {
         // A bent route between nodes that overlap across the gap separating
         // them can run straight through facing sides inside that overlap.
         // Authored sides must already face; every other route, slot and label
@@ -1349,6 +1346,7 @@ export function createRouter(components, connections = [], {
             if (!points.every(withinScene)
                 || !endpointSlotsClear([routed], others, sidesOf)
                 || !routeIsClear(conn, routed, geometry, others)
+                || !routeClearsReservedLabels(conn, points)
                 || crossingCount(conn, points, others) > crossingsBefore) continue;
             const rect = labelRectFor?.(conn, points, {
               routes: [...others.map((other) => other.points), points],
@@ -1362,6 +1360,12 @@ export function createRouter(components, connections = [], {
             break;
           }
         }
+      }
+      allowGridSearch = false;
+      try {
+        improveReciprocalPairs();
+        improveComplexRoutes();
+        straightenFacingRoutes();
         // Finish the established route/straightening plan first. Moving a
         // label earlier could prevent a later edge from taking its straight
         // corridor, even though the local candidate was cheaper.
@@ -1468,7 +1472,11 @@ export function createRouter(components, connections = [], {
         // must not grow merely because its labels could move into that space.
         if (readabilityBottomMargin > 0) {
           bounds.bottom += readabilityBottomMargin;
+          const improvedBefore = planningMetrics.readabilityImprovedCount;
           improveComplexRoutes(true);
+          // Rerouting a crossing can free a straight corridor that was
+          // occupied when the earlier pass examined it.
+          if (planningMetrics.readabilityImprovedCount !== improvedBefore) straightenFacingRoutes();
         }
       } finally {
         allowGridSearch = true;

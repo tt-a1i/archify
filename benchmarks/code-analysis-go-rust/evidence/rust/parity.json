@@ -1,0 +1,47 @@
+{
+  "comparisons": [
+    {
+      "artifact": "regex-base/raw-facts.json",
+      "byteEqual": true,
+      "sha256": "6c3b724232fe9140db37db70270f7def784541dda6a8998be46217532633570f"
+    },
+    {
+      "artifact": "regex/raw-facts.json",
+      "byteEqual": true,
+      "sha256": "f566644866e40ab8d2309454a2ab1245f4735fdadcd8cecae1b8cf43b11a5192"
+    },
+    {
+      "artifact": "serde-json-base/raw-facts.json",
+      "byteEqual": true,
+      "sha256": "96f664ec5c1b7890d16cf9ad53ceae2adb3b4cceacc64f6d4d22c64b38d1165c"
+    },
+    {
+      "artifact": "serde-json-base-float/raw-facts.json",
+      "byteEqual": true,
+      "sha256": "a4272cde98e623ba33ececde3a4f4043113fb16713f4fe0cdda61422b0bde41c"
+    },
+    {
+      "artifact": "serde-json/raw-facts.json",
+      "byteEqual": true,
+      "sha256": "60bff4773b55b89440fed6d686d40df18e9e20b583e895b8585f47bfa536a6af"
+    },
+    {
+      "artifact": "serde-json-float/raw-facts.json",
+      "byteEqual": true,
+      "sha256": "94058fe60720849c09fbc7fd11a166bd005cfcc23ee30a7b749adf2b69b5b4b3"
+    },
+    {
+      "artifact": "regex-question.json",
+      "equalAfterInstallationOutputPathNormalization": true
+    },
+    {
+      "artifact": "regex-paired.json",
+      "equalAfterInstallationOutputPathNormalization": true
+    },
+    {
+      "artifact": "serde-json-paired.json",
+      "equalAfterInstallationOutputPathNormalization": true
+    }
+  ],
+  "normalization": "Installation, workflow and output paths only; no source location, target, coverage, limit or status normalization."
+}

@@ -134,13 +134,36 @@ function renderKeyGlyphs(attribute, x0, baseline) {
 // renderer can never disagree about a box's height.
 const metrics = grid ?? DEFAULT_ER_GRID;
 
-// Width resolution lives in the grid module so placement and measurement cannot
-// disagree about an entity that omits `width`.
-const entityWidth = (entity) => resolvedEntityWidth(entity, grid);
+// Widening a table moves grid columns and route endpoints, just like widening
+// a relationship-label gap. Leave those coordinates alone when they are pinned.
+const autoGridGeometry = grid && !Array.isArray(er.meta?.viewBox)
+  && !asArray(er.entities).some((entity) => Array.isArray(entity.pos))
+  && !asArray(er.relationships).some((relationship) => relationship.via?.length || relationship.labelAt
+    || (relationship.route && relationship.route !== 'auto')
+    || relationship.channelX !== undefined || relationship.channelY !== undefined);
+
+function rowTextWidth(attribute) {
+  const nameWidth = textUnits(attribute.name) * nodeTextFit.widthFactor * layout.rowFont;
+  const typeWidth = textUnits(attributeTypeText(attribute)) * nodeTextFit.widthFactor * layout.typeFont;
+  return nameWidth + (typeWidth ? typeWidth + 8 : 0);
+}
+
+function entityDiffGutter(entity) {
+  return asArray(entity.attributes).some(isChangeMarked) ? 18 : 0;
+}
+
+function rowInsets(entity) {
+  return layout.padX * 2 + entityDiffGutter(entity) + keyColumnWidth(entity);
+}
 
 const measuredEntities = asArray(er.entities).map((entity) => {
   const attributes = asArray(entity.attributes);
-  const width = entityWidth(entity);
+  const baseWidth = resolvedEntityWidth(entity, grid);
+  let width = baseWidth;
+  if (autoGridGeometry && er.layout?.entityW === undefined && entity.width === undefined) {
+    const widestRow = attributes.reduce((max, attribute) => Math.max(max, rowTextWidth(attribute)), 0);
+    width = Math.max(baseWidth, Math.ceil(widestRow + rowInsets(entity)));
+  }
   return {
     ...entity,
     attributes,
@@ -169,14 +192,9 @@ const relationshipLabelWidth = (label, relationship = null) => Math.max(30, text
 // such gap widens just enough for its widest label to clear both glyphs.
 const LABEL_GLYPH_CLEARANCE = 24 + 4;
 function labelColumnGaps() {
-  if (!grid || Array.isArray(er.meta?.viewBox)) return null;
+  if (!autoGridGeometry) return null;
   const rawEntities = asArray(er.entities);
   const rawRelationships = asArray(er.relationships);
-  const absolute = rawEntities.some((entity) => Array.isArray(entity.pos))
-    || rawRelationships.some((relationship) => relationship.via?.length || relationship.labelAt
-      || (relationship.route && relationship.route !== 'auto')
-      || relationship.channelX !== undefined || relationship.channelY !== undefined);
-  if (absolute) return null;
   const byId = new Map(rawEntities.map((entity) => [entity.id, entity]));
   const gaps = new Map();
   for (const relationship of rawRelationships) {
@@ -499,8 +517,6 @@ const changeReview = changeReviewFor({
   )),
   edges: relationships,
 });
-
-const entityDiffGutter = (entity) => (asArray(entity?.attributes).some(isChangeMarked) ? 18 : 0);
 
 function entityChangeAttrs(entity) {
   if (!entity.change && entitiesWithChangedColumns.has(entity.id)) {
@@ -1090,13 +1106,6 @@ function renderableRelationship(relationship) {
   return entities.has(relationship.from) && entities.has(relationship.to);
 }
 
-function rowTextWidths(attribute) {
-  const typeText = attributeTypeText(attribute);
-  const name = textUnits(attribute.name) * nodeTextFit.widthFactor;
-  const type = typeText ? textUnits(typeText) * nodeTextFit.widthFactor : 0;
-  return { name, type };
-}
-
 // The header carries one string: the table title. A domain that earns a band is
 // named by the band, and a tagged table the renderer cannot band is refused
 // outright, so nothing depends on the header to carry a name.
@@ -1194,7 +1203,7 @@ function validateEr() {
       supportedFixes: ['Widen layout.gapX/gapY past the band padding.', 'Split the tag so each band covers only its own tables.'],
     });
   }
-  validateErGridPlacement(er, grid, bands, problems);
+  validateErGridPlacement({ ...er, entities: measuredEntities }, grid, bands, problems);
   const seenEntityIds = new Set();
   for (const [entityIndex, entity] of asArray(er.entities).entries()) {
     if (seenEntityIds.has(entity.id)) problems.push(`Entity ids must be unique; "${entity.id}" is declared twice.`);
@@ -1203,34 +1212,35 @@ function validateEr() {
     if (!Number.isFinite(entity.width) && entity.width !== undefined) {
       problems.push(`Entity "${entity.id}" width must be a finite number.`);
     }
+    const { width } = measuredEntities[entityIndex];
+    const insets = rowInsets(entity);
+    const available = width - insets;
     const seenColumns = new Set();
     for (const [attributeIndex, attribute] of asArray(entity.attributes).entries()) {
       if (seenColumns.has(attribute.name)) {
         problems.push(`Entity "${entity.id}" declares attribute "${attribute.name}" twice.`);
       }
       seenColumns.add(attribute.name);
-      const { name: nameUnits, type: typeUnits } = rowTextWidths(attribute);
-      // entity.width is optional; validateEr sees the authored object, so the
-      // overflow check must use the resolved width or an omitted width turns the
-      // available space into NaN and silently skips the diagnostic.
-      const diffGutter = entityDiffGutter(entity);
-      const available = entityWidth(entity) - layout.padX * 2 - diffGutter - keyColumnWidth(entity);
-      const needed = nameUnits * layout.rowFont + (typeUnits ? typeUnits * layout.typeFont + 8 : 0);
+      const needed = rowTextWidth(attribute);
       if (needed > available) {
-        const requiredEntityWidth = Math.ceil(needed + layout.padX * 2 + diffGutter + keyColumnWidth(entity));
+        const requiredEntityWidth = Math.ceil(needed + insets);
         const fix = `For this attribute row's text capacity, set entities[${entityIndex}].width to at least ${requiredEntityWidth}px, preserving the attribute name, type and key roles.`;
+        const supportedFixes = [fix];
+        if (autoGridGeometry && er.layout?.entityW !== undefined && entity.width === undefined) {
+          supportedFixes.push('Remove layout.entityW to size tables without an explicit width from their attribute rows.');
+        }
         const message = `Entity "${entity.id}" attribute ${attributeIndex} "${attribute.name}" needs ${Math.ceil(needed)}px of text but only ${Math.floor(available)}px is available — ${fix}`;
         problems.push(message);
         attributeDetails.push({
           code: 'erd/attribute-text-capacity', severity: 'error', message,
           subject: { diagramType: 'erd', entityId: entity.id, attributeIndex, attributeName: attribute.name },
           evidence: {
-            entityWidth: entityWidth(entity), requiredEntityWidth,
+            entityWidth: width, requiredEntityWidth,
             availableTextWidth: available, requiredTextWidth: needed,
             paddingWidth: layout.padX * 2, keyColumnWidth: keyColumnWidth(entity),
             nameFontSize: layout.rowFont, typeFontSize: layout.typeFont,
           },
-          supportedFixes: [fix],
+          supportedFixes,
         });
       }
     }

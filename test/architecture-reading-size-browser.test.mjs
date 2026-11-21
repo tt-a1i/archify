@@ -8,6 +8,66 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
+
+test('short architecture cards keep all text inside their authored borders', async (t) => {
+  if (!Object.hasOwn(process.env, 'ARCHIFY_CHROME')) return t.skip('Set ARCHIFY_CHROME for real browser checks');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-short-cards-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const input = path.join(dir, 'input.json');
+  const output = path.join(dir, 'output.html');
+  const components = [
+    { id: 'short', type: 'backend', label: 'Checkout API', sublabel: 'API', tag: 'R', pos: [30, 70], size: [84, 24], change: 'modified' },
+    { id: 'brand', type: 'backend', label: 'AI', sublabel: 'UI', tag: 'L', brand: 'openai', pos: [185, 64], size: [68, 36] },
+    { id: 'detail', type: 'backend', label: '网关', sublabel: '队列', tag: '批次', href: 'gateway.html', pos: [30, 130], size: [105, 36] },
+  ];
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'architecture', meta: { title: 'Small cards', output: 'output.html', viewBox: [320, 240] },
+    components,
+    connections: [{ from: 'short', to: 'brand', fromSide: 'right', toSide: 'left', via: [[145, 82]], label: 'sync', labelAt: [150, 68] }],
+  }));
+  execFileSync(process.execPath, [path.join(root, 'bin/archify.mjs'), 'render', 'architecture', input, output, '--quality', 'showcase']);
+  const browser = new ChromeVisualBrowser(findChrome());
+  t.after(() => browser.close());
+  await browser.inspect({ artifactPath: output, width: 1440, height: 900, theme: 'light' });
+  const observed = await browser.cdp.send('Runtime.evaluate', { returnByValue: true, expression: `(() => {
+    const svg = document.querySelector('.diagram-container > svg');
+    const ctx = document.createElement('canvas').getContext('2d');
+    const edge = svg.querySelector('path[data-edge-from="short"][data-edge-to="brand"]');
+    const label = svg.querySelector('g[data-edge-from="short"][data-edge-to="brand"] text');
+    return { points: edge.dataset.compositionPoints, marker: edge.getAttribute('marker-end'), pin: [Number(label.getAttribute('x')), Number(label.getAttribute('y'))],
+      cards: [...svg.querySelectorAll('g[data-node-id]')].map(card => {
+        const { x, y, width, height } = card.querySelector(':scope > rect.c-mask').getBBox();
+        const rows = [...card.querySelectorAll(':scope > text')].map(text => {
+          const css = getComputedStyle(text);
+          ctx.font = css.fontWeight + ' ' + css.fontSize + ' ' + css.fontFamily;
+          ctx.textAlign = 'center';
+          const ink = ctx.measureText(text.textContent);
+          const cx = Number(text.getAttribute('x')), cy = Number(text.getAttribute('y'));
+          return { text: text.textContent, l: cx - ink.actualBoundingBoxLeft, r: cx + ink.actualBoundingBoxRight,
+            t: cy - ink.actualBoundingBoxAscent, b: cy + ink.actualBoundingBoxDescent };
+        });
+        const badge = card.querySelector(':scope > [data-change-badge] rect')?.getBBox();
+        return { bounds: [x, y, width, height], rows, badge: badge && [badge.x, badge.y, badge.width, badge.height] };
+      }) };
+  })()` }, await browser.sessionPromise);
+  assert.equal(observed.exceptionDetails, undefined);
+  const { cards, points, marker, pin } = observed.result.value;
+  assert.deepEqual(cards.map(card => card.bounds), components.map(component => [...component.pos, ...component.size]));
+  assert.deepEqual(cards.map(card => card.rows.map(row => row.text)), components.map(component => [component.label, component.sublabel, component.tag]));
+  assert.deepEqual(points.split(';'), ['114,82', '145,82', '185,82']);
+  assert.ok(marker);
+  assert.deepEqual(pin, [150, 68]);
+  assert.ok(cards[0].badge, 'the compact marked card keeps its change badge');
+  for (const { bounds: [x, y, width, height], rows, badge } of cards) rows.forEach((row, index) => {
+    assert.ok(row.l >= x && row.r <= x + width && row.t >= y && row.b <= y + height, JSON.stringify(row));
+    assert.ok(rows.slice(index + 1).every(other => row.r <= other.l || row.l >= other.r || row.b <= other.t || row.t >= other.b), JSON.stringify(rows));
+    if (badge) {
+      const [left, top, width, height] = badge;
+      assert.ok(row.r <= left || row.l >= left + width || row.b <= top || row.t >= top + height, `change badge covers ${row.text}`);
+    }
+  });
+});
+
 test('automatic architectures preserve primary reading size when fitting the full page would shrink text', async (t) => {
   if (!Object.hasOwn(process.env, 'ARCHIFY_CHROME')) return t.skip('Set ARCHIFY_CHROME for real browser checks');
   const chrome = findChrome();
@@ -142,15 +202,15 @@ test('a first-screen fit never pushes relationship labels below the 6px floor', 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-edge-floor-'));
   const input = path.join(dir, 'input.json');
   const output = path.join(dir, 'output.html');
-  // Titles only, 8px relationship labels: without the edge floor the titles'
-  // 7.5px target alone would project the labels to about 5.5px.
+  // Give the three nodes enough vertical space to exercise readable scrolling
+  // and keep the relationship labels legible in the resulting tall diagram.
   fs.writeFileSync(input, JSON.stringify({
     schema_version: 1, diagram_type: 'architecture',
     meta: { title: 'Tall request path', output: 'output.html', quality_profile: 'showcase' },
     components: [
       { id: 'client', type: 'frontend', label: 'Client', pos: [40, 40], size: [140, 60] },
-      { id: 'api', type: 'backend', label: 'API', pos: [40, 480], size: [140, 60] },
-      { id: 'db', type: 'database', label: 'Store', pos: [40, 920], size: [140, 60] },
+      { id: 'api', type: 'backend', label: 'API', pos: [40, 580], size: [140, 60] },
+      { id: 'db', type: 'database', label: 'Store', pos: [40, 1120], size: [140, 60] },
     ],
     connections: [{ from: 'client', to: 'api', label: 'request' }, { from: 'api', to: 'db', label: 'persist' }],
   }));

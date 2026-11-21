@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { softwareNotices } from './software-notices.mjs';
+import { parse } from '../../story/vendor/html-parser.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const templatePath = path.join(skillRoot, 'assets', 'template.html');
@@ -17,9 +18,6 @@ const INTERACTIVE_PSEUDO_RE = /:(hover|focus|focus-visible|focus-within|active)\
 const DROPPED_PROPERTY_RE = /^(transition|animation|cursor|will-change|pointer-events)(-|$)/;
 const ROOT_SVG_LAYOUT_PROPERTIES = new Set(['width', 'min-width', 'max-width', 'display', 'transform-origin', 'height']);
 
-// ---------------------------------------------------------------------------
-// Stylesheet access
-
 const templateStyleCache = new Map();
 export function loadViewerStyles(templateFile = templatePath) {
   const cached = templateStyleCache.get(templateFile);
@@ -29,7 +27,15 @@ export function loadViewerStyles(templateFile = templatePath) {
   const fontBlock = blocks.find((block) => /id="archify-fonts"/.test(block[1] || ''));
   if (!fontBlock) throw new Error(`svg-bake: ${templateFile} has no <style id="archify-fonts"> block`);
   const css = blocks.filter((block) => block !== fontBlock).map((block) => block[2]).join('\n');
-  const styles = { fontCss: fontBlock[2].trim(), rules: parseStylesheet(css) };
+  const rules = parseStylesheet(css);
+  let toolbar;
+  const styles = {
+    fontCss: fontBlock[2].trim(),
+    rules,
+    get toolbar() {
+      return toolbar ??= extractViewerToolbar(html, css, rules);
+    },
+  };
   templateStyleCache.set(templateFile, styles);
   return styles;
 }
@@ -91,8 +97,6 @@ function splitDeclarations(body) {
   return declarations;
 }
 
-// Flat style rules only. Viewer @media blocks describe page chrome and motion
-// states; keyframes and font faces are handled separately.
 export function parseStylesheet(cssText, { media = null, rules = [] } = {}) {
   const css = stripComments(cssText);
   let index = 0;
@@ -113,9 +117,6 @@ export function parseStylesheet(cssText, { media = null, rules = [] } = {}) {
   }
   return rules;
 }
-
-// ---------------------------------------------------------------------------
-// Selector matching for the document root
 
 function splitTopLevel(text, separator) {
   const parts = [];
@@ -141,10 +142,50 @@ function splitTopLevel(text, separator) {
   return parts.map((part) => part.trim()).filter(Boolean);
 }
 
+function extractViewerToolbar(html, css, rules) {
+  const start = html.indexOf('<div class="toolbar"');
+  const source = html.slice(start);
+  const fragment = parse(source, { sourceCodeLocationInfo: true });
+  const body = fragment.childNodes.find(node => node.tagName === 'html')?.childNodes.find(node => node.tagName === 'body');
+  const child = (node, name, value) => node?.childNodes.find(child => child.attrs?.some(attr => attr.name === name && attr.value === value));
+  const toolbar = child(body, 'class', 'toolbar');
+  const tools = child(toolbar, 'class', 'toolbar-group');
+  const exportWrap = child(toolbar, 'class', 'export-wrap');
+  const theme = child(tools, 'id', 'btn-theme');
+  const preset = child(tools, 'class', 'preset-wrap');
+  const exportButton = child(exportWrap, 'id', 'btn-export');
+  const exportHeader = child(child(exportWrap, 'id', 'export-menu'), 'class', 'export-menu-header');
+  const keyframes = css.indexOf('@keyframes toolbar-menu-in');
+  if (![theme, preset, exportButton, exportHeader].every(node => node?.sourceCodeLocation) || keyframes === -1) {
+    throw new Error('svg-bake: Viewer toolbar is missing');
+  }
+
+  // Keep the rules in Viewer cascade order. Stage positions the toolbar in
+  // its header and supplies its own set of export actions.
+  const toolbarSelectors = /(?:\.toolbar\b|\.preset-(?:wrap|menu|option|control-mark)\b|\.export-(?:wrap|menu|item)\b|#(?:theme-icon|theme-label|btn-theme|btn-preset|preset-label|btn-export)\b)/;
+  const unrelatedControls = /#(?:btn-motion|btn-present|present-icon|present-label)\b/;
+  const toolbarCss = [];
+  for (const { selector, declarations, media } of rules) {
+    const selectors = splitTopLevel(selector, ',').filter(part => toolbarSelectors.test(part) && !unrelatedControls.test(part));
+    if (!selectors.length) continue;
+    const body = declarations.map(({ property, value, important }) => `${property}:${value}${important ? '!important' : ''};`).join('');
+    const rule = `${selectors.join(',')}{${body}}`;
+    toolbarCss.push(media ? `${media}{${rule}}` : rule);
+  }
+  const keyframesEnd = findBlockEnd(css, css.indexOf('{', keyframes));
+  toolbarCss.push(css.slice(keyframes, keyframesEnd + 1));
+  const markup = ({ sourceCodeLocation: { startOffset, endOffset } }) => source.slice(startOffset, endOffset);
+  return {
+    theme: markup(theme),
+    preset: markup(preset),
+    exportButton: markup(exportButton),
+    exportHeader: markup(exportHeader),
+    css: toolbarCss.join('\n'),
+  };
+}
+
 const COMPOUND_TOKEN_RE = /^(?::root|html|svg|body|\*|\[data-[a-z-]+(?:="[^"]*")?\]|:not\(\[data-[a-z-]+(?:="[^"]*")?\]\))/;
 
-// Evaluates a compound selector (no combinators) against a root element that
-// carries exactly data-theme and data-preset.
 function compoundMatchesRoot(compound, root, { allowBody = false } = {}) {
   let rest = compound.trim();
   if (!rest) return false;
@@ -168,9 +209,6 @@ function compoundMatchesRoot(compound, root, { allowBody = false } = {}) {
 function hasCombinator(selector) {
   return /[\s>+~]/.test(selector.replace(/\([^)]*\)/g, '').replace(/"[^"]*"/g, ''));
 }
-
-// ---------------------------------------------------------------------------
-// Custom property resolution
 
 export function resolveThemeVariables(rules, { theme, preset }) {
   const root = { theme, preset };
@@ -214,9 +252,6 @@ function findCall(text, name, from = 0) {
   return null;
 }
 
-// Recursive var() substitution with fallbacks. Returns null when a variable
-// has neither a value nor a fallback, which mirrors a browser dropping the
-// declaration as invalid at computed-value time.
 export function substituteVariables(value, lookup) {
   let text = value;
   for (let guard = 0; guard < 64; guard += 1) {
@@ -282,9 +317,6 @@ function mixColors(first, second, weightFirst) {
   return [channel(0), channel(1), channel(2), alpha];
 }
 
-// Compile-time color-mix(in srgb, A p%, B q%) with premultiplied alpha.
-// Anything outside sRGB or with unparsable operands is left untouched so a
-// browser can still interpret it.
 export function compileColorMix(value) {
   let text = value;
   for (let guard = 0; guard < 32; guard += 1) {
@@ -320,19 +352,22 @@ function compileSingleMix(inner) {
   return formatColor(mixed);
 }
 
-// ---------------------------------------------------------------------------
-// Rule collection for a standalone SVG
-
-function rescopeSelectorPart(part, root) {
+function rescopeSelectorPart(part, root, switchable) {
   if (INTERACTIVE_PSEUDO_RE.test(part)) return null;
   const canvasIndex = part.indexOf(CANVAS_SCOPE);
   if (canvasIndex !== -1) {
     const prefix = part.slice(0, canvasIndex).trim();
+    if (switchable) {
+      // Viewer canvas paint rules use theme/preset on html. Match those same
+      // attributes on the embedded SVG so the rules survive image serialization.
+      if (prefix && !/^html(?:\[data-(?:preset|theme)="[^"]+"\])+$/.test(prefix)) return null;
+      return `svg${prefix.slice(4)}${part.slice(canvasIndex + CANVAS_SCOPE.length)}`;
+    }
     if (prefix && !compoundMatchesRoot(prefix, root)) return null;
     return `svg[data-preset="${root.preset}"][data-theme="${root.theme}"]${part.slice(canvasIndex + CANVAS_SCOPE.length)}`;
   }
   if (!SVG_RULE_RE.test(part)) return null;
-  if (part.startsWith('svg')) {
+  if (!switchable && part.startsWith('svg')) {
     const compoundEnd = part.search(/[\s>+~]/);
     const compound = compoundEnd === -1 ? part : part.slice(0, compoundEnd);
     if (!/^svg(\[data-(theme|preset)="[^"]*"\])*$/.test(compound)) return part;
@@ -341,33 +376,30 @@ function rescopeSelectorPart(part, root) {
   return part;
 }
 
-export function collectSvgRules(rules, { theme, preset, variables }) {
+export function collectSvgRules(rules, { theme, preset, variables, switchable = false }) {
   const root = { theme, preset };
   const output = [];
   for (const rule of rules) {
     if (rule.media) continue;
-    const parts = splitTopLevel(rule.selector, ',').map((part) => rescopeSelectorPart(part, root)).filter(Boolean);
+    const parts = splitTopLevel(rule.selector, ',').map((part) => rescopeSelectorPart(part, root, switchable)).filter(Boolean);
     if (!parts.length) continue;
     const bareRootSvg = parts.every((part) => part === 'svg');
     const local = new Map(rule.declarations.filter((d) => d.property.startsWith('--')).map((d) => [d.property, d.value]));
     const lookup = (name) => (local.has(name) ? substituteVariables(local.get(name), lookup) : (variables.get(name) ?? null));
     const declarations = [];
     for (const declaration of rule.declarations) {
-      if (declaration.property.startsWith('--')) continue;
+      if (!switchable && declaration.property.startsWith('--')) continue;
       if (DROPPED_PROPERTY_RE.test(declaration.property)) continue;
       if (bareRootSvg && ROOT_SVG_LAYOUT_PROPERTIES.has(declaration.property)) continue;
-      const value = substituteVariables(declaration.value, lookup);
+      const value = switchable ? declaration.value : substituteVariables(declaration.value, lookup);
       if (value === null) continue;
-      declarations.push(`${declaration.property}: ${compileColorMix(value)}${declaration.important ? ' !important' : ''}`);
+      declarations.push(`${declaration.property}: ${switchable ? value : compileColorMix(value)}${declaration.important ? ' !important' : ''}`);
     }
     if (!declarations.length) continue;
     output.push(`${[...new Set(parts)].join(', ')} { ${declarations.join('; ')}; }`);
   }
   return output;
 }
-
-// ---------------------------------------------------------------------------
-// SVG surgery
 
 export function extractCanonicalSvg(html) {
   const container = html.indexOf('class="diagram-container"');
@@ -454,19 +486,12 @@ export function flowPulseMarkup(body, variables) {
   return `<g data-archify-flow-pulse="finite" aria-hidden="true" pointer-events="none">${paths.join('')}</g>`;
 }
 
-// ---------------------------------------------------------------------------
-// Renderer-embedded <style> blocks and presentation attributes
-
 function scopedSelector(scope, selector) {
   const parts = splitTopLevel(selector, ',').map((part) => part.trim()).filter(Boolean);
   const target = parts.length === 1 ? parts[0] : `:is(${parts.join(', ')})`;
   return `${scope}:is(${target}), ${scope} :is(${target})`;
 }
 
-// A renderer stylesheet may set custom properties on a scope (for example an
-// ERD hue class) and read them from descendant rules. Static output has no
-// cascade, so each such rule is re-emitted once per scope that defines the
-// missing variables; unresolved declarations are dropped like a browser does.
 export function bakeEmbeddedStylesheet(cssText, variables) {
   const rules = parseStylesheet(cssText).filter((rule) => !rule.media);
   const globalLookup = (name) => variables.get(name) ?? null;
@@ -550,12 +575,12 @@ export function authoredPreset(svg) {
   return splitRootTag(svg).attributes.get('data-preset') || null;
 }
 
-export function bakeSvg(svg, { theme, preset, diagramType = null, animateFlow = false, styles = loadViewerStyles() }) {
+export function bakeSvg(svg, { theme, preset, diagramType = null, animateFlow = false, styles = loadViewerStyles(), switchable = false }) {
   if (!BAKE_THEMES.includes(theme)) throw new Error(`svg-bake: unsupported theme ${JSON.stringify(theme)}`);
   const { attributes, body: rawBody } = splitRootTag(svg);
   const resolvedPreset = preset || attributes.get('data-preset') || 'classic';
   const variables = resolveThemeVariables(styles.rules, { theme, preset: resolvedPreset });
-  const body = bakeBodyStyles(rawBody, variables);
+  const body = switchable ? rawBody : bakeBodyStyles(rawBody, variables);
   const viewBox = parseViewBox(attributes.get('viewBox'));
   attributes.set('xmlns', 'http://www.w3.org/2000/svg');
   attributes.set('width', String(viewBox.width));
@@ -566,56 +591,70 @@ export function bakeSvg(svg, { theme, preset, diagramType = null, animateFlow = 
   attributes.delete('data-animation');
   const variableBlock = [...variables].map(([name, value]) => `${name}: ${value};`).join(' ');
   const css = [
-    styles.fontCss,
     `svg { font-family: ${FONT_FALLBACK}; }`,
-    ...collectSvgRules(styles.rules, { theme, preset: resolvedPreset, variables }),
-    `svg[data-theme="${theme}"] { ${variableBlock} }`,
+    ...collectSvgRules(styles.rules, { theme, preset: resolvedPreset, variables, switchable }),
   ].join('\n');
+  const stylesheet = switchable ? css : `${styles.fontCss}\n${css}\nsvg[data-theme="${theme}"] { ${variableBlock} }`;
   const background = `<rect class="archify-bake-background" x="${viewBox.x}" y="${viewBox.y}" width="${viewBox.width}" height="${viewBox.height}" fill="${escapeAttribute(variables.get('--bg') || '#ffffff')}"/>`;
   const pulse = animateFlow && FLOW_PULSE_TYPES.has(diagramType) ? flowPulseMarkup(body, variables) : '';
   if (pulse) attributes.set('data-archify-bake', 'animate-flow');
   const metadata = `<metadata id="archify-software-notices">${escapeXml(softwareNotices)}</metadata>`;
   const split = leadingAccessibleText(body);
   const openTag = `<svg ${[...attributes].map(([name, value]) => `${name}="${escapeAttribute(value)}"`).join(' ')}>`;
-  if (css.includes(']]>')) throw new Error('svg-bake: stylesheet cannot contain a CDATA terminator');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n${openTag}${body.slice(0, split)}<style><![CDATA[\n${css}\n]]></style>${background}${body.slice(split)}${pulse}${metadata}</svg>\n`;
+  if (stylesheet.includes(']]>')) throw new Error('svg-bake: stylesheet cannot contain a CDATA terminator');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${openTag}${body.slice(0, split)}<style><![CDATA[\n${stylesheet}\n]]></style>${background}${body.slice(split)}${pulse}${metadata}</svg>\n`;
 }
 
-// ---------------------------------------------------------------------------
-// Camo / GitHub <img> safety
+function activeSvgContent(svgString) {
+  const tags = new Set();
+  const hrefs = [];
+  const css = [];
+  let eventHandler = false;
+  const pending = [parse(svgString)];
+  const urlAttributes = new Set(['style', 'fill', 'stroke', 'filter', 'clip-path', 'mask', 'cursor', 'marker', 'marker-start', 'marker-mid', 'marker-end']);
+  while (pending.length) {
+    const node = pending.pop();
+    if (node.tagName) tags.add(node.tagName.toLowerCase());
+    for (const attribute of node.attrs || []) {
+      if (/^on[a-z]+$/i.test(attribute.name)) eventHandler = true;
+      if (attribute.name === 'href') hrefs.push(attribute.value.trim());
+      if (urlAttributes.has(attribute.name)) css.push(attribute.value);
+    }
+    if (node.tagName === 'style') css.push((node.childNodes || []).filter(child => child.nodeName === '#text').map(child => child.value).join(''));
+    pending.push(...(node.childNodes || []));
+  }
+  return { tags, hrefs, css: stripComments(css.join('\n')), eventHandler };
+}
 
-const CAMO_CHECKS = [
-  { code: 'svg/script', pattern: /<script\b/i, message: 'contains a <script> element', fix: 'remove script elements; GitHub strips scripted SVGs' },
-  { code: 'svg/javascript-url', pattern: /javascript\s*:/i, message: 'contains a javascript: URL', fix: 'replace the URL with a data: or fragment reference' },
-  { code: 'svg/event-handler', pattern: /\son[a-z]+\s*=/i, message: 'contains an inline on* event handler attribute', fix: 'remove on* attributes' },
-  { code: 'svg/foreign-object', pattern: /<foreignObject\b/i, message: 'contains <foreignObject>, which Camo renders blank', fix: 'draw the content with native SVG elements' },
-  { code: 'svg/css-import', pattern: /@import\b/i, message: 'contains a CSS @import', fix: 'inline the stylesheet' },
-];
-
-function externalReference(svgString) {
-  const hrefs = [...svgString.matchAll(/\s(?:xlink:)?href\s*=\s*"([^"]*)"/gi)].map((match) => match[1].trim());
+function externalReference({ hrefs, css }) {
   const external = hrefs.find((href) => !(href === '' || href.startsWith('#') || href.startsWith('data:')));
   if (external) return { code: 'svg/external-href', message: `references an external resource ${JSON.stringify(external.slice(0, 80))}`, fix: 'embed the asset as a data: URL or drop the reference' };
-  const urls = [...svgString.matchAll(/url\(\s*(['"]?)([^)'"]*)\1\s*\)/gi)].map((match) => match[2].trim());
+  const urls = [...css.matchAll(/url\(\s*(['"]?)([^)'"]*)\1\s*\)/gi)].map((match) => match[2].trim());
   const externalUrl = urls.find((url) => !(url.startsWith('#') || url.startsWith('data:')));
   if (externalUrl) return { code: 'svg/external-css-url', message: `CSS url() points outside the file ${JSON.stringify(externalUrl.slice(0, 80))}`, fix: 'use data: or #fragment url() targets only' };
   return null;
 }
 
-// Returns { ok, bytes, problems } and throws when assert !== false.
 export function assertCamoSafeSvg(svgString, { maxBytes = CAMO_MAX_BYTES, assert = true } = {}) {
   const problems = [];
   const bytes = Buffer.byteLength(svgString, 'utf8');
   if (!/^(<\?xml[^>]*\?>\s*)?<svg\b/.test(svgString.trimStart())) {
-    problems.push({ code: 'svg/not-svg', message: 'does not start with an <svg> root', fix: 'export through archify export-svg' });
+    problems.push({ code: 'svg/not-svg', message: 'does not start with an <svg> root', fix: 'export through archify export-svg or archify story svg' });
   }
   if (!/\sxmlns="http:\/\/www\.w3\.org\/2000\/svg"/.test(svgString.slice(0, 4000))) {
     problems.push({ code: 'svg/missing-xmlns', message: 'root lacks the SVG namespace, so <img> cannot render it', fix: 'declare xmlns="http://www.w3.org/2000/svg" on the root' });
   }
-  for (const check of CAMO_CHECKS) {
-    if (check.pattern.test(svgString)) problems.push({ code: check.code, message: check.message, fix: check.fix });
+  const active = activeSvgContent(svgString);
+  for (const [detected, code, message, fix] of [
+    [active.tags.has('script'), 'svg/script', 'contains a <script> element', 'remove script elements; GitHub strips scripted SVGs'],
+    [active.hrefs.some(href => /^javascript\s*:/i.test(href)), 'svg/javascript-url', 'contains a javascript: URL', 'replace the URL with a data: or fragment reference'],
+    [active.eventHandler, 'svg/event-handler', 'contains an inline on* event handler attribute', 'remove on* attributes'],
+    [active.tags.has('foreignobject'), 'svg/foreign-object', 'contains <foreignObject>, which Camo renders blank', 'draw the content with native SVG elements'],
+    [/@import\b/i.test(active.css), 'svg/css-import', 'contains a CSS @import', 'inline the stylesheet'],
+  ]) {
+    if (detected) problems.push({ code, message, fix });
   }
-  const external = externalReference(svgString);
+  const external = externalReference(active);
   if (external) problems.push(external);
   if (bytes >= maxBytes) {
     problems.push({ code: 'svg/too-large', message: `${bytes} bytes meets or exceeds the ${maxBytes}-byte Camo limit`, fix: 'reduce the diagram or split it into several exports' });

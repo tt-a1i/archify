@@ -30,6 +30,7 @@ const { diagram: tree, template, outPath, sourceEvidence } = loadDiagram({
 const locale = tree.meta.locale;
 const direction = tree.layout?.direction === 'right' ? 'right' : 'down';
 const down = direction === 'down';
+const authoredCanvas = Array.isArray(tree.meta?.viewBox);
 
 const layout = {
   margin: 32,
@@ -241,16 +242,14 @@ for (const group of new Set(stackOf.values())) {
 
 // ---- Layout --------------------------------------------------------------------
 // Every generation shares one band (a row going down, a column going right),
-// sized by its largest node, so siblings and cousins line up. Along the other
-// axis each subtree owns a contiguous span: leaves are laid out in order and a
-// parent is centred over its children. A stacked run hangs from its parent's
-// band and owns its own span, so it never meets a cousin. Positions never
+// sized by its largest node, so siblings and cousins line up. Positions never
 // depend on collapse state, so expanding or collapsing a branch leaves every
 // visible node where the reader last saw it.
 const breadthSize = (node) => (down ? node.width : node.height);
 const depthSize = (node) => (down ? node.height : node.width);
 const breadthGap = down ? layout.gapX : layout.gapY;
 const depthGap = down ? layout.gapY : layout.gapX;
+const CENTER_SNAP = 24;
 
 const maxDepth = Math.max(...[...measured.values()].map((node) => node.depth));
 const bandSize = Array.from({ length: maxDepth + 1 }, () => 0);
@@ -269,13 +268,57 @@ for (const [id, node] of measured) {
   measured.set(id, down ? { ...node, height: bandSize[node.depth] } : { ...node, width: bandSize[node.depth] });
 }
 
+// The full span reserves space for stacked lists that extend across depths.
+// Authored canvases also retain this placement and their existing margins.
+const compactRows = down && !stackOf.size && !authoredCanvas;
 const groupSpan = (group) => (group.stack ? group.indent + group.width : span.get(group.single));
 const groupsSpan = (groups) => groups.reduce((sum, group, index) => sum + groupSpan(group) + (index ? breadthGap : 0), 0);
 const span = new Map();
-(function measureSpan(id) {
+function measureSpan(id) {
   for (const child of childrenOf.get(id)) measureSpan(child);
   span.set(id, Math.max(breadthSize(measured.get(id)), groupsSpan(groupsOf.get(id))));
-}(authoredRoot.id));
+}
+
+// For a downward tree without stacked lists, adjacent subtrees can
+// share horizontal space at different depths. Preserve declaration order in
+// every shared row and reserve each row's full span between its outer nodes.
+const rowCenter = new Map();
+function measureRows(id) {
+  const children = groupsOf.get(id);
+  const rows = [];
+  const childCenters = [];
+  for (const group of children) {
+    const child = measureRows(group.single);
+    let offset = rows.length ? rows[0][1] + breadthGap - child.rows[0][0] : 0;
+    for (let row = 1; row < Math.min(rows.length, child.rows.length); row++) {
+      offset = Math.max(offset, rows[row][1] + breadthGap - child.rows[row][0]);
+    }
+    group.offset = offset;
+    childCenters.push(offset + child.center);
+    child.rows.forEach(([left, right], row) => {
+      const other = rows[row];
+      rows[row] = other ? [other[0], right + offset] : [left + offset, right + offset];
+    });
+  }
+  const half = breadthSize(measured.get(id)) / 2;
+  const midpoint = childCenters.length ? (childCenters[0] + childCenters.at(-1)) / 2 : half;
+  // Align with a near-centred child to keep its stem straight.
+  const center = childCenters.slice(1, -1).find((child) => Math.abs(child - midpoint) < CENTER_SNAP) ?? midpoint;
+  rows.unshift([center - half, center + half]);
+  const left = Math.min(...rows.map(([start]) => start));
+  for (const group of children) group.offset -= left;
+  const result = { center: center - left, rows: rows.map(([start, end]) => [start - left, end - left]) };
+  rowCenter.set(id, result.center);
+  return result;
+}
+if (compactRows) measureRows(authoredRoot.id);
+else measureSpan(authoredRoot.id);
+
+// A tall rightward tree reads as an outline. Starting each branch at its
+// first child keeps the root and first path near the start of page scroll.
+const rightWidth = bandStart.at(-1) + bandSize.at(-1) + layout.margin + layout.toggleR + 4;
+const topAligned = !down && !authoredCanvas
+  && layout.top + span.get(authoredRoot.id) + layout.margin > rightWidth;
 
 const placed = new Map();
 // Where a group meets its parent's crossbar: a single child at its centre, a
@@ -284,6 +327,12 @@ const attachOf = (group) => (group.stack ? group.spine : centerOf(group.single))
 (function place(id, start) {
   const node = measured.get(id);
   const groups = groupsOf.get(id);
+  if (compactRows) {
+    for (const group of groups) place(group.single, start + group.offset);
+    const x = start + rowCenter.get(id) - node.width / 2;
+    placed.set(id, { ...node, x: Math.round(x), y: Math.round(bandStart[node.depth]), toggleAt: null });
+    return;
+  }
   // A parent whose only children are one stacked run sits at the run's left
   // edge, with the spine dropping straight out of it.
   const onlyStack = groups.length === 1 && groups[0].stack;
@@ -305,8 +354,11 @@ const attachOf = (group) => (group.stack ? group.spine : centerOf(group.single))
   // stem; the parent sits exactly over it instead.
   const half = breadthSize(node) / 2;
   const middle = groups.slice(1, -1).map(attachOf)
-    .find((attach) => Math.abs(attach - center) < 24 && attach - half >= start && attach + half <= start + span.get(id));
+    .find((attach) => Math.abs(attach - center) < CENTER_SNAP && attach - half >= start && attach + half <= start + span.get(id));
   if (middle !== undefined) center = middle;
+  if (topAligned && groups.length) {
+    center = Math.max(start + half, Math.min(start + span.get(id) - half, attachOf(groups[0])));
+  }
   const breadth = onlyStack ? start : center - breadthSize(node) / 2;
   // A row going down centres each node in its band; a column going right
   // left-aligns them so every link into the column has the same stub.
@@ -373,9 +425,9 @@ const legendEntries = changeLegendEntries(changeReview, tree.meta?.legend, local
 const autoWidth = Math.max(320, Math.ceil(Math.max(...all.map((node) => node.x + node.width)) + layout.margin + (down ? 0 : layout.toggleR + 4)));
 const contentBottom = Math.ceil(Math.max(...all.map((node) => node.y + node.height)) + (down ? layout.toggleR + 4 : 0));
 const legendFoot = legendEntries.length
-  ? legendFootprint(legendEntries, { width: Math.max(1, (Array.isArray(tree.meta?.viewBox) ? tree.meta.viewBox[0] : autoWidth) - layout.margin * 2), fontSize: 11 })
+  ? legendFootprint(legendEntries, { width: Math.max(1, (authoredCanvas ? tree.meta.viewBox[0] : autoWidth) - layout.margin * 2), fontSize: 11 })
   : null;
-const viewBox = Array.isArray(tree.meta?.viewBox) ? tree.meta.viewBox : [
+const viewBox = authoredCanvas ? tree.meta.viewBox : [
   autoWidth,
   Math.max(240, Math.ceil(contentBottom + layout.margin + (legendFoot ? 34 + legendFoot.extraHeight : 0))),
 ];
@@ -393,7 +445,7 @@ function descendantCount(id) {
 // ---- Canvas checks -------------------------------------------------------------
 {
   const problems = [];
-  if (Array.isArray(tree.meta?.viewBox)) {
+  if (authoredCanvas) {
     for (const node of all) {
       if (node.x + node.width + layout.margin / 2 > viewBox[0] || node.y + node.height + layout.margin / 2 > viewBox[1]) {
         problems.push(`Node "${node.id}" lies outside the authored meta.viewBox ${viewBox.join('x')} — remove meta.viewBox or enlarge it.`);
@@ -511,7 +563,7 @@ function renderEdge(edge) {
 }
 
 function renderSvg() {
-  const readerFit = tree.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"';
+  const readerFit = authoredCanvas ? '' : ' data-reader-fit="intrinsic-height" data-reader-min-text="10"';
   const expandAll = esc(i18nText(locale, 'tree.expandAll'));
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(tree.meta)} data-tree-ui="" data-tree-direction="${direction}"${readerFit}>
 ${svgAccessibleText(tree.meta, 'tree')}

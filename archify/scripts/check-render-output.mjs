@@ -454,6 +454,7 @@ if (svgBlocks.length === 1) {
       .flatMap(entry => routeParts(entry).filter(part => part.targetEndpoint)),
     allowShortWorkflowTrunks: workflowV2,
   });
+  const cardinalityPorts = svgAttrs['data-erd-ui'] ? coincidentCardinalityPorts(arrows) : [];
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
   const leadingSpace = collectArchitectureLeadingSpace({
     svgAttrs, fragment: beforeLegend, nodeRects, frames: compositionFrames,
@@ -517,6 +518,7 @@ if (svgBlocks.length === 1) {
       resolvedCrossovers: resolvedCrossovers.length,
       ambiguousCorridors: ambiguousCorridors.length,
       arrowheadCollisions: arrowheadCollisions.length,
+      ...(cardinalityPorts.length ? { coincidentCardinalityPorts: cardinalityPorts.length } : {}),
       containerBorderRuns: containerBorderRuns.length,
       labelRouteClearanceIssues: labelRouteClearance.length,
       labelCanvasOverflowIssues: labelCanvasOverflow.length,
@@ -541,6 +543,7 @@ if (svgBlocks.length === 1) {
         };
       }),
       ...(crowdedSides.length ? { crowdedSides } : {}),
+      ...(cardinalityPorts.length ? { coincidentCardinalityPorts: cardinalityPorts } : {}),
       detours: routedRelationships.flatMap((entry) => {
         const metrics = subpathBudgetMetrics([entry]);
         const blockers = directCorridorBlockers(entry.relation, nodeRects);
@@ -804,6 +807,7 @@ function collectArrows(fragment, useActualPoints = false) {
       automaticWorkflowRoute: attrs['data-composition-routing'] === 'workflow-v2-auto',
       junction: attrs['data-composition-junction'] || null,
       width: routeStrokeWidth,
+      ...(attrs['data-er-ends'] ? { erMarkers: [attrs['marker-start'], attrs['marker-end']] } : {}),
       variant: raw.match(/\ba-(default|emphasis|security|dashed)\b/)?.[1] || 'default',
       role: attrs['data-edge-role'],
       segments,
@@ -1165,6 +1169,35 @@ function crowdedNodeSides(arrows, nodes) {
     return relationships > 1 && sidePx < neededPx
       ? [{ node: node.id, label: node.label, side, relationships, sidePx, neededPx }] : [];
   });
+}
+
+// A shared ERD trunk has no marker of its own. Its relationship paths still
+// terminate at separate table ports. Measure the drawn ends, including split
+// paths, instead of inferring ports from the placement or logical route points.
+function coincidentCardinalityPorts(arrows) {
+  const ports = new Map();
+  for (const arrow of arrows) {
+    if (!arrow.erMarkers || !arrow.from || !arrow.to || !arrow.segments.length) continue;
+    const first = arrow.segments[0];
+    const last = arrow.segments.at(-1);
+    const ends = [
+      [arrow.from, 'fromSide', first.start, first.end, arrow.erMarkers[0], 'start'],
+      [arrow.to, 'toSide', last.end, last.start, arrow.erMarkers[1], 'end'],
+    ];
+    for (const [entityId, field, point, neighbor, marker, end] of ends) {
+      const glyph = marker?.match(/^url\(#er-((?:one|many)(?:-optional)?)-(start|end)\)$/);
+      if (!glyph || glyph[2] !== end) continue;
+      const dx = neighbor[0] - point[0];
+      const dy = neighbor[1] - point[1];
+      if ((!dx && !dy) || (dx && dy)) continue;
+      const side = dx ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'top' : 'bottom');
+      const key = JSON.stringify([entityId, side, point]);
+      const port = ports.get(key) || { entityId, side, point, ends: [] };
+      port.ends.push({ relationship: relationshipRecord(arrow), sideField: field, glyph: glyph[1] });
+      ports.set(key, port);
+    }
+  }
+  return [...ports.values()].filter((port) => port.ends.length > 1);
 }
 
 function relationshipRecord(arrow) {

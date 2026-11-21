@@ -9,7 +9,13 @@ const rendererPath = new RegExp(`^archify/(?:renderers/(${modes})/|schemas/(${mo
 const renderShared = /^(geometry|utils|i18n|route-quality|diagnostics|brand-marks|generated-validators|legend|layout-report|engineering-profiles|validator|generated-brand-marks|desktop-readability|text-fit|svg-path-analysis|automatic-labels|spatial-grid|change-marks)\.mjs$/;
 // Review export and PR pack code renders through the Viewer styles and ships in the package.
 const reviewExport = /^(archify\/renderers\/shared\/svg-(?:bake|export)\.mjs|archify\/pr\/[^/]+\.mjs)$/;
+const sharedSvgBaker = 'archify/renderers/shared/svg-bake.mjs';
 const gates = ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website'];
+const storyPresentationFiles = new Set([
+  'component-stage.mjs', 'story-svg.mjs', 'svg-bake.mjs', 'story-stage-html.mjs', 'story-plan.mjs',
+  'story.js', 'story.css', 'story-attachment.js', 'story-attachment.css', 'story-audio.js',
+  'story-container.js', 'story-export.js', 'story-stage-runtime.js', 'native-motion.js',
+]);
 export function classifyPaths(paths) {
   const plan = { scope: 'core', owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
   const full = () => ({ ...plan, scope: 'full', ...Object.fromEntries(gates.map(name => [name, true])) });
@@ -52,11 +58,21 @@ export function classifyPaths(paths) {
       plan.generated = plan.browser = plan.package = true;
       continue;
     }
+    if (name === 'archify/schemas/story-choreography.schema.json') {
+      own('schema'); plan.generated = plan.browser = plan.package = true; continue;
+    }
+    if (name.startsWith('archify/story/') && storyPresentationFiles.has(name.slice('archify/story/'.length))) {
+      own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;
+    }
     if (name.startsWith('archify/renderers/shared/') && renderShared.test(name.slice('archify/renderers/shared/'.length))) {
       own('renderer'); plan.generated = plan.browser = plan.package = true; continue;
     }
     if (reviewExport.test(name)) {
-      own('pr'); plan.browser = plan.package = true; continue;
+      own('pr'); plan.browser = plan.package = true;
+      if (name === sharedSvgBaker) {
+        own('viewer'); plan.generated = plan.webm = true;
+      }
+      continue;
     }
     if (/^(viewer\/|archify\/assets\/)/.test(name)) {
       own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;

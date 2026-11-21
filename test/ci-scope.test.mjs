@@ -83,6 +83,14 @@ test('Windows evidence replacement fixtures retain their native host gate', () =
   assert.equal(plan.package, false);
 });
 
+test('Story filesystem and process owners retain full regression and Windows gates', () => {
+  for (const file of ['output.mjs', 'tool.mjs', 'cli.mjs', 'choreography-plan.mjs']) {
+    const plan = classifyPaths([`archify/story/${file}`]);
+    assert.equal(plan.scope, 'full', file);
+    assert.equal(plan.windows, true, file);
+  }
+});
+
 test('recipe, schema and shared renderer owners include their real source consumers', () => {
   const available = ['test/guide.test.mjs', 'test/guide-page.test.mjs', 'test/gallery.test.mjs', 'test/start-page.test.mjs', 'test/engineering-profile.test.mjs', 'test/legend-contract.test.mjs', 'test/generate-validators.test.mjs'];
   const recipe = classifyPaths(['archify/recipes/scenarios.mjs']);
@@ -96,6 +104,12 @@ test('recipe, schema and shared renderer owners include their real source consum
   const schema = classifyPaths(['archify/schemas/workflow.schema.json']);
   assert.equal(schema.scope, 'core');
   assert.ok(selectAffectedTests(schema.owners, [], available).includes('test/generate-validators.test.mjs'));
+  const storySchema = classifyPaths(['archify/schemas/story-choreography.schema.json']);
+  assert.equal(storySchema.scope, 'core');
+  assert.ok(storySchema.owners.includes('schema') && storySchema.generated && storySchema.browser && storySchema.package);
+  const storyMod = classifyPaths(['archify/story/story-svg.mjs']);
+  assert.equal(storyMod.scope, 'core');
+  assert.ok(storyMod.owners.includes('viewer') && storyMod.generated && storyMod.browser && storyMod.webm && storyMod.package);
 });
 
 test('shared SVG parser changes retain the public checker suite without selecting unrelated tests', () => {
@@ -112,15 +126,15 @@ test('shared SVG parser changes retain the public checker suite without selectin
 });
 
 test('review export and PR pack changes retain their offline, export and sandbox suites', () => {
-  const available = ['test/pr-pack.test.mjs', 'test/pr-attach.test.mjs', 'test/svg-bake.test.mjs',
+  const available = ['test/pr-pack.test.mjs', 'test/pr-attach.test.mjs', 'test/pr-attach-gitlab.test.mjs', 'test/svg-bake.test.mjs',
     'test/svg-export-img-browser.test.mjs', 'test/change-marks.test.mjs', 'test/cli.test.mjs', 'test/workflow-compiler.test.mjs'];
-  for (const source of ['archify/renderers/shared/svg-bake.mjs', 'archify/renderers/shared/svg-export.mjs', 'archify/pr/attach.mjs']) {
+  for (const source of ['archify/renderers/shared/svg-export.mjs', 'archify/pr/attach.mjs']) {
     const plan = classifyPaths([source, 'archify.zip']);
     assert.equal(plan.scope, 'core', source);
     assert.deepEqual(plan.owners, ['pr']);
     assert.ok(plan.browser && plan.package, source);
     assert.equal(plan.generated, false);
-    assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice(0, 5).sort());
+    assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice(0, 6).sort());
   }
   const marks = classifyPaths(['archify/renderers/shared/change-marks.mjs']);
   assert.deepEqual(marks.owners, ['renderer']);
@@ -130,6 +144,16 @@ test('review export and PR pack changes retain their offline, export and sandbox
   assert.deepEqual(guide.owners, ['authoring']);
   assert.ok(guide.generated && guide.package);
   assert.equal(guide.website, false);
+});
+
+test('the shared SVG baker runs both PR export and Story regression gates', () => {
+  const plan = classifyPaths(['archify/renderers/shared/svg-bake.mjs', 'archify.zip']);
+  assert.equal(plan.scope, 'core');
+  assert.deepEqual(plan.owners, ['pr', 'viewer']);
+  assert.ok(plan.generated && plan.browser && plan.webm && plan.package);
+  const affected = ['test/pr-pack.test.mjs', 'test/svg-bake.test.mjs', 'test/story-choreography.test.mjs',
+    'test/story-choreography-browser.test.mjs'];
+  assert.deepEqual(selectAffectedTests(plan.owners, [], [...affected, 'test/cli.test.mjs']), affected.sort());
 });
 
 test('companion PR skill changes keep PR authoring suites without packaging or browser gates', () => {

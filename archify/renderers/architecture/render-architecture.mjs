@@ -6,12 +6,13 @@ import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagra
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
 import { rendererFailure, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeTextFit } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
+import { automaticComponentPositions } from './automatic-placement.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
@@ -43,11 +44,15 @@ import {
 } from '../shared/geometry.mjs';
 
 const componentTextFit = {
+  titleCornerClearance: 40,
+  drilldownInset: 19,
+  sublabelScalable: 10.5,
   sublabelPreferred: 9,
   sublabelMinimum: 6,
   tagPreferred: 7,
   tagMinimum: 6,
 };
+const scalableComponentText = /^[ -~·←↑→↓、。！？：；「」，“”\p{Unified_Ideograph}\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3]+$/u;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const layoutJsonMode = process.argv.includes('--layout-json');
@@ -89,14 +94,43 @@ const LEGEND_CATALOG = [
   'external',
 ].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 
-// ---- Measure components from free coordinates --------------------------------
-function measureComponent(c) {
-  const [x, y] = resolveComponentPos(c, grid);
-  const [w, h] = Array.isArray(c.size) ? c.size : [layout.defaultW, layout.defaultH];
+function automaticComponentSize(c) {
+  const hasDrilldown = resolveNodeDrilldowns(c).length > 0;
+  const titleFont = scalableComponentText.test(c.label) ? 12 : 11;
+  const sublabelFont = scalableComponentText.test(c.sublabel ?? '')
+    ? componentTextFit.sublabelScalable : componentTextFit.sublabelPreferred;
+  const titleInset = Math.max(componentTextFit.titleCornerClearance,
+    layout.defaultW - brandLabelFitWidth(c, layout.defaultW));
+  const width = Math.ceil(Math.max(
+    layout.defaultW,
+    minimumNodeTextWidth(c.label, titleFont) + titleInset + nodeTextFit.horizontalPadding,
+    minimumNodeTextWidth(c.sublabel, sublabelFont) + nodeTextFit.horizontalPadding,
+    minimumNodeTextWidth(c.tag, componentTextFit.tagPreferred)
+      + (hasDrilldown ? 2 * componentTextFit.drilldownInset : nodeTextFit.horizontalPadding),
+  ));
+  // Leave space for neighboring cards and routes. Text that cannot fit at the
+  // legible minimum within this width still gets the usual overflow diagnostics.
+  return [Math.min(width, 256), c.sublabel && (c.tag || hasDrilldown) ? 72 : layout.defaultH];
+}
+
+const auto = arch.layout?.mode === 'auto';
+const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
+const fitInferredBoundaryNesting = auto && requiresNestedBoundaryMembership && !arch.meta?.viewBox
+  && arch.components.every(c => !c.pos);
+const sizedComponents = asArray(arch.components).map(c => [
+  c, c.size ?? (auto ? automaticComponentSize(c) : [layout.defaultW, layout.defaultH]),
+]);
+const automaticPositions = auto
+  ? automaticComponentPositions({ ...arch, components: sizedComponents.map(([c, size]) => ({ ...c, size })) })
+  : null;
+
+// ---- Measure components from resolved coordinates ----------------------------
+function measureComponent(c, [w, h]) {
+  const [x, y] = automaticPositions ? automaticPositions.get(c.id) : resolveComponentPos(c, grid);
   return { ...c, x, y, width: w, height: h, cx: x + w / 2, cy: y + h / 2 };
 }
 
-const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
+const components = new Map(sizedComponents.map(([c, size]) => [c.id, measureComponent(c, size)]));
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
@@ -146,6 +180,29 @@ function rectContains(outer, inner) {
     && outer.y <= inner.y + epsilon
     && outer.x + outer.width + epsilon >= inner.x + inner.width
     && outer.y + outer.height + epsilon >= inner.y + inner.height;
+}
+
+function containNestedBoundaryFrames(boundaries) {
+  if (!fitInferredBoundaryNesting) return boundaries;
+  const entries = boundaries.map(boundary => ({ boundary, members: new Set(boundary.wraps) }));
+  const innerFirst = [...entries].sort((a, b) => a.members.size - b.members.size);
+  for (const child of innerFirst) {
+    for (const parent of entries) {
+      if (child.members.size >= parent.members.size || rectContains(parent.boundary, child.boundary)) continue;
+      if (![...child.members].every(id => parent.members.has(id))) continue;
+      // The child may request more padding than its parent. Leave a visible
+      // gap between the frames without moving any inferred component.
+      const gap = 8;
+      const outer = parent.boundary;
+      const inner = child.boundary;
+      const x = Math.min(outer.x, inner.x - gap);
+      const y = Math.min(outer.y, inner.y - gap);
+      const right = Math.max(outer.x + outer.width, inner.x + inner.width + gap);
+      const bottom = Math.max(outer.y + outer.height, inner.y + inner.height + gap);
+      parent.boundary = { ...outer, x, y, width: right - x, height: bottom - y };
+    }
+  }
+  return entries.map(entry => entry.boundary);
 }
 
 function boundaryLabelWidth(label, fontSize) {
@@ -333,7 +390,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
     measured.set(index, { boundary, title });
   }
 
-  return rawBoundaries.map((_boundary, index) => {
+  const measuredFrames = rawBoundaries.map((_boundary, index) => {
     const { boundary, title } = measured.get(index);
     const bottom = boundary.y + boundary.height;
     // Profile-less schema-v1 inputs keep their legacy boundary geometry. A
@@ -349,6 +406,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
       title,
     };
   });
+  return containNestedBoundaryFrames(measuredFrames);
 }
 
 // ---- Routing state ----------------------------------------------------------
@@ -359,7 +417,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 // reads components, connections and the member-derived boundary frames (so an
 // automatic route never borrows a frame border as its corridor), never the
 // title-expanded frames or the viewBox.
-const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const rawBoundaries = containNestedBoundaryFrames(asArray(arch.boundaries).map(boundaryRect).filter(Boolean));
 const { pathFor, connectionSides, connectionEndpointSide } = createArchitectureRouter(components, arch.connections, {
   fixedCanvas: Boolean(arch.meta?.viewBox),
   frames: rawBoundaries.map((boundary) => ({
@@ -480,14 +538,14 @@ function componentDiagnosticBox(component) {
 function validateArchitecture() {
   const problems = [];
   const diagnostics = [];
+  const quality = process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile;
   if (resolvedBoundaryTitles.readabilityProblem) {
     problems.push(resolvedBoundaryTitles.readabilityProblem);
   }
-  const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
   if (components.size !== asArray(arch.components).length) problems.push('Component ids must be unique.');
   if (grid) {
     validateGridPlacement(arch, grid, problems);
-  } else {
+  } else if (!automaticPositions) {
     for (const c of asArray(arch.components)) {
       if (!Array.isArray(c.pos) || c.pos.length !== 2) {
         problems.push(`Component "${c.id}" must include pos [x, y] when layout.mode is omitted (free placement).`);
@@ -558,22 +616,45 @@ function validateArchitecture() {
       });
       problems.push(message);
     }
-    const estLabelW = textUnits(c.label) * 6.6;
-    if (estLabelW > c.width + 8) {
-      const message = `Label "${c.label}" (~${Math.round(estLabelW)}px) is wider than component "${c.id}" (${c.width}px) — shorten the label or widen size.`;
+    const inferredSize = auto && !c.size;
+    const estLabelW = inferredSize ? minimumNodeTextWidth(c.label, 8) : textUnits(c.label) * 6.6;
+    const labelAvailableW = inferredSize ? availableNodeTextWidth(brandLabelFitWidth(c, c.width)) : c.width + 8;
+    if (estLabelW > labelAvailableW) {
+      const minimumExplicitWidth = Math.ceil(Math.max(
+        textUnits(c.label) * 6.6 - 8,
+        minimumNodeTextWidth(c.label, 8) + (c.width - brandLabelFitWidth(c, c.width)) + nodeTextFit.horizontalPadding,
+      ));
+      const message = inferredSize
+        ? `Label "${c.label}" needs ~${Math.ceil(estLabelW)}px at the 8px legible minimum, but component "${c.id}" provides ${labelAvailableW}px — shorten the label or provide a wider size.`
+        : `Label "${c.label}" (~${Math.round(estLabelW)}px) is wider than component "${c.id}" (${c.width}px) — shorten the label or widen size.`;
       diagnostics.push({
         code: 'architecture/component-label-overflow', severity: 'error', message,
         subject: { diagramType: 'architecture', nodeId: c.id },
-        evidence: { text: c.label, estimatedWidthPx: Math.round(estLabelW), availableWidthPx: c.width },
+        evidence: inferredSize
+          ? { text: c.label, minimumFontPx: 8, requiredWidthPx: Math.ceil(estLabelW), availableWidthPx: labelAvailableW }
+          : { text: c.label, estimatedWidthPx: Math.round(estLabelW), availableWidthPx: c.width },
         supportedFixes: [
           `shorten component "${c.id}" label "${c.label}" while preserving its meaning`,
-          `or widen component "${c.id}" to at least ${Math.ceil(estLabelW - 8)}px`,
+          inferredSize
+            ? `or set component "${c.id}" size to [${minimumExplicitWidth}, ${c.height}]`
+            : `or widen component "${c.id}" to at least ${Math.ceil(estLabelW - 8)}px`,
         ],
       });
       problems.push(message);
     }
     const brandRailProblem = brandTopRailProblem(c, c.width, 8, 'Component');
     if (brandRailProblem) problems.push(brandRailProblem);
+    if (quality === 'showcase' && !componentTextRows(c, resolveNodeDrilldowns(c)).fits) {
+      const minimumHeight = Math.max(Math.ceil(c.height + 1), 60);
+      const message = `Component "${c.id}" cannot fit its text legibly in its ${c.width} × ${c.height}px card — increase its height to ${minimumHeight}px and leave room around its routes.`;
+      problems.push(message);
+      diagnostics.push({
+        code: 'architecture/component-text-height', severity: 'error', message,
+        subject: { diagramType: 'architecture', nodeId: c.id },
+        evidence: { bounds: componentDiagnosticBox(c), recommendedHeightPx: minimumHeight },
+        supportedFixes: [`set component "${c.id}" size to [${c.width}, ${minimumHeight}]`],
+      });
+    }
     // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
     // handles the ordinary case, this rejects what it cannot rescue.
     const availableTextW = availableNodeTextWidth(c.width);
@@ -1017,7 +1098,7 @@ function buildLayoutReport() {
   return {
     ok: true,
     diagram_type: 'architecture',
-    layout: grid ? { mode: 'grid', ...grid } : { mode: 'free' },
+    layout: grid ?? { mode: automaticPositions ? 'auto' : 'free' },
     viewBox,
     components: [...components.values()].map(componentBox),
     boundaries: boundaries.map(boundaryBox),
@@ -1069,39 +1150,141 @@ function renderConnectionPath(conn, index) {
 function renderConnectionLabel(conn, index) {
   const box = connectionLabelBox(conn);
   if (!box) return '';
+  const label = conn.label;
+  const mono = /^[!-~·]+(?: [!-~·]+)*$/u.test(label);
+  const availableWidth = box.width - 4 - changeEdgeLabelExtraWidth(conn);
+  const preferredSize = 10;
+  // Fit the bundled monospace glyphs to the existing mask. Keep CJK glyphs at
+  // their natural proportions and leave other fallback text at its old size.
+  let fontSize = mono ? preferredSize : 8;
+  if (!mono && /^[ -~·←↑→↓、。！？：「」，“”\p{Unified_Ideograph}\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3]+$/u.test(label)) {
+    // East Asian fallback glyphs typically use a full em. Leave extra room
+    // for platform font differences and round the fitted size down.
+    const widthInEms = [...label].reduce((sum, glyph) => sum + (glyph.codePointAt(0) <= 0xff ? 0.6 : 1.1), 0);
+    fontSize = Math.max(8, Math.min(preferredSize, Math.floor(10 * availableWidth / widthInEms) / 10));
+  }
+  const weight = fontSize > 8 ? ' font-weight="500"' : '';
+  const fit = mono && minimumNodeTextWidth(label, preferredSize) > availableWidth
+    ? ` textLength="${availableWidth}" lengthAdjust="spacingAndGlyphs"`
+    : '';
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}${changeEdgeAttrs(changeReview, conn)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${renderChangeEdgePrefix(conn)}${esc(conn.label)}</text>
+          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="${fontSize}"${weight}${fit} text-anchor="middle">${renderChangeEdgePrefix(conn)}${esc(label)}</text>
         </g>`;
+}
+
+function componentBrandY(height) {
+  return Math.min(6, Math.max(0, (height - 16) / 2));
+}
+
+// The normal card keeps its authored geometry and familiar baseline spacing.
+function componentTextRows(c, drilldowns) {
+  const hasSub = Boolean(c.sublabel);
+  const bottom = c.y + c.height;
+  const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
+  const sublabelY = c.y + c.height / 2 + 14;
+  // Keep the larger sublabel's descenders above the tag or drilldown mark.
+  const sublabelLimit = bottom - (c.tag || drilldowns.length ? 18 : 6);
+  const sublabelPreferred = hasSub && sublabelY + 3.5 <= sublabelLimit && scalableComponentText.test(c.sublabel)
+    ? componentTextFit.sublabelScalable
+    : componentTextFit.sublabelPreferred;
+  const labelWidth = brandLabelFitWidth(c, c.width);
+  const originalFontSize = fittedNodeFontSize(c.label, labelWidth, 11, 8);
+  const titleRoom = labelY - c.y >= 22 && (!c.tag || bottom - 8 - labelY >= 14)
+    && (!drilldowns.length || labelY + 4 <= bottom - 17);
+  // A title close to the top row needs clearance from the corner icons.
+  const titleWidth = labelY - c.y < 38 ? Math.min(labelWidth, c.width - componentTextFit.titleCornerClearance) : labelWidth;
+  const labelFontSize = titleRoom && scalableComponentText.test(c.label)
+    ? Math.max(originalFontSize, fittedNodeFontSize(c.label, titleWidth, 14, 8))
+    : originalFontSize;
+  const rows = [{ key: 'title', text: c.label, y: labelY - c.y, font: labelFontSize, minimum: 8 }];
+  if (hasSub) rows.push({ key: 'sublabel', text: c.sublabel, y: sublabelY - c.y,
+    font: fittedNodeFontSize(c.sublabel, c.width, sublabelPreferred, componentTextFit.sublabelMinimum),
+    minimum: componentTextFit.sublabelMinimum });
+  if (c.tag) rows.push({ key: 'tag', text: c.tag, y: c.height - 8,
+    font: fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum),
+    minimum: componentTextFit.tagMinimum });
+  const normal = Object.fromEntries(rows.map(row => [row.key, { ...row, x: c.width / 2 }]));
+  const needsFit = rows.some((row, index) => {
+    const top = row.y - row.font * 0.8;
+    const bottom = row.y + row.font * 0.15;
+    return top < 1 || bottom > c.height - 1
+      || (index > 0 && top < rows[index - 1].y + rows[index - 1].font * 0.15);
+  });
+  if (!needsFit) return { rows: normal, fits: true };
+
+  // Fit a compact stack first, then put both secondary values on one row.
+  // Reserve each corner mark only on lines that pass through it.
+  const brandY = componentBrandY(c.height);
+  for (const fonts of [rows.map(row => row.font), rows.map(row => row.minimum)]) {
+    const entries = rows.map((row, index) => {
+      const font = fonts[index];
+      return { ...row, font, width: minimumNodeTextWidth(row.text, font) };
+    });
+    const stacks = [entries.map(row => [row])];
+    if (entries.length === 3) stacks.push([[entries[0]], entries.slice(1)]);
+    for (const lines of stacks) {
+      const lineFonts = lines.map(line => Math.max(...line.map(row => row.font)));
+      const height = lineFonts.reduce((sum, font) => sum + font * 1.25, lines.length - 1);
+      if (height > c.height - 4) continue;
+      let y = (c.height - height) / 2;
+      const fitted = {};
+      for (const [index, line] of lines.entries()) {
+        const font = lineFonts[index];
+        const lineBottom = y + font * 1.25;
+        const intersects = (top, bottom) => y < bottom && lineBottom > top;
+        const left = c.icon !== 'none' && intersects(4, 19) ? 20 : 4;
+        const rightInset = Math.max(4,
+          labelWidth < c.width && intersects(brandY - 2, brandY + 18) ? 24 : 0,
+          drilldowns.length && intersects(c.height - componentTextFit.drilldownInset, c.height - 3) ? componentTextFit.drilldownInset : 0);
+        const right = c.width - rightInset;
+        const width = line.reduce((sum, row) => sum + row.width, (line.length - 1) * 6);
+        if (width > right - left) break;
+        let x = Math.max(left, Math.min(right - width, (c.width - width) / 2));
+        for (const row of line) {
+          fitted[row.key] = { ...row, x: x + row.width / 2, y: y + font };
+          x += row.width + 6;
+        }
+        y = lineBottom + 1;
+      }
+      if (Object.keys(fitted).length < rows.length) continue;
+      return { rows: fitted, compact: true, fits: true };
+    }
+  }
+  return { rows: normal, fits: false };
 }
 
 function renderComponent(c) {
   const fill = componentFill[c.type] || 'c-external';
   const accent = componentText[c.type] || 't-muted';
-  const cx = c.cx;
-  const hasSub = c.sublabel != null && c.sublabel !== '';
-  const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
-  const sub = hasSub
-    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
-    : '';
-  const tag = c.tag
-    ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
-    : '';
-  const brandYInset = Math.min(6, Math.max(0, (c.height - 16) / 2));
-  const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + brandYInset });
-  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
-  // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
   const drilldowns = resolveNodeDrilldowns(c);
+  const { rows, compact } = componentTextRows(c, drilldowns);
+  const hasSub = Boolean(rows.sublabel);
+  const sub = hasSub
+    ? `\n        <text data-detail="context" x="${c.x + rows.sublabel.x}" y="${c.y + rows.sublabel.y}" class="t-muted" font-size="${rows.sublabel.font}" text-anchor="middle">${esc(c.sublabel)}</text>`
+    : '';
+  const tag = rows.tag
+    ? `\n        <text data-detail="fine" x="${c.x + rows.tag.x}" y="${c.y + rows.tag.y}" class="${accent}" font-size="${rows.tag.font}" text-anchor="middle">${esc(c.tag)}</text>`
+    : '';
+  const brandYInset = componentBrandY(c.height);
+  const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + brandYInset });
+  // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
-  const changeBadge = renderChangeBadge(c, nodeChangeBadgePos(c, { rx: 8, rightInset: brand ? 26 : 0 }));
+  // Compact rows can reach the top edge. Leave room for the badge outside
+  // the card, including the taller labeled version used in PR exports.
+  let badgeY = c.y;
+  if (compact && c.y >= 20) badgeY -= 9;
+  else if (compact && c.y + c.height + 20 <= viewBox[1]) badgeY += c.height + 9;
+  const badgePosition = nodeChangeBadgePos({ ...c, y: badgeY }, { rx: 8, rightInset: brand ? 26 : 0 });
+  const changeBadge = renderChangeBadge(c, badgePosition);
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}${changeNodeAttrs(changeReview, c)}>
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}${badge}
+          <text data-node-label=""${hasSub && !compact ? ' data-detail-anchor=""' : ''} x="${c.x + rows.title.x}" y="${c.y + rows.title.y}" class="t-primary" font-size="${rows.title.font}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}${badge}
         </g>`, drilldowns);
 }
 

@@ -10,8 +10,8 @@ const descriptions = {
     zh: ['Archify Agent 画图指南 — 从想法、生活规划到代码仓', '用 Claude Code、Codex、Cursor 等 Agent 把自然语言想法、生活流程、Mermaid 草稿或代码仓库快速变成十种可交互 HTML 图或四套风格的一页式解答。'],
   },
   compare: {
-    en: ['Archify vs Mermaid, Excalidraw and PlantUML — How to Choose', 'Compare Archify with Mermaid, Excalidraw, PlantUML and D2: speed, zero syntax barrier, 10 diagram types, 4-style synced one-page explainers, visual polish, everyday or codebase scope, and honest limits.'],
-    zh: ['Archify、Mermaid、Excalidraw、PlantUML 怎么选？', '全面对比 Archify 与 Mermaid、Excalidraw、PlantUML、D2：创作门槛与速度、生活/科普/代码全场景覆盖、10 种图型、4 风格图文联动一页式解答、防重叠颜值与适用边界。'],
+    en: ['Archify vs Mermaid, Excalidraw, PlantUML & D2 — Mermaid Alternatives for AI Coding Agents', 'Looking for a Mermaid alternative for interactive architecture diagrams with Claude Code, Cursor, or Codex? Compare Archify with Mermaid, Excalidraw (including MCP), PlantUML, D2, LikeC4, and Eraser.io across 10 diagram types, 4-style one-page explainers, visual polish, and honest limits.'],
+    zh: ['Archify 对比 Mermaid、Excalidraw、PlantUML 与 D2 — AI Coding Agent 交互架构图选型指南', '寻找比 Mermaid 更适合 Claude Code、Cursor、Codex 的交互式架构图替代方案？全面对比 Archify 与 Mermaid、Excalidraw（含 MCP）、PlantUML、D2、LikeC4、Eraser.io：10 种图型、4 风格一页式解答、防重叠颜值与适用边界。'],
   },
   index: {
     en: ['Archify — Interactive Diagrams & One-Page Explainers for Anything', 'Open-source (Apache-2.0) AI agent skill turning any idea, everyday plan, concept, Mermaid draft, or codebase into 10 polished interactive HTML diagram types or 4-style conclusion-first explainers — no syntax to memorize.'],
@@ -62,7 +62,10 @@ export function pageMetadata(page, lang, version) {
     schema: { '@context': 'https://schema.org', '@graph': [
       { '@type': 'WebSite', '@id': websiteId, url: `${canonicalOrigin}/`, name: 'Archify', inLanguage: ['en', 'zh-Hans'] },
       { '@type': 'SoftwareSourceCode', '@id': sourceId, name: 'Archify', codeRepository: 'https://github.com/tt-a1i/archify', url: 'https://github.com/tt-a1i/archify', license: 'https://github.com/tt-a1i/archify/blob/main/LICENSE', version, programmingLanguage: 'JavaScript', description: descriptions.index[lang][1], targetProduct: { '@id': softwareId } },
-      { '@type': 'SoftwareApplication', '@id': softwareId, name: 'Archify', url: `${canonicalOrigin}/`, applicationCategory: 'DeveloperApplication', operatingSystem: 'macOS, Linux, Windows', isAccessibleForFree: true, license: 'https://www.apache.org/licenses/LICENSE-2.0', softwareVersion: version, description: descriptions.index[lang][1], offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, sameAs: ['https://github.com/tt-a1i/archify', 'https://skills.sh/tt-a1i/archify/archify'] },
+      { '@type': 'SoftwareApplication', '@id': softwareId, name: 'Archify', url: `${canonicalOrigin}/`, applicationCategory: 'DeveloperApplication', operatingSystem: 'macOS, Linux, Windows', isAccessibleForFree: true, license: 'https://www.apache.org/licenses/LICENSE-2.0', softwareVersion: version, description: descriptions.index[lang][1], offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, sameAs: ['https://github.com/tt-a1i/archify', 'https://skills.sh/tt-a1i/archify/archify'], subjectOf: [
+        { '@type': 'NewsArticle', name: 'GitHub最热架构图Agent，开发者故事看哭了', url: 'https://www.qbitai.com/2026/09/482469.html', datePublished: '2026-09-01', inLanguage: 'zh-Hans', publisher: { '@type': 'Organization', name: 'QbitAI (量子位)' } },
+        { '@type': 'NewsArticle', name: 'GitHub三榜第一背后，一个“专升本”工程师的十年', url: 'https://www.qbitai.com/2026/09/488519.html', datePublished: '2026-09-13', inLanguage: 'zh-Hans', publisher: { '@type': 'Organization', name: 'QbitAI (量子位)' } },
+      ] },
       ...(articlePages.includes(page) ? [{ '@type': 'TechArticle', '@id': `${canonical}#article`, url: canonical, headline: title, description, inLanguage: language(lang), isPartOf: { '@id': websiteId }, about: { '@id': softwareId } }] : []),
       ...faq,
     ] },

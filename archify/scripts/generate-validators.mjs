@@ -10,9 +10,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const schemasDir = path.join(root, 'schemas');
 const output = path.join(root, 'renderers/shared/generated-validators.mjs');
-const diagramTypes = ['workflow', 'sequence', 'dataflow', 'lifecycle', 'architecture', 'erd', 'tree', 'class', 'timeline', 'waterfall', 'explainer', 'prPack'];
+const diagramTypes = ['workflow', 'sequence', 'dataflow', 'lifecycle', 'architecture', 'erd', 'tree', 'class', 'timeline', 'waterfall', 'explainer', 'storyChoreography', 'prPack'];
 // Export names must be identifiers; hyphenated schema files map through here.
-const SCHEMA_FILES = { prPack: 'pr-pack' };
+const SCHEMA_FILES = { storyChoreography: 'story-choreography', prPack: 'pr-pack' };
 
 const ajv = new Ajv2020({
   allErrors: true,

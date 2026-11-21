@@ -1,0 +1,402 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-task.schema.json",
+  "title": "Archify code-analysis AI optimization task",
+  "description": "A brief for a coding agent, built from one analysis snapshot (findings.json + raw-facts.json) by lib/task.mjs. Detected facts, possible impact and suggested directions are kept apart; anything the project does not state is listed under toConfirm. The Markdown export renders this object.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "taskId", "title", "findings", "source", "locations", "facts", "impact", "suggestions", "scope", "preserve", "acceptance", "verification", "toConfirm", "evidence", "instructions"],
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "findingId": { "type": "string", "pattern": "^[A-Z]{2,4}-(?:[0-9a-f]{12}|[0-9]{4,})$" },
+    "status": { "enum": ["captured", "valid", "changed", "missing", "unverifiable"] },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startLine", "endLine", "lines"],
+      "properties": {
+        "startLine": { "type": "integer", "minimum": 1 },
+        "endLine": { "type": "integer", "minimum": 1 },
+        "lines": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "archify-code-analysis-task" },
+    "taskId": { "type": "string", "pattern": "^TASK-[0-9a-f]{12}$", "description": "Hash of the finding ids, source evidence digests and, for external findings, the source claim review digests." },
+    "title": { "type": "string", "minLength": 1 },
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "code", "dimension", "severity", "confidence"],
+        "allOf": [{
+          "if": { "properties": { "confidence": { "type": "null" } }, "required": ["confidence"] },
+          "then": { "required": ["external"] }
+        }],
+        "properties": {
+          "id": { "$ref": "#/$defs/findingId" },
+          "code": { "type": "string" },
+          "dimension": { "type": "string" },
+          "severity": { "enum": ["error", "warning", "info"] },
+          "confidence": { "type": ["number", "null"], "description": "External claims may have no independently established confidence; null requires external provenance." },
+          "external": {
+            "type": "object",
+            "required": ["sourceId", "tool", "ruleId", "originalSeverity", "reportPointer", "identityRevision", "binding", "reviewDigest", "locations"],
+            "description": "Captured external claim and provenance, preserved from the imported finding. Source-only evidenceDigest remains separate.",
+            "properties": {
+              "sourceId": { "type": "string", "minLength": 1 },
+              "tool": { "type": "string", "minLength": 1 },
+              "ruleId": { "type": ["string", "null"] },
+              "originalSeverity": { "oneOf": [{ "type": "string" }, { "type": "number" }, { "type": "null" }] },
+              "reportPointer": { "type": "string" },
+              "identityRevision": { "type": "integer", "minimum": 1 },
+              "binding": { "enum": ["verified", "unverified", "changed"] },
+              "reviewDigest": { "$ref": "#/$defs/sha" },
+              "locations": {
+                "type": "array", "items": {
+                  "type": "object", "required": ["file"],
+                  "properties": {
+                    "file": { "type": "string", "minLength": 1 },
+                    "line": { "type": "integer", "minimum": 1 },
+                    "endLine": { "type": "integer", "minimum": 1 },
+                    "column": { "type": "integer", "minimum": 1 },
+                    "endColumn": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              }
+            }
+          },
+          "review": { "type": "object", "description": "Baseline / comparison status from review.json, when known." },
+          "evidenceDigest": {
+            "type": "object", "required": ["files", "sha256"],
+            "properties": {
+              "files": { "type": "array", "items": { "type": "string" } },
+              "lines": { "type": "array", "items": { "type": "integer" } },
+              "sha256": { "$ref": "#/$defs/sha" },
+              "ranges": {
+                "type": "array", "minItems": 1,
+                "items": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["file", "startLine", "endLine", "sha256", "capturedOccurrences"],
+                  "properties": {
+                    "file": { "type": "string", "minLength": 1 },
+                    "startLine": { "type": "integer", "minimum": 1 },
+                    "endLine": { "type": "integer", "minimum": 1 },
+                    "sha256": { "$ref": "#/$defs/sha" },
+                    "capturedOccurrences": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "language", "adapter", "sourceKind", "snapshotId", "configDigest", "analyzer", "gitHead"],
+      "properties": {
+        "root": { "type": ["string", "null"], "description": "Analyzed directory relative to the Git root; never an absolute path." },
+        "language": { "type": ["string", "null"] },
+        "adapter": { "type": ["string", "null"] },
+        "sourceKind": { "type": ["string", "null"] },
+        "snapshotId": { "type": ["string", "null"] },
+        "configDigest": { "type": ["string", "null"] },
+        "analyzer": { "type": ["object", "null"] },
+          "gitHead": { "type": ["string", "null"], "description": "Contextual HEAD for working-tree; pinned source commit for git-tree." },
+        "external": {
+          "type": "array", "description": "Only the external report contexts used by the selected findings; never a statement that the tools were rerun by this task.",
+          "items": {
+            "type": "object", "required": ["id", "tool", "binding"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "tool": { "type": "string", "minLength": 1 },
+              "binding": { "enum": ["verified", "unverified", "changed"] },
+              "sourceHashes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" }, "description": "Generation-time source byte hashes retained for report binding verification." },
+              "sourceTextHashes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" }, "description": "Embedded source text hashes retained separately from byte assertions for report binding verification." },
+              "command": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["findingId", "file", "kind", "sha256", "excerpt"],
+        "properties": {
+          "findingId": { "$ref": "#/$defs/findingId" },
+          "role": { "enum": ["primary", "related"], "description": "Related source locations are readable context and do not grant modification scope." },
+          "startColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 column in the captured source." },
+          "endColumn": { "type": "integer", "minimum": 1, "description": "Exclusive one-based UTF-16 column in the captured source." },
+          "startOffset": { "type": "integer", "minimum": 0, "description": "Zero-based UTF-16 offset in the captured source." },
+          "endOffset": { "type": "integer", "minimum": 0, "description": "Exclusive UTF-16 offset in the captured source." },
+          "file": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["function", "import", "range", "file"] },
+          "startLine": { "type": "integer", "minimum": 1 },
+          "endLine": { "type": "integer", "minimum": 1 },
+          "symbol": { "type": "string" },
+          "focusLine": { "type": "integer", "minimum": 1, "description": "For a function: the line of its deepest nesting." },
+          "capturedOccurrences": { "type": "integer", "minimum": 2, "description": "Present when the cited lines occur more than once in the captured file; a match elsewhere is then ambiguous, not a move." },
+          "note": { "type": "string" },
+          "sha256": { "oneOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }], "description": "Hash of lines startLine..endLine joined with \\n; null when the text was not captured or there is no range." },
+          "excerpt": {
+            "oneOf": [{ "type": "null" }, {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["segments", "omitted", "complete"],
+              "properties": {
+                "segments": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/segment" } },
+                "omitted": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["startLine", "endLine"], "properties": { "startLine": { "type": "integer" }, "endLine": { "type": "integer" } } } },
+                "complete": { "type": "boolean", "description": "false when lines inside the location were left out of the excerpt." }
+              }
+            }]
+          },
+          "status": { "$ref": "#/$defs/status", "description": "Set by evidence verification." },
+          "currentStartLine": { "type": "integer", "minimum": 1, "description": "Where the unchanged range is now, when it moved." },
+          "currentEndLine": { "type": "integer", "minimum": 1 },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "moduleSummaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "findingId",
+          "module",
+          "path",
+          "files",
+          "capturedFiles",
+          "loc",
+          "totalLoc",
+          "share",
+          "largestFiles",
+          "entryFiles",
+          "clusters",
+          "basis"
+        ],
+        "properties": {
+          "findingId": {
+            "$ref": "#/$defs/findingId"
+          },
+          "module": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "files": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "capturedFiles": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "loc": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalLoc": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "share": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "largestFiles": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "total",
+              "shown",
+              "truncated",
+              "items"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "shown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8
+              },
+              "truncated": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "file",
+                    "loc"
+                  ],
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "loc": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "entryFiles": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "total",
+              "shown",
+              "truncated",
+              "items"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "shown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8
+              },
+              "truncated": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "file",
+                    "importers"
+                  ],
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "importers": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "clusters": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "total",
+              "shown",
+              "truncated",
+              "items"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "shown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8
+              },
+              "truncated": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "pathGroup",
+                    "files",
+                    "loc"
+                  ],
+                  "properties": {
+                    "pathGroup": {
+                      "type": "string"
+                    },
+                    "files": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "loc": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "basis": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "facts": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["findingId", "statement", "evidence"], "properties": { "findingId": { "$ref": "#/$defs/findingId" }, "statement": { "type": "string" }, "evidence": { "type": "object" } } } },
+    "impact": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["findingId", "statement"], "properties": { "findingId": { "$ref": "#/$defs/findingId" }, "statement": { "type": "string" } } } },
+    "suggestions": { "type": "array", "description": "Directions to evaluate, from the rule's supportedFixes; not confirmed defects.", "items": { "type": "object", "additionalProperties": false, "required": ["findingId", "text"], "properties": { "findingId": { "$ref": "#/$defs/findingId" }, "text": { "type": "string" } } } },
+    "scope": { "type": "object", "additionalProperties": false, "required": ["modify", "read", "note"], "properties": { "modify": { "type": "array", "items": { "type": "string" }, "description": "Files with cited lines: where the change is expected." }, "read": { "type": "array", "items": { "type": "string" }, "description": "Other files the finding was computed from, for context." }, "note": { "type": "string" } } },
+    "preserve": { "type": "array", "items": { "type": "string" } },
+    "acceptance": { "type": "array", "items": { "type": "string" } },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reanalyze", "commands"],
+      "properties": {
+        "reanalyze": { "type": "object", "additionalProperties": false, "required": ["command", "purpose"], "properties": { "command": { "type": "string" }, "purpose": { "type": "string" } } },
+        "commands": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["command", "purpose", "source"], "properties": { "command": { "type": "string" }, "purpose": { "type": "string" }, "source": { "type": "string" } } } }
+      }
+    },
+    "toConfirm": { "type": "array", "items": { "type": "string" } },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checkedAt", "reason"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "checkedAt": { "type": ["string", "null"], "description": "ISO time of the last check against the working tree; null when only captured." },
+        "reason": { "type": ["string", "null"] },
+        "findings": { "type": "object", "description": "Per finding: source checks and, for external claims, report binding remain distinguishable.", "additionalProperties": { "type": "object", "required": ["status"], "properties": { "status": { "$ref": "#/$defs/status" }, "reason": { "type": "string" }, "digestMatches": { "type": ["boolean", "null"] }, "sourceStatus": { "$ref": "#/$defs/status" }, "reportBinding": { "enum": ["verified", "unverified", "changed", "missing"] } } } }
+      }
+    },
+    "instructions": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+  }
+}

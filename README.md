@@ -540,6 +540,8 @@ Scan the QR code below with Alipay, or save it and open it in Alipay to scan.
 
 Using Archify, sharing it, reporting bugs, and contributing improvements are also ways to help.
 
+[Code Analysis: setup and usage](archify/modules/code-analysis/docs/USAGE.md).
+
 ## Contributors
 
 Thanks to everyone who helped build Archify. [Go follow them.](https://github.com/tt-a1i/archify/graphs/contributors) ❤️

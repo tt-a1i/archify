@@ -159,6 +159,7 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
     input,
     output,
     outDir,
+    repoRoot: directory,
     runCommand,
   });
 
@@ -170,6 +171,8 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   });
   assert.equal(finalized.summary.evidence.browserCheckReceipt, path.join(outDir, 'diagram.browser-check.json'));
   assert.equal(finalized.summary.visualReview, 'not-requested');
+  assert.equal(finalized.summary.repositoryReferences.status, 'not-declared');
+  assert.equal(finalized.summary.repositoryReferences.count, 0);
   assert.equal('stages' in finalized.summary, false);
   assert.equal(JSON.stringify(finalized.summary).includes('large-stage-array'), false);
   assert.equal(finalized.receipt.stages['browser-check'].receipt.containment.viewports.length, VISUAL_CHECK_VIEWPORTS.length);

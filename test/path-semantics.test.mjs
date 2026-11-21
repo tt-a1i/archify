@@ -931,3 +931,160 @@ test('containedBy does not project ancestor semantics through a future container
   assert.equal(comparison.reason.code, 'future-descendant-semantics-indeterminate');
   assert.equal(comparison.reason.segmentIndex, 1);
 });
+
+
+function sandboxAncestorProbe(t, { denied = String.raw`C:\Users\person`, code = 'EPERM', jsCode, resolved = denied, symbolicLinks = [] } = {}) {
+  mockWindowsFilesystem(t, { symbolicLinks });
+  const original = fs.realpathSync;
+  const calls = [];
+  function fallback(target) {
+    calls.push(String(target));
+    if (jsCode) throw Object.assign(new Error('JS realpath refused'), { code: jsCode });
+    return resolved;
+  }
+  fallback.native = (target) => {
+    if (String(target).toLowerCase() === denied.toLowerCase()) {
+      throw Object.assign(new Error('native realpath refused'), { code });
+    }
+    return original.native(target);
+  };
+  fs.realpathSync = fallback;
+  t.after(() => { fs.realpathSync = original; });
+  return calls;
+}
+
+test('Windows sandbox ancestor EPERM resolves through JS with matching identity', (t) => {
+  const calls = sandboxAncestorProbe(t);
+  const location = resolvePhysicalLocation(String.raw`C:\Users\person\workspace\diagram.html`);
+  assert.equal(location.status, 'resolved');
+  assert.equal(location.location.path, String.raw`C:\Users\person\workspace\diagram.html`);
+  assert.equal(location.reason.method, 'native-realpath');
+  assert.deepEqual(calls, [String.raw`C:\Users\person`]);
+  expectResult(sameLocation(String.raw`C:\Users\person\workspace`, String.raw`C:\Users\person\workspace`), 'match');
+});
+
+test('Windows sandbox fallback resolves an ancestor before dot-prefixed child traversal', (t) => {
+  const calls = sandboxAncestorProbe(t);
+  const location = resolvePhysicalLocation(String.raw`C:\Users\person\.\workspace\diagram.html`);
+  assert.equal(location.status, 'resolved');
+  assert.equal(location.location.path, String.raw`C:\Users\person\workspace\diagram.html`);
+  assert.equal(location.reason.method, 'native-realpath');
+  assert.deepEqual(calls, [String.raw`C:\Users\person`]);
+});
+
+test('Windows sandbox fallback refuses a final directory followed only by dot segments', async (t) => {
+  for (const targetPath of [
+    String.raw`C:\Users\person`,
+    'C:\\Users\\person\\',
+    String.raw`C:\Users\person\.`,
+    String.raw`C:\Users\person\.\.`,
+  ]) {
+    await t.test(targetPath, (t) => {
+      const calls = sandboxAncestorProbe(t);
+      const location = resolvePhysicalLocation(targetPath);
+      assert.equal(location.status, 'unknown');
+      assert.equal(location.reason.code, 'path-resolution-failed');
+      assert.equal(location.reason.systemCode, 'EPERM');
+      assert.deepEqual(calls, []);
+    });
+  }
+});
+
+test('future locations report the realpath method used for their physical ancestor', async (t) => {
+  for (const [name, targetPath, denied, ancestorPath, method, expectedCalls] of [
+    ['fallback ancestor', String.raw`C:\Users\person\missing.html`, String.raw`C:\Users\person`,
+      String.raw`C:\Users\person`, 'js-realpath', [String.raw`C:\Users\person`]],
+    ['native descendant', String.raw`C:\Users\person\workspace\missing.html`, String.raw`C:\Users\person`,
+      String.raw`C:\Users\person\workspace`, 'native-realpath', [String.raw`C:\Users\person`]],
+    ['native ancestor', String.raw`C:\Users\person\missing.html`, String.raw`C:\other`,
+      String.raw`C:\Users\person`, 'native-realpath', []],
+  ]) {
+    await t.test(name, (t) => {
+      const calls = sandboxAncestorProbe(t, { denied });
+      const lstatSync = fs.lstatSync;
+      // The Windows fixture already owns restoration of this property.
+      fs.lstatSync = (target, options) => {
+        if (String(target) === targetPath) {
+          throw Object.assign(new Error('future child is absent'), { code: 'ENOENT' });
+        }
+        return lstatSync(target, options);
+      };
+      const location = resolvePhysicalLocation(targetPath);
+      assert.equal(location.status, 'resolved');
+      assert.deepEqual(location.location, { kind: 'future', ancestorPath, unresolved: ['missing.html'] });
+      assert.equal(location.reason.code, 'future-physical-ancestor');
+      assert.equal(location.reason.method, method);
+      assert.deepEqual(calls, expectedCalls);
+    });
+  }
+});
+
+test('Windows sandbox fallback stays limited to ancestor EPERM', async (t) => {
+  for (const [name, options] of [
+    ['leaf', { denied: String.raw`C:\Users\person\workspace\diagram.html` }],
+    ['root', { denied: 'C:\\' }],
+    ['access-denied', { code: 'EACCES' }],
+    ['not-directory', { code: 'ENOTDIR' }],
+  ]) {
+    await t.test(name, (t) => {
+      const calls = sandboxAncestorProbe(t, options);
+      assert.equal(resolvePhysicalLocation(String.raw`C:\Users\person\workspace\diagram.html`).status, 'unknown');
+      assert.deepEqual(calls, []);
+    });
+  }
+});
+
+test('Windows sandbox JS failure or changed ancestor identity remains unknown', async (t) => {
+  for (const [name, options] of [
+    ['JS denied', { jsCode: 'EACCES' }],
+    ['different directory', { resolved: String.raw`C:\other` }],
+  ]) {
+    await t.test(name, (t) => {
+      const calls = sandboxAncestorProbe(t, options);
+      assert.equal(resolvePhysicalLocation(String.raw`C:\Users\person\workspace\diagram.html`).status, 'unknown');
+      assert.equal(calls.length, 1);
+    });
+  }
+});
+
+test('Windows sandbox fallback requires stable non-link directory identity', async (t) => {
+  for (const name of ['no-identity', 'link-postimage', 'file-postimage']) {
+    await t.test(name, (t) => {
+      const calls = sandboxAncestorProbe(t);
+      const original = fs.lstatSync;
+      // The Windows fixture already owns restoration of this property.
+      fs.lstatSync = (target, options) => {
+        const stat = original(target, options);
+        if (String(target) !== String.raw`C:\Users\person` || calls.length === 0) return stat;
+        return { ...stat, ino: name === 'no-identity' ? 0n : stat.ino,
+          isDirectory: () => name !== 'file-postimage', isSymbolicLink: () => name === 'link-postimage' };
+      };
+      assert.equal(resolvePhysicalLocation(String.raw`C:\Users\person\workspace\diagram.html`).status, 'unknown');
+      assert.equal(calls.length, 1);
+    });
+  }
+});
+
+test('POSIX ancestor EPERM does not use the Windows compatibility fallback', { skip: process.platform === 'win32' }, (t) => {
+  const root = fs.realpathSync.native(scratchDirectory(t));
+  const native = fs.realpathSync.native;
+  const original = fs.realpathSync;
+  let jsCalls = 0;
+  let nativeDenials = 0;
+  function fallback(target) { jsCalls += 1; return original(target); }
+  fallback.native = (target) => {
+    if (String(target) === root) {
+      nativeDenials += 1;
+      throw Object.assign(new Error('native denied'), { code: 'EPERM' });
+    }
+    return native(target);
+  };
+  fs.realpathSync = fallback;
+  t.after(() => { fs.realpathSync = original; });
+  const location = resolvePhysicalLocation(path.join(root, 'diagram.html'));
+  assert.equal(location.status, 'unknown');
+  assert.equal(location.reason.code, 'path-resolution-failed');
+  assert.equal(location.reason.systemCode, 'EPERM');
+  assert.equal(nativeDenials, 1);
+  assert.equal(jsCalls, 0);
+});

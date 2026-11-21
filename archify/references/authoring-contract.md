@@ -288,7 +288,22 @@ After every edit, rerun the complete `finalize` as the delivery contract require
 
 Choose overview or mechanism detail using [Composition and meaning](authoring-defaults.md#composition-and-meaning). Use one obvious primary reading path, which may step across meaningful rows when the requested topology needs room. Keep the overview readable at its chosen abstraction; expand implementation details when they answer the reader's question. Group only real ownership, trust, process, or deployment boundaries. Boundaries do not replace relationships.
 
-Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true. A boundary is drawn as the padded box around all of its members, so place them as one compact axis-aligned cluster (no empty bay that lets a non-member sit inside the padded frame) and keep every non-member outside that box; `layout/boundary-encloses-non-member` reports a component the box swallows in showcase quality. Standard retains its existing acceptance behavior.
+For a fresh Architecture, set `"layout": {"mode": "auto"}` at the top level. Supply the real components and directed connections. The renderer computes positions for components without a `pos` and measures cards with no `size` from their text. Let it fit the canvas by omitting `meta.viewBox`. For example, these top-level fields place the two endpoints of a relationship:
+
+```json
+{
+  "layout": {"mode": "auto"},
+  "components": [
+    {"id": "client", "type": "frontend", "label": "Client"},
+    {"id": "api", "type": "backend", "label": "API"}
+  ],
+  "connections": [{"from": "client", "to": "api", "label": "HTTP"}]
+}
+```
+
+Keep a supplied absolute location in the component’s `pos`. Explicit sizes, connection sides, waypoints and label positions continue to constrain the drawing. Use `mode: "grid"` for row/column assignments. A document that omits the layout mode keeps its existing coordinate contract. Inspect resolved component boxes and connection paths with `validate architecture <source.json> --layout-json` when a branch is hard to follow.
+
+Keep external actors outside the system boundary when that is factually true. A boundary is drawn as the padded box around all of its members, so place them as one compact axis-aligned cluster (no empty bay that lets a non-member sit inside the padded frame) and keep every non-member outside that box; `layout/boundary-encloses-non-member` reports a component the box swallows in showcase quality. Standard retains its existing acceptance behavior.
 
 ### Workflow
 
@@ -425,13 +440,17 @@ parent (`tree/missing-parent`), zero or several roots (`tree/root-count`), a
 parent cycle (`tree/cycle`, which also covers every node stranded beneath it),
 and duplicate ids are refused. Children read in declaration order.
 
-Use `layout.direction: "down"` (default) for a shallow, balanced breakdown and
-`"right"` for a deep or leaf-heavy tree such as a repository layout; a rightward
-tree aligns each parent with its first child and scrolls vertically in the
-reader. Labels wrap between words. `collapsed: true` makes a branch start
-collapsed in the Viewer; it never removes content from the artifact, and every
-export is the complete tree. For a real codebase, ground each node in the
-observed path and attach `sources`. See
+Use `layout.direction: "down"` (default) for a shallow breakdown and `"right"`
+for a deep or leaf-heavy tree such as a repository layout. A rightward tree
+whose automatic canvas is taller than it is wide starts near the root and
+scrolls vertically in the reader. Labels wrap between words. `collapsed: true`
+makes a branch start collapsed in the Viewer. Every export contains the
+complete tree. For a real codebase, ground each node in the observed path and
+attach `sources`.
+
+When a user asks for a decision tree, use Tree if each outcome has exactly one
+parent and the conditions fit in the child labels. Use Workflow for labeled
+transitions, joins, or loops. See
 [`../renderers/tree/README.md`](../renderers/tree/README.md).
 
 ### Class

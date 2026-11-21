@@ -2190,7 +2190,28 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
-  story: ['scan <native.html> [--json]', 'draft <native.html> <brief.json> [--json]', 'attach <native.html> <brief.json> <enhanced.html> [--json] [--repo-root path]'],
+  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  'code-analysis': [
+    'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--ir <architecture.json> [--map file]] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
+    'verify-change <analysis-dir> --task <task.json> [--checks <checks.json> | --checks-template]',
+    'drift <git-repo> --base <full-sha> --head <full-sha> --ir <architecture.json> --out <new-directory> [--map file] [--config file] [--from-report <original-drift.json>] [--locale en|zh-CN] [--json]',
+    'verify-drift <original-drift.json> --task <task.json> --after <follow-up-drift.json> [--checks <checks.json> | --checks-template]',
+    'import-review <github-pr-url> --out report.json [--author login] [--json]',
+    'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
+    'task [<analysis-dir>] --question <text> --entry <file> [--base-root <base>] --root <repo-root> [--function <name>] [--config file] [--format md|json] [--out file]',
+    'task --verify <task.json> --root <repo-root> [--format md|json] [--out file] [--require-valid]',
+  ],
+  story: [
+    'scan <native.html> [--json]',
+    'draft <native.html> <brief.json> [--json]',
+    'attach <native.html> <brief.json> <enhanced.html> [--json] [--repo-root path]',
+    'validate <choreography.json> [--repo-root path] [--quality standard|showcase] [--json]',
+    'svg <choreography.json> <output.svg|stem> [--theme both|light|dark] [--preset name] [--still] [--repo-root path] [--json]',
+    'stage <choreography.json> <output.html> [--theme light|dark] [--preset name] [--repo-root path] [--json]',
+    'video <choreography.json> <output.mp4|output.webm> [--format mp4|webm] [--fps 30|60] [--theme light|dark] [--preset name] [--repo-root path] [--json]',
+  ],
   render: '<type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]',
   compare: 'architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]',
   deliver: '<type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]',
@@ -2432,7 +2453,11 @@ function rendererEnv(quality, repoRoot, diagnosticJson = false) {
   return {
     ...(quality ? { ARCHIFY_QUALITY_PROFILE: quality } : {}),
     ...(repoRoot ? { ARCHIFY_REPO_ROOT: repoRoot } : {}),
-    ...(diagnosticJson ? { ARCHIFY_DIAGNOSTIC_FORMAT: 'json' } : {}),
+    // The JSON diagnostic channel requires stderr to carry exactly one
+    // receipt. Node runtime warnings (e.g. experimental proxy-agent notes on
+    // newer runtimes) would otherwise precede the payload and make the
+    // parent's receipt parse fail closed as internal/unclassified.
+    ...(diagnosticJson ? { ARCHIFY_DIAGNOSTIC_FORMAT: 'json', NODE_NO_WARNINGS: '1' } : {}),
   };
 }
 
@@ -6273,7 +6298,7 @@ async function commandDoctor(args) {
   const missingExplainerRuntime = explainerRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'explainer', file))).length;
   checks.push({label:'Explainer runtime and reader assets',ok:missingExplainerRuntime===0,missing:missingExplainerRuntime});
 
-  const storyRuntime = ['cli.mjs','tool.mjs','output.mjs','story-plan.mjs','story.js','story.css','story-audio.js','story-webm.js','story-export.js','story-attachment.mjs','story-attachment.js','story-attachment.css','messages.json','scope-field.js','brand.svg','native-motion.js','vendor/html-parser.mjs'];
+  const storyRuntime = ['cli.mjs','tool.mjs','output.mjs','svg-bake.mjs','component-stage.mjs','choreography-plan.mjs','story-svg.mjs','story-stage-html.mjs','story-stage-runtime.js','story-plan.mjs','story.js','story.css','story-audio.js','story-container.js','story-export.js','story-attachment.mjs','story-attachment.js','story-attachment.css','messages.json','scope-field.js','brand.svg','native-motion.js','vendor/html-parser.mjs'];
   const missingStoryRuntime = storyRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'story', file))).length;
   checks.push({label:'Story runtime and playback assets',ok:missingStoryRuntime===0,missing:missingStoryRuntime});
 
@@ -7318,11 +7343,41 @@ try {
     case 'help':
       console.log(usage());
       break;
+    case 'start': {
+      if (!args.length || args[0] === '--help' || args[0] === '-h') {
+        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        break;
+      }
+      const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
+      const launchArgs = [...args];
+      if (!launchArgs.includes('--out')) launchArgs.push('--out', fs.mkdtempSync(path.join(os.tmpdir(), 'archify-' + createHash('sha256').update(path.resolve(args[0])).digest('hex').slice(0, 16) + '-')));
+      let view;
+      try { view = await startAnalysisView(launchArgs); }
+      catch (error) { console.error(error.message); process.exitCode = error.exitCode === 2 ? 2 : 1; break; }
+      const { url, delivered, out } = view;
+      console.log(`Archify: ${url}\n${delivered ? `Diagram: ${delivered}\nOpen the URL, then click "Code Analysis" to analyze.` : `Analysis: ${path.join(out, 'analysis/repo.analysis.html')}\nOpen the URL to analyze the repository.`} Press Ctrl+C to stop.`);
+      break;
+    }
+    case 'code-analysis': {
+      // serve: deliver the authored diagram, serve it, analyze on click.
+      // check: headless analysis with baseline, comparison and an exit code for CI.
+      // task: an AI optimization task from a finished run, with an evidence check.
+      const commands = { prepare: 'prepare.mjs', serve: 'serve.mjs', check: 'check.mjs', task: 'task.mjs', 'verify-change': 'verify-change.mjs', drift: 'drift.mjs', 'verify-drift': 'verify-drift.mjs', 'import-review': 'import-review.mjs' };
+      if (!commands[args[0]]) {
+        console.error(`archify code-analysis commands: prepare, serve, check, task, verify-change, drift, verify-drift, import-review.\n${usage()}`);
+        process.exitCode = 1;
+        break;
+      }
+      const result = runNode([path.join(skillRoot, 'modules', 'code-analysis', 'bin', commands[args[0]]), ...args.slice(1)]);
+      if (result.error) throw result.error;
+      process.exitCode = result.status ?? 1;
+      break;
+    }
     case 'render':
       commandRender(args);
       break;
     case 'story':
-      (await import('../story/cli.mjs')).commandStory(args);
+      await (await import('../story/cli.mjs')).commandStory(args);
       break;
     case 'compare':
       await commandCompare(args);
