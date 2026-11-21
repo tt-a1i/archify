@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
   <meta name="generator" content="archify 3.2.1-dev.1">
   <meta name="archify-reader-contract" content="declared-wide-v1">
   <title>Release Delivery Workflow Diagram</title>
@@ -172,6 +173,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        ========================================================== */
     :root,
     [data-theme="dark"] {
+      /* Native browser UI (scrollbars, form controls, popups) follows the
+         chosen theme instead of the OS preference. */
+      color-scheme: dark;
       --bg: #020617;
       --grid: #1e293b;
       --canvas-dot: rgba(148, 163, 184, 0.16);
@@ -217,6 +221,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     [data-theme="light"] {
+      color-scheme: light;
       --bg: #f4f5f7;
       --grid: #e9edf2;
       --canvas-dot: #e2e7ec;
