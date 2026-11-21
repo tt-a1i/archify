@@ -74,6 +74,21 @@ test('the committed Viewer rebuilds deterministically outside the repository wor
   assert.equal(fs.statSync(f.output).mtimeMs, beforeCheck, '--check must not rewrite output');
 });
 
+test('a pannable diagram container claims touch gestures while an unzoomed one leaves page scroll alone', (t) => {
+  const f = fixture(t);
+  const generated = f.run();
+  assert.equal(generated.status, 0, generated.stderr);
+  const html = fs.readFileSync(f.output, 'utf8');
+  const pannable = html.match(/\.diagram-container\.is-pannable\s*\{([^}]*)\}/);
+  assert.ok(pannable, 'the generated template styles the pannable container');
+  assert.match(pannable[1], /touch-action:\s*none\b/,
+    'a zoomed container must claim the touch gesture so the browser cannot cancel the drag');
+  for (const match of html.matchAll(/\.diagram-container\s*\{([^}]*)\}/g)) {
+    assert.doesNotMatch(match[1], /touch-action/,
+      'an unzoomed container must leave touch-action alone so the page keeps scrolling');
+  }
+});
+
 test('Viewer generation runs through a preserved symlink entry', (t) => {
   const f = fixture(t);
   const script = path.join(f.root, 'scripts/generate-viewer.mjs');
