@@ -13,7 +13,7 @@ test('default and compatibility share the real public CLI core while full discov
   assert.equal(manifest.scripts['test:compat'], 'npm run test:core');
   assert.match(manifest.scripts['test:core'], /core-smoke\.test\.mjs/);
   assert.match(manifest.scripts['test:full'], /test:generated/);
-  assert.match(manifest.scripts['test:full'], /run-tests\.mjs$/);
+  assert.match(manifest.scripts['test:full'], /test:code-analysis && node scripts\/run-tests\.mjs$/);
   assert.ok(!manifest.scripts['test:core'].includes('golden'));
 });
 
@@ -33,15 +33,16 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   const full = ci.jobs['full-regression'];
   assert.equal(full.if, "needs.scope.outputs.scope == 'full'");
   assert.equal(full.strategy['fail-fast'], false);
-  assert.deepEqual(full.strategy.matrix.shard, [1, 2]);
+  assert.deepEqual(full.strategy.matrix.shard, [1, 2, 3, 4, 'analysis']);
   assert.ok(full.steps.some(step => step.with?.['node-version'] === 22));
-  assert.ok(full.steps.some(step => step.run === 'node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2'));
+  const rootSuite = full.steps.find(step => step.run === 'node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4');
+  assert.equal(rootSuite?.if, "matrix.shard != 'analysis'");
   const generated = full.steps.find(step => step.run === 'npm run test:generated');
   assert.equal(generated.if, 'matrix.shard == 2', 'complete generated checks run once inside a regression shard');
   const hermes = full.steps.find(step => step.run === 'node --test integrations/hermes-agent/test/plugin-contract.test.mjs');
   assert.equal(hermes.if, 'matrix.shard == 2');
   const moduleSuite = full.steps.find(step => step.run === 'npm --prefix archify run test:code-analysis');
-  assert.equal(moduleSuite?.if, 'matrix.shard == 1', 'the Code Analysis module suite runs once, outside the root runner');
+  assert.equal(moduleSuite?.if, "matrix.shard == 'analysis'", 'the Code Analysis module suite runs once, outside the root runner');
   const duplicateTool = full.steps.find(step => step.name === 'Install Code Analysis duplicate detector');
   assert.equal(duplicateTool?.if, moduleSuite.if, 'the real clone detector is installed in the shard that runs its integration tests');
   assert.ok(duplicateTool.run.includes(`jscpd@${JSCPD_VERSION}`), 'CI must use the detector version accepted by the adapter');

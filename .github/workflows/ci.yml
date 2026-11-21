@@ -74,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3, 4, analysis]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -95,23 +95,24 @@ jobs:
         if: matrix.shard == 2
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
       - name: Install Code Analysis duplicate detector
-        if: matrix.shard == 1
+        if: matrix.shard == 'analysis'
         run: npm install --prefix "$RUNNER_TEMP/archify-jscpd" --ignore-scripts --no-audit --no-fund jscpd@5.4.3
       - name: Install Code Analysis C/C++ parser
-        if: matrix.shard == 1
+        if: matrix.shard == 'analysis'
         run: |
           python3 -m venv "$RUNNER_TEMP/archify-clang"
           "$RUNNER_TEMP/archify-clang/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --no-deps libclang==18.1.1
       # The root runner enumerates only test/; the module suite lives with the module.
       - name: Code Analysis module suite
-        if: matrix.shard == 1
+        if: matrix.shard == 'analysis'
         run: npm --prefix archify run test:code-analysis
         env:
           ARCHIFY_TEST_JSCPD: ${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd
           ARCHIFY_CPP_PYTHON: ${{ runner.temp }}/archify-clang/bin/python
           ARCHIFY_CPP_REQUIRED: '1'
       - name: Run a complete regression shard
-        run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2
+        if: matrix.shard != 'analysis'
+        run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4
 
   test:
     needs: scope
@@ -205,7 +206,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3, 4]
     steps:
       - name: Require successful scope checks
         env:
@@ -233,7 +234,7 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund && npm --prefix archify ci --ignore-scripts
       - name: Run shared browser regression gate
         if: needs.scope.outputs.browser == 'true'
-        run: npm run test:browser -- --shard=${{ matrix.shard }}/2
+        run: npm run test:browser -- --shard=${{ matrix.shard }}/4
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
@@ -554,11 +555,21 @@ jobs:
   windows-test-portability:
     needs: scope
     if: always() && !cancelled()
-    name: Windows test portability (Node ${{ matrix.node-version }})
+    name: Windows test portability (Node ${{ matrix.node-version }})${{ matrix.suffix }}
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22, 24]
+        include:
+          - node-version: 22
+            profile: --controlled
+          - node-version: 22
+            profile: --contracts
+            suffix: ' / contracts'
+          - node-version: 22
+            profile: --portability
+            suffix: ' / portability'
+          - node-version: 24
+            profile: --smoke
     runs-on: windows-latest
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
@@ -580,10 +591,10 @@ jobs:
         if: needs.scope.outputs.windows == 'true'
         run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
       - name: Install Code Analysis task-command test dependencies
-        if: needs.scope.outputs.windows == 'true'
+        if: needs.scope.outputs.windows == 'true' && (matrix.profile == '--controlled' || matrix.profile == '--smoke')
         run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
       - name: Verify Java source bindings and Maven evidence on Windows
-        if: needs.scope.outputs.windows == 'true' && matrix.node-version == 22
+        if: needs.scope.outputs.windows == 'true' && matrix.profile == '--controlled'
         shell: pwsh
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
@@ -607,7 +618,7 @@ jobs:
           git diff --no-index --exit-code -- "$benchmark/results/maven-enhanced.json" "$output/maven-enhanced.json"
           Write-Output 'Both Maven reports match the committed target positions.'
       - name: Execute generated task commands in native cmd.exe
-        if: needs.scope.outputs.windows == 'true'
+        if: needs.scope.outputs.windows == 'true' && (matrix.profile == '--controlled' || matrix.profile == '--smoke')
         run: node --test archify/modules/code-analysis/test/task-command-shell.test.mjs
       - name: Provision controlled Windows path fixtures
         if: needs.scope.outputs.windows == 'true'
@@ -615,10 +626,10 @@ jobs:
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
       - name: Verify maintained Windows path contracts
         if: needs.scope.outputs.windows == 'true'
-        run: node scripts/run-windows-path-tests.mjs ${{ matrix.node-version == 24 && '--smoke' || '' }}
+        run: node scripts/run-windows-path-tests.mjs ${{ matrix.profile }}
         env:
           ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
-          ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
+          ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: ${{ (matrix.profile == '--controlled' || matrix.profile == '--smoke') && '1' || '0' }}
       - name: Clean up controlled Windows path fixtures
         if: ${{ always() && needs.scope.outputs.windows == 'true' }}
         shell: pwsh

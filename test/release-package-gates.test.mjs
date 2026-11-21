@@ -272,7 +272,7 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   assert.match(website, /name: website-dist/);
   const browser = workflowJob(workflow, 'browser-regression');
   assert.match(browser, /Run shared browser regression gate/);
-  assert.match(browser, /npm run test:browser -- --shard=\$\{\{ matrix\.shard \}\}\/2/);
+  assert.match(browser, /npm run test:browser -- --shard=\$\{\{ matrix\.shard \}\}\/4/);
   const media = workflowJob(workflow, 'webm-artifact');
   assert.match(media, /needs: \[scope, browser-regression, webm-decode\]/);
   assert.match(media, /test "\$BROWSER_RESULT" = success/);
@@ -282,9 +282,7 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   assert.match(packageSmoke, /Verify delivery-lock ownership with real subprocesses/);
   assert.match(packageSmoke, /Verify macOS opener stays behind delivery-lock release/);
   const windows = workflowJob(workflow, 'windows-test-portability');
-  assert.match(windows, /node-version: \[22, 24\]/);
   assert.match(windows, /Verify maintained Windows path contracts/);
-  assert.match(windows, /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'/);
 });
 
 test('release tags with a SemVer prerelease are marked prerelease and never become latest', () => {
@@ -1510,6 +1508,16 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
   };
   const complete = list();
   const smoke = list('--smoke');
+  const workflow = parse(fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8'));
+  const automation = workflow.jobs['windows-test-portability'];
+  const lanes = automation.strategy.matrix.include.map(lane => [lane['node-version'], lane.profile]);
+  assert.deepEqual(lanes, [[22, '--controlled'], [22, '--contracts'], [22, '--portability'], [24, '--smoke']]);
+  const canonical = lanes.filter(([node]) => node === 22).map(([, profile]) => list(profile));
+  assert.equal(canonical.filter(lane => lane.controlledPaths).length, 1);
+  assert.deepEqual(canonical.flatMap(lane => lane.groups), complete.groups);
+  const invalidCombination = spawnSync(process.execPath, [runnerPath, '--list', '--controlled', '--smoke']);
+  assert.notEqual(invalidCombination.status, 0);
+
   assert.equal(complete.controlledPaths, true);
   assert.equal(smoke.controlledPaths, true);
   assert.deepEqual(smoke.groups.flat().filter(arg => arg.endsWith('.test.mjs')),
@@ -1670,12 +1678,12 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
   for (const [label, workflow] of workflows) {
     const job = workflowJob(workflow, 'windows-test-portability');
     assert.match(job, /runs-on:\s*windows-latest/);
-    assert.match(job, /node-version:\s*\[22, 24\]/);
+    if (label !== 'CI') assert.match(job, /node-version:\s*\[22, 24\]/);
     assert.match(job, /node-version:\s*\$\{\{ matrix\.node-version \}\}/);
     assert.match(job, /npm ci --ignore-scripts/);
     assert.match(job, /node scripts\/run-windows-path-tests\.mjs/);
-    assert.ok(job.includes("matrix.node-version == 24 && '--smoke' || ''"),
-      `${label} must select smoke only for Node 24; Node 22 retains the complete matrices`);
+    assert.ok(job.includes(label === 'CI' ? '${{ matrix.profile }}' : "matrix.node-version == 24 && '--smoke' || ''"),
+      `${label} must select the maintained Windows profiles`);
     assert.match(job, label === 'CI'
       ? /name: Provision controlled Windows path fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
       : /name: Provision controlled Windows path fixtures\n\s+shell: pwsh/);
@@ -1700,8 +1708,8 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     );
     assert.match(
       job,
-      /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS:\s*'1'/,
-      `${label} must require controlled UNC and case-sensitive NTFS coverage on every lane`,
+      label === 'CI' ? /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS:.*'--controlled'.*'--smoke'.*'1'/ : /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS:\s*'1'/,
+      `${label} must require controlled UNC and case-sensitive NTFS coverage on both Node versions`,
     );
     for (const suite of fullSuites) {
       assert.equal(job.includes(suite), false, `${label} must get ${suite} from the shared runner`);

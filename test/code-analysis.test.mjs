@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
@@ -48,11 +47,4 @@ test('Code Analysis exposes the workbench, checks, task and verification command
     assert.match(invalid.stderr + invalid.stdout, /--map requires --ir/);
   }
 
-});
-test('Code Analysis regression suite', () => {
-  const tests = fs.readdirSync(path.join(moduleRoot, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join(moduleRoot, 'test', f));
-  const env = { ...process.env };
-  delete env.NODE_TEST_CONTEXT;
-  const result = spawnSync(process.execPath, ['--test', ...tests], { env, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
 });
