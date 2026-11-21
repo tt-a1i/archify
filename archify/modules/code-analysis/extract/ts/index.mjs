@@ -2,22 +2,26 @@
 // Program supplies imports and conservative lexical call bindings.
 // Calls do not establish execution or runtime dispatch.
 import path from 'node:path';
-import ts from 'typescript';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import { decodeTypeScriptText } from '../../core/index.mjs';
 import { classifyRole, lineCount, listFiles, snapshotTree, toPosix, packageMarkersIn } from '../shared/files.mjs';
 import { matcher } from '../shared/glob.mjs';
-import { snapshotHost } from './snapshot-host.mjs';
-import { runtimePackageTarget } from './runtime-package-target.mjs';
+import { snapshotHostTools } from './snapshot-host.mjs';
+import { runtimePackageTools } from './runtime-package-target.mjs';
 import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
-import { isShortCircuitExpression, measureFunctions } from './functions.mjs';
-import { CALL_MODEL, callsite } from './calls.mjs';
-import { importedCallTarget } from './imported-calls.mjs';
+import { functionTools } from './functions.mjs';
+import { CALL_MODEL, callTools } from './calls.mjs';
+import { importedCallTools } from './imported-calls.mjs';
+import { selectTypeScripts } from './sdk.mjs';
+import { syntaxNodes } from './syntax-walk.mjs';
 
 export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 23;
+export const REVISION = 28;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -31,28 +35,96 @@ export function countSources(root, config) {
   return listFiles(root, config).filter((f) => SOURCE_EXT.test(f)).length;
 }
 
-const COMPILER_OPTIONS = {
-  allowJs: true,
-  module: ts.ModuleKind.NodeNext,
-  moduleResolution: ts.ModuleResolutionKind.NodeNext,
-  target: ts.ScriptTarget.ESNext,
-};
-
 export function extract(root, config, { onCapture, capturedOnly = false } = {}) {
   const absRoot = path.resolve(root);
   const include = matcher(config.include), exclude = matcher(config.exclude);
   const selected = file => SOURCE_EXT.test(file) && include(file) && !exclude(file)
     && !file.split('/').slice(0, -1).some((_, i, parts) => exclude(`${parts.slice(0, i + 1).join('/')}/`));
   const snapshot = snapshotTree(absRoot, file => selected(file) || file.endsWith('.json'));
-  const files = snapshot.names.filter(selected);
-  const inputs = snapshotHost(absRoot, snapshot, { capturedOnly });
-  const options = compilerOptions(absRoot, inputs);
-  const fileSet = new Set(files);
-  const programOptions = {
-    ...options, noResolve: true, noLib: true, types: [],
+  const segments = selectTypeScripts(absRoot, snapshot, config, selected, { capturedOnly }).map(({ sdk, files }) => {
+    const engine = createExtractor(sdk.ts);
+    return { sdk, engine, prepared: engine.prepare(absRoot, files, snapshot, { capturedOnly }) };
+  });
+  if (!capturedOnly && config.typescript?.requireProjectSdk) {
+    const missing = segments.find(segment => segment.prepared.projects.length && segment.sdk.status === 'fallback');
+    if (missing) fail('extract/typescript-sdk-required', 'A captured project has no installed TypeScript SDK.', {
+      subject: { root: absRoot, file: missing.prepared.projects[0].files[0] },
+      supportedFixes: ['install the project TypeScript SDK', 'set typescript.sdk to a validated package path'],
+    });
+  }
+  const fileSet = new Set(segments.flatMap(segment => segment.prepared.projects.flatMap(project => project.files)));
+  const results = segments.map(segment => {
+    const facts = segment.engine.run(absRoot, config, { snapshot, sdk: segment.sdk, prepared: segment.prepared,
+      fileSet, capturedOnly });
+    return { ...segment, facts };
+  });
+  for (const { prepared } of segments) prepared.inputs.assertUnchanged();
+  const reads = new Map();
+  for (const { prepared } of segments) for (const [file, value] of prepared.inputs.reads) {
+    if (reads.has(file) && reads.get(file) !== value) fail('extract/source-changed', 'A TypeScript resolution input changed between project captures.', { subject: { file } });
+    reads.set(file, value);
+  }
+  onCapture?.({ options: results.length === 1 ? (results[0].prepared.projects.length === 1
+    ? results[0].prepared.projects[0].options
+    : results[0].prepared.projects.map(project => ({ config: project.config, options: project.options })))
+    : results.flatMap(({ sdk, prepared }) => prepared.projects.map(project => ({ config: project.config, sdkVersion: sdk.version, options: project.options }))), reads });
+  const sdkRecord = sdk => {
+    const relative = sdk.packagePath && path.relative(fs.realpathSync(absRoot), sdk.packagePath);
+    const inside = relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+    const packagePath = sdk.packagePath ? (inside ? toPosix(relative) : sdk.packagePath) : null;
+    return { version: sdk.version, source: sdk.source, status: sdk.status, packagePath };
   };
+  const base = results[0].facts;
+  const projects = results.flatMap(({ facts, sdk }, sdkIndex) => facts.languageScope.projects.map(project => ({ ...project, sdkIndex, sdkVersion: sdk.version })));
+  const combined = { ...base,
+    repository: { ...base.repository, adapter: results.length === 1 ? base.repository.adapter : 'typescript@multi' },
+    languageScope: { language: 'ts', sdk: results.length === 1 ? base.languageScope.sdk : { version: 'multi', source: 'multi', status: 'matched' },
+      sdks: results.map(({ sdk }) => sdkRecord(sdk)), projects,
+      excludedByProject: [],
+      limitations: [...new Set([...results.flatMap(({ sdk }) => sdk.limitations), ...(projects.length > 1
+        ? ['Call targets follow captured members of the caller Program. Cross-SDK targets and forwarding paths that disagree with recorded owner imports remain unresolved.'] : [])])] },
+    files: results.flatMap(({ facts }) => facts.files).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0),
+    imports: results.flatMap(({ facts }) => facts.imports).sort((a, b) => a.from < b.from ? -1 : a.from > b.from ? 1 : a.line - b.line),
+    functions: results.flatMap(({ facts }) => facts.functions).sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : a.line - b.line),
+    calls: results.flatMap(({ facts }) => facts.calls).sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : a.line - b.line || a.column - b.column),
+    unresolved: Object.fromEntries(Object.keys(base.unresolved).map(key => [key, results.reduce((sum, { facts }) => sum + facts.unresolved[key], 0)])),
+  };
+  const parseErrors = results.flatMap(({ facts }) => facts.parse_errors || []).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+  if (parseErrors.length) combined.parse_errors = parseErrors;
+  else delete combined.parse_errors;
+  return combined;
+}
+
+function createExtractor(ts) {
+const { snapshotHost } = snapshotHostTools(ts);
+const { runtimePackageTarget } = runtimePackageTools(ts);
+const { isShortCircuitExpression, measureFunctions } = functionTools(ts);
+const { callsite } = callTools(ts);
+const { importedCallTarget, commonJsCallTarget, isModuleRequire } = importedCallTools(ts);
+
+const COMPILER_OPTIONS = {
+  allowJs: true,
+  module: ts.ModuleKind.Preserve,
+  moduleResolution: ts.ModuleResolutionKind.Bundler,
+  target: ts.ScriptTarget.ES2022,
+  jsx: ts.JsxEmit.ReactJSX,
+  allowImportingTsExtensions: true,
+};
+
+function prepare(root, files, snapshot, { capturedOnly }) {
+  const inputs = snapshotHost(root, snapshot, { capturedOnly });
+  return { inputs, ...configuredProjects(root, files, inputs, snapshot) };
+}
+
+// Both project membership and lexical extraction read the same captured source
+// bytes. External metadata can resolve a module, but cannot add source facts.
+function sourceProgram(root, files, options, inputs, snapshot) {
+  const programOptions = { ...options, noLib: true, types: [] };
   const host = ts.createCompilerHost(programOptions);
-  host.readFile = file => snapshot.contents.get(toPosix(path.relative(absRoot, file)))?.toString('utf8');
+  host.readFile = file => {
+    const data = snapshot.contents.get(toPosix(path.relative(root, file)));
+    return data === undefined ? undefined : file.endsWith('.json') ? inputs.readFile(file) : decodeTypeScriptText(data, true);
+  };
   host.fileExists = inputs.fileExists;
   host.directoryExists = inputs.directoryExists;
   host.getDirectories = inputs.getDirectories;
@@ -62,62 +134,98 @@ export function extract(root, config, { onCapture, capturedOnly = false } = {}) 
     const text = host.readFile(file);
     return text === undefined ? undefined : ts.createSourceFile(file, text, version, true);
   };
-  const program = ts.createProgram(files.map((rel) => path.join(absRoot, rel)), programOptions, host);
-  const checker = program.getTypeChecker();
+  return ts.createProgram(files.map(file => path.join(root, file)), programOptions, host);
+}
+
+function run(root, config, { snapshot, sdk, prepared, fileSet, capturedOnly }) {
+  const absRoot = path.resolve(root);
+  const { inputs, projects } = prepared;
   const imports = [];
   const unresolved = { external: 0, outside: 0, unknown: 0, opaque: 0 };
   const fileRecords = [];
   const functions = [];
   const calls = [];
-  const pendingCalls = [];
-  const importTargets = new Map();
-  const sources = new Map();
   const parseErrors = [];
+  const bindings = [], ownerImports = new Map();
 
-  for (const rel of files) {
-    const abs = path.join(absRoot, rel);
-    const source = program.getSourceFile(abs);
-    // TypeScript recovers from syntax errors and returns a partial tree, so a broken
-    // file can silently lose its imports and functions. Record it like Python's
-    // parse_errors: coverage shows it, and run comparisons treat it as a scope change.
-    const syntax = program.getSyntacticDiagnostics(source);
-    if (syntax.length) {
-      const first = syntax[0];
-      const line = first.start === undefined ? null : source.getLineAndCharacterOfPosition(first.start).line + 1;
-      parseErrors.push({ path: rel, message: `${line ? `line ${line}: ` : ''}${ts.flattenDiagnosticMessageText(first.messageText, ' ')}${syntax.length > 1 ? ` (+${syntax.length - 1} more)` : ''}` });
+  for (const project of projects) {
+    const options = project.options;
+    const owned = new Set(project.files);
+    const program = sourceProgram(absRoot, project.members, { ...options, noResolve: true }, inputs, snapshot);
+    const checker = program.getTypeChecker();
+    const pendingCalls = [];
+    const importTargets = new Map();
+    const sources = new Map();
+    for (const rel of project.members) {
+      const abs = path.join(absRoot, rel);
+      const source = program.getSourceFile(abs);
+      // TypeScript recovers from syntax errors and returns a partial tree, so a broken
+      // file can silently lose its imports and functions. Record it like Python's
+      // parse_errors: coverage shows it, and run comparisons treat it as a scope change.
+      const syntax = program.getSyntacticDiagnostics(source);
+      if (owned.has(rel) && syntax.length) {
+        const first = syntax[0];
+        const line = first.start === undefined ? null : source.getLineAndCharacterOfPosition(first.start).line + 1;
+        parseErrors.push({ path: rel, message: `${line ? `line ${line}: ` : ''}${ts.flattenDiagnosticMessageText(first.messageText, ' ')}${syntax.length > 1 ? ` (+${syntax.length - 1} more)` : ''}` });
+      }
+      if (owned.has(rel)) fileRecords.push({ path: rel, loc: lineCount(source.text), role: classifyRole(rel, config.roles), sourceText: source.text });
+      const functionRecords = new Map();
+      const measured = source.isDeclarationFile ? [] : measureFunctions(source, rel, (record, node) => functionRecords.set(node, record));
+      if (owned.has(rel)) functions.push(...measured);
+      sources.set(rel, { source, functionRecords, valid: !syntax.length && !source.isDeclarationFile });
+      for (const found of collectImports(source, checker, options, !owned.has(rel) || syntax.length || source.isDeclarationFile ? null : (node) => pendingCalls.push({ node, source, rel, functionRecords }))) {
+        const record = { from: rel, specifier: found.specifier, kind: found.kind, line: found.line, resolved: false };
+        if (found.names.length) record.names = found.names;
+        if (found.lazy) record.lazy = true;
+        if (found.conditional) record.conditional = true;
+        if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
+        const target = found.opaque ? { reason: 'opaque' } : resolve(record, abs, absRoot, fileSet, options, inputs, program.getModeForUsageLocation(source, found.usage));
+        if (target.to) {
+          record.to = target.to; record.resolved = true;
+          if (found.statement) importTargets.set(found.statement, target.to);
+          if (owned.has(rel) && found.statement && !record.typeOnly) {
+            const point = source.getLineAndCharacterOfPosition(found.statement.getStart(source));
+            ownerImports.set(JSON.stringify([rel, point.line + 1, point.character + 1]), target.to);
+          }
+        } else if (owned.has(rel)) unresolved[target.reason] += 1;
+        if (owned.has(rel)) imports.push(record);
+      }
     }
-    fileRecords.push({ path: rel, loc: lineCount(source.text), role: classifyRole(rel, config.roles), sourceText: source.text });
-    const functionRecords = new Map();
-    if (!source.isDeclarationFile) functions.push(...measureFunctions(source, rel, (record, node) => functionRecords.set(node, record)));
-    sources.set(rel, { source, functionRecords, valid: !syntax.length && !source.isDeclarationFile });
-    for (const found of collectImports(source, checker, options, syntax.length || source.isDeclarationFile ? null : (node) => pendingCalls.push({ node, source, rel, functionRecords }))) {
-      const record = { from: rel, specifier: found.specifier, kind: found.kind, line: found.line, resolved: false };
-      if (found.names.length) record.names = found.names;
-      if (found.lazy) record.lazy = true;
-      if (found.conditional) record.conditional = true;
-      if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
-      const target = found.opaque ? { reason: 'opaque' } : resolve(record, abs, absRoot, fileSet, options, inputs, program.getModeForUsageLocation(source, found.usage));
-      if (target.to) {
-        record.to = target.to; record.resolved = true;
-        if (found.statement) importTargets.set(found.statement, target.to);
-      } else unresolved[target.reason] += 1;
-      imports.push(record);
+
+    for (const { node, source, rel, functionRecords } of pendingCalls) {
+      const call = callsite(node, source, rel, checker, functionRecords);
+      const candidate = call.reason === 'no-local-function-binding' && ts.isIdentifier(node.expression);
+      const target = candidate ? importedCallTarget(node, source, checker, importTargets, sources) : null;
+      const commonJs = candidate && !target ? commonJsCallTarget(node, source, rel, checker, importTargets, sources) : null;
+      if (!target && !commonJs) { calls.push(call); continue; }
+      const { reason, ...record } = call;
+      const bound = target ? { ...record, resolution: 'imported-function', ...target }
+        : { ...record, resolution: 'commonjs-function', target: commonJs };
+      const point = bound.target;
+      const measurement = [...sources.get(point.file).functionRecords.values()].find(fn => fn.name === point.name
+        && fn.sourceRange.line === point.line && fn.sourceRange.column === point.column);
+      // Keep only plain evidence after this Program, so checkers/ASTs do not
+      // accumulate while the other owners produce their canonical facts.
+      bindings.push({ bound, fallback: call, measurement });
     }
   }
 
-  for (const { node, source, rel, functionRecords } of pendingCalls) {
-    const call = callsite(node, source, rel, checker, functionRecords);
-    const target = call.reason === 'no-local-function-binding' && ts.isIdentifier(node.expression)
-      ? importedCallTarget(node, source, checker, importTargets, sources) : null;
-    if (target) {
-      const { reason, ...record } = call;
-      calls.push({ ...record, resolution: 'imported-function', ...target });
-    } else calls.push(call);
+  const broken = new Set(parseErrors.map(error => error.path));
+  const canonical = new Map(functions.map(fn => [JSON.stringify([fn.file, fn.name, fn.sourceRange.line, fn.sourceRange.column]), fn]));
+  for (const { bound, fallback, measurement } of bindings) {
+    const target = bound.target;
+    const recorded = canonical.get(JSON.stringify([target.file, target.name, target.line, target.column]));
+    const sameBody = recorded && measurement && !broken.has(target.file) && recorded.syntaxKind === measurement.syntaxKind
+      && JSON.stringify(recorded.sourceRange) === JSON.stringify(measurement.sourceRange);
+    // A shared barrel is resolved with caller options, while its saved graph
+    // edge belongs to its owner. Do not emit a route the facts cannot support.
+    const sameRoute = (bound.via || []).every((via, index, path) => !broken.has(via.file)
+      && ownerImports.get(JSON.stringify([via.file, via.line, via.column])) === (path[index + 1]?.file || target.file));
+    calls.push(sameBody && sameRoute ? bound : fallback);
   }
 
   imports.sort((a, b) => compareText(a.from, b.from) || a.line - b.line || compareText(a.specifier, b.specifier));
 
-  onCapture?.({ options, reads: inputs.reads });
   inputs.assertUnchanged();
   // Markers come from the frozen inventory, like every other resolution input.
   const packageMarkers = packageMarkersIn(snapshot.names, config);
@@ -127,6 +235,10 @@ export function extract(root, config, { onCapture, capturedOnly = false } = {}) 
   return {
     schema_version: 1,
     repository: { ...repo, language: 'ts', adapter: `typescript@${ts.version}`, adapterRevision: REVISION },
+    languageScope: { language: 'ts', sdk: { version: sdk.version, source: sdk.source, status: sdk.status },
+      projects: projects.map(project => ({ config: project.config, optionsDigest: project.optionsDigest, files: project.files, members: project.members })),
+      excludedByProject: [], limitations: [...sdk.limitations, ...(projects.length > 1
+        ? ['Call targets follow captured members of the caller Program. Cross-SDK targets and forwarding paths that disagree with recorded owner imports remain unresolved.'] : [])] },
     files: fileRecords,
     packageMarkers,
     imports,
@@ -147,23 +259,90 @@ function lineOf(source, node) {
   return source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
 }
 
-/** Read options explicitly selected by the analyzed root; never discover ancestor configs. */
-function compilerOptions(root, inputs) {
-  const configPath = path.join(root, 'tsconfig.json');
-  if (!inputs.fileExists(configPath)) return COMPILER_OPTIONS;
-  const loaded = ts.readConfigFile(configPath, inputs.readFile);
-  inputs.assertUnchanged();
-  if (loaded.error) fail('extract/tsconfig-invalid', 'Cannot read tsconfig.json.', { subject: { file: configPath } });
-  const parsed = ts.parseJsonConfigFileContent(loaded.config, inputs, path.dirname(configPath));
-  inputs.assertUnchanged();
-  const errors = parsed.errors.filter((e) => e.code !== 18003); // no input files is irrelevant to a subtree analysis
-  if (errors.length) fail('extract/tsconfig-invalid', 'Invalid TypeScript configuration.', { subject: { file: configPath }, evidence: { errors: errors.map((e) => ts.flattenDiagnosticMessageText(e.messageText, '\n')) } });
-  return { ...COMPILER_OPTIONS, ...parsed.options, allowJs: true };
+/** Assign selected sources to configured projects or inferred-project defaults. */
+function configuredProjects(root, files, inputs, snapshot) {
+  const parsed = new Map();
+  const groups = new Map();
+  const owners = [];
+  const loadConfig = relative => {
+    if (parsed.has(relative)) return parsed.get(relative);
+    const file = path.join(root, relative);
+    const loaded = ts.readConfigFile(file, inputs.readFile);
+    inputs.assertUnchanged();
+    if (loaded.error) fail('extract/tsconfig-invalid', 'Cannot read a TypeScript project configuration.', { subject: { file } });
+    const result = ts.parseJsonConfigFileContent(loaded.config, inputs, path.dirname(file), undefined, file);
+    inputs.assertUnchanged();
+    const errors = result.errors.filter(error => ![18002, 18003].includes(error.code));
+    if (errors.length) fail('extract/tsconfig-invalid', 'Invalid TypeScript project configuration.', {
+      subject: { file }, evidence: { errors: errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, '\n')) },
+    });
+    const options = result.options;
+    const roots = result.fileNames.map(name => toPosix(path.relative(root, name)))
+      .filter(name => snapshot.contents.has(name));
+    // include/exclude selects roots, not the complete project. Let this SDK
+    // follow imports and references; only captured source bytes are available.
+    const members = new Set(roots);
+    // Expansion cannot add facts when every captured candidate is already a
+    // root. Avoid a second parse of that common case and explicit noResolve.
+    if (!options.noResolve && files.some(name => !members.has(name))) {
+      const program = sourceProgram(root, roots, options, inputs, snapshot);
+      for (const source of program.getSourceFiles()) members.add(toPosix(path.relative(root, source.fileName)));
+    }
+    const project = { config: relative, options, members };
+    parsed.set(relative, project);
+    for (const reference of result.projectReferences || []) {
+      const referenced = ts.resolveProjectReferencePath(reference);
+      if (inputs.fileExists(referenced)) loadConfig(toPosix(path.relative(root, referenced)));
+    }
+    return project;
+  };
+  for (const relative of files) {
+    let directory = path.dirname(path.join(root, relative));
+    const candidates = [];
+    while (true) {
+      const configFile = ['tsconfig.json', 'jsconfig.json'].map(name => path.join(directory, name))
+        .find(inputs.fileExists);
+      if (configFile) candidates.push(loadConfig(toPosix(path.relative(root, configFile))));
+      if (directory === root) break;
+      const parent = path.dirname(directory);
+      if (parent === directory) break;
+      directory = parent;
+    }
+    owners.push([relative, candidates]);
+  }
+  for (const [relative, candidates] of owners) {
+    // A nearer config can omit a source that another configured Program
+    // imports. Prefer its own project when applicable, then an importing one.
+    const owner = candidates.find(project => project.members.has(relative))
+      || [...parsed.values()].find(project => project.members.has(relative));
+    const key = owner?.config ?? null;
+    if (!groups.has(key)) {
+      const options = owner?.options ?? COMPILER_OPTIONS;
+      const normalized = JSON.stringify(options, (_key, value) => {
+        if (typeof value !== 'string' || !path.isAbsolute(value)) return value;
+        const relativePath = path.relative(root, value);
+        return relativePath === '..' || relativePath.startsWith(`..${path.sep}`) ? value : `<root>/${toPosix(relativePath)}`;
+      });
+      groups.set(key, { config: key, options, optionsDigest: createHash('sha256').update(normalized).digest('hex'), files: [], members: owner?.members });
+    }
+    groups.get(key).files.push(relative);
+  }
+  for (const project of groups.values()) {
+    const members = project.members || new Set(project.files);
+    if (project.config === null && files.some(file => !members.has(file))) {
+      const program = sourceProgram(root, project.files, project.options, inputs, snapshot);
+      for (const source of program.getSourceFiles()) members.add(toPosix(path.relative(root, source.fileName)));
+    }
+    // SDK groups never exchange ASTs or callable bodies. The actual Program
+    // may also discover external/other-SDK files, outside this facts projection.
+    project.members = files.filter(file => members.has(file)).sort(compareText);
+  }
+  return { projects: [...groups.values()] };
 }
 
 function collectImports(source, checker, options, onCall) {
   const found = [];
-  const visit = (node) => {
+  for (const node of syntaxNodes(ts, source)) {
     if (onCall && ts.isCallExpression(node)) onCall(node);
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       const clause = node.importClause;
@@ -186,14 +365,12 @@ function collectImports(source, checker, options, onCall) {
         const argument = node.arguments[0];
         const opaque = !ts.isStringLiteralLike(argument);
         found.push({
-          usage: argument, specifier: opaque ? OPAQUE : argument.text, kind, line: lineOf(source, node),
+          statement: node, usage: argument, specifier: opaque ? OPAQUE : argument.text, kind, line: lineOf(source, node),
           names: [], opaque, ...loadContext(node, isRequire),
         });
       }
     }
-    ts.forEachChild(node, visit);
-  };
-  visit(source);
+  }
   return found;
 }
 
@@ -229,29 +406,6 @@ function isConditionalChild(parent, child) {
   return ts.isCatchClause(parent);
 }
 
-// Native CommonJS require has no source declaration. Also preserve the common
-// ESM createRequire pattern, but never infer an arbitrary local function is a loader.
-function isModuleRequire(identifier, checker) {
-  const declarations = checker.getSymbolAtLocation(identifier)?.declarations || [];
-  if (!declarations.length) return true;
-  if (declarations.length !== 1) return false;
-  const declaration = declarations[0];
-  if (!ts.isVariableDeclaration(declaration) || !declaration.initializer
-    || !ts.isCallExpression(declaration.initializer)) return false;
-  const args = declaration.initializer.arguments;
-  const base = args[0];
-  if (args.length !== 1 || !ts.isPropertyAccessExpression(base) || base.name.text !== 'url'
-    || !ts.isMetaProperty(base.expression) || base.expression.keywordToken !== ts.SyntaxKind.ImportKeyword) return false;
-  const factory = declaration.initializer.expression;
-  if (!ts.isIdentifier(factory)) return false;
-  const imported = checker.getSymbolAtLocation(factory)?.declarations?.[0];
-  if (!imported || !ts.isImportSpecifier(imported)
-    || (imported.propertyName || imported.name).text !== 'createRequire') return false;
-  const statement = imported.parent.parent.parent;
-  return ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)
-    && ['node:module', 'module'].includes(statement.moduleSpecifier.text);
-}
-
 function importedNames(clause) {
   if (!clause) return [];
   const names = [];
@@ -279,27 +433,28 @@ function resolve(record, containingFile, absRoot, fileSet, options, inputs, reso
   const result = correction ? null : ts.resolveModuleName(specifier, containingFile, options, inputs, undefined, undefined, resolutionMode);
   const resolvedFile = correction?.file || result?.resolvedModule?.resolvedFileName;
   if (!resolvedFile) return { reason: isPathLike ? 'unknown' : 'external' };
-  if (result?.resolvedModule.isExternalLibraryImport || resolvedFile.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
+  if (resolvedFile.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
   let rel = toPosix(path.relative(absRoot, resolvedFile));
   // Only a parent-directory result is outside the root; an in-root directory whose
   // name merely starts with ".." (e.g. "..generated/") must not be misclassified.
-  if (rel === '..' || rel.startsWith('../')) return { reason: 'outside' };
+  // TS 5.6 also marks in-package #imports/self exports as external library
+  // imports. Captured in-root source identity takes precedence over that flag.
+  if (rel === '..' || rel.startsWith('../')) return { reason: result?.resolvedModule.isExternalLibraryImport ? 'external' : 'outside' };
   if (record.kind === 'require' && !record.typeOnly && /\.d\.(?:ts|cts|mts)$/.test(rel)) {
     const runtime = resolveRelativeRequire(specifier, containingFile, absRoot, fileSet, inputs);
     if (runtime) return runtime;
   }
   if ((!isPathLike || resolutionMode === ts.ModuleKind.ESNext) && !record.typeOnly && /\.[cm]?js$/.test(containingFile) && /\.d\.(?:ts|mts|cts)$/.test(rel)) {
-    // The language service uses noDtsResolution for implementation lookup. It
-    // omits the types condition, but still substitutes TS sources for JS paths.
-    // This fallback serves JS callers, so keep only JS implementations and use
-    // the captured host for every lookup, including excluded-file boundaries.
+    // Resolve once more with a captured host that exposes only JS candidates.
+    // Type declarations and TS substitutions cannot become runtime edges;
+    // excluded-file boundaries remain checked against the captured file set.
     const runtimeHost = { ...inputs, fileExists: file => !/\.[cm]?tsx?$/.test(file) && inputs.fileExists(file) };
-    const runtime = ts.resolveModuleName(specifier, containingFile, { ...options, noDtsResolution: true }, runtimeHost, undefined, undefined, resolutionMode).resolvedModule;
+    const runtime = ts.resolveModuleName(specifier, containingFile, options, runtimeHost, undefined, undefined, resolutionMode).resolvedModule;
     const file = runtime?.resolvedFileName;
     if (!file || !/\.[cm]?js$/.test(file)) return { reason: 'unknown' };
-    if (runtime.isExternalLibraryImport || file.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
+    if (file.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
     rel = toPosix(path.relative(absRoot, file));
-    if (rel === '..' || rel.startsWith('../')) return { reason: 'outside' };
+    if (rel === '..' || rel.startsWith('../')) return { reason: runtime.isExternalLibraryImport ? 'external' : 'outside' };
   }
   if (!fileSet.has(rel)) return { reason: 'unknown' };
   return { to: rel };
@@ -337,4 +492,7 @@ function resolveRelativeRequire(specifier, containingFile, root, fileSet, inputs
   }
   if (typeof main !== 'string' || !/\.[cm]?js$/.test(main)) return { reason: 'unknown' };
   return target(path.resolve(requested, main));
+}
+
+return { prepare, run };
 }

@@ -62,7 +62,9 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   if (path.resolve(dir, 'repo.analysis.html') === htmlPath) fail('cli/out-invalid', 'The analysis output must not overwrite the delivered HTML.', { supportedFixes: ['use a different --out directory'] });
   if (map && !irPath) fail('cli/input-invalid', '--map requires --ir.', { supportedFixes: ['provide the authored architecture IR or omit --map'] });
   fs.mkdirSync(dir, { recursive: true });
-  const { adapter, facts, config: cfg, otherLanguages } = extractFacts(absRoot, { language, config });
+  const { adapter, facts, config: cfg, otherLanguages } = extractFacts(absRoot, {
+    language, config, capturedOnly: source?.sourceKind === 'git-tree',
+  });
   if (source) {
     facts.repository = { ...facts.repository, ...source };
     delete facts.repository.snapshotId;

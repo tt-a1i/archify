@@ -5,7 +5,7 @@ import ts from 'typescript';
 import { extractFacts, loadConfig } from './analysis.mjs';
 import { readInside } from './evidence.mjs';
 import { measureFunctions } from '../extract/ts/functions.mjs';
-import { fail, rangeText } from '../core/index.mjs';
+import { fail, rangeText, validSourceRange } from '../core/index.mjs';
 
 const LIMIT = 40;
 const digest = text => createHash('sha256').update(text).digest('hex');
@@ -42,12 +42,17 @@ export function changeEntryLanguage(entry) {
   fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java, .go, .rs, .c, .cc, .cpp, .cxx or .C source file with --entry.');
 }
 
+function configDigestFor(config, language) {
+  const relevant = language === 'ts' ? config : Object.fromEntries(Object.entries(config).filter(([key]) => key !== 'typescript'));
+  return digest(JSON.stringify(relevant));
+}
+
 export function captureChangeSide(root, config, language = 'ts') {
   root = path.resolve(root);
   let resolution;
   const { facts } = extractFacts(root, { language, config, onCapture: input => { resolution = input; } });
   if (!['ts', 'go', 'rust', 'java', 'c', 'cpp'].includes(language)) resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
-  return { root, facts, resolution, language, configDigest: digest(JSON.stringify(config)) };
+  return { root, facts, resolution, language, configDigest: configDigestFor(config, language) };
 }
 
 function inspectSide(capture, side) {
@@ -139,7 +144,7 @@ function inspectSide(capture, side) {
     targets.push(record); importsByTarget.set(fact.to, targets);
   });
   for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
-  const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5'].includes(facts.callModel))
+  const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5', 'js-ts-lexical-v6'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^(?:python|pyright-parser)@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2', 'python-source-v1', 'python-source-v2', 'python-source-v3'].includes(facts.callModel))
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3', 'java-static-lexical-v4', 'java-static-lexical-v5', 'java-static-lexical-v6'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3', 'go-source-direct-v4'].includes(facts.callModel))
@@ -188,6 +193,21 @@ function definitions(side, file) {
         line: identity.line, column: identity.column || fn.column || 1,
         endLine: metadata.sourceRange.endLine, endColumn: metadata.sourceRange.endColumn,
         sourceRange: metadata.sourceRange, textSha256: metadata.sourceRange.sha256 });
+    }
+    return { coverage: unavailable.length ? 'definition-regions-unavailable' : 'available', records: result, unavailable };
+  }
+  if (/\.d\.(?:ts|mts|cts)$/.test(file)) return { coverage: 'declaration-file-unsupported', records: [] };
+  if (side.facts.repository.adapterRevision >= 24 || side.facts.languageScope?.language === 'ts') {
+    const result = [], unavailable = [];
+    for (const fn of side.facts.functions.filter(item => item.file === file)) {
+      if (!validSourceRange(captured.sourceText, fn, 'ts') || !fn.syntaxKind) {
+        unavailable.push({ file, name: fn.name, qualname: fn.qualname, reason: 'definition-metadata-invalid' });
+        continue;
+      }
+      const range = fn.sourceRange;
+      result.push({ file, name: fn.name, qualname: fn.qualname, kind: fn.syntaxKind,
+        line: range.line, column: range.column, endLine: range.endLine, endColumn: range.endColumn,
+        sourceRange: range, textSha256: range.sha256 });
     }
     return { coverage: unavailable.length ? 'definition-regions-unavailable' : 'available', records: result, unavailable };
   }
@@ -423,7 +443,7 @@ function fileQuestion(sides, entry) {
 export function buildChangeQuestion({ question, entry, base, head, config }) {
   if (typeof question !== 'string' || !question.trim()) fail('task/question-invalid', 'Pass a nonempty --question.');
   const language = changeEntryLanguage(entry);
-  const expectedConfig = digest(JSON.stringify(config));
+  const expectedConfig = configDigestFor(config, language);
   for (const capture of [base, head]) {
     const repo = capture.facts.repository;
     const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter)

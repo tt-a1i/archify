@@ -88,6 +88,56 @@ function rawFactsErrors(data, report) {
   const files = report.unique(data.files, 'path', '/files');
   recordedFileErrors(data, files, add);
 
+  // Dev revision 23 recorded exact ranges before SDK provenance was added.
+  const hasTsSdkProvenance = data.repository.language === 'ts'
+    && (data.repository.adapterRevision >= 24 || data.languageScope?.language === 'ts');
+  if (hasTsSdkProvenance) {
+    const sdk = data.languageScope?.language === 'ts' ? data.languageScope.sdk : null;
+    if (!sdk || data.repository.adapter !== `typescript@${sdk.version}`) {
+      add('/languageScope/sdk', 'TS revision 23 requires the selected SDK version to match repository.adapter');
+    }
+    const owners = (data.languageScope?.projects || []).flatMap(project => project.files);
+    if (owners.length !== files.size || new Set(owners).size !== files.size || owners.some(file => !files.has(file))) {
+      add('/languageScope/projects', 'must assign every recorded source to exactly one TypeScript project');
+    }
+    const excluded = (data.languageScope?.excludedByProject || []).map(item => item.file);
+    if (new Set(excluded).size !== excluded.length || excluded.some(file => files.has(file))) {
+      add('/languageScope/excludedByProject', 'must list unique source files outside the recorded project facts');
+    }
+    if (data.repository.adapterRevision >= 24) {
+      const sdks = data.languageScope?.sdks || [];
+      if (!sdks.length || (sdks.length === 1 && data.repository.adapter !== `typescript@${sdks[0].version}`)
+        || (sdks.length > 1 && data.repository.adapter !== 'typescript@multi')) {
+        add('/languageScope/sdks', 'TS revision 24 requires every selected SDK and the matching adapter identity');
+      }
+      if (sdks.length === 1 && (sdk?.version !== sdks[0].version || sdk.source !== sdks[0].source || sdk.status !== sdks[0].status)) {
+        add('/languageScope/sdk', 'single-SDK provenance must match its selected SDK record');
+      }
+      if (sdks.length > 1 && (sdk?.version !== 'multi' || sdk.source !== 'multi' || sdk.status !== 'matched')) {
+        add('/languageScope/sdk', 'multi-SDK provenance must use the explicit multi marker');
+      }
+      const selectedSdks = new Set((data.languageScope?.projects || []).map(project => project.sdkIndex));
+      for (const index of sdks.keys()) if (selectedSdks.size && !selectedSdks.has(index)) {
+        add(`/languageScope/sdks/${index}`, 'each recorded SDK must own a captured project');
+      }
+      for (const [i, project] of (data.languageScope?.projects || []).entries()) {
+        if (!Number.isInteger(project.sdkIndex) || sdks[project.sdkIndex]?.version !== project.sdkVersion) {
+          add(`/languageScope/projects/${i}/sdkIndex`, 'must identify the SDK used for this project');
+        }
+      }
+    }
+    if (data.repository.adapterRevision >= 28) {
+      const projects = data.languageScope?.projects || [];
+      const sdkByFile = new Map(projects.flatMap(project => project.files.map(file => [file, project.sdkIndex])));
+      for (const [i, project] of projects.entries()) {
+        if (!Array.isArray(project.members) || project.files.some(file => !project.members.includes(file))
+          || project.members.some(file => !files.has(file) || sdkByFile.get(file) !== project.sdkIndex)) {
+          add(`/languageScope/projects/${i}/members`, 'requires captured caller Program members including owned files, all under the same SDK');
+        }
+      }
+    }
+  }
+
   const model = callModelVersions(data);
   if (data.languageScope?.language === 'py') {
     if (model.py < 5) add('/languageScope', 'requires the Python v3 source model');
@@ -172,6 +222,9 @@ function functionRangeErrors(data, sourceTexts, model, add) {
     || (language === 'ts' && data.repository.adapterRevision >= 23);
   data.functions?.forEach((fn, i) => {
     if ((exactRanges || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn, language)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
+    if (language === 'ts' && (data.repository.adapterRevision >= 24 || data.languageScope?.language === 'ts') && !fn.syntaxKind) {
+      add(`/functions/${i}/syntaxKind`, 'TypeScript SDK captures require a captured syntax kind');
+    }
     if (fn.definition && !validDefinitionExtent(fn, sourceTexts.get(fn.file), language)) {
       add(`/functions/${i}/definition/sourceRange`, 'must match exact captured owned definition extent and digest');
     }
@@ -243,16 +296,28 @@ function callContext(data, { files, model, sourceTexts, metadata, traitDeclarati
   };
   const brokenFiles = new Set((data.parse_errors || []).map((error) => error.path));
   const staticImports = new Map();
+  const requireImports = new Map();
   for (const edge of data.imports) if (edge.resolved && edge.kind === 'static' && !edge.typeOnly) {
     if (!staticImports.has(edge.from)) staticImports.set(edge.from, new Set());
     staticImports.get(edge.from).add(edge.to);
   }
-  const forwardingModel = data.repository.language === 'ts' && /^typescript@/.test(data.repository.adapter) && data.callModel === 'js-ts-lexical-v5';
+  for (const edge of data.imports) if (edge.resolved && edge.kind === 'require' && !edge.typeOnly) {
+    if (!requireImports.has(edge.from)) requireImports.set(edge.from, new Set());
+    requireImports.get(edge.from).add(edge.to);
+  }
+  const tsAdapter = data.repository.language === 'ts' && /^typescript@/.test(data.repository.adapter);
+  const forwardingModel = tsAdapter && ['js-ts-lexical-v5', 'js-ts-lexical-v6'].includes(data.callModel);
+  const commonJsModel = tsAdapter && data.callModel === 'js-ts-lexical-v6';
   const valueImportLines = forwardingModel ? new Set(data.imports.filter((edge) => edge.resolved && ['static', 'export'].includes(edge.kind) && !edge.typeOnly).map((edge) => JSON.stringify([edge.from, edge.line, edge.to]))) : null;
   const functions = data.functions || [];
+  const programMembers = tsAdapter && data.repository.adapterRevision >= 28
+    ? new Map((data.languageScope?.projects || []).flatMap(project => {
+      const members = new Set(Array.isArray(project.members) ? project.members : []);
+      return project.files.map(file => [file, members]);
+    })) : null;
   const declarations = data.methodDeclarations || [];
   return {
-    add, files, model, metadata, traitDeclarations, validPoint, brokenFiles, staticImports, forwardingModel, valueImportLines,
+    add, files, model, metadata, traitDeclarations, validPoint, brokenFiles, staticImports, requireImports, forwardingModel, commonJsModel, valueImportLines, programMembers,
     functionStarts: new Set(functions.map((fn) => JSON.stringify([fn.file, fn.name, fn.line]))),
     functionPoints: new Set(functions.map((fn) => JSON.stringify([fn.file, fn.name, fn.sourceRange?.line, fn.sourceRange?.column]))),
     methodDeclarationPoints: new Set(declarations.map((decl) => JSON.stringify([decl.file, decl.name, decl.sourceRange?.line, decl.sourceRange?.column]))),
@@ -329,10 +394,15 @@ function callProvenanceErrors(call, at, { add, model, metadata, validPoint, capt
 function callTargetErrors(call, at, context) {
   const { add, model, validPoint, traitDeclarations, functionPoints, functionStarts, methodDeclarationPoints } = context;
   const targetFile = call.target.file || call.file;
+  if (context.programMembers && (!context.programMembers.get(call.file)?.has(targetFile)
+    || call.via?.some(point => !context.programMembers.get(call.file)?.has(point.file)))) {
+    add(`${at}/target`, 'target and forwarding sources must be members of the caller Program');
+  }
   const traitCandidate = call.resolution === 'rust-trait-method-candidate';
   const required = RESOLUTION_MODELS.get(call.resolution);
   if (required && (required[0] === 'cpp' ? Math.max(model.c, model.cpp) : model[required[0]]) < required[1]) add(`${at}/resolution`, required[2]);
   if (call.resolution === 'imported-function') importedTargetErrors(call, at, targetFile, context);
+  if (call.resolution === 'commonjs-function') commonJsTargetErrors(call, at, targetFile, context);
   if (traitCandidate && !traitDeclarations.has(pointKey(targetFile, call.target))) add(`${at}/target`, 'must match a captured trait method declaration');
   if (!validPoint(targetFile, call.target)) add(`${at}/target`, 'target must lie inside captured source');
   // A trait candidate points at a declaration, which need not be a measured function.
@@ -341,6 +411,14 @@ function callTargetErrors(call, at, context) {
     && methodDeclarationPoints.has(pointKey(targetFile, call.target));
   if ((model.py || model.java || model.go || model.rust || model.c || model.cpp) && !functionPoints.has(pointKey(targetFile, call.target)) && !abstractMethod) add(`${at}/target`, 'must match a captured definition start');
   if (!functionStarts.has(JSON.stringify([targetFile, call.target.name, call.target.line])) && !abstractMethod) add(`${at}/target`, 'target must reference a recorded function in its target file');
+}
+
+function commonJsTargetErrors(call, at, targetFile, { add, requireImports, brokenFiles, commonJsModel }) {
+  if (!commonJsModel) add(`${at}/resolution`, 'requires the JS/TS v6 CommonJS call model');
+  if (call.target.file === undefined || !requireImports.get(call.file)?.has(targetFile)) {
+    add(`${at}/target/file`, 'must follow a recorded CommonJS require to its captured target file');
+  }
+  if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
 }
 
 // An imported target must be reachable from the call's file: directly, through

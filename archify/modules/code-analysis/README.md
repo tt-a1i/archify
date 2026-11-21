@@ -65,6 +65,23 @@ Adding `--base-root` with a required `--entry` prepares a fresh before/after sou
 comparison, including separate call and module-reading references and explicit
 coverage limits. See [change questions](docs/FUNCTION-ANALYSIS.md#change-questions).
 
+For JS/TS analysis, the analyzer selects each source package's installed TypeScript SDK
+when available and records its version, source and project ownership in `raw-facts.json`,
+the check receipt's `coverage.languageScope`, and findings context. One capture may use
+different SDK versions for different subprojects; `repository.adapter` then reads
+`typescript@multi`, with the version of each project in `languageScope.projects`.
+Projects without an installed SDK use the bundled SDK. To require an installed project SDK, pass a JSON config file
+containing `{"typescript":{"requireProjectSdk":true}}` with `--config`; to select
+one explicitly, set `typescript.sdk` to its package directory. See
+[project SDK and configuration](docs/TECH-GUIDE.md#project-sdk-and-configuration).
+All sources selected by Archify are analyzed: files outside configured Programs
+enter inferred projects. A config `exclude` changes project membership, while
+Archify's own include/exclude controls capture. The [alignment ledger](docs/TS-UPSTREAM-LEDGER.md)
+separates official engine comparisons, migrated observations and remaining product differences.
+Shared Program members remain available for call analysis even when their facts
+belong to another default project; each source is still recorded once. See the
+[ts-pattern acceptance](docs/TS-REAL-PROJECT-ACCEPTANCE.md) for the verified improvement.
+
 Optional [C6 duplicate detection](docs/USAGE.md#duplicate-code-c6-optional) uses a
 separately installed jscpd 5.4.3 executable for all six languages. They use five
 analysis adapters: `ts` covers JavaScript and TypeScript, alongside `py`, `java`,

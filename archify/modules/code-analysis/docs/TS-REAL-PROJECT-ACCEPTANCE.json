@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "acceptanceScope": "captured source facts and bounded known call targets; full language-service coverage is assessed separately",
+  "project": {
+    "origin": "https://github.com/gvergnaud/ts-pattern.git",
+    "commit": "f11be73acb18e1d653d4f252e7d75981d873a2e6",
+    "packageVersion": "5.9.2",
+    "clean": true,
+    "lockSha256": "44e8aa7ffe9dd6c9f6ac1b9eea8a05d1179ffc691649bc7cbaa8942e7279b3aa"
+  },
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v24.20.0",
+    "sdkVersion": "5.9.2",
+    "sdkPath": "node_modules/typescript"
+  },
+  "candidate": {
+    "adapter": "typescript@5.9.2",
+    "adapterRevision": 28,
+    "callModel": "js-ts-lexical-v6",
+    "sourceSha256": {
+      "index.mjs": "8b1752803d70205151cc1ba8eee7a03363a323f3870246facf4dfb51ab5edf89",
+      "sdk.mjs": "a818dbd190da766e8e58c35c89ea57ff8877427d813efc381c0b60af833958b2",
+      "calls.mjs": "d7b4ee4f6b5e840f6bd59f4d0937f30b332a1847103c4dfe9d31f36a228fd676",
+      "functions.mjs": "ef43d6b290b6cfd3616f81e1d5cf6bddf6f0981d31b38a94d5532cbcaecbe3b4",
+      "imported-calls.mjs": "a011bdee83a5ac1aeb2e413386d1d4e81fd48ecddf6190eeae40ee4bcb28aac3",
+      "snapshot-host.mjs": "13c91e3feb0d5a3644e759f886e68d3d204bbe623116ce569f1f15e2c2f5e84f",
+      "runtime-package-target.mjs": "b4784427c3c138d604c0e35ca4241d35a65f4b3105f2f5737354a5d786fb5290",
+      "syntax-walk.mjs": "3081f8ff206a5be77628c8e09c47810bee8869db732beb2a19cd2ae56bfd3e8b"
+    },
+    "runnerSha256": "83085bb3e4f6345fede657c7697f4c0e29b9577cb2eee8c4b0c5c2d95bc8be8d",
+    "protocolHelperSha256": "141e19b847a6b1cd73b5f1a93dddefacccb1a16c2d4249f0f978ffc3f2672785"
+  },
+  "summary": {
+    "files": 88,
+    "projects": 6,
+    "imports": 214,
+    "functions": 475,
+    "calls": 5618,
+    "knownCalls": 1096,
+    "sharedMemberTargets": 497,
+    "unknownCalls": 4522,
+    "unknownReasons": {
+      "unsupported-callee": 3389,
+      "no-local-function-binding": 1130,
+      "optional-call": 3
+    },
+    "unknownDefinitionCategories": {
+      "captured-definition-other-project": 2617,
+      "captured-definition-same-project": 62,
+      "external-definition": 1738,
+      "no-definition": 94,
+      "expression-not-queried": 11
+    },
+    "unresolved": {
+      "external": 16,
+      "outside": 0,
+      "unknown": 1,
+      "opaque": 0
+    },
+    "unexplainedDifferences": 0
+  },
+  "coverageGates": {
+    "capturedFacts": "passed",
+    "knownTargetPrecision": "passed",
+    "completeDefinitionNavigation": "gap-observed",
+    "note": "A navigation candidate may be an interface, property, parameter or unresolved alias; candidate counts are not executable-body counts or runtime dispatch proof."
+  },
+  "reproducibility": {
+    "sourceUnchanged": true,
+    "trackedTreeClean": true,
+    "rawFactsSha256": "e8882bd35c8d134cfca5b901d0f82c6ce4181ada4b40a478ad756561f01a940d",
+    "repeatedRawFactsSha256": "e8882bd35c8d134cfca5b901d0f82c6ce4181ada4b40a478ad756561f01a940d",
+    "repeatedCaptureIdentical": true
+  },
+  "sensitivity": [
+    {
+      "mutation": "different function in the same target file",
+      "call": {
+        "file": "benchmarks/always-last-digit.ts",
+        "line": 7,
+        "column": 10
+      },
+      "original": {
+        "file": "src/match.ts",
+        "name": "match",
+        "line": 32,
+        "column": 1
+      },
+      "altered": {
+        "file": "src/match.ts",
+        "name": "constructor",
+        "line": 48,
+        "column": 3
+      },
+      "detected": true
+    }
+  ],
+  "date": "2026-11-17",
+  "nativeTypeChecks": [
+    {
+      "config": "tsconfig.json",
+      "exitCode": 0,
+      "reused": "same external source commit and SDK",
+      "log": {
+        "file": "tsc-src.log",
+        "bytes": 980,
+        "sha256": "218fabe041f04597af106ba4b1e85f138708e7dea4260288061c52e130e47889"
+      }
+    },
+    {
+      "config": "tests/tsconfig.json",
+      "exitCode": 0,
+      "reused": "same external source commit and SDK",
+      "log": {
+        "file": "tsc-tests.log",
+        "bytes": 945,
+        "sha256": "aeff495cd9855dac9036891cb59a4120d7f334d264cdd375ab9cd484a6bfac66"
+      }
+    }
+  ],
+  "beforeSharedMembers": {
+    "revision": 27,
+    "knownCalls": 599,
+    "rawFacts": {
+      "file": "before-shared-members/archify-raw-facts.json",
+      "bytes": 2156393,
+      "sha256": "e0e143a2836e2ff57c5b045f84f9fdcf5099ab96b4fd6ad1b54a7cf600246933"
+    }
+  },
+  "beforeCleanup": {
+    "candidate": {
+      "adapter": "typescript@5.9.2",
+      "adapterRevision": 28,
+      "callModel": "js-ts-lexical-v6",
+      "sourceSha256": {
+        "index.mjs": "8b1752803d70205151cc1ba8eee7a03363a323f3870246facf4dfb51ab5edf89",
+        "sdk.mjs": "a818dbd190da766e8e58c35c89ea57ff8877427d813efc381c0b60af833958b2",
+        "calls.mjs": "cd53a5bf5b59282d9caad3d18bbe0db11e5c7af85d66cce480d03c58166eac78",
+        "functions.mjs": "b8079df0becbd9f8f2f2ff0235a3e663dcf28884e0e8be580040cd596a7776dd",
+        "imported-calls.mjs": "64c0fa218ee7c1a84719c04a688b3c94988a96b98b5fe1e6b9734e0f5d561203",
+        "snapshot-host.mjs": "13c91e3feb0d5a3644e759f886e68d3d204bbe623116ce569f1f15e2c2f5e84f",
+        "runtime-package-target.mjs": "b4784427c3c138d604c0e35ca4241d35a65f4b3105f2f5737354a5d786fb5290",
+        "syntax-walk.mjs": "3081f8ff206a5be77628c8e09c47810bee8869db732beb2a19cd2ae56bfd3e8b"
+      },
+      "runnerSha256": "83085bb3e4f6345fede657c7697f4c0e29b9577cb2eee8c4b0c5c2d95bc8be8d",
+      "protocolHelperSha256": "141e19b847a6b1cd73b5f1a93dddefacccb1a16c2d4249f0f978ffc3f2672785"
+    },
+    "rawFactsSha256": "e8882bd35c8d134cfca5b901d0f82c6ce4181ada4b40a478ad756561f01a940d",
+    "completeRawFactsUnchanged": true
+  },
+  "publication": {
+    "relatedIssue": "https://github.com/tt-a1i/archify/issues/1394",
+    "comparisonBase": "772b2dea12381ed87916dc811b3767f1d8bc3eb5",
+    "status": "prepared-for-draft-review"
+  },
+  "regressionChecks": {
+    "cleanup": {
+      "passed": 67,
+      "failed": 0,
+      "node": "v24.20.0"
+    },
+    "officialSdkMatrix": [
+      {
+        "version": "5.6.3",
+        "passed": 83,
+        "failed": 0,
+        "node": "v22.23.2"
+      },
+      {
+        "version": "5.9.3",
+        "passed": 83,
+        "failed": 0,
+        "node": "v22.23.2"
+      },
+      {
+        "version": "6.0.3",
+        "passed": 83,
+        "failed": 0,
+        "node": "v22.23.2"
+      }
+    ],
+    "packageRecheck": {
+      "command": "npm run test:focus -- test/release-package-gates.test.mjs",
+      "node": "v22.23.2",
+      "tests": 38,
+      "passed": 36,
+      "skipped": 2,
+      "failed": 0,
+      "resolves": "the archive-freshness failure in canonicalFullBeforeArchiveRefresh"
+    },
+    "canonicalFullBeforeArchiveRefresh": {
+      "command": "npm run test:full",
+      "node": "v22.23.2",
+      "tests": 3693,
+      "passed": 3544,
+      "skipped": 148,
+      "failed": 1,
+      "codeAnalysisModule": "passed",
+      "failure": "committed archify.zip was stale; package-only rebuild and recheck are recorded in the PR"
+    },
+    "previousFull": {
+      "command": "npm run test:full",
+      "node": "v24.20.0",
+      "tests": 3693,
+      "passed": 3540,
+      "skipped": 153,
+      "failed": 0,
+      "includesCodeAnalysisModule": true,
+      "identity": "revision 28 before unused helper export cleanup and Labs base refresh; not a final-head rerun"
+    }
+  },
+  "examples": {
+    "sharedMemberCall": {
+      "file": "tests/is-matching.test.ts",
+      "line": 11,
+      "column": 24,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/is-matching.ts",
+        "name": "isMatching",
+        "line": 53,
+        "column": 1
+      },
+      "matched": true,
+      "officialDefinitions": [
+        {
+          "file": "src/is-matching.ts",
+          "name": "isMatching",
+          "kind": "function",
+          "textSpan": {
+            "start": 976,
+            "length": 10
+          },
+          "contextSpan": {
+            "start": 960,
+            "length": 118
+          }
+        }
+      ]
+    },
+    "testProject": {
+      "config": "tests/tsconfig.json",
+      "ownedFiles": 52,
+      "members": 71
+    },
+    "remainingMemberCall": {
+      "file": "src/internals/helpers.ts",
+      "line": 39,
+      "column": 37,
+      "reason": "unsupported-callee",
+      "category": "captured-definition-same-project",
+      "calleeSyntax": "PropertyAccessExpression",
+      "officialDefinitions": [
+        {
+          "file": "src/types/Pattern.ts",
+          "name": "match",
+          "kind": "property",
+          "textSpan": {
+            "start": 1031,
+            "length": 5
+          },
+          "contextSpan": {
+            "start": 1031,
+            "length": 44
+          }
+        }
+      ],
+      "policy": "definition candidates are not runtime dispatch evidence"
+    }
+  },
+  "artifacts": [
+    {
+      "file": "pr-final/package-recheck.log",
+      "bytes": 9129,
+      "sha256": "d0758446dc609530326355c019919a9586c6f131d29a024c9c1673f89945282b"
+    },
+    {
+      "file": "pr-final/acceptance.json",
+      "bytes": 4084998,
+      "sha256": "776b46b1690b9a6f61423cbf39d45226c45879fa15474edd9c7ebc88b69e4097"
+    },
+    {
+      "file": "pr-final/archify-raw-facts.json",
+      "bytes": 2265364,
+      "sha256": "2141b29960dcbc39b1e369435b5965a3edb74a33790d883cb695b1c7f208b3c6"
+    },
+    {
+      "file": "pr-final/tsserver-projects.json",
+      "bytes": 157194,
+      "sha256": "058e6e3620bc94c444629a02c7dee02622d446481ad763fc4af4619622436440"
+    },
+    {
+      "file": "pr-final/acceptance-run.log",
+      "bytes": 804,
+      "sha256": "c17d55dced00b69621b4389bd1c4511a7a2580d0fc22f5a160bdf265105f09aa"
+    },
+    {
+      "file": "pr-final/root-full-before-zip.log",
+      "bytes": 848630,
+      "sha256": "f8e1ff7220b1d64d11d6b69f11d55c166f9f634de55ea18c567dff789d9a83dc"
+    },
+    {
+      "file": "pr-final/cleanup-regressions.log",
+      "bytes": 7266,
+      "sha256": "0a5ac9b170a6e6134ed7258acaf30c8f59b8d7d29a1a74a7985b08ffffdb74d9"
+    },
+    {
+      "file": "pr-final/official-5.6.3.log",
+      "bytes": 13821,
+      "sha256": "7e39d4d7f855968cda2b9c443033843c6b6045bbdb2cea0c5fa453a776975b46"
+    },
+    {
+      "file": "pr-final/official-6.0.3.log",
+      "bytes": 13827,
+      "sha256": "16c3f06bcde588d69ddcc515b78478c4e37786f88c4bbe5f5cd4fbb9c141fb57"
+    },
+    {
+      "file": "root-full-r28-final.log",
+      "bytes": 360676,
+      "sha256": "f484d4899032ec3cb1e27a5e3b232a741e7462a3737e962ec5ba2b8e35e53136"
+    },
+    {
+      "file": "npm-ci.log",
+      "bytes": 535,
+      "sha256": "204144b0176b5f4b58b0920d8d3ee74f3c7ea28b2ba8d39e4e23f14865d59f8b"
+    },
+    {
+      "file": "shared-members-comparison.json",
+      "bytes": 747,
+      "sha256": "8ab666a455c56d9af679c4da36c6f3bf1616e78549078b558b7a5031d9972c12"
+    }
+  ]
+}
