@@ -152,7 +152,7 @@ test('Explainer toolbar and menus remain inside narrow viewports',{skip:!chrome}
   for(const locale of ['en','zh-CN']) {
    const document=formalDocument();document.meta.locale=locale;
    const file=artifact('toolbar-'+locale,renderExplainer(document));
-   for(const width of [320,390,1440])for(const style of ['clean','editorial','product','swiss']) {
+   for(const width of [320,390,760,1440])for(const style of ['clean','editorial','product','swiss']) {
     await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,height:900,keyboard:false});
     await keyboardActivate(browser,'.style-menu [aria-haspopup]');
     await keyboardActivate(browser,`[data-style-choice="${style}"]`);
@@ -164,8 +164,9 @@ test('Explainer toolbar and menus remain inside narrow viewports',{skip:!chrome}
     assert.ok(containment.controls.every(r=>r.left>=0&&r.right<=width),JSON.stringify(containment));
     for(const menu of ['.style-menu','.export-menu']) {
      await keyboardActivate(browser,menu+' [aria-haspopup]');
-     const popup=await pageValue(browser,`(()=>{const e=document.querySelector(${JSON.stringify(menu+' .menu-options')});const r=e.getBoundingClientRect();return {left:r.left,right:r.right,visible:getComputedStyle(e).display!=='none',scroll:document.documentElement.scrollWidth}})()`);
+     const popup=await pageValue(browser,`(()=>{const e=document.querySelector(${JSON.stringify(menu+' .menu-options')});const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,toolbarBottom:document.querySelector('.tools').getBoundingClientRect().bottom,visible:getComputedStyle(e).display!=='none',scroll:document.documentElement.scrollWidth}})()`);
      assert.equal(popup.visible,true);assert.ok(popup.left>=0&&popup.right<=width,JSON.stringify({locale,width,style,menu,popup}));assert.equal(popup.scroll,width);
+     if(width<=760)assert.ok(popup.top>=popup.toolbarBottom,'popup must clear the complete toolbar: '+JSON.stringify({locale,width,style,menu,popup}));
      assert.equal(await pageValue(browser,`document.querySelector(${JSON.stringify(menu+' .menu-options')}).contains(document.activeElement)`),true,'Keyboard opening must focus a menu item');
      await keyboardPress(browser,'Escape');
      const closed=await pageValue(browser,`(()=>{const toggle=document.querySelector(${JSON.stringify(menu+' [aria-haspopup]')});return {hidden:document.querySelector(${JSON.stringify(menu+' .menu-options')}).hidden,expanded:toggle.getAttribute('aria-expanded'),focused:document.activeElement===toggle}})()`);
