@@ -40,7 +40,9 @@ test('Cloudflare publishes only the checked artifact at the current main SHA', (
   assert.equal(browser.env.ARCHIFY_SITE_BASE, '');
   assert.equal(browser.env.ARCHIFY_SITE_INTEGRATION, '1');
   assert.equal(browser.run, 'npm run test:browser');
+  assert.deepEqual(workflow.jobs.website.strategy.matrix.target, ['pages', 'cloudflare']);
   const upload = workflow.jobs.website.steps.find(step => step.with?.name === download.with.name);
+  assert.equal(upload.if, "matrix.target == 'cloudflare'");
   assert.equal(upload.with.path, download.with.path);
   assert.equal(upload.with['if-no-files-found'], 'error');
 });

@@ -94,7 +94,13 @@ export function publishSeo(root, target) {
     ...PUBLISHED_CASES.map(entry => `${CANONICAL_ORIGIN}/${entry.artifact.replace(/\.html$/, '')}`),
   ];
   fs.writeFileSync(path.join(root, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(url => `  <url><loc>${escape(url)}</loc></url>`).join('\n')}\n</urlset>\n`);
-  fs.writeFileSync(path.join(root, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${CANONICAL_ORIGIN}/sitemap.xml\n`);
+  // Disallow synthetic RFC 6901 JSON Pointer prefixes (including bare /answer
+  // and /meta root pointers) embedded in Explainer <script id="archify-explainer-prepared">
+  // payloads while keeping /gallery/sources/ and /cases/ crawlable so X-Robots-Tag: noindex is read.
+  fs.writeFileSync(
+    path.join(root, 'robots.txt'),
+    `User-agent: *\nAllow: /\nDisallow: /panels/\nDisallow: /answer/\nDisallow: /answer$\nDisallow: /meta/\nDisallow: /meta$\nDisallow: /sources/\n\nSitemap: ${CANONICAL_ORIGIN}/sitemap.xml\n`,
+  );
   // Static Pages supports these response headers; GitHub Pages does not.
   if (target.name === 'cloudflare') {
     fs.writeFileSync(path.join(root, '_headers'), `/*.json\n  X-Robots-Tag: noindex\n/*.archify.md\n  X-Robots-Tag: noindex\n`);

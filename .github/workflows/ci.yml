@@ -74,7 +74,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3, 4]
+        include:
+          - shard: analysis-1
+            module-shard: 1
+          - shard: analysis-2
+            module-shard: 2
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -94,8 +99,30 @@ jobs:
       - name: Verify community Hermes adapter
         if: matrix.shard == 2
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
+      - name: Install Code Analysis duplicate detector
+        if: matrix.module-shard
+        run: npm install --prefix "$RUNNER_TEMP/archify-jscpd" --ignore-scripts --no-audit --no-fund jscpd@5.4.3
+      - name: Install Code Analysis C/C++ parser
+        if: matrix.module-shard
+        run: |
+          python3 -m venv "$RUNNER_TEMP/archify-clang"
+          "$RUNNER_TEMP/archify-clang/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --no-deps libclang==18.1.1
+      # The root runner enumerates only test/; the module suite lives with the module.
+      - name: Verify generated Code Analysis Python parser
+        if: matrix.module-shard == 1
+        run: npm run check:python
+        working-directory: archify/modules/code-analysis
+      - name: Code Analysis module suite
+        if: matrix.module-shard
+        run: node --test --test-shard=${{ matrix.module-shard }}/2 test/*.test.mjs
+        working-directory: archify/modules/code-analysis
+        env:
+          ARCHIFY_TEST_JSCPD: ${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd
+          ARCHIFY_CPP_PYTHON: ${{ runner.temp }}/archify-clang/bin/python
+          ARCHIFY_CPP_REQUIRED: '1'
       - name: Run a complete regression shard
-        run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2
+        if: '!matrix.module-shard'
+        run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4
 
   test:
     needs: scope
@@ -189,7 +216,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3, 4]
     steps:
       - name: Require successful scope checks
         env:
@@ -214,10 +241,13 @@ jobs:
           install-dependencies: true
       - name: Install browser test dependencies
         if: needs.scope.outputs.browser == 'true'
-        run: npm ci --ignore-scripts --no-audit --no-fund && npm --prefix archify ci --ignore-scripts
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm --prefix archify ci --ignore-scripts --no-audit --no-fund
+          npm --prefix archify/modules/code-analysis ci --ignore-scripts --no-audit --no-fund
       - name: Run shared browser regression gate
         if: needs.scope.outputs.browser == 'true'
-        run: npm run test:browser -- --shard=${{ matrix.shard }}/2
+        run: npm run test:browser -- --shard=${{ matrix.shard }}/4
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
@@ -287,6 +317,7 @@ jobs:
         run: npm run test:webm
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
 
   webm-artifact:
     needs: [scope, browser-regression, webm-decode]
@@ -471,6 +502,10 @@ jobs:
     needs: scope
     if: needs.scope.outputs.website == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [pages, cloudflare]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -482,6 +517,7 @@ jobs:
         run: npm ci
         working-directory: website
       - name: Typecheck and build website
+        if: matrix.target == 'pages'
         run: npm run check && npm run build && npm test
         working-directory: website
       - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
@@ -494,6 +530,7 @@ jobs:
           sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
           fc-match 'sans-serif:lang=zh-cn'
       - name: Verify built website navigation and language continuity
+        if: matrix.target == 'pages'
         run: npm run test:browser
         working-directory: website
         env:
@@ -502,11 +539,13 @@ jobs:
           ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Build and validate the Cloudflare static website
+        if: matrix.target == 'cloudflare'
         run: npm run build && node scripts/check-cloudflare-output.mjs && node --test test/deployment-target.test.mjs
         working-directory: website
         env:
           ARCHIFY_SITE_TARGET: cloudflare
       - name: Verify Cloudflare navigation and language continuity
+        if: matrix.target == 'cloudflare'
         run: npm run test:browser
         working-directory: website
         env:
@@ -519,15 +558,17 @@ jobs:
         if: always()
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: website-homepage-evidence
+          name: website-homepage-evidence${{ matrix.target == 'cloudflare' && '-cloudflare' || '' }}
           path: website/.browser-evidence
           if-no-files-found: warn
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        if: matrix.target == 'pages'
         with:
           name: website-dist
           path: website/dist
           include-hidden-files: true
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        if: matrix.target == 'cloudflare'
         with:
           name: website-cloudflare-dist
           path: website/dist-cloudflare
@@ -537,11 +578,24 @@ jobs:
   windows-test-portability:
     needs: scope
     if: always() && !cancelled()
-    name: Windows test portability (Node ${{ matrix.node-version }})
+    name: Windows test portability (Node ${{ matrix.node-version }})${{ matrix.suffix }}
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22, 24]
+        include:
+          - node-version: 22
+            profile: --controlled
+          - node-version: 22
+            profile: --contracts-1
+            suffix: ' / contracts 1'
+          - node-version: 22
+            profile: --contracts-2
+            suffix: ' / contracts 2'
+          - node-version: 22
+            profile: --portability
+            suffix: ' / portability'
+          - node-version: 24
+            profile: --smoke
     runs-on: windows-latest
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
@@ -562,16 +616,46 @@ jobs:
       - name: Install test dependencies
         if: needs.scope.outputs.windows == 'true'
         run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
+      - name: Install Code Analysis task-command test dependencies
+        if: needs.scope.outputs.windows == 'true' && (matrix.profile == '--controlled' || matrix.profile == '--smoke')
+        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
+      - name: Verify Java source bindings and Maven evidence on Windows
+        if: needs.scope.outputs.windows == 'true' && matrix.profile == '--controlled'
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          if (!$env:JAVA_HOME_17_X64) { throw 'The Windows runner must provide JDK 17.' }
+          $env:ARCHIFY_JAVA = Join-Path $env:JAVA_HOME_17_X64 'bin/java.exe'
+          & $env:ARCHIFY_JAVA -version
+          $module = 'archify/modules/code-analysis'
+          node --test --test-reporter=tap "$module/test/java-semantic.test.mjs" | Tee-Object -Variable semanticResults
+          if ($semanticResults -notcontains '# skipped 0') { throw 'Java semantic tests must run without skips.' }
+
+          $benchmark = 'benchmarks/java-binding-probe'
+          $fixture = "$benchmark/fixture"
+          $output = Join-Path $env:RUNNER_TEMP 'archify-java-binding'
+          New-Item -ItemType Directory -Path $output | Out-Null
+          & $env:ARCHIFY_JAVA "$module/extract/java/SourceBindings.java" $fixture 'api/src/main/java,app/src/main/java' "$output/maven.tsv" 8
+          node "$module/test/run-extract.mjs" $fixture --language java --out "$output/maven-facts.json"
+          node "$benchmark/compare.mjs" $fixture "$output/maven-facts.json" "$output/maven.tsv" "$benchmark/maven-queries.json" > "$output/maven.json"
+          git diff --no-index --exit-code -- "$benchmark/results/maven.json" "$output/maven.json"
+          node "$module/test/run-extract.mjs" $fixture --language java --config "$benchmark/semantic-config.json" --out "$output/maven-enhanced-facts.json"
+          node "$benchmark/compare.mjs" $fixture "$output/maven-enhanced-facts.json" "$output/maven.tsv" "$benchmark/maven-queries.json" --enhanced > "$output/maven-enhanced.json"
+          git diff --no-index --exit-code -- "$benchmark/results/maven-enhanced.json" "$output/maven-enhanced.json"
+          Write-Output 'Both Maven reports match the committed target positions.'
+      - name: Execute generated task commands in native cmd.exe
+        if: needs.scope.outputs.windows == 'true' && (matrix.profile == '--controlled' || matrix.profile == '--smoke')
+        run: node --test archify/modules/code-analysis/test/task-command-shell.test.mjs
       - name: Provision controlled Windows path fixtures
         if: needs.scope.outputs.windows == 'true'
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
       - name: Verify maintained Windows path contracts
         if: needs.scope.outputs.windows == 'true'
-        run: node scripts/run-windows-path-tests.mjs ${{ matrix.node-version == 24 && '--smoke' || '' }}
+        run: node scripts/run-windows-path-tests.mjs ${{ matrix.profile }}
         env:
           ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
-          ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
+          ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: ${{ (matrix.profile == '--controlled' || matrix.profile == '--smoke') && '1' || '0' }}
       - name: Clean up controlled Windows path fixtures
         if: ${{ always() && needs.scope.outputs.windows == 'true' }}
         shell: pwsh

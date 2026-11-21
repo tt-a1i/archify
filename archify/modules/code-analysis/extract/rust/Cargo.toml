@@ -1,0 +1,11 @@
+[package]
+name = "archify-rust-source"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.71"
+
+[dependencies]
+syn = { version = "=2.0.119", features = ["full", "visit"] }
+proc-macro2 = { version = "=1.0.107", features = ["span-locations"] }
+serde_json = "=1.0.154"
+quote = "=1.0.47"

@@ -1,0 +1,62 @@
+{
+  "kind": "constructed-native-viewer-new-base-equivalence",
+  "route": "Viewer presentation/export replay",
+  "oldBase": "10a608a743be58ede8069959cc6e502175677d7c",
+  "newBase": "91270ea08d53baf676bd2270d7805233a8798351",
+  "frozenHead": "bdd477bb7f76dedb7975bf9ecb1b86018b3ed44d",
+  "originalReplay": "native-viewer-comparison.json",
+  "originalInputSha256": "a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef",
+  "nativeOnly": true,
+  "sourceFiles": [
+    {
+      "path": "app/index.mjs",
+      "sha256": "f1314de34414aee59d2d6e6f22038526bac7abcd0ceb6a9cb3cbb7f5bf53bbae"
+    },
+    {
+      "path": "lib/helper.mjs",
+      "sha256": "1db03a239709ac2d87419e9b60cf3652050fcf63bd5c02f0ae7c1b78aa660463"
+    }
+  ],
+  "samples": [
+    {
+      "name": "old-base",
+      "inputSha256": "a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef",
+      "htmlSha256": "f36748f4754aef1c27261c8e7fbc8b19daf33b4a9c9c4dbcb87d103b7d5dcf4d",
+      "payloadSha256": "d2b6addfbe1c4c636ddb56699ce2b5c1fff4760076ef0d26fa25872e7f7b504d"
+    },
+    {
+      "name": "new-base",
+      "inputSha256": "a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef",
+      "htmlSha256": "f36748f4754aef1c27261c8e7fbc8b19daf33b4a9c9c4dbcb87d103b7d5dcf4d",
+      "payloadSha256": "d2b6addfbe1c4c636ddb56699ce2b5c1fff4760076ef0d26fa25872e7f7b504d"
+    },
+    {
+      "name": "frozen-bdd",
+      "inputSha256": "a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef",
+      "htmlSha256": "587cf861c4338bfdaf7d5a31cbd252c4d6eb483094c9015ac9a060e0aa13e75d",
+      "payloadSha256": "177644ac2c7fd1549585b854d0612dab63917c2720f75e9d6b894e30b046cdfb"
+    }
+  ],
+  "baseHtmlByteEqual": true,
+  "basePayloadByteEqual": true,
+  "currentCandidate": {
+    "head": "69f90c17be2dd2558c2a5cd99dc5389857b90ddf",
+    "sample": {
+      "name": "merged-candidate",
+      "inputSha256": "a68f2c17e5d693b117c8ce962eca12d7ece7c53971fc7c50744c53f397880eef",
+      "htmlSha256": "587cf861c4338bfdaf7d5a31cbd252c4d6eb483094c9015ac9a060e0aa13e75d",
+      "payloadSha256": "177644ac2c7fd1549585b854d0612dab63917c2720f75e9d6b894e30b046cdfb"
+    },
+    "htmlEqualToPriorCandidate": true,
+    "payloadEqualToPriorCandidate": true,
+    "state": "69f90c17 with 91270ea0 merged and text conflicts resolved"
+  },
+  "screenshotsRecaptured": false,
+  "evidenceReuse": "Identical complete rendered HTML includes the payload, CSS and JS. Original fixed-condition screenshots remain the visual evidence; no new visual or human approval is claimed.",
+  "date": "2026-11-12",
+  "limitations": [
+    "Controlled native TypeScript fixture without Git history; Viewer replay only",
+    "Does not validate incoming Go build-scope or Git-diff logic",
+    "Original four screenshots are reused, not recaptured; no new human approval"
+  ]
+}
