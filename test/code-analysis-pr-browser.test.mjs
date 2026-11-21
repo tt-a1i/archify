@@ -178,9 +178,14 @@ async function checkPinnedFiles(t, diagram) {
   };
   const literal = JSON.stringify;
   const click = async selector => {
-    const point = await read('(() => {const b=document.querySelector(' + literal(selector) + ');if(!b)throw Error("Control missing");' +
-      'b.scrollIntoView({block:"nearest"});const r=b.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;' +
-      'if(!b.contains(document.elementFromPoint(x,y)))throw Error("Control obstructed: "+b.textContent);return {x,y};})()');
+    // The reader slides in when pinned source opens; click where the control
+    // settles, as a person would, not where it is mid-transition.
+    const point = await read('(async () => {const b=document.querySelector(' + literal(selector) + ');if(!b)throw Error("Control missing");' +
+      'const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));' +
+      'b.scrollIntoView({block:"nearest"});let r=b.getBoundingClientRect();' +
+      'for(let i=0;i<60;i++){await frame();const n=b.getBoundingClientRect();if(n.left===r.left&&n.top===r.top&&n.width===r.width)break;r=n;}' +
+      'const x=r.left+r.width/2,y=r.top+r.height/2,o=document.elementFromPoint(x,y);' +
+      'if(!b.contains(o))throw Error("Control obstructed: "+b.textContent+" by "+(o?o.tagName+"#"+o.id+"."+o.className:"nothing")+" at "+Math.round(x)+","+Math.round(y));return {x,y};})()');
     for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, ...point, button: 'left', clickCount: 1 });
   };
   const image = async name => {
@@ -202,6 +207,9 @@ async function checkPinnedFiles(t, diagram) {
   const assertSourceVisible = async () => {
     assert.equal(await read('document.getElementById("bauify-code").getClientRects().length > 0'), true, 'pinned source must be visible');
     assert.equal(await read('document.getElementById("bauify-atlas").hidden'), diagram);
+    // Once the reader settles, its Back control stays on screen.
+    assert.equal(await read('(async () => {const b=document.querySelector(".source-back");let p=null;for(let i=0;i<60;i++){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const r=b.getBoundingClientRect(),k=r.left+","+r.top;if(k===p)break;p=k;}' +
+      'const r=b.getBoundingClientRect();return r.left>=0&&r.right<=document.documentElement.clientWidth;})()'), true, 'the source Back control must stay on screen');
   };
   const assertFilesRestored = async side => {
     assert.equal(await read('document.getElementById("bauify-code").hidden'), true);

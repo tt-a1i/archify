@@ -309,9 +309,12 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 /* Source page: code needs width more than the diagram does while it is being read. */
 @media (min-width: 1181px) {
   html[data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
-  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .diagram-container,
-  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) #bauify-views,
-  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]) .reader-rail { margin-right: calc(min(760px, 54vw) + 24px); }
+  /* A docked reader takes width from the page. The fly-out rides on the canvas
+     edge instead, so shrinking the canvas would push it off the left side. */
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]):not([data-bauify-flymode]) .diagram-container,
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]):not([data-bauify-flymode]) #bauify-views,
+  html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]):not([data-bauify-flymode]) .reader-rail { margin-right: calc(min(760px, 54vw) + 24px); }
+  html[data-bauify-flymode][data-bauify-source="on"] #bauify-reader:not(.collapsed) { max-width: calc(100vw - var(--bauify-fly-right, 16px) - 16px); }
   #bauify-reader { transition: width .16s ease; }
 }
 @media (prefers-reduced-motion: reduce) { #bauify-reader { transition: none; } }
