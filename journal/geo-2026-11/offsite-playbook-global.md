@@ -391,3 +391,93 @@ Use this positioning whenever targeting broader design, knowledge-management, pr
   - Concept & engineering explainers: `https://archify.si/cases/explainer/tls-first-visit`, `https://archify.si/cases/explainer/p99-tail-latency`, `https://archify.si/cases/mco-runtime`
   - Canonical comparison & complete retrieval reference: `https://archify.si/compare`, `https://archify.si/llms-full.txt`
 
+---
+
+## 8. Draft 5 — English Technical Comparison Article (Dev.to / Hashnode / Medium / r/ClaudeAI)
+
+> **Purpose**: Direct external backlink & topical authority driver for `https://archify.si/compare` on high-intent English queries such as *"Mermaid alternatives for AI coding agents"* and *"interactive architecture diagram tool Claude Code Cursor"*. Before publishing, review against your account's disclosure rules and keep every claim grounded.
+
+### Title
+
+`Mermaid Alternatives for AI Coding Agents: Why Typed JSON IR + Browser Checks Beat Syntax Prompting`
+
+### Tags (for Dev.to / Hashnode)
+
+`architecture`, `claudecode`, `cursor`, `mermaid`, `ai`
+
+### Canonical URL (optional on Dev.to / Hashnode if cross-posting from a blog, or leave blank if Dev.to is the original article and link `https://archify.si/compare` cleanly in body)
+
+Do not set `canonical_url` to `archify.si/compare` unless publishing an identical mirror; instead publish this original comparison post and link directly to `https://archify.si/compare` and the no-signup artifacts.
+
+### Body
+
+```markdown
+> Maintainer disclosure: I maintain [Archify](https://archify.si) (`tt-a1i/archify`, Apache-2.0). This comparison covers real trade-offs with Mermaid, Excalidraw (including Excalidraw MCP), D2, LikeC4, and Eraser.io — including several scenarios where you should **not** pick Archify.
+
+If you use **Claude Code, Cursor, Codex CLI, OpenCode, or GitHub Copilot** to explain a system, you have probably hit the "20-node Mermaid wall":
+
+- A 6-node flowchart in a Markdown README is fast and clean in Mermaid.
+- Past ~15–20 nodes, asking an LLM to hand-author graph syntax turns into edge crossings, clipped labels, and awkward text wrapping — and the final output is still a static SVG you cannot explore by clicking upstream dependencies or hiding noise.
+
+So when teams go looking for **Mermaid alternatives for AI coding agents**, what actually works — and when does each tool win?
+
+## How the six main options divide the problem
+
+| Tool | How the agent works with it | What readers receive | Best fit |
+| --- | --- | --- | --- |
+| **Mermaid** | Generates concise Markdown DSL inside docs | Inline static diagram in GitHub / Docs | Small flows (<15 nodes) that live inside a README |
+| **Excalidraw (+ MCP)** | Pushes sketch primitives onto a live canvas | Editable freehand whiteboard / image export | Group brainstorming & rough spatial thinking |
+| **PlantUML / D2** | Generates text DSL compiled in a CLI/docs pipeline | Static SVG / PNG with clean Git line diffs | Diagram-as-code workflows committed alongside docs |
+| **LikeC4** | Maintains a typed C4 architecture model across a repo | Multi-view C4 architecture site / views | Teams standardizing strictly on C4 modeling in Git |
+| **Eraser.io** | DiagramGPT / hosted workspace canvas | Cloud workspace with team sharing & permissions | Organizations wanting a managed SaaS diagram hub |
+| **Archify** | Agent authors **typed JSON IR** (10 diagram types) or `.archify.md` (explainer) | **One standalone interactive HTML file** (no server or account) | Explaining complex plans, flows, or codebases with polish and interactivity |
+
+A detailed side-by-side matrix and scope boundary list is maintained at **[archify.si/compare](https://archify.si/compare)**.
+
+## Why typed JSON IR + browser checks change agent reliability
+
+When an agent writes freehand Mermaid or raw SVG, syntax validity and readable geometry are coupled in one fragile step. With [Archify](https://archify.si):
+
+1. **You never write or debug diagram syntax.** Describe the topic in plain language — or point your agent at an existing plan, a tangled Mermaid draft, or a pinned repository revision. Note: converting a Mermaid draft is semantic re-authoring rather than lossless parsing of arbitrary Mermaid directives.
+2. **Typed JSON IR separates semantics from routing.** The agent chooses among **10 native diagram types** (`architecture`, `workflow`, `sequence`, `dataflow`, `lifecycle`, `erd`, `class`, `tree`, `timeline`, `waterfall`). Deterministic layout and orthogonal routing handle placement instead of asking an LLM to guess `(x, y)` coordinates or hand-code SVG paths.
+3. **Validation checks the artifact before delivery.** `archify finalize` runs schema checks, route/geometry collision checks, and a headless browser check by default for native diagrams (explainers run structural/delivery checks by default, with browser checks available via `--browser-check`).
+4. **Output is a single zero-dependency HTML file.** Open it offline in any browser to focus a node, highlight upstream/downstream reach, trace shortest paths, switch light/dark themes, or export PNG/SVG/WebM/PDF (where browser and local tooling support it).
+5. **Beyond single charts: 4-style one-page explainers (`.archify.md`).** When one diagram still leaves readers asking *why*, the agent generates a conclusion-first page pairing prose, tables, steps, and synced validated diagrams side by side — reading a step lights up the matching part of the diagram.
+
+**Important boundary:** Structural and layout validation proves the rendered artifact is readable and well-formed; it does *not* verify that every claim matches runtime reality in production. Human review still owns factual accuracy.
+
+## Beyond codebases: live no-signup examples
+
+A repository is optional — people use the exact same workflow for everyday plans, protocol breakdowns, and codebase maps alike:
+
+- **One-page technical explainers**: [What happens before a first HTTPS request? (TLS 1.3)](https://archify.si/cases/explainer/tls-first-visit) and [Why P99 tail latency spikes while averages stay flat](https://archify.si/cases/explainer/p99-tail-latency)
+- **Source-backed codebase mapping**: [MCO runtime architecture at a pinned commit](https://archify.si/cases/mco-runtime)
+- **Everyday workflows & extensible HTML (no repo needed)**: [First-time apartment rental checklist explainer](https://archify.si/cases/explainer/first-rental) and a community-extended [4-day Shanghai CityWalk itinerary](https://archify.si/cases/community/shanghai-citywalk)
+
+## When to pick the other tools instead
+
+- Pick **Mermaid** if the diagram is small, belongs inline inside a GitHub Markdown file, and needs to be edited directly in text.
+- Pick **Excalidraw** (or Excalidraw MCP) if several teammates need to drag shapes together on an infinite whiteboard.
+- Pick **PlantUML / D2** for strict text-diff CI pipelines, or **LikeC4** if you want a repository-wide typed C4 DSL model.
+- Pick **Eraser.io** if you want a hosted multi-user SaaS workspace with role permissions.
+
+## Try it with your agent
+
+Inspect the skill listing first (read-only):
+
+```sh
+npx -y skills@latest add https://archify.si --list --full-depth
+```
+
+Install globally for Claude Code (or swap `--agent` to `cursor`, `codex`, `opencode`, or `github-copilot`, and omit `--global` for a project-local install; check existing skill folders first so unmanaged files are preserved):
+
+```sh
+npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes
+```
+
+- Full tool comparison & boundaries: https://archify.si/compare
+- 10 diagram types guide: https://archify.si/guide
+- Source & Apache-2.0 license: https://github.com/tt-a1i/archify
+```
+
+
