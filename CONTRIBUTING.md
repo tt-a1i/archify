@@ -118,7 +118,16 @@ Renderer and Viewer changes also run the real browser gate and generated-output
 checks. Filesystem, process, dependency, build, and workflow changes retain the
 full regression and relevant Windows/package gates. New or modified test files
 are executed; test helpers and fixtures take the conservative full path.
-Repository prose and website-only changes use their own checks.
+Repository prose and website-only changes use their own checks. Changes limited
+to the five root README languages, `CHANGELOG.md`, repository policy Markdown,
+and community badge assets use the documentation path. It installs root check dependencies only for README/changelog changes, verifies release identity for README/changelog changes, and
+runs existing README contracts and the website's README entry-point check when
+README content changes. Policy-only changes reuse the intake/process contract;
+community badge changes retain the README showcase checks. Neither requires
+dependency installation. README and changelog files are not website build inputs.
+Mixed product changes retain those documentation checks alongside product gates;
+changed tests still run through the core path. Unknown README language names and
+other Markdown paths do not automatically qualify for this fast path.
 
 Unknown paths, an empty comparison, and an unavailable development-push base
 select full coverage. An invalid PR comparison fails classification. Required

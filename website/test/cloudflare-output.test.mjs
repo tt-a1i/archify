@@ -17,7 +17,7 @@ function fixture(t) {
   fs.writeFileSync(path.join(root, '404.html'), '<!doctype html><title>Not found</title>');
   fs.writeFileSync(path.join(root, 'sitemap.xml'), `<urlset>${urls.map(url => `<url><loc>${url}</loc></url>`).join('')}</urlset>`);
   fs.writeFileSync(path.join(root, 'robots.txt'), 'User-agent: *\nAllow: /\n\nSitemap: https://archify.si/sitemap.xml\n');
-  fs.writeFileSync(path.join(root, '_headers'), '/*.json\n  X-Robots-Tag: noindex\n');
+  fs.writeFileSync(path.join(root, '_headers'), '/*.json\n  X-Robots-Tag: noindex\n/*.archify.md\n  X-Robots-Tag: noindex\n');
   fs.writeFileSync(path.join(root, 'site.css'), 'body { color: black; }');
   fs.appendFileSync(path.join(root, 'index.html'), '<link href="site.css" rel="stylesheet"><a href="/guide?lang=zh#install">Guide</a>');
   const manifest = path.join(root, 'skill-updates/archify/stable.json');

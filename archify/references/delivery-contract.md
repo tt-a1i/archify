@@ -631,8 +631,10 @@ Never start it by default. Do not use it for CI, unattended agents, remote shari
 The automated path ends with the deterministic browser gate and reports
 `visual_review: not_requested`. Ordinary generation does not require screenshots
 or an image-reading step, including newly authored or repositioned Architecture.
-Perceptual review is optional; use it for an explicit request or a concrete visual
-investigation. Possible reasons include:
+When the requested output is for a README or project document, open it at the
+intended reading size and follow the path that answers the reader's question.
+For a project README, deliver a static SVG by default unless the user specifically asks for a link or interactive HTML. For other project documents, deliver an SVG when a static image is requested. Run `node <skill-dir>/bin/export-svg.mjs <diagram.html> <image.svg> [auto|light|dark]`. This uses the standalone Viewer’s SVG export and requires Chrome or Chromium (`ARCHIFY_CHROME` can select its executable). It refuses to replace an existing output. Inspect the exported image in a document column using its natural size and a maximum width of 100%. When an answer depends on small labels or Viewer cards, supply a paste-ready Markdown image followed by a short caption. State the requested names, outcomes, or conditions in ordinary document text. Reasons to capture
+screenshots for a reproducible visual review include:
 
 - the compact finalizer includes `visualReviewRecommendation` for crossings or detours (advisory, not a delivery gate);
 - the user explicitly requests an aesthetic or visual review;

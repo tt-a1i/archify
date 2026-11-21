@@ -30,32 +30,19 @@ function metadata(content) {
   return data;
 }
 
-// A PowerShell 7 parent (the CI step shell) leaks its PSModulePath, so Windows
-// PowerShell would load PowerShell 7's Archive module, which calls a .NET Core-only
-// ExtractToDirectory overload. Let powershell.exe use its own module path.
-function windowsPowerShellEnv(extra) {
-  const env = { ...process.env, ...extra };
-  for (const name of Object.keys(env)) if (name.toLowerCase() === 'psmodulepath') delete env[name];
-  return env;
-}
-
 function extractArchive(destination) {
   fs.mkdirSync(destination, { recursive: true });
   const archive = path.join(repoRoot, 'archify.zip');
+  // Avoid loading the PowerShell 7 Archive module in Windows PowerShell 5.1
+  // when the test process inherits PSModulePath from a pwsh parent.
   const result = process.platform === 'win32'
     ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      "$ErrorActionPreference = 'Stop'; Expand-Archive -LiteralPath $env:ARCHIFY_TEST_ARCHIVE -DestinationPath $env:ARCHIFY_TEST_EXTRACT"], {
+      "$ErrorActionPreference = 'Stop'; Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory($env:ARCHIFY_TEST_ARCHIVE, $env:ARCHIFY_TEST_EXTRACT)"], {
       encoding: 'utf8',
-      env: windowsPowerShellEnv({ ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination }),
+      env: { ...process.env, ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination },
     })
     : spawnSync('unzip', ['-q', archive, '-d', destination], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.error?.message || result.stderr);
-  // Expand-Archive deletes what it expanded when it stops early; report what it said.
-  const entries = fs.existsSync(destination) ? fs.readdirSync(destination, { recursive: true }) : [];
-  assert.ok(fs.existsSync(path.join(destination, 'archify', 'SKILL.md')),
-    `archive did not expand (${entries.length} entries): ${entries.slice(0, 5).join(', ')}
-${result.stdout}
-${result.stderr}`);
+  assert.equal(result.status, 0, result.error?.message || `${result.stdout}\n${result.stderr}`);
 }
 
 test('distributed ZIP carries the same valid Skill frontmatter as source', (t) => {

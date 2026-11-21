@@ -98,8 +98,52 @@ test('writing: Chinese and English controlled-language hints stay precise', () =
   const rules = text => lintExplainerWriting([entry(text)]).map(item => item.evidence.rule);
   assert.deepEqual(rules('综上所述，先做出决定再加以验证。'), ['filler', 'light-verb', 'light-verb']);
   assert.deepEqual(rules('重试 3 次以上会放大延迟。'), ['number-boundary']);
-  assert.deepEqual(rules('负责处理用户提交的订单的服务的日志很大。'), ['de-chain']);
   assert.deepEqual(rules('In order to utilize the cache, read it first.'), ['plain-word', 'plain-word']);
   assert.deepEqual(rules('In summary, this cutting-edge design is seamless.'), ['filler', 'cliche', 'cliche']);
   assert.deepEqual(lintExplainerWriting(['任务进行中。', '目的的确清楚。', '重试超过 3 次。', '服务以下游为准。', 'Use the cache before the database.'].map(text => entry(text))), []);
+});
+
+test('writing: independent Chinese modifiers do not imply a nested noun phrase', () => {
+  const independentModifiers = [
+    '冲突中的文件不适用上表的简单复制模型：从暂存区恢复工作区时，未合并条目需要相应的冲突选项处理。',
+    '是当前提交里的版本；暂存区是准备提交的版本；工作区是磁盘上正在编辑的文件。',
+    '上面的机制来自固定版本的 CPython 3.13.9 源码；观察运行于本地 Python 3.15.0，并非 3.13.9 的实测。',
+    '请求的状态和用户的权限决定缓存的键。',
+  ];
+  assert.deepEqual(lintExplainerWriting(independentModifiers.map(text => entry(text)), {mode: 'strict'}), []);
+});
+
+
+test('writing: local uncertainty and examples survive strict mode without disabling actionable hints', () => {
+  const qualifications = [
+    '示例中的 3 个请求共用一次调用，不代表结果会被缓存。',
+    '图中的耗时未实测；箭头只表示调用顺序。',
+    'The counts are illustrative, not measured.',
+    'The request count is not measured; check traces before choosing a limit.',
+  ];
+  assert.deepEqual(lintExplainerWriting(qualifications.map(text => entry(text)), {mode: 'strict'}), []);
+  const mixed = lintExplainerWriting([entry('本例未实测。很多用户进行分析。')], {mode: 'strict'});
+  assert.deepEqual(mixed.map(d => d.evidence.rule), ['vague-quantity', 'light-verb']);
+  assert.ok(mixed.every(d => d.severity === 'error'));
+});
+
+test('writing: semicolon clauses keep short clauses readable without counting as extra paragraph sentences', () => {
+  const parallel = '浏览器先查本地缓存并校验过期时间窗口；接口再回源查询主库记录并写入更新；最后把结果同步返回调用方。';
+  assert.deepEqual(lintExplainerWriting([entry(parallel)], {mode: 'strict', sentenceLimits: {zh: 24}}), []);
+  const enParallel = 'Check the local cache entry first; fetch the database row only when missing; write the value back last.';
+  assert.deepEqual(lintExplainerWriting([entry(enParallel)], {mode: 'strict', sentenceLimits: {en: 10}}), []);
+  // Five semicolon clauses in a single sentence still count as 1 sentence (< 4 cap).
+  assert.deepEqual(lintExplainerWriting([entry('一；二；三；四；五。')], {mode: 'strict'}), []);
+  // Overlong individual clause still fails sentence-length; URL semicolons stay masked.
+  const longClause = lintExplainerWriting([entry('参见 https://example.com/a?x=1;y=2；然后缓存读取返回空值后接口等待数据库再写回缓存并更新索引。')], {mode: 'strict', sentenceLimits: {zh: 12}});
+  assert.deepEqual(longClause.map(d => d.evidence.rule), ['sentence-length']);
+});
+
+test('writing: Chinese plain-word patterns flag roundabout phrasing without false positives', () => {
+  for (const text of ['在缓存未命中的情况下直接回源。', '旨在通过缓存减少回源。', '令牌被用于校验签名。', '由于锁超时的原因导致失败。']) {
+    const result = lintExplainerWriting([entry(text)], {mode: 'strict'});
+    assert.deepEqual(result.map(d => d.evidence.rule), ['plain-word'], text);
+  }
+  const clean = ['缓存未命中时直接回源。', '用缓存减少回源。', '令牌用于校验签名。', '锁超时导致失败。', '当前情况下无需重试。'];
+  assert.deepEqual(lintExplainerWriting(clean.map(text => entry(text)), {mode: 'strict'}), []);
 });

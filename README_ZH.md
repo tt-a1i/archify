@@ -42,6 +42,7 @@
   <a href="#社区交流"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
   <a href="#社区交流"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
+  <a href="#支持-archify"><img src="https://img.shields.io/badge/Support-E2500E?style=for-the-badge" alt="Support Archify" /></a>
 </p>
 
 <p align="center"><a href="#sponsors"><strong>❤️ 合作与赞助伙伴：Kimi Work · Supercode · OpenLux</strong></a></p>
@@ -95,6 +96,8 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 可能是什么原因，应该怎么排查？
 ```
 
+默认情况下，遇到复杂流程、排查结果、方案对比或测试报告这类回答，agent 也会主动做一页。回复里照样先给能直接读懂的简短结论，最后一行是页面链接，比如“查看测试报告”。简短问答、只要文字的请求和生成失败的页面，都不会出现页面或链接。只想在要求时才做页面，直接告诉 agent，或者在它的全局规则文件（如 `~/.codex/AGENTS.md`、`~/.claude/CLAUDE.md`）里加一行 `[archify explainer: on-demand]`。`[archify explainer: always-on]` 会给每个得出结论的回答附一页精简页面；删掉这一行就回到默认行为。
+
 在线示例：[P99 延迟排查](https://archify.si/cases/explainer/p99-tail-latency.html) · [读 Archify 仓库：finalize 怎么保住旧产物](https://archify.si/cases/explainer/finalize-delivery.html) · [第一次租房要确认什么](https://archify.si/cases/explainer/first-rental.html) · [第一次打开 HTTPS 网站（英文）](https://archify.si/cases/explainer/tls-first-visit.html)
 
 <a id="sponsors"></a>
@@ -130,7 +133,7 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 </tr>
 <tr>
 <td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc 无限星河" width="140" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc 无限星河</a></strong></td>
-<td>感谢 Infistar.cc 无限星河赞助 Archify！一个 API Key 覆盖文案、图片与视频创作，支持 GPT、Claude、Gemini、DeepSeek、通义千问、可灵等主流模型，无需分组。大模型低至官方 0.1 折，AI 生图低至 ¥0.06/张。<br/><br/>Archify 专属福利：通过专属链接注册即送 $5 体验额度，并享首充特惠。<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">立即体验 Infistar →</a></td>
+<td>Infistar 用一个 API Key 接入 Claude、GPT、Gemini 和 DeepSeek，支持文本、图像和视频创作。模型 API 价格低至官方的 1%。<br/><br/>Archify 用户通过此链接注册可获得 5 元人民币试用额度。<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">试用 Infistar →</a></td>
 </tr>
 </table>
 
@@ -251,7 +254,7 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --age
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
+DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
 
 安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。
 
@@ -464,7 +467,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | **Claude.ai** | Settings → Capabilities → Skills 中上传 `archify.zip` | 取决于沙箱是否提供 Node.js |
 | **Project Knowledge** | 把 `archify.zip` 上传到项目 | Prompt 驱动的 Architecture Fallback |
 | **Hermes Agent** | 显式启用：`hermes skills install skills-sh/tt-a1i/archify/archify -y` | 社区 Skill-only；Node `>=18`；不是 Nous 官方产品。没有遥测。非切换器目标。[详情](integrations/hermes-agent/README.md)。 |
-| **DeepSeek Harness** | 显式启用：`dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`；调用：`Use the archify skill to map this repository's runtime architecture.`；卸载：`dsh plugin --profile web remove @tt-a1i/archify-dsh`。 | 面向开发者预览版 `@deepseek-ai/dsh@0.1.2-rc.1` 的社区集成；Node `^22.19.0 \|\| >=24.0.0`；不是 DeepSeek 官方产品。没有遥测；shell 文件不会自动进入 Web Produced Files，请返回精确工作区路径。[详情](integrations/deepseek-harness/README.md)。 |
+| **DeepSeek Harness** | 显式启用：`dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`；调用：`Use the archify skill to map this repository's runtime architecture.`；卸载：`dsh plugin --profile web remove @tt-a1i/archify-dsh`。 | 面向开发者预览版 `@deepseek-ai/dsh@0.2.1-rc.2` 的社区集成；Node `^22.19.0 \|\| >=24.0.0`；不是 DeepSeek 官方产品。没有遥测；shell 文件不会自动进入 Web Produced Files，请返回精确工作区路径。[详情](integrations/deepseek-harness/README.md)。 |
 
 ## 参考与边界
 
