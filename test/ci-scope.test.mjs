@@ -82,6 +82,14 @@ test('Windows evidence replacement fixtures retain their native host gate', () =
   assert.equal(plan.package, false);
 });
 
+test('Story filesystem and process owners retain full regression and Windows gates', () => {
+  for (const file of ['output.mjs', 'tool.mjs', 'cli.mjs', 'choreography-plan.mjs']) {
+    const plan = classifyPaths([`archify/story/${file}`]);
+    assert.equal(plan.scope, 'full', file);
+    assert.equal(plan.windows, true, file);
+  }
+});
+
 test('recipe, schema and shared renderer owners include their real source consumers', () => {
   const available = ['test/guide.test.mjs', 'test/guide-page.test.mjs', 'test/gallery.test.mjs', 'test/start-page.test.mjs', 'test/engineering-profile.test.mjs', 'test/legend-contract.test.mjs', 'test/generate-validators.test.mjs'];
   const recipe = classifyPaths(['archify/recipes/scenarios.mjs']);
@@ -95,6 +103,12 @@ test('recipe, schema and shared renderer owners include their real source consum
   const schema = classifyPaths(['archify/schemas/workflow.schema.json']);
   assert.equal(schema.scope, 'core');
   assert.ok(selectAffectedTests(schema.owners, [], available).includes('test/generate-validators.test.mjs'));
+  const storySchema = classifyPaths(['archify/schemas/story-choreography.schema.json']);
+  assert.equal(storySchema.scope, 'core');
+  assert.ok(storySchema.owners.includes('schema') && storySchema.generated && storySchema.browser && storySchema.package);
+  const storyMod = classifyPaths(['archify/story/story-svg.mjs']);
+  assert.equal(storyMod.scope, 'core');
+  assert.ok(storyMod.owners.includes('viewer') && storyMod.generated && storyMod.browser && storyMod.webm && storyMod.package);
 });
 
 test('shared SVG parser changes retain the public checker suite without selecting unrelated tests', () => {

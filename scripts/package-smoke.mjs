@@ -121,7 +121,19 @@ function verifyPackagedStory(){
   if(!receipt.ok)throw Error('packaged story attachment failed');
   const html=fs.readFileSync(output,'utf8'),start=html.indexOf('<style id="archify-story-attachment-style">');
   if(start<0||html.slice(0,start)+html.slice(html.lastIndexOf('</body>'))!==fs.readFileSync(input,'utf8'))throw Error('packaged story changed the native HTML');
-  process.stdout.write('packaged story scan, draft and attachment passed without dependencies\n');
+  const choreoSpec=path.join(scratch,'story-choreo.json'),svgStem=path.join(scratch,'story-choreo'),stageOut=path.join(scratch,'story-stage.html');
+  fs.writeFileSync(choreoSpec,JSON.stringify({
+    schema_version:1,title:'Smoke choreography',preset:'classic',
+    views:[{id:'main',type:'workflow',diagram:JSON.parse(fs.readFileSync(path.join(skillRoot,'examples/agent-tool-call.workflow.json'),'utf8'))}],
+    steps:[{view:'main',title:'Agent tool loop',body:'Walk through the tool invocation path.',focus:[facts.nodes[0].id]}],
+  }));
+  const val=JSON.parse(run(['story','validate',choreoSpec,'--json'],options));
+  if(!val.ok||val.steps!==1)throw Error('packaged story validate failed');
+  const svgRec=JSON.parse(run(['story','svg',choreoSpec,svgStem,'--theme','both','--still','--json'],options));
+  if(!svgRec.ok||svgRec.outputs.length!==2||svgRec.stills.length!==2)throw Error('packaged story svg failed');
+  const stageRec=JSON.parse(run(['story','stage',choreoSpec,stageOut,'--json'],options));
+  if(!stageRec.ok||!fs.readFileSync(stageOut,'utf8').includes('ArchifyStoryStage'))throw Error('packaged story stage failed');
+  process.stdout.write('packaged story scan, draft, attach and choreography passed without dependencies\n');
 }
 
 async function verifyPackage() {
