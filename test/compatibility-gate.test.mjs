@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { parse } from 'yaml';
+import { JSCPD_VERSION } from '../archify/modules/code-analysis/lib/duplicates.mjs';
 
 const manifest = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const ci = parse(fs.readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8'));
@@ -12,7 +13,7 @@ test('default and compatibility share the real public CLI core while full discov
   assert.equal(manifest.scripts['test:compat'], 'npm run test:core');
   assert.match(manifest.scripts['test:core'], /core-smoke\.test\.mjs/);
   assert.match(manifest.scripts['test:full'], /test:generated/);
-  assert.match(manifest.scripts['test:full'], /run-tests\.mjs$/);
+  assert.match(manifest.scripts['test:full'], /test:code-analysis && node scripts\/run-tests\.mjs$/);
   assert.ok(!manifest.scripts['test:core'].includes('golden'));
 });
 
@@ -26,19 +27,36 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.equal(ci.jobs.test.name, undefined);
   assert.equal(ci.jobs.test.needs, 'scope', 'short compatibility checks must not wait for complete regression');
   const canonical = ci.jobs['canonical-test'];
+  for (const id of ['canonical-test', 'webm-decode', 'webm-artifact', 'zip-freshness', 'published-update-manifest']) {
+    assert.equal(ci.jobs[id].strategy, undefined, `${id} must keep a single stable check name`);
+  }
   assert.equal(canonical.name, 'test (22)');
   assert.deepEqual(canonical.needs, ['scope', 'full-regression']);
   assert.ok(canonical.steps.some(step => step.with?.['node-version'] === 22));
   const full = ci.jobs['full-regression'];
   assert.equal(full.if, "needs.scope.outputs.scope == 'full'");
   assert.equal(full.strategy['fail-fast'], false);
-  assert.deepEqual(full.strategy.matrix.shard, [1, 2]);
+  assert.deepEqual(full.strategy.matrix.shard, [1, 2, 3, 4]);
+  assert.deepEqual(full.strategy.matrix.include.map(lane => lane['module-shard']), [1, 2]);
   assert.ok(full.steps.some(step => step.with?.['node-version'] === 22));
-  assert.ok(full.steps.some(step => step.run === 'node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2'));
+  const rootSuite = full.steps.find(step => step.run === 'node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4');
+  assert.equal(rootSuite?.if, '!matrix.module-shard');
   const generated = full.steps.find(step => step.run === 'npm run test:generated');
   assert.equal(generated.if, 'matrix.shard == 2', 'complete generated checks run once inside a regression shard');
   const hermes = full.steps.find(step => step.run === 'node --test integrations/hermes-agent/test/plugin-contract.test.mjs');
   assert.equal(hermes.if, 'matrix.shard == 2');
+  const moduleSuite = full.steps.find(step => step.name === 'Code Analysis module suite');
+  assert.equal(moduleSuite.if, 'matrix.module-shard');
+  assert.equal(moduleSuite.run, 'node --test --test-shard=${{ matrix.module-shard }}/2 test/*.test.mjs');
+  assert.equal(moduleSuite['working-directory'], 'archify/modules/code-analysis');
+  const python = full.steps.find(step => step.run === 'npm run check:python');
+  assert.equal(python.if, 'matrix.module-shard == 1');
+  assert.equal(python['working-directory'], moduleSuite['working-directory']);
+  const duplicateTool = full.steps.find(step => step.name === 'Install Code Analysis duplicate detector');
+  assert.equal(duplicateTool?.if, moduleSuite.if, 'the real clone detector is installed in the shard that runs its integration tests');
+  assert.ok(duplicateTool.run.includes(`jscpd@${JSCPD_VERSION}`), 'CI must use the detector version accepted by the adapter');
+  assert.equal(moduleSuite.env.ARCHIFY_TEST_JSCPD, '${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd',
+    'real duplicate and six-language integration tests must execute instead of silently skipping in CI');
   assert.equal(full.steps.filter(step => step.run === 'npm run test:generated').length, 1);
   const coreGenerated = canonical.steps.find(step => step.run === 'npm run test:generated');
   assert.equal(coreGenerated.if, "needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'");

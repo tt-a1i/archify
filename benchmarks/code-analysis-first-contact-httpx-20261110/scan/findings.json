@@ -1,0 +1,641 @@
+{
+  "schema_version": 1,
+  "repository": {
+    "revision": null,
+    "baseRevision": "326b9431c761e1ef1e00b9f760d1f654c8db48c6",
+    "sourceKind": "working-tree",
+    "root": ".",
+    "url": "https://github.com/encode/httpx.git",
+    "language": "py",
+    "adapter": "python@3.15.0",
+    "adapterRevision": 10,
+    "snapshotId": "5f5e3f9029d07d42cbbfcd3bf358fa8e62746e3bdea916929a3714a4ceb6b7ab"
+  },
+  "rules": [
+    "coupling/import-cycle",
+    "coupling/cycle",
+    "coupling/hub",
+    "coupling/internal-leak",
+    "complexity/function"
+  ],
+  "summary": {
+    "errors": 0,
+    "warnings": 1,
+    "info": 7,
+    "suppressed": 0
+  },
+  "analysis": {
+    "analyzer": {
+      "name": "@archify/code-analysis",
+      "version": "0.1.0-dev.1"
+    },
+    "language": "py",
+    "adapter": "python@3.15.0",
+    "adapterRevision": 10,
+    "configDigest": "460e5dea57abe89e9f06cee573a3e625fbe448f1c0c65e61423e6dbd3281288c",
+    "ruleVersions": {
+      "complexity/function": 1,
+      "coupling/cycle": 1,
+      "coupling/hub": 1,
+      "coupling/import-cycle": 1,
+      "coupling/internal-leak": 1
+    },
+    "coverage": {
+      "files": 24,
+      "excludedRoles": [
+        "generated",
+        "test"
+      ],
+      "parseErrors": []
+    }
+  },
+  "diagnostics": [
+    {
+      "id": "COMP-911a2f469140",
+      "code": "complexity/function",
+      "dimension": "complexity",
+      "severity": "info",
+      "confidence": 1,
+      "message": "format_certificate in httpx/_main.py has nesting depth 5 (16 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+      "subject": {
+        "file": "httpx/_main.py",
+        "function": "format_certificate",
+        "line": 192,
+        "endLine": 207
+      },
+      "evidence": {
+        "threshold": {
+          "complexity": 15,
+          "nesting": 5
+        },
+        "thresholds": {
+          "info": {
+            "complexity": 15,
+            "nesting": 5
+          },
+          "warning": {
+            "complexity": 25,
+            "nesting": 6
+          }
+        },
+        "complexity": 8,
+        "nesting": 5,
+        "deepestLine": 199,
+        "length": 16
+      },
+      "supportedFixes": [
+        "start at the deepest nested block: extract it into a named helper with its own tests",
+        "replace long if/elif chains on one value with a lookup table or dispatch",
+        "return early for edge cases so the main path is not nested",
+        "if the branching is inherent, raise the threshold in the analysis config rather than splitting artificially"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "httpx/_main.py"
+        ],
+        "lines": [
+          192,
+          207
+        ],
+        "sha256": "18c5f0f5c1a3123c1f53388849b4438d041bc58c887cd2c24a0a77938280d1e4"
+      }
+    },
+    {
+      "id": "COMP-af208f4d9024",
+      "code": "complexity/function",
+      "dimension": "complexity",
+      "severity": "info",
+      "confidence": 1,
+      "message": "main in httpx/_main.py has nesting depth 5 (60 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+      "subject": {
+        "file": "httpx/_main.py",
+        "function": "main",
+        "line": 450,
+        "endLine": 509
+      },
+      "evidence": {
+        "threshold": {
+          "complexity": 15,
+          "nesting": 5
+        },
+        "thresholds": {
+          "info": {
+            "complexity": 15,
+            "nesting": 5
+          },
+          "warning": {
+            "complexity": 25,
+            "nesting": 6
+          }
+        },
+        "complexity": 10,
+        "nesting": 5,
+        "deepestLine": 501,
+        "length": 60
+      },
+      "supportedFixes": [
+        "start at the deepest nested block: extract it into a named helper with its own tests",
+        "replace long if/elif chains on one value with a lookup table or dispatch",
+        "return early for edge cases so the main path is not nested",
+        "if the branching is inherent, raise the threshold in the analysis config rather than splitting artificially"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "httpx/_main.py"
+        ],
+        "lines": [
+          450,
+          509
+        ],
+        "sha256": "6d4989883070459db061e381ab58e102fc51c66fa07530222a1d2b12e2d2397c"
+      }
+    },
+    {
+      "id": "COMP-474a99d6abbd",
+      "code": "complexity/function",
+      "dimension": "complexity",
+      "severity": "info",
+      "confidence": 1,
+      "message": "Cookies.get in httpx/_models.py has nesting depth 5 (24 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+      "subject": {
+        "file": "httpx/_models.py",
+        "function": "Cookies.get",
+        "line": 1075,
+        "endLine": 1098
+      },
+      "evidence": {
+        "threshold": {
+          "complexity": 15,
+          "nesting": 5
+        },
+        "thresholds": {
+          "info": {
+            "complexity": 15,
+            "nesting": 5
+          },
+          "warning": {
+            "complexity": 25,
+            "nesting": 6
+          }
+        },
+        "complexity": 9,
+        "nesting": 5,
+        "deepestLine": 1091,
+        "length": 24
+      },
+      "supportedFixes": [
+        "start at the deepest nested block: extract it into a named helper with its own tests",
+        "replace long if/elif chains on one value with a lookup table or dispatch",
+        "return early for edge cases so the main path is not nested",
+        "if the branching is inherent, raise the threshold in the analysis config rather than splitting artificially"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "httpx/_models.py"
+        ],
+        "lines": [
+          1075,
+          1098
+        ],
+        "sha256": "4a6efee5502a3ac16833c7f164c949608829f9e1d0b8848db15b01bec56f2d8a"
+      }
+    },
+    {
+      "id": "COMP-c96d5a89f434",
+      "code": "complexity/function",
+      "dimension": "complexity",
+      "severity": "warning",
+      "confidence": 1,
+      "message": "urlparse in httpx/_urlparse.py has cyclomatic complexity 39 (133 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+      "subject": {
+        "file": "httpx/_urlparse.py",
+        "function": "urlparse",
+        "line": 151,
+        "endLine": 283
+      },
+      "evidence": {
+        "threshold": {
+          "complexity": 25,
+          "nesting": 6
+        },
+        "thresholds": {
+          "info": {
+            "complexity": 15,
+            "nesting": 5
+          },
+          "warning": {
+            "complexity": 25,
+            "nesting": 6
+          }
+        },
+        "complexity": 39,
+        "nesting": 3,
+        "deepestLine": 201,
+        "length": 133
+      },
+      "supportedFixes": [
+        "start at the deepest nested block: extract it into a named helper with its own tests",
+        "replace long if/elif chains on one value with a lookup table or dispatch",
+        "return early for edge cases so the main path is not nested",
+        "if the branching is inherent, raise the threshold in the analysis config rather than splitting artificially"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "httpx/_urlparse.py"
+        ],
+        "lines": [
+          151,
+          283
+        ],
+        "sha256": "8ccb03b5c252a74288e3c6ad83fdef90e5626785ad416d02f5256231eab30ffc"
+      }
+    },
+    {
+      "id": "COUP-1c4b02649d1e",
+      "code": "coupling/cycle",
+      "dimension": "coupling",
+      "severity": "info",
+      "confidence": 1,
+      "message": "2 modules depend on each other at package level: httpx → httpx/_transports → httpx. See coupling/import-cycle for whether any file actually cycles.",
+      "subject": {
+        "modules": [
+          "httpx",
+          "httpx-_transports"
+        ]
+      },
+      "evidence": {
+        "kind": "eager",
+        "path": [
+          "httpx",
+          "httpx-_transports"
+        ],
+        "edges": [
+          {
+            "from": "httpx",
+            "to": "httpx-_transports",
+            "weight": 18,
+            "lazy": 0,
+            "deferred": false
+          },
+          {
+            "from": "httpx-_transports",
+            "to": "httpx",
+            "weight": 11,
+            "lazy": 0,
+            "deferred": false
+          }
+        ],
+        "closingLazyImports": [],
+        "imports": [
+          {
+            "file": "httpx/__init__.py",
+            "line": 39,
+            "to": "httpx/_transports/__init__.py"
+          },
+          {
+            "file": "httpx/__init__.py",
+            "line": 39,
+            "to": "httpx/_transports/asgi.py"
+          },
+          {
+            "file": "httpx/_transports/asgi.py",
+            "line": 7,
+            "to": "httpx/_models.py"
+          },
+          {
+            "file": "httpx/_transports/asgi.py",
+            "line": 8,
+            "to": "httpx/_types.py"
+          }
+        ],
+        "totalImports": 29,
+        "threshold": null
+      },
+      "supportedFixes": [
+        "move the shared piece both sides need into a new leaf module",
+        "invert one edge by passing the dependency in as a parameter",
+        "if one direction is a single import, check whether it is a convenience re-export that can be dropped"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "httpx/__init__.py",
+          "httpx/__version__.py",
+          "httpx/_api.py",
+          "httpx/_auth.py",
+          "httpx/_client.py",
+          "httpx/_compat.py",
+          "httpx/_config.py",
+          "httpx/_content.py",
+          "httpx/_decoders.py",
+          "httpx/_exceptions.py",
+          "httpx/_main.py",
+          "httpx/_models.py",
+          "httpx/_multipart.py",
+          "httpx/_status_codes.py",
+          "httpx/_transports/__init__.py",
+          "httpx/_transports/asgi.py",
+          "httpx/_transports/base.py",
+          "httpx/_transports/default.py",
+          "httpx/_transports/mock.py",
+          "httpx/_transports/wsgi.py",
+          "httpx/_types.py",
+          "httpx/_urlparse.py",
+          "httpx/_urls.py",
+          "httpx/_utils.py"
+        ],
+        "sha256": "f684d9fcdc429cb7b75cef0bf634b80e04dc337b9940a69442151e704574c16a"
+      }
+    },
+    {
+      "id": "COUP-c286cebf0577",
+      "code": "coupling/import-cycle",
+      "dimension": "coupling",
+      "confidence": 0.7,
+      "severity": "info",
+      "message": "2 files form a dependency cycle containing deferred or conditional imports: httpx/_urls.py → httpx/_utils.py → httpx/_urls.py. Initialization-time behavior is not proven: functions can be called during import, and dynamic imports or guards need execution context. Any module-scope subcycles are reported separately.",
+      "subject": {
+        "files": [
+          "httpx/_urls.py",
+          "httpx/_utils.py"
+        ]
+      },
+      "evidence": {
+        "kind": "deferred",
+        "risk": {
+          "loading": "not-proven",
+          "coupling": "present",
+          "loadingNote": "call timing and conditional execution are not modeled; no import-safety guarantee"
+        },
+        "path": [
+          "httpx/_urls.py",
+          "httpx/_utils.py"
+        ],
+        "pathImports": [
+          {
+            "file": "httpx/_urls.py",
+            "to": "httpx/_utils.py",
+            "line": 10,
+            "deferred": false
+          },
+          {
+            "file": "httpx/_utils.py",
+            "to": "httpx/_urls.py",
+            "line": 361,
+            "deferred": true
+          }
+        ],
+        "imports": [
+          {
+            "file": "httpx/_urls.py",
+            "line": 10,
+            "to": "httpx/_utils.py",
+            "names": [
+              "primitive_value_to_str"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "httpx/_utils.py",
+            "line": 361,
+            "to": "httpx/_urls.py",
+            "names": [
+              "URL"
+            ],
+            "lazy": true,
+            "kind": "static"
+          }
+        ],
+        "lazyImports": 1,
+        "totalImports": 2,
+        "threshold": null
+      },
+      "supportedFixes": [
+        "keep the lazy import if the call-back is intentional, and say so in a comment at the import",
+        "if the two sides should be testable in isolation, inject the callee (a callback or protocol) from the composition root instead of importing it"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "httpx/_urls.py",
+          "httpx/_utils.py"
+        ],
+        "sha256": "bf7c34172caa784c1b688542cfc0bbd878a8debafc43232c2cbd9127e9df1d43"
+      }
+    },
+    {
+      "id": "COUP-0b3b46f8e89a",
+      "code": "coupling/internal-leak",
+      "dimension": "coupling",
+      "severity": "info",
+      "confidence": 1,
+      "message": "httpx has an entry point (httpx/__init__.py), but 11 imports from 1 module reach 5 of its internal files directly.",
+      "subject": {
+        "module": "httpx"
+      },
+      "evidence": {
+        "entries": [
+          "httpx/__init__.py"
+        ],
+        "entrySource": "detected",
+        "internalFiles": [
+          "httpx/_config.py",
+          "httpx/_exceptions.py",
+          "httpx/_models.py",
+          "httpx/_types.py",
+          "httpx/_urls.py"
+        ],
+        "moduleFiles": 18,
+        "consumers": [
+          "httpx-_transports"
+        ],
+        "viaEntry": 0,
+        "totalImports": 11,
+        "files": [
+          "httpx/_transports/asgi.py",
+          "httpx/_transports/base.py",
+          "httpx/_transports/default.py",
+          "httpx/_transports/mock.py",
+          "httpx/_transports/wsgi.py"
+        ],
+        "imports": [
+          {
+            "file": "httpx/_transports/asgi.py",
+            "line": 7,
+            "to": "httpx/_models.py"
+          },
+          {
+            "file": "httpx/_transports/asgi.py",
+            "line": 8,
+            "to": "httpx/_types.py"
+          },
+          {
+            "file": "httpx/_transports/base.py",
+            "line": 6,
+            "to": "httpx/_models.py"
+          },
+          {
+            "file": "httpx/_transports/default.py",
+            "line": 34,
+            "to": "httpx/_config.py"
+          },
+          {
+            "file": "httpx/_transports/default.py",
+            "line": 35,
+            "to": "httpx/_exceptions.py"
+          },
+          {
+            "file": "httpx/_transports/default.py",
+            "line": 51,
+            "to": "httpx/_models.py"
+          },
+          {
+            "file": "httpx/_transports/default.py",
+            "line": 52,
+            "to": "httpx/_types.py"
+          },
+          {
+            "file": "httpx/_transports/default.py",
+            "line": 53,
+            "to": "httpx/_urls.py"
+          },
+          {
+            "file": "httpx/_transports/mock.py",
+            "line": 5,
+            "to": "httpx/_models.py"
+          },
+          {
+            "file": "httpx/_transports/wsgi.py",
+            "line": 8,
+            "to": "httpx/_models.py"
+          },
+          {
+            "file": "httpx/_transports/wsgi.py",
+            "line": 9,
+            "to": "httpx/_types.py"
+          }
+        ],
+        "threshold": {
+          "minFiles": 3
+        }
+      },
+      "supportedFixes": [
+        "export what consumers need from httpx/__init__.py and change the cited imports to use it",
+        "if a file is meant to be public, add it to rules.coupling.internalLeak.entries"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "httpx/_config.py",
+          "httpx/_exceptions.py",
+          "httpx/_models.py",
+          "httpx/_transports/asgi.py",
+          "httpx/_transports/base.py",
+          "httpx/_transports/default.py",
+          "httpx/_transports/mock.py",
+          "httpx/_transports/wsgi.py",
+          "httpx/_types.py",
+          "httpx/_urls.py"
+        ],
+        "sha256": "c1e0dd178d4251e0df3ed4d52a16a9407b7b636a39d1d3cef07ceaa41ffdb99e"
+      }
+    },
+    {
+      "id": "COUP-e22d59674302",
+      "code": "coupling/internal-leak",
+      "dimension": "coupling",
+      "severity": "info",
+      "confidence": 1,
+      "message": "httpx/_transports has an entry point (httpx/_transports/__init__.py), but 9 imports from 1 module reach 5 of its internal files directly.",
+      "subject": {
+        "module": "httpx-_transports"
+      },
+      "evidence": {
+        "entries": [
+          "httpx/_transports/__init__.py"
+        ],
+        "entrySource": "detected",
+        "internalFiles": [
+          "httpx/_transports/asgi.py",
+          "httpx/_transports/base.py",
+          "httpx/_transports/default.py",
+          "httpx/_transports/mock.py",
+          "httpx/_transports/wsgi.py"
+        ],
+        "moduleFiles": 6,
+        "consumers": [
+          "httpx"
+        ],
+        "viaEntry": 9,
+        "totalImports": 9,
+        "files": [
+          "httpx/__init__.py",
+          "httpx/_client.py"
+        ],
+        "imports": [
+          {
+            "file": "httpx/__init__.py",
+            "line": 39,
+            "to": "httpx/_transports/asgi.py"
+          },
+          {
+            "file": "httpx/__init__.py",
+            "line": 40,
+            "to": "httpx/_transports/base.py"
+          },
+          {
+            "file": "httpx/__init__.py",
+            "line": 41,
+            "to": "httpx/_transports/default.py"
+          },
+          {
+            "file": "httpx/__init__.py",
+            "line": 42,
+            "to": "httpx/_transports/mock.py"
+          },
+          {
+            "file": "httpx/__init__.py",
+            "line": 43,
+            "to": "httpx/_transports/wsgi.py"
+          },
+          {
+            "file": "httpx/_client.py",
+            "line": 30,
+            "to": "httpx/_transports/asgi.py"
+          },
+          {
+            "file": "httpx/_client.py",
+            "line": 31,
+            "to": "httpx/_transports/base.py"
+          },
+          {
+            "file": "httpx/_client.py",
+            "line": 32,
+            "to": "httpx/_transports/default.py"
+          },
+          {
+            "file": "httpx/_client.py",
+            "line": 33,
+            "to": "httpx/_transports/wsgi.py"
+          }
+        ],
+        "threshold": {
+          "minFiles": 3
+        }
+      },
+      "supportedFixes": [
+        "export what consumers need from httpx/_transports/__init__.py and change the cited imports to use it",
+        "if a file is meant to be public, add it to rules.coupling.internalLeak.entries"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "httpx/__init__.py",
+          "httpx/_client.py",
+          "httpx/_transports/asgi.py",
+          "httpx/_transports/base.py",
+          "httpx/_transports/default.py",
+          "httpx/_transports/mock.py",
+          "httpx/_transports/wsgi.py"
+        ],
+        "sha256": "8e594b2edc7c6c39a8f104338f01e5e7f93dd885a2caa9ca134934e6f0350bb7"
+      }
+    }
+  ]
+}

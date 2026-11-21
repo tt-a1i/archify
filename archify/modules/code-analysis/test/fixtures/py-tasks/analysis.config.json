@@ -1,0 +1,6 @@
+{
+  "boundaries": {
+    "layers": { "domain": ["domain/**"], "ui": ["ui/**"], "app": ["app/**"] },
+    "rules": [{ "from": "domain", "disallow": ["ui"], "reason": "domain logic stays independent of presentation" }]
+  }
+}

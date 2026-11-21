@@ -128,7 +128,7 @@ test('focus alias requires files and invalid options never launch a child', (t) 
 
 test('repository shards execute exactly their listed inventory and together cover every suite once', (t) => {
   const full = interceptedRun(t, ['--list']).stdout.trim().split('\n');
-  for (const count of [2, 3]) {
+  for (const count of [2, 3, 4]) {
     const shards = [];
     for (let index = 1; index <= count; index++) {
       const argument = `--shard=${index}/${count}`;
