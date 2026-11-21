@@ -509,8 +509,8 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
   // In place of the diagram, full width with the summary column hidden, following the page theme.
   assert.deepEqual(await run(`(() => { const a = document.getElementById('bauify-atlas'), r = document.getElementById('bauify-reader');
-    return [document.documentElement.getAttribute('data-theme'), getComputedStyle(a).position, getComputedStyle(r).display, getComputedStyle(document.querySelector('.diagram-container')).display, getComputedStyle(a).backgroundColor !== 'rgb(11, 18, 32)']; })()`),
-    ['light', 'relative', 'none', 'none', true], 'the Atlas replaces the diagram, hides the summary column and follows the page theme');
+    return [document.documentElement.getAttribute('data-theme'), getComputedStyle(a).position, getComputedStyle(r).display, getComputedStyle(document.querySelector('.diagram-container')).display, getComputedStyle(a).backgroundColor]; })()`),
+    ['light', 'relative', 'none', 'none', 'rgb(11, 18, 32)'], 'the Atlas replaces the diagram, hides the summary column and stays dark on a light page');
   const atlas = JSON.parse(await run("document.getElementById('bauify-atlas-data').textContent"));
   await until(`document.documentElement.getAttribute('data-bauify-atlas-drawn') === '${atlas.edges.length}'`, 'atlas did not draw');
   assert.ok(atlas.edges.length > 0 && atlas.functions.length > 0, 'the fixture has dependencies and functions to draw');

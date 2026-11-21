@@ -198,7 +198,10 @@
 
   // ---- colours: module hues spaced around the wheel, lightness by theme ----
   function cssVar(name, fallback) { var v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fallback; }
+  // Below a diagram the Atlas defaults to dark colours (atlas.css resets the page
+  // colours inside it); the standalone page follows its own theme.
   function theme() {
+    if (!standalone) return { dark: true, bg: '#0b1220', text: '#f8fafc', muted: '#94a3b8', grid: '#1e293b' };
     var dark = (root.getAttribute('data-theme') || '') !== 'light';
     return { dark: dark, bg: cssVar('--bg', dark ? '#0b1220' : '#ffffff'), text: cssVar('--text', dark ? '#f8fafc' : '#0f172a'), muted: cssVar('--text-muted', dark ? '#94a3b8' : '#475569'), grid: cssVar('--panel-border', dark ? '#1e293b' : '#e2e8f0') };
   }
