@@ -34,7 +34,10 @@ const browserSection = delivery.match(/## Automated browser evidence[\s\S]*?## O
 const perceptualReviewSection = delivery.match(/## Perceptual review[\s\S]*?## Handoff receipt/)?.[0] ?? '';
 
 test('ordinary handoff uses one deterministic finalizer without image capability', () => {
-  assert.ok(skill.indexOf('## Existing candidate handoff') < skill.indexOf('## Native diagram authoring'));
+  const handoffStart = skill.indexOf('## Existing candidate handoff');
+  const authoringStart = skill.indexOf('## Native diagram authoring');
+  assert.ok(handoffStart >= 0, 'existing candidate handoff section exists');
+  assert.ok(authoringStart > handoffStart, 'handoff precedes native diagram authoring');
   assert.match(skill, /run `finalize` first as one CLI invocation/);
   assert.match(skill, /passing receipt completes the automated gates; follow any visual review recommendation/i);
   assert.match(skill, /archify\.mjs finalize <type> <candidate\.json> <output\.html> --quality showcase --json/);

@@ -1,0 +1,51 @@
+{
+  "repo": "clap-rs/clap",
+  "revision": "ec93e71255c0b833a34f50662a3fdb22f53f6ded",
+  "before": {
+    "findings": 28,
+    "warnings": 6,
+    "info": 22,
+    "ruleCounts": [
+      {
+        "code": "complexity/function",
+        "severity": "warning",
+        "count": 23
+      },
+      {
+        "code": "coupling/import-cycle",
+        "severity": "info",
+        "count": 4
+      },
+      {
+        "code": "coupling/internal-leak",
+        "severity": "info",
+        "count": 1
+      }
+    ]
+  },
+  "after": {
+    "findings": 27,
+    "warnings": 6,
+    "info": 21,
+    "ruleCounts": [
+      {
+        "code": "complexity/function",
+        "severity": "warning",
+        "count": 23
+      },
+      {
+        "code": "coupling/import-cycle",
+        "severity": "info",
+        "count": 3
+      },
+      {
+        "code": "coupling/internal-leak",
+        "severity": "info",
+        "count": 1
+      }
+    ]
+  },
+  "removedCycle": "COUP-9716712f94d7 (clap_builder/src/builder/arg.rs <-> clap_builder/src/builder/arg_settings.rs)",
+  "tests": "cargo test -p clap_builder --lib: 83 passed, 0 failed",
+  "compile": "cargo check -p clap_builder: ok"
+}

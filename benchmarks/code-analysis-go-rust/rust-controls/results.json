@@ -1,0 +1,242 @@
+[
+  {
+    "name": "use-root-2015",
+    "edition": "2015",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2015",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/use-root-2015.rmeta",
+      "<controls>/use-root-2015.rs"
+    ],
+    "stderr": ""
+  },
+  {
+    "name": "use-local-2018",
+    "edition": "2018",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2018",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/use-local-2018.rmeta",
+      "<controls>/use-local-2018.rs"
+    ],
+    "stderr": ""
+  },
+  {
+    "name": "use-local-2021",
+    "edition": "2021",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/use-local-2021.rmeta",
+      "<controls>/use-local-2021.rs"
+    ],
+    "stderr": ""
+  },
+  {
+    "name": "wrong-local-2015",
+    "edition": "2015",
+    "expectedCompile": false,
+    "compiled": false,
+    "exit": 1,
+    "command": [
+      "rustc",
+      "--edition",
+      "2015",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/wrong-local-2015.rmeta",
+      "<controls>/wrong-local-2015.rs"
+    ],
+    "stderr": "error[E0308]: mismatched types\n --> <controls>/wrong-local-2015.rs:3:107\n  |\n3 | mod b { pub mod a { pub struct B; pub fn run()->B { B } } use a::run; pub fn check(){ let _: self::a::B = run(); } }\n  |                                                                                              ----------   ^^^^^ expected `B`, found `A`\n  |                                                                                              |\n  |                                                                                              expected due to this\n\nerror: aborting due to 1 previous error\n\nFor more information about this error, try `rustc --explain E0308`.\n"
+  },
+  {
+    "name": "wrong-root-2018",
+    "edition": "2018",
+    "expectedCompile": false,
+    "compiled": false,
+    "exit": 1,
+    "command": [
+      "rustc",
+      "--edition",
+      "2018",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/wrong-root-2018.rmeta",
+      "<controls>/wrong-root-2018.rs"
+    ],
+    "stderr": "error[E0308]: mismatched types\n --> <controls>/wrong-root-2018.rs:3:108\n  |\n3 | mod b { pub mod a { pub struct B; pub fn run()->B { B } } use a::run; pub fn check(){ let _: crate::a::A = run(); } }\n  |                                                                                              -----------   ^^^^^ expected `A`, found `B`\n  |                                                                                              |\n  |                                                                                              expected due to this\n\nerror: aborting due to 1 previous error\n\nFor more information about this error, try `rustc --explain E0308`.\n"
+  },
+  {
+    "name": "block-use-hoisted",
+    "edition": "2021",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/block-use-hoisted.rmeta",
+      "<controls>/block-use-hoisted.rs"
+    ],
+    "stderr": "warning: function `caller` is never used\n --> <controls>/block-use-hoisted.rs:1:27\n  |\n1 | mod a {pub fn run(){}} fn caller(){run();use crate::a::run;}\n  |                           ^^^^^^\n  |\n  = note: `#[warn(dead_code)]` on by default\n\nwarning: function `run` is never used\n --> <controls>/block-use-hoisted.rs:1:15\n  |\n1 | mod a {pub fn run(){}} fn caller(){run();use crate::a::run;}\n  |               ^^^\n\nwarning: 2 warnings emitted\n\n"
+  },
+  {
+    "name": "value-does-not-shadow-module",
+    "edition": "2021",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/value-does-not-shadow-module.rmeta",
+      "<controls>/value-does-not-shadow-module.rs"
+    ],
+    "stderr": "warning: function `caller` is never used\n --> <controls>/value-does-not-shadow-module.rs:1:27\n  |\n1 | mod a {pub fn run(){}} fn caller(){let a=0;a::run();let _=a;}\n  |                           ^^^^^^\n  |\n  = note: `#[warn(dead_code)]` on by default\n\nwarning: function `run` is never used\n --> <controls>/value-does-not-shadow-module.rs:1:15\n  |\n1 | mod a {pub fn run(){}} fn caller(){let a=0;a::run();let _=a;}\n  |               ^^^\n\nwarning: 2 warnings emitted\n\n"
+  },
+  {
+    "name": "parameter-shadows-function",
+    "edition": "2021",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/parameter-shadows-function.rmeta",
+      "<controls>/parameter-shadows-function.rs"
+    ],
+    "stderr": "warning: function `run` is never used\n --> <controls>/parameter-shadows-function.rs:1:4\n  |\n1 | fn run()->u8{0} fn caller(run:fn()->u16){let _:u16=run();}\n  |    ^^^\n  |\n  = note: `#[warn(dead_code)]` on by default\n\nwarning: function `caller` is never used\n --> <controls>/parameter-shadows-function.rs:1:20\n  |\n1 | fn run()->u8{0} fn caller(run:fn()->u16){let _:u16=run();}\n  |                    ^^^^^^\n\nwarning: 2 warnings emitted\n\n"
+  },
+  {
+    "name": "local-let-follows-initializer",
+    "edition": "2021",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/local-let-follows-initializer.rmeta",
+      "<controls>/local-let-follows-initializer.rs"
+    ],
+    "stderr": "warning: function `run` is never used\n --> <controls>/local-let-follows-initializer.rs:1:4\n  |\n1 | fn run()->u8{0} fn caller(){let run=run();let _:u8=run;}\n  |    ^^^\n  |\n  = note: `#[warn(dead_code)]` on by default\n\nwarning: function `caller` is never used\n --> <controls>/local-let-follows-initializer.rs:1:20\n  |\n1 | fn run()->u8{0} fn caller(){let run=run();let _:u8=run;}\n  |                    ^^^^^^\n\nwarning: 2 warnings emitted\n\n"
+  },
+  {
+    "name": "generic-trait-dispatch",
+    "edition": "2021",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/generic-trait-dispatch.rmeta",
+      "<controls>/generic-trait-dispatch.rs"
+    ],
+    "stderr": "warning: trait `T` is never used\n --> <controls>/generic-trait-dispatch.rs:1:7\n  |\n1 | trait T{fn run();} fn caller<F:T>(){F::run();}\n  |       ^\n  |\n  = note: `#[warn(dead_code)]` on by default\n\nwarning: function `caller` is never used\n --> <controls>/generic-trait-dispatch.rs:1:23\n  |\n1 | trait T{fn run();} fn caller<F:T>(){F::run();}\n  |                       ^^^^^^\n\nwarning: 2 warnings emitted\n\n"
+  },
+  {
+    "name": "macro-generated-definition",
+    "edition": "2021",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/macro-generated-definition.rmeta",
+      "<controls>/macro-generated-definition.rs"
+    ],
+    "stderr": "warning: function `generated` is never used\n --> <controls>/macro-generated-definition.rs:1:27\n  |\n1 | macro_rules! make{()=>{fn generated(){}}} make!();fn caller(){generated();}\n  |                           ^^^^^^^^^       ------- in this macro invocation\n  |\n  = note: `#[warn(dead_code)]` on by default\n  = note: this warning originates in the macro `make` (in Nightly builds, run with -Z macro-backtrace for more info)\n\nwarning: function `caller` is never used\n --> <controls>/macro-generated-definition.rs:1:54\n  |\n1 | macro_rules! make{()=>{fn generated(){}}} make!();fn caller(){generated();}\n  |                                                      ^^^^^^\n\nwarning: 2 warnings emitted\n\n"
+  },
+  {
+    "name": "cfg-exclusive-definition",
+    "edition": "2021",
+    "expectedCompile": true,
+    "compiled": true,
+    "exit": 0,
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "--crate-type",
+      "lib",
+      "--emit",
+      "metadata",
+      "-o",
+      "<controls>/cfg-exclusive-definition.rmeta",
+      "<controls>/cfg-exclusive-definition.rs"
+    ],
+    "stderr": "warning: function `run` is never used\n --> <controls>/cfg-exclusive-definition.rs:1:68\n  |\n1 | #[cfg(feature=\"chosen\")]fn run(){} #[cfg(not(feature=\"chosen\"))]fn run(){} fn caller(){run();}\n  |                                                                    ^^^\n  |\n  = note: `#[warn(dead_code)]` on by default\n\nwarning: function `caller` is never used\n --> <controls>/cfg-exclusive-definition.rs:1:79\n  |\n1 | #[cfg(feature=\"chosen\")]fn run(){} #[cfg(not(feature=\"chosen\"))]fn run(){} fn caller(){run();}\n  |                                                                               ^^^^^^\n\nwarning: 2 warnings emitted\n\n"
+  }
+]

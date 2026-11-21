@@ -2190,6 +2190,19 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
+  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  'code-analysis': [
+    'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--ir <architecture.json> [--map file]] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
+    'verify-change <analysis-dir> --task <task.json> [--checks <checks.json> | --checks-template]',
+    'drift <git-repo> --base <full-sha> --head <full-sha> --ir <architecture.json> --out <new-directory> [--map file] [--config file] [--from-report <original-drift.json>] [--locale en|zh-CN] [--json]',
+    'verify-drift <original-drift.json> --task <task.json> --after <follow-up-drift.json> [--checks <checks.json> | --checks-template]',
+    'import-review <github-pr-url> --out report.json [--author login] [--json]',
+    'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
+    'task [<analysis-dir>] --question <text> --entry <file> [--base-root <base>] --root <repo-root> [--function <name>] [--config file] [--format md|json] [--out file]',
+    'task --verify <task.json> --root <repo-root> [--format md|json] [--out file] [--require-valid]',
+  ],
   story: [
     'scan <native.html> [--json]',
     'draft <native.html> <brief.json> [--json]',
@@ -7282,6 +7295,36 @@ try {
     case 'help':
       console.log(usage());
       break;
+    case 'start': {
+      if (!args.length || args[0] === '--help' || args[0] === '-h') {
+        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        break;
+      }
+      const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
+      const launchArgs = [...args];
+      if (!launchArgs.includes('--out')) launchArgs.push('--out', fs.mkdtempSync(path.join(os.tmpdir(), 'archify-' + createHash('sha256').update(path.resolve(args[0])).digest('hex').slice(0, 16) + '-')));
+      let view;
+      try { view = await startAnalysisView(launchArgs); }
+      catch (error) { console.error(error.message); process.exitCode = error.exitCode === 2 ? 2 : 1; break; }
+      const { url, delivered, out } = view;
+      console.log(`Archify: ${url}\n${delivered ? `Diagram: ${delivered}\nOpen the URL, then click "Code Analysis" to analyze.` : `Analysis: ${path.join(out, 'analysis/repo.analysis.html')}\nOpen the URL to analyze the repository.`} Press Ctrl+C to stop.`);
+      break;
+    }
+    case 'code-analysis': {
+      // serve: deliver the authored diagram, serve it, analyze on click.
+      // check: headless analysis with baseline, comparison and an exit code for CI.
+      // task: an AI optimization task from a finished run, with an evidence check.
+      const commands = { prepare: 'prepare.mjs', serve: 'serve.mjs', check: 'check.mjs', task: 'task.mjs', 'verify-change': 'verify-change.mjs', drift: 'drift.mjs', 'verify-drift': 'verify-drift.mjs', 'import-review': 'import-review.mjs' };
+      if (!commands[args[0]]) {
+        console.error(`archify code-analysis commands: prepare, serve, check, task, verify-change, drift, verify-drift, import-review.\n${usage()}`);
+        process.exitCode = 1;
+        break;
+      }
+      const result = runNode([path.join(skillRoot, 'modules', 'code-analysis', 'bin', commands[args[0]]), ...args.slice(1)]);
+      if (result.error) throw result.error;
+      process.exitCode = result.status ?? 1;
+      break;
+    }
     case 'render':
       commandRender(args);
       break;

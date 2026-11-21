@@ -1,6 +1,6 @@
 ---
 name: archify
-description: "Create validated architecture, workflow, sequence, data-flow, lifecycle/state, ERD, class, tree, timeline, and waterfall diagrams as explorable standalone HTML with dark/light themes, motion and image/SVG/WebM export. Accept requirements or Mermaid; inspect repository evidence for code-backed diagrams. Use when visualizing systems, API calls, pipelines, schemas, histories, timings, or everyday steps, parts, relationships and states. Also turn an answer into a one-page explainer, with the conclusion first, structured panels, native diagrams and charts, when the user asks for a page, an explainer or an answer to share (做成一页, 用页面讲), and by default unasked for a complex flow, diagnosis, comparison or test report; an [archify explainer: on-demand] rules line limits pages to requests. Optionally add a guided story and video export to an existing native diagram. Not for dashboards."
+description: "Create validated architecture, workflow, sequence, data-flow, lifecycle/state, ERD, class, tree, timeline, and waterfall diagrams as explorable standalone HTML with dark/light themes, motion and image/SVG/WebM export. Accept requirements or Mermaid; inspect repository evidence for code-backed diagrams. Also investigate local repository architecture health, coupling and refactoring scope with source-backed Code Analysis. Use when visualizing systems, API calls, pipelines, schemas, histories, timings, or everyday steps, parts, relationships and states. Also turn an answer into a one-page explainer, with the conclusion first, structured panels, native diagrams and charts, when the user asks for a page, an explainer or an answer to share (做成一页, 用页面讲), and by default unasked for a complex flow, diagnosis, comparison or test report; an [archify explainer: on-demand] rules line limits pages to requests. Optionally add a guided story and video export to an existing native diagram. Not for dashboards."
 license: Apache-2.0
 metadata:
   version: "3.2"
@@ -9,7 +9,7 @@ metadata:
 
 # Archify
 
-Create checked standalone HTML as a native diagram or a one-page explainer that answers a question.
+Create checked HTML as a native diagram, explainer, story, or standalone Code Analysis workbench.
 
 Run commands from your working directory. Unless the user names another location, give each new artifact request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once): keep the candidate and `<slug>.html` in it and reuse it for repairs. Native diagrams use `candidate.json` with `meta.output` relative to the working directory; explainers may use `candidate.archify.md` and a portable output filename. A later request gets a new folder. Replace `bin/archify.mjs` in every command with the installed package's absolute path, or its path relative to your working directory; CLI input and output paths resolve from that directory.
 
@@ -17,7 +17,8 @@ For a native diagram of a real codebase, read [Repository authoring](references/
 
 ## Choose the artifact
 
-- When the user asks to draw or visualize a system, flow, schema or history, use a native diagram and the Type router.
+- For drawing a system, flow, schema or history, use a native diagram and the Type router. Deliver the requested diagram through `finalize`; code analysis is a separate mode.
+- For local repository architecture health, module coupling, cycles, layer violations, large files, complexity hotspots or refactoring orientation, use Code Analysis below; the agent handles commands and no architecture JSON is required.
 - For a guided walkthrough, animated/static dual-theme SVG, interactive stage player, or 1080p MP4/WebM video over one or more native diagrams, read [Story authoring](references/story-authoring.md). Use `story draft`/`attach` to add playback to a native Viewer, or `story validate`/`svg`/`stage`/`video` for declarative component choreography.
 - Use `explainer` when the user asks for the answer as a page: a page, one page, an explainer, something to share (“做成一页”, “用页面讲”, “answer with a page”).
 - Explainer mode is `proactive` by default. A rules line `[archify explainer: <mode>]` in context selects another; an instruction in the conversation overrides it for that conversation.
@@ -58,7 +59,6 @@ Use this path for ordinary generation. Read branch references only when their st
 `finalize` and standalone `deliver` include `update` in their receipts. Do not run a separate check for the same delivery. If `update.noticeRequired` is true, read `references/update-awareness.md` and keep one compact update notice in your final response to the user, even after a quality gate fails. For a task with several diagrams, mention the update once in the final response. Snooze or ignore a reminder only when the user explicitly asks; never install or update on your own initiative.
 
 Before the first candidate, use the authoring references and relevant repository source, not Archify implementation or tests. Inspect Archify implementation if diagnostics remain unactionable after focused repairs.
-
 
 ## Type router
 
@@ -111,15 +111,17 @@ For workflow viewport overflow, read [Workflow viewport repair](references/autho
 
 When reporting verification details, distinguish artifact checks, browser evidence, captures, and actual perceptual review. For an explicitly requested immediate preview or active desktop loop, see [Optional opening](references/delivery-contract.md#optional-opening).
 
+## Code Analysis (local repository architecture)
+
+For a repository investigation, run `node bin/archify.mjs code-analysis prepare <repo-root> --out <analysis-dir> [--locale zh-CN|en] [--language ts|py|java|go|rust]`. Use `--locale zh-CN` for Chinese conversations. It creates `analysis/repo.analysis.html` with a source-backed workbench, interactive Atlas and captured AI tasks, then exits. No architecture JSON or diagram authoring is needed. Normal diagram requests end with their `finalize` delivery; analysis runs when the user requests investigation. Add `--ir <architecture.json>` only when a relevant diagram already exists or the user also wants authored architecture boundaries aligned with code evidence. This keeps the existing architecture/Atlas views and checked source mapping. Read [Code Analysis entry and investigation](modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation) for adapter prerequisites, headless checks, interactive re-analysis and coverage limits. Deliver the analysis HTML with one or two scoped observations and its task-copy controls, or continue investigating in this conversation. Users need no maintenance objective or CLI knowledge. Analysis describes the working tree, including uncommitted source; keep authored commit evidence separate. Verify source before editing, make a scoped improvement or explain why to retain the structure, then rerun analysis and project tests. Report measured preparation time and tool gaps, preserve any separately delivered diagram on failure, and avoid claims that static or missing findings prove runtime failure or a fix.
+
 ## Optional viewer capabilities
 
 Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text `explanation` (1–1200 characters). The focused Semantic Passport offers Explain; prose stays outside canonical SVG and visual exports. Omit the field when the existing label, sublabel and sources are sufficient.
 
 Live motion is enabled by default for every rendered diagram; omit `meta.animation`. The Viewer’s Live/Still button controls playback.
 
-### Cross-diagram navigation
-
-When the user wants overview → module → detail navigation across multiple HTML artifacts:
+### Cross-diagram navigation (overview → module → detail across HTML artifacts)
 
 - Targets are same-directory `filename.html` only (optional `?` / `#`). No `../`, `/`, or schemes.
 - Node `href` is sugar for a one-entry list (label defaults to the node label). `drilldowns` wins if both are present.
