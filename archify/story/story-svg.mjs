@@ -11,7 +11,8 @@ import {
   serializeXmlNode,
 } from './component-stage.mjs';
 import { failChoreography, validatePlanAgainstParts } from './choreography-plan.mjs';
-import { assertCamoSafeSvg, loadViewerStyles, resolveThemeVariables } from './svg-bake.mjs';
+import { highlightSourceLines } from './code-highlight.mjs';
+import { BAKE_PRESETS, BAKE_THEMES, assertCamoSafeSvg, compileColorMix, loadViewerStyles, parseColor, resolveThemeVariables } from './svg-bake.mjs';
 
 export const CANVAS_WIDTH = 960;
 export const CANVAS_HEIGHT = 560;
@@ -90,6 +91,36 @@ function fitCamera(box, area, maxScale = 2) {
 
 const formatTransform = (camera) => `translate(${camera.x.toFixed(3)}px,${camera.y.toFixed(3)}px) scale(${camera.scale.toFixed(5)})`;
 
+function relativeLuminance(color) {
+  const channels = parseColor(color).slice(0, 3).map(channel => {
+    const unit = channel / 255;
+    return unit <= 0.04045 ? unit / 12.92 : ((unit + 0.055) / 1.055) ** 2.4;
+  });
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+function codeColors(vars, { bg, text, accent, muted, amber }) {
+  const highlightBg = compileColorMix(`color-mix(in srgb, ${accent} 10%, ${bg})`);
+  const backgrounds = [bg, highlightBg].map(relativeLuminance);
+  const seeds = {
+    keyword: vars.get('--database-stroke') || text,
+    string: accent,
+    comment: muted,
+    number: amber,
+    function: vars.get('--frontend-stroke') || text,
+    operator: vars.get('--security-stroke') || muted,
+  };
+  return Object.fromEntries(Object.entries(seeds).map(([kind, seed]) => {
+    // Move the Viewer hue toward its text color until it reads on both row fills.
+    for (let ink = 0; ink < 100; ink += 10) {
+      const color = compileColorMix(`color-mix(in srgb, ${text} ${ink}%, ${seed})`);
+      const value = relativeLuminance(color);
+      if (backgrounds.every(bg => (Math.max(value, bg) + 0.05) / (Math.min(value, bg) + 0.05) >= 5)) return [kind, color];
+    }
+    return [kind, text];
+  }));
+}
+
 export function storyPalette(theme, preset, styles) {
   const vars = resolveThemeVariables(styles.rules, { theme, preset });
   const bg = vars.get('--bg') || (theme === 'dark' ? '#0f172a' : '#ffffff');
@@ -99,7 +130,16 @@ export function storyPalette(theme, preset, styles) {
   const amber = vars.get('--cloud-stroke') || (theme === 'dark' ? '#f3b64f' : '#ac7007');
   const removed = vars.get('--security-stroke') || (theme === 'dark' ? '#f291a4' : '#c64458');
   const line = vars.get('--lane-stroke') || vars.get('--grid') || (theme === 'dark' ? '#293548' : '#e3e8ee');
-  return { bg, text, muted, accent, amber, removed, line };
+  const palette = { bg, text, muted, accent, amber, removed, line };
+  return { ...palette, code: codeColors(vars, palette) };
+}
+
+function storyStageColors(styles, theme, preset) {
+  const { code, ...palette } = storyPalette(theme, preset, styles);
+  return new Map([
+    ...Object.entries(palette).map(([name, color]) => [`--story-${name}`, color]),
+    ...Object.entries(code).map(([name, color]) => [`--story-code-${name}`, color]),
+  ]);
 }
 
 function parseStyleDeclarations(styleText) {
@@ -158,10 +198,11 @@ function interpolateCssValue(prop, a, b, alpha, easing) {
 }
 
 class StoryTimeline {
-  constructor(duration, iteration, theme) {
+  constructor(duration, iteration, theme, switchable) {
     this.duration = duration;
     this.iteration = iteration;
     this.theme = theme;
+    this.root = switchable ? 'svg[data-story-switchable]' : `svg[data-theme="${theme}"][data-archify-bake]`;
     this.keyframesCss = [];
     this.tracks = new Map();
     this.index = 0;
@@ -206,7 +247,7 @@ class StoryTimeline {
         this.keyframesCss.push(`@keyframes ${name}{${stops}}`);
         anims.push(`${name} ${this.duration}s linear ${this.iteration}`);
       }
-      bindings.push(`svg[data-theme="${this.theme}"][data-archify-bake] :is(${selector}){animation:${anims.join(',')}}`);
+      bindings.push(`${this.root} :is(${selector}){animation:${anims.join(',')}}`);
     }
     return [...this.keyframesCss, ...bindings];
   }
@@ -253,18 +294,22 @@ class StoryTimeline {
 function wrapSourceLines(text, maxUnits = 27.5) {
   const rows = [];
   let remaining = String(text ?? '').replace(/\t/g, '  ');
-  let first = true;
+  let start = 0;
+  let prefix = '';
+  const addRow = (text) => rows.push({ first: !prefix, text, start, prefix });
   while (textUnits(remaining) > maxUnits && remaining.length > 8) {
     let cut = 0;
     while (cut < remaining.length && textUnits(remaining.slice(0, cut + 1)) <= maxUnits) cut += 1;
     const boundary = Math.max(remaining.lastIndexOf(', ', cut), remaining.lastIndexOf(' ', cut));
     if (boundary > 8) cut = boundary + 1;
     if (cut <= 0) cut = 1;
-    rows.push({ first, text: remaining.slice(0, cut) });
-    first = false;
-    remaining = `      ${remaining.slice(cut).trimStart()}`;
+    addRow(remaining.slice(0, cut));
+    const carry = remaining.slice(cut).trimStart();
+    start += remaining.length - carry.length - prefix.length;
+    prefix = '      ';
+    remaining = prefix + carry;
   }
-  rows.push({ first, text: remaining });
+  addRow(remaining);
   return rows;
 }
 
@@ -283,7 +328,7 @@ function collectWrappedDetailRows(detail) {
   for (const number of detail.lines) {
     const raw = fileLines[number - 1] ?? '';
     for (const part of wrapSourceLines(raw, wrapWidth)) {
-      rows.push({ line: part.first ? number : '', sourceLine: number, text: part.text, highlighted: highlights.has(number) });
+      rows.push({ ...part, line: part.first ? number : '', sourceLine: number, highlighted: highlights.has(number) });
     }
   }
   const rowStartY = CODE_Y + (detail.note ? 62 : 44);
@@ -313,6 +358,7 @@ function addDetailHighlightTrack(id, sourceLine, selections, timeline, duration)
 
 function buildDetailMarkup(detail, detailIndex, totalDetails, timeline, duration, palette) {
   const { rows, rowStartY, font, gap } = collectWrappedDetailRows(detail);
+  const tokensByLine = highlightSourceLines(detail.path, detail.fileLines, detail.lines);
   const selections = detail.selections?.length
     ? detail.selections
     : [{ at: detail.start, lines: detail.highlight || [] }];
@@ -339,7 +385,18 @@ function buildDetailMarkup(detail, detailIndex, totalDetails, timeline, duration
       addDetailHighlightTrack(id, row.sourceLine, selections, timeline, duration);
     }
     if (row.line) content += `<text x="${CODE_X}" y="${yy}" font-size="10.5" fill="${palette.muted}">${row.line}</text>`;
-    content += `<text x="${CODE_X + 34}" y="${yy}" font-size="${font}" fill="${palette.text}" xml:space="preserve" style="font-family:${CODE_FONT_FAMILY};white-space:pre">${escapeXml(row.text)}</text>`;
+    let code = '';
+    let cursor = 0;
+    for (const token of tokensByLine.get(row.sourceLine) || []) {
+      const start = Math.max(row.prefix.length, token.start - row.start + row.prefix.length);
+      const end = Math.min(row.text.length, token.end - row.start + row.prefix.length);
+      if (start >= end) continue;
+      code += escapeXml(row.text.slice(cursor, start));
+      code += `<tspan fill="${palette.code[token.kind]}">${escapeXml(row.text.slice(start, end))}</tspan>`;
+      cursor = end;
+    }
+    code += escapeXml(row.text.slice(cursor));
+    content += `<text x="${CODE_X + 34}" y="${yy}" font-size="${font}" fill="${palette.text}" xml:space="preserve" style="font-family:${CODE_FONT_FAMILY};white-space:pre">${code}</text>`;
   });
 
   const inAt = Math.min(duration, detail.start + 0.5);
@@ -1097,7 +1154,7 @@ function buildReducedMotionRule(plan, cameras) {
   ].join('');
 }
 
-function assembleStorySvgMarkup({ plan, theme, preset, palette, staticCss, timelineCss, stageLayers, sharedLayers, detailMarkup, captionLayers, stillAt }) {
+function assembleStorySvgMarkup({ plan, theme, preset, palette, staticCss, timelineCss, stageLayers, sharedLayers, detailMarkup, captionLayers, stillAt, switchable }) {
   const css = [...staticCss, ...timelineCss].join('\n');
   if (css.includes(']]>')) {
     throw new Error('story-svg: generated stylesheet contains forbidden CDATA terminator');
@@ -1107,9 +1164,10 @@ function assembleStorySvgMarkup({ plan, theme, preset, palette, staticCss, timel
   const metadata = `<metadata id="archify-software-notices">${escapeXml(softwareNotices)}</metadata>`;
   const bakeKind = stillAt === null ? 'story' : 'story-still';
   const loopAttr = stillAt === null ? ` data-story-loop="${plan.loop ? 'infinite' : 'finite'}"` : ` data-story-still="${stillAt}"`;
+  const switchableAttr = switchable ? ' data-story-switchable=""' : '';
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>\n`
-    + `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" viewBox="0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}" role="img" aria-labelledby="archify-story-title archify-story-desc" data-theme="${theme}" data-preset="${escapeXml(preset)}" data-archify-bake="${bakeKind}"${loopAttr}>`
+    + `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" viewBox="0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}" role="img" aria-labelledby="archify-story-title archify-story-desc" data-theme="${theme}" data-preset="${escapeXml(preset)}" data-archify-bake="${bakeKind}"${loopAttr}${switchableAttr}>`
     + `<title id="archify-story-title">${escapeXml(storyTitle)}</title>`
     + `<desc id="archify-story-desc">${escapeXml(storyDesc)}</desc>`
     + `<style><![CDATA[\n${css}\n]]></style>`
@@ -1136,17 +1194,21 @@ function assembleStorySvgMarkup({ plan, theme, preset, palette, staticCss, timel
 // allowing animated SVG and arbitrary static still snapshots without repeating AST passes.
 export function createCompiledStoryTheme({
   plan, bakedViews, viewTypes = new Map(), theme, preset = 'classic',
-  styles = loadViewerStyles(), reducedMotionFallback = true,
+  styles = loadViewerStyles(), reducedMotionFallback = true, switchable = false,
 }) {
   const duration = plan.duration;
   const iteration = plan.loop === false ? '1 both' : 'infinite';
-  const palette = storyPalette(theme, preset, styles);
+  const colors = storyPalette(theme, preset, styles);
+  const palette = switchable ? {
+    ...Object.fromEntries(Object.keys(colors).filter(key => key !== 'code').map(key => [key, `var(--story-${key})`])),
+    code: Object.fromEntries(Object.keys(colors.code).map(key => [key, `var(--story-code-${key})`])),
+  } : colors;
   const isZh = (plan.locale || '').toLowerCase().startsWith('zh');
 
   const parts = prepareStageParts({ plan, bakedViews, viewTypes, theme, palette, isZh });
   validatePlanAgainstParts(plan, parts);
 
-  const timeline = new StoryTimeline(duration, iteration, theme);
+  const timeline = new StoryTimeline(duration, iteration, theme, switchable);
   const staticCss = [
     styles.fontCss,
     `svg{font-family:${STORY_FONT_FALLBACK}}`,
@@ -1155,6 +1217,20 @@ export function createCompiledStoryTheme({
     `[data-story-metric]{visibility:visible}`,
     ...Object.values(parts).flatMap((part) => part.scopedCss),
   ];
+  if (switchable) {
+    // Keep the entire palette in the SVG so a frozen frame can be decoded as
+    // an independent image without inheriting anything from the Stage page.
+    for (const preset of BAKE_PRESETS) {
+      for (const theme of BAKE_THEMES) {
+        const variables = new Map([
+          ...resolveThemeVariables(styles.rules, { theme, preset }),
+          ...storyStageColors(styles, theme, preset),
+        ]);
+        const declarations = [...variables].map(([key, value]) => `${key}:${value}`).join(';');
+        staticCss.push(`svg[data-story-switchable][data-theme="${theme}"][data-preset="${preset}"]{${declarations}}`);
+      }
+    }
+  }
 
   attachStoryMetrics(plan, parts, timeline, duration, palette);
   const cameras = computeInitialCameras(plan, parts);
@@ -1177,7 +1253,7 @@ export function createCompiledStoryTheme({
   const stageLayers = buildStageLayers(plan, parts, cameras, stageOpacity, tokenMarkupByView);
   const captionLayers = buildCaptionLayers(plan, timeline, duration, palette);
   let cachedAnimatedCss = null;
-  const baseMarkup = { plan, theme, preset, palette, staticCss, stageLayers, sharedLayers, detailMarkup, captionLayers };
+  const baseMarkup = { plan, theme, preset, palette, staticCss, stageLayers, sharedLayers, detailMarkup, captionLayers, switchable };
 
   return {
     meta: {

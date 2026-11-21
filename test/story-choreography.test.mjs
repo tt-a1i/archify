@@ -7,13 +7,15 @@ import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import { captureAtomicOutput } from '../archify/renderers/shared/atomic-output.mjs';
+import { highlightSourceLines } from '../archify/story/code-highlight.mjs';
 import { fromStoryBriefToChoreography, normalizeChoreographySpec } from '../archify/story/choreography-plan.mjs';
 import { writeStoryOutput } from '../archify/story/output.mjs';
 import { compileStoryStillSvg, compileStorySvg, createCompiledStoryTheme } from '../archify/story/story-svg.mjs';
-import { assertCamoSafeSvg, bakeSvg, extractCanonicalSvg, loadViewerStyles } from '../archify/story/svg-bake.mjs';
+import { buildStoryStageHtml } from '../archify/story/story-stage-html.mjs';
+import { BAKE_PRESETS, BAKE_THEMES, assertCamoSafeSvg, bakeSvg, extractCanonicalSvg, loadViewerStyles, resolveThemeVariables } from '../archify/story/svg-bake.mjs';
 import { git } from './helpers/repository-evidence-fixture.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
-import { parseXml } from './helpers/xml.mjs';
+import { extractSvgs, parseXml } from './helpers/xml.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..', 'archify');
@@ -31,6 +33,36 @@ function run(args, cwd = skillRoot, extraEnv = {}, nodeArgs = []) {
 function scratch() {
   return createScratchDirectory(path.join(os.tmpdir(), 'archify-story-choreo-test-'));
 }
+
+function codeRows(svg) {
+  return [...svg.matchAll(/<text\b[^>]*xml:space="preserve"[^>]*>(.*?)<\/text>/g)].map(match => match[1]);
+}
+
+function codeRowText(svg) {
+  return codeRows(svg).map(row => row.replace(/<\/?tspan\b[^>]*>/g, '')).join('\n');
+}
+
+test('source highlighting infers language and keeps token positions across multiline excerpts', () => {
+  const examples = [
+    ['js mjs cjs jsx ts tsx', 'const', 'keyword'], ['py', 'def', 'keyword'],
+    ['go', 'func', 'keyword'], ['rs', 'fn', 'keyword'], ['java', 'public', 'keyword'],
+    ['c cc cpp h hpp', 'sizeof', 'keyword'], ['json', 'false', 'number'],
+    ['sql', 'SELECT', 'keyword'], ['sh bash zsh', 'then', 'keyword'],
+    ['yml yaml', 'false', 'number'], ['css', '@media', 'keyword'],
+    ['html xml', '<root>', 'keyword'],
+  ];
+  for (const [extensions, source, kind] of examples) {
+    for (const ext of extensions.split(' ')) {
+      const tokens = highlightSourceLines(`src/example.${ext.toUpperCase()}`, [source], [1]).get(1);
+      assert.ok(tokens.some(token => token.kind === kind), ext);
+    }
+  }
+  const source = ['const result = call();/* start', '\treturn "still a comment"; */ const result = 5;', ''];
+  const shown = highlightSourceLines('test.js', source, [2]).get(2);
+  assert.deepEqual(shown[0], { start: 0, end: 30, kind: 'comment' });
+  assert.deepEqual(shown.at(-2), { start: 46, end: 47, kind: 'number' });
+  assert.equal(highlightSourceLines('README.unrecognized', source, [1, 2]).size, 0);
+});
 
 function multiViewFixtures(dir) {
   const archV1 = {
@@ -223,8 +255,31 @@ test('standalone multi-view component choreography validates, compiles dual-them
   assert.match(html, /window\.ArchifyStoryStage/);
   assert.match(html, /StoryContainer/);
   assert.match(html, /avc1\.64002a/);
-  assert.match(html, /data-stage-theme="light"/);
-  assert.match(html, /data-stage-theme="dark"/);
+  assert.equal(extractSvgs(html).direct.length, 1, 'stage shares SVG geometry and keyframes across palettes');
+  assert.match(html, /<div class="preset-wrap">\s*<button id="stage-preset"[^>]*aria-controls="stage-preset-menu"/);
+  assert.match(html, /<div class="preset-menu" id="stage-preset-menu" role="menu"/);
+  assert.match(html, /<span>视觉表达<\/span>.*<kbd>S<\/kbd>循环切换/);
+  assert.deepEqual([...html.matchAll(/class="preset-option" data-preset-value="([^"]+)"[^>]*role="menuitemradio"/g)].map(match => match[1]), BAKE_PRESETS);
+  assert.match(html, /<strong>信号流<\/strong><small>突出动态流向<\/small>/);
+  assert.match(html, /<strong>编辑风格<\/strong><small>适合发布与上线说明<\/small>/);
+  assert.match(html, /#stage-preset\[data-preset-option="editorial"\] \.preset-control-mark\{[^}]*var\(--arrow-emphasis\)/);
+  const styles = loadViewerStyles();
+  for (const theme of BAKE_THEMES) {
+    for (const preset of BAKE_PRESETS) {
+      const values = resolveThemeVariables(styles.rules, { theme, preset });
+      const selector = `html[data-theme="${theme}"][data-preset="${preset}"]`;
+      const chrome = html.slice(html.indexOf(selector) + selector.length).split('}')[0];
+      for (const [target, viewer] of [['stage-bg', 'bg'], ['surface', 'panel'], ['ink', 'text'], ['muted', 'text-muted'], ['border', 'panel-border'], ['accent', 'arrow-emphasis']]) {
+        assert.ok(chrome.includes(`--${target}:${values.get(`--${viewer}`)}`), `${preset} ${theme} ${target}`);
+      }
+    }
+  }
+  const legacyHtml = buildStoryStageHtml({
+    plan: { duration: 1, steps: [] }, defaultTheme: 'dark', preset: 'blueprint',
+    lightSvg: fs.readFileSync(svgJson.outputs[0].path, 'utf8'), darkSvg: fs.readFileSync(svgJson.outputs[1].path, 'utf8'),
+  });
+  assert.equal(extractSvgs(legacyHtml).direct.length, 2);
+  assert.match(legacyHtml, /class="stage-pane is-active" data-stage-theme="dark"/);
 });
 
 function writeLegacyStoryBrief(dir) {
@@ -469,7 +524,8 @@ test('choreography resolves pinned repository source lines via --repo-root and r
     '  if (!job) return "skip";',
     '  return job.id;',
     '}',
-    ...Array.from({ length: 26 }, (_, i) => `// Cited line ${i + 5}`),
+    '\tconst markup = "<script onload=evil()><foreignObject>&</foreignObject></script>";',
+    ...Array.from({ length: 25 }, (_, i) => `// Cited line ${i + 6}`),
   ].join('\n'));
   git(repo, 'add', '-A');
   git(repo, 'commit', '-q', '-m', 'worker guard');
@@ -500,14 +556,23 @@ test('choreography resolves pinned repository source lines via --repo-root and r
       view: 'seq',
       title: 'Guard empty jobs',
       body: 'Pins worker.mjs at the diagram revision.',
-      detail: { nodes: ['worker'], title: 'worker.mjs', path: 'worker.mjs', lines: [1, 2, 3], highlight: [2] },
+      detail: { nodes: ['worker'], title: 'worker.mjs', path: 'worker.mjs', lines: [1, 2, 3, 5], highlight: [2, 5] },
     }],
   }, null, 2));
 
   const outSvg = path.join(dir, 'repo.svg');
   const okRes = run(['story', 'svg', specPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
   assert.equal(okRes.status, 0, okRes.stdout + okRes.stderr);
-  assert.match(fs.readFileSync(outSvg, 'utf8'), /if \(!job\) return &quot;skip&quot;;/);
+  const pinned = fs.readFileSync(outSvg, 'utf8');
+  parseXml(pinned);
+  assert.equal(assertCamoSafeSvg(pinned).ok, true);
+  assert.match(codeRowText(pinned), /if \(!job\) return &quot;skip&quot;;/);
+  const wrapped = codeRows(pinned).slice(-3);
+  assert.match(wrapped[0], /^  <tspan fill="#[a-f\d]{6}">const<\/tspan>/);
+  assert.match(wrapped[1], /^ {6}<tspan fill="#[a-f\d]{6}">/);
+  assert.equal(wrapped[0].match(/<tspan fill="([^"]+)">&quot;/)[1], wrapped[1].match(/<tspan fill="([^"]+)"/)[1], 'a wrapped string keeps its token color');
+  assert.match(codeRowText(pinned), /&lt;script \n {6}onload=evil\(\)&gt;&lt;foreignObject&gt;&amp;/);
+  assert.equal((pinned.match(/<rect id="story-source-hl-/g) || []).length, 4);
 
   // Multiple pinned views must read the revision of the view owning the excerpt.
   const beforeSeq = structuredClone(workerSeq);
@@ -520,7 +585,7 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   fs.writeFileSync(specPath, JSON.stringify(pairedSpec));
   const pairedRes = run(['story', 'svg', specPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
   assert.equal(pairedRes.status, 0, pairedRes.stdout + pairedRes.stderr);
-  assert.match(fs.readFileSync(outSvg, 'utf8'), /if \(!job\) return &quot;skip&quot;;/, 'The second view keeps its own pinned source instead of the first view revision');
+  assert.match(codeRowText(fs.readFileSync(outSvg, 'utf8')), /if \(!job\) return &quot;skip&quot;;/, 'The second view keeps its own pinned source instead of the first view revision');
 
   // The same pin survives when the views arrive as rendered native HTML.
   for (const [input, output] of [['before-seq.json', 'before-seq.html'], ['seq.json', 'seq.html']]) {
@@ -532,7 +597,7 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   fs.writeFileSync(path.join(repo, 'worker.mjs'), 'export function processJob() { return "uncommitted"; }\n');
   const htmlViews = run(['story', 'svg', specPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
   assert.equal(htmlViews.status, 0, htmlViews.stdout + htmlViews.stderr);
-  assert.match(fs.readFileSync(outSvg, 'utf8'), /if \(!job\) return &quot;skip&quot;;/, 'Rendered HTML views retain pinned source despite working-tree edits');
+  assert.match(codeRowText(fs.readFileSync(outSvg, 'utf8')), /if \(!job\) return &quot;skip&quot;;/, 'Rendered HTML views retain pinned source despite working-tree edits');
 
   const briefPath = path.join(dir, 'worker-brief.json');
   fs.writeFileSync(briefPath, JSON.stringify({
@@ -548,9 +613,9 @@ test('choreography resolves pinned repository source lines via --repo-root and r
   const bridged = run(['story', 'svg', path.join(dir, 'seq.html'), briefPath, outSvg, '--theme', 'light', '--repo-root', repo, '--json'], dir);
   assert.equal(bridged.status, 0, bridged.stdout + bridged.stderr);
   const bridgeSvg = fs.readFileSync(outSvg, 'utf8');
-  const codeRows = [...bridgeSvg.matchAll(/<text\b[^>]*xml:space="preserve"[^>]*>([^<]*)<\/text>/g)];
-  assert.equal(codeRows.length, 20);
-  assert.equal(codeRows.at(-1)[1], '// Cited line 23');
+  const bridgeRows = codeRowText(bridgeSvg).split('\n');
+  assert.equal(bridgeRows.length, 22);
+  assert.equal(bridgeRows.at(-1), '// Cited line 23');
   assert.equal((bridgeSvg.match(/<rect id="story-source-hl-/g) || []).length, 1);
   assert.equal(JSON.parse(bridged.stdout).preset, 'editorial');
 

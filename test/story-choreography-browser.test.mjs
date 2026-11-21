@@ -10,7 +10,7 @@ import { desktopBrowser } from './helpers/desktop-browser.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 import { normalizeChoreographySpec } from '../archify/story/choreography-plan.mjs';
 import { createCompiledStoryTheme } from '../archify/story/story-svg.mjs';
-import { bakeSvg, extractCanonicalSvg, loadViewerStyles } from '../archify/story/svg-bake.mjs';
+import { BAKE_PRESETS, BAKE_THEMES, bakeSvg, compileColorMix, extractCanonicalSvg, loadViewerStyles, resolveThemeVariables } from '../archify/story/svg-bake.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..', 'archify');
@@ -53,6 +53,7 @@ function buildChoreographySample(dir) {
   };
   fs.writeFileSync(path.join(dir, 'before.json'), JSON.stringify(before, null, 2));
   fs.writeFileSync(path.join(dir, 'after.json'), JSON.stringify(after, null, 2));
+  fs.writeFileSync(path.join(dir, 'queue.mjs'), '\tconst markup = "<tag>&";\n  return send(markup);\n');
   const spec = path.join(dir, 'choreo.json');
   fs.writeFileSync(spec, JSON.stringify({
     schema_version: 1,
@@ -76,6 +77,7 @@ function buildChoreographySample(dir) {
         enter: ['queue'],
         connect: ['enqueue'],
         trace: { edges: ['enqueue'], travel: 1.0 },
+        detail: { nodes: ['api'], title: 'Cited queue source', path: 'queue.mjs', lines: [1, 2], highlight: [2] },
       },
     ],
   }, null, 2));
@@ -191,8 +193,158 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
   });
   for (const theme of ['light', 'dark']) {
     const actualColors = await evalJs(`(() => { window.ArchifyStoryStage.pause(); window.ArchifyStoryStage.setTheme('${theme}'); return (${nativeColors})(document.querySelector('.stage-pane.is-active > svg')); })()`);
-    assert.deepEqual(actualColors, expectedColors[theme], `${theme} native diagram colors match the standalone SVG without contamination from the other pane`);
+    assert.deepEqual(actualColors, expectedColors[theme], `${theme} native diagram colors match the standalone SVG`);
   }
+  await t.test('Stage preset menu follows Viewer click, focus, and keyboard behavior', async () => {
+    const menu = await evalJs(`(() => {
+      const api = window.StoryStage;
+      const trigger = document.getElementById('stage-preset');
+      const menu = document.getElementById('stage-preset-menu');
+      const sendKey = (key, target = document.activeElement, options = {}) => target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...options }));
+      const active = () => document.activeElement.dataset.presetValue;
+      const expanded = () => trigger.getAttribute('aria-expanded');
+      trigger.querySelector('.preset-control-mark').click();
+      const opened = [expanded(), getComputedStyle(menu).display, active()];
+      const navigation = ['End', 'ArrowDown', 'ArrowUp', 'Home'].map(key => {
+        sendKey(key);
+        return active();
+      });
+      menu.querySelector('[data-preset-value="blueprint"] strong').click();
+      const svg = document.querySelector('[data-story-switchable]');
+      const selection = {
+        preset: api.state().preset, html: document.documentElement.dataset.preset, svg: svg.dataset.preset,
+        trigger: trigger.dataset.presetOption, label: trigger.querySelector('#stage-preset-label').textContent,
+        checked: [...menu.querySelectorAll('[aria-checked="true"]')].map(el => el.dataset.presetValue),
+        closed: expanded(), focusReturned: document.activeElement === trigger,
+      };
+      sendKey('ArrowUp');
+      const keyboardOpened = [expanded(), active()];
+      sendKey('Escape');
+      const escaped = [expanded(), document.activeElement === trigger];
+      trigger.click();
+      document.querySelector('h1').click();
+      const outside = expanded();
+      sendKey('s', document.body, { ctrlKey: true });
+      sendKey('s', document.getElementById('stage-range'));
+      sendKey('s', trigger);
+      const ignored = api.state().preset;
+      sendKey('S', document.body, { shiftKey: true });
+      const cycled = api.state().preset;
+      sendKey('s', document.body);
+      return { opened, navigation, selection, keyboardOpened, escaped, outside, ignored, cycled, wrapped: api.state().preset };
+    })()`);
+    assert.deepEqual(menu.opened, ['true', 'block', 'classic']);
+    assert.deepEqual(menu.navigation, ['editorial', 'classic', 'editorial', 'classic']);
+    assert.deepEqual(menu.selection, {
+      preset: 'blueprint', html: 'blueprint', svg: 'blueprint', trigger: 'blueprint', label: 'Blueprint',
+      checked: ['blueprint'], closed: 'false', focusReturned: true,
+    });
+    assert.deepEqual(menu.keyboardOpened, ['true', 'editorial']);
+    assert.deepEqual(menu.escaped, ['false', true]);
+    assert.equal(menu.outside, 'false');
+    assert.equal(menu.ignored, 'blueprint');
+    assert.equal(menu.cycled, 'editorial');
+    assert.equal(menu.wrapped, 'classic');
+  });
+  await t.test('Stage switches all eight Viewer palettes and PNG captures the active syntax and canvas', async () => {
+    const { rules } = loadViewerStyles();
+    const combinations = BAKE_PRESETS.flatMap(preset => BAKE_THEMES.map(theme => {
+      const vars = resolveThemeVariables(rules, { theme, preset });
+      const backend = vars.get('--backend-stroke');
+      const node = theme === 'dark' ? compileColorMix(`color-mix(in srgb, ${backend} 72%, ${vars.get('--mask')})`) : backend;
+      return { preset, theme, background: vars.get('--bg'), node, text: vars.get('--text') };
+    }));
+    const result = await evalJs(`(async () => {
+      await document.fonts.ready;
+      const api = window.StoryStage;
+      const svg = document.querySelector('.stage-pane.is-active > svg');
+      const presetControl = document.getElementById('stage-preset');
+      const presetMenu = document.getElementById('stage-preset-menu');
+      const code = [...svg.querySelectorAll('.story-source-detail text')].find(row => row.getAttribute('xml:space') === 'preserve');
+      const keyword = code.querySelector('tspan');
+      const node = svg.querySelector('[data-node-id] rect.c-backend');
+      const caption = svg.querySelector('.caption-body');
+      const canvas = document.createElement('canvas');
+      canvas.width = 1920;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const bytes = color => {
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        return [...ctx.getImageData(0, 0, 1, 1).data];
+      };
+      api.pause();
+      api.seek(6);
+      const palettes = [];
+      for (const { preset, theme, background, node: expectedNode, text } of ${JSON.stringify(combinations)}) {
+        presetControl.click();
+        presetMenu.querySelector('[data-preset-value="' + preset + '"]').click();
+        api.setTheme(theme);
+        const blob = await api.exportPNG();
+        const image = await createImageBitmap(blob);
+        const expectedBg = bytes(background);
+        const keywordColor = bytes(getComputedStyle(keyword).fill);
+        ctx.drawImage(image, 0, 0);
+        image.close();
+        const pixel = (x, y) => [...ctx.getImageData(x, y, 1, 1).data];
+        const letterbox = pixel(0, 500);
+        const canvasBg = pixel(120, 25);
+        const codeBg = pixel(1700, 760);
+        // The first code row begins at (564, 188) in the SVG. Search for
+        // solid glyph interiors to avoid relying on antialiasing at one point.
+        const textPixels = ctx.getImageData(1110, 332, 90, 34).data;
+        let colored = 0;
+        for (let i = 0; i < textPixels.length; i += 4) {
+          if (keywordColor.every((channel, j) => channel === textPixels[i + j])) colored++;
+        }
+        palettes.push({
+          preset, theme, state: api.state(),
+          expectedBg, letterbox, canvasBg, codeBg,
+          chrome: bytes(getComputedStyle(document.body).backgroundColor),
+          node: bytes(getComputedStyle(node).stroke), expectedNode: bytes(expectedNode),
+          ink: bytes(getComputedStyle(code).fill), expectedInk: bytes(text),
+          caption: getComputedStyle(caption).fill, keywordColor, colored,
+          activeTimeline: svg.getAnimations({ subtree: true }).some(a => a.currentTime === 6000),
+        });
+      }
+      const pending = api.exportPNG();
+      api.setPreset('classic');
+      api.setTheme('light');
+      const frozen = await createImageBitmap(await pending);
+      ctx.drawImage(frozen, 0, 0);
+      frozen.close();
+      const pendingPng = [0, 120].map(x => [...ctx.getImageData(x, 500, 1, 1).data]);
+      api.play();
+      const animation = svg.getAnimations({ subtree: true })[0];
+      const before = animation.currentTime;
+      api.setPreset('signal-flow');
+      api.setTheme('dark');
+      const playing = api.state().playing;
+      const after = animation.currentTime;
+      api.pause();
+      api.setPreset('classic');
+      return { palettes, pendingPng, before, after, playing, source: code.textContent };
+    })()`);
+    for (const item of result.palettes) {
+      const label = `${item.preset} ${item.theme}`;
+      assert.equal(item.state.preset, item.preset, label);
+      assert.equal(item.state.theme, item.theme, label);
+      assert.equal(item.state.time, 6, label);
+      assert.equal(item.state.playing, false, label);
+      assert.equal(item.activeTimeline, true, label);
+      for (const region of ['chrome', 'letterbox', 'canvasBg', 'codeBg']) assert.deepEqual(item[region], item.expectedBg, `${label} ${region}`);
+      assert.deepEqual(item.node, item.expectedNode, label);
+      assert.deepEqual(item.ink, item.expectedInk, label);
+      assert.ok(item.colored > 8, `${label} exports syntax-colored glyphs`);
+    }
+    assert.equal(new Set(result.palettes.map(item => item.caption)).size, 8);
+    assert.equal(new Set(result.palettes.map(item => String(item.keywordColor))).size, 8);
+    const capturedBg = result.palettes.at(-1).expectedBg;
+    assert.deepEqual(result.pendingPng, [capturedBg, capturedBg], 'canvas and letterbox use the same preset captured at export start');
+    assert.equal(result.source, '  const markup = "<tag>&";');
+    assert.equal(result.playing, true);
+    assert.ok(Math.abs(result.before - result.after) < 5, 'switching while playing does not restart or reseek the animation');
+  });
   const stageCheck = await evalJs(`(async () => {
     window.ArchifyStoryStage.pause();
     window.ArchifyStoryStage.seek(6.0);
@@ -204,11 +356,18 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     bmp.close();
     let controlsLocked = false;
     let overlappingExport;
-    const controls = [...document.querySelectorAll('#stage-theme,#stage-play,#stage-replay,#stage-range,.stage-step')];
+    const controls = [...document.querySelectorAll('#stage-theme,#stage-preset,#stage-play,#stage-replay,#stage-range,.stage-step')];
+    const presetButton = document.getElementById('stage-preset');
+    presetButton.click();
+    const presetOpenBeforeExport = presetButton.getAttribute('aria-expanded') === 'true';
     const vidBlob = await window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 2, seconds: 5, fps: 1, onProgress: ev => {
       if (ev.frame === 1) {
-        controlsLocked = controls.every(el => el.disabled);
+        controlsLocked = controls.every(el => el.disabled) && presetButton.getAttribute('aria-expanded') === 'false';
         document.getElementById('stage-theme').click();
+        presetButton.click();
+        document.body.dispatchEvent(new KeyboardEvent('keydown', {key:'s',bubbles:true}));
+        window.ArchifyStoryStage.setTheme('dark');
+        window.ArchifyStoryStage.setPreset('blueprint');
         document.getElementById('stage-replay').click();
         document.dispatchEvent(new KeyboardEvent('keydown', {code:'Space',bubbles:true}));
         controlsLocked = controlsLocked && !window.ArchifyStoryStage.state().playing;
@@ -218,6 +377,7 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     } });
     const overlapMessage = await overlappingExport;
     const themeAfterExport = window.ArchifyStoryStage.state().theme;
+    const presetAfterExport = window.ArchifyStoryStage.state().preset;
     const timeAfterExport = window.ArchifyStoryStage.state().time;
     const stage = window.ArchifyStoryStage;
     const cancelDuringExport = async (startExport, cancel, signal) => {
@@ -265,12 +425,15 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
       ctx.drawImage(source, x, 0, width, thumbnail.height);
       return ctx.getImageData(0, 0, thumbnail.width, thumbnail.height).data;
     };
-    const firstFrame = frameSample(video);
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('WebM seek timeout')), 5000);
+    const seekVideo = (video, time) => new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Video seek timeout')), 5000);
       video.onseeked = () => { clearTimeout(timer); resolve(); };
-      video.currentTime = video.duration - 0.5;
+      video.currentTime = time;
     });
+    // loadeddata can precede the first frame being drawable into a canvas.
+    await seekVideo(video, 0.25);
+    const firstFrame = frameSample(video);
+    await seekVideo(video, video.duration - 0.5);
     const lastFrame = frameSample(video);
     video.removeAttribute('src');
     video.load();
@@ -283,7 +446,8 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
       return frameSample(img, (thumbnail.width - width) / 2, width);
     }));
     const distance = (pixels, still) => pixels.reduce((sum, channel, i) => sum + Math.abs(channel - still[i]), 0);
-    const matchedStills = [firstFrame, lastFrame].map(frame => distance(frame, stills[0]) < distance(frame, stills[1]) ? 0 : 1);
+    const frameDistances = [firstFrame, lastFrame].map(frame => stills.map(still => distance(frame, still)));
+    const matchedStills = frameDistances.map(([first, second]) => first < second ? 0 : 1);
     const supportsH264 = typeof VideoEncoder !== 'undefined' && (await VideoEncoder.isConfigSupported({
       codec: 'avc1.64002a', width: 1920, height: 1080, framerate: 30, bitrate: 12000000, latencyMode: 'quality', avc: { format: 'avc' },
     })).supported;
@@ -296,14 +460,14 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
         silentMp4Head = new TextDecoder().decode(await mp4.slice(4,12).arrayBuffer());
       } finally { window.AudioEncoder = originalAudioEncoder; }
     }
-    return { state, pngDims, head, videoDims, matchedStills, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, timeAfterExport, controlsLocked, cancellations, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
+    return { state, pngDims, head, videoDims, matchedStills, frameDistances, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, presetAfterExport, timeAfterExport, presetOpenBeforeExport, controlsLocked, cancellations, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
   })()`);
 
   await t.test('Stage rejects an overlapping export before it can change reader state', () => {
     assert.match(stageCheck.overlapMessage ?? '', /already running/i);
   });
   await t.test('decoded Stage video advances under reduced motion', () => {
-    assert.deepEqual(stageCheck.matchedStills, [0, 1]);
+    assert.deepEqual(stageCheck.matchedStills, [0, 1], JSON.stringify(stageCheck.frameDistances));
   });
   await t.test('Stage programmatic video cancellation restores controls and reader position', () => {
     const cancelled = { error: 'AbortError', time: stageCheck.state.time, unlocked: true };
@@ -312,6 +476,8 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
   assert.equal(stageCheck.state.theme, 'light');
   assert.equal(stageCheck.state.playing, false);
   assert.equal(stageCheck.themeAfterExport, 'light', 'Theme control cannot mix light and dark frames during export');
+  assert.equal(stageCheck.presetAfterExport, 'classic', 'Preset API cannot mix palettes during video export');
+  assert.equal(stageCheck.presetOpenBeforeExport, true);
   assert.equal(stageCheck.controlsLocked, true);
   assert.equal(stageCheck.controlsRestored, true);
   assert.equal(stageCheck.timeAfterExport, stageCheck.state.time, 'Export restores the paused reader position');

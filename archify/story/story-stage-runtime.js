@@ -22,6 +22,10 @@
   const playBtn = document.getElementById('stage-play');
   const replayBtn = document.getElementById('stage-replay');
   const themeBtn = document.getElementById('stage-theme');
+  const presetBtn = document.getElementById('stage-preset');
+  const presetLabel = document.getElementById('stage-preset-label');
+  const presetMenu = document.getElementById('stage-preset-menu');
+  const presetOptions = presetMenu ? [...presetMenu.querySelectorAll('[data-preset-value]')] : [];
   const pngBtn = document.getElementById('stage-export-png');
   const mp4Btn = document.getElementById('stage-export-mp4');
   const webmBtn = document.getElementById('stage-export-webm');
@@ -33,13 +37,16 @@
     light: document.querySelector('.stage-pane[data-stage-theme="light"]'),
     dark: document.querySelector('.stage-pane[data-stage-theme="dark"]'),
   };
+  const switchableSvg = document.querySelector('.stage-pane[data-stage-switchable] > svg');
+  const themedSvgs = switchableSvg ? [switchableSvg, ...switchableSvg.querySelectorAll('svg[data-archify-bake]')] : [];
 
   let currentTheme = meta.defaultTheme;
+  let currentPreset = meta.preset;
   let playing = true;
   let currentTime = 0;
   let activeJob = null;
 
-  const activeSvg = () => panes[currentTheme]?.querySelector('svg') || null;
+  const activeSvg = () => switchableSvg || panes[currentTheme]?.querySelector('svg') || null;
   const allAnims = (svg) => (svg ? svg.getAnimations({ subtree: true }) : []);
   const abortCheck = (signal) => {
     if (signal?.aborted) throw new DOMException('Export cancelled.', 'AbortError');
@@ -98,12 +105,88 @@
   function seek(seconds) { applyTime(seconds, playing); }
 
   function setTheme(theme) {
-    if (!panes[theme]) return;
+    if (activeJob || !['light', 'dark'].includes(theme) || theme === currentTheme) return;
     currentTheme = theme;
     document.documentElement.dataset.theme = theme;
-    panes.light.classList.toggle('is-active', theme === 'light');
-    panes.dark.classList.toggle('is-active', theme === 'dark');
-    applyTime(currentTime, playing);
+    for (const svg of themedSvgs) svg.dataset.theme = theme;
+    if (!switchableSvg) {
+      panes.light.classList.toggle('is-active', theme === 'light');
+      panes.dark.classList.toggle('is-active', theme === 'dark');
+      applyTime(currentTime, playing);
+    }
+    themeBtn.textContent = theme === 'dark' ? labels.themeLight : labels.themeDark;
+  }
+
+  function setPreset(preset) {
+    if (activeJob || !meta.presets.includes(preset)) return;
+    currentPreset = preset;
+    document.documentElement.dataset.preset = preset;
+    for (const svg of themedSvgs) svg.dataset.preset = preset;
+    const { label, aria } = meta.presetLabels[preset];
+    presetBtn.dataset.presetOption = preset;
+    presetBtn.setAttribute('aria-label', aria);
+    presetLabel.textContent = label;
+    for (const option of presetOptions) {
+      option.setAttribute('aria-checked', String(option.dataset.presetValue === preset));
+    }
+  }
+
+  function openPresetMenu(focusLast = false) {
+    if (activeJob || presetBtn.disabled) return;
+    presetMenu.classList.add('open');
+    presetBtn.setAttribute('aria-expanded', 'true');
+    const option = focusLast ? presetOptions.at(-1) : presetOptions.find(button => button.dataset.presetValue === currentPreset);
+    (option || presetOptions[0]).focus();
+  }
+
+  function closePresetMenu(restoreFocus = false) {
+    if (!presetMenu?.classList.contains('open')) return;
+    presetMenu.classList.remove('open');
+    presetBtn.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) presetBtn.focus();
+  }
+
+  function bindPresetMenu() {
+    const wrap = presetBtn.closest('.preset-wrap');
+    setPreset(currentPreset);
+    presetBtn.addEventListener('click', () => {
+      if (presetMenu.classList.contains('open')) closePresetMenu();
+      else openPresetMenu();
+    });
+    presetMenu.addEventListener('click', (event) => {
+      const option = event.target.closest('[data-preset-value]');
+      if (!option || activeJob) return;
+      setPreset(option.dataset.presetValue);
+      closePresetMenu(true);
+    });
+    document.addEventListener('click', (event) => {
+      if (!wrap.contains(event.target)) closePresetMenu();
+    });
+    wrap.addEventListener('keydown', (event) => {
+      const { key } = event;
+      const open = presetMenu.classList.contains('open');
+      if (key === 'Escape' && open) {
+        event.preventDefault();
+        closePresetMenu(true);
+        return;
+      }
+      if (key === 'Tab') closePresetMenu();
+      if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+      if (event.target === presetBtn) {
+        if (!open && (key === 'ArrowDown' || key === 'ArrowUp')) {
+          event.preventDefault();
+          openPresetMenu(key === 'ArrowUp');
+        }
+        return;
+      }
+      const active = presetOptions.indexOf(document.activeElement);
+      const count = presetOptions.length;
+      const next = { ArrowDown: (active + 1) % count, ArrowUp: (active - 1 + count) % count, Home: 0, End: count - 1 };
+      if (open && Object.hasOwn(next, key)) {
+        event.preventDefault();
+        presetOptions[next[key]].focus();
+      }
+    });
   }
 
   // Matches story-export.js: check whether `[style]` selectors could collide with
@@ -197,15 +280,15 @@
     return async (targetCanvas, timeSec, offsetY = 0) => {
       const svg = activeSvg();
       applyTime(timeSec, false);
+      const background = svg.querySelector(':scope > rect[fill]');
+      const fill = background ? getComputedStyle(background).fill : getComputedStyle(document.body).backgroundColor;
       const copy = freezeSvgClone(svg, support, drawW, drawH);
       const img = new Image();
       img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serializer.serializeToString(copy))}`;
       try {
         await img.decode();
         const ctx = targetCanvas.getContext('2d', { willReadFrequently: false });
-        const bg = svg.querySelector(':scope > rect[fill]')?.getAttribute('fill')
-          || (currentTheme === 'dark' ? '#0f172a' : '#ffffff');
-        ctx.fillStyle = bg;
+        ctx.fillStyle = fill;
         ctx.fillRect(0, offsetY, WIDTH, HEIGHT);
         ctx.drawImage(img, dx, offsetY + dy, drawW, drawH);
       } finally {
@@ -414,6 +497,9 @@
     if (activeJob) throw Error('A story export is already running.');
     const controller = new AbortController();
     activeJob = controller;
+    const presetWasDisabled = presetBtn?.disabled;
+    closePresetMenu();
+    if (presetBtn) presetBtn.disabled = true;
     const abortFromCaller = () => controller.abort(callerSignal.reason);
     try {
       if (callerSignal?.aborted) abortFromCaller();
@@ -421,6 +507,7 @@
       return await run(controller.signal);
     } finally {
       activeJob = null;
+      if (presetBtn) presetBtn.disabled = presetWasDisabled;
       callerSignal?.removeEventListener('abort', abortFromCaller);
     }
   }
@@ -464,11 +551,20 @@
   playBtn.addEventListener('click', () => (playing ? pause() : play()));
   replayBtn.addEventListener('click', () => { playing = true; applyTime(0, true); });
   themeBtn.addEventListener('click', () => setTheme(currentTheme === 'dark' ? 'light' : 'dark'));
+  if (presetBtn) bindPresetMenu();
   range.addEventListener('input', () => applyTime(Number(range.value), false));
   range.addEventListener('change', () => applyTime(Number(range.value), playing));
   stepButtons.forEach((btn) => btn.addEventListener('click', () => seek(Number(btn.dataset.stepAt))));
   document.addEventListener('keydown', (event) => {
-    if (event.code === 'Space' && !playBtn.disabled && !['INPUT', 'BUTTON'].includes(document.activeElement?.tagName)) {
+    if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
+    const target = event.target instanceof Element ? event.target : document.activeElement;
+    if (target?.isContentEditable || target?.closest('input,textarea,button,select')) return;
+    if (!activeJob && presetBtn && !presetBtn.disabled && (event.key === 's' || event.key === 'S')) {
+      event.preventDefault();
+      const next = (meta.presets.indexOf(currentPreset) + 1) % meta.presets.length;
+      setPreset(meta.presets[next]);
+    }
+    if (event.code === 'Space' && !playBtn.disabled) {
       event.preventDefault();
       playing ? pause() : play();
     }
@@ -486,13 +582,14 @@
     pause,
     seek,
     setTheme,
+    setPreset,
     exportPNG,
     exportVideo: (options) => startVideoExport(options),
     writeVideo: (writer, options) => startVideoExport(options, writer),
     cancelExport: () => activeJob?.abort(),
     duration: meta.duration,
     defaults: { width: WIDTH, height: HEIGHT, fps: DEFAULT_FPS, format: 'webm' },
-    state: () => ({ theme: currentTheme, playing, time: currentTime, duration: meta.duration, steps: meta.steps }),
+    state: () => ({ theme: currentTheme, preset: currentPreset, playing, time: currentTime, duration: meta.duration, steps: meta.steps }),
   };
   window.ArchifyStoryStage = api;
   window.StoryStage = api;

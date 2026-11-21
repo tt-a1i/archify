@@ -27,7 +27,15 @@ export function loadViewerStyles(templateFile = templatePath) {
   const fontBlock = blocks.find((block) => /id="archify-fonts"/.test(block[1] || ''));
   if (!fontBlock) throw new Error(`svg-bake: ${templateFile} has no <style id="archify-fonts"> block`);
   const css = blocks.filter((block) => block !== fontBlock).map((block) => block[2]).join('\n');
-  const styles = { fontCss: fontBlock[2].trim(), rules: parseStylesheet(css) };
+  const rules = parseStylesheet(css);
+  let presetMenu;
+  const styles = {
+    fontCss: fontBlock[2].trim(),
+    rules,
+    get presetMenu() {
+      return presetMenu ??= extractViewerPresetMenu(html, css, rules);
+    },
+  };
   templateStyleCache.set(templateFile, styles);
   return styles;
 }
@@ -132,6 +140,34 @@ function splitTopLevel(text, separator) {
   }
   parts.push(text.slice(start));
   return parts.map((part) => part.trim()).filter(Boolean);
+}
+
+function extractViewerPresetMenu(html, css, rules) {
+  const start = html.indexOf('<div class="preset-wrap">');
+  const fragment = parse(html.slice(start), { sourceCodeLocationInfo: true });
+  const body = fragment.childNodes.find(node => node.tagName === 'html')?.childNodes.find(node => node.tagName === 'body');
+  const wrap = body?.childNodes.find(node => node.attrs?.some(attr => attr.name === 'class' && attr.value === 'preset-wrap'));
+  const end = wrap?.sourceCodeLocation?.endOffset;
+  const keyframes = css.indexOf('@keyframes toolbar-menu-in');
+  if (start === -1 || !end || keyframes === -1) throw new Error('svg-bake: Viewer preset menu is missing');
+
+  // Keep the Viewer's menu, trigger, and tools capsule rules in cascade order.
+  // Stage supplies the toolbar's page position and its own control layout.
+  const menuSelectors = /(?:\.preset-(?:wrap|menu|option|control-mark)\b|\.toolbar-(?:group|icon|chevron)\b|#(?:btn-preset|preset-label)\b|^\.toolbar button\b)/;
+  const menuCss = [];
+  for (const { selector, declarations, media } of rules) {
+    const selectors = splitTopLevel(selector, ',').filter(part => menuSelectors.test(part));
+    if (!selectors.length) continue;
+    const body = declarations.map(({ property, value, important }) => `${property}:${value}${important ? '!important' : ''};`).join('');
+    const rule = `${selectors.join(',')}{${body}}`;
+    menuCss.push(media ? `${media}{${rule}}` : rule);
+  }
+  const keyframesEnd = findBlockEnd(css, css.indexOf('{', keyframes));
+  menuCss.push(css.slice(keyframes, keyframesEnd + 1));
+  return {
+    markup: html.slice(start, start + end),
+    css: menuCss.join('\n'),
+  };
 }
 
 const COMPOUND_TOKEN_RE = /^(?::root|html|svg|body|\*|\[data-[a-z-]+(?:="[^"]*")?\]|:not\(\[data-[a-z-]+(?:="[^"]*")?\]\))/;
@@ -302,16 +338,22 @@ function compileSingleMix(inner) {
   return formatColor(mixed);
 }
 
-function rescopeSelectorPart(part, root) {
+function rescopeSelectorPart(part, root, switchable) {
   if (INTERACTIVE_PSEUDO_RE.test(part)) return null;
   const canvasIndex = part.indexOf(CANVAS_SCOPE);
   if (canvasIndex !== -1) {
     const prefix = part.slice(0, canvasIndex).trim();
+    if (switchable) {
+      // Viewer canvas paint rules use theme/preset on html. Match those same
+      // attributes on the embedded SVG so the rules survive image serialization.
+      if (prefix && !/^html(?:\[data-(?:preset|theme)="[^"]+"\])+$/.test(prefix)) return null;
+      return `svg${prefix.slice(4)}${part.slice(canvasIndex + CANVAS_SCOPE.length)}`;
+    }
     if (prefix && !compoundMatchesRoot(prefix, root)) return null;
     return `svg[data-preset="${root.preset}"][data-theme="${root.theme}"]${part.slice(canvasIndex + CANVAS_SCOPE.length)}`;
   }
   if (!SVG_RULE_RE.test(part)) return null;
-  if (part.startsWith('svg')) {
+  if (!switchable && part.startsWith('svg')) {
     const compoundEnd = part.search(/[\s>+~]/);
     const compound = compoundEnd === -1 ? part : part.slice(0, compoundEnd);
     if (!/^svg(\[data-(theme|preset)="[^"]*"\])*$/.test(compound)) return part;
@@ -320,24 +362,24 @@ function rescopeSelectorPart(part, root) {
   return part;
 }
 
-export function collectSvgRules(rules, { theme, preset, variables }) {
+export function collectSvgRules(rules, { theme, preset, variables, switchable = false }) {
   const root = { theme, preset };
   const output = [];
   for (const rule of rules) {
     if (rule.media) continue;
-    const parts = splitTopLevel(rule.selector, ',').map((part) => rescopeSelectorPart(part, root)).filter(Boolean);
+    const parts = splitTopLevel(rule.selector, ',').map((part) => rescopeSelectorPart(part, root, switchable)).filter(Boolean);
     if (!parts.length) continue;
     const bareRootSvg = parts.every((part) => part === 'svg');
     const local = new Map(rule.declarations.filter((d) => d.property.startsWith('--')).map((d) => [d.property, d.value]));
     const lookup = (name) => (local.has(name) ? substituteVariables(local.get(name), lookup) : (variables.get(name) ?? null));
     const declarations = [];
     for (const declaration of rule.declarations) {
-      if (declaration.property.startsWith('--')) continue;
+      if (!switchable && declaration.property.startsWith('--')) continue;
       if (DROPPED_PROPERTY_RE.test(declaration.property)) continue;
       if (bareRootSvg && ROOT_SVG_LAYOUT_PROPERTIES.has(declaration.property)) continue;
-      const value = substituteVariables(declaration.value, lookup);
+      const value = switchable ? declaration.value : substituteVariables(declaration.value, lookup);
       if (value === null) continue;
-      declarations.push(`${declaration.property}: ${compileColorMix(value)}${declaration.important ? ' !important' : ''}`);
+      declarations.push(`${declaration.property}: ${switchable ? value : compileColorMix(value)}${declaration.important ? ' !important' : ''}`);
     }
     if (!declarations.length) continue;
     output.push(`${[...new Set(parts)].join(', ')} { ${declarations.join('; ')}; }`);
@@ -480,12 +522,12 @@ export function authoredPreset(svg) {
   return splitRootTag(svg).attributes.get('data-preset') || null;
 }
 
-export function bakeSvg(svg, { theme, preset, styles = loadViewerStyles() }) {
+export function bakeSvg(svg, { theme, preset, styles = loadViewerStyles(), switchable = false }) {
   if (!BAKE_THEMES.includes(theme)) throw new Error(`svg-bake: unsupported theme ${JSON.stringify(theme)}`);
   const { attributes, body: rawBody } = splitRootTag(svg);
   const resolvedPreset = preset || attributes.get('data-preset') || 'classic';
   const variables = resolveThemeVariables(styles.rules, { theme, preset: resolvedPreset });
-  const body = bakeBodyStyles(rawBody, variables);
+  const body = switchable ? rawBody : bakeBodyStyles(rawBody, variables);
   const viewBox = parseViewBox(attributes.get('viewBox'));
   attributes.set('xmlns', 'http://www.w3.org/2000/svg');
   attributes.set('width', String(viewBox.width));
@@ -496,17 +538,16 @@ export function bakeSvg(svg, { theme, preset, styles = loadViewerStyles() }) {
   attributes.delete('data-animation');
   const variableBlock = [...variables].map(([name, value]) => `${name}: ${value};`).join(' ');
   const css = [
-    styles.fontCss,
     `svg { font-family: ${FONT_FALLBACK}; }`,
-    ...collectSvgRules(styles.rules, { theme, preset: resolvedPreset, variables }),
-    `svg[data-theme="${theme}"] { ${variableBlock} }`,
+    ...collectSvgRules(styles.rules, { theme, preset: resolvedPreset, variables, switchable }),
   ].join('\n');
+  const stylesheet = switchable ? css : `${styles.fontCss}\n${css}\nsvg[data-theme="${theme}"] { ${variableBlock} }`;
   const background = `<rect class="archify-bake-background" x="${viewBox.x}" y="${viewBox.y}" width="${viewBox.width}" height="${viewBox.height}" fill="${escapeAttribute(variables.get('--bg') || '#ffffff')}"/>`;
   const metadata = `<metadata id="archify-software-notices">${escapeXml(softwareNotices)}</metadata>`;
   const split = leadingAccessibleText(body);
   const openTag = `<svg ${[...attributes].map(([name, value]) => `${name}="${escapeAttribute(value)}"`).join(' ')}>`;
-  if (css.includes(']]>')) throw new Error('svg-bake: stylesheet cannot contain a CDATA terminator');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n${openTag}${body.slice(0, split)}<style><![CDATA[\n${css}\n]]></style>${background}${body.slice(split)}${metadata}</svg>\n`;
+  if (stylesheet.includes(']]>')) throw new Error('svg-bake: stylesheet cannot contain a CDATA terminator');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${openTag}${body.slice(0, split)}<style><![CDATA[\n${stylesheet}\n]]></style>${background}${body.slice(split)}${metadata}</svg>\n`;
 }
 
 function activeSvgContent(svgString) {

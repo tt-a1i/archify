@@ -262,11 +262,11 @@ function parseChoreographyArgs(args, action) {
   return options;
 }
 
-function bakeSingleHtmlBundleView({ singleHtml, presetOverride, rawPreset, themeList, styles }) {
+function bakeSingleHtmlBundleView({ singleHtml, presetOverride, rawPreset, themeList, styles, switchable }) {
   const htmlText = fs.readFileSync(singleHtml.htmlPath, 'utf8');
   const canonical = extractCanonicalSvg(htmlText);
   const resolvedPreset = presetOverride || rawPreset || authoredPreset(canonical) || 'classic';
-  const byTheme = new Map(themeList.map((theme) => [theme, bakeSvg(canonical, { theme, preset: resolvedPreset, styles })]));
+  const byTheme = new Map(themeList.map((theme) => [theme, bakeSvg(canonical, { theme, preset: resolvedPreset, styles, switchable })]));
   return {
     bakedViews: new Map([['main', byTheme]]),
     viewTypes: new Map([['main', singleHtml.diagramType]]),
@@ -316,7 +316,7 @@ function loadCanonicalViewSvg(view, { baseDir, tempDir, env, inputPaths, viewDia
   return extractCanonicalSvg(htmlText);
 }
 
-async function bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride, env, themeList, styles }) {
+async function bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride, env, themeList, styles, switchable }) {
   const bakedViews = new Map();
   const viewTypes = new Map();
   const viewDiagrams = new Map();
@@ -335,7 +335,8 @@ async function bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride,
       const canonical = loadCanonicalViewSvg(view, { baseDir, tempDir: temp.path, env, inputPaths, viewDiagrams });
       const effectivePreset = presetOverride || view.preset || rawSpec.preset || authoredPreset(canonical) || 'classic';
       resolvedPreset ??= effectivePreset;
-      const byTheme = new Map(themeList.map((theme) => [theme, bakeSvg(canonical, { theme, preset: effectivePreset, styles })]));
+      const preset = switchable ? resolvedPreset : effectivePreset;
+      const byTheme = new Map(themeList.map((theme) => [theme, bakeSvg(canonical, { theme, preset, styles, switchable })]));
       bakedViews.set(view.id, byTheme);
     }
   } finally {
@@ -346,7 +347,7 @@ async function bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride,
 
 async function prepareChoreographyBundle({
   rawSpec, baseDir, themeList, presetOverride, quality, repoRoot,
-  singleHtml = null, requireDetailSource = false, validateParts = false,
+  singleHtml = null, requireDetailSource = false, validateParts = false, switchable = false,
 }) {
   validateSchema('storyChoreography', rawSpec);
   const styles = loadViewerStyles();
@@ -356,8 +357,8 @@ async function prepareChoreographyBundle({
   };
 
   const baked = singleHtml
-    ? bakeSingleHtmlBundleView({ singleHtml, presetOverride, rawPreset: rawSpec.preset, themeList, styles })
-    : await bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride, env, themeList, styles });
+    ? bakeSingleHtmlBundleView({ singleHtml, presetOverride, rawPreset: rawSpec.preset, themeList, styles, switchable })
+    : await bakeDeclaredChoreographyViews({ rawSpec, baseDir, presetOverride, env, themeList, styles, switchable });
 
   const loadSourceLines = makeSourceLoader({
     baseDir, repoRoot, viewDiagrams: baked.viewDiagrams, inputPaths: baked.inputPaths,
@@ -731,13 +732,13 @@ async function runStorySvgCommand(spec, opts) {
 }
 
 function compileStoryStage(bundle, defaultTheme) {
-  const compileTheme = (theme) => compileStorySvg({
+  const stageSvg = compileStorySvg({
     plan: bundle.plan, bakedViews: bundle.bakedViews, viewTypes: bundle.viewTypes,
-    theme, preset: bundle.resolvedPreset, styles: bundle.styles, reducedMotionFallback: false,
+    theme: defaultTheme, preset: bundle.resolvedPreset, styles: bundle.styles,
+    reducedMotionFallback: false, switchable: true,
   }).svg;
   return buildStoryStageHtml({
-    plan: bundle.plan, lightSvg: compileTheme('light'), darkSvg: compileTheme('dark'),
-    defaultTheme, preset: bundle.resolvedPreset,
+    plan: bundle.plan, stageSvg, defaultTheme, preset: bundle.resolvedPreset, styles: bundle.styles,
   });
 }
 
@@ -756,7 +757,8 @@ async function runStoryVideoCommand(spec, opts, defaultTheme) {
   const bundle = await prepareChoreographyBundle({
     rawSpec: spec.rawSpec,
     baseDir: spec.baseDir,
-    themeList: ['light', 'dark'],
+    themeList: [defaultTheme],
+    switchable: true,
     presetOverride: opts.preset,
     quality: opts.quality,
     repoRoot: opts.repoRoot,
@@ -810,7 +812,8 @@ async function runStoryStageCommand(spec, opts, defaultTheme) {
   const bundle = await prepareChoreographyBundle({
     rawSpec: spec.rawSpec,
     baseDir: spec.baseDir,
-    themeList: ['light', 'dark'],
+    themeList: [defaultTheme],
+    switchable: true,
     presetOverride: opts.preset,
     quality: opts.quality,
     repoRoot: opts.repoRoot,
