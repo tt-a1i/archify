@@ -123,7 +123,7 @@ test('English, Chinese, and Japanese docs cover install, invoke, uninstall, comm
   assert.match(japanese, /テレメトリ/);
 });
 
-test('agent install prompt and Skills CLI for Cursor, Codex, Claude Code, and OpenCode remain the default main path', () => {
+test('Skills CLI, Cursor, Codex, Claude Code, OpenCode, and Raven remain the default main path', () => {
   const english = read('README.md');
   const chinese = read('README_ZH.md');
   const japanese = read('README_JA.md');
