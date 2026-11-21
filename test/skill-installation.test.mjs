@@ -30,6 +30,15 @@ function metadata(content) {
   return data;
 }
 
+// A PowerShell 7 parent (the CI step shell) leaks its PSModulePath, so Windows
+// PowerShell would load PowerShell 7's Archive module, which calls a .NET Core-only
+// ExtractToDirectory overload. Let powershell.exe use its own module path.
+function windowsPowerShellEnv(extra) {
+  const env = { ...process.env, ...extra };
+  for (const name of Object.keys(env)) if (name.toLowerCase() === 'psmodulepath') delete env[name];
+  return env;
+}
+
 function extractArchive(destination) {
   fs.mkdirSync(destination, { recursive: true });
   const archive = path.join(repoRoot, 'archify.zip');
@@ -37,7 +46,7 @@ function extractArchive(destination) {
     ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
       "$ErrorActionPreference = 'Stop'; Expand-Archive -LiteralPath $env:ARCHIFY_TEST_ARCHIVE -DestinationPath $env:ARCHIFY_TEST_EXTRACT"], {
       encoding: 'utf8',
-      env: { ...process.env, ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination },
+      env: windowsPowerShellEnv({ ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination }),
     })
     : spawnSync('unzip', ['-q', archive, '-d', destination], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.error?.message || result.stderr);
