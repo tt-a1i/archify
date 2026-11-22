@@ -293,8 +293,8 @@ footer{padding:28px 0 32px}
 .colophon.colophon-has-feedback{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
 .colophon.colophon-has-feedback .colophon-brand{justify-self:start}
 .colophon.colophon-has-feedback .colophon-star-wrap{justify-self:center}
-.colophon.colophon-has-feedback .colophon-aside{justify-self:end;margin-left:0}
-@media(max-width:1080px){.colophon.colophon-has-feedback{display:flex;flex-wrap:wrap;justify-content:space-between}}
+.colophon.colophon-has-feedback .colophon-aside{justify-self:end;justify-content:flex-end;margin-left:0}
+@media(max-width:1080px){.colophon.colophon-has-feedback{display:flex;flex-wrap:wrap;justify-content:space-between}.colophon.colophon-has-feedback .colophon-aside{justify-content:flex-start}}
 .sources:has(ol:empty)+.colophon,.typical-footnotes+.colophon{margin-top:8px}
 .colophon-brand{display:inline-flex;align-items:center;gap:10px;min-width:0;color:var(--ink);text-decoration:none}
 .colophon-brand:hover{text-decoration:none}
@@ -304,13 +304,11 @@ footer{padding:28px 0 32px}
 .colophon-name{font:650 13.5px/1 var(--sans);letter-spacing:-.01em;transition:color .15s}
 .colophon-brand:hover .colophon-name{color:var(--accent)}
 .colophon-tagline{font-size:11.5px;line-height:1.3;color:var(--muted)}
-.colophon-aside{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-left:auto}
-.colophon-facts{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;margin:0;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.colophon-aside{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px 12px;margin-left:auto}
+.colophon-facts{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:4px 0;margin:0;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .colophon-facts span+span::before{content:"·";margin:0 8px;color:var(--faint)}
-@media(max-width:760px){.colophon-aside{margin-left:0}}
+@media(max-width:760px){.colophon-aside,.colophon-facts{margin-left:0;justify-content:flex-start}}
 .colophon-feedback{display:inline-flex;align-items:center;gap:8px}
-.colophon-feedback::before{content:"";width:1px;height:14px;margin-right:4px;background:var(--rule)}
-@media(max-width:760px){.colophon-feedback::before{display:none}}
 .colophon-feedback-menu{position:relative}
 .colophon-btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--control-border,var(--rule));border-radius:999px;background:var(--panel);color:var(--ink);font-size:12px;font-weight:500;line-height:1;text-decoration:none;cursor:pointer;user-select:none;list-style:none;transition:border-color .15s,background-color .15s,color .15s}
 .colophon-btn::-webkit-details-marker{display:none}
