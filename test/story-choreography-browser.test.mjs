@@ -661,7 +661,7 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
   });
 });
 
-test('Story Stage seeks by pointer at 320px and 768px', { skip: !chrome }, async (t) => {
+test('Story Stage seeks by pointer and keyboard at 320px and 768px', { skip: !chrome }, async (t) => {
   const dir = createScratchDirectory(path.join(os.tmpdir(), 'archify-story-seek-'));
   const spec = buildChoreographySample(dir);
   const stageHtml = path.join(dir, 'stage.html');
@@ -693,8 +693,14 @@ test('Story Stage seeks by pointer at 320px and 768px', { skip: !chrome }, async
     for (const type of ['mousePressed', 'mouseReleased']) {
       await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
     }
-    assert.ok(await read("Number(document.getElementById('stage-range').value)") > target.value,
-      `${width}px viewport can seek by clicking the track`);
+    const clicked = await read("Number(document.getElementById('stage-range').value)");
+    assert.ok(clicked > target.value, `${width}px viewport can seek by clicking the track`);
+    assert.equal(await read('document.activeElement.id'), 'stage-range');
+    for (const type of ['keyDown', 'keyUp']) {
+      await send('Input.dispatchKeyEvent', { type, key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
+    }
+    assert.ok(await read("Number(document.getElementById('stage-range').value)") > clicked,
+      `${width}px viewport can continue seeking with the arrow key`);
   }
 });
 
