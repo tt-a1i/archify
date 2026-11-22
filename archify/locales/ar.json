@@ -71,6 +71,7 @@
   "viewer.diagnosis.findings": "افتح الشفرة المصدرية لكل نتيجة وأوكل إصلاحها إلى مساعد ذكاء اصطناعي.",
   "viewer.diagnosis.ask": "اطلب من مساعد الذكاء الاصطناعي:",
   "viewer.diagnosis.prompt": "ابدأ تشخيص البنية لهذا المستودع.",
+  "viewer.diagnosis.repository": "المستودع: {url} @ {revision}",
   "viewer.diagnosis.copy": "نسخ الطلب",
   "viewer.theme.toggle.title": "تبديل الثيم (T)",
   "viewer.theme.toggle": "تبديل ثيم الألوان",

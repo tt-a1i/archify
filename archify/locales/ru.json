@@ -71,6 +71,7 @@
   "viewer.diagnosis.findings": "Открывайте исходный код для каждой найденной проблемы и поручайте её исправление ИИ.",
   "viewer.diagnosis.ask": "Попросите своего ИИ-помощника:",
   "viewer.diagnosis.prompt": "Запусти диагностику архитектуры этого репозитория.",
+  "viewer.diagnosis.repository": "Репозиторий: {url} @ {revision}",
   "viewer.diagnosis.copy": "Копировать запрос",
   "viewer.theme.toggle.title": "Переключить тему (T)",
   "viewer.theme.toggle": "Переключить цветовую тему",

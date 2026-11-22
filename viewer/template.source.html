@@ -726,7 +726,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <li>{{i18n:viewer.diagnosis.findings}}</li>
     </ul>
     <div class="analysis-info-start">
-      <p>{{i18n:viewer.diagnosis.ask}} <q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
+      <div class="analysis-info-prompt">
+        <p>{{i18n:viewer.diagnosis.ask}} <q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
+        <!-- ARCHIFY:DIAGNOSIS_REPOSITORY -->
+      </div>
       <button id="code-analysis-copy" type="button">{{i18n:viewer.diagnosis.copy}}</button>
     </div>
     <div id="code-analysis-copy-status" role="status"></div>
@@ -829,6 +832,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       });
       document.getElementById('code-analysis-copy').addEventListener('click', function () {
         var prompt = document.getElementById('code-analysis-prompt').textContent;
+        var repository = document.getElementById('code-analysis-repository');
+        if (repository) prompt += '\n' + repository.textContent;
         copyReaderText(prompt, dialog).then(function (copied) {
           status.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
         });

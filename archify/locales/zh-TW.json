@@ -71,6 +71,7 @@
   "viewer.diagnosis.findings": "每項發現都能開啟對應的原始碼，也能交給 AI 作為修正任務。",
   "viewer.diagnosis.ask": "對你的 AI 助理說：",
   "viewer.diagnosis.prompt": "啟動架構診斷",
+  "viewer.diagnosis.repository": "儲存庫：{url} @ {revision}",
   "viewer.diagnosis.copy": "複製提示詞",
   "viewer.theme.toggle.title": "切換主題（T）",
   "viewer.theme.toggle": "切換顏色主題",
