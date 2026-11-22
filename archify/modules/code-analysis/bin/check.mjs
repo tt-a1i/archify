@@ -184,7 +184,7 @@ export async function runCheck(argv) {
         ...(newOnly && !review.comparison ? { note: 'no previous run to compare with: every open finding counts as new' } : {}),
         // A first run, or a run after a rule became stricter, fails on findings that
         // already existed. Without a baseline, say how to record them once.
-        ...(failing.length && !baselineFile ? { adopt: baselineCommand(CLI, root, { language: options['--language'] || null, config: options['--config'] || null }) } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: findingWhere(d), message: d.message })) },
+        ...(failing.length && !baselineFile && !blocked ? { adopt: baselineCommand(CLI, root, { language: options['--language'] || null, config: options['--config'] || null }) } : {}), failing: failing.map((d) => ({ id: d.id, code: d.code, severity: d.severity, where: findingWhere(d), message: d.message })) },
       review: reviewSummary(review),
       comparisonReasons: review.comparison ? review.comparison.reasons : [],
       staleBaseline: review.baseline ? review.baseline.stale : [],
@@ -290,7 +290,9 @@ export function formatText(r) {
       lines.push(`    ${formatTerminalText(config)} requires ${missingExtends.map(formatTerminalText).join(', ')}`);
     }
   }
-  if (r.gate.blocked) lines.push('  Gate blocked by incomplete TypeScript project coverage. Restore the configuration dependencies, or use --fail-on never to inspect the partial report.');
+  if (r.gate.blocked) lines.push(uncovered.unavailableTypeScriptFiles
+    ? '  Gate blocked by incomplete TypeScript project coverage. Restore the configuration dependencies, or use --fail-on never to inspect the partial report.'
+    : '  Gate blocked because the previous TypeScript run omitted project files. Compare against a complete run or check without --new-only.');
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);
   for (const source of uncovered.external || []) {
     const coverage = source.coverage.complete === true ? 'complete' : source.coverage.complete === false ? 'incomplete' : 'unknown';
@@ -338,7 +340,7 @@ export function formatText(r) {
       lines.push(`    ${r.gate.adopt}`);
       lines.push('  Then pass --baseline analysis-baseline.json on every run. Accepted errors stay listed as still to fix.');
     }
-  } else lines.push(`PASSED: no open finding at or above ${r.gate.failOn}${r.gate.newOnly ? ' among new findings' : ''}.`);
+  } else if (r.status !== 'incomplete') lines.push(`PASSED: no open finding at or above ${r.gate.failOn}${r.gate.newOnly ? ' among new findings' : ''}.`);
   return lines.join('\n');
 }
 

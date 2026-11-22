@@ -147,7 +147,6 @@ function comparisonOf({ previous, before, current, findings, ids, analysis, file
   const ran = analysis ? new Set(Object.keys(analysis.ruleVersions)) : null;
   const known = files ? new Set(files) : null;
   const parseErrors = new Set(analysis?.coverage?.parseErrors || []);
-  const missingFileCause = analysis?.coverage?.unavailableTypeScriptFiles ? 'typescript-project-coverage-incomplete' : 'files-missing';
   const added = [...current.values()].filter((d) => findings[d.id].since === 'new');
   const notDetected = [...before.values()].filter((d) => !matchedBefore.has(d.id)).map((d) => {
     const involved = d.evidenceDigest?.files || [];
@@ -160,7 +159,7 @@ function comparisonOf({ previous, before, current, findings, ids, analysis, file
     const likelyCause = d.external ? externalAbsenceCause(d, analysis, reasons) || (candidates.length ? 'possibly-renamed' : null)
       : ran && !ran.has(d.code) ? 'rule-not-run'
       : involved.some((f) => parseErrors.has(f)) ? 'parse-error'
-        : known && involved.some((f) => !known.has(f)) ? missingFileCause
+        : known && involved.some((f) => !known.has(f)) ? 'files-missing'
           : candidates.length ? 'possibly-renamed' : null;
     return { id: d.id, code: d.code, severity: d.severity, message: d.message, ...(d.external ? { sourceId: d.external.sourceId } : {}), ...(likelyCause ? { likelyCause } : {}), ...(likelyCause === 'possibly-renamed' ? { candidates } : {}) };
   }).sort((a, b) => compareText(a.id, b.id));

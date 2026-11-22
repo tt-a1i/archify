@@ -85,21 +85,26 @@ test('check: a clean run says nothing about coverage and the gate is unchanged',
 
 test('check: unavailable TypeScript packages produce evidence without passing a quality gate', (t) => {
   const root = fixture(t, {
-    'src/index.ts': 'export const value = 1;',
+    'analysis.json': '{"rules":{"complexity":{"function":{"warning":{"complexity":0}}}}}',
+    'src/index.ts': 'export function choose(value: number) { if (value) return 1; return 0; }',
     'website/package.json': '{"devDependencies":{"base-config":"1.0.0"}}',
     'website/tsconfig.json': '{"extends":"base-config/strict"}',
     'website/index.ts': 'export const unavailable = 1;',
   });
   const out = path.join(root, 'out');
-  const args = ['--language', 'ts', '--out', out, '--json'];
+  const args = ['--language', 'ts', '--config', path.join(root, 'analysis.json'), '--out', out, '--json'];
   const gate = check(root, args);
   assert.equal(gate.status, 2, gate.stdout + gate.stderr);
   const receipt = JSON.parse(gate.stdout);
   assert.equal(receipt.status, 'incomplete');
   assert.equal(receipt.gate.blocked, 'typescript-project-coverage-incomplete');
+  assert.equal(receipt.gate.failing.length, 1);
+  assert.equal(receipt.gate.adopt, undefined);
   assert.equal(receipt.coverage.unavailableTypeScriptFiles, 1);
   assert.equal(receipt.coverage.analyzedFiles, 1);
-  assert.match(formatText(receipt), /website\/tsconfig.json requires base-config\/strict/);
+  const summary = formatText(receipt);
+  assert.match(summary, /website\/tsconfig.json requires base-config\/strict/);
+  assert.doesNotMatch(summary, /PASSED:|--update-baseline/);
   const previous = JSON.parse(fs.readFileSync(path.join(out, 'findings.json'), 'utf8'));
   assert.equal(previous.analysis.coverage.unavailableTypeScriptFiles, 1);
   const inspection = check(root, [...args, '--fail-on', 'never']);
@@ -115,9 +120,12 @@ test('check: unavailable TypeScript packages produce evidence without passing a 
   fs.mkdirSync(packageDir, { recursive: true });
   fs.writeFileSync(path.join(packageDir, 'package.json'), '{"name":"base-config","version":"1.0.0"}');
   fs.writeFileSync(path.join(packageDir, 'strict.json'), '{"compilerOptions":{"strict":true}}');
-  const compare = check(root, ['--language', 'ts', '--new-only', '--compare', path.join(out, 'findings.json'), '--json']);
+  const compare = check(root, [...args, '--new-only', '--compare', path.join(out, 'findings.json')]);
   assert.equal(compare.status, 2, compare.stdout + compare.stderr);
-  assert.equal(JSON.parse(compare.stdout).gate.blocked, 'typescript-project-coverage-incomplete');
+  const compareReceipt = JSON.parse(compare.stdout);
+  assert.equal(compareReceipt.gate.blocked, 'typescript-project-coverage-incomplete');
+  assert.match(formatText(compareReceipt), /previous TypeScript run omitted project files/);
+  assert.doesNotMatch(formatText(compareReceipt), /PASSED:/);
   const restored = check(root, ['--language', 'ts', '--json']);
   assert.equal(restored.status, 0, restored.stdout + restored.stderr);
   assert.equal(JSON.parse(restored.stdout).files, 2);
