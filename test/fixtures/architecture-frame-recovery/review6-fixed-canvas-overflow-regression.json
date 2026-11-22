@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "viewBox": [
+      480,
+      320
+    ],
+    "title": "Fixed canvas",
+    "output": "fixed.html",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "backend",
+      "label": "Card 0",
+      "size": [
+        140,
+        70
+      ],
+      "pos": [
+        260,
+        120
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Card 1",
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Card 2",
+      "size": [
+        100,
+        80
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Card 3",
+      "size": [
+        160,
+        80
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "backend",
+      "label": "Card 4",
+      "size": [
+        120,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service frame",
+      "wraps": [
+        "n1",
+        "n4"
+      ],
+      "pad": 32
+    }
+  ],
+  "connections": []
+}

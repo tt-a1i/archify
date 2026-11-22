@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {"mode": "auto"},
+  "meta": {"title": "Probe", "output": "probe.html", "quality_profile": "showcase"},
+  "components": [
+    {"id": "n0", "label": "Card 0", "type": "backend", "size": [158, 46], "pos": [95, 60]},
+    {"id": "n1", "label": "Card 1", "type": "backend", "size": [168, 50], "pos": [404, 70]},
+    {"id": "n2", "label": "Card 2", "type": "backend", "size": [159, 80], "pos": [702, 86]},
+    {"id": "n3", "label": "Card 3", "type": "backend", "size": [149, 53], "pos": [951, 65]},
+    {"id": "n4", "label": "Card 4", "type": "backend", "size": [160, 48], "pos": [108, 256]},
+    {"id": "n5", "label": "Card 5", "type": "backend", "size": [136, 51], "pos": [388, 232]},
+    {"id": "n6", "label": "Card 6", "type": "backend", "size": [240, 60], "pos": [681, 244]},
+    {"id": "n7", "label": "Card 7", "type": "backend", "size": [194, 70], "pos": [995, 240]},
+    {"id": "n8", "label": "Card 8", "type": "backend", "size": [191, 68], "pos": [126, 417]}
+  ],
+  "connections": [
+    {"id": "r0", "from": "n0", "to": "n6"},
+    {"id": "r2", "from": "n8", "to": "n3"},
+    {"id": "r3", "from": "n2", "to": "n6", "label": "Start job"},
+    {"id": "r4", "from": "n8", "to": "n1", "label": "Records events"},
+    {"id": "r5", "from": "n3", "to": "n1"},
+    {"id": "r6", "from": "n5", "to": "n3", "label": "Records events", "variant": "emphasis"},
+    {"id": "r7", "from": "n8", "to": "n2"},
+    {"id": "r9", "from": "n1", "to": "n6"},
+    {"id": "r10", "from": "n3", "to": "n4"},
+    {"id": "r12", "from": "n4", "to": "n5", "label": "Runs validation"},
+    {"id": "r13", "from": "n6", "to": "n3", "label": "Runs validation", "variant": "emphasis"},
+    {"id": "r15", "from": "n3", "to": "n5"},
+    {"id": "r16", "from": "n4", "to": "n7"}
+  ],
+  "boundaries": [
+    {"label": "System boundary", "wraps": ["n0", "n1", "n2", "n3", "n4", "n5", "n6"], "kind": "region"}
+  ]
+}

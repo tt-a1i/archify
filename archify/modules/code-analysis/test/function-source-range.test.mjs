@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { measureFunctions } from '../extract/ts/functions.mjs';
 import { REVISION } from '../extract/ts/index.mjs';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';

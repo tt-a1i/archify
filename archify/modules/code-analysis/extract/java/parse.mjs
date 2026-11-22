@@ -1,6 +1,6 @@
 // Parse only captured source text. No application code, build files or annotation
 // processors are executed. The CST keeps source offsets for evidence/navigation.
-import { lexAndParse } from 'java-parser';
+import { lexAndParse } from '../../vendor/deps.cjs';
 import { matcher } from '../shared/glob.mjs';
 import { classifyRole, lineCount, snapshotFiles, packageMarkersIn, PACKAGE_MARKERS, JAVA_BUILD_MARKERS } from '../shared/files.mjs';
 

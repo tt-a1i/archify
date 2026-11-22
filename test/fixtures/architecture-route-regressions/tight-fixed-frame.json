@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Single service in a fixed frame",
+    "output": "fixed-frame.html",
+    "quality_profile": "standard",
+    "viewBox": [
+      320,
+      240
+    ]
+  },
+  "components": [
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "size": [
+        250,
+        60
+      ]
+    }
+  ],
+  "connections": [],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Runtime",
+      "wraps": [
+        "service"
+      ]
+    }
+  ]
+}

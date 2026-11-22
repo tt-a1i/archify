@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Canvas 442",
+    "output": "output.html",
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      422,
+      309
+    ]
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Ingress 1",
+      "type": "frontend",
+      "size": [
+        76,
+        92
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Webhook 2",
+      "type": "external",
+      "size": [
+        140,
+        92
+      ]
+    },
+    {
+      "id": "n2",
+      "label": "Ingress 3",
+      "type": "backend",
+      "size": [
+        120,
+        80
+      ],
+      "pos": [
+        209,
+        56
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1",
+      "label": "Load inventory"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Runtime scope 1",
+      "wraps": [
+        "n1",
+        "n2"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "security-group",
+      "label": "Operational and transactional infrastructure services 2",
+      "wraps": [
+        "n2"
+      ],
+      "pad": 24
+    }
+  ]
+}

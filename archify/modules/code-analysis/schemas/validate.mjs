@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Ajv2020 from 'ajv/dist/2020.js';
+import { Ajv2020 } from '../vendor/deps.cjs';
 import { semanticErrors } from './semantics.mjs';
 
 const SCHEMA_DIR = path.dirname(fileURLToPath(import.meta.url));

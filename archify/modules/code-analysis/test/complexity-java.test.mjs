@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { lexAndParse } from 'java-parser';
+import { lexAndParse } from '../vendor/deps.cjs';
 import { measureFunctions } from '../extract/java/functions.mjs';
 
 function measure(sourceText) {

@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createArchitectureRouter, createRouter } from '../archify/renderers/architecture/routing.mjs';
-import { properSegmentIntersection, routeBudgetMetrics } from '../archify/renderers/shared/geometry.mjs';
+import { connectionLabelBoxAt, createArchitectureRouter, createRouter } from '../archify/renderers/architecture/routing.mjs';
+import { reservedLabelRect } from '../archify/renderers/shared/automatic-labels.mjs';
+import { labelPoint, properSegmentIntersection, routeBudgetMetrics, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
 
 function fixture() {
   const boxes = new Map(Array.from({ length: 6 }, (_, index) => {
@@ -58,6 +59,63 @@ test('readability sweep preserves explicit geometry and endpoint-side contracts'
   }));
   assert.deepEqual(routers[1].pathFor(connections[0]), routers[0].pathFor(connections[0]));
   assert.deepEqual(routers[1].connectionSides(connections[3]), { fromSide: 'bottom', toSide: 'top' });
+});
+
+test('automatic architecture uncrosses two fan-out elbows using their existing source slots', () => {
+  const boxes = new Map([
+    ['cli', 320, 398], ['lock', 585, 78], ['output', 585, 238], ['receipts', 827, 398],
+    ['browser', 585, 398], ['temp', 585, 558], ['installed', 573, 768],
+  ].map(([id, x, y]) => [id, { id, x, y, width: 150, height: 64, cx: x + 75, cy: y + 32 }]));
+  const connections = [
+    ['cli', 'lock', 'acquire'], ['cli', 'output', 'read + write'], ['cli', 'temp', 'stage file', 'dashed'],
+    ['cli', 'browser', 'spawn + evaluate'], ['cli', 'receipts', 'write receipt'],
+    ['browser', 'receipts', 'evidence', 'security'], ['installed', 'cli', 'runs binary', 'dashed'],
+  ].map(([from, to, label, variant]) => ({ from, to, label, variant }));
+  const pointsFor = (automaticPlacement, edges = connections) => {
+    const router = createArchitectureRouter(boxes, edges, { automaticPlacement });
+    return edges.map(conn => router.pathFor(conn).points);
+  };
+  const before = pointsFor(false);
+  const after = pointsFor(true);
+  assert.equal(crossings(before), 1, 'the two branches cross before the exchange');
+  assert.equal(crossings(after), 0);
+  for (const [index, route] of after.entries()) {
+    if (index === 1 || index === 4) {
+      assert.deepEqual(route.slice(2), before[index].slice(2), 'the route after its first elbow stays in place');
+      assert.deepEqual(route[0], before[index === 1 ? 4 : 1][0], 'the branches use each other’s source slots');
+    } else {
+      assert.deepEqual(route, before[index], 'neighbouring routes stay in place');
+    }
+  }
+  for (const controls of [
+    { fromSide: 'top' },
+    { toSide: 'left' },
+    { fromSide: 'top', toSide: 'left', via: [[454, 286]] },
+    { labelAt: [518, 278] },
+  ]) {
+    const authoredConnections = connections.map((conn, index) => index === 1 ? { ...conn, ...controls } : conn);
+    assert.deepEqual(pointsFor(true, authoredConnections), pointsFor(false, authoredConnections),
+      `authored controls prevent a port exchange: ${JSON.stringify(controls)}`);
+  }
+
+  const provisionalLabel = createRouter(boxes, connections, {
+    distinctAutomaticPorts: true, preferReadableRoutes: true, repairAutomaticPorts: true, readabilityBottomMargin: 24,
+    labelRectFor: (conn, points, { routes, labels }) => {
+      // The incoming slot exchange crosses this old mask. The replacement
+      // for the same label fits beside its route after the exchange.
+      const oldSlot = conn === connections[1] && points[0][0] === before[1][0][0];
+      const label = {
+        relation: conn, label: conn.label,
+        ...connectionLabelBoxAt(conn, oldSlot ? [454, 393] : labelPoint(conn, points)),
+      };
+      return oldSlot ? label : reservedLabelRect({
+        label, points, labels, components: [...boxes.values()],
+        routes: routes.map((points, relationIndex) => ({ points, relationIndex })),
+      });
+    },
+  });
+  const repaired = connections.map(conn => provisionalLabel.pathFor(conn).points);
+  assert.equal(crossings(repaired), 0, 'a replacement label can free the exchange');
 });
 
 test('a fan-out sibling takes a free parallel channel instead of a detour', () => {
@@ -148,4 +206,98 @@ test('a facing link straightens once a crossing moves to the lower return corrid
   assert.equal(crossings(routes), 0);
   assert.equal(routes[0].length, 2, 'the neighboring link stays straight');
   assert.ok(routes[2].some(([, y]) => y > 566), 'the return uses the corridor below the boxes');
+});
+
+test('a crossing route can reuse its upper corridor to reach a free target side', () => {
+  const boxes = new Map([
+    ['runtime', 329, 204, 172], ['coordinator', 625, 48, 166],
+    ['worker', 632, 204, 153], ['tasks', 887, 204, 120],
+  ].map(([id, x, y, width]) => [id, { id, x, y, width, height: 60, cx: x + width / 2, cy: y + 30 }]));
+  const connections = [
+    ['input-pty', 'runtime', 'coordinator', '写入 PTY'],
+    ['dispatch', 'runtime', 'worker', '启动并写入任务'],
+    ['report', 'worker', 'runtime', 'team report · HTTP'],
+    ['write-tasks', 'worker', 'tasks', '可编辑任务图'],
+    ['read-tasks', 'runtime', 'tasks', '读取并监听'],
+  ].map(([id, from, to, label]) => ({ id, from, to, label }));
+  const [, , , write, read] = connections;
+  const { pathFor, routingMetrics } = createArchitectureRouter(boxes, connections, { automaticPlacement: true });
+  assert.equal(crossings([pathFor(read).points, pathFor(write).points]), 0);
+  assert.ok(pathFor(read).points.length <= 5, 'the new approach uses at most three bends');
+
+  const authored = { ...read, toSide: 'bottom' };
+  const pinned = createArchitectureRouter(boxes, [...connections.slice(0, -1), authored], { automaticPlacement: true });
+  assert.equal(pinned.connectionSides(authored).toSide, 'bottom');
+  const fixedCanvas = createArchitectureRouter(boxes, connections, { fixedCanvas: true });
+  assert.equal(routingMetrics().gridSearchCount, fixedCanvas.routingMetrics().gridSearchCount);
+});
+
+test('automatic routing leaves grid searches for a return path around unrelated cards', () => {
+  const boxes = new Map([
+    ['desktop', 64, 48, 153], ['runtime', 416.1, 334, 185],
+    ['orchestrator', 48, 512, 172], ['worker', 284, 512, 160],
+    ['sqlite', 508, 512, 179], ['bridge', 126.9, 334, 160],
+    ['gateway', 281, 176, 166], ['phone', 281, 48, 166],
+  ].map(([id, x, y, width]) => [id, { id, x, y, width, height: 60, cx: x + width / 2, cy: y + 30 }]));
+  const connections = [
+    ['terminal-input', 'desktop', 'runtime', 'WS · 输入任务', 'emphasis'],
+    ['terminal-output', 'runtime', 'desktop', 'WS · 终端回显'],
+    ['state-response', 'runtime', 'desktop', 'HTTP · 队伍与派单'],
+    ['orchestrator-output', 'orchestrator', 'runtime', 'PTY · 协调终端输出'],
+    ['send', 'orchestrator', 'runtime', 'HTTP · team send', 'emphasis'],
+    ['dispatch', 'runtime', 'worker', 'PTY · 投递派单', 'emphasis'],
+    ['report', 'worker', 'runtime', 'HTTP · 回报', 'emphasis'],
+    ['ledger', 'runtime', 'sqlite', 'SQLite · 读写记录'],
+    ['phone-response', 'gateway', 'phone', 'WSS · 加密回传'],
+    ['relay-response', 'bridge', 'gateway', '转发回传密文'],
+    ['bridge-request', 'bridge', 'runtime', '回环 · API 与 WS'],
+  ].map(([id, from, to, label, variant]) => ({ id, from, to, label, variant }));
+  const { pathFor, routingMetrics } = createArchitectureRouter(boxes, connections, { automaticPlacement: true });
+  const response = connections.find(({ id }) => id === 'state-response');
+  const { points } = pathFor(response);
+  for (const [id, box] of boxes) {
+    if (id === response.from || id === response.to) continue;
+    assert.ok(points.slice(1).every((end, index) => !segmentIntersectsRect({ start: points[index], end }, box, 2)),
+      `state response passes through ${id}`);
+  }
+  assert.equal(routingMetrics().gridBudgetExhaustedCount, 0);
+});
+
+test('three labelled reciprocal lanes stay straight regardless of connection order', () => {
+  const boxes = new Map([
+    ['control', 48, 166], ['runtime', 329, 172], ['worker', 625, 153],
+  ].map(([id, x, width]) => [id, { id, x, y: 48, width, height: 60, cx: x + width / 2, cy: 78 }]));
+  const connections = [
+    { id: 'input', from: 'runtime', to: 'control', label: 'Open input' },
+    { id: 'submit', from: 'control', to: 'runtime', label: 'Submit request' },
+    { id: 'start', from: 'runtime', to: 'worker', label: 'Start work' },
+    { id: 'report', from: 'worker', to: 'runtime', label: 'Report result' },
+    { id: 'output', from: 'runtime', to: 'control', label: 'Forward result' },
+  ];
+  for (const order of [[0, 1, 2, 3, 4], [4, 3, 2, 1, 0], [2, 3, 4, 0, 1], [4, 0, 1, 2, 3]]) {
+    const ordered = order.map(index => connections[index]);
+    const router = createArchitectureRouter(boxes, ordered, { automaticPlacement: true });
+    const routes = connections.map(conn => router.pathFor(conn));
+    assert.ok(routes.every(({ points }) => points.length === 2 && points[0][1] === points[1][1]),
+      `all five routes use straight horizontal lanes for input order ${order}`);
+    const parallel = [0, 1, 4].map(index => ({ conn: connections[index], ...routes[index] }))
+      .sort((a, b) => a.points[0][1] - b.points[0][1]);
+    for (const [index, { conn, points, labelAt }] of parallel.entries()) {
+      assert.ok(labelAt, `${conn.id} has a verified label placement`);
+      const mask = connectionLabelBoxAt(conn, labelAt);
+      assert.equal(segmentIntersectsRect({ start: points[0], end: points[1] }, mask), index === 1,
+        'only the middle mask sits on its own line');
+      for (const other of routes.filter(route => route.points !== points)) {
+        assert.equal(segmentIntersectsRect({ start: other.points[0], end: other.points[1] }, mask, 4), false,
+          `${conn.id} label clears other routes`);
+      }
+    }
+  }
+
+  for (const geometry of [{ labelAt: [270, 54] }, { fromSide: 'left' }, { via: [[271, 64]] }]) {
+    const pinned = [{ ...connections[0], ...geometry }, ...connections.slice(1)];
+    const router = createArchitectureRouter(boxes, pinned, { automaticPlacement: true });
+    assert.ok(pinned.every(conn => router.pathFor(conn).labelAt === undefined),
+      'an authored route, side or label prevents joint label placement');
+  }
 });

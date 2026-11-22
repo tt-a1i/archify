@@ -73,6 +73,9 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   const python = full.steps.find(step => step.run === 'pnpm run check:python');
   assert.equal(python.if, 'matrix.module-shard == 1');
   assert.equal(python['working-directory'], moduleSuite['working-directory']);
+  const vendor = full.steps.find(step => step.run === 'pnpm run check:vendor');
+  assert.equal(vendor?.if, 'matrix.module-shard == 1', 'vendored parser bundles must match their pinned packages');
+  assert.equal(vendor['working-directory'], moduleSuite['working-directory']);
   const duplicateTool = full.steps.find(step => step.name === 'Install Code Analysis duplicate detector');
   assert.equal(duplicateTool?.if, moduleSuite.if, 'the real clone detector is installed in the shard that runs its integration tests');
   assert.ok(duplicateTool.run.includes(`jscpd@${JSCPD_VERSION}`), 'CI must use the detector version accepted by the adapter');
