@@ -28,7 +28,8 @@ reviews:
     base_branches: ["^dev$"]
     enabled: true
     drafts: false
-    auto_incremental_review: true
+    # Review once when a PR opens; request later passes with `@coderabbitai review`.
+    auto_incremental_review: false
     auto_pause_after_reviewed_commits: 0
   finishing_touches:
     docstrings:
