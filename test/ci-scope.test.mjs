@@ -106,7 +106,7 @@ test('independent browser test edits run the exact suites once with their owned 
 test('Viewer interaction changes keep artifact coverage and use Chrome for Story', () => {
   const source = 'viewer/route-probe.js';
   const template = 'archify/assets/template.html';
-  const storyGolden = 'archify/examples/workflow-agent-tool-call-rendered.html';
+  const storyGolden = 'examples/workflow-agent-tool-call-rendered.html';
   const rebuilt = [source, template, storyGolden, 'archify.zip', 'examples/checkout-platform-delta.html'];
   for (const paths of [[source], rebuilt]) {
     const plan = classifyPaths(paths);
