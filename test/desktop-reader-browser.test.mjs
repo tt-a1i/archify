@@ -108,6 +108,68 @@ test('default sequence and dataflow canvases fit the real desktop reader without
   }
 });
 
+test('a compact lifecycle shows its transition card on the first desktop screen', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-lifecycle-card-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const input = path.join(directory, 'input.json');
+  const compact = path.join(directory, 'output.html');
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 3,
+    diagram_type: 'lifecycle',
+    meta: { title: 'Job lifecycle', output: 'output.html' },
+    mainPath: ['queued', 'running', 'done'],
+    states: [
+      { id: 'queued', type: 'start', label: 'Queued', sublabel: 'Waiting for a worker' },
+      { id: 'running', type: 'active', label: 'Running', sublabel: 'Processing the request' },
+      { id: 'done', type: 'success', label: 'Done', sublabel: 'Result recorded' },
+      { id: 'failed', type: 'failure', label: 'Failed', sublabel: 'Retry budget exhausted' },
+      { id: 'paused', type: 'neutral', label: 'Paused', sublabel: 'Ready for a new worker' },
+    ],
+    transitions: [
+      { from: 'queued', to: 'running', label: 'Start processing' },
+      { from: 'running', to: 'done', label: 'Finish processing' },
+      { from: 'running', to: 'failed', label: 'Record error' },
+      { from: 'running', to: 'paused', label: 'Commit checkpoint' },
+    ],
+    cards: [{ dot: 'amber', title: 'Running → Paused', items: ['A new worker can resume from the committed checkpoint.'] }],
+  }));
+  const deployment = path.join(directory, 'deployment-release.html');
+  for (const [source, output] of [[input, compact], [path.join(skillRoot, 'examples/deployment-release.lifecycle.json'), deployment]]) {
+    execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'lifecycle', source, output]);
+  }
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const session = await browser.sessionPromise;
+    for (const [artifactPath, width, height, cardCount] of [
+      [compact, 2048, 1320, 1],
+      [compact, 1440, 900, 1],
+      [deployment, 1440, 900, 3],
+    ]) {
+      const metrics = await browser.inspect({ artifactPath, width, height, theme: 'light' });
+      const bounds = await browser.cdp.send('Runtime.evaluate', { returnByValue: true, expression: `(() => {
+        const stage = document.querySelector('.diagram-container').getBoundingClientRect();
+        const cards = [...document.querySelectorAll('.cards .card')].map(card => {
+          const { top, bottom } = card.getBoundingClientRect();
+          return { top, bottom, title: card.querySelector('h3').textContent };
+        });
+        return { stageBottom: stage.bottom, cards };
+      })()` }, session);
+      assert.equal(bounds.exceptionDetails, undefined, bounds.exceptionDetails?.exception?.description);
+      const { stageBottom, cards } = bounds.result.value;
+      assert.equal(cards.length, cardCount);
+      for (const card of cards) {
+        assert.ok(stageBottom <= card.top && card.bottom <= height,
+          `${width}x${height}: ${JSON.stringify(card)}`);
+      }
+      assert.ok(metrics.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX, JSON.stringify(metrics));
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 test('visual-check collects nested ID-less semantic edge text for every renderer family', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
