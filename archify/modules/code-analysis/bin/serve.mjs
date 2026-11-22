@@ -55,17 +55,21 @@ export function runWorker(options) {
   });
 }
 
+export function missingAnalysisDependencies(root = moduleRoot) {
+  return ['typescript', 'ajv', 'ajv-draft-04', 'ajv-formats', 'java-parser', '@xmldom/xmldom']
+    .filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
+}
+
 // Parser and schema dependencies live in the module's own package. Archify itself needs no install, and
 // the skill is often used from a plain copy of the folder, so the first `serve`
 // installs them on demand instead of asking for a separate setup step.
 export async function ensureDependencies(root = moduleRoot) {
   root = fs.realpathSync(root);
-  const missingPackages = () => ['typescript', 'ajv', 'ajv-draft-04', 'ajv-formats', 'java-parser', '@xmldom/xmldom'].filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
   // Installed, read-only copies need no lock file. An active installer must
   // finish even if its package manifests have already appeared.
-  if (!missingPackages().length && !fs.existsSync(path.join(root, '.code-analysis-install.lock'))) return false;
+  if (!missingAnalysisDependencies(root).length && !fs.existsSync(path.join(root, '.code-analysis-install.lock'))) return false;
   return withInstallLock(root, async () => {
-    const missing = missingPackages();
+    const missing = missingAnalysisDependencies(root);
     if (!missing.length) return false;
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
     const lock = fs.existsSync(path.join(root, 'package-lock.json'));

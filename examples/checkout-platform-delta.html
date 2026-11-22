@@ -16608,6 +16608,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var viewBox = svg &amp;&amp; svg.viewBox &amp;&amp; svg.viewBox.baseVal;
       var ratio = viewBox &amp;&amp; viewBox.height &gt; 0 ? viewBox.width / viewBox.height : 0;
       var readerFit = svg &amp;&amp; svg.getAttribute(&#39;data-reader-fit&#39;);
+      var fitCards = svg &amp;&amp; svg.hasAttribute(&#39;data-reader-fit-cards&#39;);
       var widthFirstReading = readerFit === &#39;width-first&#39;;
       var automaticSequence = widthFirstReading &amp;&amp; svg.hasAttribute(&#39;data-sequence-column-fit&#39;);
       var readingScroll = widthFirstReading;
@@ -16633,8 +16634,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         : MIN_PROJECTED_NODE_TEXT_PX;
       var declaredPrimaryText = svg ? parseFloat(svg.getAttribute(&#39;data-reader-primary-text&#39;) || &#39;&#39;) : null;
       var SAFE_BOTTOM_GAP = 12;
-      // Wide viewports move summary cards beside the diagram, so the height
-      // budget belongs to the diagram and spare width holds the notes.
+      // The optional right rail uses spare width for notes.
       var RAIL_MIN_VIEWPORT = 1280;
       var RAIL_WIDTH = 288;
       var RAIL_GAP = 20;
@@ -16826,8 +16826,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function hasCards() {
         return Boolean((cards &amp;&amp; cards.children.length &amp;&amp; !cards.hidden) || (outline &amp;&amp; !outline.hidden));
       }
-      // Bottom notes and index are reading material below the fold: the first
-      // screen belongs to the interactive diagram and its controls.
+      function fitBottomCards() {
+        return fitCards &amp;&amp; html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; &amp;&amp; visible(cards);
+      }
+      // The diagram can pass containment on its own when bottom notes need
+      // to scroll. First-screen card fitting is best effort.
       function belowFold() {
         return html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; ? outerHeight(railPanel) : 0;
       }
@@ -16863,17 +16866,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.style.setProperty(&#39;--archify-reader-width&#39;, Math.max(rounded, shellFloor) + &#39;px&#39;);
         var railShare = html.getAttribute(&#39;data-reader-rail&#39;) === &#39;true&#39; ? RAIL_WIDTH + RAIL_GAP : 0;
         var diagramWidth = Math.max(1, rounded - railShare - chromeMetrics().diagramX);
-        // Content fitting and automatic enlargement never reduce the outer
-        // reader region. The SVG alone takes the narrower reading width.
+        // The SVG takes the narrower reading width. With first-screen cards,
+        // let the stage follow that SVG&#39;s height and leave room for the notes.
         var automaticWidthCap = measuredHeightFit &amp;&amp; viewBox &amp;&amp; viewBox.width &gt; 0
           ? viewBox.width * MAX_AUTOMATIC_SCALE : 0;
-        if (automaticWidthCap &amp;&amp; diagramWidth &gt; automaticWidthCap) {
-          diagramWidth = automaticWidthCap;
+        var capped = automaticWidthCap &gt; 0 &amp;&amp; diagramWidth &gt; automaticWidthCap;
+        if (capped) diagramWidth = automaticWidthCap;
+        if (capped &amp;&amp; !fitBottomCards()) {
           html.style.setProperty(&#39;--archify-diagram-min-height&#39;, automaticAreaHeight + &#39;px&#39;);
           html.setAttribute(&#39;data-reader-area&#39;, &#39;true&#39;);
         } else {
-          // Ordinary automatic diagrams retain their existing document flow.
-          // Settling can also stop binding the cap without a new measure.
           html.style.removeProperty(&#39;--archify-diagram-min-height&#39;);
           html.removeAttribute(&#39;data-reader-area&#39;);
         }
@@ -16964,7 +16966,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         setRail(mode);
         chrome = chromeMetrics();
         if (docked) minWidth = Math.min(maxWidth, minWidth + railExtra);
-        var stackedBelow = mode === &#39;bottom&#39; ? 0 : docked ? 0 : outerHeight(cards);
+        // Keep the index outside the height budget. If cards need more room
+        // than the readable width permits, they can continue below the fold.
+        var stackedBelow = mode === &#39;bottom&#39; || docked ? 0 : outerHeight(cards);
+        if (fitBottomCards()) {
+          minWidth = Math.max(minWidth, Math.min(maxWidth, readableWidth));
+          stackedBelow = outerHeight(cards) + number(window.getComputedStyle(railPanel).marginTop);
+        }
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
@@ -32794,6 +32802,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var viewBox = svg &amp;&amp; svg.viewBox &amp;&amp; svg.viewBox.baseVal;
       var ratio = viewBox &amp;&amp; viewBox.height &gt; 0 ? viewBox.width / viewBox.height : 0;
       var readerFit = svg &amp;&amp; svg.getAttribute(&#39;data-reader-fit&#39;);
+      var fitCards = svg &amp;&amp; svg.hasAttribute(&#39;data-reader-fit-cards&#39;);
       var widthFirstReading = readerFit === &#39;width-first&#39;;
       var automaticSequence = widthFirstReading &amp;&amp; svg.hasAttribute(&#39;data-sequence-column-fit&#39;);
       var readingScroll = widthFirstReading;
@@ -32819,8 +32828,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         : MIN_PROJECTED_NODE_TEXT_PX;
       var declaredPrimaryText = svg ? parseFloat(svg.getAttribute(&#39;data-reader-primary-text&#39;) || &#39;&#39;) : null;
       var SAFE_BOTTOM_GAP = 12;
-      // Wide viewports move summary cards beside the diagram, so the height
-      // budget belongs to the diagram and spare width holds the notes.
+      // The optional right rail uses spare width for notes.
       var RAIL_MIN_VIEWPORT = 1280;
       var RAIL_WIDTH = 288;
       var RAIL_GAP = 20;
@@ -33012,8 +33020,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function hasCards() {
         return Boolean((cards &amp;&amp; cards.children.length &amp;&amp; !cards.hidden) || (outline &amp;&amp; !outline.hidden));
       }
-      // Bottom notes and index are reading material below the fold: the first
-      // screen belongs to the interactive diagram and its controls.
+      function fitBottomCards() {
+        return fitCards &amp;&amp; html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; &amp;&amp; visible(cards);
+      }
+      // The diagram can pass containment on its own when bottom notes need
+      // to scroll. First-screen card fitting is best effort.
       function belowFold() {
         return html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; ? outerHeight(railPanel) : 0;
       }
@@ -33049,17 +33060,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.style.setProperty(&#39;--archify-reader-width&#39;, Math.max(rounded, shellFloor) + &#39;px&#39;);
         var railShare = html.getAttribute(&#39;data-reader-rail&#39;) === &#39;true&#39; ? RAIL_WIDTH + RAIL_GAP : 0;
         var diagramWidth = Math.max(1, rounded - railShare - chromeMetrics().diagramX);
-        // Content fitting and automatic enlargement never reduce the outer
-        // reader region. The SVG alone takes the narrower reading width.
+        // The SVG takes the narrower reading width. With first-screen cards,
+        // let the stage follow that SVG&#39;s height and leave room for the notes.
         var automaticWidthCap = measuredHeightFit &amp;&amp; viewBox &amp;&amp; viewBox.width &gt; 0
           ? viewBox.width * MAX_AUTOMATIC_SCALE : 0;
-        if (automaticWidthCap &amp;&amp; diagramWidth &gt; automaticWidthCap) {
-          diagramWidth = automaticWidthCap;
+        var capped = automaticWidthCap &gt; 0 &amp;&amp; diagramWidth &gt; automaticWidthCap;
+        if (capped) diagramWidth = automaticWidthCap;
+        if (capped &amp;&amp; !fitBottomCards()) {
           html.style.setProperty(&#39;--archify-diagram-min-height&#39;, automaticAreaHeight + &#39;px&#39;);
           html.setAttribute(&#39;data-reader-area&#39;, &#39;true&#39;);
         } else {
-          // Ordinary automatic diagrams retain their existing document flow.
-          // Settling can also stop binding the cap without a new measure.
           html.style.removeProperty(&#39;--archify-diagram-min-height&#39;);
           html.removeAttribute(&#39;data-reader-area&#39;);
         }
@@ -33150,7 +33160,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         setRail(mode);
         chrome = chromeMetrics();
         if (docked) minWidth = Math.min(maxWidth, minWidth + railExtra);
-        var stackedBelow = mode === &#39;bottom&#39; ? 0 : docked ? 0 : outerHeight(cards);
+        // Keep the index outside the height budget. If cards need more room
+        // than the readable width permits, they can continue below the fold.
+        var stackedBelow = mode === &#39;bottom&#39; || docked ? 0 : outerHeight(cards);
+        if (fitBottomCards()) {
+          minWidth = Math.max(minWidth, Math.min(maxWidth, readableWidth));
+          stackedBelow = outerHeight(cards) + number(window.getComputedStyle(railPanel).marginTop);
+        }
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
