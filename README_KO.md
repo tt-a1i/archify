@@ -93,6 +93,33 @@ Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐�
 
 [Proof Lab](https://tt-a1i.github.io/archify/gallery.html)에는 저장소에 포함된 시나리오와 JSON 소스, 검증 결과가 있습니다.
 
+### 저장소 진단하기
+
+<sub>CODE ANALYSIS · Skill에 내장, 추가 설치 없음</sub>
+
+| 의존성 별 지도 | 같은 분석의 3D 모델 |
+|---|---|
+| [![Atlas 별 지도: 모듈이 원을 따라 놓이고 파일 의존성이 그 안을 가로지르며, 사이드 패널에 발견 사항과 결합도가 표시됨](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D: 가장 많이 의존되는 모듈이 줄기가 되고, 다른 모듈은 의존 계층 높이에서 가지를 뻗음](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**아키텍처 진단**은 저장소를 읽고 코드가 실제로 어떻게 연결되어 있는지 보여줍니다. 순환 의존성, 결합이 지나친 모듈, 복잡도 핫스팟, 레이어 규칙 위반을 근거 소스 링크와 에이전트에게 그대로 넘길 수 있는 수정 작업과 함께 보여줍니다. 아키텍처 다이어그램과 함께 쓰면 각 컴포넌트에 문제 개수가 표시됩니다. JS/TS, Python, Java, Go, Rust, C, C++를 지원하며 결과는 오프라인으로 열 수 있는 HTML 파일 하나입니다.
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
+[Code Analysis 가이드](archify/modules/code-analysis/docs/USAGE.md)
+
+### 스토리나 PR로 설명하기
+
+<sub>STORY · PR 워크스루</sub>
+
+- **Story 영상.** 에이전트에게 요청하면 어떤 다이어그램에도 안내 스토리를 추가할 수 있습니다. 페이지에 타임라인과 자막이 있는 Story 모드가 생기고, **Export → Story video**로 1080p, 60 fps 영상(WebM 또는 MP4)을 내보낼 수 있습니다. 여러 다이어그램을 하나의 스테이지 페이지나 영상으로 엮을 수도 있습니다. [Story 작성 가이드](archify/references/story-authoring.md)
+- **PR 워크스루.** 에이전트에게 PR이나 브랜치 설명을 요청하면 Archify가 변경 사항을 다이어그램 위에 직접 표시하고, 라이트/다크 다이어그램을 GitHub PR이나 GitLab MR에 첨부할 수 있습니다. 선택형 `archify-pr` Skill은 PR을 준비할 때 실질적인 변경이 있을 때만 제안합니다. [PR 리뷰](archify/references/pr-review.md)
+
+```text
+Use archify to add a guided story to this diagram and export it as a video.
+```
+
 ## 빠른 시작
 
 **현재 개발 버전:** `v3.2.1-dev.1` (안정 릴리스가 아닙니다). [변경 이력](CHANGELOG.md#unreleased)을 확인하세요.
@@ -211,6 +238,7 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 | 역할 하나 또는 둘 비교 | `L` 또는 `LENS` |
 | 개요 지도 열기 | `M` 또는 `MAP` |
 | 프레젠테이션 모드 | `F` |
+| 안내 스토리 재생 또는 영상 내보내기(스토리가 있는 다이어그램) | 모션 컨트롤 → `Story` · Export → `Story video` |
 | 시각 스타일, 테마, 내보내기 | `S` / `T` / `E` |
 | 확대/축소 및 초기화 | `+` / `-` / `0` |
 
