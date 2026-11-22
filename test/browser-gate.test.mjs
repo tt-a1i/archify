@@ -289,50 +289,61 @@ test('CI media gates fail closed and run only for their affected responsibility'
   const jobs = parse(fs.readFileSync(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8')).jobs;
   assert.equal(jobs['browser-regression'].strategy['fail-fast'], false);
   assert.equal(jobs['browser-regression'].strategy.matrix.shard,
-    "${{ fromJSON(needs.scope.outputs.browser == 'true' && (needs.scope.outputs.browserProfile != 'changed' || fromJSON(needs.scope.outputs.browserTests || '[]')[4]) && '[1,2,3,4]' || '[1]') }}");
+    "${{ fromJSON((needs.scope.outputs.browserProfile != 'changed' || fromJSON(needs.scope.outputs.browserTests || '[]')[4]) && '[1,2,3,4]' || '[1]') }}");
+  for (const [name, flag] of [['browser-regression', 'browser'], ['webm-decode', 'webm']]) {
+    const job = jobs[name];
+    assert.equal(job.needs, 'scope');
+    assert.equal(job.if, `needs.scope.result == 'success' && needs.scope.outputs.${flag} == 'true'`);
+    assert.ok(job.steps.every(step => step.if === undefined), `${name} runs every step when requested`);
+  }
   const aggregate = jobs['webm-artifact'];
   assert.deepEqual(aggregate.needs, ['scope', 'browser-regression', 'webm-decode']);
   assert.equal(aggregate.if, 'always() && !cancelled()');
   const step = aggregate.steps[0];
+  assert.equal(step.env.SCOPE_RESULT, '${{ needs.scope.result }}');
+  assert.equal(step.env.CI_SCOPE, '${{ needs.scope.outputs.scope }}');
+  assert.equal(step.env.CI_BROWSER, '${{ needs.scope.outputs.browser }}');
+  assert.equal(step.env.CI_BROWSER_PROFILE, '${{ needs.scope.outputs.browserProfile }}');
+  assert.equal(step.env.CI_WEBM, '${{ needs.scope.outputs.webm }}');
   assert.equal(step.env.BROWSER_RESULT, '${{ needs.browser-regression.result }}');
   assert.equal(step.env.WEBM_RESULT, '${{ needs.webm-decode.result }}');
   const runAggregate = overrides => spawnSync('bash', ['-e', '-u', '-o', 'pipefail', '-c', step.run], {
     encoding: 'utf8', env: {
-      ...process.env, SCOPE_RESULT: 'success', CI_SCOPE: 'full',
+      ...process.env, SCOPE_RESULT: 'success', CI_SCOPE: 'full', CI_BROWSER: 'true',
+      CI_BROWSER_PROFILE: 'full', CI_WEBM: 'true',
       BROWSER_RESULT: 'success', WEBM_RESULT: 'success', ...overrides,
     },
   });
-  for (const scope of ['full', 'core', 'docs']) assert.equal(runAggregate({ CI_SCOPE: scope }).status, 0);
-  for (const key of ['SCOPE_RESULT', 'BROWSER_RESULT', 'WEBM_RESULT']) {
-    for (const result of ['failure', 'skipped', 'cancelled', '']) {
-      assert.notEqual(runAggregate({ [key]: result }).status, 0, `${key}=${result} must fail closed`);
+  for (const [scope, profile, browser, webm] of [
+    ['docs', 'full', false, false], ['full', 'full', true, true],
+    ['core', 'full', false, false], ['core', 'full', false, true],
+    ['core', 'full', true, false], ['core', 'full', true, true],
+    ['core', 'atlas', true, false], ['core', 'changed', true, false], ['core', 'changed', true, true],
+  ]) {
+    const plan = {
+      CI_SCOPE: scope, CI_BROWSER_PROFILE: profile, CI_BROWSER: String(browser), CI_WEBM: String(webm),
+      BROWSER_RESULT: browser ? 'success' : 'skipped', WEBM_RESULT: webm ? 'success' : 'skipped',
+    };
+    assert.equal(runAggregate(plan).status, 0, JSON.stringify(plan));
+    for (const key of ['SCOPE_RESULT', 'BROWSER_RESULT', 'WEBM_RESULT']) {
+      for (const result of ['success', 'failure', 'skipped', 'cancelled', '']) {
+        const expected = result === (plan[key] ?? 'success') ? 0 : 1;
+        assert.equal(runAggregate({ ...plan, [key]: result }).status, expected,
+          `${JSON.stringify(plan)} with ${key}=${result}`);
+      }
     }
   }
-  assert.notEqual(runAggregate({ CI_SCOPE: 'unknown' }).status, 0);
-  for (const name of ['browser-regression', 'webm-decode']) {
-    const job = jobs[name];
-    assert.equal(job.needs, 'scope');
-    assert.equal(job.if, 'always() && !cancelled()');
-    assert.equal(job.steps[0].env.SCOPE_RESULT, '${{ needs.scope.result }}');
-    const scopeCheck = (scope, result = 'success', browser = scope === 'full' ? 'true' : 'false', profile = 'full') =>
-      spawnSync('bash', ['-e', '-c', job.steps[0].run], {
-        env: { ...process.env, SCOPE_RESULT: result, CI_SCOPE: scope, CI_BROWSER: browser, CI_BROWSER_PROFILE: profile },
-    }).status;
-    for (const scope of ['docs', 'core', 'full']) assert.equal(scopeCheck(scope), 0);
-    assert.notEqual(scopeCheck('unknown'), 0);
-    assert.notEqual(scopeCheck('core', 'failure'), 0);
-    if (name === 'browser-regression') {
-      assert.equal(scopeCheck('core', 'success', 'true', 'changed'), 0);
-      assert.equal(scopeCheck('core', 'success', 'true', 'atlas'), 0);
-      for (const [scope, browser, profile] of [
-        ['full', 'false', 'full'], ['full', 'true', 'changed'], ['core', 'false', 'changed'],
-        ['core', 'true', 'unknown'], ['core', 'true', ''], ['core', '', 'full'],
-      ]) assert.notEqual(scopeCheck(scope, 'success', browser, profile), 0);
-    }
-    const responsibility = name === 'browser-regression' ? 'browser' : 'webm';
-    for (const runtimeStep of job.steps.slice(1)) {
-      assert.equal(runtimeStep.if, `needs.scope.outputs.${responsibility} == 'true'`);
-    }
+  for (const plan of [
+    { CI_SCOPE: '' }, { CI_SCOPE: 'unknown' }, { CI_SCOPE: 'docs' },
+    { CI_BROWSER: '' }, { CI_WEBM: '' }, { CI_BROWSER_PROFILE: '' },
+    { CI_BROWSER: 'false', BROWSER_RESULT: 'skipped' }, { CI_WEBM: 'false', WEBM_RESULT: 'skipped' },
+    { CI_BROWSER_PROFILE: 'changed' }, { CI_BROWSER_PROFILE: 'atlas' },
+    { CI_SCOPE: 'core', CI_BROWSER_PROFILE: 'unknown' },
+    { CI_SCOPE: 'core', CI_BROWSER: 'false', BROWSER_RESULT: 'skipped', CI_BROWSER_PROFILE: 'changed' },
+    { CI_SCOPE: 'core', CI_BROWSER_PROFILE: 'atlas' },
+    { CI_SCOPE: 'core', CI_WEBM: '0', WEBM_RESULT: 'skipped' },
+  ]) {
+    assert.equal(runAggregate(plan).status, 1, JSON.stringify(plan));
   }
 });
 

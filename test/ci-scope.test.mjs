@@ -364,7 +364,7 @@ test('real Git comparison retains rename source ownership and detects added test
 });
 
 test('required jobs fail when classification fails or returns an unknown scope', () => {
-  for (const name of ['test', 'canonical-test', 'browser-regression', 'webm-decode', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability']) {
+  for (const name of ['test', 'canonical-test', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability']) {
     const step = workflow.jobs[name].steps.find(step => step.name === 'Require successful scope checks');
     assert.ok(step, name);
     for (const [result, scope, status] of [['success', 'docs', 0], ['failure', 'docs', 1], ['success', 'core', 0], ['success', 'full', 0], ['failure', 'core', 1], ['success', '', 1], ['success', 'unknown', 1]]) {
@@ -374,8 +374,6 @@ test('required jobs fail when classification fails or returns an unknown scope',
           SCOPE_RESULT: result,
           CI_SCOPE: scope,
           RUN_WINDOWS: 'true',
-          CI_BROWSER: scope === 'full' ? 'true' : 'false',
-          CI_BROWSER_PROFILE: 'full',
         },
       });
       assert.equal(run.status, status, `${name}: ${result}/${scope}`);

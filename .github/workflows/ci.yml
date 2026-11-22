@@ -213,48 +213,30 @@ jobs:
 
   browser-regression:
     needs: scope
-    if: always() && !cancelled()
+    if: needs.scope.result == 'success' && needs.scope.outputs.browser == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # Keep a scope check for no browser work and share setup across up to four focused suites.
-        shard: ${{ fromJSON(needs.scope.outputs.browser == 'true' && (needs.scope.outputs.browserProfile != 'changed' || fromJSON(needs.scope.outputs.browserTests || '[]')[4]) && '[1,2,3,4]' || '[1]') }}
+        # Share setup across up to four focused suites.
+        shard: ${{ fromJSON((needs.scope.outputs.browserProfile != 'changed' || fromJSON(needs.scope.outputs.browserTests || '[]')[4]) && '[1,2,3,4]' || '[1]') }}
     steps:
-      - name: Require successful scope checks
-        env:
-          SCOPE_RESULT: ${{ needs.scope.result }}
-          CI_SCOPE: ${{ needs.scope.outputs.scope }}
-          CI_BROWSER: ${{ needs.scope.outputs.browser }}
-          CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
-        shell: bash
-        run: |
-          test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE:$CI_BROWSER:$CI_BROWSER_PROFILE" in
-            docs:false:full|core:false:full|core:true:full|core:true:atlas|core:true:changed|full:true:full) ;;
-            *) exit 1 ;;
-          esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.browser == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.browser == 'true'
         with:
           node-version: 22
       - name: Provision a known Chrome runtime
-        if: needs.scope.outputs.browser == 'true'
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         with:
           chrome-version: stable
           install-dependencies: true
       - name: Install browser test dependencies
-        if: needs.scope.outputs.browser == 'true'
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm --prefix archify ci --ignore-scripts --no-audit --no-fund
           npm --prefix archify/modules/code-analysis ci --ignore-scripts --no-audit --no-fund
       - name: Run shared browser regression gate
-        if: needs.scope.outputs.browser == 'true'
         run: npm run test:browser -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
@@ -265,26 +247,14 @@ jobs:
 
   webm-decode:
     needs: scope
-    if: always() && !cancelled()
+    if: needs.scope.result == 'success' && needs.scope.outputs.webm == 'true'
     runs-on: ubuntu-latest
     steps:
-      # Keep every required matrix check present; fail closed if classification/checks fail.
-      - name: Require successful scope checks
-        env:
-          SCOPE_RESULT: ${{ needs.scope.result }}
-          CI_SCOPE: ${{ needs.scope.outputs.scope }}
-        shell: bash
-        run: |
-          test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.webm == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.webm == 'true'
         with:
           node-version: 22
       - name: Provision a known Chrome runtime
-        if: needs.scope.outputs.webm == 'true'
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         with:
@@ -296,7 +266,6 @@ jobs:
       # permission with its own AppArmor profile, as Chromium documents, rather than
       # disabling the sandbox or relaxing the restriction for the whole runner.
       - name: Let the provisioned Chrome start with its sandbox
-        if: needs.scope.outputs.webm == 'true'
         env:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         shell: bash
@@ -321,10 +290,8 @@ jobs:
           timeout 60 "$CHROME_PATH" --headless=new --disable-gpu --user-data-dir="$profile_dir" --dump-dom about:blank >/dev/null
           rm -rf "$profile_dir"
       - name: Install the WebM decoder
-        if: needs.scope.outputs.webm == 'true'
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
       - name: Decode a real motion export and reject static frames
-        if: needs.scope.outputs.webm == 'true'
         run: npm run test:webm
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
@@ -335,18 +302,30 @@ jobs:
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
-      - name: Require every browser and WebM gate to succeed
+      - name: Verify media jobs against the CI plan
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          CI_BROWSER: ${{ needs.scope.outputs.browser }}
+          CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
+          CI_WEBM: ${{ needs.scope.outputs.webm }}
           BROWSER_RESULT: ${{ needs.browser-regression.result }}
           WEBM_RESULT: ${{ needs.webm-decode.result }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
-          test "$BROWSER_RESULT" = success
-          test "$WEBM_RESULT" = success
+          case "$CI_SCOPE:$CI_BROWSER:$CI_BROWSER_PROFILE:$CI_WEBM" in
+            docs:false:full:false|full:true:full:true|core:false:full:*|core:true:full:*|core:true:atlas:false|core:true:changed:*) ;;
+            *) echo "Invalid media scope $CI_SCOPE/$CI_BROWSER/$CI_BROWSER_PROFILE/$CI_WEBM"; exit 1 ;;
+          esac
+          require_media_result() {
+            case "$2:$3" in
+              true:success|false:skipped) ;;
+              *) echo "Unexpected $1 result '$3' with requested flag '$2'"; exit 1 ;;
+            esac
+          }
+          require_media_result browser "$CI_BROWSER" "$BROWSER_RESULT"
+          require_media_result WebM "$CI_WEBM" "$WEBM_RESULT"
 
   zip-freshness:
     needs: scope

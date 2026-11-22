@@ -260,11 +260,12 @@ to four such suites share one job. Larger selections run in four shards.
 Deleted, renamed, or type-changed root test files trigger full CI.
 When WebM CI is selected, it owns the Story browser file and runs it with FFmpeg.
 The browser shards retain that file when WebM CI is outside the change scope.
-The required `webm-artifact` check depends on successful browser, WebM, and scope
-jobs. Tag releases and an unqualified `npm run test:browser` still run the complete
-browser inventory across their browser and WebM checks.
+The required `webm-artifact` check validates the scope and requires each media job
+to pass when selected or be skipped when outside the scope. Tag releases cover
+the full browser inventory across the browser and WebM commands. An unqualified
+`npm run test:browser` selects the full browser inventory.
 `--list --shard=1/2` lists a shard without requiring Chrome. Shards cannot be
-combined with explicit files or test-name filtering; every maintained file runs
+combined with explicit files or test-name filtering; every selected file runs
 in exactly one shard, and every executing shard still requires Chrome.
 
 Only set `ARCHIFY_CHROME` for the browser run when you also plan to run the full

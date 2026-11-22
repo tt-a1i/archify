@@ -275,8 +275,6 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   assert.match(browser, /npm run test:browser -- --shard=\$\{\{ matrix\.shard \}\}\/\$\{\{ strategy\.job-total \}\}/);
   const media = workflowJob(workflow, 'webm-artifact');
   assert.match(media, /needs: \[scope, browser-regression, webm-decode\]/);
-  assert.match(media, /test "\$BROWSER_RESULT" = success/);
-  assert.match(media, /test "\$WEBM_RESULT" = success/);
   assert.ok(jobs['canonical-test'].needs.includes('full-regression'), 'Pages must wait for the complete regression and adapter checks');
   const packageSmoke = workflowJob(workflow, 'package-smoke');
   assert.match(packageSmoke, /Verify delivery-lock ownership with real subprocesses/);
