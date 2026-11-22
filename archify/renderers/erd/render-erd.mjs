@@ -402,6 +402,7 @@ const MARKER_CIRCLE_X = 3.5;
 // The glyph spans y 1..15, so two ports closer than this draw overlapping
 // symbols and the side reads as one lattice instead of N cardinalities.
 const MARKER_HEIGHT = 14;
+const MARKER_STROKE_WIDTH = 1.75;
 // One glyph source for the relationship markers and the legend swatches, so the
 // legend can never teach a different symbol than the lines draw.
 function cardinalityGlyphParts({ cardinality, optional, mirror = false }) {
@@ -424,7 +425,7 @@ function cardinalityGlyphParts({ cardinality, optional, mirror = false }) {
 
 function cardinalityMarkerMarkup(id, { cardinality, optional, mirror, strokeVar = '--text-muted' }) {
   const refX = mirror ? 0 : MARKER_TOE_X;
-  return `          <marker id="${esc(id)}" markerWidth="${MARKER_GLYPH_WIDTH}" markerHeight="18" refX="${refX}" refY="8" orient="auto" markerUnits="userSpaceOnUse" class="a-default" style="stroke: var(${strokeVar})" stroke-width="1.75">
+  return `          <marker id="${esc(id)}" markerWidth="${MARKER_GLYPH_WIDTH}" markerHeight="18" refX="${refX}" refY="8" orient="auto" markerUnits="userSpaceOnUse" class="a-default" style="stroke: var(${strokeVar})" stroke-width="${MARKER_STROKE_WIDTH}">
             ${cardinalityGlyphParts({ cardinality, optional, mirror }).join('\n            ')}
           </marker>`;
 }
@@ -631,6 +632,7 @@ const { ports, pathFor, inferredSides, connectionEndpointSide } = createRouter(e
   // A cardinality glyph is 14 units tall, so ports must clear it (see
   // ERD_PORT_SPACING, which the trunk bridge is derived from).
   maxPortSpacing: ERD_PORT_SPACING,
+  minimumPortSpacing: Math.ceil(MARKER_HEIGHT + MARKER_STROKE_WIDTH),
   // Greedy planning routes each relationship against only the earlier ones, so
   // a later route could cross an earlier corridor while an empty side of the
   // table was free. Architecture's bounded readability sweep re-plans one

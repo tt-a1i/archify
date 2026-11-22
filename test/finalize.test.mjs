@@ -456,6 +456,21 @@ test('compact success turns route evidence into node-move hints that keep relati
   } } } } }).visualReviewRecommendation, false);
 });
 
+test('compact success identifies both directions of a crossing between the same nodes', () => {
+  const crossing = {
+    left: { id: 'pty-input', from: 'runtime', to: 'orchestrator' },
+    right: { id: 'team-send', from: 'orchestrator', to: 'runtime' },
+    sharedNode: 'runtime',
+  };
+  const { hints } = compactFinalizeReceipt({ ok: true, type: 'architecture', stages: { check: { receipt: { composition: {
+    metrics: { resolvedCrossovers: 1 }, routeReview: { crossings: [crossing], detours: [] },
+  } } } } }).visualReviewRecommendation;
+  assert.equal(hints.length, 1);
+  assert.match(hints[0], /runtime → orchestrator and orchestrator → runtime cross next to runtime/);
+  assert.match(hints[0], /trace both routes near runtime/);
+  assert.doesNotMatch(hints[0], /move node/);
+});
+
 test('compact failure receipts retain diverse actionable subjects without embedding full stage evidence', () => {
   const diagnostics = Array.from({ length: 20 }, (_, index) => ({
     code: 'composition/proper-crossing',

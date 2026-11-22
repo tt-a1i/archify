@@ -1,7 +1,7 @@
 // Fresh paired source orientation. Slots are reading aids, never persistent IDs.
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { extractFacts, loadConfig } from './analysis.mjs';
 import { readInside } from './evidence.mjs';
 import { measureFunctions } from '../extract/ts/functions.mjs';

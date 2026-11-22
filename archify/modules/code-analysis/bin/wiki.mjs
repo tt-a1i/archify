@@ -7,7 +7,6 @@ import { DiagnosticError, fail, receipt } from '../core/index.mjs';
 import { assertDriftPin, captureDriftTree, driftRepository } from '../lib/drift-capture.mjs';
 import { readDriftInput } from '../lib/drift-input.mjs';
 import { git } from '../lib/git-sources.mjs';
-import { ensureDependencies } from './serve.mjs';
 import { containedBy } from '../../../renderers/shared/path-semantics.mjs';
 import { resolveNativeOutputDirectory } from '../../../renderers/shared/output-path.mjs';
 import { createOwnedTempDirectory } from '../../../renderers/shared/owned-temp-directory.mjs';
@@ -91,7 +90,6 @@ async function build(args) {
   const narrative = options.narrative ? readDriftInput(options.narrative, 'wiki narrative', 1024 * 1024).doc : null;
   if (options.narrative && (!narrative || typeof narrative !== 'object')) fail('wiki/narrative-invalid', 'Select a wiki narrative JSON object.');
   const url = await githubOrigin(root);
-  await ensureDependencies();
   const { buildGraph, evaluateGraph, extractFacts, stableJson } = await import('../lib/analysis.mjs');
   const { buildOverlay } = await import('../overlay/inject.mjs');
   const { buildWiki } = await import('../wiki/model.mjs');

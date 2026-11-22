@@ -136,6 +136,28 @@ function verifyPackagedStory(){
   process.stdout.write('packaged story scan, draft, attach and choreography passed without dependencies\n');
 }
 
+function verifyPackagedCodeAnalysis() {
+  // Parser and schema packages are vendored, so a copied Skill analyzes TS and
+  // Java sources without installing node_modules.
+  const repo = path.join(scratch, 'code-analysis-repo');
+  const files = {
+    'src/a/index.ts': 'export function a() { return 1; }\n',
+    'src/b/index.ts': 'import { a } from "../a/index";\nexport const b = () => a();\n',
+    'java/src/main/java/demo/App.java': 'package demo;\npublic class App { int run() { return 1; } }\n',
+  };
+  for (const [relative, text] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(repo, relative)), { recursive: true });
+    fs.writeFileSync(path.join(repo, relative), text);
+  }
+  for (const [root, language, expected] of [[repo, 'ts', 2], [path.join(repo, 'java'), 'java', 1]]) {
+    const result = JSON.parse(run(['code-analysis', 'check', root, '--language', language, '--json']));
+    if (result.status !== 'ok' || result.files !== expected) {
+      throw new Error(`packaged Code Analysis ${language} check failed: ${JSON.stringify(result).slice(0, 400)}`);
+    }
+  }
+  process.stdout.write('packaged Code Analysis analyzed TS and Java without dependencies\n');
+}
+
 async function verifyPackage() {
   if (!fs.existsSync(cli)) throw new Error(`packaged CLI not found at ${cli}`);
   requireAbsent('node_modules');
@@ -143,6 +165,8 @@ async function verifyPackage() {
   requireAbsent(path.join('scripts', 'generate-validators.mjs'));
   requireAbsent(path.join('scripts', 'generate-brand-marks.mjs'));
   requireAbsent('test');
+  requireAbsent(path.join('modules', 'code-analysis', 'node_modules'));
+  requireAbsent(path.join('modules', 'code-analysis', 'test'));
   requireAbsent('.hive');
   requireAbsent('.workbuddy');
 
@@ -276,6 +300,8 @@ async function verifyPackage() {
   await verifyPackagedExplainer();
 
   verifyPackagedStory();
+
+  verifyPackagedCodeAnalysis();
 
   const workflowLayout = JSON.parse(run([
     'validate', 'workflow', path.join(skillRoot, 'examples', fixtures[1][1]),

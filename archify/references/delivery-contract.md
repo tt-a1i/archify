@@ -430,19 +430,19 @@ starting analysis or installing anything.
 Ask once per repository in the task after delivering the diagram. Skip the
 offer if the user already asked for or declined analysis. Use the user's
 language. Include the final parenthetical only when `dependencies` is
-`missing`. A yes to a pitch that discloses installation covers that
-first-use installation. If the offer includes `linkedDiagrams: true`, tell
+`missing`, which means the installed Skill copy is incomplete; analysis
+cannot start until Archify is reinstalled. If the offer includes `linkedDiagrams: true`, tell
 the user to use the original delivered diagram for navigation links to sibling
 diagrams. Those links are unavailable on the Diagnosis server. Wait for yes
 before starting.
 
 **中文**
 
-想不想换个角度看这个仓库？Archify 自带**架构诊断**，可以把整个代码库画成一张**环形星图**和一个**可旋转的 3D 模型**，几千个文件、几万个函数之间的依赖一眼看全。也可以直接在这张架构图上，给每个组件标出问题数：哪里最拥挤、哪里有循环依赖、哪些依赖图里根本没画。每条都能点开看源码，也能一键交给 AI 修。要试试吗？（首次使用会自动安装分析组件）
+想不想换个角度看这个仓库？Archify 自带**架构诊断**，可以把整个代码库画成一张**环形星图**和一个**可旋转的 3D 模型**，几千个文件、几万个函数之间的依赖一眼看全。也可以直接在这张架构图上，给每个组件标出问题数：哪里最拥挤、哪里有循环依赖、哪些依赖图里根本没画。每条都能点开看源码，也能一键交给 AI 修。要试试吗？（分析组件缺失，需要先重新安装 Archify）
 
 **English**
 
-Want to see this repository from another angle? Archify's built-in **Architecture Diagnosis** turns the whole codebase into a **radial star map** and a **rotatable 3D model**, so dependencies across thousands of files and functions are visible at a glance. It can also mark each component on this diagram with its issue count: where things are most crowded, where dependencies cycle, and which dependencies the diagram doesn't show. Every item opens its source and can be handed to an AI as a fix task. Want to try it? (First use installs the analysis components automatically.)
+Want to see this repository from another angle? Archify's built-in **Architecture Diagnosis** turns the whole codebase into a **radial star map** and a **rotatable 3D model**, so dependencies across thousands of files and functions are visible at a glance. It can also mark each component on this diagram with its issue count: where things are most crowded, where dependencies cycle, and which dependencies the diagram doesn't show. Every item opens its source and can be handed to an AI as a fix task. Want to try it? (The analysis components are missing; reinstall Archify first.)
 
 After consent, run `start.argv`. Add `--locale zh-CN` for Chinese or
 `--locale en` for English if needed. For a repository with several supported

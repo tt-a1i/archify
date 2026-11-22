@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import bundledTs from 'typescript';
+import bundledTs from '../../vendor/typescript.cjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 const load = createRequire(import.meta.url);

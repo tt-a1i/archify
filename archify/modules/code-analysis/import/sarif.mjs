@@ -1,6 +1,5 @@
 import fs from 'node:fs';
-import AjvDraft04 from 'ajv-draft-04';
-import addFormats from 'ajv-formats';
+import { AjvDraft04, addFormats } from '../vendor/deps.cjs';
 import { invalid, lineLocation, sourceSeverity } from './common.mjs';
 
 let validate;

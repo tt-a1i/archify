@@ -95,9 +95,11 @@ From the `archify/` package directory:
 node bin/archify.mjs code-analysis serve /path/to/repo --ir architecture.json --out out/analysis --language py
 ```
 
-The first run installs the module's Node parser and schema dependencies
-(including typescript, java-parser and Ajv with SARIF draft/format support) into `modules/code-analysis/node_modules`; `npm ci` in
-`archify/` does the same through its `postinstall`. Open the URL the command
+The module's Node parser and schema packages (typescript, java-parser, xmldom
+and Ajv with SARIF draft/format support) ship pre-bundled in
+`modules/code-analysis/vendor/`, so no install step is needed; maintainers
+regenerate them by running `pnpm run build:vendor` from `archify/modules/code-analysis/`
+after changing those pinned versions. Open the URL the command
 prints and keep the process running. Options:
 `--language ts|py|java|go|rust` (choose explicitly for a mixed-language root), `--map overlay-map.json`
 (`{"componentId": ["moduleId", …]}` when the IR's `sources` do not say which

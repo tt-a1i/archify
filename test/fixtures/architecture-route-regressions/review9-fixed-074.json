@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Fixed 74",
+    "output": "out.html",
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      682,
+      311
+    ]
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "database",
+      "label": "Service 1",
+      "size": [
+        100,
+        72
+      ],
+      "pos": [
+        36,
+        59
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "messagebus",
+      "label": "Service 2",
+      "size": [
+        100,
+        52
+      ],
+      "pos": [
+        209,
+        60
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Service 3",
+      "size": [
+        120,
+        60
+      ],
+      "pos": [
+        404,
+        43
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "frontend",
+      "label": "Service 4",
+      "size": [
+        120,
+        52
+      ],
+      "pos": [
+        36,
+        199
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "database",
+      "label": "Service 5",
+      "size": [
+        120,
+        52
+      ],
+      "pos": [
+        220,
+        187
+      ]
+    },
+    {
+      "id": "n5",
+      "type": "database",
+      "label": "Service 6",
+      "size": [
+        120,
+        72
+      ],
+      "pos": [
+        372,
+        165
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1",
+      "label": "Fetch data 1"
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": "Send job 2"
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3"
+    },
+    {
+      "id": "e3",
+      "from": "n3",
+      "to": "n4"
+    },
+    {
+      "id": "e4",
+      "from": "n4",
+      "to": "n5",
+      "label": "Fetch data 5"
+    },
+    {
+      "id": "e5",
+      "from": "n5",
+      "to": "n3",
+      "label": "Sync 6"
+    },
+    {
+      "id": "e6",
+      "from": "n1",
+      "to": "n3"
+    },
+    {
+      "id": "e7",
+      "from": "n5",
+      "to": "n0"
+    },
+    {
+      "id": "e8",
+      "from": "n3",
+      "to": "n2"
+    }
+  ],
+  "boundaries": []
+}
