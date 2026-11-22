@@ -156,6 +156,33 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 
 Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本并生成这张校验地图。**[打开成品 ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [追踪下游 ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [Typed Source](docs/cases/mco-runtime.architecture.json)
 
+### 诊断一个代码仓库
+
+<sub>CODE ANALYSIS · Skill 自带，无需额外安装</sub>
+
+| 依赖星图 | 同一次分析的 3D 模型 |
+|---|---|
+| [![Atlas 星图：模块排成一圈，文件依赖横穿其中，侧栏列出问题与耦合度](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D：被依赖最多的模块作为树干，其他模块按依赖层级向上分枝](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**架构诊断**会读取仓库，告诉你代码实际上是怎么连在一起的：循环依赖、耦合过紧的模块、复杂度热点、违反分层规则的地方。每条发现都能点开对应源码，还附有可以直接交回给 Agent 的修复任务。和架构图一起使用时，每个组件上会标出问题数。支持 JS/TS、Python、Java、Go、Rust、C 和 C++，结果是一个可离线打开的 HTML 文件。
+
+```text
+用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
+```
+
+[Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)
+
+### 讲成一段故事，或讲清一个 PR
+
+<sub>STORY · PR 导览</sub>
+
+- **Story 视频。** 让 Agent 给任意一张图加上导览故事。页面会多出 Story 模式，带时间轴和字幕；**导出 → Story video** 可录成 1080p、60 fps 的视频（WebM 或 MP4）。也可以把多张图编排进同一个舞台页面或视频。[Story 编写说明](archify/references/story-authoring.md)
+- **PR 导览。** 让 Agent 讲解一个 PR 或分支：Archify 直接在图上标出改动，还能把深浅两版图附到 GitHub PR 或 GitLab MR。可选的 `archify-pr` Skill 会在你准备 PR 时主动询问，且只针对实质性改动。[PR 审阅说明](archify/references/pr-review.md)
+
+```text
+用 archify 给这张图加一段导览故事，并导出成视频。
+```
+
 ### 易于扩展，社区还在不断创造新用法
 
 <sub>COMMUNITY STORIES · 社区用户提供的部分案例</sub>
@@ -443,7 +470,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 }
 ```
 
-不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为任意合法语言标签，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。`en`、`zh-CN`、`zh-TW`、`es`、`ko` 与 `ar` 已内置，只需设置 `meta.locale`；`meta.translations`（规范消息键到译文字符串的映射）可逐键覆盖，其余文案保持所选语言。其他语言需在该字段中提供完整目录（参见 `archify/examples/locales/`），否则渲染器回退为英文并在 stderr 中说明。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于既未内置也未提供 `meta.translations` 的创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
+不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为任意合法语言标签，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。`en`、`zh-CN`、`zh-TW`、`es`、`ko`、`ar` 与 `ru` 已内置，只需设置 `meta.locale`；`meta.translations`（规范消息键到译文字符串的映射）可逐键覆盖，其余文案保持所选语言。其他语言需在该字段中提供完整目录（参见 `archify/examples/locales/`），否则渲染器回退为英文并在 stderr 中说明。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于既未内置也未提供 `meta.translations` 的创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
 
 </details>
 
@@ -458,6 +485,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 对比一种或两种语义角色 | <kbd>L</kbd> 或“透镜” |
 | 打开实时全局雷达 | <kbd>M</kbd> 或“地图” |
 | 进入 Presentation Stage | <kbd>F</kbd> |
+| 播放导览故事或导出视频（带故事的图） | 动效控件 → `Story` · 导出 → `Story video` |
 | 选择视觉风格（<kbd>S</kbd> 循环）/ 切换主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | 缩放或复位 | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
