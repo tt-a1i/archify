@@ -806,12 +806,6 @@ function chooseAutomaticPlacement() {
     }
   }
   if (canShorten) {
-    for (const { moved } of sharedNeighborCandidates(best.scene, best.spans).slice(0, 4)) {
-      if (remainingPlacementRoutes <= 2) break;
-      consider(moved, 0, 'group');
-    }
-  }
-  if (canShorten) {
     // Reserve an alternative when the accepted scene has competing lanes.
     const corridor = corridorMeasures(best.scene);
     const reserve = best.crossings.length ? 0 : (corridor.length || corridor.border ? 2 : 1);
@@ -847,6 +841,14 @@ function chooseAutomaticPlacement() {
     const corridor = corridorMeasures(best.scene);
     if (corridor.length || corridor.border) {
       consider(best.scene.boxes, 0, 'corridor', { ...best.routingOptions, separateRuns: true });
+    }
+  }
+  if (canShorten && remainingPlacementRoutes) {
+    // Judge grouped moves against the finished ordinary placement. Spending
+    // this budget earlier can prevent a later branch or spacing repair.
+    for (const { moved } of sharedNeighborCandidates(best.scene, best.spans).slice(0, 4)) {
+      if (!remainingPlacementRoutes) break;
+      consider(moved, 0, 'group', best.routingOptions);
     }
   }
   if (best.router !== router) {
