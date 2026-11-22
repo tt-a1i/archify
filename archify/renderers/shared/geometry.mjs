@@ -653,7 +653,7 @@ export function cleanCrossingProblems({
       relation,
       index,
       points,
-      visiblePath: visiblePathFor?.(path),
+      visiblePath: visiblePathFor?.(path, relation),
       analysisSegments: mergeForwardCollinearWaypoints
         ? forwardCollinearAnalysisSegments(points)
         : authoredAnalysisSegments(points),
@@ -668,7 +668,7 @@ export function cleanCrossingProblems({
       if ([left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to)
           && !includeSharedEndpoints(left.relation, right.relation)) continue;
 
-      let hit = left.visiblePath && right.visiblePath ? visibleCrossingFor(left.visiblePath, right.visiblePath) : null;
+      let hit = null;
       for (const leftSegment of left.analysisSegments) {
         if (hit) break;
         for (const rightSegment of right.analysisSegments) {
@@ -688,6 +688,7 @@ export function cleanCrossingProblems({
           }
         }
       }
+      if (!hit && left.visiblePath && right.visiblePath) hit = visibleCrossingFor(left.visiblePath, right.visiblePath);
       if (!hit) continue;
       if (crossingResolved(left.relation, right.relation, hit)) continue;
 

@@ -1311,8 +1311,23 @@ function validateArchitecture({
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
     includeSharedEndpoints: () => true,
-    visiblePathFor: ({ points }) => prepareCrossingPath(roundedPathSegments(points, 8)),
-    visibleCrossingFor: (left, right) => visibleCrossings(left, right, 1)[0],
+    visiblePathFor: ({ points }, conn) => ({
+      ...prepareCrossingPath(roundedPathSegments(points, 8)),
+      authoredWaypoints: asArray(conn.via),
+    }),
+    visibleCrossingFor: (left, right) => {
+      if (!left.authoredWaypoints.length && !right.authoredWaypoints.length) return visibleCrossings(left, right, 1)[0];
+      // Keep the renderer's authored-touch contract at an explicit straight-through waypoint.
+      // The artifact checker independently reports intersections in the rendered SVG.
+      const touchesWaypoint = ({ segments, authoredWaypoints }, index, [x, y]) => {
+        const matches = ([a, b]) => Math.abs(a - x) <= 1e-7 && Math.abs(b - y) <= 1e-7;
+        const { start, end, control } = segments[index];
+        return !control && (matches(start) || matches(end)) && authoredWaypoints.some(matches);
+      };
+      return visibleCrossings(left, right).find(({ leftSegment, rightSegment, point }) => (
+        !touchesWaypoint(left, leftSegment, point) && !touchesWaypoint(right, rightSegment, point)
+      ));
+    },
     // Automatic architecture routes render with an opaque crossover halo.
     // That makes a proper X visually unambiguous while explicit authored
     // crossings remain a blocking composition error.
