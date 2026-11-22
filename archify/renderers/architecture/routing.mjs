@@ -49,12 +49,13 @@ export function horizontalLabelClearance(conn) {
 
 // Use the same architecture route preferences for rendering and placement checks.
 export function createArchitectureRouter(components, connections, {
-  frames = [], fixedCanvas = false, automaticPlacement = false,
+  frames = [], fixedCanvas = false, automaticPlacement = false, acceptSimplification,
 } = {}) {
   return createRouter(components, connections, {
     distinctAutomaticPorts: true,
     preferReadableRoutes: true,
     repairAutomaticPorts: automaticPlacement,
+    acceptSimplification,
     // Intrinsic canvases can use one outward stub without shrinking their text.
     readabilityBottomMargin: fixedCanvas ? 0 : 24,
     frames,
@@ -139,6 +140,7 @@ export function createRouter(components, connections = [], {
   minimumTerminalSegmentPx = 0,
   readabilityBottomMargin = 0,
   repairAutomaticPorts = false,
+  acceptSimplification = null,
 } = {}) {
   const frameBorders = frames.flatMap((frame) => frameBorderSegments(frame));
   const LABEL_CLEARANCE = 4;
@@ -205,6 +207,8 @@ export function createRouter(components, connections = [], {
     crossoverRoutedCount: 0,
     readabilityCandidateCount: 0,
     readabilityImprovedCount: 0,
+    residualCandidateCount: 0,
+    residualLabelRejectionCount: 0,
     labelRelocationCandidateCount: 0,
     labelRelocationImprovedCount: 0,
     reciprocalCandidateCount: 0,
@@ -981,23 +985,21 @@ export function createRouter(components, connections = [], {
       && !routeOverlapsResolved(conn, routed.points, resolvedRoutes);
   }
 
-  function crossingCount(conn, points, resolvedRoutes) {
+  function crossingPoints(conn, points, other, limit = Infinity) {
+    if (relationshipsShareEndpoint(conn, other.conn)
+        && (!distinctAutomaticPorts || hasAuthoredRouteGeometry(other.conn) || other.conn.labelAt || conn.labelAt)) return 0;
     let count = 0;
-    for (const entry of resolvedRoutes) {
-      if (relationshipsShareEndpoint(conn, entry.conn)
-          && (!distinctAutomaticPorts || hasAuthoredRouteGeometry(entry.conn) || entry.conn.labelAt || conn.labelAt)) continue;
-      let crosses = false;
-      for (let index = 1; index < points.length && !crosses; index += 1) {
-        for (let otherIndex = 1; otherIndex < entry.points.length; otherIndex += 1) {
-          if (properSegmentIntersection(points[index - 1], points[index], entry.points[otherIndex - 1], entry.points[otherIndex])) {
-            crosses = true;
-            break;
-          }
-        }
+    for (let index = 1; index < points.length; index += 1) {
+      for (let otherIndex = 1; otherIndex < other.points.length; otherIndex += 1) {
+        if (properSegmentIntersection(points[index - 1], points[index], other.points[otherIndex - 1], other.points[otherIndex])
+          && ++count >= limit) return count;
       }
-      if (crosses) count += 1;
     }
     return count;
+  }
+
+  function crossingCount(conn, points, resolvedRoutes) {
+    return resolvedRoutes.reduce((count, other) => count + crossingPoints(conn, points, other, 1), 0);
   }
 
   function routeLength(points) {
@@ -1494,6 +1496,8 @@ export function createRouter(components, connections = [], {
       function simplifyResidualRoutes() {
         // Try off-center ports and short orthogonal routes after the regular
         // planner has settled. Keep every other route and label in place.
+        const maximumCandidatesPerRoute = 4096;
+        const maximumCandidates = 16384;
         const horizontal = side => side === 'left' || side === 'right';
         const direction = side => side === 'right' || side === 'bottom' ? 1 : -1;
         const withCoordinate = (point, axis, value) => axis === 0 ? [value, point[1]] : [point[0], value];
@@ -1505,11 +1509,14 @@ export function createRouter(components, connections = [], {
           if (entry.points.length <= 4 || jointlyImproved.has(conn) || typeOwned.has(conn) || hasAuthoredRouteGeometry(conn)
               || hasAuthoredLabelPlacement(conn) || conn.from === conn.to) continue;
           const others = resolvedRoutes.filter(other => other !== entry);
-          const crossed = new Set(others.filter(other => crossingCount(conn, entry.points, [other])));
+          const previousCrossings = others.map(other => crossingPoints(conn, entry.points, other));
           const length = routeLength(entry.points);
           const labels = reservedLabels.filter(label => label.conn !== conn);
           const routes = others.map(other => other.points);
           const obstacles = [...components.values(), ...frames, ...labels.map(({ rect }) => rect)];
+          const segments = routes.flatMap(points => points.slice(1).map((end, index) => [points[index], end]));
+          let remaining = Math.min(maximumCandidatesPerRoute, maximumCandidates - planningMetrics.residualCandidateCount);
+          if (!remaining) break;
           const ownedLabels = labels.flatMap(({ conn: owner, rect }) => {
             const distance = labelDistance(pathCache.get(owner).points, rect, 20);
             return distance <= 20 && labelDistance(entry.points, rect, distance) > distance
@@ -1532,7 +1539,7 @@ export function createRouter(components, connections = [], {
             return [...new Set(values)].filter(value => value >= low && value <= high);
           };
           let best;
-          for (const sides of candidateSidePairs(conn)) {
+          sidePairs: for (const sides of candidateSidePairs(conn)) {
             const geometry = connectionGeometry(conn, sides);
             const { from, to, start, end, fromSide, toSide } = geometry;
             const sourceAxis = Number(horizontal(fromSide));
@@ -1551,18 +1558,41 @@ export function createRouter(components, connections = [], {
             const endLimit = end[axis] + lastStep * stub;
             const coordinates = [(startLimit + endLimit) / 2, startLimit, endLimit, ...entry.points.map(point => point[axis])];
             if (sourceAxis === targetAxis) {
-              // Cut the available corridor at known obstacle and route
-              // coordinates. Each intervening slot gets one midpoint.
-              const edges = obstacles.flatMap(rect => axis
-                ? [rect.y, rect.y + rect.height] : [rect.x, rect.x + rect.width]);
-              const cuts = [...new Set([...edges, ...routes.flatMap(points => points.map(point => point[axis])),
-                startLimit, endLimit])].sort((a, b) => a - b);
-              coordinates.push(...cuts.slice(1).map((cut, index) => (cuts[index] + cut) / 2));
+              // A two-turn route spends its transverse span plus the two
+              // approach legs. Ignore cuts outside the union of feasible
+              // channels and outside the span of the endpoint ports.
+              const sourceLow = Math.min(...starts);
+              const sourceHigh = Math.max(...starts);
+              const targetLow = Math.min(...ends);
+              const targetHigh = Math.max(...ends);
+              const acrossLow = Math.min(sourceLow, targetLow);
+              const acrossHigh = Math.max(sourceHigh, targetHigh);
+              const alongBudget = length - Math.max(0, sourceLow - targetHigh, targetLow - sourceHigh);
+              const from = start[axis];
+              const to = end[axis];
+              const low = Math.max((from + to - alongBudget) / 2,
+                step > 0 ? startLimit : -Infinity, lastStep > 0 ? endLimit : -Infinity);
+              const high = Math.min((from + to + alongBudget) / 2,
+                step < 0 ? startLimit : Infinity, lastStep < 0 ? endLimit : Infinity);
+              const cuts = [startLimit, endLimit];
+              const collectCuts = ([x1, y1], [x2, y2]) => {
+                const [axisStart, axisEnd, acrossStart, acrossEnd] = axis ? [y1, y2, x1, x2] : [x1, x2, y1, y2];
+                if (Math.max(acrossStart, acrossEnd) < acrossLow || Math.min(acrossStart, acrossEnd) > acrossHigh
+                    || Math.max(axisStart, axisEnd) < low || Math.min(axisStart, axisEnd) > high) return;
+                cuts.push(axisStart, axisEnd);
+              };
+              for (const rect of obstacles) collectCuts([rect.x, rect.y], [rect.x + rect.width, rect.y + rect.height]);
+              for (const [start, end] of segments) collectCuts(start, end);
+              const ordered = [...new Set(cuts)].sort((a, b) => a - b);
+              coordinates.push(...ordered.slice(1).map((cut, index) => (ordered[index] + cut) / 2)
+                .filter(value => value >= low && value <= high));
             }
             const channels = [...new Set(coordinates)].filter(value =>
               step * (value - startLimit) >= 0 && lastStep * (value - endLimit) >= 0);
             const sidesOf = candidate => candidate === conn ? sides : selectedSides.get(candidate);
             const consider = (points, drift) => {
+              remaining -= 1;
+              planningMetrics.residualCandidateCount += 1;
               const span = routeLength(points);
               if (span > length + 0.0001 || !points.every(withinScene)) return;
               const order = best ? points.length - best.points.length
@@ -1570,17 +1600,23 @@ export function createRouter(components, connections = [], {
               if (best?.crossings === 0 && order >= 0) return;
               if (!endpointSlotsClear([{ conn, points }], others, sidesOf)
                   || !routeIsClear(conn, { points }, { ...geometry, crowded: false }, others)) return;
-              const crossings = others.filter(other => crossingCount(conn, points, [other]));
-              if (crossings.some(other => !crossed.has(other))) return;
-              if (best && (crossings.length - best.crossings || order) >= 0) return;
+              let crossings = 0;
+              for (const [index, other] of others.entries()) {
+                const previous = previousCrossings[index];
+                const current = crossingPoints(conn, points, other, previous + 1);
+                if (current > previous) return;
+                crossings += current;
+              }
+              if (best && (crossings - best.crossings || order) >= 0) return;
               const rect = labelRectFor?.(conn, points, { routes: [...routes, points], labels: labels.map(label => label.rect) });
               if (!labelClears(rect, conn, others, labels, labelInBounds)
                   || (rect && !labelFollowsRoute(rect, points, others))
                   || ownedLabels.some(({ rect, distance }) => labelDistance(points, rect, distance) <= distance)) return;
-              best = { points, sides, rect, length: span, drift, crossings: crossings.length };
+              best = { points, sides, rect, length: span, drift, crossings };
             };
             for (const fromValue of new Set(starts)) {
               for (const toValue of new Set(ends)) {
+                if (!remaining) break sidePairs;
                 const source = withCoordinate(start, sourceAxis, fromValue);
                 const target = withCoordinate(end, targetAxis, toValue);
                 const drift = Math.abs(start[sourceAxis] - fromValue) + Math.abs(end[targetAxis] - toValue);
@@ -1590,6 +1626,7 @@ export function createRouter(components, connections = [], {
                   consider([source, target], drift);
                 } else {
                   for (const channel of channels) {
+                    if (!remaining) break sidePairs;
                     consider([source, withCoordinate(source, axis, channel), withCoordinate(target, axis, channel), target], drift);
                   }
                 }
@@ -1598,7 +1635,13 @@ export function createRouter(components, connections = [], {
           }
           if (!best) continue;
           const { points, sides, rect } = best;
-          cachePath(conn, { points, d: roundedPath(points, 8), ...(rect ? { labelAt: [rect.lx, rect.ly] } : {}) }, sides);
+          const routed = { points, d: roundedPath(points, 8), ...(rect ? { labelAt: [rect.lx, rect.ly] } : {}) };
+          if (acceptSimplification && connections.some(connection => connection.label)
+              && !acceptSimplification(other => pathCache.get(other), other => other === conn ? routed : pathCache.get(other))) {
+            planningMetrics.residualLabelRejectionCount += 1;
+            continue;
+          }
+          cachePath(conn, routed, sides);
           entry.points = points;
           reservedLabels = [...labels, ...(rect ? [{ conn, rect }] : [])];
           planningMetrics.readabilityImprovedCount += 1;

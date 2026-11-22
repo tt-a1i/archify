@@ -27,6 +27,8 @@ import {
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
   collectArrowheadCollisions,
+  collectLabelRouteClearance,
+  segmentRectClearanceWithin,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
@@ -225,31 +227,14 @@ const architectureLegendEntries = [
   ...changeLegendEntries(changeReview, arch.meta?.legend, arch.meta.locale),
 ];
 
-// One source for connection label geometry: the rect the containment rule
-// measures is the rect the SVG mask draws, the auto canvas covers, the legend
-// avoids, and the layout report publishes.
-const resolvedLabelPoints = new Map();
 function connectionLabelBox(conn) {
-  if (!conn.label) return null;
-  const routed = pathFor(conn);
-  return connectionLabelBoxAt(conn, resolvedLabelPoints.get(conn) || routed.labelAt || labelPoint(conn, routed.points));
+  return labelBoxes.get(conn);
 }
 
-function connectionLabelRects() {
-  const rects = [];
-  for (const [relationIndex, conn] of asArray(arch.connections).entries()) {
-    if (!components.has(conn.from) || !components.has(conn.to)) continue;
-    const box = connectionLabelBox(conn);
-    if (!box) continue;
-    rects.push({ relation: conn, relationIndex, label: conn.label, ...box });
-  }
-  return rects;
-}
-
-function autoViewBoxFor(candidateBoundaries, extraRects = []) {
+function autoViewBoxFor(boxes, candidateBoundaries, extraRects) {
   let maxX = 0;
   let maxY = 0;
-  for (const rects of [components.values(), candidateBoundaries, extraRects]) {
+  for (const rects of [boxes.values(), candidateBoundaries, extraRects]) {
     for (const rect of rects) {
       maxX = Math.max(maxX, rect.x + rect.width);
       maxY = Math.max(maxY, rect.y + rect.height);
@@ -271,11 +256,11 @@ function autoViewBoxFor(candidateBoundaries, extraRects = []) {
   ];
 }
 
-function resolvedViewBoxWidth(candidateBoundaries) {
+function resolvedViewBoxWidth(boxes, candidateBoundaries, connectionGeometry) {
   if (Array.isArray(arch.meta?.viewBox) && Number.isFinite(arch.meta.viewBox[0])) {
     return arch.meta.viewBox[0];
   }
-  return autoViewBoxFor(candidateBoundaries, connectionGeometry)[0];
+  return autoViewBoxFor(boxes, candidateBoundaries, connectionGeometry)[0];
 }
 
 function expandBoundaryForReadableTitle(boundary, minimumFontSize) {
@@ -326,19 +311,12 @@ function horizontalOverlap(left, right) {
 // A route through a title disappears under its mask and reads as struck-through
 // text. Keep the left rail position when it is clear; otherwise slide the title
 // along its rail to the nearest clear position inside the frame.
-let titleRouteSegments = null;
-function slideTitleOffRoutes(boundary, title, placedTitles) {
+function slideTitleOffRoutes(boundary, title, placedTitles, { titleRouteSegments, boxes, connectionLabels }) {
   if (!enforcesBoundaryTitleComposition) return;
-  titleRouteSegments ||= asArray(arch.connections)
-    .filter((conn) => components.has(conn.from) && components.has(conn.to))
-    .flatMap((conn) => {
-      const points = pathFor(conn).points;
-      return points.slice(1).map((end, index) => ({ start: points[index], end }));
-    });
   const clear = (x) => {
     const rect = { ...title, x };
     return !titleRouteSegments.some((segment) => segmentIntersectsRect(segment, rect, 2))
-      && ![...placedTitles, ...components.values(), ...connectionLabels].some((other) => rectsOverlap(rect, other));
+      && ![...placedTitles, ...boxes.values(), ...connectionLabels].some((other) => rectsOverlap(rect, other));
   };
   if (clear(title.x)) return;
   const left = boundary.x + layout.boundaryLabelFrameInset;
@@ -359,7 +337,7 @@ function slideTitleOffRoutes(boundary, title, placedTitles) {
   if (x !== undefined) title.x = x;
 }
 
-function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
+function layoutBoundaryTitles(rawBoundaries, minimumFontSize, scene) {
   const placedTitles = [];
   const measured = new Map();
   const ordered = rawBoundaries
@@ -375,11 +353,11 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
     const boundary = expandBoundaryForReadableTitle(entry.boundary, minimumFontSize);
     const title = measureBoundaryTitle(boundary, minimumFontSize);
     let guard = 0;
-    while (guard < rawBoundaries.length + components.size + 1) {
+    while (guard < rawBoundaries.length + scene.boxes.size + 1) {
       guard += 1;
       const blockers = [
         ...placedTitles,
-        ...components.values(),
+        ...scene.boxes.values(),
       ].filter((candidate) => horizontalOverlap(title, candidate) && rectsOverlap(title, candidate));
       if (!blockers.length) break;
       title.y = blockers.reduce(
@@ -387,7 +365,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
         Infinity,
       );
     }
-    slideTitleOffRoutes(boundary, title, placedTitles);
+    slideTitleOffRoutes(boundary, title, placedTitles, scene);
     placedTitles.push(title);
     measured.set(index, { boundary, title });
   }
@@ -425,11 +403,23 @@ const routingFrames = rawBoundaries.map(boundary => ({
   radius: boundary.kind === 'security-group' ? 8 : 12,
 }));
 const connections = asArray(arch.connections);
-const makeRouter = boxes => createArchitectureRouter(boxes, connections, {
-  automaticPlacement: Boolean(automaticPositions),
-  fixedCanvas: Boolean(arch.meta?.viewBox),
-  frames: routingFrames,
-});
+const makeRouter = boxes => {
+  let acceptedProblems;
+  return createArchitectureRouter(boxes, connections, {
+    automaticPlacement: Boolean(automaticPositions),
+    fixedCanvas: Boolean(arch.meta?.viewBox),
+    frames: routingFrames,
+    acceptSimplification: (before, after) => {
+      acceptedProblems ??= labelProblems(resolveConnectionComposition(boxes, before));
+      const candidateProblems = labelProblems(resolveConnectionComposition(boxes, after));
+      for (const [pair, severity] of candidateProblems) {
+        if (severity > (acceptedProblems.get(pair) ?? 0) + 0.0001) return false;
+      }
+      acceptedProblems = candidateProblems;
+      return true;
+    },
+  });
+};
 let router = makeRouter(components);
 if (automaticPositions && !arch.meta?.viewBox) {
   const placement = placeCrossedLeaf(components, connections, routingFrames, router, makeRouter);
@@ -445,22 +435,11 @@ function hasAutomaticRouteGeometry(connection) {
     && connection?.channelX === undefined
     && connection?.channelY === undefined;
 }
-// The auto canvas has to cover these rects; an authored viewBox is never
-// resized to fit them — there the containment rule reports the clipping.
-let connectionLabels = connectionLabelRects();
-// Unlabelled outer corridors are geometry too. Fitting only nodes and labels
-// can clip a valid explicit via route while every browser overflow check passes.
-const connectionGeometry = [
-  ...connectionLabels,
-  ...asArray(arch.connections)
-    .filter((conn) => components.has(conn.from) && components.has(conn.to))
-    .flatMap((conn) => pathFor(conn).points.map(([x, y]) => ({ x, y, width: 0, height: 0 }))),
-];
-
-function resolveBoundaryTitles() {
+function resolveBoundaryTitles(scene, connectionGeometry) {
+  const { boxes } = scene;
   if (!enforcesBoundaryTitleComposition || rawBoundaries.length === 0) {
     return {
-      boundaries: layoutBoundaryTitles(rawBoundaries, layout.boundaryLabelFontMinimum),
+      boundaries: layoutBoundaryTitles(rawBoundaries, layout.boundaryLabelFontMinimum, scene),
       readabilityProblem: null,
     };
   }
@@ -468,13 +447,13 @@ function resolveBoundaryTitles() {
   const maximumIterations = 32;
   let candidateBoundaries = rawBoundaries;
   for (let iteration = 0; iteration < maximumIterations; iteration += 1) {
-    const budgetViewBoxWidth = resolvedViewBoxWidth(candidateBoundaries);
+    const budgetViewBoxWidth = resolvedViewBoxWidth(boxes, candidateBoundaries, connectionGeometry);
     const minimumFontSize = Math.max(
       layout.boundaryLabelFontMinimum,
       minimumReadableSourceTextPx(budgetViewBoxWidth) + 1e-6,
     );
-    const nextBoundaries = layoutBoundaryTitles(rawBoundaries, minimumFontSize);
-    const finalViewBoxWidth = resolvedViewBoxWidth(nextBoundaries);
+    const nextBoundaries = layoutBoundaryTitles(rawBoundaries, minimumFontSize, scene);
+    const finalViewBoxWidth = resolvedViewBoxWidth(boxes, nextBoundaries, connectionGeometry);
     const finalMinimumFontSize = Math.max(
       layout.boundaryLabelFontMinimum,
       minimumReadableSourceTextPx(finalViewBoxWidth),
@@ -485,15 +464,89 @@ function resolveBoundaryTitles() {
     candidateBoundaries = nextBoundaries;
   }
 
-  const finalViewBoxWidth = resolvedViewBoxWidth(candidateBoundaries);
+  const finalViewBoxWidth = resolvedViewBoxWidth(boxes, candidateBoundaries, connectionGeometry);
   return {
     boundaries: candidateBoundaries,
     readabilityProblem: `[composition/desktop-readability] Boundary title layout did not converge after ${maximumIterations} iterations for the final ${finalViewBoxWidth}px viewBox — shorten boundary labels, provide a wider authored viewBox, or move wrapped components closer to the left edge.`,
   };
 }
 
-const resolvedBoundaryTitles = resolveBoundaryTitles();
+// Run the same title, canvas and label placement for a route proposal and
+// for the SVG. The router's provisional label reservations only prune probes.
+function resolveConnectionComposition(boxes, routeFor) {
+  const routes = connections.flatMap((relation, relationIndex) => {
+    if (!boxes.has(relation.from) || !boxes.has(relation.to)) return [];
+    const routed = routeFor(relation);
+    if (routed.points.length < 2) return [];
+    return [{ relation, relationIndex, ...routed }];
+  });
+  const labels = routes.flatMap(({ relation, relationIndex, points, labelAt }) => relation.label ? [{
+    relation, relationIndex, label: relation.label,
+    ...connectionLabelBoxAt(relation, labelAt || labelPoint(relation, points)),
+  }] : []);
+  const titleRouteSegments = routes.flatMap(({ points }) =>
+    points.slice(1).map((end, index) => ({ start: points[index], end })));
+  // Include route extents too. Fitting cards and labels alone can clip an
+  // explicit via route even when every browser overflow check passes.
+  const geometry = [...labels, ...routes.flatMap(({ points }) => points.map(([x, y]) => ({ x, y, width: 0, height: 0 })))];
+  const titles = resolveBoundaryTitles({ boxes, connectionLabels: labels, titleRouteSegments }, geometry);
+  const boundaries = titles.boundaries;
+  const viewBox = arch.meta?.viewBox || autoViewBoxFor(boxes, boundaries, geometry);
+  const placed = arch.meta?.quality_profile === 'showcase' ? placeAutomaticLabels({
+    keepFallbackNearRoute: true,
+    labels,
+    routes,
+    components: [...boxes.values()],
+    titles: boundaries.map(boundary => boundary.title),
+    viewBox,
+    // Resolve labels inside the fitted canvas, above its legend.
+    placementBottom: architectureLegendEntries.length
+      ? viewBox[1] - 48 - legendFootprint(architectureLegendEntries, { width: viewBox[0] - layout.margin * 2 }).extraHeight
+      : viewBox[1],
+  }) : labels;
+  return { routes, labels: placed, titles, viewBox, boxes };
+}
+
+function labelProblems({ routes, labels, titles, viewBox, boxes }) {
+  const problems = new Map();
+  // Use the same measurements as the composition gate. Compare distances
+  // per label and relationship so an existing defect cannot mask a new one.
+  for (const hit of collectLabelRouteClearance({ labels, routedRelations: routes, threshold: 4 })) {
+    problems.set(`clearance/${hit.labelRelationIndex}/${hit.otherRelationIndex}`, 4 - hit.clearance);
+  }
+  const distance = (points, rect, limit) => Math.min(...points.slice(1).map((end, index) =>
+    segmentRectClearanceWithin({ start: points[index], end }, rect, limit)));
+  const byIndex = new Map(routes.map(route => [route.relationIndex, route]));
+  const canvas = { x: 0, y: 0, width: viewBox[0], height: viewBox[1] };
+  for (const [index, label] of labels.entries()) {
+    const { relationIndex } = label;
+    const owner = byIndex.get(relationIndex);
+    const own = distance(owner.points, label, Infinity);
+    for (const other of routes) {
+      if (other === owner) continue;
+      const gap = distance(other.points, label, own);
+      if (gap + 0.0001 < own) problems.set(`ownership/${relationIndex}/${other.relationIndex}`, own - gap);
+    }
+    for (const box of boxes.values()) {
+      if (rectsOverlap(label, box, -2)) problems.set(`component/${relationIndex}/${box.id}`, 1);
+    }
+    for (const [frameIndex, { title }] of titles.boundaries.entries()) {
+      if (rectsOverlap(label, title)) problems.set(`title/${relationIndex}/${frameIndex}`, 1);
+    }
+    for (const other of labels.slice(index + 1)) {
+      if (rectsOverlap(label, other)) problems.set(`label/${relationIndex}/${other.relationIndex}`, 1);
+    }
+    if (!rectContains(canvas, label)) problems.set(`canvas/${relationIndex}`, 1);
+  }
+  return problems;
+}
+
+const {
+  titles: resolvedBoundaryTitles, labels: connectionLabels, viewBox,
+} = resolveConnectionComposition(components, pathFor);
 const boundaries = resolvedBoundaryTitles.boundaries;
+const labelBoxes = new Map(connectionLabels.map(rect => [rect.relation, rect]));
+const legendY = () => viewBox[1] - 16;
 const compositionFrames = boundaries.map((boundary, index) => ({
   ...boundary,
   id: boundary.id || index,
@@ -507,36 +560,6 @@ function componentContext(component) {
     .sort((a, b) => (b.width * b.height) - (a.width * a.height))
     .map((boundary) => boundary.label);
   return scopes.length ? scopes.join(' › ') : i18nText(arch.meta.locale, 'node.context.architecture');
-}
-
-// ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
-// Connection labels are diagram content, so an auto canvas that stopped at the
-// component/boundary bbox would clip them; the label rects join the fit here
-// and in the title convergence above, which sizes fonts for this same width.
-const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries, connectionGeometry);
-const legendY = () => viewBox[1] - 16;
-
-// Fit titles and canvas from the original geometry first. Fallback labels must
-// fit inside that canvas, so moving a label cannot trigger title reflow or a
-// canvas/label feedback loop. Keep standard and every authored label control.
-if (arch.meta?.quality_profile === 'showcase') {
-  connectionLabels = placeAutomaticLabels({
-    keepFallbackNearRoute: true,
-    labels: connectionLabels,
-    routes: asArray(arch.connections).flatMap((conn, relationIndex) => (
-      components.has(conn.from) && components.has(conn.to)
-        ? [{ relationIndex, points: pathFor(conn).points }] : []
-    )),
-    components: [...components.values()],
-    titles: boundaries.map(boundary => boundary.title),
-    viewBox,
-    // Leave the resolved legend band available; moving a label must not hide
-    // an otherwise visible legend. Existing labels keep their placement.
-    placementBottom: architectureLegendEntries.length
-      ? legendY() - 32 - legendFootprint(architectureLegendEntries, { width: viewBox[0] - layout.margin * 2 }).extraHeight
-      : viewBox[1],
-  });
-  for (const rect of connectionLabels) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
 }
 
 // ---- Validation: mechanical correctness, never layout taste -----------------
